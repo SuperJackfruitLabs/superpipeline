@@ -1,5 +1,5 @@
 /**
- * The credential `kbn` acts with.
+ * The credential `supi` acts with.
  *
  * A **hub-issued token** — the same one `apn fleet login` produces. superpipeline verifies it offline
  * against the hub's JWKS, so one sign-in serves both planes; that is what
@@ -33,7 +33,7 @@ export interface Credential {
   source: string;
 }
 
-/** Where `apn fleet login` stores its token. Read, never written — `kbn` does not sign in. */
+/** Where `apn fleet login` stores its token. Read, never written — `supi` does not sign in. */
 function apnTokenPath(): string {
   const xdg = process.env.XDG_CONFIG_HOME;
   const base = xdg && xdg.trim() !== "" ? xdg : join(homedir(), ".config");
