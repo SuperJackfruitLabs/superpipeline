@@ -72,12 +72,12 @@ describe('MCP server — Streamable HTTP transport', () => {
     });
     expect(res.status).toBe(200);
     const { result } = await rpc(res);
-    expect(result.serverInfo.name).toBe('kaambaan');
+    expect(result.serverInfo.name).toBe('superpipeline');
     expect(result.capabilities.tools).toBeDefined();
     // The server is self-describing: the workflow protocol ships in `instructions` so any client can
     // use it without prior knowledge.
-    expect(result.instructions).toContain('kaambaan_list_work');
-    expect(result.instructions).toContain('kaambaan_claim_card');
+    expect(result.instructions).toContain('superpipeline_list_work');
+    expect(result.instructions).toContain('superpipeline_claim_card');
   });
 
   it('lists tools over HTTP', async () => {
@@ -89,8 +89,8 @@ describe('MCP server — Streamable HTTP transport', () => {
     expect(res.status).toBe(200);
     const { result } = await rpc(res);
     const names = (result.tools as Array<{ name: string }>).map((t) => t.name);
-    expect(names).toContain('kaambaan_claim_card');
-    expect(names).toContain('kaambaan_complete');
+    expect(names).toContain('superpipeline_claim_card');
+    expect(names).toContain('superpipeline_complete');
   });
 
   it('claims a card over HTTP, scoped to the bearer\'s tenant + capabilities', async () => {
@@ -104,7 +104,7 @@ describe('MCP server — Streamable HTTP transport', () => {
         jsonrpc: '2.0',
         id: 3,
         method: 'tools/call',
-        params: { name: 'kaambaan_claim_card', arguments: { boardId: 'brd_http' } },
+        params: { name: 'superpipeline_claim_card', arguments: { boardId: 'brd_http' } },
       }),
     });
     expect(res.status).toBe(200);
@@ -127,7 +127,7 @@ describe('MCP server — Streamable HTTP transport', () => {
         jsonrpc: '2.0',
         id: 4,
         method: 'tools/call',
-        params: { name: 'kaambaan_claim_card', arguments: { boardId: 'brd_owned' } },
+        params: { name: 'superpipeline_claim_card', arguments: { boardId: 'brd_owned' } },
       }),
     });
     const { result } = await rpc(res);

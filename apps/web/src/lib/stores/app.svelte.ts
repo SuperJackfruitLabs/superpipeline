@@ -29,8 +29,8 @@ import {
   type AgentSummary,
 } from '$lib/api';
 
-const BOARD_KEY = 'kaambaan.boardId';
-const THEME_KEY = 'kaambaan.theme';
+const BOARD_KEY = 'superpipeline.boardId';
+const THEME_KEY = 'superpipeline.theme';
 
 export type Theme = 'dark' | 'light';
 export type View = 'board' | 'list';

@@ -31,7 +31,7 @@
       <path d="M3 12h15" /><path d="M13 6l6 6-6 6" /><path d="M3 9l3 3-3 3" />
     </svg>
     <div>
-      <div class="flex items-baseline gap-2.5"><span class="wordmark text-[19px] leading-none">Kaambaan</span><span class="eyebrow">agent flight deck</span></div>
+      <div class="flex items-baseline gap-2.5"><span class="wordmark text-[19px] leading-none">Superpipeline</span><span class="eyebrow">agent flight deck</span></div>
       <div class="mono text-muted-foreground mt-1 text-xs">welcome, {app.user?.name ?? app.user?.login ?? 'there'}</div>
     </div>
   </div>

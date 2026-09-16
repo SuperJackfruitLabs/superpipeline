@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 
-const BOARD_KEY = 'kaambaan.boardId';
+const BOARD_KEY = 'superpipeline.boardId';
 const API = 'http://localhost:8787';
 const TENANT = { 'X-Tenant-Id': 'tnt_dev', 'Content-Type': 'application/json' };
 const DEFAULT_STAGES = [

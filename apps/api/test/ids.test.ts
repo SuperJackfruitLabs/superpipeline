@@ -13,7 +13,7 @@ import {
   GateId,
   ContextId,
   ID_PREFIXES,
-} from '@kaambaan/contract';
+} from '@superpipeline/contract';
 import { newId } from '../src/ids';
 
 // The contract is the shared source of truth for id shapes, across this repo and its consumers.

@@ -18,7 +18,7 @@ import { test, expect, type Page } from '@playwright/test';
  * not a regression guard bolted on afterwards.
  */
 
-const BOARD_KEY = 'kaambaan.boardId';
+const BOARD_KEY = 'superpipeline.boardId';
 const API = 'http://localhost:8787';
 const TENANT = { 'X-Tenant-Id': 'tnt_dev', 'Content-Type': 'application/json' };
 

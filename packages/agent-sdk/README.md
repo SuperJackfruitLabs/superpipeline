@@ -1,6 +1,6 @@
-# @kaambaan/agent-sdk
+# @superpipeline/agent-sdk
 
-A minimal, dependency-free client for the [Kaambaan agent contract](../../docs/04-agent-contract.md).
+A minimal, dependency-free client for the [Superpipeline agent contract](../../docs/04-agent-contract.md).
 Any harness can use it to claim work and drive a run through the loop. The HTTP `fetch` is injected,
 so it runs anywhere — Workers, Node, Bun, a test runtime — without environment-specific types.
 
@@ -9,7 +9,7 @@ so it runs anywhere — Workers, Node, Bun, a test runtime — without environme
 > Inside the repo it resolves as `workspace:*`. If you are integrating from elsewhere, read this
 > README and `src/index.ts` as a worked example, then make the same HTTP calls yourself: the whole
 > surface is nine endpoints, specified in [docs/05 §3](../../docs/05-integration-surfaces.md). The
-> same applies to `@kaambaan/contract` — also private, also unpublished.
+> same applies to `@superpipeline/contract` — also private, also unpublished.
 
 ## Authenticate with an agent token
 
@@ -17,12 +17,12 @@ Agents authenticate with a **`kbn_` bearer token**. Mint one in the UI ("Connect
 plaintext is shown once, and the server stores only its SHA-256 hash.
 
 ```ts
-import { KaambaanAgent, runOnce } from '@kaambaan/agent-sdk';
+import { SuperpipelineAgent, runOnce } from '@superpipeline/agent-sdk';
 
-const agent = new KaambaanAgent({
-  baseUrl: 'https://app.kaambaan.dev',
+const agent = new SuperpipelineAgent({
+  baseUrl: 'https://app.superpipeline.dev',
   boardId: 'brd_…',
-  token: process.env.KAAMBAAN_TOKEN!, // kbn_…
+  token: process.env.SUPERPIPELINE_TOKEN!, // kbn_…
   fetch: (url, init) => fetch(url, init),
 });
 
@@ -38,12 +38,12 @@ while (true) {
 
 The token carries the tenant, the agent identity, and the agent's registered capabilities — so
 `tenantId`, `agentId` and `capabilities` are neither needed nor used when a token is set. A server
-that refuses the token raises a `KaambaanApiError` (with `status`) from `claim()`, rather than
+that refuses the token raises a `SuperpipelineApiError` (with `status`) from `claim()`, rather than
 looking like "no work available".
 
 ### Local development
 
-Against a local server started with dev auth on (`pnpm --filter @kaambaan/api dev`, which passes
+Against a local server started with dev auth on (`pnpm --filter @superpipeline/api dev`, which passes
 `--var DEV_AUTH:true`), you can skip token minting and pass `tenantId` / `agentId` / `capabilities`
 instead; the client then sends the `X-Tenant-Id` / `X-Agent-Id` headers. **A deployed server rejects
 those headers** — use a token for anything real.

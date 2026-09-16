@@ -1,9 +1,9 @@
 {
-  "//": "Point Claude Code at a running Kaambaan board worker (pnpm --filter @kaambaan/api dev).",
+  "//": "Point Claude Code at a running Superpipeline board worker (pnpm --filter @superpipeline/api dev).",
   "//auth": "LOCAL ONLY. Dev bearer '<tenantId>:<agentId>:<caps>' is accepted only when the server runs with DEV_AUTH=true (docs/05 \u00a72).",
-  "//usage": "Copy into your project's .mcp.json, then in Claude Code the kaambaan_* tools become available.",
+  "//usage": "Copy into your project's .mcp.json, then in Claude Code the superpipeline_* tools become available.",
   "mcpServers": {
-    "kaambaan": {
+    "superpipeline": {
       "type": "http",
       "url": "http://localhost:8787/mcp",
       "headers": {

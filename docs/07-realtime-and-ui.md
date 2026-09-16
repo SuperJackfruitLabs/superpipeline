@@ -36,10 +36,10 @@ is both a product feature (live board + audit) and standards-compatible telemetr
   "traceId": "…", "spanId": "…", "parentId": "…", "path": "/pipeline/stageB/run/tool",
   "sessionId": "card_…",            // a CARD's life = a session (universal grouping key)
   "tenantId": "…", "userId": "…",
-  // type — span-KIND enum (not OTel operation-verbs), plus Kaambaan kinds
+  // type — span-KIND enum (not OTel operation-verbs), plus Superpipeline kinds
   "kind": "AGENT | LLM | TOOL | CHAIN | RETRIEVER | GUARDRAIL | STAGE_TRANSITION | PIPELINE",
   "name": "…",
-  // Kaambaan audit dimensions (no standard has these — we add them)
+  // Superpipeline audit dimensions (no standard has these — we add them)
   "boardId": "…", "cardId": "…", "stageFrom": "research", "stageTo": "review",
   // agent/tool/model
   "agentId": "…", "toolName": "…", "toolCallId": "…", "model": "…", "provider": "…",
@@ -136,7 +136,7 @@ see what's modeled vs reported. Surfaces:
   note.) Invalid `usage` (negative/non-finite) is rejected at the DO so every wire shares the guard.
 - The board UI shows a `$spent / $budget` header chip and a per-card cost (red when over its cap).
 
-`usage` flows over both wires (REST `runs/:id/activities`, MCP `kaambaan_post_activity`).
+`usage` flows over both wires (REST `runs/:id/activities`, MCP `superpipeline_post_activity`).
 
 **Follow-up slices (delivered):**
 - **Attempts** (§5) — `getAttempts(cardId)` lists each run with its agent · model · cost · outcome;
@@ -146,7 +146,7 @@ see what's modeled vs reported. Surfaces:
 - **Pre-run estimate** (§6) — `estimateCardCost(cardId)` averages historical runs at the card's stage
   (`GET …/cards/:id/estimate`).
 - **AG-UI adapter** (§1) — `normalizeClaudeStreamLine` translates Claude Code `stream-json` →
-  normalized activities (`packages/agent-sdk/src/claude-code.ts`, re-exported from `@kaambaan/agent-sdk`); a bridge POSTs
+  normalized activities (`packages/agent-sdk/src/claude-code.ts`, re-exported from `@superpipeline/agent-sdk`); a bridge POSTs
   each, including usage. It lives in the SDK because that is what a bridge imports — inside the
   Worker it had no caller and could not have had one.
 - **In-app notifications** (§7) — notify-worthy transitions (gate opened, failed, reclaimed) record a

@@ -1,9 +1,9 @@
 import { DurableObject } from 'cloudflare:workers';
-import { canTransition, nextState, type GateDecision, type TaskEventType, type TaskState } from '@kaambaan/contract';
+import { canTransition, nextState, type GateDecision, type TaskEventType, type TaskState } from '@superpipeline/contract';
 import type { Env } from '../env';
 import { newId } from '../ids';
 import { grantPermitsAgent, isControlPairEnforced } from '../auth/grant-match';
-import { capabilityTag, normalizeRequirement, stageCapabilitiesMet } from '@kaambaan/contract';
+import { capabilityTag, normalizeRequirement, stageCapabilitiesMet } from '@superpipeline/contract';
 import { parseElicitationOptions } from './elicitation';
 import { verifyGithubSignature } from '../references/github-signature';
 import { mapGithubEvent } from '../references/github-events';
@@ -100,7 +100,7 @@ export interface StageDef {
    * A multi-capability requirement for a capability lane: `all` every member, `any` at least one.
    * Wins over `owner` when present. A sibling field rather than a union on `owner` because
    * SQLite's `json_each` raises on a scalar, so widening `owner` would break `boardCount` on
-   * every stage that already exists (see `StageRequirement` in @kaambaan/contract).
+   * every stage that already exists (see `StageRequirement` in @superpipeline/contract).
    */
   requires?: { all?: string[]; any?: string[] };
   gate?: 'none' | 'approval';
@@ -358,7 +358,7 @@ export interface ElicitationAnswer {
   answeredAt: string;
 }
 
-// Defined in `@kaambaan/contract` — it is a cross-repo contract value that
+// Defined in `@superpipeline/contract` — it is a cross-repo contract value that
 // AgentPod's bridge and supermessage both read. Re-exported so the many
 // existing importers of it from this module keep working.
 export type { GateDecision };
@@ -1836,7 +1836,7 @@ export class BoardDO extends DurableObject<Env> {
   /**
    * The suite principal id this local agent maps to (`agents.external_id`), or `null` if it has
    * never been linked to one. A grant enumerates principal ids
-   * (charter decisions/2026-08-30-an-agent-is-a-principal.md §3/§5), not kaambaan's local
+   * (charter decisions/2026-08-30-an-agent-is-a-principal.md §3/§5), not superpipeline's local
    * `agt_…` ids — no external token has ever heard of the latter — so this is the id
    * `grantPermitsAgent` actually needs to compare against.
    */
@@ -2707,7 +2707,7 @@ export class BoardDO extends DurableObject<Env> {
   /**
    * Every gate still waiting on a human, in the body a push carries.
    *
-   * The floor beneath push. kaambaan retries a delivery five times and then
+   * The floor beneath push. superpipeline retries a delivery five times and then
    * dead-letters it, at which point the gate is silent: the card is blocked on
    * an approval nobody was told about, and neither side is looking. This is
    * what lets the hub ask independently rather than wait to be told.

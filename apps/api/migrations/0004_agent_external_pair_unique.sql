@@ -2,11 +2,11 @@
 -- 0003) already leans on, and the premise the whole organisation plane depends on. Nothing so
 -- far enforced it: `findAgentByExternal` ran `.first()` with no `ORDER BY`, so two agents
 -- (in the same tenant, or different ones) could both write the same `external_id`, and whichever
--- row SQLite happened to return would quietly win kaambaan's hub-token resolution — the other's
+-- row SQLite happened to return would quietly win superpipeline's hub-token resolution — the other's
 -- mapping effectively vanished, with nothing anywhere reporting it.
 --
 -- PARTIAL index, not a plain UNIQUE column constraint: the pair is `NULL, NULL` for every agent
--- nobody has ever linked — which is every agent in a standalone kaambaan, and every agent today
+-- nobody has ever linked — which is every agent in a standalone superpipeline, and every agent today
 -- — and a bare UNIQUE(external_source, external_id) would either reject every second unmapped
 -- agent (SQLite does NOT treat two NULLs as equal for uniqueness — this would actually be safe on
 -- that point) or, worse, be the kind of constraint a future column default could quietly break.

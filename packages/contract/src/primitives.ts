@@ -86,7 +86,7 @@ export type RunOutcome = z.infer<typeof RunOutcome>;
 /**
  * The one spelling of a work-capability tag.
  *
- * A capability is how kaambaan routes a card to an agent, and the whole of the match is
+ * A capability is how superpipeline routes a card to an agent, and the whole of the match is
  * `agent.capabilities.includes(stage.owner)` — exact string equality between two free strings.
  * Nothing defines the set, so every place that produces one had invented its own spelling: board
  * templates slugified a stage name (`code-review`), the agent editor lowercased it
@@ -147,7 +147,7 @@ export type SyncState = z.infer<typeof SyncState>;
  * is not a local change. A gate offering an option no client knows renders a
  * button that resolves nothing — see `charter` →
  * `decisions/2026-08-30-a-gate-closes-over-chat.md`, which records free-form
- * option ids as the one correction to kaambaan#34 that would have failed at
+ * option ids as the one correction to superpipeline#34 that would have failed at
  * runtime rather than in review.
  */
 export const GateDecision = z.enum(['approve', 'request_changes', 'reject']);

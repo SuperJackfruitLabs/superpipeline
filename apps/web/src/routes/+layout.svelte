@@ -33,7 +33,7 @@
     <svg class="arrowmark size-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
       <path d="M3 12h15" /><path d="M13 6l6 6-6 6" /><path d="M3 9l3 3-3 3" />
     </svg>
-    <div class="wordmark text-lg">Kaambaan</div>
+    <div class="wordmark text-lg">Superpipeline</div>
     <div class="mono text-muted-foreground flex items-center gap-2 text-xs"><span class="live-dot"></span>warming up the flight deck…</div>
   </main>
 {:else if app.authState === 'signed-out'}

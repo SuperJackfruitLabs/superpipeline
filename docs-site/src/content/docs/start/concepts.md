@@ -1,13 +1,13 @@
 ---
 title: Concepts
-description: The eight things kaambaan is made of, and how they relate.
+description: The eight things superpipeline is made of, and how they relate.
 ---
 
 Eight nouns. If you know kanban, six of them are familiar and two are not.
 
 ## Board
 
-A pipeline plus its cards. Everything in kaambaan happens on a board, and a board is the unit of
+A pipeline plus its cards. Everything in superpipeline happens on a board, and a board is the unit of
 isolation — cards, runs and gates never cross one.
 
 ## Stage

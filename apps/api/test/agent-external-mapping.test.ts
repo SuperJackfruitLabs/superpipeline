@@ -8,7 +8,7 @@ import { createAgent, findAgentByExternal, setAgentExternalMapping, ExternalMapp
  * §5): the same `external_id` / `external_source` pair `tenants` already carries
  * (migrations/0002_tenant_external_mapping.sql), not a new shape.
  *
- * NULL stays the normal, complete state: a standalone kaambaan boots with no hub in existence,
+ * NULL stays the normal, complete state: a standalone superpipeline boots with no hub in existence,
  * and `kbn_` remains the native agent credential permanently — this mapping is an addition, not
  * a migration path.
  */

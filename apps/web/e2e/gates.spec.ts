@@ -34,7 +34,7 @@ test('a human approves an agent-opened gate from the board', async ({ page, requ
   });
 
   // 2. Load that board in the UI — the card sits at the review gate with resolve actions.
-  await page.addInitScript((id) => window.localStorage.setItem('kaambaan.boardId', id), boardId);
+  await page.addInitScript((id) => window.localStorage.setItem('superpipeline.boardId', id), boardId);
   await page.goto('/');
 
   const review = page.locator('section').filter({ has: page.getByText('Review', { exact: true }) });

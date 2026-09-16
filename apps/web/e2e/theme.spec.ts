@@ -3,8 +3,8 @@ import { test, expect } from '@playwright/test';
 // The theme toggle is web-only: it flips a `data-theme` attribute on <html>, persists the choice to
 // localStorage, and on a first visit (no stored choice) follows the OS `prefers-color-scheme`. A tiny
 // inline script in app.html applies the stored theme before first paint, so a reload doesn't flash.
-const BOARD_KEY = 'kaambaan.boardId';
-const THEME_KEY = 'kaambaan.theme';
+const BOARD_KEY = 'superpipeline.boardId';
+const THEME_KEY = 'superpipeline.theme';
 const API = 'http://localhost:8787';
 const TENANT = { 'X-Tenant-Id': 'tnt_dev', 'Content-Type': 'application/json' };
 const DEFAULT_STAGES = [

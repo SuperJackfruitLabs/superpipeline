@@ -17,7 +17,7 @@ import { valuePermitsAgent, grantPermitsAgent } from '../src/auth/grant-match';
  * been written down while it was still askable — which is what `queued_grant`
  * is — and the claim checks the recorded answer, against the PRINCIPAL id the
  * claiming agent maps to (`agents.external_id`), not its local `agt_…` id —
- * nothing outside kaambaan has ever heard of the latter.
+ * nothing outside superpipeline has ever heard of the latter.
  */
 
 const PIPELINE = [
@@ -57,7 +57,7 @@ async function cards(tenant: string, boardId: string) {
 /**
  * Register the local agent a `claim()` call names, so `claim()`'s D1 lookup of
  * `agents.external_id` has a row to find. Mapped to `principalId` when given one — `null` leaves
- * the agent registered but unmapped, which is the ordinary, standalone-kaambaan state.
+ * the agent registered but unmapped, which is the ordinary, standalone-superpipeline state.
  */
 async function agentMappedTo(tenant: string, agentId: string, principalId: string | null): Promise<void> {
   await env.DB.prepare(`INSERT OR IGNORE INTO agents (id, tenant_id, name) VALUES (?, ?, ?)`)
@@ -135,10 +135,10 @@ describe('matching, which is the fixture\'s contract', () => {
   });
 
   it('a retired per-plane value is simply not equal to any real id — ignored, not denied', () => {
-    // The old `kaambaan:` namespace form. It never matches under equality, but its presence
+    // The old `superpipeline:` namespace form. It never matches under equality, but its presence
     // alongside a real id must not sink the whole grant: a consumer ignores what it does not
     // recognise, it never denies on it.
-    expect(grantPermitsAgent(['kaambaan:agt_x', 'prn_target'], 'prn_target')).toBe(true);
+    expect(grantPermitsAgent(['superpipeline:agt_x', 'prn_target'], 'prn_target')).toBe(true);
   });
 
   it('treats no grant and an empty grant alike, and both as no', () => {
@@ -148,7 +148,7 @@ describe('matching, which is the fixture\'s contract', () => {
 
   it('an agent never linked to a principal cannot be named by any grant', () => {
     // Behaviour change, and a correct one: a local agent with no suite identity is not a weaker
-    // caller, it is unenumerable — nothing outside kaambaan has ever heard of it.
+    // caller, it is unenumerable — nothing outside superpipeline has ever heard of it.
     expect(grantPermitsAgent(['prn_target'], null)).toBe(false);
   });
 });
@@ -227,7 +227,7 @@ describe('claiming under enforcement', () => {
   it('refuses an agent that has never been linked to a principal, even with a matching-looking grant', async () => {
     // An agent this plane has never mapped to a suite principal cannot be named by ANY grant —
     // there is no id to enumerate. This is the direct behavioural consequence of equality
-    // matching on principal ids rather than kaambaan's local `agt_…` id.
+    // matching on principal ids rather than superpipeline's local `agt_…` id.
     const t = 'tnt_cp_unmapped';
     const boardId = await board(t);
     await agentMappedTo(t, 'agt_nobody', null);

@@ -1,6 +1,6 @@
 import { SELF, env } from 'cloudflare:test';
 import { beforeAll, describe, it, expect } from 'vitest';
-import { KaambaanAgent, type Fetcher } from '@kaambaan/agent-sdk';
+import { SuperpipelineAgent, type Fetcher } from '@superpipeline/agent-sdk';
 import { setupCatalog } from './helpers/catalog';
 import { createAgent, createAgentToken } from '../src/db/catalog';
 
@@ -9,7 +9,7 @@ import { createAgent, createAgentToken } from '../src/db/catalog';
  *
  * An agent that needs a decision it cannot make itself (a permission prompt, a choice) asks, keeps
  * its lease, and polls the run it holds until the answer appears. Everything here goes through
- * `@kaambaan/agent-sdk` — if the SDK cannot express "ask, then collect the answer", a bridge has to
+ * `@superpipeline/agent-sdk` — if the SDK cannot express "ask, then collect the answer", a bridge has to
  * hand-roll the contract, which is how the question came to be posted with no options at all.
  */
 
@@ -61,7 +61,7 @@ describe('agent SDK — asking a human, and collecting the answer', () => {
     const boardId = await createBoard(tenantId);
     await addCard(tenantId, boardId);
     const { token } = await connectAgent(tenantId);
-    const agent = new KaambaanAgent({ baseUrl, boardId, token, fetch: fetcher });
+    const agent = new SuperpipelineAgent({ baseUrl, boardId, token, fetch: fetcher });
 
     const work = await agent.claim();
     expect(work).not.toBeNull();
@@ -95,14 +95,14 @@ describe('agent SDK — asking a human, and collecting the answer', () => {
     const boardId = await createBoard(tenantId);
     await addCard(tenantId, boardId);
     const { token } = await connectAgent(tenantId);
-    const agent = new KaambaanAgent({ baseUrl, boardId, token, fetch: fetcher });
+    const agent = new SuperpipelineAgent({ baseUrl, boardId, token, fetch: fetcher });
 
     const work = await agent.claim();
     const asked = await agent.ask(work!, 'Which repo should I use?');
     expect(asked.options).toEqual([]);
 
-    await answerAsHuman(tenantId, boardId, asked.id, { text: 'kaambaan' });
+    await answerAsHuman(tenantId, boardId, asked.id, { text: 'superpipeline' });
     const [answered] = await agent.elicitations(work!);
-    expect(answered!.answer).toMatchObject({ option: null, text: 'kaambaan' });
+    expect(answered!.answer).toMatchObject({ option: null, text: 'superpipeline' });
   });
 });

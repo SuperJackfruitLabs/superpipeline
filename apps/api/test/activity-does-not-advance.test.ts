@@ -2,7 +2,7 @@ import { SELF, env } from 'cloudflare:test';
 import { beforeAll, describe, it, expect } from 'vitest';
 import { setupCatalog } from './helpers/catalog';
 import { createAgent, createAgentToken } from '../src/db/catalog';
-import { deriveStateFromActivity } from '@kaambaan/contract';
+import { deriveStateFromActivity } from '@superpipeline/contract';
 
 /**
  * What a `response` / `error` activity actually does to a card (docs/04 §4).

@@ -40,7 +40,7 @@ person. A card that cycles forever is worse than one that stops.
 
 ## Cost
 
-Agents report token usage as they work, and kaambaan totals it per card and per board. You can set
+Agents report token usage as they work, and superpipeline totals it per card and per board. You can set
 a **USD cap** on either. A card over its cap is surfaced in Operate → Needs you rather than
 silently continuing.
 

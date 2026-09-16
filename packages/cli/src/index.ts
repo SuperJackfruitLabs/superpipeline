@@ -1,8 +1,8 @@
 #!/usr/bin/env bun
 /**
- * `kbn` — kaambaan from a terminal.
+ * `kbn` — superpipeline from a terminal.
  *
- * The third consumer of `@kaambaan/contract`, after REST and MCP. It is a client: it adds no
+ * The third consumer of `@superpipeline/contract`, after REST and MCP. It is a client: it adds no
  * authority, performs no local permission check, and renders the board's own refusals. A client
  * that pre-empts a server decision is a client that will one day disagree with it.
  *
@@ -11,7 +11,7 @@
  */
 import { baseUrl, expired, inspect, loadCredential, ENV_TOKEN } from "./credential.ts";
 
-const USAGE = `kbn — kaambaan from a terminal
+const USAGE = `kbn — superpipeline from a terminal
 
   kbn whoami                  who the stored token says you are
   kbn boards                  the workspace's boards
@@ -24,7 +24,7 @@ const USAGE = `kbn — kaambaan from a terminal
   --json                      machine-stable output, on any command
 
 Credential: $${ENV_TOKEN}, else $AGENTPOD_TOKEN, else the token \`apn fleet login\` writes.
-One sign-in serves both planes — kaambaan verifies the hub's token offline.
+One sign-in serves both planes — superpipeline verifies the hub's token offline.
 
 Not here: creating boards, staffing agents, editing capabilities, changing the fleet link.
 Those need a seat in the workspace, which a hub token does not grant. See README.md.`;
@@ -68,19 +68,19 @@ async function api(path: string, init: RequestInit = {}): Promise<unknown> {
   const body = await res.text();
 
   if (res.status === 401) {
-    fail("kaambaan did not accept that token (401).", "  apn fleet login");
+    fail("superpipeline did not accept that token (401).", "  apn fleet login");
   }
   if (res.status === 403) {
     // Distinguished from 401 deliberately: 401 means sign in, 403 means you may not. A hub token
     // is a `member`, so a management verb lands here — and telling a person to sign in again
     // when the answer is "your seat does not permit this" sends them round a loop.
     fail(
-      `Refused by kaambaan (403). ${body.trim()}`,
+      `Refused by superpipeline (403). ${body.trim()}`,
       "A hub token acts as a `member`. Managing boards, agents or people needs a seat in the\n" +
         "workspace — see packages/cli/README.md.",
     );
   }
-  if (!res.ok) fail(`kaambaan returned ${res.status}: ${body.trim()}`);
+  if (!res.ok) fail(`superpipeline returned ${res.status}: ${body.trim()}`);
 
   try {
     return JSON.parse(body);
@@ -113,7 +113,7 @@ async function main(argv: string[]): Promise<void> {
           principal: claims.subject,
           kind: claims.principalKind,
           source: c.source,
-          kaambaan: baseUrl(),
+          superpipeline: baseUrl(),
           expires: claims.expiry?.toISOString() ?? null,
         });
         return;
@@ -121,7 +121,7 @@ async function main(argv: string[]): Promise<void> {
       process.stdout.write(
         `principal  ${claims.subject}\n` +
           `kind       ${claims.principalKind}\n` +
-          `kaambaan   ${baseUrl()}\n` +
+          `superpipeline   ${baseUrl()}\n` +
           `token from ${c.source}\n` +
           (claims.expiry ? `expires    ${claims.expiry.toLocaleString()}\n` : ""),
       );

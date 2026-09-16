@@ -57,10 +57,10 @@ export interface AgentPrincipal {
   /**
    * The scopes on the `kbn_` token that authenticated this request (`agent_tokens.scopes_json`).
    *
-   * **Null means "this credential is not a kaambaan token"** — a hub-issued agent token, or a dev
+   * **Null means "this credential is not a superpipeline token"** — a hub-issued agent token, or a dev
    * header — not "no scopes". The distinction is load-bearing: `scopePermits` treats null as
    * unscoped-and-therefore-unrestricted, because a hub token's authority is the hub's and is
-   * checked by the control pair at claim time, not by a scope kaambaan never minted.
+   * checked by the control pair at claim time, not by a scope superpipeline never minted.
    */
   scopes?: string[] | null;
   /**
@@ -222,12 +222,12 @@ export async function resolveHubUser(request: Request, env: Env): Promise<UserPr
  * The agent-kind sibling of `resolveHubUser` above — same shape, deliberately: a node can now
  * exchange its own credential for a short-lived hub token whose `sub` is a bare `prn_…`
  * principal id and whose `principalKind` is `"agent"` (charter
- * decisions/2026-08-30-an-agent-is-a-principal.md), and kaambaan must accept it AS THAT AGENT.
+ * decisions/2026-08-30-an-agent-is-a-principal.md), and superpipeline must accept it AS THAT AGENT.
  *
- * **Capabilities never come from the claim.** They are kaambaan's own vocabulary — charter
+ * **Capabilities never come from the claim.** They are superpipeline's own vocabulary — charter
  * decisions/2026-08-15-a-grant-names-an-agent-per-plane.md calls putting them in a cross-plane
  * claim "a trap — the same word, two vocabularies". The token names a principal (`sub`);
- * `findAgentByExternal` looks up kaambaan's OWN `agents` row for that principal and its
+ * `findAgentByExternal` looks up superpipeline's OWN `agents` row for that principal and its
  * capabilities come from there, never from the token.
  *
  * Four refusals, all failing closed, same posture as `resolveHubUser`:
@@ -238,11 +238,11 @@ export async function resolveHubUser(request: Request, env: Env): Promise<UserPr
  *     no capability set to act with.
  *   - **`principalKind` is not `"agent"`** → refused. A human's token must never double as an
  *     agent credential just because its `sub` happens to also be mapped as one.
- *   - **The claim's `tenant` does not map to the SAME kaambaan tenant the agent row names** →
+ *   - **The claim's `tenant` does not map to the SAME superpipeline tenant the agent row names** →
  *     refused. `resolveHubUser` already maps `claims.tenant` through `findTenantByExternal` and
  *     refuses an unmapped one; this mirrors that rather than trusting the agent row alone, so a
  *     token minted for one fleet cannot resolve into an agent whose row happens to sit in a
- *     different kaambaan tenant. charter → decisions/2026-08-15-tenancy-is-local-and-mapped.md:
+ *     different superpipeline tenant. charter → decisions/2026-08-15-tenancy-is-local-and-mapped.md:
  *     an unmapped tenant is "invisible to the other plane, and silently so" — the check makes
  *     that invisibility a refusal instead of a silent cross-tenant hop.
  */
@@ -263,7 +263,7 @@ export async function resolveHubAgent(request: Request, env: Env): Promise<Agent
   if (!found) return null;
 
   // Same mapping resolveHubUser performs on the human path — the claim's tenant must land on the
-  // exact kaambaan tenant the agent row names, not merely on some tenant. A mismatch is a
+  // exact superpipeline tenant the agent row names, not merely on some tenant. A mismatch is a
   // cross-fleet confusion nothing else in this path would catch.
   const claimTenantId = await findTenantByExternal(env.DB, 'agentpod', claims.tenant);
   if (!claimTenantId || claimTenantId !== found.tenantId) return null;

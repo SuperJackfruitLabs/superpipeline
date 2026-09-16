@@ -1,5 +1,5 @@
 /**
- * @kaambaan/agent-sdk — a minimal, dependency-free client for the Kaambaan agent contract
+ * @superpipeline/agent-sdk — a minimal, dependency-free client for the Superpipeline agent contract
  * (docs/04 §3). Any harness can use it to claim work and drive a run through the loop; it speaks
  * only the public REST surface. The HTTP `fetch` is injected so it runs anywhere (Workers, Node,
  * or a test runtime) without pulling in environment-specific types.
@@ -15,10 +15,10 @@
  * ## Authentication
  *
  * Agents authenticate with a **`kbn_` bearer token**, minted in the UI ("Connect an agent") and
- * stored server-side only as a SHA-256 hash. That is the way to talk to a deployed Kaambaan:
+ * stored server-side only as a SHA-256 hash. That is the way to talk to a deployed Superpipeline:
  *
  * ```ts
- * const agent = new KaambaanAgent({ baseUrl, boardId, token: process.env.KAAMBAAN_TOKEN!, fetch });
+ * const agent = new SuperpipelineAgent({ baseUrl, boardId, token: process.env.SUPERPIPELINE_TOKEN!, fetch });
  * ```
  *
  * The token carries the tenant, the agent identity, and the agent's registered capabilities, so
@@ -57,7 +57,7 @@ export type Fetcher = (
 ) => Promise<HttpResponse>;
 
 export interface AgentConfig {
-  /** Origin of the Kaambaan deployment, e.g. `https://app.kaambaan.dev`. */
+  /** Origin of the Superpipeline deployment, e.g. `https://app.superpipeline.dev`. */
   baseUrl: string;
   /** The board this agent works. */
   boardId: string;
@@ -158,14 +158,14 @@ interface ClaimResponse {
 }
 
 /** A request the server refused (auth, validation, conflict) — carries the HTTP status. */
-export class KaambaanApiError extends Error {
+export class SuperpipelineApiError extends Error {
   constructor(
     readonly status: number,
     readonly path: string,
     message: string,
   ) {
     super(message);
-    this.name = 'KaambaanApiError';
+    this.name = 'SuperpipelineApiError';
   }
 }
 
@@ -181,16 +181,16 @@ async function errorMessage(res: HttpResponse, path: string, method = 'POST'): P
   return `${method} ${path} failed with ${res.status}${detail ? `: ${detail}` : ''}`;
 }
 
-/** A small client for the Kaambaan agent contract. One instance works one board as one agent. */
-export class KaambaanAgent {
+/** A small client for the Superpipeline agent contract. One instance works one board as one agent. */
+export class SuperpipelineAgent {
   constructor(private readonly config: AgentConfig) {
     if (config.token) {
       if (!config.token.startsWith('kbn_')) {
-        throw new Error('KaambaanAgent: token must be a Kaambaan agent token ("kbn_…"), minted via Connect an agent');
+        throw new Error('SuperpipelineAgent: token must be a Superpipeline agent token ("kbn_…"), minted via Connect an agent');
       }
     } else if (!config.tenantId) {
       throw new Error(
-        'KaambaanAgent: a `token` ("kbn_…") is required. `tenantId`/`agentId` headers only work against a local server run with DEV_AUTH=true.',
+        'SuperpipelineAgent: a `token` ("kbn_…") is required. `tenantId`/`agentId` headers only work against a local server run with DEV_AUTH=true.',
       );
     }
   }
@@ -218,7 +218,7 @@ export class KaambaanAgent {
   /**
    * Claim the next ready card matching this agent, or null when none is available.
    *
-   * Throws {@link KaambaanApiError} when the server refuses the request — a rejected token must
+   * Throws {@link SuperpipelineApiError} when the server refuses the request — a rejected token must
    * not be indistinguishable from "no work available".
    */
   async claim(): Promise<ClaimedWork | null> {
@@ -227,7 +227,7 @@ export class KaambaanAgent {
       capabilities: this.config.capabilities,
       maxConcurrency: this.config.maxConcurrency,
     });
-    if (!res.ok) throw new KaambaanApiError(res.status, path, await errorMessage(res, path));
+    if (!res.ok) throw new SuperpipelineApiError(res.status, path, await errorMessage(res, path));
     const body = (await res.json()) as ClaimResponse;
     if (!body.claimed || !body.runId || body.leaseEpoch === undefined || !body.card || !body.stage) {
       return null;
@@ -246,13 +246,13 @@ export class KaambaanAgent {
    * the upstream handoff and the card's references. The claim already returns this; use it to
    * resume after a restart, or to observe where the card landed once the run has ended.
    *
-   * Throws {@link KaambaanApiError} on 403 (the run is another agent's) or 404 (no such run).
+   * Throws {@link SuperpipelineApiError} on 403 (the run is another agent's) or 404 (no such run).
    */
   async context(work: ClaimedWork | string): Promise<RunContext> {
     const runId = typeof work === 'string' ? work : work.runId;
     const path = `/v1/boards/${this.config.boardId}/runs/${runId}`;
     const res = await this.config.fetch(`${this.config.baseUrl}${path}`, { method: 'GET', headers: this.headers() });
-    if (!res.ok) throw new KaambaanApiError(res.status, path, await errorMessage(res, path, 'GET'));
+    if (!res.ok) throw new SuperpipelineApiError(res.status, path, await errorMessage(res, path, 'GET'));
     return (await res.json()) as RunContext;
   }
 
@@ -317,11 +317,11 @@ export class KaambaanAgent {
       signal: opts.signal ?? (opts.options && opts.options.length > 0 ? 'select' : undefined),
       parameter: opts.options ? { options: opts.options } : undefined,
     });
-    if (!res.ok) throw new KaambaanApiError(res.status, path, await errorMessage(res, path));
+    if (!res.ok) throw new SuperpipelineApiError(res.status, path, await errorMessage(res, path));
     // The activity response acknowledges the post; the question itself (with its id) comes back on
     // the run — the same read the agent polls for the answer, so there is one shape to handle.
     const asked = (await this.elicitations(work)).at(-1);
-    if (!asked) throw new KaambaanApiError(res.status, path, `${path} accepted the question but the run has none`);
+    if (!asked) throw new SuperpipelineApiError(res.status, path, `${path} accepted the question but the run has none`);
     return asked;
   }
 
@@ -331,14 +331,14 @@ export class KaambaanAgent {
   }
 }
 
-export type WorkHandler = (work: ClaimedWork, agent: KaambaanAgent) => Promise<unknown | void>;
+export type WorkHandler = (work: ClaimedWork, agent: SuperpipelineAgent) => Promise<unknown | void>;
 
 /**
  * Reference driver: claim one card, acknowledge, run the work via `handler`, and complete it.
  * Returns true if a card was worked, false if there was nothing to claim. This is the loop a
  * real harness (Claude Code, Codex, …) wraps around its own execution.
  */
-export async function runOnce(agent: KaambaanAgent, handler: WorkHandler): Promise<boolean> {
+export async function runOnce(agent: SuperpipelineAgent, handler: WorkHandler): Promise<boolean> {
   const work = await agent.claim();
   if (!work) return false;
   await agent.heartbeat(work);

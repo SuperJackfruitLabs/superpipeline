@@ -201,14 +201,14 @@ describe('run verbs check identity, not just the lease', () => {
     const b = { tenantId, agentId: 'agt_mcp_b', capabilities: ['research'] };
 
     const clientA = await connectMcp(depsFor(a));
-    const claimed = toolJson(await clientA.callTool({ name: 'kaambaan_claim_card', arguments: { boardId } })) as {
+    const claimed = toolJson(await clientA.callTool({ name: 'superpipeline_claim_card', arguments: { boardId } })) as {
       runId: string;
       leaseEpoch: number;
     };
 
     const clientB = await connectMcp(depsFor(b));
     const hijack = await clientB.callTool({
-      name: 'kaambaan_complete',
+      name: 'superpipeline_complete',
       arguments: { boardId, runId: claimed.runId, leaseEpoch: claimed.leaseEpoch },
     });
     expect(hijack.isError).toBe(true);
@@ -216,7 +216,7 @@ describe('run verbs check identity, not just the lease', () => {
 
     // A's own call still works.
     const own = await clientA.callTool({
-      name: 'kaambaan_complete',
+      name: 'superpipeline_complete',
       arguments: { boardId, runId: claimed.runId, leaseEpoch: claimed.leaseEpoch },
     });
     expect(own.isError).toBeFalsy();
@@ -234,7 +234,7 @@ describe('run verbs check identity, not just the lease', () => {
     const res = await worker.fetch(
       new Request(`${base}/v1/boards/${boardId}/runs/${run.runId}/complete`, {
         method: 'POST',
-        headers: { Cookie: `kaambaan_session=${cookie}`, 'Content-Type': 'application/json' },
+        headers: { Cookie: `superpipeline_session=${cookie}`, 'Content-Type': 'application/json' },
         body: JSON.stringify({ leaseEpoch: run.leaseEpoch }),
       }),
       deployed,

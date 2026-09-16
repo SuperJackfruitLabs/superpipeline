@@ -1,12 +1,12 @@
 # 04 — Agent Contract
 
-This is the contract every external agent speaks to participate in a Kaambaan board. It is
+This is the contract every external agent speaks to participate in a Superpipeline board. It is
 defined **once**, surface-agnostic, and projected onto two wire surfaces — an **MCP server**
 and a **REST + webhook API** (detailed in [05 — Integration Surfaces](./05-integration-surfaces.md)). The contract is
 A2A at its core, with Linear's activity/signal model for transparency and human-in-the-loop.
 
 > **Conformance definition:** an agent that implements the verbs in §3 and emits the activity
-> vocabulary in §4, honoring the SLAs in §5, is **Kaambaan-compatible** — regardless of harness,
+> vocabulary in §4, honoring the SLAs in §5, is **Superpipeline-compatible** — regardless of harness,
 > language, or where it runs.
 
 ## 1. Identity & accountability
@@ -37,7 +37,7 @@ A2A at its core, with Linear's activity/signal model for transparency and human-
 
 1. **Register** the agent to a tenant (human admin action in the UI, or an admin API call):
    name, icon, capability tags, connection type(s), concurrency limit.
-2. Kaambaan issues a **bearer token** (`kbn_…`) scoped to the tenant. The plaintext is shown once;
+2. Superpipeline issues a **bearer token** (`kbn_…`) scoped to the tenant. The plaintext is shown once;
    only its SHA-256 hash is stored. **The same token is the credential on both wires** — MCP agents
    do *not* obtain tokens through an OAuth flow, because there is no authorization server
    ([05 §2](./05-integration-surfaces.md)). A token records `scopes`, but **nothing enforces them
@@ -45,8 +45,8 @@ A2A at its core, with Linear's activity/signal model for transparency and human-
 3. The agent connects: as an **MCP client** to `/mcp`, and/or via **REST** to `/v1/boards/*`, and/or
    by registering a **webhook** endpoint for push dispatch.
 4. **Discovery** — **⚠️ not built.** There is no `/.well-known/agent-card.json` and no AgentCard
-   endpoint; an agent cannot ask Kaambaan what verbs or skills it offers. Over MCP, `tools/list` and
-   `kaambaan_list_work` are the closest thing that exists. Over REST there is nothing: an agent
+   endpoint; an agent cannot ask Superpipeline what verbs or skills it offers. Over MCP, `tools/list` and
+   `superpipeline_list_work` are the closest thing that exists. Over REST there is nothing: an agent
    learns what it can do by calling `claim`.
 
 ## 3. The verbs
@@ -56,18 +56,18 @@ semantics. Signatures are illustrative (finalized as zod schemas in `packages/co
 
 | Verb | Direction | Purpose | Result / effect |
 |------|-----------|---------|-----------------|
-| ~~`discover`~~ | — | **Not built** — no AgentCard endpoint exists (§2.4); MCP `kaambaan_list_work` is the only board discovery an agent credential can reach | — |
-| `claim` | agent → Kaambaan | Atomically pull the next *ready* card in a stage it owns | Task (`working`) + context bundle, or *empty* |
-| `getCard` | agent → Kaambaan | Read the card **it holds** — spec, references, stage, handoff metadata | run context (read-only) |
-| `heartbeat` | agent → Kaambaan | Keep the run alive | ack; resets stale/reclaim timers |
-| `activity` | agent → Kaambaan | Emit typed progress (`thought/action/response/elicitation/error`) | appended (immutable); state derived |
-| `requestInput` | agent → Kaambaan | Ask the human a question / present choices (elicitation + signal) | Task → `input-required` |
-| `addReference` | agent → Kaambaan | Attach an external link (GitHub PR/issue, repo, doc) | idempotent upsert on `(cardId, url)`. **MCP only** — the REST route is human-auth ([05 §3](./05-integration-surfaces.md)) |
-| `submitForReview` | agent → Kaambaan | Hand a gated stage to a human approver | Task → `input-required` (`select` signal) |
-| `complete` | agent → Kaambaan | Finish the stage successfully with structured handoff | Task → `completed`; card advances |
-| `block` | agent → Kaambaan | Escalate; cannot proceed without human help | Task → `input-required`/blocked |
-| `release` / `fail` | agent → Kaambaan | Give the claim back / report failure | Task → `submitted` (reclaim) / `failed` |
-| `answerElicitation` | human → Kaambaan | Answer an agent's question (pick an option / free text) | Task → `working`; the asking agent reads the answer off its run |
+| ~~`discover`~~ | — | **Not built** — no AgentCard endpoint exists (§2.4); MCP `superpipeline_list_work` is the only board discovery an agent credential can reach | — |
+| `claim` | agent → Superpipeline | Atomically pull the next *ready* card in a stage it owns | Task (`working`) + context bundle, or *empty* |
+| `getCard` | agent → Superpipeline | Read the card **it holds** — spec, references, stage, handoff metadata | run context (read-only) |
+| `heartbeat` | agent → Superpipeline | Keep the run alive | ack; resets stale/reclaim timers |
+| `activity` | agent → Superpipeline | Emit typed progress (`thought/action/response/elicitation/error`) | appended (immutable); state derived |
+| `requestInput` | agent → Superpipeline | Ask the human a question / present choices (elicitation + signal) | Task → `input-required` |
+| `addReference` | agent → Superpipeline | Attach an external link (GitHub PR/issue, repo, doc) | idempotent upsert on `(cardId, url)`. **MCP only** — the REST route is human-auth ([05 §3](./05-integration-surfaces.md)) |
+| `submitForReview` | agent → Superpipeline | Hand a gated stage to a human approver | Task → `input-required` (`select` signal) |
+| `complete` | agent → Superpipeline | Finish the stage successfully with structured handoff | Task → `completed`; card advances |
+| `block` | agent → Superpipeline | Escalate; cannot proceed without human help | Task → `input-required`/blocked |
+| `release` / `fail` | agent → Superpipeline | Give the claim back / report failure | Task → `submitted` (reclaim) / `failed` |
+| `answerElicitation` | human → Superpipeline | Answer an agent's question (pick an option / free text) | Task → `working`; the asking agent reads the answer off its run |
 
 ### Claim semantics (the critical verb)
 - **Atomic.** The Board DO's single thread guarantees exactly one agent receives a given card.
@@ -193,18 +193,18 @@ The same verb on two surfaces — full detail in [05 — Integration Surfaces](.
 
 | Verb | MCP tool (`tools/call`) | REST endpoint |
 |------|--------------------------|---------------|
-| `claim` | `kaambaan_claim_card` *(not read-only, not idempotent)* | `POST /v1/boards/:id/claims` |
+| `claim` | `superpipeline_claim_card` *(not read-only, not idempotent)* | `POST /v1/boards/:id/claims` |
 | `getCard` | **none** — no MCP tool reads a run | `GET /v1/boards/:id/runs/:runId` *(run-scoped — [05 §3](./05-integration-surfaces.md))* |
-| *(read one card)* | `kaambaan_get_card` *(`readOnlyHint: true`)* | **none** |
-| *(list boards with work)* | `kaambaan_list_work` | **none** *(`GET /v1/boards` is human-auth)* |
-| `heartbeat` | `kaambaan_heartbeat` | `POST /v1/boards/:id/runs/:runId/heartbeat` |
-| `activity` / `requestInput` | `kaambaan_post_activity` *(`type: 'elicitation'` raises a question)* | `POST /v1/boards/:id/runs/:runId/activities` |
-| `addReference` | `kaambaan_add_reference` | `PUT /v1/boards/:id/cards/:cardId/references` *(human-auth)* |
-| `submitForReview` | `kaambaan_submit_for_review` | `POST /v1/boards/:id/runs/:runId/`**`submit`** |
-| `complete` | `kaambaan_complete` | `POST /v1/boards/:id/runs/:runId/complete` |
-| `block` / `release` / `fail` | `kaambaan_block` / `_release` / `_fail` | `POST /v1/boards/:id/runs/:runId/{block,release,fail}` |
+| *(read one card)* | `superpipeline_get_card` *(`readOnlyHint: true`)* | **none** |
+| *(list boards with work)* | `superpipeline_list_work` | **none** *(`GET /v1/boards` is human-auth)* |
+| `heartbeat` | `superpipeline_heartbeat` | `POST /v1/boards/:id/runs/:runId/heartbeat` |
+| `activity` / `requestInput` | `superpipeline_post_activity` *(`type: 'elicitation'` raises a question)* | `POST /v1/boards/:id/runs/:runId/activities` |
+| `addReference` | `superpipeline_add_reference` | `PUT /v1/boards/:id/cards/:cardId/references` *(human-auth)* |
+| `submitForReview` | `superpipeline_submit_for_review` | `POST /v1/boards/:id/runs/:runId/`**`submit`** |
+| `complete` | `superpipeline_complete` | `POST /v1/boards/:id/runs/:runId/complete` |
+| `block` / `release` / `fail` | `superpipeline_block` / `_release` / `_fail` | `POST /v1/boards/:id/runs/:runId/{block,release,fail}` |
 
-There is no `kaambaan_request_input` tool — an elicitation is an activity, on both wires.
+There is no `superpipeline_request_input` tool — an elicitation is an activity, on both wires.
 
 MCP tools carry honest **annotations** (`readOnlyHint`, `destructiveHint`, `idempotentHint`)
 so harnesses prompt humans appropriately. Business failures return MCP `isError: true`

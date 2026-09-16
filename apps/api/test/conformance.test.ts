@@ -1,9 +1,9 @@
 import { SELF } from 'cloudflare:test';
 import { describe, it, expect } from 'vitest';
-import { KaambaanAgent, runOnce, type Fetcher } from '@kaambaan/agent-sdk';
+import { SuperpipelineAgent, runOnce, type Fetcher } from '@superpipeline/agent-sdk';
 
 // The conformance kit (docs/09 §5): drive a real agent through the loop using ONLY the public
-// REST contract (via @kaambaan/agent-sdk) and assert the full lifecycle.
+// REST contract (via @superpipeline/agent-sdk) and assert the full lifecycle.
 
 const STAGES = [
   { key: 'research', name: 'Research', order: 0, ownerKind: 'capability', owner: 'research' },
@@ -21,8 +21,8 @@ async function createBoard(): Promise<string> {
   return ((await res.json()) as { boardId: string }).boardId;
 }
 
-function agent(boardId: string, agentId: string, capability: string): KaambaanAgent {
-  return new KaambaanAgent({
+function agent(boardId: string, agentId: string, capability: string): SuperpipelineAgent {
+  return new SuperpipelineAgent({
     baseUrl: 'https://api.test',
     tenantId: 'tnt_a',
     boardId,

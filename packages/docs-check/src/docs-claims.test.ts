@@ -47,16 +47,16 @@ function publishedPages(dir = SITE, prefix = ''): Array<{ file: string; text: st
  * true sentence. A test whose failure is fixed by making the docs worse is worse than no test.
  */
 const NOT_A_TOOL: Record<string, string> = {
-  kaambaan_session:
+  superpipeline_session:
     "the session cookie's name (docs/02, docs/01), not an MCP tool — it just matches the pattern",
-  kaambaan_request_input:
+  superpipeline_request_input:
     'named ONLY to say it does not exist: an elicitation is an activity on both wires, and docs/04 ' +
     'and docs/05 say so explicitly. Removing the mention would delete the clarification.',
 };
 
 /** The tools actually registered, from the one file that registers them. */
 const registeredTools = (): string[] =>
-  [...new Set([...read('apps/api/src/mcp/tools.ts').matchAll(/'(kaambaan_[a-z_]+)'/g)].map((m) => m[1]!))].sort();
+  [...new Set([...read('apps/api/src/mcp/tools.ts').matchAll(/'(superpipeline_[a-z_]+)'/g)].map((m) => m[1]!))].sort();
 
 describe('the MCP tools the docs name', () => {
   const registered = registeredTools;
@@ -66,7 +66,7 @@ const named = (): string[] =>
     [
       ...new Set(
         [...allDocs(), ...publishedPages()].flatMap(({ text }) =>
-          [...text.matchAll(/\bkaambaan_[a-z_]+\b/g)].map((m) => m[0]),
+          [...text.matchAll(/\bsuperpipeline_[a-z_]+\b/g)].map((m) => m[0]),
         ),
       ),
     ].sort();
@@ -75,7 +75,7 @@ const named = (): string[] =>
     // An empty scan passes both assertions below for free, and a regex is exactly the thing that
     // quietly stops matching when somebody reformats the file it reads.
     expect(registered().length).toBeGreaterThan(5);
-    expect(registered()).toContain('kaambaan_claim_card');
+    expect(registered()).toContain('superpipeline_claim_card');
     expect(named().length).toBeGreaterThan(5);
   });
 

@@ -48,7 +48,7 @@ describe("loadCredential", () => {
     expect(c?.source).toBe(`env:${ENV_TOKEN}`);
   });
 
-  it("falls back to the hub token, because that IS what kaambaan accepts", () => {
+  it("falls back to the hub token, because that IS what superpipeline accepts", () => {
     process.env[ENV_HUB_TOKEN] = "hub-token";
     expect(loadCredential()?.token).toBe("hub-token");
   });
@@ -72,7 +72,7 @@ describe("loadCredential", () => {
   it("never reads a kbn_ agent token from anywhere", () => {
     // An agent token in the environment under any name this CLI does not read must not be
     // picked up. The absence is the point: `kbn` acts as a person or not at all.
-    process.env.KAAMBAAN_AGENT_TOKEN = "kbn_deadbeef";
+    process.env.SUPERPIPELINE_AGENT_TOKEN = "kbn_deadbeef";
     process.env.KBN_TOKEN = "kbn_deadbeef";
     expect(loadCredential()).toBeNull();
   });
@@ -94,7 +94,7 @@ function jwt(payload: Record<string, unknown>): string {
 
 describe("inspect", () => {
   it("reads claims without verifying the signature", () => {
-    // Deliberate: this is `whoami`, not an authorization decision. kaambaan verifies.
+    // Deliberate: this is `whoami`, not an authorization decision. superpipeline verifies.
     const c = inspect(jwt({ sub: "prn_x", principalKind: "human", exp: 2000000000 }));
     expect(c?.subject).toBe("prn_x");
     expect(c?.principalKind).toBe("human");

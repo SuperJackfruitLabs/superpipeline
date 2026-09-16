@@ -1,14 +1,14 @@
 /**
  * The credential `kbn` acts with.
  *
- * A **hub-issued token** — the same one `apn fleet login` produces. kaambaan verifies it offline
+ * A **hub-issued token** — the same one `apn fleet login` produces. superpipeline verifies it offline
  * against the hub's JWKS, so one sign-in serves both planes; that is what
  * `charter → decisions/2026-08-15-one-issuer-and-offline-verification.md` is for.
  *
  * Resolution order, and nothing else is ever consulted:
  *
- *   1. `$KAAMBAAN_TOKEN` — this CLI's own, for a caller that wants them separate
- *   2. `$AGENTPOD_TOKEN` — the hub token, because it IS the credential kaambaan accepts
+ *   1. `$SUPERPIPELINE_TOKEN` — this CLI's own, for a caller that wants them separate
+ *   2. `$AGENTPOD_TOKEN` — the hub token, because it IS the credential superpipeline accepts
  *   3. the file `apn fleet login` writes
  *
  * **It never reads a `kbn_` agent token.** Those name an agent, and an agent is not a person
@@ -21,11 +21,11 @@ import { homedir } from "node:os";
 import { join } from "node:path";
 import { readFileSync } from "node:fs";
 
-export const ENV_TOKEN = "KAAMBAAN_TOKEN";
+export const ENV_TOKEN = "SUPERPIPELINE_TOKEN";
 export const ENV_HUB_TOKEN = "AGENTPOD_TOKEN";
-export const ENV_BASE = "KAAMBAAN_URL";
+export const ENV_BASE = "SUPERPIPELINE_URL";
 
-export const DEFAULT_BASE = "https://app.kaambaan.dev";
+export const DEFAULT_BASE = "https://app.superpipeline.dev";
 
 export interface Credential {
   token: string;
@@ -71,7 +71,7 @@ export interface Claims {
  * Read a JWT's payload without verifying it.
  *
  * Correct here, and worth stating because it looks wrong: this is not an authorization decision.
- * It is `whoami` telling an operator what they are carrying. kaambaan verifies; a client that
+ * It is `whoami` telling an operator what they are carrying. superpipeline verifies; a client that
  * pre-empts the server's decision is a client that will one day disagree with it.
  */
 export function inspect(token: string): Claims | null {

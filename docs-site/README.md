@@ -1,6 +1,6 @@
-# kaambaan docs site
+# superpipeline docs site
 
-The user-facing documentation published at `docs.kaambaan.dev`. Astro + Starlight.
+The user-facing documentation published at `docs.superpipeline.dev`. Astro + Starlight.
 
 ```sh
 npm install
@@ -34,7 +34,7 @@ claim on their dependency resolution.
 
 `packages/docs-check` reads the pages under `src/content/docs` and fails CI if they
 name a tool, capability or environment variable the codebase does not define. Prose
-about the product is checked against the product. Run it with `pnpm -F @kaambaan/docs-check test`.
+about the product is checked against the product. Run it with `pnpm -F @superpipeline/docs-check test`.
 
 ## Publishing
 
@@ -43,22 +43,22 @@ that passes `test`.
 
 ### One-time setup
 
-1. **Create the Pages project.** `kaambaan-docs`, in the same Cloudflare account that
+1. **Create the Pages project.** `superpipeline-docs`, in the same Cloudflare account that
    holds the Worker. A direct-upload project — do not connect it to the Git repo, or it
    will race the CI job and deploy an unbuilt tree.
 
    ```sh
-   npx wrangler pages project create kaambaan-docs --production-branch=main
+   npx wrangler pages project create superpipeline-docs --production-branch=main
    ```
 
 2. **Widen the API token.** The existing `CLOUDFLARE_API_TOKEN` repo secret needs
    **Cloudflare Pages: Edit** added alongside its Workers and D1 scopes.
 
-3. **Point the domain.** Add `docs.kaambaan.dev` as a custom domain on the Pages project.
-   `kaambaan.dev` is already on Cloudflare, so this needs no manual DNS record — adding
+3. **Point the domain.** Add `docs.superpipeline.dev` as a custom domain on the Pages project.
+   `superpipeline.dev` is already on Cloudflare, so this needs no manual DNS record — adding
    the custom domain creates the CNAME.
 
 ### Checking it
 
 The site is static and has no runtime, so the deploy either served the built tree or it
-did not. `curl -sI https://docs.kaambaan.dev/start/what-it-is/` is the whole smoke test.
+did not. `curl -sI https://docs.superpipeline.dev/start/what-it-is/` is the whole smoke test.

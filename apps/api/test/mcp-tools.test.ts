@@ -10,32 +10,32 @@ describe('MCP tools — registration', () => {
     const byName = new Map(tools.map((t) => [t.name, t]));
 
     expect([...byName.keys()].sort()).toEqual([
-      'kaambaan_add_reference',
-      'kaambaan_block',
-      'kaambaan_claim_card',
-      'kaambaan_complete',
-      'kaambaan_fail',
-      'kaambaan_get_card',
-      'kaambaan_heartbeat',
-      'kaambaan_list_work',
-      'kaambaan_post_activity',
-      'kaambaan_release',
-      'kaambaan_submit_for_review',
+      'superpipeline_add_reference',
+      'superpipeline_block',
+      'superpipeline_claim_card',
+      'superpipeline_complete',
+      'superpipeline_fail',
+      'superpipeline_get_card',
+      'superpipeline_heartbeat',
+      'superpipeline_list_work',
+      'superpipeline_post_activity',
+      'superpipeline_release',
+      'superpipeline_submit_for_review',
     ]);
-    expect(byName.get('kaambaan_list_work')!.annotations).toMatchObject({ readOnlyHint: true, idempotentHint: true });
+    expect(byName.get('superpipeline_list_work')!.annotations).toMatchObject({ readOnlyHint: true, idempotentHint: true });
 
     // The annotation table in docs/05 §2 — honest hints so harnesses prompt humans correctly.
-    expect(byName.get('kaambaan_get_card')!.annotations).toMatchObject({ readOnlyHint: true, idempotentHint: true });
-    expect(byName.get('kaambaan_claim_card')!.annotations).toMatchObject({
+    expect(byName.get('superpipeline_get_card')!.annotations).toMatchObject({ readOnlyHint: true, idempotentHint: true });
+    expect(byName.get('superpipeline_claim_card')!.annotations).toMatchObject({
       readOnlyHint: false,
       destructiveHint: false,
       idempotentHint: false,
     });
-    expect(byName.get('kaambaan_heartbeat')!.annotations).toMatchObject({ idempotentHint: true });
-    expect(byName.get('kaambaan_add_reference')!.annotations).toMatchObject({ idempotentHint: true });
-    expect(byName.get('kaambaan_block')!.annotations).toMatchObject({ destructiveHint: true });
-    expect(byName.get('kaambaan_fail')!.annotations).toMatchObject({ destructiveHint: true });
-    expect(byName.get('kaambaan_release')!.annotations).toMatchObject({ destructiveHint: true });
+    expect(byName.get('superpipeline_heartbeat')!.annotations).toMatchObject({ idempotentHint: true });
+    expect(byName.get('superpipeline_add_reference')!.annotations).toMatchObject({ idempotentHint: true });
+    expect(byName.get('superpipeline_block')!.annotations).toMatchObject({ destructiveHint: true });
+    expect(byName.get('superpipeline_fail')!.annotations).toMatchObject({ destructiveHint: true });
+    expect(byName.get('superpipeline_release')!.annotations).toMatchObject({ destructiveHint: true });
   });
 });
 
@@ -47,7 +47,7 @@ describe('MCP tools — claim & lifecycle', () => {
     if (!created.ok) throw new Error('seed failed');
 
     const client = await connectMcp(depsFor(AUTH));
-    const res = await client.callTool({ name: 'kaambaan_claim_card', arguments: { boardId: 'brd_claim' } });
+    const res = await client.callTool({ name: 'superpipeline_claim_card', arguments: { boardId: 'brd_claim' } });
     const claim = toolJson(res) as { claimed: boolean; runId?: string; leaseEpoch?: number; card?: { id: string } };
 
     expect(res.isError).toBeFalsy();
@@ -59,7 +59,7 @@ describe('MCP tools — claim & lifecycle', () => {
   it('reports no work (not an error) when nothing is claimable', async () => {
     await initBoard(AUTH, 'brd_empty', RESEARCH_PIPELINE);
     const client = await connectMcp(depsFor(AUTH));
-    const res = await client.callTool({ name: 'kaambaan_claim_card', arguments: { boardId: 'brd_empty' } });
+    const res = await client.callTool({ name: 'superpipeline_claim_card', arguments: { boardId: 'brd_empty' } });
 
     expect(res.isError).toBeFalsy();
     expect(toolJson(res)).toEqual({ claimed: false });
@@ -71,12 +71,12 @@ describe('MCP tools — claim & lifecycle', () => {
     await stub.createCard({ title: 'Ship it', ownerUserId: 'usr_a' });
 
     const client = await connectMcp(depsFor(AUTH));
-    const claim = toolJson(await client.callTool({ name: 'kaambaan_claim_card', arguments: { boardId: 'brd_done' } })) as {
+    const claim = toolJson(await client.callTool({ name: 'superpipeline_claim_card', arguments: { boardId: 'brd_done' } })) as {
       runId: string;
       leaseEpoch: number;
     };
     const res = await client.callTool({
-      name: 'kaambaan_complete',
+      name: 'superpipeline_complete',
       arguments: { boardId: 'brd_done', runId: claim.runId, leaseEpoch: claim.leaseEpoch, handoff: { summary: 'drafted' } },
     });
     const card = toolJson(res) as { currentStageKey: string; state: string };
@@ -91,13 +91,13 @@ describe('MCP tools — claim & lifecycle', () => {
     const stub = depsFor(AUTH).boardStub('brd_stale');
     await stub.createCard({ title: 'Card', ownerUserId: 'usr_a' });
     const client = await connectMcp(depsFor(AUTH));
-    const claim = toolJson(await client.callTool({ name: 'kaambaan_claim_card', arguments: { boardId: 'brd_stale' } })) as {
+    const claim = toolJson(await client.callTool({ name: 'superpipeline_claim_card', arguments: { boardId: 'brd_stale' } })) as {
       runId: string;
       leaseEpoch: number;
     };
 
     const res = await client.callTool({
-      name: 'kaambaan_complete',
+      name: 'superpipeline_complete',
       arguments: { boardId: 'brd_stale', runId: claim.runId, leaseEpoch: claim.leaseEpoch + 99 },
     });
 
@@ -112,7 +112,7 @@ describe('MCP tools — run verbs', () => {
     await initBoard(AUTH, boardId, RESEARCH_PIPELINE);
     await depsFor(AUTH).boardStub(boardId).createCard({ title: 'Work', ownerUserId: 'usr_a' });
     const client = await connectMcp(depsFor(AUTH));
-    const c = toolJson(await client.callTool({ name: 'kaambaan_claim_card', arguments: { boardId } })) as {
+    const c = toolJson(await client.callTool({ name: 'superpipeline_claim_card', arguments: { boardId } })) as {
       runId: string;
       leaseEpoch: number;
     };
@@ -122,7 +122,7 @@ describe('MCP tools — run verbs', () => {
   it('post_activity captures usage for metering (docs/07 §6)', async () => {
     const { client, runId, leaseEpoch } = await claimed('brd_usage');
     await client.callTool({
-      name: 'kaambaan_post_activity',
+      name: 'superpipeline_post_activity',
       arguments: { boardId: 'brd_usage', runId, leaseEpoch, type: 'action', usage: { model: 'claude-opus-4-8', inputTokens: 0, outputTokens: 0, costUsd: 0.4 } },
     });
     const card = (await depsFor(AUTH).boardStub('brd_usage').getState()).cards[0];
@@ -131,7 +131,7 @@ describe('MCP tools — run verbs', () => {
 
   it('heartbeat acknowledges an active lease', async () => {
     const { client, runId, leaseEpoch } = await claimed('brd_hb');
-    const res = await client.callTool({ name: 'kaambaan_heartbeat', arguments: { boardId: 'brd_hb', runId, leaseEpoch } });
+    const res = await client.callTool({ name: 'superpipeline_heartbeat', arguments: { boardId: 'brd_hb', runId, leaseEpoch } });
     expect(res.isError).toBeFalsy();
     expect(toolJson(res)).toEqual({ acknowledged: true });
   });
@@ -139,19 +139,19 @@ describe('MCP tools — run verbs', () => {
   it('block removes the card from the queue until it is unblocked', async () => {
     const { client, runId, leaseEpoch } = await claimed('brd_block');
     const res = await client.callTool({
-      name: 'kaambaan_block',
+      name: 'superpipeline_block',
       arguments: { boardId: 'brd_block', runId, leaseEpoch, reason: 'waiting on API key' },
     });
     expect(res.isError).toBeFalsy();
-    const reclaim = await client.callTool({ name: 'kaambaan_claim_card', arguments: { boardId: 'brd_block' } });
+    const reclaim = await client.callTool({ name: 'superpipeline_claim_card', arguments: { boardId: 'brd_block' } });
     expect(toolJson(reclaim)).toEqual({ claimed: false });
   });
 
   it('release returns the card to the queue for another attempt', async () => {
     const { client, runId, leaseEpoch } = await claimed('brd_rel');
-    const res = await client.callTool({ name: 'kaambaan_release', arguments: { boardId: 'brd_rel', runId, leaseEpoch } });
+    const res = await client.callTool({ name: 'superpipeline_release', arguments: { boardId: 'brd_rel', runId, leaseEpoch } });
     expect(res.isError).toBeFalsy();
-    const reclaim = toolJson(await client.callTool({ name: 'kaambaan_claim_card', arguments: { boardId: 'brd_rel' } })) as {
+    const reclaim = toolJson(await client.callTool({ name: 'superpipeline_claim_card', arguments: { boardId: 'brd_rel' } })) as {
       claimed: boolean;
     };
     expect(reclaim.claimed).toBe(true);
@@ -165,12 +165,12 @@ describe('MCP tools — run verbs', () => {
     await initBoard(AUTH, 'brd_submit', BUILD_PIPELINE);
     await depsFor(AUTH).boardStub('brd_submit').createCard({ title: 'Build it', ownerUserId: 'usr_a' });
     const client = await connectMcp(depsFor(AUTH));
-    const c = toolJson(await client.callTool({ name: 'kaambaan_claim_card', arguments: { boardId: 'brd_submit' } })) as {
+    const c = toolJson(await client.callTool({ name: 'superpipeline_claim_card', arguments: { boardId: 'brd_submit' } })) as {
       runId: string;
       leaseEpoch: number;
     };
     const res = await client.callTool({
-      name: 'kaambaan_submit_for_review',
+      name: 'superpipeline_submit_for_review',
       arguments: { boardId: 'brd_submit', runId: c.runId, leaseEpoch: c.leaseEpoch, output: { artifact: 'build.zip' } },
     });
     expect(res.isError).toBeFalsy();
@@ -182,7 +182,7 @@ describe('MCP tools — run verbs', () => {
   it('get_card returns isError for an unknown card', async () => {
     await initBoard(AUTH, 'brd_gc', RESEARCH_PIPELINE);
     const client = await connectMcp(depsFor(AUTH));
-    const res = await client.callTool({ name: 'kaambaan_get_card', arguments: { boardId: 'brd_gc', cardId: 'card_nope' } });
+    const res = await client.callTool({ name: 'superpipeline_get_card', arguments: { boardId: 'brd_gc', cardId: 'card_nope' } });
     expect(res.isError).toBe(true);
     expect((res.content as Array<{ text: string }>)[0]!.text).toContain('CARD_NOT_FOUND');
   });
@@ -199,7 +199,7 @@ describe('MCP tools — add_reference', () => {
   it('auto-enriches a bare GitHub PR url into provider/sourceType/externalId', async () => {
     const { client, cardId } = await withCard('brd_ref_mcp');
     const res = await client.callTool({
-      name: 'kaambaan_add_reference',
+      name: 'superpipeline_add_reference',
       arguments: { boardId: 'brd_ref_mcp', cardId, url: 'https://github.com/org/repo/pull/42' },
     });
     expect(res.isError).toBeFalsy();
@@ -214,8 +214,8 @@ describe('MCP tools — add_reference', () => {
   it('is idempotent on (cardId, url)', async () => {
     const { client, cardId } = await withCard('brd_ref_idem');
     const args = { boardId: 'brd_ref_idem', cardId, url: 'https://github.com/org/repo/pull/9' };
-    await client.callTool({ name: 'kaambaan_add_reference', arguments: { ...args, title: 'first' } });
-    await client.callTool({ name: 'kaambaan_add_reference', arguments: { ...args, title: 'second' } });
+    await client.callTool({ name: 'superpipeline_add_reference', arguments: { ...args, title: 'first' } });
+    await client.callTool({ name: 'superpipeline_add_reference', arguments: { ...args, title: 'second' } });
     const refs = (await depsFor(AUTH).boardStub('brd_ref_idem').getState()).references;
     expect(refs).toHaveLength(1);
     expect(refs[0]!.title).toBe('second');
@@ -224,7 +224,7 @@ describe('MCP tools — add_reference', () => {
   it('returns isError for an unknown card', async () => {
     const { client } = await withCard('brd_ref_nocard');
     const res = await client.callTool({
-      name: 'kaambaan_add_reference',
+      name: 'superpipeline_add_reference',
       arguments: { boardId: 'brd_ref_nocard', cardId: 'card_nope', url: 'https://x.y' },
     });
     expect(res.isError).toBe(true);

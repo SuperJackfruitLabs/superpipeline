@@ -1,7 +1,7 @@
 <script lang="ts">
   import { Button } from '$lib/components/ui/button';
   import { createBoard, getCapabilities, BOARD_TEMPLATES, type Stage, type CapabilityRecord } from '$lib/api';
-  import { capabilityTag } from '@kaambaan/contract';
+  import { capabilityTag } from '@superpipeline/contract';
   import { onMount } from 'svelte';
 
   /**

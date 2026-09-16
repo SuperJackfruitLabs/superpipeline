@@ -90,7 +90,7 @@ export function protectedResourceMetadata(request: Request): Response {
     // The Authorization Server is co-located for now; replaced by a dedicated AS when OAuth lands.
     authorization_servers: [origin],
     bearer_methods_supported: ['header'],
-    resource_name: 'Kaambaan board worker',
+    resource_name: 'Superpipeline board worker',
   });
 }
 

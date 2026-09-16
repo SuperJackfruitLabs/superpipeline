@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { hubToken, forgetHubToken, withAuthority, beginHubAuthorization, hubStatus } from './hub-token';
 
 /**
- * Carrying authority from the browser (kaambaan#43, option A).
+ * Carrying authority from the browser (superpipeline#43, option A).
  *
  * What matters here is not that a token is fetched — it is that **no token is an
  * ordinary answer**. An operator with no hub session, a hub that is down, a
@@ -25,7 +25,7 @@ beforeEach(() => {
 
 describe('hubToken', () => {
   it('reads the token our own back end holds, same-origin', async () => {
-    // The path that works from kaambaan.dev, and therefore the one asked first:
+    // The path that works from superpipeline.dev, and therefore the one asked first:
     // our Worker went to the hub on the operator's behalf and kept the result.
     const fetchSpy = vi.fn(async (url: string, _init?: RequestInit) => {
       if (String(url).startsWith('/hub/token')) {
@@ -151,7 +151,7 @@ describe('hubStatus', () => {
     expect(await hubStatus()).toEqual({ configured: true, token: null });
   });
 
-  it('reports no hub on a standalone kaambaan, so nothing offers to connect', async () => {
+  it('reports no hub on a standalone superpipeline, so nothing offers to connect', async () => {
     // A board with no hub is a first-class deployment (migration 0003). It must
     // render neither button and navigate nowhere, and this is the only signal
     // that says so — `token: null` alone cannot tell it from "not connected".
@@ -193,7 +193,7 @@ describe('withAuthority', () => {
   });
 
   it('leaves the request unchanged when there is none', async () => {
-    // Additive, never substitutive: kaambaan still reads its own session cookie,
+    // Additive, never substitutive: superpipeline still reads its own session cookie,
     // and a board with no hub issuer keeps working exactly as before.
     vi.stubGlobal('fetch', vi.fn(async () => new Response('nope', { status: 401 })));
 
@@ -209,7 +209,7 @@ describe('beginHubAuthorization', () => {
     // the hub reads its own first-party cookie. A `fetch` here would be the bug
     // this whole flow exists to fix.
     const authorize =
-      'https://hub.agentpod.dev/api/auth/authorize?client=kaambaan&code_challenge_method=S256';
+      'https://hub.agentpod.dev/api/auth/authorize?client=superpipeline&code_challenge_method=S256';
     vi.stubGlobal(
       'fetch',
       vi.fn(async () => new Response(JSON.stringify({ url: authorize }), { status: 200 }))
@@ -220,7 +220,7 @@ describe('beginHubAuthorization', () => {
     expect(navigate).toHaveBeenCalledWith(authorize);
   });
 
-  it('never navigates anywhere on a standalone kaambaan', async () => {
+  it('never navigates anywhere on a standalone superpipeline', async () => {
     // A board with no hub configured is a first-class deployment, not a broken
     // one (migration 0003). Our Worker answers 503 and the operator stays
     // exactly where they are — being sent to a hub that does not exist would be

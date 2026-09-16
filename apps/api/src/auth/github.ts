@@ -1,5 +1,5 @@
 /**
- * GitHub OAuth client (the human-login flow, P0). Kaambaan is the OAuth *client*: redirect to
+ * GitHub OAuth client (the human-login flow, P0). Superpipeline is the OAuth *client*: redirect to
  * GitHub, exchange the code for a token, read the profile + primary verified email. Network calls
  * take an injectable `fetch` so the flow is unit-testable.
  */
@@ -42,7 +42,7 @@ export async function exchangeCodeForToken(
 }
 
 export async function fetchGithubUser(accessToken: string, fetchImpl: FetchLike = fetch): Promise<GithubUser | null> {
-  const headers = { Authorization: `Bearer ${accessToken}`, Accept: 'application/vnd.github+json', 'User-Agent': 'kaambaan' };
+  const headers = { Authorization: `Bearer ${accessToken}`, Accept: 'application/vnd.github+json', 'User-Agent': 'superpipeline' };
   try {
     const profileRes = await fetchImpl('https://api.github.com/user', { headers });
     if (!profileRes.ok) return null;

@@ -1,11 +1,11 @@
 # 01 — Domain Model & Glossary
 
-This document defines the **nouns** of Kaambaan and how they relate. Terminology here is
+This document defines the **nouns** of Superpipeline and how they relate. Terminology here is
 binding: code, APIs, and tests should use exactly these names.
 
 ## The three-level work hierarchy (read this first)
 
-The single most important distinction in Kaambaan is **Card vs Task vs Run**. Conflating them
+The single most important distinction in Superpipeline is **Card vs Task vs Run**. Conflating them
 is the most likely source of design bugs.
 
 - **Card** — the *durable unit of work* on the board (e.g. "Add OAuth login"). It persists for
@@ -47,26 +47,26 @@ Card ──< Task (one per stage / rework, A2A-immutable) ──< Run (one per a
 ## Entities
 
 ### Tenant *(a.k.a. Workspace)*
-kaambaan's **local hard isolation boundary** — and only that. All data, auth, and agent
+superpipeline's **local hard isolation boundary** — and only that. All data, auth, and agent
 registrations are scoped to exactly one tenant. Fields: `id`, `slug`, `name`, `createdAt`,
 `externalId`, `externalSource`, settings, billing. There is no cross-tenant read path;
 isolation is enforced at the edge, not by a query filter.
 
 **It is deliberately not an Org.** Principal, Team, Role and authority belong to the
 Organization plane, which does not exist yet; a product that grows its own org model has to
-migrate it later. So kaambaan owns the boundary and nothing about who anyone *is*.
+migrate it later. So superpipeline owns the boundary and nothing about who anyone *is*.
 
 **The external mapping.** `externalSource` names the system a tenant is also known to
 (`agentpod` today, `org-plane` later) and `externalId` is that system's id, kept opaque
-because it is not kaambaan's id space. **Both or neither**, enforced by a database CHECK
+because it is not superpipeline's id space. **Both or neither**, enforced by a database CHECK
 (`tenants_external_pair`) — an id recorded without the system it came from cannot be joined
 against anything, and a wrong join is harder to notice than a missing one. AgentPod carries
 the same pair with the same CHECK on its own rows.
 
-Absent is the normal, complete state: a **standalone kaambaan** — a plain kanban board for
+Absent is the normal, complete state: a **standalone superpipeline** — a plain kanban board for
 someone's agents, with no organisation layer anywhere — never sets either column. When the
 Organization plane mints canonical ids, both products map to them: a data move, not a schema
-change. The mapping is deliberately **not unique** — kaambaan is one-tenant-per-user, so two
+change. The mapping is deliberately **not unique** — superpipeline is one-tenant-per-user, so two
 people in one real organisation legitimately map two local boundaries onto one external id.
 A shared mapping never becomes a shared keyspace; isolation stays local, on `tenantId`.
 
@@ -74,7 +74,7 @@ A shared mapping never becomes a shared keyspace; isolation stays local, on `ten
 A human principal and their role within a tenant. `Membership(userId, tenantId, role)` where
 `role ∈ {owner, admin, member, viewer}`, ids prefixed `mbr_`.
 
-Humans authenticate with **GitHub OAuth → a signed session cookie** (`kaambaan_session`, HMAC over
+Humans authenticate with **GitHub OAuth → a signed session cookie** (`superpipeline_session`, HMAC over
 `SESSION_SECRET`, 30 days, stateless — there is no session store). Signing in creates a personal
 workspace with the user as `owner`. **⚠️ There is no magic-link and no email sending anywhere in the
 repo** — earlier drafts listed it as a login method; it was never built. GitHub is the only provider.
@@ -112,7 +112,7 @@ An external worker registered to a tenant. It is an **app-actor identity** (per 
 
   Matching a grant on a skill tag, or reading an AgentPod station capability as one of these, was
   refused deliberately — see `charter → decisions/2026-09-02-capability-is-three-words.md`. Note
-  kaambaan's own `members.ts` also declares an unrelated `type Capability = 'read' | 'work' |
+  superpipeline's own `members.ts` also declares an unrelated `type Capability = 'read' | 'work' |
   'manage' | 'own'`; that is a permission verb, and a fourth use of the word inside one repository.
 - `tokens` — per-agent `kbn_` bearer credentials, stored as SHA-256 hashes, carrying `scopes`
   (**recorded, never enforced**)
@@ -249,7 +249,7 @@ Events drive the WebSocket broadcast to UI clients and the webhook dispatch to s
 
 | Term | One-line meaning |
 |------|------------------|
-| **Tenant / Workspace** | kaambaan's *local* hard isolation boundary; everything is scoped to one. Not an authority — the Organization plane owns Principal/Team/Role |
+| **Tenant / Workspace** | superpipeline's *local* hard isolation boundary; everything is scoped to one. Not an authority — the Organization plane owns Principal/Team/Role |
 | **External mapping** | Optional `externalSource` + `externalId` on a tenant: the same real organisation, as known to another system. Both or neither |
 | **Board** | A pipeline + its cards; one Durable Object |
 | **Pipeline / Stage** | The ordered columns a card flows through |
@@ -265,7 +265,7 @@ Events drive the WebSocket broadcast to UI clients and the webhook dispatch to s
 | **Gate** | Human-approval pause; a Task in `input-required` |
 | **Reference** | First-class external link (GitHub issue/PR, repo, doc) |
 | **AgentCard** | A2A capability/discovery document for an agent |
-| **Seat** | What an account may do inside one plane — kaambaan's `memberships.role`. Local, never unified with another plane's, never inferred from a post |
+| **Seat** | What an account may do inside one plane — superpipeline's `memberships.role`. Local, never unified with another plane's, never inferred from a post |
 | **Post** | What a principal is *for*: duties, required capabilities, authority, how it is judged. The Organization plane's Role. **Does not exist yet** |
 | **Capability tag** | The `key` of a Capability — the string a stage and an agent both carry, and the whole of what routing compares |
 | **Capability** | A record in the workspace registry (migration 0006), shaped as an A2A `AgentSkill`: `key`, `name`, `description`, `tags`, `examples`, plus an optional external mapping (an OASF dotted id, say). It gives a routing tag an identity and a definition; it does not enumerate what may exist |

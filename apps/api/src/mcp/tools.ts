@@ -1,5 +1,5 @@
 /**
- * Kaambaan MCP tools (docs/05 §2). Each tool maps 1:1 onto a contract verb and calls the *same*
+ * Superpipeline MCP tools (docs/05 §2). Each tool maps 1:1 onto a contract verb and calls the *same*
  * Board Durable Object method the REST surface calls (apps/api/src/index.ts) — so MCP and REST are
  * the same contract, projected onto two wires (parity is proven by mcp-parity.test.ts).
  *
@@ -46,15 +46,15 @@ const fromResult = <T>(r: Result<T>): CallToolResult => (r.ok ? ok(r.value) : fa
 
 const json = z.record(z.string(), z.unknown());
 
-export function registerKaambaanTools(server: McpServer, deps: ToolDeps): void {
+export function registerSuperpipelineTools(server: McpServer, deps: ToolDeps): void {
   const { auth } = deps;
 
   server.registerTool(
-    'kaambaan_list_work',
+    'superpipeline_list_work',
     {
       description:
         'Discover where there is work for you: lists the boards in your workspace with how many cards are ' +
-        'ready for your capabilities right now. Start here to find a boardId, then call kaambaan_claim_card. ' +
+        'ready for your capabilities right now. Start here to find a boardId, then call superpipeline_claim_card. ' +
         'Returns { capabilities, boards: [{ boardId, name, readyForYou }] }.',
       inputSchema: {},
       annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true },
@@ -73,7 +73,7 @@ export function registerKaambaanTools(server: McpServer, deps: ToolDeps): void {
   );
 
   server.registerTool(
-    'kaambaan_claim_card',
+    'superpipeline_claim_card',
     {
       description:
         'Claim the next ready card you are eligible to work, using your token\'s capabilities. ' +
@@ -93,7 +93,7 @@ export function registerKaambaanTools(server: McpServer, deps: ToolDeps): void {
   );
 
   server.registerTool(
-    'kaambaan_get_card',
+    'superpipeline_get_card',
     {
       description: 'Read a card by id (title, current stage, state).',
       inputSchema: { boardId: z.string(), cardId: z.string() },
@@ -106,7 +106,7 @@ export function registerKaambaanTools(server: McpServer, deps: ToolDeps): void {
   );
 
   server.registerTool(
-    'kaambaan_add_reference',
+    'superpipeline_add_reference',
     {
       description:
         'Attach a first-class external reference (GitHub PR/issue, repo, doc, or any url) to a card. ' +
@@ -133,7 +133,7 @@ export function registerKaambaanTools(server: McpServer, deps: ToolDeps): void {
   );
 
   server.registerTool(
-    'kaambaan_heartbeat',
+    'superpipeline_heartbeat',
     {
       description: 'Renew your lease on an active run so it is not reclaimed (docs/08).',
       inputSchema: { boardId: z.string(), runId: z.string(), leaseEpoch: z.number().int().min(0) },
@@ -144,7 +144,7 @@ export function registerKaambaanTools(server: McpServer, deps: ToolDeps): void {
   );
 
   server.registerTool(
-    'kaambaan_post_activity',
+    'superpipeline_post_activity',
     {
       description: 'Stream a typed activity (thought/action/response/elicitation/error) onto the run.',
       inputSchema: {
@@ -188,7 +188,7 @@ export function registerKaambaanTools(server: McpServer, deps: ToolDeps): void {
   );
 
   server.registerTool(
-    'kaambaan_submit_for_review',
+    'superpipeline_submit_for_review',
     {
       description: 'Submit your work at a gated stage for human review (opens an approval gate).',
       inputSchema: { boardId: z.string(), runId: z.string(), leaseEpoch: z.number().int().min(0), output: json.optional() },
@@ -199,7 +199,7 @@ export function registerKaambaanTools(server: McpServer, deps: ToolDeps): void {
   );
 
   server.registerTool(
-    'kaambaan_complete',
+    'superpipeline_complete',
     {
       description: 'Finish your run successfully; the card advances to the next stage carrying your handoff.',
       inputSchema: { boardId: z.string(), runId: z.string(), leaseEpoch: z.number().int().min(0), handoff: json.optional() },
@@ -210,7 +210,7 @@ export function registerKaambaanTools(server: McpServer, deps: ToolDeps): void {
   );
 
   server.registerTool(
-    'kaambaan_block',
+    'superpipeline_block',
     {
       description: 'Mark the run blocked on an external dependency; releases the lease.',
       inputSchema: { boardId: z.string(), runId: z.string(), leaseEpoch: z.number().int().min(0), reason: z.string().min(1) },
@@ -221,7 +221,7 @@ export function registerKaambaanTools(server: McpServer, deps: ToolDeps): void {
   );
 
   server.registerTool(
-    'kaambaan_release',
+    'superpipeline_release',
     {
       description: 'Voluntarily give the card back to the queue without failing it.',
       inputSchema: { boardId: z.string(), runId: z.string(), leaseEpoch: z.number().int().min(0), reason: z.string().optional() },
@@ -232,7 +232,7 @@ export function registerKaambaanTools(server: McpServer, deps: ToolDeps): void {
   );
 
   server.registerTool(
-    'kaambaan_fail',
+    'superpipeline_fail',
     {
       description: 'Fail the run (counts toward the circuit breaker); the card returns to the queue or trips.',
       inputSchema: { boardId: z.string(), runId: z.string(), leaseEpoch: z.number().int().min(0), reason: z.string().min(1) },

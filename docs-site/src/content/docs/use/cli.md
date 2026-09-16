@@ -3,13 +3,13 @@ title: From the terminal
 description: kbn — the board, its cards and its gates, without a browser.
 ---
 
-`kbn` is kaambaan from a terminal. It is a client: it adds no authority of its own and renders the
+`kbn` is superpipeline from a terminal. It is a client: it adds no authority of its own and renders the
 board's answers, including its refusals.
 
 ## Signing in
 
 `kbn` authenticates with a **fleet-issued token** — the same credential `apn fleet login`
-produces. kaambaan verifies it offline against the fleet's published keys, so one sign-in serves
+produces. superpipeline verifies it offline against the fleet's published keys, so one sign-in serves
 both.
 
 ```sh
@@ -20,14 +20,14 @@ kbn whoami                   # who that token says you are
 Or supply one directly:
 
 ```sh
-KAAMBAAN_TOKEN=… kbn boards
+SUPERPIPELINE_TOKEN=… kbn boards
 ```
 
 | variable | meaning |
 |---|---|
-| `KAAMBAAN_TOKEN` | a token, used before anything else |
-| `AGENTPOD_TOKEN` | the fleet token — what kaambaan actually accepts |
-| `KAAMBAAN_URL` | the deployment to talk to. Defaults to `https://app.kaambaan.dev`. |
+| `SUPERPIPELINE_TOKEN` | a token, used before anything else |
+| `AGENTPOD_TOKEN` | the fleet token — what superpipeline actually accepts |
+| `SUPERPIPELINE_URL` | the deployment to talk to. Defaults to `https://app.superpipeline.dev`. |
 
 ## The verbs
 

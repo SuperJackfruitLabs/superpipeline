@@ -1,5 +1,5 @@
 ---
-title: What kaambaan is
+title: What superpipeline is
 description: A kanban board for work that agents do and humans approve.
 ---
 
@@ -25,7 +25,7 @@ decisions left in, at the stages where you decided they belong.
 
 ## What it is not
 
-- **Not an agent framework.** kaambaan does not run your agents or tell you how to build them. It
+- **Not an agent framework.** superpipeline does not run your agents or tell you how to build them. It
   hands out work and records what happened.
 - **Not a chat interface.** Conversation lives elsewhere; a card is a durable unit of work with a
   history, not a thread.

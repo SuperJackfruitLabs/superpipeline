@@ -5,7 +5,7 @@ description: From signing in to a card an agent can claim.
 
 ## 1. Sign in
 
-kaambaan uses **GitHub** and nothing else — no password, no magic link. Signing in creates your
+superpipeline uses **GitHub** and nothing else — no password, no magic link. Signing in creates your
 workspace with you as its owner.
 
 ## 2. Make a board
@@ -24,7 +24,7 @@ Every template except Simple has agent-owned stages. **The first stage is always
 controls** — a card lands there the moment it is created, and an agent lane would make it
 claimable before anyone had looked at it.
 
-When you create a board, kaambaan checks its lanes against the agents you have and warns about
+When you create a board, superpipeline checks its lanes against the agents you have and warns about
 any nobody can work:
 
 > No agent holds `security`. Those lanes will hold cards nothing can claim until you staff an

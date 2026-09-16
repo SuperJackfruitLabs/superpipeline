@@ -9,7 +9,7 @@
  * would attribute to one account."
  *
  * Note what this does NOT prove. `decided_by` holds an AgentPod principal id
- * and `produced_by` a kaambaan agent id; those spaces never intersect, so
+ * and `produced_by` a superpipeline agent id; those spaces never intersect, so
  * SEPARATION_OF_DUTIES passes vacuously on this path and is not exercised here.
  * The testable claim is narrower and is the one that matters: the board records
  * the person.
@@ -47,7 +47,7 @@ const dev = (user?: string) => ({
 async function hubToken(sub = HUMAN): Promise<string> {
   // mayDispatch is required on the claim, but never checked by gate resolution (these tests
   // claim/complete via dev headers, not this token) — a real-shaped `prn_…` id is here only so
-  // nothing in this file models the retired `kaambaan:*` namespace-and-wildcard form.
+  // nothing in this file models the retired `superpipeline:*` namespace-and-wildcard form.
   return new SignJWT({ sub, principalKind: 'human', tenant: FLEET, mayDispatch: ['prn_0000000000000000ghtk'] })
     .setProtectedHeader({ alg: 'EdDSA', kid: 'g-kid' })
     .setIssuedAt()

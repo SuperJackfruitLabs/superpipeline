@@ -1,7 +1,7 @@
 /**
  * Walking through the hub's front door from a domain its cookie will never reach.
  *
- * kaambaan runs on `kaambaan.dev`; the hub's session cookie is `Domain=.agentpod.dev`,
+ * superpipeline runs on `superpipeline.dev`; the hub's session cookie is `Domain=.agentpod.dev`,
  * `SameSite=Lax`. Those are different registrable domains, so the browser never attaches that
  * cookie to a cross-site `fetch` — which is why `hubToken()`'s direct call to
  * `GET /api/auth/token` has returned nothing in production since the day it was written, and why
@@ -30,7 +30,7 @@
  * better than `sessionStorage`: a code read out of an address bar, a history entry or a `Referer`
  * is then worth nothing to anyone but this Worker, even to script running on this origin.
  *
- * **Nothing here is mandatory.** `HUB_ISSUER` unset means a standalone kaambaan, and every route
+ * **Nothing here is mandatory.** `HUB_ISSUER` unset means a standalone superpipeline, and every route
  * below answers 503 without reaching for anything — the same posture the rest of the hub-token
  * path takes (`env.ts`, migration 0003). A board with no hub keeps working exactly as it did.
  */
@@ -41,12 +41,12 @@ import type { Env } from '../env';
  *
  * `SameSite=Lax`, not `Strict`: the callback arrives as a top-level navigation redirected from
  * `hub.agentpod.dev`, which is cross-site, and Strict would withhold the cookie exactly then —
- * the same reason `kaambaan_oauth_state` is Lax for the GitHub flow.
+ * the same reason `superpipeline_oauth_state` is Lax for the GitHub flow.
  *
  * `Path=/hub` so it is not attached to every board request; only the two routes that need it live
  * under that prefix.
  */
-const PKCE_COOKIE = 'kaambaan_hub_pkce';
+const PKCE_COOKIE = 'superpipeline_hub_pkce';
 
 /**
  * The minted token, waiting for the SPA to come and read it.
@@ -55,19 +55,19 @@ const PKCE_COOKIE = 'kaambaan_hub_pkce';
  * navigation that started somewhere else, so a top-level navigation from another site must not be
  * able to make `GET /hub/token` answer.
  */
-const TOKEN_COOKIE = 'kaambaan_hub_token';
+const TOKEN_COOKIE = 'superpipeline_hub_token';
 
 /** A code lives 60s at the hub; ten minutes is generous for a person reading a sign-in page. */
 const PKCE_TTL_S = 600;
 
 /**
- * The hub's registry key for this plane (`HUB_OAUTH_CLIENTS=kaambaan|https://…` on the hub).
+ * The hub's registry key for this plane (`HUB_OAUTH_CLIENTS=superpipeline|https://…` on the hub).
  *
  * Defaulted rather than required because it is not a credential and grants nothing on its own —
  * the hub decides whether it knows this client, and an unknown one gets a rendered 400 that says
  * so. Overridable for a deployment registered under another name.
  */
-const DEFAULT_CLIENT_ID = 'kaambaan';
+const DEFAULT_CLIENT_ID = 'superpipeline';
 
 /** The path the hub redirects back to. Must match the hub's registry entry byte for byte. */
 export const HUB_CALLBACK_PATH = '/hub/callback';
@@ -156,13 +156,13 @@ function tokenSetCookie(token: string, maxAgeS: number): string {
 /**
  * Where this deployment's hub is, who it says it is, and where the hub sends the code back to.
  *
- * `null` means no hub — a standalone kaambaan, which is a first-class deployment and not a
+ * `null` means no hub — a standalone superpipeline, which is a first-class deployment and not a
  * misconfiguration. `HUB_ISSUER` is reused rather than joined by a second setting: one plane has
  * one hub, and the issuer we verify tokens against had better be the issuer we ask for them.
  *
  * `redirect_uri` prefers `APP_URL` over the request's own origin because the hub compares it
- * against its registry as a whole string: a deployment reachable at both `kaambaan.dev` and
- * `kaambaan-api.workers.dev` must send the one that is registered, not whichever host the
+ * against its registry as a whole string: a deployment reachable at both `superpipeline.dev` and
+ * `superpipeline-api.workers.dev` must send the one that is registered, not whichever host the
  * operator happened to type.
  */
 function hubConfig(request: Request, env: Env): { base: string; clientId: string; redirectUri: string } | null {
@@ -310,7 +310,7 @@ export async function handleHubRoute(
     // answer, and neither is an error.
     //
     // `hubConfigured` is the one thing a null token does NOT say, and the UI needs it. A
-    // standalone kaambaan and an operator who has simply not connected yet both hold no token,
+    // standalone superpipeline and an operator who has simply not connected yet both hold no token,
     // but only one of them should be offered a "Connect to AgentPod" button — the other has
     // nowhere to be sent, and a button that leads nowhere is worse than no button. This Worker is
     // the only place that knows, because `HUB_ISSUER` is its environment and not the page's.

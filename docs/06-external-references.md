@@ -37,7 +37,7 @@ References live in the Board DO (`card_references`, `UNIQUE(card_id, url)`), sur
 snapshot + live feed. `addReference` is an idempotent upsert (`apps/api/src/board/board-do.ts`).
 
 - **Surfaces**: `PUT /v1/boards/:boardId/cards/:cardId/references` (REST) and the MCP
-  `kaambaan_add_reference` tool — both call `resolveReferenceInput`, which **auto-recognizes**
+  `superpipeline_add_reference` tool — both call `resolveReferenceInput`, which **auto-recognizes**
   GitHub PR/issue/repo/commit URLs into `provider`/`sourceType`/`externalId`
   (`apps/api/src/references/`), so a caller can pass just a url. The board UI renders each as a
   chip linking out.
@@ -56,7 +56,7 @@ auto-close on the default branch) is recorded as `mergedToDefaultBranch`; **trap
 
 **The reconciliation query builders were deleted on 2026-09-02**, and the traps they encoded are
 kept here instead. They had no importer outside their own test and could not be given one:
-reconciliation needs a GitHub App installation token, and kaambaan stores no GitHub token at all —
+reconciliation needs a GitHub App installation token, and superpipeline stores no GitHub token at all —
 `src/auth/github.ts` exchanges the OAuth code, reads the profile and discards the token. Code that
 cannot run is not a partial feature; it is a claim about the product that nothing can contradict.
 Whoever wires the cron Workflow writes the queries then, against these two rules:
@@ -65,7 +65,7 @@ Whoever wires the cron Workflow writes the queries then, against these two rules
   query MUST pass `includeClosedPrs: true`, or an issue whose PR has already merged reads as
   unlinked.
 - **Trap #1** — a PR only auto-closes its linked issues when it targets the repository's default
-  branch, so the query must select `baseRefName` and compare it against the repo default. Kaambaan
+  branch, so the query must select `baseRefName` and compare it against the repo default. Superpipeline
   records the outcome as `mergedToDefaultBranch`.
 
 - The sub-state machine models `pull_request` (opened/synchronize/ready_for_review/converted_to_draft/
@@ -136,7 +136,7 @@ reference-based gate conditions.
 
 ## 5. Repos & docs
 
-- **Repository** references record `{ hostname, fullName, defaultBranch }`. Unlike Hermes, Kaambaan
+- **Repository** references record `{ hostname, fullName, defaultBranch }`. Unlike Hermes, Superpipeline
   does **not** mount or own the repo — the *remote agent* resolves it in its own sandbox; we track
   the **branch/ref** it produces as the integration unit ("workspace = unit of delegation; branch
   + PR = unit of integration").

@@ -1,6 +1,6 @@
 # 12 — Deploy (Cloudflare)
 
-Kaambaan deploys as **one Worker** that serves both the API (`/v1`, `/auth`, `/mcp`, `/health`) and
+Superpipeline deploys as **one Worker** that serves both the API (`/v1`, `/auth`, `/mcp`, `/health`) and
 the web SPA (static assets, same-origin). Same-origin means the session cookie and the app's relative
 `fetch`es just work — no CORS, no cross-site cookies.
 
@@ -16,7 +16,7 @@ secret:
   *Settings → Secrets and variables → Actions*.
 
 So the day-to-day flow is: open a PR → tests run → merge → it builds, migrates, and ships to
-app.kaambaan.dev automatically — `kaambaan.dev` is a separate static site, see
+app.superpipeline.dev automatically — `superpipeline.dev` is a separate static site, see
 `14-splitting-app-and-marketing-hosts.md`. The manual steps below are only for first-time setup or one-off deploys.
 
 ## Prerequisites (you)
@@ -26,8 +26,8 @@ app.kaambaan.dev automatically — `kaambaan.dev` is a separate static site, see
    wrangler login
    ```
 2. **Create a GitHub OAuth app** — https://github.com/settings/developers → *New OAuth App*:
-   - Application name: `Kaambaan`
-   - Homepage URL: your deployed origin (e.g. `https://kaambaan-api.<your-subdomain>.workers.dev`)
+   - Application name: `Superpipeline`
+   - Homepage URL: your deployed origin (e.g. `https://superpipeline-api.<your-subdomain>.workers.dev`)
    - **Authorization callback URL**: `<origin>/auth/callback`
    - Note the **Client ID** and generate a **Client secret**.
 
@@ -38,22 +38,22 @@ app.kaambaan.dev automatically — `kaambaan.dev` is a separate static site, see
 
 3. **Create the D1 catalog** and paste its id into `apps/api/wrangler.jsonc` (`database_id`):
    ```
-   cd apps/api && wrangler d1 create kaambaan-catalog
+   cd apps/api && wrangler d1 create superpipeline-catalog
    ```
 4. **Apply migrations** to the remote DB:
    ```
-   pnpm --filter @kaambaan/api db:migrate
+   pnpm --filter @superpipeline/api db:migrate
    ```
 5. **Set secrets** (from `apps/api`):
    ```
    wrangler secret put SESSION_SECRET        # a long random string
    wrangler secret put GITHUB_CLIENT_ID
    wrangler secret put GITHUB_CLIENT_SECRET
-   wrangler secret put APP_URL               # the deployed origin, e.g. https://kaambaan-api.<sub>.workers.dev
+   wrangler secret put APP_URL               # the deployed origin, e.g. https://superpipeline-api.<sub>.workers.dev
    ```
 6. **Build the web + deploy** (this builds `apps/web/build` and deploys with dev-auth OFF):
    ```
-   pnpm --filter @kaambaan/api deploy
+   pnpm --filter @superpipeline/api deploy
    ```
 
 ### Dev auth is opt-in
@@ -64,7 +64,7 @@ explicitly. It is deliberately **not** in `wrangler.jsonc`, so *any* deploy — 
 `wrangler deploy` — accepts **only** real auth (GitHub session cookies + `kbn_` agent tokens). The
 `deploy` script still passes `--var DEV_AUTH:false` as belt-and-braces.
 
-Opting in is per-command: `pnpm --filter @kaambaan/api dev` runs `wrangler dev --var DEV_AUTH:true`,
+Opting in is per-command: `pnpm --filter @superpipeline/api dev` runs `wrangler dev --var DEV_AUTH:true`,
 and the API test runner sets the binding in `apps/api/vitest.config.ts`.
 
 ## After deploy
@@ -75,6 +75,6 @@ and the API test runner sets the binding in `apps/api/vitest.config.ts`.
 
 ## Local development is unchanged
 
-`pnpm --filter @kaambaan/api dev:setup` (migrate + seed the local D1) then run the web (`:5173`,
+`pnpm --filter @superpipeline/api dev:setup` (migrate + seed the local D1) then run the web (`:5173`,
 Vite) and API (`:8787`, wrangler) separately; Vite proxies `/v1`, `/auth`, `/mcp` to the Worker. The
 `dev` script passes `--var DEV_AUTH:true`, so the `tnt_dev` workspace works without signing in.

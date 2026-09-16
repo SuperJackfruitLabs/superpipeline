@@ -169,10 +169,10 @@ describe('BoardDO — a human answers, and the answer reaches the blocked agent'
       await mustCreate(board, 'Open question');
       const { runId } = await askAQuestion(board, { parameter: undefined, body: 'Which repo?' });
       const elicitationId = (await elicitationsOf(board, runId))[0]!.id;
-      const answered = await board.answerElicitation({ elicitationId, answeredBy: HUMAN, text: 'kaambaan' });
+      const answered = await board.answerElicitation({ elicitationId, answeredBy: HUMAN, text: 'superpipeline' });
       expect(answered.ok).toBe(true);
       const [elicitation] = await elicitationsOf(board, runId);
-      expect(elicitation!.answer).toMatchObject({ option: null, text: 'kaambaan' });
+      expect(elicitation!.answer).toMatchObject({ option: null, text: 'superpipeline' });
     });
   });
 

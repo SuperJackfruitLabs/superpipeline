@@ -19,10 +19,10 @@ async function freshTenant(email: string, name: string) {
 }
 
 /**
- * kaambaan's tenant is a LOCAL isolation boundary, not an authority. `external_id` +
+ * superpipeline's tenant is a LOCAL isolation boundary, not an authority. `external_id` +
  * `external_source` record that the same real organisation is also known somewhere else
  * (`agentpod` today, the Organization plane later). The mapping is optional — a standalone
- * kaambaan has none — but it is never half-recorded: an id without the system it came from is
+ * superpipeline has none — but it is never half-recorded: an id without the system it came from is
  * worse than no id at all, because nothing downstream can tell whose id space it belongs to.
  */
 describe('tenant external mapping', () => {
@@ -124,7 +124,7 @@ describe('tenant external mapping', () => {
   });
 
   /**
-   * Deliberately NOT unique: kaambaan is one-tenant-per-user, so two people in the same real
+   * Deliberately NOT unique: superpipeline is one-tenant-per-user, so two people in the same real
    * organisation legitimately map two local boundaries onto one external id. Isolation is local
    * and stays local — a shared mapping must not become a shared keyspace.
    */

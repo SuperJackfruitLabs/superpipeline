@@ -10,9 +10,9 @@ const idSchema = (prefix: string) =>
     .regex(new RegExp(`^${prefix}_[A-Za-z0-9]{6,}$`), `expected a "${prefix}_…" id`);
 
 /**
- * `tnt` stays `tnt`. The tenant is now explicitly kaambaan's *local* isolation boundary rather
+ * `tnt` stays `tnt`. The tenant is now explicitly superpipeline's *local* isolation boundary rather
  * than an org (docs/01), which raises the question of renaming the prefix — and the answer is no.
- * `tnt` is registered to kaambaan as `declared-and-minted` in the shared fixture corpus
+ * `tnt` is registered to superpipeline as `declared-and-minted` in the shared fixture corpus
  * (AgentPod `fixtures/ecosystem-identity/id_grammar.json`), with accept/reject cases another
  * repo's suite asserts against; renaming would be a coordinated two-repo change that buys no
  * correctness. Collision safety comes from the registry, not from the spelling: AgentPod's own

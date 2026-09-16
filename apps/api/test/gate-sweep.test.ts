@@ -35,7 +35,7 @@ const REVIEW_PIPELINE: BoardInit['stages'] = [
   { key: 'publish', name: 'Publish', order: 2, ownerKind: 'capability', owner: 'publish' },
 ];
 
-const HOOK = 'https://hub.example/public/bridge/kaambaan/push';
+const HOOK = 'https://hub.example/public/bridge/superpipeline/push';
 
 function stubFor(name: string): DurableObjectStub<BoardDO> {
   return env.BOARD_DO.get(env.BOARD_DO.idFromName(name)) as unknown as DurableObjectStub<BoardDO>;

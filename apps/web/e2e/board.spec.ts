@@ -4,7 +4,7 @@ import { test, expect } from '@playwright/test';
 // a 15x16px `+` popover put priority, due date and description behind a control below the WCAG
 // target-size floor; they are first-class fields in the sheet.
 
-const BOARD_KEY = 'kaambaan.boardId';
+const BOARD_KEY = 'superpipeline.boardId';
 const API = 'http://localhost:8787';
 // The app talks to the API as the dev workspace (tnt_dev) when the server runs with DEV_AUTH on.
 const TENANT = { 'X-Tenant-Id': 'tnt_dev', 'Content-Type': 'application/json' };

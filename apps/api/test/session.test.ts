@@ -35,14 +35,14 @@ describe('session (signed, stateless)', () => {
   });
 
   it('reads the session token from the Cookie header', () => {
-    const req = new Request('https://x/', { headers: { Cookie: 'other=1; kaambaan_session=abc.def; foo=bar' } });
+    const req = new Request('https://x/', { headers: { Cookie: 'other=1; superpipeline_session=abc.def; foo=bar' } });
     expect(readSessionToken(req)).toBe('abc.def');
     expect(readSessionToken(new Request('https://x/'))).toBeNull();
   });
 
   it('builds httpOnly secure cookies', () => {
     const set = sessionSetCookie('abc.def', { secure: true });
-    expect(set).toContain('kaambaan_session=abc.def');
+    expect(set).toContain('superpipeline_session=abc.def');
     expect(set).toContain('HttpOnly');
     expect(set).toContain('Secure');
     expect(set).toContain('SameSite=Lax');

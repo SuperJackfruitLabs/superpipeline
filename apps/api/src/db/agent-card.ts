@@ -38,7 +38,7 @@ export interface AgentCard {
 }
 
 /**
- * A2A requires a `version` on the card. kaambaan versions the CARD SHAPE, not the agent — an
+ * A2A requires a `version` on the card. superpipeline versions the CARD SHAPE, not the agent — an
  * agent here has no version of its own and inventing one would be a field that never changes and
  * means nothing. This moves when the projection changes.
  */

@@ -2,7 +2,7 @@ import { SELF, env } from 'cloudflare:test';
 import { beforeAll, describe, it, expect } from 'vitest';
 import { setupCatalog } from './helpers/catalog';
 import { createAgent, createAgentToken } from '../src/db/catalog';
-import { KaambaanAgent, type Fetcher } from '@kaambaan/agent-sdk';
+import { SuperpipelineAgent, type Fetcher } from '@superpipeline/agent-sdk';
 import { signSession } from '../src/auth/session';
 import worker from '../src/index';
 import type { Env } from '../src/env';
@@ -79,7 +79,7 @@ describe('agent read surface — GET /v1/boards/:id/runs/:runId', () => {
     await SELF.fetch(`${base}/v1/boards/${boardId}/cards/${cardId}/references`, {
       method: 'PUT',
       headers: { 'X-Tenant-Id': tenantId, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ url: 'https://github.com/rakeshgangwar/kaambaan/issues/1' }),
+      body: JSON.stringify({ url: 'https://github.com/rakeshgangwar/superpipeline/issues/1' }),
     });
     const { token } = await connectAgent(tenantId, ['research']);
     const claimed = await claim(boardId, token);
@@ -105,7 +105,7 @@ describe('agent read surface — GET /v1/boards/:id/runs/:runId', () => {
     expect(body.card).toMatchObject({ id: cardId, title: 'Summarize incidents', state: 'working' });
     expect(body.card.spec).toEqual({ goal: 'summarize the incident reports' });
     expect(body.stage).toMatchObject({ key: 'research', name: 'Research' });
-    expect(body.references.map((r) => r.url)).toEqual(['https://github.com/rakeshgangwar/kaambaan/issues/1']);
+    expect(body.references.map((r) => r.url)).toEqual(['https://github.com/rakeshgangwar/superpipeline/issues/1']);
   });
 
   it('carries the upstream handoff so a later stage can act on it', async () => {
@@ -200,7 +200,7 @@ describe('agent read surface — GET /v1/boards/:id/runs/:runId', () => {
 
     // A signed-in human is not an agent: run routes take a token, and a session isn't one. Humans
     // read the same facts (and more) through the board snapshot.
-    const human = await worker.fetch(new Request(url, { headers: { Cookie: `kaambaan_session=${cookie}` } }), deployed);
+    const human = await worker.fetch(new Request(url, { headers: { Cookie: `superpipeline_session=${cookie}` } }), deployed);
     expect(human.status).toBe(401);
     // And no credential at all is refused too.
     expect((await worker.fetch(new Request(url), deployed)).status).toBe(401);
@@ -213,7 +213,7 @@ describe('agent read surface — GET /v1/boards/:id/runs/:runId', () => {
     const mine = await connectAgent(tenantId, ['research'], 'Bridge');
     const other = await connectAgent(tenantId, ['research'], 'Intruder');
 
-    const sdk = new KaambaanAgent({ baseUrl: base, boardId, token: mine.token, fetch: fetcher });
+    const sdk = new SuperpipelineAgent({ baseUrl: base, boardId, token: mine.token, fetch: fetcher });
     const work = await sdk.claim();
     if (!work) throw new Error('expected work');
 
@@ -222,7 +222,7 @@ describe('agent read surface — GET /v1/boards/:id/runs/:runId', () => {
     expect(context.stage?.key).toBe('research');
 
     // …and only for its own run.
-    const intruder = new KaambaanAgent({ baseUrl: base, boardId, token: other.token, fetch: fetcher });
+    const intruder = new SuperpipelineAgent({ baseUrl: base, boardId, token: other.token, fetch: fetcher });
     await expect(intruder.context(work)).rejects.toMatchObject({ status: 403 });
   });
 

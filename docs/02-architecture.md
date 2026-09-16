@@ -1,6 +1,6 @@
 # 02 — Architecture
 
-Kaambaan runs on **Cloudflare**.
+Superpipeline runs on **Cloudflare**.
 
 > **⚠️ What is actually bound today.** `apps/api/wrangler.jsonc` binds exactly three things: **D1**
 > (`DB`), the **Board Durable Object** namespace (`BOARD_DO`), and the static **ASSETS** for the SPA.
@@ -88,7 +88,7 @@ scope. **⚠️ OPEN**: whether to also adopt per-tenant DBs or row-level enforc
 default is row-level with a mandatory tenant guard in the data layer.
 
 `tenants` additionally carries an optional `external_id` + `external_source` pair — where the
-same real organisation is known outside kaambaan — under an all-or-nothing CHECK
+same real organisation is known outside superpipeline — under an all-or-nothing CHECK
 (`tenants_external_pair`, migration 0002). It is a *record*, never an input to isolation: no
 query, DO name, or authorization check reads it.
 
@@ -115,10 +115,10 @@ is also why there is no way to revoke one before it expires.
 
 - **Boundary = Tenant.** A Board belongs to exactly one tenant. A Board DO id is derived from
   `(tenantId, boardId)` so a DO can never serve two tenants.
-- **The boundary is local, not an authority.** kaambaan enforces isolation; it does not decide
+- **The boundary is local, not an authority.** superpipeline enforces isolation; it does not decide
   who anyone is. Principal, Team, Role and authority belong to the Organization plane, which
-  does not exist yet — so kaambaan models none of them and instead records an *optional*
-  mapping (`external_source` + `external_id`) to the same organisation elsewhere. kaambaan runs
+  does not exist yet — so superpipeline models none of them and instead records an *optional*
+  mapping (`external_source` + `external_id`) to the same organisation elsewhere. superpipeline runs
   standalone with no mapping at all, and the mapping never widens a scope: isolation is always
   computed from `tenantId`.
 - **Humans**: session → membership lookup → role check. No membership ⇒ no access, full stop.
@@ -133,11 +133,11 @@ is also why there is no way to revoke one before it expires.
 
 | Principal | Mechanism *(as shipped)* | Carrier |
 |---|---|---|
-| Human | **GitHub OAuth only** → stateless HMAC-signed session (30d). No Google, no magic-link, no password | Cookie `kaambaan_session` |
+| Human | **GitHub OAuth only** → stateless HMAC-signed session (30d). No Google, no magic-link, no password | Cookie `superpipeline_session` |
 | Agent (REST **and** MCP) | Per-agent `kbn_` token, stored as a SHA-256 hash; carries tenant + agent identity + capabilities | `Authorization: Bearer` on `/v1/boards/*` and `/mcp` |
 | Human or agent, **dev only** | `X-Tenant-Id` / `X-Agent-Id` / `?tenant=`, or an MCP `<tenant>:<agent>:<caps>` bearer — self-asserted, no secret. Requires `DEV_AUTH=true`; a deploy rejects them | Headers / query |
 | Inbound webhook (GitHub) | HMAC-SHA256 signature verify, in the DO | `X-Hub-Signature-256` |
-| Outbound webhook (to agents) | HMAC-SHA256 over the exact body | `X-Kaambaan-Signature: sha256=…` |
+| Outbound webhook (to agents) | HMAC-SHA256 over the exact body | `X-Superpipeline-Signature: sha256=…` |
 
 **Not implemented**: any authorization server, `/authorize`, `/token`, dynamic client
 registration, PKCE, JWTs, audience (`aud`) claims, token expiry or rotation, role/scope checks,
@@ -168,7 +168,7 @@ rate limiting, and CSRF tokens (`SameSite=Lax` is the only CSRF defense).
 ## Repository shape (proposed)
 
 ```
-kaambaan/
+superpipeline/
 ├── docs/                      # this spec set (source of truth)
 ├── packages/
 │   └── contract/              # zod schemas + types for the shared contract (A2A-aligned)

@@ -29,19 +29,19 @@ const timestamps = {
 };
 
 /**
- * kaambaan's LOCAL isolation boundary (docs/02) — hard, and not an authority.
+ * superpipeline's LOCAL isolation boundary (docs/02) — hard, and not an authority.
  *
  * Principal, Team, Role and authority belong to the Organization plane, which does not exist
- * yet; kaambaan does not model them. What it does own is a note that the same real organisation
+ * yet; superpipeline does not model them. What it does own is a note that the same real organisation
  * is also known somewhere else: `externalSource` names the system ('agentpod' today, 'org-plane'
- * later) and `externalId` is that system's id, left opaque because it is not kaambaan's id space.
+ * later) and `externalId` is that system's id, left opaque because it is not superpipeline's id space.
  *
  * The pair is all-or-nothing. An id without the system it came from cannot be joined against
  * anything, and a wrong join is harder to notice than a missing one. Enforced here and, more
  * importantly, in the database (`tenants_external_pair`, migration 0002) — matching the same
  * pair and the same CHECK on AgentPod's rows.
  *
- * Absent is the normal, complete state: a standalone kaambaan never sets either.
+ * Absent is the normal, complete state: a standalone superpipeline never sets either.
  */
 export const Tenant = z
   .object({

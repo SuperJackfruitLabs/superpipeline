@@ -23,7 +23,7 @@ the card's history, not a transient notification.
 
 ## The rule that makes a gate mean something
 
-**Whoever produced the work cannot resolve its gate.** kaambaan refuses it:
+**Whoever produced the work cannot resolve its gate.** superpipeline refuses it:
 
 > the producer cannot resolve their own gate
 
@@ -34,12 +34,12 @@ itself. With it, a gate is a genuine second party, which is the only reason to h
 
 ## Answering from somewhere else
 
-A gate does not have to be answered in the board. If kaambaan is linked to an
+A gate does not have to be answered in the board. If superpipeline is linked to an
 [AgentPod](https://docs.agentpod.dev) fleet, a pending gate can be projected into a Matrix room and
 answered there — from a phone, in a conversation, as an ordinary reply. The decision arrives back
 as the same three options, and the card moves.
 
-That path is optional and adds nothing you must run: a standalone kaambaan gates entirely in its
+That path is optional and adds nothing you must run: a standalone superpipeline gates entirely in its
 own interface.
 
 ## Finding what is waiting

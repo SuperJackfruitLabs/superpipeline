@@ -1,6 +1,6 @@
--- The tenant is kaambaan's LOCAL isolation boundary — not an authority on who anyone is.
+-- The tenant is superpipeline's LOCAL isolation boundary — not an authority on who anyone is.
 -- Principal, Team, Role and authority belong to the Organization plane, which does not exist
--- yet. So this does not add an org model; it adds the one thing kaambaan legitimately owns
+-- yet. So this does not add an org model; it adds the one thing superpipeline legitimately owns
 -- about the outside world: a note that the same real organisation is also known somewhere else.
 --
 --   external_source  the system the id came from — 'agentpod' today, 'org-plane' later
@@ -14,11 +14,11 @@
 -- `acp_runs_external_pair`); this is the symmetric half, so when the Organization plane mints
 -- canonical ids both products map to them as a data move, not a schema change.
 --
--- NULL is the normal, complete state. A standalone kaambaan — a plain kanban board for
+-- NULL is the normal, complete state. A standalone superpipeline — a plain kanban board for
 -- someone's agents, with no organisation layer anywhere — never sets either column, and the
 -- CHECK is satisfied by both being absent.
 --
--- Deliberately NOT unique. kaambaan is one-tenant-per-user, so two people in the same real
+-- Deliberately NOT unique. superpipeline is one-tenant-per-user, so two people in the same real
 -- organisation legitimately map two local boundaries onto one external id. A shared mapping
 -- must never become a shared keyspace: isolation stays local, on tenant_id.
 --

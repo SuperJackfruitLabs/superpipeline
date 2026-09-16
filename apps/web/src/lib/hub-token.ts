@@ -6,26 +6,26 @@
  * the agent claims it long afterwards with nobody around to ask
  * (`charter` → `decisions/2026-08-13-ecosystem-identity.md`, Decision 4).
  *
- * A kaambaan session cannot answer that: kaambaan is not the issuer. So the app
+ * A superpipeline session cannot answer that: superpipeline is not the issuer. So the app
  * carries a short-lived token minted by the hub, sends it alongside its own
- * cookie, and kaambaan verifies it offline and records the `mayDispatch` it
+ * cookie, and superpipeline verifies it offline and records the `mayDispatch` it
  * carries.
  *
  * **How that token is obtained changed, because the original way never worked.**
  * It used to be one cross-site `fetch` to the hub with `credentials: 'include'`.
  * The hub's session cookie is `SameSite=Lax` on `.agentpod.dev`, and this page is
- * on `app.kaambaan.dev` — a different registrable domain — so the browser never
+ * on `app.superpipeline.dev` — a different registrable domain — so the browser never
  * attached it, the hub answered 401, and `hubToken()` said null. Silently, and in
  * production only, since the two share an origin nowhere else. Every card queued
  * from the deployed UI carried no authority.
  *
  * Lax does permit **top-level navigation**, so the operator now *goes* to the hub
  * (`beginHubAuthorization()`) instead of the page *calling* it, and the hub sends
- * a one-time code back to kaambaan's own Worker, which spends it server-to-server
+ * a one-time code back to superpipeline's own Worker, which spends it server-to-server
  * and holds the result. `hubToken()` then reads it same-origin. See
  * `apps/api/src/auth/hub-oauth.ts`.
  *
- * Chosen over kaambaan keeping its own grant store (kaambaan#43, option B),
+ * Chosen over superpipeline keeping its own grant store (superpipeline#43, option B),
  * because two grant stores is the drift
  * `decisions/2026-08-15-a-grant-names-an-agent-per-plane.md` warns about: an
  * asymmetric grant is worse than no grant, since permission starts depending on
@@ -76,7 +76,7 @@ export interface HubStatus {
    *
    * The one thing a null token cannot say. An operator who has not connected
    * and an operator with nowhere to connect *to* both hold no token, and only
-   * the first should ever be offered a button — a standalone kaambaan is a
+   * the first should ever be offered a button — a standalone superpipeline is a
    * first-class deployment (migration 0003), not a half-configured one, and a
    * button that leads nowhere is worse than no button.
    */
@@ -88,8 +88,8 @@ export interface HubStatus {
 /**
  * Ask our own back end for both at once (`apps/api/src/auth/hub-oauth.ts`).
  *
- * Same-origin, so kaambaan's own cookie travels and the hub's never has to.
- * This is the path that actually works from `kaambaan.dev`, which is why
+ * Same-origin, so superpipeline's own cookie travels and the hub's never has to.
+ * This is the path that actually works from `superpipeline.dev`, which is why
  * `hubToken()` asks it first.
  *
  * A missing `hubConfigured` reads as **not** configured. That is the safe
@@ -115,7 +115,7 @@ export async function hubStatus(): Promise<HubStatus> {
  * Kept as a fallback rather than deleted: it is the correct path for a
  * deployment that shares the hub's registrable domain, and it is what the
  * back-end handoff exists to work around rather than replace. From
- * `kaambaan.dev` it answers 401 — the browser will not attach a `SameSite=Lax`
+ * `superpipeline.dev` it answers 401 — the browser will not attach a `SameSite=Lax`
  * cookie to a cross-site fetch — and 401 is null, which is an ordinary answer.
  */
 async function tokenFromHubDirectly(): Promise<string | null> {
@@ -145,7 +145,7 @@ async function tokenFromHubDirectly(): Promise<string | null> {
  *
  * **This function never navigates.** Wanting authority is not the same as asking
  * for it: a board that redirected to a sign-in page because a background refresh
- * came back empty would take a standalone kaambaan — a first-class deployment —
+ * came back empty would take a standalone superpipeline — a first-class deployment —
  * and send its operator to a hub that does not exist. Starting the flow is
  * `beginHubAuthorization()`, and only an operator calls that.
  */
@@ -177,7 +177,7 @@ export async function hubToken(): Promise<string | null> {
  * the verifier never exists in this browser's script, so a code read out of an
  * address bar or a history entry is worth nothing without the Worker; and a
  * deployment with no hub configured answers 503, so **nothing navigates
- * anywhere**. A standalone kaambaan stays exactly where it is.
+ * anywhere**. A standalone superpipeline stays exactly where it is.
  *
  * Returns whether the navigation was started. `false` is not an error — it is a
  * board with no hub to connect to, or a hub that could not be reached.
@@ -206,9 +206,9 @@ export function forgetHubToken(): void {
 }
 
 /**
- * Headers for a kaambaan request, carrying authority when there is any.
+ * Headers for a superpipeline request, carrying authority when there is any.
  *
- * The `Authorization` header is additive: kaambaan still reads its own session
+ * The `Authorization` header is additive: superpipeline still reads its own session
  * cookie, and `resolveHubUser` only runs when the cookie path declines. This is
  * what lets a board with no hub issuer keep working unchanged.
  */
