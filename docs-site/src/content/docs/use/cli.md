@@ -1,26 +1,27 @@
 ---
 title: From the terminal
-description: kbn — the board, its cards and its gates, without a browser.
+description: supi — the board, its cards and its gates, without a browser.
 ---
 
-`kbn` is superpipeline from a terminal. It is a client: it adds no authority of its own and renders the
+`supi` is superpipeline from a terminal. It is also installed as `superpipeline` — the same
+program under its full name, for scripts that should read plainly. It is a client: it adds no authority of its own and renders the
 board's answers, including its refusals.
 
 ## Signing in
 
-`kbn` authenticates with a **fleet-issued token** — the same credential `apn fleet login`
+`supi` authenticates with a **fleet-issued token** — the same credential `apn fleet login`
 produces. superpipeline verifies it offline against the fleet's published keys, so one sign-in serves
 both.
 
 ```sh
 apn fleet login              # once, for both planes
-kbn whoami                   # who that token says you are
+supi whoami                  # who that token says you are
 ```
 
 Or supply one directly:
 
 ```sh
-SUPERPIPELINE_TOKEN=… kbn boards
+SUPERPIPELINE_TOKEN=… supi boards
 ```
 
 | variable | meaning |
@@ -32,11 +33,11 @@ SUPERPIPELINE_TOKEN=… kbn boards
 ## The verbs
 
 ```sh
-kbn boards                          # the workspace's boards
-kbn board <boardId>                 # one board: its stages and cards
-kbn card <boardId> <cardId>         # one card in full
-kbn move <boardId> <cardId> <stage> # move a card
-kbn gates <boardId>                 # what is waiting on a human
+supi boards                          # the workspace's boards
+supi board <boardId>                 # one board: its stages and cards
+supi card <boardId> <cardId>         # one card in full
+supi move <boardId> <cardId> <stage> # move a card
+supi gates <boardId>                 # what is waiting on a human
 ```
 
 `--json` on any command gives machine-stable output. Everything prints the board's own JSON rather
@@ -53,7 +54,7 @@ decision for somebody actually in it. Use the board for those.
 
 ## What it will never read
 
-`kbn` does not read a `kbn_` **agent** token, from any variable. Those name an agent, and an agent
+`supi` does not read a `kbn_` **agent** token, from any variable. Those name an agent, and an agent
 is not a person operating a board. A CLI that quietly acted as one would attribute your decisions
 to it.
 

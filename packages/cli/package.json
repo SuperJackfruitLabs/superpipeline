@@ -4,7 +4,8 @@
   "private": true,
   "type": "module",
   "bin": {
-    "kbn": "./src/index.ts"
+    "superpipeline": "./src/index.ts",
+    "supi": "./src/index.ts"
   },
   "scripts": {
     "test": "vitest run",

@@ -1,6 +1,10 @@
 #!/usr/bin/env bun
 /**
- * `kbn` — superpipeline from a terminal.
+ * `supi` — superpipeline from a terminal.
+ *
+ * Installed under two names, `superpipeline` and `supi`, pointing at this one file: the full
+ * name for scripts and documentation a stranger reads, the short one for a person typing.
+ * It was `kbn` until the product was renamed; that name was short for the old one.
  *
  * The third consumer of `@superpipeline/contract`, after REST and MCP. It is a client: it adds no
  * authority, performs no local permission check, and renders the board's own refusals. A client
@@ -11,17 +15,17 @@
  */
 import { baseUrl, expired, inspect, loadCredential, ENV_TOKEN } from "./credential.ts";
 
-const USAGE = `kbn — superpipeline from a terminal
+const USAGE = `supi — superpipeline from a terminal (\`superpipeline\` is the same command)
 
-  kbn whoami                  who the stored token says you are
-  kbn boards                  the workspace's boards
-  kbn board <boardId>         one board: its stages and their cards
-  kbn card <boardId> <cardId> one card in full
-  kbn move <boardId> <cardId> <stageKey>
-                              move a card to another stage
-  kbn gates <boardId>         approval gates waiting on a human
+  supi whoami                  who the stored token says you are
+  supi boards                  the workspace's boards
+  supi board <boardId>         one board: its stages and their cards
+  supi card <boardId> <cardId> one card in full
+  supi move <boardId> <cardId> <stageKey>
+                               move a card to another stage
+  supi gates <boardId>         approval gates waiting on a human
 
-  --json                      machine-stable output, on any command
+  --json                       machine-stable output, on any command
 
 Credential: $${ENV_TOKEN}, else $AGENTPOD_TOKEN, else the token \`apn fleet login\` writes.
 One sign-in serves both planes — superpipeline verifies the hub's token offline.
@@ -133,19 +137,19 @@ async function main(argv: string[]): Promise<void> {
       return;
 
     case "board": {
-      if (!pos[0]) fail("usage: kbn board <boardId>");
+      if (!pos[0]) fail("usage: supi board <boardId>");
       out(await api(`/v1/boards/${pos[0]}`));
       return;
     }
 
     case "card": {
-      if (!pos[0] || !pos[1]) fail("usage: kbn card <boardId> <cardId>");
+      if (!pos[0] || !pos[1]) fail("usage: supi card <boardId> <cardId>");
       out(await api(`/v1/boards/${pos[0]}/cards/${pos[1]}`));
       return;
     }
 
     case "move": {
-      if (!pos[0] || !pos[1] || !pos[2]) fail("usage: kbn move <boardId> <cardId> <stageKey>");
+      if (!pos[0] || !pos[1] || !pos[2]) fail("usage: supi move <boardId> <cardId> <stageKey>");
       out(
         await api(`/v1/boards/${pos[0]}/cards/${pos[1]}/move`, {
           method: "POST",
@@ -156,7 +160,7 @@ async function main(argv: string[]): Promise<void> {
     }
 
     case "gates": {
-      if (!pos[0]) fail("usage: kbn gates <boardId>");
+      if (!pos[0]) fail("usage: supi gates <boardId>");
       out(await api(`/v1/boards/${pos[0]}/gates/pending`));
       return;
     }

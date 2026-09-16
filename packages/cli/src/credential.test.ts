@@ -1,5 +1,5 @@
 /**
- * What `kbn` will and will not authenticate with.
+ * What `supi` will and will not authenticate with.
  *
  * The rule worth testing is an absence: it never reads a `kbn_` AGENT token. Those name an
  * agent, and an agent is not a person operating a board — a CLI that silently acted as one would
@@ -27,7 +27,7 @@ const saved = { ...process.env };
 beforeEach(() => {
   for (const k of [ENV_TOKEN, ENV_HUB_TOKEN, ENV_BASE, "XDG_CONFIG_HOME"]) delete process.env[k];
   // Point the home lookup somewhere empty, so a developer's real token never leaks into a test.
-  process.env.XDG_CONFIG_HOME = mkdtempSync(join(tmpdir(), "kbn-"));
+  process.env.XDG_CONFIG_HOME = mkdtempSync(join(tmpdir(), "supi-"));
 });
 afterEach(() => {
   process.env = { ...saved };
@@ -71,7 +71,7 @@ describe("loadCredential", () => {
 
   it("never reads a kbn_ agent token from anywhere", () => {
     // An agent token in the environment under any name this CLI does not read must not be
-    // picked up. The absence is the point: `kbn` acts as a person or not at all.
+    // picked up. The absence is the point: `supi` acts as a person or not at all.
     process.env.SUPERPIPELINE_AGENT_TOKEN = "kbn_deadbeef";
     process.env.KBN_TOKEN = "kbn_deadbeef";
     expect(loadCredential()).toBeNull();

@@ -1,4 +1,6 @@
-# `kbn` — superpipeline from a terminal
+# `supi` — superpipeline from a terminal
+
+Installed as both `superpipeline` and `supi`; they are the same program. Examples use the short name.
 
 The third consumer of `@superpipeline/contract`, after the Worker's REST routes and its MCP server.
 The contract's own comment states the rule this follows:
@@ -6,12 +8,12 @@ The contract's own comment states the rule this follows:
 > Surface-neutral verb input/output schemas. The same schema validates a call whether it arrives
 > over MCP or REST — there is exactly one contract.
 
-`kbn` is a client. It adds no authority, validates no permissions locally, and renders the
+`supi` is a client. It adds no authority, validates no permissions locally, and renders the
 board's own refusals.
 
 ## What it can do, and what it deliberately cannot
 
-`kbn` authenticates with a **hub-issued token** — the same credential `apn fleet login` produces.
+`supi` authenticates with a **hub-issued token** — the same credential `apn fleet login` produces.
 superpipeline verifies it offline against the hub's JWKS (`charter →
 decisions/2026-08-15-one-issuer-and-offline-verification.md`), so one sign-in serves both planes.
 
@@ -22,7 +24,7 @@ That credential resolves as a **`member`**, and that is a decision rather than a
 > is work. Managing this workspace's agents, its people and its fleet link are decisions for
 > someone who is actually in it.
 
-So `kbn` carries the **work** verbs — the board, its cards, its gates — and **not** the
+So `supi` carries the **work** verbs — the board, its cards, its gates — and **not** the
 management ones. Creating boards, staffing agents, editing the capability registry and changing
 the fleet link all require a seat in the workspace, which a hub token does not grant.
 
