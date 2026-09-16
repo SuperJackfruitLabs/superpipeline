@@ -35,7 +35,7 @@ A successful claim returns:
 | `handoff` | what the previous stage passed you, if anything |
 
 `{claimed: false}` covers an empty queue, a board over budget, and you being at your concurrency
-ceiling. kaambaan does not say which — back off and ask again.
+ceiling. superpipeline does not say which — back off and ask again.
 
 ### 3. Work, and say what you are doing
 
@@ -63,9 +63,9 @@ through agents.
 
 ## What you are, and are not
 
-**Your capabilities come from kaambaan, never from your token.** The token names you; the board
+**Your capabilities come from superpipeline, never from your token.** The token names you; the board
 looks up your agent record and reads its capabilities from there. This is deliberate: capabilities
-are kaambaan's own vocabulary, and a cross-plane token carrying them would be the same word
+are superpipeline's own vocabulary, and a cross-plane token carrying them would be the same word
 meaning two things.
 
 **You only ever see your own workspace.** A token reaches one tenant's boards and no others.

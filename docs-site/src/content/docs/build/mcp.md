@@ -3,7 +3,7 @@ title: MCP tools
 description: The eleven tools an agent gets, and the loop they form.
 ---
 
-kaambaan speaks MCP over Streamable HTTP at `/mcp`. Authenticate with a `kbn_` agent token in
+superpipeline speaks MCP over Streamable HTTP at `/mcp`. Authenticate with a `kbn_` agent token in
 `Authorization: Bearer`.
 
 The server is stateless — every tool is a call into the board, which is the authority — and your
@@ -13,17 +13,17 @@ token binds the tools to your workspace. You only ever see your own.
 
 | tool | arguments | what it does |
 |---|---|---|
-| `kaambaan_list_work` | — | boards with a count of cards ready **for your capabilities** |
-| `kaambaan_claim_card` | `boardId`, `maxConcurrency?` | take the next ready card |
-| `kaambaan_get_card` | `cardId` | the card, its stage, the handoff, its references, and your questions with any answers |
-| `kaambaan_heartbeat` | `runId`, `leaseEpoch` | keep the lease |
-| `kaambaan_post_activity` | `runId`, `leaseEpoch`, `type`, `body?`, `parameter?`, `signal?`, `usage?` | say what you are doing; report usage |
-| `kaambaan_add_reference` | `cardId`, `url`, … | attach a link |
-| `kaambaan_submit_for_review` | `runId`, `leaseEpoch`, `output?` | open a gate and stop |
-| `kaambaan_complete` | `runId`, `leaseEpoch`, `handoff?` | advance the card |
-| `kaambaan_block` | `runId`, `leaseEpoch`, `reason` | you need something |
-| `kaambaan_fail` | `runId`, `leaseEpoch`, `reason` | you could not do it |
-| `kaambaan_release` | `runId`, `leaseEpoch`, `reason?` | hand it back unworked |
+| `superpipeline_list_work` | — | boards with a count of cards ready **for your capabilities** |
+| `superpipeline_claim_card` | `boardId`, `maxConcurrency?` | take the next ready card |
+| `superpipeline_get_card` | `cardId` | the card, its stage, the handoff, its references, and your questions with any answers |
+| `superpipeline_heartbeat` | `runId`, `leaseEpoch` | keep the lease |
+| `superpipeline_post_activity` | `runId`, `leaseEpoch`, `type`, `body?`, `parameter?`, `signal?`, `usage?` | say what you are doing; report usage |
+| `superpipeline_add_reference` | `cardId`, `url`, … | attach a link |
+| `superpipeline_submit_for_review` | `runId`, `leaseEpoch`, `output?` | open a gate and stop |
+| `superpipeline_complete` | `runId`, `leaseEpoch`, `handoff?` | advance the card |
+| `superpipeline_block` | `runId`, `leaseEpoch`, `reason` | you need something |
+| `superpipeline_fail` | `runId`, `leaseEpoch`, `reason` | you could not do it |
+| `superpipeline_release` | `runId`, `leaseEpoch`, `reason?` | hand it back unworked |
 
 `reason` on block and fail is required and must be non-empty. A failure with no stated reason is a
 card somebody has to reconstruct.
@@ -36,8 +36,8 @@ your next call returns `STALE_LEASE` rather than quietly writing over their work
 
 ## Asking a question
 
-There is no `kaambaan_request_input` tool. An elicitation is an **activity** — post one with type
-`elicitation` and a signal — and the answer comes back on `kaambaan_get_card`, on the token you
+There is no `superpipeline_request_input` tool. An elicitation is an **activity** — post one with type
+`elicitation` and a signal — and the answer comes back on `superpipeline_get_card`, on the token you
 already hold.
 
 ## Identity
