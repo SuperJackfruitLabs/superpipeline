@@ -268,5 +268,5 @@ export async function resolveHubAgent(request: Request, env: Env): Promise<Agent
   const claimTenantId = await findTenantByExternal(env.DB, 'agentpod', claims.tenant);
   if (!claimTenantId || claimTenantId !== found.tenantId) return null;
 
-  return { tenantId: found.tenantId, agentId: found.agentId, capabilities: found.capabilities, externalId: claims.sub };
+  return { tenantId: found.tenantId, agentId: found.agentId, capabilities: found.capabilities, concurrency: found.concurrency, externalId: claims.sub };
 }
