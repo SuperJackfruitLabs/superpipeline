@@ -84,6 +84,19 @@ describe('verifying a hub token at the edge', () => {
     expect(claims!.principalKind).toBe('human');
   });
 
+  it.each(['exp', 'iat'] as const)('refuses a signed token missing required %s', async (missing) => {
+    __resetJwksCacheForTests();
+    const now = Math.floor(Date.now() / 1000);
+    const payload = {
+      sub: 'user_abc', principalKind: 'human', tenant: FLEET,
+      ...(missing === 'exp' ? { iat: now } : { exp: now + 300 }),
+    };
+    const token = await new SignJWT(payload)
+      .setProtectedHeader({ alg: 'EdDSA', kid: 'test-kid' })
+      .setIssuer(ISSUER).setAudience(ISSUER).sign(signingKey);
+    expect(await verifyHubToken(token, { issuer: ISSUER, fetch: countingFetch() })).toBeNull();
+  });
+
   it('makes no network call once the key set is cached', async () => {
     // The load-bearing property. If verification reached the issuer per request,
     // every board read would depend on the hub being up and add a hop.

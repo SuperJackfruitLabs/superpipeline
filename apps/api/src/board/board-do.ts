@@ -1868,7 +1868,9 @@ export class BoardDO extends DurableObject<Env> {
     if (!this.getMeta('boardId')) return { claimed: false };
     // Budget cap (docs/07 §6): once the board hits its USD ceiling, stop handing out new work.
     if (this.boardOverBudget()) return { claimed: false };
-    const max = input.maxConcurrency ?? 1;
+    const max = input.maxConcurrency === undefined ? 1 : input.maxConcurrency;
+    // RPC types do not validate runtime values. Invalid limits must never admit work.
+    if (typeof max !== 'number' || !Number.isInteger(max) || max <= 0) return { claimed: false };
     const active = Number(
       this.sql.exec(`SELECT COUNT(*) AS n FROM runs WHERE agent_id = ? AND status = 'working'`, input.agentId).one().n,
     );

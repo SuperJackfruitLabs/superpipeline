@@ -258,6 +258,7 @@ export async function verifyHubToken(
     const { payload } = await jwtVerify(token, set.verify, {
       issuer: opts.issuer,
       audience: opts.issuer,
+      requiredClaims: ['exp', 'iat'],
       // Pinned, never taken from the token's own header — otherwise `alg: none`
       // is a valid token and so is one signed with a key of the caller's
       // choosing.

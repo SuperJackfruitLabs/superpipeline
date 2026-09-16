@@ -1169,7 +1169,22 @@ export default {
       // the capabilities since the dev headers don't encode them).
       if (rest === 'claims' && request.method === 'POST') {
         if (!agent!.agentId) return Response.json({ error: 'an agent identity is required to claim' }, { status: 400 });
-        const payload = (await request.json()) as { capabilities?: string[]; maxConcurrency?: number; profileKey?: string };
+        const input: unknown = await request.json().catch(() => null);
+        if (!input || typeof input !== 'object' || Array.isArray(input)) {
+          return Response.json({ error: 'claim body must be a JSON object' }, { status: 400 });
+        }
+        const payload = input as { capabilities?: unknown; maxConcurrency?: unknown; profileKey?: unknown };
+        if (payload.maxConcurrency !== undefined &&
+            (typeof payload.maxConcurrency !== 'number' || !Number.isInteger(payload.maxConcurrency) || payload.maxConcurrency <= 0)) {
+          return Response.json({ error: 'maxConcurrency must be a positive finite integer' }, { status: 400 });
+        }
+        if (payload.capabilities !== undefined &&
+            (!Array.isArray(payload.capabilities) || !payload.capabilities.every((cap): cap is string => typeof cap === 'string'))) {
+          return Response.json({ error: 'capabilities must be an array of strings' }, { status: 400 });
+        }
+        if (payload.profileKey !== undefined && typeof payload.profileKey !== 'string') {
+          return Response.json({ error: 'profileKey must be a string' }, { status: 400 });
+        }
         // Declared → effective. An agent staffed for `code-review` claims a `code` lane when the
         // workspace has said one implies the other. The expansion happens HERE, at the Worker
         // boundary, because the edges live in the catalog and the Durable Object has no D1: the

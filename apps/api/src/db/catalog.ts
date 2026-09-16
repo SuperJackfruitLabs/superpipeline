@@ -289,17 +289,17 @@ export async function findAgentByExternal(
   db: D1Database,
   source: string,
   externalId: string,
-): Promise<{ tenantId: string; agentId: string; capabilities: string[] } | null> {
+): Promise<{ tenantId: string; agentId: string; capabilities: string[]; concurrency: number } | null> {
   if (!source || !externalId) return null;
   const row = await db
     .prepare(
-      `SELECT tenant_id AS tenantId, id AS agentId, capabilities_json AS caps
+      `SELECT tenant_id AS tenantId, id AS agentId, capabilities_json AS caps, concurrency
        FROM agents WHERE external_source = ? AND external_id = ?`,
     )
     .bind(source, externalId)
-    .first<{ tenantId: string; agentId: string; caps: string }>();
+    .first<{ tenantId: string; agentId: string; caps: string; concurrency: number }>();
   if (!row) return null;
-  return { tenantId: row.tenantId, agentId: row.agentId, capabilities: JSON.parse(row.caps) };
+  return { tenantId: row.tenantId, agentId: row.agentId, capabilities: JSON.parse(row.caps), concurrency: row.concurrency };
 }
 
 /** Mint a per-agent bearer token. The plaintext is returned once; only the hash is stored. */
