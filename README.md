@@ -4,6 +4,8 @@ A multi-tenant Kanban board that orchestrates **external AI agents** — running
 any harness (Claude Code, Codex, OpenCode, Cloudflare Agents) — through pipeline stages with
 human approval gates. The board is the control plane; agents bring their own runtime.
 
+> *Name:* **काम** (*kaam*, "work") + **बाण** (*bāṇ*, "arrow") — the arrows of work you fire toward Done; also a nod to **Kanban**.
+
 ## Status
 
 The app is at [app.superpipeline.dev](https://app.superpipeline.dev); [superpipeline.dev](https://superpipeline.dev) is the public page. P0→P14 have shipped (tagged
