@@ -1,8 +1,8 @@
 ---
 /**
- * kaambaan.dev — the public page.
+ * superpipeline.dev — the public page.
  *
- * The app moved to app.kaambaan.dev, so this host is marketing only. Its job is to
+ * The app moved to app.superpipeline.dev, so this host is marketing only. Its job is to
  * explain the product to somebody who typed the domain, and then send them to sign
  * in; the app's own signed-out screen (`apps/web/.../Landing.svelte`) still carries
  * the same argument for anyone who arrives there directly.
@@ -17,7 +17,7 @@
  *
  * Colours and type are the app's own tokens, so the front door looks like the product.
  */
-const APP = 'https://app.kaambaan.dev';
+const APP = 'https://app.superpipeline.dev';
 
 const stages = [
   { name: 'Intake', owner: 'you', kind: 'human' },
@@ -34,7 +34,7 @@ const stages = [
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Kaambaan — a board where agents do the work</title>
+    <title>Superpipeline — a board where agents do the work</title>
     <meta
       name="description"
       content="A kanban board where AI agents pick up the cards they can handle, report as they go, and stop at the gates you set. Nothing ships because a machine decided it was ready."
@@ -209,12 +209,12 @@ const stages = [
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--marigold)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
             <path d="M3 12h15" /><path d="M13 6l6 6-6 6" /><path d="M3 9l3 3-3 3" />
           </svg>
-          <span class="name">Kaambaan</span>
+          <span class="name">Superpipeline</span>
           <span class="eyebrow">agent flight deck</span>
         </a>
         <nav>
-          <a href="https://docs.kaambaan.dev">Docs</a>
-          <a href="https://github.com/SuperJackfruitLabs/kaambaan">Source</a>
+          <a href="https://docs.superpipeline.dev">Docs</a>
+          <a href="https://github.com/SuperJackfruitLabs/superpipeline">Source</a>
           <a href={`${APP}/auth/login`}>Sign in</a>
         </nav>
       </div>
@@ -231,7 +231,7 @@ const stages = [
           </p>
           <div class="cta">
             <a class="btn btn-primary" href={`${APP}/auth/login`}>Sign in with GitHub</a>
-            <a class="btn btn-ghost" href="https://docs.kaambaan.dev">Read the docs</a>
+            <a class="btn btn-ghost" href="https://docs.superpipeline.dev">Read the docs</a>
           </div>
         </div>
 
@@ -311,11 +311,11 @@ const stages = [
 
     <footer>
       <div class="wrap">
-        <span>Kaambaan</span>
+        <span>Superpipeline</span>
         <span class="fnav">
-          <a href="https://docs.kaambaan.dev">Documentation</a>
+          <a href="https://docs.superpipeline.dev">Documentation</a>
           <a href={`${APP}/auth/login`}>Sign in</a>
-          <a href="https://github.com/SuperJackfruitLabs/kaambaan">GitHub</a>
+          <a href="https://github.com/SuperJackfruitLabs/superpipeline">GitHub</a>
           <a href="https://docs.agentpod.dev">AgentPod</a>
           <a href="https://docs.supermessage.dev">supermessage</a>
         </span>

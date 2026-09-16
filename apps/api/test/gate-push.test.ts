@@ -21,7 +21,7 @@ const REVIEW_PIPELINE: BoardInit['stages'] = [
   { key: 'publish', name: 'Publish', order: 2, ownerKind: 'capability', owner: 'publish' },
 ];
 
-const HOOK = 'https://hub.example/api/bridge/kaambaan/push';
+const HOOK = 'https://hub.example/api/bridge/superpipeline/push';
 
 function stubFor(name: string): DurableObjectStub<BoardDO> {
   return env.BOARD_DO.get(env.BOARD_DO.idFromName(name)) as unknown as DurableObjectStub<BoardDO>;
@@ -97,7 +97,7 @@ describe('BoardDO — gate.pending (charter 2026-08-30)', () => {
     });
   });
 
-  it('sends the option ids kaambaan resolves against, not its own vocabulary', async () => {
+  it('sends the option ids superpipeline resolves against, not its own vocabulary', async () => {
     await runInDurableObject(stubFor('gp-options'), async (board: BoardDO) => {
       await board.init({ id: 'brd_go', tenantId: 'tnt_a', name: 'G', stages: REVIEW_PIPELINE });
       await board.registerPushConfig({ agentId: 'a', url: HOOK, token: 's', events: ['gate.pending'] });

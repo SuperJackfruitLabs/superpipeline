@@ -61,7 +61,7 @@ describe('entity schemas', () => {
 });
 
 /**
- * The tenant is kaambaan's LOCAL isolation boundary. `externalId` + `externalSource` optionally
+ * The tenant is superpipeline's LOCAL isolation boundary. `externalId` + `externalSource` optionally
  * record that the same real organisation is also known elsewhere; the pair is all-or-nothing,
  * mirroring the database CHECK (apps/api/migrations/0002_tenant_external_mapping.sql).
  */

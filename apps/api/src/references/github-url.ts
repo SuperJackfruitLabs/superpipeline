@@ -1,7 +1,7 @@
 /**
  * Recognize the shape of a reference URL (docs/06 §1). GitHub PR/issue/repo/commit URLs get a
  * richer `provider`/`sourceType` and a durable `externalId` (`owner/repo#n`); anything else is a
- * valid generic `url` reference — Kaambaan is domain-agnostic, references aren't git-specific.
+ * valid generic `url` reference — Superpipeline is domain-agnostic, references aren't git-specific.
  */
 export interface RecognizedReference {
   provider: string;

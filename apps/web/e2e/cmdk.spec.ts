@@ -2,7 +2,7 @@ import { test, expect } from '@playwright/test';
 
 // The command palette is mounted in the board-ready shell, so each test needs a board and must wait
 // for the shell to render before pressing ⌘K/Ctrl-K (matches board.spec / nav.spec setup).
-const BOARD_KEY = 'kaambaan.boardId';
+const BOARD_KEY = 'superpipeline.boardId';
 const API = 'http://localhost:8787';
 const TENANT = { 'X-Tenant-Id': 'tnt_dev', 'Content-Type': 'application/json' };
 const DEFAULT_STAGES = [

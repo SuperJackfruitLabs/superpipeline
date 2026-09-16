@@ -1,6 +1,6 @@
-# `kbn` — kaambaan from a terminal
+# `kbn` — superpipeline from a terminal
 
-The third consumer of `@kaambaan/contract`, after the Worker's REST routes and its MCP server.
+The third consumer of `@superpipeline/contract`, after the Worker's REST routes and its MCP server.
 The contract's own comment states the rule this follows:
 
 > Surface-neutral verb input/output schemas. The same schema validates a call whether it arrives
@@ -12,7 +12,7 @@ board's own refusals.
 ## What it can do, and what it deliberately cannot
 
 `kbn` authenticates with a **hub-issued token** — the same credential `apn fleet login` produces.
-kaambaan verifies it offline against the hub's JWKS (`charter →
+superpipeline verifies it offline against the hub's JWKS (`charter →
 decisions/2026-08-15-one-issuer-and-offline-verification.md`), so one sign-in serves both planes.
 
 That credential resolves as a **`member`**, and that is a decision rather than an oversight.
@@ -30,6 +30,6 @@ That is the seat/post distinction in `charter → decisions/2026-09-03-role-is-a
 arriving exactly where it was predicted to: a token that names a principal is not an account in
 this workspace, and one is never inferred from the other.
 
-**If management from a terminal is wanted**, the honest route is kaambaan issuing its own
+**If management from a terminal is wanted**, the honest route is superpipeline issuing its own
 credential to a CLI — its own authorization-code flow, the way the hub gained one — not widening
 what a hub token means. That is a decision, not a feature.

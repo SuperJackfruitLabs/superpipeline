@@ -28,14 +28,14 @@ describe('MCP ≡ REST — contract parity', () => {
     const mcpStub = await seed('brd_par_mcp');
     const client = await connectMcp(depsFor(AUTH));
     const mcpClaim = toolJson(
-      await client.callTool({ name: 'kaambaan_claim_card', arguments: { boardId: 'brd_par_mcp' } }),
+      await client.callTool({ name: 'superpipeline_claim_card', arguments: { boardId: 'brd_par_mcp' } }),
     ) as { claimed: boolean; runId: string; leaseEpoch: number; handoff: unknown };
     await client.callTool({
-      name: 'kaambaan_post_activity',
+      name: 'superpipeline_post_activity',
       arguments: { boardId: 'brd_par_mcp', runId: mcpClaim.runId, leaseEpoch: mcpClaim.leaseEpoch, type: 'thought', body: 'working', ephemeral: true },
     });
     await client.callTool({
-      name: 'kaambaan_complete',
+      name: 'superpipeline_complete',
       arguments: { boardId: 'brd_par_mcp', runId: mcpClaim.runId, leaseEpoch: mcpClaim.leaseEpoch, handoff: { summary: 'done' } },
     });
     const mcpCard = (await mcpStub.getState()).cards[0]!;
@@ -73,11 +73,11 @@ describe('MCP ≡ REST — contract parity', () => {
     const mcpStub = await seed('brd_par_mcp2');
     const client = await connectMcp(depsFor(AUTH));
     const claim = toolJson(
-      await client.callTool({ name: 'kaambaan_claim_card', arguments: { boardId: 'brd_par_mcp2' } }),
+      await client.callTool({ name: 'superpipeline_claim_card', arguments: { boardId: 'brd_par_mcp2' } }),
     ) as { runId: string; leaseEpoch: number };
     void mcpStub;
     const mcpRes = await client.callTool({
-      name: 'kaambaan_complete',
+      name: 'superpipeline_complete',
       arguments: { boardId: 'brd_par_mcp2', runId: claim.runId, leaseEpoch: claim.leaseEpoch + 9 },
     });
 

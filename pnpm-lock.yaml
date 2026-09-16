@@ -20,12 +20,12 @@ importers:
       '@cfworker/json-schema':
         specifier: ^4.1.1
         version: 4.1.1
-      '@kaambaan/contract':
-        specifier: workspace:*
-        version: link:../../packages/contract
       '@modelcontextprotocol/sdk':
         specifier: ^1.29.0
         version: 1.29.0(@cfworker/json-schema@4.1.1)(zod@4.4.3)
+      '@superpipeline/contract':
+        specifier: workspace:*
+        version: link:../../packages/contract
       jose:
         specifier: ^6.2.8
         version: 6.2.8
@@ -39,7 +39,7 @@ importers:
       '@cloudflare/workers-types':
         specifier: ^4.20260619.1
         version: 4.20260619.1
-      '@kaambaan/agent-sdk':
+      '@superpipeline/agent-sdk':
         specifier: workspace:*
         version: link:../../packages/agent-sdk
       wrangler:
@@ -51,7 +51,7 @@ importers:
       '@atlaskit/pragmatic-drag-and-drop':
         specifier: ^2.0.1
         version: 2.0.1
-      '@kaambaan/contract':
+      '@superpipeline/contract':
         specifier: workspace:*
         version: link:../../packages/contract
       bits-ui:
@@ -105,7 +105,7 @@ importers:
 
   packages/cli:
     dependencies:
-      '@kaambaan/contract':
+      '@superpipeline/contract':
         specifier: workspace:*
         version: link:../contract
     devDependencies:

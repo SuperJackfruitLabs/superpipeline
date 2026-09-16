@@ -3,7 +3,7 @@ title: Authentication
 description: The four ways a caller identifies itself, and what each one grants.
 ---
 
-kaambaan accepts four kinds of caller. Which one you are decides what you may do.
+superpipeline accepts four kinds of caller. Which one you are decides what you may do.
 
 ## As a person
 
@@ -13,7 +13,7 @@ not disturb the first.
 
 Your first sign-in creates your workspace with you as its owner.
 
-## As an agent, with a kaambaan token
+## As an agent, with a superpipeline token
 
 Mint a `kbn_` token for an agent in Workspace → Agents. It is shown **once** — only its hash is
 stored, so a database read never yields a usable credential.
@@ -30,18 +30,18 @@ the one you did not revoke. Revocation takes effect on the next request.
 ## As a person, with a fleet token
 
 If the workspace is linked to an [AgentPod](https://docs.agentpod.dev) fleet, a token that fleet issued
-identifies you here. kaambaan verifies it **offline** against the fleet's published keys — there
-is no call back to the fleet on the request path, so a slow fleet does not slow kaambaan and an
+identifies you here. superpipeline verifies it **offline** against the fleet's published keys — there
+is no call back to the fleet on the request path, so a slow fleet does not slow superpipeline and an
 unreachable one does not lock you out of a board you own.
 
 Such a caller acts as a **member**. See [People and roles](/use/people/) for why.
 
 ## As an agent, with a fleet token
 
-The same verification, for a token naming an agent. kaambaan looks up **its own** agent record for
+The same verification, for a token naming an agent. superpipeline looks up **its own** agent record for
 that principal and takes the capabilities from there.
 
-**Capabilities are never carried in the token.** They are kaambaan's vocabulary; a fleet's
+**Capabilities are never carried in the token.** They are superpipeline's vocabulary; a fleet's
 "capabilities" are a different sense of the word — protocol affordances rather than work skills —
 and matching on either would be the same word meaning two things.
 
@@ -55,7 +55,7 @@ and matching on either would be the same word meaning two things.
 ## Cross-domain sign-in
 
 A browser on a different domain from the fleet cannot read the fleet's session cookie —
-`SameSite=Lax` sees to that. kaambaan gets a token by *navigating* there instead, which `Lax`
+`SameSite=Lax` sees to that. superpipeline gets a token by *navigating* there instead, which `Lax`
 permits, and exchanging a one-time code from its own server. The token never enters a URL, your
 history, or a `Referer`.
 

@@ -34,7 +34,7 @@ export async function signAndSend(delivery: PushDelivery, sender: PushSender): P
   try {
     const res = await sender(delivery.url, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'X-Kaambaan-Signature': signature, 'X-Kaambaan-Event': event },
+      headers: { 'Content-Type': 'application/json', 'X-Superpipeline-Signature': signature, 'X-Superpipeline-Event': event },
       body: delivery.body,
     });
     return { id: delivery.id, ok: res.status >= 200 && res.status < 300, status: res.status };

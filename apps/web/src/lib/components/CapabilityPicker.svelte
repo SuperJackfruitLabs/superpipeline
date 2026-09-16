@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { capabilityTag } from '@kaambaan/contract';
+  import { capabilityTag } from '@superpipeline/contract';
   import type { CapabilityRecord } from '$lib/api';
 
   /**

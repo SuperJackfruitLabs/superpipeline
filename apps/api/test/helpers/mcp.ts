@@ -2,7 +2,7 @@ import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { InMemoryTransport } from '@modelcontextprotocol/sdk/inMemory.js';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { env } from 'cloudflare:test';
-import { registerKaambaanTools, type ToolDeps, type McpAuth } from '../../src/mcp/tools';
+import { registerSuperpipelineTools, type ToolDeps, type McpAuth } from '../../src/mcp/tools';
 import type { BoardStub, BoardInit } from '../../src/board/board-do';
 
 /** Build the tool dependencies against the real Board DO, scoped to one tenant (as the Worker does). */
@@ -15,10 +15,10 @@ export function depsFor(auth: McpAuth, boards: Array<{ id: string; name: string 
   };
 }
 
-/** Connect an in-memory MCP client to a server wired with the Kaambaan tools (docs/09 — test the real surface). */
+/** Connect an in-memory MCP client to a server wired with the Superpipeline tools (docs/09 — test the real surface). */
 export async function connectMcp(deps: ToolDeps): Promise<Client> {
-  const server = new McpServer({ name: 'kaambaan', version: '0.0.0' });
-  registerKaambaanTools(server, deps);
+  const server = new McpServer({ name: 'superpipeline', version: '0.0.0' });
+  registerSuperpipelineTools(server, deps);
   const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
   const client = new Client({ name: 'mcp-test', version: '0.0.0' });
   await Promise.all([client.connect(clientTransport), server.connect(serverTransport)]);

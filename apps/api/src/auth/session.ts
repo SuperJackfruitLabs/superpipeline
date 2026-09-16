@@ -14,7 +14,7 @@ export interface SessionPayload {
   exp: number; // epoch ms
 }
 
-const COOKIE_NAME = 'kaambaan_session';
+const COOKIE_NAME = 'superpipeline_session';
 export const SESSION_TTL_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
 
 function b64urlEncode(s: string): string {

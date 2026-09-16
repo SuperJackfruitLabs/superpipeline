@@ -4,7 +4,7 @@
  * `setTenantExternalMapping` (catalog.ts) had NO production caller, only tests: the fifth column
  * in this programme with none. That would be a curiosity except that BOTH `resolveHubUser` and
  * `resolveHubAgent` require `findTenantByExternal(db, 'agentpod', claims.tenant)` to resolve
- * before a hub-issued credential can do anything in kaambaan — so the row existed only where
+ * before a hub-issued credential can do anything in superpipeline — so the row existed only where
  * somebody had made it by hand, which is the suite's "no SQL at any point" rule broken at the
  * exact seam between the two repositories.
  *
@@ -182,7 +182,7 @@ describe('PATCH /v1/tenant — link this workspace to a hub fleet', () => {
   it('two workspaces may share one fleet — the route does not invent a uniqueness the schema refused', async () => {
     // The obvious mirror of `PATCH /v1/agents/:id` would 409 here, and this route was first
     // written that way, with a partial unique index behind it. Migration 0002's own comment
-    // settles it the other way: "Deliberately NOT unique. kaambaan is one-tenant-per-user, so
+    // settles it the other way: "Deliberately NOT unique. superpipeline is one-tenant-per-user, so
     // two people in the same real organisation legitimately map two local boundaries onto one
     // external id." `test/tenant-external-mapping.test.ts` asserts that directly. A fix wave is
     // not the place to reverse a documented decision, so this pins the behaviour that survived.

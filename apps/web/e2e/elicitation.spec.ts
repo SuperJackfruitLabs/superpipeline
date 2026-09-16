@@ -37,7 +37,7 @@ test('a human answers a blocked agent’s question from the board', async ({ pag
   });
 
   // 2. The board shows the card is waiting on a human, and the drawer carries the question.
-  await page.addInitScript((id) => window.localStorage.setItem('kaambaan.boardId', id), boardId);
+  await page.addInitScript((id) => window.localStorage.setItem('superpipeline.boardId', id), boardId);
   await page.goto('/');
 
   const tile = page.locator('.tile', { hasText: 'Add the OAuth flow' });

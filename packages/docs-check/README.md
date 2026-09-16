@@ -1,6 +1,6 @@
 # `docs-check`
 
-The claims kaambaan's documentation makes, held against the code.
+The claims superpipeline's documentation makes, held against the code.
 
 It lives in its own package because `apps/api`'s tests run in the Cloudflare Workers pool, which
 has no `node:fs` — a docs test cannot read the docs there.

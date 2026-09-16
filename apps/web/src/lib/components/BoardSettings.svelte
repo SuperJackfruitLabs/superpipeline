@@ -1,7 +1,7 @@
 <script lang="ts">
   import { Button } from '$lib/components/ui/button';
   import { renameBoard, setGithubConfig, setStages, getProfiles, createProfile, type BoardSnapshot, type Profile, type Stage } from '$lib/api';
-  import { capabilityTag } from '@kaambaan/contract';
+  import { capabilityTag } from '@superpipeline/contract';
 
   let { board, onChanged }: { board: BoardSnapshot; onChanged: () => void } = $props();
 

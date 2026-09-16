@@ -32,7 +32,7 @@
 
 import { createLocalJWKSet, jwtVerify, type JSONWebKeySet, type JWTPayload } from 'jose';
 
-/** The claims kaambaan reads. Names pinned by agentpod fixtures/ecosystem-identity/token_claims.json. */
+/** The claims superpipeline reads. Names pinned by agentpod fixtures/ecosystem-identity/token_claims.json. */
 export interface HubClaims extends JWTPayload {
   /**
    * Present when a SERVICE minted this token while asserting a principal who

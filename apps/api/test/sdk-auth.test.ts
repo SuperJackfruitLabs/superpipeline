@@ -1,12 +1,12 @@
 import { SELF, env } from 'cloudflare:test';
 import { beforeAll, describe, it, expect } from 'vitest';
-import { KaambaanAgent, runOnce, KaambaanApiError, type Fetcher } from '@kaambaan/agent-sdk';
+import { SuperpipelineAgent, runOnce, SuperpipelineApiError, type Fetcher } from '@superpipeline/agent-sdk';
 import { setupCatalog } from './helpers/catalog';
 import { createAgent, createAgentToken } from '../src/db/catalog';
 
 // The SDK must be able to authenticate the way the deployed server actually authenticates agents:
 // a `kbn_` bearer token (agent_tokens.token_hash), not the dev-only X-Tenant-Id / X-Agent-Id
-// headers. Everything here goes through @kaambaan/agent-sdk — no hand-rolled requests.
+// headers. Everything here goes through @superpipeline/agent-sdk — no hand-rolled requests.
 
 beforeAll(setupCatalog);
 
@@ -67,7 +67,7 @@ describe('agent SDK — kbn_ bearer auth', () => {
     const { token } = await connectAgent(tenantId, ['research']);
 
     const recorder = recordingFetcher();
-    const agent = new KaambaanAgent({ baseUrl: 'https://api.test', boardId, token, fetch: recorder.fetch });
+    const agent = new SuperpipelineAgent({ baseUrl: 'https://api.test', boardId, token, fetch: recorder.fetch });
 
     expect(await runOnce(agent, async () => ({ done: true }))).toBe(true);
 
@@ -89,7 +89,7 @@ describe('agent SDK — kbn_ bearer auth', () => {
     // The client never states an agent id or capabilities — both come off the token's agent.
     const { agentId, token } = await connectAgent(tenantId, ['research']);
 
-    const agent = new KaambaanAgent({ baseUrl: 'https://api.test', boardId, token, fetch: fetcher });
+    const agent = new SuperpipelineAgent({ baseUrl: 'https://api.test', boardId, token, fetch: fetcher });
     expect(await agent.claim()).not.toBeNull();
     expect((await snapshot(tenantId, boardId)).cards[0]!.delegateAgentId).toBe(agentId);
   });
@@ -99,14 +99,14 @@ describe('agent SDK — kbn_ bearer auth', () => {
     const boardId = await createBoard(tenantId);
     await addCard(tenantId, boardId, 'Unreachable');
 
-    const agent = new KaambaanAgent({
+    const agent = new SuperpipelineAgent({
       baseUrl: 'https://api.test',
       boardId,
       token: 'kbn_deadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef',
       fetch: fetcher,
     });
 
-    await expect(agent.claim()).rejects.toThrow(KaambaanApiError);
+    await expect(agent.claim()).rejects.toThrow(SuperpipelineApiError);
     await expect(agent.claim()).rejects.toMatchObject({ status: 401 });
   });
 
@@ -115,18 +115,18 @@ describe('agent SDK — kbn_ bearer auth', () => {
     await addCard('tnt_sdk4', boardId, 'Not yours');
     const { token } = await connectAgent('tnt_other', ['research']);
 
-    const agent = new KaambaanAgent({ baseUrl: 'https://api.test', boardId, token, fetch: fetcher });
+    const agent = new SuperpipelineAgent({ baseUrl: 'https://api.test', boardId, token, fetch: fetcher });
     // Same board id, different tenant → a different Board DO, which has no such card.
     expect(await agent.claim()).toBeNull();
   });
 
   it('rejects a malformed token at construction', () => {
     const config = { baseUrl: 'https://api.test', boardId: 'brd_1', fetch: fetcher };
-    expect(() => new KaambaanAgent({ ...config, token: 'not-a-kaambaan-token' })).toThrow(/kbn_/);
+    expect(() => new SuperpipelineAgent({ ...config, token: 'not-a-superpipeline-token' })).toThrow(/kbn_/);
   });
 
   it('requires either a token or (dev) a tenant id', () => {
-    expect(() => new KaambaanAgent({ baseUrl: 'https://api.test', boardId: 'brd_1', fetch: fetcher })).toThrow(/token/);
+    expect(() => new SuperpipelineAgent({ baseUrl: 'https://api.test', boardId: 'brd_1', fetch: fetcher })).toThrow(/token/);
   });
 });
 
@@ -137,7 +137,7 @@ describe('agent SDK — dev headers (local only)', () => {
     await addCard(tenantId, boardId, 'Dev-mode work');
 
     const recorder = recordingFetcher();
-    const agent = new KaambaanAgent({
+    const agent = new SuperpipelineAgent({
       baseUrl: 'https://api.test',
       boardId,
       tenantId,

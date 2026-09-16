@@ -9,7 +9,7 @@ import { upsertUserByEmail, ensurePersonalWorkspace } from '../db/catalog';
 import { signSession, sessionSetCookie, sessionClearCookie, SESSION_TTL_MS } from './session';
 import { resolveUser } from './resolve';
 
-const STATE_COOKIE = 'kaambaan_oauth_state';
+const STATE_COOKIE = 'superpipeline_oauth_state';
 
 function readCookie(request: Request, name: string): string | null {
   const cookie = request.headers.get('Cookie');

@@ -3,7 +3,7 @@
  *
  * `memberships.role` has been CHECK-constrained to owner/admin/member/viewer since migration
  * 0001, written exactly once as `'owner'` by `ensurePersonalWorkspace`, and read by zero queries.
- * Membership is the entire human authorization model in kaambaan, and there was no invite, no
+ * Membership is the entire human authorization model in superpipeline, and there was no invite, no
  * member list and no role change — so a workspace was permanently one person, and the four roles
  * were a vocabulary describing nothing.
  *
@@ -98,7 +98,7 @@ export async function ownerCount(db: D1Database, tenantId: string): Promise<numb
 /**
  * Add someone to a workspace by email.
  *
- * No mail is sent and none needs to be: kaambaan's users table is keyed on the email GitHub gives
+ * No mail is sent and none needs to be: superpipeline's users table is keyed on the email GitHub gives
  * at sign-in, so recording the membership first means the invitee simply signs in and finds the
  * workspace waiting — `primaryTenant` orders by `created_at`, and a membership made before their
  * personal workspace exists is the one they land in.

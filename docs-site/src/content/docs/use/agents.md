@@ -13,7 +13,7 @@ move, the diagnosis is a string comparison anybody can run by hand. A similarity
 the same failure unfalsifiable.
 
 The practical consequence: **`code review`, `code-review` and `Code Review` are three different
-capabilities.** kaambaan normalises what you type to one spelling on the way in, at every place a
+capabilities.** superpipeline normalises what you type to one spelling on the way in, at every place a
 capability can be written, so you mostly do not have to think about it — but two agents typed
 into two different products will not match unless the spelling agrees.
 
@@ -70,9 +70,9 @@ The count is per board.
 ## Linked agents
 
 If your workspace is linked to an [AgentPod](https://docs.agentpod.dev) fleet, an agent can be added
-straight from it: kaambaan reads the agents you may dispatch and links one in a single step. A
+straight from it: superpipeline reads the agents you may dispatch and links one in a single step. A
 linked agent authenticates with fleet-issued tokens and is minted no token of its own — one less
 secret to store.
 
-**Its capabilities are still kaambaan's.** They are chosen here and never carried in a
+**Its capabilities are still superpipeline's.** They are chosen here and never carried in a
 cross-plane token, because the same word means different things in the two systems.

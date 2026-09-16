@@ -6,7 +6,7 @@
    * list had no behaviour that changed between three boards and three hundred — a local database
    * with 305 test boards rendered all 305 as one unbroken column — so it moved into a searchable
    * switcher in the board header. The agent list moved to Workspace, and its green dot was deleted
-   * outright: it meant "this agent has a capability" and read as "online", a liveness kaambaan
+   * outright: it meant "this agent has a capability" and read as "online", a liveness superpipeline
    * cannot know since `agents.status` was dropped in migration 0005 for never being written.
    *
    * Below 900px this is not rendered at all; `BottomNav` takes over. One breakpoint, mobile-first,
@@ -40,7 +40,7 @@
 </script>
 
 <nav class="border-border bg-surface hidden w-[84px] shrink-0 flex-col items-center gap-0.5 border-r px-1.5 py-3 min-[900px]:flex" aria-label="Main">
-  <a href={boardId ? `/b/${boardId}` : '/'} class="wordmark mb-3 text-center text-[13px] leading-tight" aria-label="Kaambaan home">
+  <a href={boardId ? `/b/${boardId}` : '/'} class="wordmark mb-3 text-center text-[13px] leading-tight" aria-label="Superpipeline home">
     kaam<span style="color:var(--marigold)">→</span><br />baan
   </a>
 

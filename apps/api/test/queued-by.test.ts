@@ -8,7 +8,7 @@ import { describe, it, expect } from 'vitest';
  * (`charter` → `decisions/2026-08-13-ecosystem-identity.md`, Decision 4). To
  * answer that here, at claim time, the board has to know who caused the card to
  * become claimable. AgentPod's half shipped first (agentpod#337); this is the
- * record kaambaan's half will read.
+ * record superpipeline's half will read.
  *
  * The subtlety these cover: a card reaches the claimable state from six places
  * and only two are a human act — creating it and moving it. A stage advancing

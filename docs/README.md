@@ -1,6 +1,6 @@
-# Kaambaan — Documentation
+# Superpipeline — Documentation
 
-> **Kaambaan** is a multi-tenant Kanban board that orchestrates **external AI agents**.
+> **Superpipeline** is a multi-tenant Kanban board that orchestrates **external AI agents**.
 > The board is the control plane; the agents bring their own runtime. Work flows
 > through pipeline stages with human approval gates.
 >
@@ -15,7 +15,7 @@ does not exist. Then [04](./04-agent-contract.md) for the loop and the elicitati
 
 Two things to know before you design anything:
 
-- **`@kaambaan/agent-sdk` and `@kaambaan/contract` are `private: true` and unpublished.** Nothing
+- **`@superpipeline/agent-sdk` and `@superpipeline/contract` are `private: true` and unpublished.** Nothing
   outside this repo can depend on them. You will be making HTTP calls yourself.
 - **`/mcp` has no OAuth authorization server.** It is a Resource Server *shell* over a bearer token.
   Configure your client with a `kbn_` token; do not build an authorization flow.
@@ -43,7 +43,7 @@ sentence in a 📐 Spec is an *intention*, not a promise about the running syste
 
 | # | Doc | Kind | What it answers | Drift status |
 |---|-----|:----:|-----------------|--------------|
-| 00 | [Vision & Principles](./00-vision-and-principles.md) | 🗓 | Why Kaambaan exists, what it is and isn't, the 10 principles | Stable — a statement of intent, not of state |
+| 00 | [Vision & Principles](./00-vision-and-principles.md) | 🗓 | Why Superpipeline exists, what it is and isn't, the 10 principles | Stable — a statement of intent, not of state |
 | 01 | [Domain Model & Glossary](./01-domain-model-and-glossary.md) | 📐 | The nouns: Tenant, Board, Card, Run, Agent, Activity, Signal, Elicitation, Reference | ⚠️ **Task is not implemented** — the A2A state lives on the Card. Flagged inline |
 | 02 | [Architecture](./02-architecture.md) | 📐 | Cloudflare topology, multi-tenancy, auth | ⚠️ Only D1 + the Board DO + ASSETS are bound. R2/KV/Queues/Workflows are intent. Auth table is now ✅ accurate |
 | 03 | [Card Lifecycle & Pipeline](./03-card-lifecycle.md) | 📐 | The A2A state machine, stages, gates, handoff, rework | Transition table ✅ corrected; ack-SLA / stale / stage-timeout marked ⚠️ not built |
@@ -86,7 +86,7 @@ every PR. Both must pass before merge.
 
 ## The one-paragraph design
 
-Kaambaan's contract is anchored on the **A2A protocol** (Linux Foundation) — its `Task`
+Superpipeline's contract is anchored on the **A2A protocol** (Linux Foundation) — its `Task`
 object and state machine model "dispatch long-running work to a remote agent, stream
 artifacts, pause for human input." On top of that spine we layer **Linear's** accountability
 and UX model (delegate-not-owner, an append-only typed activity log, signals for
@@ -101,5 +101,5 @@ External resources (GitHub issues/PRs, repos, docs) are first-class **references
 Design ideas adapted from [Linear's agent platform](https://linear.app/developers/aig),
 [Nous Research's Hermes kanban](https://hermes-agent.nousresearch.com/docs/), the
 [A2A protocol](https://a2a-protocol.org), [MCP](https://modelcontextprotocol.io), and
-[AG-UI](https://docs.ag-ui.com). See the team memory `kaambaan-research-sources` for the
+[AG-UI](https://docs.ag-ui.com). See the team memory `superpipeline-research-sources` for the
 full reference list.

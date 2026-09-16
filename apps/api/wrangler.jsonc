@@ -1,6 +1,6 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
-  "name": "kaambaan-api",
+  "name": "superpipeline-api",
   "main": "src/index.ts",
   "compatibility_date": "2025-11-01",
   "compatibility_flags": ["nodejs_compat"],
@@ -29,7 +29,7 @@
     // A card queued WITHOUT an authorising token parks in input-required and
     // says why. That is why the web app now carries a hub token (see
     // apps/web/src/lib/hub-token.ts): before it did, enabling this would have
-    // made the board unusable through its own UI (kaambaan#43).
+    // made the board unusable through its own UI (superpipeline#43).
     "ENFORCE_CONTROL_PAIR": "true"
   },
   // The push delivery queue drains here, on a schedule.
@@ -45,17 +45,24 @@
   "d1_databases": [
     {
       "binding": "DB",
-      "database_name": "kaambaan-catalog",
+      "database_name": "superpipeline-catalog",
       "database_id": "62bba503-d61c-4318-8c30-a74f1ffa71ae",
       "migrations_dir": "migrations"
     }
+  ],
+  // The hostnames this Worker answers on, declared here rather than clicked
+  // into the dashboard — the rename made the dashboard's copy the only record
+  // of which Worker owned which host, and that record does not survive a
+  // script being replaced.
+  "routes": [
+    { "pattern": "app.superpipeline.dev", "custom_domain": true }
   ],
   "durable_objects": {
     "bindings": [{ "name": "BOARD_DO", "class_name": "BoardDO" }]
   },
   "migrations": [{ "tag": "v1", "new_sqlite_classes": ["BoardDO"] }],
   // Serve the web SPA same-origin: static files are served directly; non-file routes fall back to
-  // index.html, and the Worker handles /v1, /auth, /mcp, /health (build: `pnpm --filter @kaambaan/web build`).
+  // index.html, and the Worker handles /v1, /auth, /mcp, /health (build: `pnpm --filter @superpipeline/web build`).
   "assets": {
     "directory": "../web/build",
     "binding": "ASSETS",

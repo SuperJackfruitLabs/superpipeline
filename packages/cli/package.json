@@ -1,5 +1,5 @@
 {
-  "name": "@kaambaan/cli",
+  "name": "@superpipeline/cli",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -11,7 +11,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@kaambaan/contract": "workspace:*"
+    "@superpipeline/contract": "workspace:*"
   },
   "devDependencies": {
     "@types/node": "^22.20.2",

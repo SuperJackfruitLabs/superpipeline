@@ -9,7 +9,7 @@ export interface UserRecord {
   name: string | null;
 }
 /**
- * A tenant is kaambaan's LOCAL isolation boundary, not an authority on who anyone is. The
+ * A tenant is superpipeline's LOCAL isolation boundary, not an authority on who anyone is. The
  * external pair optionally records that the same real organisation is also known elsewhere:
  * `externalSource` names the system, `externalId` is its (opaque) id. Both or neither — see
  * `setTenantExternalMapping` and migrations/0002_tenant_external_mapping.sql.
@@ -22,7 +22,7 @@ export interface TenantRecord {
   externalSource: string | null;
 }
 
-/** Where a tenant is also known, outside kaambaan. */
+/** Where a tenant is also known, outside superpipeline. */
 export interface TenantExternalMapping {
   externalId: string;
   externalSource: string;
@@ -37,7 +37,7 @@ export class ExternalMappingError extends Error {
 }
 
 /**
- * A registered kaambaan agent — always addressable by its native `agt_…` id and `kbn_` bearer
+ * A registered superpipeline agent — always addressable by its native `agt_…` id and `kbn_` bearer
  * token, which are permanent regardless of the external pair below.
  *
  * The external pair optionally records that this same agent is also known as a suite principal
@@ -69,7 +69,7 @@ export interface AgentRecord {
   tokenIds: string[];
 }
 
-/** Where an agent is also known, as a suite principal outside kaambaan. */
+/** Where an agent is also known, as a suite principal outside superpipeline. */
 export interface AgentExternalMapping {
   externalId: string;
   externalSource: string;
@@ -98,7 +98,7 @@ export async function ensurePersonalWorkspace(db: D1Database, userId: string, di
   const existing = await primaryTenant(db, userId);
   if (existing) return existing;
   const id = newId('tnt');
-  // No external mapping: a personal workspace answers to nothing outside kaambaan, and that is a
+  // No external mapping: a personal workspace answers to nothing outside superpipeline, and that is a
   // complete tenant. A mapping is recorded later, by whoever links this boundary to an org.
   const tenant: TenantRecord = {
     id,
@@ -141,7 +141,7 @@ export async function tenantById(db: D1Database, tenantId: string): Promise<Tena
 }
 
 /**
- * Record (or clear, with `null`) where this tenant is also known outside kaambaan.
+ * Record (or clear, with `null`) where this tenant is also known outside superpipeline.
  *
  * The pair is all-or-nothing and the database enforces it (`tenants_external_pair`); this guard
  * exists so the failure names the mistake instead of surfacing as a SQLITE_CONSTRAINT. Recording
@@ -151,14 +151,14 @@ export async function tenantById(db: D1Database, tenantId: string): Promise<Tena
  * **Corrected 2026-08-31.** This used to say "nothing calls this yet", and the whole-branch
  * review found that still true long after it mattered: `resolveHubUser` and `resolveHubAgent`
  * BOTH require `findTenantByExternal(db, 'agentpod', claims.tenant)` to resolve before a
- * hub-issued credential can do anything in kaambaan, and nothing wrote that row — so it existed
+ * hub-issued credential can do anything in superpipeline, and nothing wrote that row — so it existed
  * only where somebody had made it by hand, which is "no SQL at any point" broken at the seam
  * between the two repositories.
  *
  * The one caller is `PATCH /v1/tenant` (index.ts), the deliberate mirror of `PATCH
  * /v1/agents/:id`: a human validates the `fleet_[0-9a-f]{20}` shape and calls this. It changes no
  * existing behaviour on its own — a workspace nobody has linked is exactly the workspace
- * kaambaan has today, and that stays the normal state for a standalone board.
+ * superpipeline has today, and that stays the normal state for a standalone board.
  */
 export async function setTenantExternalMapping(
   db: D1Database,
@@ -184,7 +184,7 @@ export async function createAgent(db: D1Database, tenantId: string, input: { nam
   const id = newId('agt');
   const capabilities = input.capabilities ?? [];
   await db.prepare(`INSERT INTO agents (id, tenant_id, name, capabilities_json) VALUES (?, ?, ?, ?)`).bind(id, tenantId, input.name, JSON.stringify(capabilities)).run();
-  // No external mapping: a freshly registered agent answers to nothing outside kaambaan, and
+  // No external mapping: a freshly registered agent answers to nothing outside superpipeline, and
   // that is a complete agent. A mapping is recorded later, by whoever links it to a principal.
   // No tokens either — this function mints none; the REST route mints one right after.
   return { id, tenantId, name: input.name, capabilities, iconUrl: null, concurrency: 1, externalId: null, externalSource: null, tokenIds: [] };
@@ -241,14 +241,14 @@ export async function updateAgent(
 
 /**
  * Record (or clear, with `null`) where this agent is also known, as a suite principal, outside
- * kaambaan. Mirrors `setTenantExternalMapping` exactly — same all-or-nothing guard, same
+ * superpipeline. Mirrors `setTenantExternalMapping` exactly — same all-or-nothing guard, same
  * database-enforced CHECK (`agents_external_pair`, migration 0003) backing it up.
  *
  * **Corrected 2026-08-31.** This used to say "nothing calls this yet". The one caller is
  * `PATCH /v1/agents/:id` (index.ts): a human validates the `prn_[0-9a-f]{20}` shape and calls
  * this. It is what lets `resolveHubAgent` turn an agent-kind hub token into a local agent — until
  * a mapping is recorded, there is nothing for that resolver to find. It changes no existing
- * behaviour on its own: an agent nobody has linked is exactly the agent kaambaan has today.
+ * behaviour on its own: an agent nobody has linked is exactly the agent superpipeline has today.
  *
  * **Tenant-scoped, like `revokeAgentToken`.** `agents.id` is a bare primary key with no
  * per-tenant uniqueness (a previous review found that load-bearing for `revokeAgentToken`'s own
@@ -282,8 +282,8 @@ export async function setAgentExternalMapping(
  * Resolve a suite principal id back to the local agent it names.
  *
  * The reverse of `setAgentExternalMapping`: given the system and id an outside plane knows this
- * agent by, find kaambaan's own row for it. `null` for "no local agent maps to that principal" —
- * the ordinary case for every principal that isn't one of kaambaan's agents.
+ * agent by, find superpipeline's own row for it. `null` for "no local agent maps to that principal" —
+ * the ordinary case for every principal that isn't one of superpipeline's agents.
  */
 export async function findAgentByExternal(
   db: D1Database,
@@ -471,7 +471,7 @@ export async function agentBelongsToTenant(db: D1Database, tenantId: string, age
 }
 
 /**
- * The kaambaan tenant that a foreign system's id maps onto.
+ * The superpipeline tenant that a foreign system's id maps onto.
  *
  * Migration 0002 added `external_source` + `external_id` so the same real
  * organisation can be recognised across two products that each keep their own

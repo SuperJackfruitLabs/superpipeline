@@ -15,7 +15,7 @@
  * both be visible wherever an operator reasons about staffing — a diagnostic counting effective
  * holders while showing declared ones is a diagnostic that lies.
  */
-import { capabilityTag, capabilityTags } from '@kaambaan/contract';
+import { capabilityTag, capabilityTags } from '@superpipeline/contract';
 
 export interface Implication {
   from: string;

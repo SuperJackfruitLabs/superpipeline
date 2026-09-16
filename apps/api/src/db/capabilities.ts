@@ -16,7 +16,7 @@
  * `externalId`/`externalSource` pair is how one is ALSO known in OASF — the same borrowing
  * pattern `tenants` and `agents` already use, with the same all-or-nothing rule.
  */
-import { capabilityTag } from '@kaambaan/contract';
+import { capabilityTag } from '@superpipeline/contract';
 import { newId } from '../ids';
 import { ExternalMappingError } from './catalog';
 import { listImplications } from './implications';

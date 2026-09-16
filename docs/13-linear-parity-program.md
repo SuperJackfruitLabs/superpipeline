@@ -1,6 +1,6 @@
 # 13 — Linear Parity Program
 
-How Kaambaan reaches **feature parity with Linear** — the issue tracker whose
+How Superpipeline reaches **feature parity with Linear** — the issue tracker whose
 interaction model specs [00](./00-vision-and-principles.md) and
 [11](./11-prior-art-and-market-scan.md) already borrow. This doc is the program
 plan for the work *after* [10 — Roadmap](./10-roadmap.md)'s P0→P7 (we shipped
@@ -14,12 +14,12 @@ phase numbering at **P15**.
 > **Scope decision (recorded).** The owner chose **literal full parity** —
 > including the contested planning machinery (cycles, projects, roadmaps,
 > insights, SSO) — accepting a **~9–15 month** envelope and that a few items get
-> **adapted or stubbed** where they fight Kaambaan's thesis. This doc delivers
+> **adapted or stubbed** where they fight Superpipeline's thesis. This doc delivers
 > that plan *and* marks every collision honestly.
 
 ## 0. The honesty section — parity vs. the locked vision
 
-Kaambaan is **board-first and agent-first**, not an issue tracker that agents
+Superpipeline is **board-first and agent-first**, not an issue tracker that agents
 visit. [00](./00-vision-and-principles.md) locks three things that literal Linear
 parity presses on. We do **not** silently override them; each is an `⚠️ OPEN`
 decision below, and where parity wins, the vision doc must be amended in the same
@@ -36,13 +36,13 @@ strengthens the agent thesis** (🟡). The genuinely contested items are marked 
 
 ## 1. Two foundational decisions — resolve before P15
 
-Almost every Linear construct hangs off two containers Kaambaan doesn't yet have.
+Almost every Linear construct hangs off two containers Superpipeline doesn't yet have.
 Settle these first or we rebuild twice.
 
 ### ⚠️ OPEN — D1: the Team container
 
 Linear's top level is a **Team** (owns its issues, workflow states, cycles).
-Kaambaan's nearest noun ([01](./01-domain-model-and-glossary.md)) is a **Board**,
+Superpipeline's nearest noun ([01](./01-domain-model-and-glossary.md)) is a **Board**,
 but a Board is a *pipeline*, not a namespace.
 
 - **Option A — Board = Team.** Cheapest. A Board grows team-like attributes
@@ -56,7 +56,7 @@ but a Board is a *pipeline*, not a namespace.
 ### ⚠️ OPEN — D2: status axis vs. pipeline-stage axis
 
 Linear issues carry a **workflow status** (5 categories: backlog / unstarted /
-started / completed / canceled) a *human* drives. Kaambaan cards carry a
+started / completed / canceled) a *human* drives. Superpipeline cards carry a
 **pipeline stage** (an agent work-routing slot) plus an A2A **task-state**
 ([03](./03-card-lifecycle.md)) that is *derived*. Parity needs a human-facing
 status; the question is whether it's a **second axis** or a **projection**.
@@ -71,11 +71,11 @@ status; the question is whether it's a **second axis** or a **projection**.
   explicit human status *override* that is itself a logged activity (so derivation
   + override are both visible). Resolve in **P19**.
 
-## 2. The Linear surface → Kaambaan map
+## 2. The Linear surface → Superpipeline map
 
 Fit legend: ✅ clean borrow · 🟡 reframe for agents · 🔴 fights a locked non-goal.
 
-| Area | Linear feature | Kaambaan today | Fit | Phase |
+| Area | Linear feature | Superpipeline today | Fit | Phase |
 |---|---|---|---|---|
 | **Card depth** | Sub-issues + progress rollup | ✗ | 🟡 (sub-card pipeline semantics — see P15) | P15 |
 | | Relations (blocks/blocked-by/related/duplicate) | ✗ (only *external* refs) | ✅ | P15 |
@@ -172,7 +172,7 @@ cycles at all, or alias them to time-boxed views?*
 artifacts; treat as polish.
 
 **P24 — Insights.** 🟡 **Reframe, don't copy.** Linear shows velocity/cycle-time;
-Kaambaan's native equivalents are **cost-per-card, success/failure rate,
+Superpipeline's native equivalents are **cost-per-card, success/failure rate,
 time-in-stage, agent throughput, gate-rejection rate** — we already meter cost
 per activity ([07 §6](./07-realtime-and-ui.md)). This is parity *and* a
 differentiator ([11 §5](./11-prior-art-and-market-scan.md)).

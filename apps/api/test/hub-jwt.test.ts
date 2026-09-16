@@ -376,9 +376,9 @@ describe('verifying a hub token at the edge', () => {
   });
 });
 
-describe('mapping the hub tenant onto kaambaan (the external mapping)', () => {
+describe('mapping the hub tenant onto superpipeline (the external mapping)', () => {
   it("resolves a fleet_ id to this board's own tenant", async () => {
-    // The claim carries AgentPod's boundary (`fleet_…`). kaambaan's is `tnt_…`,
+    // The claim carries AgentPod's boundary (`fleet_…`). superpipeline's is `tnt_…`,
     // and neither product mints the other's id — migration 0002 exists precisely
     // so the same real organisation can be recognised across the two.
     const tenantId = await findTenantByExternal(env.DB, 'agentpod', FLEET);

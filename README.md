@@ -1,4 +1,4 @@
-# Kaambaan
+# Superpipeline
 
 A multi-tenant Kanban board that orchestrates **external AI agents** — running anywhere, under
 any harness (Claude Code, Codex, OpenCode, Cloudflare Agents) — through pipeline stages with
@@ -8,7 +8,7 @@ human approval gates. The board is the control plane; agents bring their own run
 
 ## Status
 
-The app is at [app.kaambaan.dev](https://app.kaambaan.dev); [kaambaan.dev](https://kaambaan.dev) is the public page. P0→P14 have shipped (tagged
+The app is at [app.superpipeline.dev](https://app.superpipeline.dev); [superpipeline.dev](https://superpipeline.dev) is the public page. P0→P14 have shipped (tagged
 [v0.0.1 "First Flight"](./CHANGELOG.md)); [docs/10-roadmap.md](./docs/10-roadmap.md) records the
 phases and [docs/13](./docs/13-linear-parity-program.md) plans what comes after.
 
@@ -39,10 +39,10 @@ corepack enable
 pnpm install
 pnpm typecheck                              # type-check all four packages
 pnpm test                                   # unit + Worker tests (contract + api only)
-pnpm --filter @kaambaan/api dev:setup       # migrate + seed the local D1 (needed once, before dev)
-pnpm --filter @kaambaan/api dev             # Worker on :8787, with DEV_AUTH on
-pnpm --filter @kaambaan/web dev             # Vite on :5173, proxying /v1 /auth /mcp to the Worker
-pnpm --filter @kaambaan/web e2e             # Playwright; boots both servers itself
+pnpm --filter @superpipeline/api dev:setup       # migrate + seed the local D1 (needed once, before dev)
+pnpm --filter @superpipeline/api dev             # Worker on :8787, with DEV_AUTH on
+pnpm --filter @superpipeline/web dev             # Vite on :5173, proxying /v1 /auth /mcp to the Worker
+pnpm --filter @superpipeline/web e2e             # Playwright; boots both servers itself
 ```
 
 `dev`, `dev:setup` and `e2e` exist only on the individual packages — there is no root script for

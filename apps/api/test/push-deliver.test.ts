@@ -16,7 +16,7 @@ describe('signAndSend', () => {
     expect(out.ok).toBe(true);
     expect(out.status).toBe(200);
     expect(calls[0]!.url).toBe('https://agent.example/hook');
-    const sig = calls[0]!.headers['X-Kaambaan-Signature']!;
+    const sig = calls[0]!.headers['X-Superpipeline-Signature']!;
     expect(sig).toMatch(/^sha256=[0-9a-f]{64}$/);
     // The same HMAC scheme the receiver verifies with.
     expect(await verifyGithubSignature('s3cret', body, sig)).toBe(true);

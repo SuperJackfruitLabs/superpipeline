@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { setAgentPrincipal, setWorkspaceFleet, getWorkspace, revokeAgentToken, getAgents, getHubPrincipals, BOARD_TEMPLATES } from './api';
-import { capabilityTag } from '@kaambaan/contract';
+import { capabilityTag } from '@superpipeline/contract';
 import { forgetHubToken } from './hub-token';
 
 /**
@@ -155,7 +155,7 @@ describe('getAgents', () => {
  * The agent picker's source of truth.
  *
  * It used to ask the hub's admin list with `credentials: 'include'`, which could
- * not work from `kaambaan.dev` — the hub's cookie is `SameSite=Lax` on another
+ * not work from `superpipeline.dev` — the hub's cookie is `SameSite=Lax` on another
  * registrable domain — and would not have worked with a token either, since the
  * hub's admin middleware does not accept one. It now asks the endpoint built for
  * the question, and carries the token as a Bearer.
@@ -193,7 +193,7 @@ describe('getHubPrincipals', () => {
   });
 
   it('answers null without touching the hub when there is no token', async () => {
-    // A standalone kaambaan makes no cross-origin request at all: with nothing
+    // A standalone superpipeline makes no cross-origin request at all: with nothing
     // to send, the answer is the same and the request is pure noise.
     const spy = stubFetch(null, new Response(JSON.stringify({ agents: [] }), { status: 200 }));
 

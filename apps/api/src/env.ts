@@ -11,7 +11,7 @@ export interface Env {
   /** GitHub OAuth app credentials (secret) for human sign-in. */
   GITHUB_CLIENT_ID?: string;
   GITHUB_CLIENT_SECRET?: string;
-  /** Public origin of the app (OAuth redirect + post-login redirect), e.g. https://kaambaan.example.com. */
+  /** Public origin of the app (OAuth redirect + post-login redirect), e.g. https://superpipeline.example.com. */
   APP_URL?: string;
   /**
    * Base URL of the suite's token issuer, e.g. https://hub.agentpod.dev
@@ -26,7 +26,7 @@ export interface Env {
    * This plane's key in the hub's OAuth client registry (`HUB_OAUTH_CLIENTS` on the hub), used by
    * the cross-domain token handoff in `auth/hub-oauth.ts`.
    *
-   * Optional, defaulting to `kaambaan`, because it is not a credential and confers nothing: the
+   * Optional, defaulting to `superpipeline`, because it is not a credential and confers nothing: the
    * hub decides whether it knows this client, and one it does not know gets a rendered 400 rather
    * than a code. Only a deployment registered under another name needs to set it.
    */

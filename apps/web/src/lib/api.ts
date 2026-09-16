@@ -1,5 +1,5 @@
 /**
- * Thin client for the Kaambaan API (apps/api). The deployed app authenticates with a session cookie
+ * Thin client for the Superpipeline API (apps/api). The deployed app authenticates with a session cookie
  * (sent automatically, same-origin); the `X-Tenant-Id` header is a no-op there and only enables the
  * local dev workspace (when the server runs with DEV_AUTH on).
  */
@@ -536,7 +536,7 @@ export interface HubPrincipal {
  * The agents this operator may dispatch, from the hub.
  *
  * **Changed from `GET /api/admin/principals` with `credentials: 'include'`,
- * which could not work from `kaambaan.dev` and never did.** The hub's session
+ * which could not work from `superpipeline.dev` and never did.** The hub's session
  * cookie is `SameSite=Lax` on another registrable domain, so the browser never
  * attached it; and the hub's admin middleware does not accept a hub-issued
  * token either, so holding one would not have rescued it. `GET
@@ -544,10 +544,10 @@ export interface HubPrincipal {
  * token, no admin role, and it answers with the agents the token's own
  * `mayDispatch` names rather than every principal in the fleet.
  *
- * **Null is an ordinary result and must stay one** — a standalone kaambaan, an
+ * **Null is an ordinary result and must stay one** — a standalone superpipeline, an
  * operator who has not connected, an expired token, a hub that is down. The
- * caller shows nothing rather than an error, because a kaambaan with no hub is
- * not a broken kaambaan (migration 0003).
+ * caller shows nothing rather than an error, because a superpipeline with no hub is
+ * not a broken superpipeline (migration 0003).
  */
 export async function getHubPrincipals(): Promise<HubPrincipal[] | null> {
   // Asked first so a board with no authority makes no cross-origin request at

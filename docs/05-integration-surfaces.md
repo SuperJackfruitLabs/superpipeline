@@ -45,7 +45,7 @@ activities are the immutable record; `usage` feeds per-tenant metering ([07](./0
 
 ## 2. MCP server surface
 
-Kaambaan exposes a **remote MCP server over Streamable HTTP** at `/mcp`, so any MCP-capable
+Superpipeline exposes a **remote MCP server over Streamable HTTP** at `/mcp`, so any MCP-capable
 harness becomes a board worker.
 
 ### Auth — what `/mcp` actually is (read this before building against it)
@@ -85,16 +85,16 @@ that flow in the present tense. None of it was ever built.
 
 | Tool | Arguments beyond `boardId` | REST equivalent |
 |------|---|---|
-| `kaambaan_list_work` | *(none — no `boardId` either)* | **none** — MCP-only; `GET /v1/boards` is human-auth and has no `readyForYou` |
-| `kaambaan_claim_card` | `maxConcurrency?` | `POST /v1/boards/:id/claims` *(REST also takes `profileKey`)* |
-| `kaambaan_get_card` | `cardId` | **none** — there is no `GET …/cards/:cardId` |
-| `kaambaan_add_reference` | `cardId`, `url`, `provider?`, `sourceType?`, … | `PUT …/cards/:cardId/references` *(human-auth — MCP is the only agent path)* |
-| `kaambaan_heartbeat` | `runId`, `leaseEpoch` | `POST …/runs/:runId/heartbeat` |
-| `kaambaan_post_activity` | `runId`, `leaseEpoch`, `type`, `body?`, `parameter?`, `signal?`, `usage?` | `POST …/runs/:runId/activities` |
-| `kaambaan_submit_for_review` | `runId`, `leaseEpoch`, `output?` | `POST …/runs/:runId/`**`submit`** *(the verb is `submit`, not `submit_for_review`)* |
-| `kaambaan_complete` | `runId`, `leaseEpoch`, `handoff?` | `POST …/runs/:runId/complete` |
-| `kaambaan_block` / `kaambaan_fail` | `runId`, `leaseEpoch`, `reason` *(required, non-empty)* | `POST …/runs/:runId/{block,fail}` *(REST defaults `reason` to `''`)* |
-| `kaambaan_release` | `runId`, `leaseEpoch`, `reason?` | `POST …/runs/:runId/release` *(REST drops `reason`)* |
+| `superpipeline_list_work` | *(none — no `boardId` either)* | **none** — MCP-only; `GET /v1/boards` is human-auth and has no `readyForYou` |
+| `superpipeline_claim_card` | `maxConcurrency?` | `POST /v1/boards/:id/claims` *(REST also takes `profileKey`)* |
+| `superpipeline_get_card` | `cardId` | **none** — there is no `GET …/cards/:cardId` |
+| `superpipeline_add_reference` | `cardId`, `url`, `provider?`, `sourceType?`, … | `PUT …/cards/:cardId/references` *(human-auth — MCP is the only agent path)* |
+| `superpipeline_heartbeat` | `runId`, `leaseEpoch` | `POST …/runs/:runId/heartbeat` |
+| `superpipeline_post_activity` | `runId`, `leaseEpoch`, `type`, `body?`, `parameter?`, `signal?`, `usage?` | `POST …/runs/:runId/activities` |
+| `superpipeline_submit_for_review` | `runId`, `leaseEpoch`, `output?` | `POST …/runs/:runId/`**`submit`** *(the verb is `submit`, not `submit_for_review`)* |
+| `superpipeline_complete` | `runId`, `leaseEpoch`, `handoff?` | `POST …/runs/:runId/complete` |
+| `superpipeline_block` / `superpipeline_fail` | `runId`, `leaseEpoch`, `reason` *(required, non-empty)* | `POST …/runs/:runId/{block,fail}` *(REST defaults `reason` to `''`)* |
+| `superpipeline_release` | `runId`, `leaseEpoch`, `reason?` | `POST …/runs/:runId/release` *(REST drops `reason`)* |
 
 `{tenant, agentId, capabilities}` always come from the token, never from tool arguments.
 
@@ -110,7 +110,7 @@ that flow in the present tense. None of it was ever built.
 - **⚠️ OPEN — MCP `elicitation/create`**: surfacing a gate as a native MCP elicitation (restricted
   flat schema, `accept / decline / cancel` tri-state, see
   [08](./08-reliability-and-durable-execution.md)) is **not built**. Today a question travels as an
-  `elicitation` activity and the answer is collected off the run read — a kaambaan-level mechanism,
+  `elicitation` activity and the answer is collected off the run read — a superpipeline-level mechanism,
   not an MCP protocol one.
 - We expose **tools only** (no MCP resources/prompts) — matches what Claude Code / Copilot
   agents consume. **⚠️ OPEN**: expose board/card snapshots as MCP *resources* later.
@@ -127,18 +127,18 @@ for the verbs it covers. It does **not** assert that the surfaces are equal in e
 not (see the run-read asymmetry above).
 
 The tool list and the auth story are above, and are not repeated here. There is no
-`kaambaan_request_input` tool: an agent raises an elicitation by posting an `elicitation` **activity**
-through `kaambaan_post_activity`, which is also how it works over REST.
+`superpipeline_request_input` tool: an agent raises an elicitation by posting an `elicitation` **activity**
+through `superpipeline_post_activity`, which is also how it works over REST.
 
 **Connect Claude Code.** Against a **deployed** board, the `Authorization` header is your `kbn_`
 token (`"Bearer kbn_…"`, minted by "Connect an agent"). The example below uses the **dev bearer**,
-which works only against a **local** worker started with `pnpm --filter @kaambaan/api dev` — see
+which works only against a **local** worker started with `pnpm --filter @superpipeline/api dev` — see
 [`apps/api/examples/claude-code.mcp.json`](../apps/api/examples/claude-code.mcp.json):
 
 ```jsonc
 {
   "mcpServers": {
-    "kaambaan": {
+    "superpipeline": {
       "type": "http",
       "url": "http://localhost:8787/mcp",
       "headers": { "Authorization": "Bearer tnt_dev:agt_research:research,publish" }
@@ -172,12 +172,12 @@ An unknown `:action` on a run returns `404 {"error":"unknown run action: …"}`;
 unmatched under `/v1/boards` returns `405 {"error":"method not allowed"}`.
 
 - **`addReference` is not on the agent REST surface.** The route is behind a session cookie, so an
-  agent cannot call it over REST at all — `kaambaan_add_reference` over MCP is the only agent path to
+  agent cannot call it over REST at all — `superpipeline_add_reference` over MCP is the only agent path to
   it. [04 §3](./04-agent-contract.md) lists `addReference` as an agent verb; over REST it is not one.
 - **There is no `discover` verb.** `GET /.well-known/agent-card.json` **does not exist** — nothing
   serves an AgentCard. `GET /v1/boards` exists but is human-auth, so an agent token cannot list
   boards over REST either. Agents find work by calling `claim` (capability-routed), or over MCP with
-  `kaambaan_list_work`, which is the only board-discovery surface an agent credential can reach.
+  `superpipeline_list_work`, which is the only board-discovery surface an agent credential can reach.
 - **⚠️ There is no `Idempotency-Key` handling.** No route reads such a header and nothing de-dupes a
   replayed verb; the `idempotencyKey` field in the contract schemas is accepted and ignored. Earlier
   drafts (and [08 §5](./08-reliability-and-durable-execution.md)) describe this as shipped — it is
@@ -193,11 +193,11 @@ and the agent's registered capabilities, so the client never asserts them. The d
 `X-Tenant-Id` / `X-Agent-Id` headers only work against a server run with `DEV_AUTH=true`
 ([12](./12-deploy.md)).
 
-> **`@kaambaan/agent-sdk` is not a dependency you can take.** It is `private: true`, ships raw
+> **`@superpipeline/agent-sdk` is not a dependency you can take.** It is `private: true`, ships raw
 > TypeScript with no build, and is **not published to npm** — nothing outside this repo can install
 > it. [Its README](../packages/agent-sdk/README.md) is worth reading as a worked example of the loop
 > below, but an external integrator implements these HTTP calls directly. The same is true of
-> `@kaambaan/contract`: the zod schemas are the source of truth *inside* this repo, and a copy you
+> `@superpipeline/contract`: the zod schemas are the source of truth *inside* this repo, and a copy you
 > vendor will not be kept in step with it.
 
 **Error shapes differ by surface**, which is worth knowing before writing a client:
@@ -294,7 +294,7 @@ card becomes **claimable** (created at / advanced into / released or reclaimed b
 capability-owned stage), `notifyWorkAvailable` queues a `work.available` delivery into `push_deliveries`
 for every subscribed config whose `capabilities` match the stage's owner — so an agent is only pinged
 about work it could actually claim. `dispatchPushDeliveries(sender)` drains pending rows, **signs each
-body** (`X-Kaambaan-Signature: sha256=…`, HMAC over the exact bytes — shared with the inbound GitHub
+body** (`X-Superpipeline-Signature: sha256=…`, HMAC over the exact bytes — shared with the inbound GitHub
 verifier, `src/crypto/hmac.ts`) and POSTs it (`src/push/deliver.ts`), marking each sent/failed.
 `POST …/push/dispatch` triggers a drain; `GET …/push/deliveries` inspects the queue. URLs are checked
 against an **SSRF denylist** (`src/push/ssrf.ts` — only public http(s); blocks localhost, loopback,
@@ -356,7 +356,7 @@ fast-follow.
 | Harness | How it connects | Notes |
 |---|---|---|
 | **Claude Code** | Remote **MCP client** in `.mcp.json` (`type:"http"`, `url`, `headers`/`headersHelper`); run headless `claude -p --input-format stream-json --output-format stream-json` | Strongest fit; dynamic per-task auth headers; `normalizeEvents` parses `stream-json` |
-| **OpenAI Codex** | Remote MCP via `experimental_use_rmcp_client=true` + `[mcp_servers.kaambaan]` (`url`, `bearer_token_env_var`); run `codex exec --json` | NDJSON event stream; per-task header injection rougher |
+| **OpenAI Codex** | Remote MCP via `experimental_use_rmcp_client=true` + `[mcp_servers.superpipeline]` (`url`, `bearer_token_env_var`); run `codex exec --json` | NDJSON event stream; per-task header injection rougher |
 | **OpenCode** | Remote MCP in `opencode.json`; **native REST/SSE** via `opencode serve` (`/session`, `/global/event`) | Can drive over REST without MCP at all |
 | **Cloudflare Agents** | Hosts MCP client *and* REST/webhook listener; `addMcpServer(url,{headers})` | The natural webhook/REST front-end + MCP hub for the others |
 | **Any (REST)** | Poll `claim`, post activities/heartbeats, complete | Lowest common denominator; works everywhere |
@@ -367,13 +367,13 @@ copy-paste starting point for operators.
 ## 6. Inbound triggers — many sources, one Task path
 
 Convergent industry pattern (Devin/Factory/Cursor/Copilot): **`@mention` or label/assignment on
-an existing tracker → a task.** Kaambaan models every trigger as an **adapter that funnels into one
+an existing tracker → a task.** Superpipeline models every trigger as an **adapter that funnels into one
 `createCard` path**, attaching the originating resource as a reference + context:
 
 - **API/SDK** — `POST /v1/boards/:id/cards`.
 - **GitHub issue** — issue labeled/assigned → card created, issue attached as a reference
   ([06](./06-external-references.md)).
-- **Slack** — `@kaambaan <task>` → card created in a default board.
+- **Slack** — `@superpipeline <task>` → card created in a default board.
 - **Webhook** — generic inbound.
 - **Schedule** — recurring cards via a Workflow cron.
 
@@ -383,7 +383,7 @@ No source is special-cased; each just produces a card with provenance.
 card and attach the originating resource as a reference (`apps/api/src/board/board-do.ts`). Wired:
 **API** (`POST …/triggers` — the generic inbound path) and **GitHub issue** (`issues.opened` →
 card+reference when `issueTrigger` is enabled via `PUT …/github`). **⚠️ Remaining**: Slack
-(`@kaambaan` — needs the Slack app from P7's notifications gap) and Schedule (a Workflow cron); both
+(`@superpipeline` — needs the Slack app from P7's notifications gap) and Schedule (a Workflow cron); both
 reuse the same funnel, only the adapter differs.
 
 ## 7. Agent profiles (configuration as data)

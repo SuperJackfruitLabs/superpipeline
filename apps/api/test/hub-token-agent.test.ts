@@ -3,22 +3,22 @@
  *
  * `charter → decisions/2026-08-30-an-agent-is-a-principal.md` gives a node the ability to
  * exchange its own credential for a short-lived hub token whose `sub` is a bare `prn_…`
- * principal id and whose `principalKind` is `"agent"`. kaambaan must accept it AS THAT AGENT —
+ * principal id and whose `principalKind` is `"agent"`. superpipeline must accept it AS THAT AGENT —
  * exactly the way `resolveHubUser` already accepts a human-kind token, mirrored here rather
  * than reinvented.
  *
  * Three properties this file exists to protect:
  *
- *   - **Capabilities never come from the claim.** They are kaambaan's own vocabulary
+ *   - **Capabilities never come from the claim.** They are superpipeline's own vocabulary
  *     (`charter → decisions/2026-08-15-a-grant-names-an-agent-per-plane.md` calls putting them
  *     in a cross-plane claim "a trap — the same word, two vocabularies"). The token names a
- *     principal; kaambaan looks up its OWN `agents` row for capabilities, via
+ *     principal; superpipeline looks up its OWN `agents` row for capabilities, via
  *     `findAgentByExternal(db, 'org-plane', sub)`.
- *   - **A `kbn_` token keeps working, unchanged.** It is kaambaan's native agent credential and
+ *   - **A `kbn_` token keeps working, unchanged.** It is superpipeline's native agent credential and
  *     a standalone board — one with no hub in existence — depends on it entirely.
- *   - **The claim's tenant must map onto the SAME kaambaan tenant the agent row names**, the
+ *   - **The claim's tenant must map onto the SAME superpipeline tenant the agent row names**, the
  *     same check `resolveHubUser` performs on the human path (`findTenantByExternal`). A token
- *     minted for one fleet resolving into an agent whose row sits in a different kaambaan tenant
+ *     minted for one fleet resolving into an agent whose row sits in a different superpipeline tenant
  *     is a cross-fleet confusion nothing else on this path would catch.
  */
 import { env } from 'cloudflare:test';
@@ -75,7 +75,7 @@ function req(token: string): Request {
   });
 }
 
-/** Map a fleet id onto a kaambaan tenant — the same external mapping resolveHubUser reads. */
+/** Map a fleet id onto a superpipeline tenant — the same external mapping resolveHubUser reads. */
 async function mapTenant(fleet: string, tenantId: string): Promise<void> {
   await env.DB.prepare(`INSERT OR IGNORE INTO tenants (id, slug, name) VALUES (?, ?, 'T')`)
     .bind(tenantId, `slug-${tenantId}`).run();
@@ -107,9 +107,9 @@ describe('resolving an agent-kind hub token', () => {
     });
   });
 
-  it('refuses when the claim\'s tenant maps to a DIFFERENT kaambaan tenant than the agent\'s own row', async () => {
+  it('refuses when the claim\'s tenant maps to a DIFFERENT superpipeline tenant than the agent\'s own row', async () => {
     // Same shape resolveHubUser guards against on the human path, mirrored here rather than
-    // trusted-away: the agent row pins one kaambaan tenant regardless of what the token claims,
+    // trusted-away: the agent row pins one superpipeline tenant regardless of what the token claims,
     // so nothing else on this path would catch a token minted for the wrong fleet. This passes
     // trivially with one fleet mapped to one tenant today — it exists to keep failing once a
     // second fleet is mapped to a second tenant.

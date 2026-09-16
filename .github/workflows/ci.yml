@@ -29,9 +29,9 @@ jobs:
           node-version: 22
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - run: pnpm --filter @kaambaan/web exec playwright install --with-deps chromium
+      - run: pnpm --filter @superpipeline/web exec playwright install --with-deps chromium
       # Boots wrangler dev (:8787) + the SvelteKit dev server (:5173) via Playwright's webServer.
-      - run: pnpm --filter @kaambaan/web e2e
+      - run: pnpm --filter @superpipeline/web e2e
 
   # Continuous deploy: after tests pass on a push to main, migrate the remote D1 + ship to Cloudflare.
   # Needs a CLOUDFLARE_API_TOKEN repo secret (Workers Scripts: Edit · D1: Edit, scoped to your account).
@@ -44,7 +44,7 @@ jobs:
       cancel-in-progress: false
     environment:
       name: production
-      url: https://app.kaambaan.dev
+      url: https://app.superpipeline.dev
     env:
       CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
     steps:
@@ -57,10 +57,10 @@ jobs:
       - run: pnpm install --frozen-lockfile
       # Apply any new catalog migrations to the remote D1 (idempotent), then build the web + deploy
       # the Worker with real auth (DEV_AUTH off).
-      - run: pnpm --filter @kaambaan/api db:migrate
-      - run: pnpm --filter @kaambaan/api run deploy
+      - run: pnpm --filter @superpipeline/api db:migrate
+      - run: pnpm --filter @superpipeline/api run deploy
 
-  # The published documentation site, to Cloudflare Pages at docs.kaambaan.dev.
+  # The published documentation site, to Cloudflare Pages at docs.superpipeline.dev.
   #
   # Separate from `deploy` on purpose. The docs site shares no dependency tree with the
   # Worker — it is npm, at the repo root, outside the pnpm workspace, for reasons set out
@@ -71,7 +71,7 @@ jobs:
   # exercise, and its claims are checked by packages/docs-check inside `test`.
   #
   # Needs the same CLOUDFLARE_API_TOKEN secret, with Pages: Edit added to its scope, and a
-  # Pages project named `kaambaan-docs`. See docs-site/README.md for the one-time setup.
+  # Pages project named `superpipeline-docs`. See docs-site/README.md for the one-time setup.
   deploy-docs:
     needs: [test]
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
@@ -81,7 +81,7 @@ jobs:
       cancel-in-progress: false
     environment:
       name: docs
-      url: https://docs.kaambaan.dev
+      url: https://docs.superpipeline.dev
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -120,4 +120,4 @@ jobs:
           mkdir -p "$RUNNER_TEMP/wrangler-cwd"
           cd "$RUNNER_TEMP/wrangler-cwd"
           npx --yes wrangler@4 pages deploy "$GITHUB_WORKSPACE/docs-site/dist" \
-            --project-name=kaambaan-docs --branch=main
+            --project-name=superpipeline-docs --branch=main

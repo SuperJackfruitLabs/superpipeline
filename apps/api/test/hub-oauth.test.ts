@@ -6,7 +6,7 @@ import type { Env } from '../src/env';
 /**
  * The cross-domain token handoff, from this side of it.
  *
- * kaambaan is on `kaambaan.dev` and the hub's session cookie is `SameSite=Lax` on
+ * superpipeline is on `superpipeline.dev` and the hub's session cookie is `SameSite=Lax` on
  * `.agentpod.dev`, so the page can never obtain a token by asking. The operator navigates to the
  * hub instead, and a one-time code comes back here to be spent server-to-server. See
  * `src/auth/hub-oauth.ts`.
@@ -23,7 +23,7 @@ import type { Env } from '../src/env';
  */
 
 const HUB = 'https://hub.test';
-const APP = 'https://kaambaan.test';
+const APP = 'https://superpipeline.test';
 
 function envWith(over: Record<string, unknown> = {}): Env {
   return { HUB_ISSUER: HUB, APP_URL: APP, ...over } as unknown as Env;
@@ -78,7 +78,7 @@ async function s256(verifier: string): Promise<string> {
 async function connect(env = envWith()): Promise<{ res: Response; cookie: string; state: string; challenge: string }> {
   const res = await handleHubRoute(new Request(`${APP}/hub/connect`, { method: 'POST' }), env, '/hub/connect');
   if (!res) throw new Error('/hub/connect was not routed');
-  const cookie = cookieOf(setCookies(res), 'kaambaan_hub_pkce');
+  const cookie = cookieOf(setCookies(res), 'superpipeline_hub_pkce');
   if (!cookie) throw new Error('no pkce cookie');
   const { url } = (await res.clone().json()) as { url: string };
   const q = new URL(url).searchParams;
@@ -87,7 +87,7 @@ async function connect(env = envWith()): Promise<{ res: Response; cookie: string
 
 function callback(cookie: string | null, query: string, fetchImpl: typeof fetch, env = envWith()) {
   return handleHubRoute(
-    new Request(`${APP}/hub/callback?${query}`, { headers: cookie ? { Cookie: `kaambaan_hub_pkce=${cookie}` } : {} }),
+    new Request(`${APP}/hub/callback?${query}`, { headers: cookie ? { Cookie: `superpipeline_hub_pkce=${cookie}` } : {} }),
     env,
     '/hub/callback',
     fetchImpl,
@@ -102,7 +102,7 @@ describe('POST /hub/connect', () => {
     const u = new URL(url);
     expect(u.origin).toBe(HUB);
     expect(u.pathname).toBe('/api/auth/authorize');
-    expect(u.searchParams.get('client')).toBe('kaambaan');
+    expect(u.searchParams.get('client')).toBe('superpipeline');
     expect(u.searchParams.get('redirect_uri')).toBe(`${APP}/hub/callback`);
     expect(u.searchParams.get('code_challenge_method')).toBe('S256');
     // 43 characters of base64url — the shape the hub's CODE_CHALLENGE_RE demands.
@@ -119,7 +119,7 @@ describe('POST /hub/connect', () => {
     const body = await res.clone().text();
     expect(body).toBe(JSON.stringify({ url: JSON.parse(body).url }));
 
-    const set = setCookies(res).find((c: string) => c.startsWith('kaambaan_hub_pkce='))!;
+    const set = setCookies(res).find((c: string) => c.startsWith('superpipeline_hub_pkce='))!;
     expect(set).toContain('HttpOnly');
     expect(set).toContain('Secure');
     // Lax, not Strict: the callback arrives redirected from the hub, which is cross-site, and
@@ -170,9 +170,9 @@ describe('GET /hub/callback', () => {
     expect(res?.status).toBe(302);
     expect(res?.headers.get('Location')).toBe('/');
     const cookies = setCookies(res!);
-    expect(cookieOf(cookies, 'kaambaan_hub_token')).toBe('hub.jwt.value');
+    expect(cookieOf(cookies, 'superpipeline_hub_token')).toBe('hub.jwt.value');
     // Spent: one navigation buys one attempt.
-    expect(cookieOf(cookies, 'kaambaan_hub_pkce')).toBe('');
+    expect(cookieOf(cookies, 'superpipeline_hub_pkce')).toBe('');
   });
 
   it('sends no Origin header — a browser must not be able to spend a code', async () => {
@@ -199,9 +199,9 @@ describe('GET /hub/callback', () => {
 
     expect(hub.calls).toHaveLength(0);
     expect(res?.status).toBe(400);
-    expect(cookieOf(setCookies(res!), 'kaambaan_hub_token')).toBeNull();
+    expect(cookieOf(setCookies(res!), 'superpipeline_hub_token')).toBeNull();
     // Cleared even on refusal, so a guess cannot be retried against the same stored state.
-    expect(cookieOf(setCookies(res!), 'kaambaan_hub_pkce')).toBe('');
+    expect(cookieOf(setCookies(res!), 'superpipeline_hub_pkce')).toBe('');
   });
 
   it('refuses a callback with no flow behind it, and exchanges NOTHING', async () => {
@@ -249,7 +249,7 @@ describe('GET /hub/callback', () => {
 
     expect(res?.status).toBe(400);
     expect(await res!.text()).toContain('That code is not redeemable.');
-    expect(cookieOf(setCookies(res!), 'kaambaan_hub_token')).toBeNull();
+    expect(cookieOf(setCookies(res!), 'superpipeline_hub_token')).toBeNull();
   });
 
   it('never sets a token from a refusal that still carried one', async () => {
@@ -257,7 +257,7 @@ describe('GET /hub/callback', () => {
     const hub = exchangeStub(json({ token: 'smuggled', error_description: 'no' }, 400));
     const res = await callback(cookie, `code=c0de&state=${encodeURIComponent(state)}`, hub.impl);
     expect(res?.status).toBe(400);
-    expect(cookieOf(setCookies(res!), 'kaambaan_hub_token')).toBeNull();
+    expect(cookieOf(setCookies(res!), 'superpipeline_hub_token')).toBeNull();
   });
 
   it('says so when the hub cannot be reached, rather than throwing', async () => {
@@ -267,14 +267,14 @@ describe('GET /hub/callback', () => {
     });
     const res = await callback(cookie, `code=c0de&state=${encodeURIComponent(state)}`, hub.impl);
     expect(res?.status).toBe(502);
-    expect(cookieOf(setCookies(res!), 'kaambaan_hub_token')).toBeNull();
+    expect(cookieOf(setCookies(res!), 'superpipeline_hub_token')).toBeNull();
   });
 
   it('bounds how long this browser holds a credential, whatever the hub says', async () => {
     const { cookie, state } = await connect();
     const hub = exchangeStub(json({ token: 't', expiresIn: 999999 }));
     const res = await callback(cookie, `code=c0de&state=${encodeURIComponent(state)}`, hub.impl);
-    const set = setCookies(res!).find((c: string) => c.startsWith('kaambaan_hub_token='))!;
+    const set = setCookies(res!).find((c: string) => c.startsWith('superpipeline_hub_token='))!;
     expect(set).toContain('Max-Age=3600');
     expect(set).toContain('HttpOnly');
     // Strict, unlike the pkce cookie: nothing legitimate sends this on a navigation that started
@@ -286,7 +286,7 @@ describe('GET /hub/callback', () => {
 describe('GET /hub/token', () => {
   it('answers with the token the callback stored', async () => {
     const res = await handleHubRoute(
-      new Request(`${APP}/hub/token`, { headers: { Cookie: 'kaambaan_hub_token=hub.jwt.value' } }),
+      new Request(`${APP}/hub/token`, { headers: { Cookie: 'superpipeline_hub_token=hub.jwt.value' } }),
       envWith(),
       '/hub/token',
     );
@@ -306,7 +306,7 @@ describe('GET /hub/token', () => {
     // The distinction a null token cannot make on its own: "you have not connected" and "there is
     // nothing to connect to" look identical from the page, and only one of them should put a
     // "Connect to AgentPod" button in front of an operator. A button that leads nowhere is worse
-    // than no button — a standalone kaambaan is a first-class deployment (migration 0003), not a
+    // than no button — a standalone superpipeline is a first-class deployment (migration 0003), not a
     // half-configured one.
     const res = await handleHubRoute(
       new Request(`${APP}/hub/token`),

@@ -1,10 +1,10 @@
 /**
- * Kaambaan API — the edge Worker (docs/02-architecture.md). It authenticates, resolves the tenant,
+ * Superpipeline API — the edge Worker (docs/02-architecture.md). It authenticates, resolves the tenant,
  * and routes board requests to the per-(tenant, board) Board Durable Object, serving the SvelteKit
  * SPA same-origin for everything else.
  *
  * Auth (docs/05 §3). Three principals, resolved before dispatch:
- *   - humans      — a signed `kaambaan_session` cookie from GitHub OAuth (auth/routes.ts). Stateless
+ *   - humans      — a signed `superpipeline_session` cookie from GitHub OAuth (auth/routes.ts). Stateless
  *                   HMAC, no session store. This is what board/card administration requires.
  *   - agents      — a `kbn_` bearer on the agent routes only: `…/claims` and `…/runs/*`. The tenant
  *                   AND the agent identity come from the token, never from the request.
@@ -42,7 +42,7 @@ import { handleAuthRoute } from './auth/routes';
 import { handleHubRoute } from './auth/hub-oauth';
 import { recordBoard, listBoards, listAllBoards, renameBoard, updateBoardStages, deleteBoard, listAgents, createAgent, updateAgent, createAgentToken, revokeAgentToken, deleteAgent, setAgentExternalMapping, findAgentByExternal, agentBelongsToTenant, setTenantExternalMapping, tenantById } from './db/catalog';
 import { AGENT_TOKEN_SCOPES, requiredScope, scopePermits } from './auth/scopes';
-import { capabilityTag, capabilityTags, stageRequiredCapabilities } from '@kaambaan/contract';
+import { capabilityTag, capabilityTags, stageRequiredCapabilities } from '@superpipeline/contract';
 import { listMembers, addMember, setMemberRole, removeMember, ownerCount, permits, asRole, type Capability } from './db/members';
 import {
   listCapabilities,
@@ -174,7 +174,7 @@ export default {
     const path = url.pathname;
 
     if (request.method === 'GET' && path === '/health') {
-      return Response.json({ ok: true, service: 'kaambaan-api', phase: 'P8' });
+      return Response.json({ ok: true, service: 'superpipeline-api', phase: 'P8' });
     }
 
     // Human auth (GitHub OAuth → session): /auth/login · /auth/callback · /auth/me · /auth/logout.
@@ -186,8 +186,8 @@ export default {
     // The hub token handoff: /hub/connect · /hub/callback · /hub/token (auth/hub-oauth.ts).
     //
     // Not part of `/auth/*` above, deliberately. Those routes establish who you are HERE — a
-    // kaambaan session, from GitHub. These carry authority from somewhere else: the hub is the
-    // issuer, kaambaan is not, and nothing under this prefix creates or reads a kaambaan session.
+    // superpipeline session, from GitHub. These carry authority from somewhere else: the hub is the
+    // issuer, superpipeline is not, and nothing under this prefix creates or reads a superpipeline session.
     // The separate prefix is also what `run_worker_first` in wrangler.jsonc names, so the SPA's
     // index.html fallback cannot shadow a callback the hub redirected a browser to.
     if (path.startsWith('/hub/')) {
@@ -268,7 +268,7 @@ export default {
         // omission.** The obvious mirror of the agent route would 409 when another workspace
         // already claims this fleet, and migration 0005 was written to enforce it before
         // migration 0002's own comment settled the question the other way: "Deliberately NOT
-        // unique. kaambaan is one-tenant-per-user, so two people in the same real organisation
+        // unique. superpipeline is one-tenant-per-user, so two people in the same real organisation
         // legitimately map two local boundaries onto one external id. A shared mapping must
         // never become a shared keyspace: isolation stays local, on tenant_id."
         // `test/tenant-external-mapping.test.ts` asserts exactly that. A fix wave is not the
@@ -741,7 +741,7 @@ export default {
              * A suite principal this agent IS, linked as it is created.
              *
              * Optional, and its absence is the ordinary case: a standalone
-             * kaambaan has no principals to name, and an agent nobody links is
+             * superpipeline has no principals to name, and an agent nobody links is
              * a complete agent (migration 0003). What it removes is a
              * four-step chore — create, copy the `agt_` id, go find the `prn_`
              * in the other plane, PUT the link — and the window between the
@@ -830,8 +830,8 @@ export default {
     } else if (isAgentRoute) {
       agent = await resolveAgent(request, env);
       // Mirrors the human fallback below: a node can now exchange its own credential for a
-      // short-lived hub token whose sub is an agent principal, and kaambaan must accept it as
-      // that agent — capabilities still come from kaambaan's own agents row, never the claim.
+      // short-lived hub token whose sub is an agent principal, and superpipeline must accept it as
+      // that agent — capabilities still come from superpipeline's own agents row, never the claim.
       if (!agent) agent = await resolveHubAgent(request, env);
       if (!agent) return Response.json({ error: 'a valid agent token is required' }, { status: 401 });
       // Scopes stop being decoration here. Every `kbn_` token has carried a scope set since

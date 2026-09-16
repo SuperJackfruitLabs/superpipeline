@@ -5,7 +5,7 @@ import { describe, it, expect, beforeEach } from 'vitest';
  * `memberships.role` has been CHECK-constrained to owner/admin/member/viewer since migration
  * 0001, written exactly once as 'owner', and read by zero queries — so a workspace was
  * permanently one person, and the four roles were a vocabulary describing nothing. Membership is
- * the ENTIRE human authorization model in kaambaan, which is what made that worth fixing rather
+ * the ENTIRE human authorization model in superpipeline, which is what made that worth fixing rather
  * than deleting: a recorded permission nobody checks reads as protection that does not exist.
  */
 
