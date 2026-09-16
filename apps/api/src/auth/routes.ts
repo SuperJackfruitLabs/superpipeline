@@ -29,7 +29,7 @@ export async function handleAuthRoute(request: Request, env: Env, path: string):
   }
 
   if (path === '/auth/logout') {
-    return new Response(null, { status: request.method === 'POST' ? 204 : 302, headers: { 'Set-Cookie': sessionClearCookie(), Location: '/' } });
+    return new Response(null, { status: request.method === 'POST' ? 204 : 302, headers: { 'Set-Cookie': sessionClearCookie({ secure: true }), Location: '/' } });
   }
 
   if (path === '/auth/login') {

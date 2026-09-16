@@ -76,6 +76,22 @@ export function sessionSetCookie(token: string, opts: { secure: boolean }): stri
   return attrs.join('; ');
 }
 
-export function sessionClearCookie(): string {
-  return `${COOKIE_NAME}=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0`;
+/**
+ * Clear the session cookie.
+ *
+ * **Takes `secure` for the same reason `sessionSetCookie` does, and it is not
+ * cosmetic.** A cookie's identity is its name, domain and path — `Secure` is
+ * not part of it — so in principle this clears either kind. In practice
+ * browsers implement "leave secure cookies alone" (RFC 6265bis §5.5), and a
+ * clear that does not match the attributes of the cookie it is replacing is
+ * the sort of thing that works in one browser and not the next.
+ *
+ * The two functions disagreed until 2026-09-16: `set` added `Secure` on HTTPS
+ * and `clear` never did, so the pair that had to agree were written in two
+ * places and only one of them knew about the scheme.
+ */
+export function sessionClearCookie(opts: { secure: boolean } = { secure: true }): string {
+  const attrs = [`${COOKIE_NAME}=`, 'Path=/', 'HttpOnly', 'SameSite=Lax', 'Max-Age=0'];
+  if (opts.secure) attrs.push('Secure');
+  return attrs.join('; ');
 }
