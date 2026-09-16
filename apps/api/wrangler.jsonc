@@ -50,6 +50,13 @@
       "migrations_dir": "migrations"
     }
   ],
+  // The hostnames this Worker answers on, declared here rather than clicked
+  // into the dashboard — the rename made the dashboard's copy the only record
+  // of which Worker owned which host, and that record does not survive a
+  // script being replaced.
+  "routes": [
+    { "pattern": "app.superpipeline.dev", "custom_domain": true }
+  ],
   "durable_objects": {
     "bindings": [{ "name": "BOARD_DO", "class_name": "BoardDO" }]
   },
