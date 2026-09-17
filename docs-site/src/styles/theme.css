@@ -1,0 +1,81 @@
+/*
+ * The docs wear the product's identity.
+ *
+ * Until this file existed the docs were Starlight's stock blue on system fonts, so
+ * following "Read the docs" from superpipeline.dev felt like leaving for somebody else's
+ * site. Every value below is the app's own token (`apps/web/src/app.css`), expressed as
+ * the seven-step gray ramp plus accent triple that Starlight derives everything else
+ * from — so no component needs restyling.
+ *
+ * Starlight wants more gray steps than the app has surfaces. The steps the app has
+ * (ink, surface, inset, line, text, muted) are used exactly; the in-between steps are
+ * interpolations and are marked as such.
+ *
+ * `html:root` rather than `:root` is load-bearing: this file can be bundled ahead of
+ * Starlight's own props.css, and at equal specificity Starlight's defaults would win
+ * with a build that succeeds and a page that looks untouched. supermessage's docs met
+ * exactly that.
+ */
+html:root {
+  /* dark — the app's default */
+  --sl-color-white: #eceaf2; /* text */
+  --sl-color-gray-1: #eceaf2; /* text */
+  --sl-color-gray-2: #c4c6d4; /* between text and muted */
+  --sl-color-gray-3: #8b91a8; /* muted */
+  --sl-color-gray-4: #4a5064; /* between muted and line */
+  --sl-color-gray-5: #282d3b; /* line */
+  --sl-color-gray-6: #161924; /* surface */
+  --sl-color-black: #0f1118; /* ink */
+
+  /* In dark, Starlight sets text on an accent fill in accent-low, so it is the app's
+     marigold-ink rather than a tint: 9:1 on marigold. */
+  --sl-color-accent-low: #1a1206;
+  --sl-color-accent: #f4a526; /* marigold */
+  --sl-color-accent-high: #f4a526;
+
+  --sl-font: 'IBM Plex Sans', system-ui, -apple-system, sans-serif;
+  --sl-font-mono: 'IBM Plex Mono', ui-monospace, 'SF Mono', monospace;
+  --sp-font-display: 'Space Grotesk', system-ui, sans-serif;
+}
+
+html:root[data-theme='light'] {
+  --sl-color-white: #1a1a2e; /* text */
+  --sl-color-gray-1: #2b2c40; /* between text and muted */
+  --sl-color-gray-2: #3f4156; /* between text and muted */
+  --sl-color-gray-3: #5d5f73; /* muted */
+  --sl-color-gray-4: #8b8d9e; /* between muted and line */
+  --sl-color-gray-5: #e1dacb; /* line */
+  --sl-color-gray-6: #efeae0; /* inset */
+  --sl-color-gray-7: #fffdf8; /* surface */
+  --sl-color-black: #faf8f3; /* ink */
+
+  /* Darker than the app's light marigold (#c2740c, 3.4:1), because here it is link
+     text on every page: 4.9:1 on the ground. The landing page uses the same value. */
+  --sl-color-accent-low: #f3e2c2;
+  --sl-color-accent: #9a5f08;
+  --sl-color-accent-high: #6b4205;
+}
+
+/* The display face on headings and the site title, as in the app's wordmark. Body
+   text stays IBM Plex Sans. */
+.site-title,
+h1,
+h2,
+h3,
+h4 {
+  font-family: var(--sp-font-display);
+  letter-spacing: -0.015em;
+}
+
+/* As in the app: the mark carries the marigold and the name is plain text. Starlight
+   colours the title with the accent by default. */
+.site-title {
+  font-weight: 700;
+  color: var(--sl-color-white);
+  gap: 0.5rem;
+}
+
+.site-title img {
+  width: 1.4em;
+  height: 1.4em;
+}

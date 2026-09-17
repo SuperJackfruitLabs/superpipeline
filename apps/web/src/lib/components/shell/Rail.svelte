@@ -16,6 +16,7 @@
   import { page } from '$app/state';
   import { app } from '$lib/stores/app.svelte';
   import { logout } from '$lib/api';
+  import BrandMark from '$lib/components/BrandMark.svelte';
 
   const boardId = $derived(app.boardId);
   /** Plan owns the bare board route and the card route beneath it. */
@@ -40,8 +41,8 @@
 </script>
 
 <nav class="border-border bg-surface hidden w-[84px] shrink-0 flex-col items-center gap-0.5 border-r px-1.5 py-3 min-[900px]:flex" aria-label="Main">
-  <a href={boardId ? `/b/${boardId}` : '/'} class="wordmark mb-3 text-center text-[13px] leading-tight" aria-label="Superpipeline home">
-    kaam<span style="color:var(--marigold)">→</span><br />baan
+  <a href={boardId ? `/b/${boardId}` : '/'} class="mb-3 flex justify-center" aria-label="superpipeline home">
+    <BrandMark class="size-7" />
   </a>
 
   {#each destinations as d (d.id)}

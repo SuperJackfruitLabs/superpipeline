@@ -121,3 +121,42 @@ jobs:
           cd "$RUNNER_TEMP/wrangler-cwd"
           npx --yes wrangler@4 pages deploy "$GITHUB_WORKSPACE/docs-site/dist" \
             --project-name=superpipeline-docs --branch=main
+
+  # The public page, to Cloudflare Pages at superpipeline.dev.
+  #
+  # Until this job existed the page was deployed by hand, and it went stale the same
+  # day: the CLI was renamed to `supi` on main while superpipeline.dev went on telling
+  # visitors about `kbn`. A page nothing redeploys drifts silently, because nothing
+  # fails.
+  #
+  # Shaped exactly like deploy-docs, for the same reasons: landing/ is npm and outside
+  # the pnpm workspace (see the comment at the top of landing/src/pages/index.astro), and
+  # wrangler must run from a neutral cwd. Same secret; the Pages project is
+  # `superpipeline-site`.
+  deploy-landing:
+    needs: [test]
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    concurrency:
+      group: deploy-landing
+      cancel-in-progress: false
+    environment:
+      name: landing
+      url: https://superpipeline.dev
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm ci
+        working-directory: landing
+      - run: npm run build
+        working-directory: landing
+      - name: Deploy
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        run: |
+          mkdir -p "$RUNNER_TEMP/wrangler-cwd"
+          cd "$RUNNER_TEMP/wrangler-cwd"
+          npx --yes wrangler@4 pages deploy "$GITHUB_WORKSPACE/landing/dist" \
+            --project-name=superpipeline-site --branch=main

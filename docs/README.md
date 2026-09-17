@@ -1,11 +1,8 @@
-# Superpipeline — Documentation
+# superpipeline — Documentation
 
-> **Superpipeline** is a multi-tenant Kanban board that orchestrates **external AI agents**.
+> **superpipeline** is a multi-tenant Kanban board that orchestrates **external AI agents**.
 > The board is the control plane; the agents bring their own runtime. Work flows
 > through pipeline stages with human approval gates.
->
-> *Name:* **काम** (*kaam*, "work") + **बाण** (*bāṇ*, "arrow") — the arrows of work you fire
-> toward Done; also a nod to **Kanban**. Pronounced ~"kaam-baan".
 
 ## Start here
 
@@ -43,7 +40,7 @@ sentence in a 📐 Spec is an *intention*, not a promise about the running syste
 
 | # | Doc | Kind | What it answers | Drift status |
 |---|-----|:----:|-----------------|--------------|
-| 00 | [Vision & Principles](./00-vision-and-principles.md) | 🗓 | Why Superpipeline exists, what it is and isn't, the 10 principles | Stable — a statement of intent, not of state |
+| 00 | [Vision & Principles](./00-vision-and-principles.md) | 🗓 | Why superpipeline exists, what it is and isn't, the 10 principles | Stable — a statement of intent, not of state |
 | 01 | [Domain Model & Glossary](./01-domain-model-and-glossary.md) | 📐 | The nouns: Tenant, Board, Card, Run, Agent, Activity, Signal, Elicitation, Reference | ⚠️ **Task is not implemented** — the A2A state lives on the Card. Flagged inline |
 | 02 | [Architecture](./02-architecture.md) | 📐 | Cloudflare topology, multi-tenancy, auth | ⚠️ Only D1 + the Board DO + ASSETS are bound. R2/KV/Queues/Workflows are intent. Auth table is now ✅ accurate |
 | 03 | [Card Lifecycle & Pipeline](./03-card-lifecycle.md) | 📐 | The A2A state machine, stages, gates, handoff, rework | Transition table ✅ corrected; ack-SLA / stale / stage-timeout marked ⚠️ not built |
@@ -86,7 +83,7 @@ every PR. Both must pass before merge.
 
 ## The one-paragraph design
 
-Superpipeline's contract is anchored on the **A2A protocol** (Linux Foundation) — its `Task`
+superpipeline's contract is anchored on the **A2A protocol** (Linux Foundation) — its `Task`
 object and state machine model "dispatch long-running work to a remote agent, stream
 artifacts, pause for human input." On top of that spine we layer **Linear's** accountability
 and UX model (delegate-not-owner, an append-only typed activity log, signals for

@@ -6,6 +6,7 @@
   import { app } from '$lib/stores/app.svelte';
   import { BOARD_TEMPLATES, logout } from '$lib/api';
   import { Button } from '$lib/components/ui/button';
+  import BrandMark from '$lib/components/BrandMark.svelte';
 
   let creating = $state(false);
   let error = $state<string | null>(null);
@@ -27,11 +28,9 @@
 
 <main class="mx-auto flex min-h-screen max-w-xl flex-col justify-center gap-5 px-5 py-5">
   <div class="flex items-center gap-3">
-    <svg class="arrowmark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-      <path d="M3 12h15" /><path d="M13 6l6 6-6 6" /><path d="M3 9l3 3-3 3" />
-    </svg>
+    <BrandMark />
     <div>
-      <div class="flex items-baseline gap-2.5"><span class="wordmark text-[19px] leading-none">Superpipeline</span><span class="eyebrow">agent flight deck</span></div>
+      <div class="flex items-baseline gap-2.5"><span class="wordmark text-[19px] leading-none">superpipeline</span></div>
       <div class="mono text-muted-foreground mt-1 text-xs">welcome, {app.user?.name ?? app.user?.login ?? 'there'}</div>
     </div>
   </div>

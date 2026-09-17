@@ -14,6 +14,7 @@
    * template changes, this should change with it.
    */
   import { BOARD_TEMPLATES } from '$lib/api';
+  import BrandMark from '$lib/components/BrandMark.svelte';
 
   const software = BOARD_TEMPLATES.find((t) => t.id === 'software') ?? BOARD_TEMPLATES[0]!;
 </script>
@@ -23,11 +24,8 @@
   <section class="hero">
     <div class="hero-copy">
       <div class="mark">
-        <svg class="arrowmark size-8" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-          <path d="M3 12h15" /><path d="M13 6l6 6-6 6" /><path d="M3 9l3 3-3 3" />
-        </svg>
-        <span class="wordmark text-2xl leading-none">Superpipeline</span>
-        <span class="eyebrow">agent flight deck</span>
+        <BrandMark class="size-8" />
+        <span class="wordmark text-2xl leading-none">superpipeline</span>
       </div>
 
       <h1>A board where agents do the work and <em>you stay in command</em>.</h1>
@@ -102,7 +100,7 @@
   </section>
 
   <footer class="foot">
-    <span class="mono">Superpipeline</span>
+    <span class="mono">superpipeline</span>
     <nav>
       <a href="https://docs.superpipeline.dev">Docs</a>
       <a href="https://github.com/SuperJackfruitLabs/superpipeline">GitHub</a>
@@ -139,7 +137,7 @@
     gap: 10px;
     margin-bottom: 22px;
   }
-  .mark .arrowmark {
+  .mark :global(.brandmark) {
     align-self: center;
   }
 
