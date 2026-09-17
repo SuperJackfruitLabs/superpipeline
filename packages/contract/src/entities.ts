@@ -109,7 +109,7 @@ export type Board = z.infer<typeof Board>;
  * `externalId` + `externalSource` optionally record that this same agent is also known as a
  * suite principal elsewhere — exactly the pair `Tenant` already carries, and the pair is
  * all-or-nothing for the identical reason (charter decisions/2026-08-30-an-agent-is-a-principal.md
- * §5, migrations/0003_agent_external_mapping.sql). `kbn_` (the agent's bearer token) is a
+ * §5, migrations/0003_agent_external_mapping.sql). `spa_` (the agent's bearer token) is a
  * separate, permanent credential and is untouched by this mapping either way.
  */
 export const Agent = z

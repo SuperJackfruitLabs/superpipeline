@@ -14,7 +14,7 @@
  * same shape.
  *
  * **Why this is an agent route.** The board snapshot already carries pending
- * gates, but `GET /v1/boards/:id` is a human route — the bridge's `kbn_` token
+ * gates, but `GET /v1/boards/:id` is a human route — the bridge's `spa_` token
  * gets 401. The alternative was for the hub to mint a principal assertion on a
  * timer, which would break the property `service-signing.ts` rests on: the
  * subject of an assertion is never a parameter, it comes from a sender's mxid,
@@ -140,7 +140,7 @@ describe('GET /v1/boards/:id/gates/pending', () => {
     return boardId;
   }
 
-  it('answers a bridge holding only its own kbn_ token', async () => {
+  it('answers a bridge holding only its own spa_ token', async () => {
     // The reason this route exists. The board snapshot carries the same gates
     // and refuses this credential, which would leave the sweep with no way to
     // ask that does not involve asserting a person who is not there.

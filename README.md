@@ -46,7 +46,7 @@ current source when extending an integration.
 - `@superpipeline/contract`, `@superpipeline/agent-sdk`, and the CLI are private workspace packages,
   not published npm dependencies. External clients use the wire API; the SDK is a reference
   implementation in this repository.
-- `/mcp` accepts an issued `kbn_` agent bearer token. Its discovery metadata does not provide a
+- `/mcp` accepts an issued `spa_` agent bearer token. Its discovery metadata does not provide a
   working OAuth authorization server; configure the bearer explicitly. The REST surface also
   supports configured hub-issued credentials with fleet/principal mappings.
 - Production dispatch authority and workspace membership are separate. See the

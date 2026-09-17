@@ -40,12 +40,12 @@ describe('catalog (D1) — auth, workspaces, agent tokens', () => {
     const t = await ensurePersonalWorkspace(env.DB, u.id, 'Lin');
     const agent = await createAgent(env.DB, t.id, { name: 'Research bot', capabilities: ['research', 'publish'] });
     const { token } = await createAgentToken(env.DB, t.id, agent.id, ['claim']);
-    expect(token.startsWith('kbn_')).toBe(true);
+    expect(token.startsWith('spa_')).toBe(true);
 
     const resolved = await findAgentByTokenHash(env.DB, await hashToken(token));
     expect(resolved).toMatchObject({ tenantId: t.id, agentId: agent.id, capabilities: ['research', 'publish'], scopes: ['claim'] });
     // a bogus / revoked token resolves to nothing
-    expect(await findAgentByTokenHash(env.DB, await hashToken('kbn_bogus'))).toBeNull();
+    expect(await findAgentByTokenHash(env.DB, await hashToken('spa_bogus'))).toBeNull();
   });
 
   it("records and lists a workspace's boards (tenant-scoped)", async () => {

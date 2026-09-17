@@ -10,7 +10,7 @@ import { createAgentToken } from '../src/db/catalog';
  *
  * Revocation is a HUMAN act, exactly like minting: the route accepts the same session/dev-header
  * auth `POST /v1/agents` and `DELETE /v1/agents/:id` already use, and nothing else — an agent
- * bearing a `kbn_` token must not be able to revoke its own, or a peer's, to escape an audit.
+ * bearing a `spa_` token must not be able to revoke its own, or a peer's, to escape an audit.
  */
 const dev = (tenant: string) => ({ 'X-Tenant-Id': tenant, 'Content-Type': 'application/json' });
 

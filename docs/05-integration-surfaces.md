@@ -65,7 +65,7 @@ that flow in the present tense. None of it was ever built.
 
 **The two credentials `/mcp` accepts** (`apps/api/src/mcp/auth.ts`):
 
-1. A **`kbn_` agent token** — the *same* credential as the REST surface, matched by SHA-256 hash
+1. A **`spa_` agent token** — the *same* credential as the REST surface, matched by SHA-256 hash
    against `agent_tokens`. This is the only credential that works against a deployed server.
 2. A **dev bearer** `<tenantId>:<agentId>:<comma-separated-capabilities>` — accepted **only** when
    the server runs with `DEV_AUTH=true`. It is parsed, not verified: it asserts its own tenant,
@@ -74,7 +74,7 @@ that flow in the present tense. None of it was ever built.
 > **⚠️ The discovery chain dead-ends.** The metadata advertises `authorization_servers: [<origin>]`,
 > and that origin serves no `/.well-known/oauth-authorization-server` and no `/authorize`. An MCP
 > client that follows the `401` and tries to run the authorization flow **will fail at the next
-> hop**. Configure your client with a `kbn_` token directly instead. A real Authorization Server is
+> hop**. Configure your client with a `spa_` token directly instead. A real Authorization Server is
 > a fast-follow (**⚠️ OPEN**); until it lands, only the `401`-and-metadata shape is real.
 
 - **Session**: none — the transport is **stateless** (`sessionIdGenerator: undefined`), so there is
@@ -130,8 +130,8 @@ The tool list and the auth story are above, and are not repeated here. There is 
 `superpipeline_request_input` tool: an agent raises an elicitation by posting an `elicitation` **activity**
 through `superpipeline_post_activity`, which is also how it works over REST.
 
-**Connect Claude Code.** Against a **deployed** board, the `Authorization` header is your `kbn_`
-token (`"Bearer kbn_…"`, minted by "Connect an agent"). The example below uses the **dev bearer**,
+**Connect Claude Code.** Against a **deployed** board, the `Authorization` header is your `spa_`
+token (`"Bearer spa_…"`, minted by "Connect an agent"). The example below uses the **dev bearer**,
 which works only against a **local** worker started with `pnpm --filter @superpipeline/api dev` — see
 [`apps/api/examples/claude-code.mcp.json`](../apps/api/examples/claude-code.mcp.json):
 
@@ -187,7 +187,7 @@ unmatched under `/v1/boards` returns `405 {"error":"method not allowed"}`.
 
 ### Auth (as shipped)
 
-An agent presents its token as `Authorization: Bearer kbn_…` (minted by "Connect an agent";
+An agent presents its token as `Authorization: Bearer spa_…` (minted by "Connect an agent";
 stored only as a SHA-256 hash in `agent_tokens`). The token carries the tenant, the agent identity
 and the agent's registered capabilities, so the client never asserts them. The dev-mode
 `X-Tenant-Id` / `X-Agent-Id` headers only work against a server run with `DEV_AUTH=true`

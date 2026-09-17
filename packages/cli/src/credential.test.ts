@@ -1,7 +1,7 @@
 /**
  * What `supi` will and will not authenticate with.
  *
- * The rule worth testing is an absence: it never reads a `kbn_` AGENT token. Those name an
+ * The rule worth testing is an absence: it never reads a `spa_` AGENT token. Those name an
  * agent, and an agent is not a person operating a board — a CLI that silently acted as one would
  * attribute a human's decisions to it, which is what
  * `charter → decisions/2026-08-13-ecosystem-identity.md` Decision 2 exists to protect.
@@ -69,11 +69,11 @@ describe("loadCredential", () => {
     expect(loadCredential()).toBeNull();
   });
 
-  it("never reads a kbn_ agent token from anywhere", () => {
+  it("never reads a spa_ agent token from anywhere", () => {
     // An agent token in the environment under any name this CLI does not read must not be
     // picked up. The absence is the point: `supi` acts as a person or not at all.
-    process.env.SUPERPIPELINE_AGENT_TOKEN = "kbn_deadbeef";
-    process.env.KBN_TOKEN = "kbn_deadbeef";
+    process.env.SUPERPIPELINE_AGENT_TOKEN = "spa_deadbeef";
+    process.env.KBN_TOKEN = "spa_deadbeef";
     expect(loadCredential()).toBeNull();
   });
 });

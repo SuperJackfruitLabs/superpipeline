@@ -114,7 +114,7 @@ An external worker registered to a tenant. It is an **app-actor identity** (per 
   refused deliberately — see `charter → decisions/2026-09-02-capability-is-three-words.md`. Note
   superpipeline's own `members.ts` also declares an unrelated `type Capability = 'read' | 'work' |
   'manage' | 'own'`; that is a permission verb, and a fourth use of the word inside one repository.
-- `tokens` — per-agent `kbn_` bearer credentials, stored as SHA-256 hashes, carrying `scopes`
+- `tokens` — per-agent `spa_` bearer credentials, stored as SHA-256 hashes, carrying `scopes`
   (**recorded, never enforced**)
 - `concurrency` — the operator's ceiling on simultaneous claimed cards. An agent may ask for
   *less* at claim time; never more. **⚠️ Counted per board**, because the count lives in the board's

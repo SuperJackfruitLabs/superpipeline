@@ -54,7 +54,7 @@ decision for somebody actually in it. Use the board for those.
 
 ## What it will never read
 
-`supi` does not read a `kbn_` **agent** token, from any variable. Those name an agent, and an agent
+`supi` does not read a `spa_` **agent** token, from any variable. Those name an agent, and an agent
 is not a person operating a board. A CLI that quietly acted as one would attribute your decisions
 to it.
 

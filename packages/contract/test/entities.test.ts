@@ -111,7 +111,7 @@ describe('tenant external mapping', () => {
 /**
  * An agent maps to a suite principal the same way a tenant maps to a real organisation:
  * `externalId` + `externalSource`, all-or-nothing (apps/api/migrations/0003_agent_external_mapping.sql).
- * `kbn_`, the agent's bearer token, is untouched by any of this — it is a separate, permanent
+ * `spa_`, the agent's bearer token, is untouched by any of this — it is a separate, permanent
  * credential (charter decisions/2026-08-30-an-agent-is-a-principal.md §5).
  */
 describe('agent external mapping', () => {

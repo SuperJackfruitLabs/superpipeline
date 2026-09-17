@@ -1851,7 +1851,7 @@ export class BoardDO extends DurableObject<Env> {
    * Atomically hand a ready, capability-matched card to an agent, within its concurrency limit.
    *
    * `principalId` is the caller's already-resolved suite principal id (`agents.external_id`),
-   * when the auth path that authenticated this request already fetched it — a `kbn_` token does,
+   * when the auth path that authenticated this request already fetched it — a `spa_` token does,
    * off the same catalog row that resolves the token (`findAgentByTokenHash`). Passing it here
    * skips the extra `SELECT` `principalIdFor` would otherwise issue on every enforced claim, which
    * matters because this is the path every agent hits repeatedly. `undefined` (not passed at all)
@@ -2610,7 +2610,7 @@ export class BoardDO extends DurableObject<Env> {
    * Identity guard (docs/04 §1): a run is driven and read by the agent that claimed it. Returns an
    * error to hand back, or null when the caller is entitled to the run.
    *
-   * `agentId` is the *authenticated* principal, which is always present for a `kbn_` token; it is
+   * `agentId` is the *authenticated* principal, which is always present for a `spa_` token; it is
    * null only under `DEV_AUTH` when the caller sent no `X-Agent-Id`, where there is no identity to
    * compare and the lease alone authorizes (dev headers are not a credential in a deploy).
    */

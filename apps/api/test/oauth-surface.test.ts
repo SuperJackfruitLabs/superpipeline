@@ -62,7 +62,7 @@ describe('/mcp OAuth surface — a Resource Server shell, and nothing behind it'
     expect(JSON.stringify(meta)).not.toMatch(/"aud"|audience/i);
   });
 
-  it('takes the same `kbn_` token as the REST surface — that is the real credential', async () => {
+  it('takes the same `spa_` token as the REST surface — that is the real credential', async () => {
     const tenantId = 'tnt_oauth';
     const agent = await createAgent(env.DB, tenantId, { name: 'MCP client', capabilities: ['research'] });
     const { token } = await createAgentToken(env.DB, tenantId, agent.id, ['claim']);
@@ -76,13 +76,13 @@ describe('/mcp OAuth surface — a Resource Server shell, and nothing behind it'
       },
       body: JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'tools/list', params: {} }),
     });
-    expect(res.status, 'a kbn_ token authenticates /mcp').toBe(200);
+    expect(res.status, 'a spa_ token authenticates /mcp').toBe(200);
 
     // And a token that was never minted does not.
     const bad = await SELF.fetch(`${base}/mcp`, {
       method: 'POST',
       headers: {
-        Authorization: 'Bearer kbn_0000000000000000000000000000000000000000000000',
+        Authorization: 'Bearer spa_0000000000000000000000000000000000000000000000',
         'Content-Type': 'application/json',
         Accept: 'application/json, text/event-stream',
       },

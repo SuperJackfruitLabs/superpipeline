@@ -61,7 +61,7 @@ app.superpipeline.dev automatically — `superpipeline.dev` is a separate static
 Dev-mode auth (accepting `X-Tenant-Id` / `X-Agent-Id` headers, `?tenant=`, and the
 `<tenant>:<agent>:<caps>` MCP bearer as credentials) is **only** on when `DEV_AUTH=true` is passed
 explicitly. It is deliberately **not** in `wrangler.jsonc`, so *any* deploy — including a bare
-`wrangler deploy` — accepts **only** real auth (GitHub session cookies + `kbn_` agent tokens). The
+`wrangler deploy` — accepts **only** real auth (GitHub session cookies + `spa_` agent tokens). The
 `deploy` script still passes `--var DEV_AUTH:false` as belt-and-braces.
 
 Opting in is per-command: `pnpm --filter @superpipeline/api dev` runs `wrangler dev --var DEV_AUTH:true`,
@@ -71,7 +71,7 @@ and the API test runner sets the binding in `apps/api/vitest.config.ts`.
 
 - Confirm the callback URL in the GitHub OAuth app matches `<origin>/auth/callback`.
 - Visit the origin → "Sign in with GitHub" → you land in your personal workspace's onboarding.
-- Connect an agent from the masthead to mint a `kbn_` token + copy the `.mcp.json`.
+- Connect an agent from the masthead to mint a `spa_` token + copy the `.mcp.json`.
 
 ## Local development is unchanged
 

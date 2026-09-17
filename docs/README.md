@@ -15,7 +15,7 @@ Two things to know before you design anything:
 - **`@superpipeline/agent-sdk` and `@superpipeline/contract` are `private: true` and unpublished.** Nothing
   outside this repo can depend on them. You will be making HTTP calls yourself.
 - **`/mcp` has no OAuth authorization server.** It is a Resource Server *shell* over a bearer token.
-  Configure your client with a `kbn_` token; do not build an authorization flow.
+  Configure your client with a `spa_` token; do not build an authorization flow.
 
 ## How to read these documents
 

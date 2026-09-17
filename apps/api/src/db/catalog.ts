@@ -37,7 +37,7 @@ export class ExternalMappingError extends Error {
 }
 
 /**
- * A registered superpipeline agent — always addressable by its native `agt_…` id and `kbn_` bearer
+ * A registered superpipeline agent — always addressable by its native `agt_…` id and `spa_` bearer
  * token, which are permanent regardless of the external pair below.
  *
  * The external pair optionally records that this same agent is also known as a suite principal
@@ -61,7 +61,7 @@ export interface AgentRecord {
   externalId: string | null;
   externalSource: string | null;
   /**
-   * Ids of this agent's active (non-revoked) `kbn_` tokens — what the console needs to offer a
+   * Ids of this agent's active (non-revoked) `spa_` tokens — what the console needs to offer a
    * "revoke" action without holding onto the one-time plaintext-mint response. Empty is a real,
    * complete state (an agent with nothing active cannot authenticate until reconnected), not an
    * omission.

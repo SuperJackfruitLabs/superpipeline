@@ -8,7 +8,7 @@ import worker from '../src/index';
 import type { Env } from '../src/env';
 
 /**
- * The agent read surface (docs/04 §3 `getCard`, docs/05 §3): an agent authenticated with a `kbn_`
+ * The agent read surface (docs/04 §3 `getCard`, docs/05 §3): an agent authenticated with a `spa_`
  * token can read the context of **its own run** — the card it claimed, that card's stage, the
  * upstream handoff and the card's references — and nothing else. Everything here goes over the
  * real production credential (a token), never the dev headers.
@@ -45,7 +45,7 @@ async function addCard(tenantId: string, boardId: string, title: string): Promis
   return ((await res.json()) as { card: { id: string } }).card.id;
 }
 
-/** Register a real agent + mint its `kbn_` token, exactly as "Connect an agent" does. */
+/** Register a real agent + mint its `spa_` token, exactly as "Connect an agent" does. */
 async function connectAgent(tenantId: string, capabilities: string[], name = 'Reader') {
   const agent = await createAgent(env.DB, tenantId, { name, capabilities });
   const { token } = await createAgentToken(env.DB, tenantId, agent.id, ['claim']);

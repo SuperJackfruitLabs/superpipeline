@@ -40,7 +40,7 @@ export interface AgentSummary {
   /** How many cards this agent may hold at once. */
   concurrency: number;
   /**
-   * Active (non-revoked) token ids. Empty means this agent cannot authenticate with a `kbn_`
+   * Active (non-revoked) token ids. Empty means this agent cannot authenticate with a `spa_`
    * token right now — which for a linked agent is the ordinary state, since it authenticates
    * with hub-issued tokens instead.
    */
@@ -498,7 +498,7 @@ export async function getBoards(): Promise<BoardSummary[]> {
  * Register an agent and mint its bearer token (shown once).
  *
  * With `externalId` the agent is created AND linked to that suite principal in
- * the one call, and **no** `kbn_` token comes back: a linked agent
+ * the one call, and **no** `spa_` token comes back: a linked agent
  * authenticates with hub JWTs, so minting one would hand over a secret the
  * operator must store and never uses.
  */
@@ -669,7 +669,7 @@ export function updateAgent(
 }
 
 /**
- * Issue a fresh `kbn_` token for an agent that already exists.
+ * Issue a fresh `spa_` token for an agent that already exists.
  *
  * The missing half of revocation: the UI has always said a revoked agent "cannot authenticate
  * until reconnected", and there was no reconnect — tokens were minted only when an agent was

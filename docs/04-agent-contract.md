@@ -37,7 +37,7 @@ A2A at its core, with Linear's activity/signal model for transparency and human-
 
 1. **Register** the agent to a tenant (human admin action in the UI, or an admin API call):
    name, icon, capability tags, connection type(s), concurrency limit.
-2. Superpipeline issues a **bearer token** (`kbn_…`) scoped to the tenant. The plaintext is shown once;
+2. Superpipeline issues a **bearer token** (`spa_…`) scoped to the tenant. The plaintext is shown once;
    only its SHA-256 hash is stored. **The same token is the credential on both wires** — MCP agents
    do *not* obtain tokens through an OAuth flow, because there is no authorization server
    ([05 §2](./05-integration-surfaces.md)). A token records `scopes`, but **nothing enforces them
