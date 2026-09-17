@@ -7,6 +7,21 @@ description: supi — the board, its cards and its gates, without a browser.
 program under its full name, for scripts that should read plainly. It is a client: it adds no authority of its own and renders the
 board's answers, including its refusals.
 
+## Installing
+
+`supi` is not published anywhere yet. It installs from a checkout of the repository:
+
+```sh
+packages/cli/install.sh          # both names into ~/.local/bin
+BIN_DIR=~/bin packages/cli/install.sh
+packages/cli/install.sh --uninstall
+```
+
+The installer links rather than copies, so the command always runs the source in that checkout —
+right for working on the CLI, and the reason there is nothing here to hand to someone who has no
+copy of the repository. It requires [bun](https://bun.sh), and says so before installing rather
+than after. It never replaces a file it did not put there.
+
 ## Signing in
 
 `supi` authenticates with a **fleet-issued token** — the same credential `apn fleet login`

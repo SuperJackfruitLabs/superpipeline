@@ -2,6 +2,27 @@
 
 Installed as both `superpipeline` and `supi`; they are the same program. Examples use the short name.
 
+## Installing
+
+```sh
+packages/cli/install.sh          # both names into ~/.local/bin
+BIN_DIR=~/bin packages/cli/install.sh
+packages/cli/install.sh --uninstall
+```
+
+It links rather than copies, so `supi` is always the `src/index.ts` in your checkout — edit the
+CLI and the next invocation is the edited one, with nothing to rebuild. The cost of that choice is
+that moving or deleting the repository breaks the command, which is the right trade for a CLI you
+are working on and the wrong one for shipping to a stranger. There is no published artifact yet.
+
+It requires [bun](https://bun.sh) — `src/index.ts` runs directly under its own shebang. The
+installer checks for it up front rather than letting the first invocation fail as
+`bad interpreter`, which names the wrong problem. Uninstalling needs no runtime.
+
+Nothing in `$BIN_DIR` is overwritten unless this installer put it there: both names are checked
+before either is written, so a refusal leaves no half-install behind, and `--uninstall` removes
+only its own links.
+
 The third consumer of `@superpipeline/contract`, after the Worker's REST routes and its MCP server.
 The contract's own comment states the rule this follows:
 
