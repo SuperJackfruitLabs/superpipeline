@@ -10,7 +10,7 @@
  * audience validation**. Nothing here parses a JWT or reads an `aud` claim; a previous version of
  * this comment claimed "validates audience-scoped bearer tokens", which was never true.
  *
- * The two credentials actually accepted are a real `kbn_` agent token (SHA-256 hashed and looked up
+ * The two credentials actually accepted are a real `spa_` agent token (SHA-256 hashed and looked up
  * in the catalog — the same credential the REST surface takes) and, only under DEV_AUTH, a
  * self-asserted "<tenantId>:<agentId>:<caps>" bearer with no secret in it.
  *
@@ -28,13 +28,13 @@ import { effectiveCapabilities } from '../db/implications';
 const PROTECTED_RESOURCE_PATH = '/.well-known/oauth-protected-resource';
 
 /**
- * Resolve the MCP caller: a real `kbn_` agent token (looked up in the catalog) takes precedence; the
+ * Resolve the MCP caller: a real `spa_` agent token (looked up in the catalog) takes precedence; the
  * dev `<tenant>:<agent>:<caps>` bearer is accepted only when DEV_AUTH is on (local + tests).
  */
 export async function resolveMcpAuth(request: Request, env: Env): Promise<McpAuth | null> {
   const match = (request.headers.get('Authorization') ?? '').match(/^Bearer\s+(.+)$/i);
   const token = match ? match[1]!.trim() : null;
-  if (token && token.startsWith('kbn_')) {
+  if (token && token.startsWith('spa_')) {
     const found = await findAgentByTokenHash(env.DB, await hashToken(token));
     if (!found) return null;
     return {

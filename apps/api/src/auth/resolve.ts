@@ -1,6 +1,6 @@
 /**
  * Edge auth resolution (docs/02). Real auth first: a signed session cookie identifies a human; a
- * `kbn_` bearer token identifies an agent (looked up in the catalog). The legacy dev headers
+ * `spa_` bearer token identifies an agent (looked up in the catalog). The legacy dev headers
  * (`X-Tenant-Id` / `X-Agent-Id` / `X-User-Id`) are accepted as a fallback only when `DEV_AUTH` is
  * explicitly `"true"` — it is opt-in (set by `pnpm dev` and the test runner, never in
  * wrangler.jsonc), so any deploy requires real credentials by default.
@@ -39,7 +39,7 @@ export interface UserPrincipal {
 export interface AgentPrincipal {
   tenantId: string;
   /**
-   * The authenticated agent. A `kbn_` token always resolves one: it is compared against
+   * The authenticated agent. A `spa_` token always resolves one: it is compared against
    * `run.agent_id` on every run verb and on the run read, so an agent only drives and reads its own
    * runs. Null only in `DEV_AUTH` mode when no `X-Agent-Id` was sent — there is no identity to
    * compare and the lease alone authorizes; the claim route refuses it outright.
@@ -49,13 +49,13 @@ export interface AgentPrincipal {
   capabilities: string[] | null;
   /**
    * The agent's mapped suite principal id (`agents.external_id`), already known from the same
-   * catalog row a `kbn_` token resolves. **Absent** (not `null`) when this auth path never looked
+   * catalog row a `spa_` token resolves. **Absent** (not `null`) when this auth path never looked
    * it up — the dev-header path, which carries no DB-backed identity at all — so a consumer can
    * tell "resolved, and there is none" from "not resolved here, look it up yourself".
    */
   externalId?: string | null;
   /**
-   * The scopes on the `kbn_` token that authenticated this request (`agent_tokens.scopes_json`).
+   * The scopes on the `spa_` token that authenticated this request (`agent_tokens.scopes_json`).
    *
    * **Null means "this credential is not a superpipeline token"** — a hub-issued agent token, or a dev
    * header — not "no scopes". The distinction is load-bearing: `scopePermits` treats null as
@@ -120,10 +120,10 @@ export async function resolveUser(request: Request, env: Env): Promise<UserPrinc
   return null;
 }
 
-/** Resolve the agent behind a request (kbn_ bearer token → catalog, or dev headers). */
+/** Resolve the agent behind a request (spa_ bearer token → catalog, or dev headers). */
 export async function resolveAgent(request: Request, env: Env): Promise<AgentPrincipal | null> {
   const token = bearer(request);
-  if (token && token.startsWith('kbn_')) {
+  if (token && token.startsWith('spa_')) {
     const found = await findAgentByTokenHash(env.DB, await hashToken(token));
     return found
       ? {
@@ -188,9 +188,9 @@ export async function resolveHubUser(request: Request, env: Env): Promise<UserPr
   if (!issuer) return null;
 
   const token = bearer(request);
-  // `kbn_` tokens are the agent credential and are resolved elsewhere; anything
+  // `spa_` tokens are the agent credential and are resolved elsewhere; anything
   // else is a candidate JWT.
-  if (!token || token.startsWith('kbn_')) return null;
+  if (!token || token.startsWith('spa_')) return null;
 
   const claims = await verifyHubToken(token, { issuer });
   if (!claims) return null;
@@ -251,9 +251,9 @@ export async function resolveHubAgent(request: Request, env: Env): Promise<Agent
   if (!issuer) return null;
 
   const token = bearer(request);
-  // `kbn_` tokens are the native agent credential and are resolved elsewhere; anything else is a
+  // `spa_` tokens are the native agent credential and are resolved elsewhere; anything else is a
   // candidate JWT.
-  if (!token || token.startsWith('kbn_')) return null;
+  if (!token || token.startsWith('spa_')) return null;
 
   const claims = await verifyHubToken(token, { issuer });
   if (!claims) return null;

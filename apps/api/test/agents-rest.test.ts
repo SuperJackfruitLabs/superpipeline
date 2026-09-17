@@ -22,7 +22,7 @@ describe('REST — /v1/agents (mint token + real-token auth)', () => {
     });
     expect(created.status).toBe(201);
     const { token } = await created.json<{ agent: { id: string }; token: string }>();
-    expect(token).toMatch(/^kbn_/);
+    expect(token).toMatch(/^spa_/);
 
     const boardId = await createBoard('tnt_agents');
     await SELF.fetch(`https://api.test/v1/boards/${boardId}/cards`, { method: 'POST', headers: dev('tnt_agents'), body: JSON.stringify({ title: 'Investigate' }) });

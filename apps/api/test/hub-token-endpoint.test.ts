@@ -170,17 +170,17 @@ describe('GET /v1/agents with a hub-issued token', () => {
     }
   });
 
-  it('never lets a hub token through as a kbn_ agent credential', async () => {
+  it('never lets a hub token through as a spa_ agent credential', async () => {
     // Independent of whether an issuer is configured: this must refuse either
     // way, so the issuer is removed to keep the case about the one thing it
     // names.
     const saved = (env as unknown as Record<string, unknown>).HUB_ISSUER;
     delete (env as unknown as Record<string, unknown>).HUB_ISSUER;
     try {
-    // `kbn_` is the agent credential and is resolved from the catalog by hash.
+    // `spa_` is the agent credential and is resolved from the catalog by hash.
     // A JWT that happened to start with that prefix must not be looked up as one.
     const res = await SELF.fetch('https://api.test/v1/agents', {
-      headers: { Authorization: `Bearer kbn_${await hubToken()}` },
+      headers: { Authorization: `Bearer spa_${await hubToken()}` },
     });
     expect(res.status).toBe(401);
     } finally {

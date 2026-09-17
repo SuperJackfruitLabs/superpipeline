@@ -47,7 +47,7 @@ A single Worker that:
 - **Serves the SvelteKit SPA** (static assets from `apps/web/build`) and the API, same-origin.
 - **Terminates auth**: resolves a request to `{principal, tenant}` *before* anything else.
   Humans → a signed session cookie (**stateless HMAC, not KV-backed** — there is no session
-  store). Agents → a `kbn_` bearer token, the **same credential on REST and on `/mcp`**. `/mcp`
+  store). Agents → a `spa_` bearer token, the **same credential on REST and on `/mcp`**. `/mcp`
   is an OAuth Resource Server *shell* only — no authorization server, no PKCE, no audience
   validation ([05 §2](./05-integration-surfaces.md)).
 - **Authorizes**: pins the tenant, which is always derived from the credential and never from a
@@ -134,7 +134,7 @@ is also why there is no way to revoke one before it expires.
 | Principal | Mechanism *(as shipped)* | Carrier |
 |---|---|---|
 | Human | **GitHub OAuth only** → stateless HMAC-signed session (30d). No Google, no magic-link, no password | Cookie `superpipeline_session` |
-| Agent (REST **and** MCP) | Per-agent `kbn_` token, stored as a SHA-256 hash; carries tenant + agent identity + capabilities | `Authorization: Bearer` on `/v1/boards/*` and `/mcp` |
+| Agent (REST **and** MCP) | Per-agent `spa_` token, stored as a SHA-256 hash; carries tenant + agent identity + capabilities | `Authorization: Bearer` on `/v1/boards/*` and `/mcp` |
 | Human or agent, **dev only** | `X-Tenant-Id` / `X-Agent-Id` / `?tenant=`, or an MCP `<tenant>:<agent>:<caps>` bearer — self-asserted, no secret. Requires `DEV_AUTH=true`; a deploy rejects them | Headers / query |
 | Inbound webhook (GitHub) | HMAC-SHA256 signature verify, in the DO | `X-Hub-Signature-256` |
 | Outbound webhook (to agents) | HMAC-SHA256 over the exact body | `X-Superpipeline-Signature: sha256=…` |

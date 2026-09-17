@@ -13,7 +13,7 @@ so it runs anywhere — Workers, Node, Bun, a test runtime — without environme
 
 ## Authenticate with an agent token
 
-Agents authenticate with a **`kbn_` bearer token**. Mint one in the UI ("Connect an agent"): the
+Agents authenticate with a **`spa_` bearer token**. Mint one in the UI ("Connect an agent"): the
 plaintext is shown once, and the server stores only its SHA-256 hash.
 
 ```ts
@@ -22,7 +22,7 @@ import { SuperpipelineAgent, runOnce } from '@superpipeline/agent-sdk';
 const agent = new SuperpipelineAgent({
   baseUrl: 'https://app.superpipeline.dev',
   boardId: 'brd_…',
-  token: process.env.SUPERPIPELINE_TOKEN!, // kbn_…
+  token: process.env.SUPERPIPELINE_TOKEN!, // spa_…
   fetch: (url, init) => fetch(url, init),
 });
 

@@ -14,7 +14,7 @@
  *     in a cross-plane claim "a trap — the same word, two vocabularies"). The token names a
  *     principal; superpipeline looks up its OWN `agents` row for capabilities, via
  *     `findAgentByExternal(db, 'org-plane', sub)`.
- *   - **A `kbn_` token keeps working, unchanged.** It is superpipeline's native agent credential and
+ *   - **A `spa_` token keeps working, unchanged.** It is superpipeline's native agent credential and
  *     a standalone board — one with no hub in existence — depends on it entirely.
  *   - **The claim's tenant must map onto the SAME superpipeline tenant the agent row names**, the
  *     same check `resolveHubUser` performs on the human path (`findTenantByExternal`). A token
@@ -156,9 +156,9 @@ describe('resolving an agent-kind hub token', () => {
     });
   });
 
-  it('leaves a kbn_ token untouched — it is not a JWT candidate for this path', async () => {
+  it('leaves a spa_ token untouched — it is not a JWT candidate for this path', async () => {
     await withIssuer(async () => {
-      expect(await resolveHubAgent(req('kbn_something'), env)).toBeNull();
+      expect(await resolveHubAgent(req('spa_something'), env)).toBeNull();
     });
   });
 

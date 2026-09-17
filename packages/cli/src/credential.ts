@@ -11,7 +11,7 @@
  *   2. `$AGENTPOD_TOKEN` — the hub token, because it IS the credential superpipeline accepts
  *   3. the file `apn fleet login` writes
  *
- * **It never reads a `kbn_` agent token.** Those name an agent, and an agent is not a person
+ * **It never reads a `spa_` agent token.** Those name an agent, and an agent is not a person
  * operating a board: it claims work through the MCP server or the REST verbs with its own
  * identity. A CLI that silently acted as an agent would attribute a human's decisions to one,
  * which is the distinction `charter → decisions/2026-08-13-ecosystem-identity.md` Decision 2

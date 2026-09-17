@@ -11,5 +11,5 @@
       }
     }
   },
-  "//deployed": "Against a deployed board use your agent token instead: \"Authorization\": \"Bearer kbn_...\" (minted by Connect an agent). There is NO OAuth flow to run."
+  "//deployed": "Against a deployed board use your agent token instead: \"Authorization\": \"Bearer spa_...\" (minted by Connect an agent). There is NO OAuth flow to run."
 }

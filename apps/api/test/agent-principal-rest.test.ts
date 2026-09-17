@@ -8,7 +8,7 @@
  * agent-kind hub token into a local agent, which is the whole reason the mapping exists.
  *
  * Same posture as `test/agent-token-revocation.test.ts`: linking is a HUMAN act. An agent's own
- * `kbn_` bearer must not be able to link itself (or anything else) to a principal, and one
+ * `spa_` bearer must not be able to link itself (or anything else) to a principal, and one
  * tenant's session must not be able to link another tenant's agent.
  */
 import { SELF, env } from 'cloudflare:test';
@@ -249,12 +249,12 @@ describe('PATCH /v1/agents/:id — link a suite principal', () => {
 // ─── Creating and linking in one call ────────────────────────────────────────
 //
 // Adding one agent from the suite used to be four steps: POST (which handed
-// back a `kbn_` secret the caller does not want), copy the `agt_` id, go find
+// back a `spa_` secret the caller does not want), copy the `agt_` id, go find
 // the `prn_` in the other plane, then PUT the link. This is that in one
 // request — and the failure window in the middle, where a rejected link left
 // an agent that existed and was linked to nobody, is gone with it.
 describe('POST /v1/agents { externalId }', () => {
-  it('creates the agent and links it, and mints no kbn_ token', async () => {
+  it('creates the agent and links it, and mints no spa_ token', async () => {
     const res = await SELF.fetch('https://x/v1/agents', {
       method: 'POST',
       headers: dev('t_one'),

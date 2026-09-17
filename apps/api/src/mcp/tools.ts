@@ -20,7 +20,7 @@ export interface McpAuth {
   capabilities: string[];
   /**
    * The agent's mapped suite principal id (`agents.external_id`), already known from the same
-   * catalog row the `kbn_` token resolved against. Absent when this auth path never looked it up
+   * catalog row the `spa_` token resolved against. Absent when this auth path never looked it up
    * (the dev bearer) — see `AgentPrincipal.externalId` in `auth/resolve.ts`, which this mirrors.
    */
   externalId?: string | null;

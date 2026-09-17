@@ -14,7 +14,7 @@
  *
  * ## Authentication
  *
- * Agents authenticate with a **`kbn_` bearer token**, minted in the UI ("Connect an agent") and
+ * Agents authenticate with a **`spa_` bearer token**, minted in the UI ("Connect an agent") and
  * stored server-side only as a SHA-256 hash. That is the way to talk to a deployed Superpipeline:
  *
  * ```ts
@@ -62,7 +62,7 @@ export interface AgentConfig {
   /** The board this agent works. */
   boardId: string;
   /**
-   * The agent's `kbn_` bearer token — how agents authenticate. It carries the tenant, the agent
+   * The agent's `spa_` bearer token — how agents authenticate. It carries the tenant, the agent
    * identity, and the agent's registered capabilities.
    */
   token?: string;
@@ -185,12 +185,12 @@ async function errorMessage(res: HttpResponse, path: string, method = 'POST'): P
 export class SuperpipelineAgent {
   constructor(private readonly config: AgentConfig) {
     if (config.token) {
-      if (!config.token.startsWith('kbn_')) {
-        throw new Error('SuperpipelineAgent: token must be a Superpipeline agent token ("kbn_…"), minted via Connect an agent');
+      if (!config.token.startsWith('spa_')) {
+        throw new Error('SuperpipelineAgent: token must be a Superpipeline agent token ("spa_…"), minted via Connect an agent');
       }
     } else if (!config.tenantId) {
       throw new Error(
-        'SuperpipelineAgent: a `token` ("kbn_…") is required. `tenantId`/`agentId` headers only work against a local server run with DEV_AUTH=true.',
+        'SuperpipelineAgent: a `token` ("spa_…") is required. `tenantId`/`agentId` headers only work against a local server run with DEV_AUTH=true.',
       );
     }
   }

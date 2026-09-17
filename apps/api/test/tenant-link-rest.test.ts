@@ -216,7 +216,7 @@ describe('PATCH /v1/tenant — link this workspace to a hub fleet', () => {
     expect(res.status).toBe(400);
   });
 
-  it('linking is a human act: an agent\'s own kbn_ bearer cannot do it', async () => {
+  it('linking is a human act: an agent\'s own spa_ bearer cannot do it', async () => {
     const tenantId = 'tnt_tlr_agentcred';
     await workspace(tenantId);
     const created = await SELF.fetch('https://api.test/v1/agents', {

@@ -108,7 +108,7 @@ describe('a revoked agent can be given a new token', () => {
     const minted = await SELF.fetch(`https://api.test/v1/agents/${id}/tokens`, { method: 'POST', headers: dev(t) });
     expect(minted.status).toBe(201);
     const fresh = await minted.json<{ token: string; tokenId: string }>();
-    expect(fresh.token).toMatch(/^kbn_/);
+    expect(fresh.token).toMatch(/^spa_/);
 
     // The proof that it is a credential and not just a string: it authenticates a real claim.
     const boardRes = await SELF.fetch('https://api.test/v1/boards', {
@@ -129,11 +129,11 @@ describe('a revoked agent can be given a new token', () => {
   it('issues a token for a linked agent, which is created with none', async () => {
     const t = 'tnt_remint_linked';
     const { body } = await makeAgent(t, { name: 'Linked', externalId: 'prn_abcdefabcdefabcdefab' });
-    expect(body.token).toBeUndefined(); // a linked agent gets no kbn_ at creation
+    expect(body.token).toBeUndefined(); // a linked agent gets no spa_ at creation
 
     const minted = await SELF.fetch(`https://api.test/v1/agents/${body.agent!.id}/tokens`, { method: 'POST', headers: dev(t) });
     expect(minted.status).toBe(201);
-    expect((await minted.json<{ token: string }>()).token).toMatch(/^kbn_/);
+    expect((await minted.json<{ token: string }>()).token).toMatch(/^spa_/);
   });
 
   it('refuses to mint for an agent in another tenant', async () => {

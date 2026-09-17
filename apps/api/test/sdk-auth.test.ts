@@ -5,7 +5,7 @@ import { setupCatalog } from './helpers/catalog';
 import { createAgent, createAgentToken } from '../src/db/catalog';
 
 // The SDK must be able to authenticate the way the deployed server actually authenticates agents:
-// a `kbn_` bearer token (agent_tokens.token_hash), not the dev-only X-Tenant-Id / X-Agent-Id
+// a `spa_` bearer token (agent_tokens.token_hash), not the dev-only X-Tenant-Id / X-Agent-Id
 // headers. Everything here goes through @superpipeline/agent-sdk — no hand-rolled requests.
 
 beforeAll(setupCatalog);
@@ -52,14 +52,14 @@ async function snapshot(tenantId: string, boardId: string) {
   ).json()) as { cards: Array<{ state: string; delegateAgentId: string | null }> };
 }
 
-/** Register a real agent + mint its `kbn_` token, exactly as the "connect an agent" flow does. */
+/** Register a real agent + mint its `spa_` token, exactly as the "connect an agent" flow does. */
 async function connectAgent(tenantId: string, capabilities: string[]) {
   const agent = await createAgent(env.DB, tenantId, { name: 'SDK agent', capabilities });
   const { token } = await createAgentToken(env.DB, tenantId, agent.id, ['claim']);
   return { agentId: agent.id, token };
 }
 
-describe('agent SDK — kbn_ bearer auth', () => {
+describe('agent SDK — spa_ bearer auth', () => {
   it('drives a full run with only a token (no tenant/agent headers)', async () => {
     const tenantId = 'tnt_sdk1';
     const boardId = await createBoard(tenantId);
@@ -102,7 +102,7 @@ describe('agent SDK — kbn_ bearer auth', () => {
     const agent = new SuperpipelineAgent({
       baseUrl: 'https://api.test',
       boardId,
-      token: 'kbn_deadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef',
+      token: 'spa_deadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef',
       fetch: fetcher,
     });
 
@@ -122,7 +122,7 @@ describe('agent SDK — kbn_ bearer auth', () => {
 
   it('rejects a malformed token at construction', () => {
     const config = { baseUrl: 'https://api.test', boardId: 'brd_1', fetch: fetcher };
-    expect(() => new SuperpipelineAgent({ ...config, token: 'not-a-superpipeline-token' })).toThrow(/kbn_/);
+    expect(() => new SuperpipelineAgent({ ...config, token: 'not-a-superpipeline-token' })).toThrow(/spa_/);
   });
 
   it('requires either a token or (dev) a tenant id', () => {

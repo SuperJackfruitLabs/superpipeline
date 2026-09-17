@@ -6,7 +6,7 @@
  * Auth (docs/05 §3). Three principals, resolved before dispatch:
  *   - humans      — a signed `superpipeline_session` cookie from GitHub OAuth (auth/routes.ts). Stateless
  *                   HMAC, no session store. This is what board/card administration requires.
- *   - agents      — a `kbn_` bearer on the agent routes only: `…/claims` and `…/runs/*`. The tenant
+ *   - agents      — a `spa_` bearer on the agent routes only: `…/claims` and `…/runs/*`. The tenant
  *                   AND the agent identity come from the token, never from the request.
  *   - dev headers — `X-Tenant-Id`/`X-Agent-Id`/`?tenant=` are a full credential, so they are gated
  *                   on DEV_AUTH === 'true' and are absent from wrangler.jsonc by design. A deploy
@@ -219,7 +219,7 @@ export default {
     // source hardcoded rather than accepted from the body.
     //
     // **Human-only, and not merely by convention.** `u` comes from `resolveUser` alone — session
-    // cookie or dev headers, never a `kbn_` bearer and never a hub token. Linking a plane is at
+    // cookie or dev headers, never a `spa_` bearer and never a hub token. Linking a plane is at
     // least as consequential as revoking a credential (charter
     // decisions/2026-08-13-ecosystem-identity.md Decision 3), and the hub-token path could not
     // work here anyway: `resolveHubUser` needs this mapping to already exist, so a token can
@@ -574,7 +574,7 @@ export default {
         // The first endpoint to accept a hub-issued token
         // (charter decisions/2026-08-15-one-issuer-and-offline-verification.md).
         //
-        // Read-only, and only as a FALLBACK: the session cookie and `kbn_` token
+        // Read-only, and only as a FALLBACK: the session cookie and `spa_` token
         // paths are untouched and still take precedence, so nothing that works
         // today changes. The hub token is verified offline against a cached JWKS —
         // no network call in this path — and resolves to the same principal shape,
@@ -590,11 +590,11 @@ export default {
         const tokenId = agentsMatch[3];
         const mintingTokens = agentId && agentsMatch[2] === 'tokens' && !tokenId;
 
-        // POST /v1/agents/:id/tokens — issue a fresh `kbn_` for an agent that already exists.
+        // POST /v1/agents/:id/tokens — issue a fresh `spa_` for an agent that already exists.
         //
         // Without this, revoking an agent's last token was terminal: tokens were only ever minted
         // inside `POST /v1/agents`, so "cannot authenticate until reconnected" named a reconnect
-        // that did not exist, and a linked agent — which is created with no `kbn_` at all — could
+        // that did not exist, and a linked agent — which is created with no `spa_` at all — could
         // never be issued one even when it needed a native credential.
         //
         // Human-only, exactly like revocation: `u` came from `resolveUser` alone, so an agent can
@@ -622,7 +622,7 @@ export default {
 
         if (agentId && tokenId) {
           // Revoking a credential is a HUMAN act, same as minting one: `u` above came ONLY from
-          // `resolveUser` (session cookie or dev headers) — never from a `kbn_` bearer or a hub
+          // `resolveUser` (session cookie or dev headers) — never from a `spa_` bearer or a hub
           // token — so an agent can never revoke its own token, or a peer's, to escape an audit
           // (charter decisions/2026-08-13-ecosystem-identity.md Decision 3).
           if (request.method === 'DELETE') {
@@ -777,7 +777,7 @@ export default {
               externalId: body.externalId!,
               externalSource: 'org-plane',
             });
-            // No `kbn_` token. A linked agent authenticates with hub JWTs
+            // No `spa_` token. A linked agent authenticates with hub JWTs
             // (`resolveHubAgent`), so minting one here would hand back a
             // long-lived secret the caller must store and never uses — and the
             // whole point of this path is to stop making the operator handle
@@ -834,7 +834,7 @@ export default {
       // that agent — capabilities still come from superpipeline's own agents row, never the claim.
       if (!agent) agent = await resolveHubAgent(request, env);
       if (!agent) return Response.json({ error: 'a valid agent token is required' }, { status: 401 });
-      // Scopes stop being decoration here. Every `kbn_` token has carried a scope set since
+      // Scopes stop being decoration here. Every `spa_` token has carried a scope set since
       // migration 0001, the resolver has always returned it, and nothing compared it to the action
       // being attempted — so a token minted to claim drove every run verb. A recorded permission
       // nobody checks reads as protection that does not exist (auth/scopes.ts).

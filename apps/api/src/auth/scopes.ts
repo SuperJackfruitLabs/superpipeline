@@ -1,5 +1,5 @@
 /**
- * What a `kbn_` token is allowed to do.
+ * What a `spa_` token is allowed to do.
  *
  * Scopes have been minted onto every agent token since migration 0001 (`scopes_json`), returned by
  * the resolver, and compared to nothing: a token minted with `['claim']` drove every run verb and
@@ -42,7 +42,7 @@ export function requiredScope(rest: string): AgentScope | null {
  *
  * A `null` scope set means the credential did not come from `agent_tokens` at all — a hub-issued
  * agent token, whose authority is the hub's and is checked by the control pair at claim time, or a
- * dev header. Those are unaffected: this function answers about `kbn_` tokens only.
+ * dev header. Those are unaffected: this function answers about `spa_` tokens only.
  */
 export function scopePermits(scopes: string[] | null | undefined, needed: AgentScope): boolean {
   if (!scopes) return true;

@@ -5,7 +5,7 @@ describe('agent tokens', () => {
   it('generates a prefixed, high-entropy, unique token', () => {
     const a = generateAgentToken();
     const b = generateAgentToken();
-    expect(a.startsWith('kbn_')).toBe(true);
+    expect(a.startsWith('spa_')).toBe(true);
     expect(a.length).toBeGreaterThanOrEqual(36);
     expect(a).not.toBe(b);
   });
