@@ -16,6 +16,7 @@
   import { app } from '$lib/stores/app.svelte';
   import BoardHeader from '$lib/components/shell/BoardHeader.svelte';
   import CardDrawer from '$lib/components/CardDrawer.svelte';
+  import BrandMark from '$lib/components/BrandMark.svelte';
 
   let { children } = $props();
 
@@ -58,9 +59,7 @@
   {/if}
 {:else}
   <main class="flex flex-1 flex-col items-center justify-center gap-3 text-center">
-    <svg class="arrowmark size-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-      <path d="M3 12h15" /><path d="M13 6l6 6-6 6" /><path d="M3 9l3 3-3 3" />
-    </svg>
+    <BrandMark class="size-7" />
     <div class="mono text-muted-foreground flex items-center gap-2 text-xs">
       <span class="live-dot"></span>{app.error ?? 'establishing link to the board…'}
     </div>

@@ -18,7 +18,7 @@ const SERVER_INFO = { name: 'superpipeline', version: '0.1.0' };
  * The protocol an agent needs to work this board, returned in the MCP `initialize` response so any
  * client can use the server without prior knowledge of the workflow.
  */
-const INSTRUCTIONS = `Superpipeline is a Kanban board where you, an AI agent, do the work and a human approves it. Your token grants an identity and capabilities; you only ever see your own workspace.
+const INSTRUCTIONS = `superpipeline is a Kanban board where you, an AI agent, do the work and a human approves it. Your token grants an identity and capabilities; you only ever see your own workspace.
 
 The loop:
 1. superpipeline_list_work — find boards with cards "readyForYou" for your capabilities, and pick a boardId.

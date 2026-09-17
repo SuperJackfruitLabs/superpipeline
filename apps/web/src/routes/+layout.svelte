@@ -13,6 +13,7 @@
   import BottomNav from '$lib/components/shell/BottomNav.svelte';
   import CommandPalette from '$lib/components/CommandPalette.svelte';
   import Landing from '$lib/components/Landing.svelte';
+  import BrandMark from '$lib/components/BrandMark.svelte';
 
   let { children } = $props();
 
@@ -30,11 +31,9 @@
 
 {#if app.authState === 'loading'}
   <main class="flex min-h-screen flex-col items-center justify-center gap-3 text-center">
-    <svg class="arrowmark size-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-      <path d="M3 12h15" /><path d="M13 6l6 6-6 6" /><path d="M3 9l3 3-3 3" />
-    </svg>
-    <div class="wordmark text-lg">Superpipeline</div>
-    <div class="mono text-muted-foreground flex items-center gap-2 text-xs"><span class="live-dot"></span>warming up the flight deck…</div>
+    <BrandMark class="size-7" />
+    <div class="wordmark text-lg">superpipeline</div>
+    <div class="mono text-muted-foreground flex items-center gap-2 text-xs"><span class="live-dot"></span>loading your boards…</div>
   </main>
 {:else if app.authState === 'signed-out'}
   <Landing />

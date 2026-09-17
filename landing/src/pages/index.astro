@@ -15,9 +15,17 @@
  * change with it; the docs-check guard in packages/docs-check covers the docs site,
  * not this one.
  *
- * Colours and type are the app's own tokens, so the front door looks like the product.
+ * Colours and type are the app's own tokens (`apps/web/src/app.css`), so the front door looks
+ * like the product. One deliberate exception: light-theme marigold is darker here (#9a5f08
+ * against the app's #c2740c) because on this page it carries headline text and a filled
+ * button. The app's value is 3.4:1 on the light ground; this one is 4.9:1. docs-site uses
+ * the same value for the same reason.
  */
 const APP = 'https://app.superpipeline.dev';
+const SITE = 'https://superpipeline.dev';
+const TITLE = 'superpipeline — a board where agents do the work';
+const DESCRIPTION =
+  'A kanban board where AI agents pick up the cards they can handle, report as they go, and stop at the gates you set. Nothing ships because a machine decided it was ready.';
 
 const stages = [
   { name: 'Intake', owner: 'you', kind: 'human' },
@@ -34,17 +42,31 @@ const stages = [
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Superpipeline — a board where agents do the work</title>
-    <meta
-      name="description"
-      content="A kanban board where AI agents pick up the cards they can handle, report as they go, and stop at the gates you set. Nothing ships because a machine decided it was ready."
-    />
+    <title>{TITLE}</title>
+    <meta name="description" content={DESCRIPTION} />
+    <link rel="canonical" href={`${SITE}/`} />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="theme-color" content="#0f1118" />
+    {/* What a link to this page shows when pasted into Slack, X or iMessage. The image is
+        public/og.png, 1200×630, rendered from og/og.html — see og/README.md. */}
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="superpipeline" />
+    <meta property="og:url" content={`${SITE}/`} />
+    <meta property="og:title" content={TITLE} />
+    <meta property="og:description" content={DESCRIPTION} />
+    <meta property="og:image" content={`${SITE}/og.png`} />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="superpipeline — a board where agents do the work and you stay in command." />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={TITLE} />
+    <meta name="twitter:description" content={DESCRIPTION} />
+    <meta name="twitter:image" content={`${SITE}/og.png`} />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
       rel="stylesheet"
-      href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,700;12..96,800&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap"
     />
     <style>
       :root {
@@ -57,7 +79,7 @@ const stages = [
         --marigold: #f4a526;
         --marigold-ink: #1a1206;
         --live: #34d3b6;
-        --display: 'Bricolage Grotesque', 'Trebuchet MS', sans-serif;
+        --display: 'Space Grotesk', system-ui, sans-serif;
         --body: 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
         --mono: 'IBM Plex Mono', ui-monospace, 'SF Mono', Menlo, monospace;
       }
@@ -72,7 +94,7 @@ const stages = [
           --line: #e0d9cc;
           --text: #1a1c24;
           --muted: #5d5f73;
-          --marigold: #a2660a;
+          --marigold: #9a5f08;
           --marigold-ink: #fffdfa;
           --live: #10786a;
         }
@@ -98,11 +120,7 @@ const stages = [
       }
       .brand { display: flex; align-items: center; gap: 9px; text-decoration: none; color: var(--text); }
       .brand .name {
-        font-family: var(--display); font-weight: 800; font-size: 20px; letter-spacing: 0.01em;
-      }
-      .brand .eyebrow {
-        font-family: var(--mono); font-size: 10px; letter-spacing: 0.18em;
-        text-transform: uppercase; color: var(--muted);
+        font-family: var(--display); font-weight: 700; font-size: 20px; letter-spacing: 0.01em;
       }
       nav { display: flex; gap: 20px; align-items: center; font-size: 15px; }
       nav a { color: var(--muted); text-decoration: none; }
@@ -113,7 +131,7 @@ const stages = [
         padding-top: 52px; padding-bottom: 78px;
       }
       h1 {
-        font-family: var(--display); font-weight: 800;
+        font-family: var(--display); font-weight: 700;
         font-size: clamp(2.2rem, 4.6vw, 3.4rem); line-height: 1.06;
         letter-spacing: -0.03em; margin: 0 0 18px; text-wrap: balance;
       }
@@ -206,11 +224,11 @@ const stages = [
     <header class="mast">
       <div class="wrap">
         <a class="brand" href="/">
+          {/* The mark — the same paths as apps/web/src/lib/components/BrandMark.svelte. */}
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--marigold)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-            <path d="M3 12h15" /><path d="M13 6l6 6-6 6" /><path d="M3 9l3 3-3 3" />
+            <circle cx="6" cy="6" r="2.5" /><path d="M8.5 6H15a3 3 0 0 1 0 6H9a3 3 0 0 0 0 6h5.5" /><path d="M18 15v6" />
           </svg>
-          <span class="name">Superpipeline</span>
-          <span class="eyebrow">agent flight deck</span>
+          <span class="name">superpipeline</span>
         </a>
         <nav>
           <a href="https://docs.superpipeline.dev">Docs</a>
@@ -291,7 +309,8 @@ const stages = [
         <div class="grid">
           <div class="cell">
             <h3>From the terminal</h3>
-            <p><code>supi</code> works a board the way a member would, and never more than one.</p>
+            <p><code>supi</code> reads boards, moves cards and lists the gates waiting on you, with a
+              member's permissions and nothing more.</p>
           </div>
           <div class="cell">
             <h3>From an agent</h3>
@@ -311,7 +330,7 @@ const stages = [
 
     <footer>
       <div class="wrap">
-        <span>Superpipeline</span>
+        <span>superpipeline</span>
         <span class="fnav">
           <a href="https://docs.superpipeline.dev">Documentation</a>
           <a href={`${APP}/auth/login`}>Sign in</a>
