@@ -15,6 +15,11 @@ jobs:
         with:
           node-version: 22
           cache: pnpm
+      # `supi` runs under bun — `packages/cli/src/index.ts` is executed directly via a
+      # `#!/usr/bin/env bun` shebang, not built first. Its installer refuses to install
+      # without bun on PATH, so without this step four of its tests fail on the refusal
+      # rather than on anything they are testing.
+      - uses: oven-sh/setup-bun@v2
       - run: pnpm install --frozen-lockfile
       - run: pnpm typecheck
       - run: pnpm test
