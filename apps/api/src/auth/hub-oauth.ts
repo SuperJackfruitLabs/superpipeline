@@ -257,6 +257,25 @@ async function signInFromHubToken(env: Env, token: string, fetchImpl: typeof fet
   // only place it applies, and says why the other two steps must stay ungated.
   if (claims.principalKind !== 'human') return null;
 
+  // And never a token a SERVICE minted while speaking FOR somebody. `act` is RFC 8693's actor
+  // claim — `sub` is still the human, `act.sub` is who spoke for them — and today that is the
+  // Matrix Application Service resolving an approval on behalf of whoever tapped a button in a
+  // room (`charter → decisions/2026-08-14-approvals-cross-planes-as-events.md`).
+  //
+  // Without this, "signs somebody in" means "verifies against the JWKS", which is strictly
+  // broader than "somebody just completed an authorize flow". `act` is the one claim that tells
+  // those two apart, so refusing on it is the difference between a browser session standing for
+  // presence and one standing for a bridge's word. An assertion carries no more reach than the
+  // person's own token, so this is not about authority — it is about not handing a thirty-day
+  // cookie to a flow nobody was present for, and not writing the adoption mapping (a one-way
+  // door) on the strength of one.
+  //
+  // Unreachable today: an assertion is minted for a service to spend, and nothing puts one
+  // through `/hub/callback`'s code exchange. It is here so that it stays unreachable — and so
+  // that whoever makes it reachable has to delete a line and say why. `hub-jwt.ts` already types
+  // the field, which is what makes this one line rather than a claim-shape debate.
+  if (claims.act) return null;
+
   // One canonical form of the address, computed ONCE and used for both the lookup and the create.
   //
   // `addMember` (db/members.ts) stores `input.email.trim().toLowerCase()`, and SQLite compares

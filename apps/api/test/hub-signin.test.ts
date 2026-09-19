@@ -386,6 +386,31 @@ describe('a token the callback cannot turn into a person', () => {
     expect(await findUserByExternal(env.DB, 'agentpod', 'hubsub_stranger')).toBeNull();
   });
 
+  it('does not sign in on a token a service ASSERTED for somebody', async () => {
+    // `act` is RFC 8693's actor claim: `sub` is still the human, `act.sub` is the service that
+    // spoke for them. Verifying against the JWKS is broader than "somebody just completed an
+    // authorize flow", and `act` is the one claim that tells the two apart. A thirty-day browser
+    // cookie — and the one-way adoption mapping below it — must stand for presence.
+    //
+    // Unreachable through this route today, which is the point: it is pinned so it stays that
+    // way, and so that making it reachable means deleting a line on purpose.
+    const existing = await upsertUserByEmail(env.DB, { email: 'asserted@example.com', name: 'A' });
+
+    const { res } = await signInViaHub({
+      sub: 'hubsub_asserted',
+      email: 'asserted@example.com',
+      email_verified: true,
+      act: { sub: 'prn_the_bridge' },
+    });
+
+    expect(await findUserByExternal(env.DB, 'agentpod', 'hubsub_asserted')).toBeNull();
+    expect(await sessionOf(res)).toBeNull();
+    expect(existing.id, 'the account it would have adopted is untouched').toBeTruthy();
+    // The token is still handed on, like every other case this cannot resolve.
+    expect(res.status).toBe(302);
+    expect(cookieOf(setCookies(res), 'superpipeline_hub_token')).toBeTruthy();
+  });
+
   it('does not sign in an agent or a service principal', async () => {
     // `resolveHubUser` refuses a non-human token outright; minting a browser session for one here
     // would be the same confusion with a cookie attached.
