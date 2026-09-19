@@ -17,8 +17,17 @@
  *   - without the has-no-mapping check, a second principal captures an account that already
  *     belongs to somebody.
  *
- * Each is pinned below by a test that fails if its condition is deleted, which is the only kind of
- * test worth having here: a guard nothing discriminates on is a comment.
+ * Creation from nothing is guarded once more, by the fleet mapping: without that, a human
+ * principal in a fleet nobody here has linked would self-register a user, a workspace they own
+ * and a thirty-day session. Adoption is deliberately NOT gated on it — see the comment at step 3.
+ *
+ * Each guard is pinned below by a test that fails if its condition is deleted, which is the only
+ * kind of test worth having here: a guard nothing discriminates on is a comment. That includes
+ * the two that are easiest to leave unpinned — the signature check (every other token in this
+ * file is correctly signed, so without one case signed by a stranger's key, swapping
+ * `verifyHubToken` for `decodeJwt` would leave the file passing) and `=== true` itself (both a
+ * `false` and an absent claim are falsy either way, so only a truthy non-boolean tells a
+ * truthiness test apart from an equality one).
  *
  * The last property is the one that makes this safe to deploy on a service with no staging
  * environment: a token this code cannot turn into a person — no mapping, no verified email, not
@@ -26,13 +35,14 @@
  * worse off than it was.
  */
 import { env } from 'cloudflare:test';
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, beforeAll } from 'vitest';
 import { SignJWT, exportJWK, generateKeyPair } from 'jose';
 import { handleHubRoute } from '../src/auth/hub-oauth';
 import { verifySession, type SessionPayload } from '../src/auth/session';
 import {
   findUserByExternal,
   primaryTenant,
+  setTenantExternalMapping,
   setUserExternalMapping,
   upsertUserByEmail,
 } from '../src/db/catalog';
@@ -40,9 +50,22 @@ import type { Env } from '../src/env';
 
 const ISSUER = 'https://hub.signin.test';
 const APP = 'https://superpipeline.signin.test';
+/** The fleet this deployment IS linked to (see `beforeAll`), which is what lets step 3 create. */
 const FLEET = 'fleet_0000000000000signin';
+/** A fleet nobody here has linked. A token naming it must never create anybody. */
+const UNLINKED_FLEET = 'fleet_00000000000unlinked';
+const TENANT = 'tnt_hub_signin';
 const SECRET = 'test-session-secret';
 const KID = 'signin-kid';
+
+beforeAll(async () => {
+  // A workspace linked to `FLEET`, because step 3 refuses to create anyone into a fleet this
+  // deployment has no mapping for. `PATCH /v1/tenant` is what writes this in production.
+  await env.DB.prepare(`INSERT OR IGNORE INTO tenants (id, slug, name) VALUES (?, ?, 'Sign-in')`)
+    .bind(TENANT, `slug-${TENANT}`)
+    .run();
+  await setTenantExternalMapping(env.DB, TENANT, { externalId: FLEET, externalSource: 'agentpod' });
+});
 
 /**
  * ONE issuer for the whole file, minted once (the same trap `hub-principal-role.test.ts` names):
@@ -70,6 +93,25 @@ async function mintToken(claims: Record<string, unknown>): Promise<string> {
     .setIssuedAt()
     .setExpirationTime('5m')
     .sign(signingKey);
+}
+
+/**
+ * The same token, signed by somebody who is not the issuer.
+ *
+ * A DIFFERENT `kid`, not merely a different key: a repeated `kid` would be served from the cached
+ * set and rejected for the signature, where an unknown one takes the refetch path and is rejected
+ * for not existing. The second is the shape a forgery actually has, and it is the path that ends
+ * in `hub-jwt.ts`'s "still missing after one refetch" refusal.
+ */
+async function mintForgedToken(claims: Record<string, unknown>): Promise<string> {
+  const other = await generateKeyPair('EdDSA', { extractable: true });
+  return new SignJWT({ principalKind: 'human', tenant: FLEET, ...claims })
+    .setProtectedHeader({ alg: 'EdDSA', kid: 'not-the-issuers-kid' })
+    .setIssuer(ISSUER)
+    .setAudience(ISSUER)
+    .setIssuedAt()
+    .setExpirationTime('5m')
+    .sign(other.privateKey);
 }
 
 function envWith(over: Record<string, unknown> = {}): Env {
@@ -191,6 +233,38 @@ describe('the hub callback resolves a local user', () => {
     expect(await sessionOf(res)).toBeNull();
   });
 
+  it('treats an email_verified that is a STRING as unverified', async () => {
+    // `hub-jwt.ts` ends in an unchecked `payload as HubClaims`, so a claim this repo typed as a
+    // boolean can arrive as anything the issuer put there — and the string 'false' is TRUTHY.
+    // Weaken `=== true` to a truthiness test and this is the case that lets it through.
+    for (const email_verified of ['false', 'true']) {
+      const local = `string-${email_verified}`;
+      await upsertUserByEmail(env.DB, { email: `${local}@example.com`, name: 'A' });
+
+      const { res } = await signInViaHub({ sub: `prn_${local}`, email: `${local}@example.com`, email_verified });
+
+      expect(await findUserByExternal(env.DB, 'agentpod', `prn_${local}`)).toBeNull();
+      expect(await sessionOf(res)).toBeNull();
+    }
+  });
+
+  it('adopts across a case-variant address, rather than making a second account', async () => {
+    // `addMember` stores every invited address lowercased and SQLite compares TEXT under BINARY
+    // collation, so a raw `claims.email` would miss this row, fall through to step 3, and create
+    // a second user and a second personal workspace for one person — silently, and beyond the
+    // reach of the documented rollback.
+    const invited = await upsertUserByEmail(env.DB, { email: 'mixed.case@example.com', name: 'A' });
+
+    const { res } = await signInViaHub({ sub: 'prn_mixed', email: '  Mixed.Case@Example.COM ', email_verified: true });
+
+    expect((await findUserByExternal(env.DB, 'agentpod', 'prn_mixed'))?.id).toBe(invited.id);
+    expect((await sessionOf(res))?.userId).toBe(invited.id);
+    const rows = await env.DB.prepare(`SELECT COUNT(*) AS n FROM users WHERE lower(email) = ?`)
+      .bind('mixed.case@example.com')
+      .first<{ n: number }>();
+    expect(rows?.n, 'one person, one row').toBe(1);
+  });
+
   it('refuses to adopt a user who already has a mapping', async () => {
     // Delete the has-no-mapping check and this test fails: a second principal asserting the same
     // address would capture an account that already belongs to somebody.
@@ -290,6 +364,53 @@ describe('a token the callback cannot turn into a person', () => {
     expect(res.status).toBe(302);
     expect(cookieOf(setCookies(res), 'superpipeline_hub_token')).toBe('not.a.jwt');
     expect(await sessionOf(res)).toBeNull();
+  });
+
+  it('signs nobody in on a token signed by a key the issuer does not publish', async () => {
+    // **This is what separates verifying from decoding.** Every other token in this file is well
+    // formed and correctly signed, so swapping `verifyHubToken` for `decodeJwt` would leave the
+    // whole file passing — and the claims now CREATE USERS, which makes the signature the trust
+    // root of the feature. This token is perfect in every respect but who signed it.
+    const forged = await mintForgedToken({ sub: 'prn_forged', email: 'forged@example.com', email_verified: true });
+    const { res } = await callbackWithToken(forged);
+
+    expect(await sessionOf(res)).toBeNull();
+    expect(await findUserByExternal(env.DB, 'agentpod', 'prn_forged')).toBeNull();
+    expect(
+      await env.DB.prepare(`SELECT id FROM users WHERE email = ?`).bind('forged@example.com').first(),
+      'no user was created from an unsigned assertion',
+    ).toBeNull();
+    // Handed on, as ever — a token this Worker cannot read is the SPA's business, not a 4xx here.
+    expect(res.status).toBe(302);
+  });
+
+  it('creates nobody for a fleet this deployment is not linked to', async () => {
+    // Until this change such a caller held a token cookie worth nothing: every route refuses on
+    // an unmapped tenant. Creating a user, a workspace they own and a thirty-day session for them
+    // would be self-registration for anyone the issuer will authenticate.
+    const { res } = await signInViaHub(
+      { sub: 'prn_unlinked_fleet', email: 'stranger@example.com', email_verified: true, tenant: UNLINKED_FLEET },
+    );
+
+    expect(await findUserByExternal(env.DB, 'agentpod', 'prn_unlinked_fleet')).toBeNull();
+    expect(await env.DB.prepare(`SELECT id FROM users WHERE email = ?`).bind('stranger@example.com').first()).toBeNull();
+    expect(await sessionOf(res)).toBeNull();
+    expect(res.status).toBe(302);
+  });
+
+  it('still adopts an invited colleague from an unlinked fleet', async () => {
+    // The gate is on step 3 only. Adoption needs an invitation-shaped signal — a local row that
+    // somebody already made, plus a verified address — and creation from nothing needs none.
+    // Gating the whole function would also break bootstrap: `PATCH /v1/tenant` is human-session
+    // only, so a hub token could never establish the mapping that would make it resolve.
+    const invited = await upsertUserByEmail(env.DB, { email: 'invited-elsewhere@example.com', name: 'I' });
+
+    const { res } = await signInViaHub(
+      { sub: 'prn_unlinked_invited', email: 'invited-elsewhere@example.com', email_verified: true, tenant: UNLINKED_FLEET },
+    );
+
+    expect((await findUserByExternal(env.DB, 'agentpod', 'prn_unlinked_invited'))?.id).toBe(invited.id);
+    expect((await sessionOf(res))?.userId).toBe(invited.id);
   });
 
   it('signs nobody in when this deployment has no session secret', async () => {
