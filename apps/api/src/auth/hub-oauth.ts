@@ -35,6 +35,16 @@
  * path takes (`env.ts`, migration 0003). A board with no hub keeps working exactly as it did.
  */
 import type { Env } from '../env';
+import { verifyHubToken } from './hub-jwt';
+import {
+  ensurePersonalWorkspace,
+  findUserByEmail,
+  findUserByExternal,
+  setUserExternalMapping,
+  upsertUserByEmail,
+  type UserRecord,
+} from '../db/catalog';
+import { signSession, sessionSetCookie, SESSION_TTL_MS } from './session';
 
 /**
  * The flow's own secrets, for the sixty seconds between the navigation and the callback.
@@ -196,6 +206,103 @@ interface ExchangeResult {
   error_description?: string;
 }
 
+/** Whose ids the `sub` of a hub token is. The same string `resolve.ts` matches mappings on. */
+const EXTERNAL_SOURCE = 'agentpod';
+
+/**
+ * Turn a freshly exchanged hub token into a session cookie, or null if it names nobody here.
+ *
+ * This is the step the flow was missing. Everything above it walks through the hub's front door
+ * and comes back holding a token; until this existed, the callback handed that token to the SPA
+ * and stopped — it created no user and minted no session, where the GitHub callback
+ * (`auth/routes.ts`) does both from the same shape of evidence. So a person who signed in through
+ * the issuer was, to superpipeline, a stranger with a valid credential: `resolveHubUser` gave them
+ * `member` under a foreign id, and `POST /v1/boards` refused them.
+ *
+ * Resolution is in three steps, and the order is the whole design:
+ *
+ *   1. **By principal.** Once linked, this is the only step that ever runs, and it needs no claim
+ *      but `sub`. That is what lets this ship before the hub's new claims are deployed.
+ *   2. **By verified email, exactly once.** The riskiest lines in the file — see the guards below.
+ *   3. **Create**, when that address belongs to nobody.
+ *
+ * **Null is an ordinary answer and never an error.** A token carrying no mapping and no verified
+ * email resolves nobody, and the caller hands it to the SPA exactly as it did before this
+ * function existed. That property is what makes this deployable on a service with no staging
+ * environment: the worst case is today's behaviour.
+ */
+async function signInFromHubToken(env: Env, token: string, fetchImpl: typeof fetch): Promise<string | null> {
+  // No issuer means no token to verify against; no secret means nothing to sign a cookie with.
+  // Either way this deployment simply does not sign anyone in here, and says so by doing nothing.
+  const issuer = env.HUB_ISSUER;
+  if (!issuer || !env.SESSION_SECRET) return null;
+
+  // Verified here, not trusted because the hub handed it over a back channel. The exchange proves
+  // the code was ours; only the signature proves the claims are the issuer's. `env.HUB_ISSUER`
+  // rather than the normalised `cfg.base`, so this and `resolveHubUser` accept exactly the same
+  // tokens — a token that signs in must be a token that then works.
+  const claims = await verifyHubToken(token, { issuer, fetch: fetchImpl });
+  if (!claims) return null;
+
+  // An agent's or a service's token must never become a browser session. `resolveHubUser` refuses
+  // a non-human token outright and this is the same refusal one step earlier: since
+  // `charter → decisions/2026-08-30-an-agent-is-a-principal.md` a node can exchange its own
+  // credential for a token naming an agent principal, so "a valid hub token" and "a person"
+  // stopped being the same thing.
+  if (claims.principalKind !== 'human') return null;
+
+  // 1. By principal. Once somebody is linked, no other step runs — the mapping IS the identity,
+  //    so a person whose address changed at the hub is still this row rather than a new one.
+  let user: UserRecord | null = await findUserByExternal(env.DB, EXTERNAL_SOURCE, claims.sub);
+
+  if (!user && claims.email && claims.email_verified === true) {
+    // `findUserByEmail`, never `upsertUserByEmail`: the latter CREATES when it finds none, so
+    // asking it whether someone exists would conjure the very row the guard below is about to
+    // inspect — and it selects only `id, email, name`, leaving `externalId` undefined, which
+    // would make the has-no-mapping guard pass for everybody.
+    const candidate = await findUserByEmail(env.DB, claims.email);
+
+    // 2. Adopt, exactly once. **Both conditions above and here are load-bearing.** Without
+    //    `email_verified === true`, anyone who can make the issuer assert an address takes over
+    //    the account at that address. Without `!candidate.externalId`, a second principal
+    //    captures an account that already belongs to somebody.
+    if (candidate && !candidate.externalId) {
+      await setUserExternalMapping(env.DB, candidate.id, {
+        externalId: claims.sub,
+        externalSource: EXTERNAL_SOURCE,
+      });
+      user = candidate;
+    }
+
+    // 3. Create — only when that address belongs to NOBODY. `users.email` is UNIQUE, so for an
+    //    address somebody already holds there is no "create": `upsertUserByEmail` would find that
+    //    same row and hand it back, and the mapping write below would then move it to this
+    //    principal — undoing, one line later, the refusal step 2 had just made. Keying this on
+    //    `!candidate` rather than on `!user` is what keeps a refusal refused.
+    if (!candidate) {
+      const created = await upsertUserByEmail(env.DB, { email: claims.email, name: null });
+      await setUserExternalMapping(env.DB, created.id, {
+        externalId: claims.sub,
+        externalSource: EXTERNAL_SOURCE,
+      });
+      user = created;
+    }
+  }
+
+  if (!user) return null;
+
+  // From here on, exactly what the GitHub callback does: a workspace to land in, and a session
+  // cookie naming it. `ensurePersonalWorkspace` returns the workspace they already have if they
+  // have one, so a linked colleague lands in the team's board rather than a personal duplicate.
+  const displayName = user.name || user.email;
+  const tenant = await ensurePersonalWorkspace(env.DB, user.id, displayName);
+  const session = await signSession(
+    { userId: user.id, tenantId: tenant.id, name: displayName, exp: Date.now() + SESSION_TTL_MS },
+    env.SESSION_SECRET,
+  );
+  return sessionSetCookie(session, { secure: true });
+}
+
 /**
  * Handle a `/hub/*` request, or return null if `path` is not one.
  *
@@ -295,11 +402,27 @@ export async function handleHubRoute(
     // decide how long this browser holds a credential. Five minutes is `TOKEN_TTL`.
     const ttl = Math.max(1, Math.min(typeof result.expiresIn === 'number' ? result.expiresIn : 300, 3600));
 
+    // The token is in hand and proven ours; now read it as proof of WHO, not only of what.
+    //
+    // Deliberately wrapped, and the catch is not decoration: everything inside it is new, it
+    // touches the database, and the one property that makes this change safe to deploy is that a
+    // caller who was getting a token before still gets one. A constraint violation or a D1 hiccup
+    // in the identity step must cost this flow a session, never the handoff it already had.
+    let sessionCookie: string | null = null;
+    try {
+      sessionCookie = await signInFromHubToken(env, result.token, fetchImpl);
+    } catch {
+      sessionCookie = null;
+    }
+
     // Same-origin redirect home, like the GitHub callback: it works on whatever domain this
     // deployment answers on, and it leaves nothing in the URL — no token, no code, no state.
     const headers = new Headers({ Location: '/' });
     headers.append('Set-Cookie', pkceClearCookie());
     headers.append('Set-Cookie', tokenSetCookie(result.token, ttl));
+    // AS WELL AS the token, never instead of it: the SPA's `GET /hub/token` path is untouched,
+    // and a caller this Worker could not resolve to a person is left exactly where it was.
+    if (sessionCookie) headers.append('Set-Cookie', sessionCookie);
     return new Response(null, { status: 302, headers });
   }
 

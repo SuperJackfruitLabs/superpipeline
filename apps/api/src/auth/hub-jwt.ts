@@ -67,6 +67,23 @@ export interface HubClaims extends JWTPayload {
    */
   mayDispatch?: string[];
   mayGrantReach?: boolean;
+  /**
+   * The address the issuer holds for this principal, and whether the issuer has
+   * checked that the person reading mail there is this principal.
+   *
+   * **Both optional, and that is permanent rather than transitional.** A token
+   * minted before the hub grew these claims carries neither, and the hub-callback
+   * sign-in has to keep working for one: an already-linked principal resolves
+   * from `sub` alone and never reads either field.
+   *
+   * `email_verified` is a verdict, not a formality. It is the only thing
+   * standing between "the issuer says this person's address is X" and "whoever
+   * can make the issuer say that owns the account at X", so the one consumer
+   * (`hub-oauth.ts`) compares it against `true` rather than testing it for
+   * truthiness — absent is not verified, and neither is the string "false".
+   */
+  email?: string;
+  email_verified?: boolean;
 }
 
 export interface VerifyOptions {
