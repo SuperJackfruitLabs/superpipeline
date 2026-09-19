@@ -180,6 +180,60 @@ export async function setTenantExternalMapping(
     .run();
 }
 
+/** The user a principal is, in this workspace. Null when nobody has linked that principal. */
+export async function findUserByExternal(
+  db: D1Database,
+  source: string,
+  externalId: string,
+): Promise<UserRecord | null> {
+  if (!source || !externalId) return null;
+  return db
+    .prepare(`SELECT id, email, name FROM users WHERE external_source = ? AND external_id = ?`)
+    .bind(source, externalId)
+    .first<UserRecord>();
+}
+
+/** Record that this user is also known to `externalSource` as `externalId`. */
+export async function setUserExternalMapping(
+  db: D1Database,
+  userId: string,
+  mapping: { externalId: string; externalSource: string } | null,
+): Promise<void> {
+  if (mapping) {
+    const { externalId, externalSource } = mapping;
+    if (typeof externalId !== 'string' || externalId.trim() === '') {
+      throw new ExternalMappingError('an external mapping needs an externalId');
+    }
+    if (typeof externalSource !== 'string' || externalSource.trim() === '') {
+      throw new ExternalMappingError('an external mapping needs an externalSource naming whose id it is');
+    }
+  }
+  await db
+    .prepare(`UPDATE users SET external_id = ?, external_source = ?, updated_at = datetime('now') WHERE id = ?`)
+    .bind(mapping?.externalId ?? null, mapping?.externalSource ?? null, userId)
+    .run();
+}
+
+/**
+ * A user by email, for the one-time adoption in the hub callback.
+ *
+ * Deliberately NOT `upsertUserByEmail`, which CREATES when it does not find —
+ * using it as a lookup would conjure a user as a side effect of asking whether
+ * one exists. And it selects `external_id`, because the caller's guard is
+ * "adopt only a user who has no mapping", and a guard reading an undefined
+ * column silently adopts everybody.
+ */
+export async function findUserByEmail(
+  db: D1Database,
+  email: string,
+): Promise<(UserRecord & { externalId: string | null }) | null> {
+  if (!email) return null;
+  return db
+    .prepare(`SELECT id, email, name, external_id AS externalId FROM users WHERE email = ?`)
+    .bind(email)
+    .first<UserRecord & { externalId: string | null }>();
+}
+
 export async function createAgent(db: D1Database, tenantId: string, input: { name: string; capabilities?: string[] }): Promise<AgentRecord> {
   const id = newId('agt');
   const capabilities = input.capabilities ?? [];

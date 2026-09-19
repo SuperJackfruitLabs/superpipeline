@@ -3,6 +3,7 @@ import tenantExternalMapping from '../../migrations/0002_tenant_external_mapping
 import agentExternalMapping from '../../migrations/0003_agent_external_mapping.sql?raw';
 import agentExternalPairUnique from '../../migrations/0004_agent_external_pair_unique.sql?raw';
 import dropUnused from '../../migrations/0005_drop_unused.sql?raw';
+import userExternalMapping from '../../migrations/0008_user_external_mapping.sql?raw';
 
 /** Create the catalog tables on the test D1 (mirrors migrations/0001_catalog.sql). */
 const STATEMENTS = [
@@ -87,5 +88,8 @@ export async function setupCatalog(): Promise<void> {
   // files: a mirror is how this helper drifted from 0001 in the first place.
   if (await tableHasColumn('agents', 'connection_json')) {
     for (const s of statementsOf(dropUnused)) await env.DB.prepare(s).run();
+  }
+  if (!(await tableHasColumn('users', 'external_id'))) {
+    for (const s of statementsOf(userExternalMapping)) await env.DB.prepare(s).run();
   }
 }
