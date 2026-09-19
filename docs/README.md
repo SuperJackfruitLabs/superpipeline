@@ -77,6 +77,8 @@ documented statement will fail CI if it stops being true.
 | MCP and REST agree on the verbs both expose | `apps/api/test/mcp-parity.test.ts` |
 | **`/mcp` serves no authorization server, and no `agent-card.json` exists** | `apps/api/test/oauth-surface.test.ts` |
 | **A `response`/`error` activity does not advance the card; only the verbs do** | `apps/api/test/activity-does-not-advance.test.ts` |
+| **A user's mapping to an issuer subject is both-or-neither and UNIQUE — one subject is never two users** | `apps/api/test/user-external-mapping.test.ts` (runs the real migration) |
+| **The hub callback adopts an existing account only on a verified address and only when that account has no mapping; it creates only into a linked fleet; it never signs in an agent, a service, or a token a service asserted** | `apps/api/test/hub-signin.test.ts` |
 
 CI (`.github/workflows/ci.yml`) runs `pnpm typecheck` + `pnpm test`, and the Playwright e2e, on
 every PR. Both must pass before merge.
