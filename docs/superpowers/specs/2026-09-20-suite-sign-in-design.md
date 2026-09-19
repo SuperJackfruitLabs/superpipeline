@@ -154,6 +154,28 @@ can make the issuer assert an address can take an account; without *has no
 mapping*, a second principal can capture an account that already belongs to
 someone.
 
+**Those two conditions are what stands between a stranger and an account only
+for a non-admin.** `email_verified` is the hub's verdict, and one path in the hub
+sets that verdict by fiat: `apps/hub/src/routes/admin.ts:460` creates users with
+`emailVerified: true` — "Admin-created users are pre-verified". A hub admin can
+therefore mint a verified assertion of **any** address, link a principal to it,
+and adopt whichever unmapped superpipeline user holds that address — inheriting
+that user's real role, `owner` included. Adoption is deliberately not gated on
+the fleet mapping (only creation is), so this works from any fleet, including one
+this deployment has never linked.
+
+This is a real widening and it is being accepted knowingly. Before this design
+the hub's reach into superpipeline stopped at `member` by construction: an
+unmapped hub caller got the stranger's role and nothing a hub admin did could
+change that. After it, **superpipeline's account boundary sits downstream of the
+hub's email-verification policy**, and that policy has an administrative override.
+The trust being extended is "a hub admin is trusted over superpipeline accounts
+at any address they can assert", which is a larger statement than "the hub
+authenticates people" and should be read as such by anyone granting hub admin.
+Narrowing it — distinguishing an address a person proved from one an admin
+asserted, or gating adoption on the fleet too — is future work this design does
+not do.
+
 `resolve.ts` then reads the mapped user's real role, and sets `userId` to the
 local `usr_` id rather than to `claims.sub`.
 
