@@ -1,7 +1,9 @@
 # Signing in through the suite's issuer, and knowing that the person is the same person
 
 **Date:** 2026-09-20
-**Status:** proposed
+**Status:** proposed. **Amended the same day, before any code**, when writing the
+plan found that the hub mints no email claim — see "What the hub must add".
+The first draft's reconciliation could not have worked.
 **Repos:** `superpipeline` (most of it), `agentpod` (the hub's client registry and
 token audience)
 **Charter:** `decisions/2026-09-18-signing-in-is-not-a-products-verb.md`,
@@ -131,10 +133,15 @@ five-minute token governs the token, not the browser session.
 
 1. **By principal.** `WHERE external_source='agentpod' AND external_id=<sub>`.
    Once a user is mapped, this is the only path that runs.
-2. **By verified email, once.** Only when step 1 found nothing **and** the token
-   asserts a *verified* email **and** the matched user has no mapping. Adopt that
+2. **By verified email, once.** Only when step 1 found nothing **and** the token's
+   `email_verified` is true **and** the matched user has no mapping. Adopt that
    row by writing the mapping onto it.
-3. **Create.** A new user, then `ensurePersonalWorkspace`.
+3. **Create.** A new user from `email`, then `ensurePersonalWorkspace`.
+
+Steps 2 and 3 both require the claims added in "What the hub must add". A token
+without `email` can still be *verified* and still resolve an already-mapped user
+through step 1 — it simply cannot originate one. That degradation is deliberate:
+an older token keeps working for someone already linked.
 
 Step 2 is the only place email is ever a join key across planes, and it can fire
 at most once per user because it writes the mapping that makes step 1 hit
@@ -145,6 +152,35 @@ someone.
 
 `resolve.ts` then reads the mapped user's real role, and sets `userId` to the
 local `usr_` id rather than to `claims.sub`.
+
+## What the hub must add
+
+The hub mints exactly `{sub, principalKind, tenant, mayDispatch, mayGrantReach}`
+(`jwt-claims.ts:174`). **There is no email**, and that is fatal to the first
+draft of this design in two ways, not one:
+
+- step 2 has nothing to match on
+- step 3 cannot run either, because `users.email` is `NOT NULL UNIQUE` and a new
+  user cannot be inserted without one
+
+So sign-in through the issuer could not work for anybody, not merely
+reconciliation. The gap was found while writing the implementation plan and the
+design is amended rather than worked around.
+
+**The hub adds `email` and `email_verified` to the token.** The values are one
+join from where tokens are minted — `principals.ts:143` notes that a principal's
+`userId` "travels with the row so the console can put a name and an email".
+
+Two reasons for claims rather than a userinfo endpoint. It needs no new
+authenticated route, and — more durably — `email` and `email_verified` are the
+**standard OIDC claim names**, so this moves the token towards a conforming ID
+token instead of inventing a bespoke shape. That keeps the approach-2 door open
+rather than narrowing it.
+
+The cost, stated plainly: an email address now rides in a bearer token that
+reaches every plane. It is bounded — these tokens live five minutes and already
+carry the tenant and the dispatch grants — but it is a real widening of what a
+leaked token reveals, and it was accepted deliberately.
 
 ## Audiences
 
@@ -189,13 +225,20 @@ every step must be safe deployed alone, in whatever order deploys land.
 
 | # | where | change | safe alone because |
 |---|---|---|---|
-| 0 | hub | mint `aud` as an array | additive — `jose` matches when the checked value is *in* the array |
-| 1 | superpipeline | migration `0008` | schema only |
-| 2 | superpipeline | `resolve.ts` reads a mapping when present | no mappings exist yet; behaviour identical |
-| 3 | superpipeline | `/hub/callback` signs in | the behaviour change |
-| 4 | — | verify against the live deployment | below |
-| 5 | superpipeline | require superpipeline's own URL in `aud` | only after 0 is proven |
-| 6 | hub | drop the hub's URL from clients that do not need it | only after 5 |
+| 0 | hub | add `email` + `email_verified` claims | additive — nothing reads them yet |
+| 1 | hub | mint `aud` as an array | additive — `jose` matches when the checked value is *in* the array |
+| 2 | superpipeline | migration `0008` | schema only |
+| 3 | superpipeline | `resolve.ts` reads a mapping when present | no mappings exist yet; behaviour identical |
+| 4 | superpipeline | `/hub/callback` signs in | the behaviour change |
+| 5 | — | verify against the live deployment | below |
+| 6 | superpipeline | require superpipeline's own URL in `aud` | only after 1 is proven |
+| 7 | hub | drop the hub's URL from clients that do not need it | only after 6 |
+
+**Step 4 depends on step 0 being deployed**, and they are in different
+repositories with independent pipelines. That is the one genuine cross-repo
+ordering constraint here: sign-in cannot resolve or create a user until the hub
+is issuing the email claim, so step 4 must not merge before step 0 is live and
+confirmed by decoding a freshly minted token.
 
 **GitHub login is the escape hatch and it never closes.** No step touches it. If
 step 3 is broken, sign in the way you do today; nothing is lost but time. With no
@@ -228,6 +271,8 @@ disproportionate coverage:
 - **refuses** when the user already has a mapping — a second principal can never
   capture an adopted account
 - adopts at most once: the mapping it writes makes step 1 hit thereafter
+- a token carrying **no** `email` claim still resolves an already-mapped user,
+  and refuses to originate one — the deliberate degradation for older tokens
 
 Then:
 
