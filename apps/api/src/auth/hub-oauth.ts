@@ -485,8 +485,18 @@ export async function handleHubRoute(
     let sessionCookie: string | null = null;
     try {
       sessionCookie = await signInFromHubToken(env, result.token, fetchImpl);
-    } catch {
+    } catch (err) {
       sessionCookie = null;
+      // Swallowed, but never silently. This deploys to a service with no staging environment, so
+      // the live verification has nothing to read except the Worker's logs — and the flow's own
+      // symptom is indistinguishable from the ordinary "this token resolves nobody" case: a 302
+      // home with a token cookie and no session. Without a line here, a constraint violation or a
+      // D1 hiccup that costs somebody their session looks exactly like the feature deciding not
+      // to sign them in, forever.
+      //
+      // No claims, no token, no address in the message: this lands in a log an operator reads,
+      // and the useful part is that the identity step threw, not who it threw about.
+      console.error('hub sign-in: the identity step threw; handing the token on without a session', err);
     }
 
     // Same-origin redirect home, like the GitHub callback: it works on whatever domain this
