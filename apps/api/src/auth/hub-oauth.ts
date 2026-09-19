@@ -269,6 +269,10 @@ async function signInFromHubToken(env: Env, token: string, fetchImpl: typeof fet
   // This deliberately WIDENS what `email_verified` is trusted for: every case variant of an
   // address is one account here. That is correct under how mail is actually delivered, and it is
   // what `addMember` already assumed — but it is a choice, not a typo fix.
+  //
+  // Folding here folds only ONE side, and that is not enough on its own: `auth/routes.ts` stores
+  // `ghUser.email` verbatim, so the rows this has to find are not all canonical. The other half
+  // of the fold lives in `findUserByEmail`'s `COLLATE NOCASE` — see the comment there.
   const email = claims.email?.trim().toLowerCase();
 
   // 1. By principal. Once somebody is linked, no other step runs — the mapping IS the identity,

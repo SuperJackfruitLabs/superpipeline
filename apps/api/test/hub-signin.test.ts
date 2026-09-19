@@ -253,14 +253,46 @@ describe('the hub callback resolves a local user', () => {
     // collation, so a raw `claims.email` would miss this row, fall through to step 3, and create
     // a second user and a second personal workspace for one person — silently, and beyond the
     // reach of the documented rollback.
+    //
+    // This direction is the one the CLAIM is odd in; the stored row is already canonical. The two
+    // id assertions are what discriminate: delete the `.trim().toLowerCase()` in `hub-oauth.ts`
+    // and the mapping lands on a new row instead of this one. The row count below is only a
+    // backstop, and `lower(trim(...))` is what makes it one — `lower()` alone case-folds but does
+    // not trim, so a row stored with the claim's padding would slip past a bare `lower(email)`
+    // comparison against a trimmed literal and the count would read 1 either way.
     const invited = await upsertUserByEmail(env.DB, { email: 'mixed.case@example.com', name: 'A' });
 
     const { res } = await signInViaHub({ sub: 'prn_mixed', email: '  Mixed.Case@Example.COM ', email_verified: true });
 
     expect((await findUserByExternal(env.DB, 'agentpod', 'prn_mixed'))?.id).toBe(invited.id);
     expect((await sessionOf(res))?.userId).toBe(invited.id);
-    const rows = await env.DB.prepare(`SELECT COUNT(*) AS n FROM users WHERE lower(email) = ?`)
+    const rows = await env.DB.prepare(`SELECT COUNT(*) AS n FROM users WHERE lower(trim(email)) = ?`)
       .bind('mixed.case@example.com')
+      .first<{ n: number }>();
+    expect(rows?.n, 'one person, one row').toBe(1);
+  });
+
+  it('adopts a MIXED-CASE STORED row from a lowercase claim', async () => {
+    // The other direction, and the one that is actually reachable today. Canonicalising the claim
+    // only folds one side: `auth/routes.ts` stores `ghUser.email` VERBATIM, and GitHub returns it
+    // as the person typed it. So a GitHub-created row holding `Rakesh.Gangwar@Example.com` is
+    // missed by a BINARY `WHERE email = ?` against the lowercased claim, `candidate` is null, step
+    // 3 runs, and `upsertUserByEmail` inserts a SECOND user and a second personal workspace —
+    // SQLite's UNIQUE on `email` is BINARY too, so nothing stops it.
+    //
+    // That is exactly the harm the canonicalisation commit prevented, arriving from the other
+    // side, and it lands on the person who signed in through GitHub first. `COLLATE NOCASE` in
+    // `findUserByEmail` is what closes it.
+    const stored = await upsertUserByEmail(env.DB, { email: 'Stored.Mixed@Example.COM', name: 'A' });
+
+    const { res } = await signInViaHub({ sub: 'prn_stored_mixed', email: 'stored.mixed@example.com', email_verified: true });
+
+    expect((await findUserByExternal(env.DB, 'agentpod', 'prn_stored_mixed'))?.id).toBe(stored.id);
+    expect((await sessionOf(res))?.userId).toBe(stored.id);
+    // Here the count genuinely discriminates: without `COLLATE NOCASE` step 3 writes a second row
+    // whose address differs from this one only in case.
+    const rows = await env.DB.prepare(`SELECT COUNT(*) AS n FROM users WHERE lower(trim(email)) = ?`)
+      .bind('stored.mixed@example.com')
       .first<{ n: number }>();
     expect(rows?.n, 'one person, one row').toBe(1);
   });
