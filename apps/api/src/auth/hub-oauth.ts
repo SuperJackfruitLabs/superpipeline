@@ -275,8 +275,17 @@ async function signInFromHubToken(env: Env, token: string, fetchImpl: typeof fet
   // of the fold lives in `findUserByEmail`'s `COLLATE NOCASE` — see the comment there.
   const email = claims.email?.trim().toLowerCase();
 
-  // 1. By principal. Once somebody is linked, no other step runs — the mapping IS the identity,
-  //    so a person whose address changed at the hub is still this row rather than a new one.
+  // 1. By the issuer's subject id (`claims.sub`). Once somebody is linked, no other step runs —
+  //    the mapping IS the identity, so a person whose address changed at the hub is still this
+  //    row rather than a new one.
+  //
+  //    `sub` is NOT a principal id, however much it reads like one. The hub's jwt plugin
+  //    overwrites `sub` with `session.user.id` after `definePayload` runs
+  //    (agentpod apps/hub/src/routes/auth-authorize.ts), so a session or exchange token carries a
+  //    Better Auth user id while a station-minted or bridge-asserted token for the SAME human
+  //    carries `prn_…`. Only the first kind ever reaches this callback, so the mapping written
+  //    here is keyed on the first kind — and a token of the second kind can never match it. Open
+  //    question in docs/superpowers/specs/2026-09-20-suite-sign-in-design.md.
   let user: UserRecord | null = await findUserByExternal(env.DB, EXTERNAL_SOURCE, claims.sub);
 
   if (!user && email && claims.email_verified === true) {

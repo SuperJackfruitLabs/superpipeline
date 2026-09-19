@@ -204,10 +204,18 @@ export async function resolveHubUser(request: Request, env: Env): Promise<UserPr
   const tenantId = await findTenantByExternal(env.DB, 'agentpod', claims.tenant);
   if (!tenantId) return null;
 
-  // A hub token names a principal in the fleet. If someone has linked that principal to a user
-  // here, they ARE that user: their real role, and their local id on anything they write. If
-  // nobody has, they are a stranger holding a valid credential, and `member` is what a stranger
-  // gets — the same rule as before, now reached only when the mapping says nothing.
+  // A hub token names a SUBJECT in the fleet — `claims.sub`, which for a session or exchange
+  // token is a Better Auth user id, not a `prn_…` principal id (the hub's jwt plugin overwrites
+  // `sub` with `session.user.id` after building the payload). If someone has linked that subject
+  // to a user here, they ARE that user: their real role, and their local id on anything they
+  // write. If nobody has, they are a stranger holding a valid credential, and `member` is what a
+  // stranger gets — the same rule as before, now reached only when the mapping says nothing.
+  //
+  // That the two ids differ is load-bearing: a token for the SAME human minted on the station or
+  // bridge path carries `sub = prn_…`, which this mapping can never match, so an approval
+  // arriving that way still resolves as a stranger even after linking. Recorded as an open
+  // question in docs/superpowers/specs/2026-09-20-suite-sign-in-design.md; closing it is a change
+  // to what both mint paths put in `sub`, not something this lookup may paper over.
   const linked = await findUserByExternal(env.DB, 'agentpod', claims.sub);
   if (linked) {
     const role = await roleFor(env.DB, tenantId, linked.id);

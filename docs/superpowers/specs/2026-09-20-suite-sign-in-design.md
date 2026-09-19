@@ -34,11 +34,13 @@ const local = await roleFor(env.DB, tenantId, claims.sub);
 return { userId: claims.sub, tenantId, role: local ?? 'member', … };
 ```
 
-`roleFor` looks up `memberships.user_id` by `claims.sub` — a hub principal id.
-Memberships are only ever written with `usr_`-prefixed ids, by
-`ensurePersonalWorkspace` (`catalog.ts:111`) and `addMember` (`members.ts:118`,
-keyed on email). **No code path can produce a membership row whose `user_id` is a
-hub principal**, so `local` is always `null` and the fallback is always taken.
+`roleFor` looks up `memberships.user_id` by `claims.sub` — a hub *subject* id,
+and note what it actually is above: `68jYD9VOCmXlPhIY…` is a Better Auth user id,
+not a `prn_` principal id (see "Open, and deliberately"). Memberships are only
+ever written with `usr_`-prefixed ids, by `ensurePersonalWorkspace`
+(`catalog.ts:111`) and `addMember` (`members.ts:118`, keyed on email). **No code
+path can produce a membership row whose `user_id` is a hub subject id**, so
+`local` is always `null` and the fallback is always taken.
 The cap is real, but it is enforced by an id-space mismatch rather than by any
 check that says so.
 
@@ -131,8 +133,10 @@ five-minute token governs the token, not the browser session.
 
 ## Resolution order
 
-1. **By principal.** `WHERE external_source='agentpod' AND external_id=<sub>`.
-   Once a user is mapped, this is the only path that runs.
+1. **By the issuer's subject id.** `WHERE external_source='agentpod' AND
+   external_id=<sub>`. Once a user is mapped, this is the only path that runs.
+   `sub` is the hub's subject id — today a Better Auth user id, *not* a `prn_`
+   principal id; see "Open, and deliberately" for what follows from that.
 2. **By verified email, once.** Only when step 1 found nothing **and** the token's
    `email_verified` is true **and** the matched user has no mapping. Adopt that
    row by writing the mapping onto it.
@@ -311,6 +315,30 @@ reasoning that the README's caution turned on the principal being *unknown* to
 the workspace, and linking is what makes that false. A terminal credential is
 more exposed than a browser session, and a future decision may want a scoped
 session that can read a board but not manage people. Nothing here forecloses it.
+
+**`sub` is not a principal id, and one human therefore has two of them.** The
+hub's jwt plugin overwrites `sub` with `session.user.id` after `definePayload`
+runs (`apps/hub/src/routes/auth-authorize.ts:509-513`), so the session and
+exchange tokens this design consumes carry a Better Auth user id — the
+measurement above shows `68jYD9VOCmXlPhIY…`, which is plainly not a `prn_`.
+Station tokens and `mintPrincipalAssertion` carry `subject: prn_…` instead.
+`users.external_id` therefore holds the hub's *subject* id, and only ever the
+first kind.
+
+The consequence is not cosmetic. A token minted for the **same human** on the
+station or bridge path carries `sub = prn_…`, which can never match the mapping
+this design writes, so an approval arriving that way still resolves as a stranger
+— `member`, not their real role — even after someone has linked them by hand.
+That is the case `charter → decisions/2026-08-14-approvals-cross-planes-as-events.md`
+asks to arrive *as the human*, and it is exactly the case linking was supposed to
+fix.
+
+Closing it means changing what `sub` carries on both mint paths at once, or
+mapping the two ids to each other at the hub and asserting both. Either is a
+token change owned by whoever owns the token, not something this design may
+decide from the consuming side. Until then the comments and the migration header
+here say "the issuer's subject id", never "the principal", so the gap stays
+visible rather than being papered over by a name.
 
 **Whether superpipeline becomes a full OIDC relying party.** Approach 2 —
 discovery documents and off-the-shelf client libraries — was considered and

@@ -6,7 +6,15 @@
  * token to hand to the SPA rather than as proof of who somebody is. It created no user and minted
  * no session, where the GitHub callback at `auth/routes.ts` does both.
  *
- * Resolution is by principal, then by verified email exactly once, then create.
+ * Resolution is by the issuer's subject id, then by verified email exactly once, then create.
+ *
+ * **`sub` is not a principal id.** The hub's jwt plugin overwrites `sub` with `session.user.id`
+ * after `definePayload` runs (agentpod apps/hub/src/routes/auth-authorize.ts), so a session or
+ * exchange token — the only kind that reaches this callback — carries a Better Auth user id,
+ * while a station-minted or bridge-asserted token for the same human carries `prn_…`. The `sub`
+ * literals below are shaped accordingly (`hubsub_…`), except where the token deliberately names
+ * an agent or a service. What follows from the two ids differing is an open question in
+ * docs/superpowers/specs/2026-09-20-suite-sign-in-design.md, not something this file settles.
  *
  * **The adoption step is the riskiest behaviour in this repository's auth**, because it is the one
  * place a wrong decision attaches one person's account to another person's identity. Two
@@ -193,9 +201,9 @@ describe('the hub callback resolves a local user', () => {
   it('adopts an existing user on a verified email, once', async () => {
     const existing = await upsertUserByEmail(env.DB, { email: 'adopt@example.com', name: 'A' });
 
-    const { res } = await signInViaHub({ sub: 'prn_adopt', email: 'adopt@example.com', email_verified: true });
+    const { res } = await signInViaHub({ sub: 'hubsub_adopt', email: 'adopt@example.com', email_verified: true });
 
-    const mapped = await findUserByExternal(env.DB, 'agentpod', 'prn_adopt');
+    const mapped = await findUserByExternal(env.DB, 'agentpod', 'hubsub_adopt');
     expect(mapped?.id).toBe(existing.id);
     // Adopted, not duplicated: the row that existed is the row that is now linked.
     const session = await sessionOf(res);
@@ -211,12 +219,12 @@ describe('the hub callback resolves a local user', () => {
     // make the issuer assert an address would otherwise take over the account at that address.
     const existing = await upsertUserByEmail(env.DB, { email: 'unverified@example.com', name: 'A' });
 
-    const { res } = await signInViaHub({ sub: 'prn_unverified', email: 'unverified@example.com', email_verified: false });
+    const { res } = await signInViaHub({ sub: 'hubsub_unverified', email: 'unverified@example.com', email_verified: false });
 
-    expect(await findUserByExternal(env.DB, 'agentpod', 'prn_unverified')).toBeNull();
+    expect(await findUserByExternal(env.DB, 'agentpod', 'hubsub_unverified')).toBeNull();
     expect(await sessionOf(res)).toBeNull();
     // Untouched, not merely unmapped — no session names that person either.
-    expect((await findUserByExternal(env.DB, 'agentpod', 'prn_unverified'))?.id).not.toBe(existing.id);
+    expect((await findUserByExternal(env.DB, 'agentpod', 'hubsub_unverified'))?.id).not.toBe(existing.id);
     // The token is handed on regardless: nobody is worse off than before this change.
     expect(res.status).toBe(302);
     expect(cookieOf(setCookies(res), 'superpipeline_hub_token')).toBeTruthy();
@@ -227,9 +235,9 @@ describe('the hub callback resolves a local user', () => {
     // not a verdict of "verified", and `=== true` is what makes the difference.
     await upsertUserByEmail(env.DB, { email: 'noverdict@example.com', name: 'A' });
 
-    const { res } = await signInViaHub({ sub: 'prn_noverdict', email: 'noverdict@example.com' });
+    const { res } = await signInViaHub({ sub: 'hubsub_noverdict', email: 'noverdict@example.com' });
 
-    expect(await findUserByExternal(env.DB, 'agentpod', 'prn_noverdict')).toBeNull();
+    expect(await findUserByExternal(env.DB, 'agentpod', 'hubsub_noverdict')).toBeNull();
     expect(await sessionOf(res)).toBeNull();
   });
 
@@ -241,9 +249,9 @@ describe('the hub callback resolves a local user', () => {
       const local = `string-${email_verified}`;
       await upsertUserByEmail(env.DB, { email: `${local}@example.com`, name: 'A' });
 
-      const { res } = await signInViaHub({ sub: `prn_${local}`, email: `${local}@example.com`, email_verified });
+      const { res } = await signInViaHub({ sub: `hubsub_${local}`, email: `${local}@example.com`, email_verified });
 
-      expect(await findUserByExternal(env.DB, 'agentpod', `prn_${local}`)).toBeNull();
+      expect(await findUserByExternal(env.DB, 'agentpod', `hubsub_${local}`)).toBeNull();
       expect(await sessionOf(res)).toBeNull();
     }
   });
@@ -262,9 +270,9 @@ describe('the hub callback resolves a local user', () => {
     // comparison against a trimmed literal and the count would read 1 either way.
     const invited = await upsertUserByEmail(env.DB, { email: 'mixed.case@example.com', name: 'A' });
 
-    const { res } = await signInViaHub({ sub: 'prn_mixed', email: '  Mixed.Case@Example.COM ', email_verified: true });
+    const { res } = await signInViaHub({ sub: 'hubsub_mixed', email: '  Mixed.Case@Example.COM ', email_verified: true });
 
-    expect((await findUserByExternal(env.DB, 'agentpod', 'prn_mixed'))?.id).toBe(invited.id);
+    expect((await findUserByExternal(env.DB, 'agentpod', 'hubsub_mixed'))?.id).toBe(invited.id);
     expect((await sessionOf(res))?.userId).toBe(invited.id);
     const rows = await env.DB.prepare(`SELECT COUNT(*) AS n FROM users WHERE lower(trim(email)) = ?`)
       .bind('mixed.case@example.com')
@@ -285,9 +293,9 @@ describe('the hub callback resolves a local user', () => {
     // `findUserByEmail` is what closes it.
     const stored = await upsertUserByEmail(env.DB, { email: 'Stored.Mixed@Example.COM', name: 'A' });
 
-    const { res } = await signInViaHub({ sub: 'prn_stored_mixed', email: 'stored.mixed@example.com', email_verified: true });
+    const { res } = await signInViaHub({ sub: 'hubsub_stored_mixed', email: 'stored.mixed@example.com', email_verified: true });
 
-    expect((await findUserByExternal(env.DB, 'agentpod', 'prn_stored_mixed'))?.id).toBe(stored.id);
+    expect((await findUserByExternal(env.DB, 'agentpod', 'hubsub_stored_mixed'))?.id).toBe(stored.id);
     expect((await sessionOf(res))?.userId).toBe(stored.id);
     // Here the count genuinely discriminates: without `COLLATE NOCASE` step 3 writes a second row
     // whose address differs from this one only in case.
@@ -301,13 +309,13 @@ describe('the hub callback resolves a local user', () => {
     // Delete the has-no-mapping check and this test fails: a second principal asserting the same
     // address would capture an account that already belongs to somebody.
     const existing = await upsertUserByEmail(env.DB, { email: 'taken@example.com', name: 'A' });
-    await setUserExternalMapping(env.DB, existing.id, { externalId: 'prn_first', externalSource: 'agentpod' });
+    await setUserExternalMapping(env.DB, existing.id, { externalId: 'hubsub_first', externalSource: 'agentpod' });
 
-    const { res } = await signInViaHub({ sub: 'prn_second', email: 'taken@example.com', email_verified: true });
+    const { res } = await signInViaHub({ sub: 'hubsub_second', email: 'taken@example.com', email_verified: true });
 
-    const first = await findUserByExternal(env.DB, 'agentpod', 'prn_first');
+    const first = await findUserByExternal(env.DB, 'agentpod', 'hubsub_first');
     expect(first?.id, 'the first principal still holds that account').toBe(existing.id);
-    expect(await findUserByExternal(env.DB, 'agentpod', 'prn_second')).toBeNull();
+    expect(await findUserByExternal(env.DB, 'agentpod', 'hubsub_second')).toBeNull();
     expect(await sessionOf(res)).toBeNull();
     expect(res.status).toBe(302);
   });
@@ -317,9 +325,9 @@ describe('the hub callback resolves a local user', () => {
     // linked must still sign in from one, or this change would be undeployable until the hub's
     // new claims are live everywhere.
     const existing = await upsertUserByEmail(env.DB, { email: 'mapped@example.com', name: 'M' });
-    await setUserExternalMapping(env.DB, existing.id, { externalId: 'prn_mapped', externalSource: 'agentpod' });
+    await setUserExternalMapping(env.DB, existing.id, { externalId: 'hubsub_mapped', externalSource: 'agentpod' });
 
-    const { res } = await signInViaHub({ sub: 'prn_mapped' });
+    const { res } = await signInViaHub({ sub: 'hubsub_mapped' });
 
     const session = await sessionOf(res);
     expect(session?.userId).toBe(existing.id);
@@ -327,9 +335,9 @@ describe('the hub callback resolves a local user', () => {
   });
 
   it('creates a user and a workspace when nothing matches', async () => {
-    const { res } = await signInViaHub({ sub: 'prn_new', email: 'new@example.com', email_verified: true });
+    const { res } = await signInViaHub({ sub: 'hubsub_new', email: 'new@example.com', email_verified: true });
 
-    const created = await findUserByExternal(env.DB, 'agentpod', 'prn_new');
+    const created = await findUserByExternal(env.DB, 'agentpod', 'hubsub_new');
     expect(created).not.toBeNull();
     expect(created!.email).toBe('new@example.com');
     const tenant = await primaryTenant(env.DB, created!.id);
@@ -340,22 +348,22 @@ describe('the hub callback resolves a local user', () => {
     expect(session?.tenantId).toBe(tenant!.id);
   });
 
-  it('does not create a second user for a principal that already has one', async () => {
-    await signInViaHub({ sub: 'prn_twice', email: 'twice@example.com', email_verified: true });
-    const first = await findUserByExternal(env.DB, 'agentpod', 'prn_twice');
-    const { res } = await signInViaHub({ sub: 'prn_twice', email: 'twice@example.com', email_verified: true });
-    const second = await findUserByExternal(env.DB, 'agentpod', 'prn_twice');
+  it('does not create a second user for a subject that already has one', async () => {
+    await signInViaHub({ sub: 'hubsub_twice', email: 'twice@example.com', email_verified: true });
+    const first = await findUserByExternal(env.DB, 'agentpod', 'hubsub_twice');
+    const { res } = await signInViaHub({ sub: 'hubsub_twice', email: 'twice@example.com', email_verified: true });
+    const second = await findUserByExternal(env.DB, 'agentpod', 'hubsub_twice');
     expect(second?.id).toBe(first?.id);
     expect((await sessionOf(res))?.userId).toBe(first?.id);
   });
 
-  it('follows the principal, not the email, once the two disagree', async () => {
+  it('follows the subject id, not the email, once the two disagree', async () => {
     // The mapping is the identity. A person who changed their address at the hub is still the
     // same row here, and must not be adopted into — or create — a second one.
     const existing = await upsertUserByEmail(env.DB, { email: 'old@example.com', name: 'O' });
-    await setUserExternalMapping(env.DB, existing.id, { externalId: 'prn_moved', externalSource: 'agentpod' });
+    await setUserExternalMapping(env.DB, existing.id, { externalId: 'hubsub_moved', externalSource: 'agentpod' });
 
-    const { res } = await signInViaHub({ sub: 'prn_moved', email: 'new-address@example.com', email_verified: true });
+    const { res } = await signInViaHub({ sub: 'hubsub_moved', email: 'new-address@example.com', email_verified: true });
 
     expect((await sessionOf(res))?.userId).toBe(existing.id);
     expect(
@@ -369,13 +377,13 @@ describe('a token the callback cannot turn into a person', () => {
   it('is handed to the SPA exactly as before, signing nobody in', async () => {
     // Neither a mapping nor a verified email. This is the property that makes the change safe to
     // deploy: that caller is no worse off than it was, and the flow it already had still works.
-    const { res } = await signInViaHub({ sub: 'prn_stranger' });
+    const { res } = await signInViaHub({ sub: 'hubsub_stranger' });
 
     expect(res.status).toBe(302);
     expect(res.headers.get('Location')).toBe('/');
     expect(cookieOf(setCookies(res), 'superpipeline_hub_token')).toBeTruthy();
     expect(await sessionOf(res)).toBeNull();
-    expect(await findUserByExternal(env.DB, 'agentpod', 'prn_stranger')).toBeNull();
+    expect(await findUserByExternal(env.DB, 'agentpod', 'hubsub_stranger')).toBeNull();
   });
 
   it('does not sign in an agent or a service principal', async () => {
@@ -403,11 +411,11 @@ describe('a token the callback cannot turn into a person', () => {
     // formed and correctly signed, so swapping `verifyHubToken` for `decodeJwt` would leave the
     // whole file passing — and the claims now CREATE USERS, which makes the signature the trust
     // root of the feature. This token is perfect in every respect but who signed it.
-    const forged = await mintForgedToken({ sub: 'prn_forged', email: 'forged@example.com', email_verified: true });
+    const forged = await mintForgedToken({ sub: 'hubsub_forged', email: 'forged@example.com', email_verified: true });
     const { res } = await callbackWithToken(forged);
 
     expect(await sessionOf(res)).toBeNull();
-    expect(await findUserByExternal(env.DB, 'agentpod', 'prn_forged')).toBeNull();
+    expect(await findUserByExternal(env.DB, 'agentpod', 'hubsub_forged')).toBeNull();
     expect(
       await env.DB.prepare(`SELECT id FROM users WHERE email = ?`).bind('forged@example.com').first(),
       'no user was created from an unsigned assertion',
@@ -421,10 +429,10 @@ describe('a token the callback cannot turn into a person', () => {
     // an unmapped tenant. Creating a user, a workspace they own and a thirty-day session for them
     // would be self-registration for anyone the issuer will authenticate.
     const { res } = await signInViaHub(
-      { sub: 'prn_unlinked_fleet', email: 'stranger@example.com', email_verified: true, tenant: UNLINKED_FLEET },
+      { sub: 'hubsub_unlinked_fleet', email: 'stranger@example.com', email_verified: true, tenant: UNLINKED_FLEET },
     );
 
-    expect(await findUserByExternal(env.DB, 'agentpod', 'prn_unlinked_fleet')).toBeNull();
+    expect(await findUserByExternal(env.DB, 'agentpod', 'hubsub_unlinked_fleet')).toBeNull();
     expect(await env.DB.prepare(`SELECT id FROM users WHERE email = ?`).bind('stranger@example.com').first()).toBeNull();
     expect(await sessionOf(res)).toBeNull();
     expect(res.status).toBe(302);
@@ -438,17 +446,17 @@ describe('a token the callback cannot turn into a person', () => {
     const invited = await upsertUserByEmail(env.DB, { email: 'invited-elsewhere@example.com', name: 'I' });
 
     const { res } = await signInViaHub(
-      { sub: 'prn_unlinked_invited', email: 'invited-elsewhere@example.com', email_verified: true, tenant: UNLINKED_FLEET },
+      { sub: 'hubsub_unlinked_invited', email: 'invited-elsewhere@example.com', email_verified: true, tenant: UNLINKED_FLEET },
     );
 
-    expect((await findUserByExternal(env.DB, 'agentpod', 'prn_unlinked_invited'))?.id).toBe(invited.id);
+    expect((await findUserByExternal(env.DB, 'agentpod', 'hubsub_unlinked_invited'))?.id).toBe(invited.id);
     expect((await sessionOf(res))?.userId).toBe(invited.id);
   });
 
   it('signs nobody in when this deployment has no session secret', async () => {
     // Without it there is nothing to sign a cookie with. The hub handoff predates human sign-in
     // on this deployment shape and must keep working without one.
-    const { res } = await signInViaHub({ sub: 'prn_nosecret', email: 'nosecret@example.com', email_verified: true }, { SESSION_SECRET: undefined });
+    const { res } = await signInViaHub({ sub: 'hubsub_nosecret', email: 'nosecret@example.com', email_verified: true }, { SESSION_SECRET: undefined });
     expect(res.status).toBe(302);
     expect(cookieOf(setCookies(res), 'superpipeline_session')).toBeNull();
   });

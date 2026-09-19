@@ -180,7 +180,15 @@ export async function setTenantExternalMapping(
     .run();
 }
 
-/** The user a principal is, in this workspace. Null when nobody has linked that principal. */
+/**
+ * The user an issuer subject is, in this workspace. Null when nobody has linked it.
+ *
+ * `externalId` is the hub token's `sub` — today a Better Auth user id, not a
+ * `prn_…` principal id (the hub's jwt plugin overwrites `sub` with
+ * `session.user.id` after building the payload). Two ids for one human exist
+ * upstream and only this one ever reaches this table; the consequence is
+ * recorded as an open question in the suite-sign-in spec.
+ */
 export async function findUserByExternal(
   db: D1Database,
   source: string,
@@ -193,7 +201,7 @@ export async function findUserByExternal(
     .first<UserRecord>();
 }
 
-/** Record that this user is also known to `externalSource` as `externalId`. */
+/** Record that this user is also known to `externalSource` as the subject `externalId`. */
 export async function setUserExternalMapping(
   db: D1Database,
   userId: string,
