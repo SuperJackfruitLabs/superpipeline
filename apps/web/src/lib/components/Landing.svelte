@@ -12,11 +12,76 @@
    * The pipeline shown is the real `software` board template from `$lib/api` — the same stages,
    * owners and gate a new board is created with — rather than an invented illustration. If that
    * template changes, this should change with it.
+   *
+   * **There are two doors now, and for a while there was only one.** superpipeline learned to sign
+   * people in through the AgentPod hub — `/hub/callback` verifies the token, resolves or adopts a
+   * local user, and mints a session — and nothing on this page offered it. The only caller of
+   * `beginHubAuthorization()` lived in the workspace's Connections tab, behind a session you
+   * could only get by signing in with GitHub first, so the one person the hub flow exists for —
+   * somebody with an AgentPod identity and no superpipeline account — had no way to reach it.
+   * The capability shipped on the server and stayed unreachable in the product.
    */
+  import { onMount } from 'svelte';
   import { BOARD_TEMPLATES } from '$lib/api';
   import BrandMark from '$lib/components/BrandMark.svelte';
+  import { beginHubAuthorization, hubStatus } from '$lib/hub-token';
+  import { signInNotice, urlWithoutSignInParam, type SignInNotice } from '$lib/sign-in';
 
   const software = BOARD_TEMPLATES.find((t) => t.id === 'software') ?? BOARD_TEMPLATES[0]!;
+
+  /**
+   * Whether this deployment has an issuer to send anyone to.
+   *
+   * Starts false and is never assumed: a standalone superpipeline is a first-class deployment
+   * (migration 0003), and the second button must not exist there. `hubStatus()` reads it from our
+   * own Worker, which is the only place that knows — `HUB_ISSUER` is its environment, not this
+   * page's. A button that leads nowhere is worse than no button, and this is the same rule the
+   * Connections tab already follows.
+   */
+  let hubConfigured = $state(false);
+  let connecting = $state(false);
+
+  /** What the last attempt came back saying, when it came back at all. */
+  let notice = $state<SignInNotice | null>(null);
+  let failure = $state<string | null>(null);
+
+  onMount(() => {
+    // Read the outcome before anything can navigate, then take it out of the URL: the notice is
+    // about one sign-in attempt, and a reload half an hour later should not re-assert it.
+    notice = signInNotice(location.search);
+    if (notice) history.replaceState(history.state, '', urlWithoutSignInParam(location.href));
+
+    // `hubStatus()` answers rather than throws on every failure it can have — no hub, an
+    // unreachable Worker, a browser offline — and every one of those answers is `configured:
+    // false`, which is exactly the render this page wants.
+    void hubStatus().then((status) => {
+      hubConfigured = status.configured;
+    });
+  });
+
+  /**
+   * Start the hub's authorize flow from a signed-out page.
+   *
+   * The same call the Connections tab makes, for a different reason. `POST /hub/connect` asks
+   * nothing of the caller — no session, no cookie — so this door has always been open on the
+   * Worker; nothing in the UI had opened it. `beginHubAuthorization()` navigates or answers
+   * false, and false is a deployment with no hub or a Worker that could not be reached: neither
+   * is an error to throw, and both leave the operator where they are with something to read.
+   */
+  async function continueWithAgentPod(): Promise<void> {
+    connecting = true;
+    failure = null;
+    notice = null;
+
+    // Deliberately not a `finally`. On success the browser is already navigating away, and
+    // putting the label back to its resting state on the way out would make a button that worked
+    // look like one that did nothing. Only a refusal returns to this page, and only a refusal
+    // has anything to clear.
+    if (await beginHubAuthorization()) return;
+
+    connecting = false;
+    failure = 'AgentPod could not be reached just now. Please try again.';
+  }
 </script>
 
 <main class="landing">
@@ -36,13 +101,38 @@
         it was ready.
       </p>
 
+      {#if notice}
+        <div class="notice" role="status">
+          <strong>{notice.title}</strong>
+          <p>{notice.detail}</p>
+        </div>
+      {/if}
+
       <div class="cta">
         <a href="/auth/login" data-sveltekit-reload class="btn-signin">
           <svg class="size-4" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 .5C5.37.5 0 5.78 0 12.29c0 5.21 3.44 9.63 8.2 11.19.6.11.82-.26.82-.58l-.01-2C5.67 21.6 4.97 19.3 4.97 19.3c-.55-1.36-1.34-1.73-1.34-1.73-1.08-.73.09-.72.09-.72 1.2.08 1.84 1.21 1.84 1.21 1.07 1.8 2.8 1.28 3.49.98.11-.76.42-1.28.76-1.58-2.66-.3-5.47-1.31-5.47-5.83 0-1.29.47-2.34 1.24-3.17-.13-.3-.54-1.5.11-3.12 0 0 1-.32 3.3 1.21a11.5 11.5 0 0 1 6 0c2.3-1.53 3.3-1.21 3.3-1.21.65 1.62.24 2.82.12 3.12.77.83 1.23 1.88 1.23 3.17 0 4.53-2.81 5.53-5.49 5.82.43.37.81 1.1.81 2.22l-.01 3.29c0 .32.22.69.83.57A12 12 0 0 0 24 12.29C24 5.78 18.63.5 12 .5Z" /></svg>
           Sign in with GitHub
         </a>
+
+        <!--
+          Offered only where there is an issuer to offer. This is the sign-in half of the flow the
+          Connections tab uses to fetch a token: one route, two reasons to walk it.
+        -->
+        {#if hubConfigured}
+          <button type="button" class="btn-alt" onclick={() => void continueWithAgentPod()} disabled={connecting}>
+            <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <rect x="3" y="4" width="18" height="6.5" rx="2" /><rect x="3" y="13.5" width="18" height="6.5" rx="2" /><path d="M6.8 7.25h.01M6.8 16.75h.01" />
+            </svg>
+            {connecting ? 'Taking you to AgentPod…' : 'Continue with AgentPod'}
+          </button>
+        {/if}
+
         <a href="https://docs.superpipeline.dev" class="btn-ghost">Read the docs</a>
       </div>
+
+      {#if failure}
+        <p class="failure" role="alert">{failure}</p>
+      {/if}
     </div>
 
     <!-- The signature: a real pipeline, with the human gate where it actually sits. -->
@@ -168,6 +258,7 @@
     flex-wrap: wrap;
   }
   .btn-signin,
+  .btn-alt,
   .btn-ghost {
     display: inline-flex;
     align-items: center;
@@ -186,12 +277,57 @@
   .btn-signin:hover {
     filter: brightness(1.08);
   }
-  .btn-ghost {
+  /* The second way in, ranked below GitHub and above the docs link. */
+  .btn-alt {
     border: 1px solid var(--line);
+    background: var(--surface);
     color: var(--text);
+    font-family: inherit;
+    cursor: pointer;
+  }
+  .btn-alt:hover:not(:disabled) {
+    border-color: var(--marigold);
+  }
+  .btn-alt:disabled {
+    cursor: default;
+    color: var(--muted);
+  }
+
+  .btn-ghost {
+    border: 1px solid transparent;
+    color: var(--muted);
   }
   .btn-ghost:hover {
-    border-color: var(--marigold);
+    color: var(--text);
+    border-color: var(--line);
+  }
+
+  /* An outcome worth a sentence: authenticated at the issuer, unknown here. */
+  .notice {
+    border: 1px solid var(--line);
+    border-left: 2px solid var(--marigold);
+    background: var(--inset);
+    border-radius: 8px;
+    padding: 12px 14px;
+    margin: 0 0 20px;
+    max-width: 38em;
+  }
+  .notice strong {
+    display: block;
+    font-size: 14px;
+    margin-bottom: 4px;
+  }
+  .notice p {
+    margin: 0;
+    color: var(--muted);
+    font-size: 13.5px;
+    line-height: 1.6;
+  }
+
+  .failure {
+    margin: 12px 0 0;
+    font-size: 13px;
+    color: var(--muted);
   }
 
   /* ── the pipeline ──────────────────────────────────────────────────────── */

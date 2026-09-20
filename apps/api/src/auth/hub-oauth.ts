@@ -45,7 +45,7 @@ import {
   upsertUserByEmail,
   type UserRecord,
 } from '../db/catalog';
-import { signSession, sessionSetCookie, SESSION_TTL_MS } from './session';
+import { signSession, sessionSetCookie, SESSION_TTL_MS, readSessionToken, verifySession } from './session';
 
 /**
  * The flow's own secrets, for the sixty seconds between the navigation and the callback.
@@ -205,6 +205,32 @@ interface ExchangeResult {
   token?: string;
   expiresIn?: number;
   error_description?: string;
+}
+
+/**
+ * Where the callback sends somebody it could not sign in, and the word it uses to say so.
+ *
+ * Read by `apps/web/src/lib/sign-in.ts`, which turns it into the sentence on the landing page.
+ * The two literals are written twice on purpose rather than shared through a package: this is one
+ * query parameter between a Worker and the page it serves, and a domain-model package is the wrong
+ * home for HTTP plumbing. Each side pins it in a test, and the cost of drift is a missing notice —
+ * today's behaviour — not a broken flow.
+ */
+const SIGNIN_OUTCOME_PARAM = 'signin';
+const SIGNIN_NO_ACCOUNT = 'no-account';
+
+/**
+ * Whether this browser is already somebody here, by this Worker's own cookie.
+ *
+ * HMAC and an expiry check, no database: the question is only whether the person arriving at the
+ * callback had a session before it ran, which decides whether a failed identity step is worth a
+ * sentence. See its one caller.
+ */
+async function hasLiveSession(request: Request, env: Env): Promise<boolean> {
+  if (!env.SESSION_SECRET) return false;
+  const raw = readSessionToken(request);
+  if (!raw) return false;
+  return (await verifySession(raw, env.SESSION_SECRET)) !== null;
 }
 
 /** Whose ids the `sub` of a hub token is. The same string `resolve.ts` matches mappings on. */
@@ -500,8 +526,33 @@ export async function handleHubRoute(
     }
 
     // Same-origin redirect home, like the GitHub callback: it works on whatever domain this
-    // deployment answers on, and it leaves nothing in the URL — no token, no code, no state.
-    const headers = new Headers({ Location: '/' });
+    // deployment answers on, and it leaves nothing in the URL that is worth anything — no token,
+    // no code, no state.
+    //
+    // **The one thing it may carry is the outcome**, and only in the case that would otherwise be
+    // silent. `signInFromHubToken` answering null is two different events depending on who asked:
+    //
+    //   - Somebody who already had a session — the workspace's Connections tab, whose "connect"
+    //     button came here for a token and nothing else. Their session was never in question, they
+    //     have the token they came for, and there is nothing to report.
+    //   - Somebody who arrived signed out — the landing page's "Continue with AgentPod". For them
+    //     null is the whole trip failing: they authenticated at the issuer, came back, and would
+    //     land on the same sign-in screen they left, with no way to tell a rejection from a
+    //     misclick.
+    //
+    // The discriminator is the request rather than an intent recorded at `/hub/connect`, because
+    // *arriving with no session and leaving with no session* is precisely the condition that
+    // deserves a sentence — whichever button started the flow, and including the flows nobody has
+    // written yet.
+    //
+    // One outcome value, deliberately. The reasons `signInFromHubToken` declines — no verified
+    // email, an address already mapped to another principal, an unlinked fleet — are not all safe
+    // to distinguish out loud: telling a stranger which of those applied answers "does an account
+    // exist at this address?" for them.
+    const signedInHere = sessionCookie !== null || (await hasLiveSession(request, env));
+    const location = signedInHere ? '/' : `/?${SIGNIN_OUTCOME_PARAM}=${SIGNIN_NO_ACCOUNT}`;
+
+    const headers = new Headers({ Location: location });
     headers.append('Set-Cookie', pkceClearCookie());
     headers.append('Set-Cookie', tokenSetCookie(result.token, ttl));
     // AS WELL AS the token, never instead of it: the SPA's `GET /hub/token` path is untouched,
