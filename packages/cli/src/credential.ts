@@ -1,15 +1,16 @@
 /**
  * The credential `supi` acts with.
  *
- * A **hub-issued token** — the same one `apn fleet login` produces. superpipeline verifies it offline
+ * A **hub-issued token** — the same one `fleet login` produces. superpipeline verifies it offline
  * against the hub's JWKS, so one sign-in serves both planes; that is what
  * `charter → decisions/2026-08-15-one-issuer-and-offline-verification.md` is for.
  *
- * Resolution order, and nothing else is ever consulted:
+ * Resolution order:
  *
  *   1. `$SUPERPIPELINE_TOKEN` — this CLI's own, for a caller that wants them separate
  *   2. `$AGENTPOD_TOKEN` — the hub token, because it IS the credential superpipeline accepts
- *   3. the file `apn fleet login` writes
+ *   3. the token cache `fleet login` writes
+ *   4. its device credential, exchanged with its recorded issuer when the cache expires
  *
  * **It never reads a `spa_` agent token.** Those name an agent, and an agent is not a person
  * operating a board: it claims work through the MCP server or the REST verbs with its own
@@ -19,7 +20,7 @@
  */
 import { homedir } from "node:os";
 import { join } from "node:path";
-import { readFileSync } from "node:fs";
+import { readFileSync, mkdtempSync, writeFileSync, renameSync, rmSync } from "node:fs";
 
 export const ENV_TOKEN = "SUPERPIPELINE_TOKEN";
 export const ENV_HUB_TOKEN = "AGENTPOD_TOKEN";
@@ -33,11 +34,18 @@ export interface Credential {
   source: string;
 }
 
-/** Where `apn fleet login` stores its token. Read, never written — `supi` does not sign in. */
-function apnTokenPath(): string {
-  const xdg = process.env.XDG_CONFIG_HOME;
-  const base = xdg && xdg.trim() !== "" ? xdg : join(homedir(), ".config");
-  return join(base, "agentpod", "token.json");
+/** Match Go os.UserConfigDir(), used by fleet on every supported platform. */
+export function fleetConfigDir(platform: NodeJS.Platform = process.platform): string {
+  if (platform === "darwin") return join(homedir(), "Library", "Application Support", "agentpod");
+  if (platform === "win32") {
+    if (!process.env.APPDATA) throw new Error("APPDATA is not set; cannot locate fleet credentials.");
+    return join(process.env.APPDATA, "agentpod");
+  }
+  return join(process.env.XDG_CONFIG_HOME || join(homedir(), ".config"), "agentpod");
+}
+
+function fleetTokenPath(): string {
+  return join(fleetConfigDir(), "token.json");
 }
 
 export function loadCredential(): Credential | null {
@@ -46,14 +54,90 @@ export function loadCredential(): Credential | null {
     if (v !== "") return { token: v, source: `env:${name}` };
   }
   try {
-    const raw = JSON.parse(readFileSync(apnTokenPath(), "utf8")) as { token?: string };
-    if (raw.token && raw.token.trim() !== "") {
-      return { token: raw.token.trim(), source: apnTokenPath() };
+    const raw = JSON.parse(readFileSync(fleetTokenPath(), "utf8")) as { token?: string };
+    if (typeof raw?.token === "string" && raw.token.trim() !== "") {
+      return { token: raw.token.trim(), source: fleetTokenPath() };
     }
   } catch {
     // Absent or unreadable is simply "no credential". Nothing else is tried.
   }
   return null;
+}
+
+/** Resolve locally first. Explicit environment credentials never change identity silently. */
+export async function resolveCredential(): Promise<Credential | null> {
+  const cached = loadCredential();
+  if (cached?.source.startsWith("env:")) return cached;
+  const claims = cached ? inspect(cached.token) : null;
+  if (claims?.expiry && !expired(claims)) return cached;
+
+  let device: { id?: unknown; secret?: unknown; hub?: unknown } | null;
+  const devicePath = join(fleetConfigDir(), "device.json");
+  try {
+    device = JSON.parse(readFileSync(devicePath, "utf8"));
+  } catch {
+    return cached;
+  }
+  if (typeof device?.id !== "string" || !device.id.trim() ||
+      typeof device.secret !== "string" || !device.secret.trim()) return cached;
+
+  // The long-lived secret goes only to the issuer recorded by fleet login, never to
+  // SUPERPIPELINE_URL, a JWT claim, or a redirected host. Local development can use HTTP.
+  let issuer: URL;
+  try {
+    issuer = new URL(typeof device.hub === "string" ? device.hub : "");
+    const loopback = ["localhost", "127.0.0.1", "[::1]"].includes(issuer.hostname);
+    if ((issuer.protocol !== "https:" && !(issuer.protocol === "http:" && loopback)) ||
+        issuer.username || issuer.password || issuer.search || issuer.hash) throw new Error();
+  } catch {
+    throw new Error("The device has no safe issuer. Run fleet login again.");
+  }
+  const hub = issuer.href.replace(/\/+$/, "");
+  let response: Response;
+  try {
+    response = await fetch(`${hub}/api/auth/devices/token`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${device.id}:${device.secret}` },
+      redirect: "error",
+      signal: AbortSignal.timeout(30_000),
+    });
+  } catch {
+    // Fetch errors can contain request details. Do not print secrets or server bodies.
+    throw new Error("Could not renew the fleet token. Check the hub connection and try again.");
+  }
+  if (!response.ok) {
+    if (response.status === 401 || response.status === 403) {
+      throw new Error("Could not renew the fleet token: the hub refused this device. Run fleet login again.");
+    }
+    throw new Error(`Could not renew the fleet token (HTTP ${response.status}). Try again later.`);
+  }
+  let token: unknown;
+  try {
+    token = (await response.json())?.token;
+  } catch {
+    throw new Error("Could not renew the fleet token: the hub returned an invalid response.");
+  }
+  const renewed = typeof token === "string" ? inspect(token) : null;
+  if (typeof token !== "string" || !renewed?.expiry || expired(renewed)) {
+    throw new Error("Could not renew the fleet token: the hub returned an unusable token.");
+  }
+
+  // Atomic, private cache replacement; never touch the long-lived device file.
+  // A read-only cache must not invalidate an otherwise successful exchange.
+  let staging: string | undefined;
+  try {
+    staging = mkdtempSync(join(fleetConfigDir(), ".supi-token-"));
+    const path = join(staging, "token.json");
+    writeFileSync(path, JSON.stringify({ token, hub }), { mode: 0o600 });
+    renameSync(path, fleetTokenPath());
+  } catch {
+    // Best effort, as in fleet itself. The command can still use the fresh token.
+  } finally {
+    if (staging) {
+      try { rmSync(staging, { recursive: true, force: true }); } catch { /* Best-effort cleanup. */ }
+    }
+  }
+  return { token, source: devicePath };
 }
 
 export function baseUrl(): string {
@@ -70,8 +154,8 @@ export interface Claims {
 /**
  * Read a JWT's payload without verifying it.
  *
- * Correct here, and worth stating because it looks wrong: this is not an authorization decision.
- * It is `whoami` telling an operator what they are carrying. superpipeline verifies; a client that
+ * This is not an authorization decision: whoami displays the claims and renewal checks expiry.
+ * Superpipeline verifies the token; a client that
  * pre-empts the server's decision is a client that will one day disagree with it.
  */
 export function inspect(token: string): Claims | null {
@@ -86,7 +170,8 @@ export function inspect(token: string): Claims | null {
     return {
       subject: payload.sub ?? "",
       principalKind: payload.principalKind ?? "",
-      expiry: payload.exp ? new Date(payload.exp * 1000) : null,
+      expiry: typeof payload.exp === "number" && Number.isFinite(payload.exp) && Number.isFinite(new Date(payload.exp * 1000).getTime())
+        ? new Date(payload.exp * 1000) : null,
     };
   } catch {
     return null;
@@ -94,5 +179,5 @@ export function inspect(token: string): Claims | null {
 }
 
 export function expired(c: Claims): boolean {
-  return c.expiry !== null && c.expiry.getTime() < Date.now();
+  return c.expiry !== null && c.expiry.getTime() <= Date.now();
 }

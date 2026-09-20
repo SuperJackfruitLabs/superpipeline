@@ -6,8 +6,8 @@
  * attribute a human's decisions to it, which is what
  * `charter → decisions/2026-08-13-ecosystem-identity.md` Decision 2 exists to protect.
  */
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { mkdtempSync, mkdirSync, writeFileSync } from "node:fs";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
@@ -20,40 +20,42 @@ import {
   expired,
   inspect,
   loadCredential,
+  fleetConfigDir,
 } from "./credential";
 
-const saved = { ...process.env };
-
+let home: string;
 beforeEach(() => {
-  for (const k of [ENV_TOKEN, ENV_HUB_TOKEN, ENV_BASE, "XDG_CONFIG_HOME"]) delete process.env[k];
-  // Point the home lookup somewhere empty, so a developer's real token never leaks into a test.
-  process.env.XDG_CONFIG_HOME = mkdtempSync(join(tmpdir(), "supi-"));
+  for (const k of [ENV_TOKEN, ENV_HUB_TOKEN, ENV_BASE]) vi.stubEnv(k, "");
+  // Redirect every platform's config directory, never the developer's real credentials.
+  home = mkdtempSync(join(tmpdir(), "supi-"));
+  for (const k of ["HOME", "USERPROFILE", "APPDATA", "XDG_CONFIG_HOME"]) vi.stubEnv(k, home);
 });
 afterEach(() => {
-  process.env = { ...saved };
+  vi.unstubAllEnvs();
+  rmSync(home, { recursive: true, force: true });
 });
 
 function writeApnToken(token: string): void {
-  const dir = join(process.env.XDG_CONFIG_HOME!, "agentpod");
+  const dir = fleetConfigDir();
   mkdirSync(dir, { recursive: true });
   writeFileSync(join(dir, "token.json"), JSON.stringify({ token }));
 }
 
 describe("loadCredential", () => {
   it("prefers its own variable", () => {
-    process.env[ENV_TOKEN] = "  own-token  ";
-    process.env[ENV_HUB_TOKEN] = "hub-token";
+    vi.stubEnv(ENV_TOKEN, "  own-token  ");
+    vi.stubEnv(ENV_HUB_TOKEN, "hub-token");
     const c = loadCredential();
     expect(c?.token).toBe("own-token");
     expect(c?.source).toBe(`env:${ENV_TOKEN}`);
   });
 
   it("falls back to the hub token, because that IS what superpipeline accepts", () => {
-    process.env[ENV_HUB_TOKEN] = "hub-token";
+    vi.stubEnv(ENV_HUB_TOKEN, "hub-token");
     expect(loadCredential()?.token).toBe("hub-token");
   });
 
-  it("then the file `apn fleet login` writes — one sign-in, both planes", () => {
+  it("then the file `fleet login` writes — one sign-in, both planes", () => {
     writeApnToken("from-file");
     const c = loadCredential();
     expect(c?.token).toBe("from-file");
@@ -65,15 +67,15 @@ describe("loadCredential", () => {
   });
 
   it("ignores an empty or whitespace-only variable", () => {
-    process.env[ENV_TOKEN] = "   ";
+    vi.stubEnv(ENV_TOKEN, "   ");
     expect(loadCredential()).toBeNull();
   });
 
   it("never reads a spa_ agent token from anywhere", () => {
     // An agent token in the environment under any name this CLI does not read must not be
     // picked up. The absence is the point: `supi` acts as a person or not at all.
-    process.env.SUPERPIPELINE_AGENT_TOKEN = "spa_deadbeef";
-    process.env.KBN_TOKEN = "spa_deadbeef";
+    vi.stubEnv("SUPERPIPELINE_AGENT_TOKEN", "spa_deadbeef");
+    vi.stubEnv("KBN_TOKEN", "spa_deadbeef");
     expect(loadCredential()).toBeNull();
   });
 });
@@ -83,7 +85,7 @@ describe("baseUrl", () => {
     expect(baseUrl()).toBe(DEFAULT_BASE);
   });
   it("honours an override and strips trailing slashes", () => {
-    process.env[ENV_BASE] = "http://localhost:8787///";
+    vi.stubEnv(ENV_BASE, "http://localhost:8787///");
     expect(baseUrl()).toBe("http://localhost:8787");
   });
 });
