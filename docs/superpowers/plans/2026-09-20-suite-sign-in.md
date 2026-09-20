@@ -571,7 +571,27 @@ Expected: **201**, where it was 403. Delete the probe board afterwards.
 
 ### Task 6 (superpipeline): require superpipeline's own audience
 
-**Only after task 2 is deployed and a live token is confirmed to carry the array.**
+> **Amended 2026-09-20, after execution. This task ran SECOND, not first, and the
+> gate below was not sufficient.**
+>
+> The gate said "after task 2 is deployed and a live token is confirmed to carry
+> the array". Task 2 shipped the hub's *ability* to put per-client audiences in a
+> token; it did not put any there. The deployed `HUB_OAUTH_CLIENTS` still declared
+> no audience for any client, so `parseOAuthClients` gave each the default
+> `[HUB_AUDIENCE]` — `https://hub.agentpod.dev` alone — and a freshly minted `apn`
+> token decoded to exactly that.
+>
+> Tightening first would therefore have refused **every** hub token the moment it
+> deployed: `supi`, `fleet`, and the browser's own `/hub/token` path, in one push
+> to main, with no staging environment to catch it.
+>
+> **The correct order is: widen the registry (task 7's first half), confirm a live
+> token carries both audiences, then tighten here.** That is the order it was
+> actually done in. The gate should have read "after a live token is confirmed to
+> NAME THIS PLANE", which is a different sentence from "carry the array".
+
+**Only after task 7's widen step is deployed and a live token is confirmed to name
+`https://app.superpipeline.dev`.**
 
 **Files:**
 - Modify: `apps/api/src/auth/hub-jwt.ts` — line 260
@@ -613,11 +633,45 @@ purpose. It now asks for this deployment's own origin."
 
 ---
 
-### Task 7 (agentpod): narrow the registry
+### Task 7 (agentpod): widen the registry
 
-**Only after task 6 is live.**
+> **Amended 2026-09-20, after execution. This task ran FIRST, and its central
+> claim was false.**
+>
+> It was written as a *narrowing* — give each client only what it needs — and
+> scheduled after task 6. Both were wrong:
+>
+> **The order.** Nothing in the deployed registry named `https://app.superpipeline.dev`,
+> so this had to come first or task 6 refused everything. See the amendment there.
+>
+> **The premise.** The step below said *"superpipeline's browser client presents its
+> token to superpipeline's own API and never to the hub"*. It does present it to the
+> hub: `apps/web/src/lib/api.ts`'s `getHubPrincipals()` sends it to
+> `GET /api/fleet/dispatchable` to populate the Connections tab's agent picker, and
+> `agentpod/apps/hub/src/auth/hub-token.ts` verifies that request with
+> `audience: config.publicUrl`. Narrowing that client to `https://app.superpipeline.dev`
+> alone would have refused the call — and **silently**, because `getHubPrincipals()`
+> returns null on every failure and its caller "shows nothing rather than an error".
+> The agent picker would simply have gone empty, with nothing anywhere saying why.
+>
+> **So both clients need both audiences, and the narrowing does not apply today.**
+> It becomes available only for a client that never calls the hub, and no such
+> client exists yet.
+>
+> The lesson worth keeping: *"which audiences does this client need"* is a question
+> about **every endpoint its token is presented to**, not about which product issued
+> the client id. One of superpipeline's own files answers it, and the plan reasoned from
+> the client's name instead of reading it.
 
-- [ ] **Step 1** — In the deployed `HUB_OAUTH_CLIENTS`, give each client only the audiences it needs. superpipeline's browser client presents its token to superpipeline's own API and never to the hub, so it gets `https://app.superpipeline.dev` alone. `apn` keeps both.
+**This task comes first, before task 6.**
+
+- [ ] **Step 1** — In the deployed `HUB_OAUTH_CLIENTS`, give each client every audience it presents a token to. Both clients call both planes today, so both get both:
+
+```
+HUB_OAUTH_CLIENTS=superpipeline|https://app.superpipeline.dev/hub/callback|https://hub.agentpod.dev,https://app.superpipeline.dev,apn|loopback|https://hub.agentpod.dev,https://app.superpipeline.dev
+```
+
+Check the string against `parseOAuthClients` before it goes near the VPS — a bare token continues the previous entry's audience list, so a dropped `|` silently moves an audience onto the wrong client.
 
 - [ ] **Step 2** — Confirm by decoding a token from each client that the arrays are what the registry says.
 
@@ -626,6 +680,17 @@ purpose. It now asks for this deployment's own origin."
 ---
 
 ## Self-Review
+
+> **Amended 2026-09-20.** The self-review below passed this plan with the two
+> defects recorded in tasks 6 and 7 still in it — a wrong task order and a factual
+> claim about superpipeline's own frontend that one `grep` would have refuted. Both were
+> caught during execution, against production, not by this review.
+>
+> What the review checked was internal: that tasks agree with each other and that
+> names and types line up. Neither defect was internal. The ordering one needed a
+> *decoded live token*; the premise one needed *reading the caller*. A review that
+> only reads the plan cannot find either, and should say which of its claims rest on
+> the world rather than on the document — those are the ones to go and check.
 
 **Spec coverage.** Every section maps to a task: the hub's email claims → 1; audiences → 2 and 6 and 7; the users mapping → 3; `resolve.ts` → 4; the flow → 5; migration order → the task order and the two "do not merge before" gates. GitHub login is covered by a global constraint forbidding any task from touching it.
 
