@@ -35,7 +35,7 @@
  * path takes (`env.ts`, migration 0003). A board with no hub keeps working exactly as it did.
  */
 import type { Env } from '../env';
-import { verifyHubToken } from './hub-jwt';
+import { verifyHubToken, planeAudience } from './hub-jwt';
 import {
   ensurePersonalWorkspace,
   findTenantByExternal,
@@ -184,7 +184,9 @@ function hubConfig(request: Request, env: Env): { base: string; clientId: string
   } catch {
     return null;
   }
-  const appOrigin = env.APP_URL || new URL(request.url).origin;
+  // The SAME origin the audience check demands — see `planeAudience`'s comment on why one
+  // expression serves both.
+  const appOrigin = planeAudience(request, env);
   let redirectUri: string;
   try {
     redirectUri = new URL(HUB_CALLBACK_PATH, appOrigin).toString();
@@ -259,7 +261,12 @@ const EXTERNAL_SOURCE = 'agentpod';
  * function existed. That property is what makes this deployable on a service with no staging
  * environment: the worst case is today's behaviour.
  */
-async function signInFromHubToken(env: Env, token: string, fetchImpl: typeof fetch): Promise<string | null> {
+async function signInFromHubToken(
+  env: Env,
+  token: string,
+  fetchImpl: typeof fetch,
+  audience: string,
+): Promise<string | null> {
   // No issuer means no token to verify against; no secret means nothing to sign a cookie with.
   // Either way this deployment simply does not sign anyone in here, and says so by doing nothing.
   const issuer = env.HUB_ISSUER;
@@ -269,7 +276,7 @@ async function signInFromHubToken(env: Env, token: string, fetchImpl: typeof fet
   // the code was ours; only the signature proves the claims are the issuer's. `env.HUB_ISSUER`
   // rather than the normalised `cfg.base`, so this and `resolveHubUser` accept exactly the same
   // tokens — a token that signs in must be a token that then works.
-  const claims = await verifyHubToken(token, { issuer, fetch: fetchImpl });
+  const claims = await verifyHubToken(token, { issuer, audience, fetch: fetchImpl });
   if (!claims) return null;
 
   // An agent's or a service's token must never become a browser session: since
@@ -510,7 +517,7 @@ export async function handleHubRoute(
     // in the identity step must cost this flow a session, never the handoff it already had.
     let sessionCookie: string | null = null;
     try {
-      sessionCookie = await signInFromHubToken(env, result.token, fetchImpl);
+      sessionCookie = await signInFromHubToken(env, result.token, fetchImpl, planeAudience(request, env));
     } catch (err) {
       sessionCookie = null;
       // Swallowed, but never silently. This deploys to a service with no staging environment, so

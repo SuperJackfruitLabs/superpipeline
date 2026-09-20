@@ -37,7 +37,7 @@ async function hubToken(over: Record<string, unknown> = {}) {
     .setProtectedHeader({ alg: 'EdDSA', kid: 'itest-kid' })
     .setIssuedAt()
     .setIssuer(issuerOrigin)
-    .setAudience(issuerOrigin)
+    .setAudience([issuerOrigin, 'https://api.test'])
     .setExpirationTime('5m')
     .sign(signingKey);
 }

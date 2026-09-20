@@ -19,6 +19,13 @@ import { resolveHubAgent } from '../src/auth/resolve';
 const dev = (tenant: string) => ({ 'X-Tenant-Id': tenant, 'Content-Type': 'application/json' });
 
 const ISSUER = 'https://issuer.test';
+
+/**
+ * The origin this Worker answers on in these tests, and therefore the audience a hub token
+ * must name (`auth/hub-jwt.ts`, `planeAudience`). Before 2026-09-20 the check asked for the
+ * issuer, which every token carries, so `aud` was decoration here.
+ */
+const PLANE = 'https://api.test';
 const FLEET = 'fleet_00000000000000aprnrt';
 
 /** A syntactically valid `prn_` + 20 lowercase-hex principal id, distinct per call. */
@@ -83,7 +90,7 @@ describe('PATCH /v1/agents/:id — link a suite principal', () => {
         .setProtectedHeader({ alg: 'EdDSA', kid: 'aprt-kid' })
         .setIssuedAt()
         .setIssuer(ISSUER)
-        .setAudience(ISSUER)
+        .setAudience([ISSUER, PLANE])
         .setExpirationTime('5m')
         .sign(signingKey);
       const req = new Request('https://api.test/v1/boards/brd_x/claims', { headers: { Authorization: `Bearer ${token}` } });
@@ -105,7 +112,7 @@ describe('PATCH /v1/agents/:id — link a suite principal', () => {
         .setProtectedHeader({ alg: 'EdDSA', kid: 'aprt-kid' })
         .setIssuedAt()
         .setIssuer(ISSUER)
-        .setAudience(ISSUER)
+        .setAudience([ISSUER, PLANE])
         .setExpirationTime('5m')
         .sign(signingKey);
       const req = new Request('https://api.test/v1/boards/brd_x/claims', { headers: { Authorization: `Bearer ${token}` } });

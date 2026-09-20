@@ -54,6 +54,13 @@ const CLAIMS_READ = {
 } as const;
 
 const ISSUER = 'https://hub.claim-contract.test';
+
+/**
+ * The origin this Worker answers on in these tests, and therefore the audience a hub token
+ * must name (`auth/hub-jwt.ts`, `planeAudience`). Before 2026-09-20 the check asked for the
+ * issuer, which every token carries, so `aud` was decoration here.
+ */
+const PLANE = 'https://api.test';
 const KID = 'claim-contract-kid';
 
 let issuerOnce: Promise<{ signingKey: CryptoKey; jwksBody: string }> | null = null;
@@ -71,7 +78,7 @@ async function verifiedClaimsOf(payload: Record<string, unknown>): Promise<HubCl
   const token = await new SignJWT(payload)
     .setProtectedHeader({ alg: 'EdDSA', kid: KID })
     .setIssuer(ISSUER)
-    .setAudience(ISSUER)
+    .setAudience([ISSUER, PLANE])
     .setIssuedAt()
     .setExpirationTime('5m')
     .sign(signingKey);
@@ -82,7 +89,7 @@ async function verifiedClaimsOf(payload: Record<string, unknown>): Promise<HubCl
     }
     return new Response('no', { status: 404 });
   }) as unknown as typeof fetch;
-  return verifyHubToken(token, { issuer: ISSUER, fetch: fetchImpl });
+  return verifyHubToken(token, { issuer: ISSUER, audience: PLANE, fetch: fetchImpl });
 }
 
 /** A token spelled exactly as the fixture spells it. */

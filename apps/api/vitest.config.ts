@@ -22,6 +22,13 @@ export default defineConfig({
           // (test/control-pair-claim.test.ts), which is the right shape: opt in
           // where it is the subject, off where it is scenery.
           ENFORCE_CONTROL_PAIR: 'false',
+          // This plane's own origin, which a hub token must now name in `aud`
+          // (`auth/hub-jwt.ts`, `planeAudience`). Overridden here rather than
+          // inherited from wrangler.jsonc so the suite does not depend on the
+          // production hostname: `https://api.test` is the origin these tests
+          // already drive the Worker at, so the pinned value and the request's
+          // own origin agree and a token is valid for the reason it reads as.
+          APP_URL: 'https://api.test',
         },
       },
     }),

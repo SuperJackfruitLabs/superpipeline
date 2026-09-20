@@ -10,7 +10,7 @@ import { readSessionToken, verifySession } from './session';
 import { hashToken } from './agent-token';
 import { findAgentByExternal, findAgentByTokenHash, findTenantByExternal, findUserByExternal } from '../db/catalog';
 import { roleFor, type Role } from '../db/members';
-import { verifyHubToken } from './hub-jwt';
+import { verifyHubToken, planeAudience } from './hub-jwt';
 
 export interface UserPrincipal {
   userId: string;
@@ -192,7 +192,7 @@ export async function resolveHubUser(request: Request, env: Env): Promise<UserPr
   // else is a candidate JWT.
   if (!token || token.startsWith('spa_')) return null;
 
-  const claims = await verifyHubToken(token, { issuer });
+  const claims = await verifyHubToken(token, { issuer, audience: planeAudience(request, env) });
   if (!claims) return null;
   // An agent's token must never double as a human credential — the exact mirror of the refusal
   // `resolveHubAgent` has always made in the other direction, and the more dangerous half now
@@ -263,7 +263,7 @@ export async function resolveHubAgent(request: Request, env: Env): Promise<Agent
   // candidate JWT.
   if (!token || token.startsWith('spa_')) return null;
 
-  const claims = await verifyHubToken(token, { issuer });
+  const claims = await verifyHubToken(token, { issuer, audience: planeAudience(request, env) });
   if (!claims) return null;
   if (claims.principalKind !== 'agent') return null;
 

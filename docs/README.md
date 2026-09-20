@@ -80,6 +80,7 @@ documented statement will fail CI if it stops being true.
 | **A user's mapping to an issuer subject is both-or-neither and UNIQUE — one subject is never two users** | `apps/api/test/user-external-mapping.test.ts` (runs the real migration) |
 | **The hub callback adopts an existing account only on a verified address and only when that account has no mapping; it creates only into a linked fleet; it never signs in an agent, a service, or a token a service asserted** | `apps/api/test/hub-signin.test.ts` |
 | **A hub sign-in that resolves nobody tells the person so, and tells everyone the same thing whichever reason it declined for — while somebody who was already signed in, and only came for a token, hears nothing** | `apps/api/test/hub-signin.test.ts`, `apps/web/src/lib/sign-in.test.ts` |
+| **A hub token must name THIS plane in `aud`, not merely the issuer — a token minted for another client, or another product on the same issuer, is refused** | `apps/api/test/hub-jwt-audience.test.ts` |
 
 CI (`.github/workflows/ci.yml`) runs `pnpm typecheck` + `pnpm test`, and the Playwright e2e, on
 every PR. Both must pass before merge.

@@ -89,8 +89,44 @@ export interface HubClaims extends JWTPayload {
 export interface VerifyOptions {
   /** The issuer's base URL, e.g. https://hub.agentpod.dev */
   issuer: string;
+  /**
+   * This deployment's own public origin, which the token must name in `aud`.
+   *
+   * **Required, with no default, and that is the point of the field.** The check used to ask for
+   * `opts.issuer` — the same value as `issuer` — which every token the hub mints carries by
+   * construction, so it passed for every token ever issued: one obtained by another client, for
+   * another purpose, presented here, verified. An audience that equals the issuer is not an
+   * audience check; it is the issuer check, written twice.
+   *
+   * Optional-with-a-fallback was considered and rejected. A fallback to `issuer` restores the old
+   * behaviour for any caller that forgets the field, silently and in exactly the case that
+   * matters — so the type requires it and the compiler names every call site instead.
+   *
+   * Callers derive it with `planeAudience()`, never by hand.
+   */
+  audience: string;
   /** Injectable for tests; defaults to the runtime's fetch. */
   fetch?: typeof fetch;
+}
+
+/**
+ * The origin this deployment answers on, as both the audience it demands and the `redirect_uri`
+ * it registers.
+ *
+ * **One expression, used for both, on purpose.** The hub matches `redirect_uri` as a whole string
+ * against its registry, and now issues a token whose `aud` names this plane; if the origin we
+ * register and the origin we demand were derived differently they could disagree, and the failure
+ * would be a token that verifies nowhere while every setting looks right. `hub-oauth.ts`'s
+ * `hubConfig` uses this same function for the redirect.
+ *
+ * `APP_URL` first, the request's own origin second. The fallback keeps a deployment that never set
+ * it working, but a deployment reachable on more than one host — a custom domain and a
+ * `workers.dev` one — MUST set it: otherwise the audience demanded depends on which host the
+ * caller happened to type, and a token minted for the registered origin is refused on the other.
+ * superpipeline's own `wrangler.jsonc` pins it for that reason.
+ */
+export function planeAudience(request: Request, env: { APP_URL?: string }): string {
+  return env.APP_URL || new URL(request.url).origin;
 }
 
 /**
@@ -274,7 +310,9 @@ export async function verifyHubToken(
 
     const { payload } = await jwtVerify(token, set.verify, {
       issuer: opts.issuer,
-      audience: opts.issuer,
+      // This plane, not the issuer. See `VerifyOptions.audience` for why the two were the same
+      // value until 2026-09-20 and why that made the check vacuous. Do not "simplify" it back.
+      audience: opts.audience,
       requiredClaims: ['exp', 'iat'],
       // Pinned, never taken from the token's own header — otherwise `alg: none`
       // is a valid token and so is one signed with a key of the caller's

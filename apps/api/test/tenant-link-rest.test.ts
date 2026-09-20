@@ -35,6 +35,13 @@ const dev = (tenant: string) => ({ 'X-Tenant-Id': tenant, 'Content-Type': 'appli
 
 const ISSUER = 'https://issuer.test';
 
+/**
+ * The origin this Worker answers on in these tests, and therefore the audience a hub token
+ * must name (`auth/hub-jwt.ts`, `planeAudience`). Before 2026-09-20 the check asked for the
+ * issuer, which every token carries, so `aud` was decoration here.
+ */
+const PLANE = 'https://api.test';
+
 /** A syntactically valid `fleet_` + 20 lowercase-hex id, distinct per call. */
 function fleet(n: number): string {
   return `fleet_${n.toString(16).padStart(20, '0')}`;
@@ -93,7 +100,7 @@ async function hubToken(signingKey: CryptoKey, claims: Record<string, unknown>):
   return new SignJWT(claims)
     .setProtectedHeader({ alg: 'EdDSA', kid: 'tlr-kid' })
     .setIssuer(ISSUER)
-    .setAudience(ISSUER)
+    .setAudience([ISSUER, PLANE])
     .setIssuedAt()
     .setExpirationTime('5m')
     .sign(signingKey);
