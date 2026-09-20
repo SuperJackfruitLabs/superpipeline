@@ -32,27 +32,55 @@ The contract's own comment states the rule this follows:
 `supi` is a client. It adds no authority, validates no permissions locally, and renders the
 board's own refusals.
 
-## What it can do, and what it deliberately cannot
+## Signing in and staying signed in
 
-`supi` authenticates with a **hub-issued token** — the same credential `apn fleet login` produces.
-superpipeline verifies it offline against the hub's JWKS (`charter →
-decisions/2026-08-15-one-issuer-and-offline-verification.md`), so one sign-in serves both planes.
+Install AgentPod's standalone `fleet` client, then run:
 
-That credential resolves as a **`member`**, and that is a decision rather than an oversight.
-`auth/resolve.ts` says why:
+```sh
+fleet login
+supi whoami
+supi boards
+```
 
-> `member` rather than `owner`: the handoff exists so cards can be queued with authority, which
-> is work. Managing this workspace's agents, its people and its fleet link are decisions for
-> someone who is actually in it.
+`supi` uses hub-issued tokens and the device credential created by `fleet login`.
+It checks `SUPERPIPELINE_TOKEN`, then `AGENTPOD_TOKEN`, then fleet's token cache.
+If the cache is absent, malformed or expired, it exchanges the stored device
+credential for a fresh five-minute token and caches that token for later commands.
+No browser interaction is needed while the device credential remains usable.
 
-So `supi` carries the **work** verbs — the board, its cards, its gates — and **not** the
-management ones. Creating boards, staffing agents, editing the capability registry and changing
-the fleet link all require a seat in the workspace, which a hub token does not grant.
+Explicit environment tokens take precedence even when expired. Replace or unset
+an expired variable; `supi` will not silently switch to a different disk identity.
+Without a usable device credential, run `fleet login` again. A refused exchange
+also asks for a new login; a network/server failure asks you to retry. No API write
+is automatically replayed.
 
-That is the seat/post distinction in `charter → decisions/2026-09-03-role-is-a-seat-and-a-post.md`
-arriving exactly where it was predicted to: a token that names a principal is not an account in
-this workspace, and one is never inferred from the other.
+The files are `agentpod/token.json` and `agentpod/device.json` under the same
+platform config directory as fleet: `$XDG_CONFIG_HOME` (or `~/.config`) on Linux,
+`~/Library/Application Support` on macOS, and `%AppData%` on Windows. The device
+secret goes only to the issuer recorded in `device.json`, with redirects disabled.
+HTTPS is required except for loopback development hubs. Token-cache replacement
+is atomic and private (0600); the device file is never modified. If caching fails,
+the fresh token still works for that command.
 
-**If management from a terminal is wanted**, the honest route is superpipeline issuing its own
-credential to a CLI — its own authorization-code flow, the way the hub gained one — not widening
-what a hub token means. That is a decision, not a feature.
+`SUPERPIPELINE_URL` changes the work API destination (default
+`https://app.superpipeline.dev`), not the issuer used for device exchange.
+Superpipeline verifies the resulting token and its audience/authority at the API.
+This reuses the existing fleet credential protocol; it does not add a separate
+Superpipeline login or change the suite's identity agreements.
+
+## What it can do
+
+The CLI reads boards, cards and pending gates, moves cards, lists templates, and
+creates boards with `supi create-board <name> [--template <id>] [--stages <file|->]`.
+It renders the server's decisions rather than granting authority itself.
+
+A hub identity linked to a local Superpipeline account uses that account's actual
+workspace role. An unmapped principal falls back to `member`; that fallback is
+not a ceiling on linked users. Board creation therefore works when the server
+grants the caller the necessary seat. Staffing agents, editing capabilities and
+changing the fleet link are not CLI verbs.
+
+The CLI never discovers credentials from agent-token variables or the node
+agent's enrollment config. A `spa_` agent credential is not a substitute for a
+human's fleet credential. **401** means the credential was not accepted;
+**403** means the server refused that operation with the caller's authority.

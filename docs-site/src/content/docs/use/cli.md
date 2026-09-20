@@ -24,16 +24,27 @@ than after. It never replaces a file it did not put there.
 
 ## Signing in
 
-`supi` authenticates with a **fleet-issued token** — the same credential `apn fleet login`
-produces. superpipeline verifies it offline against the fleet's published keys, so one sign-in serves
+`supi` authenticates with a **hub-issued token** — the same credential `fleet login`
+produces. superpipeline verifies it offline against the hub's published keys, so one sign-in serves
 both.
 
 ```sh
-apn fleet login              # once, for both planes
+fleet login              # once, for both planes
 supi whoami                  # who that token says you are
 ```
 
-Or supply one directly:
+Install AgentPod's standalone `fleet` client for that login. After login, `supi`
+renews an expired or missing cached token using fleet's device credential, without
+opening a browser. A refused device exchange asks you to run `fleet login` again;
+a network failure asks you to retry.
+
+The shared `agentpod/token.json` and `agentpod/device.json` files live under
+`$XDG_CONFIG_HOME` (or `~/.config`) on Linux, `~/Library/Application Support` on
+macOS, and `%AppData%` on Windows. Device exchange uses the issuer saved by fleet,
+not `SUPERPIPELINE_URL`, and does not follow redirects. The device file stays
+unchanged; only the short-lived token cache is replaced.
+
+Or supply a token directly:
 
 ```sh
 SUPERPIPELINE_TOKEN=… supi boards
@@ -45,9 +56,14 @@ SUPERPIPELINE_TOKEN=… supi boards
 | `AGENTPOD_TOKEN` | the fleet token — what superpipeline actually accepts |
 | `SUPERPIPELINE_URL` | the deployment to talk to. Defaults to `https://app.superpipeline.dev`. |
 
+Explicit environment tokens are not renewed or replaced with a disk identity. If
+one expires, replace or unset that variable. Commands do not retry API writes.
+
 ## The verbs
 
 ```sh
+supi templates                       # available starting pipelines
+supi create-board "My board" --template simple
 supi boards                          # the workspace's boards
 supi board <boardId>                 # one board: its stages and cards
 supi card <boardId> <cardId>         # one card in full
@@ -58,18 +74,17 @@ supi gates <boardId>                 # what is waiting on a human
 `--json` on any command gives machine-stable output. Everything prints the board's own JSON rather
 than a summary, so nothing you needed is dropped in the retelling.
 
-## What it deliberately cannot do
+## Workspace authority
 
-**Creating boards, staffing agents, editing capabilities and changing the fleet link are not
-here.** A fleet token acts as a `member`, and those are `admin` and `owner` acts.
-
-That is a decision, not a gap waiting to be filled. A token naming a principal in a fleet is not
-an account in this workspace, and one is never inferred from the other — managing a workspace is a
-decision for somebody actually in it. Use the board for those.
+A linked hub identity uses its Superpipeline account's actual workspace role.
+Unmapped principals fall back to `member`; linked owners can create boards.
+The API checks permissions. The CLI does not add authority or bypass a refusal.
+Staffing agents, editing capabilities and changing the fleet link are not CLI verbs.
 
 ## What it will never read
 
-`supi` does not read a `spa_` **agent** token, from any variable. Those name an agent, and an agent
+`supi` does not discover credentials from agent-token variables or the node
+agent’s enrollment config. A `spa_` **agent** token is not a human fleet credential. Those name an agent, and an agent
 is not a person operating a board. A CLI that quietly acted as one would attribute your decisions
 to it.
 

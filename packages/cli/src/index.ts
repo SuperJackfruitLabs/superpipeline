@@ -24,7 +24,7 @@
  */
 import { readFileSync } from "node:fs";
 import { BOARD_TEMPLATES, boardTemplate, type BoardTemplateStage } from "@superpipeline/contract";
-import { baseUrl, expired, inspect, loadCredential, ENV_TOKEN } from "./credential.ts";
+import { baseUrl, expired, inspect, resolveCredential, ENV_TOKEN } from "./credential.ts";
 
 const USAGE = `supi — superpipeline from a terminal (\`superpipeline\` is the same command)
 
@@ -42,8 +42,9 @@ const USAGE = `supi — superpipeline from a terminal (\`superpipeline\` is the 
 
   --json                       machine-stable output, on any command
 
-Credential: $${ENV_TOKEN}, else $AGENTPOD_TOKEN, else the token \`apn fleet login\` writes.
-One sign-in serves both planes — superpipeline verifies the hub's token offline.
+Credential: $${ENV_TOKEN}, else $AGENTPOD_TOKEN, else the token \`fleet login\` writes.
+Expired file tokens renew through the device credential from fleet login.
+Explicit environment tokens are used as supplied; superpipeline verifies them offline.
 
 Not here: staffing agents, editing capabilities, changing the fleet link.
 What you may do is your seat in the workspace, which the server decides — not this
@@ -59,24 +60,32 @@ function fail(message: string, hint?: string): never {
   process.exit(1);
 }
 
-function credentialOrExit() {
-  const c = loadCredential();
+async function credentialOrExit() {
+  let c;
+  try {
+    c = await resolveCredential();
+  } catch (error) {
+    fail(error instanceof Error ? error.message : "Could not read fleet credentials.");
+  }
   if (!c) {
     fail(
       "Not signed in.",
-      `  apn fleet login          sign in once, for both planes\n` +
+      `  fleet login          sign in once, for both planes\n` +
         `  ${ENV_TOKEN}=…   supply a token directly`,
     );
   }
   const claims = inspect(c.token);
   if (claims && expired(claims)) {
-    fail(`Your session expired at ${claims.expiry!.toLocaleString()}.`, "  apn fleet login");
+    const hint = c.source.startsWith("env:")
+      ? `Replace or unset ${c.source.slice(4)}; explicit tokens are not renewed.`
+      : "fleet login";
+    fail(`Your session expired at ${claims.expiry!.toLocaleString()}.`, `  ${hint}`);
   }
   return c;
 }
 
 async function api(path: string, init: RequestInit = {}): Promise<unknown> {
-  const c = credentialOrExit();
+  const c = await credentialOrExit();
   const res = await fetch(baseUrl() + path, {
     ...init,
     headers: {
@@ -88,7 +97,7 @@ async function api(path: string, init: RequestInit = {}): Promise<unknown> {
   const body = await res.text();
 
   if (res.status === 401) {
-    fail("superpipeline did not accept that token (401).", "  apn fleet login");
+    fail("superpipeline did not accept that token (401).", "  fleet login");
   }
   if (res.status === 403) {
     // Distinguished from 401 deliberately: 401 means sign in, 403 means you may not — and telling
@@ -192,7 +201,7 @@ async function main(argv: string[]): Promise<void> {
       return;
 
     case "whoami": {
-      const c = credentialOrExit();
+      const c = await credentialOrExit();
       const claims = inspect(c.token);
       if (!claims) fail("The stored credential is not a token this can read.");
       if (json) {
