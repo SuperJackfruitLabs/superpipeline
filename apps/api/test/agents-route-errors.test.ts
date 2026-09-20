@@ -45,13 +45,23 @@ describe('/v1/agents answers unexpected errors in the shape the rest of the API 
     expect(typeof (await res.json<{ error: { message: string } }>()).error.message).toBe('string');
   });
 
-  it('the same shape the boards routes have always answered with', async () => {
+  it('the same ENVELOPE the boards routes answer with, at a better status', async () => {
+    // This asserted 500 until 2026-09-20, when `POST /v1/boards` learned to validate its body
+    // (`board-create-validation.test.ts`). A malformed body there is now a 400 — a client
+    // mistake answered as a client mistake — and it no longer reaches the catch-all at all.
+    //
+    // The status is deliberately NOT unified with the agents routes above. What this file is
+    // about is the envelope: whatever a route decides an error is, it comes back as
+    // `{ error: { message } }` and never as an escape from the `fetch` handler. That the boards
+    // route now classifies this particular trigger better than the agents routes do is a real
+    // difference and worth seeing, not a drift to paper over — the agents routes validating
+    // their own bodies is the obvious follow-up, and when they do, this expectation moves too.
     const boards = await SELF.fetch('https://api.test/v1/boards', {
       method: 'POST',
       headers: dev('tnt_are_boards'),
       body: 'also not json',
     });
-    expect(boards.status).toBe(500);
+    expect(boards.status).toBe(400);
     expect(await boards.json()).toHaveProperty('error.message');
   });
 });
