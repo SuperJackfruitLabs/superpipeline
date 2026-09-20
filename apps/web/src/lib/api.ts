@@ -246,94 +246,16 @@ export interface Profile {
   capabilities: string[];
 }
 
-export const DEFAULT_STAGES: Stage[] = [
-  { key: 'backlog', name: 'Backlog', order: 0 },
-  { key: 'ready', name: 'Ready', order: 1 },
-  { key: 'in-progress', name: 'In Progress', order: 2, wipLimit: 3 },
-  { key: 'review', name: 'Review', order: 3, gate: 'approval' },
-  { key: 'done', name: 'Done', order: 4 },
-];
-
-export interface BoardTemplate {
-  id: string;
-  name: string;
-  description: string;
-  stages: Stage[];
-}
-
 /**
- * Starting pipelines.
+ * Starting pipelines, and the lanes a board gets when no template is chosen.
  *
- * **Rewritten 2026-09-03.** The templates that shipped asked for nine capabilities no agent in
- * any fleet held — `publish`, `test`, `deploy`, `triage`, `support`, `send`, `extract`,
- * `transform`, `load` — while the agent-creation UI offered three, of which two overlapped. That
- * gap is where the capability mismatch began: a board created from a template had lanes nothing
- * could ever claim, and nothing said so.
- *
- * These use a small vocabulary an operator can actually staff, and each names the capabilities it
- * needs so the mismatch is visible before the board exists rather than after. A stage whose
- * capability nobody holds is flagged in the dialog — a lane no agent can work is a real state,
- * not an error, but it should never be a surprise.
+ * **Defined in `@superpipeline/contract` since 2026-09-20**, not here. `supi` creates boards too
+ * now, and two copies of a template list drift in the way that is hardest to notice: both
+ * clients keep working, each making a different board. Re-exported rather than merely imported
+ * so every existing `from '$lib/api'` keeps resolving.
  */
-export const BOARD_TEMPLATES: BoardTemplate[] = [
-  {
-    id: 'software',
-    name: 'Software delivery',
-    description: 'Plan, build, check, ship. Needs: planning, code, security.',
-    stages: [
-      { key: 'intake', name: 'Intake', order: 0, ownerKind: 'human' },
-      { key: 'plan', name: 'Plan', order: 1, ownerKind: 'capability', owner: 'planning' },
-      { key: 'build', name: 'Build', order: 2, ownerKind: 'capability', owner: 'code', wipLimit: 3 },
-      { key: 'security-review', name: 'Security review', order: 3, ownerKind: 'capability', owner: 'security' },
-      { key: 'sign-off', name: 'Sign-off', order: 4, ownerKind: 'human', gate: 'approval' },
-      { key: 'shipped', name: 'Shipped', order: 5, ownerKind: 'human' },
-    ],
-  },
-  {
-    id: 'research-report',
-    name: 'Research report',
-    description: 'Question to written answer. Needs: research, analysis, writing.',
-    stages: [
-      { key: 'question', name: 'Question', order: 0, ownerKind: 'human' },
-      { key: 'gather', name: 'Gather', order: 1, ownerKind: 'capability', owner: 'research' },
-      { key: 'analyse', name: 'Analyse', order: 2, ownerKind: 'capability', owner: 'analysis' },
-      { key: 'draft', name: 'Draft', order: 3, ownerKind: 'capability', owner: 'writing' },
-      { key: 'review', name: 'Review', order: 4, ownerKind: 'human', gate: 'approval' },
-      { key: 'published', name: 'Published', order: 5, ownerKind: 'human' },
-    ],
-  },
-  {
-    id: 'security',
-    name: 'Security review',
-    description: 'A finding, fixed and verified. Needs: security, code.',
-    stages: [
-      { key: 'reported', name: 'Reported', order: 0, ownerKind: 'human' },
-      { key: 'assess', name: 'Assess', order: 1, ownerKind: 'capability', owner: 'security' },
-      { key: 'fix', name: 'Fix', order: 2, ownerKind: 'capability', owner: 'code', wipLimit: 2 },
-      { key: 'verify', name: 'Verify', order: 3, ownerKind: 'capability', owner: 'security' },
-      { key: 'sign-off', name: 'Sign-off', order: 4, ownerKind: 'human', gate: 'approval' },
-      { key: 'closed', name: 'Closed', order: 5, ownerKind: 'human' },
-    ],
-  },
-  {
-    id: 'onboarding',
-    name: 'Onboarding',
-    description: 'Bring someone or something up to working order. Needs: onboarding, writing.',
-    stages: [
-      { key: 'arrived', name: 'Arrived', order: 0, ownerKind: 'human' },
-      { key: 'prepare', name: 'Prepare', order: 1, ownerKind: 'capability', owner: 'onboarding' },
-      { key: 'document', name: 'Document', order: 2, ownerKind: 'capability', owner: 'writing' },
-      { key: 'check', name: 'Check', order: 3, ownerKind: 'human', gate: 'approval' },
-      { key: 'ready', name: 'Ready', order: 4, ownerKind: 'human' },
-    ],
-  },
-  {
-    id: 'simple',
-    name: 'Simple board',
-    description: 'A classic Kanban: Backlog → Ready → In Progress → Review → Done. All human lanes (you move the cards).',
-    stages: DEFAULT_STAGES,
-  },
-];
+export { DEFAULT_STAGES, BOARD_TEMPLATES, boardTemplate } from '@superpipeline/contract';
+export type { BoardTemplate, BoardTemplateStage } from '@superpipeline/contract';
 
 export async function createBoard(name: string, stages: Stage[]): Promise<string> {
   const res = await fetch('/v1/boards', { method: 'POST', headers, body: JSON.stringify({ name, stages }) });

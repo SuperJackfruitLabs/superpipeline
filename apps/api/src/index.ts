@@ -875,10 +875,46 @@ export default {
       if (!boardId) {
         if (request.method === 'GET') return Response.json({ boards: await listBoards(env.DB, tenantId) });
         if (request.method !== 'POST') return Response.json({ error: 'method not allowed' }, { status: 405 });
-        const body = (await request.json()) as { name: string; stages: StageDef[] };
+
+        // Validated rather than asserted. The assertion `as { name: string; stages: StageDef[] }`
+        // promised the compiler two fields the request had no obligation to carry, and the first
+        // caller to get it wrong — `{"name": "…", "template": "software"}`, which is what a
+        // reasonable person types — reached `[...board.stages]` inside the Durable Object and got
+        // **HTTP 500 `board.stages is not iterable`**. A malformed request answered with a server
+        // error, and an error that says `board.stages` to somebody who wrote `template` sends them
+        // looking for a bug in the board.
+        //
+        // The checks stop at shape: a non-empty array of objects each carrying a string `key`.
+        // What a *valid pipeline* is remains the board's decision — it normalises owners and
+        // routing on the way in (`board-do.ts`) — and duplicating that here is how a route starts
+        // refusing things the board would have accepted.
+        const body = (await request.json().catch(() => null)) as { name?: unknown; stages?: unknown } | null;
+        if (!body || typeof body !== 'object') {
+          return Response.json({ error: { message: 'Expected a JSON object.' } }, { status: 400 });
+        }
+        if (typeof body.name !== 'string' || body.name.trim() === '') {
+          return Response.json({ error: { message: '`name` is required and must be a non-empty string.' } }, { status: 400 });
+        }
+        if (!Array.isArray(body.stages) || body.stages.length === 0) {
+          return Response.json(
+            {
+              error: {
+                message:
+                  '`stages` is required and must be a non-empty array. There is no `template` field — a client picks the stages and sends them.',
+              },
+            },
+            { status: 400 },
+          );
+        }
+        if (!body.stages.every((s) => s && typeof s === 'object' && typeof (s as { key?: unknown }).key === 'string')) {
+          return Response.json({ error: { message: 'Every stage needs a string `key`.' } }, { status: 400 });
+        }
+        const name = body.name;
+        const stages = body.stages as StageDef[];
+
         const id = newId('brd');
-        const snapshot = await boardStub(env, tenantId, id).init({ id, tenantId, name: body.name, stages: body.stages });
-        await recordBoard(env.DB, tenantId, { id, name: body.name, stagesJson: JSON.stringify(snapshot.stages) });
+        const snapshot = await boardStub(env, tenantId, id).init({ id, tenantId, name, stages });
+        await recordBoard(env.DB, tenantId, { id, name, stagesJson: JSON.stringify(snapshot.stages) });
         // A stage naming a capability IS the act of declaring the workspace needs that work done,
         // so it registers the capability. Read from the SNAPSHOT rather than the request, because
         // the DO normalised the owners on the way in and the registry must record what was
