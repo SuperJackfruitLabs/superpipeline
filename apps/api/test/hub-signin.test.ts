@@ -433,6 +433,49 @@ describe('a token the callback cannot turn into a person', () => {
     expect(cookieOf(setCookies(res), 'superpipeline_hub_token')).toBeTruthy();
   });
 
+  it('does not sign in a token minted from a DEVICE credential', async () => {
+    // `amr: ["device"]` marks a token obtained by exchanging a long-lived device credential —
+    // a 0600 file on a laptop — rather than by somebody completing an authorize flow. It
+    // authenticates API calls; it must not become a thirty-day cookie here.
+    //
+    // The user below is fully adoptable: verified email, no existing mapping, a linked fleet.
+    // Everything about this token would sign somebody in except the one claim, which is what
+    // makes this a test of the refusal rather than of the surrounding guards.
+    const user = await upsertUserByEmail(env.DB, { email: 'device@outcome.test', name: 'Device' });
+
+    const { res } = await signInViaHub({
+      sub: 'hubsub_from_device',
+      email: 'device@outcome.test',
+      email_verified: true,
+      amr: ['device'],
+    });
+
+    expect(await sessionOf(res)).toBeNull();
+    // And it wrote no mapping: adoption is a one-way door, and a device credential must not
+    // walk through it either.
+    expect(await findUserByExternal(env.DB, 'agentpod', 'hubsub_from_device')).toBeNull();
+    expect(user.id).toBeTruthy();
+
+    // The token is still handed to the SPA — this refuses a SESSION, not the credential.
+    expect(cookieOf(setCookies(res), 'superpipeline_hub_token')).toBeTruthy();
+  });
+
+  it('signs in the SAME token when amr does not name a device', async () => {
+    // The discriminator. Without this the test above passes for a route that refuses
+    // everything, and `amr` carrying some other method — a password, a passkey — must not
+    // be collateral damage.
+    await upsertUserByEmail(env.DB, { email: 'notdevice@outcome.test', name: 'Not Device' });
+
+    const { res } = await signInViaHub({
+      sub: 'hubsub_not_device',
+      email: 'notdevice@outcome.test',
+      email_verified: true,
+      amr: ['pwd'],
+    });
+
+    expect(await sessionOf(res)).not.toBeNull();
+  });
+
   it('does not sign in an agent or a service principal', async () => {
     // `resolveHubUser` refuses a non-human token outright; minting a browser session for one here
     // would be the same confusion with a cookie attached.
