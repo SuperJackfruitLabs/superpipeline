@@ -46,7 +46,7 @@ import { env } from 'cloudflare:test';
 import { describe, it, expect, beforeAll } from 'vitest';
 import { SignJWT, exportJWK, generateKeyPair } from 'jose';
 import { handleHubRoute } from '../src/auth/hub-oauth';
-import { verifySession, type SessionPayload } from '../src/auth/session';
+import { signSession, verifySession, type SessionPayload } from '../src/auth/session';
 import {
   findUserByExternal,
   primaryTenant,
@@ -170,8 +170,18 @@ async function sessionOf(res: Response): Promise<SessionPayload | null> {
   return verifySession(raw, SECRET);
 }
 
-/** Walk the whole flow: connect, then land on the callback with `token` coming back from the hub. */
-async function callbackWithToken(token: string | null, over: Record<string, unknown> = {}) {
+/**
+ * Walk the whole flow: connect, then land on the callback with `token` coming back from the hub.
+ *
+ * `arrivingAs` is the session cookie the browser already holds, which is how the two reasons to
+ * walk this flow are told apart — see the outcome tests at the bottom of the file. Empty is the
+ * signed-out case, which is every other test here.
+ */
+async function callbackWithToken(
+  token: string | null,
+  over: Record<string, unknown> = {},
+  arrivingAs: string | null = null,
+) {
   const e = envWith(over);
   const connected = await handleHubRoute(new Request(`${APP}/hub/connect`, { method: 'POST' }), e, '/hub/connect');
   if (!connected) throw new Error('/hub/connect was not routed');
@@ -179,10 +189,13 @@ async function callbackWithToken(token: string | null, over: Record<string, unkn
   const { url } = (await connected.json()) as { url: string };
   const state = new URL(url).searchParams.get('state') ?? '';
 
+  const cookies = [`superpipeline_hub_pkce=${pkce}`];
+  if (arrivingAs !== null) cookies.push(`superpipeline_session=${arrivingAs}`);
+
   const hub = hubStub(token);
   const res = await handleHubRoute(
     new Request(`${APP}/hub/callback?code=c0de&state=${encodeURIComponent(state)}`, {
-      headers: { Cookie: `superpipeline_hub_pkce=${pkce}` },
+      headers: { Cookie: cookies.join('; ') },
     }),
     e,
     '/hub/callback',
@@ -193,8 +206,12 @@ async function callbackWithToken(token: string | null, over: Record<string, unkn
 }
 
 /** Sign in through the hub with a token carrying exactly these claims. */
-async function signInViaHub(claims: Record<string, unknown>, over: Record<string, unknown> = {}) {
-  return callbackWithToken(await mintToken(claims), over);
+async function signInViaHub(
+  claims: Record<string, unknown>,
+  over: Record<string, unknown> = {},
+  arrivingAs: string | null = null,
+) {
+  return callbackWithToken(await mintToken(claims), over, arrivingAs);
 }
 
 describe('the hub callback resolves a local user', () => {
@@ -377,10 +394,15 @@ describe('a token the callback cannot turn into a person', () => {
   it('is handed to the SPA exactly as before, signing nobody in', async () => {
     // Neither a mapping nor a verified email. This is the property that makes the change safe to
     // deploy: that caller is no worse off than it was, and the flow it already had still works.
+    //
+    // The redirect now names the outcome, because this request carries no session and would
+    // otherwise land back on the sign-in screen with nothing to read — see the outcome tests at
+    // the bottom of the file. What matters HERE is everything after it: the token is handed over
+    // regardless, which is the property that has to keep holding.
     const { res } = await signInViaHub({ sub: 'hubsub_stranger' });
 
     expect(res.status).toBe(302);
-    expect(res.headers.get('Location')).toBe('/');
+    expect(res.headers.get('Location')).toBe('/?signin=no-account');
     expect(cookieOf(setCookies(res), 'superpipeline_hub_token')).toBeTruthy();
     expect(await sessionOf(res)).toBeNull();
     expect(await findUserByExternal(env.DB, 'agentpod', 'hubsub_stranger')).toBeNull();
@@ -490,5 +512,128 @@ describe('a token the callback cannot turn into a person', () => {
     const { res } = await callbackWithToken(null);
     expect(res.status).toBe(400);
     expect(cookieOf(setCookies(res), 'superpipeline_session')).toBeNull();
+  });
+});
+
+/**
+ * What the callback SAYS when it signs nobody in.
+ *
+ * The flow can succeed at the issuer and resolve nobody here, and until the landing page offered
+ * a sign-in button that case had no audience: whoever walked it was already signed in, came for a
+ * token, and got one. From the landing page it is the whole trip failing — and a redirect to `/`
+ * would put the person back on the sign-in screen they left, unable to tell a rejection from a
+ * misclick.
+ *
+ * So the callback says so, and only to the person for whom it is news. The discriminator is the
+ * session the request arrived with, not an intent recorded at `/hub/connect`: arriving signed out
+ * and leaving signed out is the condition that deserves a sentence, whichever button started it.
+ *
+ * `?signin=no-account` is read by `apps/web/src/lib/sign-in.ts`, which pins the same two literals
+ * from its side.
+ */
+describe('the outcome the callback redirects with', () => {
+  it('tells a signed-out visitor that the sign-in resolved nobody', async () => {
+    // No mapping, no verified email: the ordinary "this token names nobody here" case, arriving
+    // from the landing page's button rather than from a workspace.
+    const { res } = await signInViaHub({ sub: 'hubsub_outcome_nobody', email: 'nobody@outcome.test' });
+
+    expect(await sessionOf(res)).toBeNull();
+    expect(res.status).toBe(302);
+    expect(res.headers.get('Location')).toBe('/?signin=no-account');
+  });
+
+  it('gives the same answer whatever the reason it declined', async () => {
+    // The outcome must not be an account-existence oracle. These two are refused for different
+    // reasons — the first address belongs to nobody, the second belongs to somebody already
+    // linked to another principal — and a stranger who could tell them apart would have learnt
+    // whether an account exists at an address they typed.
+    //
+    // Pinned here rather than in the page's copy, because this is the side that CHOOSES the
+    // value; a test on the prose could only grep for words and would pass on the wrong reasoning.
+    const taken = await upsertUserByEmail(env.DB, { email: 'taken@outcome.test', name: 'Taken' });
+    await setUserExternalMapping(env.DB, taken.id, {
+      externalId: 'hubsub_outcome_incumbent',
+      externalSource: 'agentpod',
+    });
+
+    const unknown = await signInViaHub({
+      sub: 'hubsub_outcome_unknown',
+      email: 'never-seen@outcome.test',
+      email_verified: true,
+      tenant: UNLINKED_FLEET,
+    });
+    const collision = await signInViaHub({
+      sub: 'hubsub_outcome_latecomer',
+      email: 'taken@outcome.test',
+      email_verified: true,
+    });
+
+    expect(await sessionOf(unknown.res)).toBeNull();
+    expect(await sessionOf(collision.res)).toBeNull();
+    expect(collision.res.headers.get('Location')).toBe(unknown.res.headers.get('Location'));
+    expect(unknown.res.headers.get('Location')).toBe('/?signin=no-account');
+  });
+
+  it('says nothing at all when somebody was signed in', async () => {
+    const user = await upsertUserByEmail(env.DB, { email: 'landed@outcome.test', name: 'Landed' });
+    await setUserExternalMapping(env.DB, user.id, {
+      externalId: 'hubsub_outcome_landed',
+      externalSource: 'agentpod',
+    });
+
+    const { res } = await signInViaHub({ sub: 'hubsub_outcome_landed' });
+
+    expect(await sessionOf(res)).not.toBeNull();
+    expect(res.headers.get('Location')).toBe('/');
+  });
+
+  it('says nothing to somebody who already had a session and only came for a token', async () => {
+    // The Connections tab's "connect": their session was never in question, and a notice telling
+    // them they are not known here would be both alarming and false.
+    const existing = await signSession(
+      { userId: 'usr_outcome_connected', tenantId: TENANT, exp: Date.now() + 60_000 },
+      SECRET,
+    );
+
+    const { res } = await signInViaHub(
+      { sub: 'hubsub_outcome_connect', email: 'stranger@outcome.test' },
+      {},
+      existing,
+    );
+
+    // Nobody was signed in by this callback — and that is fine, because somebody already was.
+    expect(await sessionOf(res)).toBeNull();
+    expect(res.headers.get('Location')).toBe('/');
+    // The token is still handed over: fetching one is what this caller came for.
+    expect(cookieOf(setCookies(res), 'superpipeline_hub_token')).toBeTruthy();
+  });
+
+  it('treats a session cookie that does not verify as no session', async () => {
+    // Presence is not the test — validity is. Without this, a forged or stale cookie would
+    // suppress the notice, which is the one case where being quiet is wrong.
+    const { res } = await signInViaHub(
+      { sub: 'hubsub_outcome_forged', email: 'forged@outcome.test' },
+      {},
+      'not-a-session.0000000000000000000000000000000000000000000000000000000000000000',
+    );
+
+    expect(res.headers.get('Location')).toBe('/?signin=no-account');
+  });
+
+  it('treats an EXPIRED session as no session', async () => {
+    // A correctly signed cookie whose `exp` has passed. `verifySession` refuses it, and so the
+    // person is signed out and should hear why their sign-in did nothing.
+    const stale = await signSession(
+      { userId: 'usr_outcome_stale', tenantId: TENANT, exp: Date.now() - 1000 },
+      SECRET,
+    );
+
+    const { res } = await signInViaHub(
+      { sub: 'hubsub_outcome_stale', email: 'stale@outcome.test' },
+      {},
+      stale,
+    );
+
+    expect(res.headers.get('Location')).toBe('/?signin=no-account');
   });
 });

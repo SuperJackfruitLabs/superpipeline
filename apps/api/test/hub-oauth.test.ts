@@ -168,7 +168,11 @@ describe('GET /hub/callback', () => {
     expect(await s256(sent.code_verifier)).toBe(challenge);
 
     expect(res?.status).toBe(302);
-    expect(res?.headers.get('Location')).toBe('/');
+    // Home, carrying the outcome: `hub.jwt.value` is not a token that verifies, so the identity
+    // step resolves nobody, and this request arrived with no session of its own. That pair is
+    // what the parameter reports — see `hub-signin.test.ts`'s outcome tests. The handoff itself,
+    // which is what this test is about, is the line below and is unchanged.
+    expect(res?.headers.get('Location')).toBe('/?signin=no-account');
     const cookies = setCookies(res!);
     expect(cookieOf(cookies, 'superpipeline_hub_token')).toBe('hub.jwt.value');
     // Spent: one navigation buys one attempt.
