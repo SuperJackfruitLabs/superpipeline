@@ -24,6 +24,9 @@ import { findTenantByExternal } from '../src/db/catalog';
  */
 
 const ISSUER = 'https://hub.agentpod.dev';
+
+/** This plane's own origin — what `aud` must name since the check stopped asking for the issuer. */
+const PLANE = 'https://api.test';
 const FLEET = 'fleet_0123456789abcdef0123';
 
 let signingKey: CryptoKey;
@@ -42,7 +45,7 @@ async function makeToken(over: Record<string, unknown> = {}, kid = 'test-kid') {
     .setProtectedHeader({ alg: 'EdDSA', kid })
     .setIssuedAt()
     .setIssuer(ISSUER)
-    .setAudience(ISSUER)
+    .setAudience([ISSUER, PLANE])
     .setExpirationTime(over.exp === undefined ? '5m' : (over.exp as string))
     .sign(signingKey);
 }
@@ -75,6 +78,7 @@ describe('verifying a hub token at the edge', () => {
     fetchCount = 0;
     const claims = await verifyHubToken(await makeToken(), {
       issuer: ISSUER,
+      audience: PLANE,
       fetch: countingFetch(),
     });
 
@@ -93,8 +97,8 @@ describe('verifying a hub token at the edge', () => {
     };
     const token = await new SignJWT(payload)
       .setProtectedHeader({ alg: 'EdDSA', kid: 'test-kid' })
-      .setIssuer(ISSUER).setAudience(ISSUER).sign(signingKey);
-    expect(await verifyHubToken(token, { issuer: ISSUER, fetch: countingFetch() })).toBeNull();
+      .setIssuer(ISSUER).setAudience([ISSUER, PLANE]).sign(signingKey);
+    expect(await verifyHubToken(token, { issuer: ISSUER, audience: PLANE, fetch: countingFetch() })).toBeNull();
   });
 
   it('makes no network call once the key set is cached', async () => {
@@ -102,11 +106,11 @@ describe('verifying a hub token at the edge', () => {
     // every board read would depend on the hub being up and add a hop.
     __resetJwksCacheForTests();
     fetchCount = 0;
-    await verifyHubToken(await makeToken(), { issuer: ISSUER, fetch: countingFetch() });
+    await verifyHubToken(await makeToken(), { issuer: ISSUER, audience: PLANE, fetch: countingFetch() });
     const afterFirst = fetchCount;
 
-    await verifyHubToken(await makeToken(), { issuer: ISSUER, fetch: countingFetch() });
-    await verifyHubToken(await makeToken(), { issuer: ISSUER, fetch: countingFetch() });
+    await verifyHubToken(await makeToken(), { issuer: ISSUER, audience: PLANE, fetch: countingFetch() });
+    await verifyHubToken(await makeToken(), { issuer: ISSUER, audience: PLANE, fetch: countingFetch() });
 
     expect(afterFirst).toBe(1);
     expect(fetchCount).toBe(1); // still one: the next two verified offline
@@ -117,13 +121,13 @@ describe('verifying a hub token at the edge', () => {
     // property cannot regress: an issuer outage must degrade new sign-ins, not
     // stop work in flight.
     __resetJwksCacheForTests();
-    await verifyHubToken(await makeToken(), { issuer: ISSUER, fetch: countingFetch() });
+    await verifyHubToken(await makeToken(), { issuer: ISSUER, audience: PLANE, fetch: countingFetch() });
 
     const dead = (async () => {
       throw new Error('connection refused');
     }) as unknown as typeof fetch;
 
-    const claims = await verifyHubToken(await makeToken(), { issuer: ISSUER, fetch: dead });
+    const claims = await verifyHubToken(await makeToken(), { issuer: ISSUER, audience: PLANE, fetch: dead });
     expect(claims).not.toBeNull();
   });
 
@@ -136,7 +140,7 @@ describe('verifying a hub token at the edge', () => {
     fetchCount = 0;
     const originalJwks = jwks;
     try {
-      await verifyHubToken(await makeToken(), { issuer: ISSUER, fetch: countingFetch() });
+      await verifyHubToken(await makeToken(), { issuer: ISSUER, audience: PLANE, fetch: countingFetch() });
       expect(fetchCount).toBe(1); // cache is now warm
 
       const rotatedIn = await generateKeyPair('EdDSA', { extractable: true });
@@ -153,11 +157,11 @@ describe('verifying a hub token at the edge', () => {
         .setProtectedHeader({ alg: 'EdDSA', kid: 'rotated-in-kid' })
         .setIssuedAt()
         .setIssuer(ISSUER)
-        .setAudience(ISSUER)
+        .setAudience([ISSUER, PLANE])
         .setExpirationTime('5m')
         .sign(rotatedIn.privateKey);
 
-      const claims = await verifyHubToken(rotatedToken, { issuer: ISSUER, fetch: countingFetch() });
+      const claims = await verifyHubToken(rotatedToken, { issuer: ISSUER, audience: PLANE, fetch: countingFetch() });
       expect(claims).not.toBeNull();
       expect(claims!.sub).toBe('user_abc');
       expect(fetchCount).toBe(2); // exactly one refetch, triggered by the unknown kid
@@ -169,7 +173,7 @@ describe('verifying a hub token at the edge', () => {
   it('rejects a kid that exists nowhere, after at most one refetch', async () => {
     __resetJwksCacheForTests();
     fetchCount = 0;
-    await verifyHubToken(await makeToken(), { issuer: ISSUER, fetch: countingFetch() });
+    await verifyHubToken(await makeToken(), { issuer: ISSUER, audience: PLANE, fetch: countingFetch() });
     expect(fetchCount).toBe(1); // cache is now warm
 
     const ghost = await generateKeyPair('EdDSA', { extractable: true });
@@ -177,11 +181,11 @@ describe('verifying a hub token at the edge', () => {
       .setProtectedHeader({ alg: 'EdDSA', kid: 'ghost-kid-nowhere' })
       .setIssuedAt()
       .setIssuer(ISSUER)
-      .setAudience(ISSUER)
+      .setAudience([ISSUER, PLANE])
       .setExpirationTime('5m')
       .sign(ghost.privateKey);
 
-    const claims = await verifyHubToken(ghostToken, { issuer: ISSUER, fetch: countingFetch() });
+    const claims = await verifyHubToken(ghostToken, { issuer: ISSUER, audience: PLANE, fetch: countingFetch() });
     expect(claims).toBeNull();
     expect(fetchCount).toBe(2); // exactly one refetch, no retry loop
   });
@@ -193,7 +197,7 @@ describe('verifying a hub token at the edge', () => {
     // against the issuer.
     __resetJwksCacheForTests();
     fetchCount = 0;
-    await verifyHubToken(await makeToken(), { issuer: ISSUER, fetch: countingFetch() });
+    await verifyHubToken(await makeToken(), { issuer: ISSUER, audience: PLANE, fetch: countingFetch() });
     expect(fetchCount).toBe(1); // cache is now warm, and knows 'test-kid'
 
     const other = await generateKeyPair('EdDSA', { extractable: true });
@@ -201,12 +205,12 @@ describe('verifying a hub token at the edge', () => {
       .setProtectedHeader({ alg: 'EdDSA', kid: 'test-kid' })
       .setIssuedAt()
       .setIssuer(ISSUER)
-      .setAudience(ISSUER)
+      .setAudience([ISSUER, PLANE])
       .setExpirationTime('5m')
       .sign(other.privateKey);
 
     expect(
-      await verifyHubToken(badSignature, { issuer: ISSUER, fetch: countingFetch() })
+      await verifyHubToken(badSignature, { issuer: ISSUER, audience: PLANE, fetch: countingFetch() })
     ).toBeNull();
     expect(fetchCount).toBe(1); // no refetch for a bad signature
 
@@ -214,11 +218,11 @@ describe('verifying a hub token at the edge', () => {
       .setProtectedHeader({ alg: 'EdDSA', kid: 'test-kid' })
       .setIssuedAt(Math.floor(Date.now() / 1000) - 600)
       .setIssuer(ISSUER)
-      .setAudience(ISSUER)
+      .setAudience([ISSUER, PLANE])
       .setExpirationTime(Math.floor(Date.now() / 1000) - 300)
       .sign(signingKey);
 
-    expect(await verifyHubToken(expired, { issuer: ISSUER, fetch: countingFetch() })).toBeNull();
+    expect(await verifyHubToken(expired, { issuer: ISSUER, audience: PLANE, fetch: countingFetch() })).toBeNull();
     expect(fetchCount).toBe(1); // still no refetch for an expired token
   });
 
@@ -243,7 +247,7 @@ describe('verifying a hub token at the edge', () => {
     // still succeeds with zero further network calls.
     __resetJwksCacheForTests();
     fetchCount = 0;
-    await verifyHubToken(await makeToken(), { issuer: ISSUER, fetch: countingFetch() }); // warm
+    await verifyHubToken(await makeToken(), { issuer: ISSUER, audience: PLANE, fetch: countingFetch() }); // warm
     expect(fetchCount).toBe(1);
 
     const unknown = await generateKeyPair('EdDSA', { extractable: true });
@@ -255,7 +259,7 @@ describe('verifying a hub token at the edge', () => {
       .setProtectedHeader({ alg: 'EdDSA', kid: 'unreachable-refetch-kid' })
       .setIssuedAt()
       .setIssuer(ISSUER)
-      .setAudience(ISSUER)
+      .setAudience([ISSUER, PLANE])
       .setExpirationTime('5m')
       .sign(unknown.privateKey);
 
@@ -265,12 +269,13 @@ describe('verifying a hub token at the edge', () => {
       throw new Error('connection refused');
     }) as unknown as typeof fetch;
 
-    const claims = await verifyHubToken(tokenWithUnknownKid, { issuer: ISSUER, fetch: dead });
+    const claims = await verifyHubToken(tokenWithUnknownKid, { issuer: ISSUER, audience: PLANE, fetch: dead });
     expect(claims).toBeNull();
     expect(deadCalls).toBe(1); // exactly one refetch attempted, no retry loop
 
     const stillWorks = await verifyHubToken(await makeToken(), {
       issuer: ISSUER,
+      audience: PLANE,
       fetch: countingFetch(),
     });
     expect(stillWorks).not.toBeNull();
@@ -282,7 +287,7 @@ describe('verifying a hub token at the edge', () => {
     fetchCount = 0;
     const originalJwks = jwks;
     try {
-      await verifyHubToken(await makeToken(), { issuer: ISSUER, fetch: countingFetch() });
+      await verifyHubToken(await makeToken(), { issuer: ISSUER, audience: PLANE, fetch: countingFetch() });
       expect(fetchCount).toBe(1); // warm
 
       const rotatedIn = await generateKeyPair('EdDSA', { extractable: true });
@@ -299,14 +304,14 @@ describe('verifying a hub token at the edge', () => {
         .setProtectedHeader({ alg: 'EdDSA', kid: 'concurrent-rotated-kid' })
         .setIssuedAt()
         .setIssuer(ISSUER)
-        .setAudience(ISSUER)
+        .setAudience([ISSUER, PLANE])
         .setExpirationTime('5m')
         .sign(rotatedIn.privateKey);
 
       const shared = countingFetch();
       const [a, b] = await Promise.all([
-        verifyHubToken(rotatedToken, { issuer: ISSUER, fetch: shared }),
-        verifyHubToken(rotatedToken, { issuer: ISSUER, fetch: shared }),
+        verifyHubToken(rotatedToken, { issuer: ISSUER, audience: PLANE, fetch: shared }),
+        verifyHubToken(rotatedToken, { issuer: ISSUER, audience: PLANE, fetch: shared }),
       ]);
 
       expect(a).not.toBeNull();
@@ -324,11 +329,11 @@ describe('verifying a hub token at the edge', () => {
       .setProtectedHeader({ alg: 'EdDSA', kid: 'test-kid' })
       .setIssuedAt()
       .setIssuer(ISSUER)
-      .setAudience(ISSUER)
+      .setAudience([ISSUER, PLANE])
       .setExpirationTime('5m')
       .sign(other.privateKey);
 
-    expect(await verifyHubToken(forged, { issuer: ISSUER, fetch: countingFetch() })).toBeNull();
+    expect(await verifyHubToken(forged, { issuer: ISSUER, audience: PLANE, fetch: countingFetch() })).toBeNull();
   });
 
   it('refuses an expired token', async () => {
@@ -340,11 +345,11 @@ describe('verifying a hub token at the edge', () => {
       .setProtectedHeader({ alg: 'EdDSA', kid: 'test-kid' })
       .setIssuedAt(Math.floor(Date.now() / 1000) - 600)
       .setIssuer(ISSUER)
-      .setAudience(ISSUER)
+      .setAudience([ISSUER, PLANE])
       .setExpirationTime(Math.floor(Date.now() / 1000) - 300)
       .sign(signingKey);
 
-    expect(await verifyHubToken(expired, { issuer: ISSUER, fetch: countingFetch() })).toBeNull();
+    expect(await verifyHubToken(expired, { issuer: ISSUER, audience: PLANE, fetch: countingFetch() })).toBeNull();
   });
 
   it('refuses a token from another issuer', async () => {
@@ -353,11 +358,11 @@ describe('verifying a hub token at the edge', () => {
       .setProtectedHeader({ alg: 'EdDSA', kid: 'test-kid' })
       .setIssuedAt()
       .setIssuer('https://not-our-hub.example.com')
-      .setAudience(ISSUER)
+      .setAudience([ISSUER, PLANE])
       .setExpirationTime('5m')
       .sign(signingKey);
 
-    expect(await verifyHubToken(wrong, { issuer: ISSUER, fetch: countingFetch() })).toBeNull();
+    expect(await verifyHubToken(wrong, { issuer: ISSUER, audience: PLANE, fetch: countingFetch() })).toBeNull();
   });
 
   it('refuses a token that names no tenant', async () => {
@@ -368,11 +373,11 @@ describe('verifying a hub token at the edge', () => {
       .setProtectedHeader({ alg: 'EdDSA', kid: 'test-kid' })
       .setIssuedAt()
       .setIssuer(ISSUER)
-      .setAudience(ISSUER)
+      .setAudience([ISSUER, PLANE])
       .setExpirationTime('5m')
       .sign(signingKey);
 
-    expect(await verifyHubToken(noTenant, { issuer: ISSUER, fetch: countingFetch() })).toBeNull();
+    expect(await verifyHubToken(noTenant, { issuer: ISSUER, audience: PLANE, fetch: countingFetch() })).toBeNull();
   });
 
   it('refuses an unsigned token', async () => {
@@ -384,7 +389,7 @@ describe('verifying a hub token at the edge', () => {
       .replace(/=+$/, '');
 
     expect(
-      await verifyHubToken(`${header}.${body}.`, { issuer: ISSUER, fetch: countingFetch() })
+      await verifyHubToken(`${header}.${body}.`, { issuer: ISSUER, audience: PLANE, fetch: countingFetch() })
     ).toBeNull();
   });
 });

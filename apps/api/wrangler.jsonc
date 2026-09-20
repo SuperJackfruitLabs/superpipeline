@@ -19,6 +19,19 @@
   // is off; a wrong value means every hub token is refused. Neither fails open.
   "vars": {
     "HUB_ISSUER": "https://hub.agentpod.dev",
+    // This deployment's own origin — the `redirect_uri` we register with the hub AND the `aud`
+    // we now demand of every hub token (`auth/hub-jwt.ts`, `planeAudience`).
+    //
+    // Pinned rather than left to fall back on the request's origin, because this Worker answers
+    // on more than one host. With the fallback, the audience demanded would be whichever host the
+    // caller typed, so a token minted for the registered origin would be refused on the other —
+    // and the registered `redirect_uri` would change shape with the Host header, which the hub
+    // matches as a whole string.
+    //
+    // Safe here for the same reason HUB_ISSUER is: it is not a credential and grants nothing. A
+    // wrong value refuses every hub token and registers a redirect the hub does not know. Both
+    // fail closed.
+    "APP_URL": "https://app.superpipeline.dev",
     // The control pair is enforced: a card is claimable only if the grant
     // recorded when it was queued permits the claiming agent
     // (charter decisions/2026-08-13-ecosystem-identity.md, Decision 4).

@@ -29,6 +29,13 @@ import { resolveHubAgent } from '../src/auth/resolve';
 import { createAgent, setAgentExternalMapping } from '../src/db/catalog';
 
 const ISSUER = 'https://issuer.test';
+
+/**
+ * The origin this Worker answers on in these tests, and therefore the audience a hub token
+ * must name (`auth/hub-jwt.ts`, `planeAudience`). Before 2026-09-20 the check asked for the
+ * issuer, which every token carries, so `aud` was decoration here.
+ */
+const PLANE = 'https://api.test';
 const FLEET = 'fleet_0000000000000000hbta';
 
 let signingKey: CryptoKey;
@@ -64,7 +71,7 @@ async function hubToken(over: Record<string, unknown>): Promise<string> {
     .setProtectedHeader({ alg: 'EdDSA', kid: 'hta-kid' })
     .setIssuedAt()
     .setIssuer(ISSUER)
-    .setAudience(ISSUER)
+    .setAudience([ISSUER, PLANE])
     .setExpirationTime('5m')
     .sign(signingKey);
 }
@@ -173,7 +180,7 @@ describe('resolving an agent-kind hub token', () => {
       .setProtectedHeader({ alg: 'EdDSA', kid: 'hta-kid' })
       .setIssuedAt()
       .setIssuer(ISSUER)
-      .setAudience(ISSUER)
+      .setAudience([ISSUER, PLANE])
       .setExpirationTime('5m')
       .sign(signingKey);
 

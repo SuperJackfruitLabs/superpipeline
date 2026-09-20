@@ -97,7 +97,7 @@ async function mintToken(claims: Record<string, unknown>): Promise<string> {
   return new SignJWT({ principalKind: 'human', tenant: FLEET, ...claims })
     .setProtectedHeader({ alg: 'EdDSA', kid: KID })
     .setIssuer(ISSUER)
-    .setAudience(ISSUER)
+    .setAudience([ISSUER, APP])
     .setIssuedAt()
     .setExpirationTime('5m')
     .sign(signingKey);
@@ -116,7 +116,7 @@ async function mintForgedToken(claims: Record<string, unknown>): Promise<string>
   return new SignJWT({ principalKind: 'human', tenant: FLEET, ...claims })
     .setProtectedHeader({ alg: 'EdDSA', kid: 'not-the-issuers-kid' })
     .setIssuer(ISSUER)
-    .setAudience(ISSUER)
+    .setAudience([ISSUER, APP])
     .setIssuedAt()
     .setExpirationTime('5m')
     .sign(other.privateKey);

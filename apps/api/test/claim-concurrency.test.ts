@@ -8,6 +8,13 @@ import type { BoardDO } from '../src/board/board-do';
 const TENANT = 'tnt_concurrency';
 const FLEET = 'fleet_concurrency';
 const ISSUER = 'https://concurrency-issuer.test';
+
+/**
+ * The origin this Worker answers on in these tests, and therefore the audience a hub token
+ * must name (`auth/hub-jwt.ts`, `planeAudience`). Before 2026-09-20 the check asked for the
+ * issuer, which every token carries, so `aud` was decoration here.
+ */
+const PLANE = 'https://api.test';
 const stages = [{ key: 'research', name: 'Research', order: 0, ownerKind: 'capability' as const, owner: 'research' }];
 const dev = { 'X-Tenant-Id': TENANT, 'Content-Type': 'application/json' };
 let signingKey: CryptoKey;
@@ -53,7 +60,7 @@ async function withAgent(kind: 'native' | 'hub', concurrency: number, fn: (token
   await setAgentExternalMapping(env.DB, TENANT, agent.id, { externalId: principal, externalSource: 'org-plane' });
   const token = await new SignJWT({ sub: principal, tenant: FLEET, principalKind: 'agent' })
     .setProtectedHeader({ alg: 'EdDSA', kid: 'concurrency' }).setIssuedAt()
-    .setIssuer(ISSUER).setAudience(ISSUER).setExpirationTime('5m').sign(signingKey);
+    .setIssuer(ISSUER).setAudience([ISSUER, PLANE]).setExpirationTime('5m').sign(signingKey);
   const originalFetch = globalThis.fetch;
   const originalIssuer = env.HUB_ISSUER;
   env.HUB_ISSUER = ISSUER;

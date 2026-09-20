@@ -18,6 +18,13 @@ import { addMember } from '../src/db/members';
 import { setTenantExternalMapping, setUserExternalMapping } from '../src/db/catalog';
 
 const ISSUER = 'https://issuer.test';
+
+/**
+ * The origin this Worker answers on in these tests, and therefore the audience a hub token
+ * must name (`auth/hub-jwt.ts`, `planeAudience`). Before 2026-09-20 the check asked for the
+ * issuer, which every token carries, so `aud` was decoration here.
+ */
+const PLANE = 'https://api.test';
 const FLEET = 'fleet_00000000000000hprtst';
 const TENANT = 'tnt_hub_principal_role';
 
@@ -58,7 +65,7 @@ async function hubToken(signingKey: CryptoKey, sub: string, fleet: string = FLEE
   return new SignJWT({ sub, principalKind: 'human', tenant: fleet })
     .setProtectedHeader({ alg: 'EdDSA', kid: 'hpr-kid' })
     .setIssuer(ISSUER)
-    .setAudience(ISSUER)
+    .setAudience([ISSUER, PLANE])
     .setIssuedAt()
     .setExpirationTime('5m')
     .sign(signingKey);

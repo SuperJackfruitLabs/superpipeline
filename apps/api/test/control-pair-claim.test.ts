@@ -69,6 +69,13 @@ async function agentMappedTo(tenant: string, agentId: string, principalId: strin
 }
 
 const ISSUER = 'https://issuer.test';
+
+/**
+ * The origin this Worker answers on in these tests, and therefore the audience a hub token
+ * must name (`auth/hub-jwt.ts`, `planeAudience`). Before 2026-09-20 the check asked for the
+ * issuer, which every token carries, so `aud` was decoration here.
+ */
+const PLANE = 'https://api.test';
 const FLEET = 'fleet_00000000000000000042';
 let signingKey: CryptoKey;
 let jwksBody: string;
@@ -86,7 +93,7 @@ async function tokenGranting(mayDispatch: string[]) {
     .setProtectedHeader({ alg: 'EdDSA', kid: 'cp-kid' })
     .setIssuedAt()
     .setIssuer(ISSUER)
-    .setAudience(ISSUER)
+    .setAudience([ISSUER, PLANE])
     .setExpirationTime('5m')
     .sign(signingKey);
 }
