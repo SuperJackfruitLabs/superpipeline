@@ -180,6 +180,91 @@ export async function setTenantExternalMapping(
     .run();
 }
 
+/**
+ * The user an issuer subject is, in this workspace. Null when nobody has linked it.
+ *
+ * `externalId` is the hub token's `sub` — today a Better Auth user id, not a
+ * `prn_…` principal id (the hub's jwt plugin overwrites `sub` with
+ * `session.user.id` after building the payload). Two ids for one human exist
+ * upstream and only this one ever reaches this table; the consequence is
+ * recorded as an open question in the suite-sign-in spec.
+ */
+export async function findUserByExternal(
+  db: D1Database,
+  source: string,
+  externalId: string,
+): Promise<UserRecord | null> {
+  if (!source || !externalId) return null;
+  return db
+    .prepare(`SELECT id, email, name FROM users WHERE external_source = ? AND external_id = ?`)
+    .bind(source, externalId)
+    .first<UserRecord>();
+}
+
+/** Record that this user is also known to `externalSource` as the subject `externalId`. */
+export async function setUserExternalMapping(
+  db: D1Database,
+  userId: string,
+  mapping: { externalId: string; externalSource: string } | null,
+): Promise<void> {
+  if (mapping) {
+    const { externalId, externalSource } = mapping;
+    if (typeof externalId !== 'string' || externalId.trim() === '') {
+      throw new ExternalMappingError('an external mapping needs an externalId');
+    }
+    if (typeof externalSource !== 'string' || externalSource.trim() === '') {
+      throw new ExternalMappingError('an external mapping needs an externalSource naming whose id it is');
+    }
+  }
+  await db
+    .prepare(`UPDATE users SET external_id = ?, external_source = ?, updated_at = datetime('now') WHERE id = ?`)
+    .bind(mapping?.externalId ?? null, mapping?.externalSource ?? null, userId)
+    .run();
+}
+
+/**
+ * A user by email, for the one-time adoption in the hub callback.
+ *
+ * Deliberately NOT `upsertUserByEmail`, which CREATES when it does not find —
+ * using it as a lookup would conjure a user as a side effect of asking whether
+ * one exists. And it selects `external_id`, because the caller's guard is
+ * "adopt only a user who has no mapping", and a guard reading an undefined
+ * column silently adopts everybody.
+ *
+ * **`COLLATE NOCASE`, because the caller can only fold its own side.**
+ * `hub-oauth.ts` lowercases and trims the asserted address, but `auth/routes.ts`
+ * stores `ghUser.email` VERBATIM and GitHub returns it as the person typed it.
+ * A BINARY `WHERE email = ?` therefore misses a GitHub-created row holding
+ * `Rakesh.Gangwar@Example.com`, the caller's `candidate` comes back null, and
+ * its create step inserts a SECOND user and a second personal workspace for one
+ * person — the UNIQUE on `users.email` is BINARY too, so nothing stops it. That
+ * is the same harm the claim-canonicalisation fix prevented, arriving from the
+ * other side.
+ *
+ * **`ORDER BY created_at LIMIT 1` because two such rows may ALREADY coexist.**
+ * Nothing before this stopped one being written, so a deployment can be holding
+ * a GitHub-verbatim row and a hub-lowercased row for one address; folding the
+ * comparison makes both match at once and `.first()` would otherwise return
+ * whichever the query planner reached first. Oldest wins: that is the account
+ * the person has actually been using, and a stable answer means adoption cannot
+ * land on a different row on a later attempt. Merging such a pair is a data
+ * repair, not something a lookup may do.
+ */
+export async function findUserByEmail(
+  db: D1Database,
+  email: string,
+): Promise<(UserRecord & { externalId: string | null }) | null> {
+  if (!email) return null;
+  return db
+    .prepare(
+      `SELECT id, email, name, external_id AS externalId FROM users
+        WHERE email = ? COLLATE NOCASE
+        ORDER BY created_at LIMIT 1`,
+    )
+    .bind(email)
+    .first<UserRecord & { externalId: string | null }>();
+}
+
 export async function createAgent(db: D1Database, tenantId: string, input: { name: string; capabilities?: string[] }): Promise<AgentRecord> {
   const id = newId('agt');
   const capabilities = input.capabilities ?? [];

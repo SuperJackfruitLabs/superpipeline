@@ -1,0 +1,369 @@
+# Signing in through the suite's issuer, and knowing that the person is the same person
+
+**Date:** 2026-09-20
+**Status:** proposed. **Amended the same day, before any code**, when writing the
+plan found that the hub mints no email claim — see "What the hub must add".
+The first draft's reconciliation could not have worked.
+**Repos:** `superpipeline` (most of it), `agentpod` (the hub's client registry and
+token audience)
+**Charter:** `decisions/2026-09-18-signing-in-is-not-a-products-verb.md`,
+`decisions/2026-08-15-one-issuer-and-offline-verification.md`,
+`decisions/2026-08-15-tenancy-is-local-and-mapped.md`
+
+---
+
+## The problem, measured
+
+On 2026-09-20, signed in to `app.superpipeline.dev` in a browser and holding a
+valid hub token at a terminal, the same human is two different people:
+
+```
+console  → usr_b19776fac3c94df4   owner   of tnt_e080b7a2cc39469e
+supi     → 68jYD9VOCmXlPhIY…      member  of the same tenant
+POST /v1/boards → 403 {"error":"a member may not do that in this workspace"}
+```
+
+Both credentials are genuine and both name Rakesh. superpipeline can verify the
+hub token is authentic without being able to tell it is *him*, so it applies the
+lowest safe role to a stranger.
+
+`resolve.ts:215-216` is where that happens:
+
+```ts
+const local = await roleFor(env.DB, tenantId, claims.sub);
+return { userId: claims.sub, tenantId, role: local ?? 'member', … };
+```
+
+`roleFor` looks up `memberships.user_id` by `claims.sub` — a hub *subject* id,
+and note what it actually is above: `68jYD9VOCmXlPhIY…` is a Better Auth user id,
+not a `prn_` principal id (see "Open, and deliberately"). Memberships are only
+ever written with `usr_`-prefixed ids, by `ensurePersonalWorkspace`
+(`catalog.ts:111`) and `addMember` (`members.ts:118`, keyed on email). **No code
+path can produce a membership row whose `user_id` is a hub subject id**, so
+`local` is always `null` and the fallback is always taken.
+The cap is real, but it is enforced by an id-space mismatch rather than by any
+check that says so.
+
+A second consequence, easy to miss: a hub caller's `userId` is set to
+`claims.sub`. Anything superpipeline records on their behalf stores a foreign id
+in a field that otherwise holds `usr_`.
+
+## What already exists, which is most of it
+
+**superpipeline is already an OAuth client of the hub.** `auth/hub-oauth.ts`
+implements `POST /hub/connect` (mint a PKCE verifier and state, HttpOnly),
+`GET /hub/callback` (check state, exchange the code server-to-server) and
+`GET /hub/token`. It was built to solve a cross-domain cookie problem — the
+hub's cookie is `Domain=.agentpod.dev` and never reaches `superpipeline.dev` —
+and it works.
+
+**The hub's authorize endpoint is already multi-client and hand-rolled**, not
+Better Auth's `oidc-provider`. `HUB_OAUTH_CLIENTS` is a registry of client ids
+and exactly-matched redirect URIs whose own docstring gives the example
+`superpipeline|https://superpipeline.dev/hub/callback,supermessage|https://…`.
+Its refusal text says a plane is added "at deployment time, deliberately".
+
+This retires a charter caveat.
+`charter → decisions/2026-08-15-one-issuer-and-offline-verification.md` said *"the `oidc-provider`
+plugin's maturity is unverified […] a spike — issue a token, verify it from a
+Worker, rotate a signing key — gates the first migration."* The plugin was never
+used. The flow was written by hand and has been exercised in production
+repeatedly. The spike that gated this has, in effect, already run.
+
+**What is missing is one thing.** Compare the two callbacks:
+
+| | creates a user | mints a session |
+|---|---|---|
+| `auth/routes.ts` — GitHub | ✅ `upsertUserByEmail` → `ensurePersonalWorkspace` | ✅ |
+| `auth/hub-oauth.ts` — hub | ❌ | ❌ hands the token to the SPA |
+
+superpipeline already walks through the hub's front door. It does not treat what
+it finds there as a sign-in: the token is a bearer credential to pass along, not
+proof of who someone is.
+
+## The decision
+
+**superpipeline signs people in through the suite's issuer, and records the
+mapping between a hub principal and its own user.** Identity comes from one
+place; superpipeline keeps its own session, its own ids, and its own idea of
+what a role permits.
+
+Three properties are deliberate:
+
+**The mapping lives in superpipeline.** `charter → decisions/2026-08-15-tenancy-is-local-and-mapped.md`
+says *"Neither product mints the other's ids."* The hub must not carry a `usr_`
+claim. It asserts its own principal id, which it owns, and superpipeline resolves
+that to a local user through a table it owns — exactly as `findTenantByExternal`
+already does for tenants.
+
+**A mapping is a record of sameness, never a grant.** The hub's own
+`principal-identities.ts` states the rule this follows: *"Nothing here answers
+'may they', only 'are they the same'."* The mapping decides *who*; the membership
+decides *what they may do*. Nothing reads authority out of the mapping.
+
+**Verification stays offline.** No call to the issuer on the request path. The
+JWKS check in `hub-jwt.ts` is unchanged.
+
+## Users get the mapping tenants and agents already have
+
+| table | external mapping | added by |
+|---|---|---|
+| `tenants` | ✅ | migration `0002` |
+| `agents` | ✅ | migration `0003` |
+| `users` | ❌ | **migration `0008`, this change** |
+
+Two nullable columns, `external_id` and `external_source`, with the same
+both-or-neither CHECK the other two carry. The pattern is charter-blessed and
+twice-applied; people were the omission.
+
+## The flow
+
+No new routes. `GET /hub/callback` gains an identity step before it hands the
+token on:
+
+1. Verify the token offline against JWKS — `hub-jwt.ts`, unchanged.
+2. Resolve `sub` to a local user (below).
+3. `ensurePersonalWorkspace` for that user, as the GitHub path does.
+4. Mint superpipeline's own session cookie — `session.ts`, unchanged.
+5. Hand the token to the SPA as it does today, so nothing that works now breaks.
+
+superpipeline does **not** adopt the hub's cookie. It cannot see it across
+registrable domains, and its own session policy stays its own. The issuer's
+five-minute token governs the token, not the browser session.
+
+## Resolution order
+
+1. **By the issuer's subject id.** `WHERE external_source='agentpod' AND
+   external_id=<sub>`. Once a user is mapped, this is the only path that runs.
+   `sub` is the hub's subject id — today a Better Auth user id, *not* a `prn_`
+   principal id; see "Open, and deliberately" for what follows from that.
+2. **By verified email, once.** Only when step 1 found nothing **and** the token's
+   `email_verified` is true **and** the matched user has no mapping. Adopt that
+   row by writing the mapping onto it.
+3. **Create.** A new user from `email`, then `ensurePersonalWorkspace`.
+
+Steps 2 and 3 both require the claims added in "What the hub must add". A token
+without `email` can still be *verified* and still resolve an already-mapped user
+through step 1 — it simply cannot originate one. That degradation is deliberate:
+an older token keeps working for someone already linked.
+
+Step 2 is the only place email is ever a join key across planes, and it can fire
+at most once per user because it writes the mapping that makes step 1 hit
+forever after. Both conditions are load-bearing: without *verified*, anyone who
+can make the issuer assert an address can take an account; without *has no
+mapping*, a second principal can capture an account that already belongs to
+someone.
+
+**Those two conditions are what stands between a stranger and an account only
+for a non-admin.** `email_verified` is the hub's verdict, and one path in the hub
+sets that verdict by fiat: `apps/hub/src/routes/admin.ts:460` creates users with
+`emailVerified: true` — "Admin-created users are pre-verified". A hub admin can
+therefore mint a verified assertion of **any** address, link a principal to it,
+and adopt whichever unmapped superpipeline user holds that address — inheriting
+that user's real role, `owner` included. Adoption is deliberately not gated on
+the fleet mapping (only creation is), so this works from any fleet, including one
+this deployment has never linked.
+
+This is a real widening and it is being accepted knowingly. Before this design
+the hub's reach into superpipeline stopped at `member` by construction: an
+unmapped hub caller got the stranger's role and nothing a hub admin did could
+change that. After it, **superpipeline's account boundary sits downstream of the
+hub's email-verification policy**, and that policy has an administrative override.
+The trust being extended is "a hub admin is trusted over superpipeline accounts
+at any address they can assert", which is a larger statement than "the hub
+authenticates people" and should be read as such by anyone granting hub admin.
+Narrowing it — distinguishing an address a person proved from one an admin
+asserted, or gating adoption on the fleet too — is future work this design does
+not do.
+
+`resolve.ts` then reads the mapped user's real role, and sets `userId` to the
+local `usr_` id rather than to `claims.sub`.
+
+## What the hub must add
+
+The hub mints exactly `{sub, principalKind, tenant, mayDispatch, mayGrantReach}`
+(`jwt-claims.ts:174`). **There is no email**, and that is fatal to the first
+draft of this design in two ways, not one:
+
+- step 2 has nothing to match on
+- step 3 cannot run either, because `users.email` is `NOT NULL UNIQUE` and a new
+  user cannot be inserted without one
+
+So sign-in through the issuer could not work for anybody, not merely
+reconciliation. The gap was found while writing the implementation plan and the
+design is amended rather than worked around.
+
+**The hub adds `email` and `email_verified` to the token.** The values are one
+join from where tokens are minted — `principals.ts:143` notes that a principal's
+`userId` "travels with the row so the console can put a name and an email".
+
+Two reasons for claims rather than a userinfo endpoint. It needs no new
+authenticated route, and — more durably — `email` and `email_verified` are the
+**standard OIDC claim names**, so this moves the token towards a conforming ID
+token instead of inventing a bespoke shape. That keeps the approach-2 door open
+rather than narrowing it.
+
+The cost, stated plainly: an email address now rides in a bearer token that
+reaches every plane. It is bounded — these tokens live five minutes and already
+carry the tenant and the dispatch grants — but it is a real widening of what a
+leaked token reveals, and it was accepted deliberately.
+
+## Audiences
+
+`hub-jwt.ts:260` checks `audience: opts.issuer`, and every token carries
+`aud === iss === https://hub.agentpod.dev`. The check passes for every token ever
+minted, including one the `apn` CLI obtained for something else. **That is why a
+token minted for client `apn` is accepted by superpipeline today** — nothing binds
+a token to the client that asked for it, so registering any new client silently
+hands it superpipeline too.
+
+Audience cannot mean "spendable in exactly one place": the CLI's single stored
+token legitimately reaches the hub (`apn fleet nodes`) and superpipeline
+(`supi boards`). It can mean **the issuer declares where a token may be spent and
+each plane refuses one that does not name it.**
+
+- The client registry gains an `audiences` list beside its redirect URIs.
+- `aud` becomes that list — a JSON array, which JWT permits.
+- Each resource server requires its own URL to be present.
+
+So `apn` is registered for `["https://hub.agentpod.dev",
+"https://app.superpipeline.dev"]`; superpipeline's browser client for
+`["https://app.superpipeline.dev"]`, because it presents its token to
+superpipeline's own API and never to the hub.
+
+## GitHub login stays, unchanged
+
+Not because it is "local auth" — it is delegated auth to a third party, the same
+class of thing as the issuer. The reason is narrower and harder: **remove it and
+a standalone superpipeline has no way to sign anyone in**, which breaks this
+suite's rule that each product stands alone. It stays until superpipeline has
+accounts it owns itself, and whether it should ever have those is not decided
+here.
+
+A user who arrives by GitHub simply has no mapping, and the email-match-once rule
+adopts them the first time they come through the issuer.
+
+## Migration order
+
+superpipeline **continuously deploys to production on merge to `main`**
+(`ci.yml`'s `deploy` job). There is no staging: merge and live are one event, so
+every step must be safe deployed alone, in whatever order deploys land.
+
+| # | where | change | safe alone because |
+|---|---|---|---|
+| 0 | hub | add `email` + `email_verified` claims | additive — nothing reads them yet |
+| 1 | hub | mint `aud` as an array | additive — `jose` matches when the checked value is *in* the array |
+| 2 | superpipeline | migration `0008` | schema only |
+| 3 | superpipeline | `resolve.ts` reads a mapping when present | no mappings exist yet; behaviour identical |
+| 4 | superpipeline | `/hub/callback` signs in | the behaviour change |
+| 5 | — | verify against the live deployment | below |
+| 6 | superpipeline | require superpipeline's own URL in `aud` | only after 1 is proven |
+| 7 | hub | drop the hub's URL from clients that do not need it | only after 6 |
+
+**Step 4 depends on step 0 being deployed**, and they are in different
+repositories with independent pipelines. That is the one genuine cross-repo
+ordering constraint here: sign-in cannot resolve or create a user until the hub
+is issuing the email claim, so step 4 must not merge before step 0 is live and
+confirmed by decoding a freshly minted token.
+
+**GitHub login is the escape hatch and it never closes.** No step touches it. If
+step 3 is broken, sign in the way you do today; nothing is lost but time. With no
+staging, that property is the whole safety argument.
+
+**Steps 5 and 6 are where the audience property actually lands, and they are the
+ones that get forgotten.** They carry their own verification tasks in the plan.
+Stopping at step 4 means doing the work and keeping none of the benefit.
+
+## Verification at step 4
+
+Sign in through the issuer. Confirm you land as `usr_b19776fac3c94df4` and not a
+new row; confirm the mapping was written; confirm the CLI token now carries
+`owner`. The concrete proof is the request that failed on the day this was
+written: `POST /v1/boards` with a hub token returning **201 instead of 403**.
+
+**Rollback**, for the only risky step: clear the two mapping columns on that one
+row. Behaviour returns to today's, with the GitHub path untouched.
+
+## Testing
+
+Following `tenant-external-mapping.test.ts`, which runs the real migration.
+
+The email adoption is the riskiest line in the design — the one place a wrong
+decision silently attaches one person's account to another's identity — and gets
+disproportionate coverage:
+
+- adopts when the email is **verified** and the user has **no** mapping
+- **refuses** when the email is present but not verified
+- **refuses** when the user already has a mapping — a second principal can never
+  capture an adopted account
+- adopts at most once: the mapping it writes makes step 1 hit thereafter
+- a token carrying **no** `email` claim still resolves an already-mapped user,
+  and refuses to originate one — the deliberate degradation for older tokens
+
+Then:
+
+- resolution order: principal → verified email → create
+- a linked principal reads its real role; an unlinked one still falls back to
+  `member`
+- `userId` is the local `usr_` id for a mapped caller
+- the both-or-neither CHECK on `users`, running the real migration
+- the callback mints a session and creates the workspace
+- after step 5: a token whose `aud` omits superpipeline's URL is refused
+- an e2e sign-in through the issuer, since Playwright already covers the SPA
+
+New guarantees get rows in `docs/README.md`'s *"What is checked, not just
+written"* table, or they are prose again.
+
+## What this does not do
+
+- **No `auth.agentpod.dev`.** Moving the issuer's hostname is a DNS record and an
+  `iss` value touching every verifier. Bundling it means a failure there looks
+  like a failure in the sign-in work. It is its own small change, immediately
+  after; the issuer URL stays configuration so that it can be.
+- **No forge integration.** GitHub, Forgejo and Gitea connections are the next
+  subsystem. This one separates identity from them; it does not build them.
+- **No change to `users.email`'s constraints.** Relaxing `NOT NULL UNIQUE` on the
+  identity column is a migration with real risk and nothing here needs it.
+- **No change to agent (`spa_`) token resolution**, and no local accounts owned by
+  superpipeline.
+- **Nothing in supermessage.** How a Matrix login relates to the issuer is an open
+  question its own docs record, with `m.login.token` as an unverified candidate.
+
+## Open, and deliberately
+
+**Whether the issuer should ever mint a token whose role is deliberately lower
+than the person's.** This design gives a linked principal their real role, on the
+reasoning that the README's caution turned on the principal being *unknown* to
+the workspace, and linking is what makes that false. A terminal credential is
+more exposed than a browser session, and a future decision may want a scoped
+session that can read a board but not manage people. Nothing here forecloses it.
+
+**`sub` is not a principal id, and one human therefore has two of them.** The
+hub's jwt plugin overwrites `sub` with `session.user.id` after `definePayload`
+runs (`apps/hub/src/routes/auth-authorize.ts:509-513`), so the session and
+exchange tokens this design consumes carry a Better Auth user id — the
+measurement above shows `68jYD9VOCmXlPhIY…`, which is plainly not a `prn_`.
+Station tokens and `mintPrincipalAssertion` carry `subject: prn_…` instead.
+`users.external_id` therefore holds the hub's *subject* id, and only ever the
+first kind.
+
+The consequence is not cosmetic. A token minted for the **same human** on the
+station or bridge path carries `sub = prn_…`, which can never match the mapping
+this design writes, so an approval arriving that way still resolves as a stranger
+— `member`, not their real role — even after someone has linked them by hand.
+That is the case `charter → decisions/2026-08-14-approvals-cross-planes-as-events.md`
+asks to arrive *as the human*, and it is exactly the case linking was supposed to
+fix.
+
+Closing it means changing what `sub` carries on both mint paths at once, or
+mapping the two ids to each other at the hub and asserting both. Either is a
+token change owned by whoever owns the token, not something this design may
+decide from the consuming side. Until then the comments and the migration header
+here say "the issuer's subject id", never "the principal", so the gap stays
+visible rather than being papered over by a name.
+
+**Whether superpipeline becomes a full OIDC relying party.** Approach 2 —
+discovery documents and off-the-shelf client libraries — was considered and
+deferred, because it swaps a proven hand-rolled flow for the plugin the charter
+flagged as unverified and buys nothing needed today. Standard parameter and claim
+names are used throughout so that path stays open.

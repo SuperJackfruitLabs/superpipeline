@@ -17,7 +17,7 @@
  *   POST /hub/connect   mint a PKCE verifier + state, keep them HttpOnly, answer with the hub
  *                       authorize URL for the page to navigate to.
  *   GET  /hub/callback  the hub's redirect lands here: check `state`, spend the code for a token
- *                       server-to-server, hand it on.
+ *                       server-to-server, verify it, sign the person in, and hand it on.
  *   GET  /hub/token     the SPA reads the token it was handed, and learns whether this
  *                       deployment has a hub at all. Same-origin, this Worker's own cookie — no
  *                       hub cookie involved.
@@ -35,6 +35,17 @@
  * path takes (`env.ts`, migration 0003). A board with no hub keeps working exactly as it did.
  */
 import type { Env } from '../env';
+import { verifyHubToken } from './hub-jwt';
+import {
+  ensurePersonalWorkspace,
+  findTenantByExternal,
+  findUserByEmail,
+  findUserByExternal,
+  setUserExternalMapping,
+  upsertUserByEmail,
+  type UserRecord,
+} from '../db/catalog';
+import { signSession, sessionSetCookie, SESSION_TTL_MS } from './session';
 
 /**
  * The flow's own secrets, for the sixty seconds between the navigation and the callback.
@@ -196,12 +207,182 @@ interface ExchangeResult {
   error_description?: string;
 }
 
+/** Whose ids the `sub` of a hub token is. The same string `resolve.ts` matches mappings on. */
+const EXTERNAL_SOURCE = 'agentpod';
+
+/**
+ * Turn a freshly exchanged hub token into a session cookie, or null if it names nobody here.
+ *
+ * This is the step the flow was missing. Everything above it walks through the hub's front door
+ * and comes back holding a token; until this existed, the callback handed that token to the SPA
+ * and stopped — it created no user and minted no session, where the GitHub callback
+ * (`auth/routes.ts`) does both from the same shape of evidence. So a person who signed in through
+ * the issuer was, to superpipeline, a stranger with a valid credential: `resolveHubUser` gave them
+ * `member` under a foreign id, and `POST /v1/boards` refused them.
+ *
+ * Resolution is in three steps, and the order is the whole design:
+ *
+ *   1. **By principal.** Once linked, this is the only step that ever runs, and it needs no claim
+ *      but `sub`. That is what lets this ship before the hub's new claims are deployed.
+ *   2. **By verified email, exactly once.** The riskiest lines in the file — see the guards below.
+ *   3. **Create**, when that address belongs to nobody AND this deployment is linked to the fleet
+ *      the token names.
+ *
+ * **Null is an ordinary answer and never an error.** A token carrying no mapping and no verified
+ * email resolves nobody, and the caller hands it to the SPA exactly as it did before this
+ * function existed. That property is what makes this deployable on a service with no staging
+ * environment: the worst case is today's behaviour.
+ */
+async function signInFromHubToken(env: Env, token: string, fetchImpl: typeof fetch): Promise<string | null> {
+  // No issuer means no token to verify against; no secret means nothing to sign a cookie with.
+  // Either way this deployment simply does not sign anyone in here, and says so by doing nothing.
+  const issuer = env.HUB_ISSUER;
+  if (!issuer || !env.SESSION_SECRET) return null;
+
+  // Verified here, not trusted because the hub handed it over a back channel. The exchange proves
+  // the code was ours; only the signature proves the claims are the issuer's. `env.HUB_ISSUER`
+  // rather than the normalised `cfg.base`, so this and `resolveHubUser` accept exactly the same
+  // tokens — a token that signs in must be a token that then works.
+  const claims = await verifyHubToken(token, { issuer, fetch: fetchImpl });
+  if (!claims) return null;
+
+  // An agent's or a service's token must never become a browser session: since
+  // `charter → decisions/2026-08-30-an-agent-is-a-principal.md` a node can exchange its own
+  // credential for a token naming an agent principal, so "a valid hub token" and "a person"
+  // stopped being the same thing.
+  //
+  // `resolveHubUser` makes three fail-closed refusals — no issuer, a non-human principal, and a
+  // `tenant` claim that maps to no workspace here. This is the second of them, made one step
+  // earlier. The third is deliberately NOT made here for the whole function; step 3 below is the
+  // only place it applies, and says why the other two steps must stay ungated.
+  if (claims.principalKind !== 'human') return null;
+
+  // And never a token a SERVICE minted while speaking FOR somebody. `act` is RFC 8693's actor
+  // claim — `sub` is still the human, `act.sub` is who spoke for them — and today that is the
+  // Matrix Application Service resolving an approval on behalf of whoever tapped a button in a
+  // room (`charter → decisions/2026-08-14-approvals-cross-planes-as-events.md`).
+  //
+  // Without this, "signs somebody in" means "verifies against the JWKS", which is strictly
+  // broader than "somebody just completed an authorize flow". `act` is the one claim that tells
+  // those two apart, so refusing on it is the difference between a browser session standing for
+  // presence and one standing for a bridge's word. An assertion carries no more reach than the
+  // person's own token, so this is not about authority — it is about not handing a thirty-day
+  // cookie to a flow nobody was present for, and not writing the adoption mapping (a one-way
+  // door) on the strength of one.
+  //
+  // Unreachable today: an assertion is minted for a service to spend, and nothing puts one
+  // through `/hub/callback`'s code exchange. It is here so that it stays unreachable — and so
+  // that whoever makes it reachable has to delete a line and say why. `hub-jwt.ts` already types
+  // the field, which is what makes this one line rather than a claim-shape debate.
+  if (claims.act) return null;
+
+  // One canonical form of the address, computed ONCE and used for both the lookup and the create.
+  //
+  // `addMember` (db/members.ts) stores `input.email.trim().toLowerCase()`, and SQLite compares
+  // TEXT under BINARY collation. So an issuer asserting `A.B@Gmail.com` against an invited
+  // `a.b@gmail.com` misses the row, falls through to step 3, and silently makes a SECOND user and
+  // a second personal workspace for one person. That fails closed rather than open, but it
+  // defeats the invite mechanism the catalog is built around, and the documented rollback for
+  // this feature — clear two columns on one row — would leave the stray user and tenant behind.
+  //
+  // This deliberately WIDENS what `email_verified` is trusted for: every case variant of an
+  // address is one account here. That is correct under how mail is actually delivered, and it is
+  // what `addMember` already assumed — but it is a choice, not a typo fix.
+  //
+  // Folding here folds only ONE side, and that is not enough on its own: `auth/routes.ts` stores
+  // `ghUser.email` verbatim, so the rows this has to find are not all canonical. The other half
+  // of the fold lives in `findUserByEmail`'s `COLLATE NOCASE` — see the comment there.
+  const email = claims.email?.trim().toLowerCase();
+
+  // 1. By the issuer's subject id (`claims.sub`). Once somebody is linked, no other step runs —
+  //    the mapping IS the identity, so a person whose address changed at the hub is still this
+  //    row rather than a new one.
+  //
+  //    `sub` is NOT a principal id, however much it reads like one. The hub's jwt plugin
+  //    overwrites `sub` with `session.user.id` after `definePayload` runs
+  //    (agentpod apps/hub/src/routes/auth-authorize.ts), so a session or exchange token carries a
+  //    Better Auth user id while a station-minted or bridge-asserted token for the SAME human
+  //    carries `prn_…`. Only the first kind ever reaches this callback, so the mapping written
+  //    here is keyed on the first kind — and a token of the second kind can never match it. Open
+  //    question in docs/superpowers/specs/2026-09-20-suite-sign-in-design.md.
+  let user: UserRecord | null = await findUserByExternal(env.DB, EXTERNAL_SOURCE, claims.sub);
+
+  if (!user && email && claims.email_verified === true) {
+    // `findUserByEmail`, never `upsertUserByEmail`: the latter CREATES when it finds none, so
+    // asking it whether someone exists would conjure the very row the guard below is about to
+    // inspect — and it selects only `id, email, name`, leaving `externalId` undefined, which
+    // would make the has-no-mapping guard pass for everybody.
+    const candidate = await findUserByEmail(env.DB, email);
+
+    // 2. Adopt, exactly once. **Both conditions above and here are load-bearing.** Without
+    //    `email_verified === true`, anyone who can make the issuer assert an address takes over
+    //    the account at that address. Without `!candidate.externalId`, a second principal
+    //    captures an account that already belongs to somebody.
+    if (candidate && !candidate.externalId) {
+      await setUserExternalMapping(env.DB, candidate.id, {
+        externalId: claims.sub,
+        externalSource: EXTERNAL_SOURCE,
+      });
+      user = candidate;
+    }
+
+    // 3. Create — only when that address belongs to NOBODY.
+    //
+    //    `users.email` is UNIQUE, so for an address somebody already holds there is no "create":
+    //    `upsertUserByEmail` would find that same row and hand it back, and the mapping write
+    //    below would then move it to this principal — undoing, one line later, the refusal step 2
+    //    had just made. Keying this on `!candidate` rather than on `!user` is what keeps a
+    //    refusal refused: `candidate` and `!candidate` are mutually exclusive and jointly
+    //    exhaustive, so exactly one of these two steps fires and neither can reopen what the
+    //    other closed.
+    if (!candidate) {
+      // And only into a fleet this deployment is actually linked to — `resolveHubUser`'s third
+      // refusal, applied HERE and nowhere else in this function.
+      //
+      // Without it, a human principal in a fleet nobody has linked to this deployment — who until
+      // now held a token cookie worth nothing, because every route refuses on an unmapped tenant —
+      // would get a user row, a workspace they own, and a thirty-day session. That is
+      // self-registration for anyone the issuer will authenticate.
+      //
+      // Steps 1 and 2 stay ungated on purpose. Step 1 is somebody a human already linked by hand.
+      // Step 2 needs an invitation-shaped signal — a local row that already exists, plus a
+      // verified address — where creation from nothing needs none. And gating the whole function
+      // would break bootstrap: `PATCH /v1/tenant` is the only thing that writes a tenant mapping
+      // and it is human-session-only, so a hub token could never establish the mapping that would
+      // make that same hub token resolve.
+      const linkedTenant = await findTenantByExternal(env.DB, EXTERNAL_SOURCE, claims.tenant);
+      if (linkedTenant) {
+        const created = await upsertUserByEmail(env.DB, { email, name: null });
+        await setUserExternalMapping(env.DB, created.id, {
+          externalId: claims.sub,
+          externalSource: EXTERNAL_SOURCE,
+        });
+        user = created;
+      }
+    }
+  }
+
+  if (!user) return null;
+
+  // From here on, exactly what the GitHub callback does: a workspace to land in, and a session
+  // cookie naming it. `ensurePersonalWorkspace` returns the workspace they already have if they
+  // have one, so a linked colleague lands in the team's board rather than a personal duplicate.
+  const displayName = user.name || user.email;
+  const tenant = await ensurePersonalWorkspace(env.DB, user.id, displayName);
+  const session = await signSession(
+    { userId: user.id, tenantId: tenant.id, name: displayName, exp: Date.now() + SESSION_TTL_MS },
+    env.SESSION_SECRET,
+  );
+  return sessionSetCookie(session, { secure: true });
+}
+
 /**
  * Handle a `/hub/*` request, or return null if `path` is not one.
  *
- * `fetchImpl` is injectable for the same reason `auth/github.ts` takes one: the exchange is the
- * only outbound call here and a test has to be able to see it — including seeing that it was
- * **not** made.
+ * `fetchImpl` is injectable for the same reason `auth/github.ts` takes one: a test has to be able
+ * to see the outbound calls, including seeing that one was **not** made. There are two of them
+ * now rather than one — the code exchange, and the JWKS fetch `signInFromHubToken` needs in order
+ * to verify what came back — and both go through this, so a test never reaches for `globalThis`.
  */
 export async function handleHubRoute(
   request: Request,
@@ -295,11 +476,37 @@ export async function handleHubRoute(
     // decide how long this browser holds a credential. Five minutes is `TOKEN_TTL`.
     const ttl = Math.max(1, Math.min(typeof result.expiresIn === 'number' ? result.expiresIn : 300, 3600));
 
+    // The token is in hand and proven ours; now read it as proof of WHO, not only of what.
+    //
+    // Deliberately wrapped, and the catch is not decoration: everything inside it is new, it
+    // touches the database, and the one property that makes this change safe to deploy is that a
+    // caller who was getting a token before still gets one. A constraint violation or a D1 hiccup
+    // in the identity step must cost this flow a session, never the handoff it already had.
+    let sessionCookie: string | null = null;
+    try {
+      sessionCookie = await signInFromHubToken(env, result.token, fetchImpl);
+    } catch (err) {
+      sessionCookie = null;
+      // Swallowed, but never silently. This deploys to a service with no staging environment, so
+      // the live verification has nothing to read except the Worker's logs — and the flow's own
+      // symptom is indistinguishable from the ordinary "this token resolves nobody" case: a 302
+      // home with a token cookie and no session. Without a line here, a constraint violation or a
+      // D1 hiccup that costs somebody their session looks exactly like the feature deciding not
+      // to sign them in, forever.
+      //
+      // No claims, no token, no address in the message: this lands in a log an operator reads,
+      // and the useful part is that the identity step threw, not who it threw about.
+      console.error('hub sign-in: the identity step threw; handing the token on without a session', err);
+    }
+
     // Same-origin redirect home, like the GitHub callback: it works on whatever domain this
     // deployment answers on, and it leaves nothing in the URL — no token, no code, no state.
     const headers = new Headers({ Location: '/' });
     headers.append('Set-Cookie', pkceClearCookie());
     headers.append('Set-Cookie', tokenSetCookie(result.token, ttl));
+    // AS WELL AS the token, never instead of it: the SPA's `GET /hub/token` path is untouched,
+    // and a caller this Worker could not resolve to a person is left exactly where it was.
+    if (sessionCookie) headers.append('Set-Cookie', sessionCookie);
     return new Response(null, { status: 302, headers });
   }
 

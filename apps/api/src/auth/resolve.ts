@@ -8,7 +8,7 @@
 import type { Env } from '../env';
 import { readSessionToken, verifySession } from './session';
 import { hashToken } from './agent-token';
-import { findAgentByExternal, findAgentByTokenHash, findTenantByExternal } from '../db/catalog';
+import { findAgentByExternal, findAgentByTokenHash, findTenantByExternal, findUserByExternal } from '../db/catalog';
 import { roleFor, type Role } from '../db/members';
 import { verifyHubToken } from './hub-jwt';
 
@@ -204,16 +204,24 @@ export async function resolveHubUser(request: Request, env: Env): Promise<UserPr
   const tenantId = await findTenantByExternal(env.DB, 'agentpod', claims.tenant);
   if (!tenantId) return null;
 
-  // **A hub caller's authority comes from the fleet link, not from a local membership.** Their
-  // `sub` is the hub's id for them and will match no row in `memberships`, and refusing on that
-  // would break the whole cross-domain handoff — the fleet link IS the workspace's decision to
-  // admit them, and it is an owner-level act to make.
+  // A hub token names a SUBJECT in the fleet — `claims.sub`, which for a session or exchange
+  // token is a Better Auth user id, not a `prn_…` principal id (the hub's jwt plugin overwrites
+  // `sub` with `session.user.id` after building the payload). If someone has linked that subject
+  // to a user here, they ARE that user: their real role, and their local id on anything they
+  // write. If nobody has, they are a stranger holding a valid credential, and `member` is what a
+  // stranger gets — the same rule as before, now reached only when the mapping says nothing.
   //
-  // `member` rather than `owner`: the handoff exists so cards can be queued with authority, which
-  // is work. Managing this workspace's agents, its people and its fleet link are decisions for
-  // someone who is actually in it. A hub caller who ALSO holds a local membership keeps it.
-  const local = await roleFor(env.DB, tenantId, claims.sub);
-  return { userId: claims.sub, tenantId, role: local ?? 'member', mayDispatch: claims.mayDispatch ?? [] };
+  // That the two ids differ is load-bearing: a token for the SAME human minted on the station or
+  // bridge path carries `sub = prn_…`, which this mapping can never match, so an approval
+  // arriving that way still resolves as a stranger even after linking. Recorded as an open
+  // question in docs/superpowers/specs/2026-09-20-suite-sign-in-design.md; closing it is a change
+  // to what both mint paths put in `sub`, not something this lookup may paper over.
+  const linked = await findUserByExternal(env.DB, 'agentpod', claims.sub);
+  if (linked) {
+    const role = await roleFor(env.DB, tenantId, linked.id);
+    return { userId: linked.id, tenantId, role: role ?? 'member', mayDispatch: claims.mayDispatch ?? [] };
+  }
+  return { userId: claims.sub, tenantId, role: 'member', mayDispatch: claims.mayDispatch ?? [] };
 }
 
 /**
