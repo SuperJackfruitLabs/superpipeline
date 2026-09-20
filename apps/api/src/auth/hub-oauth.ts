@@ -309,6 +309,27 @@ async function signInFromHubToken(
   // the field, which is what makes this one line rather than a claim-shape debate.
   if (claims.act) return null;
 
+  // And never a token minted from a device credential rather than from somebody
+  // standing at an authorize flow. `amr: ["device"]` is the hub's own mark, added when
+  // `charter → decisions/2026-09-18-a-human-at-a-terminal-has-nothing-to-exchange.md` was
+  // accepted on 2026-09-20 — a person at a terminal exchanges a long-lived credential for a
+  // five-minute token, exactly as an agent does, instead of opening a browser every five
+  // minutes.
+  //
+  // That credential is a 0600 file on a laptop. It is authority to WORK, and the record that
+  // conceded it called a stolen one "worse than a stolen token" precisely because its blast
+  // radius is bounded by what the exchange checks rather than by five minutes. Minting a
+  // thirty-day cookie from one would hand that stolen file a month in this plane, and would
+  // undo the narrowness the concession was granted on.
+  //
+  // **Unreachable the day it was written, deliberately.** No token carries `amr` yet; this
+  // refusal ships before the hub can mint one, so there is no window. That ordering is the
+  // mirror of the mistake the suite sign-in plan made earlier the same day — tightening a
+  // check before the thing it checks for existed — and it is written down in
+  // `agentpod/docs/superpowers/specs/2026-09-20-device-credential-design.md` so neither
+  // direction gets rediscovered.
+  if (claims.amr?.includes('device')) return null;
+
   // One canonical form of the address, computed ONCE and used for both the lookup and the create.
   //
   // `addMember` (db/members.ts) stores `input.email.trim().toLowerCase()`, and SQLite compares

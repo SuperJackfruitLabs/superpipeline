@@ -52,6 +52,30 @@ export interface HubClaims extends JWTPayload {
    * lost the distinction the separation-of-duties check exists to protect.
    */
   act?: { sub?: string };
+
+  /**
+   * How the subject authenticated, as OIDC's authentication-methods reference.
+   *
+   * `["device"]` means the token was minted by exchanging a long-lived device
+   * credential — the mechanism
+   * `charter → decisions/2026-09-18-a-human-at-a-terminal-has-nothing-to-exchange.md`
+   * accepted on 2026-09-20 so that a person at a terminal stops signing in
+   * through a browser every five minutes.
+   *
+   * **A device-minted token authenticates API calls and may not become a
+   * session here.** `signInFromHubToken` refuses on it, for the same reason it
+   * refuses `act`: a thirty-day cookie should stand for somebody who was
+   * present at an authorize flow, and a device credential is a file on a
+   * laptop. The accepted record calls a stolen device credential "worse than a
+   * stolen token", bounded by what the exchange checks rather than by five
+   * minutes; letting one grow into a month-long session in this plane would
+   * undo the bounding that makes the concession narrow.
+   *
+   * Absent on every token minted today. This field and the refusal that reads
+   * it ship BEFORE the hub can produce one, so there is never a window in which
+   * a device credential can be turned into a session.
+   */
+  amr?: string[];
   sub: string;
   /** What kind of principal `sub` names. */
   principalKind: 'human' | 'agent' | 'service';
