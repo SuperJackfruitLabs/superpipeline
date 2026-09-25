@@ -34,3 +34,9 @@ playwright/.cache/
 .env
 .env.*
 !.env.example
+
+# `bun build --compile` scratch files, left in the working directory by the release build.
+*.bun-build
+
+# Release artifacts built by .github/workflows/release.yml.
+/dist/

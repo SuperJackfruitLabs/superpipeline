@@ -25,6 +25,7 @@
 import { readFileSync } from "node:fs";
 import { BOARD_TEMPLATES, boardTemplate, type BoardTemplateStage } from "@superpipeline/contract";
 import { baseUrl, expired, inspect, resolveCredential, ENV_TOKEN } from "./credential.ts";
+import { VERSION, runUpdate } from "./update.ts";
 
 const USAGE = `supi — superpipeline from a terminal (\`superpipeline\` is the same command)
 
@@ -39,6 +40,9 @@ const USAGE = `supi — superpipeline from a terminal (\`superpipeline\` is the 
   supi create-board <name> [--template <id>] [--stages <file|->]
                                create a board; --template defaults to \`simple\`
   supi templates               the starting pipelines --template accepts
+
+  supi update [--check]        replace this binary with the newest release
+  supi version                 print this binary's version
 
   --json                       machine-stable output, on any command
 
@@ -199,6 +203,21 @@ async function main(argv: string[]): Promise<void> {
     case "--help":
       process.stdout.write(USAGE + "\n");
       return;
+
+    case "version":
+      process.stdout.write(`supi ${VERSION} ${process.platform}/${process.arch}\n`);
+      return;
+
+    case "update": {
+      // The network work lives in update.ts; this only decides what to print. A failure throws
+      // with a message written to be shown as it stands, so it is not re-worded here.
+      try {
+        process.stdout.write((await runUpdate({ check: rest.includes("--check") })) + "\n");
+      } catch (e) {
+        fail(e instanceof Error ? e.message : String(e));
+      }
+      return;
+    }
 
     case "whoami": {
       const c = await credentialOrExit();

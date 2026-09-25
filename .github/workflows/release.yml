@@ -1,0 +1,114 @@
+name: Release supi
+
+# What a tag means HERE is narrower than in agentpod, and worth stating so nobody looks for the
+# app in a release: `apps/api` and `apps/web` deploy continuously from `main` (see ci.yml's deploy
+# job), so the running service is never what a tag describes. A tag publishes the CLI binaries and
+# fixes a changelog point. Nothing in production waits on it.
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Tag to release (e.g. v0.0.2)"
+        required: false
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Build and publish supi
+    runs-on: ubuntu-latest
+
+    # One job builds every target, where agentpod's equivalent needs a matrix: `bun build
+    # --compile` cross-compiles from a single runner, while Go needs a GOOS/GOARCH pair per build.
+    # That difference removes the failure this repo would otherwise inherit — agentpod's release
+    # workflow carries `fail-fast: false` because one arch's transient runner failure once
+    # cancelled the others and published an incomplete v0.1.7. Four targets in one job cannot
+    # produce a partial release: either the job publishes all of them or it publishes none.
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.tag || github.ref }}
+
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      # A release must not be the first place a break is noticed. The same checks CI runs on a PR
+      # run again here, against the exact commit being published.
+      - name: Typecheck and test the CLI
+        run: |
+          pnpm --filter @superpipeline/cli typecheck
+          pnpm --filter @superpipeline/cli test
+
+      - name: Resolve the tag
+        id: tag
+        run: echo "name=${{ github.event.inputs.tag || github.ref_name }}" >> "$GITHUB_OUTPUT"
+
+      - name: Build every published target
+        env:
+          TAG: ${{ steps.tag.outputs.name }}
+        run: |
+          set -euo pipefail
+          mkdir -p dist
+          # darwin and linux only, matching agentpod's matrix and `assetName()` in update.ts.
+          # Adding a target here without adding it there gives a binary nothing will ever fetch.
+          for target in darwin-arm64 darwin-x64 linux-x64 linux-arm64; do
+            bun build \
+              --compile \
+              --minify \
+              --define SUPI_VERSION="\"${TAG}\"" \
+              --target="bun-${target}" \
+              packages/cli/src/index.ts \
+              --outfile "dist/supi-${target}"
+          done
+          ls -lh dist/
+
+      # Proves the artifact that will be published actually runs, and reports the tag it was built
+      # as. A binary whose --define silently failed would otherwise ship reporting `dev` and never
+      # consider itself out of date again.
+      - name: Verify the linux-x64 binary reports its version
+        env:
+          TAG: ${{ steps.tag.outputs.name }}
+        run: |
+          set -euo pipefail
+          got="$(./dist/supi-linux-x64 version)"
+          echo "$got"
+          case "$got" in
+            "supi ${TAG} "*) ;;
+            *) echo "::error::binary reports '${got}', expected version ${TAG}"; exit 1 ;;
+          esac
+
+      - name: Checksums
+        working-directory: dist
+        run: sha256sum supi-* > SHA256SUMS && cat SHA256SUMS
+
+      - name: Publish the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.tag.outputs.name }}
+        run: |
+          set -euo pipefail
+          # `--generate-notes` on create; an existing release is filled in rather than recreated so
+          # a re-run after a failed upload does not discard notes someone already edited.
+          if ! gh release view "$TAG" >/dev/null 2>&1; then
+            gh release create "$TAG" --title "$TAG" --generate-notes
+          fi
+          gh release upload "$TAG" dist/supi-* dist/SHA256SUMS scripts/install.sh --clobber

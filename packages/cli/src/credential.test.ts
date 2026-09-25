@@ -115,3 +115,31 @@ describe("inspect", () => {
     for (const bad of ["", "nope", "only.two"]) expect(inspect(bad)).toBeNull();
   });
 });
+
+/**
+ * Where the token lives is a PLATFORM rule, and it must stay the rule Go's `os.UserConfigDir()`
+ * applies — `agentpod/apps/node-agent/internal/fleetcred/fleetcred.go` locates the same file that
+ * way. An earlier version of this CLI implemented only the Linux branch, so on macOS it read
+ * `~/.config` while `fleet login` wrote `~/Library/Application Support`: same filename, different
+ * directory, never a hit. The tests above all stub every platform's variable to one directory, so
+ * they pass whichever branch runs and cannot catch that. These pin each branch by itself.
+ */
+describe("fleetConfigDir pins Go's os.UserConfigDir() per platform", () => {
+  it("macOS: ~/Library/Application Support, ignoring XDG_CONFIG_HOME", () => {
+    vi.stubEnv("HOME", "/Users/someone");
+    vi.stubEnv("XDG_CONFIG_HOME", "/xdg/must/be/ignored");
+    expect(fleetConfigDir("darwin")).toBe("/Users/someone/Library/Application Support/agentpod");
+  });
+
+  it("Linux: XDG_CONFIG_HOME when set", () => {
+    vi.stubEnv("HOME", "/home/someone");
+    vi.stubEnv("XDG_CONFIG_HOME", "/xdg");
+    expect(fleetConfigDir("linux")).toBe("/xdg/agentpod");
+  });
+
+  it("Linux: ~/.config when XDG_CONFIG_HOME is unset", () => {
+    vi.stubEnv("HOME", "/home/someone");
+    vi.stubEnv("XDG_CONFIG_HOME", "");
+    expect(fleetConfigDir("linux")).toBe("/home/someone/.config/agentpod");
+  });
+});
