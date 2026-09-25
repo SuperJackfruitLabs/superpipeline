@@ -72,7 +72,7 @@ describe("fleet credential compatibility", () => {
     fetchMock.mockResolvedValue(new Response(JSON.stringify({ token, expiresIn: 300 })));
     const result = await resolveCredential();
     expect(result?.token).toBe(token);
-    expect(fetchMock).toHaveBeenCalledWith(`${hub}/api/auth/devices/token`, expect.objectContaining({
+    expect(fetchMock).toHaveBeenCalledWith(`${hub}/api/auth/devices/token?client=apn`, expect.objectContaining({
       method: "POST", redirect: "error", signal: expect.any(AbortSignal),
       headers: { Authorization: "Bearer dev_fixture:fixture-secret" },
     }));
@@ -87,7 +87,7 @@ describe("fleet credential compatibility", () => {
     device();
     fetchMock.mockResolvedValue(new Response(JSON.stringify({ token: fresh() })));
     await resolveCredential();
-    expect(fetchMock.mock.calls[0]?.[0]).toBe(`${hub}/api/auth/devices/token`);
+    expect(fetchMock.mock.calls[0]?.[0]).toBe(`${hub}/api/auth/devices/token?client=apn`);
   });
 
   it.each(["", "http://issuer.example", "https://user:pass@issuer.example", "https://issuer.example/?token=secret"])("does not send a device to an unsafe/missing issuer %s", async (hub) => {
@@ -100,7 +100,7 @@ describe("fleet credential compatibility", () => {
     device({ hub: "http://127.0.0.1:8080" });
     fetchMock.mockResolvedValue(new Response(JSON.stringify({ token: fresh() })));
     await resolveCredential();
-    expect(fetchMock.mock.calls[0]?.[0]).toBe("http://127.0.0.1:8080/api/auth/devices/token");
+    expect(fetchMock.mock.calls[0]?.[0]).toBe("http://127.0.0.1:8080/api/auth/devices/token?client=apn");
   });
 
   it.each([401, 403, 500])("fails without leaking response bodies or modifying credentials on HTTP %s", async (status) => {
@@ -152,5 +152,32 @@ describe("fleet credential compatibility", () => {
     if (command === "whoami") return;
     expect(fetchMock.mock.calls[1]?.[1]?.headers).toEqual(expect.objectContaining({ Authorization: `Bearer ${token}` }));
     expect(JSON.stringify(fetchMock.mock.calls[1])).not.toContain("fixture-secret");
+  });
+});
+
+/**
+ * A renewal has to ask for the same planes the sign-in reached.
+ *
+ * The hub's device exchange mints for the hub ALONE unless the request names a registered client
+ * (`routes/devices.ts`; the audiences live on `OAuthClient.audiences`). So `fleet login` produced
+ * a token this API accepts, and the first silent renewal five minutes later produced one it does
+ * not: `supi boards` answered 401 while `supi whoami` looked perfect, because whoami never leaves
+ * the machine.
+ *
+ * `apn` is the same registry entry `fleet login` authorizes as, and the same one
+ * `fleetcred.ExchangeDevice` sends. Three places must agree on it; a renewal naming a different
+ * client would be this same bug wearing a different hat.
+ */
+describe("the renewal names its client", () => {
+  it("asks for the apn client, so the token it caches reaches this API and not only the hub", async () => {
+    device();
+    fetchMock.mockResolvedValue(new Response(JSON.stringify({ token: fresh() })));
+    await resolveCredential();
+    const url = new URL(String(fetchMock.mock.calls[0]?.[0]));
+    expect(url.searchParams.get("client")).toBe("apn");
+    // The issuer is still the credential's own, never SUPERPIPELINE_URL: naming a client widens
+    // where the token may be SPENT and must not change who is asked to mint it.
+    expect(url.origin).toBe(new URL(hub).origin);
+    expect(url.pathname).toBe("/api/auth/devices/token");
   });
 });
