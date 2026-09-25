@@ -84,3 +84,40 @@ The CLI never discovers credentials from agent-token variables or the node
 agent's enrollment config. A `spa_` agent credential is not a substitute for a
 human's fleet credential. **401** means the credential was not accepted;
 **403** means the server refused that operation with the caller's authority.
+
+## Installing
+
+```sh
+curl -fsSL https://github.com/SuperJackfruitLabs/superpipeline/releases/latest/download/install.sh | bash
+```
+
+One binary under two names in `~/.local/bin`, verified against the release's `SHA256SUMS` before
+it is installed. `VERSION=v0.0.2` pins a tag; `BIN_DIR=…` installs elsewhere. No sudo, no service.
+
+Binaries are published for darwin and linux, arm64 and x64, built with `bun build --compile` — a
+standalone executable, so Bun is not needed to run one. Building from a checkout instead:
+
+```sh
+bun build --compile packages/cli/src/index.ts --outfile supi
+```
+
+## Keeping it current
+
+```sh
+supi update            # replace this binary with the newest release
+supi update --check    # say what is available, change nothing
+supi version           # what this binary was built as
+```
+
+`update` resolves the latest release, downloads the asset for this platform, checks it against the
+release's `SHA256SUMS`, and replaces the running binary by an atomic rename. A download it cannot
+verify is refused rather than installed.
+
+This verb exists because of what happened without one. `agentpod-fleet` shipped with no way to
+update itself and was found sitting at **v0.1.52** on a developer's machine while **v0.1.66** was
+current — fourteen releases behind, published the whole time by the same workflow that published
+the binary beside it. `agentpod-node`, which self-updates, was current on that same machine. A CLI
+a person runs by hand drifts *more* than a service does, because nothing ever forces the upgrade.
+
+A binary built outside the release pipeline reports its version as `dev` and is always treated as
+out of date, so an unidentifiable binary is offered the update rather than quietly left alone.
