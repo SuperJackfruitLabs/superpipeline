@@ -25,6 +25,7 @@
 import { readFileSync } from "node:fs";
 import { BOARD_TEMPLATES, boardTemplate, type BoardTemplateStage } from "@superpipeline/contract";
 import { baseUrl, expired, inspect, resolveCredential, ENV_TOKEN } from "./credential.ts";
+import { flag, positionals } from "./args.ts";
 import { VERSION, runUpdate } from "./update.ts";
 
 const USAGE = `supi — superpipeline from a terminal (\`superpipeline\` is the same command)
@@ -39,7 +40,15 @@ const USAGE = `supi — superpipeline from a terminal (\`superpipeline\` is the 
 
   supi create-board <name> [--template <id>] [--stages <file|->]
                                create a board; --template defaults to \`simple\`
+  supi set-stages <boardId> <file|->
+                               replace a board's pipeline
+  supi create-card <boardId> <title> [--spec <file|->] [--priority <n>]
+                               queue a card, with this token as its grant
   supi templates               the starting pipelines --template accepts
+
+  supi agents                  the workspace's agents and what they declare
+  supi capabilities            the capability registry, with each one's origin
+  supi implications            what one capability implies about another
 
   supi update [--check]        replace this binary with the newest release
   supi version                 print this binary's version
@@ -130,16 +139,6 @@ async function api(path: string, init: RequestInit = {}): Promise<unknown> {
 
 const out = (value: unknown) => process.stdout.write(JSON.stringify(value, null, 2) + "\n");
 
-/** The value of `--name value`, or null. `--name=value` is accepted too. */
-function flag(args: string[], name: string): string | null {
-  const joined = args.find((a) => a.startsWith(`${name}=`));
-  if (joined) return joined.slice(name.length + 1) || null;
-  const i = args.indexOf(name);
-  if (i === -1) return null;
-  const next = args[i + 1];
-  return next && !next.startsWith("--") ? next : null;
-}
-
 /** A named template's stages, or a refusal that lists the ones that exist. */
 function stagesFromTemplate(id: string): BoardTemplateStage[] {
   const template = boardTemplate(id);
@@ -194,7 +193,8 @@ async function stagesFromFile(path: string): Promise<BoardTemplateStage[]> {
 async function main(argv: string[]): Promise<void> {
   const [cmd, ...rest] = argv;
   const json = wantsJson(rest);
-  const pos = rest.filter((a) => !a.startsWith("--"));
+  // Flags and the values they consume removed — see `positionals`; the old filter kept the value.
+  const pos = positionals(rest);
 
   switch (cmd) {
     case undefined:
@@ -275,6 +275,55 @@ async function main(argv: string[]): Promise<void> {
       out(await api(`/v1/boards/${pos[0]}/gates/pending`));
       return;
     }
+
+    // The two sides of the routing comparison, and the edges between them.
+    //
+    // Routing is exact string equality between a stage's `owner` and an agent's EFFECTIVE
+    // capability set — the closure of what it declares over the implication edges. So when a card
+    // will not move, the entire diagnosis is that comparison, and these are how it is read without
+    // opening the web app. A lane whose capability nobody holds is a real state rather than an
+    // error, which is exactly why it has to be visible.
+    case "set-stages": {
+      if (!pos[0] || !pos[1]) fail("usage: supi set-stages <boardId> <file|->");
+      // Same `--stages` shape `create-board` accepts, so a pipeline can be read back with
+      // `supi board <id> --json`, edited, and put straight back.
+      out(await api(`/v1/boards/${pos[0]}/stages`, {
+        method: "PUT",
+        body: JSON.stringify({ stages: await stagesFromFile(pos[1]) }),
+      }));
+      return;
+    }
+
+    case "create-card": {
+      if (!pos[0] || !pos[1]) fail("usage: supi create-card <boardId> <title> [--spec <file|->]");
+      const specArg = flag(rest, "--spec");
+      const priorityArg = flag(rest, "--priority");
+      // Every remaining positional is the title, so a sentence needs no quoting.
+      const body: Record<string, unknown> = { title: pos.slice(1).join(" ") };
+      if (specArg) {
+        const raw = specArg === "-" ? readFileSync(0, "utf8") : readFileSync(specArg, "utf8");
+        try {
+          body.spec = JSON.parse(raw);
+        } catch {
+          fail(`--spec is not JSON: ${specArg}`);
+        }
+      }
+      if (priorityArg) body.priority = Number(priorityArg);
+      out(await api(`/v1/boards/${pos[0]}/cards`, { method: "POST", body: JSON.stringify(body) }));
+      return;
+    }
+
+    case "agents":
+      out(await api("/v1/agents"));
+      return;
+
+    case "capabilities":
+      out(await api("/v1/capabilities"));
+      return;
+
+    case "implications":
+      out(await api("/v1/capabilities/implications"));
+      return;
 
     case "templates": {
       // No credential needed: these are shipped with the CLI, not fetched. Someone deciding
