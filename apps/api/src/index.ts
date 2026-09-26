@@ -382,7 +382,12 @@ export default {
     // its EFFECTIVE set is the closure over these edges, and only the latter is matched at claim.
     if (path === '/v1/capabilities/implications') {
       try {
-        const u = await resolveUser(request, env);
+        // A hub token may READ, exactly as `GET /v1/agents` already allows. The edges are half the
+        // routing diagnosis — a declared set that reaches a lane only through an implication looks
+        // like a mismatch until they are visible — and a terminal could not see them at all.
+        // Writes fall through to `resolveUser` alone, below, which is the boundary this keeps.
+        let u = await resolveUser(request, env);
+        if (!u && request.method === 'GET') u = await resolveHubUser(request, env);
         if (!u) return Response.json({ error: 'sign in to continue' }, { status: 401 });
 
         if (request.method === 'GET') {
@@ -430,7 +435,12 @@ export default {
     const capsMatch = path.match(/^\/v1\/capabilities(?:\/([^/]+))?$/);
     if (capsMatch) {
       try {
-        const u = await resolveUser(request, env);
+        // A hub token may READ the registry — "anyone who can see the board needs to know what its
+        // lanes ask for", and that included nobody at a terminal. Defining the vocabulary stays
+        // session-only: it is "the same class of act as managing its agents", which is human-only
+        // on purpose, so the fallback is scoped to GET and nothing below it changes.
+        let u = await resolveUser(request, env);
+        if (!u && request.method === 'GET') u = await resolveHubUser(request, env);
         if (!u) return Response.json({ error: 'sign in to continue' }, { status: 401 });
         const capId = capsMatch[1];
 
