@@ -26,6 +26,14 @@ export const ENV_TOKEN = "SUPERPIPELINE_TOKEN";
 export const ENV_HUB_TOKEN = "AGENTPOD_TOKEN";
 export const ENV_BASE = "SUPERPIPELINE_URL";
 
+/**
+ * This CLI's entry in the hub's OAuth client registry, named on every renewal.
+ *
+ * The same value `fleet login` authorizes as and `fleetcred.ClientID` sends, because the client is
+ * what decides which planes the minted token may be spent at. Three callers must agree on it.
+ */
+export const FLEET_CLIENT_ID = "apn";
+
 export const DEFAULT_BASE = "https://app.superpipeline.dev";
 
 export interface Credential {
@@ -95,7 +103,18 @@ export async function resolveCredential(): Promise<Credential | null> {
   const hub = issuer.href.replace(/\/+$/, "");
   let response: Response;
   try {
-    response = await fetch(`${hub}/api/auth/devices/token`, {
+    // `client=apn` — the registry entry `fleet login` authorizes as, and the one
+    // `fleetcred.ExchangeDevice` sends on its own renewals.
+    //
+    // Without it the hub mints for ITSELF alone, so a renewal produced a narrower token than the
+    // sign-in it renewed: accepted by the hub, refused here. `supi boards` answered 401 while
+    // `supi whoami` looked perfect, because whoami never leaves the machine. Which planes a token
+    // may be spent at is declared per client in the hub's registry (`OAuthClient.audiences`), and
+    // naming the client is how a caller asks for them.
+    //
+    // `client`, not `client_id`: the hub reads the former, and answers the latter as "unknown
+    // client" — a refusal that reads like a registry problem and is a spelling one.
+    response = await fetch(`${hub}/api/auth/devices/token?client=${encodeURIComponent(FLEET_CLIENT_ID)}`, {
       method: "POST",
       headers: { Authorization: `Bearer ${device.id}:${device.secret}` },
       redirect: "error",
