@@ -913,3 +913,8 @@
 [data-vibe='quiet'] .live-dot { animation: none; }
 [data-vibe='quiet'] .eyebrow { font-family: var(--vk-font-body); font-weight: 700; letter-spacing: 0; text-transform: none; }
 /* end vibe */
+
+/* On phones the decision buttons stick to the bottom of the drawer body. */
+@media (max-width: 599px) {
+  .gate-actions { position: sticky; bottom: 0; padding-block: var(--vk-space-2); padding-bottom: calc(var(--vk-space-2) + env(safe-area-inset-bottom, 0px)); background: var(--vk-color-signal-wash); }
+}

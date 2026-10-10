@@ -31,7 +31,7 @@
     type Milestone,
   } from '$lib/api';
   import { Button } from '$lib/components/ui/button';
-  import GateActions from '$lib/components/card/GateActions.svelte';
+  import GateDaylight from '$lib/components/card/gate/GateDaylight.svelte';
   import { manualDeliveryItems } from '$lib/approval-delivery';
   import AgentFace from '$lib/components/AgentFace.svelte';
   import { cardLead, moodFor } from '$lib/components/card/card-lead';
@@ -808,7 +808,9 @@
    */
   const delegateName = $derived(displayAgent(delegateId, app.agents));
   const delegateAgent = $derived(app.agents.find((a) => a.id === delegateId) ?? null);
-  const delegateMood = $derived(card ? moodFor(cardLead({ card, gate, elicitation }).kind, !!delegateId) : 'resting');
+  const lead = $derived(card ? cardLead({ card, gate, elicitation, activities: cardDetail?.activities ?? [], failureReason: stageEntries.at(-1)?.failureReason ?? null }) : null);
+  const delegateMood = $derived(lead ? moodFor(lead.kind, !!delegateId) : 'resting');
+  const drawerAgent = $derived({ id: delegateId, name: delegateName, iconUrl: delegateAgent?.iconUrl ?? null, mood: delegateMood });
   const faceVariant = $derived(FACE_VARIANT[appearance.value.vibe]);
 
   /**
@@ -1109,32 +1111,7 @@
         {/if}
 
         <!-- gate panel — only when a pending gate exists -->
-        {#if gate}
-          <section class="sec">
-            <div class="gate border rounded-[10px] p-3.5" style="border-color:var(--vk-color-signal);background:var(--vk-color-signal-wash)">
-              <div class="gh mb-2.5 flex items-center gap-2">
-                <span class="wordmark font-semibold text-sm" style="color:var(--coral)">⚑ awaiting your review</span>
-              </div>
-
-              {#if gateError}
-                <p role="alert" class="border-coral/40 text-coral mono mb-2.5 rounded-[7px] border px-3 py-2 text-xs" style="background:var(--vk-color-signal-wash)">
-                  {gateError}
-                </p>
-              {/if}
-
-              {#if gate.approvalSubject}
-                <div class="bg-inset border-border mono mb-3 rounded-[7px] border p-2.5 text-[11px]">
-                  <div class="mb-1 font-semibold">Immutable approval subject · revision {gate.approvalSubject.revision}</div>
-                  <div class="text-muted-foreground break-all">{gate.approvalSubject.id}</div>
-                  <div class="text-muted-foreground break-all">{gate.approvalSubject.digest}</div>
-                  <pre class="mt-2 max-h-64 overflow-auto whitespace-pre-wrap">{JSON.stringify(gate.approvalSubject.canonical, null, 2)}</pre>
-                </div>
-              {/if}
-
-              {#if boardId}<GateActions {boardId} {gate} onResponse={onGateResponse} />{/if}
-            </div>
-          </section>
-        {/if}
+        {#if gate && boardId && lead}<GateDaylight {boardId} {gate} error={gateError} onResponse={onGateResponse} agent={drawerAgent} {lead} vibe={appearance.value.vibe} />{/if}
 
         {#if deliveryGate?.approvalSubject}
           <section class="sec">
