@@ -11,6 +11,9 @@ describe('the layout registry', () => {
     }
   });
   it('Phase 1: Daylight is the board layout every vibe falls back to', () => {
-    expect(BOARD_LAYOUTS.daylight).toBe(BoardDaylight);
+    for (const v of VIBES) expect(BOARD_LAYOUTS[v], v).toBe(BoardDaylight);
+  });
+  it('each vibe has its own face variant', () => {
+    expect(FACE_VARIANT).toEqual({ daylight: 'mood', paper: 'portrait', studio: 'light', quiet: 'name' });
   });
 });

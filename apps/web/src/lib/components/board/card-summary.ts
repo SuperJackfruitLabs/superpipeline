@@ -39,7 +39,8 @@ export interface CardSummary {
   moreLabels: number;
   firstRef: Reference | null;
   delegate: AgentRef | null;
-  queuedBy: AgentRef | null;
+  /** Set whenever an agent queued the card (the chip shows even when that agent's row is gone); `agent` is null then. */
+  queuedBy: { name: string; agent: { id: string; iconUrl: string | null } | null } | null;
   cost: number;
   overBudget: boolean;
   cardCap: number | null;
@@ -103,7 +104,8 @@ export function summarize(board: BoardSnapshot, cards: Card[], ctx: SummaryConte
     const lead = cardLead({ card: c, gate, elicitation: ask });
     const held = c.delegateAgentId ? agentById.get(c.delegateAgentId) : undefined;
     const prov = cardProvenance(c, ctx.members, ctx.agents);
-    const labels = c.labels.map((id) => ({ id, ...(ctx.labels.get(id) ?? { name: id, colour: '' }) }));
+    // An id with no catalogue entry (a deleted label) renders nothing and is not counted, as on the tile.
+    const labels = c.labels.flatMap((id) => { const l = ctx.labels.get(id); return l ? [{ id, ...l }] : []; });
     const since = c.stateSince ? Date.parse(c.stateSince) : Number.NaN;
     return {
       card: c,
@@ -123,7 +125,7 @@ export function summarize(board: BoardSnapshot, cards: Card[], ctx: SummaryConte
       moreLabels: Math.max(0, labels.length - 3),
       firstRef: board.references.find((r) => r.cardId === c.id) ?? null,
       delegate: c.delegateAgentId ? { id: c.delegateAgentId, name: displayAgent(c.delegateAgentId, ctx.agents), iconUrl: held?.iconUrl ?? null } : null,
-      queuedBy: prov.known && prov.byAgent && prov.agent ? { id: prov.agent.id, name: prov.queuedByName, iconUrl: prov.agent.iconUrl } : null,
+      queuedBy: prov.byAgent ? { name: prov.queuedByName, agent: prov.agent ? { id: prov.agent.id, iconUrl: prov.agent.iconUrl ?? null } : null } : null,
       cost: c.costUsd,
       overBudget: c.overBudget,
       cardCap,
@@ -175,4 +177,13 @@ export function stageSummaries(board: BoardSnapshot, cards: Card[], agents: Agen
         empty: here.length === 0,
       };
     });
+}
+
+/** The agents currently holding open cards, once each (a layout's "who is working" strip). */
+export function crewOf(list: CardSummary[]): Array<AgentRef & { mood: Mood }> {
+  const seen = new Map<string, AgentRef & { mood: Mood }>();
+  for (const s of list) {
+    if (s.delegate && !s.archived && s.urgency !== 'done' && s.urgency !== 'closed' && !seen.has(s.delegate.id)) seen.set(s.delegate.id, { ...s.delegate, mood: s.mood });
+  }
+  return [...seen.values()];
 }

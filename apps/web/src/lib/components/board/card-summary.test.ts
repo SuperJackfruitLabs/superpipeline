@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { BoardSnapshot, Card } from '$lib/api';
-import { groupByUrgency, stageSummaries, summarize } from './card-summary';
+import { stageOwner } from './stage-owner';
+import { crewOf, groupByUrgency, stageSummaries, summarize } from './card-summary';
 
 const NOW = Date.parse('2026-10-11T12:00:00Z');
 const stages = [
@@ -37,11 +38,32 @@ describe('summarize', () => {
     expect(out[3]!.mood).toBe('thinking');
   });
 
-  it('shows three labels and counts the rest, falling back to the id for an unknown label', () => {
-    const c = card({ labels: ['lbl_1', 'x2', 'x3', 'x4', 'x5'] });
-    const [s] = summarize(board([c]), [c], ctx);
-    expect(s!.labels.map((l) => l.name)).toEqual(['ux', 'x2', 'x3']);
+  it('shows three known labels and counts the rest; an unknown (deleted) label renders nothing and is not counted', () => {
+    // Matches today's tile: a deleted label id draws no chip and is not in the "+N".
+    const known = new Map([...ctx.labels, ['a', { name: 'a', colour: '' }], ['b', { name: 'b', colour: '' }], ['c', { name: 'c', colour: '' }], ['d', { name: 'd', colour: '' }]]);
+    const c = card({ labels: ['lbl_1', 'gone', 'a', 'b', 'c', 'd'] });
+    const [s] = summarize(board([c]), [c], { ...ctx, labels: known });
+    expect(s!.labels.map((l) => l.name)).toEqual(['ux', 'a', 'b']);
     expect(s!.moreLabels).toBe(2);
+    const [t] = summarize(board([card({ labels: ['gone'] })]), [card({ labels: ['gone'] })], ctx);
+    expect(t!.labels).toEqual([]);
+    expect(t!.moreLabels).toBe(0);
+  });
+
+  it('an agent-queued card keeps its "asked by" chip even when the queuing agent row is gone', () => {
+    const gone = card({ queuedBy: 'agt_gone', queuedByAgentId: 'agt_gone' } as Partial<Card>);
+    const here = card({ queuedBy: 'agt_r', queuedByAgentId: 'agt_r' } as Partial<Card>);
+    const human = card({ queuedBy: 'usr_a' });
+    const [g, h, u] = summarize(board([gone, here, human]), [gone, here, human], ctx);
+    expect(g!.queuedBy).not.toBeNull();
+    expect(g!.queuedBy!.agent).toBeNull();
+    expect(h!.queuedBy!.agent).toMatchObject({ id: 'agt_r' });
+    expect(u!.queuedBy).toBeNull();
+  });
+
+  it('a rejected card is closed', () => {
+    const c = card({ state: 'rejected' });
+    expect(summarize(board([c]), [c], ctx)[0]!.urgency).toBe('closed');
   });
 
   it('cost against the card cap', () => {
@@ -71,12 +93,46 @@ describe('groupByUrgency', () => {
   });
 });
 
+describe('groupByUrgency tiebreaks', () => {
+  it('same priority: older first, then title', () => {
+    const cs = [
+      card({ state: 'working', title: 'B', stateSince: '2026-10-11T11:00:00Z' }),
+      card({ state: 'working', title: 'A', stateSince: '2026-10-11T11:00:00Z' }),
+      card({ state: 'working', title: 'Z', stateSince: '2026-10-11T08:00:00Z' }),
+    ];
+    const g = groupByUrgency(summarize(board(cs), cs, ctx)).find((x) => x.urgency === 'working')!;
+    expect(g.cards.map((x) => x.title)).toEqual(['Z', 'A', 'B']);
+  });
+});
+
 describe('stageSummaries', () => {
+  it('carries the stage owner', () => {
+    const out = stageSummaries(board([]), [], []);
+    expect(out[2]!.owner).toEqual(stageOwner(stages[2] as never, []));
+  });
+
   it('orders stages and carries count, WIP, gate, manager and empty', () => {
     const cs = [card({ currentStageKey: 'b' }), card({ currentStageKey: 'b', blockedBy: [{ cardId: 'x', title: 'X' }] })];
     const out = stageSummaries(board(cs), cs, []);
     expect(out.map((s) => s.name)).toEqual(['Plan', 'Build', 'Review']);
     expect(out[1]).toMatchObject({ count: 2, wipLimit: 1, atLimit: true, blocked: 1, empty: false });
     expect(out[2]).toMatchObject({ gate: true, manager: true, empty: true });
+  });
+});
+
+describe('crewOf', () => {
+  it('lists each holding agent once, leaving out archived, done and closed cards', () => {
+    const open1 = card({ delegateAgentId: 'agt_r', state: 'working' });
+    const open2 = card({ delegateAgentId: 'agt_r', state: 'working' });
+    const archived = card({ delegateAgentId: 'agt_a', state: 'working', archivedAt: '2026-10-01T00:00:00Z' });
+    const done = card({ delegateAgentId: 'agt_d', state: 'completed' });
+    const closed = card({ delegateAgentId: 'agt_c', state: 'canceled' });
+    const none = card({ state: 'working' });
+    const cs = [open1, open2, archived, done, closed, none];
+    const gates = [{ id: 'g', cardId: open1.id, stageKey: 'a', status: 'pending', options: [], producedBy: 'agt_r', summary: 's' }] as never;
+    const crew = crewOf(summarize(board(cs, { gates }), cs, ctx));
+    expect(crew.map((a) => a.id)).toEqual(['agt_r']);
+    expect(crew[0]!.mood).toBe('needs'); // the first card's mood wins, so a later card cannot replace it
+
   });
 });
