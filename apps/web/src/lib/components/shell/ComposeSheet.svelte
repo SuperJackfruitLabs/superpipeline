@@ -49,7 +49,7 @@
 
 {#if open}
   <div class="fixed inset-0 z-40 flex items-end justify-center min-[600px]:items-center min-[600px]:p-6">
-    <button class="absolute inset-0 bg-black/55" onclick={onClose} aria-label="Close" tabindex="-1"></button>
+    <button class="absolute inset-0" style="background:var(--sp-scrim)" onclick={onClose} aria-label="Close" tabindex="-1"></button>
 
     <form
       onsubmit={submit}
