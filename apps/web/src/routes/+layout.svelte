@@ -8,6 +8,8 @@
    */
   import '../app.css';
   import { onMount } from 'svelte';
+  import { goto } from '$app/navigation';
+  import { takeReturnTo } from '$lib/reconnect';
   import { app } from '$lib/stores/app.svelte';
   import { appearance } from '$lib/appearance.svelte';
   import Rail from '$lib/components/shell/Rail.svelte';
@@ -22,7 +24,10 @@
 
   onMount(() => {
     appearance.init();
-    void app.init();
+    void app.init().then(() => {
+      const back = takeReturnTo();
+      if (back && app.authState === 'ready') void goto(back, { replaceState: true });
+    });
     return () => {
       app.dispose();
       appearance.dispose();

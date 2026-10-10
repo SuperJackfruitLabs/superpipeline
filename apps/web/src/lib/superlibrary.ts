@@ -4,6 +4,7 @@
  * signed-in person's own Superlibrary-audience token (hub-token.ts `libraryToken`), so Superlibrary
  * decides what this person may see. No cookies cross: `credentials: 'omit'`.
  */
+import { say, type Vibe } from '@superjackfruit/vibekit';
 import { forgetLibraryToken, libraryConfigured, libraryToken } from '$lib/hub-token';
 import type { EmbedGrant, MountOptions, Scope, ShareInfo } from '$lib/vendor/superlibrary-embed/superlibrary-embed.js';
 
@@ -93,14 +94,22 @@ export function embedCallbacks(): Pick<MountOptions, 'getEmbedUrl' | 'getVersion
 
 const SENTENCES: Record<string, string> = {
   not_configured: 'Superlibrary is not set up here.',
-  no_token: 'Previews need you signed in through your workspace account.',
   product_not_enabled: 'Superlibrary is not enabled for this workspace.',
   not_found: 'This artifact is not there, or you cannot see it.',
   revoked: 'This artifact was revoked.',
   expired: 'This artifact has expired.',
 };
-export function sentenceFor(e: unknown): string {
+export function sentenceFor(e: unknown, vibe: Vibe = 'daylight'): string {
+  if (needsReconnect(e)) return say('error.previewReconnect', vibe);
   return (e instanceof LibraryError && SENTENCES[e.code]) || 'The preview could not be loaded. Try again in a moment.';
+}
+/** The preview is hidden only because this tab has no Superlibrary sign-in: one click fixes it. */
+export const needsReconnect = (e: unknown): boolean => e instanceof LibraryError && e.code === 'no_token';
+const REASONS: Record<string, string> = { no_token: 'this tab has no Superlibrary sign-in' };
+/** The code behind the sentence, kept on screen so a person can report it. */
+export function reasonFor(e: unknown): string {
+  if (!(e instanceof LibraryError)) return 'Reason: unknown';
+  return `Reason: ${e.code}${REASONS[e.code] ? ` (${REASONS[e.code]})` : ''}`;
 }
 export interface RelatedLite { itemId: string; title: string; kind: 'artifact' | 'work-record'; outcome: string; snippet: string; url: string }
 

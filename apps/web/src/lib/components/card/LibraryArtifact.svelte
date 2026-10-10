@@ -2,12 +2,14 @@
 <script lang="ts">
   import { untrack } from 'svelte';
   import { mountArtifact, type Mounted } from '$lib/vendor/superlibrary-embed/superlibrary-embed.js';
-  import { LIBRARY_URL, embedCallbacks, sentenceFor } from '$lib/superlibrary';
+  import { LIBRARY_URL, embedCallbacks, needsReconnect, reasonFor, sentenceFor } from '$lib/superlibrary';
+  import { reconnect } from '$lib/reconnect';
+  import { appearance } from '$lib/appearance.svelte';
 
   let { itemId, version, title, open: startOpen = false }: { itemId: string; version?: number; title: string; open?: boolean } = $props();
   let open = $state(untrack(() => startOpen));
   let host = $state<HTMLElement | null>(null);
-  let failure = $state<string | null>(null);
+  let failure = $state<unknown>(null);
   const href = $derived(`${LIBRARY_URL}/a/${itemId}${version ? `/v/${version}` : ''}`);
   const frameId = `lib-${Math.random().toString(36).slice(2, 10)}`;
 
@@ -23,7 +25,7 @@
     failure = null;
     mountArtifact(el, { itemId, ...(version ? { version } : {}), title, appUrl: LIBRARY_URL, height: 360, ...embedCallbacks() })
       .then((m) => { if (live) mounted = m; else m.destroy(); })
-      .catch((e: unknown) => { if (live) failure = sentenceFor(e); });
+      .catch((e: unknown) => { if (live) failure = e; });
     return () => { live = false; mounted?.destroy(); };
   });
 </script>
@@ -36,5 +38,13 @@
     <a {href} target="_blank" rel="noopener noreferrer" class="flex min-h-[44px] min-w-0 flex-1 items-center text-xs [overflow-wrap:anywhere] hover:underline">{title}</a>
   </div>
   {#if open}<div id={frameId} class="mt-2" bind:this={host}></div>{/if}
-  {#if failure}<p role="alert" class="text-coral mt-2 text-xs">{failure}</p>{/if}
+  {#if failure}
+    <div role="alert" class="mt-2 text-xs">
+      <p class="text-signal-text">{sentenceFor(failure, appearance.value.vibe)}</p>
+      {#if needsReconnect(failure)}
+        <p class="text-muted-foreground mt-1 mono">{reasonFor(failure)}</p>
+        <button type="button" class="vk-button vk-button--secondary mt-2" onclick={() => reconnect()}>Reconnect</button>
+      {/if}
+    </div>
+  {/if}
 </div>

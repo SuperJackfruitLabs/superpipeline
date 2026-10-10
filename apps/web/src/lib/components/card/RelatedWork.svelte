@@ -1,11 +1,14 @@
 <!-- apps/web/src/lib/components/card/RelatedWork.svelte -->
 <script lang="ts">
-  import { isAbsent, libraryRef, outcomeWord, relatedForCard, sentenceFor, type RelatedLite } from '$lib/superlibrary';
+  import { isAbsent, libraryRef, needsReconnect, outcomeWord, reasonFor, relatedForCard, sentenceFor, type RelatedLite } from '$lib/superlibrary';
+
+  import { reconnect } from '$lib/reconnect';
+  import { appearance } from '$lib/appearance.svelte';
 
   let { cardId }: { cardId: string } = $props();
   let items = $state<RelatedLite[]>([]);
   let phase = $state<'loading' | 'ok' | 'unavailable' | 'absent'>('loading');
-  let why = $state('');
+  let why = $state<unknown>(null);
   let attempt = $state(0);
 
   $effect(() => {
@@ -15,7 +18,7 @@
     phase = 'loading';
     relatedForCard(id)
       .then((r) => { if (live) { items = r; phase = 'ok'; } })
-      .catch((e: unknown) => { if (live) { if (isAbsent(e)) phase = 'absent'; else { why = sentenceFor(e); phase = 'unavailable'; } } });
+      .catch((e: unknown) => { if (live) { if (isAbsent(e)) phase = 'absent'; else { why = e; phase = 'unavailable'; } } });
     return () => { live = false; };
   });
 </script>
@@ -27,7 +30,11 @@
   {#if phase === 'loading'}
     <p class="text-muted-foreground text-xs" role="status">Looking in Superlibrary…</p>
   {:else if phase === 'unavailable'}
-    <p class="text-muted-foreground text-xs">Related prior work is not available. {why}</p>
+    <p class="text-muted-foreground text-xs">Related prior work is not available. {sentenceFor(why, appearance.value.vibe)}</p>
+    {#if needsReconnect(why)}
+      <p class="text-muted-foreground mono text-xs">{reasonFor(why)}</p>
+      <button type="button" class="vk-button vk-button--secondary min-h-[44px]" onclick={() => reconnect()}>Reconnect</button>
+    {/if}
     <button type="button" class="border-border min-h-[44px] rounded-[5px] border px-2 text-xs" onclick={() => attempt++}>Try again</button>
   {:else if items.length === 0}
     <p class="text-muted-foreground text-xs">Nothing related in Superlibrary yet.</p>

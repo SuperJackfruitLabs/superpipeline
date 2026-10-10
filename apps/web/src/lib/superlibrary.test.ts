@@ -3,7 +3,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('$lib/hub-token', () => ({ libraryToken: vi.fn(async () => 'lib-token'), forgetLibraryToken: vi.fn(), libraryConfigured: vi.fn(() => true) }));
 import { forgetLibraryToken, libraryConfigured, libraryToken } from '$lib/hub-token';
-import { LibraryError, embedCallbacks, libraryFetch, libraryRef, sentenceFor } from './superlibrary';
+import { LibraryError, embedCallbacks, libraryFetch, libraryRef, needsReconnect, reasonFor, sentenceFor } from './superlibrary';
 
 afterEach(() => { vi.unstubAllGlobals(); vi.mocked(libraryToken).mockResolvedValue('lib-token'); });
 
@@ -31,7 +31,11 @@ describe('Superlibrary references (spec §11: the drawer previews linked artifac
     expect(forgetLibraryToken).toHaveBeenCalled();
     vi.mocked(libraryToken).mockResolvedValue(null);
     await expect(embedCallbacks().getEmbedUrl({ itemId: 'itm_0123456789abcdef' })).rejects.toMatchObject({ code: 'no_token' });
-    expect(sentenceFor(new LibraryError(0, 'no_token'))).toBe('Previews need you signed in through your workspace account.');
+    expect(sentenceFor(new LibraryError(0, 'no_token'))).toBe("The file's safe! I just couldn't confirm it's you. Reconnect?");
+    expect(sentenceFor(new LibraryError(0, 'no_token'), 'quiet')).toBe('Preview hidden: your sign-in could not be confirmed. Reconnect to view it.');
+    expect(needsReconnect(new LibraryError(0, 'no_token'))).toBe(true);
+    expect(needsReconnect(new LibraryError(404, 'not_found'))).toBe(false);
+    expect(reasonFor(new LibraryError(0, 'no_token'))).toBe('Reason: no_token (this tab has no Superlibrary sign-in)');
     expect(sentenceFor(new LibraryError(403, 'product_not_enabled'))).toBe('Superlibrary is not enabled for this workspace.');
     expect(sentenceFor(new LibraryError(404, 'not_found'))).toBe('This artifact is not there, or you cannot see it.');
   });
