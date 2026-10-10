@@ -71,20 +71,20 @@
           bind:value={title}
           aria-label="Card title"
           placeholder="What needs doing?"
-          class="bg-inset border-border focus:border-marigold w-full rounded-[8px] border px-3 py-2.5 text-sm"
+          class="bg-inset border-border focus:border-marigold w-full rounded-[8px] border px-3 py-2.5 text-base min-h-[var(--tap)] sm:text-sm"
         />
 
         <div class="flex flex-wrap items-center gap-3">
           <label class="text-muted-foreground mono flex items-center gap-1.5 text-[11px]">
             priority
-            <input type="number" bind:value={priority} min="0" class="bg-inset border-border focus:border-marigold w-16 rounded-[6px] border px-2 py-1.5" />
+            <input type="number" bind:value={priority} min="0" class="bg-inset border-border focus:border-marigold w-16 min-h-[var(--tap)] rounded-[6px] border px-2 py-1.5" />
           </label>
           <label class="text-muted-foreground mono flex items-center gap-1.5 text-[11px]">
             due
-            <input type="date" bind:value={due} aria-label="Due date" class="bg-inset border-border focus:border-marigold rounded-[6px] border px-2 py-1.5" />
+            <input type="date" bind:value={due} aria-label="Due date" class="bg-inset border-border focus:border-marigold min-h-[var(--tap)] rounded-[6px] border px-2 py-1.5" />
           </label>
           {#if due !== ''}
-            <button type="button" onclick={() => (due = '')} class="text-muted-foreground hover:text-foreground mono text-[11px]">clear</button>
+            <button type="button" onclick={() => (due = '')} class="text-muted-foreground hover:text-foreground mono tap text-[11px]">clear</button>
           {/if}
         </div>
 

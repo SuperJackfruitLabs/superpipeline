@@ -635,6 +635,7 @@
     color: var(--text);
     font-family: var(--font-sans);
     font-size: 16px;
+    min-height: var(--tap);
     outline: none;
   }
   .cmdk-in input::placeholder {
@@ -670,6 +671,7 @@
     align-items: center;
     gap: 11px;
     padding: 9px 11px;
+    min-height: var(--tap);
     border-radius: 7px;
     font-size: 13.5px;
     width: 100%;

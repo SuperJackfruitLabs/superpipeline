@@ -54,8 +54,11 @@
 <div data-attention-row={item.kind} class="border-border grid gap-2 border-b px-3.5 py-2.5 last:border-b-0">
   <div class="flex flex-wrap items-start gap-2.5">
     <span
-      class="mono mt-0.5 shrink-0 rounded-[5px] px-1.5 py-0.5 text-[10px] tracking-wider uppercase"
-      style="color:{urgent ? 'var(--coral)' : item.kind === 'question' ? 'var(--marigold)' : 'var(--muted)'};background:var(--inset)"
+      class="mono mt-0.5 shrink-0 rounded-[5px] px-1.5 py-0.5 text-[10px] tracking-wider uppercase {urgent
+        ? 'bg-signal-wash text-signal-text shadow-[inset_0_0_0_2px_var(--vk-color-signal)]'
+        : item.kind === 'question'
+          ? 'border-primary text-foreground border-2'
+          : 'bg-raised text-muted-foreground'}"
     >{KIND_LABEL[item.kind]}</span>
 
     <div class="min-w-[10rem] flex-1">

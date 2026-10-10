@@ -143,7 +143,7 @@
     type="color"
     bind:value={newColour}
     aria-label="New label colour"
-    class="h-8 w-8 shrink-0 cursor-pointer rounded-[6px] border-0 bg-transparent p-0"
+    class="size-8 min-h-[var(--tap)] min-w-[var(--tap)] shrink-0 cursor-pointer rounded-[6px] border-0 bg-transparent p-0"
   />
   <input
     bind:value={newName}

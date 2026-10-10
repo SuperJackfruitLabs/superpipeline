@@ -95,7 +95,7 @@
           bind:value={query}
           placeholder="Find a board"
           aria-label="Find a board"
-          class="bg-inset border-border focus:border-marigold mb-1.5 w-full rounded-[7px] border px-2.5 py-1.5 text-xs outline-none"
+          class="bg-inset border-border focus:border-marigold mb-1.5 min-h-[var(--tap)] w-full rounded-[7px] border px-2.5 py-1.5 text-base outline-none sm:text-xs"
         />
       {/if}
 
@@ -104,7 +104,7 @@
           <button
             role="menuitem"
             onclick={() => void pick(b.id)}
-            class="hover:bg-inset flex w-full items-center gap-2 rounded-[7px] px-2.5 py-2 text-left text-sm {b.id === app.boardId ? 'text-marigold' : ''}"
+            class="hover:bg-inset flex w-full items-center gap-2 rounded-[7px] px-2.5 py-2 min-h-[var(--tap)] text-left text-sm {b.id === app.boardId ? 'text-marigold' : ''}"
           >
             <span class="truncate">{b.name}</span>
             {#if b.id === app.boardId}<span class="mono text-muted-foreground ml-auto shrink-0 text-[10px]">here</span>{/if}
@@ -124,17 +124,17 @@
               onkeydown={(e) => { if (e.key === 'Enter') void saveRename(); if (e.key === 'Escape') renaming = false; }}
               class="bg-inset border-border focus:border-marigold min-w-0 flex-1 rounded-[6px] border px-2 py-1 text-xs outline-none"
             />
-            <button onclick={() => void saveRename()} class="mono text-[11px]" style="color:var(--marigold)">save</button>
+            <button onclick={() => void saveRename()} class="mono tap text-[11px]" style="color:var(--marigold)">save</button>
           </div>
         {:else}
-          <button role="menuitem" onclick={() => { renaming = true; draftName = app.board?.name ?? ''; }} class="hover:bg-inset text-muted-foreground w-full rounded-[7px] px-2.5 py-1.5 text-left text-xs">Rename this board</button>
+          <button role="menuitem" onclick={() => { renaming = true; draftName = app.board?.name ?? ''; }} class="hover:bg-inset text-muted-foreground min-h-[var(--tap)] w-full rounded-[7px] px-2.5 py-1.5 text-left text-xs">Rename this board</button>
         {/if}
-        <a role="menuitem" href="/b/{app.boardId}/settings" onclick={close} class="hover:bg-inset text-muted-foreground block rounded-[7px] px-2.5 py-1.5 text-xs">Board settings</a>
-        <button role="menuitem" onclick={() => void onDelete()} class="hover:bg-inset text-muted-foreground hover:text-coral w-full rounded-[7px] px-2.5 py-1.5 text-left text-xs">Delete this board…</button>
+        <a role="menuitem" href="/b/{app.boardId}/settings" onclick={close} class="hover:bg-inset text-muted-foreground flex min-h-[var(--tap)] items-center rounded-[7px] px-2.5 py-1.5 text-xs">Board settings</a>
+        <button role="menuitem" onclick={() => void onDelete()} class="hover:bg-inset text-muted-foreground hover:text-coral min-h-[var(--tap)] w-full rounded-[7px] px-2.5 py-1.5 text-left text-xs">Delete this board…</button>
         <button
           role="menuitem"
           onclick={() => { close(); creating = true; }}
-          class="hover:bg-inset border-border mt-1 w-full rounded-[7px] border-t px-2.5 py-2 text-left text-xs"
+          class="hover:bg-inset border-border mt-1 min-h-[var(--tap)] w-full rounded-[7px] border-t px-2.5 py-2 text-left text-xs"
           style="color:var(--marigold)"
         >+ New board</button>
       </div>

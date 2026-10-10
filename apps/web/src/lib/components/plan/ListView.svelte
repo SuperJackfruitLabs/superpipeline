@@ -110,7 +110,7 @@
     <!-- Column headers double as the sort control. A separate sort menu would be a second place
          to look for something the columns already name. -->
     <div class="border-border text-muted-foreground mono sticky top-0 z-10 flex items-center gap-3 border-b px-4 py-1.5 text-[10px] tracking-wider uppercase" style="background:var(--ink)">
-      <button onclick={() => sort('priority')} class="w-7 shrink-0 text-left uppercase hover:text-[var(--text)]" style="min-height:var(--tap)">pri {arrow('priority')}</button>
+      <button onclick={() => sort('priority')} class="w-7 min-w-[var(--tap)] shrink-0 text-left uppercase hover:text-[var(--text)]" style="min-height:var(--tap)">pri {arrow('priority')}</button>
       <button onclick={() => sort('title')} class="flex-1 text-left uppercase hover:text-[var(--text)]" style="min-height:var(--tap)">card {arrow('title')}</button>
       <button onclick={() => sort('state')} class="hidden w-20 shrink-0 text-left uppercase hover:text-[var(--text)] md:block" style="min-height:var(--tap)">state {arrow('state')}</button>
       <span class="hidden w-24 shrink-0 sm:block">agent</span>
@@ -131,8 +131,9 @@
           <button
             onclick={() => app.openCard(card.id)}
             class="border-border/40 hover:bg-inset/60 flex w-full items-center gap-3 border-b px-4 py-2 text-left {gate ? 'tile-gate' : ''}"
+            style="min-height:var(--tap)"
           >
-            <span class="mono w-7 shrink-0 text-[11px]" style="color:{card.priority === 1 ? 'var(--coral)' : card.priority === 2 ? 'var(--marigold)' : 'var(--muted)'}">
+            <span class="mono w-7 min-w-[var(--tap)] shrink-0 text-[11px] {card.priority === 1 ? 'text-signal-text' : card.priority === 2 ? 'text-foreground font-semibold' : 'text-muted-foreground'}">
               {card.priority > 0 ? `P${card.priority}` : ''}
             </span>
             <span class="min-w-0 flex-1 truncate text-sm">{card.title}</span>

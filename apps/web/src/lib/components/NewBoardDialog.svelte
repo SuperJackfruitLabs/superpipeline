@@ -154,12 +154,12 @@ function ownerParts(raw: string): string[] {
           <div class="eyebrow mb-1">new board</div>
           <h2 class="wordmark text-lg leading-snug">Design a pipeline</h2>
         </div>
-        <button onclick={onClose} aria-label="Close" class="text-muted-foreground hover:text-foreground shrink-0">
+        <button onclick={onClose} aria-label="Close" class="text-muted-foreground hover:text-foreground tap shrink-0">
           <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" /></svg>
         </button>
       </div>
 
-      <div class="flex-1 overflow-y-auto p-6">
+      <div class="touch-form flex-1 overflow-y-auto p-6">
         <input
           bind:value={name}
           placeholder="Board name — e.g. Launch"
@@ -207,7 +207,7 @@ function ownerParts(raw: string): string[] {
                     </div>
                   {/if}
                 {:else}
-                  <label class="text-muted-foreground flex items-center gap-1.5 select-none">
+                  <label class="text-muted-foreground flex items-center gap-1.5 select-none" style="min-height:var(--tap)">
                     <input type="checkbox" bind:checked={stage.gate} class="accent-coral" /> approval gate
                   </label>
                 {/if}
