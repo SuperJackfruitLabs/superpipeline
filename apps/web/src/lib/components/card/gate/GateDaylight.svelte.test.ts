@@ -126,12 +126,12 @@ describe('GateDaylight', () => {
   });
 
   it('shows ⚑ awaiting your review, the subject revision and the seal line', () => {
-    const approvalSubject = { id: 'sub_1', digest: '3f9ac21e77', schema: 's', revision: 2, canonical: { a: 1 } };
+    const approvalSubject = { id: 'sub_1', digest: 'sha256:3f9ac21e77', schema: 's', revision: 2, canonical: { a: 1 } };
     mount(gate({ approvalSubject }));
     expect(screen.getByText('⚑ awaiting your review')).toBeTruthy();
     expect(screen.getByText(/revision 2/)).toBeTruthy();
     expect(screen.getByText(/sealed 3f9a·c21e/)).toBeTruthy();
-    expect(screen.getByText('3f9ac21e77')).toBeTruthy();
+    expect(screen.getByText('sha256:3f9ac21e77')).toBeTruthy();
   });
 
   it('shows the gate error passed in, as an alert', () => {

@@ -27,7 +27,11 @@ export function decisionFor(name: string): GateDecision {
   if (role === 'reject') return 'reject';
   return gateDecisionForOption(name);
 }
-export const sealOf = (digest: string): string => `${digest.slice(0, 4)}·${digest.slice(4, 8)}`;
+/** The first eight hex characters of the hash, after any algorithm prefix (`sha256:`). */
+export const sealOf = (digest: string): string => {
+  const hex = digest.slice(digest.indexOf(':') + 1);
+  return `${hex.slice(0, 4)}·${hex.slice(4, 8)}`;
+};
 
 export interface GateContext {
   boardId: string;

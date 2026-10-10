@@ -79,4 +79,8 @@ describe('GateDecisionModel', () => {
   it('the seal is the first eight hex of the digest', () => {
     expect(sealOf('3f9ac21e77')).toBe('3f9a·c21e');
   });
+
+  it('the seal skips the algorithm prefix', () => {
+    expect(sealOf('sha256:3f9ac21e77')).toBe('3f9a·c21e');
+  });
 });
