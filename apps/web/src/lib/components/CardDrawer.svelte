@@ -34,7 +34,7 @@
   import { Button } from '$lib/components/ui/button';
   import GateActions from '$lib/components/card/GateActions.svelte';
   import { manualDeliveryItems } from '$lib/approval-delivery';
-  import { agentColor, initialOf } from '$lib/components/agentColor';
+  import { initialOf } from '$lib/components/agentColor';
   import { resolveCardLabelsForEdit } from '$lib/components/card-labels';
   import { buildLinkGroups, edgeKey, type RemoveArgs } from '$lib/components/link-groups';
   import { crossBoardNotice, submitAddBlocker, linkRefusalSentence, type LinkKindChoice } from '$lib/components/add-blocker';
@@ -817,7 +817,6 @@
 
   // agent avatar
   const delegateId = $derived(card?.delegateAgentId ?? null);
-  const delegateColor = $derived(agentColor(delegateId));
   /**
    * The agent's NAME, then its initial from that name.
    *
@@ -953,7 +952,7 @@
 {#if card}
   <div class="fixed inset-0 z-30 flex justify-end">
     <!-- scrim -->
-    <button class="absolute inset-0 bg-black/55" onclick={close} aria-label="Close drawer" tabindex="-1"></button>
+    <button class="absolute inset-0 " style="background:var(--sp-scrim)" onclick={close} aria-label="Close drawer" tabindex="-1"></button>
 
     <!-- drawer panel -->
     <!--
@@ -1047,7 +1046,7 @@
             <!-- delegate agent -->
             {#if delegateId}
               <span class="delegate inline-flex items-center gap-1.5 font-mono text-[11px]" style="color:var(--muted)">
-                <span class="inline-flex size-[18px] items-center justify-center rounded-full text-[9px] font-semibold shrink-0" style="background:{delegateColor};color:#0f1118">{delegateInitial}</span>
+                <span class="inline-flex size-[18px] items-center justify-center rounded-full text-[9px] font-semibold shrink-0" style="background:var(--vk-color-raised);color:var(--vk-color-text)">{delegateInitial}</span>
                 <span title={delegateId}>{delegateName} · delegate</span>
               </span>
             {/if}
@@ -1105,7 +1104,7 @@
       <div class="dw-body flex-1 min-h-0 overflow-x-hidden overflow-y-auto px-4 py-4 space-y-5" style="overflow-wrap:anywhere">
 
         {#if localError}
-          <p role="alert" class="border-coral/40 text-coral mono rounded-[7px] border px-3 py-2 text-xs" style="background:rgba(255,107,87,.08)">{localError}</p>
+          <p role="alert" class="border-coral/40 text-coral mono rounded-[7px] border px-3 py-2 text-xs" style="background:var(--vk-color-signal-wash)">{localError}</p>
         {/if}
 
         <!-- description from spec -->
@@ -1119,7 +1118,7 @@
         <!-- the agent's open question — the card is parked until someone answers it -->
         {#if elicitation}
           <section class="sec">
-            <div class="elicitation border rounded-[10px] p-3.5" style="border-color:rgba(255,107,87,.35);background:rgba(255,107,87,.06)">
+            <div class="elicitation border rounded-[10px] p-3.5" style="border-color:var(--vk-color-signal);background:var(--vk-color-signal-wash)">
               <div class="mb-2 flex items-center gap-2">
                 <span class="wordmark font-semibold text-sm" style="color:var(--coral)">
                   ⚑ {elicitation.signal === 'auth' ? 'awaiting your sign-in' : 'awaiting your answer'}
@@ -1141,7 +1140,7 @@
                   rows="2"
                   placeholder="Add a note for the agent (optional)…"
                   class="bg-inset border-border mt-2.5 w-full resize-none rounded-[7px] border px-2.5 py-2 text-xs outline-none"
-                  style="border-color:rgba(255,107,87,.4)"
+                  style="border-color:var(--vk-color-signal)"
                 ></textarea>
               {:else}
                 <textarea
@@ -1149,7 +1148,7 @@
                   rows="3"
                   placeholder="Your answer — this goes straight back to the waiting agent…"
                   class="bg-inset border-border w-full resize-none rounded-[7px] border px-2.5 py-2 text-xs outline-none"
-                  style="border-color:rgba(255,107,87,.4)"
+                  style="border-color:var(--vk-color-signal)"
                 ></textarea>
                 <div class="mt-2 flex justify-end">
                   <Button size="sm" disabled={answering} onclick={() => onAnswer()}>Send answer</Button>
@@ -1162,13 +1161,13 @@
         <!-- gate panel — only when a pending gate exists -->
         {#if gate}
           <section class="sec">
-            <div class="gate border rounded-[10px] p-3.5" style="border-color:rgba(255,107,87,.35);background:rgba(255,107,87,.06)">
+            <div class="gate border rounded-[10px] p-3.5" style="border-color:var(--vk-color-signal);background:var(--vk-color-signal-wash)">
               <div class="gh mb-2.5 flex items-center gap-2">
                 <span class="wordmark font-semibold text-sm" style="color:var(--coral)">⚑ awaiting your review</span>
               </div>
 
               {#if gateError}
-                <p role="alert" class="border-coral/40 text-coral mono mb-2.5 rounded-[7px] border px-3 py-2 text-xs" style="background:rgba(255,107,87,.12)">
+                <p role="alert" class="border-coral/40 text-coral mono mb-2.5 rounded-[7px] border px-3 py-2 text-xs" style="background:var(--vk-color-signal-wash)">
                   {gateError}
                 </p>
               {/if}

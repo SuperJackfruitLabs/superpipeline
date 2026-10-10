@@ -194,7 +194,7 @@
               <span class="flex items-center gap-1.5 truncate">
                 <span
                   class="tele-av flex-none"
-                  style="background:{color};color:#0f1118"
+                  style="background:var(--vk-color-raised);color:var(--vk-color-text)"
                   title={name}
                 >{initialOf(name)}</span>
                 <span class="truncate text-xs">{name}</span>

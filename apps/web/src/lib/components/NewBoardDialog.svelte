@@ -147,7 +147,7 @@ function ownerParts(raw: string): string[] {
 
 {#if open}
   <div class="fixed inset-0 z-40 flex items-center justify-center p-4" style="padding:max(1rem, env(safe-area-inset-top, 0px)) max(1rem, env(safe-area-inset-right, 0px)) max(1rem, env(safe-area-inset-bottom, 0px)) max(1rem, env(safe-area-inset-left, 0px))">
-    <button class="absolute inset-0 bg-black/55" onclick={onClose} aria-label="Close" tabindex="-1"></button>
+    <button class="absolute inset-0 " style="background:var(--sp-scrim)" onclick={onClose} aria-label="Close" tabindex="-1"></button>
     <div class="bg-surface border-border drawer-in relative flex max-h-full w-full max-w-xl flex-col rounded-[12px] border shadow-2xl">
       <div class="border-border flex items-start justify-between gap-3 border-b p-6 pb-4">
         <div>

@@ -7,7 +7,7 @@
       variant: {
         default: 'bg-primary text-primary-foreground hover:brightness-110',
         outline: 'border border-border bg-transparent text-foreground hover:border-foreground/40 hover:bg-accent',
-        ghost: 'text-muted-foreground hover:bg-accent hover:text-coral',
+        ghost: 'text-muted-foreground hover:bg-accent hover:text-foreground',
       },
       size: {
         default: 'h-9 px-4 py-2',

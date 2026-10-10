@@ -2,7 +2,7 @@
   import { displayAgent } from '$lib/names';
   import type { Card, Reference } from '$lib/api';
   import { app } from '$lib/stores/app.svelte';
-  import { agentColor, initialOf } from '$lib/components/agentColor';
+  import { initialOf } from '$lib/components/agentColor';
   import { cardDraggable } from '$lib/dnd';
   import { Button } from '$lib/components/ui/button';
   import { overdue } from './card-due';
@@ -35,7 +35,7 @@
    * straight down a column without being read at all. Absent priority renders nothing, rather
    * than a third chip saying "P3".
    */
-  const priColour = $derived(card.priority === 1 ? 'var(--coral)' : card.priority === 2 ? 'var(--marigold)' : null);
+  const priColour = $derived(card.priority === 1 ? 'var(--vk-color-signal)' : card.priority === 2 ? 'var(--vk-color-primary)' : null);
 
   /**
    * The ⛔ badge and the `open/total` sub-task counter (Task 17b, Step 1 / 1c).
@@ -117,7 +117,6 @@
   // Delegate avatar. `agents.icon_url` has existed since migration 0001 and was read by nothing;
   // the coloured initial stays the fallback, which is what most agents will always have.
   const delegate = $derived(app.agents.find((a) => a.id === card.delegateAgentId) ?? null);
-  const avatarColor = $derived(agentColor(card.delegateAgentId));
   const avatarInitial = $derived(
     card.delegateAgentId ? initialOf(card.delegateAgentId).toUpperCase() : null,
   );
@@ -338,7 +337,7 @@
     {:else if card.delegateAgentId && avatarInitial}
       <span
         class="inline-grid size-5 shrink-0 place-items-center rounded-full font-mono text-[9px] font-semibold"
-        style="background:{avatarColor}; color: #0f1118"
+        style="background:var(--vk-color-raised); color:var(--vk-color-text)"
         title={delegate?.name ?? card.delegateAgentId}
       >{avatarInitial}</span>
     {:else}
@@ -357,7 +356,7 @@
         {:else if queuerInitial}
           <span
             class="inline-grid size-3.5 shrink-0 place-items-center rounded-full text-[8px] font-semibold"
-            style="background:{agentColor(provenance.agent?.id ?? null)}; color: #0f1118"
+            style="background:var(--vk-color-raised); color:var(--vk-color-text)"
             aria-hidden="true"
           >{queuerInitial}</span>
         {/if}

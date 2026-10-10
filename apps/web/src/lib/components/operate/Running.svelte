@@ -1,7 +1,7 @@
 <script lang="ts">
   /** Work in flight — visible today only as working cards scattered across the lanes. */
   import { app } from '$lib/stores/app.svelte';
-  import { agentColor, initialOf } from '$lib/components/agentColor';
+  import { initialOf } from '$lib/components/agentColor';
 
   const running = $derived((app.board?.cards ?? []).filter((c) => c.state === 'working'));
   const stageName = $derived((key: string) => app.board?.stages.find((s) => s.key === key)?.name ?? key);
@@ -19,7 +19,7 @@
   {:else}
     {#each running as c (c.id)}
       <div class="border-border flex items-center gap-2.5 border-b px-3.5 py-2.5 last:border-b-0">
-        <span class="grid size-[18px] shrink-0 place-items-center rounded-full text-[9px] font-semibold" style="background:{agentColor(c.delegateAgentId ?? null)};color:#0f1118">
+        <span class="grid size-[18px] shrink-0 place-items-center rounded-full text-[9px] font-semibold" style="background:var(--vk-color-raised);color:var(--vk-color-text)">
           {c.delegateAgentId ? initialOf(c.delegateAgentId).toUpperCase() : "·"}
         </span>
         <button onclick={() => app.openCard(c.id)} class="min-w-0 flex-1 text-left">

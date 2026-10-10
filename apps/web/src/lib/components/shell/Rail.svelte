@@ -92,7 +92,7 @@
             {(app.user.name ?? app.user.login ?? '·').slice(0, 1).toUpperCase()}
           </span>
         {/if}
-        <button onclick={() => void signOut()} aria-label="Sign out" title="Sign out" class="text-muted-foreground hover:text-coral tap rounded-[8px] text-xs">⏻</button>
+        <button onclick={() => void signOut()} aria-label="Sign out" title="Sign out" class="text-muted-foreground hover:text-foreground tap rounded-[8px] text-xs">⏻</button>
       </div>
     {/if}
   </div>

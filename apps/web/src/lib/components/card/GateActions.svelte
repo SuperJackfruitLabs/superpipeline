@@ -81,7 +81,7 @@
     aria-invalid={needNote}
     placeholder="Recorded with your decision. Request changes needs one: it threads into the agent's next attempt."
     class="bg-inset border-border focus:border-coral w-full resize-y rounded-[7px] border px-2.5 py-2 text-base outline-none"
-    style="border-color:{needNote ? 'var(--coral)' : 'rgba(255,107,87,.4)'}"
+    style="border-color:{needNote ? 'var(--coral)' : 'var(--vk-color-signal)'}"
   ></textarea>
   <div class="text-muted-foreground mono mt-1 text-right text-[11px]">{note.length} / {GATE_NOTE_MAX}</div>
 </div>
