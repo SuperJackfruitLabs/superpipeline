@@ -12,6 +12,7 @@
   import { enforcedBadge } from './card-blocked';
   import { childCounter } from './card-children';
   import { cardProvenance } from './card-provenance';
+  import { peekNotifier } from './peek';
   import { refLabel, safeHref, subStateClass, subStateLabel } from './ref-chip';
 
   interface Props {
@@ -25,6 +26,7 @@
   }
 
   const { card, childCounts }: Props = $props();
+  const peek = peekNotifier();
 
   // Gate is reactive — reads from app store
   const gate = $derived(app.gateForCard(card.id));
@@ -174,8 +176,11 @@
   a pseudo-element. Everything else that is interactive sits above it on the z-axis, so the
   reference chip and the move control keep behaving exactly as they did.
 -->
+<!-- svelte-ignore a11y_no_static_element_interactions -- focusin and pointerenter only tell the peek where the eye is; they act on nothing, and the title button inside is the control -->
 <div
   use:cardDraggable={{ cardId: card.id }}
+  onfocusin={() => peek(card.id)}
+  onpointerenter={() => peek(card.id)}
   class="tile bg-surface border-border group relative rounded-[10px] border p-3 text-left cursor-grab active:cursor-grabbing {gate ? 'tile-gate' : ''}"
 >
   <!-- What just happened, for a reader who cannot see the column the card landed in. -->
