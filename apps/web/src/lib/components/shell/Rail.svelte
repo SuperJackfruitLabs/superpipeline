@@ -70,6 +70,13 @@
 
   <div class="mt-auto flex w-full flex-col items-center gap-1">
     <button
+      onclick={() => (appearance.pickerOpen = true)}
+      aria-label="Appearance"
+      aria-haspopup="dialog"
+      title="Appearance"
+      class="text-muted-foreground hover:text-foreground tap rounded-[8px]"
+    >◐</button>
+    <button
       onclick={() => appearance.toggleTheme()}
       aria-label="Toggle theme"
       aria-pressed={appearance.theme === 'light'}

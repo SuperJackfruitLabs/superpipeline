@@ -96,6 +96,30 @@ describe('AppearanceStore', () => {
     expect(s.value.useLocation).toBe(false);
   });
 
+  it('stopUsingLocation turns it off and forgets the place', () => {
+    localStorage.setItem('superpipeline.place', JSON.stringify({ latitude: 51.5, longitude: -0.1 }));
+    document.cookie = 'vk_appearance=daylight.sun.strong.1; Path=/';
+    s.init(at(13));
+    s.stopUsingLocation();
+    expect(s.value.useLocation).toBe(false);
+    expect(s.place).toBeNull();
+    expect(localStorage.getItem('superpipeline.place')).toBeNull();
+    expect(written.at(-1)).toMatch(/^vk_appearance=daylight\.sun\.strong\.0; /);
+  });
+
+  it('a request that resolves after the switch was turned off does not turn it back on', async () => {
+    s.init(at(13));
+    let answer: (p: unknown) => void = () => {};
+    const geo = { getCurrentPosition: (ok: (p: unknown) => void) => { answer = ok; } } as unknown as Geolocation;
+    const pending = s.useLocation(geo);
+    s.stopUsingLocation();
+    answer({ coords: { latitude: 51.5072, longitude: -0.1276 } });
+    await expect(pending).resolves.toBe('cancelled');
+    expect(s.value.useLocation).toBe(false);
+    expect(s.place).toBeNull();
+    expect(localStorage.getItem('superpipeline.place')).toBeNull();
+  });
+
   it('a granted location is stored rough, on this device', async () => {
     s.init(at(13));
     const geo = { getCurrentPosition: (ok: (p: unknown) => void) => ok({ coords: { latitude: 51.5072, longitude: -0.1276 } }) } as unknown as Geolocation;

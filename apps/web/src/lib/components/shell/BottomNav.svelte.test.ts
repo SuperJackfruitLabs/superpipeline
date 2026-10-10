@@ -45,6 +45,14 @@ describe('BottomNav', () => {
     expect(appearance.theme).toBe('light');
   });
 
+  it('offers Appearance in the menu', async () => {
+    render(BottomNav);
+    await fireEvent.click(screen.getByRole('button', { name: /you/i }));
+    await fireEvent.click(screen.getByRole('menuitem', { name: 'Appearance…' }));
+    expect(appearance.pickerOpen).toBe(true);
+    appearance.pickerOpen = false;
+  });
+
   it('names who is signed in', async () => {
     render(BottomNav);
     await fireEvent.click(screen.getByRole('button', { name: /you/i }));

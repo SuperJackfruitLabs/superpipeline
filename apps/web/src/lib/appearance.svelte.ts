@@ -62,6 +62,8 @@ export class AppearanceStore {
   #timer: ReturnType<typeof setInterval> | undefined;
   #now: () => Date = () => new Date();
   #write: (cookie: string) => void;
+  /** Bumped whenever a location request starts or is called off, so a late answer can tell it was. */
+  #locationRequest = 0;
 
   constructor(write: (cookie: string) => void = (c) => { document.cookie = c; }) {
     this.#write = write;
@@ -105,7 +107,14 @@ export class AppearanceStore {
     this.set({ theme: this.theme === 'dark' ? 'light' : 'dark' });
   }
 
-  async useLocation(geo: Geolocation | undefined = globalThis.navigator?.geolocation): Promise<'on' | 'denied'> {
+  /** Location off, and the saved place forgotten. Also calls off any request still waiting. */
+  stopUsingLocation(): void {
+    this.#locationRequest++;
+    this.set({ useLocation: false });
+  }
+
+  async useLocation(geo: Geolocation | undefined = globalThis.navigator?.geolocation): Promise<'on' | 'denied' | 'cancelled'> {
+    const request = ++this.#locationRequest;
     if (!geo) {
       this.set({ useLocation: false });
       return 'denied';
@@ -114,12 +123,14 @@ export class AppearanceStore {
       const pos = await new Promise<GeolocationPosition>((ok, no) =>
         geo.getCurrentPosition(ok, no, { enableHighAccuracy: false, maximumAge: 86_400_000, timeout: 10_000 }),
       );
+      if (request !== this.#locationRequest) return 'cancelled';
       const place = roughPlace({ latitude: pos.coords.latitude, longitude: pos.coords.longitude });
       try { localStorage.setItem(PLACE_KEY, JSON.stringify(place)); } catch { /* kept for this tab only */ }
       this.place = place;
       this.set({ useLocation: true });
       return 'on';
     } catch {
+      if (request !== this.#locationRequest) return 'cancelled';
       this.set({ useLocation: false });
       return 'denied';
     }

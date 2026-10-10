@@ -13,6 +13,7 @@
   import Rail from '$lib/components/shell/Rail.svelte';
   import BottomNav from '$lib/components/shell/BottomNav.svelte';
   import CommandPalette from '$lib/components/CommandPalette.svelte';
+  import AppearanceDialog from '$lib/components/shell/AppearanceDialog.svelte';
   import Landing from '$lib/components/Landing.svelte';
   import { closeCardOnEscape } from '$lib/escape';
   import BrandMark from '$lib/components/BrandMark.svelte';
@@ -50,4 +51,5 @@
     </div>
   </div>
   <CommandPalette />
+  <AppearanceDialog />
 {/if}

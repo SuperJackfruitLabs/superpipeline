@@ -95,6 +95,16 @@
     items.push(
       {
         grp: 'Account',
+        icon: '◐',
+        label: 'Appearance…',
+        sub: 'vibe, light or dark, time of day',
+        act: () => {
+          close();
+          appearance.pickerOpen = true;
+        },
+      },
+      {
+        grp: 'Account',
         icon: appearance.theme === 'light' ? '☾' : '☀',
         label: otherThemeLabel(appearance.theme),
         sub: 'theme',

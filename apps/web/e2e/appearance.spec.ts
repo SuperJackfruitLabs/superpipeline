@@ -57,3 +57,29 @@ test('a cookie set elsewhere wins on the first frame', async ({ page, request })
   await expect(html).toHaveAttribute('data-theme', 'dark');
   await expect(html).toHaveAttribute('data-time', 'subtle');
 });
+
+test('the picker changes the vibe for good', async ({ page, request }) => {
+  await page.clock.setFixedTime(NOON);
+  await openBoard(page, await seedBoard(request, 'Appearance picker'));
+  await page.getByRole('button', { name: 'Appearance', exact: true }).click();
+  const dialog = page.getByRole('dialog', { name: 'Appearance' });
+  await dialog.getByRole('radio', { name: /^Studio/ }).check();
+  await dialog.getByRole('radio', { name: 'Dark' }).check();
+  await dialog.getByRole('button', { name: 'Done' }).click();
+  await expect(page.locator('html')).toHaveAttribute('data-vibe', 'studio');
+  expect((await page.context().cookies()).find((c) => c.name === 'vk_appearance')?.value).toBe('studio.dark.strong.0');
+  await page.reload();
+  await expect(page.locator('html')).toHaveAttribute('data-vibe', 'studio');
+  await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
+});
+
+test.describe('on a phone', () => {
+  test.use({ viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true });
+  test('Appearance is in the You menu', async ({ page, request }) => {
+    await page.clock.setFixedTime(NOON);
+    await openBoard(page, await seedBoard(request, 'Appearance phone'));
+    await page.getByRole('button', { name: 'You' }).click();
+    await page.getByRole('menuitem', { name: /appearance/i }).click();
+    await expect(page.getByRole('dialog', { name: 'Appearance' })).toBeVisible();
+  });
+});

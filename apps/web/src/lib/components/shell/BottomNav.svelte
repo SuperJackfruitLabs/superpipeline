@@ -119,6 +119,18 @@
         type="button"
         role="menuitem"
         onclick={() => {
+          appearance.pickerOpen = true;
+          menuOpen = false;
+        }}
+        class="hover:bg-inset flex min-h-[48px] w-full items-center gap-3 px-3.5 text-left text-sm"
+      >
+        <span class="text-muted-foreground w-4 text-center" aria-hidden="true">◐</span>
+        Appearance…
+      </button>
+      <button
+        type="button"
+        role="menuitem"
+        onclick={() => {
           appearance.toggleTheme();
           menuOpen = false;
         }}
