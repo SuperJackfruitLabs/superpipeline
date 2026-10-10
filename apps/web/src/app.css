@@ -1,94 +1,90 @@
+@layer theme, base, vk, components, utilities;
 @import 'tailwindcss';
+@import '@superjackfruit/vibekit/fonts.css';
+@import '@superjackfruit/vibekit/vibekit.css';
 
 /*
- * superpipeline. Indigo-ink ground, a marigold signature (the mark: a pipe that meets a gate),
- * and a disciplined instrument status vocabulary (teal = live, coral = needs-you). Telemetry renders in mono.
+ * Superpipeline on vibekit. The person's vibe and theme live on <html> (data-vibe, data-theme,
+ * data-phase, data-time); every colour, font and radius below reads a --vk-* variable, so a vibe
+ * change restyles the whole app without touching a class name.
+ *
+ * The names are Superpipeline's own (bg-inset, text-muted-foreground, border-marigold ...) on
+ * purpose: vibekit's tailwind.css uses some of the same names for different things (muted is a
+ * TEXT colour there and a BACKGROUND here), and 250 uses would flip meaning. Colour meaning:
+ * coral -> the vibe's signal (a person is needed), marigold -> the vibe's primary, live -> success.
  */
 @theme inline {
-  --color-background: var(--ink);
-  --color-foreground: var(--text);
-  --color-card: var(--surface);
-  --color-card-foreground: var(--text);
-  --color-muted: var(--inset);
-  --color-muted-foreground: var(--muted);
-  --color-inset: var(--inset);
-  --color-surface: var(--surface);
-  --color-border: var(--line);
-  --color-input: var(--line);
-  --color-primary: var(--marigold);
-  --color-primary-foreground: var(--marigold-ink);
-  --color-accent: var(--accent-bg);
-  --color-accent-foreground: var(--text);
-  --color-destructive: var(--coral);
-  --color-destructive-foreground: var(--coral-ink);
-  --color-ring: var(--marigold);
+  --color-background: var(--vk-color-bg);
+  --color-foreground: var(--vk-color-text);
+  --color-card: var(--vk-color-surface);
+  --color-card-foreground: var(--vk-color-text);
+  --color-muted: var(--vk-color-raised);
+  --color-muted-foreground: var(--vk-color-muted);
+  --color-inset: var(--vk-color-raised);
+  --color-surface: var(--vk-color-surface);
+  --color-border: var(--vk-color-line);
+  --color-input: var(--vk-color-line);
+  --color-primary: var(--vk-color-primary);
+  --color-primary-foreground: var(--vk-color-primary-fg);
+  --color-accent: var(--vk-color-raised);
+  --color-accent-foreground: var(--vk-color-text);
+  --color-destructive: var(--vk-color-signal-text);
+  --color-destructive-foreground: var(--vk-color-surface);
+  --color-ring: var(--vk-color-text);
 
-  /* signature semantic colors */
-  --color-marigold: var(--marigold);
-  --color-live: var(--live);
-  --color-coral: var(--coral);
+  --color-marigold: var(--vk-color-primary);
+  --color-live: var(--vk-color-success-text);
+  --color-coral: var(--vk-color-signal-text);
 
-  --font-sans: 'IBM Plex Sans', system-ui, -apple-system, sans-serif;
-  --font-mono: 'IBM Plex Mono', ui-monospace, 'SF Mono', monospace;
-  --font-display: 'Space Grotesk', system-ui, sans-serif;
+  --color-signal: var(--vk-color-signal);
+  --color-signal-wash: var(--vk-color-signal-wash);
+  --color-signal-text: var(--vk-color-signal-text);
+  --color-success: var(--vk-color-success);
+  --color-success-wash: var(--vk-color-success-wash);
+  --color-success-text: var(--vk-color-success-text);
+  --color-raised: var(--vk-color-raised);
+  --color-line: var(--vk-color-line);
+  --color-faint: var(--vk-color-faint);
+  --color-product: var(--vk-product-superpipeline-bg);
+  --color-product-fg: var(--vk-product-superpipeline-fg);
 
-  --radius-sm: 4px;
-  --radius-md: 7px;
-  --radius-lg: 10px;
+  --font-sans: var(--vk-font-body);
+  --font-mono: var(--vk-font-mono);
+  --font-display: var(--vk-font-display);
+
+  --radius-sm: var(--vk-radius-sm);
+  --radius-md: var(--vk-radius-md);
+  --radius-lg: var(--vk-radius-lg);
 }
 
+/* Legacy names, kept so inline `style="color:var(--coral)"` keeps working. Task 5 removes the
+   inline uses; these stay as the bridge until then. Resolved on <html>, which carries data-vibe
+   and data-theme, so they follow every switch. */
 :root {
-  color-scheme: dark;
-  --ink: #0f1118;
-  --surface: #161924;
-  --inset: #1d2130;
-  --line: #282d3b;
-  --text: #eceaf2;
-  --muted: #8b91a8;
-  --marigold: #f4a526;
-  --marigold-ink: #1a1206;
-  --live: #34d3b6;
-  --coral: #ff6b57;
-  --coral-ink: #1c0805;
-  --accent-bg: #232838;
-
-  /* ── System tokens ────────────────────────────────────────────────────────────────────
-     Two values that close three findings from the 2026-09-03 UI audit, and that no amount
-     of layout work substitutes for.
-
-     `--focus`: computed `outline-style` was `none` on every button AND every card tile, so
-     a keyboard user could move a card with Alt+arrow — a feature added FOR them — without
-     being able to see which card they were about to move.
-
-     `--tap`: WCAG 2.2 sets 24×24 CSS pixels as the target-size floor. Eight controls were
-     under it, including the two added for accessibility: the move control at 15×11 and the
-     compose expander at 15×16. The pointer query raises it where the pointer is a finger. */
-  --focus: 2px solid var(--marigold);
+  --ink: var(--vk-color-bg);
+  --surface: var(--vk-color-surface);
+  --inset: var(--vk-color-raised);
+  --line: var(--vk-color-line);
+  --text: var(--vk-color-text);
+  --muted: var(--vk-color-muted);
+  --marigold: var(--vk-color-primary);
+  --marigold-ink: var(--vk-color-primary-fg);
+  --live: var(--vk-color-success-text);
+  --coral: var(--vk-color-signal-text);
+  --coral-ink: var(--vk-color-surface);
+  --accent-bg: var(--vk-color-raised);
+  /* The one scrim, allow-listed in no-raw-colour.test.ts: a modal backdrop must darken in every
+     theme, which no surface token does. */
+  --sp-scrim: rgb(14 13 24 / 0.55);
+  --focus: 2px solid var(--vk-color-text);
   --focus-offset: 2px;
   --tap: 24px;
 }
 
 @media (pointer: coarse) {
   :root {
-    --tap: 44px;
+    --tap: var(--vk-target-min);
   }
-}
-
-/* Light theme — warm paper ground, indigo-ink text; the signature accents are darkened so they
-   keep AA contrast on a light surface. The body's marigold flight-grid references --ink, so it
-   adapts for free. Toggled by `data-theme="light"` on <html> (see app.html + the store). */
-[data-theme='light'] {
-  color-scheme: light;
-  --ink: #faf8f3;
-  --surface: #fffdf8;
-  --inset: #efeae0;
-  --line: #e1dacb;
-  --text: #1a1a2e;
-  --muted: #5d5f73;
-  --marigold: #c2740c;
-  --live: #0e9e86;
-  --coral: #d6442b;
-  --accent-bg: #efeae0;
 }
 
 /* Deliberately OUTSIDE every layer.
@@ -200,10 +196,6 @@
     background-color: var(--ink);
     color: var(--text);
     font-family: var(--font-sans);
-    /* faint flight-grid: the deck the work moves across */
-    background-image:
-      radial-gradient(900px 380px at 78% -8%, rgba(244, 165, 38, 0.06), transparent 70%),
-      linear-gradient(var(--ink), var(--ink));
     -webkit-font-smoothing: antialiased;
   }
   ::selection {
@@ -732,196 +724,6 @@
     color: var(--muted);
   }
 
-  /* ---- triage screen ---- */
-  .triage-pad {
-    padding: 24px 28px 40px;
-    max-width: 860px;
-  }
-  .triage-header {
-    margin-bottom: 28px;
-  }
-  .triage-title {
-    font-family: var(--font-display);
-    font-weight: 700;
-    font-size: 26px;
-    letter-spacing: -0.01em;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    margin: 0 0 4px;
-  }
-  .triage-count {
-    font-family: var(--font-mono);
-    font-size: 12px;
-    font-weight: 600;
-    background: var(--coral);
-    color: var(--coral-ink);
-    border-radius: 20px;
-    padding: 2px 8px;
-    vertical-align: middle;
-  }
-  .triage-sub {
-    font-size: 13px;
-    color: var(--muted);
-    margin: 0;
-  }
-
-  /* empty state */
-  .triage-empty-state {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 18px 20px;
-    background: var(--surface);
-    border: 1px solid var(--line);
-    border-radius: var(--radius-lg);
-    font-family: var(--font-mono);
-    font-size: 13px;
-    color: var(--muted);
-  }
-  .triage-empty-icon {
-    color: var(--live);
-    font-size: 16px;
-    flex: none;
-  }
-
-  /* section wrapper */
-  .triage-section {
-    margin-bottom: 28px;
-  }
-  .triage-sep {
-    flex: 1;
-    height: 1px;
-    background: var(--line);
-    margin-left: 8px;
-  }
-
-  /* needs-you list */
-  .triage-list {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-  }
-
-  /* individual needs-you row */
-  .triage-item {
-    background: var(--surface);
-    border: 1px solid var(--line);
-    border-left: 2px solid var(--coral);
-    border-radius: var(--radius-lg);
-    padding: 13px 15px;
-    transition: border-color 0.12s ease;
-  }
-  .triage-item:hover {
-    border-color: color-mix(in srgb, var(--coral) 55%, var(--line));
-  }
-  .triage-item-top {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    margin-bottom: 11px;
-    flex-wrap: wrap;
-  }
-  .triage-item-title {
-    font-weight: 500;
-    font-size: 14px;
-    flex: 1;
-    min-width: 0;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-  .triage-badge {
-    font-family: var(--font-mono);
-    font-size: 10px;
-    font-weight: 600;
-    background: rgba(255, 107, 87, 0.13);
-    color: var(--coral);
-    border-radius: 20px;
-    padding: 2px 7px;
-    flex: none;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-  }
-  .triage-avatar {
-    width: 20px;
-    height: 20px;
-    border-radius: 50%;
-    display: grid;
-    place-items: center;
-    font-family: var(--font-mono);
-    font-size: 9px;
-    font-weight: 600;
-    color: var(--ink);
-    flex: none;
-  }
-  .triage-stage {
-    font-family: var(--font-mono);
-    font-size: 10.5px;
-    color: var(--muted);
-    flex: none;
-  }
-  .triage-item-foot {
-    display: flex;
-    align-items: center;
-    justify-content: flex-end;
-  }
-  .triage-review-btn {
-    font-family: var(--font-sans);
-    font-size: 12.5px;
-    font-weight: 500;
-    color: var(--marigold);
-    background: rgba(244, 165, 38, 0.1);
-    border: 1px solid rgba(244, 165, 38, 0.22);
-    border-radius: var(--radius-md);
-    padding: 5px 13px;
-    cursor: pointer;
-    transition: background 0.12s ease;
-  }
-  .triage-review-btn:hover {
-    background: rgba(244, 165, 38, 0.18);
-  }
-
-  /* activity list */
-  .triage-activity-list {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-  }
-  .triage-activity-item {
-    display: grid;
-    grid-template-columns: 10px 1fr auto;
-    align-items: start;
-    gap: 10px;
-    padding: 9px 11px;
-    border-radius: var(--radius-md);
-    background: var(--surface);
-    border: 1px solid var(--line);
-    font-size: 12.5px;
-  }
-  .triage-activity-item:hover {
-    background: var(--inset);
-  }
-  .triage-activity-dot {
-    width: 7px;
-    height: 7px;
-    border-radius: 50%;
-    background: var(--marigold);
-    margin-top: 4px;
-    flex: none;
-  }
-  .triage-activity-body {
-    color: var(--text);
-    line-height: 1.4;
-  }
-  .triage-activity-time {
-    font-family: var(--font-mono);
-    font-size: 10.5px;
-    color: var(--muted);
-    white-space: nowrap;
-    flex: none;
-    padding-top: 1px;
-  }
 
   /* ---- telemetry screen ---- */
   /* Centred, and wider than it was: at 1920px a left-aligned 1180px column left 656px blank. */
@@ -1079,9 +881,7 @@
   .tile,
   .costbar-fill,
   .tele-burn > i,
-  .tele-track > i,
-  .triage-item,
-  .triage-review-btn {
+  .tele-track > i {
     transition: none;
   }
 

@@ -8,8 +8,8 @@
     <!-- Installable to a home screen. No service worker: nothing is cached offline, because a
          stale app shell would fight the sign-in. -->
     <link rel="manifest" href="/manifest.webmanifest" />
-    <meta name="theme-color" content="#0f1118" media="(prefers-color-scheme: dark)" />
-    <meta name="theme-color" content="#faf8f3" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#17162a" media="(prefers-color-scheme: dark)" />
+    <meta name="theme-color" content="#fff8ee" media="(prefers-color-scheme: light)" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="mobile-web-app-capable" content="yes" />
@@ -34,13 +34,7 @@
     </script>
     <title>superpipeline</title>
     <!-- Inline so the Worker needs no static route for it. Same mark as BrandMark.svelte. -->
-    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32' role='img' aria-label='superpipeline'%3E%3Crect width='32' height='32' rx='7' fill='%230f1118'/%3E%3Cg transform='translate(4 4)' fill='none' stroke='%23f4a526' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='6' cy='6' r='2.5'/%3E%3Cpath d='M8.5 6H15a3 3 0 0 1 0 6H9a3 3 0 0 0 0 6h5.5'/%3E%3Cpath d='M18 15v6'/%3E%3C/g%3E%3C/svg%3E" />
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap"
-      rel="stylesheet"
-    />
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32' role='img' aria-label='superpipeline'%3E%3Crect width='32' height='32' rx='7' fill='%23ffefa8'/%3E%3Cg transform='translate(4 4)' fill='none' stroke='%235e4a00' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='6' cy='6' r='2.5'/%3E%3Cpath d='M8.5 6H15a3 3 0 0 1 0 6H9a3 3 0 0 0 0 6h5.5'/%3E%3Cpath d='M18 15v6'/%3E%3C/g%3E%3C/svg%3E" />
     %sveltekit.head%
   </head>
   <body data-sveltekit-preload-data="hover">

@@ -59,9 +59,9 @@ describe('installable', () => {
     expect(m.start_url).toBe('/');
     expect(m.scope).toBe('/');
     expect(m.display).toBe('standalone');
-    // The dark palette's --ink, which is the default theme.
-    expect(m.background_color).toBe('#0f1118');
-    expect(m.theme_color).toBe('#0f1118');
+    // Daylight's light --vk-color-bg, the first-visit default.
+    expect(m.background_color).toBe('#fff8ee');
+    expect(m.theme_color).toBe('#fff8ee');
     const want = [
       ['192x192', 'any'],
       ['512x512', 'any'],
