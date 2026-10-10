@@ -9,6 +9,7 @@
   import '../app.css';
   import { onMount } from 'svelte';
   import { app } from '$lib/stores/app.svelte';
+  import { appearance } from '$lib/appearance.svelte';
   import Rail from '$lib/components/shell/Rail.svelte';
   import BottomNav from '$lib/components/shell/BottomNav.svelte';
   import CommandPalette from '$lib/components/CommandPalette.svelte';
@@ -19,8 +20,12 @@
   let { children } = $props();
 
   onMount(() => {
+    appearance.init();
     void app.init();
-    return () => app.dispose();
+    return () => {
+      app.dispose();
+      appearance.dispose();
+    };
   });
 </script>
 

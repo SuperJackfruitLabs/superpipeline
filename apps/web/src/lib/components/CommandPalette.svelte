@@ -1,5 +1,6 @@
 <script lang="ts">
   import { app } from '$lib/stores/app.svelte';
+  import { appearance } from '$lib/appearance.svelte';
   import { goto } from '$app/navigation';
   import { tick } from 'svelte';
   import { signOut, otherThemeLabel } from '$lib/components/shell/account';
@@ -94,11 +95,11 @@
     items.push(
       {
         grp: 'Account',
-        icon: app.theme === 'light' ? '☾' : '☀',
-        label: otherThemeLabel(app.theme),
+        icon: appearance.theme === 'light' ? '☾' : '☀',
+        label: otherThemeLabel(appearance.theme),
         sub: 'theme',
         act: () => {
-          app.toggleTheme();
+          appearance.toggleTheme();
           close();
         },
       },

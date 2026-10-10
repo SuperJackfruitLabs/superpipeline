@@ -16,6 +16,7 @@
    */
   import { page } from '$app/state';
   import { app } from '$lib/stores/app.svelte';
+  import { appearance } from '$lib/appearance.svelte';
   import { signOut, otherThemeLabel } from './account';
 
   const boardId = $derived(app.boardId);
@@ -118,13 +119,13 @@
         type="button"
         role="menuitem"
         onclick={() => {
-          app.toggleTheme();
+          appearance.toggleTheme();
           menuOpen = false;
         }}
         class="hover:bg-inset flex min-h-[48px] w-full items-center gap-3 px-3.5 text-left text-sm"
       >
-        <span class="text-muted-foreground w-4 text-center" aria-hidden="true">{app.theme === 'light' ? '☾' : '☀'}</span>
-        {otherThemeLabel(app.theme)}
+        <span class="text-muted-foreground w-4 text-center" aria-hidden="true">{appearance.theme === 'light' ? '☾' : '☀'}</span>
+        {otherThemeLabel(appearance.theme)}
       </button>
       <button
         type="button"

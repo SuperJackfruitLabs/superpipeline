@@ -40,9 +40,7 @@ import { passesArchivedFilter, passesProjectFilter } from './card-filters';
 import { feedIsStalled, STALL_CHECK_MS } from '../feed-liveness';
 
 const BOARD_KEY = 'superpipeline.boardId';
-const THEME_KEY = 'superpipeline.theme';
 
-export type Theme = 'dark' | 'light';
 export type View = 'board' | 'list' | 'projects';
 export type ListGroupBy = 'stage' | 'state' | 'owner' | 'priority';
 export interface CardFilters {
@@ -111,7 +109,6 @@ class AppStore {
   projects = $state<Project[]>([]);
 
   // navigation + view
-  theme = $state<Theme>('dark');
   view = $state<View>('board');
   listGroupBy = $state<ListGroupBy>('stage');
   filters = $state<CardFilters>({
@@ -242,7 +239,6 @@ class AppStore {
    * Matrix room forever, and the board it names can be deleted long after.
    */
   async init(preferred?: { boardId?: string | null; cardId?: string | null }): Promise<void> {
-    this.initTheme();
     /**
      * A 401 anywhere means the session this tab is holding is gone, whatever it decided at boot.
      *
@@ -537,23 +533,6 @@ class AppStore {
   }
   closeCard(): void {
     this.openCardId = null;
-  }
-  /** Mirror the theme the inline app.html script already applied to <html> into reactive state. */
-  initTheme(): void {
-    const current = document.documentElement.getAttribute('data-theme');
-    this.theme = current === 'light' ? 'light' : 'dark';
-  }
-  setTheme(t: Theme): void {
-    this.theme = t;
-    document.documentElement.setAttribute('data-theme', t);
-    try {
-      localStorage.setItem(THEME_KEY, t);
-    } catch {
-      /* private mode / storage disabled — the toggle still works for this session */
-    }
-  }
-  toggleTheme(): void {
-    this.setTheme(this.theme === 'dark' ? 'light' : 'dark');
   }
   setView(v: View): void {
     this.view = v;

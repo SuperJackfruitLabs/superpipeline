@@ -5,6 +5,11 @@
     <!-- viewport-fit=cover: the page owns the whole screen, notch and home indicator included, and
          keeps its content clear of them with env(safe-area-inset-*) (app.css). -->
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <!-- First frame: the person's vibe and theme, before any stylesheet (vibekit HEAD_SCRIPT).
+         The first line carries a light/dark choice made with the old toggle into the cookie, once.
+         head-script.test.ts fails if the HEAD_SCRIPT copy drifts from the installed vibekit. -->
+    <script>(function(){try{if(!/(?:^|; )vk_appearance=/.test(document.cookie)){var t=localStorage.getItem('superpipeline.theme');if(t==='light'||t==='dark'){document.cookie='vk_appearance=daylight.'+t+'.strong.0; Path=/; Max-Age=31536000; SameSite=Lax'+(location.protocol==='https:'?'; Secure':'');}}}catch(_){}})();</script>
+    <script>(function(){try{var d=document,m=/(?:^|; )vk_appearance=([^;]*)/.exec(d.cookie||""),p=(m?m[1]:"").split("."),V=["daylight","paper","studio","quiet"],v=V.indexOf(p[0])>-1?p[0]:"daylight",t=["sun","light","dark"].indexOf(p[1])>-1?p[1]:"sun",s=["strong","subtle","off"].indexOf(p[2])>-1?p[2]:(v==="quiet"?"off":"strong"),n=new Date(),x=n.getHours()*60+n.getMinutes(),h=x<330||x>=1140?"night":x<420?"dawn":x>=1065?"dusk":x>=990?"golden":x<648?"morning":"noon",e=d.documentElement;e.setAttribute("data-vibe",v);e.setAttribute("data-theme",t==="sun"?(h==="night"?"dark":"light"):t);e.setAttribute("data-phase",h);e.setAttribute("data-time",s)}catch(_){}})();</script>
     <!-- Installable to a home screen. No service worker: nothing is cached offline, because a
          stale app shell would fight the sign-in. -->
     <link rel="manifest" href="/manifest.webmanifest" />
@@ -17,21 +22,6 @@
          safe-area-inset-top. -->
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="Superpipeline" />
-    <!-- Apply the saved theme before first paint so a reload never flashes the wrong palette.
-         No stored choice → follow the OS preference. Kept inline + tiny on purpose. -->
-    <script>
-      (function () {
-        try {
-          var t = localStorage.getItem('superpipeline.theme');
-          if (t !== 'light' && t !== 'dark') {
-            t = window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
-          }
-          document.documentElement.setAttribute('data-theme', t);
-        } catch (e) {
-          document.documentElement.setAttribute('data-theme', 'dark');
-        }
-      })();
-    </script>
     <title>superpipeline</title>
     <!-- Inline so the Worker needs no static route for it. Same mark as BrandMark.svelte. -->
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32' role='img' aria-label='superpipeline'%3E%3Crect width='32' height='32' rx='7' fill='%23ffefa8'/%3E%3Cg transform='translate(4 4)' fill='none' stroke='%235e4a00' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='6' cy='6' r='2.5'/%3E%3Cpath d='M8.5 6H15a3 3 0 0 1 0 6H9a3 3 0 0 0 0 6h5.5'/%3E%3Cpath d='M18 15v6'/%3E%3C/g%3E%3C/svg%3E" />

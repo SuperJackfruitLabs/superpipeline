@@ -15,6 +15,7 @@
    */
   import { page } from '$app/state';
   import { app } from '$lib/stores/app.svelte';
+  import { appearance } from '$lib/appearance.svelte';
   import { signOut } from './account';
   import BrandMark from '$lib/components/BrandMark.svelte';
 
@@ -69,11 +70,11 @@
 
   <div class="mt-auto flex w-full flex-col items-center gap-1">
     <button
-      onclick={() => app.toggleTheme()}
+      onclick={() => appearance.toggleTheme()}
       aria-label="Toggle theme"
-      aria-pressed={app.theme === 'light'}
+      aria-pressed={appearance.theme === 'light'}
       class="text-muted-foreground hover:text-foreground tap rounded-[8px]"
-    >{app.theme === 'light' ? '☀' : '☾'}</button>
+    >{appearance.theme === 'light' ? '☀' : '☾'}</button>
 
     {#if app.user}
       <div class="border-border mt-1 flex w-full flex-col items-center gap-1 border-t pt-2">
