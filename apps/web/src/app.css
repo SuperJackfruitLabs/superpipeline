@@ -918,3 +918,8 @@
 @media (max-width: 599px) {
   .gate-actions { position: sticky; bottom: 0; padding-block: var(--vk-space-2); padding-bottom: calc(var(--vk-space-2) + env(safe-area-inset-bottom, 0px)); background: var(--vk-color-signal-wash); }
 }
+
+/* A pending reply stays in reach on a phone while the long drawer scrolls beneath it. */
+@media (max-width: 599px) {
+  .sticky-reply .elicitation { position: sticky; bottom: 0; }
+}

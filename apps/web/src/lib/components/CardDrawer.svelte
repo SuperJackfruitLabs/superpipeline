@@ -994,7 +994,7 @@
       tabindex="-1"
       onkeydown={trapTab}
       class="bg-surface border-border drawer-in safe-top safe-bottom safe-x relative flex h-full w-full flex-col border-l shadow-2xl {L.panel}">
-      <button onclick={close} class="text-muted-foreground hover:text-foreground hover:bg-accent absolute top-[calc(env(safe-area-inset-top,0px)+0.75rem)] right-[calc(env(safe-area-inset-right,0px)+0.75rem)] z-20 rounded-[7px] p-1" aria-label="Close" title="close (esc)">
+      <button onclick={close} class="tap text-muted-foreground hover:text-foreground hover:bg-accent absolute top-[calc(env(safe-area-inset-top,0px)+0.75rem)] right-[calc(env(safe-area-inset-right,0px)+0.75rem)] z-20 rounded-[7px] p-1" aria-label="Close" title="close (esc)">
         <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
       </button>
       <L.component
