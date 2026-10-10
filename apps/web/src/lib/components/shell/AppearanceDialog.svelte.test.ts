@@ -77,4 +77,33 @@ describe('AppearanceDialog', () => {
     await fireEvent.keyDown(await screen.findByRole('dialog'), { key: 'Escape' });
     expect(appearance.pickerOpen).toBe(false);
   });
+
+  it('Shift+Tab from the checked vibe stays inside the dialog', async () => {
+    appearance.set({ vibe: 'studio' });
+    render(AppearanceDialog);
+    const studio = screen.getByRole('radio', { name: /^Studio/ }) as HTMLInputElement;
+    studio.focus();
+    // Studio is the first tab stop of the dialog (one stop per radio group), so Shift+Tab wraps.
+    const ev = new KeyboardEvent('keydown', { key: 'Tab', shiftKey: true, bubbles: true, cancelable: true });
+    studio.dispatchEvent(ev);
+    expect(ev.defaultPrevented).toBe(true);
+    expect(document.activeElement).toBe(screen.getByRole('button', { name: 'Done' }));
+  });
+
+  it('Shift+Tab from the panel itself stays inside the dialog', async () => {
+    render(AppearanceDialog);
+    const panel = screen.getByRole('dialog');
+    panel.focus();
+    const ev = new KeyboardEvent('keydown', { key: 'Tab', shiftKey: true, bubbles: true, cancelable: true });
+    panel.dispatchEvent(ev);
+    expect(ev.defaultPrevented).toBe(true);
+    expect(document.activeElement).toBe(screen.getByRole('button', { name: 'Done' }));
+  });
+
+  it('Escape is consumed so a card behind does not also close', () => {
+    render(AppearanceDialog);
+    const ev = new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true });
+    screen.getByRole('dialog').dispatchEvent(ev);
+    expect(ev.defaultPrevented).toBe(true);
+  });
 });

@@ -61,14 +61,29 @@
   }
 
   const FOCUSABLE = 'button:not([disabled]),input:not([disabled]),[tabindex]:not([tabindex="-1"])';
+  /** The Tab order: a radio group is one stop (its checked member, else its first). */
+  function tabStops(): HTMLElement[] {
+    if (!panel) return [];
+    const seen = new Set<string>();
+    const stops: HTMLElement[] = [];
+    for (const el of panel.querySelectorAll<HTMLElement>(FOCUSABLE)) {
+      if (el instanceof HTMLInputElement && el.type === 'radio') {
+        if (seen.has(el.name)) continue;
+        seen.add(el.name);
+        stops.push(panel.querySelector<HTMLElement>(`input[type="radio"][name="${el.name}"]:checked`) ?? el);
+      } else stops.push(el);
+    }
+    return stops;
+  }
   function onKeydown(e: KeyboardEvent): void {
     if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); close(); return; }
     if (e.key !== 'Tab' || !panel) return;
-    const f = [...panel.querySelectorAll<HTMLElement>(FOCUSABLE)];
+    const f = tabStops();
     if (f.length === 0) return;
     const first = f[0]!, last = f[f.length - 1]!;
-    if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
-    else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+    const here = document.activeElement;
+    if (e.shiftKey && (here === first || here === panel)) { e.preventDefault(); last.focus(); }
+    else if (!e.shiftKey && here === last) { e.preventDefault(); first.focus(); }
   }
 </script>
 
