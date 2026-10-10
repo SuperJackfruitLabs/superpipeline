@@ -13,7 +13,6 @@
     deleteCard,
     addReference,
     updateApprovalDelivery,
-    answerElicitation,
     archiveCard,
     unarchiveCard,
     addLink,
@@ -37,6 +36,8 @@
   import AgentFace from '$lib/components/AgentFace.svelte';
   import { cardLead, moodFor } from '$lib/components/card/card-lead';
   import { appearance } from '$lib/appearance.svelte';
+  import { QuestionAnswer } from '$lib/components/card/question/question-answer.svelte';
+  import QuestionDaylight from '$lib/components/card/question/QuestionDaylight.svelte';
   import { FACE_VARIANT } from '$lib/layouts';
   import { resolveCardLabelsForEdit } from '$lib/components/card-labels';
   import { buildLinkGroups, edgeKey, type RemoveArgs } from '$lib/components/link-groups';
@@ -76,6 +77,15 @@
       : undefined,
   );
   const elicitation = $derived(cardId ? app.elicitationForCard(cardId) : undefined);
+  const question = new QuestionAnswer(() => ({
+    boardId,
+    elicitation,
+    after: async () => {
+      await app.refresh();
+      if (cardId && boardId) void refreshDrawer(cardId, boardId);
+    },
+  }));
+  $effect(() => question.follow(elicitation?.id ?? null));
   const refs = $derived(cardId ? app.referencesForCard(cardId) : []);
   /** Superlibrary links preview in the embedded viewer; the first opens itself (superlibrary decision O6). */
   const libraryRefs = $derived(refs.flatMap((r) => { const l = libraryRef(r.url); return l ? [{ ref: r, ...l }] : []; }));
@@ -274,10 +284,6 @@
   let deliverySaving = $state(false);
   let copiedItem = $state<number | null>(null);
 
-  // ---- elicitation (agent question) state ----
-  let answerText = $state('');
-  let answering = $state(false);
-
   /**
    * How long a burst of feed events is allowed to collapse into one refetch.
    *
@@ -291,7 +297,6 @@
   $effect(() => {
     const id = cardId;
     if (id && boardId) {
-      answerText = '';
       gateError = null;
       livePostUrl = '';
       deliverySaving = false;
@@ -729,33 +734,6 @@
     }
   }
 
-  // ---- answering an agent's question (docs/04 §4) ----
-  // The agent is blocked and still holding its lease; the answer is what lets it carry on, so a
-  // failure here has to say so rather than quietly leaving the card parked.
-  async function onAnswer(option?: string): Promise<void> {
-    if (!boardId || !elicitation || answering) return;
-    const text = answerText.trim();
-    if (!option && text === '') {
-      localError = elicitation.options.length > 0 ? 'Pick one of the options.' : 'Type an answer first.';
-      return;
-    }
-    answering = true;
-    try {
-      const res = await answerElicitation(boardId, elicitation.id, { option, text: text || undefined });
-      if (!res.ok) {
-        const body = (await res.json().catch(() => null)) as { error?: { message?: string } } | null;
-        localError = body?.error?.message ?? `Couldn't send that answer (${res.status})`;
-      } else {
-        localError = null;
-        answerText = '';
-      }
-      await app.refresh();
-      if (cardId && boardId) void refreshDrawer(cardId, boardId);
-    } finally {
-      answering = false;
-    }
-  }
-
   // ---- helpers ----
   function activityMarker(type: string): { glyph: string; cssClass: string } {
     if (type === 'action') return { glyph: '▸', cssClass: 'act-action' };
@@ -1122,45 +1100,12 @@
 
         <!-- the agent's open question — the card is parked until someone answers it -->
         {#if elicitation}
-          <section class="sec">
-            <div class="elicitation border rounded-[10px] p-3.5" style="border-color:var(--vk-color-signal);background:var(--vk-color-signal-wash)">
-              <div class="mb-2 flex items-center gap-2">
-                <span class="wordmark font-semibold text-sm" style="color:var(--coral)">
-                  ⚑ {elicitation.signal === 'auth' ? 'awaiting your sign-in' : 'awaiting your answer'}
-                </span>
-                <span class="eyebrow ml-auto" title={elicitation.agentId}>{displayAgent(elicitation.agentId, app.agents)} is waiting</span>
-              </div>
-              <p class="mb-3 text-[13px] leading-relaxed whitespace-pre-wrap">{elicitation.question}</p>
-
-              {#if elicitation.options.length > 0}
-                <div class="flex flex-wrap gap-2">
-                  {#each elicitation.options as opt (opt.name)}
-                    <Button size="sm" variant={opt.name === elicitation.options[0]?.name ? 'default' : 'outline'} disabled={answering} onclick={() => onAnswer(opt.name)}>
-                      {opt.title}
-                    </Button>
-                  {/each}
-                </div>
-                <textarea
-                  bind:value={answerText}
-                  rows="2"
-                  placeholder="Add a note for the agent (optional)…"
-                  class="bg-inset border-border mt-2.5 w-full resize-none rounded-[7px] border px-2.5 py-2 text-xs outline-none"
-                  style="border-color:var(--vk-color-signal)"
-                ></textarea>
-              {:else}
-                <textarea
-                  bind:value={answerText}
-                  rows="3"
-                  placeholder="Your answer — this goes straight back to the waiting agent…"
-                  class="bg-inset border-border w-full resize-none rounded-[7px] border px-2.5 py-2 text-xs outline-none"
-                  style="border-color:var(--vk-color-signal)"
-                ></textarea>
-                <div class="mt-2 flex justify-end">
-                  <Button size="sm" disabled={answering} onclick={() => onAnswer()}>Send answer</Button>
-                </div>
-              {/if}
-            </div>
-          </section>
+          <QuestionDaylight
+            model={question}
+            {elicitation}
+            agent={{ id: elicitation.agentId, name: displayAgent(elicitation.agentId, app.agents), iconUrl: app.agents.find((a) => a.id === elicitation.agentId)?.iconUrl ?? null, mood: 'needs' }}
+            vibe={appearance.value.vibe}
+          />
         {/if}
 
         <!-- gate panel — only when a pending gate exists -->
