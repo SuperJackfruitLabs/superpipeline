@@ -7,10 +7,17 @@
    * overflowing.
    */
   import { app } from '$lib/stores/app.svelte';
-  import BoardKanban from '$lib/components/board/BoardKanban.svelte';
+  import { appearance } from '$lib/appearance.svelte';
+  import { BOARD_LAYOUTS } from '$lib/layouts';
+  import { itemsFromBoard } from '$lib/components/attention/attention';
+  import { stageSummaries, summarize } from '$lib/components/board/card-summary';
   import ListView from './ListView.svelte';
   import ProjectView from './ProjectView.svelte';
   import FilterBar from './FilterBar.svelte';
+
+  const summaries = $derived(app.board ? summarize(app.board, app.filteredCards(), { agents: app.agents, members: app.members, labels: app.labelById(), nowMs: Date.now() }) : []);
+  const stageList = $derived(app.board ? stageSummaries(app.board, app.filteredCards(), app.agents) : []);
+  const attention = $derived(app.board ? itemsFromBoard(app.board, app.agents) : []);
 </script>
 
 <div class="flex h-full min-h-0 flex-col">
@@ -45,7 +52,8 @@
 
   <div class="min-h-0 flex-1 overflow-auto">
     {#if app.view === 'board'}
-      <BoardKanban />
+      {@const Board = BOARD_LAYOUTS[appearance.value.vibe]}
+      <Board {summaries} stages={stageList} {attention} phase={appearance.phase} vibe={appearance.value.vibe} boardName={app.board?.name ?? ''} cardCount={app.filteredCards().length} onCompose={() => app.requestCompose()} />
     {:else if app.view === 'list'}
       <ListView />
     {:else}

@@ -1,6 +1,6 @@
 <script lang="ts">
   import { displayAgent } from '$lib/names';
-  import type { Card, Reference } from '$lib/api';
+  import type { Card } from '$lib/api';
   import { app } from '$lib/stores/app.svelte';
   import AgentFace from '$lib/components/AgentFace.svelte';
   import { cardLead, moodFor, moodWord } from '$lib/components/card/card-lead';
@@ -12,6 +12,7 @@
   import { enforcedBadge } from './card-blocked';
   import { childCounter } from './card-children';
   import { cardProvenance } from './card-provenance';
+  import { refLabel, safeHref, subStateClass, subStateLabel } from './ref-chip';
 
   interface Props {
     card: Card;
@@ -57,48 +58,6 @@
   const blocked = $derived(enforcedBadge(card.blockedBy));
   const totalChildren = $derived(childCounts.get(card.id) ?? 0);
   const children = $derived(childCounter(card.openChildCount, totalChildren));
-
-  // Reference chip helpers (ported from page.svelte)
-  const SUB_STATE_LABELS: Record<string, string> = {
-    draft_pr_open: 'draft',
-    pr_open: 'open',
-    agent_iterating: 'iterating',
-    awaiting_review: 'review',
-    merged: 'merged',
-    closed: 'closed',
-    agent_working: 'working',
-    issue_open: 'open',
-    issue_closed: 'closed',
-  };
-
-  function subStateLabel(ref: Reference): string | null {
-    const s = ref.metadata?.subState;
-    return typeof s === 'string' ? (SUB_STATE_LABELS[s] ?? s) : null;
-  }
-
-  function refLabel(ref: Reference): string {
-    if (ref.sourceType === 'pull_request') {
-      const num = ref.externalId?.split('#')[1];
-      return `PR${num ? ` #${num}` : ''}`.trim();
-    }
-    if (ref.sourceType === 'issue') {
-      const num = ref.externalId?.split('#')[1];
-      return `Issue${num ? ` #${num}` : ''}`.trim();
-    }
-    if (ref.sourceType === 'repo') return ref.externalId ?? 'repo';
-    return ref.title ?? ref.sourceType;
-  }
-
-  function subStateClass(sub: string): string {
-    if (sub === 'draft' || sub === 'draft_pr_open') return 'refchip-st refchip-st-draft';
-    if (sub === 'open' || sub === 'ready' || sub === 'review' || sub === 'iterating' || sub === 'working') return 'refchip-st refchip-st-ready';
-    if (sub === 'merged') return 'refchip-st refchip-st-merged';
-    return 'refchip-st refchip-st-draft';
-  }
-
-  function safeHref(url: string): string | null {
-    return /^https?:\/\//i.test(url) ? url : null;
-  }
 
   function fmtUsd(n: number): string {
     return `$${n.toFixed(2)}`;

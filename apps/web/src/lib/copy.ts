@@ -4,7 +4,7 @@
  * same in every vibe (spec decision 6). vibekit's own catalogue (say, greeting) covers the suite
  * strings; these are Superpipeline's.
  */
-import type { Vibe } from '@superjackfruit/vibekit';
+import type { Phase, Vibe } from '@superjackfruit/vibekit';
 import type { CardLead, LeadKind } from '$lib/components/card/card-lead';
 
 export type Four = Readonly<Record<Vibe, string>>;
@@ -48,3 +48,5 @@ const EMOJI = /(\p{Extended_Pictographic}(?:️|‍\p{Extended_Pictographic})*)/
 export function splitEmoji(text: string): Array<{ text: string; emoji: boolean }> {
   return text.split(EMOJI).filter((p) => p !== '').map((p) => ({ text: p, emoji: EMOJI.test(p) }));
 }
+
+export const LIGHT_WORDS: Readonly<Record<Phase, string>> = { dawn: 'first light', morning: 'morning light', noon: 'full daylight', golden: 'golden light', dusk: 'evening light', night: 'lamplight' };
