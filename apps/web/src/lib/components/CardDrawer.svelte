@@ -34,7 +34,10 @@
   import { Button } from '$lib/components/ui/button';
   import GateActions from '$lib/components/card/GateActions.svelte';
   import { manualDeliveryItems } from '$lib/approval-delivery';
-  import { initialOf } from '$lib/components/agentColor';
+  import AgentFace from '$lib/components/AgentFace.svelte';
+  import { cardLead, moodFor } from '$lib/components/card/card-lead';
+  import { appearance } from '$lib/appearance.svelte';
+  import { FACE_VARIANT } from '$lib/layouts';
   import { resolveCardLabelsForEdit } from '$lib/components/card-labels';
   import { buildLinkGroups, edgeKey, type RemoveArgs } from '$lib/components/link-groups';
   import { crossBoardNotice, submitAddBlocker, linkRefusalSentence, type LinkKindChoice } from '$lib/components/add-blocker';
@@ -826,7 +829,9 @@
    * through `displayPrincipal`; this was the one site the naming work missed.
    */
   const delegateName = $derived(displayAgent(delegateId, app.agents));
-  const delegateInitial = $derived(initialOf(delegateName));
+  const delegateAgent = $derived(app.agents.find((a) => a.id === delegateId) ?? null);
+  const delegateMood = $derived(card ? moodFor(cardLead({ card, gate, elicitation }).kind, !!delegateId) : 'resting');
+  const faceVariant = $derived(FACE_VARIANT[appearance.value.vibe]);
 
   /**
    * Who asked for this card, and what they were permitted to dispatch when they did.
@@ -1045,9 +1050,9 @@
 
             <!-- delegate agent -->
             {#if delegateId}
-              <span class="delegate inline-flex items-center gap-1.5 font-mono text-[11px]" style="color:var(--muted)">
-                <span class="inline-flex size-[18px] items-center justify-center rounded-full text-[9px] font-semibold shrink-0" style="background:var(--vk-color-raised);color:var(--vk-color-text)">{delegateInitial}</span>
-                <span title={delegateId}>{delegateName} · delegate</span>
+              <span class="delegate inline-flex items-center gap-1.5 font-mono text-[11px]" style="color:var(--muted)" title={delegateId}>
+                <AgentFace agentId={delegateId} name={delegateName} iconUrl={delegateAgent?.iconUrl ?? null} mood={delegateMood} size={28} variant={faceVariant} withName />
+                <span>· delegate</span>
               </span>
             {/if}
 
@@ -1067,8 +1072,8 @@
             {#if provenance?.known}
               {#if provenance.byAgent}
                 <span class="queuedchip" title={`Queued by ${provenance.queuedByName} — ${grantSummary}`}>
-                  {#if provenance.agent?.iconUrl}
-                    <img src={provenance.agent.iconUrl} alt="" class="size-4 shrink-0 rounded-full object-cover" />
+                  {#if provenance.agent}
+                    <AgentFace agentId={provenance.agent.id} name={provenance.queuedByName} iconUrl={provenance.agent.iconUrl ?? null} size={16} variant="portrait" />
                   {/if}
                   <span>asked by {provenance.queuedByName}</span>
                 </span>

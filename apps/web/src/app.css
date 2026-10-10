@@ -891,6 +891,12 @@
   }
 }
 
+/* agent status light (AgentFace, light variant); the studio vibe blinks it below */
+.status-led { background: var(--vk-color-faint); box-shadow: 0 0 0 2px var(--vk-color-surface); }
+.status-led[data-mood='needs'] { background: var(--vk-color-signal); }
+.status-led[data-mood='working'] { background: var(--vk-color-success); }
+.status-led[data-mood='done'] { background: var(--vk-color-primary); }
+
 /* vibe: daylight */
 [data-vibe='daylight'] .eyebrow { font-family: var(--vk-font-display); letter-spacing: 0.02em; }
 /* end vibe */

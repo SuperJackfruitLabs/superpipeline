@@ -1,7 +1,9 @@
 <script lang="ts">
   /** Work in flight — visible today only as working cards scattered across the lanes. */
   import { app } from '$lib/stores/app.svelte';
-  import { initialOf } from '$lib/components/agentColor';
+  import AgentFace from '$lib/components/AgentFace.svelte';
+  import { appearance } from '$lib/appearance.svelte';
+  import { FACE_VARIANT } from '$lib/layouts';
 
   const running = $derived((app.board?.cards ?? []).filter((c) => c.state === 'working'));
   const stageName = $derived((key: string) => app.board?.stages.find((s) => s.key === key)?.name ?? key);
@@ -19,9 +21,11 @@
   {:else}
     {#each running as c (c.id)}
       <div class="border-border flex items-center gap-2.5 border-b px-3.5 py-2.5 last:border-b-0">
-        <span class="grid size-[18px] shrink-0 place-items-center rounded-full text-[9px] font-semibold" style="background:var(--vk-color-raised);color:var(--vk-color-text)">
-          {c.delegateAgentId ? initialOf(c.delegateAgentId).toUpperCase() : "·"}
-        </span>
+        {#if c.delegateAgentId}
+          <AgentFace agentId={c.delegateAgentId} name={agentName(c.delegateAgentId)} iconUrl={app.agents.find((a) => a.id === c.delegateAgentId)?.iconUrl ?? null} mood="working" size={24} variant={FACE_VARIANT[appearance.value.vibe]} />
+        {:else}
+          <span class="text-muted-foreground w-6 shrink-0 text-center" aria-hidden="true">·</span>
+        {/if}
         <button onclick={() => app.openCard(c.id)} class="min-w-0 flex-1 text-left">
           <span class="mono block truncate text-[12px]">{agentName(c.delegateAgentId ?? null)}</span>
           <span class="text-muted-foreground block truncate text-[11px]">{c.title} · {stageName(c.currentStageKey)}</span>

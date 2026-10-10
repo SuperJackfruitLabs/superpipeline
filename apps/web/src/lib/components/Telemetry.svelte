@@ -1,7 +1,9 @@
 <script lang="ts">
   import { getUsage, getBoardEvents, type UsageSummary, type BoardEvent } from '$lib/api';
   import { app } from '$lib/stores/app.svelte';
-  import { agentColor, initialOf } from '$lib/components/agentColor';
+  import AgentFace from '$lib/components/AgentFace.svelte';
+  import { appearance } from '$lib/appearance.svelte';
+  import { FACE_VARIANT } from '$lib/layouts';
 
   // ---- reactive data ----
   let usage = $state<UsageSummary | null>(null);
@@ -188,18 +190,12 @@
         <div class="tele-bars">
           {#each usage.byAgent as row (row.agentId)}
             {@const name = agentName(row.agentId)}
-            {@const color = agentColor(row.agentId)}
             {@const pct = Math.round((row.costUsd / maxAgentCost) * 100)}
             <div class="tele-barrow">
               <span class="flex items-center gap-1.5 truncate">
-                <span
-                  class="tele-av flex-none"
-                  style="background:var(--vk-color-raised);color:var(--vk-color-text)"
-                  title={name}
-                >{initialOf(name)}</span>
-                <span class="truncate text-xs">{name}</span>
+                <AgentFace agentId={row.agentId} name={name} iconUrl={agents.find((a) => a.id === row.agentId)?.iconUrl ?? null} size={20} variant={FACE_VARIANT[appearance.value.vibe]} withName />
               </span>
-              <span class="tele-track"><i style="width:{pct}%;background:{color}"></i></span>
+              <span class="tele-track"><i style="width:{pct}%"></i></span>
               <span class="tele-num">{usd(row.costUsd)}</span>
             </div>
           {/each}

@@ -81,3 +81,8 @@ export function agentForPrincipal(
   if (!principalId) return null;
   return agents.find((a) => !!a.externalId && a.externalId === principalId) ?? null;
 }
+
+/** The first letter of a name, upper-cased, for a round portrait with no picture. */
+export function initialOf(name: string | null | undefined): string {
+  return (name ?? '?').trim().charAt(0).toUpperCase() || '?';
+}

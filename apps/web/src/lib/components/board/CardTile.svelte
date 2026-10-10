@@ -2,7 +2,10 @@
   import { displayAgent } from '$lib/names';
   import type { Card, Reference } from '$lib/api';
   import { app } from '$lib/stores/app.svelte';
-  import { initialOf } from '$lib/components/agentColor';
+  import AgentFace from '$lib/components/AgentFace.svelte';
+  import { cardLead, moodFor, moodWord } from '$lib/components/card/card-lead';
+  import { appearance } from '$lib/appearance.svelte';
+  import { FACE_VARIANT } from '$lib/layouts';
   import { cardDraggable } from '$lib/dnd';
   import { Button } from '$lib/components/ui/button';
   import { overdue } from './card-due';
@@ -117,9 +120,10 @@
   // Delegate avatar. `agents.icon_url` has existed since migration 0001 and was read by nothing;
   // the coloured initial stays the fallback, which is what most agents will always have.
   const delegate = $derived(app.agents.find((a) => a.id === card.delegateAgentId) ?? null);
-  const avatarInitial = $derived(
-    card.delegateAgentId ? initialOf(card.delegateAgentId).toUpperCase() : null,
-  );
+  const delegateName = $derived(displayAgent(card.delegateAgentId, app.agents));
+  const lead = $derived(cardLead({ card, gate, elicitation: question }));
+  const mood = $derived(moodFor(lead.kind, !!card.delegateAgentId));
+  const faceVariant = $derived(FACE_VARIANT[appearance.value.vibe]);
 
   /**
    * Who asked for this card. Shown on the TILE and not only in the drawer, because a board full of
@@ -132,9 +136,6 @@
    * would say nothing.
    */
   const provenance = $derived(cardProvenance(card, app.members, app.agents));
-  const queuerInitial = $derived(
-    provenance.agent ? initialOf(provenance.agent.id).toUpperCase() : null,
-  );
 
   /**
    * At most three chips plus "+N" — a tile is scanned, not read. An id with no catalogue entry
@@ -332,16 +333,11 @@
       absence of an agent the most repeated and loudest thing on the board. The board's default
       state is that nobody has picked a card up; it should be its quietest.
     -->
-    {#if card.delegateAgentId && delegate?.iconUrl}
-      <img src={delegate.iconUrl} alt="" title={delegate.name} class="size-5 shrink-0 rounded-full object-cover" />
-    {:else if card.delegateAgentId && avatarInitial}
-      <span
-        class="inline-grid size-5 shrink-0 place-items-center rounded-full font-mono text-[9px] font-semibold"
-        style="background:var(--vk-color-raised); color:var(--vk-color-text)"
-        title={delegate?.name ?? card.delegateAgentId}
-      >{avatarInitial}</span>
+    {#if card.delegateAgentId}
+      <AgentFace agentId={card.delegateAgentId} name={delegateName} iconUrl={delegate?.iconUrl ?? null} {mood} size={24} variant={faceVariant} withName />
+      <span class="text-muted-foreground text-[11px]">{moodWord(mood)}</span>
     {:else}
-      <span class="text-muted-foreground" aria-hidden="true">—</span>
+      <span class="text-muted-foreground" title="nobody holds this card">—</span>
     {/if}
 
     <!--
@@ -351,14 +347,8 @@
     -->
     {#if provenance.byAgent}
       <span class="queuedchip queuedchip-tile" title={`Queued by ${provenance.queuedByName}, not by you`}>
-        {#if provenance.agent?.iconUrl}
-          <img src={provenance.agent.iconUrl} alt="" class="size-3.5 shrink-0 rounded-full object-cover" />
-        {:else if queuerInitial}
-          <span
-            class="inline-grid size-3.5 shrink-0 place-items-center rounded-full text-[8px] font-semibold"
-            style="background:var(--vk-color-raised); color:var(--vk-color-text)"
-            aria-hidden="true"
-          >{queuerInitial}</span>
+        {#if provenance.agent}
+          <AgentFace agentId={provenance.agent.id} name={provenance.queuedByName} iconUrl={provenance.agent.iconUrl ?? null} size={16} variant="portrait" />
         {/if}
         <span class="truncate">asked by {provenance.queuedByName}</span>
       </span>
