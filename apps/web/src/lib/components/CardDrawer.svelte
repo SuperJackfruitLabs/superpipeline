@@ -33,7 +33,7 @@
   import { Button } from '$lib/components/ui/button';
   import { manualDeliveryItems } from '$lib/approval-delivery';
   import AgentFace from '$lib/components/AgentFace.svelte';
-  import { cardLead, moodFor } from '$lib/components/card/card-lead';
+  import { cardLead, moodFor, speakerOf } from '$lib/components/card/card-lead';
   import { appearance } from '$lib/appearance.svelte';
   import { QuestionAnswer } from '$lib/components/card/question/question-answer.svelte';
   import { CARD_LAYOUTS, FACE_VARIANT } from '$lib/layouts';
@@ -394,7 +394,9 @@
 
   // ---- edit ----
   function startEdit(): void {
-    if (!card) return;
+    // Already editing: reloading the fields from the card would throw away what was typed. The
+    // button stays on screen while editing in some layouts, so a second press must be harmless.
+    if (!card || editing) return;
     editTitle = card.title;
     editPriority = card.priority;
     editDesc = (card.spec?.description as string | undefined) ?? '';
@@ -818,6 +820,10 @@
     refs: refs.length,
     attempts: drawerAttempts.length,
     deliveryActive: !!deliveryGate?.approvalSubject,
+    // Each the same test its section uses to decide whether to draw anything.
+    description: !!card?.spec?.description,
+    handoff: !!cardDetail?.handoff && Object.keys(cardDetail.handoff).length > 0,
+    cost: !!card && (card.costUsd > 0 || !!cardEstimate?.estimatedUsd),
   });
 
   // cost
@@ -841,7 +847,10 @@
   const delegateAgent = $derived(app.agents.find((a) => a.id === delegateId) ?? null);
   const lead = $derived(card ? cardLead({ card, gate, elicitation, activities: cardDetail?.activities ?? [], failureReason: stageEntries.at(-1)?.failureReason ?? null }) : null);
   const delegateMood = $derived(lead ? moodFor(lead.kind, !!delegateId) : 'resting');
-  const drawerAgent = $derived({ id: delegateId, name: delegateName, iconUrl: delegateAgent?.iconUrl ?? null, mood: delegateMood });
+  // Who the layouts name (`speakerOf`). With nobody, the name is '' and each layout words it.
+  const speakerId = $derived(speakerOf({ delegateId, gate, elicitation }));
+  const speaker = $derived(speakerId === delegateId ? delegateAgent : (app.agents.find((a) => a.id === speakerId) ?? null));
+  const drawerAgent = $derived({ id: speakerId, name: speakerId ? displayAgent(speakerId, app.agents) : '', iconUrl: speaker?.iconUrl ?? null, mood: lead ? moodFor(lead.kind, !!speakerId) : 'resting' });
   const faceVariant = $derived(FACE_VARIANT[appearance.value.vibe]);
 
   /**
@@ -1074,7 +1083,7 @@
 
 {#snippet s_editButton()}
   {#if card}
-    <button onclick={startEdit} aria-label="Edit card" title="Edit card" class="text-muted-foreground hover:text-foreground hover:bg-accent tap shrink-0 rounded-[7px] p-1.5">
+    <button onclick={startEdit} aria-label="Edit card" aria-pressed={editing} title={editing ? 'Editing above' : 'Edit card'} class="text-muted-foreground hover:text-foreground hover:bg-accent tap shrink-0 rounded-[7px] p-1.5">
       <svg class="size-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
     </button>
   {/if}

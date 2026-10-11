@@ -93,3 +93,24 @@ test('a card tile exposes one button for itself, not a button inside a button', 
   );
   expect(nested, 'no interactive element may contain another').toBe(0);
 });
+
+for (const vibe of ['daylight', 'paper', 'studio', 'quiet'] as const) {
+  test(`${vibe}: the dialog keeps its name while editing, and a second "Edit card" keeps the draft`, async ({ page, request }) => {
+    await page.context().addCookies([{ name: 'vk_appearance', value: `${vibe}.light.strong.0`, url: 'http://localhost:5173' }]);
+    const boardId = await boardWithACard(request);
+    await page.goto(`/b/${boardId}`);
+    await page.getByRole('button', { name: /^A card to open, in/ }).click();
+    const dialog = page.getByRole('dialog');
+    await dialog.getByRole('button', { name: 'Edit card' }).click();
+    await expect(dialog).toHaveAccessibleName(/A card to open/);
+    const title = dialog.getByPlaceholder('Title', { exact: true });
+    await title.fill('Typed but not saved');
+    // Daylight swaps the button out while editing; the other vibes keep it on screen.
+    const again = dialog.getByRole('button', { name: 'Edit card' });
+    if (await again.count()) {
+      await expect(again).toHaveAttribute('aria-pressed', 'true');
+      await again.click();
+    }
+    await expect(title).toHaveValue('Typed but not saved');
+  });
+}

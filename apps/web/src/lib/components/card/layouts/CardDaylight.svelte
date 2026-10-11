@@ -19,20 +19,24 @@
     const k = `${card.id}:${lead.needsYou}`;
     if (k !== briefFor) { briefFor = k; briefOpen = !lead.needsYou; }
   });
-  const label = $derived(lead.needsYou ? say('agent.needsYou', vibe, { agent: agent.name }) : agent.name);
+  // Nobody may hold the card yet (every queued card): the sentences still need a subject.
+  const label = $derived(lead.needsYou ? say('agent.needsYou', vibe, { agent: agent.name || 'The agent' }) : agent.name || 'Nobody yet');
   const replying = $derived(!!question || !!gate);
 </script>
 
 <!-- dw-head; pr-14 leaves room for the shell's 44px close target -->
 <div class="dw-head border-border flex-none border-b p-4 pr-14 pb-3.5">
-  {#if editing}
-    {@render sections.editForm()}
-  {:else}
-    <div class="dw-stage eyebrow" style="color:var(--marigold)">{stageName}</div>
-    <div class="mt-1 flex items-start gap-2">
-      <h2 id="drawer-title" class="wordmark dw-title min-w-0 flex-1 text-[17px] leading-snug font-semibold">{card.title}</h2>
+  <!-- The title stays in the page while editing (visually hidden), so the dialog keeps its name. -->
+  {#if !editing}<div class="dw-stage eyebrow" style="color:var(--marigold)">{stageName}</div>{/if}
+  <div class="flex items-start gap-2" class:mt-1={!editing}>
+    <h2 id="drawer-title" class="wordmark dw-title min-w-0 flex-1 text-[17px] leading-snug font-semibold" class:sr-only={editing}>{card.title}</h2>
+    {#if editing}
+      {@render sections.editForm()}
+    {:else}
       {@render sections.editButton()}
-    </div>
+    {/if}
+  </div>
+  {#if !editing}
     <div class="mt-3"><StageTrack stages={stages.map((s) => s.name)} current={stageIndex} stopped={lead.needsYou} label="Stages" /></div>
     {@render sections.status()}
     {@render sections.facts()}
@@ -50,7 +54,7 @@
 
   <section aria-label="The brief">
     <button type="button" class="pinned-brief bg-raised flex w-full items-center gap-2 rounded-[var(--vk-radius-md)] px-3 text-left text-sm" style="min-height:var(--vk-target-min)" aria-expanded={briefOpen} aria-controls="brief-{card.id}" onclick={() => (briefOpen = !briefOpen)}>
-      <span aria-hidden="true">📌</span> What {agent.name} was asked <span class="text-muted-foreground ml-auto">{briefOpen ? 'hide' : 'show'}</span>
+      <span aria-hidden="true">📌</span> What {agent.name || 'the agent'} was asked <span class="text-muted-foreground ml-auto">{briefOpen ? 'hide' : 'show'}</span>
     </button>
     <div id="brief-{card.id}" hidden={!briefOpen} class="mt-3 space-y-4">
       {@render sections.description()}

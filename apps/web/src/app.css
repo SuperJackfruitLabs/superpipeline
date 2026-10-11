@@ -76,6 +76,9 @@
   /* The one scrim, allow-listed in no-raw-colour.test.ts: a modal backdrop must darken in every
      theme, which no surface token does. */
   --sp-scrim: rgb(14 13 24 / 0.55);
+  /* A floating box's shadow. The ground is dark in every dark theme and a warm shade in light ones;
+     the text colour, which this used to be, is near-white in dark themes and glowed. */
+  --sp-shadow: color-mix(in oklch, var(--vk-color-ground) 70%, transparent);
   --focus: 2px solid var(--vk-color-text);
   --focus-offset: 2px;
   --tap: 24px;
@@ -212,11 +215,6 @@
   }
   ::selection {
     background: color-mix(in oklch, var(--vk-color-primary) 28%, transparent);
-  }
-  :focus-visible {
-    outline: 2px solid var(--marigold);
-    outline-offset: 2px;
-    border-radius: 3px;
   }
 }
 
@@ -618,7 +616,7 @@
     background: var(--surface);
     border: 1px solid var(--line);
     border-radius: 14px;
-    box-shadow: 0 30px 80px color-mix(in oklch, var(--vk-color-text) 18%, transparent);
+    box-shadow: 0 30px 80px var(--sp-shadow);
     overflow: hidden;
     animation: cmdk-in 0.18s ease forwards;
   }

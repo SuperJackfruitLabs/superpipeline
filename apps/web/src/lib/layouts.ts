@@ -5,25 +5,30 @@
 import type { Vibe } from '@superjackfruit/vibekit';
 import type { Component } from 'svelte';
 import BoardDaylight from '$lib/components/board/layouts/BoardDaylight.svelte';
+import BoardStudio from '$lib/components/board/layouts/BoardStudio.svelte';
+import BoardQuiet from '$lib/components/board/layouts/BoardQuiet.svelte';
+import BoardPaper from '$lib/components/board/layouts/BoardPaper.svelte';
 import type { BoardLayoutProps } from '$lib/components/board/layouts/types';
 import CardDaylight from '$lib/components/card/layouts/CardDaylight.svelte';
+import CardStudio from '$lib/components/card/layouts/CardStudio.svelte';
+import CardQuiet from '$lib/components/card/layouts/CardQuiet.svelte';
+import CardPaper from '$lib/components/card/layouts/CardPaper.svelte';
 import type { CardLayoutProps } from '$lib/components/card/layouts/types';
 
 export type FaceVariant = 'mood' | 'portrait' | 'light' | 'name';
 export const FACE_VARIANT: Readonly<Record<Vibe, FaceVariant>> = { daylight: 'mood', paper: 'portrait', studio: 'light', quiet: 'name' };
 
-/** Phase 1: every vibe uses the Daylight board, in its own tokens and words. Phases 2–4 swap one line each. */
+/** Every vibe has its own board. */
 export const BOARD_LAYOUTS: Readonly<Record<Vibe, Component<BoardLayoutProps>>> = {
   daylight: BoardDaylight,
-  paper: BoardDaylight,
-  studio: BoardDaylight,
-  quiet: BoardDaylight,
+  paper: BoardPaper,
+  studio: BoardStudio,
+  quiet: BoardQuiet,
 };
 
 /**
  * The card drawer's layout per vibe, with the panel's width and where it sits. The drawer shell
  * (`CardDrawer.svelte`) picks one by the person's vibe and hands it every section.
- * Phase 1: every vibe uses Daylight's card.
  */
 export interface CardLayout {
   component: Component<CardLayoutProps>;
@@ -32,10 +37,9 @@ export interface CardLayout {
   /** Where the panel sits: against the right edge, or centred. */
   align: 'end' | 'center';
 }
-const DAYLIGHT_CARD: CardLayout = { component: CardDaylight, panel: 'sm:max-w-[520px]', align: 'end' };
 export const CARD_LAYOUTS: Readonly<Record<Vibe, CardLayout>> = {
-  daylight: DAYLIGHT_CARD,
-  paper: DAYLIGHT_CARD,
-  studio: DAYLIGHT_CARD,
-  quiet: DAYLIGHT_CARD,
+  daylight: { component: CardDaylight, panel: 'sm:max-w-[520px]', align: 'end' },
+  paper: { component: CardPaper, panel: 'sm:max-w-[680px] sm:mx-auto sm:border-r', align: 'center' },
+  studio: { component: CardStudio, panel: 'sm:max-w-[760px]', align: 'end' },
+  quiet: { component: CardQuiet, panel: 'sm:max-w-[640px]', align: 'end' },
 };

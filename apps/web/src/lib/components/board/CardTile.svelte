@@ -12,8 +12,10 @@
   import { enforcedBadge } from './card-blocked';
   import { childCounter } from './card-children';
   import { cardProvenance } from './card-provenance';
-  import { peekNotifier } from './peek';
+  import { cameFromATile, peekNotifier } from './peek';
   import { refLabel, safeHref, subStateClass, subStateLabel } from './ref-chip';
+  import CardMoveMenu from './CardMoveMenu.svelte';
+  import { cardKeys, openLabel } from './open-label';
 
   interface Props {
     card: Card;
@@ -119,48 +121,20 @@
     app.openCard(card.id);
   }
 
-  /**
-   * Moving a card was mouse-only — drag and drop with no keyboard or menu alternative — so the
-   * board's central action was unavailable to keyboard and assistive-technology users.
-   *
-   * `Alt` + arrow rather than a bare arrow: bare arrows are how a keyboard user moves BETWEEN
-   * cards, and stealing them to move the card itself would make the board impossible to read.
-   */
+  // The move control itself lives in CardMoveMenu (one implementation, shared with every layout);
+  // the tile only owns whether it is open and how to reach its `step`.
   const orderedStages = $derived([...(app.board?.stages ?? [])].sort((a, b) => a.order - b.order));
   const stageIndex = $derived(orderedStages.findIndex((s) => s.key === card.currentStageKey));
   let moveMenuOpen = $state(false);
-  let moveAnnouncement = $state('');
-
-  async function moveTo(stageKey: string): Promise<void> {
-    const target = orderedStages.find((s) => s.key === stageKey);
-    if (!target || stageKey === card.currentStageKey) return;
-    moveMenuOpen = false;
-    await app.moveCard(card.id, stageKey);
-    // Said out loud, because a keyboard user gets no visual feedback from a card that moved to a
-    // column they cannot see. A refusal (a WIP limit) already lands in the error bar.
-    moveAnnouncement = app.error ? '' : `${card.title} moved to ${target.name}`;
-  }
-
-  function shiftStage(by: number): void {
-    const next = orderedStages[stageIndex + by];
-    if (next) void moveTo(next.key);
-  }
+  let mover = $state<ReturnType<typeof CardMoveMenu>>();
 
   function handleKeydown(e: KeyboardEvent) {
-    if (e.key === 'Enter') {
-      e.preventDefault();
-      app.openCard(card.id);
-      return;
-    }
-    if (e.altKey && (e.key === 'ArrowLeft' || e.key === 'ArrowRight')) {
-      e.preventDefault();
-      shiftStage(e.key === 'ArrowRight' ? 1 : -1);
-      return;
-    }
-    if (e.key === 'm' || e.key === 'M') {
-      e.preventDefault();
-      moveMenuOpen = !moveMenuOpen;
-    }
+    cardKeys(e, {
+      open: () => app.openCard(card.id),
+      toggleMove: () => (moveMenuOpen = !moveMenuOpen),
+      step: (d) => mover?.step(d),
+      peek: peek?.available ? () => peek.pin(card.id) : undefined,
+    });
   }
 </script>
 
@@ -179,45 +153,11 @@
 <!-- svelte-ignore a11y_no_static_element_interactions -- focusin and pointerenter only tell the peek where the eye is; they act on nothing, and the title button inside is the control -->
 <div
   use:cardDraggable={{ cardId: card.id }}
-  onfocusin={() => peek(card.id)}
-  onpointerenter={() => peek(card.id)}
+  onfocusin={(e) => { if (!cameFromATile(e)) peek?.look(card.id); }}
+  onpointerenter={() => peek?.look(card.id)}
   class="tile bg-surface border-border group relative rounded-[10px] border p-3 text-left cursor-grab active:cursor-grabbing {gate ? 'tile-gate' : ''}"
 >
-  <!-- What just happened, for a reader who cannot see the column the card landed in. -->
-  <span aria-live="polite" class="sr-only">{moveAnnouncement}</span>
-
-  <!--
-    The menu alternative to dragging. Reachable by keyboard (M, or Tab to the control) and by a
-    pointer that cannot drag — a touch screen, a trackpad the user finds hard to hold.
-  -->
-  <div class="absolute top-2 right-2 z-10">
-    <button
-      onclick={(e) => { e.stopPropagation(); moveMenuOpen = !moveMenuOpen; }}
-      aria-label="Move {card.title} to another stage"
-      aria-expanded={moveMenuOpen}
-      title="Move to…"
-      class="text-muted-foreground hover:text-foreground tap mono rounded-[6px] text-[11px] leading-none opacity-0 focus-visible:opacity-100 group-hover:opacity-100"
-      style="opacity:{moveMenuOpen ? 1 : undefined}"
-    >⇄</button>
-    {#if moveMenuOpen}
-      <div
-        role="menu"
-        tabindex="-1"
-        onclick={(e) => e.stopPropagation()}
-        onkeydown={(e) => { if (e.key === 'Escape') { e.stopPropagation(); moveMenuOpen = false; } }}
-        class="bg-surface border-border absolute top-full right-0 z-20 mt-1 w-40 rounded-[8px] border py-1 shadow-xl"
-      >
-        {#each orderedStages as s (s.key)}
-          <button
-            role="menuitem"
-            onclick={() => void moveTo(s.key)}
-            disabled={s.key === card.currentStageKey}
-            class="hover:bg-inset block w-full px-2.5 py-1 text-left text-xs disabled:opacity-40"
-          >{s.name}{s.key === card.currentStageKey ? ' · here' : ''}</button>
-        {/each}
-      </div>
-    {/if}
-  </div>
+  <CardMoveMenu {card} stages={orderedStages} bind:open={moveMenuOpen} bind:this={mover} />
   {#if priColour}
     <span class="absolute top-0 bottom-0 left-0 w-[3px]" style="background:{priColour}" aria-hidden="true"></span>
     <span class="sr-only">Priority {card.priority}</span>
@@ -229,7 +169,7 @@
       type="button"
       onclick={handleClick}
       onkeydown={handleKeydown}
-      aria-label="{card.title}, in {orderedStages[stageIndex]?.name ?? card.currentStageKey}. Enter to open, M to move, Alt with left or right arrow to move between stages."
+      aria-label={openLabel({ title: card.title, stageName: orderedStages[stageIndex]?.name ?? card.currentStageKey, peek: peek?.available })}
       data-stretch-target
       data-card-open={card.id}
       class="tile-open hit flex-1 text-left text-[13.5px] font-medium leading-snug"

@@ -3,8 +3,7 @@
   import type { Gate, GateDecision } from '$lib/api';
   import { Button } from '$lib/components/ui/button';
   import AgentFace from '$lib/components/AgentFace.svelte';
-  import Words from '$lib/components/Words.svelte';
-  import { leadText } from '$lib/copy';
+  import LeadWords from '$lib/components/LeadWords.svelte';
   import type { CardLead } from '../card-lead';
   import { GATE_NOTE_MAX, GateDecisionModel, roleOf, sealOf } from './gate-decision.svelte';
 
@@ -25,9 +24,8 @@
     <h3 id="gate-h-{gate.id}" class="wordmark text-signal-text mb-2.5 text-sm font-semibold">⚑ awaiting your review</h3>
     <div class="mb-3 flex items-start gap-2">
       {#if agent.id}<AgentFace agentId={agent.id} name={agent.name} iconUrl={agent.iconUrl} mood="needs" size={40} variant="mood" />{/if}
-      <p class="agent-voice bg-surface flex-1 rounded-[var(--vk-radius-md)] p-3 text-base"><Words text={leadText(lead, vibe)} /></p>
+      <p class="agent-voice bg-surface flex-1 rounded-[var(--vk-radius-md)] p-3 text-base"><LeadWords {lead} {vibe} /></p>
     </div>
-    {#if error}<p role="alert" class="text-signal-text bg-surface mono mb-2.5 rounded-[var(--vk-radius-md)] border-2 px-3 py-2 text-xs" style="border-color:var(--vk-color-signal)">{error}</p>{/if}
     {#if gate.approvalSubject}
       <div class="bg-surface border-border mono mb-3 rounded-[var(--vk-radius-md)] border p-2.5 text-[11px]">
         <div class="mb-1 font-semibold">Immutable approval subject · revision {gate.approvalSubject.revision}</div>
@@ -46,6 +44,8 @@
         style="border-color:{model.needNote ? 'var(--vk-color-signal)' : 'var(--vk-color-line)'}"></textarea>
       <div class="text-muted-foreground mono mt-1 text-right text-[11px]">{model.note.length} / {GATE_NOTE_MAX}</div>
     </div>
+    <!-- Beside the buttons: on a phone they stick under the thumb, and a refusal must be seen there. -->
+    {#if error}<p role="alert" class="text-signal-text bg-surface mono mb-2.5 rounded-[var(--vk-radius-md)] border-2 px-3 py-2 text-xs" style="border-color:var(--vk-color-signal)">{error}</p>{/if}
     <div class="triad gate-actions flex flex-wrap gap-2">
       {#each ordered as opt (opt.name)}
         {@const role = roleOf(opt.name)}

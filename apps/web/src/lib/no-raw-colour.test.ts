@@ -41,4 +41,11 @@ describe('colour comes from vibekit tokens', () => {
     expect(blocks.length).toBe(4);
     for (const b of blocks) expect(b).not.toMatch(/display:\s*none|visibility:\s*hidden/);
   });
+  it('shadows are cast in the ground colour, never the text colour (which glows pale in a dark theme)', () => {
+    const css = readFileSync(join(SRC, 'app.css'), 'utf8');
+    const shadows = css.match(/box-shadow:[^;]*;/g) ?? [];
+    expect(shadows.filter((d) => d.includes('--vk-color-text'))).toEqual([]);
+    expect(css).toMatch(/--sp-shadow:\s*color-mix\(in oklch, var\(--vk-color-ground\)/);
+    expect(css).toMatch(/\.cmdk-box\s*\{[^}]*box-shadow:[^;]*var\(--sp-shadow\)/);
+  });
 });

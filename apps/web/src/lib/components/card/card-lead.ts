@@ -69,3 +69,14 @@ export function moodFor(kind: LeadKind, claimed: boolean): Mood {
 }
 
 export const moodWord = (m: Mood): string => (m === 'needs' ? 'needs you' : m);
+
+/**
+ * Who speaks for a card: its delegate, else the agent that produced the pending gate (a person can
+ * produce a gate too, so only an agent id counts), else the agent asking a question. Nobody holds a
+ * queued card, and many gate cards, so the delegate alone left the drawer's sentences without a
+ * subject. Null when none of them is known: the layouts word that case themselves.
+ */
+export function speakerOf(i: { delegateId: string | null; gate?: { producedBy?: string | null } | null; elicitation?: { agentId: string } | null }): string | null {
+  const producer = i.gate?.producedBy?.startsWith('agt_') ? i.gate.producedBy : null;
+  return i.delegateId ?? producer ?? i.elicitation?.agentId ?? null;
+}

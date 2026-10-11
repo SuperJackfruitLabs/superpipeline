@@ -3,6 +3,9 @@
    * An agent, as the vibe draws it (vibekit spec "Agent faces"): a face with its mood, a round
    * portrait, a square with a status light, or the name only. The face is generated from the id
    * unless the agent has a chosen picture (iconUrl). The name is always the accessible name.
+   *
+   * `nameShown`: the caller prints the name itself, right beside the face. The `name` variant then
+   * draws nothing, so the name is not printed (and read) twice.
    */
   import { Face, type Mood } from '@superjackfruit/vibekit';
   import type { FaceVariant } from '$lib/layouts';
@@ -16,9 +19,11 @@
     size = 24,
     variant = 'mood',
     withName = false,
-  }: { agentId: string; name: string; iconUrl?: string | null; mood?: Mood; size?: number; variant?: FaceVariant; withName?: boolean } = $props();
+    nameShown = false,
+  }: { agentId: string; name: string; iconUrl?: string | null; mood?: Mood; size?: number; variant?: FaceVariant; withName?: boolean; nameShown?: boolean } = $props();
 </script>
 
+{#if !(variant === 'name' && nameShown)}
 <span class="agent-face inline-flex min-w-0 items-center gap-1.5" data-variant={variant}>
   {#if variant === 'mood'}
     <Face id={agentId} label={name} {mood} {size} src={iconUrl ?? undefined} />
@@ -36,3 +41,4 @@
   {/if}
   {#if withName || variant === 'name'}<span class="agent-name truncate">{name}</span>{/if}
 </span>
+{/if}

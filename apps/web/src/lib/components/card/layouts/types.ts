@@ -17,7 +17,8 @@ export const CARD_SECTION_KEYS = [
 export type CardSectionKey = (typeof CARD_SECTION_KEYS)[number];
 export type CardSections = Readonly<Record<CardSectionKey, Snippet>>;
 
-export interface CardCounts { criteria: number; planSteps: number; specFields: number; runs: number; links: number; children: number; openChildren: number; decisions: number; refs: number; attempts: number; deliveryActive: boolean }
+/** `description`, `handoff`, `cost`: whether that section has anything to show (Quiet says "None." under an empty one). */
+export interface CardCounts { criteria: number; planSteps: number; specFields: number; runs: number; links: number; children: number; openChildren: number; decisions: number; refs: number; attempts: number; deliveryActive: boolean; description: boolean; handoff: boolean; cost: boolean }
 export interface CardAgent { id: string | null; name: string; iconUrl: string | null; mood: Mood }
 export interface GateBinding { boardId: string; gate: Gate; error: string | null; onResponse: (d: GateDecision, r: Response) => Promise<boolean> }
 export interface QuestionBinding { model: QuestionAnswer; elicitation: Elicitation; agent: CardAgent }

@@ -44,7 +44,7 @@ export function wantYou(n: number, vibe: Vibe): string {
 
 export const leadText = (lead: Pick<CardLead, 'kind' | 'sentence'>, vibe: Vibe): string => lead.sentence ?? LEAD_FALLBACK[lead.kind][vibe];
 
-const EMOJI = /(\p{Extended_Pictographic}(?:️|‍\p{Extended_Pictographic})*)/u;
+const EMOJI = /(\p{Extended_Pictographic}(?:\uFE0F|\u200D\p{Extended_Pictographic})*)/u;
 export function splitEmoji(text: string): Array<{ text: string; emoji: boolean }> {
   return text.split(EMOJI).filter((p) => p !== '').map((p) => ({ text: p, emoji: EMOJI.test(p) }));
 }
