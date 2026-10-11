@@ -40,7 +40,7 @@
     { label: 'cards', value: String(summaries.length) },
     { label: 'needs you', value: String(summaries.filter((s) => s.urgency === 'needs').length) },
     { label: 'working', value: String(summaries.filter((s) => s.urgency === 'working').length) },
-    { label: 'spend 7d', value: usd(app.board?.usage.totalCostUsd ?? 0) },
+    { label: 'spend', value: usd(app.board?.usage.totalCostUsd ?? 0) },
     { label: 'over budget', value: String(summaries.filter((s) => s.overBudget).length) },
     { label: 'overdue', value: String(summaries.filter((s) => s.overdue).length) },
   ]);

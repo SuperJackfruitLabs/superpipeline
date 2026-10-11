@@ -100,7 +100,7 @@ describe('BoardStudio', () => {
     expect(pair('cards')).toBe('11cards');
     expect(pair('needs you')).toBe('2needs you');
     expect(pair('working')).toBe('1working');
-    expect(pair('spend 7d')).toBe('$7.50spend 7d');
+    expect(pair('spend')).toBe('$7.50spend');
     expect(pair('over budget')).toBe('1over budget');
     expect(pair('overdue')).toBe('1overdue');
   });
