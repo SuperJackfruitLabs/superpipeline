@@ -33,7 +33,7 @@
 
   <article class="letter agent-voice text-[17px] leading-relaxed">
     <p>Dear {personName},</p>
-    <p class="mt-3"><LeadWords {lead} {vibe} /></p>
+    <p class="mt-3 whitespace-pre-wrap"><LeadWords {lead} {vibe} /></p>
     <footer class="mt-4 flex items-center gap-2 not-italic">
       {#if agent.id}<AgentFace agentId={agent.id} name={agent.name} iconUrl={agent.iconUrl} mood={agent.mood} size={32} variant="portrait" />{/if}
       <!-- "delegate" only when the named agent holds the card; nobody may hold it yet. -->
@@ -45,7 +45,8 @@
 
   <section class="mt-6" aria-label="Your reply">
     {#if question}
-      <QuestionPaper model={question.model} elicitation={question.elicitation} agent={question.agent} {vibe} />
+      <!-- The letter above already carries the question. -->
+      <QuestionPaper model={question.model} elicitation={question.elicitation} agent={question.agent} {vibe} showQuestion={false} />
     {:else if gate}
       <!-- The letter above already carries the agent's sentence. -->
       <GatePaper boardId={gate.boardId} gate={gate.gate} error={gate.error} onResponse={gate.onResponse} {agent} {lead} {vibe} showLead={false} />

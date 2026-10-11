@@ -166,9 +166,9 @@ describe('CardStudio gate and question frames', () => {
     expect(bar.contains(screen.getByRole('button', { name: 'Approve' }))).toBe(true);
     expect(container.querySelector('.command-bar')!.parentElement!.contains(screen.getByText('SECTION-resume'))).toBe(true);
   });
-  it('shows the question above the tabs', () => {
+  it('shows the question once, in the readout above the tabs', () => {
     const question = { model: { text: '', error: null, answering: false, send: () => {} }, elicitation: { id: 'eli_1', agentId: 'agt_r', question: 'Shall I run the tests?', signal: 'question', options: [{ name: 'y', title: 'Yes' }] }, agent: { id: 'agt_r', name: 'Sample agent', iconUrl: null, mood: 'needs' } } as never;
-    render(CardStudio, props({ question }));
+    render(CardStudio, props({ question, lead: lead({ kind: 'question', sentence: 'Shall I run the tests?', source: 'question' }) }));
     expect(!!(screen.getByText('Shall I run the tests?').compareDocumentPosition(screen.getByRole('tablist')) & Node.DOCUMENT_POSITION_FOLLOWING)).toBe(true);
   });
   it('in the resume state the bar caps its height and scrolls on its own', () => {

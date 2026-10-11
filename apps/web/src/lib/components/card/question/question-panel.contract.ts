@@ -58,6 +58,11 @@ export function questionPanelContract(
       expect(panel.textContent).toContain('Shall I run the tests?');
     });
 
+    it('says the question once in its own render', () => {
+      const { container } = mountQuestion(C, ask());
+      expect(container.textContent!.split('Shall I run the tests?')).toHaveLength(2);
+    });
+
     it('says sign-in for an auth signal', () => {
       const { container } = mountQuestion(C, ask({ signal: 'auth' } as never));
       expect(container.querySelector('.elicitation')!.textContent).toContain('awaiting your sign-in');
