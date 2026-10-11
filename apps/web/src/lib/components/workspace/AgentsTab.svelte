@@ -175,7 +175,7 @@
         </div>
       {:else}
         <div class="flex flex-wrap items-center gap-2">
-          <AgentFace agentId={a.id} name={a.name} iconUrl={a.iconUrl ?? null} size={24} variant={FACE_VARIANT[appearance.value.vibe]} />
+          <AgentFace agentId={a.id} name={a.name} iconUrl={a.iconUrl ?? null} size={24} variant={FACE_VARIANT[appearance.value.vibe]} nameShown />
           <span class="min-w-[7rem] text-sm font-medium">{a.name}</span>
           {#each a.capabilities as c (c)}
             <span class="border-border mono text-muted-foreground rounded-[5px] border px-1.5 py-0.5 text-[10px]">{c}</span>

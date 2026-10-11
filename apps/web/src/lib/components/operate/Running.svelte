@@ -22,7 +22,7 @@
     {#each running as c (c.id)}
       <div class="border-border flex items-center gap-2.5 border-b px-3.5 py-2.5 last:border-b-0">
         {#if c.delegateAgentId}
-          <AgentFace agentId={c.delegateAgentId} name={agentName(c.delegateAgentId)} iconUrl={app.agents.find((a) => a.id === c.delegateAgentId)?.iconUrl ?? null} mood="working" size={24} variant={FACE_VARIANT[appearance.value.vibe]} />
+          <AgentFace agentId={c.delegateAgentId} name={agentName(c.delegateAgentId)} iconUrl={app.agents.find((a) => a.id === c.delegateAgentId)?.iconUrl ?? null} mood="working" size={24} variant={FACE_VARIANT[appearance.value.vibe]} nameShown />
         {:else}
           <span class="text-muted-foreground w-6 shrink-0 text-center" aria-hidden="true">·</span>
         {/if}

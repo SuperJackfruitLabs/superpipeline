@@ -32,6 +32,14 @@ describe('AgentFace', () => {
     expect(container.textContent?.trim()).toBe('Sample agent');
     expect(container.querySelector('svg, img')).toBeNull();
   });
+  it('name with nameShown: nothing, because the caller prints the name beside it', () => {
+    const { container } = render(AgentFace, { agentId: 'agt_r', name: 'Sample agent', variant: 'name', nameShown: true });
+    expect(container.textContent?.trim()).toBe('');
+  });
+  it('a picture variant with nameShown still draws the face', () => {
+    const { container } = render(AgentFace, { agentId: 'agt_r', name: 'Sample agent', variant: 'portrait', nameShown: true });
+    expect(container.querySelector('[role="img"]')).not.toBeNull();
+  });
   it('an HTML name is text, never markup', () => {
     const { container } = render(AgentFace, { agentId: 'agt_r', name: '<img src=x onerror=alert(1)>', variant: 'portrait' });
     expect(container.querySelector('img')).toBeNull();
