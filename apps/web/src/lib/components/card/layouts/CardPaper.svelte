@@ -7,6 +7,7 @@
   import AgentFace from '$lib/components/AgentFace.svelte';
   import LeadWords from '$lib/components/LeadWords.svelte';
   import { LIGHT_WORDS } from '$lib/copy';
+  import { app } from '$lib/stores/app.svelte';
   import GatePaper from '../gate/GatePaper.svelte';
   import QuestionPaper from '../question/QuestionPaper.svelte';
   import type { CardLayoutProps } from './types';
@@ -18,7 +19,8 @@
 
 <!-- pr-12 leaves room for the shell's 44px close target -->
 <div class="flex-none px-6 pt-5 pr-12">
-  <p class="text-muted-foreground text-sm">‹ {boardName} · in {LIGHT_WORDS[phase]}</p>
+  <!-- The way back closes the drawer (spec §5.2), like Quiet's. -->
+  <p class="text-muted-foreground text-sm"><button type="button" class="vk-link inline-flex min-h-[var(--vk-target-min)] items-center" onclick={() => app.closeCard()}>‹ {boardName}</button> · in {LIGHT_WORDS[phase]}</p>
   {#if lead.needsYou}<p class="eyebrow text-signal-text mt-2">● A letter that needs a reply</p>{/if}
   <!-- The title stays in the page while editing (visually hidden), so the dialog keeps its name. -->
   <h2 id="drawer-title" class="font-display mt-1 text-2xl" class:sr-only={editing}>Re: {card.title}</h2>

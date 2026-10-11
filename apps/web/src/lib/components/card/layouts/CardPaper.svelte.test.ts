@@ -3,12 +3,15 @@
  * Paper's card is a letter from the agent (spec §5.2): the reply comes first, and the brief, the
  * history, the waiting work, the attachments and the correspondence are labelled enclosures.
  */
-import { describe, it, expect, afterEach } from 'vitest';
-import { render, screen, cleanup } from '@testing-library/svelte';
+import { describe, it, expect, afterEach, vi } from 'vitest';
+import { render, screen, cleanup, fireEvent } from '@testing-library/svelte';
 import { createRawSnippet } from 'svelte';
 import CardPaper from './CardPaper.svelte';
 import { CARD_SECTION_KEYS, type CardCounts, type CardLayoutProps, type CardSections } from './types';
 import type { CardLead } from '../card-lead';
+
+const closeCard = vi.hoisted(() => vi.fn());
+vi.mock('$lib/stores/app.svelte', () => ({ app: { closeCard } }));
 
 afterEach(() => cleanup());
 
@@ -101,6 +104,12 @@ describe('CardPaper', () => {
     expect(screen.getAllByText('SECTION-editForm')).toHaveLength(1);
     // The title stays for the dialog's name, visually hidden.
     expect(screen.getByRole('heading', { level: 2 }).classList.contains('sr-only')).toBe(true);
+  });
+
+  it('has a way back that closes the drawer', async () => {
+    render(CardPaper, props(lead()));
+    await fireEvent.click(screen.getByRole('button', { name: '‹ Board' }));
+    expect(closeCard).toHaveBeenCalledOnce();
   });
 
   it('leaves room for the close button', () => {

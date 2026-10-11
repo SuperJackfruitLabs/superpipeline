@@ -53,7 +53,7 @@
         <ul class="mt-2">
           {#each g.cards as s (s.id)}
             {@const act = action(s)}
-            <li class="border-border relative border-b py-3 pr-12 {g.urgency === 'needs' ? 'border-l-[5px] border-signal pl-3.5' : ''}" aria-labelledby="qb-t-{s.id}">
+            <li class="border-border relative border-b py-3 pr-12 {g.urgency === 'needs' ? 'border-l-[5px] border-l-signal pl-3.5' : ''}" aria-labelledby="qb-t-{s.id}">
               <h3 id="qb-t-{s.id}" class="font-semibold">
                 <button type="button" class="hit text-left hover:underline" aria-label={openLabel(s)} data-card-open={s.id} onclick={() => app.openCard(s.id)} onkeydown={(e) => keys(e, s)}>{s.title}</button>
               </h3>

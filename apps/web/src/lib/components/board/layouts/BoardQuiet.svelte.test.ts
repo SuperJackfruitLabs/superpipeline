@@ -114,6 +114,9 @@ describe('BoardQuiet', () => {
   it('marks needs-you items with a signal rule, and only those', () => {
     render(BoardQuiet, props());
     expect(screen.getByRole('listitem', { name: /Review me/ }).className).toContain('border-l-[5px]');
+    // Only the left rule is signal; the item's bottom rule stays the line colour.
+    expect(screen.getByRole('listitem', { name: /Review me/ }).className.split(/\s+/)).toContain('border-l-signal');
+    expect(screen.getByRole('listitem', { name: /Review me/ }).className.split(/\s+/)).not.toContain('border-signal');
     expect(screen.getByRole('listitem', { name: /Busy one/ }).className).not.toContain('border-l-[5px]');
   });
 
