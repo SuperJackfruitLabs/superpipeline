@@ -2,12 +2,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, fireEvent, render, screen } from '@testing-library/svelte';
 
-const answerElicitation = vi.fn();
-vi.mock('$lib/api', async (orig) => ({
-  ...(await orig<typeof import('$lib/api')>()),
-  answerElicitation: (...a: unknown[]) => answerElicitation(...a),
-}));
-
+import { answerElicitation, questionPanelContract } from './question-panel.contract';
 import QuestionDaylight from './QuestionDaylight.svelte';
 import { QuestionAnswer } from './question-answer.svelte';
 import type { Elicitation } from '$lib/api';
@@ -34,6 +29,8 @@ function mount(e: Elicitation) {
 
 beforeEach(() => answerElicitation.mockReset().mockResolvedValue({ ok: true, json: async () => ({}) }));
 afterEach(() => cleanup());
+
+questionPanelContract(QuestionDaylight, { decision: 'button' });
 
 describe('QuestionDaylight', () => {
   it('is the .elicitation panel, with who is waiting and what they asked', () => {

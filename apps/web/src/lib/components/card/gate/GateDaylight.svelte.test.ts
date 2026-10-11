@@ -7,12 +7,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, fireEvent, cleanup } from '@testing-library/svelte';
 import { tick } from 'svelte';
 
-const resolveGate = vi.fn();
-vi.mock('$lib/api', async (orig) => ({
-  ...(await orig<typeof import('$lib/api')>()),
-  resolveGate: (...a: unknown[]) => resolveGate(...a),
-}));
-
+import { gatePanelContract, resolveGate } from './gate-panel.contract';
 import GateDaylight from './GateDaylight.svelte';
 import type { Gate } from '$lib/api';
 
@@ -37,6 +32,8 @@ function mount(g: Gate, ok = true) {
 
 beforeEach(() => resolveGate.mockReset().mockResolvedValue(new Response('{}', { status: 200 })));
 afterEach(() => cleanup());
+
+gatePanelContract(GateDaylight, { decision: 'button' });
 
 describe('GateDaylight', () => {
   it('shows the note while the gate is pending, with a visible limit and a 16px font class', () => {
