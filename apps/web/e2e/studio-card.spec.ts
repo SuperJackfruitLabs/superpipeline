@@ -38,3 +38,21 @@ test('studio phone: a focused control in the open tab is not under the resume ba
     expect(box.y + box.height, `${tab}: last control sits above the bar`).toBeLessThanOrEqual(top + 1);
   }
 });
+
+test('studio phone: the edit form scrolls with the body, and Save can be reached and seen', async ({ page, request }) => {
+  await page.setViewportSize({ width: 375, height: 667 });
+  await setAppearance(page, 'studio.light.strong.0');
+  const boardId = await seedBoard(request, 'Studio edit', PIPELINE);
+  await request.post(`${API}/v1/boards/${boardId}/cards`, { headers: TENANT, data: { title: 'Edit me on a phone', ownerUserId: 'usr_a' } });
+  await openBoard(page, boardId);
+  await page.getByRole('button', { name: /^Edit me on a phone, in / }).first().click();
+  const dialog = page.getByRole('dialog');
+  await dialog.getByRole('button', { name: 'Edit card' }).click();
+  // Not inside the header capped at 40dvh.
+  await expect(dialog.getByRole('region', { name: 'Card summary' }).getByPlaceholder('Title')).toHaveCount(0);
+  const save = dialog.getByRole('button', { name: 'Save' });
+  await save.scrollIntoViewIfNeeded();
+  await expect(save).toBeInViewport();
+  await save.focus();
+  await expect(save).toBeFocused();
+});

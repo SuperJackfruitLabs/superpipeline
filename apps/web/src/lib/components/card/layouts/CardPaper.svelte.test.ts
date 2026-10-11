@@ -19,10 +19,10 @@ const sections = Object.fromEntries(
 const lead = (over: Partial<CardLead> = {}): CardLead => ({
   kind: 'stopped', needsYou: true, agentId: 'agt_r', sentence: 'Handoff refused twice.', source: 'needs-human', at: '2026-10-11T09:30:00Z', ...over,
 });
-const counts: CardCounts = { criteria: 3, planSteps: 2, specFields: 1, runs: 4, links: 2, children: 1, openChildren: 1, decisions: 0, refs: 5, attempts: 1, deliveryActive: false };
+const counts: CardCounts = { criteria: 3, planSteps: 2, specFields: 1, runs: 4, links: 2, children: 1, openChildren: 1, decisions: 0, refs: 5, attempts: 1, deliveryActive: false, description: true, handoff: false, cost: false };
 
 const props = (l: CardLead, extra: Partial<CardLayoutProps> = {}): CardLayoutProps => ({
-  card: { id: 'crd_1', title: 'Fix the thing' } as never,
+  card: { id: 'crd_1', title: 'Fix the thing', delegateAgentId: 'agt_r' } as never,
   vibe: 'paper', phase: 'noon', boardName: 'Board', personName: 'Pat',
   stages: [{ key: 'a', name: 'Todo' }] as never, stageIndex: 0, stageName: 'Todo', ageHours: null, lead: l,
   agent: { id: 'agt_r', name: 'Sample agent', iconUrl: null, mood: 'needs' },
@@ -96,10 +96,11 @@ describe('CardPaper', () => {
     inside(/Correspondence/, ['comments']);
   });
 
-  it('swaps the title for the edit form while editing', () => {
+  it('shows the edit form while editing and keeps the title, visually hidden', () => {
     render(CardPaper, props(lead(), { editing: true }));
     expect(screen.getAllByText('SECTION-editForm')).toHaveLength(1);
-    expect(screen.queryByRole('heading', { level: 2 })).toBeNull();
+    // The title stays for the dialog's name, visually hidden.
+    expect(screen.getByRole('heading', { level: 2 }).classList.contains('sr-only')).toBe(true);
   });
 
   it('leaves room for the close button', () => {

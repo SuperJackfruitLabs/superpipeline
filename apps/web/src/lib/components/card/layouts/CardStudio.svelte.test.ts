@@ -23,7 +23,7 @@ const sections = Object.fromEntries(
 const lead = (over: Partial<CardLead> = {}): CardLead => ({
   kind: 'stopped', needsYou: true, agentId: 'agt_r', sentence: 'Handoff refused twice.', source: 'needs-human', at: '2026-10-11T09:30:00Z', ...over,
 });
-const counts: CardCounts = { criteria: 3, planSteps: 2, specFields: 1, runs: 4, links: 2, children: 3, openChildren: 1, decisions: 0, refs: 5, attempts: 1, deliveryActive: false };
+const counts: CardCounts = { criteria: 3, planSteps: 2, specFields: 1, runs: 4, links: 2, children: 3, openChildren: 1, decisions: 0, refs: 5, attempts: 1, deliveryActive: false, description: true, handoff: false, cost: false };
 
 const props = (extra: Partial<CardLayoutProps> = {}): CardLayoutProps => ({
   card: { id: 'crd_abcd1234', title: 'Fix the thing', attemptCount: 2, state: 'stuck', costUsd: 1.5 } as never,
@@ -118,10 +118,18 @@ describe('CardStudio', () => {
     expect((scroller as HTMLElement).style.scrollPaddingBottom).toMatch(/^\d+px$/);
   });
 
-  it('swaps the title for the edit form while editing', async () => {
+  it('shows the edit form while editing and keeps the title, visually hidden', async () => {
     render(CardStudio, props({ editing: true }));
     expect(screen.getAllByText('SECTION-editForm')).toHaveLength(1);
-    expect(screen.queryByRole('heading', { level: 2 })).toBeNull();
+    // The title stays for the dialog's name, visually hidden.
+    expect(screen.getByRole('heading', { level: 2 }).classList.contains('sr-only')).toBe(true);
+  });
+
+  it('puts the edit form in the scrolling body, not the capped header', () => {
+    render(CardStudio, props({ editing: true }));
+    const form = screen.getByText('SECTION-editForm');
+    expect(screen.getByRole('region', { name: 'Card summary' }).contains(form)).toBe(false);
+    expect(before('SECTION-error', form)).toBe(true);
   });
 
   it('caps the header so a long reason cannot push the body off a phone', () => {

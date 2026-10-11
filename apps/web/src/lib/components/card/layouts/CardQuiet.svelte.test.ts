@@ -7,7 +7,7 @@ import { describe, it, expect, afterEach, vi } from 'vitest';
 import { render, screen, cleanup, fireEvent } from '@testing-library/svelte';
 import { createRawSnippet } from 'svelte';
 import CardQuiet from './CardQuiet.svelte';
-import { CARD_SECTION_KEYS, type CardLayoutProps, type CardSections } from './types';
+import { CARD_SECTION_KEYS, type CardCounts, type CardLayoutProps, type CardSections } from './types';
 import type { CardLead } from '../card-lead';
 
 const closeCard = vi.hoisted(() => vi.fn());
@@ -110,10 +110,33 @@ describe('CardQuiet', () => {
     expect(container.querySelector('details')).toBeNull();
   });
 
-  it('swaps the title for the edit form while editing', () => {
+  it('shows the edit form while editing, the title kept for the dialog’s name but visually hidden', () => {
     render(CardQuiet, props(lead(), { editing: true }));
     expect(screen.getAllByText('SECTION-editForm')).toHaveLength(1);
-    expect(screen.queryByRole('heading', { level: 2 })).toBeNull();
+    const h = screen.getByRole('heading', { level: 2 });
+    expect(h.id).toBe('drawer-title');
+    expect(h.classList.contains('sr-only')).toBe(true);
+  });
+
+  const EMPTY: CardCounts = { criteria: 0, planSteps: 0, specFields: 0, runs: 0, links: 0, children: 0, openChildren: 0, decisions: 0, refs: 0, attempts: 0, deliveryActive: false, description: false, handoff: false, cost: false };
+  const FULL: CardCounts = { criteria: 2, planSteps: 3, specFields: 1, runs: 2, links: 1, children: 1, openChildren: 1, decisions: 1, refs: 1, attempts: 2, deliveryActive: true, description: true, handoff: true, cost: true };
+  const SAYS_NONE = ['Description', 'Acceptance criteria', 'Plan', 'Decisions', 'Handoff', 'Cost', 'Attempts', 'Delivery'];
+
+  it('says "None." under every heading whose section is empty, and keeps the heading', () => {
+    render(CardQuiet, props(lead(), { counts: EMPTY }));
+    for (const name of SAYS_NONE) expect(sectionOf(name).textContent, name).toContain('None.');
+    // Sections that carry their own empty state or controls say nothing extra.
+    for (const name of ['Details', 'History', 'Comments', 'Links', 'Sub-tasks', 'Project', 'References', 'Card actions']) expect(sectionOf(name).textContent, name).not.toContain('None.');
+  });
+
+  it('says nothing extra when the sections hold something', () => {
+    const { container } = render(CardQuiet, props(lead(), { counts: FULL }));
+    expect(container.textContent).not.toContain('None.');
+  });
+
+  it('counts a single attempt as one, not none', () => {
+    render(CardQuiet, props(lead(), { counts: { ...EMPTY, attempts: 1 } }));
+    expect(sectionOf('Attempts').textContent).toContain('One attempt.');
   });
 
   it('is one 640px column and leaves room for the close button', () => {

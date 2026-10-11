@@ -6,18 +6,21 @@
   import type { CardLead } from '../card-lead';
   import { sealOf } from './gate-decision.svelte';
 
-  let { gate, agent, lead, vibe }: {
-    gate: Gate; agent: { id: string | null; name: string; iconUrl: string | null; mood: Mood }; lead: CardLead; vibe: Vibe;
+  /** `showLead` false: the caller (Studio's card readout) already says who, what is needed and the sentence. */
+  let { gate, agent, lead, vibe, showLead = true }: {
+    gate: Gate; agent: { id: string | null; name: string; iconUrl: string | null; mood: Mood }; lead: CardLead; vibe: Vibe; showLead?: boolean;
   } = $props();
 </script>
 
 <section class="sec" aria-labelledby="gate-h-{gate.id}">
-  <p class="mb-2 flex items-center gap-2 text-xs">
-    <span class="status-led inline-block size-2.5 rounded-full" data-mood="needs" aria-hidden="true"></span>
-    <span class="uppercase font-mono">{agent.name} · needs decision</span>
-  </p>
+  {#if showLead}
+    <p class="mb-2 flex items-center gap-2 text-xs">
+      <span class="status-led inline-block size-2.5 rounded-full" data-mood="needs" aria-hidden="true"></span>
+      <span class="uppercase font-mono">{agent.name || 'The agent'} · needs decision</span>
+    </p>
+  {/if}
   <h3 id="gate-h-{gate.id}" class="eyebrow text-signal-text mb-2 text-sm font-semibold">⚑ awaiting your review</h3>
-  <p class="agent-voice font-mono mb-3 text-base"><LeadWords {lead} {vibe} /></p>
+  {#if showLead}<p class="agent-voice font-mono mb-3 text-base"><LeadWords {lead} {vibe} /></p>{/if}
   {#if gate.approvalSubject}
     <div class="bg-surface border-border font-mono mb-3 rounded-[var(--vk-radius-md)] border p-2.5 text-xs">
       <div class="mb-1 font-semibold">Immutable approval subject · revision {gate.approvalSubject.revision}</div>

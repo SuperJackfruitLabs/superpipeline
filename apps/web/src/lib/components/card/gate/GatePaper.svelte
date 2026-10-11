@@ -5,11 +5,12 @@
   import type { CardLead } from '../card-lead';
   import { GATE_NOTE_MAX, GateDecisionModel, sealOf } from './gate-decision.svelte';
 
-  let { boardId, gate, error, onResponse, lead, vibe }: {
+  /** `showLead` false: the caller (Paper's letter) already says the agent's sentence. */
+  let { boardId, gate, error, onResponse, lead, vibe, showLead = true }: {
     boardId: string; gate: Gate; error: string | null;
     onResponse: (d: GateDecision, r: Response) => Promise<boolean>;
     agent: { id: string | null; name: string; iconUrl: string | null; mood: Mood };
-    lead: CardLead; vibe: Vibe;
+    lead: CardLead; vibe: Vibe; showLead?: boolean;
   } = $props();
 
   const model = new GateDecisionModel(() => ({ boardId, gate, onResponse }));
@@ -19,7 +20,7 @@
 <section class="sec paper-gate" aria-labelledby="gate-h-{gate.id}">
   <h3 id="gate-h-{gate.id}" class="eyebrow text-signal-text">⚑ awaiting your review</h3>
   <p class="font-display mt-1 text-lg">Re: approval</p>
-  <p class="agent-voice mt-2"><LeadWords {lead} {vibe} /></p>
+  {#if showLead}<p class="agent-voice mt-2"><LeadWords {lead} {vibe} /></p>{/if}
   {#if gate.approvalSubject}
     <figure class="mt-3 border-l-2 border-[var(--vk-color-line)] pl-3" aria-label="The version you are approving">
       <figcaption class="text-sm">Immutable approval subject · revision {gate.approvalSubject.revision}</figcaption>

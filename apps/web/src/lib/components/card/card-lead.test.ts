@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { cardLead, moodFor, moodWord } from './card-lead';
+import { cardLead, moodFor, moodWord, speakerOf } from './card-lead';
 
 const card = (over: Record<string, unknown> = {}) =>
   ({ state: 'submitted', delegateAgentId: null, needsHuman: undefined, overBudget: false, stateSince: '2026-10-11T10:00:00Z', ...over }) as never;
@@ -49,5 +49,19 @@ describe('cardLead: the agent speaks first', () => {
     expect(moodFor('idle', true)).toBe('thinking');
     expect(moodFor('idle', false)).toBe('resting');
     expect(moodWord('needs')).toBe('needs you');
+  });
+});
+
+describe('speakerOf', () => {
+  it('is the delegate when one holds the card', () => {
+    expect(speakerOf({ delegateId: 'agt_d', gate: { producedBy: 'agt_g' }, elicitation: { agentId: 'agt_q' } })).toBe('agt_d');
+  });
+  it('falls back to the agent that produced the gate, then the agent asking', () => {
+    expect(speakerOf({ delegateId: null, gate: { producedBy: 'agt_g' }, elicitation: { agentId: 'agt_q' } })).toBe('agt_g');
+    expect(speakerOf({ delegateId: null, gate: null, elicitation: { agentId: 'agt_q' } })).toBe('agt_q');
+  });
+  it('skips a gate a person produced, and is null with nobody at all', () => {
+    expect(speakerOf({ delegateId: null, gate: { producedBy: 'usr_a' }, elicitation: null })).toBeNull();
+    expect(speakerOf({ delegateId: null, gate: { producedBy: '' } })).toBeNull();
   });
 });

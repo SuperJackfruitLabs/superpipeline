@@ -76,21 +76,22 @@
 <!-- svelte-ignore a11y_no_noninteractive_tabindex -->
 <div role="region" aria-label="Card summary" tabindex="0" class="border-border max-h-[40dvh] flex-none overflow-y-auto border-b p-4 pr-14 pb-3">
   <p class="eyebrow text-muted-foreground font-mono flex flex-wrap justify-between gap-x-3"><span>‹ {boardName} / {card.id.slice(-4)}</span><span>{clock} {greeting(phase, 'studio')}</span></p>
-  {#if editing}
-    {@render sections.editForm()}
-  {:else}
-    <h2 id="drawer-title" class="mt-1 text-lg leading-snug font-semibold">{card.title}</h2>
-  {/if}
+  <!-- The title stays while editing (visually hidden), so the dialog keeps its name; the form
+       itself is at the top of the scrolling body, not in this capped header. -->
+  <h2 id="drawer-title" class="mt-1 text-lg leading-snug font-semibold" class:sr-only={editing}>{card.title}</h2>
   <div class="mt-3 grid grid-cols-2 gap-1.5 sm:grid-cols-3 lg:grid-cols-6" role="group" aria-label="Card numbers">
     {#each numbers as n (n.label)}
       <p class="bg-surface border-border flex flex-wrap items-baseline gap-x-1.5 rounded-[var(--vk-radius-sm)] border px-2 py-1"><span class="eyebrow">{n.label}</span> <span class="font-mono text-sm font-semibold">{n.value}</span></p>
     {/each}
   </div>
   <div class="mt-3"><StageTrack stages={stages.map((s) => s.name)} current={stageIndex} stopped={lead.needsYou} label="Stages" /></div>
-  <p class="readout font-mono mt-3 flex items-start gap-2 text-sm">
+  <div class="readout font-mono mt-3 flex items-start gap-2 text-sm">
     <span class="status-led mt-1 inline-block size-2.5 flex-none rounded-full" data-mood={agent.mood} data-blink={lead.needsYou} aria-hidden="true"></span>
-    <span><b>{agent.name}</b> · <LeadWords {lead} {vibe} /></span>
-  </p>
+    <div class="min-w-0">
+      <p class="uppercase"><b>{agent.name || 'Nobody yet'}</b> · {lead.needsYou ? 'needs decision' : card.state}</p>
+      <p><LeadWords {lead} {vibe} /></p>
+    </div>
+  </div>
 </div>
 
 <!--
@@ -102,10 +103,12 @@
 -->
 <div class="min-h-0 flex-1 space-y-5 overflow-x-hidden overflow-y-auto px-4 py-4" style="overflow-wrap:anywhere;scroll-padding-bottom:{barHeight + 16}px">
   {@render sections.error()}
+  {#if editing}{@render sections.editForm()}{/if}
   {#if question}
     <QuestionStudioFrame elicitation={question.elicitation} agent={question.agent} />
   {:else if gate}
-    <GateStudioFrame gate={gate.gate} {agent} {lead} {vibe} />
+    <!-- The readout above already says who, what is needed and the sentence. -->
+    <GateStudioFrame gate={gate.gate} {agent} {lead} {vibe} showLead={false} />
   {/if}
   <div class="flex flex-wrap items-center gap-2">
     {@render sections.status()}

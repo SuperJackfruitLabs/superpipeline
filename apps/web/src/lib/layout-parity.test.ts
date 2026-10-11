@@ -11,14 +11,24 @@ const stripComments = (src: string) => src.replace(/<!--[\s\S]*?-->/g, '').repla
 export const LEAD_USED = /\blead=|\{lead\b|\blead\.|\bleadText\(\s*lead\b/;
 /**
  * Section renders that sit inside an open {#if ...} block (an {:else} branch counts as inside).
- * The one allowed condition is `editing`: the shell's edit-mode swap, whose other branch is the
- * edit form, and each section is still rendered once overall.
+ * The one allowed condition is `editing` (or `!editing`): the shell's edit-mode swap, whose other
+ * branch is the edit form, and each section is still rendered once overall.
  */
+/** Whether `needle` first appears inside an open {#if ...} block of any kind, the edit swap included. */
+export function insideAnyIf(src: string, needle: string): boolean {
+  const clean = stripComments(src);
+  const at = clean.indexOf(needle);
+  if (at < 0) return false;
+  let depth = 0;
+  for (const m of clean.slice(0, at).matchAll(/\{#if\s[^}]*\}|\{\/if\}/g)) depth += m[0] === '{/if}' ? -1 : 1;
+  return depth > 0;
+}
+
 export function conditionalSections(src: string): string[] {
   const out: string[] = [];
-  const stack: boolean[] = []; // true for each open {#if} that is not `editing`
+  const stack: boolean[] = []; // true for each open {#if} that is not the edit-mode swap
   for (const m of stripComments(src).matchAll(/\{#if\s+([^}]*)\}|\{\/if\}|\{@render sections\.(\w+)\(\)\}/g)) {
-    if (m[0].startsWith('{#if')) stack.push(m[1].trim() !== 'editing');
+    if (m[0].startsWith('{#if')) stack.push(!/^!?editing$/.test(m[1].trim()));
     else if (m[0] === '{/if}') stack.pop();
     else if (stack.some(Boolean)) out.push(m[2]);
   }
@@ -36,6 +46,8 @@ describe('every card layout shows everything (spec §7.5)', () => {
       it(`${f} renders sections.${k} exactly once`, () => expect(count(src, `{@render sections.${k}()}`)).toBe(1));
     }
     it(`${f} labels the dialog with the title`, () => expect(count(src, 'id="drawer-title"')).toBe(1));
+    it(`${f} keeps the title outside every {#if}, so the dialog keeps its name while editing`, () =>
+      expect(insideAnyIf(src, 'id="drawer-title"')).toBe(false));
     it(`${f} renders a gate panel and a question panel`, () => {
       expect(src).toMatch(/<Gate[A-Z]\w*\b/);
       expect(src).toMatch(/<Question[A-Z]\w*\b/);
@@ -72,5 +84,11 @@ describe('the parity guards catch what they are for', () => {
     expect(conditionalSections('{#if x}{:else}{@render sections.plan()}{/if}')).toEqual(['plan']);
     expect(conditionalSections('{#if a}{#if editing}{@render sections.plan()}{/if}{/if}{@render sections.cost()}')).toEqual(['plan']);
     expect(conditionalSections('{#if editing}{@render sections.plan()}{:else}{@render sections.cost()}{/if}')).toEqual([]);
+    expect(conditionalSections('{#if !editing}{@render sections.plan()}{/if}')).toEqual([]);
+    expect(conditionalSections('{#if !editingProject}{@render sections.plan()}{/if}')).toEqual(['plan']);
+  });
+  it('a title inside an {#if}, even the edit swap, is flagged', () => {
+    expect(insideAnyIf('{#if editing}{:else}<h2 id="drawer-title">{/if}', 'id="drawer-title"')).toBe(true);
+    expect(insideAnyIf('{#if editing}x{/if}<h2 id="drawer-title">', 'id="drawer-title"')).toBe(false);
   });
 });

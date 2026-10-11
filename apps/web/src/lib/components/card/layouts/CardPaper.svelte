@@ -20,11 +20,9 @@
 <div class="flex-none px-6 pt-5 pr-12">
   <p class="text-muted-foreground text-sm">‹ {boardName} · in {LIGHT_WORDS[phase]}</p>
   {#if lead.needsYou}<p class="eyebrow text-signal-text mt-2">● A letter that needs a reply</p>{/if}
-  {#if editing}
-    {@render sections.editForm()}
-  {:else}
-    <h2 id="drawer-title" class="font-display mt-1 text-2xl">Re: {card.title}</h2>
-  {/if}
+  <!-- The title stays in the page while editing (visually hidden), so the dialog keeps its name. -->
+  <h2 id="drawer-title" class="font-display mt-1 text-2xl" class:sr-only={editing}>Re: {card.title}</h2>
+  {#if editing}{@render sections.editForm()}{/if}
 </div>
 
 <!-- Unbroken tokens (handoffs, tool arguments, references) must not push the panel sideways. -->
@@ -36,7 +34,8 @@
     <p class="mt-3"><LeadWords {lead} {vibe} /></p>
     <footer class="mt-4 flex items-center gap-2 not-italic">
       {#if agent.id}<AgentFace agentId={agent.id} name={agent.name} iconUrl={agent.iconUrl} mood={agent.mood} size={32} variant="portrait" />{/if}
-      <span class="font-body text-sm"><b>{agent.name}</b> · delegate{#if lead.at} · <time datetime={lead.at}>{time}</time>{/if}</span>
+      <!-- "delegate" only when the named agent holds the card; nobody may hold it yet. -->
+      <span class="font-body text-sm">{#if agent.name}<b>{agent.name}</b>{#if card.delegateAgentId} · delegate{/if}{:else}Nobody holds this card yet{/if}{#if lead.at} · <time datetime={lead.at}>{time}</time>{/if}</span>
     </footer>
   </article>
 
@@ -46,7 +45,8 @@
     {#if question}
       <QuestionPaper model={question.model} elicitation={question.elicitation} agent={question.agent} {vibe} />
     {:else if gate}
-      <GatePaper boardId={gate.boardId} gate={gate.gate} error={gate.error} onResponse={gate.onResponse} {agent} {lead} {vibe} />
+      <!-- The letter above already carries the agent's sentence. -->
+      <GatePaper boardId={gate.boardId} gate={gate.gate} error={gate.error} onResponse={gate.onResponse} {agent} {lead} {vibe} showLead={false} />
     {/if}
     {@render sections.resume()}
   </section>
