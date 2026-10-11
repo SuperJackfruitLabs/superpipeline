@@ -27,6 +27,14 @@ const full = (over: Record<string, unknown> = {}) => ({
 const texts = () => [...document.querySelectorAll('.card-facts > li')].map((li) => li.textContent!.replace(/\s+/g, ' ').trim());
 
 describe('CardFacts (chips)', () => {
+  it('keeps every list item a plain list item (the cost meter sits inside one)', () => {
+    render(CardFacts, { s: full(), tone: 'chips' });
+    const items = [...document.querySelectorAll('.card-facts > *')];
+    expect(items.length).toBeGreaterThan(0);
+    for (const li of items) { expect(li.tagName).toBe('LI'); expect(li.hasAttribute('role')).toBe(false); }
+    expect(screen.getByRole('meter').closest('li')).toBeTruthy();
+  });
+
   it('shows every fact the tile shows, in order', () => {
     render(CardFacts, { s: full(), tone: 'chips' });
     expect(texts()).toEqual([

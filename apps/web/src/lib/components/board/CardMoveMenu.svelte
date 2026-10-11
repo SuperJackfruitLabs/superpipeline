@@ -2,7 +2,12 @@
   import type { Card, Stage } from '$lib/api';
   import { app } from '$lib/stores/app.svelte';
 
-  let { card, stages, open = $bindable(false) }: { card: Card; stages: Stage[]; open?: boolean } = $props();
+  /**
+   * `visible` keeps the control shown at all times. The default hides it until the tile is hovered
+   * or focused, which suits a dense grid and leaves a touch screen with no way to reach it; a layout
+   * that is not a grid of tiles passes `visible`.
+   */
+  let { card, stages, open = $bindable(false), visible = false }: { card: Card; stages: Stage[]; open?: boolean; visible?: boolean } = $props();
 
   /**
    * Moving a card was mouse-only — drag and drop with no keyboard or menu alternative — so the
@@ -44,7 +49,7 @@
     aria-label="Move {card.title} to another stage"
     aria-expanded={open}
     title="Move to…"
-    class="text-muted-foreground hover:text-foreground tap mono rounded-[6px] text-[11px] leading-none opacity-0 focus-visible:opacity-100 group-hover:opacity-100"
+    class="text-muted-foreground hover:text-foreground tap mono rounded-[6px] text-[11px] leading-none {visible ? '' : 'opacity-0 focus-visible:opacity-100 group-hover:opacity-100'}"
     style="opacity:{open ? 1 : undefined}"
   >⇄</button>
   {#if open}

@@ -31,6 +31,14 @@ describe('CardMoveMenu', () => {
     expect((screen.getByRole('menuitem', { name: 'Build · here' }) as HTMLButtonElement).disabled).toBe(true);
   });
 
+  it('is hover-only by default and always shown when asked', () => {
+    const { unmount } = render(CardMoveMenu, { card, stages });
+    expect(screen.getByRole('button', { name: /Move Launch post/ }).className).toContain('opacity-0');
+    unmount();
+    render(CardMoveMenu, { card, stages, visible: true });
+    expect(screen.getByRole('button', { name: /Move Launch post/ }).className).not.toContain('opacity-0');
+  });
+
   it('moves, closes and announces', async () => {
     const { container } = render(CardMoveMenu, { card, stages });
     await fireEvent.click(screen.getByRole('button', { name: /Move Launch post/ }));
