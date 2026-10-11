@@ -11,6 +11,9 @@ import CardStudio from './CardStudio.svelte';
 import { CARD_SECTION_KEYS, type CardCounts, type CardLayoutProps, type CardSections } from './types';
 import type { CardLead } from '../card-lead';
 
+// jsdom has no ResizeObserver; the body pads by the bars' measured height with one.
+globalThis.ResizeObserver ??= class { observe() {} unobserve() {} disconnect() {} } as never;
+
 afterEach(() => cleanup());
 
 const sections = Object.fromEntries(
@@ -41,6 +44,7 @@ describe('CardStudio', () => {
   it('has the header bar, the title and the readout', () => {
     render(CardStudio, props());
     expect(screen.getByText('‹ Board / 1234')).toBeTruthy();
+    expect(screen.getByText(/^\d\d:\d\d FULL DAYLIGHT|^\d\d:\d\d .+/).textContent).toMatch(/^\d\d:\d\d \S/);
     const h = screen.getByRole('heading', { level: 2 });
     expect(h.id).toBe('drawer-title');
     expect(h.textContent).toBe('Fix the thing');
@@ -106,18 +110,26 @@ describe('CardStudio', () => {
   it('the command bar has no overflow or transform ancestor between it and the scrolling body', () => {
     const question = { model: { text: '', error: null, answering: false, send: () => {} }, elicitation: { id: 'eli_1', agentId: 'agt_r', question: 'Run?', signal: 'question', options: [{ name: 'y', title: 'Yes' }] }, agent: { id: 'agt_r', name: 'Sample agent', iconUrl: null, mood: 'needs' } } as never;
     const { container } = render(CardStudio, props({ question }));
-    const scroller = container.querySelector('.overflow-y-auto')!;
+    const scroller = container.querySelector('.overflow-y-auto.flex-1')!;
     for (let e = container.querySelector('.command-bar')!.parentElement; e && e !== scroller; e = e.parentElement) {
       expect(e.className, e.tagName).not.toMatch(/\boverflow|\btransform|\btranslate/);
     }
     expect(scroller.contains(container.querySelector('.command-bar'))).toBe(true);
-    expect(scroller.className).toMatch(/scroll-pb-/);
+    expect((scroller as HTMLElement).style.scrollPaddingBottom).toMatch(/^\d+px$/);
   });
 
   it('swaps the title for the edit form while editing', async () => {
     render(CardStudio, props({ editing: true }));
     expect(screen.getAllByText('SECTION-editForm')).toHaveLength(1);
     expect(screen.queryByRole('heading', { level: 2 })).toBeNull();
+  });
+
+  it('caps the header so a long reason cannot push the body off a phone', () => {
+    const { container } = render(CardStudio, props());
+    const head = container.querySelector('[aria-label="Card summary"]')!;
+    expect(head.className).toMatch(/max-h-\[40dvh\]/);
+    expect(head.className).toMatch(/overflow-y-auto/);
+    expect(head.getAttribute('tabindex')).toBe('0');
   });
 
   it('leaves room for the close button', () => {
@@ -130,5 +142,33 @@ describe('CardStudio', () => {
     await fireEvent.click(screen.getByRole('tab', { name: 'Talk' }));
     expect(panel('Talk').hidden).toBe(false);
     expect(panel('Spec').hidden).toBe(true);
+  });
+});
+
+describe('CardStudio gate and question frames', () => {
+  const gate = { boardId: 'b', gate: { id: 'gat_1', cardId: 'c', status: 'pending', options: [], approvalSubject: { id: 'sub_1', digest: 'sha256:3f9ac21e77aa', schema: 's', revision: 4, canonical: { post: 'Hello' } } }, error: null, onResponse: async () => true } as never;
+  it('shows the heading, lead and approval subject above the tabs, and only the bar after them', () => {
+    const { container } = render(CardStudio, props({ gate }));
+    const tablist = screen.getByRole('tablist');
+    for (const t of [screen.getByText(/awaiting your review/), screen.getByText(/Immutable approval subject/), screen.getByRole('region', { name: /canonical JSON/ })]) {
+      expect(!!(t.compareDocumentPosition(tablist) & Node.DOCUMENT_POSITION_FOLLOWING), t.textContent!).toBe(true);
+    }
+    const bar = container.querySelector('.command-bar')!;
+    expect(!!(tablist.compareDocumentPosition(bar) & Node.DOCUMENT_POSITION_FOLLOWING)).toBe(true);
+    expect(bar.contains(screen.getByRole('button', { name: 'Approve' }))).toBe(true);
+    expect(container.querySelector('.command-bar')!.parentElement!.contains(screen.getByText('SECTION-resume'))).toBe(true);
+  });
+  it('shows the question above the tabs', () => {
+    const question = { model: { text: '', error: null, answering: false, send: () => {} }, elicitation: { id: 'eli_1', agentId: 'agt_r', question: 'Shall I run the tests?', signal: 'question', options: [{ name: 'y', title: 'Yes' }] }, agent: { id: 'agt_r', name: 'Sample agent', iconUrl: null, mood: 'needs' } } as never;
+    render(CardStudio, props({ question }));
+    expect(!!(screen.getByText('Shall I run the tests?').compareDocumentPosition(screen.getByRole('tablist')) & Node.DOCUMENT_POSITION_FOLLOWING)).toBe(true);
+  });
+  it('in the resume state the bar caps its height and scrolls on its own', () => {
+    const { container } = render(CardStudio, props());
+    const bar = container.querySelector('.resume-bar')!;
+    expect(bar.className).toMatch(/max-h-\[35dvh\]/);
+    expect(bar.className).toMatch(/overflow-y-auto/);
+    expect(bar.parentElement!.className).toMatch(/\bsticky\b/);
+    expect(bar.contains(screen.getByText('SECTION-resume'))).toBe(true);
   });
 });
