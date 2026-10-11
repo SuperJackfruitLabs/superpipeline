@@ -1,6 +1,8 @@
 import { VIBES } from '@superjackfruit/vibekit';
 import { describe, expect, it } from 'vitest';
 import { BOARD_LAYOUTS, CARD_LAYOUTS, FACE_VARIANT } from './layouts';
+import BoardPaper from '$lib/components/board/layouts/BoardPaper.svelte';
+import CardPaper from '$lib/components/card/layouts/CardPaper.svelte';
 import BoardDaylight from '$lib/components/board/layouts/BoardDaylight.svelte';
 import CardDaylight from '$lib/components/card/layouts/CardDaylight.svelte';
 
@@ -11,9 +13,10 @@ describe('the layout registry', () => {
       expect(FACE_VARIANT[v], v).toBeTruthy();
     }
   });
-  it('Phase 1: Daylight is the board layout every vibe falls back to', () => {
-    for (const v of VIBES) expect(BOARD_LAYOUTS[v], v).toBe(BoardDaylight);
+  it('Daylight is the board layout for the vibes without their own yet', () => {
+    for (const v of ['daylight', 'studio', 'quiet'] as const) expect(BOARD_LAYOUTS[v], v).toBe(BoardDaylight);
   });
+  it('Paper has its own board', () => expect(BOARD_LAYOUTS.paper).toBe(BoardPaper));
   it('each vibe has its own face variant', () => {
     expect(FACE_VARIANT).toEqual({ daylight: 'mood', paper: 'portrait', studio: 'light', quiet: 'name' });
   });
@@ -24,7 +27,11 @@ describe('the layout registry', () => {
       expect(['end', 'center'], v).toContain(CARD_LAYOUTS[v].align);
     }
   });
-  it('Phase 1: Daylight is the card layout', () => {
-    expect(CARD_LAYOUTS.daylight.component).toBe(CardDaylight);
+  it('Daylight is the card layout for the vibes without their own yet', () => {
+    for (const v of ['daylight', 'studio', 'quiet'] as const) expect(CARD_LAYOUTS[v].component, v).toBe(CardDaylight);
+  });
+  it('Paper has its own card, centred', () => {
+    expect(CARD_LAYOUTS.paper.component).toBe(CardPaper);
+    expect(CARD_LAYOUTS.paper.align).toBe('center');
   });
 });

@@ -3,11 +3,11 @@ import { expect, test, type Locator, type Page } from '@playwright/test';
 import { BOUND_PIPELINE, openBoard, REVIEW_PIPELINE, seedBoard, seedBoundGateCard, seedGatedCard, seedQuestionCard, setAppearance } from './support/seed';
 
 // Every vibe × theme runs against whatever layout the registry gives it. LAYOUT_VIBES lists the
-// vibes whose own layouts have shipped (Phase 1: daylight; the others run as skins over Daylight).
+// vibes whose own layouts have shipped (daylight, paper; the others run as skins over Daylight).
 // RADIO_DECISIONS lists the vibes where a decision is a radio choice plus a submit button.
 const ALL_VIBES = ['daylight', 'paper', 'studio', 'quiet'] as const;
-const LAYOUT_VIBES: readonly string[] = ['daylight']; // documents progress; every vibe runs regardless
-const RADIO_DECISIONS = new Set<string>([]);
+const LAYOUT_VIBES: readonly string[] = ['daylight', 'paper']; // documents progress; every vibe runs regardless
+const RADIO_DECISIONS = new Set<string>(['paper']);
 const SUBMIT: Record<string, string> = { paper: 'Send reply', quiet: 'Submit decision' };
 
 test.use({ timezoneId: 'Europe/London' });

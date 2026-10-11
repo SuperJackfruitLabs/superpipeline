@@ -5,17 +5,19 @@
 import type { Vibe } from '@superjackfruit/vibekit';
 import type { Component } from 'svelte';
 import BoardDaylight from '$lib/components/board/layouts/BoardDaylight.svelte';
+import BoardPaper from '$lib/components/board/layouts/BoardPaper.svelte';
 import type { BoardLayoutProps } from '$lib/components/board/layouts/types';
 import CardDaylight from '$lib/components/card/layouts/CardDaylight.svelte';
+import CardPaper from '$lib/components/card/layouts/CardPaper.svelte';
 import type { CardLayoutProps } from '$lib/components/card/layouts/types';
 
 export type FaceVariant = 'mood' | 'portrait' | 'light' | 'name';
 export const FACE_VARIANT: Readonly<Record<Vibe, FaceVariant>> = { daylight: 'mood', paper: 'portrait', studio: 'light', quiet: 'name' };
 
-/** Phase 1: every vibe uses the Daylight board, in its own tokens and words. Phases 2–4 swap one line each. */
+/** Daylight and Paper have their own boards; the others use Daylight's, in their own tokens and words, until their phases land. */
 export const BOARD_LAYOUTS: Readonly<Record<Vibe, Component<BoardLayoutProps>>> = {
   daylight: BoardDaylight,
-  paper: BoardDaylight,
+  paper: BoardPaper,
   studio: BoardDaylight,
   quiet: BoardDaylight,
 };
@@ -23,7 +25,7 @@ export const BOARD_LAYOUTS: Readonly<Record<Vibe, Component<BoardLayoutProps>>> 
 /**
  * The card drawer's layout per vibe, with the panel's width and where it sits. The drawer shell
  * (`CardDrawer.svelte`) picks one by the person's vibe and hands it every section.
- * Phase 1: every vibe uses Daylight's card.
+ * Daylight and Paper have their own cards; the others use Daylight's until their phases land.
  */
 export interface CardLayout {
   component: Component<CardLayoutProps>;
@@ -35,7 +37,7 @@ export interface CardLayout {
 const DAYLIGHT_CARD: CardLayout = { component: CardDaylight, panel: 'sm:max-w-[520px]', align: 'end' };
 export const CARD_LAYOUTS: Readonly<Record<Vibe, CardLayout>> = {
   daylight: DAYLIGHT_CARD,
-  paper: DAYLIGHT_CARD,
+  paper: { component: CardPaper, panel: 'sm:max-w-[680px] sm:mx-auto sm:border-r', align: 'center' },
   studio: DAYLIGHT_CARD,
   quiet: DAYLIGHT_CARD,
 };
