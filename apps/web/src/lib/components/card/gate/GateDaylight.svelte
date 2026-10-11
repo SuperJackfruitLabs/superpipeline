@@ -3,8 +3,7 @@
   import type { Gate, GateDecision } from '$lib/api';
   import { Button } from '$lib/components/ui/button';
   import AgentFace from '$lib/components/AgentFace.svelte';
-  import Words from '$lib/components/Words.svelte';
-  import { leadText } from '$lib/copy';
+  import LeadWords from '$lib/components/LeadWords.svelte';
   import type { CardLead } from '../card-lead';
   import { GATE_NOTE_MAX, GateDecisionModel, roleOf, sealOf } from './gate-decision.svelte';
 
@@ -25,7 +24,7 @@
     <h3 id="gate-h-{gate.id}" class="wordmark text-signal-text mb-2.5 text-sm font-semibold">⚑ awaiting your review</h3>
     <div class="mb-3 flex items-start gap-2">
       {#if agent.id}<AgentFace agentId={agent.id} name={agent.name} iconUrl={agent.iconUrl} mood="needs" size={40} variant="mood" />{/if}
-      <p class="agent-voice bg-surface flex-1 rounded-[var(--vk-radius-md)] p-3 text-base"><Words text={leadText(lead, vibe)} /></p>
+      <p class="agent-voice bg-surface flex-1 rounded-[var(--vk-radius-md)] p-3 text-base"><LeadWords {lead} {vibe} /></p>
     </div>
     {#if error}<p role="alert" class="text-signal-text bg-surface mono mb-2.5 rounded-[var(--vk-radius-md)] border-2 px-3 py-2 text-xs" style="border-color:var(--vk-color-signal)">{error}</p>{/if}
     {#if gate.approvalSubject}

@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs';
 import { VIBES } from '@superjackfruit/vibekit';
 import { describe, expect, it } from 'vitest';
 import { COPY, LEAD_FALLBACK, leadText, splitEmoji, wantYou, words } from './copy';
@@ -39,5 +40,17 @@ describe('four-way words', () => {
       { text: '😕', emoji: true },
       { text: ' ok', emoji: false },
     ]);
+  });
+  it('keeps a variation selector and a joined sequence inside the one emoji', () => {
+    expect(splitEmoji('a \u2764\uFE0F b \u{1F469}\u200D\u{1F4BB}')).toEqual([
+      { text: 'a ', emoji: false },
+      { text: '\u2764\uFE0F', emoji: true },
+      { text: ' b ', emoji: false },
+      { text: '\u{1F469}\u200D\u{1F4BB}', emoji: true },
+    ]);
+  });
+  it('writes the invisible joiners in its pattern as escapes', () => {
+    const src = readFileSync(new URL('./copy.ts', import.meta.url), 'utf8');
+    expect(src).not.toMatch(/[\uFE0F\u200D]/);
   });
 });

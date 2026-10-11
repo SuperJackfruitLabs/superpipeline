@@ -1,8 +1,7 @@
 <script lang="ts">
   import type { Mood, Vibe } from '@superjackfruit/vibekit';
   import type { Gate, GateDecision } from '$lib/api';
-  import Words from '$lib/components/Words.svelte';
-  import { leadText } from '$lib/copy';
+  import LeadWords from '$lib/components/LeadWords.svelte';
   import type { CardLead } from '../card-lead';
   import { GATE_NOTE_MAX, GateDecisionModel, sealOf } from './gate-decision.svelte';
 
@@ -20,7 +19,7 @@
 <section class="sec paper-gate" aria-labelledby="gate-h-{gate.id}">
   <h3 id="gate-h-{gate.id}" class="eyebrow text-signal-text">⚑ awaiting your review</h3>
   <p class="font-display mt-1 text-lg">Re: approval</p>
-  <p class="agent-voice mt-2"><Words text={leadText(lead, vibe)} /></p>
+  <p class="agent-voice mt-2"><LeadWords {lead} {vibe} /></p>
   {#if error}<p role="alert" class="text-signal-text mono mt-2 rounded-[var(--vk-radius-md)] border-2 px-3 py-2 text-xs" style="border-color:var(--vk-color-signal)">{error}</p>{/if}
   {#if gate.approvalSubject}
     <figure class="mt-3 border-l-2 border-[var(--vk-color-line)] pl-3" aria-label="The version you are approving">

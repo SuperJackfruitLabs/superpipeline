@@ -5,8 +5,8 @@
    * labelled enclosures. The shell hands every section in; this file only places them.
    */
   import AgentFace from '$lib/components/AgentFace.svelte';
-  import Words from '$lib/components/Words.svelte';
-  import { LIGHT_WORDS, leadText } from '$lib/copy';
+  import LeadWords from '$lib/components/LeadWords.svelte';
+  import { LIGHT_WORDS } from '$lib/copy';
   import GatePaper from '../gate/GatePaper.svelte';
   import QuestionPaper from '../question/QuestionPaper.svelte';
   import type { CardLayoutProps } from './types';
@@ -33,7 +33,7 @@
 
   <article class="letter agent-voice text-[17px] leading-relaxed">
     <p>Dear {personName},</p>
-    <p class="mt-3"><Words text={leadText(lead, vibe)} /></p>
+    <p class="mt-3"><LeadWords {lead} {vibe} /></p>
     <footer class="mt-4 flex items-center gap-2 not-italic">
       {#if agent.id}<AgentFace agentId={agent.id} name={agent.name} iconUrl={agent.iconUrl} mood={agent.mood} size={32} variant="portrait" />{/if}
       <span class="font-body text-sm"><b>{agent.name}</b> · delegate{#if lead.at} · <time datetime={lead.at}>{time}</time>{/if}</span>

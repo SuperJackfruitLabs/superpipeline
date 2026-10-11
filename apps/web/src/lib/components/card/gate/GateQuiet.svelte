@@ -1,8 +1,7 @@
 <script lang="ts">
   import type { Mood, Vibe } from '@superjackfruit/vibekit';
   import type { Gate, GateDecision } from '$lib/api';
-  import Words from '$lib/components/Words.svelte';
-  import { leadText } from '$lib/copy';
+  import LeadWords from '$lib/components/LeadWords.svelte';
   import type { CardLead } from '../card-lead';
   import { GATE_NOTE_MAX, GateDecisionModel, roleOf, sealOf } from './gate-decision.svelte';
 
@@ -29,7 +28,7 @@
   <fieldset class="border-2 border-[var(--vk-color-text)] p-4">
     <legend class="px-1 font-semibold">Your decision is needed</legend>
     <p class="text-sm">⚑ awaiting your review</p>
-    <p class="mt-2"><Words text={leadText(lead, vibe)} /></p>
+    <p class="mt-2"><LeadWords {lead} {vibe} /></p>
     {#if gate.approvalSubject}
       <div class="mono mt-3 text-xs" aria-label="The version you are approving" role="group">
         <div>Immutable approval subject · revision {gate.approvalSubject.revision}</div>

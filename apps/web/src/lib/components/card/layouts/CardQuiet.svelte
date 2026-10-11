@@ -4,8 +4,7 @@
    * decision if there is one, then every fact under a heading in a fixed order. No disclosures, no
    * motion. The shell hands every section in; this file only places them.
    */
-  import Words from '$lib/components/Words.svelte';
-  import { leadText } from '$lib/copy';
+  import LeadWords from '$lib/components/LeadWords.svelte';
   import { ageLabel } from '$lib/age';
   import { app } from '$lib/stores/app.svelte';
   import GateQuiet from '../gate/GateQuiet.svelte';
@@ -48,7 +47,7 @@
     {:else if gate}
       <GateQuiet boardId={gate.boardId} gate={gate.gate} error={gate.error} onResponse={gate.onResponse} {agent} {lead} {vibe} />
     {:else}
-      <p><Words text={leadText(lead, vibe)} /></p>
+      <p><LeadWords {lead} {vibe} /></p>
     {/if}
     <div class="mt-3">{@render sections.resume()}</div>
   </svelte:element>

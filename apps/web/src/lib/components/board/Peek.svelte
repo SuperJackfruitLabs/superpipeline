@@ -1,8 +1,7 @@
 <script lang="ts">
   import type { Vibe } from '@superjackfruit/vibekit';
   import AgentFace from '$lib/components/AgentFace.svelte';
-  import Words from '$lib/components/Words.svelte';
-  import { leadText } from '$lib/copy';
+  import LeadWords from '$lib/components/LeadWords.svelte';
   import type { CardSummary } from './card-summary';
 
   let { summary, vibe, onOpen }: { summary: CardSummary | null; vibe: Vibe; onOpen: (id: string) => void } = $props();
@@ -22,7 +21,7 @@
     <p class="font-display text-lg leading-snug">{summary.title}</p>
     <div class="flex items-start gap-2">
       {#if summary.delegate}<AgentFace agentId={summary.delegate.id} name={summary.delegate.name} iconUrl={summary.delegate.iconUrl} mood={summary.mood} size={36} variant="mood" />{/if}
-      <p class="agent-voice bg-raised min-h-[3rem] flex-1 rounded-[var(--vk-radius-md)] p-3 text-sm"><Words text={leadText(summary.lead, vibe)} /></p>
+      <p class="agent-voice bg-raised min-h-[3rem] flex-1 rounded-[var(--vk-radius-md)] p-3 text-sm"><LeadWords lead={summary.lead} {vibe} /></p>
     </div>
     <button bind:this={actionButton} type="button" class="vk-button tap {summary.lead.needsYou ? 'vk-button--signal' : 'vk-button--secondary'}" onclick={() => onOpen(summary.id)}>{action}</button>
   {:else}

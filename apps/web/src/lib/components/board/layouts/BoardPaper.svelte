@@ -2,9 +2,9 @@
   /** Paper: the board as a front page. What waits on you is a letter; the rest is set below it (spec §5.1). */
   import { app } from '$lib/stores/app.svelte';
   import AgentFace from '$lib/components/AgentFace.svelte';
-  import Words from '$lib/components/Words.svelte';
+  import LeadWords from '$lib/components/LeadWords.svelte';
   import { ageLabel } from '$lib/age';
-  import { LIGHT_WORDS, leadText } from '$lib/copy';
+  import { LIGHT_WORDS } from '$lib/copy';
   import { FACE_VARIANT } from '$lib/layouts';
   import CardFacts from '../CardFacts.svelte';
   import CardMoveMenu from '../CardMoveMenu.svelte';
@@ -79,7 +79,7 @@
       {#each needs as s (s.id)}
         <article class="letter border-border relative border-b py-4 pr-12" aria-labelledby="pp-t-{s.id}">
           {@render title(s, 'font-display text-lg')}
-          <p class="agent-voice mt-1">“<Words text={leadText(s.lead, vibe)} />”</p>
+          <p class="agent-voice mt-1">“<LeadWords lead={s.lead} {vibe} />”</p>
           <p class="mt-2 flex items-center gap-2 text-sm">
             {#if s.delegate}<AgentFace agentId={s.delegate.id} name={s.delegate.name} iconUrl={s.delegate.iconUrl} mood={s.mood} size={24} variant={faceVariant === 'mood' ? 'portrait' : faceVariant} withName />{/if}
             {#if ageLabel(s.ageHours)}<span class="text-muted-foreground">{ageLabel(s.ageHours)}</span>{/if}

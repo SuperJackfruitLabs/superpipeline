@@ -7,9 +7,8 @@
   import { onMount } from 'svelte';
   import { StageTrack, greeting } from '@superjackfruit/vibekit';
   import Tabs from '$lib/components/Tabs.svelte';
-  import Words from '$lib/components/Words.svelte';
+  import LeadWords from '$lib/components/LeadWords.svelte';
   import { ageLabel } from '$lib/age';
-  import { leadText } from '$lib/copy';
   import GateStudioBar from '../gate/GateStudioBar.svelte';
   import GateStudioFrame from '../gate/GateStudioFrame.svelte';
   import QuestionStudioBar from '../question/QuestionStudioBar.svelte';
@@ -90,7 +89,7 @@
   <div class="mt-3"><StageTrack stages={stages.map((s) => s.name)} current={stageIndex} stopped={lead.needsYou} label="Stages" /></div>
   <p class="readout font-mono mt-3 flex items-start gap-2 text-sm">
     <span class="status-led mt-1 inline-block size-2.5 flex-none rounded-full" data-mood={agent.mood} data-blink={lead.needsYou} aria-hidden="true"></span>
-    <span><b>{agent.name}</b> · <Words text={leadText(lead, vibe)} /></span>
+    <span><b>{agent.name}</b> · <LeadWords {lead} {vibe} /></span>
   </p>
 </div>
 
