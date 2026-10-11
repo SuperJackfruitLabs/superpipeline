@@ -105,7 +105,8 @@
   {@render sections.error()}
   {#if editing}{@render sections.editForm()}{/if}
   {#if question}
-    <QuestionStudioFrame elicitation={question.elicitation} agent={question.agent} />
+    <!-- The readout above already says the question. -->
+    <QuestionStudioFrame elicitation={question.elicitation} agent={question.agent} showQuestion={false} />
   {:else if gate}
     <!-- The readout above already says who, what is needed and the sentence. -->
     <GateStudioFrame gate={gate.gate} {agent} {lead} {vibe} showLead={false} />

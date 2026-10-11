@@ -61,6 +61,14 @@ describe.each(VIBES)('%s card layout', (vibe) => {
     expect(container.textContent!.split('Draft ready to ship.')).toHaveLength(2);
   });
 
+  it('says a pending question once', () => {
+    const q = 'Shall I run the tests?';
+    const elicitation = { id: 'eli_1', agentId: 'agt_r', question: q, signal: 'question', options: [{ name: 'go', title: 'Go' }], createdAt: '2026-10-11T00:00:00Z' } as never;
+    const question = { model: {}, elicitation, agent: { id: 'agt_r', name: 'Sample agent', iconUrl: null, mood: 'needs' } } as never;
+    const { container } = render(C, props(vibe, { question, lead: lead({ kind: 'question', sentence: q, source: 'question' }) }));
+    expect(container.textContent!.split(q)).toHaveLength(2);
+  });
+
   it('writes whole sentences when nobody holds the card', () => {
     const { container } = render(C, props(vibe, {
       card: { id: 'crd_abcd1234', title: 'Fix the thing', attemptCount: 1, state: 'queued', costUsd: 0, delegateAgentId: null } as never,

@@ -3,7 +3,8 @@
   import type { Mood } from '@superjackfruit/vibekit';
   import type { Elicitation } from '$lib/api';
 
-  let { elicitation, agent }: { elicitation: Elicitation; agent: { id: string | null; name: string; iconUrl: string | null; mood: Mood } } = $props();
+  /** `showQuestion` false: the caller (Studio's card readout) already says the question. */
+  let { elicitation, agent, showQuestion = true }: { elicitation: Elicitation; agent: { id: string | null; name: string; iconUrl: string | null; mood: Mood }; showQuestion?: boolean } = $props();
 </script>
 
 <section class="sec elicitation" aria-labelledby="q-{elicitation.id}">
@@ -12,5 +13,5 @@
     <span class="uppercase font-mono" title={elicitation.agentId}>{agent.name} is waiting</span>
   </p>
   <h3 id="q-{elicitation.id}" class="eyebrow text-signal-text mb-2 text-sm font-semibold">⚑ {elicitation.signal === 'auth' ? 'awaiting your sign-in' : 'awaiting your answer'}</h3>
-  <p class="agent-voice font-mono mb-3 text-base leading-relaxed whitespace-pre-wrap">{elicitation.question}</p>
+  {#if showQuestion}<p class="agent-voice font-mono mb-3 text-base leading-relaxed whitespace-pre-wrap">{elicitation.question}</p>{/if}
 </section>

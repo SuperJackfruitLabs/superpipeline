@@ -45,7 +45,8 @@
 
   <section class="mt-6" aria-label="Your reply">
     {#if question}
-      <QuestionPaper model={question.model} elicitation={question.elicitation} agent={question.agent} {vibe} />
+      <!-- The letter above already carries the question. -->
+      <QuestionPaper model={question.model} elicitation={question.elicitation} agent={question.agent} {vibe} showQuestion={false} />
     {:else if gate}
       <!-- The letter above already carries the agent's sentence. -->
       <GatePaper boardId={gate.boardId} gate={gate.gate} error={gate.error} onResponse={gate.onResponse} {agent} {lead} {vibe} showLead={false} />

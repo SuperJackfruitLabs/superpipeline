@@ -3,13 +3,14 @@
   import type { Elicitation } from '$lib/api';
   import type { QuestionAnswer } from './question-answer.svelte';
 
-  let { model, elicitation, agent }: { model: QuestionAnswer; elicitation: Elicitation; agent: { id: string | null; name: string; iconUrl: string | null; mood: Mood }; vibe: Vibe } = $props();
+  /** `showQuestion` false: the caller (Paper's letter) already says the question. */
+  let { model, elicitation, agent, showQuestion = true }: { model: QuestionAnswer; elicitation: Elicitation; agent: { id: string | null; name: string; iconUrl: string | null; mood: Mood }; vibe: Vibe; showQuestion?: boolean } = $props();
 </script>
 
 <section class="sec elicitation" aria-labelledby="q-{elicitation.id}">
   <h3 id="q-{elicitation.id}" class="eyebrow text-signal-text">⚑ {elicitation.signal === 'auth' ? 'awaiting your sign-in' : 'awaiting your answer'}</h3>
   <p class="eyebrow mt-1" title={elicitation.agentId}>{agent.name} is waiting</p>
-  <p class="agent-voice mt-2 whitespace-pre-wrap">{elicitation.question}</p>
+  {#if showQuestion}<p class="agent-voice mt-2 whitespace-pre-wrap">{elicitation.question}</p>{/if}
   {#if model.error}<p role="alert" class="text-signal-text mt-2 text-sm">{model.error}</p>{/if}
   <fieldset class="mt-3">
     <legend class="font-display">Your reply</legend>
