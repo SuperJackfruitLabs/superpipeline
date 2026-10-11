@@ -9,6 +9,8 @@ import { tick } from 'svelte';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, fireEvent, render, screen } from '@testing-library/svelte';
 
+/** The class a button panel gives its primary action: the Button variant or vibekit's own. */
+export const PRIMARY = /\bbg-primary\b|\bvk-button--primary\b/;
 export const resolveGate = vi.fn();
 vi.mock('$lib/api', async (orig) => ({
   ...(await orig<typeof import('$lib/api')>()),
@@ -84,6 +86,27 @@ export function gatePanelContract(C: Component<any>, o: { decision: 'button' | '
       await choose('Approve');
       expect(resolveGate).toHaveBeenCalledWith('brd_1', 'gat_1', 'approve', 'checked', subject);
     });
+
+    it('disables the decision controls while a decision is in flight', async () => {
+      let settle!: (r: Response) => void;
+      resolveGate.mockReset().mockReturnValue(new Promise<Response>((r) => (settle = r)));
+      render(C, gatePanelProps());
+      await choose('Approve');
+      await tick();
+      const controls = o.decision === 'button'
+        ? ['Approve', 'Request changes', 'Reject'].map((n) => screen.getByRole('button', { name: n }))
+        : [screen.getByRole('button', { name: o.submit! })];
+      for (const c of controls) expect((c as HTMLButtonElement).disabled).toBe(true);
+      settle(new Response('{}', { status: 200 }));
+      await tick();
+    });
+
+    if (o.decision === 'button') {
+      it('gives Approve the primary style', () => {
+        render(C, gatePanelProps());
+        expect(screen.getByRole('button', { name: 'Approve' }).className).toMatch(PRIMARY);
+      });
+    }
 
     it('shows the gate error as an alert', () => {
       render(C, gatePanelProps({ error: 'Gate already decided (409)' }));

@@ -4,11 +4,13 @@
  * imports this before the component, so the api mock below is in place first.
  */
 import type { Component } from 'svelte';
+import { tick } from 'svelte';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, fireEvent, render, screen } from '@testing-library/svelte';
 import type { Elicitation } from '$lib/api';
 import { QuestionAnswer } from './question-answer.svelte';
 
+export const PRIMARY = /\bbg-primary\b|\bvk-button--primary\b/;
 export const answerElicitation = vi.fn();
 vi.mock('$lib/api', async (orig) => ({
   ...(await orig<typeof import('$lib/api')>()),
@@ -100,6 +102,40 @@ export function questionPanelContract(
         await fireEvent.click(screen.getByRole('button', { name: o.submit! }));
         expect(screen.getByRole('alert').textContent).toContain('Pick one of the options.');
         expect(answerElicitation).not.toHaveBeenCalled();
+      });
+    }
+
+    it('disables the answer controls while an answer is in flight', async () => {
+      let settle!: (r: unknown) => void;
+      answerElicitation.mockReset().mockReturnValue(new Promise((r) => (settle = r)));
+      mountQuestion(C, ask());
+      await choose('Run the tests');
+      await tick();
+      const controls = o.decision === 'button'
+        ? ['Run the tests', 'Skip them'].map((n) => screen.getByRole('button', { name: n }))
+        : [screen.getByRole('button', { name: o.submit! })];
+      for (const c of controls) expect((c as HTMLButtonElement).disabled).toBe(true);
+      settle({ ok: true, json: async () => ({}) });
+      await tick();
+    });
+
+    it('disables Send answer while a free answer is in flight', async () => {
+      let settle!: (r: unknown) => void;
+      answerElicitation.mockReset().mockReturnValue(new Promise((r) => (settle = r)));
+      mountQuestion(C, ask({ options: [] }));
+      await fireEvent.input(screen.getByRole('textbox', { name: 'Your answer' }), { target: { value: 'yes' } });
+      await fireEvent.click(screen.getByRole('button', { name: 'Send answer' }));
+      await tick();
+      expect((screen.getByRole('button', { name: 'Send answer' }) as HTMLButtonElement).disabled).toBe(true);
+      settle({ ok: true, json: async () => ({}) });
+      await tick();
+    });
+
+    if (o.decision === 'button') {
+      it('gives the first option the primary style, and not the second', () => {
+        mountQuestion(C, ask());
+        expect(screen.getByRole('button', { name: 'Run the tests' }).className).toMatch(PRIMARY);
+        expect(screen.getByRole('button', { name: 'Skip them' }).className).not.toMatch(PRIMARY);
       });
     }
 
