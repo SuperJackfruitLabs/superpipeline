@@ -94,7 +94,7 @@ describe('BoardQuiet', () => {
     render(BoardQuiet, props());
     const review = screen.getByRole('listitem', { name: /Review me/ });
     const decide = within(review).getByRole('button', { name: '⚑ Review' });
-    expect(decide.textContent).toBe('Decide');
+    expect(decide.textContent).toBe('Review');
     await fireEvent.click(decide);
     const ask = screen.getByRole('listitem', { name: /Answer me/ });
     const answer = within(ask).getByRole('button', { name: '⚑ Answer Sample agent' });
@@ -102,6 +102,13 @@ describe('BoardQuiet', () => {
     await fireEvent.click(answer);
     expect(openCard).toHaveBeenCalledTimes(2);
     expect(within(review).getByRole('button', { name: openLabel({ title: 'Review me', stageName: 'Build' }) })).toBeTruthy();
+  });
+
+  it('every action’s accessible name contains its visible word (WCAG 2.5.3 label in name)', () => {
+    render(BoardQuiet, props());
+    const actions = screen.getAllByRole('button').filter((b) => b.getAttribute('aria-label') && !b.hasAttribute('data-card-open') && !/^Move /.test(b.getAttribute('aria-label')!));
+    expect(actions.length).toBeGreaterThan(2);
+    for (const b of actions) expect(b.getAttribute('aria-label')!.toLowerCase(), b.textContent!).toContain(b.textContent!.trim().toLowerCase());
   });
 
   it('marks needs-you items with a signal rule, and only those', () => {

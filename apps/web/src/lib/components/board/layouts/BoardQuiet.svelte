@@ -29,10 +29,11 @@
 
   const meta = (s: CardSummary) => [s.delegate ? s.delegate.name : 'nobody', s.stageName, ageLabel(s.ageHours)].filter(Boolean).join(' · ');
 
-  // The visible word is short; the accessible name is the one every vibe shares.
+  // The visible word is short; the accessible name is the one every vibe shares, and always
+  // contains the visible word, so speech input can say what it sees (WCAG 2.5.3).
   const action = (s: CardSummary) =>
     s.questionFrom ? { text: 'Answer', name: `⚑ Answer ${s.questionFrom}` }
-    : s.gatePending ? { text: 'Decide', name: '⚑ Review' }
+    : s.gatePending ? { text: 'Review', name: '⚑ Review' }
     : { text: 'Open', name: `Open ${s.title}` };
 </script>
 
