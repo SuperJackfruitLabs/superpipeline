@@ -232,7 +232,7 @@
       aria-label="{card.title}, in {orderedStages[stageIndex]?.name ?? card.currentStageKey}. Enter to open, M to move, Alt with left or right arrow to move between stages."
       data-stretch-target
       data-card-open={card.id}
-      class="tile-open flex-1 text-left text-[13.5px] font-medium leading-snug"
+      class="tile-open hit flex-1 text-left text-[13.5px] font-medium leading-snug"
     >{card.title}</button>
     {#if card.state === 'working'}
       <span class="live-dot mt-1 shrink-0" title="Agent working"></span>

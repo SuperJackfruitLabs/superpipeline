@@ -159,6 +159,19 @@
 
   /* A control that must LOOK small still has to be hittable. Pad the target, never enlarge
      the glyph — which is why this sets only the minimums and centres the content. */
+  /* A control whose desktop size is right but whose finger target is not: pads to 44px on a
+     coarse pointer only, so nothing moves with a mouse. Content stays left-aligned and centred
+     vertically. */
+  @media (pointer: coarse) {
+    .hit {
+      min-height: var(--tap);
+      min-width: var(--tap);
+      justify-content: center;
+      display: inline-flex;
+      align-items: center;
+    }
+  }
+
   .tap {
     min-width: var(--tap);
     min-height: var(--tap);

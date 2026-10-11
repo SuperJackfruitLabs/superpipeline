@@ -1074,7 +1074,7 @@
 
 {#snippet s_editButton()}
   {#if card}
-    <button onclick={startEdit} aria-label="Edit card" title="Edit card" class="text-muted-foreground hover:text-foreground hover:bg-accent shrink-0 rounded-[7px] p-1.5">
+    <button onclick={startEdit} aria-label="Edit card" title="Edit card" class="text-muted-foreground hover:text-foreground hover:bg-accent tap shrink-0 rounded-[7px] p-1.5">
       <svg class="size-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
     </button>
   {/if}
@@ -1124,7 +1124,7 @@
         <button
           onclick={() => void assignToMe()}
           disabled={assigning}
-          class="text-muted-foreground hover:text-foreground font-mono text-[11px] underline disabled:opacity-40"
+          class="text-muted-foreground hover:text-foreground hit font-mono text-[11px] underline disabled:opacity-40"
         >{assigning ? 'assigning…' : 'assign to me'}</button>
       {/if}
 
@@ -1357,7 +1357,7 @@
           {:else}
             <span class="text-muted-foreground">No project</span>
           {/if}
-          <button onclick={startProjectEdit} class="text-muted-foreground hover:text-foreground mono text-[11px] underline underline-offset-2">
+          <button onclick={startProjectEdit} class="text-muted-foreground hover:text-foreground hit mono text-[11px] underline underline-offset-2">
             {currentProjectName ? 'change' : 'assign'}
           </button>
         </div>
@@ -1980,15 +1980,15 @@
     <!-- archive / un-archive / delete -->
     <div class="border-border/60 flex gap-3 border-t pt-4">
       {#if card.archivedAt}
-        <button onclick={() => void onUnarchiveCard()} disabled={archiving} class="text-muted-foreground hover:text-marigold text-xs disabled:opacity-50">
+        <button onclick={() => void onUnarchiveCard()} disabled={archiving} class="text-muted-foreground hover:text-marigold hit text-xs disabled:opacity-50">
           {archiving ? 'Un-archiving…' : 'Archived — un-archive'}
         </button>
       {:else}
-        <button onclick={() => void onArchiveCard()} disabled={archiving} class="text-muted-foreground hover:text-marigold text-xs disabled:opacity-50">
+        <button onclick={() => void onArchiveCard()} disabled={archiving} class="text-muted-foreground hover:text-marigold hit text-xs disabled:opacity-50">
           {archiving ? 'Archiving…' : 'Archive card'}
         </button>
       {/if}
-      <button onclick={onDeleteCard} class="text-muted-foreground hover:text-coral text-xs">Delete card</button>
+      <button onclick={onDeleteCard} class="text-muted-foreground hover:text-coral hit text-xs">Delete card</button>
     </div>
   {/if}
 {/snippet}

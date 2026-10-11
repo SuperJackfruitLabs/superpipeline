@@ -39,7 +39,7 @@
 <style>
   .raw-btn {
     color: var(--muted);
-    min-height: 24px;
+    min-height: var(--tap);
   }
   .raw-btn:hover {
     color: var(--marigold);

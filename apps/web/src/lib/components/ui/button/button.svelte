@@ -11,7 +11,7 @@
       },
       size: {
         default: 'min-h-[var(--tap)] px-4 py-2',
-        sm: 'min-h-[var(--tap)] px-2.5 text-xs',
+        sm: 'min-h-[max(var(--tap),28px)] min-w-[var(--tap)] px-2.5 text-xs',
         icon: 'size-9 min-h-[var(--tap)] min-w-[var(--tap)]',
       },
     },
