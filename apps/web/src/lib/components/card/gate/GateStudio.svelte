@@ -31,14 +31,14 @@
   });
 </script>
 
-<section class="sec" aria-labelledby="gate-h-{gate.id}">
-  <p class="mb-2 flex items-center gap-2 text-xs">
+<!-- display:contents: the command bar sticks to the card's scrolling body, not to this section -->
+<section class="sec contents" aria-labelledby="gate-h-{gate.id}">
+  <p class="mt-5 mb-2 flex items-center gap-2 text-xs">
     <span class="status-led inline-block size-2.5 rounded-full" data-mood="needs" aria-hidden="true"></span>
     <span class="uppercase font-mono">{agent.name} · needs decision</span>
   </p>
   <h3 id="gate-h-{gate.id}" class="eyebrow text-signal-text mb-2 text-sm font-semibold">⚑ awaiting your review</h3>
   <p class="agent-voice font-mono mb-3 text-base"><Words text={leadText(lead, vibe)} /></p>
-  {#if error}<p role="alert" class="text-signal-text bg-surface font-mono mb-2.5 rounded-[var(--vk-radius-md)] border-2 px-3 py-2 text-xs" style="border-color:var(--vk-color-signal)">{error}</p>{/if}
   {#if gate.approvalSubject}
     <div class="bg-surface border-border font-mono mb-3 rounded-[var(--vk-radius-md)] border p-2.5 text-xs">
       <div class="mb-1 font-semibold">Immutable approval subject · revision {gate.approvalSubject.revision}</div>
@@ -50,6 +50,7 @@
     </div>
   {/if}
   <div class="command-bar bg-surface border-border sticky bottom-0 -mx-1 border-t px-1 py-2">
+    {#if error}<p role="alert" class="text-signal-text bg-surface font-mono mb-2.5 rounded-[var(--vk-radius-md)] border-2 px-3 py-2 text-xs" style="border-color:var(--vk-color-signal)">{error}</p>{/if}
     <label for="gate-note-{gate.id}" class="text-muted-foreground mb-1 block text-xs">{model.needNote ? 'Say what needs to change' : 'Add a note (optional)'}</label>
     <textarea id="gate-note-{gate.id}" bind:this={model.noteEl} bind:value={model.note} maxlength={GATE_NOTE_MAX} rows="1" aria-invalid={model.needNote}
       placeholder="Recorded with your decision. Request changes needs one: it threads into the agent's next attempt."

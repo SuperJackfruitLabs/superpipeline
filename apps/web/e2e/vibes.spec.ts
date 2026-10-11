@@ -3,10 +3,10 @@ import { expect, test, type Locator, type Page } from '@playwright/test';
 import { BOUND_PIPELINE, openBoard, REVIEW_PIPELINE, seedBoard, seedBoundGateCard, seedGatedCard, seedQuestionCard, setAppearance } from './support/seed';
 
 // Every vibe × theme runs against whatever layout the registry gives it. LAYOUT_VIBES lists the
-// vibes whose own layouts have shipped (daylight, paper; the others run as skins over Daylight).
+// vibes whose own layouts have shipped (daylight, paper, studio; the other run as skins over Daylight).
 // RADIO_DECISIONS lists the vibes where a decision is a radio choice plus a submit button.
 const ALL_VIBES = ['daylight', 'paper', 'studio', 'quiet'] as const;
-const LAYOUT_VIBES: readonly string[] = ['daylight', 'paper']; // documents progress; every vibe runs regardless
+const LAYOUT_VIBES: readonly string[] = ['daylight', 'paper', 'studio']; // documents progress; every vibe runs regardless
 const RADIO_DECISIONS = new Set<string>(['paper']);
 const SUBMIT: Record<string, string> = { paper: 'Send reply', quiet: 'Submit decision' };
 
@@ -107,7 +107,7 @@ for (const vibe of ALL_VIBES) {
         await page.getByRole('button', { name: /^⚑ Answer agt_r/ }).first().click();
         await expect(dialog).toBeVisible();
         await expect(dialog.getByText('May I run the test suite?').first()).toBeVisible();
-        for (const [role, name] of [[decision, 'Run the tests'], [decision, 'Skip them'], ['textbox', /Add a note for the agent|Note for/]] as const) {
+        for (const [role, name] of [[decision, 'Run the tests'], [decision, 'Skip them'], ['textbox', /Add a note for the agent|Note (for|to) /]] as const) {
           expect(await reachable(dialog, role, name), `question: ${String(name)}`).toBe(true);
         }
         await noA11yViolations(page, '[role="dialog"]');

@@ -3,6 +3,8 @@ import { describe, expect, it } from 'vitest';
 import { BOARD_LAYOUTS, CARD_LAYOUTS, FACE_VARIANT } from './layouts';
 import BoardPaper from '$lib/components/board/layouts/BoardPaper.svelte';
 import CardPaper from '$lib/components/card/layouts/CardPaper.svelte';
+import BoardStudio from '$lib/components/board/layouts/BoardStudio.svelte';
+import CardStudio from '$lib/components/card/layouts/CardStudio.svelte';
 import BoardDaylight from '$lib/components/board/layouts/BoardDaylight.svelte';
 import CardDaylight from '$lib/components/card/layouts/CardDaylight.svelte';
 
@@ -14,7 +16,7 @@ describe('the layout registry', () => {
     }
   });
   it('Daylight is the board layout for the vibes without their own yet', () => {
-    for (const v of ['daylight', 'studio', 'quiet'] as const) expect(BOARD_LAYOUTS[v], v).toBe(BoardDaylight);
+    for (const v of ['daylight', 'quiet'] as const) expect(BOARD_LAYOUTS[v], v).toBe(BoardDaylight);
   });
   it('Paper has its own board', () => expect(BOARD_LAYOUTS.paper).toBe(BoardPaper));
   it('each vibe has its own face variant', () => {
@@ -28,7 +30,11 @@ describe('the layout registry', () => {
     }
   });
   it('Daylight is the card layout for the vibes without their own yet', () => {
-    for (const v of ['daylight', 'studio', 'quiet'] as const) expect(CARD_LAYOUTS[v].component, v).toBe(CardDaylight);
+    for (const v of ['daylight', 'quiet'] as const) expect(CARD_LAYOUTS[v].component, v).toBe(CardDaylight);
+  });
+  it('Studio has its own board and a wide card against the right edge', () => {
+    expect(BOARD_LAYOUTS.studio).toBe(BoardStudio);
+    expect(CARD_LAYOUTS.studio).toEqual({ component: CardStudio, panel: 'sm:max-w-[760px]', align: 'end' });
   });
   it('Paper has its own card, centred', () => {
     expect(CARD_LAYOUTS.paper.component).toBe(CardPaper);

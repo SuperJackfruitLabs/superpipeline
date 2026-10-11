@@ -34,3 +34,10 @@ describe.each(['lines', 'strip', 'table'] as const)('StageList %s', (variant) =>
     expect(screen.queryByText('empty')).toBeNull();
   });
 });
+
+describe('StageList strip scrolls by keyboard', () => {
+  it('is focusable so a sideways-scrolling strip can be reached', () => {
+    const { container } = render(StageList, { stages: [], variant: 'strip' } as never);
+    expect(container.querySelector('ol')!.getAttribute('tabindex')).toBe('0');
+  });
+});

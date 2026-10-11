@@ -13,3 +13,12 @@ describe('QuestionStudio', () => {
     expect(container.querySelectorAll('.command-bar button')).toHaveLength(2);
   });
 });
+
+describe('QuestionStudio refusal', () => {
+  it('shows a refusal on the command bar, beside the options', async () => {
+    const { container } = mountQuestion(QuestionStudio, ask({ options: [] }));
+    (await import('@testing-library/svelte')).screen.getByRole('button', { name: 'Send answer' }).click();
+    const alert = await (await import('@testing-library/svelte')).screen.findByRole('alert');
+    expect(container.querySelector('.command-bar')!.contains(alert)).toBe(true);
+  });
+});

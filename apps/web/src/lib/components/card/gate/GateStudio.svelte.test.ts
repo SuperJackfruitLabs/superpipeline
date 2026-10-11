@@ -25,3 +25,10 @@ describe('GateStudio', () => {
     expect([...bar.querySelectorAll('button')].map((b) => b.textContent)).toEqual(['Request changes', 'Reject', 'Approve']);
   });
 });
+
+describe('GateStudio refusal', () => {
+  it('shows a refusal on the command bar, beside the decisions', () => {
+    const { container } = render(GateStudio, gatePanelProps({ error: 'Gate already decided (409)' }));
+    expect(container.querySelector('.command-bar')!.contains(screen.getByRole('alert'))).toBe(true);
+  });
+});
