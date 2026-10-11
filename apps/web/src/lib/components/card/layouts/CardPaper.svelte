@@ -33,7 +33,7 @@
 
   <article class="letter agent-voice text-[17px] leading-relaxed">
     <p>Dear {personName},</p>
-    <p class="mt-3"><LeadWords {lead} {vibe} /></p>
+    <p class="mt-3 whitespace-pre-wrap"><LeadWords {lead} {vibe} /></p>
     <footer class="mt-4 flex items-center gap-2 not-italic">
       {#if agent.id}<AgentFace agentId={agent.id} name={agent.name} iconUrl={agent.iconUrl} mood={agent.mood} size={32} variant="portrait" />{/if}
       <!-- "delegate" only when the named agent holds the card; nobody may hold it yet. -->

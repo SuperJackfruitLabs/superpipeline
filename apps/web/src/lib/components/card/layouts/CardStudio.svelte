@@ -89,7 +89,7 @@
     <span class="status-led mt-1 inline-block size-2.5 flex-none rounded-full" data-mood={agent.mood} data-blink={lead.needsYou} aria-hidden="true"></span>
     <div class="min-w-0">
       <p class="uppercase"><b>{agent.name || 'Nobody yet'}</b> · {lead.needsYou ? 'needs decision' : card.state}</p>
-      <p><LeadWords {lead} {vibe} /></p>
+      <p class="whitespace-pre-wrap" style="overflow-wrap:anywhere"><LeadWords {lead} {vibe} /></p>
     </div>
   </div>
 </div>
