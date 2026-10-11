@@ -88,8 +88,10 @@
 
   <table class="studio-table mt-4 w-full text-left text-sm">
     <caption class="sr-only">Cards</caption>
-    <thead class="sr-only">
-      <tr>{#each ['Status', 'Card', 'Agent', 'Stage', 'Attempts', 'Age', 'Next', 'Cost', 'Due', 'Move'] as h (h)}<th scope="col">{h}</th>{/each}</tr>
+    <!-- Visible from 768px up: without it the columns are bare numbers. On the phone each stacked
+         cell carries its own data-label, so the row is visually hidden there (never removed). -->
+    <thead class="border-border border-b max-md:sr-only">
+      <tr>{#each ['Status', 'Card', 'Agent', 'Stage', 'Attempts', 'Age', 'Next', 'Cost', 'Due', 'Move'] as h (h)}<th scope="col" class="eyebrow text-muted-foreground py-1.5 pr-3 font-normal">{h}</th>{/each}</tr>
     </thead>
     <tbody>
       {#each shown as s (s.id)}
@@ -134,7 +136,7 @@
 </div>
 
 <style>
-  /* Phone: each row stacks, each cell carries its own label, and the (visually hidden) header stays. */
+  /* Phone: each row stacks, each cell carries its own label, and the header stays, visually hidden. */
   @media (max-width: 767px) {
     .studio-table, .studio-table :global(tbody), .studio-table :global(tr), .studio-table :global(td) { display: block; }
     .studio-table :global(tr) { position: relative; padding: var(--vk-space-2) 0; }

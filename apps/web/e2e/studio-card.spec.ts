@@ -56,3 +56,19 @@ test('studio phone: the edit form scrolls with the body, and Save can be reached
   await save.focus();
   await expect(save).toBeFocused();
 });
+
+test('studio board: the column headers show on a desktop and stay visually hidden on a phone', async ({ page, request }) => {
+  await setAppearance(page, 'studio.light.strong.0');
+  const boardId = await seedBoard(request, 'Studio columns', PIPELINE);
+  await request.post(`${API}/v1/boards/${boardId}/cards`, { headers: TENANT, data: { title: 'A row', ownerUserId: 'usr_a' } });
+  await page.setViewportSize({ width: 1280, height: 800 });
+  await openBoard(page, boardId);
+  const header = page.getByRole('table', { name: 'Cards' }).getByRole('columnheader', { name: 'Attempts' });
+  // sr-only is a 1px absolutely placed box, which Playwright still counts as visible: measure the row.
+  const row = page.getByRole('table', { name: 'Cards' }).locator('thead');
+  await expect(header).toBeVisible();
+  expect((await row.boundingBox())!.width).toBeGreaterThan(300);
+  await page.setViewportSize({ width: 375, height: 667 });
+  await expect.poll(async () => (await row.boundingBox())?.width ?? 0).toBeLessThanOrEqual(1);
+  await expect(header).toHaveCount(1);
+});

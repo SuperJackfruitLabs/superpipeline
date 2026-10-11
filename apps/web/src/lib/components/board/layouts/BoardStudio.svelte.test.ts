@@ -117,8 +117,11 @@ describe('BoardStudio', () => {
     const t = screen.getByRole('table', { name: 'Cards' });
     expect(t.querySelector('caption')!.textContent).toBe('Cards');
     expect(within(t).getAllByRole('columnheader').map((h) => h.textContent)).toEqual(['Status', 'Card', 'Agent', 'Stage', 'Attempts', 'Age', 'Next', 'Cost', 'Due', 'Move']);
-    // the header row is visually hidden, never removed
-    expect(t.querySelector('thead')!.className).toContain('sr-only');
+    // Shown from 768px up, where the columns would otherwise be bare numbers; visually hidden (never
+    // removed) on the phone, where every stacked cell carries its own label.
+    const classes = t.querySelector('thead')!.className.split(/\s+/);
+    expect(classes).toContain('max-md:sr-only');
+    expect(classes).not.toContain('sr-only');
   });
 
   it('gives every row each cell, labelled for the phone view', () => {
