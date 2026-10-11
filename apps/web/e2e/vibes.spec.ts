@@ -1,6 +1,6 @@
 import AxeBuilder from '@axe-core/playwright';
 import { expect, test, type Locator, type Page } from '@playwright/test';
-import { openBoard, REVIEW_PIPELINE, seedBoard, seedGatedCard, seedQuestionCard, setAppearance } from './support/seed';
+import { BOUND_PIPELINE, openBoard, REVIEW_PIPELINE, seedBoard, seedBoundGateCard, seedGatedCard, seedQuestionCard, setAppearance } from './support/seed';
 
 // Every vibe × theme runs against whatever layout the registry gives it. LAYOUT_VIBES lists the
 // vibes whose own layouts have shipped (Phase 1: daylight; the others run as skins over Daylight).
@@ -18,9 +18,9 @@ async function revealAll(scope: Locator): Promise<void> {
   for (const b of await scope.locator('button[aria-expanded="false"][aria-controls]').all()) if (await b.isVisible()) await b.click();
 }
 
-/** Visible now, or after opening every disclosure, or on some tab. */
-async function reachable(scope: Locator, role: Parameters<Locator['getByRole']>[0], name: string | RegExp): Promise<boolean> {
-  const seen = async () => scope.getByRole(role, { name, exact: typeof name === 'string' }).first().isVisible().catch(() => false);
+/** Found by `find` now, or after opening every disclosure, or on some tab. */
+async function reach(scope: Locator, find: (s: Locator) => Locator): Promise<boolean> {
+  const seen = async () => find(scope).first().isVisible().catch(() => false);
   if (await seen()) return true;
   await revealAll(scope);
   if (await seen()) return true;
@@ -32,6 +32,10 @@ async function reachable(scope: Locator, role: Parameters<Locator['getByRole']>[
   }
   return false;
 }
+
+const reachable = (scope: Locator, role: Parameters<Locator['getByRole']>[0], name: string | RegExp) =>
+  reach(scope, (s) => s.getByRole(role, { name, exact: typeof name === 'string' }));
+const reachableText = (scope: Locator, text: string | RegExp) => reach(scope, (s) => s.getByText(text));
 
 /** Axe reads the colours on screen, so let every finite transition (the drawer sliding in) finish first. */
 async function settled(page: Page): Promise<void> {
@@ -113,6 +117,30 @@ for (const vibe of ALL_VIBES) {
   }
 }
 
+// D17: a gate bound to an approval subject shows what is being approved, whole, in every vibe.
+for (const vibe of ALL_VIBES) {
+  for (const size of SIZES) {
+    test(`${vibe} ${size.name}: a bound gate shows its approval subject`, async ({ page, request }, info) => {
+      await page.setViewportSize({ width: size.width, height: size.height });
+      await page.clock.setFixedTime(NOON);
+      await setAppearance(page, `${vibe}.light.strong.0`);
+      const boardId = await seedBoard(request, `Bound ${vibe} ${size.name}`, BOUND_PIPELINE);
+      await seedBoundGateCard(request, boardId, 'Launch post');
+      await openBoard(page, boardId);
+      await page.getByRole('button', { name: '⚑ Review' }).first().click();
+      const dialog = page.getByRole('dialog');
+      await expect(dialog).toBeVisible();
+      await expect(dialog.getByText('⚑ awaiting your review')).toBeVisible();
+      for (const text of [/Immutable approval subject · revision 1/, /sha256:[0-9a-f]{64}/, /"username": "example_product"/, /Approving exactly this version · sealed [0-9a-f]{4}·[0-9a-f]{4}/]) {
+        expect(await reachableText(dialog, text), `subject: ${String(text)}`).toBe(true);
+      }
+      await noSideScroll(page);
+      await noA11yViolations(page, '[role="dialog"]');
+      await info.attach(`${vibe}-${size.name}-bound-gate.png`, { body: await page.screenshot(), contentType: 'image/png' });
+    });
+  }
+}
+
 // Ruling 12: on a finger every interactive thing is a 44px target (or sits in a 44px label/hit area).
 test.describe('coarse pointer', () => {
   test.use({ viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true });
@@ -156,6 +184,13 @@ test.describe('coarse pointer', () => {
       await expect(dialog).toBeVisible();
       await revealAll(dialog);
       expect(await smallTargets(dialog), 'card drawer').toEqual([]);
+
+      await page.keyboard.press('Escape');
+      await expect(dialog).toBeHidden();
+      await page.getByRole('button', { name: /^⚑ Answer agt_r/ }).first().tap();
+      await expect(dialog.getByText('May I run the test suite?').first()).toBeVisible();
+      await revealAll(dialog);
+      expect(await smallTargets(dialog), 'question drawer').toEqual([]);
     });
   }
 });

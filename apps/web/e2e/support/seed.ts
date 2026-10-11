@@ -49,3 +49,31 @@ export async function openBoard(page: Page, boardId: string): Promise<void> {
 export async function setAppearance(page: Page, value: string): Promise<void> {
   await page.context().addCookies([{ name: 'vk_appearance', value, url: 'http://localhost:5173' }]);
 }
+
+/** A pipeline whose review stage binds its gate to an immutable approval subject (needs a project and a decider). */
+export const BOUND_PIPELINE = [
+  { key: 'draft', name: 'Draft', order: 0, ownerKind: 'capability', owner: 'research' },
+  { key: 'review', name: 'Review', order: 1, ownerKind: 'human', gate: 'approval', approvalSubjectSchema: 'social-publish/v1', approvalDeciderPrincipalIds: ['usr_dev'] },
+  { key: 'publish', name: 'Publish', order: 2, ownerKind: 'capability', owner: 'publish' },
+];
+
+const PUBLICATION_PAYLOAD = {
+  channel: 'x',
+  account: { platform: 'x', userId: 'acct_1', username: 'example_product' },
+  items: [{ index: 0, text: 'Exact post text', media: [], replyToPostId: null, quotePostId: null }],
+  timing: { mode: 'immediate', notBefore: null, expiresAt: '2030-01-02T03:04:05Z' },
+  evidenceRefs: [],
+  policy: { allowThread: true, duplicatePolicyId: 'duplicate-policy', floodPolicyId: 'flood-policy' },
+};
+
+/** A card at a gate that carries an approval subject (revision 1, a digest and the canonical payload). */
+export async function seedBoundGateCard(request: APIRequestContext, boardId: string, title: string): Promise<void> {
+  const project = (await (await request.post(`${API}/v1/projects`, { headers: TENANT, data: { name: `Fixture project ${Math.random().toString(36).slice(2, 8)}` } })).json()) as { project: { id: string } };
+  const card = (await (await request.post(`${API}/v1/boards/${boardId}/cards`, { headers: TENANT, data: { title, ownerUserId: 'usr_a' } })).json()) as { card: { id: string } };
+  await request.patch(`${API}/v1/boards/${boardId}/cards/${card.card.id}`, { headers: TENANT, data: { projectId: project.project.id } });
+  const claim = await (await request.post(`${API}/v1/boards/${boardId}/claims`, { headers: AGENT, data: { capabilities: ['research'] } })).json();
+  await request.post(`${API}/v1/boards/${boardId}/runs/${claim.runId}/complete`, {
+    headers: TENANT,
+    data: { leaseEpoch: claim.leaseEpoch, handoff: { publicationPayload: PUBLICATION_PAYLOAD } },
+  });
+}

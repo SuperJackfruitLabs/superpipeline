@@ -33,7 +33,8 @@
         <div class="mb-1 font-semibold">Immutable approval subject · revision {gate.approvalSubject.revision}</div>
         <div class="text-muted-foreground break-all">{gate.approvalSubject.id}</div>
         <div class="text-muted-foreground break-all">{gate.approvalSubject.digest}</div>
-        <pre class="mt-2 max-h-64 overflow-auto whitespace-pre-wrap">{JSON.stringify(gate.approvalSubject.canonical, null, 2)}</pre>
+        <!-- svelte-ignore a11y_no_noninteractive_tabindex: a scrollable region must be keyboard reachable -->
+        <pre tabindex="0" role="region" aria-label="Approval subject, canonical JSON" class="mt-2 max-h-64 overflow-auto whitespace-pre-wrap">{JSON.stringify(gate.approvalSubject.canonical, null, 2)}</pre>
         <div class="mt-2 text-xs">Approving exactly this version · sealed {sealOf(gate.approvalSubject.digest)}</div>
       </div>
     {/if}

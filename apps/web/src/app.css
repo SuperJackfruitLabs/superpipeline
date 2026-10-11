@@ -166,7 +166,6 @@
     .hit {
       min-height: var(--tap);
       min-width: var(--tap);
-      justify-content: center;
       display: inline-flex;
       align-items: center;
     }
