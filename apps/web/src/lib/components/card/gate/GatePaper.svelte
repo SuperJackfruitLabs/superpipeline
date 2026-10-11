@@ -20,7 +20,6 @@
   <h3 id="gate-h-{gate.id}" class="eyebrow text-signal-text">⚑ awaiting your review</h3>
   <p class="font-display mt-1 text-lg">Re: approval</p>
   <p class="agent-voice mt-2"><LeadWords {lead} {vibe} /></p>
-  {#if error}<p role="alert" class="text-signal-text mono mt-2 rounded-[var(--vk-radius-md)] border-2 px-3 py-2 text-xs" style="border-color:var(--vk-color-signal)">{error}</p>{/if}
   {#if gate.approvalSubject}
     <figure class="mt-3 border-l-2 border-[var(--vk-color-line)] pl-3" aria-label="The version you are approving">
       <figcaption class="text-sm">Immutable approval subject · revision {gate.approvalSubject.revision}</figcaption>
@@ -45,6 +44,8 @@
       class="bg-surface w-full resize-y rounded-[var(--vk-radius-md)] border-2 px-2.5 py-2 text-base outline-none"
       style="border-color:{model.needNote ? 'var(--vk-color-signal)' : 'var(--vk-color-line)'}"></textarea>
     <div class="text-muted-foreground mono text-right text-[11px]">{model.note.length} / {GATE_NOTE_MAX}</div>
+    <!-- Beside the send button, so a refusal is seen where the reply was sent. -->
+    {#if error}<p role="alert" class="text-signal-text mono mt-2 rounded-[var(--vk-radius-md)] border-2 px-3 py-2 text-xs" style="border-color:var(--vk-color-signal)">{error}</p>{/if}
     <button type="button" class="vk-button vk-button--primary mt-2" disabled={model.busy} onclick={() => model.submit()}>Send reply</button>
   </fieldset>
 </section>

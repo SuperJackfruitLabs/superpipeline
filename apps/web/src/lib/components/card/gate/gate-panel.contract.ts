@@ -113,6 +113,15 @@ export function gatePanelContract(C: Component<any>, o: { decision: 'button' | '
       expect(screen.getByRole('alert').textContent).toContain('Gate already decided (409)');
     });
 
+    it('puts the gate error beside the controls: after the subject, right before the decision', () => {
+      render(C, gatePanelProps({ error: 'Gate already decided (409)' }));
+      const alert = screen.getByRole('alert');
+      const follows = (a: Element, b: Element) => !!(a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING);
+      expect(follows(screen.getByRole('region', { name: /canonical JSON/i }), alert)).toBe(true);
+      const control = o.decision === 'button' ? screen.getAllByRole('button').find((b) => /Approve|Request changes|Reject/.test(b.textContent ?? ''))! : screen.getByRole('button', { name: o.submit! });
+      expect(follows(alert, control)).toBe(true);
+    });
+
     if (o.decision === 'radio') {
       it('asks for a choice before sending', async () => {
         resolveGate.mockReset();
