@@ -10,6 +10,12 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 > Everything current is `superpipeline`, and an agent token now starts `spa_`
 > rather than `kbn_`, with no fallback.
 
+## [0.0.19] — Unreleased
+
+### Changed
+
+- Superpipeline moves onto vibekit: pick Daylight, Paper, Studio or Quiet in Appearance; light, dark or follow the sun. The card opens with what its agent needs. Superlibrary previews hidden for want of a sign-in offer Reconnect.
+
 ## [0.0.1] — 2026-06-21
 
 **"First Flight."** The first tagged milestone, spanning the work since the
