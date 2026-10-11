@@ -13,6 +13,7 @@ vi.mock('$lib/api', async (orig) => ({ ...(await orig<typeof import('$lib/api')>
 
 import CommandPalette from './CommandPalette.svelte';
 import { app } from '$lib/stores/app.svelte';
+import { appearance } from '$lib/appearance.svelte';
 
 async function openWith(query: string) {
   render(CommandPalette);
@@ -25,7 +26,7 @@ async function openWith(query: string) {
 describe('CommandPalette account commands', () => {
   beforeEach(() => {
     logout.mockClear();
-    app.theme = 'dark';
+    appearance.set({ theme: 'dark' });
     app.cmdkOpen = false;
     Object.defineProperty(window, 'location', { value: { ...window.location, reload: vi.fn() }, writable: true });
   });
@@ -40,12 +41,12 @@ describe('CommandPalette account commands', () => {
   it('switches to the light theme from dark', async () => {
     await openWith('theme');
     await fireEvent.click(screen.getByRole('button', { name: /light theme/i }));
-    expect(app.theme).toBe('light');
+    expect(appearance.theme).toBe('light');
     expect(app.cmdkOpen).toBe(false);
   });
 
   it('offers the dark theme when light is on', async () => {
-    app.theme = 'light';
+    appearance.set({ theme: 'light' });
     await openWith('theme');
     expect(screen.getByRole('button', { name: /dark theme/i })).toBeTruthy();
   });

@@ -146,7 +146,7 @@
           {#if cards.length === 0}
             <!-- One quiet strip. Five full-height AWAITING WORK boxes meant the majority of the
                  screen was spent saying "empty" five times at full width. -->
-            <div class="eyebrow border-border/60 mx-1 grid h-[34px] place-items-center rounded-[8px] border border-dashed text-center opacity-60">
+            <div class="eyebrow border-border/60 mx-1 grid h-[34px] place-items-center rounded-[8px] border border-dashed text-center">
               empty
             </div>
           {/if}

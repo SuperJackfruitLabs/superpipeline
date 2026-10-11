@@ -8,8 +8,7 @@
  * `find()` repeated per component.
  */
 import { describe, it, expect } from 'vitest';
-import { displayAgent, displayPrincipal, shortId } from './names';
-import { initialOf } from './components/agentColor';
+import { displayAgent, displayPrincipal, initialOf, shortId } from './names';
 import type { AgentSummary } from './api';
 
 const AGENTS = [
@@ -67,6 +66,14 @@ describe('shortId', () => {
   it('leaves something already short alone', () => {
     expect(shortId('agt_1')).toBe('agt_1');
     expect(shortId('')).toBe('');
+  });
+});
+
+describe('initialOf', () => {
+  it('is the upper-cased first letter, or ? when there is no name', () => {
+    expect(initialOf('sample agent')).toBe('S');
+    expect(initialOf(null)).toBe('?');
+    expect(initialOf('  ')).toBe('?');
   });
 });
 

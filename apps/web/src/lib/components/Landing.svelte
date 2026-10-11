@@ -23,6 +23,8 @@
    */
   import { onMount } from 'svelte';
   import { BOARD_TEMPLATES } from '$lib/api';
+  import { greeting, Sky } from '@superjackfruit/vibekit';
+  import { appearance } from '$lib/appearance.svelte';
   import BrandMark from '$lib/components/BrandMark.svelte';
   import { beginHubAuthorization, hubStatus } from '$lib/hub-token';
   import { signInChoices, signInNotice, urlWithoutSignInParam, type SignInNotice } from '$lib/sign-in';
@@ -94,11 +96,14 @@
 <main class="landing min-h-viewport">
   <!-- ── hero ─────────────────────────────────────────────────────────────── -->
   <section class="hero">
+    <Sky phase={appearance.phase}>
     <div class="hero-copy">
       <div class="mark">
         <BrandMark class="size-8" />
         <span class="wordmark text-2xl leading-none">superpipeline</span>
       </div>
+
+      <p class="greeting font-display">{greeting(appearance.phase, appearance.value.vibe)}</p>
 
       <h1>A board where agents do the work and <em>you stay in command</em>.</h1>
 
@@ -143,6 +148,7 @@
         <p class="failure" role="alert">{failure}</p>
       {/if}
     </div>
+    </Sky>
 
     <!-- The signature: a real pipeline, with the human gate where it actually sits. -->
     <div class="pipeline" role="img"
@@ -242,8 +248,17 @@
     align-self: center;
   }
 
+  /* The sky is the hero's ground: its text colour is the sky's, and the muted greys step aside. */
+  .hero > :global(.vk-sky) {
+    border-radius: var(--vk-radius-lg);
+  }
+  .greeting {
+    margin: 0 0 8px;
+    font-size: 1.05rem;
+    font-weight: 600;
+  }
   h1 {
-    font-family: var(--font-display);
+    font-family: var(--vk-font-display);
     font-weight: 700;
     font-size: clamp(2rem, 4vw, 2.9rem);
     line-height: 1.08;
@@ -253,10 +268,15 @@
   }
   h1 em {
     font-style: normal;
-    color: var(--marigold);
+    /* The sky owns the text colour; the emphasis is a rule under the words, not a second colour
+       that would have to clear every phase's sky. */
+    text-decoration: underline;
+    text-decoration-color: var(--vk-color-primary);
+    text-decoration-thickness: 0.09em;
+    text-underline-offset: 0.12em;
   }
   .lede {
-    color: var(--muted);
+    color: inherit;
     font-size: 1.02rem;
     line-height: 1.62;
     margin: 0 0 26px;
@@ -274,7 +294,8 @@
     display: inline-flex;
     align-items: center;
     gap: 9px;
-    border-radius: 7px;
+    border-radius: var(--vk-radius-md);
+    min-height: var(--tap);
     padding: 10px 16px;
     font-size: 14px;
     font-weight: 500;
@@ -282,46 +303,48 @@
     transition: filter 0.15s ease, border-color 0.15s ease;
   }
   .btn-signin {
-    background: var(--marigold);
-    color: var(--marigold-ink);
+    background: var(--vk-color-primary);
+    color: var(--vk-color-primary-fg);
   }
   .btn-signin:hover {
     filter: brightness(1.08);
   }
   /* The second way in, ranked below GitHub and above the docs link. */
   .btn-alt {
-    border: 1px solid var(--line);
-    background: var(--surface);
-    color: var(--text);
+    border: 1px solid var(--vk-color-line);
+    background: var(--vk-color-surface);
+    color: var(--vk-color-text);
     font-family: inherit;
     cursor: pointer;
   }
   .btn-alt:hover:not(:disabled) {
-    border-color: var(--marigold);
+    border-color: var(--vk-color-primary);
   }
   .btn-alt:disabled {
     cursor: default;
-    color: var(--muted);
+    color: var(--vk-color-muted);
   }
 
   .btn-ghost {
     border: 1px solid transparent;
-    color: var(--muted);
+    color: inherit;
+    text-decoration: underline;
+    text-underline-offset: 4px;
   }
   .btn-ghost:hover {
-    color: var(--text);
-    border-color: var(--line);
+    border-color: var(--vk-color-line);
   }
 
   /* An outcome worth a sentence: authenticated at the issuer, unknown here. */
   .notice {
-    border: 1px solid var(--line);
-    border-left: 2px solid var(--marigold);
-    background: var(--inset);
+    border: 1px solid var(--vk-color-line);
+    border-left: 2px solid var(--vk-color-primary);
+    background: var(--vk-color-raised);
     border-radius: 8px;
     padding: 12px 14px;
     margin: 0 0 20px;
     max-width: 38em;
+    color: var(--vk-color-text);
   }
   .notice strong {
     display: block;
@@ -330,7 +353,7 @@
   }
   .notice p {
     margin: 0;
-    color: var(--muted);
+    color: var(--vk-color-muted);
     font-size: 13.5px;
     line-height: 1.6;
   }
@@ -338,13 +361,12 @@
   .failure {
     margin: 12px 0 0;
     font-size: 13px;
-    color: var(--muted);
   }
 
   /* ── the pipeline ──────────────────────────────────────────────────────── */
   .pipeline {
-    background: var(--surface);
-    border: 1px solid var(--line);
+    background: var(--vk-color-surface);
+    border: 1px solid var(--vk-color-line);
     border-radius: 12px;
     overflow: hidden;
   }
@@ -354,10 +376,10 @@
     justify-content: space-between;
     gap: 10px;
     padding: 12px 15px;
-    border-bottom: 1px solid var(--line);
+    border-bottom: 1px solid var(--vk-color-line);
   }
   .pipe-title {
-    font-family: var(--font-display);
+    font-family: var(--vk-font-display);
     font-weight: 700;
     font-size: 15px;
   }
@@ -375,50 +397,50 @@
     border-left: 2px solid transparent;
   }
   .stage.gated {
-    border-left-color: var(--marigold);
-    background: var(--inset);
+    border-left-color: var(--vk-color-primary);
+    background: var(--vk-color-raised);
   }
   .stage-name {
     font-weight: 500;
   }
   .owner {
-    font-family: var(--font-mono);
+    font-family: var(--vk-font-mono);
     font-size: 11px;
     border-radius: 999px;
     padding: 2px 8px;
     margin-left: auto;
   }
   .owner.cap {
-    color: var(--live);
-    border: 1px solid color-mix(in srgb, var(--live) 40%, transparent);
+    color: var(--vk-color-success-text);
+    border: 1px solid color-mix(in srgb, var(--vk-color-success-text) 40%, transparent);
   }
   .owner.human {
-    color: var(--muted);
-    border: 1px solid var(--line);
+    color: var(--vk-color-muted);
+    border: 1px solid var(--vk-color-line);
   }
   .gate {
-    font-family: var(--font-mono);
+    font-family: var(--vk-font-mono);
     font-size: 10px;
     letter-spacing: 0.12em;
     text-transform: uppercase;
-    color: var(--marigold);
+    color: var(--vk-color-primary);
   }
   .wip {
-    font-family: var(--font-mono);
+    font-family: var(--vk-font-mono);
     font-size: 10px;
-    color: var(--muted);
+    color: var(--vk-color-muted);
   }
   .pipe-foot {
-    border-top: 1px solid var(--line);
+    border-top: 1px solid var(--vk-color-line);
     margin: 0;
     padding: 11px 15px;
     font-size: 12.5px;
-    color: var(--muted);
+    color: var(--vk-color-muted);
   }
 
   /* ── argument ──────────────────────────────────────────────────────────── */
   .band {
-    border-top: 1px solid var(--line);
+    border-top: 1px solid var(--vk-color-line);
     padding: 52px 0;
   }
   .cells {
@@ -427,7 +449,7 @@
     gap: 28px;
   }
   .cell h2 {
-    font-family: var(--font-display);
+    font-family: var(--vk-font-display);
     font-weight: 700;
     font-size: 1.05rem;
     letter-spacing: -0.01em;
@@ -435,20 +457,20 @@
   }
   .cell p {
     margin: 0;
-    color: var(--muted);
+    color: var(--vk-color-muted);
     font-size: 14.5px;
     line-height: 1.6;
   }
 
   .foot {
-    border-top: 1px solid var(--line);
+    border-top: 1px solid var(--vk-color-line);
     display: flex;
     justify-content: space-between;
     gap: 16px;
     flex-wrap: wrap;
     padding: 24px 0 40px;
     font-size: 13px;
-    color: var(--muted);
+    color: var(--vk-color-muted);
   }
   .foot nav {
     display: flex;
@@ -457,14 +479,15 @@
   }
   /* A 20px-tall text link is a miss on a finger; the target grows, the type does not. */
   .foot a {
-    color: var(--muted);
+    color: var(--vk-color-muted);
     text-decoration: none;
     display: inline-flex;
     align-items: center;
     min-height: var(--tap);
+    min-width: var(--tap);
   }
   .foot a:hover {
-    color: var(--text);
+    color: var(--vk-color-text);
   }
 
   @media (max-width: 880px) {

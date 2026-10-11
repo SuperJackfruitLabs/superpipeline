@@ -49,7 +49,7 @@
     <div class="mt-4 flex flex-wrap items-center gap-1.5">
       {#each template.stages as s, i (s.key)}
         <span class="border-border mono rounded-[6px] border px-2 py-1 text-[11px] {s.ownerKind === 'capability' ? 'text-marigold' : s.gate === 'approval' ? 'text-coral' : ''}">
-          {s.name}{#if s.gate === 'approval'}<span class="ml-1 opacity-70">gate</span>{/if}
+          {s.name}{#if s.gate === 'approval'}<span class="ml-1">gate</span>{/if}
         </span>
         {#if i < template.stages.length - 1}<span style="color:var(--marigold)" aria-hidden="true">→</span>{/if}
       {/each}
@@ -60,7 +60,7 @@
     </div>
   </div>
 
-  <button onclick={() => void logout().then(() => location.reload())} class="text-muted-foreground hover:text-foreground mono self-start text-xs">sign out</button>
+  <button onclick={() => void logout().then(() => location.reload())} class="text-muted-foreground hover:text-foreground mono tap self-start text-xs">sign out</button>
   {#if error}<p class="text-coral mono text-xs">{error}</p>{/if}
 </div>
 </main>

@@ -47,4 +47,13 @@ describe('LibraryArtifact (spec §9 Embedding, §11)', () => {
     const id = screen.getByRole('button', { name: 'Hide preview' }).getAttribute('aria-controls')!;
     expect(document.getElementById(id)).not.toBeNull();
   });
+  it('a missing sign-in offers Reconnect and keeps the reason visible', async () => {
+    mount.mockRejectedValue(new LibraryError(0, 'no_token'));
+    render(LibraryArtifact, { itemId: 'itm_0123456789abcdef', title: 'Plan', open: true });
+    const alert = await screen.findByRole('alert');
+    expect(alert.textContent).toContain("I just couldn't confirm it's you");
+    expect(alert.textContent).toContain('Reason: no_token');
+    expect(alert.textContent).not.toContain('Previews need you signed in');
+    expect(screen.getByRole('button', { name: 'Reconnect' })).toBeTruthy();
+  });
 });

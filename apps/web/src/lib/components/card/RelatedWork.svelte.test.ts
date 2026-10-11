@@ -31,7 +31,9 @@ describe('Related prior work (superlibrary spec §11)', () => {
     cleanup();
     related.mockRejectedValueOnce(new LibraryError(0, 'no_token')).mockResolvedValueOnce([]);
     render(RelatedWork, { cardId: CARD });
-    expect(await screen.findByText(/Previews need you signed in/)).toBeTruthy();
+    expect(await screen.findByText(/I just couldn't confirm it's you/)).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Reconnect' })).toBeTruthy();
+    expect(document.body.textContent).toContain('Reason: no_token');
     await fireEvent.click(screen.getByRole('button', { name: 'Try again' }));
     expect(await screen.findByText('Nothing related in Superlibrary yet.')).toBeTruthy();
   });

@@ -1,14 +1,19 @@
 <script lang="ts">
   import { displayAgent } from '$lib/names';
-  import type { Card, Reference } from '$lib/api';
+  import type { Card } from '$lib/api';
   import { app } from '$lib/stores/app.svelte';
-  import { agentColor, initialOf } from '$lib/components/agentColor';
+  import AgentFace from '$lib/components/AgentFace.svelte';
+  import { cardLead, moodFor, moodWord } from '$lib/components/card/card-lead';
+  import { appearance } from '$lib/appearance.svelte';
+  import { FACE_VARIANT } from '$lib/layouts';
   import { cardDraggable } from '$lib/dnd';
   import { Button } from '$lib/components/ui/button';
   import { overdue } from './card-due';
   import { enforcedBadge } from './card-blocked';
   import { childCounter } from './card-children';
   import { cardProvenance } from './card-provenance';
+  import { peekNotifier } from './peek';
+  import { refLabel, safeHref, subStateClass, subStateLabel } from './ref-chip';
 
   interface Props {
     card: Card;
@@ -21,6 +26,7 @@
   }
 
   const { card, childCounts }: Props = $props();
+  const peek = peekNotifier();
 
   // Gate is reactive — reads from app store
   const gate = $derived(app.gateForCard(card.id));
@@ -35,7 +41,7 @@
    * straight down a column without being read at all. Absent priority renders nothing, rather
    * than a third chip saying "P3".
    */
-  const priColour = $derived(card.priority === 1 ? 'var(--coral)' : card.priority === 2 ? 'var(--marigold)' : null);
+  const priColour = $derived(card.priority === 1 ? 'var(--vk-color-signal)' : card.priority === 2 ? 'var(--vk-color-primary)' : null);
 
   /**
    * The ⛔ badge and the `open/total` sub-task counter (Task 17b, Step 1 / 1c).
@@ -54,48 +60,6 @@
   const blocked = $derived(enforcedBadge(card.blockedBy));
   const totalChildren = $derived(childCounts.get(card.id) ?? 0);
   const children = $derived(childCounter(card.openChildCount, totalChildren));
-
-  // Reference chip helpers (ported from page.svelte)
-  const SUB_STATE_LABELS: Record<string, string> = {
-    draft_pr_open: 'draft',
-    pr_open: 'open',
-    agent_iterating: 'iterating',
-    awaiting_review: 'review',
-    merged: 'merged',
-    closed: 'closed',
-    agent_working: 'working',
-    issue_open: 'open',
-    issue_closed: 'closed',
-  };
-
-  function subStateLabel(ref: Reference): string | null {
-    const s = ref.metadata?.subState;
-    return typeof s === 'string' ? (SUB_STATE_LABELS[s] ?? s) : null;
-  }
-
-  function refLabel(ref: Reference): string {
-    if (ref.sourceType === 'pull_request') {
-      const num = ref.externalId?.split('#')[1];
-      return `PR${num ? ` #${num}` : ''}`.trim();
-    }
-    if (ref.sourceType === 'issue') {
-      const num = ref.externalId?.split('#')[1];
-      return `Issue${num ? ` #${num}` : ''}`.trim();
-    }
-    if (ref.sourceType === 'repo') return ref.externalId ?? 'repo';
-    return ref.title ?? ref.sourceType;
-  }
-
-  function subStateClass(sub: string): string {
-    if (sub === 'draft' || sub === 'draft_pr_open') return 'refchip-st refchip-st-draft';
-    if (sub === 'open' || sub === 'ready' || sub === 'review' || sub === 'iterating' || sub === 'working') return 'refchip-st refchip-st-ready';
-    if (sub === 'merged') return 'refchip-st refchip-st-merged';
-    return 'refchip-st refchip-st-draft';
-  }
-
-  function safeHref(url: string): string | null {
-    return /^https?:\/\//i.test(url) ? url : null;
-  }
 
   function fmtUsd(n: number): string {
     return `$${n.toFixed(2)}`;
@@ -117,10 +81,10 @@
   // Delegate avatar. `agents.icon_url` has existed since migration 0001 and was read by nothing;
   // the coloured initial stays the fallback, which is what most agents will always have.
   const delegate = $derived(app.agents.find((a) => a.id === card.delegateAgentId) ?? null);
-  const avatarColor = $derived(agentColor(card.delegateAgentId));
-  const avatarInitial = $derived(
-    card.delegateAgentId ? initialOf(card.delegateAgentId).toUpperCase() : null,
-  );
+  const delegateName = $derived(displayAgent(card.delegateAgentId, app.agents));
+  const lead = $derived(cardLead({ card, gate, elicitation: question }));
+  const mood = $derived(moodFor(lead.kind, !!card.delegateAgentId));
+  const faceVariant = $derived(FACE_VARIANT[appearance.value.vibe]);
 
   /**
    * Who asked for this card. Shown on the TILE and not only in the drawer, because a board full of
@@ -133,9 +97,6 @@
    * would say nothing.
    */
   const provenance = $derived(cardProvenance(card, app.members, app.agents));
-  const queuerInitial = $derived(
-    provenance.agent ? initialOf(provenance.agent.id).toUpperCase() : null,
-  );
 
   /**
    * At most three chips plus "+N" — a tile is scanned, not read. An id with no catalogue entry
@@ -215,8 +176,11 @@
   a pseudo-element. Everything else that is interactive sits above it on the z-axis, so the
   reference chip and the move control keep behaving exactly as they did.
 -->
+<!-- svelte-ignore a11y_no_static_element_interactions -- focusin and pointerenter only tell the peek where the eye is; they act on nothing, and the title button inside is the control -->
 <div
   use:cardDraggable={{ cardId: card.id }}
+  onfocusin={() => peek(card.id)}
+  onpointerenter={() => peek(card.id)}
   class="tile bg-surface border-border group relative rounded-[10px] border p-3 text-left cursor-grab active:cursor-grabbing {gate ? 'tile-gate' : ''}"
 >
   <!-- What just happened, for a reader who cannot see the column the card landed in. -->
@@ -268,7 +232,7 @@
       aria-label="{card.title}, in {orderedStages[stageIndex]?.name ?? card.currentStageKey}. Enter to open, M to move, Alt with left or right arrow to move between stages."
       data-stretch-target
       data-card-open={card.id}
-      class="tile-open flex-1 text-left text-[13.5px] font-medium leading-snug"
+      class="tile-open hit flex-1 text-left text-[13.5px] font-medium leading-snug"
     >{card.title}</button>
     {#if card.state === 'working'}
       <span class="live-dot mt-1 shrink-0" title="Agent working"></span>
@@ -333,16 +297,11 @@
       absence of an agent the most repeated and loudest thing on the board. The board's default
       state is that nobody has picked a card up; it should be its quietest.
     -->
-    {#if card.delegateAgentId && delegate?.iconUrl}
-      <img src={delegate.iconUrl} alt="" title={delegate.name} class="size-5 shrink-0 rounded-full object-cover" />
-    {:else if card.delegateAgentId && avatarInitial}
-      <span
-        class="inline-grid size-5 shrink-0 place-items-center rounded-full font-mono text-[9px] font-semibold"
-        style="background:{avatarColor}; color: #0f1118"
-        title={delegate?.name ?? card.delegateAgentId}
-      >{avatarInitial}</span>
+    {#if card.delegateAgentId}
+      <AgentFace agentId={card.delegateAgentId} name={delegateName} iconUrl={delegate?.iconUrl ?? null} {mood} size={24} variant={faceVariant} withName />
+      <span class="text-muted-foreground text-[11px]">{moodWord(mood)}</span>
     {:else}
-      <span class="text-muted-foreground" aria-hidden="true">—</span>
+      <span class="text-muted-foreground" title="nobody holds this card">—</span>
     {/if}
 
     <!--
@@ -352,14 +311,8 @@
     -->
     {#if provenance.byAgent}
       <span class="queuedchip queuedchip-tile" title={`Queued by ${provenance.queuedByName}, not by you`}>
-        {#if provenance.agent?.iconUrl}
-          <img src={provenance.agent.iconUrl} alt="" class="size-3.5 shrink-0 rounded-full object-cover" />
-        {:else if queuerInitial}
-          <span
-            class="inline-grid size-3.5 shrink-0 place-items-center rounded-full text-[8px] font-semibold"
-            style="background:{agentColor(provenance.agent?.id ?? null)}; color: #0f1118"
-            aria-hidden="true"
-          >{queuerInitial}</span>
+        {#if provenance.agent}
+          <AgentFace agentId={provenance.agent.id} name={provenance.queuedByName} iconUrl={provenance.agent.iconUrl ?? null} size={16} variant="portrait" />
         {/if}
         <span class="truncate">asked by {provenance.queuedByName}</span>
       </span>

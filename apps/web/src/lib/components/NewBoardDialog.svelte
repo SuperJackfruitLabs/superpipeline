@@ -147,19 +147,19 @@ function ownerParts(raw: string): string[] {
 
 {#if open}
   <div class="fixed inset-0 z-40 flex items-center justify-center p-4" style="padding:max(1rem, env(safe-area-inset-top, 0px)) max(1rem, env(safe-area-inset-right, 0px)) max(1rem, env(safe-area-inset-bottom, 0px)) max(1rem, env(safe-area-inset-left, 0px))">
-    <button class="absolute inset-0 bg-black/55" onclick={onClose} aria-label="Close" tabindex="-1"></button>
+    <button class="absolute inset-0 " style="background:var(--sp-scrim)" onclick={onClose} aria-label="Close" tabindex="-1"></button>
     <div class="bg-surface border-border drawer-in relative flex max-h-full w-full max-w-xl flex-col rounded-[12px] border shadow-2xl">
       <div class="border-border flex items-start justify-between gap-3 border-b p-6 pb-4">
         <div>
           <div class="eyebrow mb-1">new board</div>
           <h2 class="wordmark text-lg leading-snug">Design a pipeline</h2>
         </div>
-        <button onclick={onClose} aria-label="Close" class="text-muted-foreground hover:text-foreground shrink-0">
+        <button onclick={onClose} aria-label="Close" class="text-muted-foreground hover:text-foreground tap shrink-0">
           <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" /></svg>
         </button>
       </div>
 
-      <div class="flex-1 overflow-y-auto p-6">
+      <div class="touch-form flex-1 overflow-y-auto p-6">
         <input
           bind:value={name}
           placeholder="Board name — e.g. Launch"
@@ -207,7 +207,7 @@ function ownerParts(raw: string): string[] {
                     </div>
                   {/if}
                 {:else}
-                  <label class="text-muted-foreground flex items-center gap-1.5 select-none">
+                  <label class="text-muted-foreground flex items-center gap-1.5 select-none" style="min-height:var(--tap)">
                     <input type="checkbox" bind:checked={stage.gate} class="accent-coral" /> approval gate
                   </label>
                 {/if}

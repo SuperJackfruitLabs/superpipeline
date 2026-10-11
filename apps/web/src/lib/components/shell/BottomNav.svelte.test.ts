@@ -15,12 +15,13 @@ vi.mock('$lib/api', async (orig) => ({ ...(await orig<typeof import('$lib/api')>
 
 import BottomNav from './BottomNav.svelte';
 import { app } from '$lib/stores/app.svelte';
+import { appearance } from '$lib/appearance.svelte';
 
 describe('BottomNav', () => {
   beforeEach(() => {
     logout.mockClear();
     app.user = { id: 'usr_1', login: 'ada', name: 'Ada Lovelace', avatarUrl: null } as never;
-    app.theme = 'dark';
+    appearance.set({ theme: 'dark' });
     Object.defineProperty(window, 'location', { value: { ...window.location, reload: vi.fn() }, writable: true });
   });
   afterEach(() => cleanup());
@@ -41,7 +42,15 @@ describe('BottomNav', () => {
     render(BottomNav);
     await fireEvent.click(screen.getByRole('button', { name: /you/i }));
     await fireEvent.click(screen.getByRole('menuitem', { name: /light theme/i }));
-    expect(app.theme).toBe('light');
+    expect(appearance.theme).toBe('light');
+  });
+
+  it('offers Appearance in the menu', async () => {
+    render(BottomNav);
+    await fireEvent.click(screen.getByRole('button', { name: /you/i }));
+    await fireEvent.click(screen.getByRole('menuitem', { name: 'Appearance…' }));
+    expect(appearance.pickerOpen).toBe(true);
+    appearance.pickerOpen = false;
   });
 
   it('names who is signed in', async () => {

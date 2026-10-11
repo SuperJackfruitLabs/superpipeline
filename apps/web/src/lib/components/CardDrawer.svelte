@@ -13,7 +13,6 @@
     deleteCard,
     addReference,
     updateApprovalDelivery,
-    answerElicitation,
     archiveCard,
     unarchiveCard,
     addLink,
@@ -32,9 +31,16 @@
     type Milestone,
   } from '$lib/api';
   import { Button } from '$lib/components/ui/button';
-  import GateActions from '$lib/components/card/GateActions.svelte';
   import { manualDeliveryItems } from '$lib/approval-delivery';
-  import { agentColor, initialOf } from '$lib/components/agentColor';
+  import AgentFace from '$lib/components/AgentFace.svelte';
+  import { cardLead, moodFor } from '$lib/components/card/card-lead';
+  import { appearance } from '$lib/appearance.svelte';
+  import { QuestionAnswer } from '$lib/components/card/question/question-answer.svelte';
+  import { CARD_LAYOUTS, FACE_VARIANT } from '$lib/layouts';
+  import type { CardCounts } from '$lib/components/card/layouts/types';
+  import { normalisePlan } from '$lib/components/card/plan';
+  import { overdue } from '$lib/components/board/card-due';
+  import { ageLabel } from '$lib/age';
   import { resolveCardLabelsForEdit } from '$lib/components/card-labels';
   import { buildLinkGroups, edgeKey, type RemoveArgs } from '$lib/components/link-groups';
   import { crossBoardNotice, submitAddBlocker, linkRefusalSentence, type LinkKindChoice } from '$lib/components/add-blocker';
@@ -73,6 +79,15 @@
       : undefined,
   );
   const elicitation = $derived(cardId ? app.elicitationForCard(cardId) : undefined);
+  const question = new QuestionAnswer(() => ({
+    boardId,
+    elicitation,
+    after: async () => {
+      await app.refresh();
+      if (cardId && boardId) void refreshDrawer(cardId, boardId);
+    },
+  }));
+  $effect(() => question.follow(elicitation?.id ?? null));
   const refs = $derived(cardId ? app.referencesForCard(cardId) : []);
   /** Superlibrary links preview in the embedded viewer; the first opens itself (superlibrary decision O6). */
   const libraryRefs = $derived(refs.flatMap((r) => { const l = libraryRef(r.url); return l ? [{ ref: r, ...l }] : []; }));
@@ -271,10 +286,6 @@
   let deliverySaving = $state(false);
   let copiedItem = $state<number | null>(null);
 
-  // ---- elicitation (agent question) state ----
-  let answerText = $state('');
-  let answering = $state(false);
-
   /**
    * How long a burst of feed events is allowed to collapse into one refetch.
    *
@@ -288,7 +299,6 @@
   $effect(() => {
     const id = cardId;
     if (id && boardId) {
-      answerText = '';
       gateError = null;
       livePostUrl = '';
       deliverySaving = false;
@@ -726,33 +736,6 @@
     }
   }
 
-  // ---- answering an agent's question (docs/04 §4) ----
-  // The agent is blocked and still holding its lease; the answer is what lets it carry on, so a
-  // failure here has to say so rather than quietly leaving the card parked.
-  async function onAnswer(option?: string): Promise<void> {
-    if (!boardId || !elicitation || answering) return;
-    const text = answerText.trim();
-    if (!option && text === '') {
-      localError = elicitation.options.length > 0 ? 'Pick one of the options.' : 'Type an answer first.';
-      return;
-    }
-    answering = true;
-    try {
-      const res = await answerElicitation(boardId, elicitation.id, { option, text: text || undefined });
-      if (!res.ok) {
-        const body = (await res.json().catch(() => null)) as { error?: { message?: string } } | null;
-        localError = body?.error?.message ?? `Couldn't send that answer (${res.status})`;
-      } else {
-        localError = null;
-        answerText = '';
-      }
-      await app.refresh();
-      if (cardId && boardId) void refreshDrawer(cardId, boardId);
-    } finally {
-      answering = false;
-    }
-  }
-
   // ---- helpers ----
   function activityMarker(type: string): { glyph: string; cssClass: string } {
     if (type === 'action') return { glyph: '▸', cssClass: 'act-action' };
@@ -808,6 +791,35 @@
     Array.isArray(card?.spec?.acceptanceCriteria) ? (card!.spec!.acceptanceCriteria as string[]) : null,
   );
 
+  /** The board's stages in order, for a layout that draws where the card stands among them. */
+  const orderedStages = $derived([...(app.board?.stages ?? [])].sort((a, b) => a.order - b.order));
+
+  // ---- read-mode facts (D11): priority, due and labels were only visible in the edit form ----
+  const cardOverdue = $derived(card ? overdue(card.dueAt, card.state, new Date().toISOString().slice(0, 10)) : false);
+  const cardLabels = $derived(card ? card.labels.map((id) => ({ id, ...(app.labelById().get(id) ?? { name: id, colour: '' }) })) : []);
+  const cardAgeHours = $derived(card?.stateSince ? Math.max(0, (Date.now() - Date.parse(card.stateSince)) / 3_600_000) : null);
+
+  /** How much each section holds, for a layout that labels a tab or a summary with a count. */
+  const counts = $derived<CardCounts>({
+    criteria: acceptanceCriteria?.length ?? 0,
+    planSteps: normalisePlan(card?.spec?.plan)?.length ?? 0,
+    specFields: Object.keys(card?.spec ?? {}).filter((k) => !['description', 'acceptanceCriteria', 'labels', 'due'].includes(k)).length,
+    runs: activityGroups.length,
+    links:
+      linkGroups.blockedBy.length +
+      linkGroups.resolvedBlockedBy.length +
+      linkGroups.blocks.length +
+      linkGroups.relates.length +
+      linkGroups.supersedes.length +
+      linkGroups.advisory.length,
+    children: totalChildren,
+    openChildren: card?.openChildCount ?? 0,
+    decisions: decidedGates.length,
+    refs: refs.length,
+    attempts: drawerAttempts.length,
+    deliveryActive: !!deliveryGate?.approvalSubject,
+  });
+
   // cost
   const costPct = $derived(
     card && cardEstimate?.estimatedUsd && cardEstimate.estimatedUsd > 0
@@ -817,7 +829,6 @@
 
   // agent avatar
   const delegateId = $derived(card?.delegateAgentId ?? null);
-  const delegateColor = $derived(agentColor(delegateId));
   /**
    * The agent's NAME, then its initial from that name.
    *
@@ -827,7 +838,11 @@
    * through `displayPrincipal`; this was the one site the naming work missed.
    */
   const delegateName = $derived(displayAgent(delegateId, app.agents));
-  const delegateInitial = $derived(initialOf(delegateName));
+  const delegateAgent = $derived(app.agents.find((a) => a.id === delegateId) ?? null);
+  const lead = $derived(card ? cardLead({ card, gate, elicitation, activities: cardDetail?.activities ?? [], failureReason: stageEntries.at(-1)?.failureReason ?? null }) : null);
+  const delegateMood = $derived(lead ? moodFor(lead.kind, !!delegateId) : 'resting');
+  const drawerAgent = $derived({ id: delegateId, name: delegateName, iconUrl: delegateAgent?.iconUrl ?? null, mood: delegateMood });
+  const faceVariant = $derived(FACE_VARIANT[appearance.value.vibe]);
 
   /**
    * Who asked for this card, and what they were permitted to dispatch when they did.
@@ -928,8 +943,9 @@
   /** Keep Tab inside the dialog — the definition of modal, and the thing that was missing. */
   function trapTab(e: KeyboardEvent): void {
     if (e.key !== 'Tab' || !panelEl) return;
+    // Rendered elements only: a layout may keep a section in a hidden tab panel.
     const items = [...panelEl.querySelectorAll<HTMLElement>(FOCUSABLE)].filter(
-      (el) => el.offsetParent !== null || el === document.activeElement,
+      (el) => (el.offsetParent !== null && el.getClientRects().length > 0) || el === document.activeElement,
     );
     if (items.length === 0) {
       // Nothing to move to; holding focus on the panel is better than letting it escape behind.
@@ -951,9 +967,10 @@
 </script>
 
 {#if card}
-  <div class="fixed inset-0 z-30 flex justify-end">
+  {@const L = CARD_LAYOUTS[appearance.value.vibe]}
+  <div class="fixed inset-0 z-30 flex {L.align === 'center' ? 'justify-center' : 'justify-end'}">
     <!-- scrim -->
-    <button class="absolute inset-0 bg-black/55" onclick={close} aria-label="Close drawer" tabindex="-1"></button>
+    <button class="absolute inset-0 " style="background:var(--sp-scrim)" onclick={close} aria-label="Close drawer" tabindex="-1"></button>
 
     <!-- drawer panel -->
     <!--
@@ -963,6 +980,9 @@
       opening a card left focus on `<body>`, and the first Tab landed on "superpipeline home" —
       the navigation BEHIND the drawer. Its controls, including a gate's approve and reject, were
       reachable only after tabbing through the whole board.
+
+      The shell owns the dialog, the data and every control; the vibe's card layout
+      (`CARD_LAYOUTS`, `$lib/layouts`) only places the sections it is handed.
     -->
     <!-- A div, not an `<aside>`: `aside` is a complementary LANDMARK, and a modal dialog is
          not complementary content sitting beside the page — it is the page, until it closes. -->
@@ -973,972 +993,1002 @@
       aria-labelledby="drawer-title"
       tabindex="-1"
       onkeydown={trapTab}
-      class="bg-surface border-border drawer-in safe-top safe-bottom safe-x relative flex h-full w-full flex-col border-l shadow-2xl sm:max-w-[520px]">
-
-      <!-- dw-head -->
-      <div class="dw-head border-border border-b p-4 pb-3.5 flex-none">
-        {#if editing}
-          <!-- edit form -->
-          <div class="min-w-0 flex-1">
-            <div class="eyebrow mb-2">edit card</div>
-            <input bind:value={editTitle} placeholder="Title" class="bg-inset border-border focus:border-marigold w-full rounded-[6px] border px-2.5 py-1.5 text-sm outline-none" />
-            <div class="mt-2 flex flex-wrap items-center gap-3">
-              <label class="text-muted-foreground mono flex items-center gap-1.5 text-[11px]">
-                priority
-                <input type="number" bind:value={editPriority} class="bg-inset border-border focus:border-marigold w-16 rounded-[5px] border px-1.5 py-1 outline-none" />
-              </label>
-              <label class="text-muted-foreground mono flex items-center gap-1.5 text-[11px]">
-                due
-                <input type="date" bind:value={editDue} aria-label="Due date" class="bg-inset border-border focus:border-marigold rounded-[5px] border px-1.5 py-1 outline-none" />
-              </label>
-              {#if editDue !== ''}
-                <button onclick={() => (editDue = '')} class="text-muted-foreground hover:text-foreground mono text-[11px]">clear</button>
-              {/if}
-            </div>
-            <textarea bind:value={editDesc} rows="3" placeholder="Description / brief for the agent…" class="bg-inset border-border focus:border-marigold mt-2 w-full resize-none rounded-[6px] border px-2.5 py-2 text-xs outline-none"></textarea>
-            <label for="edit-labels" class="text-muted-foreground mono mt-3 block text-[11px] uppercase tracking-widest">Labels <span class="normal-case">(comma-separated)</span></label>
-            <input
-              id="edit-labels"
-              bind:value={editLabels}
-              placeholder="bug, frontend, urgent"
-              disabled={editLabelsBlind}
-              class="bg-inset border-border focus:border-marigold mt-1 w-full rounded-[6px] border px-2.5 py-1.5 text-xs outline-none disabled:opacity-60"
-            />
-            {#if editLabelsBlind}
-              <p class="text-muted-foreground mono mt-1 text-[10px]">
-                Couldn't load this card's labels from the catalogue — editing is disabled so saving does not clear them. Reopen the card to retry.
-              </p>
-            {/if}
-            <label for="edit-ac" class="text-muted-foreground mono mt-3 block text-[11px] uppercase tracking-widest">Acceptance Criteria <span class="normal-case">(one per line)</span></label>
-            <textarea
-              id="edit-ac"
-              bind:value={editAC}
-              rows="3"
-              placeholder={"User can log in\nError messages are shown\nAll tests pass"}
-              class="bg-inset border-border focus:border-marigold mt-1 w-full resize-none rounded-[6px] border px-2.5 py-2 text-xs outline-none"
-            ></textarea>
-            <div class="mt-2.5 flex gap-1.5">
-              <Button size="sm" onclick={saveCard} disabled={savingCard || editTitle.trim() === ''}>{savingCard ? 'Saving…' : 'Save'}</Button>
-              <Button size="sm" variant="ghost" onclick={() => (editing = false)}>Cancel</Button>
-            </div>
-          </div>
-        {:else}
-          <!-- dw-crumbs row -->
-          <div class="dw-crumbs mb-2 flex items-center gap-2">
-            <span class="dw-stage eyebrow" style="color:var(--marigold)">{stageName}</span>
-            <button onclick={close} class="text-muted-foreground hover:text-foreground hover:bg-accent ml-auto rounded-[7px] p-1" aria-label="Close" title="close (esc)">
-              <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
-            </button>
-          </div>
-
-          <!-- dw-title -->
-          <div class="flex items-start gap-2">
-            <h2 id="drawer-title" class="wordmark dw-title text-[17px] font-semibold leading-snug flex-1 min-w-0">{card.title}</h2>
-            <button onclick={startEdit} aria-label="Edit card" title="Edit card" class="text-muted-foreground hover:text-foreground hover:bg-accent shrink-0 rounded-[7px] p-1.5">
-              <svg class="size-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
-            </button>
-          </div>
-
-          <!-- status row -->
-          <div class="statusrow mt-2.5 flex flex-wrap items-center gap-2.5">
-            <!-- state pill -->
-            <span class={statePillClass(card.state)}>{statePillLabel(card.state)}</span>
-
-            <!-- delegate agent -->
-            {#if delegateId}
-              <span class="delegate inline-flex items-center gap-1.5 font-mono text-[11px]" style="color:var(--muted)">
-                <span class="inline-flex size-[18px] items-center justify-center rounded-full text-[9px] font-semibold shrink-0" style="background:{delegateColor};color:#0f1118">{delegateInitial}</span>
-                <span title={delegateId}>{delegateName} · delegate</span>
-              </span>
-            {/if}
-
-            <!-- owner -->
-            <span class="delegate inline-flex items-center gap-1 font-mono text-[11px]" style="color:var(--muted)" title={card.ownerUserId}>owner · {displayPrincipal(card.ownerUserId, app.members)}</span>
-
-            <!--
-              Queued by — the third identity, and the one that was carried on every card and shown
-              nowhere. A reader has to be able to answer all three questions here without opening a
-              terminal: who asked for this, who is answerable for it, and who is doing it.
-
-              Shown for a person too, not only for an agent: the row's job is to make the three
-              identities legible, and omitting the common case would leave a reader unable to tell
-              "a person queued this" from "nobody recorded who did". The violet chip is reserved for
-              the agent case, which is the one that needs to be noticed.
-            -->
-            {#if provenance?.known}
-              {#if provenance.byAgent}
-                <span class="queuedchip" title={`Queued by ${provenance.queuedByName} — ${grantSummary}`}>
-                  {#if provenance.agent?.iconUrl}
-                    <img src={provenance.agent.iconUrl} alt="" class="size-4 shrink-0 rounded-full object-cover" />
-                  {/if}
-                  <span>asked by {provenance.queuedByName}</span>
-                </span>
-              {:else}
-                <span class="delegate inline-flex items-center gap-1 font-mono text-[11px]" style="color:var(--muted)" title={card.queuedBy ?? ''}>asked by · {provenance.queuedByName}</span>
-              {/if}
-            {/if}
-            {#if app.user && card.ownerUserId !== app.user.userId}
-              <button
-                onclick={() => void assignToMe()}
-                disabled={assigning}
-                class="text-muted-foreground hover:text-foreground font-mono text-[11px] underline disabled:opacity-40"
-              >{assigning ? 'assigning…' : 'assign to me'}</button>
-            {/if}
-
-            <!-- live ephemeral -->
-            {#if card.state === 'working'}
-              <span class="ephemeral inline-flex items-center gap-1.5 font-mono text-[11.5px]" style="color:var(--live)">
-                <span class="live-dot"></span>
-              </span>
-            {/if}
-          </div>
-        {/if}
-      </div>
-
-      <!-- dw-body -->
-      <!--
-        The drawer renders text nobody on this side wrote: handoffs, tool arguments, references,
-        card specs, an agent's own words. Any of it can be one long unbroken token — a URL, a JSON
-        blob, a sha, a path — and on a phone one such token pushes the whole panel sideways. The
-        rule is set here so a new section cannot forget it; `pre` blocks keep their own scrolling.
-      -->
-      <div class="dw-body flex-1 min-h-0 overflow-x-hidden overflow-y-auto px-4 py-4 space-y-5" style="overflow-wrap:anywhere">
-
-        {#if localError}
-          <p role="alert" class="border-coral/40 text-coral mono rounded-[7px] border px-3 py-2 text-xs" style="background:rgba(255,107,87,.08)">{localError}</p>
-        {/if}
-
-        <!-- description from spec -->
-        {#if card.spec?.description}
-          <section class="sec">
-            <div class="sec-h eyebrow">description</div>
-            <p class="text-foreground/90 text-sm leading-relaxed whitespace-pre-wrap">{String(card.spec.description)}</p>
-          </section>
-        {/if}
-
-        <!-- the agent's open question — the card is parked until someone answers it -->
-        {#if elicitation}
-          <section class="sec">
-            <div class="elicitation border rounded-[10px] p-3.5" style="border-color:rgba(255,107,87,.35);background:rgba(255,107,87,.06)">
-              <div class="mb-2 flex items-center gap-2">
-                <span class="wordmark font-semibold text-sm" style="color:var(--coral)">
-                  ⚑ {elicitation.signal === 'auth' ? 'awaiting your sign-in' : 'awaiting your answer'}
-                </span>
-                <span class="eyebrow ml-auto" title={elicitation.agentId}>{displayAgent(elicitation.agentId, app.agents)} is waiting</span>
-              </div>
-              <p class="mb-3 text-[13px] leading-relaxed whitespace-pre-wrap">{elicitation.question}</p>
-
-              {#if elicitation.options.length > 0}
-                <div class="flex flex-wrap gap-2">
-                  {#each elicitation.options as opt (opt.name)}
-                    <Button size="sm" variant={opt.name === elicitation.options[0]?.name ? 'default' : 'outline'} disabled={answering} onclick={() => onAnswer(opt.name)}>
-                      {opt.title}
-                    </Button>
-                  {/each}
-                </div>
-                <textarea
-                  bind:value={answerText}
-                  rows="2"
-                  placeholder="Add a note for the agent (optional)…"
-                  class="bg-inset border-border mt-2.5 w-full resize-none rounded-[7px] border px-2.5 py-2 text-xs outline-none"
-                  style="border-color:rgba(255,107,87,.4)"
-                ></textarea>
-              {:else}
-                <textarea
-                  bind:value={answerText}
-                  rows="3"
-                  placeholder="Your answer — this goes straight back to the waiting agent…"
-                  class="bg-inset border-border w-full resize-none rounded-[7px] border px-2.5 py-2 text-xs outline-none"
-                  style="border-color:rgba(255,107,87,.4)"
-                ></textarea>
-                <div class="mt-2 flex justify-end">
-                  <Button size="sm" disabled={answering} onclick={() => onAnswer()}>Send answer</Button>
-                </div>
-              {/if}
-            </div>
-          </section>
-        {/if}
-
-        <!-- gate panel — only when a pending gate exists -->
-        {#if gate}
-          <section class="sec">
-            <div class="gate border rounded-[10px] p-3.5" style="border-color:rgba(255,107,87,.35);background:rgba(255,107,87,.06)">
-              <div class="gh mb-2.5 flex items-center gap-2">
-                <span class="wordmark font-semibold text-sm" style="color:var(--coral)">⚑ awaiting your review</span>
-              </div>
-
-              {#if gateError}
-                <p role="alert" class="border-coral/40 text-coral mono mb-2.5 rounded-[7px] border px-3 py-2 text-xs" style="background:rgba(255,107,87,.12)">
-                  {gateError}
-                </p>
-              {/if}
-
-              {#if gate.approvalSubject}
-                <div class="bg-inset border-border mono mb-3 rounded-[7px] border p-2.5 text-[11px]">
-                  <div class="mb-1 font-semibold">Immutable approval subject · revision {gate.approvalSubject.revision}</div>
-                  <div class="text-muted-foreground break-all">{gate.approvalSubject.id}</div>
-                  <div class="text-muted-foreground break-all">{gate.approvalSubject.digest}</div>
-                  <pre class="mt-2 max-h-64 overflow-auto whitespace-pre-wrap">{JSON.stringify(gate.approvalSubject.canonical, null, 2)}</pre>
-                </div>
-              {/if}
-
-              {#if boardId}<GateActions {boardId} {gate} onResponse={onGateResponse} />{/if}
-            </div>
-          </section>
-        {/if}
-
-        {#if deliveryGate?.approvalSubject}
-          <section class="sec">
-            <div class="border-border bg-inset rounded-[10px] border p-3.5">
-              <div class="mb-2 flex items-center justify-between gap-2">
-                <span class="wordmark text-sm font-semibold">Approved delivery</span>
-                <span class="mono text-muted-foreground text-[10px] uppercase">{deliveryGate.delivery?.mode}</span>
-              </div>
-
-              {#if gateError}
-                <p role="alert" class="border-coral/40 text-coral mono mb-2.5 rounded-[7px] border px-3 py-2 text-xs">{gateError}</p>
-              {/if}
-
-              {#if deliveryGate.decision === 'approve_manual'}
-                <p class="text-muted-foreground mb-3 text-xs">Post these authoritative frozen bytes yourself. No publisher can claim this card.</p>
-                <div class="space-y-3">
-                  {#each manualItems as item (item.index)}
-                    <div class="bg-surface border-border rounded-[7px] border p-2.5">
-                      <div class="mb-2 flex items-center justify-between gap-2">
-                        <span class="mono text-[10px] uppercase">Post {item.index + 1}</span>
-                        <Button size="sm" variant="outline" onclick={() => void copyApprovedText(item.index, item.text)}>
-                          {copiedItem === item.index ? 'Copied' : 'Copy exact text'}
-                        </Button>
-                      </div>
-                      <pre class="font-sans text-xs whitespace-pre-wrap">{item.text}</pre>
-                      {#if item.media.length > 0}
-                        <div class="mt-2 flex flex-wrap gap-2">
-                          {#each item.media as media (media.digest)}
-                            {#if safeHref(media.href)}
-                              <a class="mono text-marigold text-[11px] underline" href={safeHref(media.href)!} download={media.filename} title={media.altText || media.digest}>
-                                Download {media.filename}
-                              </a>
-                            {:else}
-                              <span class="mono text-muted-foreground text-[11px]" title={media.digest}>Media download unavailable</span>
-                            {/if}
-                          {/each}
-                        </div>
-                      {/if}
-                    </div>
-                  {/each}
-                </div>
-
-                <div class="mt-3 flex flex-col gap-2">
-                  <label for="manual-live-url" class="mono text-[11px]">Live post URL</label>
-                  <div class="flex gap-2">
-                    <input id="manual-live-url" bind:value={livePostUrl} type="url" placeholder="https://x.com/…/status/…" class="bg-surface border-border min-w-0 flex-1 rounded-[7px] border px-2.5 py-2 text-xs" />
-                    <Button size="sm" disabled={deliverySaving || livePostUrl.trim() === ''} onclick={() => void changeDelivery({ liveUrl: livePostUrl.trim() })}>Record URL</Button>
-                  </div>
-                  {#if deliveryGate.delivery?.liveUrl}
-                    <p class="mono text-[11px]">
-                      Recorded: <a class="underline" href={deliveryGate.delivery.liveUrl} target="_blank" rel="noreferrer">{deliveryGate.delivery.liveUrl}</a>
-                      · read-back {deliveryGate.delivery.readBackStatus === 'not_checked' ? 'not available' : deliveryGate.delivery.readBackStatus}
-                    </p>
-                  {/if}
-                  <Button size="sm" variant="outline" disabled={deliverySaving || !!deliveryGate.delivery?.liveUrl} onclick={() => void changeDelivery({ mode: 'automatic' })}>
-                    Switch to automatic delivery
-                  </Button>
-                </div>
-              {:else if card?.state !== 'working'}
-                <p class="text-muted-foreground mb-2 text-xs">Automatic delivery has not started. You can still take over manually without approving a new digest.</p>
-                <Button size="sm" variant="outline" disabled={deliverySaving} onclick={() => void changeDelivery({ mode: 'manual' })}>Switch to manual delivery</Button>
-              {:else}
-                <p class="text-muted-foreground text-xs">Automatic delivery has started; switching is fenced.</p>
-              {/if}
-            </div>
-          </section>
-        {/if}
-
-        <!--
-          Resume — the human half of a block. Only when resume is the answer: a card its agent
-          blocked, the breaker stopped, the completion check refused twice, or dispatch refused.
-          An open question and a pending review have their own panels above.
-        -->
-        {#if boardId}
-          <CardResume
-            {boardId}
-            {card}
-            stages={app.board?.stages ?? []}
-            gatePending={!!gate}
-            questionPending={!!elicitation}
-            onResumed={async () => { await Promise.all([app.refresh(), refreshDrawer(card.id, boardId)]); }}
-          />
-        {/if}
-
-        <!-- plan checklist (from card.spec.plan, any shape agents write) -->
-        <PlanChecklist plan={card.spec?.plan} />
-
-        <!-- acceptance criteria (from card.spec.acceptanceCriteria) -->
-        {#if acceptanceCriteria && acceptanceCriteria.length > 0}
-          <section class="sec">
-            <div class="sec-h eyebrow">acceptance criteria</div>
-            <ul class="ac bg-inset border-border list-disc rounded-[7px] border px-4 py-3 text-[12.5px] space-y-1">
-              {#each acceptanceCriteria as criterion, i (i)}
-                <li style="color:var(--text)">{criterion}</li>
-              {/each}
-            </ul>
-          </section>
-        {/if}
-
-        <!--
-          Every other spec field (role, requirements, nested decisions…). The agent receives the
-          whole spec; the person reviewing the card should be able to read all of it too.
-        -->
-        <SpecDetails spec={card.spec} hasDescription={!!card.spec?.description} />
-
-        <!--
-          Project / milestone (Step 3) — a card's cross-board membership. `currentProjectName` and
-          `currentMilestoneName` are both total: a dangling id (its project/milestone was deleted)
-          shows the raw id rather than throwing or spinning forever (see `project-lookup.ts`).
-        -->
-        <section class="sec">
-          <div class="sec-h eyebrow">project</div>
-          {#if editingProject}
-            <div class="bg-inset border-border space-y-2 rounded-[8px] border p-3 text-xs">
-              <div>
-                <label for="assign-project" class="text-muted-foreground mono mb-1 block text-[11px] uppercase tracking-widest">Project</label>
-                <select
-                  id="assign-project"
-                  bind:value={selProjectId}
-                  onchange={() => void onProjectSelectChange()}
-                  class="bg-surface border-border focus:border-marigold w-full rounded-[6px] border px-2 py-1.5 text-xs outline-none"
-                >
-                  <option value="">No project</option>
-                  {#each app.projects as p (p.id)}
-                    <option value={p.id}>{p.name}</option>
-                  {/each}
-                </select>
-              </div>
-              <div>
-                <!--
-                  Scoped to the chosen project ONLY (`milestonesForProject`) — the server refuses a
-                  milestone that does not belong to the card's project (`MILESTONE_NOT_IN_PROJECT`),
-                  so this picker never offers one it would refuse.
-                -->
-                <label for="assign-milestone" class="text-muted-foreground mono mb-1 block text-[11px] uppercase tracking-widest">Milestone</label>
-                <select
-                  id="assign-milestone"
-                  bind:value={selMilestoneId}
-                  disabled={selProjectId === ''}
-                  class="bg-surface border-border focus:border-marigold w-full rounded-[6px] border px-2 py-1.5 text-xs outline-none disabled:opacity-50"
-                >
-                  <option value="">No milestone</option>
-                  {#each selProjectMilestones as m (m.id)}
-                    <option value={m.id}>{m.name}</option>
-                  {/each}
-                </select>
-              </div>
-              <div class="flex gap-1.5">
-                <Button size="sm" onclick={() => void saveProjectAssignment()} disabled={savingProject}>{savingProject ? 'Saving…' : 'Save'}</Button>
-                <Button size="sm" variant="ghost" onclick={() => (editingProject = false)}>Cancel</Button>
-              </div>
-              {#if projectAssignError}
-                <p role="alert" class="text-coral mono text-[11px]">{projectAssignError}</p>
-              {/if}
-            </div>
-          {:else}
-            <div class="flex flex-wrap items-center gap-2 text-[12px]">
-              {#if currentProjectName}
-                <span class="mono">{currentProjectName}</span>
-                {#if currentMilestoneName}<span class="text-muted-foreground">· {currentMilestoneName}</span>{/if}
-              {:else}
-                <span class="text-muted-foreground">No project</span>
-              {/if}
-              <button onclick={startProjectEdit} class="text-muted-foreground hover:text-foreground mono text-[11px] underline underline-offset-2">
-                {currentProjectName ? 'change' : 'assign'}
-              </button>
-            </div>
-          {/if}
-        </section>
-
-        <!--
-          Links (whole-branch review, Important finding) — EVERY edge this card has, in five
-          groups that never share a row style, because a person could otherwise create a `relates`
-          edge or an outgoing `blocks` edge through the dialogue below and never see it rendered
-          anywhere: what blocks this card (enforced, ⛔), what blocked it but has since resolved,
-          what this card blocks, what it merely relates to, and the advisory cross-board ones —
-          each with its own "remove" control, since `removeLink` (Task 17a) had shipped with zero
-          callers in this app.
-
-          Every `{#each}` below is keyed by `edgeKey(row.remove)` — the EDGE's own identity, never
-          `row.cardId`/`row.boardId` alone. See `edgeKey`'s own doc comment (`link-groups.ts`) for
-          why: two edges can legitimately name the same "other card" (mutual `relates`, since
-          `wouldCycle` excludes it from the cycle check), and a key that collides is not a cosmetic
-          bug — Svelte 5 throws on a duplicate `{#each}` key, which fails this whole section's
-          render. No test in this project can reach that failure directly (Vitest cannot import a
-          `.svelte` file here), which is exactly why the reasoning has to live here, not only in a
-          function nobody reading this template is forced to open.
-        -->
-        <section class="sec">
-          <div class="sec-h eyebrow">links</div>
-
-          {#if linkGroups.blockedBy.length > 0}
-            <div class="text-muted-foreground mono mb-1 text-[10px] uppercase tracking-widest">blocked by</div>
-            <div class="mb-2.5 space-y-1.5">
-              {#each linkGroups.blockedBy as row (edgeKey(row.remove))}
-                {@const key = edgeKey(row.remove)}
-                <div class="bg-inset border-border mono flex items-center gap-2 rounded-[7px] border px-2.5 py-1.5 text-[11px]" title={row.badge.tooltip}>
-                  <span class="blk-pill">{row.badge.glyph}</span>
-                  <span class="min-w-0 flex-1 truncate">{row.title}</span>
-                  <button onclick={() => void onRemoveLink(row.remove)} disabled={removingKeys.has(key)} class="text-muted-foreground hover:text-coral shrink-0 text-[10px] disabled:opacity-50">
-                    {removingKeys.has(key) ? '…' : 'remove'}
-                  </button>
-                </div>
-              {/each}
-            </div>
-          {/if}
-
-          {#if linkGroups.resolvedBlockedBy.length > 0}
-            <!--
-              Re-review N2: `blockedBy` only ever carries UNRESOLVED inbound blockers (the claim
-              query's own predicate) — a blocker that has since completed drops out of it, but the
-              edge itself is never deleted, so it was previously visible in NEITHER group. Shown
-              here as resolved, never `⛔`: nothing is currently enforcing it, and re-opening the
-              blocker (`moveCard` sets a card back to `submitted` unconditionally) would silently
-              re-arm an edge its owner never saw — this is where they can see and clear it first.
-            -->
-            <div class="text-muted-foreground mono mb-1 text-[10px] uppercase tracking-widest">blocked by (resolved)</div>
-            <div class="mb-2.5 space-y-1.5">
-              {#each linkGroups.resolvedBlockedBy as row (edgeKey(row.remove))}
-                {@const key = edgeKey(row.remove)}
-                <div class="bg-inset border-border mono flex items-center gap-2 rounded-[7px] border px-2.5 py-1.5 text-[11px]" title="{row.title} blocked this card — resolved, no longer enforced">
-                  <span class="min-w-0 flex-1 truncate">{row.title}</span>
-                  <button onclick={() => void onRemoveLink(row.remove)} disabled={removingKeys.has(key)} class="text-muted-foreground hover:text-coral shrink-0 text-[10px] disabled:opacity-50">
-                    {removingKeys.has(key) ? '…' : 'remove'}
-                  </button>
-                </div>
-              {/each}
-            </div>
-          {/if}
-
-          {#if linkGroups.blocks.length > 0}
-            <div class="text-muted-foreground mono mb-1 text-[10px] uppercase tracking-widest">blocks</div>
-            <div class="mb-2.5 space-y-1.5">
-              {#each linkGroups.blocks as row (edgeKey(row.remove))}
-                {@const key = edgeKey(row.remove)}
-                <div class="bg-inset border-border mono flex items-center gap-2 rounded-[7px] border px-2.5 py-1.5 text-[11px]">
-                  <span class="min-w-0 flex-1 truncate">{row.title}</span>
-                  <button onclick={() => void onRemoveLink(row.remove)} disabled={removingKeys.has(key)} class="text-muted-foreground hover:text-coral shrink-0 text-[10px] disabled:opacity-50">
-                    {removingKeys.has(key) ? '…' : 'remove'}
-                  </button>
-                </div>
-              {/each}
-            </div>
-          {/if}
-
-          {#if linkGroups.relates.length > 0}
-            <div class="text-muted-foreground mono mb-1 text-[10px] uppercase tracking-widest">relates to</div>
-            <div class="mb-2.5 space-y-1.5">
-              {#each linkGroups.relates as row (edgeKey(row.remove))}
-                {@const key = edgeKey(row.remove)}
-                <div class="bg-inset border-border mono flex items-center gap-2 rounded-[7px] border px-2.5 py-1.5 text-[11px]">
-                  <span class="min-w-0 flex-1 truncate">{row.title}</span>
-                  <button onclick={() => void onRemoveLink(row.remove)} disabled={removingKeys.has(key)} class="text-muted-foreground hover:text-coral shrink-0 text-[10px] disabled:opacity-50">
-                    {removingKeys.has(key) ? '…' : 'remove'}
-                  </button>
-                </div>
-              {/each}
-            </div>
-          {/if}
-
-          {#if linkGroups.supersedes.length > 0}
-            <div class="text-muted-foreground mono mb-1 text-[10px] uppercase tracking-widest">supersedes / superseded by</div>
-            <div class="mb-2.5 space-y-1.5">
-              {#each linkGroups.supersedes as row (edgeKey(row.remove))}
-                {@const key = edgeKey(row.remove)}
-                <div class="bg-inset border-border mono flex items-center gap-2 rounded-[7px] border px-2.5 py-1.5 text-[11px]">
-                  <span class="text-muted-foreground shrink-0 text-[10px]">{row.direction === 'supersedes' ? 'replaces' : 'replaced by'}</span>
-                  <span class="min-w-0 flex-1 truncate">{row.title}</span>
-                  <button onclick={() => void onRemoveLink(row.remove)} disabled={removingKeys.has(key)} class="text-muted-foreground hover:text-coral shrink-0 text-[10px] disabled:opacity-50">
-                    {removingKeys.has(key) ? '…' : 'remove'}
-                  </button>
-                </div>
-              {/each}
-            </div>
-          {/if}
-
-          {#if linkGroups.advisory.length > 0}
-            <div class="text-muted-foreground mono mb-1 text-[10px] uppercase tracking-widest">advisory (other boards)</div>
-            <div class="mb-2.5 space-y-1.5">
-              {#each linkGroups.advisory as row (edgeKey(row.remove))}
-                {@const key = edgeKey(row.remove)}
-                <div
-                  class="bg-inset border-border mono flex items-center gap-2 rounded-[7px] border px-2.5 py-1.5 text-[11px]"
-                  title={row.badge?.tooltip ?? `${row.relation === 'blocks' ? 'Blocks' : 'Relates to'} ${row.title} on another board — advisory, not enforced`}
-                >
-                  {#if row.badge}
-                    <span class="blk-pill blk-pill-advisory">{row.badge.glyph}</span>
-                  {/if}
-                  <span class="min-w-0 flex-1 truncate">
-                    {row.title}
-                    {#if row.relation !== 'blocked-by'}<span class="text-muted-foreground">· {row.relation}</span>{/if}
-                  </span>
-                  <button onclick={() => void onRemoveLink(row.remove)} disabled={removingKeys.has(key)} class="text-muted-foreground hover:text-coral shrink-0 text-[10px] disabled:opacity-50">
-                    {removingKeys.has(key) ? '…' : 'remove'}
-                  </button>
-                </div>
-              {/each}
-            </div>
-          {/if}
-
-          {#if !hasAnyLink}
-            <p class="text-muted-foreground mb-2.5 text-xs">No links on this card.</p>
-          {/if}
-
-          {#if linksError}
-            <p role="alert" class="text-coral mono mb-2.5 text-[11px]">{linksError}</p>
-          {/if}
-
-          <Button size="sm" variant="outline" onclick={openAddBlocker}>Add link</Button>
-
-          {#if addBlockerOpen}
-            <div class="bg-inset border-border mt-2.5 space-y-2 rounded-[8px] border p-3 text-xs">
-              <!--
-                Re-review N3: the dialogue always creates an edge pointing AT this card ("picked
-                card → this card") — there is no way, here, to create the reverse. That used to be
-                implicit in generic Board/Card/Kind fields sitting directly under a visible "blocks"
-                (outgoing) group, which invites exactly the wrong expectation. Said outright instead
-                of left to be inferred, per the reviewer's finding — the symmetry argument for NOT
-                adding an outgoing-creation path stands (that edge is always reachable from the
-                other card's own drawer), so this fixes the wording, not the architecture.
-              -->
-              <p class="text-muted-foreground mono text-[10.5px]">
-                The card you pick below will point <strong>at "{card.title}"</strong> — e.g. picking "blocks" creates
-                "picked card blocks this card", never the other way around.
-              </p>
-              <div>
-                <label for="blocker-board" class="text-muted-foreground mono mb-1 block text-[11px] uppercase tracking-widest">Board</label>
-                <select
-                  id="blocker-board"
-                  bind:value={blockerBoardId}
-                  onchange={() => void onBlockerBoardChange()}
-                  class="bg-surface border-border focus:border-marigold w-full rounded-[6px] border px-2 py-1.5 text-xs outline-none"
-                >
-                  {#each app.boards as b (b.id)}
-                    <option value={b.id}>{b.name}</option>
-                  {/each}
-                </select>
-              </div>
-
-              {#if crossBoardNoticeText}
-                <!-- Shown the moment a different board is picked — BEFORE any request, never after. -->
-                <p class="mono text-[11px]" style="color:var(--marigold)">⚑ {crossBoardNoticeText}</p>
-              {/if}
-
-              <div>
-                <label for="blocker-card" class="text-muted-foreground mono mb-1 block text-[11px] uppercase tracking-widest">Card (the one that will act on this one)</label>
-                <select
-                  id="blocker-card"
-                  bind:value={blockerCardId}
-                  class="bg-surface border-border focus:border-marigold w-full rounded-[6px] border px-2 py-1.5 text-xs outline-none"
-                >
-                  <option value="">Pick a card…</option>
-                  {#each blockerBoardCards as c (c.id)}
-                    <option value={c.id}>{c.title}</option>
-                  {/each}
-                </select>
-              </div>
-
-              <div>
-                <label for="blocker-kind" class="text-muted-foreground mono mb-1 block text-[11px] uppercase tracking-widest">Kind</label>
-                <select
-                  id="blocker-kind"
-                  bind:value={blockerKind}
-                  class="bg-surface border-border focus:border-marigold w-full rounded-[6px] border px-2 py-1.5 text-xs outline-none"
-                >
-                  <option value="blocks">blocks this card — this card will not be claimed while it is open</option>
-                  <option value="relates">relates to this card — informational only</option>
-                </select>
-              </div>
-
-              <div class="flex gap-1.5">
-                <Button size="sm" onclick={() => void onAddBlocker()} disabled={blockerCardId === '' || addingBlocker}>
-                  {addingBlocker ? 'Adding…' : 'Add'}
-                </Button>
-                <Button size="sm" variant="ghost" onclick={() => (addBlockerOpen = false)}>Cancel</Button>
-              </div>
-
-              {#if blockerError}
-                <p role="alert" class="text-coral mono text-[11px]">{blockerError}</p>
-              {/if}
-            </div>
-          {/if}
-        </section>
-
-        <!--
-          Sub-tasks (Step 1b) — children with their state and cost, plus "Add sub-task".
-          `children` (script, above) reads `parentCardId` straight off the board's own card list;
-          `card.openChildCount`/the count of `children` is the same pair `CardTile`'s counter shows.
-        -->
-        <section class="sec">
-          <div class="sec-h eyebrow">
-            sub-tasks
-            {#if totalChildren > 0}<span class="ml-auto">{card.openChildCount}/{totalChildren} open</span>{/if}
-          </div>
-          {#if children.length > 0}
-            <div class="mb-2.5 space-y-1.5">
-              {#each children as child (child.id)}
-                <button
-                  onclick={() => app.openCard(child.id)}
-                  class="bg-inset border-border mono flex w-full items-center gap-2 rounded-[7px] border px-2.5 py-1.5 text-left text-[11px]"
-                >
-                  <span class="min-w-0 flex-1 truncate">{child.title}</span>
-                  <span class={statePillClass(child.state)} style="padding:1px 7px;font-size:9.5px">{statePillLabel(child.state)}</span>
-                  {#if child.costUsd > 0}<span class="text-muted-foreground shrink-0">{fmtUsd(child.costUsd)}</span>{/if}
-                </button>
-              {/each}
-            </div>
-          {/if}
-          <div class="flex gap-1.5">
-            <input
-              bind:value={newSubtaskTitle}
-              placeholder="New sub-task title…"
-              onkeydown={(e) => { if (e.key === 'Enter') void addSubtask(); }}
-              class="bg-inset border-border focus:border-marigold flex-1 rounded-[6px] border px-2.5 py-1.5 text-xs outline-none"
-            />
-            <Button size="sm" variant="outline" onclick={() => void addSubtask()} disabled={newSubtaskTitle.trim() === '' || addingSubtask}>
-              {addingSubtask ? 'Adding…' : 'Add'}
-            </Button>
-          </div>
-          {#if subtaskError}
-            <p role="alert" class="text-coral mono mt-1.5 text-[11px]">{subtaskError}</p>
-          {/if}
-        </section>
-
-        <!-- activity stream -->
-        <section class="sec">
-          <div class="sec-h eyebrow">session activity</div>
-          <!--
-            The timeline opens with provenance, so the first thing read is the frame for everything
-            after it: who asked for this card, on what authority, and who holds it now.
-
-            Above the empty-state branch deliberately. A card an agent queued and nobody has picked
-            up is precisely where "who asked for this" matters most — that is the shape of an agent
-            queueing work that no capability can claim, and the version of this that sat inside the
-            `{#else}` would have hidden it on every such card.
-          -->
-          {#if provenance?.known}
-            <p class="mono text-muted-foreground mb-1.5 text-[10.5px]">
-              asked by {provenance.queuedByName}{provenance.byAgent ? ' (an agent)' : ''}
-              · {grantSummary}
-              · {delegateId ? `held by ${delegateName}` : 'held by nobody'}
-            </p>
-          {/if}
-          {#if !cardDetail || cardDetail.activities.length === 0}
-            <p class="text-muted-foreground text-xs">No recorded activity yet — this card hasn't been worked.</p>
-          {:else}
-            <div class="mb-1.5 flex items-center gap-2">
-              <button
-                onclick={() => (showToolCalls = !showToolCalls)}
-                aria-pressed={showToolCalls}
-                class="mono border-border hover:bg-accent rounded-[6px] border px-1.5 py-0.5 text-[10px]"
-                style="min-height:var(--tap)"
-              >{showToolCalls ? 'hide tool calls' : 'show tool calls'}</button>
-              <span class="text-muted-foreground mono text-[10px]">
-                {activityGroups.length} run{activityGroups.length === 1 ? '' : 's'}
-              </span>
-            </div>
-
-            <!--
-              One `<details>` per run, and per expandable row.
-
-              Native disclosure rather than a click handler on a div: it is keyboard-operable and
-              announced as expandable for free, and the previous stream had a `▸` glyph that LOOKED
-              expandable and was decorative — a UI that promises a detail it does not have.
-            -->
-            <div class="stream flex flex-col gap-1.5">
-              {#each activityGroups as g, gi (g.runId)}
-                {@const view = visibleActivities(g.activities, isNarrative, showToolCalls, isControlRow)}
-                {@const rows = view.rows}
-                <details open={defaultOpen(activityGroups, gi)} class="border-border rounded-[7px] border">
-                  <summary
-                    class="mono flex cursor-pointer items-center gap-2 px-2 py-1.5 text-[11px]"
-                    style="min-height:var(--tap)"
-                  >
-                    <!--
-                      The run id when the stage is unknown. The attempts fetch can fail or lag,
-                      and five groups all reading "unassigned run" are indistinguishable — which
-                      is the flat list this change replaces, in miniature.
-                    -->
-                    <span style="color:var(--marigold)">{g.stageKey ?? `run ${g.runId.slice(-6)}`}</span>
-                    {#if g.agentId}
-                      <span class="text-muted-foreground truncate" title={g.agentId}>{displayAgent(g.agentId, app.agents)}</span>
-                    {/if}
-                    {#if g.outcome}
-                      <span style="color:{g.outcome === 'completed' ? 'var(--live)' : 'var(--coral)'}">{g.outcome}</span>
-                    {/if}
-                    <!--
-                      "attempt 2" rather than two things that look like two stages. A retry at one
-                      stage is its own run with its own story, and the fact that an earlier one failed
-                      is the most useful thing on the card — so it is named, not merged away.
-                    -->
-                    {#if (stageByRun.get(g.runId)?.attemptOfStage ?? 1) > 1}
-                      <span class="text-muted-foreground text-[10px]">attempt {stageByRun.get(g.runId)!.attemptOfStage}</span>
-                    {/if}
-                    <span class="text-muted-foreground ml-auto whitespace-nowrap text-[10px]">
-                      {g.counts.total} event{g.counts.total === 1 ? '' : 's'}{g.counts.error > 0 ? ` · ${g.counts.error} error` : ''}
-                    </span>
-                  </summary>
-
-                  <div class="flex flex-col gap-0.5 px-1.5 pb-1.5">
-                    {#if view.shownBecauseNoNarrative}
-                      <!--
-                        Said once, quietly, rather than hiding the run: the reader's preference is
-                        narrative-only, and this run has none, so what follows is its tool calls.
-                        The alternative — what this replaces — was an empty panel under a heading
-                        reading "67 events".
-                      -->
-                      <p class="text-muted-foreground px-1.5 py-1 text-[11px]">
-                        This run said nothing in prose; its tool calls are below.
-                      </p>
-                    {:else if rows.length === 0}
-                      <p class="text-muted-foreground px-1.5 py-1 text-[11px]">No activity recorded for this run.</p>
-                    {/if}
-                    {#each rows as a (a.seq)}
-                      {@const m = activityMarker(a.type)}
-                      {@const detail = a.parameter !== null || a.result !== null}
-                      {#if detail}
-                        <details class="act {m.cssClass} rounded-[6px]">
-                          <summary class="grid cursor-pointer px-1.5 py-1.5 text-[12.5px] items-start" style="grid-template-columns:18px 1fr auto;gap:9px;min-height:var(--tap)">
-                            <span class="act-icon text-[12px] text-center pt-px">{m.glyph}</span>
-                            <div class="act-body min-w-0" style="overflow-wrap:anywhere">
-                              <span class="act-k font-mono text-[9.5px] uppercase tracking-wider mr-1.5" style="color:var(--muted)">{a.type}</span>
-                              {#if a.action}<span class="font-mono text-[11px]" style="color:var(--marigold)">{a.action}</span>{/if}
-                              {#if a.body}<div class="mt-0.5 text-xs leading-relaxed {a.type === 'error' || a.type === 'elicitation' ? 'text-coral' : 'text-foreground/90'}">{a.body}</div>{/if}
-                            </div>
-                            <span class="act-ts text-muted-foreground font-mono text-[10px] whitespace-nowrap pt-px">{fmtTime(a.ts)}</span>
-                          </summary>
-                          <!--
-                            `result` was populated on 153 of this card's 366 activities and rendered
-                            nowhere at all, and `parameter` was truncated at 140 characters with no
-                            way to see the rest. Both were already on the wire.
-                          -->
-                          <div class="space-y-1 px-2 pb-2 pl-[27px]">
-                            {#if a.parameter !== null}
-                              <div>
-                                <div class="mono text-[9.5px] uppercase tracking-wider" style="color:var(--muted)">parameter</div>
-                                <pre class="bg-inset mt-0.5 overflow-x-auto rounded-[5px] px-2 py-1.5 font-mono text-[11px] whitespace-pre-wrap" style="overflow-wrap:anywhere">{JSON.stringify(a.parameter, null, 2)}</pre>
-                              </div>
-                            {/if}
-                            {#if a.result !== null}
-                              <div>
-                                <div class="mono text-[9.5px] uppercase tracking-wider" style="color:var(--muted)">result</div>
-                                <pre class="bg-inset mt-0.5 overflow-x-auto rounded-[5px] px-2 py-1.5 font-mono text-[11px] whitespace-pre-wrap" style="overflow-wrap:anywhere">{typeof a.result === 'string' ? a.result : JSON.stringify(a.result, null, 2)}</pre>
-                              </div>
-                            {/if}
-                          </div>
-                        </details>
-                      {:else}
-                        <div class="act {m.cssClass} grid rounded-[6px] px-1.5 py-1.5 text-[12.5px] items-start" style="grid-template-columns:18px 1fr auto;gap:9px">
-                          <span class="act-icon text-[12px] text-center pt-px">{m.glyph}</span>
-                          <div class="act-body min-w-0" style="overflow-wrap:anywhere">
-                            <span class="act-k font-mono text-[9.5px] uppercase tracking-wider mr-1.5" style="color:var(--muted)">{a.type}</span>
-                            {#if a.action}<span class="font-mono text-[11px]" style="color:var(--marigold)">{a.action}</span>{/if}
-                            {#if a.body}<div class="mt-0.5 text-xs leading-relaxed {a.type === 'error' || a.type === 'elicitation' ? 'text-coral' : 'text-foreground/90'}">{a.body}</div>{/if}
-                          </div>
-                          <span class="act-ts text-muted-foreground font-mono text-[10px] whitespace-nowrap pt-px">{fmtTime(a.ts)}</span>
-                        </div>
-                      {/if}
-                    {/each}
-
-                    <!--
-                      How this run ended, and what it attached.
-                      ──────────────────────────────────────────
-                      The activities above say what the agent DID; this says what it concluded, and
-                      it is the half that had nowhere to live. The handoff was one column on the card,
-                      overwritten by the next stage; a failure's reason went to a notification and the
-                      event stream. Both are now kept on the run itself.
-
-                      Nothing is rendered for a run that ended with neither — a legacy card, or a
-                      completed run that said nothing — because an empty "Handoff" heading is worse
-                      than silence.
-                    -->
-                    {#if stageByRun.get(g.runId)}
-                      {@const e = stageByRun.get(g.runId)!}
-                      {#if e.failureReason}
-                        <div class="stage-foot stage-foot-failed">
-                          <div class="stage-foot-h">failed</div>
-                          <div class="text-xs leading-relaxed">{e.failureReason}</div>
-                        </div>
-                      {:else if !isEmptyValue(e.handoff)}
-                        <div class="stage-foot">
-                          <div class="stage-foot-h">handed on</div>
-                          <HandoffView handoff={e.handoff} testid={`handed-on-${g.runId}`} />
-                        </div>
-                      {/if}
-                      {#if e.references.length > 0}
-                        <div class="stage-foot">
-                          <div class="stage-foot-h">attached here</div>
-                          <div class="flex flex-wrap gap-1">
-                            {#each e.references as r (r.id)}
-                              <a class="refchip hover:border-marigold/50" href={r.url} target="_blank" rel="noreferrer noopener">
-                                {r.title || r.url}
-                              </a>
-                            {/each}
-                          </div>
-                        </div>
-                      {/if}
-                    {/if}
-                  </div>
-                </details>
-              {/each}
-            </div>
-            {#if card.state === 'working'}
-              <div class="streamcap mt-2 flex items-center gap-2 font-mono text-[10.5px]" style="color:var(--muted)">
-                <span class="live-dot"></span> streaming live…
-              </div>
-            {/if}
-          {/if}
-        </section>
-
-        <!--
-          Approval history.
-
-          `gates.decided_by` and `gates.comment` were written on every resolution and appeared in
-          no read shape at all, so who approved a card — and the feedback they gave with it — was
-          recorded and unreadable. An approval nobody can attribute is not much of an approval.
-        -->
-        {#if decidedGates.length > 0}
-          <section class="sec">
-            <div class="sec-h eyebrow">decisions</div>
-            <div class="space-y-1.5">
-              {#each decidedGates as g (g.id)}
-                <div class="bg-inset border-border rounded-[8px] border px-3 py-2 text-[11px]">
-                  <div class="flex items-center gap-1.5">
-                    <span class="mono" style="color:{g.decision === 'approve' ? 'var(--live)' : 'var(--coral)'}">{g.decision ?? g.status}</span>
-                    <span class="text-muted-foreground">at</span>
-                    <span class="mono">{g.stageKey}</span>
-                    {#if g.decidedBy}
-                      <span class="text-muted-foreground">by</span>
-                      <!-- A gate decided through AgentPod records a `prn_…` whose directory is in
-                           another product, so it shortens rather than resolves. -->
-                      <span class="mono truncate" title={g.decidedBy}>{displayPrincipal(g.decidedBy, app.members)}</span>
-                    {/if}
-                  </div>
-                  {#if g.comment}
-                    <p class="text-muted-foreground mt-1 leading-relaxed">{g.comment}</p>
-                  {/if}
-                </div>
-              {/each}
-            </div>
-          </section>
-        {/if}
-
-        <!--
-          Comments: a thread on the card for people and for the agent working it. Its own component
-          so the text-only rendering rule (no `{@html}`) is held by its own test.
-        -->
-        <section class="sec" aria-label="Comments">
-          <div class="sec-h eyebrow">comments</div>
-          {#if boardId}<CardComments {boardId} cardId={card.id} currentUserId={app.user?.userId ?? null} onFeed={(fn) => app.onFeed(fn)} />{/if}
-        </section>
-
-        <!-- handoff from prior stage -->
-        {#if cardDetail?.handoff && Object.keys(cardDetail.handoff).length > 0}
-          <section class="sec">
-            <div class="sec-h eyebrow">handoff from prior stage</div>
-            <!--
-              The same renderer as Details and each stage's "handed on": a handoff is whatever the
-              agent wrote — nested groups, lists, a JSON document stored as a string, one long
-              unbroken token — and it reads as a document, wraps on a phone, and keeps its raw JSON
-              one tap away. After a refused completion this holds `feedback` and `refusedHandoff`.
-            -->
-            <div class="bg-inset border-border min-w-0 rounded-[8px] border p-3" style="overflow-wrap:anywhere">
-              <HandoffView handoff={cardDetail.handoff} testid="carried-handoff" />
-            </div>
-          </section>
-        {/if}
-
-        <!-- cost block -->
-        {#if card.costUsd > 0 || cardEstimate?.estimatedUsd}
-          <section class="sec">
-            <div class="sec-h eyebrow">cost</div>
-            <div class="costblock flex items-baseline gap-2 font-mono">
-              <span class="text-[21px] font-semibold" style="color:var(--text)">{fmtUsd(card.costUsd)}</span>
-              {#if cardEstimate?.estimatedUsd !== null && cardEstimate?.estimatedUsd !== undefined}
-                <span class="text-[11.5px]" style="color:var(--muted)">
-                  / {fmtUsd(cardEstimate.estimatedUsd)} estimate
-                  {#if card.overBudget}<span style="color:var(--coral)"> · over budget</span>{/if}
-                  {#if cardEstimate.sampleSize > 0}<span title="{cardEstimate.sampleSize} similar run{cardEstimate.sampleSize === 1 ? '' : 's'}"> · {cardEstimate.sampleSize}× sample</span>{/if}
-                </span>
-              {/if}
-            </div>
-            <div class="costmeter mt-2 h-1.5 overflow-hidden rounded-full bg-inset {card.overBudget ? 'costmeter-over' : ''}">
-              <div class="h-full rounded-full transition-all duration-1000" style="width:{costPct}%;background:{card.overBudget ? 'var(--coral)' : 'var(--live)'}"></div>
-            </div>
-          </section>
-        {/if}
-
-        <!-- attempts (if > 1) -->
-        {#if drawerAttempts.length > 1}
-          <section class="sec">
-            <div class="sec-h eyebrow">attempts · {drawerAttempts.length}</div>
-            <div class="space-y-1.5">
-              {#each drawerAttempts as a, i (a.runId)}
-                <div class="bg-inset border-border mono flex items-center justify-between gap-2 rounded-[7px] border px-2.5 py-1.5 text-[11px]">
-                  <span class="text-muted-foreground truncate" title={a.agentId}>{i + 1} · {displayAgent(a.agentId, app.agents)}{a.profileKey ? ` · ${a.profileKey}` : a.model ? ` · ${a.model}` : ''}</span>
-                  <span class="shrink-0">{fmtUsd(a.costUsd)}{a.outcome ? ` · ${a.outcome}` : ''}</span>
-                </div>
-              {/each}
-            </div>
-          </section>
-        {/if}
-
-        {#if cardId}<RelatedWork {cardId} />{/if}
-
-        <!-- references -->
-        <section class="sec">
-          <div class="sec-h eyebrow">references</div>
-          {#if libraryRefs.length > 0}
-            <div class="mb-2.5 grid gap-2" aria-label="Superlibrary artifacts">
-              {#each libraryRefs as l, i (l.ref.id)}
-                <LibraryArtifact itemId={l.itemId} version={l.version} title={l.ref.title || l.itemId} open={i === 0} />
-              {/each}
-            </div>
-          {/if}
-          {#if otherRefs.length > 0}
-            <div class="mb-2.5 flex flex-wrap gap-1.5">
-              {#each otherRefs as ref (ref.id)}
-                {@const href = safeHref(ref.url)}
-                {@const inner = `${refLabel(ref)}${subStateLabel(ref) ? ` · ${subStateLabel(ref)}` : ''}`}
-                {#if href}
-                  <a {href} target="_blank" rel="noreferrer" class="border-border hover:border-marigold/50 mono inline-flex items-center gap-1 rounded-[5px] border px-1.5 py-0.5 text-[10px]"><span style="color:var(--marigold)">↗</span>{inner}</a>
-                {:else}
-                  <span class="border-border mono inline-flex items-center gap-1 rounded-[5px] border px-1.5 py-0.5 text-[10px]">{inner}</span>
-                {/if}
-              {/each}
-            </div>
-          {/if}
-          <div class="flex gap-1.5">
-            <input
-              bind:value={newRefUrl}
-              placeholder="https://… attach a link"
-              onkeydown={(e) => { if (e.key === 'Enter') addRef(); }}
-              class="bg-inset border-border focus:border-marigold flex-1 rounded-[6px] border px-2.5 py-1.5 text-xs outline-none"
-            />
-            <Button size="sm" variant="outline" onclick={addRef} disabled={newRefUrl.trim() === ''}>Add</Button>
-          </div>
-        </section>
-
-        <!-- archive / un-archive / delete -->
-        <div class="border-border/60 flex gap-3 border-t pt-4">
-          {#if card.archivedAt}
-            <button onclick={() => void onUnarchiveCard()} disabled={archiving} class="text-muted-foreground hover:text-marigold text-xs disabled:opacity-50">
-              {archiving ? 'Un-archiving…' : 'Archived — un-archive'}
-            </button>
-          {:else}
-            <button onclick={() => void onArchiveCard()} disabled={archiving} class="text-muted-foreground hover:text-marigold text-xs disabled:opacity-50">
-              {archiving ? 'Archiving…' : 'Archive card'}
-            </button>
-          {/if}
-          <button onclick={onDeleteCard} class="text-muted-foreground hover:text-coral text-xs">Delete card</button>
-        </div>
-      </div>
+      class="bg-surface border-border drawer-in safe-top safe-bottom safe-x relative flex h-full w-full flex-col border-l shadow-2xl {L.panel}">
+      <button onclick={close} class="tap text-muted-foreground hover:text-foreground hover:bg-accent absolute top-[calc(env(safe-area-inset-top,0px)+0.75rem)] right-[calc(env(safe-area-inset-right,0px)+0.75rem)] z-20 rounded-[7px] p-1" aria-label="Close" title="close (esc)">
+        <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+      </button>
+      <L.component
+        {card}
+        vibe={appearance.value.vibe}
+        phase={appearance.phase}
+        boardName={app.board?.name ?? ''}
+        personName={app.user?.name ?? app.user?.login ?? 'there'}
+        stages={orderedStages}
+        stageIndex={Math.max(0, orderedStages.findIndex((s) => s.key === card.currentStageKey))}
+        {stageName}
+        ageHours={cardAgeHours}
+        lead={lead!}
+        agent={drawerAgent}
+        sections={{ error: s_error, status: s_status, facts: s_facts, editButton: s_editButton, editForm: s_editForm, description: s_description, delivery: s_delivery, resume: s_resume, plan: s_plan, criteria: s_criteria, details: s_details, project: s_project, links: s_links, subtasks: s_subtasks, activity: s_activity, decisions: s_decisions, comments: s_comments, handoff: s_handoff, cost: s_cost, attempts: s_attempts, related: s_related, references: s_references, cardActions: s_cardActions }}
+        {counts}
+        {editing}
+        gate={gate && boardId ? { boardId, gate, error: gateError, onResponse: onGateResponse } : null}
+        question={elicitation ? { model: question, elicitation, agent: { id: elicitation.agentId, name: displayAgent(elicitation.agentId, app.agents), iconUrl: app.agents.find((a) => a.id === elicitation.agentId)?.iconUrl ?? null, mood: 'needs' } } : null}
+      />
     </div>
   </div>
 {/if}
+
+<!--
+  The 23 sections a card layout places (card/layouts/types.ts). Each is the drawer's markup as it
+  was, wrapped in {#if card} so it type-checks outside the shell's own guard.
+-->
+{#snippet s_editForm()}
+  {#if card}
+    <!-- edit form -->
+    <div class="min-w-0 flex-1">
+      <div class="eyebrow mb-2">edit card</div>
+      <input bind:value={editTitle} placeholder="Title" class="bg-inset border-border focus:border-marigold w-full rounded-[6px] border px-2.5 py-1.5 text-sm outline-none" />
+      <div class="mt-2 flex flex-wrap items-center gap-3">
+        <label class="text-muted-foreground mono flex items-center gap-1.5 text-[11px]">
+          priority
+          <input type="number" bind:value={editPriority} class="bg-inset border-border focus:border-marigold w-16 rounded-[5px] border px-1.5 py-1 outline-none" />
+        </label>
+        <label class="text-muted-foreground mono flex items-center gap-1.5 text-[11px]">
+          due
+          <input type="date" bind:value={editDue} aria-label="Due date" class="bg-inset border-border focus:border-marigold rounded-[5px] border px-1.5 py-1 outline-none" />
+        </label>
+        {#if editDue !== ''}
+          <button onclick={() => (editDue = '')} class="text-muted-foreground hover:text-foreground mono text-[11px]">clear</button>
+        {/if}
+      </div>
+      <textarea bind:value={editDesc} rows="3" placeholder="Description / brief for the agent…" class="bg-inset border-border focus:border-marigold mt-2 w-full resize-none rounded-[6px] border px-2.5 py-2 text-xs outline-none"></textarea>
+      <label for="edit-labels" class="text-muted-foreground mono mt-3 block text-[11px] uppercase tracking-widest">Labels <span class="normal-case">(comma-separated)</span></label>
+      <input
+        id="edit-labels"
+        bind:value={editLabels}
+        placeholder="bug, frontend, urgent"
+        disabled={editLabelsBlind}
+        class="bg-inset border-border focus:border-marigold mt-1 w-full rounded-[6px] border px-2.5 py-1.5 text-xs outline-none disabled:opacity-60"
+      />
+      {#if editLabelsBlind}
+        <p class="text-muted-foreground mono mt-1 text-[10px]">
+          Couldn't load this card's labels from the catalogue — editing is disabled so saving does not clear them. Reopen the card to retry.
+        </p>
+      {/if}
+      <label for="edit-ac" class="text-muted-foreground mono mt-3 block text-[11px] uppercase tracking-widest">Acceptance Criteria <span class="normal-case">(one per line)</span></label>
+      <textarea
+        id="edit-ac"
+        bind:value={editAC}
+        rows="3"
+        placeholder={"User can log in\nError messages are shown\nAll tests pass"}
+        class="bg-inset border-border focus:border-marigold mt-1 w-full resize-none rounded-[6px] border px-2.5 py-2 text-xs outline-none"
+      ></textarea>
+      <div class="mt-2.5 flex gap-1.5">
+        <Button size="sm" onclick={saveCard} disabled={savingCard || editTitle.trim() === ''}>{savingCard ? 'Saving…' : 'Save'}</Button>
+        <Button size="sm" variant="ghost" onclick={() => (editing = false)}>Cancel</Button>
+      </div>
+    </div>
+  {/if}
+{/snippet}
+
+{#snippet s_editButton()}
+  {#if card}
+    <button onclick={startEdit} aria-label="Edit card" title="Edit card" class="text-muted-foreground hover:text-foreground hover:bg-accent tap shrink-0 rounded-[7px] p-1.5">
+      <svg class="size-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+    </button>
+  {/if}
+{/snippet}
+
+{#snippet s_status()}
+  {#if card}
+    <!-- status row -->
+    <div class="statusrow mt-2.5 flex flex-wrap items-center gap-2.5">
+      <!-- state pill -->
+      <span class={statePillClass(card.state)}>{statePillLabel(card.state)}</span>
+
+      <!-- delegate agent -->
+      {#if delegateId}
+        <span class="delegate inline-flex items-center gap-1.5 font-mono text-[11px]" style="color:var(--muted)" title={delegateId}>
+          <AgentFace agentId={delegateId} name={delegateName} iconUrl={delegateAgent?.iconUrl ?? null} mood={delegateMood} size={28} variant={faceVariant} withName />
+          <span>· delegate</span>
+        </span>
+      {/if}
+
+      <!-- owner -->
+      <span class="delegate inline-flex items-center gap-1 font-mono text-[11px]" style="color:var(--muted)" title={card.ownerUserId}>owner · {displayPrincipal(card.ownerUserId, app.members)}</span>
+
+      <!--
+        Queued by — the third identity, and the one that was carried on every card and shown
+        nowhere. A reader has to be able to answer all three questions here without opening a
+        terminal: who asked for this, who is answerable for it, and who is doing it.
+
+        Shown for a person too, not only for an agent: the row's job is to make the three
+        identities legible, and omitting the common case would leave a reader unable to tell
+        "a person queued this" from "nobody recorded who did". The violet chip is reserved for
+        the agent case, which is the one that needs to be noticed.
+      -->
+      {#if provenance?.known}
+        {#if provenance.byAgent}
+          <span class="queuedchip" title={`Queued by ${provenance.queuedByName} — ${grantSummary}`}>
+            {#if provenance.agent}
+              <AgentFace agentId={provenance.agent.id} name={provenance.queuedByName} iconUrl={provenance.agent.iconUrl ?? null} size={16} variant="portrait" />
+            {/if}
+            <span>asked by {provenance.queuedByName}</span>
+          </span>
+        {:else}
+          <span class="delegate inline-flex items-center gap-1 font-mono text-[11px]" style="color:var(--muted)" title={card.queuedBy ?? ''}>asked by · {provenance.queuedByName}</span>
+        {/if}
+      {/if}
+      {#if app.user && card.ownerUserId !== app.user.userId}
+        <button
+          onclick={() => void assignToMe()}
+          disabled={assigning}
+          class="text-muted-foreground hover:text-foreground hit font-mono text-[11px] underline disabled:opacity-40"
+        >{assigning ? 'assigning…' : 'assign to me'}</button>
+      {/if}
+
+      <!-- live ephemeral -->
+      {#if card.state === 'working'}
+        <span class="ephemeral inline-flex items-center gap-1.5 font-mono text-[11.5px]" style="color:var(--live)">
+          <span class="live-dot"></span>
+        </span>
+      {/if}
+    </div>
+  {/if}
+{/snippet}
+
+<!-- D11: priority, due and labels were only visible in the edit form; read mode shows them too. -->
+{#snippet s_facts()}
+  {#if card}
+    <dl class="dw-facts mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs">
+      <div class="flex gap-1"><dt class="text-muted-foreground">priority</dt><dd>{card.priority > 0 ? `P${card.priority}` : 'none'}</dd></div>
+      <div class="flex gap-1"><dt class="text-muted-foreground">due</dt><dd class={cardOverdue ? 'text-signal-text' : ''}>{card.dueAt ? `${cardOverdue ? '⚠ ' : ''}${card.dueAt.slice(0, 10)}` : 'none'}</dd></div>
+      <div class="flex flex-wrap items-center gap-1"><dt class="text-muted-foreground">labels</dt>
+        {#if cardLabels.length === 0}<dd>none</dd>{:else}{#each cardLabels as l (l.id)}<dd class="lbl-pill" style={l.colour ? `border-color:${l.colour}; color:${l.colour}` : undefined}>{l.name}</dd>{/each}{/if}
+      </div>
+      {#if ageLabel(cardAgeHours)}<div class="flex gap-1"><dt class="text-muted-foreground">in {stageName} for</dt><dd>{ageLabel(cardAgeHours)}</dd></div>{/if}
+      {#if card.attemptCount > 1}<div class="flex gap-1"><dt class="text-muted-foreground">attempt</dt><dd>{card.attemptCount}</dd></div>{/if}
+    </dl>
+  {/if}
+{/snippet}
+
+{#snippet s_error()}
+  {#if card}
+    {#if localError}
+      <p role="alert" class="border-coral/40 text-coral mono rounded-[7px] border px-3 py-2 text-xs" style="background:var(--vk-color-signal-wash)">{localError}</p>
+    {/if}
+  {/if}
+{/snippet}
+
+{#snippet s_description()}
+  {#if card}
+    <!-- description from spec -->
+    {#if card.spec?.description}
+      <section class="sec">
+        <div class="sec-h eyebrow">description</div>
+        <p class="text-foreground/90 text-sm leading-relaxed whitespace-pre-wrap">{String(card.spec.description)}</p>
+      </section>
+    {/if}
+  {/if}
+{/snippet}
+
+{#snippet s_delivery()}
+  {#if card}
+    {#if deliveryGate?.approvalSubject}
+      <section class="sec">
+        <div class="border-border bg-inset rounded-[10px] border p-3.5">
+          <div class="mb-2 flex items-center justify-between gap-2">
+            <span class="wordmark text-sm font-semibold">Approved delivery</span>
+            <span class="mono text-muted-foreground text-[10px] uppercase">{deliveryGate.delivery?.mode}</span>
+          </div>
+
+          {#if gateError}
+            <p role="alert" class="border-coral/40 text-coral mono mb-2.5 rounded-[7px] border px-3 py-2 text-xs">{gateError}</p>
+          {/if}
+
+          {#if deliveryGate.decision === 'approve_manual'}
+            <p class="text-muted-foreground mb-3 text-xs">Post these authoritative frozen bytes yourself. No publisher can claim this card.</p>
+            <div class="space-y-3">
+              {#each manualItems as item (item.index)}
+                <div class="bg-surface border-border rounded-[7px] border p-2.5">
+                  <div class="mb-2 flex items-center justify-between gap-2">
+                    <span class="mono text-[10px] uppercase">Post {item.index + 1}</span>
+                    <Button size="sm" variant="outline" onclick={() => void copyApprovedText(item.index, item.text)}>
+                      {copiedItem === item.index ? 'Copied' : 'Copy exact text'}
+                    </Button>
+                  </div>
+                  <pre class="font-sans text-xs whitespace-pre-wrap">{item.text}</pre>
+                  {#if item.media.length > 0}
+                    <div class="mt-2 flex flex-wrap gap-2">
+                      {#each item.media as media (media.digest)}
+                        {#if safeHref(media.href)}
+                          <a class="mono text-marigold text-[11px] underline" href={safeHref(media.href)!} download={media.filename} title={media.altText || media.digest}>
+                            Download {media.filename}
+                          </a>
+                        {:else}
+                          <span class="mono text-muted-foreground text-[11px]" title={media.digest}>Media download unavailable</span>
+                        {/if}
+                      {/each}
+                    </div>
+                  {/if}
+                </div>
+              {/each}
+            </div>
+
+            <div class="mt-3 flex flex-col gap-2">
+              <label for="manual-live-url" class="mono text-[11px]">Live post URL</label>
+              <div class="flex gap-2">
+                <input id="manual-live-url" bind:value={livePostUrl} type="url" placeholder="https://x.com/…/status/…" class="bg-surface border-border min-w-0 flex-1 rounded-[7px] border px-2.5 py-2 text-xs" />
+                <Button size="sm" disabled={deliverySaving || livePostUrl.trim() === ''} onclick={() => void changeDelivery({ liveUrl: livePostUrl.trim() })}>Record URL</Button>
+              </div>
+              {#if deliveryGate.delivery?.liveUrl}
+                <p class="mono text-[11px]">
+                  Recorded: <a class="underline" href={deliveryGate.delivery.liveUrl} target="_blank" rel="noreferrer">{deliveryGate.delivery.liveUrl}</a>
+                  · read-back {deliveryGate.delivery.readBackStatus === 'not_checked' ? 'not available' : deliveryGate.delivery.readBackStatus}
+                </p>
+              {/if}
+              <Button size="sm" variant="outline" disabled={deliverySaving || !!deliveryGate.delivery?.liveUrl} onclick={() => void changeDelivery({ mode: 'automatic' })}>
+                Switch to automatic delivery
+              </Button>
+            </div>
+          {:else if card?.state !== 'working'}
+            <p class="text-muted-foreground mb-2 text-xs">Automatic delivery has not started. You can still take over manually without approving a new digest.</p>
+            <Button size="sm" variant="outline" disabled={deliverySaving} onclick={() => void changeDelivery({ mode: 'manual' })}>Switch to manual delivery</Button>
+          {:else}
+            <p class="text-muted-foreground text-xs">Automatic delivery has started; switching is fenced.</p>
+          {/if}
+        </div>
+      </section>
+    {/if}
+  {/if}
+{/snippet}
+
+{#snippet s_resume()}
+  {#if card}
+    <!--
+      Resume — the human half of a block. Only when resume is the answer: a card its agent
+      blocked, the breaker stopped, the completion check refused twice, or dispatch refused.
+      An open question and a pending review have their own panels above.
+    -->
+    {#if boardId}
+      <CardResume
+        {boardId}
+        {card}
+        stages={app.board?.stages ?? []}
+        gatePending={!!gate}
+        questionPending={!!elicitation}
+        onResumed={async () => { await Promise.all([app.refresh(), refreshDrawer(card.id, boardId)]); }}
+      />
+    {/if}
+  {/if}
+{/snippet}
+
+{#snippet s_plan()}
+  {#if card}
+    <!-- plan checklist (from card.spec.plan, any shape agents write) -->
+    <PlanChecklist plan={card.spec?.plan} />
+  {/if}
+{/snippet}
+
+{#snippet s_criteria()}
+  {#if card}
+    <!-- acceptance criteria (from card.spec.acceptanceCriteria) -->
+    {#if acceptanceCriteria && acceptanceCriteria.length > 0}
+      <section class="sec">
+        <div class="sec-h eyebrow">acceptance criteria</div>
+        <ul class="ac bg-inset border-border list-disc rounded-[7px] border px-4 py-3 text-[12.5px] space-y-1">
+          {#each acceptanceCriteria as criterion, i (i)}
+            <li style="color:var(--text)">{criterion}</li>
+          {/each}
+        </ul>
+      </section>
+    {/if}
+  {/if}
+{/snippet}
+
+{#snippet s_details()}
+  {#if card}
+    <!--
+      Every other spec field (role, requirements, nested decisions…). The agent receives the
+      whole spec; the person reviewing the card should be able to read all of it too.
+    -->
+    <SpecDetails spec={card.spec} hasDescription={!!card.spec?.description} />
+  {/if}
+{/snippet}
+
+{#snippet s_project()}
+  {#if card}
+    <!--
+      Project / milestone (Step 3) — a card's cross-board membership. `currentProjectName` and
+      `currentMilestoneName` are both total: a dangling id (its project/milestone was deleted)
+      shows the raw id rather than throwing or spinning forever (see `project-lookup.ts`).
+    -->
+    <section class="sec">
+      <div class="sec-h eyebrow">project</div>
+      {#if editingProject}
+        <div class="bg-inset border-border space-y-2 rounded-[8px] border p-3 text-xs">
+          <div>
+            <label for="assign-project" class="text-muted-foreground mono mb-1 block text-[11px] uppercase tracking-widest">Project</label>
+            <select
+              id="assign-project"
+              bind:value={selProjectId}
+              onchange={() => void onProjectSelectChange()}
+              class="bg-surface border-border focus:border-marigold w-full rounded-[6px] border px-2 py-1.5 text-xs outline-none"
+            >
+              <option value="">No project</option>
+              {#each app.projects as p (p.id)}
+                <option value={p.id}>{p.name}</option>
+              {/each}
+            </select>
+          </div>
+          <div>
+            <!--
+              Scoped to the chosen project ONLY (`milestonesForProject`) — the server refuses a
+              milestone that does not belong to the card's project (`MILESTONE_NOT_IN_PROJECT`),
+              so this picker never offers one it would refuse.
+            -->
+            <label for="assign-milestone" class="text-muted-foreground mono mb-1 block text-[11px] uppercase tracking-widest">Milestone</label>
+            <select
+              id="assign-milestone"
+              bind:value={selMilestoneId}
+              disabled={selProjectId === ''}
+              class="bg-surface border-border focus:border-marigold w-full rounded-[6px] border px-2 py-1.5 text-xs outline-none disabled:opacity-50"
+            >
+              <option value="">No milestone</option>
+              {#each selProjectMilestones as m (m.id)}
+                <option value={m.id}>{m.name}</option>
+              {/each}
+            </select>
+          </div>
+          <div class="flex gap-1.5">
+            <Button size="sm" onclick={() => void saveProjectAssignment()} disabled={savingProject}>{savingProject ? 'Saving…' : 'Save'}</Button>
+            <Button size="sm" variant="ghost" onclick={() => (editingProject = false)}>Cancel</Button>
+          </div>
+          {#if projectAssignError}
+            <p role="alert" class="text-coral mono text-[11px]">{projectAssignError}</p>
+          {/if}
+        </div>
+      {:else}
+        <div class="flex flex-wrap items-center gap-2 text-[12px]">
+          {#if currentProjectName}
+            <span class="mono">{currentProjectName}</span>
+            {#if currentMilestoneName}<span class="text-muted-foreground">· {currentMilestoneName}</span>{/if}
+          {:else}
+            <span class="text-muted-foreground">No project</span>
+          {/if}
+          <button onclick={startProjectEdit} class="text-muted-foreground hover:text-foreground hit mono text-[11px] underline underline-offset-2">
+            {currentProjectName ? 'change' : 'assign'}
+          </button>
+        </div>
+      {/if}
+    </section>
+  {/if}
+{/snippet}
+
+{#snippet s_links()}
+  {#if card}
+    <!--
+      Links (whole-branch review, Important finding) — EVERY edge this card has, in five
+      groups that never share a row style, because a person could otherwise create a `relates`
+      edge or an outgoing `blocks` edge through the dialogue below and never see it rendered
+      anywhere: what blocks this card (enforced, ⛔), what blocked it but has since resolved,
+      what this card blocks, what it merely relates to, and the advisory cross-board ones —
+      each with its own "remove" control, since `removeLink` (Task 17a) had shipped with zero
+      callers in this app.
+
+      Every `{#each}` below is keyed by `edgeKey(row.remove)` — the EDGE's own identity, never
+      `row.cardId`/`row.boardId` alone. See `edgeKey`'s own doc comment (`link-groups.ts`) for
+      why: two edges can legitimately name the same "other card" (mutual `relates`, since
+      `wouldCycle` excludes it from the cycle check), and a key that collides is not a cosmetic
+      bug — Svelte 5 throws on a duplicate `{#each}` key, which fails this whole section's
+      render. No test in this project can reach that failure directly (Vitest cannot import a
+      `.svelte` file here), which is exactly why the reasoning has to live here, not only in a
+      function nobody reading this template is forced to open.
+    -->
+    <section class="sec">
+      <div class="sec-h eyebrow">links</div>
+
+      {#if linkGroups.blockedBy.length > 0}
+        <div class="text-muted-foreground mono mb-1 text-[10px] uppercase tracking-widest">blocked by</div>
+        <div class="mb-2.5 space-y-1.5">
+          {#each linkGroups.blockedBy as row (edgeKey(row.remove))}
+            {@const key = edgeKey(row.remove)}
+            <div class="bg-inset border-border mono flex items-center gap-2 rounded-[7px] border px-2.5 py-1.5 text-[11px]" title={row.badge.tooltip}>
+              <span class="blk-pill">{row.badge.glyph}</span>
+              <span class="min-w-0 flex-1 truncate">{row.title}</span>
+              <button onclick={() => void onRemoveLink(row.remove)} disabled={removingKeys.has(key)} class="text-muted-foreground hover:text-coral shrink-0 text-[10px] disabled:opacity-50">
+                {removingKeys.has(key) ? '…' : 'remove'}
+              </button>
+            </div>
+          {/each}
+        </div>
+      {/if}
+
+      {#if linkGroups.resolvedBlockedBy.length > 0}
+        <!--
+          Re-review N2: `blockedBy` only ever carries UNRESOLVED inbound blockers (the claim
+          query's own predicate) — a blocker that has since completed drops out of it, but the
+          edge itself is never deleted, so it was previously visible in NEITHER group. Shown
+          here as resolved, never `⛔`: nothing is currently enforcing it, and re-opening the
+          blocker (`moveCard` sets a card back to `submitted` unconditionally) would silently
+          re-arm an edge its owner never saw — this is where they can see and clear it first.
+        -->
+        <div class="text-muted-foreground mono mb-1 text-[10px] uppercase tracking-widest">blocked by (resolved)</div>
+        <div class="mb-2.5 space-y-1.5">
+          {#each linkGroups.resolvedBlockedBy as row (edgeKey(row.remove))}
+            {@const key = edgeKey(row.remove)}
+            <div class="bg-inset border-border mono flex items-center gap-2 rounded-[7px] border px-2.5 py-1.5 text-[11px]" title="{row.title} blocked this card — resolved, no longer enforced">
+              <span class="min-w-0 flex-1 truncate">{row.title}</span>
+              <button onclick={() => void onRemoveLink(row.remove)} disabled={removingKeys.has(key)} class="text-muted-foreground hover:text-coral shrink-0 text-[10px] disabled:opacity-50">
+                {removingKeys.has(key) ? '…' : 'remove'}
+              </button>
+            </div>
+          {/each}
+        </div>
+      {/if}
+
+      {#if linkGroups.blocks.length > 0}
+        <div class="text-muted-foreground mono mb-1 text-[10px] uppercase tracking-widest">blocks</div>
+        <div class="mb-2.5 space-y-1.5">
+          {#each linkGroups.blocks as row (edgeKey(row.remove))}
+            {@const key = edgeKey(row.remove)}
+            <div class="bg-inset border-border mono flex items-center gap-2 rounded-[7px] border px-2.5 py-1.5 text-[11px]">
+              <span class="min-w-0 flex-1 truncate">{row.title}</span>
+              <button onclick={() => void onRemoveLink(row.remove)} disabled={removingKeys.has(key)} class="text-muted-foreground hover:text-coral shrink-0 text-[10px] disabled:opacity-50">
+                {removingKeys.has(key) ? '…' : 'remove'}
+              </button>
+            </div>
+          {/each}
+        </div>
+      {/if}
+
+      {#if linkGroups.relates.length > 0}
+        <div class="text-muted-foreground mono mb-1 text-[10px] uppercase tracking-widest">relates to</div>
+        <div class="mb-2.5 space-y-1.5">
+          {#each linkGroups.relates as row (edgeKey(row.remove))}
+            {@const key = edgeKey(row.remove)}
+            <div class="bg-inset border-border mono flex items-center gap-2 rounded-[7px] border px-2.5 py-1.5 text-[11px]">
+              <span class="min-w-0 flex-1 truncate">{row.title}</span>
+              <button onclick={() => void onRemoveLink(row.remove)} disabled={removingKeys.has(key)} class="text-muted-foreground hover:text-coral shrink-0 text-[10px] disabled:opacity-50">
+                {removingKeys.has(key) ? '…' : 'remove'}
+              </button>
+            </div>
+          {/each}
+        </div>
+      {/if}
+
+      {#if linkGroups.supersedes.length > 0}
+        <div class="text-muted-foreground mono mb-1 text-[10px] uppercase tracking-widest">supersedes / superseded by</div>
+        <div class="mb-2.5 space-y-1.5">
+          {#each linkGroups.supersedes as row (edgeKey(row.remove))}
+            {@const key = edgeKey(row.remove)}
+            <div class="bg-inset border-border mono flex items-center gap-2 rounded-[7px] border px-2.5 py-1.5 text-[11px]">
+              <span class="text-muted-foreground shrink-0 text-[10px]">{row.direction === 'supersedes' ? 'replaces' : 'replaced by'}</span>
+              <span class="min-w-0 flex-1 truncate">{row.title}</span>
+              <button onclick={() => void onRemoveLink(row.remove)} disabled={removingKeys.has(key)} class="text-muted-foreground hover:text-coral shrink-0 text-[10px] disabled:opacity-50">
+                {removingKeys.has(key) ? '…' : 'remove'}
+              </button>
+            </div>
+          {/each}
+        </div>
+      {/if}
+
+      {#if linkGroups.advisory.length > 0}
+        <div class="text-muted-foreground mono mb-1 text-[10px] uppercase tracking-widest">advisory (other boards)</div>
+        <div class="mb-2.5 space-y-1.5">
+          {#each linkGroups.advisory as row (edgeKey(row.remove))}
+            {@const key = edgeKey(row.remove)}
+            <div
+              class="bg-inset border-border mono flex items-center gap-2 rounded-[7px] border px-2.5 py-1.5 text-[11px]"
+              title={row.badge?.tooltip ?? `${row.relation === 'blocks' ? 'Blocks' : 'Relates to'} ${row.title} on another board — advisory, not enforced`}
+            >
+              {#if row.badge}
+                <span class="blk-pill blk-pill-advisory">{row.badge.glyph}</span>
+              {/if}
+              <span class="min-w-0 flex-1 truncate">
+                {row.title}
+                {#if row.relation !== 'blocked-by'}<span class="text-muted-foreground">· {row.relation}</span>{/if}
+              </span>
+              <button onclick={() => void onRemoveLink(row.remove)} disabled={removingKeys.has(key)} class="text-muted-foreground hover:text-coral shrink-0 text-[10px] disabled:opacity-50">
+                {removingKeys.has(key) ? '…' : 'remove'}
+              </button>
+            </div>
+          {/each}
+        </div>
+      {/if}
+
+      {#if !hasAnyLink}
+        <p class="text-muted-foreground mb-2.5 text-xs">No links on this card.</p>
+      {/if}
+
+      {#if linksError}
+        <p role="alert" class="text-coral mono mb-2.5 text-[11px]">{linksError}</p>
+      {/if}
+
+      <Button size="sm" variant="outline" onclick={openAddBlocker}>Add link</Button>
+
+      {#if addBlockerOpen}
+        <div class="bg-inset border-border mt-2.5 space-y-2 rounded-[8px] border p-3 text-xs">
+          <!--
+            Re-review N3: the dialogue always creates an edge pointing AT this card ("picked
+            card → this card") — there is no way, here, to create the reverse. That used to be
+            implicit in generic Board/Card/Kind fields sitting directly under a visible "blocks"
+            (outgoing) group, which invites exactly the wrong expectation. Said outright instead
+            of left to be inferred, per the reviewer's finding — the symmetry argument for NOT
+            adding an outgoing-creation path stands (that edge is always reachable from the
+            other card's own drawer), so this fixes the wording, not the architecture.
+          -->
+          <p class="text-muted-foreground mono text-[10.5px]">
+            The card you pick below will point <strong>at "{card.title}"</strong> — e.g. picking "blocks" creates
+            "picked card blocks this card", never the other way around.
+          </p>
+          <div>
+            <label for="blocker-board" class="text-muted-foreground mono mb-1 block text-[11px] uppercase tracking-widest">Board</label>
+            <select
+              id="blocker-board"
+              bind:value={blockerBoardId}
+              onchange={() => void onBlockerBoardChange()}
+              class="bg-surface border-border focus:border-marigold w-full rounded-[6px] border px-2 py-1.5 text-xs outline-none"
+            >
+              {#each app.boards as b (b.id)}
+                <option value={b.id}>{b.name}</option>
+              {/each}
+            </select>
+          </div>
+
+          {#if crossBoardNoticeText}
+            <!-- Shown the moment a different board is picked — BEFORE any request, never after. -->
+            <p class="mono text-[11px]" style="color:var(--marigold)">⚑ {crossBoardNoticeText}</p>
+          {/if}
+
+          <div>
+            <label for="blocker-card" class="text-muted-foreground mono mb-1 block text-[11px] uppercase tracking-widest">Card (the one that will act on this one)</label>
+            <select
+              id="blocker-card"
+              bind:value={blockerCardId}
+              class="bg-surface border-border focus:border-marigold w-full rounded-[6px] border px-2 py-1.5 text-xs outline-none"
+            >
+              <option value="">Pick a card…</option>
+              {#each blockerBoardCards as c (c.id)}
+                <option value={c.id}>{c.title}</option>
+              {/each}
+            </select>
+          </div>
+
+          <div>
+            <label for="blocker-kind" class="text-muted-foreground mono mb-1 block text-[11px] uppercase tracking-widest">Kind</label>
+            <select
+              id="blocker-kind"
+              bind:value={blockerKind}
+              class="bg-surface border-border focus:border-marigold w-full rounded-[6px] border px-2 py-1.5 text-xs outline-none"
+            >
+              <option value="blocks">blocks this card — this card will not be claimed while it is open</option>
+              <option value="relates">relates to this card — informational only</option>
+            </select>
+          </div>
+
+          <div class="flex gap-1.5">
+            <Button size="sm" onclick={() => void onAddBlocker()} disabled={blockerCardId === '' || addingBlocker}>
+              {addingBlocker ? 'Adding…' : 'Add'}
+            </Button>
+            <Button size="sm" variant="ghost" onclick={() => (addBlockerOpen = false)}>Cancel</Button>
+          </div>
+
+          {#if blockerError}
+            <p role="alert" class="text-coral mono text-[11px]">{blockerError}</p>
+          {/if}
+        </div>
+      {/if}
+    </section>
+  {/if}
+{/snippet}
+
+{#snippet s_subtasks()}
+  {#if card}
+    <!--
+      Sub-tasks (Step 1b) — children with their state and cost, plus "Add sub-task".
+      `children` (script, above) reads `parentCardId` straight off the board's own card list;
+      `card.openChildCount`/the count of `children` is the same pair `CardTile`'s counter shows.
+    -->
+    <section class="sec">
+      <div class="sec-h eyebrow">
+        sub-tasks
+        {#if totalChildren > 0}<span class="ml-auto">{card.openChildCount}/{totalChildren} open</span>{/if}
+      </div>
+      {#if children.length > 0}
+        <div class="mb-2.5 space-y-1.5">
+          {#each children as child (child.id)}
+            <button
+              onclick={() => app.openCard(child.id)}
+              class="bg-inset border-border mono flex w-full items-center gap-2 rounded-[7px] border px-2.5 py-1.5 text-left text-[11px]"
+            >
+              <span class="min-w-0 flex-1 truncate">{child.title}</span>
+              <span class={statePillClass(child.state)} style="padding:1px 7px;font-size:9.5px">{statePillLabel(child.state)}</span>
+              {#if child.costUsd > 0}<span class="text-muted-foreground shrink-0">{fmtUsd(child.costUsd)}</span>{/if}
+            </button>
+          {/each}
+        </div>
+      {/if}
+      <div class="flex gap-1.5">
+        <input
+          bind:value={newSubtaskTitle}
+          placeholder="New sub-task title…"
+          onkeydown={(e) => { if (e.key === 'Enter') void addSubtask(); }}
+          class="bg-inset border-border focus:border-marigold flex-1 rounded-[6px] border px-2.5 py-1.5 text-xs outline-none"
+        />
+        <Button size="sm" variant="outline" onclick={() => void addSubtask()} disabled={newSubtaskTitle.trim() === '' || addingSubtask}>
+          {addingSubtask ? 'Adding…' : 'Add'}
+        </Button>
+      </div>
+      {#if subtaskError}
+        <p role="alert" class="text-coral mono mt-1.5 text-[11px]">{subtaskError}</p>
+      {/if}
+    </section>
+  {/if}
+{/snippet}
+
+{#snippet s_activity()}
+  {#if card}
+    <!-- activity stream -->
+    <section class="sec">
+      <div class="sec-h eyebrow">session activity</div>
+      <!--
+        The timeline opens with provenance, so the first thing read is the frame for everything
+        after it: who asked for this card, on what authority, and who holds it now.
+
+        Above the empty-state branch deliberately. A card an agent queued and nobody has picked
+        up is precisely where "who asked for this" matters most — that is the shape of an agent
+        queueing work that no capability can claim, and the version of this that sat inside the
+        `{#else}` would have hidden it on every such card.
+      -->
+      {#if provenance?.known}
+        <p class="mono text-muted-foreground mb-1.5 text-[10.5px]">
+          asked by {provenance.queuedByName}{provenance.byAgent ? ' (an agent)' : ''}
+          · {grantSummary}
+          · {delegateId ? `held by ${delegateName}` : 'held by nobody'}
+        </p>
+      {/if}
+      {#if !cardDetail || cardDetail.activities.length === 0}
+        <p class="text-muted-foreground text-xs">No recorded activity yet — this card hasn't been worked.</p>
+      {:else}
+        <div class="mb-1.5 flex items-center gap-2">
+          <button
+            onclick={() => (showToolCalls = !showToolCalls)}
+            aria-pressed={showToolCalls}
+            class="mono border-border hover:bg-accent rounded-[6px] border px-1.5 py-0.5 text-[10px]"
+            style="min-height:var(--tap)"
+          >{showToolCalls ? 'hide tool calls' : 'show tool calls'}</button>
+          <span class="text-muted-foreground mono text-[10px]">
+            {activityGroups.length} run{activityGroups.length === 1 ? '' : 's'}
+          </span>
+        </div>
+
+        <!--
+          One `<details>` per run, and per expandable row.
+
+          Native disclosure rather than a click handler on a div: it is keyboard-operable and
+          announced as expandable for free, and the previous stream had a `▸` glyph that LOOKED
+          expandable and was decorative — a UI that promises a detail it does not have.
+        -->
+        <div class="stream flex flex-col gap-1.5">
+          {#each activityGroups as g, gi (g.runId)}
+            {@const view = visibleActivities(g.activities, isNarrative, showToolCalls, isControlRow)}
+            {@const rows = view.rows}
+            <details open={defaultOpen(activityGroups, gi)} class="border-border rounded-[7px] border">
+              <summary
+                class="mono flex cursor-pointer items-center gap-2 px-2 py-1.5 text-[11px]"
+                style="min-height:var(--tap)"
+              >
+                <!--
+                  The run id when the stage is unknown. The attempts fetch can fail or lag,
+                  and five groups all reading "unassigned run" are indistinguishable — which
+                  is the flat list this change replaces, in miniature.
+                -->
+                <span style="color:var(--marigold)">{g.stageKey ?? `run ${g.runId.slice(-6)}`}</span>
+                {#if g.agentId}
+                  <span class="text-muted-foreground truncate" title={g.agentId}>{displayAgent(g.agentId, app.agents)}</span>
+                {/if}
+                {#if g.outcome}
+                  <span style="color:{g.outcome === 'completed' ? 'var(--live)' : 'var(--coral)'}">{g.outcome}</span>
+                {/if}
+                <!--
+                  "attempt 2" rather than two things that look like two stages. A retry at one
+                  stage is its own run with its own story, and the fact that an earlier one failed
+                  is the most useful thing on the card — so it is named, not merged away.
+                -->
+                {#if (stageByRun.get(g.runId)?.attemptOfStage ?? 1) > 1}
+                  <span class="text-muted-foreground text-[10px]">attempt {stageByRun.get(g.runId)!.attemptOfStage}</span>
+                {/if}
+                <span class="text-muted-foreground ml-auto whitespace-nowrap text-[10px]">
+                  {g.counts.total} event{g.counts.total === 1 ? '' : 's'}{g.counts.error > 0 ? ` · ${g.counts.error} error` : ''}
+                </span>
+              </summary>
+
+              <div class="flex flex-col gap-0.5 px-1.5 pb-1.5">
+                {#if view.shownBecauseNoNarrative}
+                  <!--
+                    Said once, quietly, rather than hiding the run: the reader's preference is
+                    narrative-only, and this run has none, so what follows is its tool calls.
+                    The alternative — what this replaces — was an empty panel under a heading
+                    reading "67 events".
+                  -->
+                  <p class="text-muted-foreground px-1.5 py-1 text-[11px]">
+                    This run said nothing in prose; its tool calls are below.
+                  </p>
+                {:else if rows.length === 0}
+                  <p class="text-muted-foreground px-1.5 py-1 text-[11px]">No activity recorded for this run.</p>
+                {/if}
+                {#each rows as a (a.seq)}
+                  {@const m = activityMarker(a.type)}
+                  {@const detail = a.parameter !== null || a.result !== null}
+                  {#if detail}
+                    <details class="act {m.cssClass} rounded-[6px]">
+                      <summary class="grid cursor-pointer px-1.5 py-1.5 text-[12.5px] items-start" style="grid-template-columns:18px 1fr auto;gap:9px;min-height:var(--tap)">
+                        <span class="act-icon text-[12px] text-center pt-px">{m.glyph}</span>
+                        <div class="act-body min-w-0" style="overflow-wrap:anywhere">
+                          <span class="act-k font-mono text-[9.5px] uppercase tracking-wider mr-1.5" style="color:var(--muted)">{a.type}</span>
+                          {#if a.action}<span class="font-mono text-[11px]" style="color:var(--marigold)">{a.action}</span>{/if}
+                          {#if a.body}<div class="mt-0.5 text-xs leading-relaxed {a.type === 'error' || a.type === 'elicitation' ? 'text-coral' : 'text-foreground/90'}">{a.body}</div>{/if}
+                        </div>
+                        <span class="act-ts text-muted-foreground font-mono text-[10px] whitespace-nowrap pt-px">{fmtTime(a.ts)}</span>
+                      </summary>
+                      <!--
+                        `result` was populated on 153 of this card's 366 activities and rendered
+                        nowhere at all, and `parameter` was truncated at 140 characters with no
+                        way to see the rest. Both were already on the wire.
+                      -->
+                      <div class="space-y-1 px-2 pb-2 pl-[27px]">
+                        {#if a.parameter !== null}
+                          <div>
+                            <div class="mono text-[9.5px] uppercase tracking-wider" style="color:var(--muted)">parameter</div>
+                            <pre class="bg-inset mt-0.5 overflow-x-auto rounded-[5px] px-2 py-1.5 font-mono text-[11px] whitespace-pre-wrap" style="overflow-wrap:anywhere">{JSON.stringify(a.parameter, null, 2)}</pre>
+                          </div>
+                        {/if}
+                        {#if a.result !== null}
+                          <div>
+                            <div class="mono text-[9.5px] uppercase tracking-wider" style="color:var(--muted)">result</div>
+                            <pre class="bg-inset mt-0.5 overflow-x-auto rounded-[5px] px-2 py-1.5 font-mono text-[11px] whitespace-pre-wrap" style="overflow-wrap:anywhere">{typeof a.result === 'string' ? a.result : JSON.stringify(a.result, null, 2)}</pre>
+                          </div>
+                        {/if}
+                      </div>
+                    </details>
+                  {:else}
+                    <div class="act {m.cssClass} grid rounded-[6px] px-1.5 py-1.5 text-[12.5px] items-start" style="grid-template-columns:18px 1fr auto;gap:9px">
+                      <span class="act-icon text-[12px] text-center pt-px">{m.glyph}</span>
+                      <div class="act-body min-w-0" style="overflow-wrap:anywhere">
+                        <span class="act-k font-mono text-[9.5px] uppercase tracking-wider mr-1.5" style="color:var(--muted)">{a.type}</span>
+                        {#if a.action}<span class="font-mono text-[11px]" style="color:var(--marigold)">{a.action}</span>{/if}
+                        {#if a.body}<div class="mt-0.5 text-xs leading-relaxed {a.type === 'error' || a.type === 'elicitation' ? 'text-coral' : 'text-foreground/90'}">{a.body}</div>{/if}
+                      </div>
+                      <span class="act-ts text-muted-foreground font-mono text-[10px] whitespace-nowrap pt-px">{fmtTime(a.ts)}</span>
+                    </div>
+                  {/if}
+                {/each}
+
+                <!--
+                  How this run ended, and what it attached.
+                  ──────────────────────────────────────────
+                  The activities above say what the agent DID; this says what it concluded, and
+                  it is the half that had nowhere to live. The handoff was one column on the card,
+                  overwritten by the next stage; a failure's reason went to a notification and the
+                  event stream. Both are now kept on the run itself.
+
+                  Nothing is rendered for a run that ended with neither — a legacy card, or a
+                  completed run that said nothing — because an empty "Handoff" heading is worse
+                  than silence.
+                -->
+                {#if stageByRun.get(g.runId)}
+                  {@const e = stageByRun.get(g.runId)!}
+                  {#if e.failureReason}
+                    <div class="stage-foot stage-foot-failed">
+                      <div class="stage-foot-h">failed</div>
+                      <div class="text-xs leading-relaxed">{e.failureReason}</div>
+                    </div>
+                  {:else if !isEmptyValue(e.handoff)}
+                    <div class="stage-foot">
+                      <div class="stage-foot-h">handed on</div>
+                      <HandoffView handoff={e.handoff} testid={`handed-on-${g.runId}`} />
+                    </div>
+                  {/if}
+                  {#if e.references.length > 0}
+                    <div class="stage-foot">
+                      <div class="stage-foot-h">attached here</div>
+                      <div class="flex flex-wrap gap-1">
+                        {#each e.references as r (r.id)}
+                          <a class="refchip hover:border-marigold/50" href={r.url} target="_blank" rel="noreferrer noopener">
+                            {r.title || r.url}
+                          </a>
+                        {/each}
+                      </div>
+                    </div>
+                  {/if}
+                {/if}
+              </div>
+            </details>
+          {/each}
+        </div>
+        {#if card.state === 'working'}
+          <div class="streamcap mt-2 flex items-center gap-2 font-mono text-[10.5px]" style="color:var(--muted)">
+            <span class="live-dot"></span> streaming live…
+          </div>
+        {/if}
+      {/if}
+    </section>
+  {/if}
+{/snippet}
+
+{#snippet s_decisions()}
+  {#if card}
+    <!--
+      Approval history.
+
+      `gates.decided_by` and `gates.comment` were written on every resolution and appeared in
+      no read shape at all, so who approved a card — and the feedback they gave with it — was
+      recorded and unreadable. An approval nobody can attribute is not much of an approval.
+    -->
+    {#if decidedGates.length > 0}
+      <section class="sec">
+        <div class="sec-h eyebrow">decisions</div>
+        <div class="space-y-1.5">
+          {#each decidedGates as g (g.id)}
+            <div class="bg-inset border-border rounded-[8px] border px-3 py-2 text-[11px]">
+              <div class="flex items-center gap-1.5">
+                <span class="mono" style="color:{g.decision === 'approve' ? 'var(--live)' : 'var(--coral)'}">{g.decision ?? g.status}</span>
+                <span class="text-muted-foreground">at</span>
+                <span class="mono">{g.stageKey}</span>
+                {#if g.decidedBy}
+                  <span class="text-muted-foreground">by</span>
+                  <!-- A gate decided through AgentPod records a `prn_…` whose directory is in
+                       another product, so it shortens rather than resolves. -->
+                  <span class="mono truncate" title={g.decidedBy}>{displayPrincipal(g.decidedBy, app.members)}</span>
+                {/if}
+              </div>
+              {#if g.comment}
+                <p class="text-muted-foreground mt-1 leading-relaxed">{g.comment}</p>
+              {/if}
+            </div>
+          {/each}
+        </div>
+      </section>
+    {/if}
+  {/if}
+{/snippet}
+
+{#snippet s_comments()}
+  {#if card}
+    <!--
+      Comments: a thread on the card for people and for the agent working it. Its own component
+      so the text-only rendering rule (no `{@html}`) is held by its own test.
+    -->
+    <section class="sec" aria-label="Comments">
+      <div class="sec-h eyebrow">comments</div>
+      {#if boardId}<CardComments {boardId} cardId={card.id} currentUserId={app.user?.userId ?? null} onFeed={(fn) => app.onFeed(fn)} />{/if}
+    </section>
+  {/if}
+{/snippet}
+
+{#snippet s_handoff()}
+  {#if card}
+    <!-- handoff from prior stage -->
+    {#if cardDetail?.handoff && Object.keys(cardDetail.handoff).length > 0}
+      <section class="sec">
+        <div class="sec-h eyebrow">handoff from prior stage</div>
+        <!--
+          The same renderer as Details and each stage's "handed on": a handoff is whatever the
+          agent wrote — nested groups, lists, a JSON document stored as a string, one long
+          unbroken token — and it reads as a document, wraps on a phone, and keeps its raw JSON
+          one tap away. After a refused completion this holds `feedback` and `refusedHandoff`.
+        -->
+        <div class="bg-inset border-border min-w-0 rounded-[8px] border p-3" style="overflow-wrap:anywhere">
+          <HandoffView handoff={cardDetail.handoff} testid="carried-handoff" />
+        </div>
+      </section>
+    {/if}
+  {/if}
+{/snippet}
+
+{#snippet s_cost()}
+  {#if card}
+    <!-- cost block -->
+    {#if card.costUsd > 0 || cardEstimate?.estimatedUsd}
+      <section class="sec">
+        <div class="sec-h eyebrow">cost</div>
+        <div class="costblock flex items-baseline gap-2 font-mono">
+          <span class="text-[21px] font-semibold" style="color:var(--text)">{fmtUsd(card.costUsd)}</span>
+          {#if cardEstimate?.estimatedUsd !== null && cardEstimate?.estimatedUsd !== undefined}
+            <span class="text-[11.5px]" style="color:var(--muted)">
+              / {fmtUsd(cardEstimate.estimatedUsd)} estimate
+              {#if card.overBudget}<span style="color:var(--coral)"> · over budget</span>{/if}
+              {#if cardEstimate.sampleSize > 0}<span title="{cardEstimate.sampleSize} similar run{cardEstimate.sampleSize === 1 ? '' : 's'}"> · {cardEstimate.sampleSize}× sample</span>{/if}
+            </span>
+          {/if}
+        </div>
+        <div class="costmeter mt-2 h-1.5 overflow-hidden rounded-full bg-inset {card.overBudget ? 'costmeter-over' : ''}">
+          <div class="h-full rounded-full transition-all duration-1000" style="width:{costPct}%;background:{card.overBudget ? 'var(--coral)' : 'var(--live)'}"></div>
+        </div>
+      </section>
+    {/if}
+  {/if}
+{/snippet}
+
+{#snippet s_attempts()}
+  {#if card}
+    <!-- attempts (if > 1) -->
+    {#if drawerAttempts.length > 1}
+      <section class="sec">
+        <div class="sec-h eyebrow">attempts · {drawerAttempts.length}</div>
+        <div class="space-y-1.5">
+          {#each drawerAttempts as a, i (a.runId)}
+            <div class="bg-inset border-border mono flex items-center justify-between gap-2 rounded-[7px] border px-2.5 py-1.5 text-[11px]">
+              <span class="text-muted-foreground truncate" title={a.agentId}>{i + 1} · {displayAgent(a.agentId, app.agents)}{a.profileKey ? ` · ${a.profileKey}` : a.model ? ` · ${a.model}` : ''}</span>
+              <span class="shrink-0">{fmtUsd(a.costUsd)}{a.outcome ? ` · ${a.outcome}` : ''}</span>
+            </div>
+          {/each}
+        </div>
+      </section>
+    {/if}
+  {/if}
+{/snippet}
+
+{#snippet s_related()}
+  {#if card}
+    {#if cardId}<RelatedWork {cardId} />{/if}
+  {/if}
+{/snippet}
+
+{#snippet s_references()}
+  {#if card}
+    <!-- references -->
+    <section class="sec">
+      <div class="sec-h eyebrow">references</div>
+      {#if libraryRefs.length > 0}
+        <div class="mb-2.5 grid gap-2" aria-label="Superlibrary artifacts">
+          {#each libraryRefs as l, i (l.ref.id)}
+            <LibraryArtifact itemId={l.itemId} version={l.version} title={l.ref.title || l.itemId} open={i === 0} />
+          {/each}
+        </div>
+      {/if}
+      {#if otherRefs.length > 0}
+        <div class="mb-2.5 flex flex-wrap gap-1.5">
+          {#each otherRefs as ref (ref.id)}
+            {@const href = safeHref(ref.url)}
+            {@const inner = `${refLabel(ref)}${subStateLabel(ref) ? ` · ${subStateLabel(ref)}` : ''}`}
+            {#if href}
+              <a {href} target="_blank" rel="noreferrer" class="border-border hover:border-marigold/50 mono inline-flex items-center gap-1 rounded-[5px] border px-1.5 py-0.5 text-[10px]"><span style="color:var(--marigold)">↗</span>{inner}</a>
+            {:else}
+              <span class="border-border mono inline-flex items-center gap-1 rounded-[5px] border px-1.5 py-0.5 text-[10px]">{inner}</span>
+            {/if}
+          {/each}
+        </div>
+      {/if}
+      <div class="flex gap-1.5">
+        <input
+          bind:value={newRefUrl}
+          placeholder="https://… attach a link"
+          onkeydown={(e) => { if (e.key === 'Enter') addRef(); }}
+          class="bg-inset border-border focus:border-marigold flex-1 rounded-[6px] border px-2.5 py-1.5 text-xs outline-none"
+        />
+        <Button size="sm" variant="outline" onclick={addRef} disabled={newRefUrl.trim() === ''}>Add</Button>
+      </div>
+    </section>
+  {/if}
+{/snippet}
+
+{#snippet s_cardActions()}
+  {#if card}
+    <!-- archive / un-archive / delete -->
+    <div class="border-border/60 flex gap-3 border-t pt-4">
+      {#if card.archivedAt}
+        <button onclick={() => void onUnarchiveCard()} disabled={archiving} class="text-muted-foreground hover:text-marigold hit text-xs disabled:opacity-50">
+          {archiving ? 'Un-archiving…' : 'Archived — un-archive'}
+        </button>
+      {:else}
+        <button onclick={() => void onArchiveCard()} disabled={archiving} class="text-muted-foreground hover:text-marigold hit text-xs disabled:opacity-50">
+          {archiving ? 'Archiving…' : 'Archive card'}
+        </button>
+      {/if}
+      <button onclick={onDeleteCard} class="text-muted-foreground hover:text-coral hit text-xs">Delete card</button>
+    </div>
+  {/if}
+{/snippet}

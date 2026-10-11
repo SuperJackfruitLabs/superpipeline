@@ -8,10 +8,14 @@
    */
   import '../app.css';
   import { onMount } from 'svelte';
+  import { goto } from '$app/navigation';
+  import { takeReturnTo } from '$lib/reconnect';
   import { app } from '$lib/stores/app.svelte';
+  import { appearance } from '$lib/appearance.svelte';
   import Rail from '$lib/components/shell/Rail.svelte';
   import BottomNav from '$lib/components/shell/BottomNav.svelte';
   import CommandPalette from '$lib/components/CommandPalette.svelte';
+  import AppearanceDialog from '$lib/components/shell/AppearanceDialog.svelte';
   import Landing from '$lib/components/Landing.svelte';
   import { closeCardOnEscape } from '$lib/escape';
   import BrandMark from '$lib/components/BrandMark.svelte';
@@ -19,8 +23,15 @@
   let { children } = $props();
 
   onMount(() => {
-    void app.init();
-    return () => app.dispose();
+    appearance.init();
+    void app.init().then(() => {
+      const back = takeReturnTo();
+      if (back && app.authState === 'ready') void goto(back, { replaceState: true });
+    });
+    return () => {
+      app.dispose();
+      appearance.dispose();
+    };
   });
 </script>
 
@@ -45,4 +56,5 @@
     </div>
   </div>
   <CommandPalette />
+  <AppearanceDialog />
 {/if}

@@ -37,6 +37,14 @@ jobs:
       - run: pnpm --filter @superpipeline/web exec playwright install --with-deps chromium
       # Boots wrangler dev (:8787) + the SvelteKit dev server (:5173) via Playwright's webServer.
       - run: pnpm --filter @superpipeline/web e2e
+      # The report upload uses artifact v4, which forge's runner does not support (GHESNotSupportedError);
+      # on forge the step is skipped, like the deploy jobs below.
+      - uses: actions/upload-artifact@v4
+        if: always() && github.server_url == 'https://github.com'
+        with:
+          name: playwright-report
+          path: apps/web/playwright-report
+          retention-days: 14
 
   # Every deploy job below is gated on `github.server_url == 'https://github.com'`. This workflow
   # also runs on forge (Forgejo Actions reads .github/workflows when .forgejo/workflows is absent),

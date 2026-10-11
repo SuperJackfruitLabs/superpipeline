@@ -50,7 +50,7 @@
 
 {#if show}
   <section class="sec">
-    <div class="border rounded-[10px] p-3.5" style="border-color:rgba(255,107,87,.35);background:rgba(255,107,87,.06)">
+    <div class="border rounded-[10px] p-3.5" style="border-color:var(--vk-color-signal);background:var(--vk-color-signal-wash)">
       <div class="eyebrow mb-1.5" style="color:var(--coral)">{heading}</div>
       {#if card.needsHuman?.failureCount}
         <p class="mono text-muted-foreground mb-1 text-[11px]">{card.needsHuman.failureCount} failed attempts</p>

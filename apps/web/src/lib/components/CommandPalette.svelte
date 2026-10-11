@@ -1,5 +1,6 @@
 <script lang="ts">
   import { app } from '$lib/stores/app.svelte';
+  import { appearance } from '$lib/appearance.svelte';
   import { goto } from '$app/navigation';
   import { tick } from 'svelte';
   import { signOut, otherThemeLabel } from '$lib/components/shell/account';
@@ -94,11 +95,21 @@
     items.push(
       {
         grp: 'Account',
-        icon: app.theme === 'light' ? '☾' : '☀',
-        label: otherThemeLabel(app.theme),
+        icon: '◐',
+        label: 'Appearance…',
+        sub: 'vibe, light or dark, time of day',
+        act: () => {
+          close();
+          appearance.pickerOpen = true;
+        },
+      },
+      {
+        grp: 'Account',
+        icon: appearance.theme === 'light' ? '☾' : '☀',
+        label: otherThemeLabel(appearance.theme),
         sub: 'theme',
         act: () => {
-          app.toggleTheme();
+          appearance.toggleTheme();
           close();
         },
       },
@@ -209,7 +220,7 @@
   <!-- Backdrop -->
   <div
     class="fixed inset-0 z-50 flex items-start justify-center pt-[12svh]"
-    style="background:rgba(8,9,13,.55)"
+    style="background:var(--sp-scrim)"
     role="dialog"
     aria-modal="true"
     aria-label="Command palette"

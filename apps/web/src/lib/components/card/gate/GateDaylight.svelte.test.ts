@@ -13,7 +13,7 @@ vi.mock('$lib/api', async (orig) => ({
   resolveGate: (...a: unknown[]) => resolveGate(...a),
 }));
 
-import GateActions from './GateActions.svelte';
+import GateDaylight from './GateDaylight.svelte';
 import type { Gate } from '$lib/api';
 
 const gate = (over: Partial<Gate> = {}): Gate =>
@@ -22,16 +22,23 @@ const gate = (over: Partial<Gate> = {}): Gate =>
 const note = () => screen.getByLabelText(/note|what needs to change/i) as HTMLTextAreaElement;
 const type = (v: string) => fireEvent.input(note(), { target: { value: v } });
 
+const props = (g: Gate, onResponse: unknown, error: string | null = null) => ({
+  boardId: 'brd_1', gate: g, error, onResponse: onResponse as never,
+  agent: { id: 'agt_r', name: 'Sample agent', iconUrl: null, mood: 'needs' as const },
+  lead: { kind: 'review' as const, needsYou: true, agentId: 'agt_r', sentence: null, source: 'none' as const, at: null },
+  vibe: 'daylight' as const,
+});
+
 function mount(g: Gate, ok = true) {
   const onResponse = vi.fn(async () => ok);
-  const r = render(GateActions, { boardId: 'brd_1', gate: g, onResponse });
+  const r = render(GateDaylight, props(g, onResponse));
   return { onResponse, ...r };
 }
 
 beforeEach(() => resolveGate.mockReset().mockResolvedValue(new Response('{}', { status: 200 })));
 afterEach(() => cleanup());
 
-describe('GateActions', () => {
+describe('GateDaylight', () => {
   it('shows the note while the gate is pending, with a visible limit and a 16px font class', () => {
     mount(gate());
     expect(note()).toBeTruthy();
@@ -98,7 +105,7 @@ describe('GateActions', () => {
   it('clears the note when the gate changes (another card)', async () => {
     const { rerender } = mount(gate());
     await type('for card one');
-    await rerender({ boardId: 'brd_1', gate: gate({ id: 'gat_2' }), onResponse: vi.fn(async () => true) });
+    await rerender(props(gate({ id: 'gat_2' }), vi.fn(async () => true)));
     await tick();
     expect(note().value).toBe('');
   });
@@ -116,5 +123,27 @@ describe('GateActions', () => {
     await fireEvent.click(screen.getByRole('button', { name: 'Approve' }));
     await tick();
     expect(onResponse).toHaveBeenCalledWith('approve', expect.any(Response));
+  });
+
+  it('shows ⚑ awaiting your review, the subject revision and the seal line', () => {
+    const approvalSubject = { id: 'sub_1', digest: 'sha256:3f9ac21e77', schema: 's', revision: 2, canonical: { a: 1 } };
+    mount(gate({ approvalSubject }));
+    expect(screen.getByText('⚑ awaiting your review')).toBeTruthy();
+    expect(screen.getByText(/revision 2/)).toBeTruthy();
+    expect(screen.getByText(/sealed 3f9a·c21e/)).toBeTruthy();
+    expect(screen.getByText('sha256:3f9ac21e77')).toBeTruthy();
+  });
+
+  it('shows the gate error passed in, as an alert', () => {
+    render(GateDaylight, props(gate(), vi.fn(async () => true), 'Gate already decided'));
+    expect(screen.getByRole('alert').textContent).toContain('Gate already decided');
+  });
+
+  it('marks the note invalid and focuses it when Request changes has no note', async () => {
+    mount(gate());
+    await fireEvent.click(screen.getByRole('button', { name: 'Request changes' }));
+    await tick();
+    expect(note().getAttribute('aria-invalid')).toBe('true');
+    expect(document.activeElement).toBe(note());
   });
 });

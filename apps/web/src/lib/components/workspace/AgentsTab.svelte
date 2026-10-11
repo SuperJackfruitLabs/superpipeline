@@ -9,6 +9,9 @@
    * stated once, above the list.
    */
   import { app } from '$lib/stores/app.svelte';
+  import AgentFace from '$lib/components/AgentFace.svelte';
+  import { appearance } from '$lib/appearance.svelte';
+  import { FACE_VARIANT } from '$lib/layouts';
   import {
     getAgents, getCapabilities, createAgent, updateAgent, deleteAgent,
     issueAgentToken, revokeAgentToken, setAgentPrincipal, type AgentScope,
@@ -172,9 +175,7 @@
         </div>
       {:else}
         <div class="flex flex-wrap items-center gap-2">
-          {#if a.iconUrl}
-            <img src={a.iconUrl} alt="" class="size-6 shrink-0 rounded-full object-cover" />
-          {/if}
+          <AgentFace agentId={a.id} name={a.name} iconUrl={a.iconUrl ?? null} size={24} variant={FACE_VARIANT[appearance.value.vibe]} />
           <span class="min-w-[7rem] text-sm font-medium">{a.name}</span>
           {#each a.capabilities as c (c)}
             <span class="border-border mono text-muted-foreground rounded-[5px] border px-1.5 py-0.5 text-[10px]">{c}</span>
