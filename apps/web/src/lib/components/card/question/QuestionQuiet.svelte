@@ -22,14 +22,14 @@
         {/each}
       </div>
       <label for="q-note-{elicitation.id}" class="mt-3 mb-1 block text-sm">Note for {agent.name} (optional)</label>
-      <textarea id="q-note-{elicitation.id}" bind:value={model.text} rows="2" class="w-full resize-y border-2 border-[var(--vk-color-text)] bg-transparent px-2.5 py-2 text-base"></textarea>
+      <textarea id="q-note-{elicitation.id}" bind:value={model.text} rows="2" placeholder="Goes straight back to the waiting agent with your choice." class="w-full resize-y border-2 border-[var(--vk-color-text)] bg-transparent px-2.5 py-2 text-base"></textarea>
       <div class="mt-2">
         {#if model.error}<p role="alert" class="mb-2 text-sm">{model.error}</p>{/if}
         <button type="button" class="vk-button vk-button--primary" disabled={model.answering} onclick={() => model.submit()}>Submit decision</button>
       </div>
     {:else}
       <label for="q-answer-{elicitation.id}" class="mt-3 mb-1 block text-sm">Your answer</label>
-      <textarea id="q-answer-{elicitation.id}" bind:value={model.text} rows="3" class="w-full resize-y border-2 border-[var(--vk-color-text)] bg-transparent px-2.5 py-2 text-base"></textarea>
+      <textarea id="q-answer-{elicitation.id}" bind:value={model.text} rows="3" placeholder="Your answer goes straight back to the waiting agent." class="w-full resize-y border-2 border-[var(--vk-color-text)] bg-transparent px-2.5 py-2 text-base"></textarea>
       <div class="mt-2">
         {#if model.error}<p role="alert" class="mb-2 text-sm">{model.error}</p>{/if}
         <button type="button" class="vk-button vk-button--primary" disabled={model.answering} onclick={() => model.send()}>Send answer</button>

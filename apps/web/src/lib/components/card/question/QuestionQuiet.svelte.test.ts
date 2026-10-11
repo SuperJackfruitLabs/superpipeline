@@ -20,4 +20,12 @@ describe('QuestionQuiet', () => {
     const alert = await screen.findByRole('alert');
     expect(alert.parentElement).toBe(screen.getByRole('button', { name: 'Submit decision' }).parentElement);
   });
+
+  it('says the answer goes straight back to the waiting agent', () => {
+    const { container } = mountQuestion(QuestionQuiet, ask({ options: [] }));
+    expect(container.querySelector('textarea')!.placeholder).toMatch(/straight back to the waiting agent/);
+    cleanup();
+    const withOptions = mountQuestion(QuestionQuiet, ask());
+    expect(withOptions.container.querySelector('textarea')!.placeholder).toMatch(/straight back to the waiting agent/);
+  });
 });
