@@ -11,6 +11,10 @@ describe('openLabel', () => {
       'Launch post, in Build. Enter to open, M to move, Alt with left or right arrow to move between stages.',
     );
   });
+  it('names the P key only where a peek can receive it', () => {
+    expect(openLabel({ title: 'Launch post', stageName: 'Build', peek: true })).toMatch(/ P to show it in the peek\.$/);
+    expect(openLabel({ title: 'Launch post', stageName: 'Build', peek: false })).not.toMatch(/peek/);
+  });
 });
 
 describe('cardKeys', () => {
@@ -41,5 +45,15 @@ describe('cardKeys', () => {
     expect(h.open).not.toHaveBeenCalled();
     expect(h.toggleMove).not.toHaveBeenCalled();
     expect(h.step).not.toHaveBeenCalled();
+  });
+  it('pins the peek on p and P when there is one, and leaves the key alone when there is not', () => {
+    const h = { ...handlers(), peek: vi.fn() };
+    cardKeys(key('p'), h);
+    cardKeys(key('P'), h);
+    cardKeys(key('p', { ctrlKey: true }), h);
+    expect(h.peek).toHaveBeenCalledTimes(2);
+    const e = key('p');
+    cardKeys(e, handlers());
+    expect(e.defaultPrevented).toBe(false);
   });
 });

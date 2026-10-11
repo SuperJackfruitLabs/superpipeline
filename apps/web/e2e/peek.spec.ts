@@ -47,6 +47,28 @@ test('keyboard focus on a tile moves the peek too', async ({ page }) => {
   await expect(page.getByRole('complementary', { name: 'Peek' }).getByText('Focus peek card')).toBeVisible();
 });
 
+test('P on a tile pins that card in the peek and moves focus to its button', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto('/');
+  for (const t of ['Peek one', 'Peek two', 'Peek three']) await compose(page, t);
+  const peek = page.getByRole('complementary', { name: 'Peek' });
+  const open = (t: string) => page.locator('.tile', { hasText: t }).getByRole('button', { name: new RegExp(`^${t}, in .* P to show it in the peek\\.$`) });
+  await open('Peek two').focus();
+  await page.keyboard.press('p');
+  await expect(peek.getByText('Peek two')).toBeVisible();
+  await expect(peek.getByRole('button', { name: 'Open' })).toBeFocused();
+  // Walking on through the board does not repin it: the peek stays where the person pinned it.
+  await open('Peek one').focus();
+  await page.keyboard.press('p');
+  await expect(peek.getByText('Peek one')).toBeVisible();
+  await open('Peek one').focus();
+  for (let i = 0; i < 6; i++) { await page.keyboard.press('Tab'); await page.waitForTimeout(200); }
+  await expect(peek.getByText('Peek one')).toBeVisible();
+  await peek.getByRole('button', { name: 'Open' }).focus();
+  await page.keyboard.press('Enter');
+  await expect(page.getByRole('dialog').getByText('Peek one').first()).toBeVisible();
+});
+
 test('below 1440px there is no peek', async ({ page }) => {
   await page.setViewportSize({ width: 1280, height: 800 });
   await page.goto('/');

@@ -12,7 +12,7 @@
   import { enforcedBadge } from './card-blocked';
   import { childCounter } from './card-children';
   import { cardProvenance } from './card-provenance';
-  import { peekNotifier } from './peek';
+  import { cameFromAnotherTile, peekNotifier } from './peek';
   import { refLabel, safeHref, subStateClass, subStateLabel } from './ref-chip';
   import CardMoveMenu from './CardMoveMenu.svelte';
   import { cardKeys, openLabel } from './open-label';
@@ -129,7 +129,12 @@
   let mover = $state<ReturnType<typeof CardMoveMenu>>();
 
   function handleKeydown(e: KeyboardEvent) {
-    cardKeys(e, { open: () => app.openCard(card.id), toggleMove: () => (moveMenuOpen = !moveMenuOpen), step: (d) => mover?.step(d) });
+    cardKeys(e, {
+      open: () => app.openCard(card.id),
+      toggleMove: () => (moveMenuOpen = !moveMenuOpen),
+      step: (d) => mover?.step(d),
+      peek: peek?.available ? () => peek.pin(card.id) : undefined,
+    });
   }
 </script>
 
@@ -148,8 +153,8 @@
 <!-- svelte-ignore a11y_no_static_element_interactions -- focusin and pointerenter only tell the peek where the eye is; they act on nothing, and the title button inside is the control -->
 <div
   use:cardDraggable={{ cardId: card.id }}
-  onfocusin={() => peek(card.id)}
-  onpointerenter={() => peek(card.id)}
+  onfocusin={(e) => { if (!cameFromAnotherTile(e)) peek?.look(card.id); }}
+  onpointerenter={() => peek?.look(card.id)}
   class="tile bg-surface border-border group relative rounded-[10px] border p-3 text-left cursor-grab active:cursor-grabbing {gate ? 'tile-gate' : ''}"
 >
   <CardMoveMenu {card} stages={orderedStages} bind:open={moveMenuOpen} bind:this={mover} />
@@ -164,7 +169,7 @@
       type="button"
       onclick={handleClick}
       onkeydown={handleKeydown}
-      aria-label={openLabel({ title: card.title, stageName: orderedStages[stageIndex]?.name ?? card.currentStageKey })}
+      aria-label={openLabel({ title: card.title, stageName: orderedStages[stageIndex]?.name ?? card.currentStageKey, peek: peek?.available })}
       data-stretch-target
       data-card-open={card.id}
       class="tile-open hit flex-1 text-left text-[13.5px] font-medium leading-snug"

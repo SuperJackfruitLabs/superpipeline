@@ -1,13 +1,13 @@
 <script lang="ts">
   /** Daylight: the columns, with faces, under the sky (spec §5.1). The lanes are BoardKanban, unchanged. */
-  import { onDestroy, setContext } from 'svelte';
+  import { onDestroy, setContext, tick } from 'svelte';
   import { MediaQuery } from 'svelte/reactivity';
   import { app } from '$lib/stores/app.svelte';
   import BoardKanban from '../BoardKanban.svelte';
   import { crewOf } from '../card-summary';
   import GreetingBand from '../GreetingBand.svelte';
   import Peek from '../Peek.svelte';
-  import { PEEK_KEY } from '../peek';
+  import { PEEK_KEY, type PeekHandle } from '../peek';
   import type { BoardLayoutProps } from './types';
 
   let { summaries, attention, phase, vibe }: BoardLayoutProps = $props();
@@ -18,9 +18,20 @@
   const wide = new MediaQuery('min-width: 1440px');
   let looked = $state<string | null>(null);
   let timer: ReturnType<typeof setTimeout> | undefined;
-  setContext(PEEK_KEY, (id: string) => {
-    clearTimeout(timer);
-    timer = setTimeout(() => (looked = id), 150);
+  let peekPanel = $state<ReturnType<typeof Peek>>();
+  setContext<PeekHandle>(PEEK_KEY, {
+    look(id) {
+      clearTimeout(timer);
+      timer = setTimeout(() => (looked = id), 150);
+    },
+    pin(id) {
+      clearTimeout(timer);
+      looked = id;
+      void tick().then(() => peekPanel?.focusAction());
+    },
+    get available() {
+      return wide.current;
+    },
   });
   onDestroy(() => clearTimeout(timer));
   const peeked = $derived(summaries.find((s) => s.id === looked) ?? summaries.find((s) => s.urgency === 'needs') ?? null);
@@ -30,6 +41,6 @@
   <GreetingBand {phase} {vibe} needCount={attention.length} {crew} />
   <div class="flex min-h-0 flex-1">
     <div class="min-w-0 flex-1 overflow-auto"><BoardKanban /></div>
-    {#if wide.current}<Peek summary={peeked} {vibe} onOpen={(id) => app.openCard(id)} />{/if}
+    {#if wide.current}<Peek bind:this={peekPanel} summary={peeked} {vibe} onOpen={(id) => app.openCard(id)} />{/if}
   </div>
 </div>
