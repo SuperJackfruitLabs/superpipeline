@@ -103,7 +103,7 @@ for (const vibe of ['daylight', 'paper', 'studio', 'quiet'] as const) {
     const dialog = page.getByRole('dialog');
     await dialog.getByRole('button', { name: 'Edit card' }).click();
     await expect(dialog).toHaveAccessibleName(/A card to open/);
-    const title = dialog.getByPlaceholder('Title');
+    const title = dialog.getByPlaceholder('Title', { exact: true });
     await title.fill('Typed but not saved');
     // Daylight swaps the button out while editing; the other vibes keep it on screen.
     const again = dialog.getByRole('button', { name: 'Edit card' });

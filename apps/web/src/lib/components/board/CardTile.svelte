@@ -12,7 +12,7 @@
   import { enforcedBadge } from './card-blocked';
   import { childCounter } from './card-children';
   import { cardProvenance } from './card-provenance';
-  import { cameFromAnotherTile, peekNotifier } from './peek';
+  import { cameFromATile, peekNotifier } from './peek';
   import { refLabel, safeHref, subStateClass, subStateLabel } from './ref-chip';
   import CardMoveMenu from './CardMoveMenu.svelte';
   import { cardKeys, openLabel } from './open-label';
@@ -153,7 +153,7 @@
 <!-- svelte-ignore a11y_no_static_element_interactions -- focusin and pointerenter only tell the peek where the eye is; they act on nothing, and the title button inside is the control -->
 <div
   use:cardDraggable={{ cardId: card.id }}
-  onfocusin={(e) => { if (!cameFromAnotherTile(e)) peek?.look(card.id); }}
+  onfocusin={(e) => { if (!cameFromATile(e)) peek?.look(card.id); }}
   onpointerenter={() => peek?.look(card.id)}
   class="tile bg-surface border-border group relative rounded-[10px] border p-3 text-left cursor-grab active:cursor-grabbing {gate ? 'tile-gate' : ''}"
 >

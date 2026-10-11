@@ -17,10 +17,11 @@ export function peekNotifier(): PeekHandle | null {
 }
 
 /**
- * Focus arriving on a tile from ANOTHER tile is a keyboard user passing through the board, not
- * looking. Tabbing across it used to repin the peek at every stop, so it ended on the last tile.
+ * Focus that was already on a tile (another one, or a control inside this one) is a keyboard user
+ * passing through the board, not looking. Tabbing across it used to repin the peek at every stop,
+ * so it ended on the last tile. Each tile's move control comes before its title, so a check for
+ * "another tile" alone still repinned on the move-to-title step inside the next tile.
  */
-export function cameFromAnotherTile(e: FocusEvent): boolean {
-  const from = e.relatedTarget instanceof Element ? e.relatedTarget.closest('.tile') : null;
-  return from !== null && from !== e.currentTarget;
+export function cameFromATile(e: FocusEvent): boolean {
+  return e.relatedTarget instanceof Element && e.relatedTarget.closest('.tile') !== null;
 }
