@@ -40,9 +40,21 @@ describe('DlTile', () => {
     await tick();
     expect(store.openMoveDialog).toHaveBeenCalled(); // the Move dialog (SP-Dlg-Move) opens, not a menu
   });
+  it('shows priority as a P chip, for P3 and P4 too, and nothing for none', () => {
+    const { container } = render(DlTile, props(DX_IDS.c63ac));
+    expect(container.querySelector('.dl-pri')!.textContent).toBe('P1');
+    expect(container.querySelector('.dl-pri')!.getAttribute('aria-hidden')).toBe('true');
+  });
+  it('P3 and P4 are chips, not just an edge', async () => {
+    const { container, rerender } = render(DlTile, props(DX_IDS.c63ac, { s: { ...s(DX_IDS.c63ac), priority: 3 } }));
+    expect(container.querySelector('.dl-pri')!.textContent).toBe('P3');
+    await rerender(props(DX_IDS.c63ac, { s: { ...s(DX_IDS.c63ac), priority: 4 } }));
+    expect(container.querySelector('.dl-pri')!.textContent).toBe('P4');
+  });
   it('1dfc has no priority and no chips row at all', () => {
     const { container } = render(DlTile, props(DX_IDS.c1dfc));
     expect(container.querySelector('.dl-chips')).toBeNull();
+    expect(container.querySelector('.dl-pri')).toBeNull();
     expect(container.querySelector('.dl-ref')!.textContent).toBe('test(api): pin manual delivery reminder');
   });
   it('a blocked queued card says it is unclaimed and offers no action', () => {

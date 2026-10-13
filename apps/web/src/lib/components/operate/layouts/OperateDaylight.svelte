@@ -6,7 +6,7 @@
   import LineIcon from '$lib/components/parts/LineIcon.svelte';
   import { moveTargets } from '../operate-data';
   import { CapsUi, OperateUi } from '../operate-ui.svelte';
-  import { cut140, daylightCap, daylightMeta, kindWord, moveOptionLabel, resumeOptions, RESUME_LABEL, staleLine, stopHint, usd, when } from '../operate-words';
+  import { cut140, daylightCap, daylightMeta, kindWord, moveOptionLabel, resumeOptions, RESUME_LABEL, staleLine, noticeBody, stopHint, usd, when } from '../operate-words';
   import type { NeedRow, OperateLayoutProps } from './types';
   import './operate-daylight.css';
 
@@ -139,7 +139,7 @@
         <div class="grp">
           <div class="grp__head">{@render face(g.agentName, g.iconUrl, 24, g.need ? 'needs' : 'resting')}<h3 class="grp__title"><a href={model.cardHref(g.cardId)} onclick={(e: MouseEvent) => go(e, g.cardId)}>{g.title}</a></h3></div>
           {#each events(g) as n (n.seq)}
-            <div class="ev"><span class="ev__t">{when(n)} UTC</span><span class="ev__body">{staleLine(n, 'daylight', g.need?.item.kind ?? null) ?? n.body}{#if g.need}{' '}<a href="#needs">Why, in Needs you</a>{/if}</span>{#if !n.read}<button class="tick" type="button" aria-label="Mark read" onclick={() => model.markRead(n.seq)}><LineIcon name="tick" size={20} /></button>{/if}</div>
+            <div class="ev"><span class="ev__t">{when(n)}</span><span class="ev__body">{staleLine(n, 'daylight', g.need?.item.kind ?? null) ?? noticeBody(n)}{#if g.need}{' '}<a href="#needs">Why, in Needs you</a>{/if}</span>{#if !n.read}<button class="tick" type="button" aria-label="Mark read" onclick={() => model.markRead(n.seq)}><LineIcon name="tick" size={20} /></button>{/if}</div>
           {/each}
           {#if (g.need && (g.need.actions.includes('resume') || g.need.actions.includes('move'))) || g.earlier.length > 0}
             <div class="ev__acts">

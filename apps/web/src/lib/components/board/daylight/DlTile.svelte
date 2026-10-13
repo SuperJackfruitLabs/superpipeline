@@ -1,6 +1,7 @@
 <!-- apps/web/src/lib/components/board/daylight/DlTile.svelte -->
 <script lang="ts">
   /** One Daylight card tile (SB §3.3 Tiles). The title's ::after covers the tile, so the whole tile opens the card. */
+  import './priority-chip.css';
   import { Button, Face } from '@superjackfruit/vibekit';
   import type { Stage } from '$lib/api';
   import { app } from '$lib/stores/app.svelte';
@@ -61,7 +62,7 @@
   <CardMoveMenu bind:this={menu} bind:open={moveOpen} card={s.card} {stages} bare />
   {#if chips}
     <div class="dl-chips">
-      {#if s.priority > 0}<span class="vk-visually-hidden">Priority {s.priority}</span>{/if}
+      {#if s.priority > 0}<span class="vk-visually-hidden">Priority {s.priority}</span><span class="dl-chip dl-pri" aria-hidden="true">P{s.priority}</span>{/if}
       {#each s.labels as l (l.id)}<span class="dl-chip">{l.name}</span>{/each}
       {#if s.moreLabels > 0}<span class="dl-chip" title={moreLabelsTitle(s.moreLabels)}>+{s.moreLabels}</span>{/if}
       {#if s.blocked}<span class="dl-chip block" title="Blocked by another card. This card will not be claimed"><Icon name="blocked" size={13} strokeWidth={1.8} />Blocked</span>{/if}
