@@ -29,6 +29,10 @@ else
   if [ -n "$arg" ] && ! [[ "$arg" =~ ^0+$ ]]; then arg="$(git rev-parse "$arg")"; fi
   base="$(node "$web/scripts/visual/trailer.mjs" base "$arg")"
   echo "visual: base $base, head $(git rev-parse HEAD)"
+  if [ "$(node "$web/scripts/visual/trailer.mjs" touches "$base")" = no ]; then
+    echo "visual: no file in $base...HEAD can move a pixel (prose and unit tests only); nothing to capture, pass."
+    exit 0
+  fi
   tree="$tmp/base"
   cleanup() { git -C "$repo" worktree remove --force "$tree" 2>/dev/null || rm -rf "$tree"; git -C "$repo" worktree prune; rm -rf "$tmp"; }
   trap cleanup EXIT

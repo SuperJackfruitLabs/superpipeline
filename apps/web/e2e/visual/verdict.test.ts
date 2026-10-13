@@ -50,6 +50,13 @@ describe('visual verdict', () => {
     expect(v.lines.join('\n')).toMatch(/CHANGED\s+SP-Board-Paper\s+1\.000% \(10 px\), box x=1 y=2 w=3 h=4/);
     expect(v.lines.join('\n')).toMatch(/Visual-Change: <why>/);
   });
+  it('lists every changed screen, each with its ratio and box (the forge log is the report)', () => {
+    const v = verdict([row('SP-Board-Paper', true), row('a', false), { ...row('SP-Phone-Board-Quiet', true), ratio: 0.5, diffPixels: 99, box: { x: 0, y: 10, w: 390, h: 20 } }], null);
+    const text = v.lines.join('\n');
+    expect(text).toMatch(/CHANGED\s+SP-Board-Paper\s+1\.000% \(10 px\), box x=1 y=2 w=3 h=4/);
+    expect(text).toMatch(/CHANGED\s+SP-Phone-Board-Quiet\s+50\.000% \(99 px\), box x=0 y=10 w=390 h=20/);
+    expect(text).not.toMatch(/CHANGED\s+a\b/);
+  });
   it('passes a change the range explains, and lists it', () => {
     const v = verdict([row('SP-Board-Paper', true)], 'taller header');
     expect(v.ok).toBe(true);
