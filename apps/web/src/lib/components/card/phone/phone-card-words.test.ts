@@ -72,10 +72,10 @@ describe('runs and attempts', () => {
       ['Run 1 · Reproduce', 'error-eric · Sent back · attempt 1', false],
     ]);
     expect(v.runs[0].rows).toEqual([
-      { key: 1, verb: 'Started', body: 'Rework run on this card session; read prior persisted evidence first.', time: 'Thu 8 Oct', stop: false },
-      { key: 14, verb: 'Stopped', body: STOP_COPY, time: '19:41', stop: true },
+      { key: 1, verb: 'Started', body: 'Rework run on this card session; read prior persisted evidence first.', time: 'Thu 8 Oct', stop: false, parameter: null, result: null },
+      { key: 14, verb: 'Stopped', body: STOP_COPY, time: '19:41', stop: true, parameter: null, result: null },
     ]);
-    expect(v.runs[1].rows).toEqual([{ key: 1, verb: 'Sent back', body: 'The board refused completion: repro and observed were missing.', time: 'Thu 8 Oct', stop: false }]);
+    expect(v.runs[1].rows).toEqual([{ key: 1, verb: 'Sent back', body: 'The board refused completion: repro and observed were missing.', time: 'Thu 8 Oct', stop: false, parameter: null, result: null }]);
     expect(v.attemptRows.map((a) => [a.n, a.agentName, a.mood, a.usd, a.text])).toEqual([
       [1, 'error-eric', 'resting', '$0.00', 'Sent back: repro and observed missing'],
       [2, 'error-eric', 'needs', '$0.00', 'Stopped: waiting on you'],

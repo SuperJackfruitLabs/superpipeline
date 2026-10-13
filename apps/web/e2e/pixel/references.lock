@@ -1,6 +1,6 @@
 {
   "files": {
-    "CORRECTIONS.md": "00854dd611ec8571fe1a9fbbb1956b68f4c3cca53b8dd15b59e4e73ba09d9dbf",
+    "CORRECTIONS.md": "c69197d0f3f95d8f9212094cb2260b754610255a8bbdc7d5cf6a41214cb5852a",
     "SP-Board-Daylight.html": "81a8b76aff2d691506d1093713275d3586823de766276299490a9472b0aae540",
     "SP-Board-Empty-Daylight.html": "6c4a78b81a3ae4db7660b2928c3841af97ac90882dcc179138b7d41e6e0241c1",
     "SP-Board-Empty-Paper.html": "207fd6a002c026010741469f90e53b51024481a40d11d57d0c37f5d97d20a425",
@@ -57,9 +57,9 @@
     "SP-Phone-Board-Paper.html": "afc0fe31039aa4a3dd2ed8fd5890773202c8016a29779cfd3bf477d497944ceb",
     "SP-Phone-Board-Quiet.html": "55419b2888d60478518ffef15ea49a73311f183d6f9378045e1ebd5393259815",
     "SP-Phone-Board-Studio.html": "6d8fb08c02d81604540459085bcc405a56d7954c61ece43918ec150cdc92177f",
-    "SP-Phone-Card-Daylight.html": "783aa35d91d032ab4f20de3be3e8110929779ff41e3ec6a496db839732defc32",
-    "SP-Phone-Card-Paper.html": "a871a280dcdc8f0b243a2b5eb99dd2555bf2cbc206c9b24ea22ea466dac8ac1f",
-    "SP-Phone-Card-Quiet.html": "114d6756ba12c8dc9dc4f7223b9649e254ddb0f64751e9e3123d92c229158dba",
+    "SP-Phone-Card-Daylight.html": "cf06292f14f5f0c8c87c49a268d2649c79d2344a9fdf51e493295fc407f3422a",
+    "SP-Phone-Card-Paper.html": "ce8da83bec810a461c54a105c941bf9b21bfaa25b1df50d9990ec919f38ad77f",
+    "SP-Phone-Card-Quiet.html": "dfbeed5487bb76c6806e91b2569a9db2076db7a0066454497758318d0bd5f128",
     "SP-Phone-Card-Studio.html": "c827c19d8da51670da852fd8f6c61367519277ab1a193feefd1640c46776ff5f",
     "SP-Projects-Daylight.html": "11f9541937d178b97511c0d6a3339f12cb766025335f3116bc0962771d593e23",
     "SP-Projects-Paper.html": "a44e921eb4b13ea85c60c4e0656a5e0988d25da2723a4e9e4ad0380f6e88e59c",

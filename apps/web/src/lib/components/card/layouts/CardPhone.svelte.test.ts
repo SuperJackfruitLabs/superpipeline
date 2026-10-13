@@ -143,3 +143,32 @@ describe.each(Object.keys(PHONES) as (keyof typeof PHONES)[])('%s phone: empty s
     for (const key of ['plan', 'decisions']) for (const el of document.querySelectorAll<HTMLElement>(`[data-section="${key}"]`)) expect(el.hidden, key).toBe(true);
   });
 });
+
+describe.each(Object.keys(PHONES) as (keyof typeof PHONES)[])('%s phone: every attempt (R4)', (vibe) => {
+  it('expands, toggles its own tool calls, and each call opens its details', async () => {
+    const m = props(vibe).model;
+    const g1 = (m.activityGroups as Array<{ runId: string; activities: Array<{ parameter: unknown; result: unknown }> }>)[0]!;
+    g1.activities[1] = { ...g1.activities[1]!, parameter: { path: 'apps/hub/src/inbound.ts' }, result: { lines: 408 } };
+    render(PHONES[vibe], { props: props(vibe, { model: m }) });
+    const log = [...document.querySelectorAll<HTMLElement>('[role="tab"]')].find((t) => /^Log/.test(t.textContent!.trim()));
+    if (log) await fireEvent.click(log);
+    const head = (run: string) => document.querySelector<HTMLButtonElement>(`button[aria-expanded][data-attempt-head="${run}"]`)!;
+    const body = (run: string) => document.getElementById(head(run).getAttribute('aria-controls') ?? '');
+    const toggle = (run: string) => document.querySelector<HTMLButtonElement>(`button[data-attempt-tools="${run}"]`);
+    expect(head('run_fx_4605_2').getAttribute('aria-expanded')).toBe('true');
+    expect(head('run_fx_4605_1').getAttribute('aria-expanded')).toBe('false');
+    expect(body('run_fx_4605_1')).toBeNull();
+    await fireEvent.click(head('run_fx_4605_1'));
+    expect(body('run_fx_4605_1')!.textContent).toContain('The board refused completion');
+    const before = body('run_fx_4605_1')!.querySelectorAll('li').length;
+    expect(toggle('run_fx_4605_1')!.textContent!.trim()).toBe('Show tool calls');
+    await fireEvent.click(toggle('run_fx_4605_1')!);
+    expect(toggle('run_fx_4605_1')!.textContent!.trim()).toBe('Hide tool calls');
+    expect(body('run_fx_4605_1')!.querySelectorAll('li').length).toBeGreaterThan(before);
+    expect(toggle('run_fx_4605_2')!.textContent!.trim(), 'per attempt').toBe('Show tool calls');
+    const det = body('run_fx_4605_1')!.querySelector('details summary')!;
+    expect(det.textContent).toBe('Details');
+    await fireEvent.click(det);
+    expect(body('run_fx_4605_1')!.querySelector('[data-testid="raw-json"]')!.textContent).toContain('apps/hub/src/inbound.ts');
+  });
+});
