@@ -64,6 +64,7 @@
   const LINK_LABEL = { blockedBy: 'Blocked by', resolvedBlockedBy: 'Blocked by (resolved)', blocks: 'Blocks', relates: 'Relates to', supersedes: 'Supersedes', advisory: 'On other boards (advisory)' } as const;
 
   // The pinned brief folds while the agent needs you; re-decided only when the card or that changes.
+  let rawOpen = $state(false);
   let briefOpen = $state(false);
   let briefFor = '';
   $effect(() => {
@@ -237,9 +238,10 @@
             {/each}
           </div>
           <div class="dd-row" style="gap: var(--vk-space-5);">
-            <details class="dd-raw"><summary>View raw JSON</summary><RawJson value={card.spec} /></details>
-            <button class="vk-button vk-button--quiet" type="button" style="font-size: var(--vk-text-sm);" onclick={() => m.copySpec()}><Icon name={m.copied === 'spec' ? 'check' : 'copy'} size={18} /> Copy</button>
+            <button class="dd-rawbtn" type="button" aria-expanded={rawOpen} onclick={() => (rawOpen = !rawOpen)}>{rawOpen ? 'Hide raw JSON' : 'View raw JSON'}</button>
+            {#if rawOpen}<button class="vk-button vk-button--quiet" type="button" style="font-size: var(--vk-text-sm);" onclick={() => m.copySpec()}><Icon name={m.copied === 'spec' ? 'check' : 'copy'} size={18} /> Copy</button>{/if}
           </div>
+          {#if rawOpen}<RawJson value={card.spec} bare />{/if}
         {:else}<p class="dd-small" data-section="details" style="margin: 0px;">No other details.</p>{/if}
         <div class="dd-twocol">
           <div data-section="plan" style="display: flex; flex-direction: column; gap: var(--vk-space-2);">

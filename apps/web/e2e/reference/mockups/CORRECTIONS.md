@@ -300,3 +300,9 @@ The SP-Dlg-Appearance artboards were 1200px tall and `.art` clipped the 1237–1
 | Artboard | Selector | Was | Now | Ruling |
 |---|---|---|---|---|
 | every SP-\* reference (80 files) | `<link rel="stylesheet" data-vibekit>` | `_vibekit-0.0.9/vibekit.css` | `_vibekit-0.0.10/vibekit.css` | adopt 0.0.7 step 5 ruling, standing: references compare against the vibekit the app ships |
+
+## Wave 1 readability (card drawer and page, operator issues 2026-10-13)
+
+| Artboard | Selector | Was | Now | Ruling |
+|---|---|---|---|---|
+| SP-Card-* and SP-CardPage-* (all 8) | the brief's raw-JSON row: the Copy button after View raw JSON | Copy drawn beside the closed toggle | removed: Copy appears only while the JSON is shown, beside the one toggle | Operator issue O8 (2026-10-13): one raw-JSON toggle and one Copy, Copy only while the JSON is shown |

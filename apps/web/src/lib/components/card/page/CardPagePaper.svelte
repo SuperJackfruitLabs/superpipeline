@@ -168,7 +168,7 @@
                 Project: {m.projectName ? projectLine(m.projectName, m.milestoneName) : 'none'} · <a href="#project" role="button" onclick={(e) => { e.preventDefault(); m.project.start(); }}>{m.projectName ? 'Change project' : 'Assign to a project'}</a>
               {/if}
             </span>
-            <span style="display: flex; gap: var(--vk-space-3); align-items: center;"><details class="pg-raw" bind:open={rawOpen}><summary>View raw JSON</summary>{#if rawOpen}<RawJson value={card.spec} />{/if}</details><button class="vk-button vk-button--quiet" type="button" style="font-size: var(--vk-text-sm);" onclick={() => m.copySpec()}><Icon name={m.copied === 'spec' ? 'check' : 'copy'} size={14} /> Copy</button></span>
+            <span style="display: flex; gap: var(--vk-space-3); align-items: center;"><button class="pg-rawbtn" type="button" aria-expanded={rawOpen} onclick={() => (rawOpen = !rawOpen)}>{rawOpen ? 'Hide raw JSON' : 'View raw JSON'}</button>{#if rawOpen}<button class="vk-button vk-button--quiet" type="button" style="font-size: var(--vk-text-sm);" onclick={() => m.copySpec()}><Icon name={m.copied === 'spec' ? 'check' : 'copy'} size={14} /> Copy</button>{/if}</span>{#if rawOpen}<RawJson value={card.spec} bare />{/if}
           </div>
         </section>
         <section class="pg-enc">

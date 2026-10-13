@@ -127,8 +127,8 @@
     <section class="qcd-sec" data-section="details">
       <h3>Brief details ({specRowCount(groups)})</h3>
       {#each groups as g (g.label)}<h4>{g.label}</h4><dl class="qcd-dl">{#each g.rows as r (r.key)}<dt>{r.label}</dt><dd data-testid="spec-value-{r.key}"><SpecValueView value={r.value} v={{ more: 'qcd-lb', id: 'qcd-id', matrixLinks: true }} /></dd>{/each}</dl>{/each}
-      <div class="qcd-row"><button class="qcd-ln" type="button" aria-expanded={rawOpen} onclick={() => (rawOpen = !rawOpen)}>View raw JSON</button><button class="qcd-ln" type="button" onclick={() => m.copySpec()}>{m.copied === 'spec' ? 'Copied' : 'Copy'}</button></div>
-      {#if rawOpen}<RawJson value={card.spec} />{/if}
+      <div class="qcd-row"><button class="qcd-ln" type="button" aria-expanded={rawOpen} onclick={() => (rawOpen = !rawOpen)}>{rawOpen ? 'Hide raw JSON' : 'View raw JSON'}</button>{#if rawOpen}<button class="qcd-ln" type="button" onclick={() => m.copySpec()}>{m.copied === 'spec' ? 'Copied' : 'Copy'}</button>{/if}</div>
+      {#if rawOpen}<RawJson value={card.spec} bare />{/if}
     </section>
     <section class="qcd-sec">
       <h3>History ({m.counts.runs} run{m.counts.runs === 1 ? '' : 's'})</h3>

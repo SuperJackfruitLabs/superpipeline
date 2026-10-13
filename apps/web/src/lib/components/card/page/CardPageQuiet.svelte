@@ -120,8 +120,8 @@
         <section class="qp-sec" aria-labelledby="qp-brief" data-section="details">
           <h2 id="qp-brief">Brief details ({specRowCount(groups)})</h2>
           {#each groups as g (g.label)}<h3>{g.label}</h3><dl class="qp-dl">{#each g.rows as r (r.key)}<dt>{r.label}</dt><dd data-testid="spec-value-{r.key}"><SpecValueView value={r.value} v={{ clamp: 'qp-clamp', more: 'qp-link', matrixLinks: false }} /></dd>{/each}</dl>{/each}
-          <div class="qp-acts"><a href="#raw" role="button" aria-expanded={rawOpen} onclick={act(() => (rawOpen = !rawOpen))}>View raw JSON</a><button class="qp-link" type="button" style="min-height: 44px;" onclick={() => m.copySpec()}>{m.copied === 'spec' ? 'Copied' : 'Copy'}</button></div>
-          {#if rawOpen}<RawJson value={card.spec} />{/if}
+          <div class="qp-acts"><a href="#raw" role="button" aria-expanded={rawOpen} onclick={act(() => (rawOpen = !rawOpen))}>{rawOpen ? 'Hide raw JSON' : 'View raw JSON'}</a>{#if rawOpen}<button class="qp-link" type="button" style="min-height: 44px;" onclick={() => m.copySpec()}>{m.copied === 'spec' ? 'Copied' : 'Copy'}</button>{/if}</div>
+          {#if rawOpen}<RawJson value={card.spec} bare />{/if}
         </section>
         <section class="qp-sec" aria-labelledby="qp-plan" data-section="plan"><h2 id="qp-plan">Plan</h2>{#if m.plan}<ol>{#each m.plan as st, i (i)}<li>{st.text}{st.done ? ' (done)' : ''}</li>{/each}</ol>{:else}<p>{planNone(m.agent.name)}</p>{/if}</section>
         <section class="qp-sec" aria-labelledby="qp-links" data-section="links">

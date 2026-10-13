@@ -94,3 +94,7 @@
 /* the app's base stylesheet strips link underlines; the reference keeps them */
 .dd-card a.dd-link { text-decoration: underline; }
 .dd-raw > summary { min-width: 44px; }
+
+/* One raw-JSON toggle (O8): a button drawn as the summary it replaced. */
+.dd-rawbtn { all: unset; min-height: 44px; min-width: 44px; display: inline-flex; align-items: center; cursor: pointer; text-decoration: underline; text-underline-offset: 3px; font-size: var(--vk-text-sm); }
+.dd-rawbtn:focus-visible { outline: 2px solid var(--vk-focus); outline-offset: 2px; }

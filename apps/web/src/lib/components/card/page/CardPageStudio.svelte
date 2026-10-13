@@ -139,7 +139,7 @@
               <div class="ar-q cp-q" role="status">
                 <h3>{@html face(agentName, lead.needsYou ? 'needs' : 'working', 24)}{agentName}{lead.needsYou ? ' · Stopped · needs you' : ''}{#if lead.at}<span class="mono">{quoteWhen(lead.at, new Date())}</span>{/if}</h3>
                 <blockquote>{#each splitTokens(lead.sentence) as p, i (i)}{#if p.token}<code>{p.text}</code>{#if p.text === sid}<sup class="fn">1</sup>{/if}{:else}{p.text}{/if}{/each}</blockquote>
-                {#if sid}<div class="ar-pfn"><span class="k">1</span><span>Session <code>{sid}</code></span><button class="ar-lk" type="button" style="padding-right: 0px;" onclick={() => m.copySessionId(sid)}><Icon name="copy" size={14} strokeWidth={1.75} />Copy</button></div>{/if}
+                {#if sid}<div class="ar-pfn"><span class="k">1</span><span>Session <code>{sid}</code></span><button class="ar-lk" type="button" style="padding-right: 0px;" aria-label="Copy session id" onclick={() => m.copySessionId(sid)}><Icon name="copy" size={14} strokeWidth={1.75} />Copy</button></div>{/if}
               </div>
             {/if}
           </section>
@@ -176,12 +176,12 @@
           </div>
           <div data-section="plan"><h3 class="cd-h">Agent plan</h3>{#if m.plan}<ol class="cd-ol">{#each m.plan as st, i (i)}<li><span>{st.done ? '✓ ' : ''}{st.text}</span></li>{/each}</ol>{:else}<p class="note cd-p">{planNone(m.agent.name)}</p>{/if}</div>
           <div data-section="details">
-            <div class="cd-acts" style="justify-content: space-between;"><h3 class="cd-h" style="margin: 0px;">Details <span class="mono">{specRowCount(groups)} fields</span></h3><span class="cd-acts"><button class="ar-lk" type="button" aria-expanded={rawOpen} onclick={() => (rawOpen = !rawOpen)}>View raw JSON</button><button class="ar-lk" type="button" onclick={() => m.copySpec()}><Icon name={m.copied === 'spec' ? 'check' : 'copy'} size={14} strokeWidth={1.75} />Copy</button></span></div>
+            <div class="cd-acts" style="justify-content: space-between;"><h3 class="cd-h" style="margin: 0px;">Details <span class="mono">{specRowCount(groups)} fields</span></h3><span class="cd-acts"><button class="ar-lk" type="button" aria-expanded={rawOpen} onclick={() => (rawOpen = !rawOpen)}>{rawOpen ? 'Hide raw JSON' : 'View raw JSON'}</button>{#if rawOpen}<button class="ar-lk" type="button" onclick={() => m.copySpec()}><Icon name={m.copied === 'spec' ? 'check' : 'copy'} size={14} strokeWidth={1.75} />Copy</button>{/if}</span></div>
             <table class="cd-dt">
               <caption class="sr">Brief details, {specRowCount(groups)} fields</caption>
               <tbody>{#each rows as r (r.key)}<tr class:g={r.first}>{#if r.first}<th scope="rowgroup" rowspan={r.span}>{r.group}</th>{/if}<th scope="row">{r.label}</th><td data-testid="spec-value-{r.key}"><SpecValueView value={r.value} v={{ clamp: 'cd-clamp', more: 'ar-lk', matrixLinks: false }} /></td></tr>{/each}</tbody>
             </table>
-            {#if rawOpen}<RawJson value={card.spec} />{/if}
+            {#if rawOpen}<RawJson value={card.spec} bare />{/if}
           </div>
           <div class="cd-acts" data-section="project">
             {#if m.project.editing}

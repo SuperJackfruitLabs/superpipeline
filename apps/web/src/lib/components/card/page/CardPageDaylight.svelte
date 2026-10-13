@@ -67,6 +67,7 @@
   function commentKey(e: KeyboardEvent): void {
     if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) { e.preventDefault(); void m.comments.submit(); }
   }
+  let rawOpen = $state(false);
 </script>
 
 {#snippet hidden(key: string)}<span hidden data-section={key}></span>{/snippet}
@@ -195,9 +196,10 @@
             {/each}
           </div>
           <div class="dp-row" style="gap: var(--vk-space-4);">
-            <details class="dp-raw"><summary>View raw JSON</summary><RawJson value={card.spec} /></details>
-            <Button variant="quiet" style="font-size: var(--vk-text-sm);" onclick={() => m.copySpec()}>{#snippet icon()}<Icon name={m.copied === 'spec' ? 'check' : 'copy'} size={14} />{/snippet}Copy</Button>
+            <button class="dp-rawbtn" type="button" aria-expanded={rawOpen} onclick={() => (rawOpen = !rawOpen)}>{rawOpen ? 'Hide raw JSON' : 'View raw JSON'}</button>
+            {#if rawOpen}<Button variant="quiet" style="font-size: var(--vk-text-sm);" onclick={() => m.copySpec()}>{#snippet icon()}<Icon name={m.copied === 'spec' ? 'check' : 'copy'} size={14} />{/snippet}Copy</Button>{/if}
           </div>
+          {#if rawOpen}<RawJson value={card.spec} bare />{/if}
         {:else}<p class="dp-p dp-small" data-section="details">No other details.</p>{/if}
         <div data-section="plan" style="display: flex; flex-direction: column; gap: var(--vk-space-2);">
           <div class="dp-row" style="justify-content: space-between;"><b>Agent plan</b><span class="dp-small">{m.plan ? planProgress(planDone, m.plan.length) : 'none yet'}</span></div>

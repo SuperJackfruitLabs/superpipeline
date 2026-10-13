@@ -217,10 +217,10 @@
         </span>
         <span>
           <button class="pcd-linkbtn pcd-small" type="button" aria-expanded={rawOpen} onclick={() => (rawOpen = !rawOpen)}>{rawOpen ? 'Hide raw JSON' : 'View raw JSON'}</button>
-          <button class="vk-button vk-button--quiet" type="button" style="font-size: var(--vk-text-sm);" onclick={() => m.copySpec()}><Icon name={m.copied === 'spec' ? 'check' : 'copy'} size={14} /> Copy</button>
+          {#if rawOpen}<button class="vk-button vk-button--quiet" type="button" style="font-size: var(--vk-text-sm);" onclick={() => m.copySpec()}><Icon name={m.copied === 'spec' ? 'check' : 'copy'} size={14} /> Copy</button>{/if}
         </span>
       </div>
-      {#if rawOpen}<RawJson value={card.spec} />{/if}
+      {#if rawOpen}<RawJson value={card.spec} bare />{/if}
     {/snippet}
     {@render enc('brief', 'The brief', paperBriefSummary({ criteria: m.counts.criteria, rows: rowCount, planSteps: m.counts.planSteps, project: !!m.projectName }), briefBody)}
 
