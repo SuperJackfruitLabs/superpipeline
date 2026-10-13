@@ -1,6 +1,8 @@
 /* Hand-written: the label and board pickers are not drawn in any reference (D-21). */
 .vk-dialog.nc .nc-labels, .vk-dialog.nc .nc-boardpick { position: relative; }
-.vk-dialog.nc .nc-picker { position: absolute; z-index: 2; top: calc(100% + 4px); left: 0; min-width: 240px; max-height: 280px; overflow: auto; padding: 6px; border-radius: var(--vk-radius-sm); background: var(--vk-color-surface); color: var(--vk-color-text); font: 400 15px/1.4 var(--vk-font-body); text-transform: none; letter-spacing: normal; box-shadow: 0 0 0 1px var(--vk-color-line), 0 12px 30px color-mix(in oklch, var(--vk-color-text) 18%, transparent); }
+/* The label picker is fixed to the viewport (LabelPicker sets top/left/max-height from its trigger), so the
+   dialog body never scrolls to make room for it and it never runs past the screen's edge (#2). */
+.vk-dialog.nc .nc-picker { position: fixed; z-index: 2; top: var(--_pk-y, auto); left: var(--_pk-x, auto); min-width: 240px; max-width: calc(100vw - 16px); max-height: var(--_pk-h, 280px); box-sizing: border-box; overflow: auto; padding: 6px; border-radius: var(--vk-radius-sm); background: var(--vk-color-surface); color: var(--vk-color-text); font: 400 15px/1.4 var(--vk-font-body); text-transform: none; letter-spacing: normal; box-shadow: 0 0 0 1px var(--vk-color-line), 0 12px 30px color-mix(in oklch, var(--vk-color-text) 18%, transparent); }
 .vk-dialog.nc .nc-picker [role="option"] { display: flex; align-items: center; min-height: 44px; padding: 0 10px; border-radius: var(--vk-radius-sm); cursor: pointer; }
 .vk-dialog.nc .nc-picker [role="option"][aria-selected="true"], .vk-dialog.nc .nc-picker [role="option"]:hover { background: var(--vk-color-raised); }
 .vk-dialog.nc .nc-picker__empty { margin: 0; padding: 10px; color: var(--vk-color-muted); }
