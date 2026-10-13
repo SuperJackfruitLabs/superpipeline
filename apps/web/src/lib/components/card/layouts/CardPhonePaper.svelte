@@ -4,6 +4,7 @@
   import '../phone/phone-card-shared.css';
   import '../phone/pc-paper.css';
   import { Button, Face } from '@superjackfruit/vibekit';
+  import { paperSalutation } from '../paper-words';
   import type { CardLayoutProps } from './types';
   import PhoneIcon from '$lib/components/parts/PhoneIcon.svelte';
   import PhoneDetails from '../phone/PhoneDetails.svelte';
@@ -31,7 +32,6 @@
   const enc = $derived(paperEnclosures(v, model));
   const eye = $derived(paperEye(lead.needsYou && !model.archived, c.archivedAt));
   const role = $derived((model.agents.find((a) => a.id === model.agent.id)?.role ?? 'agent').toLowerCase());
-  const firstName = $derived(personName.split(' ')[0] ?? personName);
 </script>
 
 <div class="ph-root pcard pcard--paper">
@@ -68,7 +68,7 @@
     <CardStatePaper kind="done" {model} /><div data-section="resume" hidden></div>
   {:else}
     <article class="paper" aria-label="Letter from {v.speaker}">
-      <p class="dear">Dear {firstName},</p>
+      <p class="dear">{paperSalutation(personName)}</p>
       {#if lead.sentence}<p class="voice">{sentenceCase(lead.sentence)}</p>{/if}
       <div class="sigb">
         <span class="portrait"><Face id={model.agent.id ?? v.lastAgent?.id ?? c.id} label={v.speaker} mood={lead.needsYou && !model.archived ? 'needs' : model.agent.mood} size={32} /></span>

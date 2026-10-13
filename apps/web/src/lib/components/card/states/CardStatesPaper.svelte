@@ -8,13 +8,13 @@
   import GatePaper from '../gate/GatePaper.svelte';
   import QuestionPaper from '../question/QuestionPaper.svelte';
   import CardStatePaper from '../state/CardStatePaper.svelte';
-  import { firstName, paperArchivedLine, paperCellLine, paperDoneLine, PAPER_LABELS, reTitle } from '../paper-words';
+  import { paperArchivedLine, paperSalutation, paperCellLine, paperDoneLine, PAPER_LABELS, reTitle } from '../paper-words';
   import type { CardModel } from '../card-model.svelte';
   import type { CardStatesProps } from '../layouts/types';
 
   let { cells, vibe }: CardStatesProps = $props();
   const owner = (m: CardModel) => displayPrincipal(m.card?.ownerUserId ?? '', app.members);
-  const person = $derived(firstName(app.user?.name ?? app.user?.login ?? 'there'));
+  const person = $derived(app.user?.name ?? '');
   const said = (m: CardModel) => (typeof m.handoff?.summary === 'string' ? m.handoff.summary : null);
   const handedOn = (m: CardModel) => (typeof m.handoff?.handedOn === 'string' ? m.handoff.handedOn : null);
   const who = (m: CardModel) => m.agent.name || 'The agent';
@@ -75,7 +75,7 @@
           <p class="pcs-line">{paperDoneLine({ board: m.boardName, stage: m.stageName, priority: m.card!.priority, owner: owner(m) })}</p>
           <CardStatePaper kind="done" model={m} />
           {#if said(m)}
-            <p class="pcs-dear">Dear {person},</p>
+            <p class="pcs-dear">{paperSalutation(person)}</p>
             <p class="pcs-voice">{said(m)}</p>
             <div class="pcs-sign"><Face id={who(m)} label={who(m)} mood="done" size={32} /><div><span class="n">{who(m)}</span><p class="pcs-small">Finished it{m.provenance?.known ? ` · asked by ${m.queuedByName}` : ''}</p></div></div>
           {/if}

@@ -7,6 +7,7 @@
  * Surface rule after a successful decision, archive or delete: drawer → `app.closeCard()`;
  * page → stay and `refresh()` (delete navigates to the board); gallery → nothing.
  */
+import { displayAuthor } from '$lib/names';
 import { untrack } from 'svelte';
 import { goto } from '$app/navigation';
 import { app } from '$lib/stores/app.svelte';
@@ -238,14 +239,7 @@ export class CardModel {
    * An agent nobody can name is "An agent"; a person nobody can name is "Someone".
    */
   authorName(a: { kind: 'human' | 'agent'; id: string; name: string | null }): string {
-    const given = a.name?.trim();
-    if (given && !given.includes('@')) return given;
-    if (a.kind === 'agent') {
-      return app.agents.find((x) => x.id === a.id || (!!x.externalId && x.externalId === a.id))?.name?.trim() || 'An agent';
-    }
-    const member = app.members.find((x) => x.userId === a.id)?.name?.trim();
-    if (member) return member;
-    return app.agents.find((x) => !!x.externalId && x.externalId === a.id)?.name?.trim() || 'Someone';
+    return displayAuthor(a, app.members, app.agents);
   }
   principalName(id: string | null | undefined): string { return displayPrincipal(id, app.members); }
   readonly ownerName = $derived(this.card ? this.principalName(this.card.ownerUserId) : '');

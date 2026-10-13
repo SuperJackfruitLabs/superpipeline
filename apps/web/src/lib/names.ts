@@ -86,3 +86,16 @@ export function agentForPrincipal(
 export function initialOf(name: string | null | undefined): string {
   return (name ?? '?').trim().charAt(0).toUpperCase() || '?';
 }
+
+/**
+ * A comment author's name from the workspace roster (O12): never an id or an email.
+ * An agent nobody can name is "An agent"; a person nobody can name is "Someone".
+ */
+export function displayAuthor(a: { kind: 'human' | 'agent'; id: string; name: string | null }, members: Member[], agents: AgentSummary[]): string {
+  const given = a.name?.trim();
+  if (given && !given.includes('@')) return given;
+  if (a.kind === 'agent') return agents.find((x) => x.id === a.id || (!!x.externalId && x.externalId === a.id))?.name?.trim() || 'An agent';
+  const member = members.find((x) => x.userId === a.id)?.name?.trim();
+  if (member) return member;
+  return agents.find((x) => !!x.externalId && x.externalId === a.id)?.name?.trim() || 'Someone';
+}

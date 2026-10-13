@@ -51,3 +51,19 @@ describe('the gallery', () => {
     dispose();
   });
 });
+
+describe('the gallery letter salutation (R3, O13)', () => {
+  it('says Hello when the person has no name, never their login', async () => {
+    const was = fakeApp.user;
+    fakeApp.user = { ...was, name: null as never, login: 'ira@vibes-fixture.invalid' } as never;
+    fakeApi.getCardActivities.mockResolvedValueOnce({ activities: [], handoff: { summary: 'Finished the trace.' }, gates: [] } as never);
+    const { model, dispose } = mountModel({ surface: 'gallery' });
+    await vi.waitFor(() => expect(model.detailLoaded).toBe(true));
+    const cell = { model, gate: null, question: null };
+    render(CardStatesPaper, { cells: { gate: cell, question: cell, archived: cell, done: cell, error: cell, loading: cell }, vibe: 'paper', phase: 'noon' });
+    expect(document.body.textContent).not.toMatch(/Dear (ira@|there)/);
+    expect(screen.getAllByText('Hello,').length).toBeGreaterThan(0);
+    fakeApp.user = was;
+    dispose();
+  });
+});
