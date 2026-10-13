@@ -22,6 +22,16 @@ export function ageLong(hours: number | null): string {
   return hours === null ? '—' : ageWords(hours);
 }
 
+/**
+ * How long a card has been in its stage, as the peek says it: the drawer's thresholds (`ageWords`: under
+ * an hour, hours below two days, then days) in the tile's short form. A done card is not counted in
+ * whole days here: it moved when it moved, and the drawer says "under an hour" for one moved seconds ago.
+ */
+export function ageStage(hours: number | null): string {
+  if (hours === null || !Number.isFinite(hours)) return '—';
+  return hours < 1 ? ageWords(hours) : ageShort(hours);
+}
+
 /** Tile age: open `33h` / `2d`; a done card counts whole days, at least `1d`; unknown is a dash. */
 export function ageShort(hours: number | null, done = false): string {
   if (hours === null || !Number.isFinite(hours)) return '—';

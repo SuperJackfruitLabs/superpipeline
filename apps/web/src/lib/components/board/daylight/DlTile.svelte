@@ -12,10 +12,11 @@
   import { refLabel } from '../ref-chip';
   import { dueShort, moreLabelsTitle, tileAction, tileWho } from '../board-words';
   import type { CardSummary } from '../card-summary';
+  import type { PeekController } from './peek-controller';
   import DlPeek from './DlPeek.svelte';
 
-  let { s, stages, peekOpen, firstNeeds, onPeek, onPeekClose }: {
-    s: CardSummary; stages: Stage[]; peekOpen: boolean; firstNeeds: boolean; onPeek: (id: string) => void; onPeekClose: () => void;
+  let { s, stages, peekOpen, firstNeeds, peek }: {
+    s: CardSummary; stages: Stage[]; peekOpen: boolean; firstNeeds: boolean; peek: PeekController;
   } = $props();
 
   let moveOpen = $state(false);
@@ -38,8 +39,10 @@
   class:focused={peekOpen}
   data-card-id={s.id}
   use:cardDraggable={{ cardId: s.id }}
-  onpointerenter={() => onPeek(s.id)}
-  onfocusin={() => onPeek(s.id)}
+  onpointerenter={() => peek.pointerEnter(s.id)}
+  onpointerleave={() => peek.pointerLeave(s.id)}
+  onfocusin={() => peek.focusIn(s.id)}
+  onfocusout={(e) => { if (!e.currentTarget.contains(e.relatedTarget as Node | null)) peek.focusOut(s.id); }}
 >
   <h3>
     <button
@@ -85,5 +88,5 @@
     {/if}
   </div>
   {#if action}<div class="dl-act"><Button variant="signal" onclick={act}>{action.label}</Button></div>{/if}
-  {#if peekOpen}<DlPeek {s} actionLabel={action?.label ?? null} onAct={act} onClose={onPeekClose} />{/if}
+  {#if peekOpen}<DlPeek {s} actionLabel={action?.label ?? null} onAct={act} onClose={() => peek.close()} />{/if}
 </article>
