@@ -174,10 +174,8 @@
         <section class="pg-enc">
           <h3><span class="no">Enclosure II</span>Things to prove</h3>
           {#if m.acceptanceCriteria?.length}<ol class="pg-ol" data-section="criteria">{#each m.acceptanceCriteria as c, i (i)}<li>{c}</li>{/each}</ol>{:else}{@render hidden('criteria')}{/if}
-          <p class="pg-sc pg-sc--bare">Agent plan</p>
-          <div data-section="plan">
-            {#if m.plan}<ol class="pg-ol">{#each m.plan as st, i (i)}<li style={st.done ? 'text-decoration: line-through' : undefined}>{st.text}</li>{/each}</ol>{:else}<p class="pg-small" style="margin: 0px;">{planNone(m.agent.name)}</p>{/if}
-          </div>
+          {#if m.plan}<p class="pg-sc pg-sc--bare">Agent plan</p>
+          <div data-section="plan"><ol class="pg-ol">{#each m.plan as st, i (i)}<li style={st.done ? 'text-decoration: line-through' : undefined}>{st.text}</li>{/each}</ol></div>{:else}<span hidden data-section="plan"></span>{/if}
         </section>
         <section class="pg-enc">
           <h3><span class="no">Enclosure III</span>Who is waiting, and what is attached</h3>
@@ -227,7 +225,7 @@
               {/if}
             {/each}
           </div>
-          <p class="pg-small" style="margin: 0px;" data-section="decisions">Decisions: {#if m.decidedGates.length}{m.decidedGates.map((d) => `${d.decision ?? d.status} at ${stageNameOf(d.stageKey)}`).join('; ')}.{:else}none yet.{/if}</p>
+          {#if m.decidedGates.length}<p class="pg-small" style="margin: 0px;" data-section="decisions">Decisions: {#if m.decidedGates.length}{m.decidedGates.map((d) => `${d.decision ?? d.status} at ${stageNameOf(d.stageKey)}`).join('; ')}.{:else}none yet.{/if}</p>{:else}<span hidden data-section="decisions"></span>{/if}
         </section>
         <section class="pg-enc">
           <h3><span class="no">Accounts</span>Cost and delivery</h3>

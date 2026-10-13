@@ -202,11 +202,11 @@
           </div>
           {#if rawOpen}<RawJson value={card.spec} bare />{/if}
         {:else}<p class="dp-p dp-small" data-section="details">No other details.</p>{/if}
-        <div data-section="plan" style="display: flex; flex-direction: column; gap: var(--vk-space-2);">
+        {#if m.plan}<div data-section="plan" style="display: flex; flex-direction: column; gap: var(--vk-space-2);">
           <div class="dp-row" style="justify-content: space-between;"><b>Agent plan</b><span class="dp-small">{m.plan ? planProgress(planDone, m.plan.length) : 'none yet'}</span></div>
           {#if m.plan}<div class="dp-meter"><i style="width: {Math.round((100 * planDone) / m.plan.length)}%;"></i></div><ul class="dp-plan">{#each m.plan as st, i (i)}<li class:done={st.done}><Icon name={st.done ? 'check' : 'chevron-right'} size={14} /><span>{st.text}</span></li>{/each}</ul>
           {:else}<p class="dp-p dp-small">{planNone(m.agent.name)}</p>{/if}
-        </div>
+        </div>{:else}<span hidden data-section="plan"></span>{/if}
         <div class="dp-row" style="justify-content: space-between;" data-section="project">
           {#if m.project.editing}
             <span style="flex: 1 1 16rem; min-width: 0px; display: flex; flex-direction: column; gap: var(--vk-space-2);">
@@ -285,7 +285,7 @@
         {:else}
           <div class="dp-small" data-section="handoff"><b style="color: var(--vk-color-text);">Handoff from {m.stages[m.stageIndex - 1]?.name ?? 'the queue'}</b><br />{handoffLine({ handoff: null, stageIndex: m.stageIndex, stages: m.stages, queuedByName: m.queuedByName || 'someone', createdAt: card.createdAt })}</div>
         {/if}
-        <div class="dp-small" data-section="decisions"><b style="color: var(--vk-color-text);">Decisions</b><br />{#if m.decidedGates.length}{#each m.decidedGates as d (d.id)}{d.decision ?? d.status} at {stageNameOf(d.stageKey)}{d.decidedBy ? ` by ${displayPrincipal(d.decidedBy, app.members)}` : ''}{d.comment ? ` — ${d.comment}` : ''}. {/each}{:else}None yet.{/if}</div>
+        {#if m.decidedGates.length}<div class="dp-small" data-section="decisions"><b style="color: var(--vk-color-text);">Decisions</b><br />{#if m.decidedGates.length}{#each m.decidedGates as d (d.id)}{d.decision ?? d.status} at {stageNameOf(d.stageKey)}{d.decidedBy ? ` by ${displayPrincipal(d.decidedBy, app.members)}` : ''}{d.comment ? ` — ${d.comment}` : ''}. {/each}{:else}None yet.{/if}</div>{:else}<span hidden data-section="decisions"></span>{/if}
       </div>
 
       <div class="dp-card">

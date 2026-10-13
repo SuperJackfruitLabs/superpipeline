@@ -105,7 +105,7 @@ describe('CardPaper (4605)', () => {
     expect(screen.getByText('5 items, listed under Things to prove.')).toBeTruthy();
     await fireEvent.click(more[0]!);
     expect(more[0]!.getAttribute('aria-expanded')).toBe('true');
-    expect(screen.getByText('error-eric did not post a plan for this card.')).toBeTruthy();
+    expect(screen.queryByText('error-eric did not post a plan for this card.'), 'an absent plan is hidden (O7)').toBeNull();
     expect(screen.getByText(/Project: Marketing & Community — Melissa and Anna onboarding · no milestone/)).toBeTruthy();
     dispose();
   });
@@ -116,7 +116,7 @@ describe('CardPaper (4605)', () => {
     expect(attempts).toEqual(['Attempt 2 · error-eric · 14 events · stopped at 19:41 Thu 8 Oct', 'Attempt 1 · error-eric · 9 events · sent back']);
     expect(words(document.querySelector('.pcd-log .stop')!)).toContain('Stopped. Blocked. Waiting on you; the reason is shown at the top of this card.');
     expect(screen.getByText('Cost $0.00, no estimate yet.')).toBeTruthy();
-    expect(screen.getByText('Decisions: none yet.')).toBeTruthy();
+    expect(screen.queryByText('Decisions: none yet.'), 'no decisions is hidden (O7)').toBeNull();
     dispose();
   });
   it('references name their source; the foot has Edit, Archive and an ink-outlined Delete', async () => {

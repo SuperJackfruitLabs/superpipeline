@@ -44,7 +44,7 @@
 .dd-sec > summary .tw { margin-left: auto; color: var(--vk-color-muted); transition: transform var(--vk-motion-fast) var(--vk-motion-easing); }
 .dd-sec[open] > summary .tw { transform: rotate(90deg); }
 .dd-secbody { padding: 0 0 var(--vk-space-5); display: flex; flex-direction: column; gap: var(--vk-space-4); }
-.dd-groups { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; gap: var(--vk-space-3); }
+.dd-groups { display: grid; grid-template-columns: minmax(0, 1fr); align-items: start; gap: var(--vk-space-3); }
 .dd-group { background: var(--vk-color-raised); border-radius: var(--vk-radius-md); padding: var(--vk-space-4); display: flex; flex-direction: column; gap: var(--vk-space-3); min-width: 0; }
 .dd-group h4 { margin: 0; font: 700 var(--vk-text-sm)/1.2 var(--vk-font-body); color: var(--vk-color-muted); text-transform: uppercase; letter-spacing: 0.06em; }
 .dd-dl { margin: 0; display: flex; flex-direction: column; gap: var(--vk-space-3); }
@@ -80,7 +80,7 @@
 /* The stacked head draws the title; the card's own head starts at the track. */
 .dd-card > .dd-head { padding-top: 0; }
 /* the plan/project pair, an inline grid in the reference, gets a class so it can stack */
-.dd-twocol { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: var(--vk-space-5); }
+.dd-twocol { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--vk-space-5); }
 .dd-bubble.plain { background: var(--vk-color-raised); }
 .dd-bubble.plain .dd-who { color: var(--vk-color-muted); }
 .dd-row .vk-button--quiet { min-height: 44px; }

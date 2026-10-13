@@ -54,7 +54,7 @@ describe('CardQuiet (4605)', () => {
   it('plain sections: details, brief, history, comments, links, the rest', async () => {
     const { dispose } = await mount();
     expect([...document.querySelectorAll('.qcd-sec > h3')].map((h) => h.textContent)).toEqual([
-      'Details', 'Description', 'Acceptance criteria', 'Plan', 'Brief details (10)', 'History (2 runs)', 'Decisions', 'Comments', 'Links (0)',
+      'Details', 'Description', 'Acceptance criteria', 'Brief details (10)', 'History (2 runs)', 'Comments', 'Links (0)',
       'Sub-tasks, Project, Cost, Delivery', 'References and related prior work', 'Card actions',
     ]);
     const who = [...document.querySelectorAll('[data-section="status"] > *')].map(words).join(' | ');

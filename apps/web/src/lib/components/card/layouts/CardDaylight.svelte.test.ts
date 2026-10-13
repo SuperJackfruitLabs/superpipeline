@@ -114,7 +114,7 @@ describe('CardDaylight (4605)', () => {
     await fireEvent.click(more[0]!);
     expect(more[0]!.getAttribute('aria-expanded')).toBe('true');
     expect(screen.getByText(/This continuation is only shown after Show more\./)).toBeTruthy();
-    expect(screen.getByText('error-eric did not post a plan for this card.')).toBeTruthy();
+    expect(screen.queryByText('error-eric did not post a plan for this card.'), 'an absent plan is hidden (O7)').toBeNull();
     expect(screen.getByText('Marketing & Community — Melissa and Anna onboarding · no milestone')).toBeTruthy();
     dispose();
   });

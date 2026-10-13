@@ -198,10 +198,10 @@
           <p class="pcd-sc">Things to prove</p>
           {#if m.acceptanceCriteria?.length}<ul class="pcd-ul" data-section="criteria">{#each m.acceptanceCriteria as c, i (i)}<li>{c}</li>{/each}</ul>{:else}<p class="pcd-small pcd-small--flush" data-section="criteria">Nothing listed to prove.</p>{/if}
         </div>
-        <div data-section="plan">
+        {#if m.plan}<div data-section="plan">
           <p class="pcd-sc">Plan</p>
           {#if m.plan}<ol class="pcd-ul">{#each m.plan as step, i (i)}<li style={step.done ? 'text-decoration: line-through' : undefined}>{step.text}</li>{/each}</ol>{:else}<p class="pcd-small pcd-small--flush">{planNone(m.agent.name)}</p>{/if}
-        </div>
+        </div>{:else}<span hidden data-section="plan"></span>{/if}
       </div>
       <div class="pcd-groups" data-section="details" data-testid="spec-details">
         {#each groups as g (g.label)}
@@ -259,7 +259,7 @@
           </div>
         {/each}
       </div></div>
-      <p class="pcd-small pcd-small--flush" data-section="decisions">{#if m.decidedGates.length}Decisions: {m.decidedGates.map((d) => `${d.decision ?? d.status} at ${m.stages.find((s) => s.key === d.stageKey)?.name ?? d.stageKey}${d.decidedBy ? ` by ${displayPrincipal(d.decidedBy, app.members)}` : ''}`).join('; ')}.{:else}Decisions: none yet.{/if}</p>
+      {#if m.decidedGates.length}<p class="pcd-small pcd-small--flush" data-section="decisions">{#if m.decidedGates.length}Decisions: {m.decidedGates.map((d) => `${d.decision ?? d.status} at ${m.stages.find((s) => s.key === d.stageKey)?.name ?? d.stageKey}${d.decidedBy ? ` by ${displayPrincipal(d.decidedBy, app.members)}` : ''}`).join('; ')}.{:else}Decisions: none yet.{/if}</p>{:else}<span hidden data-section="decisions"></span>{/if}
       <p class="pcd-small pcd-small--flush" data-section="cost">Cost {usd(card.costUsd)}, {m.estimate?.estimatedUsd ? `of an estimated ${usd(m.estimate.estimatedUsd)}` : 'no estimate yet'}.</p>
     {/snippet}
     {@render enc('happened', 'What happened', paperHappenedSummary({ runs: m.counts.runs, decisions: m.counts.decisions, costUsd: card.costUsd }), happenedBody)}

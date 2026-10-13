@@ -134,7 +134,7 @@
     </section>
     <section class="qcd-sec"><h3>Description</h3>{#if card.spec?.description}<p data-section="description" style="white-space: pre-line">{String(card.spec.description)}</p>{:else}<p data-section="description">None.</p>{/if}</section>
     <section class="qcd-sec"><h3>Acceptance criteria</h3>{#if m.acceptanceCriteria?.length}<ul data-section="criteria">{#each m.acceptanceCriteria as c, i (i)}<li>{c}</li>{/each}</ul>{:else}<p data-section="criteria">None.</p>{/if}</section>
-    <section class="qcd-sec" data-section="plan"><h3>Plan</h3>{#if m.plan}<ol>{#each m.plan as st, i (i)}<li>{st.text}{st.done ? ' (done)' : ''}</li>{/each}</ol>{:else}<p>None yet.</p>{/if}</section>
+    {#if m.plan}<section class="qcd-sec" data-section="plan"><h3>Plan</h3>{#if m.plan}<ol>{#each m.plan as st, i (i)}<li>{st.text}{st.done ? ' (done)' : ''}</li>{/each}</ol>{:else}<p>None yet.</p>{/if}</section>{:else}<span hidden data-section="plan"></span>{/if}
     <section class="qcd-sec" data-section="details">
       <h3>Brief details ({specRowCount(groups)})</h3>
       {#each groups as g (g.label)}<h4>{g.label}</h4><dl class="qcd-dl">{#each g.rows as r (r.key)}<dt>{r.label}</dt><dd data-testid="spec-value-{r.key}"><SpecValueView value={r.value} v={{ more: 'qcd-lb', id: 'qcd-id', matrixLinks: true }} /></dd>{/each}</dl>{/each}
@@ -159,7 +159,7 @@
         </ul>
       </div>
     </section>
-    <section class="qcd-sec" data-section="decisions"><h3>Decisions</h3>{#if m.decidedGates.length}<ul>{#each m.decidedGates as d (d.id)}<li>{d.decision ?? d.status} at {stageNameOf(d.stageKey)}{d.decidedBy ? `, by ${m.principalName(d.decidedBy)}` : ''}.</li>{/each}</ul>{:else}<p>None yet.</p>{/if}</section>
+    {#if m.decidedGates.length}<section class="qcd-sec" data-section="decisions"><h3>Decisions</h3>{#if m.decidedGates.length}<ul>{#each m.decidedGates as d (d.id)}<li>{d.decision ?? d.status} at {stageNameOf(d.stageKey)}{d.decidedBy ? `, by ${m.principalName(d.decidedBy)}` : ''}.</li>{/each}</ul>{:else}<p>None yet.</p>{/if}</section>{:else}<span hidden data-section="decisions"></span>{/if}
     <section class="qcd-sec" data-section="comments">
       <h3>Comments</h3>
       {#if m.comments.comments.length}<ul>{#each m.comments.comments as c (c.id)}<li><b>{m.authorName(c.author)}:</b> <span style="white-space: pre-wrap">{c.deletedAt ? 'Comment deleted' : c.body}</span></li>{/each}</ul>{:else}<p>No comments yet. The agent that works this card reads them.</p>{/if}

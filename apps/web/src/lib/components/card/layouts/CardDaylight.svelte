@@ -255,13 +255,13 @@
           {#if rawOpen}<RawJson value={card.spec} bare />{/if}
         {:else}<p class="dd-small" data-section="details" style="margin: 0px;">No other details.</p>{/if}
         <div class="dd-twocol">
-          <div data-section="plan" style="display: flex; flex-direction: column; gap: var(--vk-space-2);">
+          {#if m.plan}<div data-section="plan" style="display: flex; flex-direction: column; gap: var(--vk-space-2);">
             <div class="dd-row" style="justify-content: space-between;"><b>Agent plan</b><span class="dd-small">{m.plan ? planProgress(planDone, m.plan.length) : 'none yet'}</span></div>
             {#if m.plan}
               <div class="dd-meter"><i style="width: {Math.round((100 * planDone) / m.plan.length)}%;"></i></div>
               <ul class="dd-plan">{#each m.plan as step, i (i)}<li class:done={step.done}><Icon name={step.done ? 'check' : 'chevron-right'} size={14} /><span>{step.text}</span></li>{/each}</ul>
             {:else}<p class="dd-small" style="margin: 0px;">{planNone(m.agent.name)}</p>{/if}
-          </div>
+          </div>{:else}<span hidden data-section="plan"></span>{/if}
           <div data-section="project" style="display: flex; flex-direction: column; gap: var(--vk-space-2);">
             <b>Project</b>
             {#if m.project.editing}

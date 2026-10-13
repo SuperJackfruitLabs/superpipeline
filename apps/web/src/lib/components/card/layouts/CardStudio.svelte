@@ -224,7 +224,7 @@
           <div>{#if card.spec?.description}<h3 class="cd-h">Description</h3><p class="cd-p" data-section="description" style="white-space: pre-line">{String(card.spec.description)}</p>{:else}{@render hidden('description')}{/if}</div>
           <div>{#if m.acceptanceCriteria?.length}<h3 class="cd-h">Acceptance criteria <span class="mono">{m.acceptanceCriteria.length}</span></h3><ol class="cd-ol" data-section="criteria">{#each m.acceptanceCriteria as c, i (i)}<li><span>{c}</span></li>{/each}</ol>{:else}{@render hidden('criteria')}{/if}</div>
         </div>
-        <div data-section="plan"><h3 class="cd-h">Agent plan</h3>{#if m.plan}<ol class="cd-ol">{#each m.plan as st, i (i)}<li><span>{st.done ? '✓ ' : ''}{st.text}</span></li>{/each}</ol>{:else}<p class="cd-p">{planNone(m.agent.name)}</p>{/if}</div>
+        {#if m.plan}<div data-section="plan"><h3 class="cd-h">Agent plan</h3>{#if m.plan}<ol class="cd-ol">{#each m.plan as st, i (i)}<li><span>{st.done ? '✓ ' : ''}{st.text}</span></li>{/each}</ol>{:else}<p class="cd-p">{planNone(m.agent.name)}</p>{/if}</div>{:else}<span hidden data-section="plan"></span>{/if}
         <div data-section="details" data-testid="spec-details">
           <div class="cd-acts" style="justify-content: space-between;"><h3 class="cd-h" style="margin: 0px;">Details <span class="mono">{specRowCount(groups)} fields</span></h3><span class="cd-acts"><button class="ar-lk" type="button" aria-expanded={rawOpen} onclick={() => (rawOpen = !rawOpen)}>{rawOpen ? 'Hide raw JSON' : 'View raw JSON'}</button>{#if rawOpen}<button class="ar-lk" type="button" onclick={() => m.copySpec()}><Icon name={m.copied === 'spec' ? 'check' : 'copy'} size={14} strokeWidth={1.75} />Copy</button>{/if}</span></div>
           <table class="cd-dt">
@@ -261,7 +261,7 @@
         </div>
         {#if m.counts.handoff}<div data-section="handoff"><span class="kick">Handoff</span><HandoffView handoff={m.handoff} testid="carried-handoff" /></div>
         {:else}<p class="cd-p" data-section="handoff"><span class="kick">Handoff</span> {handoffLine({ handoff: null, stageIndex: m.stageIndex, stages: m.stages, queuedByName: m.queuedByName || 'someone', createdAt: card.createdAt })}</p>{/if}
-        <p class="cd-p" data-section="decisions"><span class="kick">Decisions</span> {m.decidedGates.length ? m.decidedGates.map((d) => `${d.decision ?? d.status} at ${m.stages.find((s) => s.key === d.stageKey)?.name ?? d.stageKey}`).join('; ') : 'None yet.'}</p>
+        {#if m.decidedGates.length}<p class="cd-p" data-section="decisions"><span class="kick">Decisions</span> {m.decidedGates.length ? m.decidedGates.map((d) => `${d.decision ?? d.status} at ${m.stages.find((s) => s.key === d.stageKey)?.name ?? d.stageKey}`).join('; ') : 'None yet.'}</p>{:else}<span hidden data-section="decisions"></span>{/if}
       {:else if tab === 'links'}
         <div class="cd-acts" style="justify-content: space-between;"><span class="cd-p">{m.counts.links + m.counts.children + m.counts.refs} in all</span><button class="ar-lk" type="button" onclick={() => m.links.openAdd()}><Icon name="link" size={14} strokeWidth={1.75} />Add link</button></div>
         <LinkAddForm model={m} />

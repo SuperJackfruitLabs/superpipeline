@@ -1034,7 +1034,7 @@ a[href*="CardPage"], a[class*="icon"][style*="width: auto"], button[class*="icon
 .dl-sec > summary .tw { margin-left: auto; color: var(--vk-color-muted); transition: transform var(--vk-motion-fast) var(--vk-motion-easing); }
 .dl-sec[open] > summary .tw { transform: rotate(90deg); }
 .dl-secbody { padding: 0 0 var(--vk-space-5); display: flex; flex-direction: column; gap: var(--vk-space-4); }
-.dl-groups { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; gap: var(--vk-space-3); }
+.dl-groups { display: grid; grid-template-columns: minmax(0, 1fr); align-items: start; gap: var(--vk-space-3); }
 .dl-group { background: var(--vk-color-raised); border-radius: var(--vk-radius-md); padding: var(--vk-space-4); display: flex; flex-direction: column; gap: var(--vk-space-3); min-width: 0; }
 .dl-group h4 { margin: 0; font: 700 var(--vk-text-sm)/1.2 var(--vk-font-body); color: var(--vk-color-muted); text-transform: uppercase; letter-spacing: 0.06em; }
 .dl-dl { margin: 0; display: flex; flex-direction: column; gap: var(--vk-space-3); }
@@ -1243,11 +1243,7 @@ a[href*="CardPage"], a[class*="icon"][style*="width: auto"], button[class*="icon
             <div data-dc-tpl="364" class="dl-row" style="gap: var(--vk-space-5);">
               <details data-dc-tpl="365" class="dl-raw"><summary data-dc-tpl="366">View raw JSON</summary></details>
             </div>
-            <div data-dc-tpl="371" style="display: grid; grid-template-columns: minmax(0px, 1fr) minmax(0px, 1fr); gap: var(--vk-space-5);">
-              <div data-dc-tpl="372" style="display: flex; flex-direction: column; gap: var(--vk-space-2);">
-                <div data-dc-tpl="373" class="dl-row" style="justify-content: space-between;"><b data-dc-tpl="374">Agent plan</b><span data-dc-tpl="375" class="dl-small">none yet</span></div>
-                <p data-dc-tpl="376" class="dl-small" style="margin: 0px;">error-eric did not post a plan for this card.</p>
-              </div>
+            <div data-dc-tpl="371" style="display: grid; grid-template-columns: minmax(0px, 1fr); gap: var(--vk-space-5);">
               <div data-dc-tpl="377" style="display: flex; flex-direction: column; gap: var(--vk-space-2);">
                 <b data-dc-tpl="378">Project</b>
                 <span data-dc-tpl="379" style="font-size: var(--vk-text-sm); line-height: 1.45;">Marketing &amp; Community — Melissa and Anna onboarding · no milestone</span>

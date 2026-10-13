@@ -123,7 +123,7 @@
           <div class="qp-acts"><a href="#raw" role="button" aria-expanded={rawOpen} onclick={act(() => (rawOpen = !rawOpen))}>{rawOpen ? 'Hide raw JSON' : 'View raw JSON'}</a>{#if rawOpen}<button class="qp-link" type="button" style="min-height: 44px;" onclick={() => m.copySpec()}>{m.copied === 'spec' ? 'Copied' : 'Copy'}</button>{/if}</div>
           {#if rawOpen}<RawJson value={card.spec} bare />{/if}
         </section>
-        <section class="qp-sec" aria-labelledby="qp-plan" data-section="plan"><h2 id="qp-plan">Plan</h2>{#if m.plan}<ol>{#each m.plan as st, i (i)}<li>{st.text}{st.done ? ' (done)' : ''}</li>{/each}</ol>{:else}<p>{planNone(m.agent.name)}</p>{/if}</section>
+        {#if m.plan}<section class="qp-sec" aria-labelledby="qp-plan" data-section="plan"><h2 id="qp-plan">Plan</h2>{#if m.plan}<ol>{#each m.plan as st, i (i)}<li>{st.text}{st.done ? ' (done)' : ''}</li>{/each}</ol>{:else}<p>{planNone(m.agent.name)}</p>{/if}</section>{:else}<span hidden data-section="plan"></span>{/if}
         <section class="qp-sec" aria-labelledby="qp-links" data-section="links">
           <h2 id="qp-links">Links ({m.counts.links})</h2>
           {#if m.hasAnyLink}<ul>{#each [...m.linkGroups.blockedBy, ...m.linkGroups.blocks, ...m.linkGroups.relates] as row (row.title)}<li>{row.title} <button class="qp-link" type="button" onclick={() => m.links.remove(row.remove)}>Remove</button></li>{/each}</ul>{:else}<p>Nothing blocks this card and it blocks nothing.</p>{/if}
@@ -162,7 +162,7 @@
             {/each}
           </div>
         </section>
-        <section class="qp-sec" aria-labelledby="qp-dec" data-section="decisions"><h2 id="qp-dec">Decisions</h2>{#if m.decidedGates.length}<ul>{#each m.decidedGates as d (d.id)}<li>{d.decision ?? d.status} at {stageNameOf(d.stageKey)}{d.decidedBy ? `, by ${displayPrincipal(d.decidedBy, app.members)}` : ''}.</li>{/each}</ul>{:else}<p>None yet.</p>{/if}</section>
+        {#if m.decidedGates.length}<section class="qp-sec" aria-labelledby="qp-dec" data-section="decisions"><h2 id="qp-dec">Decisions</h2>{#if m.decidedGates.length}<ul>{#each m.decidedGates as d (d.id)}<li>{d.decision ?? d.status} at {stageNameOf(d.stageKey)}{d.decidedBy ? `, by ${displayPrincipal(d.decidedBy, app.members)}` : ''}.</li>{/each}</ul>{:else}<p>None yet.</p>{/if}</section>{:else}<span hidden data-section="decisions"></span>{/if}
         <section class="qp-sec" aria-labelledby="qp-com" data-section="comments">
           <h2 id="qp-com">Comments</h2>
           {#if m.comments.comments.length}<ul>{#each m.comments.comments as c (c.id)}<li><b>{m.authorName(c.author)}:</b> <span style="white-space: pre-wrap">{c.deletedAt ? 'Comment deleted' : c.body}</span></li>{/each}</ul>{:else}<p>No comments yet. The agent that works this card reads them.</p>{/if}
