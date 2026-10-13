@@ -245,7 +245,7 @@
           {@const isOpen = m.isRunOpen(a.runId, i === 0)}
           {@const tools = m.toolsShown(a.runId)}
           <div class="pcd-att" data-attempt={a.runId}>
-            <button class="pcd-atthead" type="button" data-attempt-head={a.runId} aria-expanded={isOpen} aria-controls="pcd-run-{a.runId}" onclick={() => m.toggleRun(a.runId, i === 0)}><span class="pcd-p"><b>{line.head}</b>{line.rest}</span><span class="o" aria-hidden="true">{isOpen ? 'Close' : 'Open'}</span></button>
+            <button class="pcd-atthead" type="button" data-attempt-head={a.runId} aria-expanded={isOpen} aria-controls={isOpen && g ? `pcd-run-${a.runId}` : undefined} onclick={() => m.toggleRun(a.runId, i === 0)}><span class="pcd-p"><b>{line.head}</b>{line.rest}</span><span class="o" aria-hidden="true">{isOpen ? 'Close' : 'Open'}</span></button>
             {#if isOpen && g}
               {@const who = name(g.agentId) || 'An agent'}
               {@const view = visibleActivities(g.activities, isNarrative, tools, isControlRow)}

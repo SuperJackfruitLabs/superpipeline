@@ -150,7 +150,7 @@
               {@const no = (m.attempts.findIndex((x) => x.runId === g.runId) + 1) || runs.length - ri}
               {@const isOpen = m.isRunOpen(g.runId, ri === 0)}
               {@const tools = m.toolsShown(g.runId)}
-              <h3><button class="qp-att" type="button" data-attempt-head={g.runId} aria-expanded={isOpen} aria-controls="qp-run-{g.runId}" onclick={() => m.toggleRun(g.runId, ri === 0)}>{quietHistoryHead(no, stageNameOf(g.stageKey), name(g.agentId) || 'an agent')}</button></h3>
+              <h3><button class="qp-att" type="button" data-attempt-head={g.runId} aria-expanded={isOpen} aria-controls={isOpen ? `qp-run-${g.runId}` : undefined} onclick={() => m.toggleRun(g.runId, ri === 0)}>{quietHistoryHead(no, stageNameOf(g.stageKey), name(g.agentId) || 'an agent')}</button></h3>
               <p>{quietHistoryLine(a ? attemptWord(a) : (g.outcome ?? 'working'), a?.endedAt ?? null, g.counts.total, g.counts.error)}</p>
               {#if isOpen}
                 {@const view = visibleActivities(g.activities, isNarrative, tools, isControlRow)}

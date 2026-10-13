@@ -212,7 +212,7 @@
               {@const word = a ? attemptWord(a) : (g.outcome ?? 'working')}
               {@const isOpen = m.isRunOpen(g.runId, ri === 0)}
               {@const tools = m.toolsShown(g.runId)}
-              <button class="pg-atthead" type="button" data-attempt-head={g.runId} aria-expanded={isOpen} aria-controls="pg-run-{g.runId}" style={ri > 0 ? 'border-top: 1px solid var(--vk-color-line); padding-top: var(--vk-space-3);' : undefined} onclick={() => m.toggleRun(g.runId, ri === 0)}><span class="pg-p"><b>Attempt {attemptNo(g.runId) || runs.length - ri}</b> · {who} · {paperAttempt(g.counts.total, g.counts.error, word, ri > 0 && a?.endedAt ? clockHM(a.endedAt) : null)}</span></button>
+              <button class="pg-atthead" type="button" data-attempt-head={g.runId} aria-expanded={isOpen} aria-controls={isOpen ? `pg-run-${g.runId}` : undefined} style={ri > 0 ? 'border-top: 1px solid var(--vk-color-line); padding-top: var(--vk-space-3);' : undefined} onclick={() => m.toggleRun(g.runId, ri === 0)}><span class="pg-p"><b>Attempt {attemptNo(g.runId) || runs.length - ri}</b> · {who} · {paperAttempt(g.counts.total, g.counts.error, word, ri > 0 && a?.endedAt ? clockHM(a.endedAt) : null)}</span></button>
               {#if isOpen}
                 {@const view = visibleActivities(g.activities, isNarrative, tools, isControlRow)}
                 {@const rows = view.rows}

@@ -151,7 +151,7 @@
             {@const a = m.attempts.find((x) => x.runId === g.runId)}
             {@const tools = m.toolsShown(g.runId)}
             {@const expanded = m.isRunOpen(g.runId, false) || tools}
-            <li data-attempt={g.runId}><button class="qcd-att" type="button" data-attempt-head={g.runId} aria-expanded={expanded} aria-controls="qcd-run-{g.runId}" onclick={() => m.setRun(g.runId, !expanded)}>{quietHistoryHead((m.attempts.findIndex((x) => x.runId === g.runId) + 1) || runs.length - ri, stageNameOf(g.stageKey), name(g.agentId) || 'an agent')}</button>: {lcFirst(quietHistoryLine(a ? attemptWord(a) : (g.outcome ?? 'working'), a?.endedAt ?? null, g.counts.total, g.counts.error))}
+            <li data-attempt={g.runId}><button class="qcd-att" type="button" data-attempt-head={g.runId} aria-expanded={expanded} aria-controls={expanded ? `qcd-run-${g.runId}` : undefined} onclick={() => m.setRun(g.runId, !expanded)}>{quietHistoryHead((m.attempts.findIndex((x) => x.runId === g.runId) + 1) || runs.length - ri, stageNameOf(g.stageKey), name(g.agentId) || 'an agent')}</button>: {lcFirst(quietHistoryLine(a ? attemptWord(a) : (g.outcome ?? 'working'), a?.endedAt ?? null, g.counts.total, g.counts.error))}
               {#if g.counts.action > 0 && (ri === 0 || expanded)}<button class="qcd-ln" type="button" data-attempt-tools={g.runId} aria-pressed={tools} onclick={() => m.toggleTools(g.runId)}>{tools ? 'Hide tool calls' : 'Show tool calls'}</button>{/if}
               {#if expanded}<ol id="qcd-run-{g.runId}">{#each visibleActivities(g.activities, isNarrative, tools, isControlRow).rows as ev (ev.seq)}<li>{quietRow(ev)}<ToolCallDetails parameter={ev.parameter} result={ev.result} cls="qcd-details" /></li>{/each}</ol>{/if}
             </li>

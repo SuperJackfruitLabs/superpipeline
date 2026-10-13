@@ -297,7 +297,7 @@
             {@const entry = m.stageByRun.get(g.runId)}
             {@const isOpen = m.isRunOpen(g.runId, ri === 0)}
             <div class="dd-run" data-attempt={g.runId}>
-              <button class="dd-runhead" type="button" data-attempt-head={g.runId} aria-expanded={isOpen} aria-controls="dd-run-{g.runId}" onclick={() => m.toggleRun(g.runId, ri === 0)}><Face id={who} label={who} mood={latestNeeds ? 'needs' : 'resting'} size={24} /><b>{stageNameOf(g.stageKey)} · {who}</b><span class:dd-who={latestNeeds}>{a ? attemptWord(a) : (g.outcome ?? 'working')}</span><span>attempt {(m.attempts.findIndex((x) => x.runId === g.runId) + 1) || runs.length - ri}</span><span class="dd-small">{g.counts.total} events · {g.counts.error} errors</span><span class="tw" aria-hidden="true"><Icon name="chevron-right" size={18} /></span></button>
+              <button class="dd-runhead" type="button" data-attempt-head={g.runId} aria-expanded={isOpen} aria-controls={isOpen ? `dd-run-${g.runId}` : undefined} onclick={() => m.toggleRun(g.runId, ri === 0)}><Face id={who} label={who} mood={latestNeeds ? 'needs' : 'resting'} size={24} /><b>{stageNameOf(g.stageKey)} · {who}</b><span class:dd-who={latestNeeds}>{a ? attemptWord(a) : (g.outcome ?? 'working')}</span><span>attempt {(m.attempts.findIndex((x) => x.runId === g.runId) + 1) || runs.length - ri}</span><span class="dd-small">{g.counts.total} events · {g.counts.error} errors</span><span class="tw" aria-hidden="true"><Icon name="chevron-right" size={18} /></span></button>
               {#if isOpen}
               <div id="dd-run-{g.runId}">
               <ul class="dd-ev">

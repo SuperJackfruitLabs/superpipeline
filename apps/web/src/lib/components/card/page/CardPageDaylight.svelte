@@ -266,7 +266,7 @@
             {@const hiddenCount = g.activities.length - visibleActivities(g.activities, isNarrative, false, isControlRow).rows.length}
             {@const isOpen = m.isRunOpen(g.runId, ri === 0)}
             <div class="dp-run">
-              <button class="dp-runhead" type="button" data-attempt-head={g.runId} aria-expanded={isOpen} aria-controls="dp-run-{g.runId}" onclick={() => m.toggleRun(g.runId, ri === 0)}><Face id={who} label={who} mood={latestNeeds ? 'needs' : 'resting'} size={24} /><b>Attempt {attemptNo(g.runId) || runs.length - ri} · {stageNameOf(g.stageKey)}</b><span class:dp-who={latestNeeds}>{a ? attemptWord(a) : (g.outcome ?? 'working')}</span><span class="dp-small">{g.counts.total} events · {g.counts.error} errors{ri > 0 && a?.endedAt ? ` · ${clockHM(a.endedAt)}` : ''}</span></button>
+              <button class="dp-runhead" type="button" data-attempt-head={g.runId} aria-expanded={isOpen} aria-controls={isOpen ? `dp-run-${g.runId}` : undefined} onclick={() => m.toggleRun(g.runId, ri === 0)}><Face id={who} label={who} mood={latestNeeds ? 'needs' : 'resting'} size={24} /><b>Attempt {attemptNo(g.runId) || runs.length - ri} · {stageNameOf(g.stageKey)}</b><span class:dp-who={latestNeeds}>{a ? attemptWord(a) : (g.outcome ?? 'working')}</span><span class="dp-small">{g.counts.total} events · {g.counts.error} errors{ri > 0 && a?.endedAt ? ` · ${clockHM(a.endedAt)}` : ''}</span></button>
               {#if isOpen}
               <div id="dp-run-{g.runId}">
               <ol class="dp-tl" style="padding: var(--vk-space-2) var(--vk-space-4) 0;">
