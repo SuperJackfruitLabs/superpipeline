@@ -130,6 +130,8 @@ Ratios are from the full pixel run on vibekit 0.0.10 (Node 22). A screen compare
 
 | Platform | Key | Verdict | Ratio | Cause |
 |---|---|---|---|---|
+| linux-x64 | SP-List-Paper·dark | passes | 0.000% | passes on linux-x64 in the Playwright image (CI): the darwin residual (vibekit Paper Tabs' 17px/1.45 against the reference's 17px/1.5, and the masthead Button rasterising) does not show under that FreeType render |
+| linux-x64 | SP-List-Paper·light | passes | 0.000% | passes on linux-x64 in the Playwright image (CI): the darwin residual (vibekit Paper Tabs' 17px/1.45 against the reference's 17px/1.5, and the masthead Button rasterising) does not show under that FreeType render |
 | linux-x64 | SP-Dlg-NewCard-Daylight·dark | fails | 0.030% | one broken block: the Add label chip's words and the label chips' × glyphs draw 1px higher than the reference's under Linux FreeType hinting |
 | linux-x64 | SP-CardPage-Paper·light | fails | 0.043% | one broken block on the links and list markers the app's reset dropped (Change project and the crumbs drew no underline, Things to prove no decimals; restored in card-page-paper.css, so this may now pass) |
 | linux-x64 | SP-Phone-Board-Studio#shell·dark | fails | 0.503% | header part: vibekit Button: New card's label, Live and the switcher chevron draw 1px higher than the reference's under Linux FreeType hinting; tab-bar part: the first two tab glyphs rasterise 1px off |

@@ -137,6 +137,8 @@ export const currentPlatform = (): PlatformKey => `${process.platform}-${process
  */
 export const PLATFORM_OVERRIDES: Readonly<Record<PlatformKey, Readonly<Record<string, 'fails' | 'passes' | 'either'>>>> = {
   'linux-x64': {
+    'SP-List-Paper·dark': 'passes', // 0.000% (CI linux-x64): passes on linux-x64 in the Playwright image (CI): the darwin residual (vibekit Paper Tabs' 17px/1.45 against the reference's 17px/1.5, and the masthead Button rasterising) does not show under that FreeType render
+    'SP-List-Paper·light': 'passes', // 0.000% (CI linux-x64): passes on linux-x64 in the Playwright image (CI): the darwin residual (vibekit Paper Tabs' 17px/1.45 against the reference's 17px/1.5, and the masthead Button rasterising) does not show under that FreeType render
     'SP-Dlg-NewCard-Daylight·dark': 'fails', // 0.030% (CI linux-x64): one broken block: the Add label chip's words and the label chips' × glyphs draw 1px higher than the reference's under Linux FreeType hinting
     'SP-CardPage-Paper·light': 'fails', // 0.043% (CI linux-x64): one broken block on the links and list markers the app's reset dropped (Change project and the crumbs drew no underline, Things to prove no decimals; restored in card-page-paper.css, so this may now pass)
     'SP-Phone-Board-Studio#shell·dark': 'fails', // 0.503% (CI linux-x64): header part: vibekit Button: New card's label, Live and the switcher chevron draw 1px higher than the reference's under Linux FreeType hinting; tab-bar part: the first two tab glyphs rasterise 1px off
