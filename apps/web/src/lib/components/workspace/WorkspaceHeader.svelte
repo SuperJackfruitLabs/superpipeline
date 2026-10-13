@@ -4,6 +4,7 @@
   import { app } from '$lib/stores/app.svelte';
   import { viewport } from '$lib/viewport.svelte';
   import { backLink } from './workspace-copy';
+  import { scopedNeedWords } from '$lib/components/shell/nav-scope';
   import { workspaceCounts, workspaceTabs, type WorkspaceTab } from './workspace-counts.svelte';
   let { current, description }: { current: WorkspaceTab; description: string } = $props();
   const back = $derived(backLink(app.boardId, app.board?.name ?? null));
@@ -21,7 +22,7 @@
   </div>
   <div class="tabs" role="tablist" aria-label="Workspace">
     {#each tabs as t (t.id)}
-      <a class="tab" role="tab" aria-selected={t.id === current} href="/workspace/{t.id}">{t.label}{#if t.count !== null}{#if t.signal}<span class="count-signal">{t.count}</span><span class="sr"> waiting on you</span>{:else}<span class="count">{t.count}</span>{/if}{/if}</a>
+      <a class="tab" role="tab" aria-selected={t.id === current} href="/workspace/{t.id}">{t.label}{#if t.count !== null}{#if t.signal}<span class="count-signal" aria-hidden="true">{t.count}</span><span class="sr">, {scopedNeedWords(t.count, false)}</span>{:else}<span class="count">{t.count}</span>{/if}{/if}</a>
     {/each}
   </div>
 </div>

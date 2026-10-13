@@ -11,7 +11,7 @@ import { activeFilterCount } from '$lib/stores/card-filters';
 import { plural } from '$lib/words';
 import { greetingName } from '../dialogs/person';
 import { signOut } from './account';
-import { crewCount, crewLine, crewOf, crewTitle, type CrewMember } from './crew';
+import { crewCount, crewLine, crewScopeTitle, crewOf, crewTitle, type CrewMember } from './crew';
 import {
   boardCounts, boardStatus, dateline, filterSummary, initialsOf, operateCount, paperShowingLine, projectCountOf,
   showingLine, statusLine, studioSubRight, userNameOf, type OperateCount, type ShellStatus, type StatusItem,
@@ -36,6 +36,7 @@ export const shellModel = {
   get crew(): CrewMember[] { return app.board ? crewOf(app.board, app.agents, needIds()) : []; },
   get crewCount(): string { return crewCount(this.crew); },
   get crewLine(): string { return crewLine(this.crew); },
+  get crewScopeTitle(): string { return crewScopeTitle(this.crew); },
   get crewTitle(): string { return crewTitle(this.crew); },
   get dark(): boolean { return appearance.theme === 'dark'; },
   get phase(): Phase { return appearance.phase; },
