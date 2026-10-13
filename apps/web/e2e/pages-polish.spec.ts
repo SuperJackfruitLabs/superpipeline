@@ -191,9 +191,11 @@ for (const size of [SIZES[0], SIZES[1]]) {
     await openWorld(page, DX, { vibe: 'daylight', dark: false, width: size.width, height: size.height });
     const gaps = await page.evaluate(() =>
       [...document.querySelectorAll('.dl-tile')].map((t) => {
-        const h = t.querySelector('h3')!.getBoundingClientRect();
-        const tb = t.getBoundingClientRect();
-        return { right: Math.round(tb.right - h.right), title: t.querySelector('h3')!.textContent!.trim().slice(0, 20) };
+        // The title's text box: the heading's own padding does not count as width the title uses.
+        const h = t.querySelector('h3')!;
+        const cs = getComputedStyle(h);
+        const right = h.getBoundingClientRect().right - parseFloat(cs.paddingRight);
+        return { right: Math.round(t.getBoundingClientRect().right - right), title: h.textContent!.trim().slice(0, 20) };
       }),
     );
     expect(gaps.length).toBeGreaterThan(0);
