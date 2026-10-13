@@ -306,3 +306,4 @@ The SP-Dlg-Appearance artboards were 1200px tall and `.art` clipped the 1237–1
 | Artboard | Selector | Was | Now | Ruling |
 |---|---|---|---|---|
 | SP-Card-* and SP-CardPage-* (all 8) | the brief's raw-JSON row: the Copy button after View raw JSON | Copy drawn beside the closed toggle | removed: Copy appears only while the JSON is shown, beside the one toggle | Operator issue O8 (2026-10-13): one raw-JSON toggle and one Copy, Copy only while the JSON is shown |
+| SP-Card-* and SP-CardPage-* (all 8) | the card-actions Delete card button | the dark primary Button (`vk-button--primary` with a page restyle) in Daylight and the Paper and Quiet pages, `vk-button--danger` in the Paper and Quiet drawers, an inline-restyled `ar-btn2` in Studio | vibekit's quiet Button (`vk-button vk-button--quiet`), no inline style; Archive stays the secondary action; the existing confirmation is unchanged | Wave 1 audit #9 (2026-10-13): Delete is not the primary action |

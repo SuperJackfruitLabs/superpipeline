@@ -2,7 +2,7 @@
 <script lang="ts">
   /** Studio's card page (SP-CardPage-Studio): an annual-report page for one card. */
   import './card-page-studio.css';
-  import { faceSvg, StageTrack } from '@superjackfruit/vibekit';
+  import { Button, faceSvg, StageTrack } from '@superjackfruit/vibekit';
   import { goto } from '$app/navigation';
   import { app } from '$lib/stores/app.svelte';
   import { appearance } from '$lib/appearance.svelte';
@@ -248,7 +248,7 @@
           {@render hd(8, 'cp-s8', 'Card actions', null)}
           <div class="cd-acts" data-section="cardActions">
             {#if !m.archived}<button class="ar-btn2" type="button" aria-disabled={m.archiving ? 'true' : undefined} onclick={() => { if (!m.archiving) void m.archive(); }}><Icon name="archive" size={15} strokeWidth={1.75} />Archive card</button><span class="vk-visually-hidden" role="status">{m.archiving ? 'Archiving…' : ''}</span>{/if}
-            <button class="ar-btn2" type="button" style="border: 0px; background: transparent; color: var(--text); box-shadow: inset 0 0 0 2.5px var(--rule);" onclick={() => m.remove()}>Delete card</button>
+            <Button variant="quiet" onclick={() => m.remove()}>Delete card</Button>
           </div>
         </section>
       </div>

@@ -310,7 +310,7 @@
   <div class="pcd-foot" data-section="cardActions">
     <Button variant="secondary" data-section="editButton" pressed={editing} onclick={() => m.edit.start()}>{#snippet icon()}<Icon name="edit" size={18} />{/snippet}Edit card</Button>
     {#if !m.archived}<Button variant="secondary" aria-disabled={m.archiving ? 'true' : undefined} onclick={() => { if (!m.archiving) void m.archive(); }}>{#snippet icon()}<Icon name="archive" size={18} />{/snippet}Archive card</Button><span class="vk-visually-hidden" role="status">{m.archiving ? 'Archiving…' : ''}</span>{/if}
-    <Button variant="danger" onclick={() => m.remove()}>Delete card</Button>
+    <Button variant="quiet" onclick={() => m.remove()}>Delete card</Button>
   </div>
 </div>
 </Drawer>

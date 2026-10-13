@@ -143,7 +143,7 @@ describe('CardDaylight (4605)', () => {
     expect(screen.getByText('Nothing blocks this card and it blocks nothing.')).toBeTruthy();
     const foot = container.querySelector('.dd-foot')!;
     expect(within(foot as HTMLElement).getByRole('button', { name: /Archive card/ })).toBeTruthy();
-    expect(within(foot as HTMLElement).getByRole('button', { name: /Delete card/ }).className).toContain('dd-danger');
+    expect(within(foot as HTMLElement).getByRole('button', { name: /Delete card/ }).className).toContain('vk-button--quiet');
     dispose();
   });
   it('editing swaps in the edit form; the dialog keeps its name', async () => {

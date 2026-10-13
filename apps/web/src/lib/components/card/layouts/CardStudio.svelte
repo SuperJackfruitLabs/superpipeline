@@ -291,7 +291,7 @@
 
   <div class="cw-foot" data-section="cardActions">
     {#if !m.archived}<button class="ar-btn2" type="button" aria-disabled={m.archiving ? 'true' : undefined} onclick={() => { if (!m.archiving) void m.archive(); }}><Icon name="archive" size={15} strokeWidth={1.75} />Archive card</button><span class="vk-visually-hidden" role="status">{m.archiving ? 'Archiving…' : ''}</span>{/if}
-    <Button variant="danger" onclick={() => m.remove()}>Delete card</Button>
+    <Button variant="quiet" onclick={() => m.remove()}>Delete card</Button>
   </div>
 </div>
 </Drawer>

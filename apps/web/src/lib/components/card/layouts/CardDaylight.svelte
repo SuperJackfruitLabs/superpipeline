@@ -372,7 +372,7 @@
 
     <div class="dd-foot" data-section="cardActions">
       {#if !m.archived}<button class="vk-button vk-button--secondary" type="button" disabled={m.archiving} onclick={() => m.archive()}><Icon name="archive" size={18} /> {m.archiving ? 'Archiving…' : 'Archive card'}</button>{/if}
-      <button class="vk-button dd-danger" type="button" onclick={() => m.remove()}><Icon name="trash" size={18} /> Delete card</button>
+      <Button variant="quiet" onclick={() => m.remove()}>{#snippet icon()}<Icon name="trash" size={18} />{/snippet}Delete card</Button>
     </div>
   </div>
 </div>

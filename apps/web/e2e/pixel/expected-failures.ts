@@ -21,8 +21,6 @@ export const EXPECTED_FAILURES: ReadonlySet<string> = new Set([
   'SP-Card-States-Studio·light', // 0.472% (vibekit 0.0.10, full run): vibekit: StageTrack's cell form cuts a long current name to one line ('Messaging…') where the reference wraps it to two, which shifts what follows by 13px
   'SP-Card-Studio·dark', // 0.116% (vibekit 0.0.10, full run): vibekit: the Drawer bar (crumb row, Open tool)
   'SP-Card-Studio·light', // 0.122% (vibekit 0.0.10, full run): vibekit: the Drawer bar (crumb row, Open tool)
-  'SP-CardPage-Daylight·dark', // 0.094% (vibekit 0.0.10, full run): vibekit StageTrack page form since 0.0.6; copy/check glyphs
-  'SP-CardPage-Daylight·light', // 0.095% (vibekit 0.0.10, full run): vibekit StageTrack page form since 0.0.6; copy/check glyphs
   'SP-CardPage-Studio·dark', // 0.041% (vibekit 0.0.10, full run): the light causes; the light band is gone (harness fix)
   'SP-CardPage-Studio·light', // 0.043% (vibekit 0.0.10, full run): vibekit 0.0.4: its copy/link/edit/archive/send glyphs differ from the reference's Studio set, the 18px search glyph sits 2px off, Field select text rasterises differently (0.043%, 14 blocks)
   'SP-Dlg-Appearance-Daylight·dark', // 0.162% (vibekit 0.0.10, full run): within the bar since vibekit 0.0.10 and the picker's 1.45 type: the reference's 'See every accent's contrast' link is not drawn (its target is a mockup page the app does not have); the Paper preview's IN PROGRESS heading wraps in vibekit's preview frame; the Studio card's five swatches are vibekit's (bg, surface, primary, accent, signal) where the reference shows bg, primary, stage 5, accent, signal; Studio's readout Sky draws a smaller sun; the swatch wash strips and the foot's line rasterise a pixel off

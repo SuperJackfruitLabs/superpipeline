@@ -127,7 +127,7 @@ describe('CardPaper (4605)', () => {
     const foot = document.querySelector('[data-section="cardActions"]') as HTMLElement;
     expect(within(foot).getByRole('button', { name: /Edit card/ })).toBeTruthy();
     expect(within(foot).getByRole('button', { name: /Archive card/ })).toBeTruthy();
-    expect(within(foot).getByRole('button', { name: 'Delete card' }).className).toContain('vk-button--danger');
+    expect(within(foot).getByRole('button', { name: 'Delete card' }).className).toContain('vk-button--quiet');
     dispose();
   });
   it('editing swaps in the edit form; the dialog keeps its name', async () => {

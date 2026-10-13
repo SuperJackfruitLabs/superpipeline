@@ -186,7 +186,7 @@
       <h3>Card actions</h3>
       <div class="qcd-row">
         {#if !m.archived}<Button variant="secondary" aria-disabled={m.archiving ? 'true' : undefined} onclick={() => { if (!m.archiving) void m.archive(); }}>Archive card</Button><span class="vk-visually-hidden" role="status">{m.archiving ? 'Archiving…' : ''}</span>{/if}
-        <Button variant="danger" onclick={() => m.remove()}>Delete card</Button>
+        <Button variant="quiet" onclick={() => m.remove()}>Delete card</Button>
       </div>
     </section>
   </div>

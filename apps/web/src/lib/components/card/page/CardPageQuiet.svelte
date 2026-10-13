@@ -186,7 +186,7 @@
           <div class="qp-acts">
             <a href="#edit" role="button" onclick={act(() => m.edit.start())}>Edit card</a>
             {#if !m.archived}<Button variant="secondary" aria-disabled={m.archiving ? 'true' : undefined} onclick={() => { if (!m.archiving) void m.archive(); }}>Archive card</Button><span class="vk-visually-hidden" role="status">{m.archiving ? 'Archiving…' : ''}</span>{/if}
-            <Button style="background: var(--vk-color-surface); color: var(--vk-color-text); box-shadow: inset 0 0 0 2px var(--vk-color-text);" onclick={() => m.remove()}>Delete card</Button>
+            <Button variant="quiet" onclick={() => m.remove()}>Delete card</Button>
           </div>
         </section>
       </div>

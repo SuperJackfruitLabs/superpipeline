@@ -308,7 +308,7 @@
       <Button variant="secondary" aria-disabled={m.archiving ? 'true' : undefined} onclick={() => { if (!m.archiving) void m.archive(); }}>{#snippet icon()}<Icon name="archive" size={18} />{/snippet}Archive card</Button>
       <span class="vk-visually-hidden" role="status">{m.archiving ? 'Archiving…' : ''}</span>
     {/if}
-    <Button variant="danger" onclick={() => m.remove()}>{#snippet icon()}<Icon name="trash" size={18} />{/snippet}Delete card</Button>
+    <Button variant="quiet" onclick={() => m.remove()}>{#snippet icon()}<Icon name="trash" size={18} />{/snippet}Delete card</Button>
     <span style="flex: 1 1 auto;"></span>
     <span class="dp-small">Opened from {m.boardName} · <a href={boardHref}>Back to the board</a></span>
   </footer>
