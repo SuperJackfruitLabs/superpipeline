@@ -33,7 +33,7 @@ function mods() {
       return { ...c, ...r, close: async () => {} };
     }
     const { createServer } = await import('vite');
-    const s = await createServer({ configFile: false, root: WEB, logLevel: 'error', appType: 'custom', server: { middlewareMode: true, hmr: false, ws: false }, optimizeDeps: { noDiscovery: true, include: [] } });
+    const s = await createServer({ configFile: false, root: WEB, logLevel: 'error', appType: 'custom', server: { middlewareMode: true, hmr: false, ws: false }, optimizeDeps: { noDiscovery: true, include: [] }, ssr: { optimizeDeps: { disabled: true } }, cacheDir: (await import('node:path')).join((await import('node:os')).tmpdir(), `sp-resync-vite-${process.pid}`) }); // own cache: see resync/render.ts
     const c = await s.ssrLoadModule(join(HERE, 'resync/components.ts'));
     const r = await s.ssrLoadModule(join(HERE, 'resync/render.ts'));
     return { ...c, ...r, close: async () => { await r.closeRenderer(); await s.close(); } };

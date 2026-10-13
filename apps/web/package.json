@@ -12,7 +12,9 @@
     "e2e": "playwright test",
     "test:pixel": "playwright test -c e2e/pixel/playwright.pixel.config.ts",
     "test:refs": "playwright test -c e2e/pixel/playwright.refs.config.ts",
-    "test:pixel:report": "open test-results/pixel/index.html"
+    "test:pixel:report": "open test-results/pixel/index.html",
+    "visual:local": "bash scripts/visual/base-vs-head.sh HEAD~1",
+    "visual:self": "VISUAL_SELF=1 bash scripts/visual/base-vs-head.sh"
   },
   "dependencies": {
     "@atlaskit/pragmatic-drag-and-drop": "^2.0.1",
@@ -49,6 +51,7 @@
     "svelte-check": "^4.6.0",
     "tailwindcss": "^4.3.1",
     "typescript": "^6.0.3",
-    "vite": "^8.0.16"
+    "vite": "^8.0.16",
+    "yaml": "2.9.0"
   }
 }
