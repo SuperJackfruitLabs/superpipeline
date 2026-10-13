@@ -98,3 +98,11 @@ from drift and lowers integration cost for the "any harness" promise.
 - The conformance kit runs against the reference worker as a release gate.
 - **Coverage is judged on the normative tables**, not a global %: every spec table row must have a
   corresponding test id.
+
+## 8. Pixel suite
+
+The pixel suite renders the app and the approved Design-canvas references in the same Chromium and
+fails a screen that drifts from its mockup; a deploy bar of 1% holds for every screen, and the
+references, thresholds and masks are locked. CI runs it as the `pixel` job on Node 22 and uploads the
+report; a change to the lock needs a `Reference-Change:` trailer. See the
+[pixel suite](../apps/web/e2e/pixel/README.md).

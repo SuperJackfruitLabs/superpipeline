@@ -1,0 +1,103 @@
+{
+  "boardId": "brd_c13e29c2e7e940fa",
+  "tenantId": "tnt_vibes",
+  "name": "Reliability & Incident Response",
+  "stages": [
+    {
+      "key": "reported",
+      "name": "Reported",
+      "order": 0,
+      "ownerKind": "human"
+    },
+    {
+      "key": "triage",
+      "name": "Triage",
+      "order": 1,
+      "ownerKind": "capability",
+      "owner": "diagnostics",
+      "instructions": "Find out what is actually wrong. You are not fixing it here.\n\nA report is a symptom, and a symptom names where someone noticed a problem, not where it is. Start\nfrom the observation in the card and work toward the mechanism.\n\n  reproduce   can you make it happen again, on purpose? A fault you cannot reproduce is one you\n              cannot prove you fixed. If you cannot, say so and say what you tried\n  localise    name the component, the file, the process or the host. \"The gateway is unhealthy\" is\n              a restatement; \"`servesRootGateway` returns false for every multiplexed profile\n              because it compares Matrix identities\" is a localisation\n  blast       what else is affected that nobody has reported yet? A fault usually has a wider\n              footprint than its first symptom\n\nPrefer what you observed over what you were told. A command's output you ran is evidence; a line in\nthe report is a claim, including when the reporter is a person.\n\n**Say whether it is still happening.** A fault that has stopped on its own is a different card from\none that is live, and mitigation should not be designed for the wrong one.\n\nComplete with `mechanism` (what is actually wrong, in one or two sentences), `reproduced`\n(`yes` / `no` plus what you ran), and `scope` (what else this touches).",
+      "completion": {
+        "handoff": [
+          "mechanism",
+          "reproduced",
+          "scope"
+        ]
+      }
+    },
+    {
+      "key": "mitigate",
+      "name": "Mitigate",
+      "order": 2,
+      "ownerKind": "capability",
+      "owner": "resilience",
+      "instructions": "Stop the bleeding, then say honestly which of the two things you did.\n\nThere are two legitimate outcomes and they are not the same:\n\n  mitigated   the symptom is gone but the mechanism is intact. A restart, a flag flipped, a\n              rollback, traffic moved. Cheap, fast, and it WILL come back\n  fixed       the mechanism named in triage no longer exists\n\nBoth are fine. Confusing them is not — a card closed as `fixed` when it was mitigated is how the\nsame incident arrives three times with nobody realising it is the same one.\n\nRules:\n\n  reversible first   prefer the change you can undo. A rollback you can reverse beats a\n                     clever repair you cannot\n  one change         change one thing, then look. Two simultaneous changes mean you cannot say\n                     which one worked, and neither can whoever reads this later\n  no silent scope    if fixing this properly needs a code change, a release, or someone's\n                     decision, do the mitigation and say what the real fix requires. Do not\n                     quietly do the larger thing\n\nIf the right move is to do nothing — the fault stopped, the cost of acting exceeds the symptom —\ncomplete with `action: none` and the argument for it. That is a legitimate answer here.\n\nComplete with `outcome` (`mitigated` / `fixed` / `none`), `change` (exactly what you altered, so it\ncan be reversed), and `recurrence` (will it come back, and what would stop it).",
+      "completion": {
+        "handoff": [
+          "outcome",
+          "change",
+          "recurrence"
+        ]
+      }
+    },
+    {
+      "key": "verify",
+      "name": "Verify",
+      "order": 3,
+      "ownerKind": "capability",
+      "owner": "claim-check",
+      "requires": {
+        "any": [
+          "claim-check",
+          "analysis"
+        ]
+      },
+      "instructions": "Say independently whether the symptom is gone. Not whether a change was made — whether the thing\nthat was wrong is no longer wrong.\n\nThe previous stage reported what it did. You look at the system.\n\n  the symptom   reproduce the original fault the way triage reproduced it. If triage could not\n                reproduce it, say so and verify what you can instead\n  the change    is the change described actually in place? Read the file, the config, the process\n  the scope     triage named what else this touches. Check one of those, not just the headline\n\n**A `mitigated` outcome must not be verified as if it were a fix.** If the mechanism is intact, say\nthe symptom is gone AND the mechanism remains — that is the whole distinction the previous stage was\nasked to preserve, and losing it here undoes it.\n\nComplete with a `verdict`: `confirmed` plus what you observed, or `unconfirmed` plus what you looked\nfor and could not find. `unconfirmed` is a useful answer; a verify stage that always confirms is a\nrubber stamp, and this board exists to stop an incident being closed while it is still live.",
+      "completion": {
+        "handoff": [
+          "verdict"
+        ]
+      }
+    },
+    {
+      "key": "postmortem",
+      "name": "Postmortem",
+      "order": 4,
+      "ownerKind": "capability",
+      "owner": "documentation",
+      "instructions": "Write the record, for the person who meets this again in six months and is not you.\n\nShort is correct. One screen. No ceremony, no blame, no \"lessons learned\" section that restates the\ntimeline in the future tense.\n\nWhat it must contain:\n\n  what broke      the mechanism from triage, in plain words\n  how it showed   the symptom someone actually noticed, and how long before it was noticed\n  what was done   mitigated or fixed, and the exact change\n  what remains    if it was mitigated, the real fix and what it needs. If nothing remains, say so\n  the detector    what would have caught this sooner? Name a specific check, not \"better\n                  monitoring\". If the honest answer is that nothing reasonable would have, say that\n\n**The most valuable line is usually the one that says what nobody checked.** This board's own\nfirst incidents came from an agent reporting that it could not confirm something, not from an alarm.\n\nFile it where the estate keeps records of this kind, and name the path in your handoff. Do not\ninvent a new location if one already exists — look first.\n\nComplete with `record` (the path you wrote) and `remaining` (the real fix, or `none`).",
+      "completion": {
+        "handoff": [
+          "record",
+          "remaining"
+        ]
+      }
+    },
+    {
+      "key": "closed",
+      "name": "Closed",
+      "order": 5,
+      "ownerKind": "human",
+      "gate": "approval"
+    }
+  ],
+  "cards": [],
+  "gates": [],
+  "elicitations": [],
+  "references": [],
+  "usage": {
+    "totalCostUsd": 0,
+    "estimatedCostUsd": 0,
+    "budgetUsd": null,
+    "cardUsdCap": null,
+    "overBudget": false
+  },
+  "github": {
+    "issueTrigger": false,
+    "webhookConfigured": false,
+    "triggerGrantCount": null
+  },
+  "stale": {
+    "enabled": true,
+    "afterHours": 24
+  }
+}

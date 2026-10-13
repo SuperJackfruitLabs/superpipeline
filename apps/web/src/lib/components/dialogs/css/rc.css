@@ -1,0 +1,27 @@
+/* Ported verbatim from e2e/reference/mockups/SP-Dlg-Reconnect-Daylight, SP-Dlg-Reconnect-Paper, SP-Dlg-Reconnect-Studio, SP-Dlg-Reconnect-Quiet (prefixes rc-, bd-avatar, small, muted, mono; root :where(.fg) as .vk-dialog.rc) by scripts/pixel/extract-css.mjs. */
+.vk-dialog.rc .muted { color: var(--vk-color-muted); }
+.vk-dialog.rc .small { font-size: var(--vk-text-sm); }
+.vk-dialog.rc .mono { font-family: var(--vk-font-mono); }
+.vk-dialog.rc .rc-ic { width: 48px; height: 48px; border-radius: 50%; display: grid; place-items: center; background: var(--vk-color-raised); color: var(--vk-color-text); }
+.vk-dialog.rc .rc-lead { margin: 0; font-size: 16px; color: var(--vk-color-muted); }
+[data-vibe="paper"] .vk-dialog.rc .rc-lead { font-family: var(--vk-font-display); font-style: italic; font-size: 18px; color: var(--vk-color-text); }
+.vk-dialog.rc .rc-back { display: flex; gap: 12px; align-items: flex-start; padding: 12px 14px; border-radius: var(--vk-radius-sm); background: var(--vk-color-raised); }
+.vk-dialog.rc .rc-back b { display: block; font-weight: 600; overflow-wrap: anywhere; line-height: 1.35; }
+.vk-dialog.rc .rc-who { display: flex; align-items: center; gap: 10px; font-size: 14px; color: var(--vk-color-muted); }
+.vk-dialog.rc .rc-who .bd-avatar { width: 28px; height: 28px; font-size: 12px; }
+.vk-dialog.rc .rc-btn { width: 100%; }
+.vk-dialog.rc .bd-avatar { width: 32px; height: 32px; border-radius: 50%; background: var(--vk-mood-resting); display: grid; place-items: center; font: 700 13px/1 var(--vk-font-body); color: var(--vk-face-ink); }
+/* Hand-written beside the port: the reference's `.rc` frame is vibekit's sectioned Dialog (class rc), so its
+   `.rc details`/`.rc summary` rules are re-rooted on the dialog; the reference artboard's type (.art: 16px / 1.45). */
+.vk-dialog.rc { --vk-dialog-x: 30px; }
+.vk-dialog.rc .rc-body { display: flex; flex-direction: column; gap: 16px; font-size: var(--vk-text-md); line-height: 1.45; padding-bottom: 26px; }
+.vk-dialog.rc .rc-ic { margin-top: 6px; margin-bottom: 16px; }
+.vk-dialog.rc .rc-back > svg { flex: 0 0 auto; }
+.vk-dialog.rc details { font-size: 14px; color: var(--vk-color-muted); }
+.vk-dialog.rc summary { min-height: 44px; display: flex; align-items: center; cursor: pointer; color: var(--vk-color-text); text-decoration: underline; text-underline-offset: 3px; list-style: none; }
+.vk-dialog.rc summary::-webkit-details-marker { display: none; }
+.vk-dialog.rc details p { margin: 0 0 6px; overflow-wrap: anywhere; }
+.vk-dialog.rc .rc-reason { font-size: 12px; color: var(--vk-color-faint); }
+.vk-dialog.rc .rc-who strong { color: var(--vk-color-text); }
+.rc-toast-wrap { position: fixed; inset-inline: 0; top: 100px; z-index: 60; display: flex; justify-content: center; pointer-events: none; }
+.rc-toast-wrap > * { pointer-events: auto; }

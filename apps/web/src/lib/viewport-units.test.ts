@@ -53,7 +53,7 @@ describe('viewport units', () => {
   it('every vh fallback is followed by its dynamic replacement', () => {
     const css = readFileSync(join(SRC, 'app.css'), 'utf8');
     expect(css).toMatch(/@supports \(height: 100dvh\)[\s\S]*\.h-viewport\s*\{\s*height: 100dvh;/);
-    expect(css).toMatch(/max-height: 46vh; \/\* vh-fallback \*\/\s*max-height: 46svh;/);
+    // The old palette's 46vh list was the only inline fallback; the rest are replaced under @supports (above).
   });
 
   it('the page is laid out edge to edge, so safe-area insets are real', () => {

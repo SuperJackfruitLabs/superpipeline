@@ -6,6 +6,7 @@
  * live WebSocket. Modal-local transient state (budget inputs, agent-mint form, card-edit form) stays
  * inside the components that own it. Ported from the original monolithic `+page.svelte`.
  */
+import type { ListSort } from '$lib/components/plan/list/types';
 import {
   getMe,
   getBoard,
@@ -17,6 +18,7 @@ import {
   moveCard,
   openBoardSocket,
   setUnauthorizedHandler,
+  renewSession,
   type BoardFeedEvent,
   deleteBoard,
   BOARD_TEMPLATES,
@@ -35,11 +37,17 @@ import {
   type Label,
   listProjects,
   type Project,
+  listAttention,
+  type StaleCard,
 } from '$lib/api';
-import { passesArchivedFilter, passesProjectFilter } from './card-filters';
+import { tick } from 'svelte';
+import { auth } from '$lib/auth-recovery.svelte';
+import { itemsFromBoard, type AttentionItem } from '$lib/components/attention/attention';
+import { noFilters, passesArchivedFilter, passesProjectFilter } from './card-filters';
 import { feedIsStalled, STALL_CHECK_MS } from '../feed-liveness';
 
 const BOARD_KEY = 'superpipeline.boardId';
+const ATTENTION_COALESCE_MS = 1000;
 
 export type View = 'board' | 'list' | 'projects';
 export type ListGroupBy = 'stage' | 'state' | 'owner' | 'priority';
@@ -59,6 +67,25 @@ export interface CardFilters {
 }
 
 class AppStore {
+  #busy = 0;
+  /** Track a load that the pixel suite must wait for (dev galleries, workspace tabs). */
+  async markBusy<T>(p: Promise<T>): Promise<T> {
+    this.#busy++;
+    this.noteLoaded();
+    try {
+      return await p;
+    } finally {
+      this.#busy--;
+      this.noteLoaded();
+    }
+  }
+  /** Dev builds: `<html data-ready="true">` once the board and its catalogue are in and nothing is pending. */
+  noteLoaded(): void {
+    if (!import.meta.env.DEV || typeof document === 'undefined') return;
+    const settled = this.authState !== 'ready' || this.needsBoard || this.board !== null;
+    document.documentElement.dataset.ready = String(this.#busy === 0 && settled);
+  }
+
   // auth + onboarding
   authState = $state<'loading' | 'signed-out' | 'ready'>('loading');
   user = $state<User | null>(null);
@@ -81,9 +108,26 @@ class AppStore {
    * already true cannot be raised again.
    */
   composeRequest = $state(0);
+  /** The sentence the composer opens with (the palette's "Dispatch a card called …" passes one). */
+  composeSentence = $state('');
+  /** The new card composer is showing (it sets this); the shell's single-key shortcuts stand down. */
+  composeOpen = $state(false);
 
-  requestCompose(): void {
+  requestCompose(sentence = ''): void {
+    this.composeSentence = sentence;
     this.composeRequest += 1;
+  }
+
+  /**
+   * What the last move did, said by the one page-level live region (+layout.svelte) in every vibe:
+   * a row or tile that moved changes column or group and unmounts, so it cannot say it itself.
+   * Cleared first, then set after a tick, so the same move twice is announced twice.
+   */
+  moveSaid = $state('');
+  async announceMove(text: string): Promise<void> {
+    this.moveSaid = '';
+    await tick();
+    this.moveSaid = text;
   }
   error = $state<string | null>(null);
 
@@ -111,17 +155,10 @@ class AppStore {
   // navigation + view
   view = $state<View>('board');
   listGroupBy = $state<ListGroupBy>('stage');
-  filters = $state<CardFilters>({
-    states: [],
-    owners: [],
-    minPriority: null,
-    needsReview: false,
-    live: false,
-    overBudget: false,
-    labels: [],
-    showArchived: false,
-    projectId: null,
-  });
+  listSort = $state<ListSort>({ key: 'priority', ascending: true });
+  /** The card the Move dialog is open for (SP-Dlg-Move, drawn by Task 37); null when closed. */
+  moveCardId = $state<string | null>(null);
+  filters = $state<CardFilters>(noFilters());
 
   // overlays
   openCardId = $state<string | null>(null);
@@ -137,6 +174,19 @@ class AppStore {
    * closes it: choosing a screen does, and so should anything that navigates.
    */
   cmdkOpen = $state(false);
+  /**
+   * Every card in the workspace waiting on a person (`GET /v1/stale?attention=1`), for the shell's
+   * Operate count. Workspace-wide on purpose: the count says "someone needs you", wherever.
+   */
+  attention = $state<StaleCard[]>([]);
+  /** The Filter cards dialog (`plan/FilterDialog.svelte`); every shell's Filter button opens it. */
+  filterOpen = $state(false);
+  /** The board switcher; the board name in every shell opens it. */
+  boardSwitcherOpen = $state(false);
+  /** When the board was last known to be current: a snapshot arrived or the feed spoke. */
+  syncedAt = $state<Date | null>(null);
+  #attentionLoadedAt = 0;
+  #attentionTimer: ReturnType<typeof setTimeout> | undefined;
 
   #socket: WebSocket | undefined;
   /**
@@ -216,12 +266,9 @@ class AppStore {
   referencesForCard(id: string): Reference[] {
     return this.board?.references.filter((r) => r.cardId === id) ?? [];
   }
-  /** The "Needs You" triage queue: cards at a pending gate or question, over budget, or failed. */
-  needsYou(): Card[] {
-    const cards = this.board?.cards ?? [];
-    return cards.filter(
-      (c) => this.gateForCard(c.id) || this.elicitationForCard(c.id) || c.overBudget || c.state === 'failed',
-    );
+  /** The board's cards waiting on a person, as attention rows — one rule for every count. */
+  needsYou(): AttentionItem[] {
+    return this.board ? itemsFromBoard(this.board, this.agents) : [];
   }
 
   // ---- actions ----
@@ -238,23 +285,45 @@ class AppStore {
    * rather than erroring. Stale links are the normal case: a gate lives in a
    * Matrix room forever, and the board it names can be deleted long after.
    */
-  async init(preferred?: { boardId?: string | null; cardId?: string | null }): Promise<void> {
-    /**
-     * A 401 anywhere means the session this tab is holding is gone, whatever it decided at boot.
-     *
-     * Without this the app decides `authState` once and never revisits it, so an expired session
-     * presents as a board that stopped updating and buttons that do nothing — the failure is
-     * total and says nothing, which is the worst shape a failure can have. The socket is closed
-     * too: reconnecting a dead session forever would keep the board looking merely offline.
-     */
-    setUnauthorizedHandler(() => {
-      if (this.authState === 'signed-out') return;
-      this.authState = 'signed-out';
-      this.user = null;
-      this.#closeSocket();
-    });
+  init(preferred?: { boardId?: string | null; cardId?: string | null }): Promise<void> {
+    return this.markBusy(this.#init(preferred));
+  }
+
+  #watchingVisibility = false;
+
+  /**
+   * A 401 anywhere means the session this tab holds has lapsed. It is renewed quietly first, and
+   * only if that fails does the app ask the person to sign in. The person, the route and any open
+   * card stay as they are: the old "any 401 → signed out → Landing" path is gone.
+   */
+  watchAuth(): void {
+    setUnauthorizedHandler(() => auth.noteUnauthorized());
+    auth.configure({ restore: () => this.#restore(), onExpired: () => this.#closeSocket() });
+    if (!this.#watchingVisibility && typeof document !== 'undefined') {
+      this.#watchingVisibility = true;
+      // Signed in again in another tab: back to work without a click.
+      document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState !== 'visible' || auth.state !== 'expired') return;
+        void getMe().then(async (me) => { if (me) { auth.resolved(); await this.#restore(); } });
+      });
+    }
+  }
+
+  async #restore(): Promise<boolean> {
+    const me = await getMe();
+    if (!me) return false;
+    this.user = me;
+    await this.refresh();
+    if (this.boardId) this.#connect(this.boardId);
+    return true;
+  }
+
+  async #init(preferred?: { boardId?: string | null; cardId?: string | null }): Promise<void> {
+    this.watchAuth();
     try {
       this.user = await getMe();
+      // A session cookie that lapsed while the tab was closed: one quiet renewal before Landing.
+      if (!this.user && (await renewSession()).ok) this.user = await getMe();
       if (!this.user) {
         this.authState = 'signed-out';
         return;
@@ -315,7 +384,35 @@ class AppStore {
     }
   }
 
-  async openBoard(id: string): Promise<void> {
+  /** Read the workspace's attention now. A failed read keeps the last answer. */
+  async loadAttention(): Promise<void> {
+    this.#attentionLoadedAt = Date.now();
+    try {
+      this.attention = (await listAttention()).cards;
+    } catch {
+      /* best-effort: a count that is a little stale beats one that vanishes */
+    }
+  }
+
+  /**
+   * Load the attention now when the last load is over a second old, otherwise once, a second
+   * after it. A burst of feed events costs two reads, not one per event.
+   */
+  scheduleAttention(): Promise<void> | void {
+    const wait = this.#attentionLoadedAt + ATTENTION_COALESCE_MS - Date.now();
+    if (wait <= 0) return this.loadAttention();
+    if (this.#attentionTimer !== undefined) return;
+    this.#attentionTimer = setTimeout(() => {
+      this.#attentionTimer = undefined;
+      void this.loadAttention();
+    }, wait);
+  }
+
+  openBoard(id: string): Promise<void> {
+    return this.markBusy(this.#openBoard(id));
+  }
+
+  async #openBoard(id: string): Promise<void> {
     this.boardId = id;
     this.needsBoard = false;
     localStorage.setItem(BOARD_KEY, id);
@@ -348,6 +445,7 @@ class AppStore {
     const generation = this.#socketGeneration;
     const sock = openBoardSocket(boardId, (event) => {
       this.#lastMessageAt = Date.now();
+      this.syncedAt = new Date();
       void this.refresh();
       // Fan the event out to whoever is watching one card. The board snapshot that `refresh`
       // reloads does not carry activities, so without this the open card learns nothing.
@@ -434,14 +532,21 @@ class AppStore {
     if (id !== this.boardId) await this.openBoard(id);
   }
 
-  async refresh(): Promise<void> {
+  refresh(): Promise<void> {
+    return this.markBusy(this.#refresh());
+  }
+
+  async #refresh(): Promise<void> {
     if (!this.boardId) return;
     try {
       this.board = await getBoard(this.boardId);
+      this.syncedAt = new Date();
       this.notifications = await getNotifications(this.boardId);
     } catch (e) {
-      this.error = String(e);
+      // While recovery owns a lapsed session, the toast or the dialog says so; the error bar stays quiet.
+      if (auth.state === 'ok') this.error = String(e);
     }
+    await this.scheduleAttention();
     // Best-effort, same as openBoard: the label catalogue used to load ONLY there, so a label
     // created (or renamed) after board load never updated `app.labels` — the drawer's editor then
     // resolved a stale catalogue against a fresher card and could silently wipe labels off a card
@@ -458,39 +563,49 @@ class AppStore {
   }
 
   /**
-   * Queue a card.
-   *
-   * `detail` is optional because the one-line dispatch is a real and common act — but the API has
-   * always accepted priority and a spec, and the compose form captured neither, so a card could
-   * only ever be created bare and then edited. Everything the drawer can set, the compose form can
-   * now set at creation.
+   * Queue a card, with everything the composer holds. `boardId` may name another board: the card
+   * goes there and this board does not navigate. True when the card was created; on failure `error`
+   * says why and the composer stays open.
    */
-  async dispatchCard(title: string, detail?: { priority?: number; description?: string; due?: string }): Promise<void> {
-    if (!this.boardId || title.trim() === '') return;
+  async dispatchCard(
+    title: string,
+    detail: { priority?: number; description?: string; due?: string; stageKey?: string; labelIds?: string[]; projectId?: string | null; boardId?: string | null } = {},
+  ): Promise<boolean> {
+    const boardId = detail.boardId ?? this.boardId;
+    if (!boardId || title.trim() === '') return false;
     try {
       const spec: Record<string, unknown> = {};
-      if (detail?.description && detail.description.trim() !== '') spec.description = detail.description.trim();
-      // The due date is `dueAt`, a first-class field on `createCard` — never `spec.due`. Two
-      // sources of truth for one date is the condition the `due_at` column exists to end.
-      await createCard(this.boardId, title.trim(), {
-        priority: detail?.priority,
+      if (detail.description && detail.description.trim() !== '') spec.description = detail.description.trim();
+      // The due date is `dueAt`, a first-class field on `createCard` — never `spec.due`.
+      await createCard(boardId, title.trim(), {
+        priority: detail.priority,
         spec: Object.keys(spec).length > 0 ? spec : undefined,
-        dueAt: detail?.due && detail.due.trim() !== '' ? detail.due.trim() : undefined,
+        dueAt: detail.due && detail.due.trim() !== '' ? detail.due.trim() : undefined,
+        stageKey: detail.stageKey || undefined,
+        labelIds: detail.labelIds?.length ? detail.labelIds : undefined,
+        projectId: detail.projectId ?? undefined,
       });
-      await this.refresh();
+      this.error = null;
+      if (boardId === this.boardId) await this.refresh();
+      return true;
     } catch (e) {
-      this.error = String(e);
+      this.error = String(e instanceof Error ? e.message : e);
+      return false;
     }
   }
 
   async moveCard(cardId: string, toStageKey: string): Promise<void> {
     if (!this.boardId) return;
+    const title = this.cardById(cardId)?.title ?? 'The card';
+    const stage = this.board?.stages.find((s) => s.key === toStageKey)?.name ?? toStageKey;
     const res = await moveCard(this.boardId, cardId, toStageKey);
     if (!res.ok) {
       const body = (await res.json().catch(() => null)) as { error?: { message?: string } } | null;
       this.error = body?.error?.message ?? `Move failed (${res.status})`;
+      void this.announceMove(`${title} was not moved to ${stage}. ${this.error}`);
     } else {
       this.error = null;
+      void this.announceMove(`${title} moved to ${stage}`);
     }
     await this.refresh();
   }
@@ -528,6 +643,12 @@ class AppStore {
     }
   }
 
+  openMoveDialog(cardId: string): void {
+    this.moveCardId = cardId;
+  }
+  closeMoveDialog(): void {
+    this.moveCardId = null;
+  }
   openCard(id: string): void {
     this.openCardId = id;
   }
@@ -545,6 +666,8 @@ class AppStore {
     // would leave a timer that reopens one after the component that owned it is gone.
     this.#closeSocket();
     this.connected = false;
+    if (this.#attentionTimer !== undefined) clearTimeout(this.#attentionTimer);
+    this.#attentionTimer = undefined;
   }
 
   /**
@@ -565,3 +688,8 @@ class AppStore {
 }
 
 export const app = new AppStore();
+
+// Dev builds only: the pixel suite re-reads the board on demand instead of waiting for a poll.
+if (import.meta.env.DEV && typeof window !== 'undefined') {
+  (window as unknown as { __spDev: { refresh: () => Promise<void> } }).__spDev = { refresh: () => app.refresh() };
+}

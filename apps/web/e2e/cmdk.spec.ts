@@ -3,7 +3,8 @@ import { test, expect } from '@playwright/test';
 // The command palette is mounted in the board-ready shell, so each test needs a board and must wait
 // for the shell to render before pressing ⌘K/Ctrl-K (matches board.spec / nav.spec setup).
 const BOARD_KEY = 'superpipeline.boardId';
-const API = 'http://localhost:8787';
+import { PORTS } from '../scripts/ports';
+const API = PORTS.apiUrl;
 const TENANT = { 'X-Tenant-Id': 'tnt_dev', 'Content-Type': 'application/json' };
 const DEFAULT_STAGES = [
   { key: 'backlog', name: 'Backlog', order: 0 },
@@ -48,9 +49,8 @@ test('palette filters results as user types', async ({ page }) => {
   const input = page.getByPlaceholder(/Jump to a card/i);
   await expect(input).toBeVisible();
   await input.fill('Operate');
-  // Scoped to the palette: "Operate" is also a rail destination, and an unscoped match is
-  // ambiguous rather than wrong.
-  await expect(page.getByRole('dialog').getByText('Operate')).toBeVisible();
+  // Scoped to the palette's rows: "Operate" is also a rail destination, and vibekit marks the match.
+  await expect(page.getByRole('dialog').getByRole('option', { name: /^Operate/ })).toBeVisible();
 });
 
 test('palette shows actions group with navigation items', async ({ page }) => {

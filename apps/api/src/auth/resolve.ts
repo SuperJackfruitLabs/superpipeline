@@ -39,6 +39,13 @@ export interface UserPrincipal {
    * "not a member" must not resolve to the weakest role that can still see the board.
    */
   role: Role | null;
+  /**
+   * The surface this caller came through, when the credential says: `matrix` for a hub token or a
+   * delegated (`act`) plane token, `web` for a plane token held by the app itself. Absent for a
+   * session cookie or dev headers, which `viaFor` reads as `web`. Recorded on a gate decision so a
+   * later conflict can say where it was decided.
+   */
+  via?: 'matrix' | 'web';
   name?: string;
   login?: string;
   avatarUrl?: string;
@@ -110,6 +117,16 @@ function bearer(request: Request): string | null {
 }
 
 /** Resolve the human behind a request (session cookie, or dev headers). */
+/**
+ * The surface a request came through, from WHO is calling and never from anything the caller
+ * wrote: an agent or API credential is `api`, a hub token (or delegated plane token) is `matrix`,
+ * and a browser session, the app's own token or dev headers are `web`.
+ */
+export function viaFor(user: Pick<UserPrincipal, 'via'> | null | undefined, agent: unknown): 'matrix' | 'web' | 'api' {
+  if (agent) return 'api';
+  return user?.via ?? 'web';
+}
+
 export async function resolveUser(request: Request, env: Env): Promise<UserPrincipal | null> {
   const token = readSessionToken(request);
   if (token && env.SESSION_SECRET) {
@@ -132,7 +149,7 @@ export async function resolveUser(request: Request, env: Env): Promise<UserPrinc
     // Browsers can't set headers on a WebSocket upgrade, so the live feed passes ?tenant= instead.
     const tenantId = request.headers.get('X-Tenant-Id') ?? new URL(request.url).searchParams.get('tenant');
     if (tenantId && tenantId.trim() !== '') {
-      const userId = request.headers.get('X-User-Id') ?? 'usr_dev';
+      const userId = request.headers.get('X-User-Id') ?? new URL(request.url).searchParams.get('user') ?? 'usr_dev';
       // Dev headers are already a FULL credential for the tenant by construction (that is why
       // they are opt-in and absent from wrangler.jsonc), so a workspace with NO members at all —
       // a bare dev or test tenant, which nothing in dev creates memberships for — grants the top
@@ -141,10 +158,13 @@ export async function resolveUser(request: Request, env: Env): Promise<UserPrinc
       // But once a workspace HAS members, the dev header must name one of them. Otherwise the
       // fallback would quietly outrank the roles it is meant to be standing in for, and every
       // role test would pass by not being applied.
+      // The pixel fixture names its person (users.name); without this /auth/me has no name to show.
+      const named = await env.DB.prepare(`SELECT name FROM users WHERE id = ?`).bind(userId).first<{ name: string | null }>();
+      const name = named?.name ?? undefined;
       const role = await roleFor(env.DB, tenantId, userId);
-      if (role) return { userId, tenantId, role };
+      if (role) return { userId, tenantId, role, name };
       const populated = await env.DB.prepare(`SELECT 1 FROM memberships WHERE tenant_id = ? LIMIT 1`).bind(tenantId).first();
-      return { userId, tenantId, role: populated ? null : 'owner' };
+      return { userId, tenantId, role: populated ? null : 'owner', name };
     }
   }
   return null;
@@ -263,9 +283,9 @@ export async function resolveHubUser(request: Request, env: Env): Promise<UserPr
   const linked = await findUserByExternal(env.DB, 'agentpod', claims.sub);
   if (linked) {
     const role = await roleFor(env.DB, tenantId, linked.id);
-    return { userId: linked.id, tenantId, role: role ?? 'member', mayDispatch: claims.mayDispatch ?? [] };
+    return { userId: linked.id, tenantId, role: role ?? 'member', mayDispatch: claims.mayDispatch ?? [], via: 'matrix' };
   }
-  return { userId: claims.sub, tenantId, role: 'member', mayDispatch: claims.mayDispatch ?? [] };
+  return { userId: claims.sub, tenantId, role: 'member', mayDispatch: claims.mayDispatch ?? [], via: 'matrix' };
 }
 
 /**

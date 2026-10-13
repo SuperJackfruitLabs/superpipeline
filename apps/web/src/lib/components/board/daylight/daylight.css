@@ -1,0 +1,73 @@
+/* Ported verbatim from e2e/reference/mockups/SP-Board-Daylight.html (prefixes dl-) by scripts/pixel/extract-css.mjs. */
+/* Every board rule is scoped to the board's own roots (.dl-scope: the band and the board), so none reaches portaled UI (a Drawer, a Menu, a Dialog). */
+/* A rule inside @scope reaches only the root's descendants; the roots themselves (.dl-band, .dl-board) are :scope. */
+@scope (.dl-scope) {
+  :scope.dl-band { position: relative; display: flex; flex-wrap: wrap; align-items: center; gap: 12px 24px; margin: 0 16px; padding: 14px 4px 18px; border-top: 1px solid color-mix(in oklch, var(--vk-color-surface) 50%, transparent); }
+  .dl-greet { margin: 0; font-family: var(--vk-font-display); font-size: 22px; font-weight: 700; letter-spacing: -0.01em; }
+  .dl-crew { display: flex; align-items: center; gap: 10px; font-size: 14px; }
+  .dl-crew ul { display: flex; gap: 6px; margin: 0; padding: 0; list-style: none; }
+  .dl-crew li { display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px 3px 3px; border-radius: var(--vk-radius-pill); background: color-mix(in oklch, var(--vk-color-surface) 70%, transparent); font-weight: 600; }
+  .dl-jump { margin-left: auto; font-size: 14px; font-weight: 600; }
+  :scope.dl-board { position: relative; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1.15fr) minmax(0, 1fr) 60px 60px minmax(0, 1fr); gap: 14px; padding: 20px 4px 28px; align-items: start; }
+  .dl-lane { position: relative; display: flex; flex-direction: column; gap: 10px; min-width: 0; padding: 8px; border-radius: var(--vk-radius-md); background: var(--vk-color-raised); }
+  .dl-lane:not(:last-child)::after, .dl-strip:not(:last-child)::after { content: ""; position: absolute; top: 22px; right: -12px; width: 10px; height: 10px; border-top: 2px solid var(--vk-color-faint); border-right: 2px solid var(--vk-color-faint); transform: rotate(45deg); }
+  .dl-lanehead { display: flex; flex-direction: column; gap: 2px; padding: 2px 4px 4px; }
+  .dl-lanehead h2 { display: flex; align-items: baseline; gap: 8px; margin: 0; font-family: var(--vk-font-display); font-size: 17px; font-weight: 700; }
+  .dl-count { font: 600 14px/1 var(--vk-font-mono); color: var(--vk-color-muted); }
+  .dl-blocked { display: inline-flex; align-items: center; gap: 4px; font-size: 13px; font-weight: 600; color: var(--vk-color-muted); }
+  .dl-owner { font-size: 13px; color: var(--vk-color-muted); overflow-wrap: anywhere; }
+  .dl-strip { position: relative; display: flex; flex-direction: column; align-items: center; gap: 10px; width: 60px; min-height: 260px; padding: 12px 0; border: 2px dashed var(--vk-color-line); border-radius: var(--vk-radius-md); background: transparent; color: var(--vk-color-muted); cursor: pointer; }
+  .dl-strip:hover { background: var(--vk-color-raised); color: var(--vk-color-text); }
+  .dl-strip .v { writing-mode: vertical-rl; font-family: var(--vk-font-display); font-weight: 700; font-size: 15px; color: var(--vk-color-text); }
+  .dl-strip .n { font: 600 13px/1 var(--vk-font-mono); }
+  .dl-strip .gate { writing-mode: vertical-rl; font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--vk-color-muted); }
+  .dl-strip .owner { writing-mode: vertical-rl; font-size: 12px; color: var(--vk-color-muted); }
+  .dl-tile { position: relative; display: flex; flex-direction: column; gap: 9px; padding: 12px 10px 12px 13px; border-radius: var(--vk-radius-sm); background: var(--vk-color-surface); box-shadow: 0 var(--vk-lift) 0 var(--vk-color-ground); overflow: visible; }
+  .dl-tile::before { content: ""; position: absolute; left: 0; top: 10px; bottom: 10px; width: 4px; border-radius: 0 4px 4px 0; }
+  .dl-tile.p1::before { background: var(--vk-color-signal); }
+  .dl-tile.p2::before { background: var(--vk-color-primary); }
+  .dl-tile.needs { box-shadow: inset 0 0 0 2px var(--vk-color-signal), 0 var(--vk-lift) 0 var(--vk-color-ground); }
+  .dl-tile.focused { outline: 3px solid var(--vk-color-text); outline-offset: 3px; }
+  .dl-tile h3 { margin: 0; font-size: 15.5px; line-height: 1.35; font-weight: 700; padding-right: 64px; overflow-wrap: anywhere; }
+  .dl-title { all: unset; cursor: pointer; }
+  .dl-title::after { content: ""; position: absolute; inset: 0; border-radius: var(--vk-radius-sm); }
+  .dl-title:focus-visible::after { outline: 3px solid var(--vk-color-text); outline-offset: 2px; }
+  .dl-move { position: absolute; z-index: 2; top: 6px; right: 6px; display: inline-flex; align-items: center; gap: 4px; min-height: 36px; padding: 0 8px; border: 0; border-radius: var(--vk-radius-sm); background: transparent; color: var(--vk-color-muted); font-size: 13px; font-weight: 600; cursor: pointer; }
+  .dl-move:hover { background: var(--vk-color-raised); color: var(--vk-color-text); }
+  .dl-chips { position: relative; z-index: 1; display: flex; flex-wrap: wrap; gap: 5px; }
+  .dl-chip { display: inline-flex; align-items: center; gap: 4px; padding: 1px 9px; border-radius: var(--vk-radius-pill); background: var(--vk-color-raised); color: var(--vk-color-muted); font-size: 12.5px; font-weight: 600; }
+  .dl-chip.block { background: var(--vk-color-bg); color: var(--vk-color-text); box-shadow: inset 0 0 0 1px var(--vk-color-line); }
+  .dl-ref { position: relative; z-index: 1; display: flex; align-items: flex-start; gap: 6px; padding: 6px 9px; border-radius: 8px; background: var(--vk-color-bg); font: 12px/1.45 var(--vk-font-mono); color: var(--vk-color-muted); overflow-wrap: anywhere; }
+  .dl-meta { position: relative; z-index: 1; display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; font-size: 13.5px; }
+  .dl-who { display: inline-flex; align-items: center; gap: 7px; font-weight: 700; }
+  .dl-mood { font-weight: 600; color: var(--vk-color-muted); }
+  .dl-mood.needs { color: var(--vk-color-signal-text); }
+  .dl-asked { display: inline-flex; align-items: center; gap: 5px; padding: 1px 8px 1px 2px; border-radius: var(--vk-radius-pill); background: var(--vk-mood-thinking); color: var(--vk-face-ink); font-size: 12.5px; font-weight: 600; }
+  .dl-due { display: inline-flex; align-items: center; gap: 4px; font-size: 13px; font-weight: 700; color: var(--vk-color-signal-text); }
+  .dl-act { position: relative; z-index: 1; display: flex; flex-wrap: wrap; gap: 8px; min-width: 0; }
+  .dl-act .vk-button { max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
+  .dl-peek { position: absolute; z-index: 10; top: -6px; left: calc(100% + 18px); width: 380px; display: flex; flex-direction: column; gap: 14px; padding: 18px 18px 16px; border-radius: var(--vk-radius-md); background: var(--vk-color-surface); color: var(--vk-color-text); box-shadow: 0 0 0 1px var(--vk-color-line), 0 18px 48px color-mix(in oklch, var(--vk-color-text) 22%, transparent); }
+  .dl-peek::before { content: ""; position: absolute; left: -8px; top: 26px; width: 14px; height: 14px; background: var(--vk-color-surface); transform: rotate(45deg); box-shadow: -1px 1px 0 var(--vk-color-line); }
+  .dl-peek .eyebrow { display: flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--vk-color-muted); }
+  .dl-peek h3 { margin: 0; font-family: var(--vk-font-display); font-size: 19px; line-height: 1.25; }
+  .dl-say { display: flex; gap: 12px; align-items: flex-start; }
+  .dl-bubble { flex: 1; min-width: 0; padding: 10px 12px; border-radius: 4px var(--vk-radius-md) var(--vk-radius-md) var(--vk-radius-md); background: var(--vk-color-signal-wash); color: var(--vk-color-text); font-size: 14.5px; line-height: 1.5; overflow-wrap: anywhere; }
+  .dl-bubble .who { display: block; margin-bottom: 4px; font-weight: 700; font-size: 13px; color: var(--vk-color-signal-text); }
+  .dl-clamp { display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; }
+  .dl-peekfoot { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+  .dl-hint { margin-left: auto; font-size: 12.5px; color: var(--vk-color-faint); }
+  .dl-close { position: absolute; top: 8px; right: 8px; }
+
+  /* Drop target while a tile is dragged over a lane or a strip (was the ring on the pre-sweep lane). */
+  .dl-lane[data-over], .dl-strip[data-over] { box-shadow: inset 0 0 0 2px var(--vk-color-primary); }
+  /* An expanded empty lane's collapse control sits at the end of its head. */
+  .dl-lanehead { position: relative; }
+  .dl-collapse { position: absolute; top: 4px; right: 4px; }
+  .dl-collapse svg { transform: rotate(180deg); }
+  /* The reference's `.dy-app` sets 16px / 1.45 for everything under it; the app's root is 17px / 1.5. */
+  :scope.dl-band, :scope.dl-board { font-size: 16px; line-height: 1.45; }
+  /* The reference's inline glyphs carry flex: 0 0 auto; the shared Icon does not, and a flex row would squeeze it. */
+  .dl-tile .vk-icon, .dl-lanehead .vk-icon, .dl-peek .vk-icon { flex: 0 0 auto; }
+  /* The reference's link has the user agent's underline; the app's base styles remove it. */
+  .dl-jump { text-decoration: underline; }
+}

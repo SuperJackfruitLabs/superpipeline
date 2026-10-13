@@ -1,77 +1,50 @@
+<!-- apps/web/src/lib/components/board/layouts/BoardQuiet.svelte -->
 <script lang="ts">
-  /** Quiet: the board as one plain list, grouped by what needs a decision (spec §5.1). Names only, no faces, no motion. */
-  import { app } from '$lib/stores/app.svelte';
-  import { ageLabel } from '$lib/age';
-  import { leadText } from '$lib/copy';
-  import CardFacts from '../CardFacts.svelte';
-  import CardMoveMenu from '../CardMoveMenu.svelte';
-  import StageList from '../StageList.svelte';
-  import { groupByUrgency, type CardSummary, type Urgency } from '../card-summary';
-  import { cardKeys, openLabel } from '../open-label';
+  /** Quiet desktop board: one reading column (SB §4.3). The shell's main is the page's one landmark. */
+  import '../quiet/quiet-board.css';
+  import { quietBlocks, quietLede, quietStageRow, quietSub } from '../board-words';
+  import QuietItem from '../quiet/QuietItem.svelte';
   import type { BoardLayoutProps } from './types';
 
-  let { summaries, stages: stageSummaries, vibe, boardName, cardCount, onCompose }: BoardLayoutProps = $props();
-
-  const HEADINGS: Record<Urgency, string> = {
-    needs: 'Needs your decision',
-    working: 'In progress',
-    queued: 'Waiting to start',
-    done: 'Done',
-    closed: 'Closed',
-  };
-  const groups = $derived(groupByUrgency(summaries));
-  const stages = $derived([...(app.board?.stages ?? [])].sort((a, b) => a.order - b.order));
-
-  let menus = $state<Record<string, boolean>>({});
-  let movers = $state<Record<string, ReturnType<typeof CardMoveMenu> | undefined>>({});
-  const keys = (e: KeyboardEvent, s: CardSummary) =>
-    cardKeys(e, { open: () => app.openCard(s.id), toggleMove: () => (menus[s.id] = !(menus[s.id] ?? false)), step: (d) => movers[s.id]?.step(d) });
-
-  const meta = (s: CardSummary) => [s.delegate ? s.delegate.name : 'nobody', s.stageName, ageLabel(s.ageHours)].filter(Boolean).join(' · ');
-
-  // The visible word is short; the accessible name is the one every vibe shares, and always
-  // contains the visible word, so speech input can say what it sees (WCAG 2.5.3).
-  const action = (s: CardSummary) =>
-    s.questionFrom ? { text: 'Answer', name: `⚑ Answer ${s.questionFrom}` }
-    : s.gatePending ? { text: 'Review', name: '⚑ Review' }
-    : { text: 'Open', name: `Open ${s.title}` };
+  let { model, onCompose }: BoardLayoutProps = $props();
+  let showAll = $state<Record<string, boolean>>({});
+  const blocks = $derived(quietBlocks(model));
 </script>
 
-<div class="quiet-board mx-auto max-w-[760px] px-4 py-6">
-  <header class="pb-2">
-    <h1 class="text-2xl font-semibold">{boardName}</h1>
-    <p class="text-muted-foreground">Superpipeline · {cardCount} cards</p>
-    <button type="button" class="tap mt-2 underline underline-offset-2" onclick={onCompose}>Write a new card</button>
+<div class="qt">
+  <header>
+    <h2 class="qt-title">{model.boardName}</h2>
+    <p class="qt-sub">{quietSub(model.counts.all, model.counts.needs)}</p>
+    <p class="qt-lede">{quietLede(model)}</p>
+    <button class="qt-newcard" type="button" onclick={onCompose}>Write a new card</button>
   </header>
-
-  {#each groups as g (g.urgency)}
-    <section aria-labelledby="qb-{g.urgency}" class="mt-8">
-      <h2 id="qb-{g.urgency}" class="text-lg font-semibold">{HEADINGS[g.urgency]} ({g.cards.length})</h2>
-      {#if g.cards.length === 0}
-        <p class="text-muted-foreground mt-2">None.</p>
-      {:else}
-        <ul class="mt-2">
-          {#each g.cards as s (s.id)}
-            {@const act = action(s)}
-            <li class="border-border relative border-b py-3 pr-12 {g.urgency === 'needs' ? 'border-l-[5px] border-l-signal pl-3.5' : ''}" aria-labelledby="qb-t-{s.id}">
-              <h3 id="qb-t-{s.id}" class="font-semibold">
-                <button type="button" class="hit text-left hover:underline" aria-label={openLabel(s)} data-card-open={s.id} onclick={() => app.openCard(s.id)} onkeydown={(e) => keys(e, s)}>{s.title}</button>
-              </h3>
-              <p class="text-muted-foreground text-sm">{meta(s)}</p>
-              <p class="text-sm">{leadText(s.lead, vibe)}</p>
-              <CardFacts {s} tone="text" />
-              {#if s.archived}<p class="text-muted-foreground text-sm">archived</p>{/if}
-              <button type="button" class="tap mt-1 underline underline-offset-2" aria-label={act.name} onclick={() => app.openCard(s.id)}>{act.text}</button>
-              <CardMoveMenu card={s.card} {stages} visible bind:open={() => menus[s.id] ?? false, (v) => (menus[s.id] = v)} bind:this={movers[s.id]} />
-            </li>
-          {/each}
+  {#each blocks as b, i (i)}
+    {#if b.kind === 'zero'}
+      <ul class="qt-zero" aria-label={b.aria}>
+        {#each b.labels as label (label)}<li><h2>{label} (0)</h2><span>None.</span></li>{/each}
+      </ul>
+    {:else}
+      {@const all = showAll[b.urgency] === true}
+      <section aria-labelledby="qt-{b.urgency}">
+        <h2 id="qt-{b.urgency}">{b.label} ({b.total})</h2>
+        {#if b.truncated && !all}<p class="qt-sub" style="margin-top: 4px;">The last 5, newest first.</p>{/if}
+        <ul class="qt-list">
+          {#each all ? b.cards : b.shown as s (s.id)}<QuietItem {s} stages={model.stageDefs} boardId={model.boardId} />{/each}
         </ul>
-      {/if}
-    </section>
+        {#if b.truncated}<button class="qt-more" type="button" aria-expanded={all} onclick={() => (showAll[b.urgency] = !all)}>{all ? 'Show the last 5 only' : b.moreLabel}</button>{/if}
+      </section>
+    {/if}
   {/each}
-
-  <section aria-labelledby="qb-stages" class="mt-8">
-    <h2 id="qb-stages" class="text-lg font-semibold">Stages</h2>
-    <StageList stages={stageSummaries} variant="table" />
+  <section aria-labelledby="qt-stages">
+    <h2 id="qt-stages">Stages</h2>
+    <table class="qt-table">
+      <thead><tr><th scope="col">Stage</th><th scope="col">Cards</th><th scope="col">Who works it</th><th scope="col">Gate</th></tr></thead>
+      <tbody>
+        {#each model.stages as st (st.key)}
+          {@const r = quietStageRow(st)}
+          <tr><td>{r.name}</td><td class="n">{r.cards}</td><td>{r.who}</td><td>{r.gate}</td></tr>
+        {/each}
+      </tbody>
+    </table>
   </section>
 </div>

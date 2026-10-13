@@ -1,0 +1,1077 @@
+<!doctype html>
+<html data-product="superpipeline" data-accent="product" lang="en" style="touch-action: pan-x pan-y; overscroll-behavior: none; --dc-chrome-unit: 1.0209424083769634px;"><head><link rel="stylesheet" href="_vibekit-0.0.10/vibekit.css" data-vibekit="0.0.10"><style>
+    .sc-placeholder{background:color-mix(in srgb,currentColor 8%,transparent);
+      border:1px solid color-mix(in srgb,currentColor 50%,transparent);
+      border-radius:2px;box-sizing:border-box;overflow:hidden}
+    @keyframes sc-shine{0%{background-position:100% 50%}100%{background-position:0% 50%}}
+    html.sc-dc-streaming .sc-placeholder,
+    html.sc-dc-streaming .sc-interp.sc-missing{position:relative;
+      background:color-mix(in srgb,currentColor 5%,transparent);
+      border-color:transparent}
+    html.sc-dc-streaming .sc-placeholder::before,
+    html.sc-dc-streaming .sc-interp.sc-missing::before{content:'';
+      position:absolute;inset:0;pointer-events:none;
+      background:linear-gradient(90deg,rgba(217,119,87,0) 25%,rgba(247,225,211,.95) 37%,rgba(217,119,87,0) 63%);
+      background-size:400% 100%;animation:sc-shine 1.4s ease infinite}
+    html.sc-dc-streaming .sc-placeholder:nth-child(n+9 of .sc-placeholder)::before,
+    html.sc-dc-streaming .sc-interp.sc-missing:nth-child(n+9 of .sc-interp.sc-missing)::before{animation:none;
+      background:color-mix(in srgb,currentColor 8%,transparent)}
+    .sc-placeholder-error{padding:4px 8px;font:11px/1.4 ui-monospace,monospace;
+      color:color-mix(in srgb,currentColor 70%,transparent);word-break:break-word}
+    .sc-interp.sc-missing{display:inline-block;width:2em;height:1em;overflow:hidden;
+      vertical-align:text-bottom;background:rgba(255,255,255,.3);border:1px solid rgba(0,0,0,.5);
+      border-radius:2px;box-sizing:border-box;color:transparent;
+      user-select:none}
+    .sc-interp.sc-unresolved{font-family:ui-monospace,monospace;font-size:.85em;
+      color:color-mix(in srgb,currentColor 50%,transparent);
+      background:color-mix(in srgb,currentColor 10%,transparent);border-radius:3px;
+      padding:0 3px}
+    .sc-host.sc-has-error{position:relative}
+    .sc-logic-error{position:absolute;top:8px;left:8px;z-index:2147483647;max-width:60ch;
+      padding:6px 10px;background:#b00020;color:#fff;font:12px/1.4 ui-monospace,monospace;
+      border-radius:4px;white-space:pre-wrap;pointer-events:none}
+    /* Mirrors PRINT_BASELINE_CSS in apps/web deck-stage-export.ts — keep both
+       in sync until dc-runtime regains a build step. */
+    @media print {
+      @page { margin: 0.5cm; }
+      figure, table { break-inside: avoid; }
+      #dc-root, #dc-root > .sc-host { height: auto; }
+      *, *::before, *::after {
+        print-color-adjust: exact; -webkit-print-color-adjust: exact;
+        backdrop-filter: none !important; -webkit-backdrop-filter: none !important;
+        animation-delay: -99s !important; animation-duration: .001s !important;
+        animation-iteration-count: 1 !important; animation-fill-mode: both !important;
+        animation-play-state: running !important; transition-duration: 0s !important;
+      }
+    }
+  </style>
+
+
+<meta charset="utf-8">
+<title>Developer Experience board, Daylight phone</title>
+<base href="/appifact/SP-Phone-Board-Daylight.dc.html">
+
+
+
+
+
+<style>x-dc{display:none!important}</style>
+
+<style>@import url("https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&family=Azeret+Mono:wght@400;500;600&family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..600&display=swap");
+
+ 
+
+:root {
+  color-scheme: light;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  --vk-font-body: "Figtree", system-ui, sans-serif;
+  --vk-font-display: "Bricolage Grotesque", system-ui, sans-serif;
+  --vk-font-mono: "Martian Mono", ui-monospace, monospace;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+}
+
+[data-vibe="daylight"][data-theme="light"] {
+  color-scheme: light;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  --vk-font-body: "Figtree", system-ui, sans-serif;
+  --vk-font-display: "Bricolage Grotesque", system-ui, sans-serif;
+  --vk-font-mono: "Martian Mono", ui-monospace, monospace;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+}
+
+[data-vibe="daylight"][data-theme="dark"] {
+  color-scheme: dark;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  --vk-font-body: "Figtree", system-ui, sans-serif;
+  --vk-font-display: "Bricolage Grotesque", system-ui, sans-serif;
+  --vk-font-mono: "Martian Mono", ui-monospace, monospace;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+}
+
+[data-vibe="paper"][data-theme="light"] {
+  color-scheme: light;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  --vk-font-body: "Geist", system-ui, sans-serif;
+  --vk-font-display: "Newsreader", "Georgia", serif;
+  --vk-font-mono: "Martian Mono", ui-monospace, monospace;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+}
+
+[data-vibe="paper"][data-theme="dark"] {
+  color-scheme: dark;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  --vk-font-body: "Geist", system-ui, sans-serif;
+  --vk-font-display: "Newsreader", "Georgia", serif;
+  --vk-font-mono: "Martian Mono", ui-monospace, monospace;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+}
+
+[data-vibe="studio"][data-theme="light"] {
+  color-scheme: light;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  --vk-font-body: "Archivo", system-ui, sans-serif;
+  --vk-font-display: "Archivo", system-ui, sans-serif;
+  --vk-font-mono: "Azeret Mono", ui-monospace, monospace;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  --vk-font-serif: "Newsreader", Georgia, serif;
+
+
+
+
+
+
+
+
+
+
+}
+
+[data-vibe="studio"][data-theme="dark"] {
+  color-scheme: dark;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  --vk-font-body: "Archivo", system-ui, sans-serif;
+  --vk-font-display: "Archivo", system-ui, sans-serif;
+  --vk-font-mono: "Azeret Mono", ui-monospace, monospace;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  --vk-font-serif: "Newsreader", Georgia, serif;
+
+
+
+
+
+
+
+
+
+
+}
+
+[data-vibe="quiet"][data-theme="light"] {
+  color-scheme: light;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  --vk-font-body: "Atkinson Hyperlegible Next", system-ui, sans-serif;
+  --vk-font-display: "Atkinson Hyperlegible Next", system-ui, sans-serif;
+  --vk-font-mono: "Martian Mono", ui-monospace, monospace;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+}
+
+[data-vibe="quiet"][data-theme="dark"] {
+  color-scheme: dark;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  --vk-font-body: "Atkinson Hyperlegible Next", system-ui, sans-serif;
+  --vk-font-display: "Atkinson Hyperlegible Next", system-ui, sans-serif;
+  --vk-font-mono: "Martian Mono", ui-monospace, monospace;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+}
+
+ 
+:root {
+  --vk-text-sm: clamp(0.8125rem, 0.78rem + 0.15vw, 0.875rem);
+  --vk-text-md: clamp(1rem, 0.96rem + 0.2vw, 1.0625rem);
+  --vk-text-lg: clamp(1.25rem, 1.1rem + 0.6vw, 1.5rem);
+  --vk-text-xl: clamp(1.75rem, 1.4rem + 1.6vw, 2.5rem);
+  --vk-focus: 0 0 0 3px var(--vk-color-bg), 0 0 0 5px var(--vk-color-text);
+
+}
+
+html {
+  background: var(--vk-color-bg);
+  color: var(--vk-color-text);
+  font-family: var(--vk-font-body);
+  font-size: 100%;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  font-size: var(--vk-text-md);
+  line-height: 1.5;
+}
+
+:focus-visible {
+   
+  outline: 2px solid var(--vk-color-text);
+  outline-offset: 2px;
+  box-shadow: var(--vk-focus);
+}
+
+ 
+.vk-visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  
+  *, *::before, *::after {
+    animation: none !important;
+    transition-duration: 0ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+[data-motion="reduce"],
+[data-motion="reduce"] *,
+[data-motion="reduce"]::before,
+[data-motion="reduce"]::after,
+[data-motion="reduce"] *::before,
+[data-motion="reduce"] *::after {
+  --vk-motion-fast: 0ms;
+  --vk-motion-base: 0ms;
+  animation: none !important;
+  transition-duration: 0ms !important;
+  scroll-behavior: auto !important;
+}
+
+
+
+@media (forced-colors: active) {
+  :focus-visible {
+    outline: 2px solid CanvasText;
+    box-shadow: none;
+  }
+}
+ 
+
+
+
+
+
+
+
+
+ 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ 
+
+
+
+
+
+
+
+
+
+
+
+
+
+.vk-toast {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--vk-space-3);
+  min-height: var(--vk-target-min);
+  padding: 0 var(--vk-space-5);
+  border-radius: var(--vk-radius-pill);
+  background: var(--vk-color-primary);
+  color: var(--vk-color-primary-fg);
+  font: 600 var(--vk-text-sm) / 1.2 var(--vk-font-body);
+}
+.vk-toast__action { min-height: var(--vk-target-min); border: 0; background: transparent; color: inherit; font: inherit; text-decoration: underline; cursor: pointer; }
+ 
+.vk-toast__action:focus-visible { outline-color: currentColor; box-shadow: var(--vk-focus); }
+
+.vk-sky {
+  --vk-sky-top: var(--vk-sky-noon-top);
+  --vk-sky-bottom: var(--vk-sky-noon-bottom);
+  --vk-sky-text: var(--vk-sky-noon-text);
+  --vk-sky-sun: var(--vk-sky-noon-sun);
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(180deg, var(--vk-sky-top), var(--vk-sky-bottom));
+  color: var(--vk-sky-text);
+}
+.vk-sky[data-phase="dawn"] { --vk-sky-top: var(--vk-sky-dawn-top); --vk-sky-bottom: var(--vk-sky-dawn-bottom); --vk-sky-text: var(--vk-sky-dawn-text); --vk-sky-sun: var(--vk-sky-dawn-sun); }
+.vk-sky[data-phase="morning"] { --vk-sky-top: var(--vk-sky-morning-top); --vk-sky-bottom: var(--vk-sky-morning-bottom); --vk-sky-text: var(--vk-sky-morning-text); --vk-sky-sun: var(--vk-sky-morning-sun); }
+.vk-sky[data-phase="golden"] { --vk-sky-top: var(--vk-sky-golden-top); --vk-sky-bottom: var(--vk-sky-golden-bottom); --vk-sky-text: var(--vk-sky-golden-text); --vk-sky-sun: var(--vk-sky-golden-sun); }
+.vk-sky[data-phase="dusk"] { --vk-sky-top: var(--vk-sky-dusk-top); --vk-sky-bottom: var(--vk-sky-dusk-bottom); --vk-sky-text: var(--vk-sky-dusk-text); --vk-sky-sun: var(--vk-sky-dusk-sun); }
+.vk-sky[data-phase="night"] { --vk-sky-top: var(--vk-sky-night-top); --vk-sky-bottom: var(--vk-sky-night-bottom); --vk-sky-text: var(--vk-sky-night-text); --vk-sky-sun: var(--vk-sky-night-sun); }
+.vk-sky__sun {
+  position: absolute;
+  top: var(--vk-space-5);
+  right: var(--vk-space-6);
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: var(--vk-sky-sun);
+  box-shadow: 0 0 48px 12px color-mix(in oklch, var(--vk-sky-sun) 45%, transparent);
+}
+.vk-sky__content { position: relative; padding: var(--vk-space-5); }
+[data-time="subtle"] .vk-sky { background: color-mix(in oklch, var(--vk-sky-top) 30%, var(--vk-color-bg)); color: var(--vk-color-text); }
+[data-time="subtle"] .vk-sky__sun { display: none; }
+[data-time="off"] .vk-sky { background: var(--vk-color-bg); color: var(--vk-color-text); }
+[data-time="off"] .vk-sky__sun { display: none; }
+[data-vibe="studio"] .vk-sky__sun { width: 10px; height: 10px; box-shadow: 0 0 10px 2px var(--vk-sky-sun); }
+[data-vibe="quiet"] .vk-sky__sun, [data-vibe="paper"] .vk-sky__sun { display: none; }
+
+
+
+
+
+
+
+
+
+
+@media (forced-colors: active) {
+  
+  .vk-toast { border: 1px solid CanvasText; }
+}
+
+ 
+.sl-danger{ white-space: nowrap; } .r .vk-button{ white-space: nowrap; }
+
+ 
+
+
+
+
+
+ 
+a[href*="CardPage"], a[class*="btn"], button[class*="btn"], a[class*="-button"], button[class*="-button"]{ white-space: nowrap; flex-shrink: 0; } .r .vk-button{ white-space: nowrap; flex-shrink: 0; }
+
+ 
+a[href*="CardPage"], a[class*="icon"][style*="width: auto"], button[class*="icon"][style*="width: auto"] { display: inline-flex !important; flex-direction: row !important; align-items: center !important; justify-content: center; gap: 8px; }
+</style>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Azeret+Mono:ital,wght@1,400&amp;display=swap" data-font-variant=""><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Azeret+Mono:ital,wght@1,500&amp;display=swap" data-font-variant=""><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Azeret+Mono:ital,wght@1,600&amp;display=swap" data-font-variant=""><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible+Next:wght@400;700&amp;family=Bricolage+Grotesque:opsz,wght@12..96,400..800&amp;family=Figtree:wght@400..800&amp;family=Geist:wght@400..700&amp;family=Instrument+Sans:wght@400..700&amp;family=Martian+Mono:wght@400..600&amp;family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..600&amp;display=swap" data-dc-tpl="1"><style data-dc-tpl="2">
+body{margin:0}
+.r{width:390px;box-sizing:border-box;background:var(--vk-color-bg);color:var(--vk-color-text);font-family:var(--vk-font-body);font-size:16px;line-height:1.45;display:flex;flex-direction:column}
+.r *,.r *::before,.r *::after{box-sizing:border-box}
+.r h1,.r h2,.r h3,.r h4,.r p,.r ul,.r ol,.r dl,.r dd,.r figure{margin:0}
+.r ul,.r ol{padding:0;list-style:none}
+:where(.r button:where(:not(.vk-button)),.r select,.r textarea,.r input){font:inherit;color:inherit}
+.r a{color:var(--vk-color-text);text-underline-offset:3px}
+.wrap{overflow-wrap:anywhere;min-width:0}
+.mono{font-family:var(--vk-font-mono)}
+.muted{color:var(--vk-color-muted)}
+.ico{width:20px;height:20px;flex:none;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.ib{min-width:44px;min-height:44px;display:inline-flex;align-items:center;justify-content:center;border:0;background:transparent;border-radius:var(--vk-radius-sm);cursor:pointer;color:var(--vk-color-text);padding:0}
+.face{flex:none;display:inline-flex;line-height:0}
+.face svg{border-radius:50%}
+.sr{position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip-path:inset(50%);white-space:nowrap;border:0}
+/* shell: Daylight. Top bar sits on the sky; a floating bottom bar */
+.pd-top{position:relative;display:flex;align-items:center;gap:6px}
+.sw{flex:1;min-width:0;display:flex;align-items:center;gap:4px;min-height:48px;border:0;background:transparent;padding:0;color:inherit;font:700 22px/1.1 var(--vk-font-display);letter-spacing:-0.01em;text-align:left;cursor:pointer}
+.sw span{overflow-wrap:anywhere}
+.pd-search{background:var(--vk-color-surface);color:var(--vk-color-text);border-radius:50%;box-shadow:0 var(--vk-lift) 0 var(--vk-color-ground)}
+.nc{display:inline-flex;align-items:center;gap:6px;min-height:44px;padding:0 16px;border:0;border-radius:var(--vk-radius-pill);background:var(--vk-color-primary);color:var(--vk-color-primary-fg);font-weight:700;cursor:pointer;box-shadow:0 var(--vk-lift) 0 var(--vk-color-ground)}
+.pd-sub{position:relative;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.vt{display:inline-flex;gap:2px;padding:3px;border-radius:var(--vk-radius-pill);background:color-mix(in oklch,var(--vk-color-surface) 55%,transparent)}
+.vt button{min-height:44px;padding:0 11px;border:0;border-radius:var(--vk-radius-pill);background:transparent;color:inherit;font-size:15px;font-weight:600;cursor:pointer}
+.vt button[aria-pressed="true"]{background:var(--vk-color-surface);color:var(--vk-color-text);font-weight:700;box-shadow:0 var(--vk-lift) 0 var(--vk-color-ground)}
+.fb{display:inline-flex;align-items:center;gap:6px;min-height:44px;padding:0 12px;border:0;border-radius:var(--vk-radius-pill);background:var(--vk-color-surface);color:var(--vk-color-text);font-size:15px;font-weight:600;cursor:pointer;box-shadow:0 var(--vk-lift) 0 var(--vk-color-ground)}
+.pd-live{margin-left:auto;display:inline-flex;align-items:center;gap:6px;min-height:28px;padding:0 10px;border-radius:var(--vk-radius-pill);background:var(--vk-color-success-wash);color:var(--vk-color-success-text);font-size:13px;font-weight:700}
+.pd-live::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--vk-color-success)}
+.pd-hello{position:relative;display:flex;flex-direction:column;gap:12px;padding-top:8px;border-top:1px solid color-mix(in oklch,var(--vk-color-surface) 50%,transparent)}
+.nav{position:sticky;bottom:12px;z-index:5;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:4px;margin:auto 12px 12px;padding:6px;border-radius:var(--vk-radius-lg);background:var(--vk-color-surface);box-shadow:0 0 0 1px var(--vk-color-line),0 12px 28px -8px var(--vk-color-ground)}
+.nav a{position:relative;min-height:58px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;border-radius:var(--vk-radius-md);font-size:13px;font-weight:600;text-decoration:none;color:var(--vk-color-muted)}
+.nav a[aria-current="page"]{color:var(--vk-color-text);background:var(--vk-color-raised);font-weight:700;box-shadow:inset 0 0 0 2px var(--vk-color-primary)}
+.nav a[aria-current="page"] .ico{fill:currentColor}
+.nav .cnt{position:absolute;top:3px;left:calc(50% + 6px);min-width:20px;height:20px;padding:0 6px;border-radius:var(--vk-radius-pill);background:var(--vk-color-signal-text);color:var(--vk-color-primary-fg);font:800 12px/20px var(--vk-font-body);text-align:center;box-shadow:0 0 0 2px var(--vk-color-surface)}
+.nav .av{width:26px;height:26px;border-radius:50%;display:inline-grid;place-items:center;font-size:10px;font-weight:800;background:var(--vk-mood-resting);color:var(--vk-face-ink)}
+
+.r{font-family:var(--vk-font-body)}
+.greet{position:relative;overflow:hidden;background:linear-gradient(180deg,var(--vk-sky-noon-top),var(--vk-sky-noon-bottom));color:var(--vk-sky-noon-text);margin:8px 8px 0;border-radius:var(--vk-radius-lg);padding:8px 12px 18px;display:flex;flex-direction:column;gap:12px}
+.sun{position:absolute;top:128px;right:-28px;width:80px;height:80px;border-radius:50%;background:var(--vk-sky-noon-sun);box-shadow:0 0 36px 10px color-mix(in oklch,var(--vk-sky-noon-sun) 45%,transparent)}
+.greet h1{font-family:var(--vk-font-display);font-size:26px;line-height:1.15;font-weight:700;padding-right:56px;text-wrap:balance}
+.greet p{font-size:17px;padding-right:56px}
+.crew{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.crew ul{display:flex;gap:6px}
+.crew li{display:flex;line-height:0;border-radius:50%;box-shadow:0 0 0 2px var(--vk-color-surface)}
+.crew small{font-size:14px;color:var(--vk-sky-noon-text)}
+.step{display:flex;flex-wrap:wrap;gap:6px;padding:14px 16px 6px}
+.step a{display:inline-flex;align-items:center;gap:6px;min-height:44px;padding:0 12px;border-radius:var(--vk-radius-pill);background:var(--vk-color-surface);border:1px solid var(--vk-color-line);text-decoration:none;font-size:15px;color:var(--vk-color-text)}
+.step a b{font-family:var(--vk-font-mono);font-size:13px;font-weight:500}
+.step a[aria-current="true"]{background:var(--vk-color-primary);color:var(--vk-color-primary-fg);border-color:var(--vk-color-primary)}
+.step a.needs{background:var(--vk-color-signal-wash);color:var(--vk-color-signal-text);border-color:var(--vk-color-signal);font-weight:700}
+.step a.empty{color:var(--vk-color-muted);border-style:dashed}
+.lane{display:flex;flex-direction:column;gap:12px;padding:16px}
+.lh{display:flex;flex-direction:column;gap:2px}
+.lh h2{font-family:var(--vk-font-display);font-size:20px;font-weight:700;display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
+.lh h2 .n{font-family:var(--vk-font-mono);font-size:14px;font-weight:500;color:var(--vk-color-muted)}
+.lh p{font-size:14px;color:var(--vk-color-muted)}
+.lane.wants{background:var(--vk-color-signal-wash);border-top:2px solid var(--vk-color-signal)}
+.lane.wants .lh h2{color:var(--vk-color-signal-text)}
+.tile{position:relative;display:flex;flex-direction:column;gap:10px;padding:14px 14px 14px 18px;background:var(--vk-color-surface);border-radius:var(--vk-radius-md);border:1px solid var(--vk-color-line);overflow:hidden}
+.tile::before{content:"";position:absolute;left:0;top:0;bottom:0;width:5px;background:transparent}
+.tile.p1::before{background:var(--vk-color-signal)}
+.tile.p2::before{background:var(--vk-color-primary)}
+.trow{display:flex;align-items:center;gap:8px;justify-content:space-between}
+.stg{font-size:13px;color:var(--vk-color-muted);overflow-wrap:anywhere;min-width:0}
+.mv{display:inline-flex;align-items:center;gap:4px;min-height:44px;padding:0 10px;margin:-10px -6px -10px 0;border:0;background:transparent;border-radius:var(--vk-radius-sm);font-size:14px;color:var(--vk-color-muted);cursor:pointer}
+.tt{display:block;width:100%;border:0;background:transparent;padding:0;text-align:left;font-family:var(--vk-font-display);font-size:18px;line-height:1.25;font-weight:650;cursor:pointer;overflow-wrap:anywhere}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{display:inline-flex;align-items:center;gap:5px;min-height:26px;padding:2px 10px;border-radius:var(--vk-radius-pill);background:var(--vk-color-raised);border:1px solid var(--vk-color-line);font-size:13px;color:var(--vk-color-text);max-width:100%;overflow-wrap:anywhere}
+.chip .ico{width:14px;height:14px}
+.chip.ref{font-family:var(--vk-font-mono);font-size:12px;border-radius:var(--vk-radius-sm)}
+.chip.blk{background:var(--vk-color-surface);border-color:var(--vk-color-muted)}
+.bub{display:flex;gap:10px;align-items:flex-start}
+.bub .say{flex:1;min-width:0;background:var(--vk-mood-needs);color:var(--vk-face-ink);border-radius:4px var(--vk-radius-md) var(--vk-radius-md) var(--vk-radius-md);padding:10px 12px;display:flex;flex-direction:column;gap:4px}
+.say .who{font-size:13px;font-weight:700}
+.say p{font-size:15px;line-height:1.45;overflow-wrap:anywhere;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.say button{align-self:flex-start;min-height:32px;border:0;background:transparent;padding:0;font-weight:700;font-size:14px;text-decoration:underline;text-underline-offset:3px;color:var(--vk-face-ink);cursor:pointer}
+.meta{display:flex;flex-wrap:wrap;align-items:center;gap:6px 12px;font-size:14px;color:var(--vk-color-muted)}
+.agent{display:inline-flex;align-items:center;gap:6px;color:var(--vk-color-text)}
+.mood{font-size:13px;color:var(--vk-color-muted)}
+.due{display:inline-flex;align-items:center;gap:4px;color:var(--vk-color-signal-text);font-weight:700}
+.due .ico{width:16px;height:16px}
+.act{display:flex;gap:8px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:44px;padding:0 18px;border-radius:var(--vk-radius-md);font-weight:700;font-size:16px;cursor:pointer;border:0}
+.act .vk-button{flex:1}
+.btn.sec{background:var(--vk-color-surface);color:var(--vk-color-text);box-shadow:inset 0 0 0 2px var(--vk-color-line)}
+.note{font-size:14px;color:var(--vk-color-muted);padding:12px 14px;border:1px dashed var(--vk-color-line);border-radius:var(--vk-radius-md);background:var(--vk-color-surface)}
+.note a{font-weight:700}
+.empties{margin:0 16px 20px;padding:12px 14px;border:1px dashed var(--vk-color-line);border-radius:var(--vk-radius-md);display:flex;flex-direction:column;gap:6px}
+.empties h2{font-size:15px;font-weight:700}
+.empties li{font-size:14px;color:var(--vk-color-muted);overflow-wrap:anywhere}
+.empties li b{color:var(--vk-color-text);font-weight:600}
+[data-theme="dark"] .greet{background:linear-gradient(180deg,var(--vk-sky-dusk-top),var(--vk-sky-dusk-bottom));color:var(--vk-sky-dusk-text)}
+[data-theme="dark"] .sun{background:var(--vk-sky-night-sun);box-shadow:0 0 24px 4px color-mix(in oklch,var(--vk-sky-night-sun) 30%,transparent)}
+[data-theme="dark"] .crew small{color:var(--vk-sky-dusk-text)}
+.sep{height:1px;background:var(--vk-color-line);margin:0 16px}
+</style><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible+Next:ital,wght@1,400&amp;display=swap" data-font-variant=""><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible+Next:ital,wght@1,700&amp;display=swap" data-font-variant=""><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:ital,wght@1,400..800&amp;display=swap" data-font-variant=""><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:ital,wght@1,400..700&amp;display=swap" data-font-variant=""><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Sans:ital,wght@1,400..700&amp;display=swap" data-font-variant=""><style data-dc-editor-style="">body:not([data-dc-editor-overlay-hidden]) [data-dc-editor-hover][data-dc-editor-hover-stroke]:not([data-dc-editor-selected]){filter:drop-shadow(0 0 calc(1*var(--dc-chrome-unit,1px)) color-mix(in srgb,#2a78d6 90%,transparent)) drop-shadow(0 0 calc(2*var(--dc-chrome-unit,1px)) color-mix(in srgb,#2a78d6 55%,transparent))!important;}body:not([data-dc-editor-overlay-hidden]):not([data-dc-editor-proxy="copy"]) [data-dc-editor-dragging],body:not([data-dc-editor-overlay-hidden]):not([data-dc-editor-proxy]) [data-dc-dragging],body[data-dc-editor-brk]:not([data-dc-editor-overlay-hidden]) [data-dc-drag-follower]{outline:calc(2*var(--dc-chrome-unit,1px)) solid #2a78d6!important;outline-offset:calc(-1*var(--dc-chrome-unit,1px))!important;opacity:0.55!important;}body[data-dc-editor-proxy="move"]:not([data-dc-editor-overlay-hidden]) [data-dc-editor-dragging],body[data-dc-editor-proxy="move"]:not([data-dc-editor-overlay-hidden]) [data-dc-dragging],body[data-dc-editor-proxy="move"]:not([data-dc-editor-overlay-hidden]) [data-dc-editor-dragging]>*,body[data-dc-editor-proxy="move"]:not([data-dc-editor-overlay-hidden]) [data-dc-dragging]>*{opacity:0!important;outline:none!important;}[data-dc-editor-drag-proxy],[data-dc-editor-drag-proxy] *{pointer-events:none!important;}body[data-dc-editor-on]:not([data-dc-editor-tool="interact"]) *{cursor:default!important;user-select:none!important;}body[data-dc-editor-on]:not([data-dc-editor-tool="interact"]) :not([data-dc-editor-overlay-root]):not([data-dc-editor-overlay-root] *){pointer-events:auto!important;transition:none!important;animation:none!important;}body[data-dc-editor-on][data-dc-editor-brk]:not([data-dc-editor-overlay-hidden]) [data-dc-editor-dragging]:not([data-dc-editor-overlay-root]) :not([data-dc-editor-overlay-root]),body[data-dc-editor-on][data-dc-editor-brk]:not([data-dc-editor-overlay-hidden]) [data-dc-dragging]:not([data-dc-editor-overlay-root]) :not([data-dc-editor-overlay-root]),body[data-dc-editor-on][data-dc-editor-brk]:not([data-dc-editor-overlay-hidden]) [data-dc-drag-follower]:not([data-dc-editor-overlay-root]),body[data-dc-editor-on][data-dc-editor-brk]:not([data-dc-editor-overlay-hidden]) [data-dc-drag-follower]:not([data-dc-editor-overlay-root]) :not([data-dc-editor-overlay-root]),body[data-dc-editor-move][data-dc-editor-brk]:not([data-dc-editor-overlay-hidden]) [data-dc-editor-dragging]:not([data-dc-editor-overlay-root]) :not([data-dc-editor-overlay-root]),body[data-dc-editor-move][data-dc-editor-brk]:not([data-dc-editor-overlay-hidden]) [data-dc-dragging]:not([data-dc-editor-overlay-root]) :not([data-dc-editor-overlay-root]),body[data-dc-editor-move][data-dc-editor-brk]:not([data-dc-editor-overlay-hidden]) [data-dc-drag-follower]:not([data-dc-editor-overlay-root]),body[data-dc-editor-move][data-dc-editor-brk]:not([data-dc-editor-overlay-hidden]) [data-dc-drag-follower]:not([data-dc-editor-overlay-root]) :not([data-dc-editor-overlay-root]){pointer-events:none!important;}body[data-dc-editor-move] :not([data-dc-editor-overlay-root]):not([data-dc-editor-overlay-root] *){pointer-events:auto!important;transition:none!important;animation-duration:0s!important;animation-delay:0s!important;}body[data-dc-editor-on][data-dc-editor-tool="rect"] *,body[data-dc-editor-on][data-dc-editor-tool="frame"] *,body[data-dc-editor-on][data-dc-editor-tool="grid"] *,body[data-dc-editor-on][data-dc-editor-tool="oval"] *,body[data-dc-editor-on][data-dc-editor-tool="arrow"] *,body[data-dc-editor-on][data-dc-editor-tool="line"] *{cursor:crosshair!important;}body[data-dc-editor-on][data-dc-editor-tool="text"] *{cursor:text!important;}body[data-dc-editor-on][data-dc-editor-tool="draw"] *{cursor:url('data:image/svg+xml,%3Csvg%20xmlns=%22http://www.w3.org/2000/svg%22%20width=%2216%22%20height=%2216%22%20viewBox=%220%200%2016%2016%22%3E%3Cpath%20d=%22M2%2014l1-4%208-8a2.1%202.1%200%200%201%203%203l-8%208-4%201z%22%20fill=%22%23333%22%20stroke=%22%23fff%22%20stroke-width=%221%22/%3E%3C/svg%3E') 1 15, crosshair!important;}body[data-dc-editor-on]:not([data-dc-editor-tool]) [data-drags-parent],body[data-dc-editor-on]:not([data-dc-editor-tool]) [data-drags-parent] *{cursor:grab!important;}body[data-dc-editor-on]:not([data-dc-editor-tool]) [data-drags-parent]:active,body[data-dc-editor-on]:not([data-dc-editor-tool]) [data-drags-parent]:active *{cursor:grabbing!important;}body[data-dc-editor-on] [data-dc-editor-editing][contenteditable][contenteditable],body[data-dc-editor-on] [data-dc-editor-editing][contenteditable][contenteditable] *,body[data-dc-editor-on] [data-dc-editor-svg-editing]{cursor:text!important;}body[data-dc-editor-on] [data-dc-editor-editing="import"]{outline:none!important;}html:not([data-dc-canvas]):has(body[data-dc-editor-on]:not([data-dc-capturing]) .sc-host){background:var(--dc-editor-backdrop,#ededeb);}html:not([data-dc-canvas]) body[data-dc-editor-on]:not([data-dc-capturing]):has(.sc-host){background:var(--dc-editor-backdrop,#ededeb);}html:not([data-dc-canvas]) body[data-dc-editor-on] .sc-host:not(.sc-host .sc-host){min-height:calc(100vh - var(--dc-editor-host-vpad,0px));}html:not([data-dc-canvas]) body[data-dc-editor-on]:not([data-dc-capturing]) .sc-host:not(.sc-host .sc-host){background:var(--dc-editor-host-bg,#fff);}html[data-dc-frameless],html[data-dc-frameless] body[data-dc-editor-on],html[data-dc-frameless] body[data-dc-editor-on] .sc-host:not(.sc-host .sc-host){background:transparent!important;min-height:0!important;}html:has(body[data-dc-capturing]),body[data-dc-capturing]{transition:none!important;}html[data-dc-canvas]{overflow:hidden;}html[data-dc-canvas] body[data-dc-editor-on] .sc-host:not(.sc-host .sc-host)::before{content:"";position:absolute;left:-100000px;top:-100000px;width:200000px;height:200000px;pointer-events:none;background:repeating-linear-gradient(45deg,var(--dc-editor-hatch-ink,rgba(0,0,0,.05)) 0 8px,transparent 8px 16px);clip-path:polygon(0 0,100% 0,100% 50%,50% 50%,50% 100%,0 100%);}</style></head>
+<body>
+<div id="dc-root"><div class="sc-host" data-sc-name="SP-Phone-Board-Daylight"><div data-product="superpipeline" data-accent="product" data-dc-tpl="3" class="r" data-vibe="daylight" data-theme="light" style="background: var(--vk-color-bg); color: var(--vk-color-text); font-family: var(--vk-font-body);"><div data-dc-tpl="4" class="greet"><span data-dc-tpl="5" class="sun" aria-hidden="true"></span><header data-dc-tpl="6" class="pd-top"><button data-dc-tpl="7" class="sw" type="button" aria-haspopup="menu" aria-label="Switch board: Developer Experience"><span data-dc-tpl="8">Developer Experience</span><svg data-dc-tpl="9" class="ico" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path data-dc-tpl="10" d="M6 9l6 6 6-6"></path></svg></button><button data-dc-tpl="11" class="ib pd-search" type="button" aria-label="Search cards, agents and actions (⌘K)"><svg data-dc-tpl="12" class="ico" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle data-dc-tpl="13" cx="11" cy="11" r="7"></circle><path data-dc-tpl="14" d="M20 20l-3.5-3.5"></path></svg></button><button data-dc-tpl="15" class="nc" type="button"><svg data-dc-tpl="16" class="ico" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path data-dc-tpl="17" d="M12 5v14M5 12h14"></path></svg><span data-dc-tpl="18">New card</span></button></header><div data-dc-tpl="19" class="pd-sub"><div data-dc-tpl="20" class="vt" role="group" aria-label="View"><button data-dc-tpl="21" type="button" aria-pressed="true">Board</button><button data-dc-tpl="22" type="button" aria-pressed="false">List</button><button data-dc-tpl="23" type="button" aria-pressed="false">Projects</button></div><button data-dc-tpl="24" class="fb" type="button" aria-haspopup="dialog"><svg data-dc-tpl="25" class="ico" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path data-dc-tpl="26" d="M4 5h16l-6 8v6l-4-2v-4z"></path></svg><span data-dc-tpl="27">Filter</span></button><span data-dc-tpl="28" class="pd-live" role="status">Live</span></div><section data-dc-tpl="29" class="pd-hello" aria-label="Greeting"><h1 data-dc-tpl="30">Good afternoon, Ira.</h1><p data-dc-tpl="31"><strong data-dc-tpl="32">4 cards want you.</strong> Three agents stopped and one card waits in a person's stage.</p><div data-dc-tpl="33" class="crew"><ul data-dc-tpl="34" aria-label="Agents on this board"><li data-dc-tpl="35"><svg data-dc-tpl="36" viewBox="-2 -4 68 70" width="32" height="32" role="img" aria-label="tester-tim, needs you" data-mood="needs"><circle data-dc-tpl="37" cx="32" cy="32" r="30" fill="var(--vk-mood-needs)"></circle><circle data-dc-tpl="38" cx="32" cy="4" r="7" fill="rgb(94 90 156)"></circle><g data-dc-tpl="39" data-eyes="open"><ellipse data-dc-tpl="40" cx="23" cy="28" rx="3.2" ry="3.2" fill="var(--vk-face-ink)"></ellipse><ellipse data-dc-tpl="41" cx="41" cy="28" rx="3.2" ry="3.2" fill="var(--vk-face-ink)"></ellipse></g><path data-dc-tpl="42" d="M24 44 Q32 38 40 44" fill="none" stroke="var(--vk-face-ink)" stroke-width="3" stroke-linecap="round"></path></svg></li><li data-dc-tpl="43"><svg data-dc-tpl="44" viewBox="-2 -4 68 70" width="32" height="32" role="img" aria-label="coder-kai, needs you" data-mood="needs"><circle data-dc-tpl="45" cx="32" cy="32" r="30" fill="var(--vk-mood-needs)"></circle><g data-dc-tpl="46" data-eyes="open"><ellipse data-dc-tpl="47" cx="23" cy="28" rx="3.2" ry="4.2" fill="var(--vk-face-ink)"></ellipse><ellipse data-dc-tpl="48" cx="41" cy="28" rx="3.2" ry="4.2" fill="var(--vk-face-ink)"></ellipse></g><circle data-dc-tpl="49" cx="17" cy="37" r="4" fill="rgb(255 158 138 / 0.5)"></circle><circle data-dc-tpl="50" cx="47" cy="37" r="4" fill="rgb(255 158 138 / 0.5)"></circle><path data-dc-tpl="51" d="M24 44 Q32 38 40 44" fill="none" stroke="var(--vk-face-ink)" stroke-width="3" stroke-linecap="round"></path></svg></li><li data-dc-tpl="52"><svg data-dc-tpl="53" viewBox="-2 -4 68 70" width="32" height="32" role="img" aria-label="error-eric, needs you" data-mood="needs"><circle data-dc-tpl="54" cx="32" cy="32" r="30" fill="var(--vk-mood-needs)"></circle><path data-dc-tpl="55" d="M28 4 Q32 -2 36 4 Q34 8 32 6 Q30 8 28 4Z" fill="rgb(107 74 43)"></path><g data-dc-tpl="56" data-eyes="open"><ellipse data-dc-tpl="57" cx="23" cy="28" rx="4" ry="2.4" fill="var(--vk-face-ink)"></ellipse><ellipse data-dc-tpl="58" cx="41" cy="28" rx="4" ry="2.4" fill="var(--vk-face-ink)"></ellipse></g><circle data-dc-tpl="59" cx="17" cy="37" r="4" fill="rgb(255 158 138 / 0.5)"></circle><circle data-dc-tpl="60" cx="47" cy="37" r="4" fill="rgb(255 158 138 / 0.5)"></circle><path data-dc-tpl="61" d="M24 44 Q32 38 40 44" fill="none" stroke="var(--vk-face-ink)" stroke-width="3" stroke-linecap="round"></path></svg></li><li data-dc-tpl="62"><svg data-dc-tpl="63" viewBox="-2 -4 68 70" width="32" height="32" role="img" aria-label="super-chotu, resting" data-mood="resting"><circle data-dc-tpl="64" cx="32" cy="32" r="30" fill="var(--vk-mood-resting)"></circle><path data-dc-tpl="65" d="M8 22 Q12 4 32 3 Q52 4 56 22 Q44 14 32 15 Q20 14 8 22Z" fill="rgb(35 35 58)"></path><g data-dc-tpl="66" data-eyes="closed"><path data-dc-tpl="67" d="M19 29 Q23 32 27 29 M37 29 Q41 32 45 29" fill="none" stroke="var(--vk-face-ink)" stroke-width="2.6" stroke-linecap="round"></path></g><path data-dc-tpl="68" d="M27 43 Q32 45 37 43" fill="none" stroke="var(--vk-face-ink)" stroke-width="3" stroke-linecap="round"></path></svg></li></ul><small data-dc-tpl="69">tester-tim, coder-kai and error-eric need you</small></div></section></div><nav data-dc-tpl="70" class="step" aria-label="Stages"><a data-dc-tpl="71" href="#wants" class="needs" aria-current="true">Needs you <b data-dc-tpl="72">4</b></a><a data-dc-tpl="73" href="#stage-reported">Reported <b data-dc-tpl="74">1</b></a><a data-dc-tpl="75" href="#stage-reproduce">Reproduce <b data-dc-tpl="76">1</b></a><a data-dc-tpl="77" href="#stage-test">Failing test <b data-dc-tpl="78">3</b></a><a data-dc-tpl="79" href="#stage-fix">Fix <b data-dc-tpl="80">1</b></a><a data-dc-tpl="81" href="#empty" class="empty">Integrate <b data-dc-tpl="82">0</b></a><a data-dc-tpl="83" href="#empty" class="empty">Signed off <b data-dc-tpl="84">0</b></a><a data-dc-tpl="85" href="#stage-shipped">Shipped <b data-dc-tpl="86">1</b></a></nav><section data-dc-tpl="87" class="lane wants" id="wants" aria-labelledby="h-wants"><div data-dc-tpl="88" class="lh"><h2 data-dc-tpl="89" id="h-wants">Needs you <span data-dc-tpl="90" class="n">4</span></h2><p data-dc-tpl="91">From four stages, most urgent first.</p></div><article data-dc-tpl="92" class="tile"><span data-dc-tpl="93" class="sr">Priority 3</span><div data-dc-tpl="94" class="trow"><span data-dc-tpl="95" class="stg">Reproduce · stage 2 of 7 · 2d</span><button data-dc-tpl="96" class="mv" type="button" aria-haspopup="menu" aria-label="Move card to another stage"><svg data-dc-tpl="97" class="ico" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path data-dc-tpl="98" d="M7 4L3 8l4 4M3 8h14M17 20l4-4-4-4M21 16H7"></path></svg>Move</button></div><h3 data-dc-tpl="99"><button data-dc-tpl="100" class="tt" type="button" aria-label="Diagnose Melissa and Anna Supermessage silence — trace actual failing hop. In Reproduce. Enter opens, M moves.">Diagnose Melissa and Anna Supermessage silence — trace actual failing hop</button></h3><div data-dc-tpl="101" class="bub"><svg data-dc-tpl="102" viewBox="-2 -4 68 70" width="24" height="24" role="img" aria-label="error-eric, needs you" data-mood="needs"><circle data-dc-tpl="103" cx="32" cy="32" r="30" fill="var(--vk-mood-needs)"></circle><path data-dc-tpl="104" d="M28 4 Q32 -2 36 4 Q34 8 32 6 Q30 8 28 4Z" fill="rgb(107 74 43)"></path><g data-dc-tpl="105" data-eyes="open"><ellipse data-dc-tpl="106" cx="23" cy="28" rx="4" ry="2.4" fill="var(--vk-face-ink)"></ellipse><ellipse data-dc-tpl="107" cx="41" cy="28" rx="4" ry="2.4" fill="var(--vk-face-ink)"></ellipse></g><circle data-dc-tpl="108" cx="17" cy="37" r="4" fill="rgb(255 158 138 / 0.5)"></circle><circle data-dc-tpl="109" cx="47" cy="37" r="4" fill="rgb(255 158 138 / 0.5)"></circle><path data-dc-tpl="110" d="M24 44 Q32 38 40 44" fill="none" stroke="var(--vk-face-ink)" stroke-width="3" stroke-linecap="round"></path></svg><div data-dc-tpl="111" class="say"><span data-dc-tpl="112" class="who">error-eric · needs you</span><p data-dc-tpl="113">Not reproduced end-to-end: Melissa’s live ACP session acps_8f86d4e4-1cf2-457b-beb8-0ffb529d9023 reached Hermes and produced a model reply, while Anna has no local ACP dispatch; first failing hop cannot be identified without one fresh DM event_id/room_id/timestamp per agent plus AgentPod hub matrix-inbound/control-pair/ACP/matrix-outbound logs, matrix_rooms/ACP metadata, homeserver send-event metadata, and Supermessage sync ingestion for those event IDs. No Accounts defect established; no issue filed.</p><button data-dc-tpl="114" type="button" aria-expanded="false">Read the rest</button></div></div><div data-dc-tpl="115" class="chips"><a data-dc-tpl="116" class="chip ref" href="#ref"><svg data-dc-tpl="117" class="ico" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path data-dc-tpl="118" d="M6 3h8l4 4v14H6z"></path><path data-dc-tpl="119" d="M14 3v4h4"></path></svg>AgentPod v0.1.91 Matrix inbound bridge contract</a></div><div data-dc-tpl="120" class="meta"><span data-dc-tpl="121" class="chip"><svg data-dc-tpl="122" viewBox="-2 -4 68 70" width="16" height="16" role="img" aria-label="super-chotu, resting" data-mood="resting"><circle data-dc-tpl="123" cx="32" cy="32" r="30" fill="var(--vk-mood-resting)"></circle><path data-dc-tpl="124" d="M8 22 Q12 4 32 3 Q52 4 56 22 Q44 14 32 15 Q20 14 8 22Z" fill="rgb(35 35 58)"></path><g data-dc-tpl="125" data-eyes="closed"><path data-dc-tpl="126" d="M19 29 Q23 32 27 29 M37 29 Q41 32 45 29" fill="none" stroke="var(--vk-face-ink)" stroke-width="2.6" stroke-linecap="round"></path></g><path data-dc-tpl="127" d="M27 43 Q32 45 37 43" fill="none" stroke="var(--vk-face-ink)" stroke-width="3" stroke-linecap="round"></path></svg> asked by super-chotu</span><span data-dc-tpl="128">$0.00</span><span data-dc-tpl="129">attempt 2</span></div><div data-dc-tpl="130" class="act"><button data-dc-tpl="131" type="button" class="vk-button vk-button--signal">Resume</button></div></article><article data-dc-tpl="132" class="tile p2"><span data-dc-tpl="133" class="sr">Priority 2</span><div data-dc-tpl="134" class="trow"><span data-dc-tpl="135" class="stg">Failing test · stage 3 of 7 · 33h</span><button data-dc-tpl="136" class="mv" type="button" aria-haspopup="menu" aria-label="Move card to another stage"><svg data-dc-tpl="137" class="ico" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path data-dc-tpl="138" d="M7 4L3 8l4 4M3 8h14M17 20l4-4-4-4M21 16H7"></path></svg>Move</button></div><h3 data-dc-tpl="139"><button data-dc-tpl="140" class="tt" type="button" aria-label="AgentPod: connector interface and generic effects ledger, state machine and executor. In Failing test. Enter opens, M moves.">AgentPod: connector interface and generic effects ledger, state machine and executor</button></h3><div data-dc-tpl="141" class="bub"><svg data-dc-tpl="142" viewBox="-2 -4 68 70" width="24" height="24" role="img" aria-label="tester-tim, needs you" data-mood="needs"><circle data-dc-tpl="143" cx="32" cy="32" r="30" fill="var(--vk-mood-needs)"></circle><circle data-dc-tpl="144" cx="32" cy="4" r="7" fill="rgb(94 90 156)"></circle><g data-dc-tpl="145" data-eyes="open"><ellipse data-dc-tpl="146" cx="23" cy="28" rx="3.2" ry="3.2" fill="var(--vk-face-ink)"></ellipse><ellipse data-dc-tpl="147" cx="41" cy="28" rx="3.2" ry="3.2" fill="var(--vk-face-ink)"></ellipse></g><path data-dc-tpl="148" d="M24 44 Q32 38 40 44" fill="none" stroke="var(--vk-face-ink)" stroke-width="3" stroke-linecap="round"></path></svg><div data-dc-tpl="149" class="say"><span data-dc-tpl="150" class="who">tester-tim · needs you</span><p data-dc-tpl="151">Blocked on the forgeDestinationHold: operator must provide the authoritative writable Forge repository URL for SuperJackfruitLabs/agentpod and grant Tester Tim's station write access. The matching URL ssh://git@forge.superjackfruit.com:2222/SuperJackfruitLabs/agentpod.git authenticates as tester-tim and is readable, but push is refused with “Mirror Repository SuperJackfruitLabs/agentpod is read-only”. Local red-test commit 7a444f3a and verbatim failure evidence are preserved at https://app.superlibrary.dev/a/itm_569034f61d1b4b1a; no GitHub push was attempted.</p><button data-dc-tpl="152" type="button" aria-expanded="false">Read the rest</button></div></div><div data-dc-tpl="153" class="chips"><a data-dc-tpl="154" class="chip ref" href="#ref"><svg data-dc-tpl="155" class="ico" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path data-dc-tpl="156" d="M6 3h8l4 4v14H6z"></path><path data-dc-tpl="157" d="M14 3v4h4"></path></svg>Deterministic X publisher red-test evidence</a></div><div data-dc-tpl="158" class="meta"><span data-dc-tpl="159" class="chip"><svg data-dc-tpl="160" viewBox="-2 -4 68 70" width="16" height="16" role="img" aria-label="super-chotu, resting" data-mood="resting"><circle data-dc-tpl="161" cx="32" cy="32" r="30" fill="var(--vk-mood-resting)"></circle><path data-dc-tpl="162" d="M8 22 Q12 4 32 3 Q52 4 56 22 Q44 14 32 15 Q20 14 8 22Z" fill="rgb(35 35 58)"></path><g data-dc-tpl="163" data-eyes="closed"><path data-dc-tpl="164" d="M19 29 Q23 32 27 29 M37 29 Q41 32 45 29" fill="none" stroke="var(--vk-face-ink)" stroke-width="2.6" stroke-linecap="round"></path></g><path data-dc-tpl="165" d="M27 43 Q32 45 37 43" fill="none" stroke="var(--vk-face-ink)" stroke-width="3" stroke-linecap="round"></path></svg> asked by super-chotu</span><span data-dc-tpl="166">$0.00</span><span data-dc-tpl="167">attempt 1</span></div><div data-dc-tpl="168" class="act"><button data-dc-tpl="169" type="button" class="vk-button vk-button--signal">Resume</button></div></article><article data-dc-tpl="170" class="tile"><div data-dc-tpl="171" class="trow"><span data-dc-tpl="172" class="stg">Fix · stage 4 of 7 · 33h</span><button data-dc-tpl="173" class="mv" type="button" aria-haspopup="menu" aria-label="Move card to another stage"><svg data-dc-tpl="174" class="ico" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path data-dc-tpl="175" d="M7 4L3 8l4 4M3 8h14M17 20l4-4-4-4M21 16H7"></path></svg>Move</button></div><h3 data-dc-tpl="176"><button data-dc-tpl="177" class="tt" type="button" aria-label="Superpipeline: manual-delivery completion and approval-subject hardening. In Fix. Enter opens, M moves.">Superpipeline: manual-delivery completion and approval-subject hardening</button></h3><div data-dc-tpl="178" class="bub"><svg data-dc-tpl="179" viewBox="-2 -4 68 70" width="24" height="24" role="img" aria-label="coder-kai, needs you" data-mood="needs"><circle data-dc-tpl="180" cx="32" cy="32" r="30" fill="var(--vk-mood-needs)"></circle><g data-dc-tpl="181" data-eyes="open"><ellipse data-dc-tpl="182" cx="23" cy="28" rx="3.2" ry="4.2" fill="var(--vk-face-ink)"></ellipse><ellipse data-dc-tpl="183" cx="41" cy="28" rx="3.2" ry="4.2" fill="var(--vk-face-ink)"></ellipse></g><circle data-dc-tpl="184" cx="17" cy="37" r="4" fill="rgb(255 158 138 / 0.5)"></circle><circle data-dc-tpl="185" cx="47" cy="37" r="4" fill="rgb(255 158 138 / 0.5)"></circle><path data-dc-tpl="186" d="M24 44 Q32 38 40 44" fill="none" stroke="var(--vk-face-ink)" stroke-width="3" stroke-linecap="round"></path></svg><div data-dc-tpl="187" class="say"><span data-dc-tpl="188" class="who">coder-kai · needs you</span><p data-dc-tpl="189">This stage was not finished twice — first: the handoff is missing commit; then, after one automatic rework: the handoff is missing commit.</p><button type="button" aria-expanded="false">Read the rest</button></div></div><div data-dc-tpl="190" class="chips"><a data-dc-tpl="191" class="chip ref" href="#ref"><svg data-dc-tpl="192" class="ico" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path data-dc-tpl="193" d="M6 3h8l4 4v14H6z"></path><path data-dc-tpl="194" d="M14 3v4h4"></path></svg>test(api): pin manual delivery reminder</a></div><div data-dc-tpl="195" class="meta"><span data-dc-tpl="196">$0.00</span><span data-dc-tpl="197">attempt 5</span></div><div data-dc-tpl="198" class="act"><button data-dc-tpl="199" type="button" class="vk-button vk-button--signal">Resume</button></div></article><article data-dc-tpl="200" class="tile p1"><span data-dc-tpl="201" class="sr">Priority 1</span><div data-dc-tpl="202" class="trow"><span data-dc-tpl="203" class="stg">Reported · a person's stage · 2d</span><button data-dc-tpl="204" class="mv" type="button" aria-haspopup="menu" aria-label="Move card to another stage"><svg data-dc-tpl="205" class="ico" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path data-dc-tpl="206" d="M7 4L3 8l4 4M3 8h14M17 20l4-4-4-4M21 16H7"></path></svg>Move</button></div><h3 data-dc-tpl="207"><button data-dc-tpl="208" class="tt" type="button" aria-label="Fix the highest-severity blocker found in the clean-room journey. In Reported. Enter opens, M moves.">Fix the highest-severity blocker found in the clean-room journey</button></h3><div data-dc-tpl="209" class="chips"><span data-dc-tpl="210" class="chip">clean-room</span><span data-dc-tpl="211" class="chip">evidence-required</span><span data-dc-tpl="212" class="chip">superpipeline</span><span data-dc-tpl="213" class="chip" title="1 more label">+1</span></div><p data-dc-tpl="214" style="font-size: 15px;">Reported is a person's stage. Waiting for you to pick it up or move it on.</p><div data-dc-tpl="215" class="meta"><span data-dc-tpl="216" class="chip"><svg data-dc-tpl="217" viewBox="-2 -4 68 70" width="16" height="16" role="img" aria-label="super-chotu, resting" data-mood="resting"><circle data-dc-tpl="218" cx="32" cy="32" r="30" fill="var(--vk-mood-resting)"></circle><path data-dc-tpl="219" d="M8 22 Q12 4 32 3 Q52 4 56 22 Q44 14 32 15 Q20 14 8 22Z" fill="rgb(35 35 58)"></path><g data-dc-tpl="220" data-eyes="closed"><path data-dc-tpl="221" d="M19 29 Q23 32 27 29 M37 29 Q41 32 45 29" fill="none" stroke="var(--vk-face-ink)" stroke-width="2.6" stroke-linecap="round"></path></g><path data-dc-tpl="222" d="M27 43 Q32 45 37 43" fill="none" stroke="var(--vk-face-ink)" stroke-width="3" stroke-linecap="round"></path></svg> asked by super-chotu</span><span data-dc-tpl="223" class="due"><svg data-dc-tpl="224" class="ico" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path data-dc-tpl="225" d="M12 3l9 17H3z"></path><path data-dc-tpl="226" d="M12 10v4M12 17h.01"></path></svg>Due 6 Oct, overdue</span></div><div data-dc-tpl="227" class="act"><button data-dc-tpl="228" type="button" class="vk-button vk-button--signal">Open</button></div></article></section><section data-dc-tpl="229" class="lane" id="stage-reported" aria-labelledby="h-rep"><div data-dc-tpl="230" class="lh"><h2 data-dc-tpl="231" id="h-rep">Reported <span data-dc-tpl="232" class="n">1</span></h2><p data-dc-tpl="233">a person</p></div><p data-dc-tpl="234" class="note">1 card, waiting on you above.</p></section><div data-dc-tpl="235" class="sep"></div><section data-dc-tpl="236" class="lane" id="stage-reproduce" aria-labelledby="h-repro"><div data-dc-tpl="237" class="lh"><h2 data-dc-tpl="238" id="h-repro">Reproduce <span data-dc-tpl="239" class="n">1</span></h2><p data-dc-tpl="240">diagnostics · error-eric</p></div><p data-dc-tpl="241" class="note">1 card, waiting on you above.</p></section><div data-dc-tpl="242" class="sep"></div><section data-dc-tpl="243" class="lane" id="stage-test" aria-labelledby="h-fail"><div data-dc-tpl="244" class="lh"><h2 data-dc-tpl="245" id="h-fail">Failing test <span data-dc-tpl="246" class="n">3</span> <span data-dc-tpl="247" class="chip blk" title="2 cards wait on other cards"><svg data-dc-tpl="248" class="ico" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle data-dc-tpl="249" cx="12" cy="12" r="9"></circle><path data-dc-tpl="250" d="M7.5 12h9"></path></svg>2 blocked</span></h2><p data-dc-tpl="251">testing · tester-tim</p></div><p data-dc-tpl="252" class="note">1 card is waiting on you above. 2 are queued here.</p><article data-dc-tpl="253" class="tile p2"><span data-dc-tpl="254" class="sr">Priority 2</span><div data-dc-tpl="255" class="trow"><span data-dc-tpl="256" class="stg">Queued · 2d</span><button data-dc-tpl="257" class="mv" type="button" aria-haspopup="menu" aria-label="Move card to another stage"><svg data-dc-tpl="258" class="ico" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path data-dc-tpl="259" d="M7 4L3 8l4 4M3 8h14M17 20l4-4-4-4M21 16H7"></path></svg>Move</button></div><h3 data-dc-tpl="260"><button data-dc-tpl="261" class="tt" type="button" aria-label="Integrate editorial workflows and prove no-write publishing acceptance. In Failing test. Enter opens, M moves.">Integrate editorial workflows and prove no-write publishing acceptance</button></h3><div data-dc-tpl="262" class="chips"><span data-dc-tpl="263" class="chip blk" title="Waits on 3 cards: agentpod-connectors X connector; AgentPod connector interface; Superpipeline manual-delivery completion"><svg data-dc-tpl="264" class="ico" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle data-dc-tpl="265" cx="12" cy="12" r="9"></circle><path data-dc-tpl="266" d="M7.5 12h9"></path></svg>Blocked by 3 cards</span></div><div data-dc-tpl="267" class="meta"><span data-dc-tpl="268" class="agent">— <span data-dc-tpl="269" class="mood">not picked up yet</span></span><span data-dc-tpl="270" class="chip"><svg data-dc-tpl="271" viewBox="-2 -4 68 70" width="16" height="16" role="img" aria-label="super-chotu, resting" data-mood="resting"><circle data-dc-tpl="272" cx="32" cy="32" r="30" fill="var(--vk-mood-resting)"></circle><path data-dc-tpl="273" d="M8 22 Q12 4 32 3 Q52 4 56 22 Q44 14 32 15 Q20 14 8 22Z" fill="rgb(35 35 58)"></path><g data-dc-tpl="274" data-eyes="closed"><path data-dc-tpl="275" d="M19 29 Q23 32 27 29 M37 29 Q41 32 45 29" fill="none" stroke="var(--vk-face-ink)" stroke-width="2.6" stroke-linecap="round"></path></g><path data-dc-tpl="276" d="M27 43 Q32 45 37 43" fill="none" stroke="var(--vk-face-ink)" stroke-width="3" stroke-linecap="round"></path></svg> asked by super-chotu</span></div></article><article data-dc-tpl="277" class="tile"><div data-dc-tpl="278" class="trow"><span data-dc-tpl="279" class="stg">Queued · 33h</span><button data-dc-tpl="280" class="mv" type="button" aria-haspopup="menu" aria-label="Move card to another stage"><svg data-dc-tpl="281" class="ico" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path data-dc-tpl="282" d="M7 4L3 8l4 4M3 8h14M17 20l4-4-4-4M21 16H7"></path></svg>Move</button></div><h3 data-dc-tpl="283"><button data-dc-tpl="284" class="tt" type="button" aria-label="agentpod-connectors: X connector (connector x). In Failing test. Enter opens, M moves.">agentpod-connectors: X connector (connector x)</button></h3><div data-dc-tpl="285" class="chips"><span data-dc-tpl="286" class="chip blk" title="Waits on AgentPod: connector interface and generic effects ledger, state machine and executor"><svg data-dc-tpl="287" class="ico" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle data-dc-tpl="288" cx="12" cy="12" r="9"></circle><path data-dc-tpl="289" d="M7.5 12h9"></path></svg>Blocked by 1 card</span></div><div data-dc-tpl="290" class="meta"><span data-dc-tpl="291" class="agent">— <span data-dc-tpl="292" class="mood">not picked up yet</span></span></div></article></section><div data-dc-tpl="293" class="sep"></div><section data-dc-tpl="294" class="lane" id="stage-fix" aria-labelledby="h-fix"><div data-dc-tpl="295" class="lh"><h2 data-dc-tpl="296" id="h-fix">Fix <span data-dc-tpl="297" class="n">1</span></h2><p data-dc-tpl="298">code · 2 agents</p></div><p data-dc-tpl="299" class="note">1 card, waiting on you above.</p></section><div data-dc-tpl="300" class="sep"></div><section data-dc-tpl="301" class="lane" id="stage-shipped" aria-labelledby="h-ship"><div data-dc-tpl="302" class="lh"><h2 data-dc-tpl="303" id="h-ship">Shipped <span data-dc-tpl="304" class="n">1</span></h2><p data-dc-tpl="305">a person</p></div><article data-dc-tpl="306" class="tile p2"><span data-dc-tpl="307" class="sr">Priority 2</span><div data-dc-tpl="308" class="trow"><span data-dc-tpl="309" class="stg">Done · 1d ago · 15 attempts</span><button data-dc-tpl="310" class="mv" type="button" aria-haspopup="menu" aria-label="Move card to another stage"><svg data-dc-tpl="311" class="ico" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path data-dc-tpl="312" d="M7 4L3 8l4 4M3 8h14M17 20l4-4-4-4M21 16H7"></path></svg>Move</button></div><h3 data-dc-tpl="313"><button data-dc-tpl="314" class="tt" type="button" aria-label="Build immutable approval subjects and digest-bound gates. In Shipped. Enter opens, M moves.">Build immutable approval subjects and digest-bound gates</button></h3><div data-dc-tpl="315" class="meta"><span data-dc-tpl="316" class="chip" style="background: var(--vk-mood-done); color: var(--vk-face-ink); border-color: transparent;"><svg data-dc-tpl="317" class="ico" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path data-dc-tpl="318" d="M5 12l5 5 9-10"></path></svg>Done</span><span data-dc-tpl="319">$0.00</span></div></article></section><section data-dc-tpl="320" class="empties" id="empty" aria-labelledby="h-empty"><h2 data-dc-tpl="321" id="h-empty">Empty stages · 2</h2><ul data-dc-tpl="322"><li data-dc-tpl="323"><b data-dc-tpl="324">Integrate</b> · integration</li><li data-dc-tpl="325"><b data-dc-tpl="326">Signed off</b> · gate · approval by a person</li></ul></section><nav data-dc-tpl="327" class="nav" aria-label="Main"><a data-dc-tpl="328" href="#plan" aria-current="page"><svg data-dc-tpl="329" class="ico" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><rect data-dc-tpl="330" x="4" y="4" width="4" height="15" rx="1"></rect><rect data-dc-tpl="331" x="10" y="4" width="4" height="11" rx="1"></rect><rect data-dc-tpl="332" x="16" y="4" width="4" height="7" rx="1"></rect></svg><span data-dc-tpl="333">Plan</span></a><a data-dc-tpl="334" href="#operate"><svg data-dc-tpl="335" class="ico" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path data-dc-tpl="336" d="M3 12h4l3-7 4 14 3-7h4"></path></svg><span data-dc-tpl="337">Operate</span><span data-dc-tpl="338" class="cnt" aria-hidden="true">4</span><span data-dc-tpl="339" class="sr">, 4 need you</span></a><a data-dc-tpl="340" href="#workspace"><svg data-dc-tpl="341" class="ico" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle data-dc-tpl="342" cx="12" cy="8" r="4"></circle><path data-dc-tpl="343" d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"></path></svg><span data-dc-tpl="344">Workspace</span></a><a data-dc-tpl="345" href="#you" aria-haspopup="menu"><span data-dc-tpl="346" class="av" aria-hidden="true">IM</span><span data-dc-tpl="347">You</span><span data-dc-tpl="348" class="sr">, Ira Mehta</span></a></nav></div></div></div>
+
+
+
+</body></html>

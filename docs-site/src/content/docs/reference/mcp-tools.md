@@ -197,6 +197,7 @@ Mark the run blocked on something you cannot fix and a person must look into; re
 | `runId` | string | yes |
 | `leaseEpoch` | integer (≥ 0) | yes |
 | `reason` | string (non-empty) | yes |
+| `summary` | string (non-empty) | no |
 
 ## superpipeline_release
 

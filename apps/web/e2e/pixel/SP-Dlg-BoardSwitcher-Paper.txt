@@ -1,0 +1,85 @@
+<div class="fg" data-vibe="paper" data-theme="light"><div class="scrim"></div><div class="bs-anchor bs-anchor--ed" style="left: 56px; top: 145px;"><h1 class="mh-title">Developer Experience</h1><button class="mh-change bs-trigger" type="button" aria-haspopup="listbox" aria-expanded="true" aria-controls="bs-list" aria-label="Change board, now Developer Experience">Change board</button></div><section class="dlg bs" role="dialog" aria-label="Switch board">
+  <div class="bs-in">
+    <svg 18/>
+    <label class="vk-visually-hidden" for="bs-q">Find a board</label>
+    <input id="bs-q" placeholder="Find a board" autocomplete="off" role="combobox" aria-controls="bs-list" aria-expanded="true" value="">
+    <span class="kbd">esc</span>
+  </div>
+  <div class="bs-list" id="bs-list" role="listbox" aria-label="Boards">
+      <div role="group" aria-label="Needs you">
+        <div class="bs-gh"><span>Needs you</span><span>7 cards</span></div>
+          <a class="bs-row" role="option" href="#board" aria-selected="true" data-sel="true" aria-current="page">
+            <span class="bs-name"><b>Developer Experience</b><span>7 cards</span></span>
+            <span><span class="chip chip--needs">4 need you</span></span>
+            <span class="bs-when"><span class="bs-here">You are here</span></span>
+          </a>
+          <a class="bs-row" role="option" href="#board" aria-selected="false" data-sel="false" aria-current="false">
+            <span class="bs-name"><b>Research &amp; Intelligence</b><span>1 card</span></span>
+            <span><span class="chip chip--needs">1 needs you</span></span>
+            <span class="bs-when">Today</span>
+          </a>
+          <a class="bs-row" role="option" href="#board" aria-selected="false" data-sel="false" aria-current="false">
+            <span class="bs-name"><b>Client Quality</b><span>2 cards</span></span>
+            <span><span class="chip chip--needs">1 needs you</span></span>
+            <span class="bs-when">Today</span>
+          </a>
+          <a class="bs-row" role="option" href="#board" aria-selected="false" data-sel="false" aria-current="false">
+            <span class="bs-name"><b>Guild Operations &amp; Automation</b><span>3 cards</span></span>
+            <span><span class="chip chip--needs">1 needs you</span></span>
+            <span class="bs-when">Today</span>
+          </a>
+      </div>
+      <div role="group" aria-label="Everything else, last used first">
+        <div class="bs-gh"><span>Everything else, last used first</span><span>8 boards</span></div>
+          <a class="bs-row" role="option" href="#board" aria-selected="false" data-sel="false" aria-current="false">
+            <span class="bs-name"><b>Agent Onboarding</b><span>20 cards</span></span>
+            <span></span>
+            <span class="bs-when">Today</span>
+          </a>
+          <a class="bs-row" role="option" href="#board" aria-selected="false" data-sel="false" aria-current="false">
+            <span class="bs-name"><b>Editorial &amp; Fact-Checking</b><span>3 cards</span></span>
+            <span></span>
+            <span class="bs-when">Yesterday</span>
+          </a>
+          <a class="bs-row" role="option" href="#board" aria-selected="false" data-sel="false" aria-current="false">
+            <span class="bs-name"><b>Recurring Maintenance</b><span>4 cards</span></span>
+            <span></span>
+            <span class="bs-when">Yesterday</span>
+          </a>
+          <a class="bs-row" role="option" href="#board" aria-selected="false" data-sel="false" aria-current="false">
+            <span class="bs-name"><b>Planning &amp; Roadmap</b><span>3 cards</span></span>
+            <span></span>
+            <span class="bs-when">3 days ago</span>
+          </a>
+          <a class="bs-row" role="option" href="#board" aria-selected="false" data-sel="false" aria-current="false">
+            <span class="bs-name"><b>Production Releases</b><span>No cards yet</span></span>
+            <span></span>
+            <span class="bs-when">4 days ago</span>
+          </a>
+          <a class="bs-row" role="option" href="#board" aria-selected="false" data-sel="false" aria-current="false">
+            <span class="bs-name"><b>Reliability &amp; Incident Response</b><span>No cards yet</span></span>
+            <span></span>
+            <span class="bs-when">Last week</span>
+          </a>
+          <a class="bs-row" role="option" href="#board" aria-selected="false" data-sel="false" aria-current="false">
+            <span class="bs-name"><b>Marketing &amp; Community</b><span>No cards yet</span></span>
+            <span></span>
+            <span class="bs-when">Last week</span>
+          </a>
+          <a class="bs-row" role="option" href="#board" aria-selected="false" data-sel="false" aria-current="false">
+            <span class="bs-name"><b>superwitness canary</b><span>No cards yet</span></span>
+            <span></span>
+            <span class="bs-when">3 weeks ago</span>
+          </a>
+      </div>
+  </div>
+  <div class="bs-acts" role="group" aria-label="This board">
+    <span class="small muted" style="margin-right: 4px;">This board:</span>
+    <button class="bs-del" type="button"><svg 15/> Rename</button>
+    <a class="link" href="#settings" style="display: inline-flex; align-items: center;"><svg 15/>&nbsp;Board settings</a>
+    <button class="link" type="button"><svg 15/> Delete board…</button>
+  </div>
+  <div class="bs-foot">
+    <span class="grow"><span class="kbd">↑</span><span class="kbd">↓</span> move <span class="kbd">↵</span> open</span>
+    <button class="vk-button vk-button--secondary" type="button"><svg 16/> New board</button>
+  </div></section></div>

@@ -1,5 +1,8 @@
 import { describe, it, expect } from 'vitest';
-import { formatAsOf, progressPct, rollupSegments } from './project-rollup';
+import type { Project, ProjectRollup } from '$lib/api';
+import {
+  fmtTarget, formatAsOf, groupProjects, HEALTH_LABEL, milestoneDate, milestonesMeta, progressPct, projectsSummary, rollupSegments, STATE_LABEL,
+} from './project-rollup';
 
 describe('formatAsOf', () => {
   it('renders a complete rollup as "as of HH:MM", with no incomplete notice', () => {
@@ -75,5 +78,50 @@ describe('rollupSegments', () => {
     const provenance = withOverdue.find((s) => s.kind === 'provenance')!;
     expect(provenance.text).toContain('2 overdue');
     expect(provenance.text).toContain(formatAsOf(base)); // provenance still present alongside it
+  });
+});
+
+const P = (id: string, name: string, state: Project['state'], targetDate: string | null = null, health: Project['health'] = null): Project =>
+  ({ id, tenantId: 'tnt_vibes', name, description: null, targetDate, state, health, leadUserId: null, createdAt: '2026-09-01T00:00:00Z', updatedAt: null });
+const FIXTURE: Project[] = [
+  P('prj_34b48f840daa4309', 'Building in public — Marketing & Community flow', 'active'),
+  P('prj_23b93f2d16d54b27', 'Guild — Forge workspaces and checkpoint recovery', 'active'),
+  P('prj_42ab5ec961104f65', 'Marketing & Community — Melissa and Anna onboarding', 'active'),
+  P('prj_fx_sjl_portfolio', 'SJL Active Portfolio', 'completed', '2026-10-05', 'on-track'),
+  P('prj_fx_sjl_baseline', 'SJL Operating Baseline', 'completed', '2026-10-09', 'on-track'),
+];
+const GUILD: ProjectRollup = { projectId: 'prj_23b93f2d16d54b27', cardsTotal: 7, cardsDone: 2, cardsOverdue: 1, costUsd: 1.85, computedAt: '2026-10-11T08:21:00Z', partial: false, boardsUnanswered: 0 };
+
+describe('projects page words', () => {
+  it('summarises the fixture as the reference prints it', () => {
+    expect(projectsSummary(FIXTURE)).toBe('5 projects · 3 active, 2 completed.');
+    expect(projectsSummary([])).toBe('No projects yet.');
+    expect(projectsSummary([P('p', 'x', 'planned')])).toBe('1 project · 1 planned.');
+  });
+  it('groups by state in the fixed order, keeping server order inside a group, and drops empty groups', () => {
+    const g = groupProjects(FIXTURE);
+    expect(g.map((x) => [x.label, x.id, x.projects.map((p) => p.name)])).toEqual([
+      ['Active', 'g-act', ['Building in public — Marketing & Community flow', 'Guild — Forge workspaces and checkpoint recovery', 'Marketing & Community — Melissa and Anna onboarding']],
+      ['Completed', 'g-done', ['SJL Active Portfolio', 'SJL Operating Baseline']],
+    ]);
+  });
+  it('prints target and milestone dates in UTC, en-GB', () => {
+    expect(fmtTarget('2026-10-05')).toBe('Target 5 Oct 2026');
+    expect(fmtTarget('2026-10-09')).toBe('Target 9 Oct 2026');
+    expect(fmtTarget(null)).toBe('No target date');
+    expect(milestoneDate('2026-10-12')).toBe('12 Oct 2026');
+  });
+  it('names the milestone count beside the disclosure', () => {
+    expect(milestonesMeta(0)).toBe('· none yet');
+    expect(milestonesMeta(3)).toBe('· 3');
+  });
+  it('labels states and health', () => {
+    expect(STATE_LABEL.completed).toBe('Completed');
+    expect(HEALTH_LABEL['on-track']).toBe('On track');
+  });
+  it('carries the rollup into segments, in the browser zone the harness uses', () => {
+    expect(rollupSegments(GUILD, 'Asia/Kolkata').map((s) => s.text)).toEqual(['2/7 cards done', '$1.85', 'as of 13:51 · 1 overdue']);
+    expect(formatAsOf({ ...GUILD, partial: true, boardsUnanswered: 1 }, 'Asia/Kolkata')).toBe('as of 13:51 · incomplete (1 board did not answer)');
+    expect([[4, 9], [2, 7], [12, 12], [0, 0]].map(([cardsDone, cardsTotal]) => progressPct({ cardsDone: cardsDone!, cardsTotal: cardsTotal! }))).toEqual([44, 29, 100, 0]);
   });
 });

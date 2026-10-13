@@ -9,7 +9,8 @@ import { test, expect, type Page } from '@playwright/test';
  * JSON document stored as a string, an unbroken path — and holds the drawer to labelled groups
  * and no sideways scroll at 390px and 1280px.
  */
-const API = 'http://localhost:8787';
+import { PORTS } from '../scripts/ports';
+const API = PORTS.apiUrl;
 const TENANT = { 'X-Tenant-Id': 'tnt_dev', 'Content-Type': 'application/json' };
 const PIPELINE = [
   { key: 'plan', name: 'Plan', order: 0, ownerKind: 'capability', owner: 'planning' },
@@ -93,6 +94,9 @@ for (const viewport of [
     await page.setViewportSize(viewport);
     await page.goto(`/b/${boardId}/c/${cardId}`);
     await expect(page.getByRole('dialog')).toBeVisible();
+    // Daylight keeps the carried handoff under "What happened", closed until asked for.
+    const happened = page.getByRole('dialog').locator('summary', { hasText: 'What happened' });
+    if (await happened.count()) await happened.click();
 
     const carried = page.getByTestId('carried-handoff');
     await expect(carried).toBeVisible();

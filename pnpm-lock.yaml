@@ -52,8 +52,8 @@ importers:
         specifier: ^2.0.1
         version: 2.0.1
       '@superjackfruit/vibekit':
-        specifier: file:./vendor/vibekit-0.0.1.tgz
-        version: file:apps/web/vendor/vibekit-0.0.1.tgz(@internationalized/date@3.12.2)(@sveltejs/kit@2.66.0(@opentelemetry/api@1.9.1)(@sveltejs/vite-plugin-svelte@7.1.2(svelte@5.56.3)(vite@8.0.16(@types/node@22.20.2)(esbuild@0.28.1)(jiti@2.7.0)(yaml@2.9.0)))(svelte@5.56.3)(typescript@6.0.3)(vite@8.0.16(@types/node@22.20.2)(esbuild@0.28.1)(jiti@2.7.0)(yaml@2.9.0)))(svelte@5.56.3)
+        specifier: file:./vendor/vibekit-0.0.10.tgz
+        version: file:apps/web/vendor/vibekit-0.0.10.tgz(@internationalized/date@3.12.2)(@sveltejs/kit@2.66.0(@opentelemetry/api@1.9.1)(@sveltejs/vite-plugin-svelte@7.1.2(svelte@5.56.3)(vite@8.0.16(@types/node@22.20.2)(esbuild@0.28.1)(jiti@2.7.0)(yaml@2.9.0)))(svelte@5.56.3)(typescript@6.0.3)(vite@8.0.16(@types/node@22.20.2)(esbuild@0.28.1)(jiti@2.7.0)(yaml@2.9.0)))(svelte@5.56.3)
       '@superpipeline/contract':
         specifier: workspace:*
         version: link:../../packages/contract
@@ -73,6 +73,33 @@ importers:
       '@axe-core/playwright':
         specifier: 4.13.0
         version: 4.13.0(playwright-core@1.61.0)
+      '@fontsource-variable/archivo':
+        specifier: 5.3.0
+        version: 5.3.0
+      '@fontsource-variable/azeret-mono':
+        specifier: 5.3.0
+        version: 5.3.0
+      '@fontsource-variable/bricolage-grotesque':
+        specifier: 5.3.0
+        version: 5.3.0
+      '@fontsource-variable/figtree':
+        specifier: 5.3.0
+        version: 5.3.0
+      '@fontsource-variable/geist':
+        specifier: 5.3.0
+        version: 5.3.0
+      '@fontsource-variable/instrument-sans':
+        specifier: 5.3.0
+        version: 5.3.0
+      '@fontsource-variable/martian-mono':
+        specifier: 5.3.0
+        version: 5.3.0
+      '@fontsource-variable/newsreader':
+        specifier: 5.3.0
+        version: 5.3.0
+      '@fontsource/atkinson-hyperlegible-next':
+        specifier: 5.3.0
+        version: 5.3.0
       '@playwright/test':
         specifier: ^1.61.0
         version: 1.61.0
@@ -94,9 +121,18 @@ importers:
       '@testing-library/svelte':
         specifier: ^5.4.2
         version: 5.4.2(svelte@5.56.3)(vite@8.0.16(@types/node@22.20.2)(esbuild@0.28.1)(jiti@2.7.0)(yaml@2.9.0))(vitest@4.1.9(@opentelemetry/api@1.9.1)(@types/node@24.13.4)(jsdom@30.1.2)(vite@8.0.16(@types/node@22.20.2)(esbuild@0.28.1)(jiti@2.7.0)(yaml@2.9.0)))
+      '@types/pngjs':
+        specifier: ^6.0.5
+        version: 6.0.5
       jsdom:
         specifier: ^30.1.2
         version: 30.1.2
+      pixelmatch:
+        specifier: ^7.2.0
+        version: 7.2.0
+      pngjs:
+        specifier: ^7.0.0
+        version: 7.0.0
       svelte:
         specifier: ^5.56.3
         version: 5.56.3
@@ -465,6 +501,12 @@ packages:
 
   '@floating-ui/utils@0.2.11':
     resolution: {integrity: sha512-RiB/yIh78pcIxl6lLMG0CgBXAZ2Y0eVHqMPYugu+9U0AeT6YBeiJpf7lbdJNIugFP5SIjwNRgo4DhR1Qxi26Gg==}
+
+  '@fontsource-variable/archivo@5.3.0':
+    resolution: {integrity: sha512-HogK8FJelrD1o7TlZlkIVtHgc20bO5PZRWE7mUeUTdMN055alznQV6/00J00IBeu8FQAH4s3zW9UJNvKExXf+g==}
+
+  '@fontsource-variable/azeret-mono@5.3.0':
+    resolution: {integrity: sha512-nX76TwGHW53SoMMJoqb415uFqEQ3qnthL/bEeOOI2DjC7MntyIUVItQ45sVLe5+wG4gT0H5B7auAMa77p8Qc3Q==}
 
   '@fontsource-variable/bricolage-grotesque@5.3.0':
     resolution: {integrity: sha512-TLi9Q4hJjS2UvoTMRSS2nHu6c4R56lAw60NR9QYtVRCHn0XtsFpiEhNffZ8Glsoxu6wEEwLKBP8lb94J52PNBA==}
@@ -961,9 +1003,9 @@ packages:
   '@standard-schema/spec@1.1.0':
     resolution: {integrity: sha512-l2aFy5jALhniG5HgqrD6jXLi/rUWrKvqN/qJx6yoJsgKhblVd+iqqU4RCXavm/jPityDo5TCvKMnpjKnOriy0w==}
 
-  '@superjackfruit/vibekit@file:apps/web/vendor/vibekit-0.0.1.tgz':
-    resolution: {integrity: sha512-aAquwnYLUzb+nbkgQT5ZKgzFmoWT8b0fTWSn+yuWi/fjhKt+K/V5vdxjQpPzAQW3cB/9xIlxTq3kreo4hLwqzQ==, tarball: file:apps/web/vendor/vibekit-0.0.1.tgz}
-    version: 0.0.1
+  '@superjackfruit/vibekit@file:apps/web/vendor/vibekit-0.0.10.tgz':
+    resolution: {integrity: sha512-g+b04n+tlR0FDplamrJb9Sc5ctE2KB4W2nSFLfUtSm7IpjDhXjJykZu3kRG4pMCAOVLFYcjoE4uEiuL3d9tOvg==, tarball: file:apps/web/vendor/vibekit-0.0.10.tgz}
+    version: 0.0.10
     engines: {node: '>=22'}
     peerDependencies:
       svelte: ^5.56.0
@@ -1160,6 +1202,9 @@ packages:
 
   '@types/node@24.13.4':
     resolution: {integrity: sha512-YJ7EqCstVTzIr0fMr7qul/977en+pQHrfmuKIo6Zr9i75Be21dr3MovcfvGtyvi2HAUrRerWps5sMO9I7WaxDw==}
+
+  '@types/pngjs@6.0.5':
+    resolution: {integrity: sha512-0k5eKfrA83JOZPppLtS2C7OUtyNAl2wKNxfyYl9Q5g9lPkgBl/9hNyAu6HuEH2J4XmIv2znEpkDd0SaZVxW6iQ==}
 
   '@types/trusted-types@2.0.7':
     resolution: {integrity: sha512-ScaPdn1dQczgbl0QFTeTOmVHFULt394XJgOQNoyVhZ6r2vLnMLJfBPd53SB52T/3G36VI1/g2MZaX0cwDuXsfw==}
@@ -1837,6 +1882,10 @@ packages:
     resolution: {integrity: sha512-QP88BAKvMam/3NxH6vj2o21R6MjxZUAd6nlwAS/pnGvN9IVLocLHxGYIzFhg6fUQ+5th6P4dv4eW9jX3DSIj7A==}
     engines: {node: '>=12'}
 
+  pixelmatch@7.2.0:
+    resolution: {integrity: sha512-xhcb4yHu9sM/G7foGzoLtXYcC0zHEaOXXjRKhGup0fw78Nf2Tkiapv4EQyMzrbcmQPsllAI7DbFY2UT7PlI9Pg==}
+    hasBin: true
+
   pkce-challenge@5.0.1:
     resolution: {integrity: sha512-wQ0b/W4Fr01qtpHlqSqspcj3EhBvimsdh0KlHhH8HRZnMsEa0ea2fTULOXOS9ccQr3om+GcGRk4e+isrZWV8qQ==}
     engines: {node: '>=16.20.0'}
@@ -1850,6 +1899,10 @@ packages:
     resolution: {integrity: sha512-Z+7BeeqQPRRzklHsVFP4KTGIyMxKUmfeRA4WisM6G3/XW6nwGeX6fX9qYaDa+CiUqpOkb2f6X3nar05R3kSuJQ==}
     engines: {node: '>=18'}
     hasBin: true
+
+  pngjs@7.0.0:
+    resolution: {integrity: sha512-LKWqWJRhstyYo9pGvgor/ivk2w94eSjE3RGVuzLGlr3NmD8bf7RcYGze1mNdEHRP6TRP6rMuDHk5t44hnTRyow==}
+    engines: {node: '>=14.19.0'}
 
   postcss@8.5.15:
     resolution: {integrity: sha512-FfR8sjd4em2T6fb3I2MwAJU7HWVMr9zba+enmQeeWFfCbm+UOC/0X4DS8XtpUTMwWMGbjKYP7xjfNekzyGmB3A==}
@@ -2627,6 +2680,10 @@ snapshots:
 
   '@floating-ui/utils@0.2.11': {}
 
+  '@fontsource-variable/archivo@5.3.0': {}
+
+  '@fontsource-variable/azeret-mono@5.3.0': {}
+
   '@fontsource-variable/bricolage-grotesque@5.3.0': {}
 
   '@fontsource-variable/figtree@5.3.0': {}
@@ -2958,12 +3015,13 @@ snapshots:
 
   '@standard-schema/spec@1.1.0': {}
 
-  '@superjackfruit/vibekit@file:apps/web/vendor/vibekit-0.0.1.tgz(@internationalized/date@3.12.2)(@sveltejs/kit@2.66.0(@opentelemetry/api@1.9.1)(@sveltejs/vite-plugin-svelte@7.1.2(svelte@5.56.3)(vite@8.0.16(@types/node@22.20.2)(esbuild@0.28.1)(jiti@2.7.0)(yaml@2.9.0)))(svelte@5.56.3)(typescript@6.0.3)(vite@8.0.16(@types/node@22.20.2)(esbuild@0.28.1)(jiti@2.7.0)(yaml@2.9.0)))(svelte@5.56.3)':
+  '@superjackfruit/vibekit@file:apps/web/vendor/vibekit-0.0.10.tgz(@internationalized/date@3.12.2)(@sveltejs/kit@2.66.0(@opentelemetry/api@1.9.1)(@sveltejs/vite-plugin-svelte@7.1.2(svelte@5.56.3)(vite@8.0.16(@types/node@22.20.2)(esbuild@0.28.1)(jiti@2.7.0)(yaml@2.9.0)))(svelte@5.56.3)(typescript@6.0.3)(vite@8.0.16(@types/node@22.20.2)(esbuild@0.28.1)(jiti@2.7.0)(yaml@2.9.0)))(svelte@5.56.3)':
     dependencies:
+      '@fontsource-variable/archivo': 5.3.0
+      '@fontsource-variable/azeret-mono': 5.3.0
       '@fontsource-variable/bricolage-grotesque': 5.3.0
       '@fontsource-variable/figtree': 5.3.0
       '@fontsource-variable/geist': 5.3.0
-      '@fontsource-variable/instrument-sans': 5.3.0
       '@fontsource-variable/martian-mono': 5.3.0
       '@fontsource-variable/newsreader': 5.3.0
       '@fontsource/atkinson-hyperlegible-next': 5.3.0
@@ -3151,6 +3209,10 @@ snapshots:
     dependencies:
       undici-types: 7.18.2
     optional: true
+
+  '@types/pngjs@6.0.5':
+    dependencies:
+      '@types/node': 22.20.2
 
   '@types/trusted-types@2.0.7': {}
 
@@ -3810,6 +3872,10 @@ snapshots:
 
   picomatch@4.0.4: {}
 
+  pixelmatch@7.2.0:
+    dependencies:
+      pngjs: 7.0.0
+
   pkce-challenge@5.0.1: {}
 
   playwright-core@1.61.0: {}
@@ -3819,6 +3885,8 @@ snapshots:
       playwright-core: 1.61.0
     optionalDependencies:
       fsevents: 2.3.2
+
+  pngjs@7.0.0: {}
 
   postcss@8.5.15:
     dependencies:

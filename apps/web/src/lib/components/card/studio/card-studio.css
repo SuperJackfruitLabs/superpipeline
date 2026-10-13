@@ -1,0 +1,30 @@
+/* The Studio card drawer (SP-Card-Studio). The bar, kicker, title and close are vibekit's Drawer; the rest is the
+   reference's .cw- rules, scoped to the drawer's own root (.ar.cw). The shared .ar-/.cd- rules live in
+   ../page/card-page-studio.css, which scopes them to .cp, .cw and .ss roots. */
+.ar.cw { display: flex; flex-direction: column; gap: 28px; min-width: 0; }
+.ar.cw:focus, .ar.cw:focus-visible { outline: none; }
+.ar.cw .cw-cols { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 32px; }
+.ar.cw .cw-cols > div { display: flex; flex-direction: column; gap: 28px; min-width: 0; }
+.ar.cw .cw-form { display: flex; flex-direction: column; gap: 12px; padding: 16px; border: 1.5px solid var(--rule); background: var(--paper); }
+.ar.cw .cw-form .row { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
+.ar.cw .cw-form .row .ar-btn { margin-left: auto; }
+.ar.cw .cw-foot { display: flex; flex-wrap: wrap; gap: 12px; padding-top: 14px; border-top: 1.5px solid var(--rule); }
+.cw-crumb { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; font: 700 14px var(--ff); color: var(--text); text-decoration: none; }
+.cw-crumb:hover { text-decoration: underline; }
+.cw-id { display: inline-flex; align-items: center; gap: 2px; font: 500 12.5px var(--fm); color: var(--muted); }
+.cw-id button { width: 44px; height: 44px; display: grid; place-items: center; border: 0; background: transparent; color: var(--muted); cursor: pointer; }
+.cw-time { font: 500 12px var(--fm); color: var(--muted); }
+/* a gate/question command bar at the end of the readout */
+.ar.cw .ss-cmd, .ar.ss .ss-cmd { display: flex; flex-direction: column; gap: 12px; }
+.ar.cw .ss-cmd { padding: 16px 18px 18px; border: 1.5px solid var(--rule); background: var(--paper); }
+.ar.cw .ss-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px; }
+.ar.cw .ss-alert .ar-lk, .ar.ss .ss-alert .ar-lk { min-height: 0; }
+.ar.cw .ss-err { color: var(--text); font-weight: 700; display: flex; gap: 6px; align-items: center; }
+.ar.cw :focus-visible { outline: 3px solid var(--text); outline-offset: 3px; }
+.ar.cw .cd-tabs [role="tab"] { cursor: pointer; }
+@container card (max-width: 700px) { .ar.cw .cw-cols { grid-template-columns: minmax(0, 1fr); } }
+.ar.cw { container: card / inline-size; }
+@media (prefers-reduced-motion: reduce) { .ss-sk { animation: none; } }
+.ar.cw .ar-tab { min-width: 44px; justify-content: center; }
+.cw-crumb, .cw-id { font-family: var(--vk-font-body); }
+.ar.cw .cd-dt td .ar-lk { margin: -12px 0; }

@@ -33,14 +33,17 @@ function mount(g: Gate, ok = true) {
 beforeEach(() => resolveGate.mockReset().mockResolvedValue(new Response('{}', { status: 200 })));
 afterEach(() => cleanup());
 
-gatePanelContract(GateDaylight, { decision: 'button' });
+gatePanelContract(GateDaylight, { decision: 'button', busy: { kind: 'aria', status: 'Recording…' }, words: {
+  heading: /Awaiting your review/, subjectHeading: /· revision 4/, subjectId: null, digest: 'digest 3f9a·c21e',
+  canonical: /Hello/, region: /The approval subject/, noteId: 'gate-note-a-gat_1', errorBeforeControls: false,
+} });
 
 describe('GateDaylight', () => {
-  it('shows the note while the gate is pending, with a visible limit and a 16px font class', () => {
+  it('shows the note while the gate is pending, with a visible limit, a vibekit field', () => {
     mount(gate());
     expect(note()).toBeTruthy();
     expect(screen.getByText(/0 \/ 8192/)).toBeTruthy();
-    expect(note().className).toMatch(/\btext-base\b/);
+    expect(note().className).toMatch(/\bvk-field__input\b/);
     expect(note().maxLength).toBe(8192);
   });
 
@@ -122,13 +125,15 @@ describe('GateDaylight', () => {
     expect(onResponse).toHaveBeenCalledWith('approve', expect.any(Response));
   });
 
-  it('shows ⚑ awaiting your review, the subject revision and the seal line', () => {
-    const approvalSubject = { id: 'sub_1', digest: 'sha256:3f9ac21e77', schema: 's', revision: 2, canonical: { a: 1 } };
-    mount(gate({ approvalSubject }));
-    expect(screen.getByText('⚑ awaiting your review')).toBeTruthy();
-    expect(screen.getByText(/revision 2/)).toBeTruthy();
-    expect(screen.getByText(/sealed 3f9a·c21e/)).toBeTruthy();
-    expect(screen.getByText('sha256:3f9ac21e77')).toBeTruthy();
+  it('shows the flag, the subject’s revision and digest, and the seal line', () => {
+    render(GateDaylight, { ...props(gate({ approvalSubject: { id: 'sub_1', digest: 'sha256:9f3ac2e1d071', schema: 'recommendation/v1', revision: 2, canonical: { kind: 'Recommendation, one paragraph', sources: ['Organization plane cutover record, 7 Oct'] } } }), vi.fn(async () => true)) });
+    expect(screen.getByText('Awaiting your review')).toBeTruthy();
+    expect(screen.getByText('· revision 2')).toBeTruthy();
+    expect(screen.getByText('digest 9f3a·c2e1')).toBeTruthy();
+    expect(screen.getByText('Kind')).toBeTruthy();
+    expect(screen.getByText('Organization plane cutover record, 7 Oct')).toBeTruthy();
+    expect(screen.getByText(/Approving exactly this version · sealed 9f3a·c2e1/)).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Copy the full digest' })).toBeTruthy();
   });
 
   it('shows the gate error passed in, as an alert', () => {
@@ -144,3 +149,20 @@ describe('GateDaylight', () => {
     expect(document.activeElement).toBe(note());
   });
 });
+
+describe('GateDaylight busy', () => {
+  it('the pressed decision keeps focus while it is recorded', async () => {
+    let settle!: (r: Response) => void;
+    resolveGate.mockReset().mockReturnValue(new Promise<Response>((r) => (settle = r)));
+    render(GateDaylight, props(gate({ options: [{ name: 'approve', title: 'Approve' }, { name: 'reject', title: 'Reject' }] } as never), vi.fn(async () => true)));
+    const approve = screen.getByRole('button', { name: 'Approve' }) as HTMLButtonElement;
+    approve.focus();
+    await fireEvent.click(approve);
+    await tick();
+    expect(approve.getAttribute('aria-disabled')).toBe('true');
+    expect(approve.disabled).toBe(false);
+    expect(document.activeElement).toBe(approve);
+    settle(new Response('{}', { status: 200 }));
+  });
+});
+

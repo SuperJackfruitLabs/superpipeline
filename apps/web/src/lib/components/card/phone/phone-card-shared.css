@@ -1,0 +1,72 @@
+/* Ported verbatim from e2e/reference/mockups/SP-Phone-Card-Daylight (prefixes small, id, kvg, gh, kv, more, lnk, rawrow, nl, addrow, inp, ta, lab, sbtn, runs, run, rt, rm, ev, evt, tm, att, refs, rf, cact; scoped to .pcard) by scripts/pixel/extract-css.mjs. */
+.pcard .small {font-size:14px}
+.pcard .id {font-size:12px;overflow-wrap:anywhere}
+.pcard .kvg {display:flex;flex-direction:column;gap:6px}
+.pcard .kvg + .kvg {margin-top:14px}
+.pcard .gh {font-size:13px;font-weight:700;letter-spacing:0.04em;color:var(--vk-color-muted)}
+.pcard .kv {display:flex;flex-direction:column;gap:10px}
+.pcard .kv dt {font-size:13px;font-weight:700}
+.pcard .kv dd {font-size:15px;line-height:1.45;overflow-wrap:anywhere}
+.pcard .more, .pcard .lnk {display:inline-flex;align-items:center;gap:6px;min-height:44px;border:0;background:transparent;padding:0;font-size:15px;text-decoration:underline;text-underline-offset:3px;cursor:pointer;color:var(--vk-color-text)}
+.pcard .more {min-height:32px}
+.pcard .rawrow {display:flex;gap:18px;margin-top:8px}
+.pcard .nl {list-style:decimal;padding-left:22px;display:flex;flex-direction:column;gap:8px}
+.pcard .nl li {font-size:15px;line-height:1.45;overflow-wrap:anywhere;padding-left:2px}
+.pcard .addrow {display:flex;gap:8px;align-items:center;margin-top:8px}
+.pcard .inp {flex:1;min-width:0;min-height:44px;padding:0 12px;font-size:16px;border:1.5px solid var(--vk-color-faint);border-radius:var(--vk-radius-sm);background:var(--vk-color-surface);color:var(--vk-color-text)}
+.pcard .ta {width:100%;min-height:72px;padding:10px 12px;font-size:16px;line-height:1.4;border:1.5px solid var(--vk-color-faint);border-radius:var(--vk-radius-sm);background:var(--vk-color-surface);color:var(--vk-color-text);resize:vertical}
+.pcard .lab {font-size:14px;font-weight:700;display:block;margin:8px 0 4px}
+.pcard .sbtn {flex:none}
+.pcard .addrow .muted {flex:1}
+.pcard .runs {display:flex;flex-direction:column;gap:8px;margin-top:8px}
+.pcard .run {border:1px solid var(--vk-color-line);border-radius:var(--vk-radius-sm);background:var(--vk-color-surface)}
+.pcard .run summary {min-height:44px;padding:8px 12px;display:flex;flex-direction:column;justify-content:center;cursor:pointer}
+.pcard .rt {font-weight:700;font-size:15px}
+.pcard .rm {font-size:13px;color:var(--vk-color-muted)}
+.pcard .ev {border-top:1px solid var(--vk-color-line)}
+.pcard .ev li {display:grid;grid-template-columns:72px minmax(0,1fr) auto;gap:8px;padding:8px 12px;font-size:14px;line-height:1.4;overflow-wrap:anywhere}
+.pcard .ev li + li {border-top:1px solid var(--vk-color-line)}
+.pcard .evt {font-weight:700}
+.pcard .tm {color:var(--vk-color-muted);font-size:13px;white-space:nowrap}
+.pcard .att li {display:grid;grid-template-columns:20px auto auto;gap:4px 10px;align-items:center;padding:8px 0;font-size:14px}
+.pcard .att li + li {border-top:1px solid var(--vk-color-line)}
+.pcard .att li > span:last-child {grid-column:2 / -1;color:var(--vk-color-muted);overflow-wrap:anywhere}
+.pcard .att .who {display:inline-flex;align-items:center;gap:6px}
+.pcard .refs {display:flex;flex-direction:column;gap:8px}
+.pcard .rf {display:flex;flex-direction:column;gap:2px;padding:10px 12px;min-height:44px;border:1px solid var(--vk-color-line);border-radius:var(--vk-radius-sm);background:var(--vk-color-surface);text-decoration:none;color:var(--vk-color-text)}
+.pcard .rf b {font-size:15px;text-decoration:underline;text-underline-offset:3px;overflow-wrap:anywhere}
+.pcard .rf span {font-size:14px;color:var(--vk-color-muted);overflow-wrap:anywhere}
+.pcard .rf small {font-size:11px;color:var(--vk-color-muted);overflow-wrap:anywhere}
+.pcard .cact {display:flex;gap:8px;flex-wrap:wrap}
+.pcard .arch .sbtn {align-self:flex-start}
+
+/* delta: wrappers that only carry a data-section take no box. */
+:where(.pcard) .sec-k { display: contents; }
+
+/* delta: the sheet host is in normal flow so the page is as tall as the card. */
+.pcard-host { display: block; min-height: 100dvh; background: var(--vk-color-bg); outline: none; }
+
+/* The phone reference's base block (.wrap .mono .muted .ico .ib .face .sr), under the card root. */
+.pcard .wrap { overflow-wrap: anywhere; min-width: 0; }
+.pcard .mono { font-family: var(--vk-font-mono); }
+.pcard .muted { color: var(--vk-color-muted); }
+.pcard .ico { width: 20px; height: 20px; flex: none; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.pcard .ib { min-width: 44px; min-height: 44px; display: inline-flex; align-items: center; justify-content: center; border: 0; background: transparent; border-radius: var(--vk-radius-sm); cursor: pointer; color: var(--vk-color-text); padding: 0; }
+.pcard .face { flex: none; display: inline-flex; line-height: 0; }
+.pcard .face svg { border-radius: 50%; }
+/* Read, not drawn. As wide as its box and wrapping (not 1px and nowrap), so a long label never makes its
+   box scroll sideways (mobile-overflow's check); clip-path hides it all the same. */
+.pcard .sr { position: absolute; left: 0; width: 100%; height: 1px; margin: -1px 0 0; padding: 0; overflow: hidden; clip-path: inset(50%); border: 0; }
+
+/* layout-only: a focused or scrolled-to control stays clear of the sticky head and dock (WCAG 2.4.11). */
+html:has(.pcard-host) { scroll-padding-block: 96px; }
+
+/* layout-only: the sheet's own sections keep their height (the frame's `.ph-root > * { flex: 1 }` is for a shell). */
+.pcard.ph-root > * { flex: none; }
+
+/* The phone reference's `.r` base (font, box model, margin resets, list and link defaults), under the card root. */
+.pcard { font-family: var(--vk-font-body); font-size: 16px; line-height: 1.45; }
+.pcard *, .pcard *::before, .pcard *::after { box-sizing: border-box; }
+.pcard h1, .pcard h2, .pcard h3, .pcard h4, .pcard p, .pcard ul, .pcard ol, .pcard dl, .pcard dd, .pcard figure { margin: 0; }
+.pcard ul, .pcard ol { padding: 0; list-style: none; }
+.pcard a { color: var(--vk-color-text); text-underline-offset: 3px; }

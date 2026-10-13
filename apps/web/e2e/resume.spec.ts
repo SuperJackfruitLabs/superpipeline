@@ -2,7 +2,8 @@ import { test, expect } from '@playwright/test';
 
 // A card its agent blocked shows in Needs you with the agent's own reason, and a person resumes it
 // from the row with a comment — which the next claim carries as feedback.
-const API = 'http://localhost:8787';
+import { PORTS } from '../scripts/ports';
+const API = PORTS.apiUrl;
 const TENANT = { 'X-Tenant-Id': 'tnt_dev', 'Content-Type': 'application/json' };
 const AGENT = { ...TENANT, 'X-Agent-Id': 'agt_b' };
 

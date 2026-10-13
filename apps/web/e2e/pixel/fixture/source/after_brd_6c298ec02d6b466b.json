@@ -1,0 +1,575 @@
+{
+  "boardId": "brd_6c298ec02d6b466b",
+  "tenantId": "tnt_vibes",
+  "name": "Client Quality",
+  "stages": [
+    {
+      "key": "observed",
+      "name": "Observed",
+      "order": 0,
+      "ownerKind": "human",
+      "instructions": "Say what a visitor met that they should not have. One problem per card — a card listing five things gets audited as one and fixed as none.\n\nName the page or product, the device or viewport if it matters, and what you expected instead. A link to the exact thing beats a description of it.\n\nIf this follows research or planning, set the same `projectId` and attach a reference to that card. Links cannot cross boards, so the project is what carries the history here."
+    },
+    {
+      "key": "audit",
+      "name": "Audit",
+      "order": 1,
+      "ownerKind": "capability",
+      "owner": "ux",
+      "instructions": "Say what is wrong with the thing a visitor actually meets. You are describing problems, not fixing them — a fix here costs the measure stage its baseline.\n\nGo to the page or product named on the card and use it the way a first-time visitor would, on a phone as well as a desktop. Name what is unclear, broken, slow to understand, or missing. Be specific: \"the primary product is not named above the fold on a 390px viewport\" is a finding; \"the homepage could be clearer\" is not.\n\n**Evidence lives where the reader can reach it.** A screenshot or trace on the machine you ran on is not evidence — nobody else can open `/root/...`. Attach a reference (`superpipeline_add_reference`) for every artefact: the page you audited, the repository, anything you captured and published. A path in a handoff is a note to yourself.\n\nHand off:\n- `findings` — the problems, worst first, each one a sentence a person could act on\n- `evidence` — what you looked at and how, so the next stage can reproduce it\n\nIf the card names no page, or the page does not load, `block` with what you needed. Do not audit something adjacent and hope it was meant.",
+      "completion": {
+        "handoff": [
+          "findings",
+          "evidence"
+        ]
+      }
+    },
+    {
+      "key": "measure",
+      "name": "Measure",
+      "order": 2,
+      "ownerKind": "capability",
+      "owner": "performance",
+      "instructions": "Put numbers on the problems the audit named, before anything changes. This baseline is the only way anyone will later know whether the remedy helped, so it is worth more than an opinion and it cannot be recreated once the fix lands.\n\nMeasure what the findings are actually about. Load time, layout shift, tap-target size, steps to the thing a visitor came for — whichever of these the audit raised. Measure on mobile as well as desktop when the card is about mobile quality. Record the exact URL and the exact conditions; a number without its method is not reproducible and is therefore not a baseline.\n\nPublish what you captured and attach it as a reference. A report that exists only on the machine you ran on cannot be compared against later by anyone, including you.\n\nHand off:\n- `baseline` — the numbers, each named and attached to the finding it measures\n- `method` — tool, URL, viewport, and anything that would change the result\n\nIf a finding cannot be measured, say so in `baseline` rather than inventing a proxy. An unmeasurable finding is a real answer; a made-up number is worse than none.",
+      "completion": {
+        "handoff": [
+          "baseline",
+          "method"
+        ]
+      }
+    },
+    {
+      "key": "remedy",
+      "name": "Remedy",
+      "order": 3,
+      "ownerKind": "capability",
+      "owner": "design",
+      "requires": {
+        "any": [
+          "design",
+          "code",
+          "ux"
+        ]
+      },
+      "instructions": "Make the change. This is the only stage on this board that edits anything.\n\nWork on a branch named for the card. Fix what the findings named and what the baseline measured — not everything you notice, which is a different card. Keep the change small enough that the verify stage can tell whether it worked.\n\n**Finishing means there is a commit a person can open.** Push the branch and attach the commit as a reference with `sourceType: commit`.\n\n**Find out where this repository actually lives before you push.** Run `git remote -v`. Several repositories here are *forge-primary*: forge is the origin and GitHub is a read-only mirror whose default branch carries a ruleset refusing writes. A branch pushed to the mirror, or a pull request opened there, cannot ever merge — and the refusal looks like a permissions problem rather than the rule working. Push where `origin` points, and reference the commit there. The card's existing references may well be GitHub URLs: that is the readable copy, not the writable one, and it is not evidence of where work lands.\n\nBack to the commit: A commit sitting unpushed on the machine you worked on does not exist as far as this board is concerned, and the board will refuse to call this stage done without one — that refusal is deliberate and is not something to work around.\n\nIf a deploy preview is produced, attach that too; verify will use it.\n\nHand off:\n- `summary` — what you changed and why, in terms of the findings\n- `commit` — the commit URL you attached\n\nDo not open or merge a pull request. Merging is a human act on this estate, and the card reaching a human stage is how that gets asked for.\n\nIf the change needs a decision you cannot make, ask — stop and ask rather than guessing, and the question will reach a person wherever they are.",
+      "completion": {
+        "handoff": [
+          "summary",
+          "commit"
+        ],
+        "reference": {
+          "sourceType": "commit"
+        }
+      }
+    },
+    {
+      "key": "verify",
+      "name": "Verify",
+      "order": 4,
+      "ownerKind": "capability",
+      "owner": "claim-check",
+      "requires": {
+        "any": [
+          "claim-check",
+          "analysis",
+          "testing"
+        ]
+      },
+      "instructions": "Say independently whether the remedy worked. Not whether work happened — whether the problem is gone.\n\n**Judge the PREVIEW, not the live site.** This stage runs BEFORE the change is merged, so the live site still serves the commit's parent and always will at this point — grading against it can only ever produce `unchanged`, which says nothing about the remedy. The question here is whether the change, as proposed, fixes the problem. Confirming the live site is the `accepted` stage's job, after the merge.\n\nYou did not make the change and you are not here to agree with it. Re-run the baseline's method against the preview the remedy stage attached, compare against the numbers the measure stage recorded, and check the findings the audit named one at a time. A finding that is still true is still true even if the commit is good.\n\n**Report a verdict, not progress.** \"Verification is in progress\" is not a verdict, and a stage that ends while still in progress is a stage that did not happen. If you have not finished, keep working or `block` with what is in your way. The board will refuse this stage without a verdict.\n\nAttach what you captured as references, and publish it somewhere the reader can open — a path under your own home directory is not evidence to anybody but you.\n\nHand off:\n- `verdict` — `improved`, `unchanged` or `regressed` **about the preview**, then one paragraph of why\n- `evidence` — the comparison, with the URLs you tested and the numbers either side\n\nA verdict of `unchanged` or `regressed` is a good outcome for this stage. It is the whole reason it exists.",
+      "completion": {
+        "handoff": [
+          "verdict",
+          "evidence"
+        ]
+      }
+    },
+    {
+      "key": "accepted",
+      "name": "Accepted",
+      "order": 5,
+      "ownerKind": "human",
+      "gate": "approval",
+      "instructions": "Decide whether this is good enough to ship, then **ship it**.\n\nRead the verify stage's verdict first. `unchanged` or `regressed` means the remedy did not work — request changes rather than approving on effort.\n\nIf you approve, the delivery act is yours and nobody else will do it:\n\n1. Merge the commit the remedy stage attached, **on the origin** — run `git remote -v` if you are unsure. For a forge-primary repository that is forge; a pull request on the GitHub mirror is blocked by ruleset and can never merge. It is on a branch; until it is merged nothing a visitor sees has changed.\n2. Confirm the change is live on the real site, not just on a preview deployment.\n3. Attach a reference to the production deployment, so the card can prove it shipped.\n\nA card that reaches `done` without those three is a card that says shipped and did not. That has happened on this board."
+    },
+    {
+      "key": "done",
+      "name": "Done",
+      "order": 6,
+      "ownerKind": "human",
+      "instructions": "The work is live and proven. Nothing is claimed here that was not shown earlier on the card: the commit is merged, the change is on the real site, and the verify stage said it helped.\n\nIf any of those is not true, move the card back rather than leaving it here. `done` is the board's statement to everyone who reads it later."
+    }
+  ],
+  "cards": [
+    {
+      "id": "card_aaa7058a335a4211",
+      "title": "Independently verify the SuperPipeline clean-room outcome",
+      "spec": {
+        "objective": "Within the third 24-hour window, independently verify the SuperPipeline clean-room operator outcome after M1 and any necessary M2 fix, and issue a criterion-by-criterion verdict backed by a redacted evidence bundle.",
+        "independenceRule": "The verifier must not be the operator who executed M1 and must not be the author of any M2 correction.",
+        "authoritativeReferences": {
+          "portfolioDecision": "https://github.com/SuperJackfruitLabs/charter/blob/6d9ad614f550d385dcdb1f9514393a8efc99e269/decisions/2026-10-04-active-portfolio.md",
+          "portfolioApprovalGate": "gate_c70348663a814452",
+          "baselineCardTitle": "Run and record the clean-room SuperPipeline operator journey",
+          "remedyCardTitle": "Fix the highest-severity blocker found in the clean-room journey"
+        },
+        "executionRequirements": [
+          "Review all M1 evidence and any M2 defect, source, test, release, and deployment evidence.",
+          "Confirm verifier independence from the M1 operator and M2 author.",
+          "Repeat the critical production-authenticated path after any M2 fix; do not rely only on branch or preview behavior.",
+          "Check AC-09 through AC-15 individually as yes or no and link the evidence for every answer.",
+          "Run a secret and privacy review over the final evidence bundle.",
+          "Return explicit verdict confirmed or unconfirmed; improved, in-progress, and partial are not completion verdicts.",
+          "Keep the project incomplete and identify exact failures if any required criterion is no."
+        ],
+        "acceptanceCriteria": {
+          "AC-09": "Independent operator used production authentication and current member-accessible documentation without development authentication.",
+          "AC-10": "One external-harness run has complete card, run, attempt or lease, typed activity, and terminal handoff evidence.",
+          "AC-11": "Exactly one authoritative human gate decision is tied to its gate and approver.",
+          "AC-12": "Setup-to-first-working-run elapsed time is 30 minutes or less with timestamps.",
+          "AC-13": "The evidence bundle records required versions, environment class, timestamps, IDs, result, and friction and contains no secret or private payload.",
+          "AC-14": "An independent reviewer marks AC-09 through AC-13 yes or no and links retained evidence; unresolved no results block completion.",
+          "AC-15": "No delivery card targets a secondary or not-now item or archived repository, and no card requires AgentPod, Supermessage, or identity/schema changes."
+        },
+        "dependencies": [
+          {
+            "requirement": "M1 evidence bundle",
+            "cardId": "card_9d48db2717044b69",
+            "boardId": "brd_f47143722126442c"
+          },
+          {
+            "requirement": "M2 disposition and fix evidence when a blocker was found",
+            "cardId": "card_ace250c9c25342e4",
+            "boardId": "brd_134a0ddb6d434478"
+          }
+        ],
+        "exclusions": [
+          "No author self-approval",
+          "No marketing publication",
+          "No acceptance based only on a branch preview",
+          "No averaging unknown evidence into a passing verdict",
+          "No secondary or not-now portfolio work"
+        ],
+        "handoffRequirements": [
+          "verifierIdentity",
+          "independenceStatement",
+          "productionRetest",
+          "acceptanceResults",
+          "evidenceIndex",
+          "secretScanResult",
+          "verdict",
+          "failures"
+        ],
+        "artifactRouting": {
+          "defaultRepository": "SuperJackfruitLabs/atelier",
+          "visibility": "PRIVATE",
+          "policyUrl": "https://github.com/SuperJackfruitLabs/atelier/blob/main/AGENTS.md",
+          "rule": "Internal artifacts and all Guild work default to Atelier. Deliver product code, tests, migrations, assets and intended product documentation in the actual project repository only when this task calls for that delivery. Internal strategy about a public product stays private. Verify destination visibility and classification before any push/PR/issue/comment/attachment; never use public fallback. No secrets/raw private messages. Public promotion requires separate approval of exact sanitized material. Preserve gate/authority/merge boundaries."
+        }
+      },
+      "ownerUserId": "usr_b19776fac3c94df4",
+      "queuedBy": "prn_d8178f4a05934b72892a",
+      "queuedByAgentId": "agt_bb586732b807460c",
+      "currentRunId": null,
+      "queuedGrant": [
+        "prn_51644819c47d42b2a480",
+        "prn_51c2b92b9ed74070821b",
+        "prn_ab0a5c8d309b4570abd0",
+        "prn_5205c2e9346044bc8e96",
+        "prn_968510c374a34f26889f",
+        "prn_c5a9929649cb46a4a1ac",
+        "prn_bc6cb3f5d5404ad9bb30",
+        "prn_fb1ed9133e474210838b",
+        "prn_d887c72a7b6e4f908e95",
+        "prn_a412649f97434334894e",
+        "prn_778d51ff29c545018c3c",
+        "prn_19b4af85e3a44c0280fa",
+        "prn_d2ed64cf2681497697b7",
+        "prn_8da27bc86efa49b0951c",
+        "prn_bc7145aa57c44c4d960d",
+        "prn_1f792d84b0134115840b",
+        "prn_9442ad4c029a42db8b5e",
+        "prn_1c5855e8d3734095bf8b",
+        "prn_491ae67d3e80484bb10a",
+        "prn_dc9d662c322946e6baa6",
+        "prn_d200c177df9142108c49",
+        "prn_7e80f37357db405fa617",
+        "prn_2ca5bd6c383a44cb9874",
+        "prn_d8178f4a05934b72892a",
+        "prn_c72963d48079404489a1",
+        "prn_3951b8445dd049d49f89",
+        "prn_c3aad129b67743c6b4b7",
+        "prn_74ddd5d409d44fa194f8",
+        "prn_b003e5b1e56a4ecb8722",
+        "prn_567e7a906d5848a99eaf"
+      ],
+      "labels": [
+        "lbl_0259a14014754f69",
+        "lbl_e9ccaacaa2f94509",
+        "lbl_8430ce51795447c3",
+        "lbl_ea12855938d94ba8"
+      ],
+      "projectId": "prj_23b93f2d16d54b27",
+      "milestoneId": "mls_a7ca0dd40e1a4035",
+      "dueAt": "2026-10-07",
+      "archivedAt": null,
+      "currentStageKey": "observed",
+      "state": "submitted",
+      "delegateAgentId": null,
+      "priority": 1,
+      "contextId": "ctx_629f506fe74b42f4",
+      "createdAt": "2026-10-04T10:19:10.572Z",
+      "updatedAt": "2026-10-08T09:50:58.655Z",
+      "stateSince": "2026-10-08T09:50:58.655Z",
+      "costUsd": 0,
+      "overBudget": false,
+      "attemptCount": 0,
+      "parentCardId": null,
+      "openChildCount": 0,
+      "costUsdRollup": 0,
+      "blockedBy": []
+    },
+    {
+      "id": "card_a9619fe99b7d477e",
+      "title": "Improve SJL homepage first-visit clarity and mobile quality",
+      "spec": {
+        "objective": "Determine whether a first-time mobile visitor can understand what Super Jackfruit Labs builds and reach the four principal products. Measure the page's technical quality, remedy the highest-impact verified defect, and confirm the result on the live site.",
+        "target": {
+          "url": "https://superjackfruit.com/",
+          "primaryViewport": "mobile",
+          "audience": "A technically competent visitor unfamiliar with Super Jackfruit Labs"
+        },
+        "inScope": [
+          "Homepage only",
+          "Product clarity and navigation",
+          "AgentPod, SuperPipeline, SuperMessage, and SuperMD links",
+          "Mobile usability",
+          "Accessibility fundamentals",
+          "Browser console and network failures",
+          "A reproducible performance baseline",
+          "At most one bounded, reversible production fix"
+        ],
+        "outOfScope": [
+          "Site-wide redesign",
+          "New branding",
+          "New product pages",
+          "Copy rewrites across the whole website",
+          "Changes to Agentnagar or the village",
+          "Multiple unrelated fixes",
+          "Analytics or marketing campaigns"
+        ],
+        "stageRequirements": {
+          "audit": {
+            "mustProduce": [
+              "Tested viewport and browser",
+              "Complete first-visit journey",
+              "Observed friction with evidence",
+              "One highest-impact defect",
+              "A durable artifact path or repository commit"
+            ],
+            "rule": "A generic opinion is insufficient."
+          },
+          "measure": {
+            "mustProduce": [
+              "Reproducible commands",
+              "Raw Lighthouse or equivalent output",
+              "Performance, accessibility, best-practices, and SEO measurements",
+              "Console and network error results",
+              "Broken-link results",
+              "A durable baseline artifact"
+            ],
+            "rule": "No baseline, no improvement claim."
+          },
+          "remedy": {
+            "mustProduce": [
+              "Address only the selected defect",
+              "A dedicated branch and commit if a change is needed",
+              "The exact change and reversal method",
+              "A push through the repository's Forge-primary workflow"
+            ],
+            "rule": "If no meaningful defect exists, record action: none with evidence. Do not invent work."
+          },
+          "verify": {
+            "mustProduce": [
+              "Repeat the original journey",
+              "Re-run the measurements",
+              "Inspect the actual commit if one exists",
+              "Check the live deployment",
+              "Compare before and after",
+              "Return confirmed with observations, or unconfirmed with the exact missing or contradictory evidence"
+            ],
+            "rule": "An unconfirmed verdict stops the card."
+          }
+        },
+        "definitionOfDone": [
+          "The public page returns HTTP 200",
+          "The intended change is visible, or action: none is justified with evidence",
+          "Required product links work",
+          "The final commit is identifiable if a change was made",
+          "Independent verification returns confirmed",
+          "The project and milestone are attached",
+          "The evidence is preserved in the card log",
+          "Human acceptance is recorded before Done"
+        ],
+        "operatingRule": "This is the M0 evidence canary. Administrative stage movement is not success. Missing evidence or an unconfirmed verdict must not be promoted to Accepted or Done."
+      },
+      "ownerUserId": "usr_b19776fac3c94df4",
+      "queuedBy": "usr_b19776fac3c94df4",
+      "queuedByAgentId": null,
+      "currentRunId": null,
+      "queuedGrant": [
+        "prn_00e5464a206549ff8c78",
+        "prn_097f1bab9af64454acf4",
+        "prn_0dd1c5f70e9c483bb062",
+        "prn_1f792d84b0134115840b",
+        "prn_2277a9809a0045febfb9",
+        "prn_2ca5bd6c383a44cb9874",
+        "prn_345f66cd3adc493daa65",
+        "prn_479d6b47ae3c48049b02",
+        "prn_491ae67d3e80484bb10a",
+        "prn_51644819c47d42b2a480",
+        "prn_5205c2e9346044bc8e96",
+        "prn_567e7a906d5848a99eaf",
+        "prn_87e0ceec9d0646e08401",
+        "prn_8cb28118aed4409694c7",
+        "prn_93bfc6b092ba46c88cd8",
+        "prn_9442ad4c029a42db8b5e",
+        "prn_9db6dbcefe2a449e8f92",
+        "prn_a22d817febdb4b91a9ec",
+        "prn_a27e234566a14851a568",
+        "prn_a809e81df17e442b8c9f",
+        "prn_bc6cb3f5d5404ad9bb30",
+        "prn_c3aad129b67743c6b4b7",
+        "prn_cdd1063f546b46689baa",
+        "prn_d1d74063a5de4689912e",
+        "prn_d200c177df9142108c49",
+        "prn_d360868949144535a675",
+        "prn_d53832782402439393ab",
+        "prn_d8178f4a05934b72892a",
+        "prn_d887c72a7b6e4f908e95",
+        "prn_dc9d662c322946e6baa6",
+        "prn_e20ddb577f304660b033",
+        "prn_fb1ed9133e474210838b",
+        "prn_f13e2d1aac384cce8cb6",
+        "prn_42e74b7cbd2f4f6d80ad",
+        "prn_49570258e83948d0a1da",
+        "prn_c1a37c9cff77424bbd95",
+        "prn_bd87006f16824a048fd5",
+        "prn_4c8dcd4786434ad8b06a",
+        "prn_637c581f8d784e83a92e",
+        "prn_19b4af85e3a44c0280fa",
+        "prn_1c5855e8d3734095bf8b",
+        "prn_3951b8445dd049d49f89",
+        "prn_51c2b92b9ed74070821b",
+        "prn_74ddd5d409d44fa194f8",
+        "prn_778d51ff29c545018c3c",
+        "prn_7e80f37357db405fa617",
+        "prn_8da27bc86efa49b0951c",
+        "prn_968510c374a34f26889f",
+        "prn_a412649f97434334894e",
+        "prn_ab0a5c8d309b4570abd0",
+        "prn_b003e5b1e56a4ecb8722",
+        "prn_bc7145aa57c44c4d960d",
+        "prn_c5a9929649cb46a4a1ac",
+        "prn_c72963d48079404489a1",
+        "prn_d2ed64cf2681497697b7"
+      ],
+      "labels": [
+        "lbl_b0fe6156141346e9",
+        "lbl_e9ccaacaa2f94509",
+        "lbl_ee975dc9482d4944"
+      ],
+      "projectId": "prj_32e4c5bc8a4a45b0",
+      "milestoneId": "mls_f8692466eb3541d0",
+      "dueAt": "2026-10-09",
+      "archivedAt": null,
+      "currentStageKey": "done",
+      "state": "completed",
+      "delegateAgentId": null,
+      "priority": 1,
+      "contextId": "ctx_86f9478ef33947f0",
+      "createdAt": "2026-10-02T11:56:13.985Z",
+      "updatedAt": "2026-10-03T19:49:46.425Z",
+      "stateSince": "2026-10-03T19:49:46.425Z",
+      "costUsd": 0,
+      "overBudget": false,
+      "attemptCount": 10,
+      "parentCardId": null,
+      "openChildCount": 0,
+      "costUsdRollup": 0,
+      "blockedBy": []
+    }
+  ],
+  "gates": [],
+  "elicitations": [],
+  "references": [
+    {
+      "id": "ref_9d9b16153d894408",
+      "cardId": "card_a9619fe99b7d477e",
+      "url": "https://github.com/SuperJackfruitLabs/super-jackfruit-website",
+      "title": "Super Jackfruit Labs website — mobile baseline evidence",
+      "subtitle": "Source repository; Measure-stage baseline artifact and checksum attached in metadata",
+      "provider": "github",
+      "sourceType": "repository",
+      "externalId": "SuperJackfruitLabs/super-jackfruit-website",
+      "metadata": {
+        "baselineArtifact": "/root/.hermes/profiles/perf-pete/artifacts/card_a9619fe99b7d477e-measure/README.md",
+        "baselineArchive": "/root/.hermes/profiles/perf-pete/artifacts/card_a9619fe99b7d477e-measure.tar.gz",
+        "baselineArchiveSha256": "2ef38e581519b0a65bcfea85343c574cd59ef4c6b0911c3dfc685554e8f61149",
+        "lighthouse": "13.0.1",
+        "medianScores": {
+          "accessibility": 100,
+          "bestPractices": 100,
+          "performance": 60,
+          "seo": 100
+        },
+        "selectedDefectConfirmed": "Homepage omits SuperMessage and SuperMD"
+      },
+      "syncState": "synced",
+      "lastSyncedAt": null,
+      "addedBy": "agent",
+      "runId": null,
+      "createdAt": "2026-10-02T12:18:01.578Z",
+      "updatedAt": "2026-10-02T12:37:18.004Z"
+    },
+    {
+      "id": "ref_aee7d5809a3747da",
+      "cardId": "card_a9619fe99b7d477e",
+      "url": "https://github.com/SuperJackfruitLabs/super-jackfruit-website/commit/37e0065a308581e6088fa484f65dd623d64d8c1e",
+      "title": "SJL homepage principal-product directory remedy",
+      "subtitle": "Bounded remedy: add SuperMessage and SuperMD to homepage catalogue",
+      "provider": "github",
+      "sourceType": "commit",
+      "externalId": "superjackfruitlabs/super-jackfruit-website@37e0065a308581e6088fa484f65dd623d64d8c1e",
+      "metadata": {
+        "artifactArchive": "/root/.hermes/profiles/ux-ulrich/artifacts/card_a9619fe99b7d477e-remedy.tar.gz",
+        "artifactArchiveSha256": "21fcc1cb66721e680e5dad8e8a644bacc3ae0f4aaaf734c38f342a180de18ac4",
+        "artifactPath": "/root/.hermes/profiles/ux-ulrich/artifacts/card_a9619fe99b7d477e-remedy/README.md",
+        "branch": "fix/card-a9619fe-homepage-products",
+        "forgePrimary": true,
+        "forgePushVerified": true
+      },
+      "syncState": "synced",
+      "lastSyncedAt": null,
+      "addedBy": "agent",
+      "runId": null,
+      "createdAt": "2026-10-02T13:02:31.343Z",
+      "updatedAt": null
+    },
+    {
+      "id": "ref_2518fcc11cd94f13",
+      "cardId": "card_a9619fe99b7d477e",
+      "url": "https://07a82b60.extinct-eclipse-9z6.pages.dev/",
+      "title": "Cloudflare Pages branch preview for remedy commit",
+      "subtitle": "HTTP 200; 4/4 WebGL runtime entries and fallback links; no console/page/request failures",
+      "provider": "cloudflare",
+      "sourceType": "deployment-preview",
+      "externalId": null,
+      "metadata": {
+        "commit": "37e0065a308581e6088fa484f65dd623d64d8c1e",
+        "mobileViewport": "390x844 DPR 3",
+        "runtimeProducts": "4/4",
+        "status": 200
+      },
+      "syncState": "synced",
+      "lastSyncedAt": null,
+      "addedBy": "agent",
+      "runId": null,
+      "createdAt": "2026-10-02T13:02:46.055Z",
+      "updatedAt": null
+    },
+    {
+      "id": "ref_7165f1c206384760",
+      "cardId": "card_a9619fe99b7d477e",
+      "url": "https://superjackfruit.com/",
+      "title": "SJL canonical homepage — attempt 8 independent verification",
+      "subtitle": "Attempt 8: UNCHANGED — live still 2/4 products; preview 4/4",
+      "provider": "cloudflare",
+      "sourceType": "production-deployment",
+      "externalId": "superjackfruit.com-homepage-attempt8",
+      "metadata": {
+        "artifactArchive": "/root/.hermes/profiles/tester-tim/artifacts/card_a9619fe99b7d477e-verify-attempt8.tar.gz",
+        "artifactArchiveSha256": "5e5860ce601f5281d7b866e9a9e3489c11429562e88dd9bd4667f1a45dd18c97",
+        "artifactPath": "/root/.hermes/profiles/tester-tim/artifacts/card_a9619fe99b7d477e-verify/README.md",
+        "browser": "Chromium 140.0.7339.16",
+        "captureWindow": "2026-10-03T17:19Z–17:26Z",
+        "lighthouseVersion": "13.0.1",
+        "livePrincipalProducts": "2/4",
+        "previewPrincipalProducts": "4/4",
+        "runId": "run_2d2b9c775e60405c",
+        "status": 200,
+        "verdict": "unchanged"
+      },
+      "syncState": "synced",
+      "lastSyncedAt": null,
+      "addedBy": "agent",
+      "runId": "run_52e2891ed6484f53",
+      "createdAt": "2026-10-03T08:23:42.433Z",
+      "updatedAt": "2026-10-03T17:30:25.258Z"
+    },
+    {
+      "id": "ref_413368ce1468470c",
+      "cardId": "card_a9619fe99b7d477e",
+      "url": "https://gist.github.com/fixture-user/6b9ea98b21e36dfe20fd58c8bcb5ecb0",
+      "title": "SJL homepage preview verification — attempt 10",
+      "subtitle": "Attempt 10 raw Lighthouse, mobile journey, runtime/link checks, scripts, and comparison",
+      "provider": "github",
+      "sourceType": "gist",
+      "externalId": "6b9ea98b21e36dfe20fd58c8bcb5ecb0",
+      "metadata": {
+        "archiveLocalPath": "/root/.hermes/profiles/tester-tim/artifacts/card_a9619fe99b7d477e-verify-attempt10.tar.gz",
+        "archiveSha256": "0cdbffed4369b8315d552706c00fbc971e6885ad0071244328fad57820ab2339",
+        "browser": "Chromium 140.0.7339.16",
+        "lighthouseVersion": "13.0.1",
+        "previewPrincipalProducts": "4/4",
+        "previewScores": {
+          "accessibility": 100,
+          "bestPractices": 100,
+          "performance": 60,
+          "seo": 63
+        },
+        "runId": "run_e5902981753c40e0",
+        "verdict": "improved",
+        "viewport": "390x844 DPR 3"
+      },
+      "syncState": "synced",
+      "lastSyncedAt": null,
+      "addedBy": "agent",
+      "runId": "run_e5902981753c40e0",
+      "createdAt": "2026-10-03T19:47:04.045Z",
+      "updatedAt": null
+    },
+    {
+      "id": "ref_3a742d5e35de4d17",
+      "cardId": "card_a9619fe99b7d477e",
+      "url": "https://gist.github.com/fixture-user/cdb8a033387229f130421057c9caea62",
+      "title": "SJL homepage preview verification — attempt 10 (secret copy)",
+      "subtitle": "Replaces the public gist removed on 2026-10-08",
+      "provider": "url",
+      "sourceType": "url",
+      "externalId": null,
+      "metadata": null,
+      "syncState": "synced",
+      "lastSyncedAt": null,
+      "addedBy": "agent",
+      "runId": null,
+      "createdAt": "2026-10-08T18:15:10.991Z",
+      "updatedAt": null
+    }
+  ],
+  "usage": {
+    "totalCostUsd": 0,
+    "estimatedCostUsd": 0,
+    "budgetUsd": null,
+    "cardUsdCap": null,
+    "overBudget": false
+  },
+  "github": {
+    "issueTrigger": false,
+    "webhookConfigured": false,
+    "triggerGrantCount": null
+  },
+  "stale": {
+    "enabled": true,
+    "afterHours": 24
+  }
+}

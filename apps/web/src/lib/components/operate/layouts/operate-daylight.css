@@ -1,0 +1,55 @@
+/* Ported verbatim from e2e/reference/mockups/SP-Operate-Daylight.html (prefixes noface, wrap-any, btn-sm, grid, panel, ph, count, ask, badge, bubble, hint, acts, resume, select, textarea, money, lbl, empty, spend, bar, seg, grp, ev, tick) by scripts/pixel/extract-css.mjs. */
+@scope (.op-dy) {
+.noface { flex: none; display: inline-block; border-radius: 50%; border: 2px dashed var(--vk-color-faint); }
+.wrap-any { overflow-wrap: anywhere; }
+.grid { font-size: 16px; line-height: 1.45; display: grid; grid-template-columns: minmax(0, 1.55fr) minmax(0, 1fr); gap: var(--vk-space-5); padding: var(--vk-space-5) 0 var(--vk-space-3); align-items: start; }
+.panel { background: var(--vk-color-surface); border-radius: var(--vk-radius-lg); box-shadow: 0 var(--vk-lift) 0 var(--vk-color-ground); padding: var(--vk-space-5); }
+.panel + .panel { margin-top: var(--vk-space-5); }
+.ph { display: flex; align-items: baseline; gap: var(--vk-space-3); margin: 0 0 var(--vk-space-4); }
+.ph h2 { margin: 0; font: 700 var(--vk-text-lg) / 1.2 var(--vk-font-display); }
+.count { font: 700 var(--vk-text-md) / 1 var(--vk-font-display); color: var(--vk-color-muted); }
+.count--needs { color: var(--vk-color-signal-text); }
+.ph__end { text-decoration: underline; margin-left: auto; display: inline-flex; align-items: center; gap: var(--vk-space-1); color: var(--vk-color-text); font-weight: 600; font-size: var(--vk-text-sm); min-height: 44px; text-underline-offset: 4px; }
+.ask { display: grid; grid-template-columns: 32px minmax(0, 1fr); gap: var(--vk-space-3) var(--vk-space-4); padding: var(--vk-space-5) 0; border-top: 1px solid var(--vk-color-line); }
+.ask:first-of-type { border-top: 0; padding-top: var(--vk-space-2); }
+.ask__who { display: flex; align-items: center; gap: var(--vk-space-2); flex-wrap: wrap; font-size: var(--vk-text-sm); color: var(--vk-color-muted); }
+.ask__who b { color: var(--vk-color-text); font-size: var(--vk-text-md); }
+.badge { display: inline-flex; align-items: center; gap: 4px; padding: 2px 10px; border-radius: var(--vk-radius-pill); font-size: 0.8125rem; font-weight: 700; }
+.badge--needs { background: var(--vk-color-signal-wash); color: var(--vk-color-signal-text); box-shadow: inset 0 0 0 1.5px var(--vk-color-signal); }
+.ask__title { margin: var(--vk-space-1) 0 0; font: 700 1.1875rem / 1.3 var(--vk-font-display); }
+.ask__title a { color: var(--vk-color-text); text-decoration: none; }
+.ask__title a:hover { text-decoration: underline; }
+.bubble { position: relative; margin-top: var(--vk-space-3); padding: var(--vk-space-4) var(--vk-space-5); background: var(--vk-mood-needs); color: var(--vk-face-ink); border-radius: 4px var(--vk-radius-lg) var(--vk-radius-lg) var(--vk-radius-lg); line-height: 1.55; overflow-wrap: anywhere; }
+.bubble--system { background: var(--vk-color-raised); color: var(--vk-color-text); }
+.bubble p { margin: 0; }
+.bubble__more { margin-top: var(--vk-space-2); min-height: 44px; padding: 0; border: 0; background: transparent; color: inherit; font: 600 var(--vk-text-sm) / 1 var(--vk-font-body); text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
+.hint { margin: var(--vk-space-3) 0 0; font-size: var(--vk-text-sm); color: var(--vk-color-muted); }
+.acts { display: flex; flex-wrap: wrap; gap: var(--vk-space-2); margin-top: var(--vk-space-3); align-items: center; }
+.resume { margin-top: var(--vk-space-4); padding: var(--vk-space-4); border-radius: var(--vk-radius-md); background: var(--vk-color-raised); display: grid; gap: var(--vk-space-4); }
+.resume__row { display: flex; gap: var(--vk-space-4); flex-wrap: wrap; align-items: end; }
+.select, .textarea, .money { font: inherit; font-size: 1rem; color: var(--vk-color-text); background: var(--vk-color-surface); border: 2px solid var(--vk-color-line); border-radius: var(--vk-radius-md); min-height: 44px; padding: 0 var(--vk-space-3); }
+.textarea { width: 100%; min-height: 88px; padding: var(--vk-space-3); resize: vertical; }
+.lbl { display: grid; gap: var(--vk-space-2); font-size: var(--vk-text-sm); font-weight: 600; }
+.empty { display: flex; align-items: center; gap: var(--vk-space-3); margin: 0; color: var(--vk-color-muted); }
+.spend { display: flex; align-items: baseline; gap: var(--vk-space-3); flex-wrap: wrap; }
+.spend__n { font: 700 2.5rem / 1 var(--vk-font-display); }
+.spend__cap { color: var(--vk-color-muted); }
+.bar { height: 10px; border-radius: var(--vk-radius-pill); background: var(--vk-color-raised); margin: var(--vk-space-4) 0; }
+/* (The reference's `.seg { margin-left: auto }` never applies there: its Segmented has no .seg wrapper, so it sits after the count.) */
+.grp { padding: var(--vk-space-4) 0; border-top: 1px solid var(--vk-color-line); }
+.grp:first-of-type { border-top: 0; padding-top: 0; }
+.grp__head { display: flex; gap: var(--vk-space-3); align-items: flex-start; }
+.grp__title { margin: 0; font-weight: 700; font-size: var(--vk-text-md); line-height: 1.35; }
+.grp__title a { color: var(--vk-color-text); text-decoration: none; }
+.grp__title a:hover { text-decoration: underline; }
+.ev { display: grid; grid-template-columns: 88px minmax(0, 1fr) 44px; gap: var(--vk-space-3); align-items: start; margin-top: var(--vk-space-2); padding-left: 36px; }
+.ev__t { white-space: nowrap; font: 500 0.8125rem / 1.6 var(--vk-font-mono); color: var(--vk-color-muted); }
+.ev__body { font-size: var(--vk-text-sm); line-height: 1.5; }
+.ev__body a { text-decoration: underline; color: var(--vk-color-text); text-underline-offset: 3px; }
+.tick { width: 44px; height: 44px; display: grid; place-items: center; border: 0; border-radius: var(--vk-radius-md); background: transparent; color: var(--vk-color-muted); cursor: pointer; margin-top: -10px; }
+.ev__acts { display: flex; gap: var(--vk-space-2); flex-wrap: wrap; padding-left: 36px; margin-top: var(--vk-space-2); }
+.seg .vk-segmented__item::after { left: 0; right: 0; top: 50%; height: max(44px, 100%); }
+
+@media (max-width: 1099.98px) { .grid { grid-template-columns: minmax(0, 1fr); } }
+@media (max-width: 599.98px) { .ev { grid-template-columns: 64px minmax(0, 1fr) 44px; padding-left: 0; } .ev__acts { padding-left: 0; } }
+}

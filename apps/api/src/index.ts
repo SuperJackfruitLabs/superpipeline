@@ -24,6 +24,8 @@
 import {
   BoardDO,
   type StageDef,
+  stageFieldError,
+  boardIntroError,
   type StagePatch,
   type BoardSnapshot,
   type BoardErrorCode,
@@ -45,13 +47,13 @@ import { addExternalLink, removeExternalLink, deleteExternalLinksForCard } from 
 import { resolveReferenceInput } from './references/resolve';
 import { handleMcpRequest } from './mcp/server';
 import { resolveMcpAuth, unauthorized, protectedResourceMetadata, MCP_PROTECTED_RESOURCE_PATH } from './mcp/auth';
-import { resolveUser, resolveAgent, type UserPrincipal, type AgentPrincipal, resolveHubUser, resolveHubAgent, resolveHubService, resolveOrgPlaneUser, EVIDENCE_READ } from './auth/resolve';
+import { resolveUser, resolveAgent, type UserPrincipal, type AgentPrincipal, resolveHubUser, resolveHubAgent, resolveHubService, resolveOrgPlaneUser, EVIDENCE_READ, viaFor } from './auth/resolve';
 import { handleAuthRoute } from './auth/routes';
 import { handleHubRoute } from './auth/hub-oauth';
-import { handlePlaneSignInRoute } from './auth/plane-signin';
+import { handlePlaneSignInRoute, handleSessionRenewal } from './auth/plane-signin';
 import { entitlementRefusal } from './auth/org-plane-resolve';
 import { orgPlaneMode } from './auth/org-plane';
-import { recordBoard, listBoards, listAllBoards, renameBoard, updateBoardStages, deleteBoard, listAgents, createAgent, updateAgent, createAgentToken, revokeAgentToken, deleteAgent, setAgentExternalMapping, findAgentByExternal, agentBelongsToTenant, setTenantExternalMapping, setTenantForgeHost, tenantById, recordAgentQueue, countBoardsComposedToday, principalIdsFor, hubSubjectsFor, agentNamesFor } from './db/catalog';
+import { recordBoard, listBoards, listAllBoards, renameBoard, updateBoardStages, deleteBoard, listAgents, createAgent, updateAgent, createAgentToken, revokeAgentToken, deleteAgent, setAgentExternalMapping, findAgentByExternal, agentBelongsToTenant, setTenantExternalMapping, setTenantForgeHost, tenantById, recordAgentQueue, countBoardsComposedToday, principalIdsFor, hubSubjectsFor, agentNamesFor, touchBoard } from './db/catalog';
 import { authorizeAgentQueue } from './auth/agent-queue';
 import { stagePatchRefusal } from './auth/scopes';
 import {
@@ -110,7 +112,9 @@ import {
   type ProjectState,
   type ProjectHealth,
 } from './db/projects';
+import { flatError } from './flat-error';
 import { withRunTelemetry } from './telemetry/run-telemetry';
+import { handleDevFixture } from './dev/fixture';
 
 export { BoardDO };
 
@@ -442,6 +446,9 @@ async function runEvidence(request: Request, env: Env, boardId: string, runId: s
   }
 }
 
+/** Requests whose success should move a board's `updated_at`, set where the tenant is known. */
+const touchOnSuccess = new WeakMap<Request, { tenantId: string; boardId: string }>();
+
 const worker = {
   async fetch(request: Request, env: Env): Promise<Response> {
     const url = new URL(request.url);
@@ -449,6 +456,13 @@ const worker = {
 
     if (request.method === 'GET' && path === '/health') {
       return Response.json({ ok: true, service: 'superpipeline-api', phase: 'P8' });
+    }
+
+    // Dev only: the pixel suite's fixture world (src/dev/fixture.ts). 404 unless DEV_AUTH and
+    // FIXTURE_IMPORT are both "true" — exactly like an unknown path.
+    if (path.startsWith('/v1/dev/')) {
+      const res = await handleDevFixture(request, env, path);
+      if (res) return res;
     }
 
     // Contract §2: a plane token whose `ent` lacks superpipeline is told so, by name, before any
@@ -460,6 +474,8 @@ const worker = {
     // connect,callback} once ORG_PLANE_ISSUER is set; it answers null otherwise, and the GitHub and
     // hub-handoff routes below run exactly as before.
     if (path.startsWith('/auth/') || path.startsWith('/hub/')) {
+      // Background renewal of a lapsed session (POST only; plane sign-in, else no_refresh).
+      if (path === '/hub/session') return handleSessionRenewal(request, env);
       const res = await handlePlaneSignInRoute(request, env, path);
       if (res) return res;
     }
@@ -1666,7 +1682,24 @@ const worker = {
           }
           return Response.json({ error: 'method not allowed' }, { status: 405 });
         }
-        if (request.method === 'GET') return Response.json({ agents: await listAgents(env.DB, u.tenantId) });
+        if (request.method === 'GET') {
+          const agents = await listAgents(env.DB, u.tenantId);
+          // How many cards each agent holds and works, summed over every board of the workspace.
+          // A board that does not answer contributes nothing rather than failing the list.
+          const boards = await listBoards(env.DB, u.tenantId);
+          const loads = await Promise.allSettled(boards.map((b) => boardStub(env, u.tenantId, b.id).agentLoad()));
+          const total = new Map<string, { claimed: number; working: number }>();
+          for (const l of loads) {
+            if (l.status !== 'fulfilled') continue;
+            for (const [a, v] of Object.entries(l.value)) {
+              const t = total.get(a) ?? { claimed: 0, working: 0 };
+              total.set(a, { claimed: t.claimed + v.claimed, working: t.working + v.working });
+            }
+          }
+          return Response.json({
+            agents: agents.map((a) => ({ ...a, claimedCount: total.get(a.id)?.claimed ?? 0, workingCount: total.get(a.id)?.working ?? 0 })),
+          });
+        }
         if (request.method === 'POST') {
           const body = (await request.json()) as {
             name?: string;
@@ -1955,7 +1988,25 @@ const worker = {
     try {
       // GET /v1/boards — list the workspace's boards · POST /v1/boards — create one
       if (!boardId) {
-        if (request.method === 'GET') return Response.json({ boards: await listBoards(env.DB, tenantId) });
+        if (request.method === 'GET') {
+          // Each row says how many live cards the board holds and how many need a person now, so a
+          // switcher can read "7 cards · 4 need you" without opening every board. A board that does
+          // not answer reads 0/0 rather than dropping out of the list.
+          const rows = await listBoards(env.DB, tenantId);
+          const counts = await Promise.allSettled(rows.map((b) => boardStub(env, tenantId, b.id).summaryCounts()));
+          return Response.json({
+            boards: rows.map((b, i) => {
+              const c = counts[i]!;
+              return {
+                id: b.id,
+                name: b.name,
+                cardCount: c.status === 'fulfilled' ? c.value.cardCount : 0,
+                needsYouCount: c.status === 'fulfilled' ? c.value.needsYouCount : 0,
+                lastActivityAt: b.updatedAt,
+              };
+            }),
+          });
+        }
         if (request.method !== 'POST') return Response.json({ error: 'method not allowed' }, { status: 405 });
 
         // Validated rather than asserted. The assertion `as { name: string; stages: StageDef[] }`
@@ -1970,7 +2021,7 @@ const worker = {
         // What a *valid pipeline* is remains the board's decision — it normalises owners and
         // routing on the way in (`board-do.ts`) — and duplicating that here is how a route starts
         // refusing things the board would have accepted.
-        const body = (await request.json().catch(() => null)) as { name?: unknown; stages?: unknown } | null;
+        const body = (await request.json().catch(() => null)) as { name?: unknown; stages?: unknown; intro?: unknown } | null;
         if (!body || typeof body !== 'object') {
           return Response.json({ error: { message: 'Expected a JSON object.' } }, { status: 400 });
         }
@@ -1993,6 +2044,16 @@ const worker = {
         }
         const name = body.name;
         const stages = body.stages as StageDef[];
+        // The two new optional fields are checked here because board create does not run the stage
+        // validator: a too-long summary or a malformed intro is a 400 at the door.
+        for (const st of stages) {
+          const bad = st.summary === undefined ? null : stageFieldError({ key: st.key, summary: st.summary });
+          if (bad) return Response.json({ error: { code: 'INVALID_STAGES', message: bad } }, { status: 400 });
+        }
+        if (body.intro !== undefined) {
+          const bad = boardIntroError(body.intro);
+          if (bad) return Response.json({ error: { code: 'INVALID_INTRO', message: bad } }, { status: 400 });
+        }
 
         /**
          * An AGENT composing a board: owned by a real human, and bounded per day.
@@ -2035,7 +2096,7 @@ const worker = {
         }
 
         const id = newId('brd');
-        const snapshot = await boardStub(env, tenantId, id).init({ id, tenantId, name, stages });
+        const snapshot = await boardStub(env, tenantId, id).init({ id, tenantId, name, stages, ...(body.intro !== undefined ? { intro: body.intro as { lede: string; composeHint: string } } : {}) });
         await recordBoard(env.DB, tenantId, {
           id,
           name,
@@ -2055,6 +2116,13 @@ const worker = {
       }
 
       const stub = boardStub(env, tenantId, boardId);
+      // Only CARD writes (cards, claims, runs, gates) move `lastActivityAt`. Board-level writes (stage
+      // edits, labels, settings, rename) deliberately do not: the switcher's "Today" means work happened.
+      // Any successful write that can change a card moves the board's "last activity" (see the
+      // wrapper at the bottom of this file, which acts once the response is known to be a success).
+      if (request.method !== 'GET' && /^(cards|claims|runs|gates)(\/|$)/.test(rest)) {
+        touchOnSuccess.set(request, { tenantId, boardId });
+      }
 
       // GET /v1/boards/:id/ws — live feed (WebSocket upgrade forwarded to the DO)
       if (rest === 'ws') return stub.fetch(request);
@@ -2123,6 +2191,7 @@ const worker = {
           gate: body.gate,
           wipLimit: body.wipLimit,
           instructions: body.instructions,
+          summary: body.summary,
           completion: body.completion,
           returnStage: body.returnStage,
         });
@@ -2186,6 +2255,9 @@ const worker = {
           spec?: JsonValue;
           priority?: number;
           dueAt?: string;
+          stageKey?: unknown;
+          labelIds?: unknown;
+          projectId?: unknown;
         };
         if (isInvalidDueAt(body.dueAt)) {
           return Response.json(
@@ -2213,6 +2285,32 @@ const worker = {
          * `undefined` — a null grant, which the control pair refuses at claim time. So an agent
          * could have created cards that nothing could ever claim: queued-looking, and dead.
          */
+        // Where the card starts, and what it carries from the first moment. Checked before anything
+        // is written, by name, so a typo is a 400 that says which field and not a card in the wrong place.
+        if (body.stageKey !== undefined && typeof body.stageKey !== 'string') {
+          return Response.json({ error: { code: 'UNKNOWN_STAGE', message: 'stageKey must be a stage key' } }, { status: 400 });
+        }
+        if (body.labelIds !== undefined) {
+          if (!Array.isArray(body.labelIds) || body.labelIds.some((l) => typeof l !== 'string')) {
+            return Response.json({ error: { code: 'INVALID_LABELS', message: 'labelIds must be an array of label ids' } }, { status: 400 });
+          }
+          const unknown = await unknownLabelIds(env.DB, tenantId, body.labelIds as string[]);
+          if (unknown.length > 0) {
+            return Response.json(
+              { error: { code: 'UNKNOWN_LABEL', message: `no such label in this workspace: ${unknown.join(', ')}` } },
+              { status: 400 },
+            );
+          }
+        }
+        if (body.projectId !== undefined && body.projectId !== null && typeof body.projectId !== 'string') {
+          return Response.json({ error: { code: 'INVALID_PROJECT', message: 'projectId must be a project id or null' } }, { status: 400 });
+        }
+        if (typeof body.projectId === 'string' && !(await projectById(env.DB, tenantId, body.projectId))) {
+          return Response.json(
+            { error: { code: 'UNKNOWN_PROJECT', message: `no such project in this workspace: ${body.projectId}` } },
+            { status: 400 },
+          );
+        }
         const queueing = agent
           ? await authorizeAgentQueue(env.DB, agent, boardId, body.ownerUserId)
           : null;
@@ -2227,8 +2325,12 @@ const worker = {
           spec: body.spec,
           priority: body.priority,
           dueAt: body.dueAt,
+          ...(body.stageKey !== undefined ? { stageKey: body.stageKey as string } : {}),
+          ...(body.labelIds !== undefined ? { labels: body.labelIds as string[] } : {}),
+          ...(body.projectId !== undefined ? { projectId: body.projectId as string | null } : {}),
           ownerUserId: queueing ? queueing.ownerUserId : body.ownerUserId ?? user!.userId,
           queuedGrant: queueing ? queueing.queuedGrant : user?.mayDispatch ?? null,
+          queuedGrantOwner: queueing ? queueing.ownerUserId : user?.userId ?? null,
           // Null for a person, and that is the whole signal: every card on every board today was
           // queued by one, and a reader must be able to see at a glance which ones were not.
           queuedBy: queueing ? queueing.queuedBy : null,
@@ -2279,6 +2381,7 @@ const worker = {
           mover ? mover.queuedBy : user!.userId,
           mover ? mover.queuedGrant : user?.mayDispatch ?? null,
           mover ? agent!.agentId : null,
+          mover ? mover.ownerUserId : user?.userId ?? null,
         );
         if (!result.ok) return Response.json({ error: result }, { status: statusForCode(result.code) });
         return Response.json({ card: result.value });
@@ -2303,6 +2406,7 @@ const worker = {
           ...(body.toStageKey !== undefined ? { toStageKey: body.toStageKey } : {}),
           actor: { id: user.userId, name: user.name ?? user.login ?? null },
           queuedGrant: user.mayDispatch ?? null,
+          queuedGrantOwner: user.userId,
         });
         if (!result.ok) return Response.json({ error: result }, { status: statusForCode(result.code) });
         return Response.json(result.value);
@@ -3329,6 +3433,7 @@ const worker = {
           options?: JsonValue;
           output?: JsonValue;
           reason?: string;
+          summary?: string;
           usage?: { model?: string; inputTokens?: number; outputTokens?: number; costUsd?: number };
         };
         const respond = (r: Result<unknown>, key: string): Response =>
@@ -3372,7 +3477,7 @@ const worker = {
               'card',
             );
           case 'block':
-            return respond(await stub.block({ ...lease, reason: p.reason ?? '' }), 'card');
+            return respond(await stub.block({ ...lease, reason: p.reason ?? '', summary: typeof p.summary === 'string' ? p.summary : undefined }), 'card');
           case 'fail':
             return respond(await stub.fail({ ...lease, reason: p.reason ?? '' }), 'card');
           case 'release':
@@ -3424,8 +3529,10 @@ const worker = {
           comment: gp.comment,
           approvalSubjectId: gp.approvalSubjectId,
           approvalSubjectDigest: gp.approvalSubjectDigest,
+          // From who is calling, never from the body: a caller cannot claim another surface.
+          via: viaFor(user, agent),
         });
-        if (!result.ok) return Response.json({ error: result }, { status: statusForCode(result.code) });
+        if (!result.ok) return Response.json({ error: flatError(result) }, { status: statusForCode(result.code) });
         return Response.json({ card: result.value });
       }
 
@@ -3554,7 +3661,21 @@ const worker = {
 } satisfies ExportedHandler<Env>;
 
 export default {
-  fetch: (request: Request, env: Env): Promise<Response> => withRunTelemetry(request, () => worker.fetch(request, env)),
+  fetch: (request: Request, env: Env, ctx?: ExecutionContext): Promise<Response> =>
+    withRunTelemetry(request, async () => {
+      const response = await worker.fetch(request, env);
+      const touch = touchOnSuccess.get(request);
+      if (touch && response.status < 400) {
+        // The board's own answer is already given; failing to note the activity must not undo it,
+        // and the D1 write runs after the response (waitUntil) so it never delays it.
+        const write = touchBoard(env.DB, touch.tenantId, touch.boardId, new Date().toISOString()).catch((err) =>
+          console.error('touchBoard failed', String(err)),
+        );
+        if (ctx) ctx.waitUntil(write);
+        else await write;
+      }
+      return response;
+    }),
   scheduled: (event: ScheduledController, env: Env, ctx: ExecutionContext): Promise<void> =>
     worker.scheduled(event, env, ctx),
 } satisfies ExportedHandler<Env>;

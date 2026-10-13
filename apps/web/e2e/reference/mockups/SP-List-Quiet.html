@@ -1,0 +1,1099 @@
+<!doctype html>
+<html data-product="superpipeline" data-accent="product" lang="en" style="touch-action: pan-x pan-y; overscroll-behavior: none; --dc-chrome-unit: 1px;"><head><link rel="stylesheet" href="_vibekit-0.0.10/vibekit.css" data-vibekit="0.0.10"><style>
+    .sc-placeholder{background:color-mix(in srgb,currentColor 8%,transparent);
+      border:1px solid color-mix(in srgb,currentColor 50%,transparent);
+      border-radius:2px;box-sizing:border-box;overflow:hidden}
+    @keyframes sc-shine{0%{background-position:100% 50%}100%{background-position:0% 50%}}
+    html.sc-dc-streaming .sc-placeholder,
+    html.sc-dc-streaming .sc-interp.sc-missing{position:relative;
+      background:color-mix(in srgb,currentColor 5%,transparent);
+      border-color:transparent}
+    html.sc-dc-streaming .sc-placeholder::before,
+    html.sc-dc-streaming .sc-interp.sc-missing::before{content:'';
+      position:absolute;inset:0;pointer-events:none;
+      background:linear-gradient(90deg,rgba(217,119,87,0) 25%,rgba(247,225,211,.95) 37%,rgba(217,119,87,0) 63%);
+      background-size:400% 100%;animation:sc-shine 1.4s ease infinite}
+    html.sc-dc-streaming .sc-placeholder:nth-child(n+9 of .sc-placeholder)::before,
+    html.sc-dc-streaming .sc-interp.sc-missing:nth-child(n+9 of .sc-interp.sc-missing)::before{animation:none;
+      background:color-mix(in srgb,currentColor 8%,transparent)}
+    .sc-placeholder-error{padding:4px 8px;font:11px/1.4 ui-monospace,monospace;
+      color:color-mix(in srgb,currentColor 70%,transparent);word-break:break-word}
+    .sc-interp.sc-missing{display:inline-block;width:2em;height:1em;overflow:hidden;
+      vertical-align:text-bottom;background:rgba(255,255,255,.3);border:1px solid rgba(0,0,0,.5);
+      border-radius:2px;box-sizing:border-box;color:transparent;
+      user-select:none}
+    .sc-interp.sc-unresolved{font-family:ui-monospace,monospace;font-size:.85em;
+      color:color-mix(in srgb,currentColor 50%,transparent);
+      background:color-mix(in srgb,currentColor 10%,transparent);border-radius:3px;
+      padding:0 3px}
+    .sc-host.sc-has-error{position:relative}
+    .sc-logic-error{position:absolute;top:8px;left:8px;z-index:2147483647;max-width:60ch;
+      padding:6px 10px;background:#b00020;color:#fff;font:12px/1.4 ui-monospace,monospace;
+      border-radius:4px;white-space:pre-wrap;pointer-events:none}
+    /* Mirrors PRINT_BASELINE_CSS in apps/web deck-stage-export.ts — keep both
+       in sync until dc-runtime regains a build step. */
+    @media print {
+      @page { margin: 0.5cm; }
+      figure, table { break-inside: avoid; }
+      #dc-root, #dc-root > .sc-host { height: auto; }
+      *, *::before, *::after {
+        print-color-adjust: exact; -webkit-print-color-adjust: exact;
+        backdrop-filter: none !important; -webkit-backdrop-filter: none !important;
+        animation-delay: -99s !important; animation-duration: .001s !important;
+        animation-iteration-count: 1 !important; animation-fill-mode: both !important;
+        animation-play-state: running !important; transition-duration: 0s !important;
+      }
+    }
+  </style>
+
+
+  <meta charset="utf-8">
+  <title>List · Quiet</title>
+  <base href="/appifact/SP-List-Quiet.dc.html">
+
+
+
+
+
+<style>x-dc{display:none!important}</style>
+
+  <style>@import url("https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&family=Azeret+Mono:wght@400;500;600&family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..600&display=swap");
+
+ 
+
+:root {
+  color-scheme: light;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  --vk-font-body: "Figtree", system-ui, sans-serif;
+  --vk-font-display: "Bricolage Grotesque", system-ui, sans-serif;
+  --vk-font-mono: "Martian Mono", ui-monospace, monospace;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+}
+
+[data-vibe="daylight"][data-theme="light"] {
+  color-scheme: light;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  --vk-font-body: "Figtree", system-ui, sans-serif;
+  --vk-font-display: "Bricolage Grotesque", system-ui, sans-serif;
+  --vk-font-mono: "Martian Mono", ui-monospace, monospace;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+}
+
+[data-vibe="daylight"][data-theme="dark"] {
+  color-scheme: dark;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  --vk-font-body: "Figtree", system-ui, sans-serif;
+  --vk-font-display: "Bricolage Grotesque", system-ui, sans-serif;
+  --vk-font-mono: "Martian Mono", ui-monospace, monospace;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+}
+
+[data-vibe="paper"][data-theme="light"] {
+  color-scheme: light;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  --vk-font-body: "Geist", system-ui, sans-serif;
+  --vk-font-display: "Newsreader", "Georgia", serif;
+  --vk-font-mono: "Martian Mono", ui-monospace, monospace;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+}
+
+[data-vibe="paper"][data-theme="dark"] {
+  color-scheme: dark;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  --vk-font-body: "Geist", system-ui, sans-serif;
+  --vk-font-display: "Newsreader", "Georgia", serif;
+  --vk-font-mono: "Martian Mono", ui-monospace, monospace;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+}
+
+[data-vibe="studio"][data-theme="light"] {
+  color-scheme: light;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  --vk-font-body: "Archivo", system-ui, sans-serif;
+  --vk-font-display: "Archivo", system-ui, sans-serif;
+  --vk-font-mono: "Azeret Mono", ui-monospace, monospace;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  --vk-font-serif: "Newsreader", Georgia, serif;
+
+
+
+
+
+
+
+
+
+
+}
+
+[data-vibe="studio"][data-theme="dark"] {
+  color-scheme: dark;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  --vk-font-body: "Archivo", system-ui, sans-serif;
+  --vk-font-display: "Archivo", system-ui, sans-serif;
+  --vk-font-mono: "Azeret Mono", ui-monospace, monospace;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  --vk-font-serif: "Newsreader", Georgia, serif;
+
+
+
+
+
+
+
+
+
+
+}
+
+[data-vibe="quiet"][data-theme="light"] {
+  color-scheme: light;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  --vk-font-body: "Atkinson Hyperlegible Next", system-ui, sans-serif;
+  --vk-font-display: "Atkinson Hyperlegible Next", system-ui, sans-serif;
+  --vk-font-mono: "Martian Mono", ui-monospace, monospace;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+}
+
+[data-vibe="quiet"][data-theme="dark"] {
+  color-scheme: dark;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  --vk-font-body: "Atkinson Hyperlegible Next", system-ui, sans-serif;
+  --vk-font-display: "Atkinson Hyperlegible Next", system-ui, sans-serif;
+  --vk-font-mono: "Martian Mono", ui-monospace, monospace;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+}
+
+ 
+:root {
+  --vk-text-sm: clamp(0.8125rem, 0.78rem + 0.15vw, 0.875rem);
+  --vk-text-md: clamp(1rem, 0.96rem + 0.2vw, 1.0625rem);
+  --vk-text-lg: clamp(1.25rem, 1.1rem + 0.6vw, 1.5rem);
+  --vk-text-xl: clamp(1.75rem, 1.4rem + 1.6vw, 2.5rem);
+  --vk-focus: 0 0 0 3px var(--vk-color-bg), 0 0 0 5px var(--vk-color-text);
+
+}
+
+html {
+  background: var(--vk-color-bg);
+  color: var(--vk-color-text);
+  font-family: var(--vk-font-body);
+  font-size: 100%;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  font-size: var(--vk-text-md);
+  line-height: 1.5;
+}
+
+:focus-visible {
+   
+  outline: 2px solid var(--vk-color-text);
+  outline-offset: 2px;
+  box-shadow: var(--vk-focus);
+}
+
+ 
+.vk-visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  
+  *, *::before, *::after {
+    animation: none !important;
+    transition-duration: 0ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+[data-motion="reduce"],
+[data-motion="reduce"] *,
+[data-motion="reduce"]::before,
+[data-motion="reduce"]::after,
+[data-motion="reduce"] *::before,
+[data-motion="reduce"] *::after {
+  --vk-motion-fast: 0ms;
+  --vk-motion-base: 0ms;
+  animation: none !important;
+  transition-duration: 0ms !important;
+  scroll-behavior: auto !important;
+}
+
+
+
+@media (forced-colors: active) {
+  :focus-visible {
+    outline: 2px solid CanvasText;
+    box-shadow: none;
+  }
+}
+ 
+
+
+
+
+
+
+
+
+ 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ 
+
+
+
+
+
+
+
+
+
+
+
+
+
+.vk-toast {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--vk-space-3);
+  min-height: var(--vk-target-min);
+  padding: 0 var(--vk-space-5);
+  border-radius: var(--vk-radius-pill);
+  background: var(--vk-color-primary);
+  color: var(--vk-color-primary-fg);
+  font: 600 var(--vk-text-sm) / 1.2 var(--vk-font-body);
+}
+.vk-toast__action { min-height: var(--vk-target-min); border: 0; background: transparent; color: inherit; font: inherit; text-decoration: underline; cursor: pointer; }
+ 
+.vk-toast__action:focus-visible { outline-color: currentColor; box-shadow: var(--vk-focus); }
+
+.vk-sky {
+  --vk-sky-top: var(--vk-sky-noon-top);
+  --vk-sky-bottom: var(--vk-sky-noon-bottom);
+  --vk-sky-text: var(--vk-sky-noon-text);
+  --vk-sky-sun: var(--vk-sky-noon-sun);
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(180deg, var(--vk-sky-top), var(--vk-sky-bottom));
+  color: var(--vk-sky-text);
+}
+.vk-sky[data-phase="dawn"] { --vk-sky-top: var(--vk-sky-dawn-top); --vk-sky-bottom: var(--vk-sky-dawn-bottom); --vk-sky-text: var(--vk-sky-dawn-text); --vk-sky-sun: var(--vk-sky-dawn-sun); }
+.vk-sky[data-phase="morning"] { --vk-sky-top: var(--vk-sky-morning-top); --vk-sky-bottom: var(--vk-sky-morning-bottom); --vk-sky-text: var(--vk-sky-morning-text); --vk-sky-sun: var(--vk-sky-morning-sun); }
+.vk-sky[data-phase="golden"] { --vk-sky-top: var(--vk-sky-golden-top); --vk-sky-bottom: var(--vk-sky-golden-bottom); --vk-sky-text: var(--vk-sky-golden-text); --vk-sky-sun: var(--vk-sky-golden-sun); }
+.vk-sky[data-phase="dusk"] { --vk-sky-top: var(--vk-sky-dusk-top); --vk-sky-bottom: var(--vk-sky-dusk-bottom); --vk-sky-text: var(--vk-sky-dusk-text); --vk-sky-sun: var(--vk-sky-dusk-sun); }
+.vk-sky[data-phase="night"] { --vk-sky-top: var(--vk-sky-night-top); --vk-sky-bottom: var(--vk-sky-night-bottom); --vk-sky-text: var(--vk-sky-night-text); --vk-sky-sun: var(--vk-sky-night-sun); }
+.vk-sky__sun {
+  position: absolute;
+  top: var(--vk-space-5);
+  right: var(--vk-space-6);
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: var(--vk-sky-sun);
+  box-shadow: 0 0 48px 12px color-mix(in oklch, var(--vk-sky-sun) 45%, transparent);
+}
+.vk-sky__content { position: relative; padding: var(--vk-space-5); }
+[data-time="subtle"] .vk-sky { background: color-mix(in oklch, var(--vk-sky-top) 30%, var(--vk-color-bg)); color: var(--vk-color-text); }
+[data-time="subtle"] .vk-sky__sun { display: none; }
+[data-time="off"] .vk-sky { background: var(--vk-color-bg); color: var(--vk-color-text); }
+[data-time="off"] .vk-sky__sun { display: none; }
+[data-vibe="studio"] .vk-sky__sun { width: 10px; height: 10px; box-shadow: 0 0 10px 2px var(--vk-sky-sun); }
+[data-vibe="quiet"] .vk-sky__sun, [data-vibe="paper"] .vk-sky__sun { display: none; }
+
+
+
+
+
+
+
+
+
+
+@media (forced-colors: active) {
+  
+  .vk-toast { border: 1px solid CanvasText; }
+}
+
+ 
+.sl-danger{ white-space: nowrap; }
+
+ 
+
+
+
+
+
+ 
+a[href*="CardPage"], a[class*="btn"], button[class*="btn"], a[class*="-button"], button[class*="-button"]{ white-space: nowrap; flex-shrink: 0; }
+
+ 
+a[href*="CardPage"], a[class*="icon"][style*="width: auto"], button[class*="icon"][style*="width: auto"] { display: inline-flex !important; flex-direction: row !important; align-items: center !important; justify-content: center; gap: 8px; }
+</style>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Azeret+Mono:ital,wght@1,400&amp;display=swap" data-font-variant=""><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Azeret+Mono:ital,wght@1,500&amp;display=swap" data-font-variant=""><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Azeret+Mono:ital,wght@1,600&amp;display=swap" data-font-variant=""><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible+Next:wght@400;700&amp;family=Bricolage+Grotesque:opsz,wght@12..96,400..800&amp;family=Figtree:wght@400..800&amp;family=Geist:wght@400..700&amp;family=Instrument+Sans:wght@400..700&amp;family=Martian+Mono:wght@400..600&amp;family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..600&amp;display=swap" data-dc-tpl="1"><style data-dc-tpl="2">
+
+.app { display: flex; flex-direction: column; align-items: stretch; min-height: 900px; background: var(--vk-color-bg); color: var(--vk-color-text); font-family: var(--vk-font-body); }
+.app *, .app *::before, .app *::after { box-sizing: border-box; }
+/* Quiet shell: plain text navigation, no rail, no icons */
+.qn { position: relative; background: var(--vk-color-bg); color: var(--vk-color-text); border-bottom: 1px solid var(--vk-color-line); font-family: var(--vk-font-body); font-size: 18px; line-height: 1.4; }
+.qn *, .qn *::before, .qn *::after { box-sizing: border-box; }
+.qn-skip { position: absolute; left: var(--vk-space-6); top: -200px; z-index: 2; display: inline-flex; align-items: center; min-height: 44px; padding: 0 var(--vk-space-4); background: var(--vk-color-surface); border: 2px solid var(--vk-color-text); border-radius: var(--vk-radius-sm); color: var(--vk-color-text); font-weight: 700; }
+.qn-skip:focus { top: var(--vk-space-2); }
+.qn-row { display: flex; flex-wrap: wrap; align-items: center; gap: 0 var(--vk-space-5); min-height: 60px; padding: var(--vk-space-1) var(--vk-space-6); }
+.qn-row + .qn-row { border-top: 1px solid var(--vk-color-line); }
+.qn a, .qn-link { display: inline-flex; align-items: center; gap: 0.3em; min-height: 44px; padding: 0; border: 0; background: transparent; color: var(--vk-color-text); font: inherit; text-decoration: underline; text-underline-offset: 4px; cursor: pointer; }
+.qn a[aria-current="page"], .qn-link[aria-pressed="true"] { font-weight: 700; text-decoration: none; }
+.qn a.qn-name { font-weight: 700; text-decoration: none; margin-right: var(--vk-space-3); }
+.qn-links { display: flex; flex-wrap: wrap; align-items: center; gap: 0 var(--vk-space-5); margin: 0; padding: 0; list-style: none; }
+.qn-need { margin-left: 0.3em; font-weight: 700; color: var(--vk-color-signal-text); }
+.qn-end { margin-left: auto; display: flex; flex-wrap: wrap; align-items: center; gap: 0 var(--vk-space-5); }
+.qn-dash { color: var(--vk-color-muted); }
+.qn-board { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 0 var(--vk-space-2); }
+.qn-board b { font-weight: 700; }
+.qn-btn { display: inline-flex; align-items: center; gap: var(--vk-space-2); min-height: 44px; padding: 0 var(--vk-space-4); border: 2px solid var(--vk-color-text); border-radius: var(--vk-radius-sm); background: var(--vk-color-surface); color: var(--vk-color-text); font: inherit; font-size: 17px; font-weight: 700; cursor: pointer; }
+.qn-kbd { font: 400 14px/1 var(--vk-font-mono); color: var(--vk-color-muted); }
+.qn-view { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 0 var(--vk-space-2); }
+.qn-view .qn-dot { color: var(--vk-color-muted); }
+.qn-live { color: var(--vk-color-muted); font-size: 17px; }
+.qn-live b { color: var(--vk-color-success-text); }
+.qn-note { color: var(--vk-color-muted); font-size: 17px; }
+.qn a:focus-visible, .qn button:focus-visible { outline: 3px solid var(--vk-color-text); outline-offset: 3px; }
+.main { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; }
+.noface { flex: none; display: inline-block; border-radius: 50%; border: 2px dashed var(--vk-color-faint); }
+.wrap-any { overflow-wrap: anywhere; }
+
+
+.q { padding: var(--vk-space-6) var(--vk-space-6) var(--vk-space-7); }
+.q__col { max-width: 72rem; }
+.q a { color: var(--vk-color-text); text-decoration: underline; text-underline-offset: 4px; }
+.q h1 { margin: 0; font: 700 2rem / 1.2 var(--vk-font-display); }
+.lede { margin: var(--vk-space-2) 0 0; font-size: 1.1875rem; }
+.controls { display: flex; flex-wrap: wrap; gap: var(--vk-space-5); align-items: end; margin-top: var(--vk-space-5); padding-bottom: var(--vk-space-4); border-bottom: 2px solid var(--vk-color-text); }
+.lbl { display: grid; gap: var(--vk-space-2); font-weight: 700; font-size: 1.0625rem; }
+.inp { font: inherit; font-weight: 400; font-size: 1.0625rem; color: var(--vk-color-text); background: var(--vk-color-surface); border: 2px solid var(--vk-color-text); border-radius: var(--vk-radius-sm); min-height: 48px; padding: 0 var(--vk-space-3); }
+.textbtn { min-height: 48px; padding: 0 var(--vk-space-2); border: 0; background: transparent; color: var(--vk-color-text); font: inherit; font-size: 1.0625rem; text-decoration: underline; text-underline-offset: 4px; cursor: pointer; }
+.textbtn[aria-pressed="true"] { font-weight: 700; text-decoration: none; }
+.views { display: flex; gap: var(--vk-space-2); align-items: center; font-size: 1.0625rem; }
+.q h2 { margin: var(--vk-space-6) 0 0; font: 700 1.375rem / 1.3 var(--vk-font-display); }
+.own { margin: 4px 0 0; color: var(--vk-color-muted); font-size: 1rem; }
+table { width: 100%; border-collapse: collapse; margin-top: var(--vk-space-3); font-size: 1.0625rem; }
+th { text-align: left; font-weight: 700; padding: 0 var(--vk-space-3) 0 0; border-bottom: 2px solid var(--vk-color-line); }
+.sort { min-height: 48px; padding: 0; border: 0; background: transparent; color: var(--vk-color-text); font: inherit; font-weight: 700; text-decoration: underline; text-underline-offset: 4px; cursor: pointer; display: inline-flex; gap: 4px; align-items: center; }
+.sort[data-on="true"] { text-decoration: none; }
+.sorted { font-weight: 400; color: var(--vk-color-muted); font-size: 0.875rem; white-space: nowrap; text-decoration: none; }
+th > .sort:has(.sorted) { flex-direction: column; align-items: flex-start; gap: 0; line-height: 1.3; padding: 4px 0; }
+td { padding: var(--vk-space-3) var(--vk-space-3) var(--vk-space-3) 0; border-bottom: 1px solid var(--vk-color-line); vertical-align: top; line-height: 1.5; overflow-wrap: anywhere; }
+tr.needs td:first-child { box-shadow: inset 5px 0 0 var(--vk-color-signal); padding-left: var(--vk-space-4); }
+td:first-child { padding-left: var(--vk-space-4); }
+.facts { margin-top: 2px; color: var(--vk-color-muted); font-size: 1rem; }
+.who { display: flex; align-items: center; gap: 8px; }
+.st--needs { font-weight: 700; color: var(--vk-color-signal-text); }
+.acts { display: flex; gap: var(--vk-space-3); align-items: center; }
+.empty { margin: var(--vk-space-6) 0 0; font-size: 1.0625rem; }
+
+  </style><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible+Next:ital,wght@1,400&amp;display=swap" data-font-variant=""><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible+Next:ital,wght@1,700&amp;display=swap" data-font-variant=""><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:ital,wght@1,400..800&amp;display=swap" data-font-variant=""><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:ital,wght@1,400..700&amp;display=swap" data-font-variant=""><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Sans:ital,wght@1,400..700&amp;display=swap" data-font-variant=""><style data-dc-editor-style="">body:not([data-dc-editor-overlay-hidden]) [data-dc-editor-hover][data-dc-editor-hover-stroke]:not([data-dc-editor-selected]){filter:drop-shadow(0 0 calc(1*var(--dc-chrome-unit,1px)) color-mix(in srgb,#2a78d6 90%,transparent)) drop-shadow(0 0 calc(2*var(--dc-chrome-unit,1px)) color-mix(in srgb,#2a78d6 55%,transparent))!important;}body:not([data-dc-editor-overlay-hidden]):not([data-dc-editor-proxy="copy"]) [data-dc-editor-dragging],body:not([data-dc-editor-overlay-hidden]):not([data-dc-editor-proxy]) [data-dc-dragging],body[data-dc-editor-brk]:not([data-dc-editor-overlay-hidden]) [data-dc-drag-follower]{outline:calc(2*var(--dc-chrome-unit,1px)) solid #2a78d6!important;outline-offset:calc(-1*var(--dc-chrome-unit,1px))!important;opacity:0.55!important;}body[data-dc-editor-proxy="move"]:not([data-dc-editor-overlay-hidden]) [data-dc-editor-dragging],body[data-dc-editor-proxy="move"]:not([data-dc-editor-overlay-hidden]) [data-dc-dragging],body[data-dc-editor-proxy="move"]:not([data-dc-editor-overlay-hidden]) [data-dc-editor-dragging]>*,body[data-dc-editor-proxy="move"]:not([data-dc-editor-overlay-hidden]) [data-dc-dragging]>*{opacity:0!important;outline:none!important;}[data-dc-editor-drag-proxy],[data-dc-editor-drag-proxy] *{pointer-events:none!important;}body[data-dc-editor-on]:not([data-dc-editor-tool="interact"]) *{cursor:default!important;user-select:none!important;}body[data-dc-editor-on]:not([data-dc-editor-tool="interact"]) :not([data-dc-editor-overlay-root]):not([data-dc-editor-overlay-root] *){pointer-events:auto!important;transition:none!important;animation:none!important;}body[data-dc-editor-on][data-dc-editor-brk]:not([data-dc-editor-overlay-hidden]) [data-dc-editor-dragging]:not([data-dc-editor-overlay-root]) :not([data-dc-editor-overlay-root]),body[data-dc-editor-on][data-dc-editor-brk]:not([data-dc-editor-overlay-hidden]) [data-dc-dragging]:not([data-dc-editor-overlay-root]) :not([data-dc-editor-overlay-root]),body[data-dc-editor-on][data-dc-editor-brk]:not([data-dc-editor-overlay-hidden]) [data-dc-drag-follower]:not([data-dc-editor-overlay-root]),body[data-dc-editor-on][data-dc-editor-brk]:not([data-dc-editor-overlay-hidden]) [data-dc-drag-follower]:not([data-dc-editor-overlay-root]) :not([data-dc-editor-overlay-root]),body[data-dc-editor-move][data-dc-editor-brk]:not([data-dc-editor-overlay-hidden]) [data-dc-editor-dragging]:not([data-dc-editor-overlay-root]) :not([data-dc-editor-overlay-root]),body[data-dc-editor-move][data-dc-editor-brk]:not([data-dc-editor-overlay-hidden]) [data-dc-dragging]:not([data-dc-editor-overlay-root]) :not([data-dc-editor-overlay-root]),body[data-dc-editor-move][data-dc-editor-brk]:not([data-dc-editor-overlay-hidden]) [data-dc-drag-follower]:not([data-dc-editor-overlay-root]),body[data-dc-editor-move][data-dc-editor-brk]:not([data-dc-editor-overlay-hidden]) [data-dc-drag-follower]:not([data-dc-editor-overlay-root]) :not([data-dc-editor-overlay-root]){pointer-events:none!important;}body[data-dc-editor-move] :not([data-dc-editor-overlay-root]):not([data-dc-editor-overlay-root] *){pointer-events:auto!important;transition:none!important;animation-duration:0s!important;animation-delay:0s!important;}body[data-dc-editor-on][data-dc-editor-tool="rect"] *,body[data-dc-editor-on][data-dc-editor-tool="frame"] *,body[data-dc-editor-on][data-dc-editor-tool="grid"] *,body[data-dc-editor-on][data-dc-editor-tool="oval"] *,body[data-dc-editor-on][data-dc-editor-tool="arrow"] *,body[data-dc-editor-on][data-dc-editor-tool="line"] *{cursor:crosshair!important;}body[data-dc-editor-on][data-dc-editor-tool="text"] *{cursor:text!important;}body[data-dc-editor-on][data-dc-editor-tool="draw"] *{cursor:url('data:image/svg+xml,%3Csvg%20xmlns=%22http://www.w3.org/2000/svg%22%20width=%2216%22%20height=%2216%22%20viewBox=%220%200%2016%2016%22%3E%3Cpath%20d=%22M2%2014l1-4%208-8a2.1%202.1%200%200%201%203%203l-8%208-4%201z%22%20fill=%22%23333%22%20stroke=%22%23fff%22%20stroke-width=%221%22/%3E%3C/svg%3E') 1 15, crosshair!important;}body[data-dc-editor-on]:not([data-dc-editor-tool]) [data-drags-parent],body[data-dc-editor-on]:not([data-dc-editor-tool]) [data-drags-parent] *{cursor:grab!important;}body[data-dc-editor-on]:not([data-dc-editor-tool]) [data-drags-parent]:active,body[data-dc-editor-on]:not([data-dc-editor-tool]) [data-drags-parent]:active *{cursor:grabbing!important;}body[data-dc-editor-on] [data-dc-editor-editing][contenteditable][contenteditable],body[data-dc-editor-on] [data-dc-editor-editing][contenteditable][contenteditable] *,body[data-dc-editor-on] [data-dc-editor-svg-editing]{cursor:text!important;}body[data-dc-editor-on] [data-dc-editor-editing="import"]{outline:none!important;}html:not([data-dc-canvas]):has(body[data-dc-editor-on]:not([data-dc-capturing]) .sc-host){background:var(--dc-editor-backdrop,#ededeb);}html:not([data-dc-canvas]) body[data-dc-editor-on]:not([data-dc-capturing]):has(.sc-host){background:var(--dc-editor-backdrop,#ededeb);}html:not([data-dc-canvas]) body[data-dc-editor-on] .sc-host:not(.sc-host .sc-host){min-height:calc(100vh - var(--dc-editor-host-vpad,0px));}html:not([data-dc-canvas]) body[data-dc-editor-on]:not([data-dc-capturing]) .sc-host:not(.sc-host .sc-host){background:var(--dc-editor-host-bg,#fff);}html[data-dc-frameless],html[data-dc-frameless] body[data-dc-editor-on],html[data-dc-frameless] body[data-dc-editor-on] .sc-host:not(.sc-host .sc-host){background:transparent!important;min-height:0!important;}html:has(body[data-dc-capturing]),body[data-dc-capturing]{transition:none!important;}html[data-dc-canvas]{overflow:hidden;}html[data-dc-canvas] body[data-dc-editor-on] .sc-host:not(.sc-host .sc-host)::before{content:"";position:absolute;left:-100000px;top:-100000px;width:200000px;height:200000px;pointer-events:none;background:repeating-linear-gradient(45deg,var(--dc-editor-hatch-ink,rgba(0,0,0,.05)) 0 8px,transparent 8px 16px);clip-path:polygon(0 0,100% 0,100% 50%,50% 50%,50% 100%,0 100%);}</style></head>
+<body>
+<div id="dc-root"><div class="sc-host" data-sc-name="SP-List-Quiet"><div data-product="superpipeline" data-accent="product" data-dc-tpl="3" data-vibe="quiet" data-theme="light" style="background: var(--vk-color-bg); color: var(--vk-color-text); font-family: var(--vk-font-body);"><div data-dc-tpl="4" class="app"><header data-dc-tpl="5" class="qn"><div data-dc-tpl="6" class="qn-row"><a data-dc-tpl="7" class="qn-skip" href="#content">Skip to content</a><a data-dc-tpl="8" class="qn-name" href="#home" aria-label="Superpipeline home">Superpipeline</a><nav data-dc-tpl="9" aria-label="Superpipeline"><ul data-dc-tpl="10" class="qn-links"><li data-dc-tpl="11"><a data-dc-tpl="12" href="#plan" aria-current="page">Plan</a></li><li data-dc-tpl="13"><a data-dc-tpl="14" href="#operate">Operate <span data-dc-tpl="15" class="qn-need">(4 need you)</span></a></li><li data-dc-tpl="16"><a data-dc-tpl="17" href="#workspace">Workspace</a></li></ul></nav><div data-dc-tpl="18" class="qn-end"><button data-dc-tpl="19" class="qn-link" type="button" aria-haspopup="dialog">Appearance</button><button data-dc-tpl="20" class="qn-link" type="button" aria-pressed="false">Dark theme</button><span data-dc-tpl="21"><a data-dc-tpl="22" href="#account" aria-haspopup="menu">Ira Mehta</a> <span data-dc-tpl="23" class="qn-dash" aria-hidden="true">—</span> <button data-dc-tpl="24" class="qn-link" type="button">Sign out</button></span></div></div><div data-dc-tpl="25" class="qn-row"><span data-dc-tpl="26" class="qn-board">Board: <b data-dc-tpl="27">Developer Experience</b> <span data-dc-tpl="28" class="qn-dash" aria-hidden="true">—</span> <button data-dc-tpl="29" class="qn-link" type="button" aria-haspopup="menu" aria-label="Change board, now Developer Experience">Change board</button></span><span data-dc-tpl="30" class="qn-live" role="status" title="Live: changes arrive as they happen"><b data-dc-tpl="31">Live.</b> Changes appear as they happen.</span><button data-dc-tpl="32" class="qn-btn" type="button" aria-label="Search cards, agents and actions">Search <span data-dc-tpl="33" class="qn-kbd" aria-hidden="true">⌘K</span></button><button data-dc-tpl="34" class="qn-btn" type="button">New card</button><div data-dc-tpl="35" class="qn-view" role="group" aria-label="View">View: <button data-dc-tpl="36" class="qn-link" type="button" aria-pressed="false">Board</button> <span data-dc-tpl="37" class="qn-dot" aria-hidden="true">·</span> <button data-dc-tpl="38" class="qn-link" type="button" aria-pressed="true">List</button> <span data-dc-tpl="39" class="qn-dot" aria-hidden="true">·</span> <button data-dc-tpl="40" class="qn-link" type="button" aria-pressed="false">Projects</button></div><button data-dc-tpl="41" class="qn-link" type="button" aria-haspopup="dialog">Filter cards (none on)</button><span data-dc-tpl="42" class="qn-note">Showing all 7 cards</span></div></header><div data-dc-tpl="43" class="main"><main data-dc-tpl="44" class="q" id="content" tabindex="-1"><div data-dc-tpl="45" class="q__col">
+  <h1 data-dc-tpl="46">Developer Experience: list</h1>
+  <p data-dc-tpl="47" class="lede">7 cards. 4 are waiting on you.</p>
+  <div data-dc-tpl="48" class="controls">
+    <label data-dc-tpl="49" class="lbl">Group by<select data-dc-tpl="50" class="inp"><option data-dc-tpl="51">Stage</option><option data-dc-tpl="52">State</option><option data-dc-tpl="53">Owner</option><option data-dc-tpl="54">Priority</option></select></label>
+    <label data-dc-tpl="55" class="lbl">Sort by<select data-dc-tpl="56" class="inp"><option data-dc-tpl="57">Priority, highest first</option><option data-dc-tpl="58">Card title</option><option data-dc-tpl="59">State</option><option data-dc-tpl="60">Agent</option><option data-dc-tpl="61">Due date</option><option data-dc-tpl="62">Cost</option></select></label>
+  </div>
+  <h2 data-dc-tpl="63">Reported (1)</h2><p data-dc-tpl="64" class="own">Worked by a person.</p><table data-dc-tpl="65"><caption data-dc-tpl="66" class="vk-visually-hidden">Reported</caption><thead data-dc-tpl="67"><tr data-dc-tpl="68"><th data-dc-tpl="69" scope="col" aria-sort="ascending"><button data-dc-tpl="70" class="sort" type="button" data-on="true">Priority <span data-dc-tpl="71" class="sorted">(sorted, highest first)</span></button></th><th data-dc-tpl="72" scope="col"><button data-dc-tpl="73" class="sort" type="button" data-on="false">Card</button></th><th data-dc-tpl="74" scope="col"><button data-dc-tpl="75" class="sort" type="button" data-on="false">State</button></th><th data-dc-tpl="76" scope="col"><button data-dc-tpl="77" class="sort" type="button" data-on="false">Agent</button></th><th data-dc-tpl="78" scope="col"><button data-dc-tpl="79" class="sort" type="button" data-on="false">Due</button></th><th data-dc-tpl="80" scope="col"><button data-dc-tpl="81" class="sort" type="button" data-on="false">Cost</button></th><th data-dc-tpl="82" scope="col">Actions</th></tr></thead><tbody data-dc-tpl="83"><tr data-dc-tpl="84" class="needs">
+  <td data-dc-tpl="85" style="width: 7rem;">P1</td>
+  <td data-dc-tpl="86"><a data-dc-tpl="87" href="#card">Fix the highest-severity blocker found in the clean-room journey</a><div data-dc-tpl="88" class="facts">Labels: clean-room, evidence-required, superpipeline and 1 more. Asked for by super-chotu.</div></td>
+  <td data-dc-tpl="89" style="width: 11rem;"><span data-dc-tpl="90" class="st--needs">Waiting on you, no owner</span></td>
+  <td data-dc-tpl="91" style="width: 11rem;"><div data-dc-tpl="92" class="who"><span data-dc-tpl="93" class="noface " aria-hidden="true" style="width: 20px; height: 20px;"></span>Unclaimed</div></td>
+  <td data-dc-tpl="94" style="width: 10rem;"><strong data-dc-tpl="95">Overdue.</strong> Was due 6 Oct 2026.</td>
+  <td data-dc-tpl="96" style="width: 5rem;">None</td>
+  <td data-dc-tpl="97" style="width: 12rem;"><div data-dc-tpl="98" class="acts"><a data-dc-tpl="99" href="#card">Open</a><button data-dc-tpl="100" class="textbtn" type="button" aria-haspopup="dialog">Move</button></div></td></tr></tbody></table><h2 data-dc-tpl="101">Reproduce (1)</h2><p data-dc-tpl="102" class="own">Worked by diagnostics · error-eric.</p><table data-dc-tpl="103"><caption data-dc-tpl="104" class="vk-visually-hidden">Reproduce</caption><thead data-dc-tpl="105"><tr data-dc-tpl="106"><th data-dc-tpl="107" scope="col" aria-sort="ascending"><button data-dc-tpl="108" class="sort" type="button" data-on="true">Priority <span data-dc-tpl="109" class="sorted">(sorted, highest first)</span></button></th><th data-dc-tpl="110" scope="col"><button data-dc-tpl="111" class="sort" type="button" data-on="false">Card</button></th><th data-dc-tpl="112" scope="col"><button data-dc-tpl="113" class="sort" type="button" data-on="false">State</button></th><th data-dc-tpl="114" scope="col"><button data-dc-tpl="115" class="sort" type="button" data-on="false">Agent</button></th><th data-dc-tpl="116" scope="col"><button data-dc-tpl="117" class="sort" type="button" data-on="false">Due</button></th><th data-dc-tpl="118" scope="col"><button data-dc-tpl="119" class="sort" type="button" data-on="false">Cost</button></th><th data-dc-tpl="120" scope="col">Actions</th></tr></thead><tbody data-dc-tpl="121"><tr data-dc-tpl="122" class="needs">
+  <td data-dc-tpl="123" style="width: 7rem;">P3</td>
+  <td data-dc-tpl="124"><a data-dc-tpl="125" href="#card">Diagnose Melissa and Anna Supermessage silence — trace actual failing hop</a><div data-dc-tpl="126" class="facts">Asked for by super-chotu.</div></td>
+  <td data-dc-tpl="127" style="width: 11rem;"><span data-dc-tpl="128" class="st--needs">Waiting on you, stopped</span></td>
+  <td data-dc-tpl="129" style="width: 11rem;"><div data-dc-tpl="130" class="who"><span data-dc-tpl="131" class="vk-face " style="--vk-face-size: 20px;"><svg data-dc-tpl="132" viewBox="-2 -4 68 70" width="20" height="20" aria-hidden="true" focusable="false" data-mood="needs"><circle data-dc-tpl="133" cx="32" cy="32" r="30" fill="var(--vk-mood-needs)"></circle><path data-dc-tpl="134" d="M28 4 Q32 -2 36 4 Q34 8 32 6 Q30 8 28 4Z" fill="rgb(107 74 43)"></path><g data-dc-tpl="135" data-eyes="open"><ellipse data-dc-tpl="136" cx="23" cy="28" rx="4" ry="2.4" fill="var(--vk-face-ink)"></ellipse><ellipse data-dc-tpl="137" cx="41" cy="28" rx="4" ry="2.4" fill="var(--vk-face-ink)"></ellipse></g><circle data-dc-tpl="138" cx="17" cy="37" r="4" fill="rgb(255 158 138 / 0.5)"></circle><circle data-dc-tpl="139" cx="47" cy="37" r="4" fill="rgb(255 158 138 / 0.5)"></circle><path data-dc-tpl="140" d="M24 44 Q32 38 40 44" fill="none" stroke="var(--vk-face-ink)" stroke-width="3" stroke-linecap="round"></path></svg></span>error-eric</div></td>
+  <td data-dc-tpl="141" style="width: 10rem;">None</td>
+  <td data-dc-tpl="142" style="width: 5rem;">None</td>
+  <td data-dc-tpl="143" style="width: 12rem;"><div data-dc-tpl="144" class="acts"><a data-dc-tpl="145" href="#card">Open</a><button data-dc-tpl="146" class="textbtn" type="button" aria-haspopup="dialog">Move</button></div></td></tr></tbody></table><h2 data-dc-tpl="147">Failing test (3)</h2><p data-dc-tpl="148" class="own">Worked by testing · tester-tim.</p><table data-dc-tpl="149"><caption data-dc-tpl="150" class="vk-visually-hidden">Failing test</caption><thead data-dc-tpl="151"><tr data-dc-tpl="152"><th data-dc-tpl="153" scope="col" aria-sort="ascending"><button data-dc-tpl="154" class="sort" type="button" data-on="true">Priority <span data-dc-tpl="155" class="sorted">(sorted, highest first)</span></button></th><th data-dc-tpl="156" scope="col"><button data-dc-tpl="157" class="sort" type="button" data-on="false">Card</button></th><th data-dc-tpl="158" scope="col"><button data-dc-tpl="159" class="sort" type="button" data-on="false">State</button></th><th data-dc-tpl="160" scope="col"><button data-dc-tpl="161" class="sort" type="button" data-on="false">Agent</button></th><th data-dc-tpl="162" scope="col"><button data-dc-tpl="163" class="sort" type="button" data-on="false">Due</button></th><th data-dc-tpl="164" scope="col"><button data-dc-tpl="165" class="sort" type="button" data-on="false">Cost</button></th><th data-dc-tpl="166" scope="col">Actions</th></tr></thead><tbody data-dc-tpl="167"><tr data-dc-tpl="168" class="needs">
+  <td data-dc-tpl="169" style="width: 7rem;">P2</td>
+  <td data-dc-tpl="170"><a data-dc-tpl="171" href="#card">AgentPod: connector interface and generic effects ledger, state machine and executor</a><div data-dc-tpl="172" class="facts">Asked for by super-chotu.</div></td>
+  <td data-dc-tpl="173" style="width: 11rem;"><span data-dc-tpl="174" class="st--needs">Waiting on you, stopped</span></td>
+  <td data-dc-tpl="175" style="width: 11rem;"><div data-dc-tpl="176" class="who"><span data-dc-tpl="177" class="vk-face " style="--vk-face-size: 20px;"><svg data-dc-tpl="178" viewBox="-2 -4 68 70" width="20" height="20" aria-hidden="true" focusable="false" data-mood="needs"><circle data-dc-tpl="179" cx="32" cy="32" r="30" fill="var(--vk-mood-needs)"></circle><circle data-dc-tpl="180" cx="32" cy="4" r="7" fill="rgb(94 90 156)"></circle><g data-dc-tpl="181" data-eyes="open"><ellipse data-dc-tpl="182" cx="23" cy="28" rx="3.2" ry="3.2" fill="var(--vk-face-ink)"></ellipse><ellipse data-dc-tpl="183" cx="41" cy="28" rx="3.2" ry="3.2" fill="var(--vk-face-ink)"></ellipse></g><path data-dc-tpl="184" d="M24 44 Q32 38 40 44" fill="none" stroke="var(--vk-face-ink)" stroke-width="3" stroke-linecap="round"></path></svg></span>tester-tim</div></td>
+  <td data-dc-tpl="185" style="width: 10rem;">None</td>
+  <td data-dc-tpl="186" style="width: 5rem;">None</td>
+  <td data-dc-tpl="187" style="width: 12rem;"><div data-dc-tpl="188" class="acts"><a data-dc-tpl="189" href="#card">Open</a><button data-dc-tpl="190" class="textbtn" type="button" aria-haspopup="dialog">Move</button></div></td></tr><tr data-dc-tpl="191">
+  <td data-dc-tpl="192" style="width: 7rem;">P2</td>
+  <td data-dc-tpl="193"><a data-dc-tpl="194" href="#card">Integrate editorial workflows and prove no-write publishing acceptance</a><div data-dc-tpl="195" class="facts">Blocked by three other cards. Asked for by super-chotu.</div></td>
+  <td data-dc-tpl="196" style="width: 11rem;"><span data-dc-tpl="197">Queued</span></td>
+  <td data-dc-tpl="198" style="width: 11rem;"><div data-dc-tpl="199" class="who"><span data-dc-tpl="200" class="noface " aria-hidden="true" style="width: 20px; height: 20px;"></span>Not claimed yet</div></td>
+  <td data-dc-tpl="201" style="width: 10rem;">None</td>
+  <td data-dc-tpl="202" style="width: 5rem;">None</td>
+  <td data-dc-tpl="203" style="width: 12rem;"><div data-dc-tpl="204" class="acts"><a data-dc-tpl="205" href="#card">Open</a><button data-dc-tpl="206" class="textbtn" type="button" aria-haspopup="dialog">Move</button></div></td></tr><tr data-dc-tpl="207">
+  <td data-dc-tpl="208" style="width: 7rem;">None</td>
+  <td data-dc-tpl="209"><a data-dc-tpl="210" href="#card">agentpod-connectors: X connector (connector x)</a><div data-dc-tpl="211" class="facts">Blocked by another card.</div></td>
+  <td data-dc-tpl="212" style="width: 11rem;"><span data-dc-tpl="213">Queued</span></td>
+  <td data-dc-tpl="214" style="width: 11rem;"><div data-dc-tpl="215" class="who"><span data-dc-tpl="216" class="noface " aria-hidden="true" style="width: 20px; height: 20px;"></span>Not claimed yet</div></td>
+  <td data-dc-tpl="217" style="width: 10rem;">None</td>
+  <td data-dc-tpl="218" style="width: 5rem;">None</td>
+  <td data-dc-tpl="219" style="width: 12rem;"><div data-dc-tpl="220" class="acts"><a data-dc-tpl="221" href="#card">Open</a><button data-dc-tpl="222" class="textbtn" type="button" aria-haspopup="dialog">Move</button></div></td></tr></tbody></table><h2 data-dc-tpl="223">Fix (1)</h2><p data-dc-tpl="224" class="own">Worked by code · 2 agents.</p><table data-dc-tpl="225"><caption data-dc-tpl="226" class="vk-visually-hidden">Fix</caption><thead data-dc-tpl="227"><tr data-dc-tpl="228"><th data-dc-tpl="229" scope="col" aria-sort="ascending"><button data-dc-tpl="230" class="sort" type="button" data-on="true">Priority <span data-dc-tpl="231" class="sorted">(sorted, highest first)</span></button></th><th data-dc-tpl="232" scope="col"><button data-dc-tpl="233" class="sort" type="button" data-on="false">Card</button></th><th data-dc-tpl="234" scope="col"><button data-dc-tpl="235" class="sort" type="button" data-on="false">State</button></th><th data-dc-tpl="236" scope="col"><button data-dc-tpl="237" class="sort" type="button" data-on="false">Agent</button></th><th data-dc-tpl="238" scope="col"><button data-dc-tpl="239" class="sort" type="button" data-on="false">Due</button></th><th data-dc-tpl="240" scope="col"><button data-dc-tpl="241" class="sort" type="button" data-on="false">Cost</button></th><th data-dc-tpl="242" scope="col">Actions</th></tr></thead><tbody data-dc-tpl="243"><tr data-dc-tpl="244" class="needs">
+  <td data-dc-tpl="245" style="width: 7rem;">None</td>
+  <td data-dc-tpl="246"><a data-dc-tpl="247" href="#card">Superpipeline: manual-delivery completion and approval-subject hardening</a></td>
+  <td data-dc-tpl="248" style="width: 11rem;"><span data-dc-tpl="249" class="st--needs">Waiting on you, stopped</span></td>
+  <td data-dc-tpl="250" style="width: 11rem;"><div data-dc-tpl="251" class="who"><span data-dc-tpl="252" class="vk-face " style="--vk-face-size: 20px;"><svg data-dc-tpl="253" viewBox="-2 -4 68 70" width="20" height="20" aria-hidden="true" focusable="false" data-mood="needs"><circle data-dc-tpl="254" cx="32" cy="32" r="30" fill="var(--vk-mood-needs)"></circle><g data-dc-tpl="255" data-eyes="open"><ellipse data-dc-tpl="256" cx="23" cy="28" rx="3.2" ry="4.2" fill="var(--vk-face-ink)"></ellipse><ellipse data-dc-tpl="257" cx="41" cy="28" rx="3.2" ry="4.2" fill="var(--vk-face-ink)"></ellipse></g><circle data-dc-tpl="258" cx="17" cy="37" r="4" fill="rgb(255 158 138 / 0.5)"></circle><circle data-dc-tpl="259" cx="47" cy="37" r="4" fill="rgb(255 158 138 / 0.5)"></circle><path data-dc-tpl="260" d="M24 44 Q32 38 40 44" fill="none" stroke="var(--vk-face-ink)" stroke-width="3" stroke-linecap="round"></path></svg></span>coder-kai</div></td>
+  <td data-dc-tpl="261" style="width: 10rem;">None</td>
+  <td data-dc-tpl="262" style="width: 5rem;">None</td>
+  <td data-dc-tpl="263" style="width: 12rem;"><div data-dc-tpl="264" class="acts"><a data-dc-tpl="265" href="#card">Open</a><button data-dc-tpl="266" class="textbtn" type="button" aria-haspopup="dialog">Move</button></div></td></tr></tbody></table><h2 data-dc-tpl="267">Shipped (1)</h2><p data-dc-tpl="268" class="own">Worked by a person.</p><table data-dc-tpl="269"><caption data-dc-tpl="270" class="vk-visually-hidden">Shipped</caption><thead data-dc-tpl="271"><tr data-dc-tpl="272"><th data-dc-tpl="273" scope="col" aria-sort="ascending"><button data-dc-tpl="274" class="sort" type="button" data-on="true">Priority <span data-dc-tpl="275" class="sorted">(sorted, highest first)</span></button></th><th data-dc-tpl="276" scope="col"><button data-dc-tpl="277" class="sort" type="button" data-on="false">Card</button></th><th data-dc-tpl="278" scope="col"><button data-dc-tpl="279" class="sort" type="button" data-on="false">State</button></th><th data-dc-tpl="280" scope="col"><button data-dc-tpl="281" class="sort" type="button" data-on="false">Agent</button></th><th data-dc-tpl="282" scope="col"><button data-dc-tpl="283" class="sort" type="button" data-on="false">Due</button></th><th data-dc-tpl="284" scope="col"><button data-dc-tpl="285" class="sort" type="button" data-on="false">Cost</button></th><th data-dc-tpl="286" scope="col">Actions</th></tr></thead><tbody data-dc-tpl="287"><tr data-dc-tpl="288">
+  <td data-dc-tpl="289" style="width: 7rem;">P2</td>
+  <td data-dc-tpl="290"><a data-dc-tpl="291" href="#card">Build immutable approval subjects and digest-bound gates</a></td>
+  <td data-dc-tpl="292" style="width: 11rem;"><span data-dc-tpl="293">Done</span></td>
+  <td data-dc-tpl="294" style="width: 11rem;"><div data-dc-tpl="295" class="who"><span data-dc-tpl="296" class="vk-face " style="--vk-face-size: 20px;"><svg data-dc-tpl="297" viewBox="-2 -4 68 70" width="20" height="20" aria-hidden="true" focusable="false" data-mood="done"><circle data-dc-tpl="298" cx="32" cy="32" r="30" fill="var(--vk-mood-done)"></circle><g data-dc-tpl="299" data-eyes="open"><ellipse data-dc-tpl="300" cx="23" cy="28" rx="3.2" ry="4.2" fill="var(--vk-face-ink)"></ellipse><ellipse data-dc-tpl="301" cx="41" cy="28" rx="3.2" ry="4.2" fill="var(--vk-face-ink)"></ellipse></g><circle data-dc-tpl="302" cx="17" cy="37" r="4" fill="rgb(255 158 138 / 0.5)"></circle><circle data-dc-tpl="303" cx="47" cy="37" r="4" fill="rgb(255 158 138 / 0.5)"></circle><path data-dc-tpl="304" d="M20 39 Q32 51 44 39" fill="none" stroke="var(--vk-face-ink)" stroke-width="3" stroke-linecap="round"></path></svg></span>coder-kai</div></td>
+  <td data-dc-tpl="305" style="width: 10rem;">None</td>
+  <td data-dc-tpl="306" style="width: 5rem;">None</td>
+  <td data-dc-tpl="307" style="width: 12rem;"><div data-dc-tpl="308" class="acts"><a data-dc-tpl="309" href="#card">Open</a><button data-dc-tpl="310" class="textbtn" type="button" aria-haspopup="dialog">Move</button></div></td></tr></tbody></table>
+  <p data-dc-tpl="311" class="empty">Stages with no cards are not shown: Integrate, Signed off.</p></div></main></div></div></div></div></div>
+
+
+
+</body></html>

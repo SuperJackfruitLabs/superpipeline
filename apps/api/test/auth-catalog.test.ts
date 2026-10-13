@@ -52,7 +52,7 @@ describe('catalog (D1) — auth, workspaces, agent tokens', () => {
     const u = await upsertUserByEmail(env.DB, { email: 'mae@x.com', name: 'Mae' });
     const t = await ensurePersonalWorkspace(env.DB, u.id, 'Mae');
     await recordBoard(env.DB, t.id, { id: 'brd_cat1', name: 'Launch', stagesJson: '[]' });
-    expect(await listBoards(env.DB, t.id)).toEqual([{ id: 'brd_cat1', name: 'Launch' }]);
+    expect(await listBoards(env.DB, t.id)).toEqual([{ id: 'brd_cat1', name: 'Launch', updatedAt: expect.any(String) }]);
     // another workspace sees none of it
     const other = await ensurePersonalWorkspace(env.DB, (await upsertUserByEmail(env.DB, { email: 'x@x.com' })).id, 'X');
     expect(await listBoards(env.DB, other.id)).toEqual([]);

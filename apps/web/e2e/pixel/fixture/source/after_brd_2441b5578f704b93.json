@@ -1,0 +1,77 @@
+{
+  "boardId": "brd_2441b5578f704b93",
+  "tenantId": "tnt_vibes",
+  "name": "Production Releases",
+  "stages": [
+    {
+      "key": "proposed",
+      "name": "Proposed",
+      "order": 0,
+      "ownerKind": "human"
+    },
+    {
+      "key": "staged",
+      "name": "Staged",
+      "order": 1,
+      "ownerKind": "capability",
+      "owner": "release",
+      "instructions": "Prepare the release this card names, so the checks stage has something concrete to examine.\n\nWork on the card's own branch, so the next stage can find what you produced even if it runs on\nanother machine. Stages may share a host today; that is luck, not design, and it fails silently\nthe day a station moves.\n\n  directory  ./.release/<cardId>/ inside the directory you start in.\n  branch     release/<cardId>.\n  repository the card's target, cloned by its ordinary GitHub URL — this host rewrites\n             forge-primary repositories to forge automatically, and your station key is what\n             authenticates the push.\n\nPush what you prepared. An artifact that exists only on the machine you built it on is not staged,\nit is stranded, and the next stage will be checking nothing.\n\nComplete with a `version` in your handoff — the exact tag or identifier you prepared, as a reader\nwould type it — and attach the forge commit as a reference. The reference is what proves the work\nleft this station; without it, \"staged\" is a word rather than a fact. This board exists because\nthat distinction has been got wrong before.",
+      "completion": {
+        "handoff": [
+          "version"
+        ],
+        "reference": {
+          "provider": "forge",
+          "sourceType": "commit"
+        }
+      }
+    },
+    {
+      "key": "checks",
+      "name": "Checks",
+      "order": 2,
+      "ownerKind": "capability",
+      "owner": "security-review",
+      "instructions": "Run the release checks against what the previous stage staged, and report what they said.\n\nStart from the staged branch and the `version` in the handoff — not from `main`, and not from a\nfresh build of your own. Checking something other than the artifact that will ship is the one\nfailure this stage cannot recover from, because it produces a confident pass about the wrong thing.\n\nRun every check the card's spec names. If the spec names none, say so in your verdict rather than\ninventing a set — a check nobody asked for passing tells a reader nothing about what was required.\n\nComplete with a `verdict` in your handoff: `pass` or `fail`, the checks you ran, and their output\nor a pointer to it.\n\n**A failing check is a successful stage.** Report `fail` with the detail and let the go/no-go gate\ndecide; do not fix the problem yourself. Fixing it here means the thing that ships was never\nchecked in the state it ships in, which is the same defect as checking the wrong artifact.",
+      "completion": {
+        "handoff": [
+          "verdict"
+        ]
+      }
+    },
+    {
+      "key": "go-no-go",
+      "name": "Go / no-go",
+      "order": 3,
+      "ownerKind": "human",
+      "gate": "approval",
+      "wipLimit": 1
+    },
+    {
+      "key": "released",
+      "name": "Released",
+      "order": 4,
+      "ownerKind": "human"
+    }
+  ],
+  "cards": [],
+  "gates": [],
+  "elicitations": [],
+  "references": [],
+  "usage": {
+    "totalCostUsd": 0,
+    "estimatedCostUsd": 0,
+    "budgetUsd": null,
+    "cardUsdCap": null,
+    "overBudget": false
+  },
+  "github": {
+    "issueTrigger": false,
+    "webhookConfigured": false,
+    "triggerGrantCount": null
+  },
+  "stale": {
+    "enabled": true,
+    "afterHours": 24
+  }
+}

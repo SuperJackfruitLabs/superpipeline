@@ -1,0 +1,5 @@
+/* Studio desktop shell: the product's own pieces in vibekit's sub-bar. Values from SP-Board-Studio's .ar-fl i, .ar-hint and .ar-sub .r. */
+.st-shell { min-height: 100svh; }
+.st-cnt { font: 500 12px var(--vk-font-mono); color: var(--vk-color-muted); }
+.st-hint { font: 500 12px/1.4 var(--vk-font-mono); color: var(--vk-color-muted); }
+.st-right { margin-left: auto; font: 500 12px var(--vk-font-mono); color: var(--vk-color-muted); white-space: nowrap; }

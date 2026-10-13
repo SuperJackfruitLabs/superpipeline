@@ -31,7 +31,8 @@ test('the theme toggle persists in the cookie and survives a reload before any a
     });
   });
   await openBoard(page, await seedBoard(request, 'Appearance toggle'));
-  await page.getByRole('button', { name: /toggle theme/i }).click();
+  await page.getByRole('navigation', { name: 'Superpipeline' }).getByRole('button', { name: /^Account/ }).click();
+  await page.getByRole('menuitemcheckbox', { name: 'Dark theme' }).click();
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
   const cookies = await page.context().cookies();
   expect(cookies.find((c) => c.name === 'vk_appearance')?.value).toBe('daylight.dark.strong.0');
@@ -78,7 +79,7 @@ test.describe('on a phone', () => {
   test('Appearance is in the You menu', async ({ page, request }) => {
     await page.clock.setFixedTime(NOON);
     await openBoard(page, await seedBoard(request, 'Appearance phone'));
-    await page.getByRole('button', { name: 'You' }).click();
+    await page.getByRole('button', { name: /^You/ }).click();
     await page.getByRole('menuitem', { name: /appearance/i }).click();
     await expect(page.getByRole('dialog', { name: 'Appearance' })).toBeVisible();
   });

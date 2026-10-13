@@ -28,8 +28,8 @@ describe('resolveProjectName', () => {
 });
 
 /**
- * `FilterBar`'s chip and `CardDrawer`'s current-assignment line both turn a `projectId` into
- * display text. `FilterBar.svelte` used to do this with its own `projectById.get(id)?.name ?? id`
+ * `FilterDialog`'s chip and `CardDrawer`'s current-assignment line both turn a `projectId` into
+ * display text. `FilterDialog.svelte` used to do this with its own `projectById.get(id)?.name ?? id`
  * — the identical fallback `resolveProjectName` computes, but AS A SECOND EXPRESSION, which
  * agreed with this one today by coincidence, not by construction (whole-branch review, Important
  * finding: "a badge computed from a second expression that agreed today would eventually disagree
@@ -43,9 +43,9 @@ describe('resolveProjectName', () => {
  * fails if a future surface reintroduces its own inline fallback that happens to agree today.
  */
 describe('resolveProjectName — one function every surface routes through', () => {
-  it('gives FilterBar\'s call shape and CardDrawer\'s call shape the identical dangling-id fallback', () => {
+  it('gives FilterDialog\'s call shape and CardDrawer\'s call shape the identical dangling-id fallback', () => {
     const danglingId = 'prj_deleted';
-    // FilterBar.svelte: `resolveProjectName(f.projectId, projectCatalogue) ?? f.projectId`
+    // FilterDialog.svelte: `resolveProjectName(f.projectId, projectCatalogue) ?? f.projectId`
     const filterBarText = resolveProjectName(danglingId, projects) ?? danglingId;
     // CardDrawer.svelte: `resolveProjectName(cardProjectId, app.projects)` used directly
     const cardDrawerText = resolveProjectName(danglingId, projects);
@@ -54,7 +54,7 @@ describe('resolveProjectName — one function every surface routes through', () 
     expect(filterBarText).toBe(danglingId);
   });
 
-  it('gives FilterBar\'s call shape and CardDrawer\'s call shape the identical text for a RESOLVED id too', () => {
+  it('gives FilterDialog\'s call shape and CardDrawer\'s call shape the identical text for a RESOLVED id too', () => {
     const filterBarText = resolveProjectName('prj_1', projects) ?? 'prj_1';
     const cardDrawerText = resolveProjectName('prj_1', projects);
 

@@ -1,0 +1,52 @@
+/* Ported verbatim from e2e/reference/mockups/SP-Phone-Card-Paper (prefixes serif, sh, back, head, light, eye, ed, trk, bars, paper, dear, voice, sigb, sc, reply, fld, sel, send, arch, encl, en, foot; scoped to .pcard--paper) by scripts/pixel/extract-css.mjs. */
+.pcard--paper .serif {font-family:var(--vk-font-display)}
+.pcard--paper .sh {display:flex;align-items:center;justify-content:space-between;gap:8px;margin:0 16px;padding:4px 0;border-top:1px solid var(--vk-color-text);border-bottom:3px double var(--vk-color-text);position:sticky;top:0;z-index:2;background:var(--vk-color-bg)}
+.pcard--paper .sh .ib {width:auto;padding:0 12px;border:1px solid var(--vk-color-line);font-size:15px;font-weight:600;gap:6px}
+.pcard--paper .back {display:inline-flex;align-items:center;gap:2px;min-width:0;min-height:44px;padding:0 6px 0 0;border:0;background:transparent;font-family:var(--vk-font-display);font-style:italic;font-size:17px;cursor:pointer;color:var(--vk-color-text);white-space:nowrap;text-align:left}
+.pcard--paper .back > span {overflow:hidden;text-overflow:ellipsis}
+.pcard--paper .head {padding:18px 16px 14px;display:flex;flex-direction:column;gap:8px}
+.pcard--paper .light {font-family:var(--vk-font-display);font-style:italic;color:var(--vk-color-muted);font-size:16px}
+.pcard--paper .eye {display:inline-flex;align-items:center;gap:8px;font-size:12px;letter-spacing:0.1em;text-transform:uppercase;font-weight:600;color:var(--vk-color-signal-text)}
+.pcard--paper .eye::before {content:"";width:8px;height:8px;border-radius:50%;background:var(--vk-color-signal)}
+.pcard--paper .eye.ar {color:var(--vk-color-muted)}
+.pcard--paper .eye.ar::before {background:var(--vk-color-muted)}
+.pcard--paper .head h2 {font-family:var(--vk-font-display);font-size:28px;line-height:1.18;font-weight:500;overflow-wrap:anywhere;text-wrap:pretty}
+.pcard--paper .ed {align-self:flex-start;display:inline-flex;align-items:center;gap:6px;min-height:44px;border:0;background:transparent;padding:0;font-size:15px;text-decoration:underline;text-underline-offset:3px;cursor:pointer;color:var(--vk-color-text)}
+.pcard--paper .trk {display:flex;flex-direction:column;gap:6px}
+.pcard--paper .bars {display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:3px}
+.pcard--paper .bars i {height:3px;background:var(--vk-color-line)}
+.pcard--paper .bars i.d {background:var(--vk-color-text)}
+.pcard--paper .bars i.s {height:5px;background:var(--vk-color-signal)}
+.pcard--paper .trk p {font-size:12px;letter-spacing:0.08em;text-transform:uppercase;color:var(--vk-color-muted);overflow-wrap:anywhere}
+.pcard--paper .paper {margin:0 16px;padding:20px 18px;background:var(--vk-color-surface);border:1px solid var(--vk-color-line);border-radius:var(--vk-radius-sm);display:flex;flex-direction:column;gap:14px}
+.pcard--paper .dear {font-family:var(--vk-font-display);font-size:20px}
+.pcard--paper .voice {font-family:var(--vk-font-display);font-size:19px;line-height:1.5;overflow-wrap:anywhere;text-wrap:pretty}
+.pcard--paper .sigb {display:flex;align-items:center;gap:10px;padding-top:12px;border-top:1px solid var(--vk-color-line)}
+.pcard--paper .sigb .portrait {display:inline-flex;line-height:0;border-radius:50%;box-shadow:0 0 0 1px var(--vk-color-line)}
+.pcard--paper .sigb p {display:flex;flex-direction:column;line-height:1.3}
+.pcard--paper .sigb em {font-family:var(--vk-font-display);font-size:18px}
+.pcard--paper .sigb small {font-size:13px;color:var(--vk-color-muted)}
+.pcard--paper .sc {display:flex;flex-wrap:wrap;gap:2px 12px;font-size:12px;letter-spacing:0.07em;text-transform:uppercase;color:var(--vk-color-muted);align-items:center}
+.pcard--paper .sc span {overflow-wrap:anywhere;min-width:0}
+.pcard--paper .sc .atm {min-height:44px;margin:-14px 0;border:0;background:transparent;padding:0;font-size:12px;letter-spacing:0.07em;text-transform:uppercase;text-decoration:underline;text-underline-offset:3px;cursor:pointer;color:var(--vk-color-text);font-weight:600}
+.pcard--paper .reply {position:sticky;bottom:0;z-index:2;margin:18px 0 0;padding:16px 16px 20px;background:var(--vk-color-raised);border-top:1px solid var(--vk-color-text);display:flex;flex-direction:column;gap:10px}
+.pcard--paper .reply h3 {font-family:var(--vk-font-display);font-size:22px;font-weight:500;display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.pcard--paper .reply h3 small {font-family:var(--vk-font-body);font-size:12px;letter-spacing:0.08em;text-transform:uppercase;color:var(--vk-color-muted)}
+.pcard--paper .fld {display:flex;flex-direction:column;gap:4px}
+.pcard--paper .fld label {font-size:14px;font-weight:600}
+.pcard--paper .sel {min-height:48px;width:100%;padding:0 12px;font-size:16px;border:1px solid var(--vk-color-text);border-radius:var(--vk-radius-sm);background:var(--vk-color-surface);color:var(--vk-color-text)}
+.pcard--paper .reply .ta {border-color:var(--vk-color-text)}
+.pcard--paper .send {width:100%}
+.pcard--paper .arch {margin:16px 16px 0;padding:14px 16px;border:1px solid var(--vk-color-text);border-radius:var(--vk-radius-sm);display:flex;flex-direction:column;gap:8px;background:var(--vk-color-surface)}
+.pcard--paper .arch h3 {font-family:var(--vk-font-display);font-size:20px;font-weight:500}
+.pcard--paper .arch .sbtn {align-self:flex-start}
+.pcard--paper .encl {padding:22px 16px 0;display:flex;flex-direction:column}
+.pcard--paper .encl > h3 {font-size:12px;letter-spacing:0.12em;text-transform:uppercase;font-weight:600;padding-bottom:8px;border-bottom:2px solid var(--vk-color-text)}
+.pcard--paper .en {border-bottom:1px solid var(--vk-color-line)}
+.pcard--paper .en > summary {min-height:56px;display:flex;flex-direction:column;justify-content:center;cursor:pointer;padding:8px 0}
+.pcard--paper .en > summary b {font-family:var(--vk-font-display);font-size:19px;font-weight:500}
+.pcard--paper .en > summary span {font-size:13px;color:var(--vk-color-muted)}
+.pcard--paper .en .in {padding:4px 0 18px;display:flex;flex-direction:column;gap:10px;font-size:15px}
+.pcard--paper .en h4 {font-family:var(--vk-font-display);font-size:17px;font-weight:600;font-style:italic;margin-top:6px}
+.pcard--paper .foot {padding:20px 16px 28px;display:flex;flex-direction:column;gap:8px}
+.pcard--paper .foot .ed {text-decoration:underline}

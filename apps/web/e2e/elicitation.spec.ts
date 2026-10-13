@@ -2,7 +2,8 @@ import { test, expect } from '@playwright/test';
 
 // The UI talks to the API as tenant 'tnt_dev' (see src/lib/api.ts), so the E2E drives the agent
 // under the same tenant and answers its question from the board.
-const API = 'http://localhost:8787';
+import { PORTS } from '../scripts/ports';
+const API = PORTS.apiUrl;
 const TENANT = { 'X-Tenant-Id': 'tnt_dev', 'Content-Type': 'application/json' };
 const AGENT = { ...TENANT, 'X-Agent-Id': 'agt_r' };
 
@@ -40,11 +41,12 @@ test('a human answers a blocked agent’s question from the board', async ({ pag
   await page.addInitScript((id) => window.localStorage.setItem('superpipeline.boardId', id), boardId);
   await page.goto('/');
 
-  const tile = page.locator('.tile', { hasText: 'Add the OAuth flow' });
+  const tile = page.locator('[data-card-id]', { hasText: 'Add the OAuth flow' });
   await expect(tile).toBeVisible();
-  await tile.getByRole('button', { name: /Answer agt_r/ }).click();
+  await tile.getByRole('button', { name: 'Answer', exact: true }).click();
   const panel = page.locator('.elicitation');
-  await expect(panel).toContainText('awaiting your answer');
+  // The default vibe (Daylight) says it as SP-Card-States-Daylight B does.
+  await expect(panel).toContainText('has a question');
   await expect(panel).toContainText('May I run the test suite?');
 
   // 3. Answering unblocks the agent: the card returns to `working` and the run carries the decision.

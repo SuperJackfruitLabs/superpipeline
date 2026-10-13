@@ -1,0 +1,1468 @@
+<!doctype html>
+<html data-product="superpipeline" data-accent="product" lang="en" style="touch-action: pan-x pan-y; overscroll-behavior: none; --dc-chrome-unit: 1.0344827586206897px;"><head><link rel="stylesheet" href="_vibekit-0.0.10/vibekit.css" data-vibekit="0.0.10"><style>
+    .sc-placeholder{background:color-mix(in srgb,currentColor 8%,transparent);
+      border:1px solid color-mix(in srgb,currentColor 50%,transparent);
+      border-radius:2px;box-sizing:border-box;overflow:hidden}
+    @keyframes sc-shine{0%{background-position:100% 50%}100%{background-position:0% 50%}}
+    html.sc-dc-streaming .sc-placeholder,
+    html.sc-dc-streaming .sc-interp.sc-missing{position:relative;
+      background:color-mix(in srgb,currentColor 5%,transparent);
+      border-color:transparent}
+    html.sc-dc-streaming .sc-placeholder::before,
+    html.sc-dc-streaming .sc-interp.sc-missing::before{content:'';
+      position:absolute;inset:0;pointer-events:none;
+      background:linear-gradient(90deg,rgba(217,119,87,0) 25%,rgba(247,225,211,.95) 37%,rgba(217,119,87,0) 63%);
+      background-size:400% 100%;animation:sc-shine 1.4s ease infinite}
+    html.sc-dc-streaming .sc-placeholder:nth-child(n+9 of .sc-placeholder)::before,
+    html.sc-dc-streaming .sc-interp.sc-missing:nth-child(n+9 of .sc-interp.sc-missing)::before{animation:none;
+      background:color-mix(in srgb,currentColor 8%,transparent)}
+    .sc-placeholder-error{padding:4px 8px;font:11px/1.4 ui-monospace,monospace;
+      color:color-mix(in srgb,currentColor 70%,transparent);word-break:break-word}
+    .sc-interp.sc-missing{display:inline-block;width:2em;height:1em;overflow:hidden;
+      vertical-align:text-bottom;background:rgba(255,255,255,.3);border:1px solid rgba(0,0,0,.5);
+      border-radius:2px;box-sizing:border-box;color:transparent;
+      user-select:none}
+    .sc-interp.sc-unresolved{font-family:ui-monospace,monospace;font-size:.85em;
+      color:color-mix(in srgb,currentColor 50%,transparent);
+      background:color-mix(in srgb,currentColor 10%,transparent);border-radius:3px;
+      padding:0 3px}
+    .sc-host.sc-has-error{position:relative}
+    .sc-logic-error{position:absolute;top:8px;left:8px;z-index:2147483647;max-width:60ch;
+      padding:6px 10px;background:#b00020;color:#fff;font:12px/1.4 ui-monospace,monospace;
+      border-radius:4px;white-space:pre-wrap;pointer-events:none}
+    /* Mirrors PRINT_BASELINE_CSS in apps/web deck-stage-export.ts — keep both
+       in sync until dc-runtime regains a build step. */
+    @media print {
+      @page { margin: 0.5cm; }
+      figure, table { break-inside: avoid; }
+      #dc-root, #dc-root > .sc-host { height: auto; }
+      *, *::before, *::after {
+        print-color-adjust: exact; -webkit-print-color-adjust: exact;
+        backdrop-filter: none !important; -webkit-backdrop-filter: none !important;
+        animation-delay: -99s !important; animation-duration: .001s !important;
+        animation-iteration-count: 1 !important; animation-fill-mode: both !important;
+        animation-play-state: running !important; transition-duration: 0s !important;
+      }
+    }
+  </style>
+
+
+<meta charset="utf-8">
+<title>Workspace tabs · Studio</title>
+<base href="/appifact/SP-Workspace-Other-Studio.dc.html">
+
+
+
+
+
+<style>x-dc{display:none!important}</style>
+
+<style>@import url("https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&family=Azeret+Mono:wght@400;500;600&family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..600&display=swap");
+
+ 
+
+:root {
+  color-scheme: light;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  --vk-font-body: "Figtree", system-ui, sans-serif;
+  --vk-font-display: "Bricolage Grotesque", system-ui, sans-serif;
+  --vk-font-mono: "Martian Mono", ui-monospace, monospace;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+}
+
+[data-vibe="daylight"][data-theme="light"] {
+  color-scheme: light;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  --vk-font-body: "Figtree", system-ui, sans-serif;
+  --vk-font-display: "Bricolage Grotesque", system-ui, sans-serif;
+  --vk-font-mono: "Martian Mono", ui-monospace, monospace;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+}
+
+[data-vibe="daylight"][data-theme="dark"] {
+  color-scheme: dark;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  --vk-font-body: "Figtree", system-ui, sans-serif;
+  --vk-font-display: "Bricolage Grotesque", system-ui, sans-serif;
+  --vk-font-mono: "Martian Mono", ui-monospace, monospace;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+}
+
+[data-vibe="paper"][data-theme="light"] {
+  color-scheme: light;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  --vk-font-body: "Geist", system-ui, sans-serif;
+  --vk-font-display: "Newsreader", "Georgia", serif;
+  --vk-font-mono: "Martian Mono", ui-monospace, monospace;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+}
+
+[data-vibe="paper"][data-theme="dark"] {
+  color-scheme: dark;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  --vk-font-body: "Geist", system-ui, sans-serif;
+  --vk-font-display: "Newsreader", "Georgia", serif;
+  --vk-font-mono: "Martian Mono", ui-monospace, monospace;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+}
+
+[data-vibe="studio"][data-theme="light"] {
+  color-scheme: light;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  --vk-font-body: "Archivo", system-ui, sans-serif;
+  --vk-font-display: "Archivo", system-ui, sans-serif;
+  --vk-font-mono: "Azeret Mono", ui-monospace, monospace;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  --vk-font-serif: "Newsreader", Georgia, serif;
+
+
+
+
+
+
+
+
+
+
+}
+
+[data-vibe="studio"][data-theme="dark"] {
+  color-scheme: dark;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  --vk-font-body: "Archivo", system-ui, sans-serif;
+  --vk-font-display: "Archivo", system-ui, sans-serif;
+  --vk-font-mono: "Azeret Mono", ui-monospace, monospace;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  --vk-font-serif: "Newsreader", Georgia, serif;
+
+
+
+
+
+
+
+
+
+
+}
+
+[data-vibe="quiet"][data-theme="light"] {
+  color-scheme: light;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  --vk-font-body: "Atkinson Hyperlegible Next", system-ui, sans-serif;
+  --vk-font-display: "Atkinson Hyperlegible Next", system-ui, sans-serif;
+  --vk-font-mono: "Martian Mono", ui-monospace, monospace;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+}
+
+[data-vibe="quiet"][data-theme="dark"] {
+  color-scheme: dark;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  --vk-font-body: "Atkinson Hyperlegible Next", system-ui, sans-serif;
+  --vk-font-display: "Atkinson Hyperlegible Next", system-ui, sans-serif;
+  --vk-font-mono: "Martian Mono", ui-monospace, monospace;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+}
+
+ 
+:root {
+  --vk-text-sm: clamp(0.8125rem, 0.78rem + 0.15vw, 0.875rem);
+  --vk-text-md: clamp(1rem, 0.96rem + 0.2vw, 1.0625rem);
+  --vk-text-lg: clamp(1.25rem, 1.1rem + 0.6vw, 1.5rem);
+  --vk-text-xl: clamp(1.75rem, 1.4rem + 1.6vw, 2.5rem);
+  --vk-focus: 0 0 0 3px var(--vk-color-bg), 0 0 0 5px var(--vk-color-text);
+
+}
+
+html {
+  background: var(--vk-color-bg);
+  color: var(--vk-color-text);
+  font-family: var(--vk-font-body);
+  font-size: 100%;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  font-size: var(--vk-text-md);
+  line-height: 1.5;
+}
+
+:focus-visible {
+   
+  outline: 2px solid var(--vk-color-text);
+  outline-offset: 2px;
+  box-shadow: var(--vk-focus);
+}
+
+ 
+.vk-visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  
+  *, *::before, *::after {
+    animation: none !important;
+    transition-duration: 0ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+[data-motion="reduce"],
+[data-motion="reduce"] *,
+[data-motion="reduce"]::before,
+[data-motion="reduce"]::after,
+[data-motion="reduce"] *::before,
+[data-motion="reduce"] *::after {
+  --vk-motion-fast: 0ms;
+  --vk-motion-base: 0ms;
+  animation: none !important;
+  transition-duration: 0ms !important;
+  scroll-behavior: auto !important;
+}
+
+
+
+@media (forced-colors: active) {
+  :focus-visible {
+    outline: 2px solid CanvasText;
+    box-shadow: none;
+  }
+}
+ 
+
+
+
+
+
+
+
+
+ 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ 
+
+
+
+
+
+
+
+
+
+
+
+
+
+.vk-toast {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--vk-space-3);
+  min-height: var(--vk-target-min);
+  padding: 0 var(--vk-space-5);
+  border-radius: var(--vk-radius-pill);
+  background: var(--vk-color-primary);
+  color: var(--vk-color-primary-fg);
+  font: 600 var(--vk-text-sm) / 1.2 var(--vk-font-body);
+}
+.vk-toast__action { min-height: var(--vk-target-min); border: 0; background: transparent; color: inherit; font: inherit; text-decoration: underline; cursor: pointer; }
+ 
+.vk-toast__action:focus-visible { outline-color: currentColor; box-shadow: var(--vk-focus); }
+
+.vk-sky {
+  --vk-sky-top: var(--vk-sky-noon-top);
+  --vk-sky-bottom: var(--vk-sky-noon-bottom);
+  --vk-sky-text: var(--vk-sky-noon-text);
+  --vk-sky-sun: var(--vk-sky-noon-sun);
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(180deg, var(--vk-sky-top), var(--vk-sky-bottom));
+  color: var(--vk-sky-text);
+}
+.vk-sky[data-phase="dawn"] { --vk-sky-top: var(--vk-sky-dawn-top); --vk-sky-bottom: var(--vk-sky-dawn-bottom); --vk-sky-text: var(--vk-sky-dawn-text); --vk-sky-sun: var(--vk-sky-dawn-sun); }
+.vk-sky[data-phase="morning"] { --vk-sky-top: var(--vk-sky-morning-top); --vk-sky-bottom: var(--vk-sky-morning-bottom); --vk-sky-text: var(--vk-sky-morning-text); --vk-sky-sun: var(--vk-sky-morning-sun); }
+.vk-sky[data-phase="golden"] { --vk-sky-top: var(--vk-sky-golden-top); --vk-sky-bottom: var(--vk-sky-golden-bottom); --vk-sky-text: var(--vk-sky-golden-text); --vk-sky-sun: var(--vk-sky-golden-sun); }
+.vk-sky[data-phase="dusk"] { --vk-sky-top: var(--vk-sky-dusk-top); --vk-sky-bottom: var(--vk-sky-dusk-bottom); --vk-sky-text: var(--vk-sky-dusk-text); --vk-sky-sun: var(--vk-sky-dusk-sun); }
+.vk-sky[data-phase="night"] { --vk-sky-top: var(--vk-sky-night-top); --vk-sky-bottom: var(--vk-sky-night-bottom); --vk-sky-text: var(--vk-sky-night-text); --vk-sky-sun: var(--vk-sky-night-sun); }
+.vk-sky__sun {
+  position: absolute;
+  top: var(--vk-space-5);
+  right: var(--vk-space-6);
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: var(--vk-sky-sun);
+  box-shadow: 0 0 48px 12px color-mix(in oklch, var(--vk-sky-sun) 45%, transparent);
+}
+.vk-sky__content { position: relative; padding: var(--vk-space-5); }
+[data-time="subtle"] .vk-sky { background: color-mix(in oklch, var(--vk-sky-top) 30%, var(--vk-color-bg)); color: var(--vk-color-text); }
+[data-time="subtle"] .vk-sky__sun { display: none; }
+[data-time="off"] .vk-sky { background: var(--vk-color-bg); color: var(--vk-color-text); }
+[data-time="off"] .vk-sky__sun { display: none; }
+[data-vibe="studio"] .vk-sky__sun { width: 10px; height: 10px; box-shadow: 0 0 10px 2px var(--vk-sky-sun); }
+[data-vibe="quiet"] .vk-sky__sun, [data-vibe="paper"] .vk-sky__sun { display: none; }
+
+
+
+
+
+
+
+
+
+
+@media (forced-colors: active) {
+  
+  .vk-toast { border: 1px solid CanvasText; }
+}
+
+ 
+.sl-danger{ white-space: nowrap; } .ar .vk-button{ white-space: nowrap; }
+
+ 
+
+
+
+
+
+ 
+a[href*="CardPage"], a[class*="btn"], button[class*="btn"], a[class*="-button"], button[class*="-button"]{ white-space: nowrap; flex-shrink: 0; } .ar .vk-button{ white-space: nowrap; flex-shrink: 0; }
+
+ 
+a[href*="CardPage"], a[class*="icon"][style*="width: auto"], button[class*="icon"][style*="width: auto"] { display: inline-flex !important; flex-direction: row !important; align-items: center !important; justify-content: center; gap: 8px; }
+</style>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Azeret+Mono:ital,wght@1,400&amp;display=swap" data-font-variant=""><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Azeret+Mono:ital,wght@1,500&amp;display=swap" data-font-variant=""><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Azeret+Mono:ital,wght@1,600&amp;display=swap" data-font-variant=""><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&amp;family=Azeret+Mono:wght@400;500;600&amp;family=Atkinson+Hyperlegible+Next:wght@400;700&amp;family=Bricolage+Grotesque:opsz,wght@12..96,400..800&amp;family=Figtree:wght@400..800&amp;family=Geist:wght@400..700&amp;family=Instrument+Sans:wght@400..700&amp;family=Martian+Mono:wght@400..600&amp;family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..600&amp;display=swap" data-dc-tpl="1"><style data-dc-tpl="2">
+
+body { margin: 0; }
+:where(*, *::before, *::after) { box-sizing: border-box; }
+:where(a) { color: inherit; }
+:where(button:where(:not(.vk-button))) { font: inherit; color: inherit; }
+
+/* page content: Workspace tabs as Annual report (patterns: SP-List-Studio, SP-Operate-Studio) */
+.wo-main { flex: 1; display: flex; flex-direction: column; gap: 36px; padding: 24px 40px 40px; min-width: 0; }
+.wo-head { display: flex; flex-direction: column; gap: 10px; }
+.wo-head .back { align-self: flex-start; }
+.wo-head h1 { font: 800 44px/1.02 var(--ff); font-stretch: 82%; letter-spacing: -.02em; }
+.wo-head .lede { max-width: 760px; font: 400 18px/1.45 var(--fs); }
+.wo-tabs { display: flex; flex-wrap: wrap; gap: 4px 28px; margin-top: 6px; border-bottom: 1px solid var(--hair); }
+.wo-ct { display: inline-grid; place-items: center; min-width: 20px; height: 20px; padding: 0 5px; border-radius: 2px; background: var(--vk-color-signal-text); color: var(--vk-color-primary-fg); font: 700 12px/1 var(--fm); }
+.ar-sec > .hd .kick { font-size: 11px; }
+.ar-sec > .hd .r .ar-btn2 { min-height: 44px; }
+.wo-lede { max-width: 760px; font: 400 16px/1.45 var(--fs); }
+.wo-tbl td { vertical-align: middle; }
+.wo-tbl td.top { vertical-align: top; }
+.wo-need td { padding-top: 14px; padding-bottom: 14px; vertical-align: top; }
+.wo-kind { display: inline-flex; align-items: center; gap: 7px; font-weight: 800; font-size: 13px; white-space: nowrap; }
+.wo-kind .u { width: 11px; height: 11px; }
+.wo-kind.needs { color: var(--sig-text); }
+.wo-sub { margin-top: 4px; font: 500 12px/1.4 var(--fm); color: var(--muted); overflow-wrap: anywhere; }
+.wo-plain { font: 400 15.5px/1.45 var(--fs); overflow-wrap: anywhere; }
+.wo-need .ar-q blockquote { font-size: 15.5px; }
+.wo-need .ar-q .ar-lk { align-self: flex-start; min-height: 32px; }
+.wo-ins { margin-top: 8px; font: 400 14px/1.4 var(--fs); font-style: italic; color: var(--muted); }
+.wo-acts { display: flex; flex-wrap: wrap; gap: 6px; }
+.wo-acts .ar-btn, .wo-acts .ar-btn2 { padding: 0 14px; font-size: 13.5px; }
+.wo-resume td { padding-top: 0; }
+.wo-resume form { display: flex; flex-direction: column; gap: 10px; padding: 14px 16px; border-left: 4px solid var(--text); background: var(--soft); }
+.wo-resume .row { display: flex; flex-wrap: wrap; gap: 8px; }
+.wo-foot { padding-top: 10px; border-top: 1px solid var(--hair); font: 400 14.5px/1.45 var(--fs); color: var(--muted); }
+.wo-note { display: flex; flex-direction: column; gap: 6px; padding: 2px 0 2px 18px; border-left: 4px solid var(--text); }
+.wo-note p { font: 400 16px/1.45 var(--fs); }
+.wo-note .ar-lk { min-height: 0; padding: 0; font-size: inherit; }
+.wo-note .ar-lk::after { content: ""; position: absolute; left: 0; right: 0; top: 50%; height: max(44px, 100%); transform: translateY(-50%); }
+.wo-cap { font: 800 15px/1.3 var(--ff); }
+.wo-who { display: flex; align-items: center; gap: 8px; margin-top: 4px; font: 500 12px var(--fm); color: var(--muted); }
+.wo-stack { display: inline-flex; }
+.wo-stack svg + svg { margin-left: -5px; }
+.wo-stack svg { border-radius: 50%; box-shadow: 0 0 0 2px var(--bg); }
+.wo-caps { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; }
+.wo-tag { display: inline-flex; align-items: center; gap: 4px; min-height: 24px; padding: 0 8px; border: 1px solid var(--rule); border-radius: 2px; font: 500 12px/1.2 var(--fm); white-space: nowrap; }
+.wo-x { position: relative; display: inline-grid; place-items: center; width: 22px; height: 22px; margin-right: -6px; border: 0; background: transparent; color: var(--text); cursor: pointer; }
+.wo-x:hover { background: var(--text); color: var(--bg); }
+.wo-del { border: 0; background: transparent; box-shadow: inset 0 0 0 2.5px var(--rule); }
+.wo-del:disabled { opacity: .45; cursor: not-allowed; }
+.wo-del:disabled:hover { background: transparent; color: var(--text); }
+.wo-sw { position: relative; display: block; width: 28px; height: 28px; border: 0; border-radius: 2px; box-shadow: inset 0 0 0 1px var(--rule); cursor: pointer; }
+.wo-sw::after { content: ""; position: absolute; inset: -8px; }
+.wo-add { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 10px 12px; padding-top: 4px; }
+.wo-add .ar-field { flex: 1 1 240px; min-width: 0; }
+.wo-add .ar-hint { flex-basis: 100%; }
+.wo-split { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 40px; align-items: start; }
+.wo-stackcol { display: flex; flex-direction: column; gap: 36px; min-width: 0; }
+.wo-ini { width: 36px; height: 36px; font-size: 13px; border-radius: 2px; }
+.wo-person { display: flex; align-items: center; gap: 12px; }
+.wo-person b { display: block; font-size: 15px; }
+.wo-inv { display: grid; grid-template-columns: minmax(0, 1fr) 150px auto; gap: 10px 12px; align-items: end; }
+.wo-inv .ar-hint { grid-column: 1 / -1; }
+.wo-kv { grid-template-columns: minmax(150px, max-content) minmax(0, 1fr) auto; }
+.wo-kv > dt span { display: block; font: 400 13px/1.4 var(--fs); color: var(--muted); font-weight: 400; }
+.wo-kv > dd { display: flex; align-items: center; }
+.wo-kv > dt, .wo-kv > dd { padding: 12px 0; }
+.wo-kv .ok { display: inline-flex; align-items: center; gap: 6px; font-weight: 700; }
+
+/* Studio = Annual report: base + shell (donor: SP-Board-Studio) */
+:where(.ar) *, :where(.ar) *::before, :where(.ar) *::after { box-sizing: border-box; }
+:where(.ar) :where(h1, h2, h3, h4, p, ul, ol, dl, dd, dt, table, form, blockquote, figure, fieldset) { margin: 0; padding: 0; }
+:where(.ar) :where(ul, ol) { list-style: none; }
+:where(.ar) :where(fieldset) { border: 0; min-width: 0; }
+:where(.ar) :where(button:where(:not(.vk-button)), input, select, textarea) { font: inherit; color: inherit; }
+:where(.ar) :where(a) { color: inherit; }
+/* local alias layer: every value comes from the Studio (Annual report) tokens in vk.css */
+.ar {
+  --bg: var(--vk-color-bg); --paper: var(--vk-color-surface); --text: var(--vk-color-text); --muted: var(--vk-color-muted);
+  --rule: var(--vk-color-rule); --hair: var(--vk-color-line); --field: var(--vk-color-raised);
+  --soft: color-mix(in srgb, var(--vk-color-text) 6%, var(--vk-color-bg));
+  --s1: var(--vk-stage-1); --s2: var(--vk-stage-2); --s3: var(--vk-stage-3); --s4: var(--vk-stage-4); --s5: var(--vk-stage-5); --s6: var(--vk-stage-6); --s7: var(--vk-stage-7);
+  --st-text: var(--vk-color-stage-text);
+  --sig: var(--vk-color-signal); --sig-text: var(--vk-color-signal-text); --sig-wash: var(--vk-color-signal-wash); --sig-fg: var(--vk-face-ink);
+  --ff: var(--vk-font-body); --fm: var(--vk-font-mono); --fs: var(--vk-font-serif);
+  background: var(--bg); color: var(--text); font: 400 14px/1.45 var(--ff); font-variant-numeric: tabular-nums lining-nums;
+}
+.ar :focus-visible { outline: 3px solid var(--text); outline-offset: 3px; box-shadow: none; }
+.ar .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.ar .h44 { position: relative; }
+.ar .h44::after { content: ""; position: absolute; left: 0; right: 0; top: 50%; height: max(44px, 100%); transform: translateY(-50%); }
+.ar .kick { font: 700 12px/1.2 var(--ff); letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
+.ar .mono { font-family: var(--fm); }
+.ar .muted { color: var(--muted); }
+.ar .serif { font-family: var(--fs); }
+.ar .fn { font: 600 11px/1 var(--fm); vertical-align: super; margin-left: 2px; color: var(--st-text); }
+.ar .kbd { display: inline-block; padding: 2px 5px; border: 1px solid currentColor; border-radius: 2px; font: 500 11px/1 var(--fm); white-space: nowrap; }
+.ar .c1 { background: var(--s1); } .ar .c2 { background: var(--s2); } .ar .c3 { background: var(--s3); } .ar .c4 { background: var(--s4); } .ar .c5 { background: var(--s5); } .ar .c6 { background: var(--s6); } .ar .c7 { background: var(--s7); }
+.ar .u { display: inline-block; flex: none; width: 18px; height: 18px; }
+.ar .u.needs { background: var(--sig); }
+.ar .u.blocked { background: repeating-linear-gradient(135deg, var(--s5) 0 1.5px, transparent 1.5px 4px); box-shadow: inset 0 0 0 1.5px var(--s5); }
+.ar .u.queued { box-shadow: inset 0 0 0 1.5px var(--s5); }
+.ar .u.done { background: var(--s7); }
+.ar .u.off { box-shadow: inset 0 0 0 1.5px var(--muted); }
+.ar .ar-ini { flex: none; display: inline-grid; place-items: center; background: var(--text); color: var(--bg); font-family: var(--ff); font-weight: 800; line-height: 1; }
+.ar svg[data-mood] { flex: none; }
+
+/* buttons */
+.ar .ar-btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 44px; padding: 0 16px; border: 0; border-radius: 2px; background: var(--text); color: var(--bg); font: 800 14px var(--ff); white-space: nowrap; text-decoration: none; cursor: pointer; }
+.ar .ar-btn .kbd { border-color: currentColor; }
+.ar .ar-btn2 { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 44px; padding: 0 14px; border: 1px solid var(--rule); border-radius: 2px; background: transparent; color: var(--text); font: 700 14px var(--ff); white-space: nowrap; text-decoration: none; cursor: pointer; }
+.ar .ar-btn2:hover { background: var(--text); color: var(--bg); }
+.ar .ar-lk { position: relative; display: inline-flex; align-items: center; gap: 6px; min-height: 44px; padding: 0 8px 0 0; border: 0; background: transparent; color: var(--text); font: 700 13.5px var(--ff); text-decoration: underline; text-decoration-thickness: 1.5px; text-underline-offset: 3px; white-space: nowrap; cursor: pointer; }
+.ar .ar-lk.quiet { color: var(--muted); }
+.ar .ar-ib { position: relative; display: inline-grid; place-items: center; flex: none; width: 44px; height: 44px; border: 1px solid var(--rule); border-radius: 2px; background: transparent; color: var(--text); text-decoration: none; cursor: pointer; }
+.ar .ar-ib:hover { background: var(--text); color: var(--bg); }
+
+/* rail */
+.ar-rail { position: relative; z-index: 3; display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 16px 0; background: var(--text); color: var(--bg); }
+.ar-mark { display: grid; place-items: center; width: 44px; height: 44px; margin-bottom: 16px; background: var(--bg); color: var(--text); text-decoration: none; }
+.ar-nav { position: relative; display: grid; place-items: center; width: 44px; height: 44px; border: 0; border-radius: 2px; background: transparent; color: var(--bg); text-decoration: none; cursor: pointer; }
+.ar-nav:hover { outline: 1px solid var(--bg); outline-offset: -1px; }
+.ar-rail .ar-nav:focus-visible, .ar-rail .ar-mark:focus-visible, .ar-rail .ar-acct:focus-visible { outline-color: var(--bg); }
+.ar-nav[aria-current="page"] { background: var(--bg); color: var(--text); }
+.ar-nav .ct { position: absolute; right: -3px; top: -3px; min-width: 18px; height: 18px; padding: 0 4px; background: var(--sig-text); color: var(--vk-color-primary-fg); font: 800 12px/18px var(--ff); text-align: center; }
+.ar-nav .tip, .ar-acct .tip { position: absolute; left: 54px; top: 50%; transform: translateY(-50%); display: none; align-items: center; gap: 8px; padding: 6px 10px; border: 1px solid var(--rule); background: var(--bg); color: var(--text); font: 700 13px var(--ff); white-space: nowrap; pointer-events: none; }
+.ar-nav:hover .tip, .ar-nav:focus-visible .tip, .ar-acct:hover .tip, .ar-acct:focus-visible .tip { display: inline-flex; }
+.ar-acct { position: relative; width: 44px; height: 44px; margin-top: 4px; border: 1.5px solid var(--bg); border-radius: 2px; background: transparent; color: var(--bg); font: 800 14px var(--ff); cursor: pointer; }
+
+/* masthead */
+.ar-top { display: flex; align-items: center; gap: 20px; min-height: 76px; padding: 0 24px 0 40px; border-bottom: 1px solid var(--rule); }
+.ar-board { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.ar-sw { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 0; border: 0; background: transparent; color: var(--text); font: 800 28px/1 var(--ff); font-stretch: 80%; letter-spacing: -.01em; white-space: nowrap; cursor: pointer; }
+.ar-sw:hover { text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: 5px; }
+.ar-cmd { flex: 1; max-width: 480px; margin-left: auto; display: flex; align-items: center; min-height: 44px; cursor: text; }
+.ar-cmd .box { flex: 1; display: flex; align-items: center; gap: 10px; height: 44px; padding: 0 10px; border-bottom: 1.5px solid var(--rule); color: var(--muted); }
+.ar-cmd input { flex: 1; min-width: 0; border: 0; background: transparent; font: 500 16px var(--ff); outline: none; color: var(--text); }
+.ar-cmd input::placeholder { color: var(--muted); }
+.ar-cmd:focus-within .box { outline: 3px solid var(--text); outline-offset: 2px; }
+.ar-live { display: inline-flex; align-items: center; gap: 6px; font: 700 12px var(--ff); letter-spacing: .1em; text-transform: uppercase; white-space: nowrap; }
+.ar-live i { width: 8px; height: 8px; background: var(--st-text); }
+
+/* sub bar */
+.ar-sub { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 24px; min-height: 48px; padding: 0 40px; border-bottom: 1px solid var(--hair); }
+.ar-tab { position: relative; display: inline-flex; align-items: center; gap: 6px; min-height: 48px; padding: 0; border: 0; background: transparent; color: var(--muted); font: 700 14px var(--ff); text-decoration: none; white-space: nowrap; cursor: pointer; }
+.ar-tab[aria-current="page"], .ar-tab[aria-pressed="true"], .ar-tab[aria-selected="true"] { color: var(--text); }
+.ar-tab[aria-current="page"]::after, .ar-tab[aria-pressed="true"]::after, .ar-tab[aria-selected="true"]::after { content: ""; position: absolute; left: 0; right: 0; bottom: -1px; height: 3px; background: var(--text); }
+.ar-tab .mono { font-size: 12px; font-weight: 500; }
+.ar-fl { position: relative; display: inline-flex; align-items: center; gap: 6px; height: 32px; padding: 0 12px; border: 1px solid var(--rule); border-radius: 2px; background: transparent; color: var(--text); font: 700 13px var(--ff); white-space: nowrap; cursor: pointer; }
+.ar-fl i { font: 500 12px var(--fm); font-style: normal; color: var(--muted); }
+.ar-sub .r { margin-left: auto; font: 500 12px var(--fm); color: var(--muted); white-space: nowrap; }
+
+/* hero */
+.ar-hero { display: grid; grid-template-columns: auto minmax(0, 1fr); column-gap: 28px; align-items: end; }
+.ar-hero .big { font: 900 184px/.78 var(--ff); font-stretch: 72%; letter-spacing: -.04em; color: var(--sig); }
+.ar-hero .big.ink { color: var(--text); }
+.ar-hero .txt { display: flex; flex-direction: column; gap: 12px; padding-bottom: 4px; }
+.ar-hero h1 { font: 800 44px/1.02 var(--ff); font-stretch: 82%; letter-spacing: -.02em; }
+.ar-hero p { max-width: 640px; font: 400 18px/1.45 var(--fs); }
+
+/* numbered sections */
+.ar-sec { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+.ar-sec > .hd { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 14px; padding-top: 10px; border-top: 1.5px solid var(--rule); }
+.ar-sec > .hd .no { font: 500 12px var(--fm); color: var(--muted); }
+.ar-sec > .hd h2 { font: 800 16px/1.2 var(--ff); }
+.ar-sec > .hd .r { margin-left: auto; display: inline-flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; font: 500 12px var(--fm); color: var(--muted); }
+
+/* figures row */
+.ar-figs { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); border-top: 1.5px solid var(--rule); border-bottom: 1px solid var(--hair); }
+.ar-figs > div { display: flex; flex-direction: column; gap: 6px; min-width: 0; padding: 12px 12px 14px 0; }
+.ar-figs > div + div { padding-left: 14px; border-left: 1px solid var(--hair); }
+.ar-figs b { font: 900 52px/.86 var(--ff); font-stretch: 72%; letter-spacing: -.03em; white-space: nowrap; }
+.ar-figs b small { font-size: 17px; font-weight: 700; margin-left: 3px; letter-spacing: 0; }
+.ar-figs b.z { font-weight: 300; color: var(--muted); }
+.ar-figs .sig b { color: var(--sig); }
+.ar-figs .sig span { color: var(--sig-text); }
+.ar-figs span { font-size: 12.5px; font-weight: 600; color: var(--muted); }
+
+/* stage ramp track */
+.ar-ramp { display: flex; gap: 2px; }
+.ar-ramp i { width: 14px; height: 8px; opacity: .28; }
+.ar-ramp i.on { opacity: 1; }
+.ar-track { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: 3px; }
+.ar-track li { display: flex; flex-direction: column; gap: 6px; min-width: 0; font: 500 11.5px/1.25 var(--fm); color: var(--muted); }
+.ar-track li .b { height: 8px; opacity: .3; }
+.ar-track li.done .b { opacity: 1; }
+.ar-track li.cur .b { opacity: 1; height: 14px; margin-top: -6px; }
+.ar-track li.cur.sig .b { box-shadow: inset 0 -4px 0 var(--sig); }
+.ar-track li.cur { color: var(--text); font-weight: 600; }
+.ar-track li.cur.sig { color: var(--sig-text); }
+
+/* quote (agent words) */
+.ar-q { display: flex; flex-direction: column; gap: 8px; padding: 2px 0 0 18px; border-left: 4px solid var(--sig); }
+.ar-q.ink { border-left-color: var(--text); }
+.ar-q.done { border-left-color: var(--s7); }
+.ar-q.off { border-left-color: var(--hair); }
+.ar-q h3 { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; font: 800 14px var(--ff); color: var(--sig-text); }
+.ar-q.ink h3, .ar-q.done h3, .ar-q.off h3 { color: var(--text); }
+.ar-q h3 .mono { margin-left: auto; font-weight: 500; font-size: 12px; }
+.ar-q blockquote { font: 400 19px/1.42 var(--fs); overflow-wrap: anywhere; }
+.ar-q blockquote code, .ar-id { font: 500 .78em var(--fm); overflow-wrap: anywhere; }
+
+/* footnote row with copy */
+.ar-pfn { display: grid; grid-template-columns: 22px minmax(0, 1fr) auto; align-items: center; column-gap: 0; padding-top: 6px; border-top: 1px solid var(--hair); font: 400 14px/1.4 var(--fs); }
+.ar-pfn .k { font: 600 11.5px var(--fm); color: var(--st-text); }
+.ar-pfn code { font: 500 12.5px var(--fm); overflow-wrap: anywhere; }
+
+/* notes */
+.ar-notes { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 32px; row-gap: 10px; padding-top: 10px; border-top: 1px solid var(--hair); }
+.ar-notes li { display: grid; grid-template-columns: 22px minmax(0, 1fr); font: 400 14.5px/1.45 var(--fs); }
+.ar-notes li .k { font: 600 11.5px/1.9 var(--fm); color: var(--st-text); }
+.ar-notes li i { font-style: italic; }
+
+/* tables */
+.ar .ttl { position: relative; padding: 0; border: 0; background: transparent; color: var(--text); font: 700 14px/1.3 var(--ff); text-align: left; text-decoration: none; overflow-wrap: anywhere; cursor: pointer; }
+.ar .ttl::after { content: ""; position: absolute; left: -4px; right: -4px; top: 50%; height: max(44px, calc(100% + 8px)); transform: translateY(-50%); }
+.ar .ttl:hover { text-decoration: underline; text-underline-offset: 3px; }
+.ar-tbl { width: 100%; border-collapse: collapse; table-layout: fixed; }
+.ar-tbl th { height: 30px; padding: 0 10px 0 0; text-align: left; font: 700 12px var(--ff); color: var(--muted); border-bottom: 1px solid var(--rule); vertical-align: bottom; }
+.ar-tbl td { overflow-wrap: break-word; padding: 10px 10px 10px 0; border-bottom: 1px solid var(--hair); vertical-align: top; }
+.ar-tbl tr.sel td { background: var(--soft); }
+.ar-tbl tr.sel td:first-child { box-shadow: inset 3px 0 0 var(--text); padding-left: 8px; }
+.ar-tbl .ix { font: 500 12.5px var(--fm); color: var(--muted); }
+.ar-tbl .stg { display: inline-flex; align-items: center; gap: 7px; font-size: 13px; white-space: nowrap; }
+.ar-tbl .ag { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; white-space: nowrap; }
+.ar-tbl .m { font: 500 12.5px var(--fm); color: var(--muted); }
+.ar-tbl .m.sig, .ar .sigt { color: var(--sig-text); font-weight: 600; }
+.ar-st { display: inline-flex; align-items: center; gap: 7px; font-weight: 700; font-size: 13px; white-space: nowrap; }
+.ar-st .u { width: 11px; height: 11px; }
+.ar-st.needs { color: var(--sig-text); }
+.ar-facts { display: flex; flex-wrap: wrap; gap: 4px 10px; margin-top: 4px; font: 500 12px/1.35 var(--fm); color: var(--muted); }
+.ar-facts > span { display: inline-flex; align-items: center; gap: 5px; overflow-wrap: anywhere; }
+.ar-facts .p { color: var(--text); font-weight: 600; }
+
+/* key/value rows */
+.ar-kv { display: grid; grid-template-columns: max-content minmax(0, 1fr); column-gap: 16px; }
+.ar-kv > dt, .ar-kv > dd { padding: 9px 0; border-top: 1px solid var(--hair); }
+.ar-kv > dt { font-weight: 700; font-size: 13px; }
+.ar-kv > dd { overflow-wrap: anywhere; }
+
+/* fields */
+.ar-field { display: flex; flex-direction: column; gap: 6px; }
+.ar-field > label, .ar .lab { font-weight: 700; font-size: 14px; }
+.ar-in, .ar-sel, .ar-ta { width: 100%; min-height: 44px; padding: 0 10px; border: 1px solid var(--rule); border-radius: 0; background: var(--field); color: var(--text); font: 400 16px/1.45 var(--ff); }
+.ar-ta { min-height: 88px; padding: 10px 12px; resize: vertical; }
+.ar-in::placeholder, .ar-ta::placeholder { color: var(--muted); }
+.ar-hint { font: 500 12px/1.4 var(--fm); color: var(--muted); }
+
+/* status bar */
+.ar-status { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 20px; min-height: 32px; padding: 0 40px; border-top: 1px solid var(--rule); font: 500 12px var(--fm); color: var(--muted); }
+.ar-status .sig { color: var(--sig-text); font-weight: 600; }
+.ar-status .r { margin-left: auto; display: flex; flex-wrap: wrap; gap: 16px; }
+
+.ar.bd { display: grid; grid-template-columns: 64px minmax(0, 1fr); }
+.ar.bd > .ar-rail { grid-row: 1; }
+.bd-body { display: flex; flex-direction: column; min-width: 0; }
+.bd-body > main { flex: 1; }
+
+</style><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible+Next:ital,wght@1,400&amp;display=swap" data-font-variant=""><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible+Next:ital,wght@1,700&amp;display=swap" data-font-variant=""><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:ital,wght@1,400..800&amp;display=swap" data-font-variant=""><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:ital,wght@1,400..700&amp;display=swap" data-font-variant=""><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Sans:ital,wght@1,400..700&amp;display=swap" data-font-variant=""><style data-dc-editor-style="">body:not([data-dc-editor-overlay-hidden]) [data-dc-editor-hover][data-dc-editor-hover-stroke]:not([data-dc-editor-selected]){filter:drop-shadow(0 0 calc(1*var(--dc-chrome-unit,1px)) color-mix(in srgb,#2a78d6 90%,transparent)) drop-shadow(0 0 calc(2*var(--dc-chrome-unit,1px)) color-mix(in srgb,#2a78d6 55%,transparent))!important;}body:not([data-dc-editor-overlay-hidden]):not([data-dc-editor-proxy="copy"]) [data-dc-editor-dragging],body:not([data-dc-editor-overlay-hidden]):not([data-dc-editor-proxy]) [data-dc-dragging],body[data-dc-editor-brk]:not([data-dc-editor-overlay-hidden]) [data-dc-drag-follower]{outline:calc(2*var(--dc-chrome-unit,1px)) solid #2a78d6!important;outline-offset:calc(-1*var(--dc-chrome-unit,1px))!important;opacity:0.55!important;}body[data-dc-editor-proxy="move"]:not([data-dc-editor-overlay-hidden]) [data-dc-editor-dragging],body[data-dc-editor-proxy="move"]:not([data-dc-editor-overlay-hidden]) [data-dc-dragging],body[data-dc-editor-proxy="move"]:not([data-dc-editor-overlay-hidden]) [data-dc-editor-dragging]>*,body[data-dc-editor-proxy="move"]:not([data-dc-editor-overlay-hidden]) [data-dc-dragging]>*{opacity:0!important;outline:none!important;}[data-dc-editor-drag-proxy],[data-dc-editor-drag-proxy] *{pointer-events:none!important;}body[data-dc-editor-on]:not([data-dc-editor-tool="interact"]) *{cursor:default!important;user-select:none!important;}body[data-dc-editor-on]:not([data-dc-editor-tool="interact"]) :not([data-dc-editor-overlay-root]):not([data-dc-editor-overlay-root] *){pointer-events:auto!important;transition:none!important;animation:none!important;}body[data-dc-editor-on][data-dc-editor-brk]:not([data-dc-editor-overlay-hidden]) [data-dc-editor-dragging]:not([data-dc-editor-overlay-root]) :not([data-dc-editor-overlay-root]),body[data-dc-editor-on][data-dc-editor-brk]:not([data-dc-editor-overlay-hidden]) [data-dc-dragging]:not([data-dc-editor-overlay-root]) :not([data-dc-editor-overlay-root]),body[data-dc-editor-on][data-dc-editor-brk]:not([data-dc-editor-overlay-hidden]) [data-dc-drag-follower]:not([data-dc-editor-overlay-root]),body[data-dc-editor-on][data-dc-editor-brk]:not([data-dc-editor-overlay-hidden]) [data-dc-drag-follower]:not([data-dc-editor-overlay-root]) :not([data-dc-editor-overlay-root]),body[data-dc-editor-move][data-dc-editor-brk]:not([data-dc-editor-overlay-hidden]) [data-dc-editor-dragging]:not([data-dc-editor-overlay-root]) :not([data-dc-editor-overlay-root]),body[data-dc-editor-move][data-dc-editor-brk]:not([data-dc-editor-overlay-hidden]) [data-dc-dragging]:not([data-dc-editor-overlay-root]) :not([data-dc-editor-overlay-root]),body[data-dc-editor-move][data-dc-editor-brk]:not([data-dc-editor-overlay-hidden]) [data-dc-drag-follower]:not([data-dc-editor-overlay-root]),body[data-dc-editor-move][data-dc-editor-brk]:not([data-dc-editor-overlay-hidden]) [data-dc-drag-follower]:not([data-dc-editor-overlay-root]) :not([data-dc-editor-overlay-root]){pointer-events:none!important;}body[data-dc-editor-move] :not([data-dc-editor-overlay-root]):not([data-dc-editor-overlay-root] *){pointer-events:auto!important;transition:none!important;animation-duration:0s!important;animation-delay:0s!important;}body[data-dc-editor-on][data-dc-editor-tool="rect"] *,body[data-dc-editor-on][data-dc-editor-tool="frame"] *,body[data-dc-editor-on][data-dc-editor-tool="grid"] *,body[data-dc-editor-on][data-dc-editor-tool="oval"] *,body[data-dc-editor-on][data-dc-editor-tool="arrow"] *,body[data-dc-editor-on][data-dc-editor-tool="line"] *{cursor:crosshair!important;}body[data-dc-editor-on][data-dc-editor-tool="text"] *{cursor:text!important;}body[data-dc-editor-on][data-dc-editor-tool="draw"] *{cursor:url('data:image/svg+xml,%3Csvg%20xmlns=%22http://www.w3.org/2000/svg%22%20width=%2216%22%20height=%2216%22%20viewBox=%220%200%2016%2016%22%3E%3Cpath%20d=%22M2%2014l1-4%208-8a2.1%202.1%200%200%201%203%203l-8%208-4%201z%22%20fill=%22%23333%22%20stroke=%22%23fff%22%20stroke-width=%221%22/%3E%3C/svg%3E') 1 15, crosshair!important;}body[data-dc-editor-on]:not([data-dc-editor-tool]) [data-drags-parent],body[data-dc-editor-on]:not([data-dc-editor-tool]) [data-drags-parent] *{cursor:grab!important;}body[data-dc-editor-on]:not([data-dc-editor-tool]) [data-drags-parent]:active,body[data-dc-editor-on]:not([data-dc-editor-tool]) [data-drags-parent]:active *{cursor:grabbing!important;}body[data-dc-editor-on] [data-dc-editor-editing][contenteditable][contenteditable],body[data-dc-editor-on] [data-dc-editor-editing][contenteditable][contenteditable] *,body[data-dc-editor-on] [data-dc-editor-svg-editing]{cursor:text!important;}body[data-dc-editor-on] [data-dc-editor-editing="import"]{outline:none!important;}html:not([data-dc-canvas]):has(body[data-dc-editor-on]:not([data-dc-capturing]) .sc-host){background:var(--dc-editor-backdrop,#ededeb);}html:not([data-dc-canvas]) body[data-dc-editor-on]:not([data-dc-capturing]):has(.sc-host){background:var(--dc-editor-backdrop,#ededeb);}html:not([data-dc-canvas]) body[data-dc-editor-on] .sc-host:not(.sc-host .sc-host){min-height:calc(100vh - var(--dc-editor-host-vpad,0px));}html:not([data-dc-canvas]) body[data-dc-editor-on]:not([data-dc-capturing]) .sc-host:not(.sc-host .sc-host){background:var(--dc-editor-host-bg,#fff);}html[data-dc-frameless],html[data-dc-frameless] body[data-dc-editor-on],html[data-dc-frameless] body[data-dc-editor-on] .sc-host:not(.sc-host .sc-host){background:transparent!important;min-height:0!important;}html:has(body[data-dc-capturing]),body[data-dc-capturing]{transition:none!important;}html[data-dc-canvas]{overflow:hidden;}html[data-dc-canvas] body[data-dc-editor-on] .sc-host:not(.sc-host .sc-host)::before{content:"";position:absolute;left:-100000px;top:-100000px;width:200000px;height:200000px;pointer-events:none;background:repeating-linear-gradient(45deg,var(--dc-editor-hatch-ink,rgba(0,0,0,.05)) 0 8px,transparent 8px 16px);clip-path:polygon(0 0,100% 0,100% 50%,50% 50%,50% 100%,0 100%);}</style></head>
+<body>
+<div id="dc-root"><div class="sc-host" data-sc-name="SP-Workspace-Other-Studio"><div data-product="superpipeline" data-accent="product" data-dc-tpl="3" class="ar bd" data-vibe="studio" data-theme="light" style="min-height: 3860px;"><nav data-dc-tpl="4" class="ar-rail" aria-label="Superpipeline">
+  <a data-dc-tpl="5" class="ar-mark" href="#home" aria-label="Superpipeline home"><svg data-dc-tpl="6" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path data-dc-tpl="7" d="M6 6h9a3 3 0 0 1 0 6H9a3 3 0 0 0 0 6h9"></path><circle data-dc-tpl="8" cx="6" cy="6" r="2"></circle><circle data-dc-tpl="9" cx="18" cy="18" r="2"></circle></svg></a>
+  <a data-dc-tpl="10" class="ar-nav" href="#plan" aria-label="Plan" aria-keyshortcuts="G P"><svg data-dc-tpl="11" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect data-dc-tpl="12" x="3" y="4" width="5" height="16" rx="1"></rect><rect data-dc-tpl="13" x="10" y="4" width="5" height="11" rx="1"></rect><rect data-dc-tpl="14" x="17" y="4" width="4" height="7" rx="1"></rect></svg><span data-dc-tpl="15" class="tip" aria-hidden="true">Plan <span data-dc-tpl="16" class="kbd">G P</span></span></a>
+  <a data-dc-tpl="17" class="ar-nav" href="#operate" aria-label="Operate, 7 need you" aria-keyshortcuts="G O"><svg data-dc-tpl="18" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path data-dc-tpl="19" d="M3 12h4l3-7 4 14 3-7h4"></path></svg><span data-dc-tpl="20" class="ct" aria-hidden="true">7</span><span data-dc-tpl="21" class="tip" aria-hidden="true">Operate · 7 need you <span data-dc-tpl="22" class="kbd">G O</span></span></a>
+  <a data-dc-tpl="23" class="ar-nav" href="#workspace" aria-current="page" aria-label="Workspace" aria-keyshortcuts="G W"><svg data-dc-tpl="24" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle data-dc-tpl="25" cx="9" cy="8" r="3.5"></circle><path data-dc-tpl="26" d="M2.5 20c.8-3.6 3.4-5.5 6.5-5.5s5.7 1.9 6.5 5.5"></path><path data-dc-tpl="27" d="M16 4.5a3.5 3.5 0 0 1 0 7M18 14.8c1.8.8 3 2.6 3.5 5.2"></path></svg><span data-dc-tpl="28" class="tip" aria-hidden="true">Workspace <span data-dc-tpl="29" class="kbd">G W</span></span></a>
+  <span data-dc-tpl="30" style="flex: 1 1 0%;"></span>
+  <button data-dc-tpl="31" class="ar-nav" type="button" aria-label="Dark theme"><svg data-dc-tpl="32" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path data-dc-tpl="33" d="M20 14.5A8 8 0 0 1 9.5 4 8 8 0 1 0 20 14.5z"></path></svg><span data-dc-tpl="34" class="tip" aria-hidden="true">Dark theme</span></button>
+  <button data-dc-tpl="35" class="ar-nav" type="button" aria-label="Appearance" aria-haspopup="dialog"><svg data-dc-tpl="36" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle data-dc-tpl="37" cx="12" cy="12" r="4"></circle><path data-dc-tpl="38" d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"></path></svg><span data-dc-tpl="39" class="tip" aria-hidden="true">Appearance</span></button>
+  <button data-dc-tpl="40" class="ar-acct" type="button" aria-label="Ira Mehta, account" aria-haspopup="menu">IM<span data-dc-tpl="41" class="tip" aria-hidden="true">Ira Mehta</span></button>
+  <button data-dc-tpl="42" class="ar-nav" type="button" aria-label="Sign out"><svg data-dc-tpl="43" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path data-dc-tpl="44" d="M15 4h4v16h-4M10 8l-4 4 4 4M6 12h10"></path></svg><span data-dc-tpl="45" class="tip" aria-hidden="true">Sign out</span></button></nav><div data-dc-tpl="46" class="bd-body"><header data-dc-tpl="47" class="ar-top">
+  <div data-dc-tpl="48" class="ar-board"><span data-dc-tpl="49" class="kick">Superpipeline · workspace</span></div>
+  <label data-dc-tpl="50" class="ar-cmd"><span data-dc-tpl="51" class="sr">Search or run a command</span><span data-dc-tpl="52" class="box"><svg data-dc-tpl="53" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle data-dc-tpl="54" cx="11" cy="11" r="7"></circle><path data-dc-tpl="55" d="M20 20l-4-4"></path></svg><input data-dc-tpl="56" type="search" placeholder="Search or run a command" aria-keyshortcuts="Meta+K"><span data-dc-tpl="57" class="kbd" aria-hidden="true">⌘K</span></span></label>
+  <span data-dc-tpl="58" class="ar-live" role="status" title="Live: changes appear as they happen"><i data-dc-tpl="59" aria-hidden="true"></i>Live</span>
+  <button data-dc-tpl="60" class="ar-btn" type="button" aria-keyshortcuts="N"><svg data-dc-tpl="61" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path data-dc-tpl="62" d="M12 5v14M5 12h14"></path></svg>New card <span data-dc-tpl="63" class="kbd" aria-hidden="true">N</span></button></header><main data-dc-tpl="64" class="wo-main" id="main">
+  <div data-dc-tpl="65" class="wo-head">
+    <a data-dc-tpl="66" class="ar-lk quiet back" href="#"><svg data-dc-tpl="67" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path data-dc-tpl="68" d="M15 6l-6 6 6 6"></path></svg>Back to Developer Experience</a>
+    <span data-dc-tpl="69" class="kick">Workspace · shared by every board</span>
+    <h1 data-dc-tpl="70">Workspace</h1>
+    <p data-dc-tpl="71" class="lede">Every workspace tab, shown together for review: Needs you, Capabilities, Labels, People and Connections. (Agents has its own artboard.)</p>
+    <div data-dc-tpl="72" class="wo-tabs" role="tablist" aria-label="Workspace"><a data-dc-tpl="73" class="ar-tab" role="tab" aria-selected="true" href="#">Needs you<span data-dc-tpl="74" class="wo-ct">7</span><span data-dc-tpl="75" class="sr"> waiting on you</span></a><a data-dc-tpl="76" class="ar-tab" role="tab" aria-selected="false" href="#">Agents<span data-dc-tpl="77" class="mono">22</span></a><a data-dc-tpl="78" class="ar-tab" role="tab" aria-selected="false" href="#">Capabilities<span data-dc-tpl="79" class="mono">19</span></a><a data-dc-tpl="80" class="ar-tab" role="tab" aria-selected="false" href="#">Labels<span data-dc-tpl="81" class="mono">3</span></a><a data-dc-tpl="82" class="ar-tab" role="tab" aria-selected="false" href="#">People<span data-dc-tpl="83" class="mono">1</span></a><a data-dc-tpl="84" class="ar-tab" role="tab" aria-selected="false" href="#">Connections</a></div>
+  </div>
+
+  <section data-dc-tpl="85" class="ar-sec" aria-labelledby="nt-h">
+    <div data-dc-tpl="86" class="hd"><span data-dc-tpl="87" class="no">01</span><span data-dc-tpl="88" class="kick">Needs you tab</span><h2 data-dc-tpl="89" id="nt-h">Waiting on you, across every board <span data-dc-tpl="90" class="wo-ct">7</span></h2><span data-dc-tpl="91" class="r">Oldest first. Every board answered.<button data-dc-tpl="92" type="button" class="ar-btn2"><svg data-dc-tpl="93" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path data-dc-tpl="94" d="M20 11a8 8 0 0 0-14.6-4.5L4 8"></path><path data-dc-tpl="95" d="M4 4v4h4"></path><path data-dc-tpl="96" d="M4 13a8 8 0 0 0 14.6 4.5L20 16"></path><path data-dc-tpl="97" d="M20 20v-4h-4"></path></svg>Refresh</button></span></div>
+    <table data-dc-tpl="98" class="ar-tbl wo-tbl">
+      <caption data-dc-tpl="99" class="sr">Cards waiting on you across every board, oldest first</caption>
+      <thead data-dc-tpl="100"><tr data-dc-tpl="101"><th data-dc-tpl="102" scope="col" style="width: 34px;">No.</th><th data-dc-tpl="103" scope="col" style="width: 96px;">Kind</th><th data-dc-tpl="104" scope="col" style="width: 31%;">Card · where</th><th data-dc-tpl="105" scope="col">Why</th><th data-dc-tpl="106" scope="col" style="width: 168px;">Actions</th></tr></thead>
+      <tbody data-dc-tpl="107"><tr data-dc-tpl="108" class="wo-need">
+  <td data-dc-tpl="109"><span data-dc-tpl="110" class="ix">01</span></td>
+  <td data-dc-tpl="111"><span data-dc-tpl="112" class="wo-kind"><span data-dc-tpl="113" class="u off" aria-hidden="true"></span>Unowned</span></td>
+  <td data-dc-tpl="114"><a data-dc-tpl="115" href="#" class="ttl">Fix the highest-severity blocker found in the clean-room journey</a><p data-dc-tpl="116" class="wo-sub">Developer Experience · nothing claims the Reported stage · 2d</p></td>
+  <td data-dc-tpl="117"><p data-dc-tpl="118" class="wo-plain">No agent works this stage and no review is asked for here, so it will sit forever. Move it to a stage someone works.</p></td>
+  <td data-dc-tpl="119"><div data-dc-tpl="120" class="wo-acts"><a data-dc-tpl="121" class="ar-btn2" href="#">Open</a></div></td></tr><tr data-dc-tpl="122" class="wo-need">
+  <td data-dc-tpl="123"><span data-dc-tpl="124" class="ix">02</span></td>
+  <td data-dc-tpl="125"><span data-dc-tpl="126" class="wo-kind needs"><span data-dc-tpl="127" class="u needs" aria-hidden="true"></span>Blocked</span></td>
+  <td data-dc-tpl="128"><a data-dc-tpl="129" href="#" class="ttl">Diagnose Melissa and Anna Supermessage silence — trace actual failing hop</a><p data-dc-tpl="130" class="wo-sub">Developer Experience · Reproduce · stopped and is waiting on you · 2d</p></td>
+  <td data-dc-tpl="131"><div data-dc-tpl="132" class="ar-q"><blockquote data-dc-tpl="133">not reproduced end-to-end: Melissa’s live ACP session acps_8f86d4e4-1cf2-457b-beb8-0ffb529d9023 reached Hermes and produced a model reply, w…</blockquote><button data-dc-tpl="134" type="button" class="ar-lk" aria-expanded="false">Show all</button></div><p data-dc-tpl="135" class="wo-ins">Read why it stopped, fix that, then resume it with a note the agent will read.</p></td>
+  <td data-dc-tpl="136"><div data-dc-tpl="137" class="wo-acts"><button data-dc-tpl="138" class="ar-btn" type="button" aria-expanded="false">Resume</button><a data-dc-tpl="139" class="ar-btn2" href="#">Open</a></div></td></tr><tr data-dc-tpl="140" class="wo-need">
+  <td data-dc-tpl="141"><span data-dc-tpl="142" class="ix">03</span></td>
+  <td data-dc-tpl="143"><span data-dc-tpl="144" class="wo-kind needs"><span data-dc-tpl="145" class="u needs" aria-hidden="true"></span>Blocked</span></td>
+  <td data-dc-tpl="146"><a data-dc-tpl="147" href="#" class="ttl">AgentPod: connector interface and generic effects ledger, state machine and executor</a><p data-dc-tpl="148" class="wo-sub">Developer Experience · Failing test · stopped and is waiting on you · 33h</p></td>
+  <td data-dc-tpl="149"><div data-dc-tpl="150" class="ar-q"><blockquote data-dc-tpl="151">Blocked on the forgeDestinationHold: operator must provide the authoritative writable Forge repository URL for SuperJackfruitLabs/agentpod and grant Tester Tim's station write access…</blockquote><button data-dc-tpl="152" type="button" class="ar-lk" aria-expanded="false">Show all</button></div><p data-dc-tpl="153" class="wo-ins">Read why it stopped, fix that, then resume it with a note the agent will read.</p></td>
+  <td data-dc-tpl="154"><div data-dc-tpl="155" class="wo-acts"><button data-dc-tpl="156" class="ar-btn" type="button">Resume</button><a data-dc-tpl="157" class="ar-btn2" href="#">Open</a></div></td></tr><tr data-dc-tpl="158" class="wo-need">
+  <td data-dc-tpl="159"><span data-dc-tpl="160" class="ix">04</span></td>
+  <td data-dc-tpl="161"><span data-dc-tpl="162" class="wo-kind needs"><span data-dc-tpl="163" class="u needs" aria-hidden="true"></span>Blocked</span></td>
+  <td data-dc-tpl="164"><a data-dc-tpl="165" href="#" class="ttl">Superpipeline: manual-delivery completion and approval-subject hardening</a><p data-dc-tpl="166" class="wo-sub">Developer Experience · Fix · stopped and is waiting on you · 33h</p></td>
+  <td data-dc-tpl="167"><div data-dc-tpl="168" class="ar-q"><blockquote data-dc-tpl="169">this stage was not finished twice — first: the handoff is missing commit; then, after one automatic rework: the handoff is missing commit</blockquote></div><p data-dc-tpl="170" class="wo-ins">Read why it stopped, fix that, then resume it with a note the agent will read.</p></td>
+  <td data-dc-tpl="171"><div data-dc-tpl="172" class="wo-acts"><button data-dc-tpl="173" class="ar-btn" type="button" aria-expanded="true">Resume</button><a data-dc-tpl="174" class="ar-btn2" href="#">Open</a></div></td></tr><tr data-dc-tpl="175" class="wo-resume">
+  <td data-dc-tpl="176"></td><td data-dc-tpl="177"></td>
+  <td data-dc-tpl="178" colspan="3"><form data-dc-tpl="179" aria-label="Resume this card">
+    <div data-dc-tpl="180" class="ar-field"><label data-dc-tpl="181" for="rs-note">Note for the agent</label><textarea data-dc-tpl="182" id="rs-note" class="ar-ta" style="min-height: 72px;">The commit is on the branch now. Pick up from the handoff step.</textarea></div>
+    <div data-dc-tpl="183" class="row"><button data-dc-tpl="184" type="button" class="ar-btn">Send back to work</button><button data-dc-tpl="185" type="button" class="ar-lk">Cancel</button></div>
+  </form></td></tr>
+      <tr class="wo-need">
+  <td><span class="ix">05</span></td>
+  <td><span class="wo-kind needs"><span class="u needs" aria-hidden="true"></span>Blocked</span></td>
+  <td><a href="/b/brd_af3fde184dd84d90/c/card_fx_af3f_0001" class="ttl">Guild Operations &amp; Automation fixture card 1</a><p class="wo-sub">Guild Operations &amp; Automation · Build · stopped and is waiting on you · 6h</p></td>
+  <td><p class="wo-plain">Read why it stopped, fix that, then resume it with a note the agent will read.</p></td>
+  <td><div class="wo-acts"><button class="ar-btn" type="button" aria-expanded="false">Resume</button><a class="ar-btn2" href="/b/brd_af3fde184dd84d90/c/card_fx_af3f_0001">Open</a></div></td></tr><tr class="wo-need">
+  <td><span class="ix">06</span></td>
+  <td><span class="wo-kind needs"><span class="u needs" aria-hidden="true"></span>Blocked</span></td>
+  <td><a href="/b/brd_6c298ec02d6b466b/c/card_fx_6c29_0001" class="ttl">Client Quality fixture card 1</a><p class="wo-sub">Client Quality · Audit · stopped and is waiting on you · 4h</p></td>
+  <td><div class="ar-q"><blockquote>Waiting on a person</blockquote></div><p class="wo-ins">Read why it stopped, fix that, then resume it with a note the agent will read.</p></td>
+  <td><div class="wo-acts"><button class="ar-btn" type="button" aria-expanded="false">Resume</button><a class="ar-btn2" href="/b/brd_6c298ec02d6b466b/c/card_fx_6c29_0001">Open</a></div></td></tr><tr class="wo-need">
+  <td><span class="ix">07</span></td>
+  <td><span class="wo-kind needs"><span class="u needs" aria-hidden="true"></span>Review</span></td>
+  <td><a href="/b/brd_fa33a0a0721d4d18/c/card_42269e99036f42ae" class="ttl">P4 exit test: one-paragraph synthesis of ‘why the organization plane exists’ (gate test — approve from Matrix)</a><p class="wo-sub">Research &amp; Intelligence · Recommendation · recommendation · waiting for your review · 1h</p></td>
+  <td><div class="ar-q"><blockquote>All done, ready for your review.</blockquote></div><p class="wo-ins">Open it, read what was produced, then approve it or request changes.</p></td>
+  <td><div class="wo-acts"><a class="ar-btn" href="/b/brd_fa33a0a0721d4d18/c/card_42269e99036f42ae">Review</a></div></td></tr>
+      </tbody>
+    </table>
+    <p data-dc-tpl="186" class="wo-foot">If a board does not answer, this line says so: “1 board did not answer; this list may be incomplete.”</p>
+  </section>
+
+  <section data-dc-tpl="187" class="ar-sec" aria-labelledby="ct-h">
+    <div data-dc-tpl="188" class="hd"><span data-dc-tpl="189" class="no">02</span><span data-dc-tpl="190" class="kick">Capabilities tab</span><h2 data-dc-tpl="191" id="ct-h">19 capabilities</h2></div>
+    <p data-dc-tpl="192" class="wo-lede">What agents can do. A board stage asks for one; an agent holding it claims the card.</p>
+    <div data-dc-tpl="193" class="wo-note"><p data-dc-tpl="194"><strong data-dc-tpl="195">command</strong> is held by super-chotu but no board stage asks for it, so it lets that agent claim nothing. <a data-dc-tpl="196" class="ar-lk" href="#">Add a stage that asks for it</a> or remove it.</p><p data-dc-tpl="197" class="ar-hint">When a stage asks for a capability no agent holds, it shows here too, with a link to staff it.</p></div>
+    <table data-dc-tpl="198" class="ar-tbl wo-tbl">
+      <caption data-dc-tpl="199" class="sr">Capabilities, A to Z</caption>
+      <thead data-dc-tpl="200"><tr data-dc-tpl="201"><th data-dc-tpl="202" scope="col" style="width: 26%;">Capability · held by</th><th data-dc-tpl="203" scope="col" style="width: 36%;">Description</th><th data-dc-tpl="204" scope="col">Implies</th><th data-dc-tpl="205" scope="col" style="width: 54px;"><span data-dc-tpl="206" class="sr">Remove</span></th></tr></thead>
+      <tbody data-dc-tpl="207"><tr data-dc-tpl="208">
+  <td data-dc-tpl="209"><p data-dc-tpl="210" class="wo-cap">analysis</p><p data-dc-tpl="211" class="wo-who"><span data-dc-tpl="212" class="wo-stack"><svg data-dc-tpl="213" viewBox="-2 -4 68 70" width="20" height="20" aria-hidden="true" focusable="false" data-mood="resting"><circle data-dc-tpl="214" cx="32" cy="32" r="30" fill="var(--vk-mood-resting)"></circle><g data-dc-tpl="215" data-eyes="closed"><path data-dc-tpl="216" d="M19 29 Q23 32 27 29 M37 29 Q41 32 45 29" fill="none" stroke="var(--vk-face-ink)" stroke-width="2.6" stroke-linecap="round"></path></g><circle data-dc-tpl="217" cx="17" cy="37" r="4" fill="rgb(255 158 138 / 0.5)"></circle><circle data-dc-tpl="218" cx="47" cy="37" r="4" fill="rgb(255 158 138 / 0.5)"></circle><path data-dc-tpl="219" d="M27 43 Q32 45 37 43" fill="none" stroke="var(--vk-face-ink)" stroke-width="3" stroke-linecap="round"></path></svg><svg data-dc-tpl="220" viewBox="-2 -4 68 70" width="20" height="20" aria-hidden="true" focusable="false" data-mood="resting"><circle data-dc-tpl="221" cx="32" cy="32" r="30" fill="var(--vk-mood-resting)"></circle><path data-dc-tpl="222" d="M28 4 Q32 -2 36 4 Q34 8 32 6 Q30 8 28 4Z" fill="rgb(35 35 58)"></path><g data-dc-tpl="223" data-eyes="closed"><path data-dc-tpl="224" d="M19 29 Q23 32 27 29 M37 29 Q41 32 45 29" fill="none" stroke="var(--vk-face-ink)" stroke-width="2.6" stroke-linecap="round"></path></g><path data-dc-tpl="225" d="M27 43 Q32 45 37 43" fill="none" stroke="var(--vk-face-ink)" stroke-width="3" stroke-linecap="round"></path></svg></span>2 agents</p></td>
+  <td data-dc-tpl="226"><label data-dc-tpl="227" class="sr" for="cd-analysis">Description of analysis</label><input data-dc-tpl="228" id="cd-analysis" class="ar-in" placeholder="Add a description" value=""></td>
+  <td data-dc-tpl="229"><div data-dc-tpl="230" class="wo-caps"><button data-dc-tpl="231" type="button" class="ar-lk" aria-label="Add an implied capability to analysis"><svg data-dc-tpl="232" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path data-dc-tpl="233" d="M12 5v14M5 12h14"></path></svg>Implies…</button></div></td>
+  <td data-dc-tpl="234"><button data-dc-tpl="235" type="button" class="ar-ib wo-del" aria-label="Remove analysis"><svg data-dc-tpl="236" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path data-dc-tpl="237" d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"></path></svg></button></td></tr><tr data-dc-tpl="238">
+  <td data-dc-tpl="239"><p data-dc-tpl="240" class="wo-cap">api</p><p data-dc-tpl="241" class="wo-who"><span data-dc-tpl="242" class="wo-stack"><svg data-dc-tpl="243" viewBox="-2 -4 68 70" width="20" height="20" aria-hidden="true" focusable="false" data-mood="resting"><circle data-dc-tpl="244" cx="32" cy="32" r="30" fill="var(--vk-mood-resting)"></circle><path data-dc-tpl="245" d="M8 22 Q12 4 32 3 Q52 4 56 22 Q44 14 32 15 Q20 14 8 22Z" fill="rgb(35 35 58)"></path><g data-dc-tpl="246" data-eyes="closed"><path data-dc-tpl="247" d="M19 29 Q23 32 27 29 M37 29 Q41 32 45 29" fill="none" stroke="var(--vk-face-ink)" stroke-width="2.6" stroke-linecap="round"></path></g><path data-dc-tpl="248" d="M27 43 Q32 45 37 43" fill="none" stroke="var(--vk-face-ink)" stroke-width="3" stroke-linecap="round"></path></svg></span>1 agent</p></td>
+  <td data-dc-tpl="249"><label data-dc-tpl="250" class="sr" for="cd-api">Description of api</label><input data-dc-tpl="251" id="cd-api" class="ar-in" placeholder="Add a description" value=""></td>
+  <td data-dc-tpl="252"><div data-dc-tpl="253" class="wo-caps"><span data-dc-tpl="254" class="wo-tag" title="Nobody defined this — it turned up in use">inferred</span><button data-dc-tpl="255" type="button" class="ar-lk" aria-label="Add an implied capability to api"><svg data-dc-tpl="256" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path data-dc-tpl="257" d="M12 5v14M5 12h14"></path></svg>Implies…</button></div></td>
+  <td data-dc-tpl="258"><button data-dc-tpl="259" type="button" class="ar-ib wo-del" aria-label="Remove api"><svg data-dc-tpl="260" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path data-dc-tpl="261" d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"></path></svg></button></td></tr><tr data-dc-tpl="262">
+  <td data-dc-tpl="263"><p data-dc-tpl="264" class="wo-cap">claim-check</p><p data-dc-tpl="265" class="wo-who"><span data-dc-tpl="266" class="wo-stack"><svg data-dc-tpl="267" viewBox="-2 -4 68 70" width="20" height="20" aria-hidden="true" focusable="false" data-mood="resting"><circle data-dc-tpl="268" cx="32" cy="32" r="30" fill="var(--vk-mood-resting)"></circle><path data-dc-tpl="269" d="M28 4 Q32 -2 36 4 Q34 8 32 6 Q30 8 28 4Z" fill="rgb(35 35 58)"></path><g data-dc-tpl="270" data-eyes="closed"><path data-dc-tpl="271" d="M19 29 Q23 32 27 29 M37 29 Q41 32 45 29" fill="none" stroke="var(--vk-face-ink)" stroke-width="2.6" stroke-linecap="round"></path></g><path data-dc-tpl="272" d="M27 43 Q32 45 37 43" fill="none" stroke="var(--vk-face-ink)" stroke-width="3" stroke-linecap="round"></path></svg></span>1 agent</p></td>
+  <td data-dc-tpl="273"><label data-dc-tpl="274" class="sr" for="cd-claim-check">Description of claim-check</label><input data-dc-tpl="275" id="cd-claim-check" class="ar-in" placeholder="Add a description" value="Checks that what an agent says it did is what the record shows."></td>
+  <td data-dc-tpl="276"><div data-dc-tpl="277" class="wo-caps"><span data-dc-tpl="278" class="wo-tag">implies analysis <button data-dc-tpl="279" type="button" class="wo-x h44" aria-label="Remove implies analysis"><svg data-dc-tpl="280" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path data-dc-tpl="281" d="M6 6l12 12M18 6L6 18"></path></svg></button></span><button data-dc-tpl="282" type="button" class="ar-lk" aria-label="Add an implied capability to claim-check"><svg data-dc-tpl="283" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path data-dc-tpl="284" d="M12 5v14M5 12h14"></path></svg>Implies…</button></div></td>
+  <td data-dc-tpl="285"><button data-dc-tpl="286" type="button" class="ar-ib wo-del" aria-label="Remove claim-check"><svg data-dc-tpl="287" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path data-dc-tpl="288" d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"></path></svg></button></td></tr><tr data-dc-tpl="289">
+  <td data-dc-tpl="290"><p data-dc-tpl="291" class="wo-cap">code</p><p data-dc-tpl="292" class="wo-who"><span data-dc-tpl="293" class="wo-stack"><svg data-dc-tpl="294" viewBox="-2 -4 68 70" width="20" height="20" aria-hidden="true" focusable="false" data-mood="resting"><circle data-dc-tpl="295" cx="32" cy="32" r="30" fill="var(--vk-mood-resting)"></circle><path data-dc-tpl="296" d="M28 4 Q32 -2 36 4 Q34 8 32 6 Q30 8 28 4Z" fill="rgb(194 112 61)"></path><g data-dc-tpl="297" data-eyes="closed"><path data-dc-tpl="298" d="M19 29 Q23 32 27 29 M37 29 Q41 32 45 29" fill="none" stroke="var(--vk-face-ink)" stroke-width="2.6" stroke-linecap="round"></path></g><path data-dc-tpl="299" d="M27 43 Q32 45 37 43" fill="none" stroke="var(--vk-face-ink)" stroke-width="3" stroke-linecap="round"></path></svg><svg data-dc-tpl="300" viewBox="-2 -4 68 70" width="20" height="20" aria-hidden="true" focusable="false" data-mood="resting"><circle data-dc-tpl="301" cx="32" cy="32" r="30" fill="var(--vk-mood-resting)"></circle><g data-dc-tpl="302" data-eyes="closed"><path data-dc-tpl="303" d="M19 29 Q23 32 27 29 M37 29 Q41 32 45 29" fill="none" stroke="var(--vk-face-ink)" stroke-width="2.6" stroke-linecap="round"></path></g><circle data-dc-tpl="304" cx="17" cy="37" r="4" fill="rgb(255 158 138 / 0.5)"></circle><circle data-dc-tpl="305" cx="47" cy="37" r="4" fill="rgb(255 158 138 / 0.5)"></circle><path data-dc-tpl="306" d="M27 43 Q32 45 37 43" fill="none" stroke="var(--vk-face-ink)" stroke-width="3" stroke-linecap="round"></path></svg></span>2 agents</p></td>
+  <td data-dc-tpl="307"><label data-dc-tpl="308" class="sr" for="cd-code">Description of code</label><input data-dc-tpl="309" id="cd-code" class="ar-in" placeholder="Add a description" value=""></td>
+  <td data-dc-tpl="310"><div data-dc-tpl="311" class="wo-caps"><button data-dc-tpl="312" type="button" class="ar-lk" aria-label="Add an implied capability to code"><svg data-dc-tpl="313" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path data-dc-tpl="314" d="M12 5v14M5 12h14"></path></svg>Implies…</button></div></td>
+  <td data-dc-tpl="315"><button data-dc-tpl="316" type="button" class="ar-ib wo-del" aria-label="Remove code"><svg data-dc-tpl="317" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path data-dc-tpl="318" d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"></path></svg></button></td></tr><tr data-dc-tpl="319">
+  <td data-dc-tpl="320"><p data-dc-tpl="321" class="wo-cap">command</p><p data-dc-tpl="322" class="wo-who"><span data-dc-tpl="323" class="wo-stack"><svg data-dc-tpl="324" viewBox="-2 -4 68 70" width="20" height="20" aria-hidden="true" focusable="false" data-mood="resting"><circle data-dc-tpl="325" cx="32" cy="32" r="30" fill="var(--vk-mood-resting)"></circle><path data-dc-tpl="326" d="M8 22 Q12 4 32 3 Q52 4 56 22 Q44 14 32 15 Q20 14 8 22Z" fill="rgb(35 35 58)"></path><g data-dc-tpl="327" data-eyes="closed"><path data-dc-tpl="328" d="M19 29 Q23 32 27 29 M37 29 Q41 32 45 29" fill="none" stroke="var(--vk-face-ink)" stroke-width="2.6" stroke-linecap="round"></path></g><path data-dc-tpl="329" d="M27 43 Q32 45 37 43" fill="none" stroke="var(--vk-face-ink)" stroke-width="3" stroke-linecap="round"></path></svg></span>1 agent</p></td>
+  <td data-dc-tpl="330"><label data-dc-tpl="331" class="sr" for="cd-command">Description of command</label><input data-dc-tpl="332" id="cd-command" class="ar-in" placeholder="Add a description" value=""></td>
+  <td data-dc-tpl="333"><div data-dc-tpl="334" class="wo-caps"><span data-dc-tpl="335" class="wo-tag">no board asks</span><button data-dc-tpl="336" type="button" class="ar-lk" aria-label="Add an implied capability to command"><svg data-dc-tpl="337" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path data-dc-tpl="338" d="M12 5v14M5 12h14"></path></svg>Implies…</button></div></td>
+  <td data-dc-tpl="339"><button data-dc-tpl="340" type="button" class="ar-ib wo-del" aria-label="Remove command"><svg data-dc-tpl="341" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path data-dc-tpl="342" d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"></path></svg></button></td></tr><tr data-dc-tpl="343">
+  <td data-dc-tpl="344"><p data-dc-tpl="345" class="wo-cap">design</p><p data-dc-tpl="346" class="wo-who"><span data-dc-tpl="347" class="wo-stack"><svg data-dc-tpl="348" viewBox="-2 -4 68 70" width="20" height="20" aria-hidden="true" focusable="false" data-mood="resting"><circle data-dc-tpl="349" cx="32" cy="32" r="30" fill="var(--vk-mood-resting)"></circle><circle data-dc-tpl="350" cx="32" cy="4" r="7" fill="rgb(94 90 156)"></circle><g data-dc-tpl="351" data-eyes="closed"><path data-dc-tpl="352" d="M19 29 Q23 32 27 29 M37 29 Q41 32 45 29" fill="none" stroke="var(--vk-face-ink)" stroke-width="2.6" stroke-linecap="round"></path></g><path data-dc-tpl="353" d="M27 43 Q32 45 37 43" fill="none" stroke="var(--vk-face-ink)" stroke-width="3" stroke-linecap="round"></path></svg></span>1 agent</p></td>
+  <td data-dc-tpl="354"><label data-dc-tpl="355" class="sr" for="cd-design">Description of design</label><input data-dc-tpl="356" id="cd-design" class="ar-in" placeholder="Add a description" value=""></td>
+  <td data-dc-tpl="357"><div data-dc-tpl="358" class="wo-caps"><button data-dc-tpl="359" type="button" class="ar-lk" aria-label="Add an implied capability to design"><svg data-dc-tpl="360" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path data-dc-tpl="361" d="M12 5v14M5 12h14"></path></svg>Implies…</button></div></td>
+  <td data-dc-tpl="362"><button data-dc-tpl="363" type="button" class="ar-ib wo-del" aria-label="Remove design"><svg data-dc-tpl="364" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path data-dc-tpl="365" d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"></path></svg></button></td></tr><tr data-dc-tpl="366">
+  <td data-dc-tpl="367"><p data-dc-tpl="368" class="wo-cap">diagnostics</p><p data-dc-tpl="369" class="wo-who"><span data-dc-tpl="370" class="wo-stack"><svg data-dc-tpl="371" viewBox="-2 -4 68 70" width="20" height="20" aria-hidden="true" focusable="false" data-mood="resting"><circle data-dc-tpl="372" cx="32" cy="32" r="30" fill="var(--vk-mood-resting)"></circle><path data-dc-tpl="373" d="M28 4 Q32 -2 36 4 Q34 8 32 6 Q30 8 28 4Z" fill="rgb(107 74 43)"></path><g data-dc-tpl="374" data-eyes="closed"><path data-dc-tpl="375" d="M19 29 Q23 32 27 29 M37 29 Q41 32 45 29" fill="none" stroke="var(--vk-face-ink)" stroke-width="2.6" stroke-linecap="round"></path></g><circle data-dc-tpl="376" cx="17" cy="37" r="4" fill="rgb(255 158 138 / 0.5)"></circle><circle data-dc-tpl="377" cx="47" cy="37" r="4" fill="rgb(255 158 138 / 0.5)"></circle><path data-dc-tpl="378" d="M27 43 Q32 45 37 43" fill="none" stroke="var(--vk-face-ink)" stroke-width="3" stroke-linecap="round"></path></svg></span>1 agent</p></td>
+  <td data-dc-tpl="379"><label data-dc-tpl="380" class="sr" for="cd-diagnostics">Description of diagnostics</label><input data-dc-tpl="381" id="cd-diagnostics" class="ar-in" placeholder="Add a description" value=""></td>
+  <td data-dc-tpl="382"><div data-dc-tpl="383" class="wo-caps"><span data-dc-tpl="384" class="wo-tag" title="Nobody defined this — it turned up in use">inferred</span><button data-dc-tpl="385" type="button" class="ar-lk" aria-label="Add an implied capability to diagnostics"><svg data-dc-tpl="386" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path data-dc-tpl="387" d="M12 5v14M5 12h14"></path></svg>Implies…</button></div></td>
+  <td data-dc-tpl="388"><button data-dc-tpl="389" type="button" class="ar-ib wo-del" aria-label="Remove diagnostics"><svg data-dc-tpl="390" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path data-dc-tpl="391" d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"></path></svg></button></td></tr><tr data-dc-tpl="392">
+  <td data-dc-tpl="393"><p data-dc-tpl="394" class="wo-cap">integration</p><p data-dc-tpl="395" class="wo-who"><span data-dc-tpl="396" class="wo-stack"><svg data-dc-tpl="397" viewBox="-2 -4 68 70" width="20" height="20" aria-hidden="true" focusable="false" data-mood="resting"><circle data-dc-tpl="398" cx="32" cy="32" r="30" fill="var(--vk-mood-resting)"></circle><g data-dc-tpl="399" data-eyes="closed"><path data-dc-tpl="400" d="M19 29 Q23 32 27 29 M37 29 Q41 32 45 29" fill="none" stroke="var(--vk-face-ink)" stroke-width="2.6" stroke-linecap="round"></path></g><circle data-dc-tpl="401" cx="17" cy="37" r="4" fill="rgb(255 158 138 / 0.5)"></circle><circle data-dc-tpl="402" cx="47" cy="37" r="4" fill="rgb(255 158 138 / 0.5)"></circle><path data-dc-tpl="403" d="M27 43 Q32 45 37 43" fill="none" stroke="var(--vk-face-ink)" stroke-width="3" stroke-linecap="round"></path></svg></span>1 agent</p></td>
+  <td data-dc-tpl="404"><label data-dc-tpl="405" class="sr" for="cd-integration">Description of integration</label><input data-dc-tpl="406" id="cd-integration" class="ar-in" placeholder="Add a description" value=""></td>
+  <td data-dc-tpl="407"><div data-dc-tpl="408" class="wo-caps"><span data-dc-tpl="409" class="wo-tag" title="Nobody defined this — it turned up in use">inferred</span><button data-dc-tpl="410" type="button" class="ar-lk" aria-label="Add an implied capability to integration"><svg data-dc-tpl="411" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path data-dc-tpl="412" d="M12 5v14M5 12h14"></path></svg>Implies…</button></div></td>
+  <td data-dc-tpl="413"><button data-dc-tpl="414" type="button" class="ar-ib wo-del" aria-label="Remove integration"><svg data-dc-tpl="415" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path data-dc-tpl="416" d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"></path></svg></button></td></tr><tr data-dc-tpl="417">
+  <td data-dc-tpl="418"><p data-dc-tpl="419" class="wo-cap">maintenance</p><p data-dc-tpl="420" class="wo-who"><span data-dc-tpl="421" class="wo-stack"><svg data-dc-tpl="422" viewBox="-2 -4 68 70" width="20" height="20" aria-hidden="true" focusable="false" data-mood="resting"><circle data-dc-tpl="423" cx="32" cy="32" r="30" fill="var(--vk-mood-resting)"></circle><circle data-dc-tpl="424" cx="32" cy="4" r="7" fill="rgb(94 90 156)"></circle><g data-dc-tpl="425" data-eyes="closed"><path data-dc-tpl="426" d="M19 29 Q23 32 27 29 M37 29 Q41 32 45 29" fill="none" stroke="var(--vk-face-ink)" stroke-width="2.6" stroke-linecap="round"></path></g><path data-dc-tpl="427" d="M27 43 Q32 45 37 43" fill="none" stroke="var(--vk-face-ink)" stroke-width="3" stroke-linecap="round"></path></svg></span>1 agent</p></td>
+  <td data-dc-tpl="428"><label data-dc-tpl="429" class="sr" for="cd-maintenance">Description of maintenance</label><input data-dc-tpl="430" id="cd-maintenance" class="ar-in" placeholder="Add a description" value=""></td>
+  <td data-dc-tpl="431"><div data-dc-tpl="432" class="wo-caps"><button data-dc-tpl="433" type="button" class="ar-lk" aria-label="Add an implied capability to maintenance"><svg data-dc-tpl="434" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path data-dc-tpl="435" d="M12 5v14M5 12h14"></path></svg>Implies…</button></div></td>
+  <td data-dc-tpl="436"><button data-dc-tpl="437" type="button" class="ar-ib wo-del" aria-label="Remove maintenance"><svg data-dc-tpl="438" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path data-dc-tpl="439" d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"></path></svg></button></td></tr><tr data-dc-tpl="440">
+  <td data-dc-tpl="441"><p data-dc-tpl="442" class="wo-cap">marketing</p><p data-dc-tpl="443" class="wo-who"><span data-dc-tpl="444" class="wo-stack"><svg data-dc-tpl="445" viewBox="-2 -4 68 70" width="20" height="20" aria-hidden="true" focusable="false" data-mood="resting"><circle data-dc-tpl="446" cx="32" cy="32" r="30" fill="var(--vk-mood-resting)"></circle><circle data-dc-tpl="447" cx="32" cy="4" r="7" fill="rgb(47 107 90)"></circle><g data-dc-tpl="448" data-eyes="closed"><path data-dc-tpl="449" d="M19 29 Q23 32 27 29 M37 29 Q41 32 45 29" fill="none" stroke="var(--vk-face-ink)" stroke-width="2.6" stroke-linecap="round"></path></g><circle data-dc-tpl="450" cx="17" cy="37" r="4" fill="rgb(255 158 138 / 0.5)"></circle><circle data-dc-tpl="451" cx="47" cy="37" r="4" fill="rgb(255 158 138 / 0.5)"></circle><path data-dc-tpl="452" d="M27 43 Q32 45 37 43" fill="none" stroke="var(--vk-face-ink)" stroke-width="3" stroke-linecap="round"></path></svg></span>1 agent</p></td>
+  <td data-dc-tpl="453"><label data-dc-tpl="454" class="sr" for="cd-marketing">Description of marketing</label><input data-dc-tpl="455" id="cd-marketing" class="ar-in" placeholder="Add a description" value=""></td>
+  <td data-dc-tpl="456"><div data-dc-tpl="457" class="wo-caps"><span data-dc-tpl="458" class="wo-tag" title="Nobody defined this — it turned up in use">inferred</span><button data-dc-tpl="459" type="button" class="ar-lk" aria-label="Add an implied capability to marketing"><svg data-dc-tpl="460" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path data-dc-tpl="461" d="M12 5v14M5 12h14"></path></svg>Implies…</button></div></td>
+  <td data-dc-tpl="462"><button data-dc-tpl="463" type="button" class="ar-ib wo-del" aria-label="Remove marketing"><svg data-dc-tpl="464" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path data-dc-tpl="465" d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"></path></svg></button></td></tr><tr data-dc-tpl="466">
+  <td data-dc-tpl="467"><p data-dc-tpl="468" class="wo-cap">onboarding</p><p data-dc-tpl="469" class="wo-who"><span data-dc-tpl="470" class="wo-stack"><svg data-dc-tpl="471" viewBox="-2 -4 68 70" width="20" height="20" aria-hidden="true" focusable="false" data-mood="resting"><circle data-dc-tpl="472" cx="32" cy="32" r="30" fill="var(--vk-mood-resting)"></circle><circle data-dc-tpl="473" cx="32" cy="4" r="7" fill="rgb(94 90 156)"></circle><g data-dc-tpl="474" data-eyes="closed"><path data-dc-tpl="475" d="M19 29 Q23 32 27 29 M37 29 Q41 32 45 29" fill="none" stroke="var(--vk-face-ink)" stroke-width="2.6" stroke-linecap="round"></path></g><circle data-dc-tpl="476" cx="17" cy="37" r="4" fill="rgb(255 158 138 / 0.5)"></circle><circle data-dc-tpl="477" cx="47" cy="37" r="4" fill="rgb(255 158 138 / 0.5)"></circle><path data-dc-tpl="478" d="M27 43 Q32 45 37 43" fill="none" stroke="var(--vk-face-ink)" stroke-width="3" stroke-linecap="round"></path></svg></span>1 agent</p></td>
+  <td data-dc-tpl="479"><label data-dc-tpl="480" class="sr" for="cd-onboarding">Description of onboarding</label><input data-dc-tpl="481" id="cd-onboarding" class="ar-in" placeholder="Add a description" value=""></td>
+  <td data-dc-tpl="482"><div data-dc-tpl="483" class="wo-caps"><button data-dc-tpl="484" type="button" class="ar-lk" aria-label="Add an implied capability to onboarding"><svg data-dc-tpl="485" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path data-dc-tpl="486" d="M12 5v14M5 12h14"></path></svg>Implies…</button></div></td>
+  <td data-dc-tpl="487"><button data-dc-tpl="488" type="button" class="ar-ib wo-del" aria-label="Remove onboarding"><svg data-dc-tpl="489" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path data-dc-tpl="490" d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"></path></svg></button></td></tr><tr data-dc-tpl="491">
+  <td data-dc-tpl="492"><p data-dc-tpl="493" class="wo-cap">planning</p><p data-dc-tpl="494" class="wo-who"><span data-dc-tpl="495" class="wo-stack"><svg data-dc-tpl="496" viewBox="-2 -4 68 70" width="20" height="20" aria-hidden="true" focusable="false" data-mood="resting"><circle data-dc-tpl="497" cx="32" cy="32" r="30" fill="var(--vk-mood-resting)"></circle><g data-dc-tpl="498" data-eyes="closed"><path data-dc-tpl="499" d="M19 29 Q23 32 27 29 M37 29 Q41 32 45 29" fill="none" stroke="var(--vk-face-ink)" stroke-width="2.6" stroke-linecap="round"></path></g><path data-dc-tpl="500" d="M27 43 Q32 45 37 43" fill="none" stroke="var(--vk-face-ink)" stroke-width="3" stroke-linecap="round"></path></svg><svg data-dc-tpl="501" viewBox="-2 -4 68 70" width="20" height="20" aria-hidden="true" focusable="false" data-mood="resting"><circle data-dc-tpl="502" cx="32" cy="32" r="30" fill="var(--vk-mood-resting)"></circle><g data-dc-tpl="503" data-eyes="closed"><path data-dc-tpl="504" d="M19 29 Q23 32 27 29 M37 29 Q41 32 45 29" fill="none" stroke="var(--vk-face-ink)" stroke-width="2.6" stroke-linecap="round"></path></g><circle data-dc-tpl="505" cx="17" cy="37" r="4" fill="rgb(255 158 138 / 0.5)"></circle><circle data-dc-tpl="506" cx="47" cy="37" r="4" fill="rgb(255 158 138 / 0.5)"></circle><path data-dc-tpl="507" d="M27 43 Q32 45 37 43" fill="none" stroke="var(--vk-face-ink)" stroke-width="3" stroke-linecap="round"></path></svg><svg data-dc-tpl="508" viewBox="-2 -4 68 70" width="20" height="20" aria-hidden="true" focusable="false" data-mood="resting"><circle data-dc-tpl="509" cx="32" cy="32" r="30" fill="var(--vk-mood-resting)"></circle><g data-dc-tpl="510" data-eyes="closed"><path data-dc-tpl="511" d="M19 29 Q23 32 27 29 M37 29 Q41 32 45 29" fill="none" stroke="var(--vk-face-ink)" stroke-width="2.6" stroke-linecap="round"></path></g><path data-dc-tpl="512" d="M27 43 Q32 45 37 43" fill="none" stroke="var(--vk-face-ink)" stroke-width="3" stroke-linecap="round"></path></svg></span>3 agents</p></td>
+  <td data-dc-tpl="513"><label data-dc-tpl="514" class="sr" for="cd-planning">Description of planning</label><input data-dc-tpl="515" id="cd-planning" class="ar-in" placeholder="Add a description" value=""></td>
+  <td data-dc-tpl="516"><div data-dc-tpl="517" class="wo-caps"><button data-dc-tpl="518" type="button" class="ar-lk" aria-label="Add an implied capability to planning"><svg data-dc-tpl="519" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path data-dc-tpl="520" d="M12 5v14M5 12h14"></path></svg>Implies…</button></div></td>
+  <td data-dc-tpl="521"><button data-dc-tpl="522" type="button" class="ar-ib wo-del" aria-label="Remove planning"><svg data-dc-tpl="523" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path data-dc-tpl="524" d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"></path></svg></button></td></tr><tr data-dc-tpl="525">
+  <td data-dc-tpl="526"><p data-dc-tpl="527" class="wo-cap">release</p><p data-dc-tpl="528" class="wo-who"><span data-dc-tpl="529" class="wo-stack"><svg data-dc-tpl="530" viewBox="-2 -4 68 70" width="20" height="20" aria-hidden="true" focusable="false" data-mood="resting"><circle data-dc-tpl="531" cx="32" cy="32" r="30" fill="var(--vk-mood-resting)"></circle><path data-dc-tpl="532" d="M28 4 Q32 -2 36 4 Q34 8 32 6 Q30 8 28 4Z" fill="rgb(47 107 90)"></path><g data-dc-tpl="533" data-eyes="closed"><path data-dc-tpl="534" d="M19 29 Q23 32 27 29 M37 29 Q41 32 45 29" fill="none" stroke="var(--vk-face-ink)" stroke-width="2.6" stroke-linecap="round"></path></g><path data-dc-tpl="535" d="M27 43 Q32 45 37 43" fill="none" stroke="var(--vk-face-ink)" stroke-width="3" stroke-linecap="round"></path></svg></span>1 agent</p></td>
+  <td data-dc-tpl="536"><label data-dc-tpl="537" class="sr" for="cd-release">Description of release</label><input data-dc-tpl="538" id="cd-release" class="ar-in" placeholder="Add a description" value=""></td>
+  <td data-dc-tpl="539"><div data-dc-tpl="540" class="wo-caps"><span data-dc-tpl="541" class="wo-tag" title="Nobody defined this — it turned up in use">inferred</span><button data-dc-tpl="542" type="button" class="ar-lk" aria-label="Add an implied capability to release"><svg data-dc-tpl="543" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path data-dc-tpl="544" d="M12 5v14M5 12h14"></path></svg>Implies…</button></div></td>
+  <td data-dc-tpl="545"><button data-dc-tpl="546" type="button" class="ar-ib wo-del" aria-label="Remove release"><svg data-dc-tpl="547" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path data-dc-tpl="548" d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"></path></svg></button></td></tr><tr data-dc-tpl="549">
+  <td data-dc-tpl="550"><p data-dc-tpl="551" class="wo-cap">research</p><p data-dc-tpl="552" class="wo-who"><span data-dc-tpl="553" class="wo-stack"><svg data-dc-tpl="554" viewBox="-2 -4 68 70" width="20" height="20" aria-hidden="true" focusable="false" data-mood="resting"><circle data-dc-tpl="555" cx="32" cy="32" r="30" fill="var(--vk-mood-resting)"></circle><circle data-dc-tpl="556" cx="32" cy="4" r="7" fill="rgb(35 35 58)"></circle><g data-dc-tpl="557" data-eyes="closed"><path data-dc-tpl="558" d="M19 29 Q23 32 27 29 M37 29 Q41 32 45 29" fill="none" stroke="var(--vk-face-ink)" stroke-width="2.6" stroke-linecap="round"></path></g><circle data-dc-tpl="559" cx="17" cy="37" r="4" fill="rgb(255 158 138 / 0.5)"></circle><circle data-dc-tpl="560" cx="47" cy="37" r="4" fill="rgb(255 158 138 / 0.5)"></circle><path data-dc-tpl="561" d="M27 43 Q32 45 37 43" fill="none" stroke="var(--vk-face-ink)" stroke-width="3" stroke-linecap="round"></path></svg></span>1 agent</p></td>
+  <td data-dc-tpl="562"><label data-dc-tpl="563" class="sr" for="cd-research">Description of research</label><input data-dc-tpl="564" id="cd-research" class="ar-in" placeholder="Add a description" value=""></td>
+  <td data-dc-tpl="565"><div data-dc-tpl="566" class="wo-caps"><button data-dc-tpl="567" type="button" class="ar-lk" aria-label="Add an implied capability to research"><svg data-dc-tpl="568" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path data-dc-tpl="569" d="M12 5v14M5 12h14"></path></svg>Implies…</button></div></td>
+  <td data-dc-tpl="570"><button data-dc-tpl="571" type="button" class="ar-ib wo-del" aria-label="Remove research"><svg data-dc-tpl="572" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path data-dc-tpl="573" d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"></path></svg></button></td></tr><tr data-dc-tpl="574">
+  <td data-dc-tpl="575"><p data-dc-tpl="576" class="wo-cap">resilience</p><p data-dc-tpl="577" class="wo-who"><span data-dc-tpl="578" class="wo-stack"><svg data-dc-tpl="579" viewBox="-2 -4 68 70" width="20" height="20" aria-hidden="true" focusable="false" data-mood="resting"><circle data-dc-tpl="580" cx="32" cy="32" r="30" fill="var(--vk-mood-resting)"></circle><circle data-dc-tpl="581" cx="32" cy="4" r="7" fill="rgb(107 74 43)"></circle><g data-dc-tpl="582" data-eyes="closed"><path data-dc-tpl="583" d="M19 29 Q23 32 27 29 M37 29 Q41 32 45 29" fill="none" stroke="var(--vk-face-ink)" stroke-width="2.6" stroke-linecap="round"></path></g><path data-dc-tpl="584" d="M27 43 Q32 45 37 43" fill="none" stroke="var(--vk-face-ink)" stroke-width="3" stroke-linecap="round"></path></svg></span>1 agent</p></td>
+  <td data-dc-tpl="585"><label data-dc-tpl="586" class="sr" for="cd-resilience">Description of resilience</label><input data-dc-tpl="587" id="cd-resilience" class="ar-in" placeholder="Add a description" value=""></td>
+  <td data-dc-tpl="588"><div data-dc-tpl="589" class="wo-caps"><button data-dc-tpl="590" type="button" class="ar-lk" aria-label="Add an implied capability to resilience"><svg data-dc-tpl="591" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path data-dc-tpl="592" d="M12 5v14M5 12h14"></path></svg>Implies…</button></div></td>
+  <td data-dc-tpl="593"><button data-dc-tpl="594" type="button" class="ar-ib wo-del" aria-label="Remove resilience"><svg data-dc-tpl="595" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path data-dc-tpl="596" d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"></path></svg></button></td></tr><tr data-dc-tpl="597">
+  <td data-dc-tpl="598"><p data-dc-tpl="599" class="wo-cap">security</p><p data-dc-tpl="600" class="wo-who"><span data-dc-tpl="601" class="wo-stack"><svg data-dc-tpl="602" viewBox="-2 -4 68 70" width="20" height="20" aria-hidden="true" focusable="false" data-mood="resting"><circle data-dc-tpl="603" cx="32" cy="32" r="30" fill="var(--vk-mood-resting)"></circle><g data-dc-tpl="604" data-eyes="closed"><path data-dc-tpl="605" d="M19 29 Q23 32 27 29 M37 29 Q41 32 45 29" fill="none" stroke="var(--vk-face-ink)" stroke-width="2.6" stroke-linecap="round"></path></g><circle data-dc-tpl="606" cx="17" cy="37" r="4" fill="rgb(255 158 138 / 0.5)"></circle><circle data-dc-tpl="607" cx="47" cy="37" r="4" fill="rgb(255 158 138 / 0.5)"></circle><path data-dc-tpl="608" d="M27 43 Q32 45 37 43" fill="none" stroke="var(--vk-face-ink)" stroke-width="3" stroke-linecap="round"></path></svg></span>1 agent</p></td>
+  <td data-dc-tpl="609"><label data-dc-tpl="610" class="sr" for="cd-security">Description of security</label><input data-dc-tpl="611" id="cd-security" class="ar-in" placeholder="Add a description" value=""></td>
+  <td data-dc-tpl="612"><div data-dc-tpl="613" class="wo-caps"><button data-dc-tpl="614" type="button" class="ar-lk" aria-label="Add an implied capability to security"><svg data-dc-tpl="615" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path data-dc-tpl="616" d="M12 5v14M5 12h14"></path></svg>Implies…</button></div></td>
+  <td data-dc-tpl="617"><button data-dc-tpl="618" type="button" class="ar-ib wo-del" aria-label="Remove security"><svg data-dc-tpl="619" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path data-dc-tpl="620" d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"></path></svg></button></td></tr><tr data-dc-tpl="621">
+  <td data-dc-tpl="622"><p data-dc-tpl="623" class="wo-cap">security-review</p><p data-dc-tpl="624" class="wo-who"><span data-dc-tpl="625" class="wo-stack"><svg data-dc-tpl="626" viewBox="-2 -4 68 70" width="20" height="20" aria-hidden="true" focusable="false" data-mood="resting"><circle data-dc-tpl="627" cx="32" cy="32" r="30" fill="var(--vk-mood-resting)"></circle><path data-dc-tpl="628" d="M28 4 Q32 -2 36 4 Q34 8 32 6 Q30 8 28 4Z" fill="rgb(35 35 58)"></path><g data-dc-tpl="629" data-eyes="closed"><path data-dc-tpl="630" d="M19 29 Q23 32 27 29 M37 29 Q41 32 45 29" fill="none" stroke="var(--vk-face-ink)" stroke-width="2.6" stroke-linecap="round"></path></g><circle data-dc-tpl="631" cx="17" cy="37" r="4" fill="rgb(255 158 138 / 0.5)"></circle><circle data-dc-tpl="632" cx="47" cy="37" r="4" fill="rgb(255 158 138 / 0.5)"></circle><path data-dc-tpl="633" d="M27 43 Q32 45 37 43" fill="none" stroke="var(--vk-face-ink)" stroke-width="3" stroke-linecap="round"></path></svg></span>1 agent</p></td>
+  <td data-dc-tpl="634"><label data-dc-tpl="635" class="sr" for="cd-security-review">Description of security-review</label><input data-dc-tpl="636" id="cd-security-review" class="ar-in" placeholder="Add a description" value=""></td>
+  <td data-dc-tpl="637"><div data-dc-tpl="638" class="wo-caps"><span data-dc-tpl="639" class="wo-tag" title="Nobody defined this — it turned up in use">inferred</span><button data-dc-tpl="640" type="button" class="ar-lk" aria-label="Add an implied capability to security-review"><svg data-dc-tpl="641" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path data-dc-tpl="642" d="M12 5v14M5 12h14"></path></svg>Implies…</button></div></td>
+  <td data-dc-tpl="643"><button data-dc-tpl="644" type="button" class="ar-ib wo-del" aria-label="Remove security-review"><svg data-dc-tpl="645" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path data-dc-tpl="646" d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"></path></svg></button></td></tr><tr data-dc-tpl="647">
+  <td data-dc-tpl="648"><p data-dc-tpl="649" class="wo-cap">testing</p><p data-dc-tpl="650" class="wo-who"><span data-dc-tpl="651" class="wo-stack"><svg data-dc-tpl="652" viewBox="-2 -4 68 70" width="20" height="20" aria-hidden="true" focusable="false" data-mood="resting"><circle data-dc-tpl="653" cx="32" cy="32" r="30" fill="var(--vk-mood-resting)"></circle><circle data-dc-tpl="654" cx="32" cy="4" r="7" fill="rgb(94 90 156)"></circle><g data-dc-tpl="655" data-eyes="closed"><path data-dc-tpl="656" d="M19 29 Q23 32 27 29 M37 29 Q41 32 45 29" fill="none" stroke="var(--vk-face-ink)" stroke-width="2.6" stroke-linecap="round"></path></g><path data-dc-tpl="657" d="M27 43 Q32 45 37 43" fill="none" stroke="var(--vk-face-ink)" stroke-width="3" stroke-linecap="round"></path></svg></span>1 agent</p></td>
+  <td data-dc-tpl="658"><label data-dc-tpl="659" class="sr" for="cd-testing">Description of testing</label><input data-dc-tpl="660" id="cd-testing" class="ar-in" placeholder="Add a description" value=""></td>
+  <td data-dc-tpl="661"><div data-dc-tpl="662" class="wo-caps"><span data-dc-tpl="663" class="wo-tag" title="Nobody defined this — it turned up in use">inferred</span><button data-dc-tpl="664" type="button" class="ar-lk" aria-label="Add an implied capability to testing"><svg data-dc-tpl="665" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path data-dc-tpl="666" d="M12 5v14M5 12h14"></path></svg>Implies…</button></div></td>
+  <td data-dc-tpl="667"><button data-dc-tpl="668" type="button" class="ar-ib wo-del" aria-label="Remove testing"><svg data-dc-tpl="669" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path data-dc-tpl="670" d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"></path></svg></button></td></tr><tr data-dc-tpl="671">
+  <td data-dc-tpl="672"><p data-dc-tpl="673" class="wo-cap">writing</p><p data-dc-tpl="674" class="wo-who"><span data-dc-tpl="675" class="wo-stack"><svg data-dc-tpl="676" viewBox="-2 -4 68 70" width="20" height="20" aria-hidden="true" focusable="false" data-mood="resting"><circle data-dc-tpl="677" cx="32" cy="32" r="30" fill="var(--vk-mood-resting)"></circle><path data-dc-tpl="678" d="M28 4 Q32 -2 36 4 Q34 8 32 6 Q30 8 28 4Z" fill="rgb(94 90 156)"></path><g data-dc-tpl="679" data-eyes="closed"><path data-dc-tpl="680" d="M19 29 Q23 32 27 29 M37 29 Q41 32 45 29" fill="none" stroke="var(--vk-face-ink)" stroke-width="2.6" stroke-linecap="round"></path></g><circle data-dc-tpl="681" cx="17" cy="37" r="4" fill="rgb(255 158 138 / 0.5)"></circle><circle data-dc-tpl="682" cx="47" cy="37" r="4" fill="rgb(255 158 138 / 0.5)"></circle><path data-dc-tpl="683" d="M27 43 Q32 45 37 43" fill="none" stroke="var(--vk-face-ink)" stroke-width="3" stroke-linecap="round"></path></svg></span>1 agent</p></td>
+  <td data-dc-tpl="684"><label data-dc-tpl="685" class="sr" for="cd-writing">Description of writing</label><input data-dc-tpl="686" id="cd-writing" class="ar-in" placeholder="Add a description" value=""></td>
+  <td data-dc-tpl="687"><div data-dc-tpl="688" class="wo-caps"><button data-dc-tpl="689" type="button" class="ar-lk" aria-label="Add an implied capability to writing"><svg data-dc-tpl="690" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path data-dc-tpl="691" d="M12 5v14M5 12h14"></path></svg>Implies…</button></div></td>
+  <td data-dc-tpl="692"><button data-dc-tpl="693" type="button" class="ar-ib wo-del" aria-label="Remove writing"><svg data-dc-tpl="694" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path data-dc-tpl="695" d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"></path></svg></button></td></tr>
+      </tbody>
+    </table>
+    <form data-dc-tpl="696" class="wo-add">
+      <div data-dc-tpl="697" class="ar-field"><label data-dc-tpl="698" for="cap-new">Add a capability</label><input data-dc-tpl="699" id="cap-new" class="ar-in" placeholder="e.g. diagnostics"></div>
+      <button data-dc-tpl="700" type="button" class="ar-btn2">Add</button>
+      <p data-dc-tpl="701" class="ar-hint">If the name is close to one you have, a “similar to …” hint appears after you add it.</p>
+    </form>
+  </section>
+
+  <div data-dc-tpl="702" class="wo-split">
+    <div data-dc-tpl="703" class="wo-stackcol">
+      <section data-dc-tpl="704" class="ar-sec" aria-labelledby="lt-h">
+        <div data-dc-tpl="705" class="hd"><span data-dc-tpl="706" class="no">03</span><span data-dc-tpl="707" class="kick">Labels tab</span><h2 data-dc-tpl="708" id="lt-h">3 labels</h2></div>
+        <p data-dc-tpl="709" class="wo-lede">Renames save when you leave the field. “Inferred” means a card created it.</p>
+        <table data-dc-tpl="710" class="ar-tbl wo-tbl">
+          <caption data-dc-tpl="711" class="sr">Labels</caption>
+          <thead data-dc-tpl="712"><tr data-dc-tpl="713"><th data-dc-tpl="714" scope="col" style="width: 60px;">Colour</th><th data-dc-tpl="715" scope="col">Name</th><th data-dc-tpl="716" scope="col" style="width: 96px;">Origin</th><th data-dc-tpl="717" scope="col" style="width: 54px;"><span data-dc-tpl="718" class="sr">Remove</span></th></tr></thead>
+          <tbody data-dc-tpl="719"><tr data-dc-tpl="720">
+  <td data-dc-tpl="721"><button data-dc-tpl="722" type="button" class="wo-sw" aria-label="Colour of clean-room" style="background: var(--vk-mood-thinking);"></button></td>
+  <td data-dc-tpl="723"><label data-dc-tpl="724" class="sr" for="lb-clean-room">Name</label><input data-dc-tpl="725" id="lb-clean-room" class="ar-in" value="clean-room"></td>
+  <td data-dc-tpl="726"><span data-dc-tpl="727" class="wo-tag">inferred</span></td>
+  <td data-dc-tpl="728"><button data-dc-tpl="729" type="button" class="ar-ib wo-del" aria-label="Remove label clean-room"><svg data-dc-tpl="730" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path data-dc-tpl="731" d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"></path></svg></button></td></tr><tr data-dc-tpl="732">
+  <td data-dc-tpl="733"><button data-dc-tpl="734" type="button" class="wo-sw" aria-label="Colour of evidence-required" style="background: var(--vk-mood-done);"></button></td>
+  <td data-dc-tpl="735"><label data-dc-tpl="736" class="sr" for="lb-evidence-required">Name</label><input data-dc-tpl="737" id="lb-evidence-required" class="ar-in" value="evidence-required"></td>
+  <td data-dc-tpl="738"><span data-dc-tpl="739" class="wo-tag">inferred</span></td>
+  <td data-dc-tpl="740"><button data-dc-tpl="741" type="button" class="ar-ib wo-del" aria-label="Remove label evidence-required"><svg data-dc-tpl="742" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path data-dc-tpl="743" d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"></path></svg></button></td></tr><tr data-dc-tpl="744">
+  <td data-dc-tpl="745"><button data-dc-tpl="746" type="button" class="wo-sw" aria-label="Colour of superpipeline" style="background: var(--vk-mood-working);"></button></td>
+  <td data-dc-tpl="747"><label data-dc-tpl="748" class="sr" for="lb-superpipeline">Name</label><input data-dc-tpl="749" id="lb-superpipeline" class="ar-in" value="superpipeline"></td>
+  <td data-dc-tpl="750"><span data-dc-tpl="751" class="wo-tag">inferred</span></td>
+  <td data-dc-tpl="752"><button data-dc-tpl="753" type="button" class="ar-ib wo-del" aria-label="Remove label superpipeline"><svg data-dc-tpl="754" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path data-dc-tpl="755" d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"></path></svg></button></td></tr>
+          </tbody>
+        </table>
+        <form data-dc-tpl="756" class="wo-add">
+          <button data-dc-tpl="757" type="button" class="wo-sw" aria-label="Colour of the new label" style="background: var(--vk-mood-needs); margin-bottom: 8px;"></button>
+          <div data-dc-tpl="758" class="ar-field"><label data-dc-tpl="759" for="lb-new">New label</label><input data-dc-tpl="760" id="lb-new" class="ar-in" placeholder="Name"></div>
+          <button data-dc-tpl="761" type="button" class="ar-btn2">Add</button>
+        </form>
+      </section>
+
+      <section data-dc-tpl="762" class="ar-sec" aria-labelledby="pt-h">
+        <div data-dc-tpl="763" class="hd"><span data-dc-tpl="764" class="no">04</span><span data-dc-tpl="765" class="kick">People tab</span><h2 data-dc-tpl="766" id="pt-h">1 person</h2></div>
+        <table data-dc-tpl="767" class="ar-tbl wo-tbl">
+          <caption data-dc-tpl="768" class="sr">People</caption>
+          <thead data-dc-tpl="769"><tr data-dc-tpl="770"><th data-dc-tpl="771" scope="col">Person</th><th data-dc-tpl="772" scope="col" style="width: 160px;">Role</th><th data-dc-tpl="773" scope="col" style="width: 54px;"><span data-dc-tpl="774" class="sr">Remove</span></th></tr></thead>
+          <tbody data-dc-tpl="775"><tr data-dc-tpl="776">
+  <td data-dc-tpl="777"><div data-dc-tpl="778" class="wo-person"><span data-dc-tpl="779" class="ar-ini wo-ini" aria-hidden="true">IM</span><div data-dc-tpl="780"><b data-dc-tpl="781">Ira Mehta</b><span data-dc-tpl="782" class="muted">You</span></div></div></td>
+  <td data-dc-tpl="783"><label data-dc-tpl="784" class="sr" for="pr-1">Role</label><select data-dc-tpl="785" id="pr-1" class="ar-sel" title="Owner: everything, including people and deleting boards"><option data-dc-tpl="786">Owner</option><option data-dc-tpl="787">Admin</option><option data-dc-tpl="788">Member</option><option data-dc-tpl="789">Viewer</option></select></td>
+  <td data-dc-tpl="790"><button data-dc-tpl="791" type="button" class="ar-ib wo-del" aria-label="Remove Ira Mehta" disabled="" title="A workspace needs at least one owner"><svg data-dc-tpl="792" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path data-dc-tpl="793" d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"></path></svg></button></td></tr>
+          </tbody>
+        </table>
+        <form data-dc-tpl="794" class="wo-inv">
+          <div data-dc-tpl="795" class="ar-field"><label data-dc-tpl="796" for="inv-e">Invite by email</label><input data-dc-tpl="797" id="inv-e" class="ar-in" type="email" placeholder="name@example.com"></div>
+          <div data-dc-tpl="798" class="ar-field"><label data-dc-tpl="799" for="inv-r">Role</label><select data-dc-tpl="800" id="inv-r" class="ar-sel"><option data-dc-tpl="801">Member</option><option data-dc-tpl="802">Viewer</option><option data-dc-tpl="803">Admin</option><option data-dc-tpl="804">Owner</option></select></div>
+          <button data-dc-tpl="805" type="button" class="ar-btn2">Invite</button>
+          <p data-dc-tpl="806" class="ar-hint">Member: creates, moves and decides cards. No email is sent — they sign in and find this workspace waiting.</p>
+        </form>
+      </section>
+    </div>
+
+    <section data-dc-tpl="807" class="ar-sec" aria-labelledby="cn-h">
+      <div data-dc-tpl="808" class="hd"><span data-dc-tpl="809" class="no">05</span><span data-dc-tpl="810" class="kick">Connections tab</span><h2 data-dc-tpl="811" id="cn-h">Connections</h2></div>
+      <p data-dc-tpl="812" class="wo-lede">Where agents push code and where they come from.</p>
+      <dl data-dc-tpl="813" class="ar-kv wo-kv">
+        <dt data-dc-tpl="814">Forge host<span data-dc-tpl="815">Where agents push branches</span></dt><dd data-dc-tpl="816"><span data-dc-tpl="817" class="mono">forge.superjackfruit.com</span></dd><dd data-dc-tpl="818"><button data-dc-tpl="819" type="button" class="ar-btn2">Change</button></dd>
+        <dt data-dc-tpl="820">AgentPod fleet<span data-dc-tpl="821">Where your agents run</span></dt><dd data-dc-tpl="822"><p data-dc-tpl="823" class="ok" title="fleet_vibes"><svg data-dc-tpl="824" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path data-dc-tpl="825" d="M5 12.5l4.5 4.5L19 7.5"></path></svg>Linked</p></dd><dd data-dc-tpl="826"><button data-dc-tpl="827" type="button" class="ar-btn2">Change</button></dd>
+        <dt data-dc-tpl="828">Add from AgentPod<span data-dc-tpl="829">Bring fleet agents in as workspace agents</span></dt><dd data-dc-tpl="830"><span data-dc-tpl="831" class="serif" style="font-size: 15px;">Every agent in the fleet already has one here.</span></dd><dd data-dc-tpl="832"><button data-dc-tpl="833" type="button" class="ar-btn2">Connect to AgentPod</button></dd>
+      </dl>
+      <p data-dc-tpl="834" class="wo-foot">Changing the forge host takes a host, not a URL: forge.example.com. When new fleet agents appear, they show here as pickable chips with a capability picker and “Add N”.</p>
+    </section>
+  </div></main><footer data-dc-tpl="835" class="ar-status" aria-label="Status">
+  <span data-dc-tpl="836">Workspace</span><span data-dc-tpl="837" class="sig">7 need you</span><span data-dc-tpl="838">synced 13:51</span>
+  <span data-dc-tpl="839" class="r"><span data-dc-tpl="840">⌘K commands</span><span data-dc-tpl="841">N new card</span></span></footer></div></div></div></div>
+
+
+
+</body></html>

@@ -22,10 +22,10 @@ describe('BoardDO — settings (rename + GitHub config in the snapshot)', () => 
   it('exposes the GitHub config (issue trigger + whether a webhook secret is set) in the snapshot', async () => {
     await runInDurableObject(stubFor('set-2'), async (board: BoardDO) => {
       await board.init({ id: 'brd_g', tenantId: 'tnt_a', name: 'G', stages: PIPE });
-      expect((await board.getState()).github).toEqual({ issueTrigger: false, webhookConfigured: false, triggerGrantCount: null });
+      expect((await board.getState()).github).toEqual({ issueTrigger: false, webhookConfigured: false, triggerGrantCount: null, webhookUrl: 'https://app.superpipeline.dev/v1/boards/brd_g/webhooks/github?tenant=tnt_a' });
 
       await board.setGithubConfig({ issueTrigger: true, secret: 's3cr3t' });
-      expect((await board.getState()).github).toEqual({ issueTrigger: true, webhookConfigured: true, triggerGrantCount: null });
+      expect((await board.getState()).github).toEqual({ issueTrigger: true, webhookConfigured: true, triggerGrantCount: null, webhookUrl: 'https://app.superpipeline.dev/v1/boards/brd_g/webhooks/github?tenant=tnt_a' });
     });
   });
 });

@@ -9,6 +9,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, fireEvent, render, screen } from '@testing-library/svelte';
 import type { Elicitation } from '$lib/api';
 import { QuestionAnswer } from './question-answer.svelte';
+import { expectBusy, type BusyForm } from '../busy-contract';
 
 export const PRIMARY = /\bbg-primary\b|\bvk-button--primary\b/;
 export const answerElicitation = vi.fn();
@@ -37,11 +38,17 @@ export function mountQuestion(C: Component<any>, e: Elicitation) {
   return { model, ...r };
 }
 
+export interface QuestionWords { heading: string; waiting: string; auth: string }
+export const OLD_QUESTION_WORDS: QuestionWords = { heading: 'awaiting your answer', waiting: 'Sample agent is waiting', auth: 'awaiting your sign-in' };
+
 export function questionPanelContract(
   C: Component<any>,
-  o: { decision: 'button' | 'radio'; submit?: string; noteLabel?: string },
+  o: { decision: 'button' | 'radio'; submit?: string; noteLabel?: string; answerLabel?: string | RegExp; words?: QuestionWords; busy?: BusyForm },
 ): void {
+  const w = o.words ?? OLD_QUESTION_WORDS;
+  const busy = o.busy ?? { kind: 'disabled' };
   const noteLabel = o.noteLabel ?? 'Add a note for the agent (optional)';
+  const answerLabel = o.answerLabel ?? 'Your answer';
   const choose = async (name: string) => {
     await fireEvent.click(screen.getByRole(o.decision, { name }));
     if (o.decision === 'radio') await fireEvent.click(screen.getByRole('button', { name: o.submit! }));
@@ -53,8 +60,8 @@ export function questionPanelContract(
     it('is the .elicitation panel: heading, who is waiting, the question', () => {
       const { container } = mountQuestion(C, ask());
       const panel = container.querySelector('.elicitation')!;
-      expect(panel.textContent).toContain('awaiting your answer');
-      expect(panel.textContent).toContain('Sample agent is waiting');
+      expect(panel.textContent).toContain(w.heading);
+      expect(panel.textContent).toContain(w.waiting);
       expect(panel.textContent).toContain('Shall I run the tests?');
     });
 
@@ -65,7 +72,7 @@ export function questionPanelContract(
 
     it('says sign-in for an auth signal', () => {
       const { container } = mountQuestion(C, ask({ signal: 'auth' } as never));
-      expect(container.querySelector('.elicitation')!.textContent).toContain('awaiting your sign-in');
+      expect(container.querySelector('.elicitation')!.textContent).toContain(w.auth);
     });
 
     it('offers every option and a note', () => {
@@ -87,7 +94,7 @@ export function questionPanelContract(
     it('with no options there is a free answer and Send answer', async () => {
       ok();
       mountQuestion(C, ask({ options: [] }));
-      await fireEvent.input(screen.getByRole('textbox', { name: 'Your answer' }), { target: { value: 'yes' } });
+      await fireEvent.input(screen.getByRole('textbox', { name: answerLabel }), { target: { value: 'yes' } });
       await fireEvent.click(screen.getByRole('button', { name: 'Send answer' }));
       expect(answerElicitation).toHaveBeenCalledWith('brd_1', 'eli_1', { option: undefined, text: 'yes' });
     });
@@ -110,29 +117,34 @@ export function questionPanelContract(
       });
     }
 
-    it('disables the answer controls while an answer is in flight', async () => {
+    it('holds the answer controls while an answer is in flight', async () => {
       let settle!: (r: unknown) => void;
       answerElicitation.mockReset().mockReturnValue(new Promise((r) => (settle = r)));
       mountQuestion(C, ask());
       await choose('Run the tests');
       await tick();
-      const controls = o.decision === 'button'
-        ? ['Run the tests', 'Skip them'].map((n) => screen.getByRole('button', { name: n }))
-        : [screen.getByRole('button', { name: o.submit! })];
-      for (const c of controls) expect((c as HTMLButtonElement).disabled).toBe(true);
-      settle({ ok: true, json: async () => ({}) });
+      const labels = o.decision === 'button' ? ['Run the tests', 'Skip them'] : [o.submit!];
+      const controls = labels.map((n) => screen.getByRole('button', { name: n }));
+      try {
+        expectBusy(controls, busy, labels);
+        if (busy.kind === 'aria') {
+          await fireEvent.click(controls[controls.length - 1]);
+          expect(answerElicitation, 'a click on a busy control is ignored').toHaveBeenCalledTimes(1);
+        }
+      } finally { settle({ ok: true, json: async () => ({}) }); }
       await tick();
     });
 
-    it('disables Send answer while a free answer is in flight', async () => {
+    it('holds Send answer while a free answer is in flight', async () => {
       let settle!: (r: unknown) => void;
       answerElicitation.mockReset().mockReturnValue(new Promise((r) => (settle = r)));
       mountQuestion(C, ask({ options: [] }));
-      await fireEvent.input(screen.getByRole('textbox', { name: 'Your answer' }), { target: { value: 'yes' } });
+      await fireEvent.input(screen.getByRole('textbox', { name: answerLabel }), { target: { value: 'yes' } });
       await fireEvent.click(screen.getByRole('button', { name: 'Send answer' }));
       await tick();
-      expect((screen.getByRole('button', { name: 'Send answer' }) as HTMLButtonElement).disabled).toBe(true);
-      settle({ ok: true, json: async () => ({}) });
+      try {
+        expectBusy([screen.getByRole('button', { name: 'Send answer' })], busy, ['Send answer']);
+      } finally { settle({ ok: true, json: async () => ({}) }); }
       await tick();
     });
 

@@ -1,46 +1,64 @@
+<!-- apps/web/src/lib/components/board/layouts/BoardDaylight.svelte -->
 <script lang="ts">
-  /** Daylight: the columns, with faces, under the sky (spec §5.1). The lanes are BoardKanban, unchanged. */
-  import { onDestroy, setContext, tick } from 'svelte';
+  /** Daylight desktop board: lanes under the sky, empty stages as strips, the peek from 1440px (SB §3). */
+  import '../daylight/daylight.css';
+  import { onDestroy } from 'svelte';
   import { MediaQuery } from 'svelte/reactivity';
   import { app } from '$lib/stores/app.svelte';
-  import BoardKanban from '../BoardKanban.svelte';
-  import { crewOf } from '../card-summary';
-  import GreetingBand from '../GreetingBand.svelte';
-  import Peek from '../Peek.svelte';
-  import { PEEK_KEY, type PeekHandle } from '../peek';
+  import { dlCols } from '../board-words';
+  import DlLane from '../daylight/DlLane.svelte';
+  import DlStrip from '../daylight/DlStrip.svelte';
   import type { BoardLayoutProps } from './types';
 
-  let { summaries, attention, phase, vibe }: BoardLayoutProps = $props();
+  let { model }: BoardLayoutProps = $props();
 
-  const crew = $derived(crewOf(summaries));
-
-  // The peek starts at 1440px; below that the board is the whole screen and no title appears twice.
   const wide = new MediaQuery('min-width: 1440px');
-  let looked = $state<string | null>(null);
+  let expanded = $state<Record<string, boolean>>({});
+  let peekId = $state<string | null>(null);
+  /** The title focus goes back to after a close must not reopen the peek it just closed. */
+  let quietFor: string | null = null;
   let timer: ReturnType<typeof setTimeout> | undefined;
-  let peekPanel = $state<ReturnType<typeof Peek>>();
-  setContext<PeekHandle>(PEEK_KEY, {
-    look(id) {
-      clearTimeout(timer);
-      timer = setTimeout(() => (looked = id), 150);
-    },
-    pin(id) {
-      clearTimeout(timer);
-      looked = id;
-      void tick().then(() => peekPanel?.focusAction());
-    },
-    get available() {
-      return wide.current;
-    },
-  });
+
+  function onPeek(id: string): void {
+    clearTimeout(timer);
+    if (id === quietFor) { quietFor = null; return; }
+    if (!wide.current) return;
+    timer = setTimeout(() => (peekId = id), 300);
+  }
+  function closePeek(): void {
+    clearTimeout(timer);
+    const id = peekId;
+    peekId = null;
+    if (!id) return;
+    const title = [...document.querySelectorAll<HTMLElement>('[data-title-for]')].find((el) => el.dataset.titleFor === id);
+    if (title && document.activeElement !== title) { quietFor = id; title.focus(); }
+  }
   onDestroy(() => clearTimeout(timer));
-  const peeked = $derived(summaries.find((s) => s.id === looked) ?? summaries.find((s) => s.urgency === 'needs') ?? null);
+
+  const cols = $derived(dlCols(model.stages, expanded));
+  const firstNeedsId = $derived(model.needs[0]?.id ?? null);
+  const peekLane = $derived(model.cards.find((s) => s.id === peekId)?.stageKey ?? null);
 </script>
 
-<div class="flex h-full min-h-0 flex-col">
-  <GreetingBand {phase} {vibe} needCount={attention.length} {crew} />
-  <div class="flex min-h-0 flex-1">
-    <div class="min-w-0 flex-1 overflow-auto"><BoardKanban /></div>
-    {#if wide.current}<Peek bind:this={peekPanel} summary={peeked} {vibe} onOpen={(id) => app.openCard(id)} />{/if}
-  </div>
-</div>
+<svelte:window onkeydown={(e) => { if (e.key === 'Escape' && peekId && !e.defaultPrevented && !app.openCardId) closePeek(); }} />
+
+<section class="dl-scope dl-board" aria-label="{model.boardName} stages" style="grid-template-columns: {cols}">
+  {#each model.stages as stage (stage.key)}
+    {@const cards = model.ordered.filter((s) => s.stageKey === stage.key)}
+    {#if cards.length === 0 && !expanded[stage.key]}
+      <DlStrip {stage} onExpand={() => (expanded[stage.key] = true)} />
+    {:else}
+      <DlLane
+        {stage}
+        {cards}
+        stages={model.stageDefs}
+        {peekId}
+        {firstNeedsId}
+        {onPeek}
+        onPeekClose={closePeek}
+        style={peekLane === stage.key ? 'z-index: 5;' : undefined}
+        onCollapse={cards.length === 0 ? () => (expanded[stage.key] = false) : undefined}
+      />
+    {/if}
+  {/each}
+</section>

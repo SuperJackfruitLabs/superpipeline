@@ -8,8 +8,13 @@ import { test, expect } from '@playwright/test';
  * BEHIND the drawer. Its controls, a gate's Approve among them, were reachable only after tabbing
  * through the whole board.
  */
-const API = 'http://localhost:8787';
+import { PORTS } from '../scripts/ports';
+const API = PORTS.apiUrl;
 const TENANT = { 'X-Tenant-Id': 'tnt_dev', 'Content-Type': 'application/json' };
+
+/** A card's title control: a button on most boards, a link on the Paper front page. */
+const cardTitle = (page: import('@playwright/test').Page) =>
+  page.getByRole('button', { name: /^A card to open, in/ }).or(page.getByRole('link', { name: /^A card to open, in/ })).first();
 const PIPELINE = [{ key: 'intake', name: 'Intake', order: 0, ownerKind: 'human' }];
 
 async function boardWithACard(request: import('@playwright/test').APIRequestContext) {
@@ -27,7 +32,7 @@ test('opening a card announces a dialog and takes focus into it', async ({ page,
   const boardId = await boardWithACard(request);
   await page.goto(`/b/${boardId}`);
 
-  await page.getByRole('button', { name: /^A card to open, in/ }).click();
+  await cardTitle(page).click();
 
   const dialog = page.getByRole('dialog');
   await expect(dialog).toBeVisible();
@@ -45,7 +50,7 @@ test('opening a card announces a dialog and takes focus into it', async ({ page,
 test('Tab stays inside the dialog rather than walking the board behind it', async ({ page, request }) => {
   const boardId = await boardWithACard(request);
   await page.goto(`/b/${boardId}`);
-  await page.getByRole('button', { name: /^A card to open, in/ }).click();
+  await cardTitle(page).click();
   await expect(page.getByRole('dialog')).toBeVisible();
 
   // Far more presses than the dialog has controls: a trap that only holds for one cycle is not
@@ -64,7 +69,7 @@ test('closing returns focus to the card that opened it', async ({ page, request 
   const boardId = await boardWithACard(request);
   await page.goto(`/b/${boardId}`);
 
-  const tile = page.getByRole('button', { name: /^A card to open, in/ });
+  const tile = cardTitle(page);
   await tile.click();
   await expect(page.getByRole('dialog')).toBeVisible();
 
@@ -96,10 +101,10 @@ test('a card tile exposes one button for itself, not a button inside a button', 
 
 for (const vibe of ['daylight', 'paper', 'studio', 'quiet'] as const) {
   test(`${vibe}: the dialog keeps its name while editing, and a second "Edit card" keeps the draft`, async ({ page, request }) => {
-    await page.context().addCookies([{ name: 'vk_appearance', value: `${vibe}.light.strong.0`, url: 'http://localhost:5173' }]);
+    await page.context().addCookies([{ name: 'vk_appearance', value: `${vibe}.light.strong.0`, url: PORTS.webUrl }]);
     const boardId = await boardWithACard(request);
     await page.goto(`/b/${boardId}`);
-    await page.getByRole('button', { name: /^A card to open, in/ }).click();
+    await cardTitle(page).click();
     const dialog = page.getByRole('dialog');
     await dialog.getByRole('button', { name: 'Edit card' }).click();
     await expect(dialog).toHaveAccessibleName(/A card to open/);

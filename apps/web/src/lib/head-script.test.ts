@@ -18,4 +18,7 @@ describe('app.html paints the right vibe on the first frame', () => {
   it('no longer writes data-theme from the OS preference', () => {
     expect(html).not.toMatch(/matchMedia\('\(prefers-color-scheme/);
   });
+  it('names the product on <html>, so HEAD_SCRIPT paints its accent on the first frame', () => {
+    expect(html).toMatch(/<html lang="en" data-product="superpipeline">/);
+  });
 });

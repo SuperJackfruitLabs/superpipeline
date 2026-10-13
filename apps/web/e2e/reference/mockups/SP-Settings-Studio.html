@@ -1,0 +1,1386 @@
+<!doctype html>
+<html data-product="superpipeline" data-accent="product" lang="en" style="touch-action: pan-x pan-y; overscroll-behavior: none; --dc-chrome-unit: 1.072605561277034px;"><head><link rel="stylesheet" href="_vibekit-0.0.10/vibekit.css" data-vibekit="0.0.10"><style>
+    .sc-placeholder{background:color-mix(in srgb,currentColor 8%,transparent);
+      border:1px solid color-mix(in srgb,currentColor 50%,transparent);
+      border-radius:2px;box-sizing:border-box;overflow:hidden}
+    @keyframes sc-shine{0%{background-position:100% 50%}100%{background-position:0% 50%}}
+    html.sc-dc-streaming .sc-placeholder,
+    html.sc-dc-streaming .sc-interp.sc-missing{position:relative;
+      background:color-mix(in srgb,currentColor 5%,transparent);
+      border-color:transparent}
+    html.sc-dc-streaming .sc-placeholder::before,
+    html.sc-dc-streaming .sc-interp.sc-missing::before{content:'';
+      position:absolute;inset:0;pointer-events:none;
+      background:linear-gradient(90deg,rgba(217,119,87,0) 25%,rgba(247,225,211,.95) 37%,rgba(217,119,87,0) 63%);
+      background-size:400% 100%;animation:sc-shine 1.4s ease infinite}
+    html.sc-dc-streaming .sc-placeholder:nth-child(n+9 of .sc-placeholder)::before,
+    html.sc-dc-streaming .sc-interp.sc-missing:nth-child(n+9 of .sc-interp.sc-missing)::before{animation:none;
+      background:color-mix(in srgb,currentColor 8%,transparent)}
+    .sc-placeholder-error{padding:4px 8px;font:11px/1.4 ui-monospace,monospace;
+      color:color-mix(in srgb,currentColor 70%,transparent);word-break:break-word}
+    .sc-interp.sc-missing{display:inline-block;width:2em;height:1em;overflow:hidden;
+      vertical-align:text-bottom;background:rgba(255,255,255,.3);border:1px solid rgba(0,0,0,.5);
+      border-radius:2px;box-sizing:border-box;color:transparent;
+      user-select:none}
+    .sc-interp.sc-unresolved{font-family:ui-monospace,monospace;font-size:.85em;
+      color:color-mix(in srgb,currentColor 50%,transparent);
+      background:color-mix(in srgb,currentColor 10%,transparent);border-radius:3px;
+      padding:0 3px}
+    .sc-host.sc-has-error{position:relative}
+    .sc-logic-error{position:absolute;top:8px;left:8px;z-index:2147483647;max-width:60ch;
+      padding:6px 10px;background:#b00020;color:#fff;font:12px/1.4 ui-monospace,monospace;
+      border-radius:4px;white-space:pre-wrap;pointer-events:none}
+    /* Mirrors PRINT_BASELINE_CSS in apps/web deck-stage-export.ts — keep both
+       in sync until dc-runtime regains a build step. */
+    @media print {
+      @page { margin: 0.5cm; }
+      figure, table { break-inside: avoid; }
+      #dc-root, #dc-root > .sc-host { height: auto; }
+      *, *::before, *::after {
+        print-color-adjust: exact; -webkit-print-color-adjust: exact;
+        backdrop-filter: none !important; -webkit-backdrop-filter: none !important;
+        animation-delay: -99s !important; animation-duration: .001s !important;
+        animation-iteration-count: 1 !important; animation-fill-mode: both !important;
+        animation-play-state: running !important; transition-duration: 0s !important;
+      }
+    }
+  </style>
+
+
+<meta charset="utf-8">
+<title>Board settings · Studio</title>
+<base href="/appifact/SP-Settings-Studio.dc.html">
+
+
+
+
+
+<style>x-dc{display:none!important}</style>
+
+<style>@import url("https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&family=Azeret+Mono:wght@400;500;600&family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..600&display=swap");
+
+ 
+
+:root {
+  color-scheme: light;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  --vk-font-body: "Figtree", system-ui, sans-serif;
+  --vk-font-display: "Bricolage Grotesque", system-ui, sans-serif;
+  --vk-font-mono: "Martian Mono", ui-monospace, monospace;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+}
+
+[data-vibe="daylight"][data-theme="light"] {
+  color-scheme: light;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  --vk-font-body: "Figtree", system-ui, sans-serif;
+  --vk-font-display: "Bricolage Grotesque", system-ui, sans-serif;
+  --vk-font-mono: "Martian Mono", ui-monospace, monospace;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+}
+
+[data-vibe="daylight"][data-theme="dark"] {
+  color-scheme: dark;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  --vk-font-body: "Figtree", system-ui, sans-serif;
+  --vk-font-display: "Bricolage Grotesque", system-ui, sans-serif;
+  --vk-font-mono: "Martian Mono", ui-monospace, monospace;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+}
+
+[data-vibe="paper"][data-theme="light"] {
+  color-scheme: light;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  --vk-font-body: "Geist", system-ui, sans-serif;
+  --vk-font-display: "Newsreader", "Georgia", serif;
+  --vk-font-mono: "Martian Mono", ui-monospace, monospace;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+}
+
+[data-vibe="paper"][data-theme="dark"] {
+  color-scheme: dark;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  --vk-font-body: "Geist", system-ui, sans-serif;
+  --vk-font-display: "Newsreader", "Georgia", serif;
+  --vk-font-mono: "Martian Mono", ui-monospace, monospace;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+}
+
+[data-vibe="studio"][data-theme="light"] {
+  color-scheme: light;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  --vk-font-body: "Archivo", system-ui, sans-serif;
+  --vk-font-display: "Archivo", system-ui, sans-serif;
+  --vk-font-mono: "Azeret Mono", ui-monospace, monospace;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  --vk-font-serif: "Newsreader", Georgia, serif;
+
+
+
+
+
+
+
+
+
+
+}
+
+[data-vibe="studio"][data-theme="dark"] {
+  color-scheme: dark;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  --vk-font-body: "Archivo", system-ui, sans-serif;
+  --vk-font-display: "Archivo", system-ui, sans-serif;
+  --vk-font-mono: "Azeret Mono", ui-monospace, monospace;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  --vk-font-serif: "Newsreader", Georgia, serif;
+
+
+
+
+
+
+
+
+
+
+}
+
+[data-vibe="quiet"][data-theme="light"] {
+  color-scheme: light;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  --vk-font-body: "Atkinson Hyperlegible Next", system-ui, sans-serif;
+  --vk-font-display: "Atkinson Hyperlegible Next", system-ui, sans-serif;
+  --vk-font-mono: "Martian Mono", ui-monospace, monospace;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+}
+
+[data-vibe="quiet"][data-theme="dark"] {
+  color-scheme: dark;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  --vk-font-body: "Atkinson Hyperlegible Next", system-ui, sans-serif;
+  --vk-font-display: "Atkinson Hyperlegible Next", system-ui, sans-serif;
+  --vk-font-mono: "Martian Mono", ui-monospace, monospace;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+}
+
+ 
+:root {
+  --vk-text-sm: clamp(0.8125rem, 0.78rem + 0.15vw, 0.875rem);
+  --vk-text-md: clamp(1rem, 0.96rem + 0.2vw, 1.0625rem);
+  --vk-text-lg: clamp(1.25rem, 1.1rem + 0.6vw, 1.5rem);
+  --vk-text-xl: clamp(1.75rem, 1.4rem + 1.6vw, 2.5rem);
+  --vk-focus: 0 0 0 3px var(--vk-color-bg), 0 0 0 5px var(--vk-color-text);
+
+}
+
+html {
+  background: var(--vk-color-bg);
+  color: var(--vk-color-text);
+  font-family: var(--vk-font-body);
+  font-size: 100%;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  font-size: var(--vk-text-md);
+  line-height: 1.5;
+}
+
+:focus-visible {
+   
+  outline: 2px solid var(--vk-color-text);
+  outline-offset: 2px;
+  box-shadow: var(--vk-focus);
+}
+
+ 
+.vk-visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  
+  *, *::before, *::after {
+    animation: none !important;
+    transition-duration: 0ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+[data-motion="reduce"],
+[data-motion="reduce"] *,
+[data-motion="reduce"]::before,
+[data-motion="reduce"]::after,
+[data-motion="reduce"] *::before,
+[data-motion="reduce"] *::after {
+  --vk-motion-fast: 0ms;
+  --vk-motion-base: 0ms;
+  animation: none !important;
+  transition-duration: 0ms !important;
+  scroll-behavior: auto !important;
+}
+
+
+
+@media (forced-colors: active) {
+  :focus-visible {
+    outline: 2px solid CanvasText;
+    box-shadow: none;
+  }
+}
+ 
+
+
+
+
+
+
+
+
+ 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ 
+
+
+
+
+
+
+
+
+
+
+
+
+
+.vk-toast {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--vk-space-3);
+  min-height: var(--vk-target-min);
+  padding: 0 var(--vk-space-5);
+  border-radius: var(--vk-radius-pill);
+  background: var(--vk-color-primary);
+  color: var(--vk-color-primary-fg);
+  font: 600 var(--vk-text-sm) / 1.2 var(--vk-font-body);
+}
+.vk-toast__action { min-height: var(--vk-target-min); border: 0; background: transparent; color: inherit; font: inherit; text-decoration: underline; cursor: pointer; }
+ 
+.vk-toast__action:focus-visible { outline-color: currentColor; box-shadow: var(--vk-focus); }
+
+.vk-sky {
+  --vk-sky-top: var(--vk-sky-noon-top);
+  --vk-sky-bottom: var(--vk-sky-noon-bottom);
+  --vk-sky-text: var(--vk-sky-noon-text);
+  --vk-sky-sun: var(--vk-sky-noon-sun);
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(180deg, var(--vk-sky-top), var(--vk-sky-bottom));
+  color: var(--vk-sky-text);
+}
+.vk-sky[data-phase="dawn"] { --vk-sky-top: var(--vk-sky-dawn-top); --vk-sky-bottom: var(--vk-sky-dawn-bottom); --vk-sky-text: var(--vk-sky-dawn-text); --vk-sky-sun: var(--vk-sky-dawn-sun); }
+.vk-sky[data-phase="morning"] { --vk-sky-top: var(--vk-sky-morning-top); --vk-sky-bottom: var(--vk-sky-morning-bottom); --vk-sky-text: var(--vk-sky-morning-text); --vk-sky-sun: var(--vk-sky-morning-sun); }
+.vk-sky[data-phase="golden"] { --vk-sky-top: var(--vk-sky-golden-top); --vk-sky-bottom: var(--vk-sky-golden-bottom); --vk-sky-text: var(--vk-sky-golden-text); --vk-sky-sun: var(--vk-sky-golden-sun); }
+.vk-sky[data-phase="dusk"] { --vk-sky-top: var(--vk-sky-dusk-top); --vk-sky-bottom: var(--vk-sky-dusk-bottom); --vk-sky-text: var(--vk-sky-dusk-text); --vk-sky-sun: var(--vk-sky-dusk-sun); }
+.vk-sky[data-phase="night"] { --vk-sky-top: var(--vk-sky-night-top); --vk-sky-bottom: var(--vk-sky-night-bottom); --vk-sky-text: var(--vk-sky-night-text); --vk-sky-sun: var(--vk-sky-night-sun); }
+.vk-sky__sun {
+  position: absolute;
+  top: var(--vk-space-5);
+  right: var(--vk-space-6);
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: var(--vk-sky-sun);
+  box-shadow: 0 0 48px 12px color-mix(in oklch, var(--vk-sky-sun) 45%, transparent);
+}
+.vk-sky__content { position: relative; padding: var(--vk-space-5); }
+[data-time="subtle"] .vk-sky { background: color-mix(in oklch, var(--vk-sky-top) 30%, var(--vk-color-bg)); color: var(--vk-color-text); }
+[data-time="subtle"] .vk-sky__sun { display: none; }
+[data-time="off"] .vk-sky { background: var(--vk-color-bg); color: var(--vk-color-text); }
+[data-time="off"] .vk-sky__sun { display: none; }
+[data-vibe="studio"] .vk-sky__sun { width: 10px; height: 10px; box-shadow: 0 0 10px 2px var(--vk-sky-sun); }
+[data-vibe="quiet"] .vk-sky__sun, [data-vibe="paper"] .vk-sky__sun { display: none; }
+
+
+
+
+
+
+
+
+
+
+@media (forced-colors: active) {
+  
+  .vk-toast { border: 1px solid CanvasText; }
+}
+
+ 
+.sl-danger{ white-space: nowrap; } .ar .vk-button{ white-space: nowrap; }
+
+ 
+
+
+
+
+
+ 
+a[href*="CardPage"], a[class*="btn"], button[class*="btn"], a[class*="-button"], button[class*="-button"]{ white-space: nowrap; flex-shrink: 0; } .ar .vk-button{ white-space: nowrap; flex-shrink: 0; }
+
+ 
+a[href*="CardPage"], a[class*="icon"][style*="width: auto"], button[class*="icon"][style*="width: auto"] { display: inline-flex !important; flex-direction: row !important; align-items: center !important; justify-content: center; gap: 8px; }
+</style>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Azeret+Mono:ital,wght@1,400&amp;display=swap" data-font-variant=""><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Azeret+Mono:ital,wght@1,500&amp;display=swap" data-font-variant=""><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Azeret+Mono:ital,wght@1,600&amp;display=swap" data-font-variant=""><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&amp;family=Azeret+Mono:wght@400;500;600&amp;family=Atkinson+Hyperlegible+Next:wght@400;700&amp;family=Bricolage+Grotesque:opsz,wght@12..96,400..800&amp;family=Figtree:wght@400..800&amp;family=Geist:wght@400..700&amp;family=Instrument+Sans:wght@400..700&amp;family=Martian+Mono:wght@400..600&amp;family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..600&amp;display=swap" data-dc-tpl="1"><style data-dc-tpl="2">
+
+body { margin: 0; }
+:where(*, *::before, *::after) { box-sizing: border-box; }
+:where(a) { color: inherit; }
+:where(button:where(:not(.vk-button))) { font: inherit; color: inherit; }
+:where(.page) *, :where(.page) *::before, :where(.page) *::after { box-sizing: border-box; }
+
+
+:where(.page a) { color: var(--vk-color-text); text-underline-offset: 3px; }
+:where(.page button) { font-family: var(--vk-font-body); }
+:where(.page input, .page select, .page textarea) { font-family: var(--vk-font-body); font-size: 16px; color: var(--vk-color-text); }
+
+/* ---- page: Board settings as Annual report ---- */
+.count-signal { display: inline-grid; place-items: center; min-width: 22px; height: 22px; padding: 0 6px; border-radius: 2px; background: var(--vk-color-signal-text); color: var(--vk-color-primary-fg); font: 700 12px var(--vk-font-mono); }
+.st-main { flex: 1; display: flex; flex-direction: column; gap: 36px; padding: 24px 40px 40px; }
+.st-head { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; }
+.st-head h1 { font: 800 44px/1.02 var(--ff); font-stretch: 82%; letter-spacing: -.02em; }
+.st-lede { max-width: 640px; font: 400 18px/1.45 var(--fs); }
+.st-lede a { text-decoration-thickness: 1.5px; text-underline-offset: 3px; }
+.st-split { display: grid; grid-template-columns: minmax(0, 1.45fr) minmax(0, 1fr); gap: 40px; align-items: start; }
+.st-stack { display: flex; flex-direction: column; gap: 36px; min-width: 0; }
+.st-sub { margin-top: -8px; font: 400 16px/1.45 var(--fs); color: var(--muted); }
+.st-state { display: inline-flex; align-items: center; gap: 5px; color: var(--text); font-weight: 600; white-space: nowrap; }
+.ar-sec > .hd .r .ar-btn { align-self: center; }
+.st-row { display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-end; }
+.st-add { padding-top: 14px; border-top: 1px solid var(--hair); }
+.st-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px 16px; }
+.st-grid .full { grid-column: 1 / -1; }
+.st-empty { padding: 12px 0; border-top: 1px solid var(--hair); border-bottom: 1px solid var(--hair); font: 400 16px/1.45 var(--fs); font-style: italic; color: var(--muted); }
+details > summary { list-style: none; cursor: pointer; }
+details > summary::-webkit-details-marker { display: none; }
+.st-how > summary { min-height: 44px; }
+.st-how > p { padding-bottom: 4px; }
+/* stage list: a ruled numbered list */
+.st-list { border-top: 1px solid var(--rule); }
+.st-list > li { border-bottom: 1px solid var(--hair); }
+.st-list > li:last-child { border-bottom: 1px solid var(--rule); }
+.st-stage > summary { display: grid; grid-template-columns: 28px 6px minmax(0, 1fr) auto 24px; column-gap: 14px; align-items: start; min-height: 64px; padding: 12px 0 12px 10px; }
+.st-stage > summary:hover .st-name { text-decoration: underline; text-underline-offset: 3px; }
+.st-stage[open] > summary { box-shadow: inset 3px 0 0 var(--text); background: var(--soft); }
+.st-no { font: 500 12.5px/24px var(--fm); color: var(--muted); }
+.st-sw { align-self: stretch; width: 6px; min-height: 24px; }
+.st-line { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 12px; min-width: 0; }
+.st-name { font: 800 16px/24px var(--ff); }
+.st-own { display: inline-flex; align-items: center; gap: 5px; font: 600 13px var(--ff); color: var(--muted); white-space: nowrap; }
+.st-tag { display: inline-flex; align-items: center; gap: 5px; min-height: 24px; padding: 0 8px; border: 1px solid var(--rule); border-radius: 2px; font: 700 12.5px var(--ff); white-space: nowrap; }
+.st-rule { flex-basis: 100%; font: 400 15px/1.45 var(--fs); overflow-wrap: break-word; }
+.st-rule.none { color: var(--muted); font-style: italic; }
+.st-ct { font: 500 12.5px/1.5 var(--fm); color: var(--muted); text-align: right; white-space: nowrap; }
+.st-chev { display: inline-grid; transition: transform var(--vk-motion-fast) var(--vk-motion-easing); }
+details[open] > summary .st-chev { transform: rotate(180deg); }
+.stage-body { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px 20px; padding: 16px 0 20px 72px; border-top: 1px solid var(--hair); }
+.stage-body .full { grid-column: 1 / -1; }
+.st-key { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; min-height: 44px; }
+.code { font: 500 13px var(--fm); padding: 1px 6px; border: 1px solid var(--hair); border-radius: 2px; overflow-wrap: anywhere; }
+.stage-body .code { overflow-wrap: normal; }
+.st-seg { display: inline-flex; width: fit-content; border: 1px solid var(--rule); border-radius: 2px; }
+.st-seg button { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; padding: 0 16px; border: 0; background: transparent; color: var(--text); font: 700 14px var(--ff); white-space: nowrap; cursor: pointer; }
+.st-seg button + button { border-left: 1px solid var(--rule); }
+.st-seg button[aria-pressed="true"] { background: var(--text); color: var(--bg); }
+.st-check { display: inline-flex; align-items: flex-start; gap: 10px; min-height: 44px; padding-top: 10px; font-size: 14px; cursor: pointer; }
+.st-check input { flex: none; width: 20px; height: 20px; margin: 0; accent-color: var(--text); }
+.st-ta { font-family: var(--fs); font-size: 16px; }
+.st-saved { display: inline-flex; align-items: center; gap: 6px; font: 500 12px var(--fm); color: var(--text); }
+.st-foot { grid-column: 1 / -1; display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding-top: 12px; border-top: 1px solid var(--hair); }
+.st-here { margin-left: auto; font: 500 12.5px var(--fm); color: var(--muted); white-space: nowrap; }
+.ar .btn-destructive { border: 0; background: transparent; color: var(--text); box-shadow: inset 0 0 0 2.5px var(--rule); }
+.ar .btn-destructive:disabled, .ar .ar-btn:disabled, .ar .ar-btn2:disabled { cursor: not-allowed; opacity: 0.55; }
+.ar .ar-btn2:disabled:hover { background: transparent; color: var(--text); }
+/* GitHub */
+.st-gh { display: inline-flex; align-items: center; gap: 8px; }
+.st-steps { display: flex; flex-direction: column; border-top: 1px solid var(--hair); }
+.st-steps li { display: grid; grid-template-columns: 22px minmax(0, 1fr); padding: 8px 0; border-bottom: 1px solid var(--hair); font-size: 14.5px; line-height: 1.45; }
+.st-steps .k { font: 600 11.5px/1.9 var(--fm); color: var(--st-text); }
+.st-copy { display: flex; gap: 8px; align-items: stretch; }
+.st-copy .ar-in { flex: 1; min-width: 0; font: 500 14px var(--fm); }
+.st-copy .ar-in[readonly] { background: transparent; }
+.st-note { display: flex; gap: 12px; align-items: flex-start; padding: 2px 0 2px 16px; border-left: 4px solid var(--text); font: 400 16px/1.45 var(--fs); }
+.st-note svg { flex: none; margin-top: 2px; }
+
+/* Studio = Annual report: base + shell (donor: SP-Board-Studio) */
+:where(.ar) *, :where(.ar) *::before, :where(.ar) *::after { box-sizing: border-box; }
+:where(.ar) :where(h1, h2, h3, h4, p, ul, ol, dl, dd, dt, table, form, blockquote, figure, fieldset) { margin: 0; padding: 0; }
+:where(.ar) :where(ul, ol) { list-style: none; }
+:where(.ar) :where(fieldset) { border: 0; min-width: 0; }
+:where(.ar) :where(button:where(:not(.vk-button)), input, select, textarea) { font: inherit; color: inherit; }
+:where(.ar) :where(a) { color: inherit; }
+/* local alias layer: every value comes from the Studio (Annual report) tokens in vk.css */
+.ar {
+  --bg: var(--vk-color-bg); --paper: var(--vk-color-surface); --text: var(--vk-color-text); --muted: var(--vk-color-muted);
+  --rule: var(--vk-color-rule); --hair: var(--vk-color-line); --field: var(--vk-color-raised);
+  --soft: color-mix(in srgb, var(--vk-color-text) 6%, var(--vk-color-bg));
+  --s1: var(--vk-stage-1); --s2: var(--vk-stage-2); --s3: var(--vk-stage-3); --s4: var(--vk-stage-4); --s5: var(--vk-stage-5); --s6: var(--vk-stage-6); --s7: var(--vk-stage-7);
+  --st-text: var(--vk-color-stage-text);
+  --sig: var(--vk-color-signal); --sig-text: var(--vk-color-signal-text); --sig-wash: var(--vk-color-signal-wash); --sig-fg: var(--vk-face-ink);
+  --ff: var(--vk-font-body); --fm: var(--vk-font-mono); --fs: var(--vk-font-serif);
+  background: var(--bg); color: var(--text); font: 400 14px/1.45 var(--ff); font-variant-numeric: tabular-nums lining-nums;
+}
+.ar :focus-visible { outline: 3px solid var(--text); outline-offset: 3px; box-shadow: none; }
+.ar .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.ar .h44 { position: relative; }
+.ar .h44::after { content: ""; position: absolute; left: 0; right: 0; top: 50%; height: max(44px, 100%); transform: translateY(-50%); }
+.ar .kick { font: 700 12px/1.2 var(--ff); letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
+.ar .mono { font-family: var(--fm); }
+.ar .muted { color: var(--muted); }
+.ar .serif { font-family: var(--fs); }
+.ar .fn { font: 600 11px/1 var(--fm); vertical-align: super; margin-left: 2px; color: var(--st-text); }
+.ar .kbd { display: inline-block; padding: 2px 5px; border: 1px solid currentColor; border-radius: 2px; font: 500 11px/1 var(--fm); white-space: nowrap; }
+.ar .c1 { background: var(--s1); } .ar .c2 { background: var(--s2); } .ar .c3 { background: var(--s3); } .ar .c4 { background: var(--s4); } .ar .c5 { background: var(--s5); } .ar .c6 { background: var(--s6); } .ar .c7 { background: var(--s7); }
+.ar .u { display: inline-block; flex: none; width: 18px; height: 18px; }
+.ar .u.needs { background: var(--sig); }
+.ar .u.blocked { background: repeating-linear-gradient(135deg, var(--s5) 0 1.5px, transparent 1.5px 4px); box-shadow: inset 0 0 0 1.5px var(--s5); }
+.ar .u.queued { box-shadow: inset 0 0 0 1.5px var(--s5); }
+.ar .u.done { background: var(--s7); }
+.ar .u.off { box-shadow: inset 0 0 0 1.5px var(--muted); }
+.ar .ar-ini { flex: none; display: inline-grid; place-items: center; background: var(--text); color: var(--bg); font-family: var(--ff); font-weight: 800; line-height: 1; }
+.ar svg[data-mood] { flex: none; }
+
+/* buttons */
+.ar .ar-btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 44px; padding: 0 16px; border: 0; border-radius: 2px; background: var(--text); color: var(--bg); font: 800 14px var(--ff); white-space: nowrap; text-decoration: none; cursor: pointer; }
+.ar .ar-btn .kbd { border-color: currentColor; }
+.ar .ar-btn2 { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 44px; padding: 0 14px; border: 1px solid var(--rule); border-radius: 2px; background: transparent; color: var(--text); font: 700 14px var(--ff); white-space: nowrap; text-decoration: none; cursor: pointer; }
+.ar .ar-btn2:hover { background: var(--text); color: var(--bg); }
+.ar .ar-lk { position: relative; display: inline-flex; align-items: center; gap: 6px; min-height: 44px; padding: 0 8px 0 0; border: 0; background: transparent; color: var(--text); font: 700 13.5px var(--ff); text-decoration: underline; text-decoration-thickness: 1.5px; text-underline-offset: 3px; white-space: nowrap; cursor: pointer; }
+.ar .ar-lk.quiet { color: var(--muted); }
+.ar .ar-ib { position: relative; display: inline-grid; place-items: center; flex: none; width: 44px; height: 44px; border: 1px solid var(--rule); border-radius: 2px; background: transparent; color: var(--text); text-decoration: none; cursor: pointer; }
+.ar .ar-ib:hover { background: var(--text); color: var(--bg); }
+
+/* rail */
+.ar-rail { position: relative; z-index: 3; display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 16px 0; background: var(--text); color: var(--bg); }
+.ar-mark { display: grid; place-items: center; width: 44px; height: 44px; margin-bottom: 16px; background: var(--bg); color: var(--text); text-decoration: none; }
+.ar-nav { position: relative; display: grid; place-items: center; width: 44px; height: 44px; border: 0; border-radius: 2px; background: transparent; color: var(--bg); text-decoration: none; cursor: pointer; }
+.ar-nav:hover { outline: 1px solid var(--bg); outline-offset: -1px; }
+.ar-rail .ar-nav:focus-visible, .ar-rail .ar-mark:focus-visible, .ar-rail .ar-acct:focus-visible { outline-color: var(--bg); }
+.ar-nav[aria-current="page"] { background: var(--bg); color: var(--text); }
+.ar-nav .ct { position: absolute; right: -3px; top: -3px; min-width: 18px; height: 18px; padding: 0 4px; background: var(--sig-text); color: var(--vk-color-primary-fg); font: 800 12px/18px var(--ff); text-align: center; }
+.ar-nav .tip, .ar-acct .tip { position: absolute; left: 54px; top: 50%; transform: translateY(-50%); display: none; align-items: center; gap: 8px; padding: 6px 10px; border: 1px solid var(--rule); background: var(--bg); color: var(--text); font: 700 13px var(--ff); white-space: nowrap; pointer-events: none; }
+.ar-nav:hover .tip, .ar-nav:focus-visible .tip, .ar-acct:hover .tip, .ar-acct:focus-visible .tip { display: inline-flex; }
+.ar-acct { position: relative; width: 44px; height: 44px; margin-top: 4px; border: 1.5px solid var(--bg); border-radius: 2px; background: transparent; color: var(--bg); font: 800 14px var(--ff); cursor: pointer; }
+
+/* masthead */
+.ar-top { display: flex; align-items: center; gap: 20px; min-height: 76px; padding: 0 24px 0 40px; border-bottom: 1px solid var(--rule); }
+.ar-board { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.ar-sw { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 0; border: 0; background: transparent; color: var(--text); font: 800 28px/1 var(--ff); font-stretch: 80%; letter-spacing: -.01em; white-space: nowrap; cursor: pointer; }
+.ar-sw:hover { text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: 5px; }
+.ar-cmd { flex: 1; max-width: 480px; margin-left: auto; display: flex; align-items: center; min-height: 44px; cursor: text; }
+.ar-cmd .box { flex: 1; display: flex; align-items: center; gap: 10px; height: 44px; padding: 0 10px; border-bottom: 1.5px solid var(--rule); color: var(--muted); }
+.ar-cmd input { flex: 1; min-width: 0; border: 0; background: transparent; font: 500 16px var(--ff); outline: none; color: var(--text); }
+.ar-cmd input::placeholder { color: var(--muted); }
+.ar-cmd:focus-within .box { outline: 3px solid var(--text); outline-offset: 2px; }
+.ar-live { display: inline-flex; align-items: center; gap: 6px; font: 700 12px var(--ff); letter-spacing: .1em; text-transform: uppercase; white-space: nowrap; }
+.ar-live i { width: 8px; height: 8px; background: var(--st-text); }
+
+/* sub bar */
+.ar-sub { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 24px; min-height: 48px; padding: 0 40px; border-bottom: 1px solid var(--hair); }
+.ar-tab { position: relative; display: inline-flex; align-items: center; gap: 6px; min-height: 48px; padding: 0; border: 0; background: transparent; color: var(--muted); font: 700 14px var(--ff); text-decoration: none; white-space: nowrap; cursor: pointer; }
+.ar-tab[aria-current="page"], .ar-tab[aria-pressed="true"], .ar-tab[aria-selected="true"] { color: var(--text); }
+.ar-tab[aria-current="page"]::after, .ar-tab[aria-pressed="true"]::after, .ar-tab[aria-selected="true"]::after { content: ""; position: absolute; left: 0; right: 0; bottom: -1px; height: 3px; background: var(--text); }
+.ar-tab .mono { font-size: 12px; font-weight: 500; }
+.ar-fl { position: relative; display: inline-flex; align-items: center; gap: 6px; height: 32px; padding: 0 12px; border: 1px solid var(--rule); border-radius: 2px; background: transparent; color: var(--text); font: 700 13px var(--ff); white-space: nowrap; cursor: pointer; }
+.ar-fl i { font: 500 12px var(--fm); font-style: normal; color: var(--muted); }
+.ar-sub .r { margin-left: auto; font: 500 12px var(--fm); color: var(--muted); white-space: nowrap; }
+
+/* hero */
+.ar-hero { display: grid; grid-template-columns: auto minmax(0, 1fr); column-gap: 28px; align-items: end; }
+.ar-hero .big { font: 900 184px/.78 var(--ff); font-stretch: 72%; letter-spacing: -.04em; color: var(--sig); }
+.ar-hero .big.ink { color: var(--text); }
+.ar-hero .txt { display: flex; flex-direction: column; gap: 12px; padding-bottom: 4px; }
+.ar-hero h1 { font: 800 44px/1.02 var(--ff); font-stretch: 82%; letter-spacing: -.02em; }
+.ar-hero p { max-width: 640px; font: 400 18px/1.45 var(--fs); }
+
+/* numbered sections */
+.ar-sec { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+.ar-sec > .hd { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 14px; padding-top: 10px; border-top: 1.5px solid var(--rule); }
+.ar-sec > .hd .no { font: 500 12px var(--fm); color: var(--muted); }
+.ar-sec > .hd h2 { font: 800 16px/1.2 var(--ff); }
+.ar-sec > .hd .r { margin-left: auto; display: inline-flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; font: 500 12px var(--fm); color: var(--muted); }
+
+/* figures row */
+.ar-figs { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); border-top: 1.5px solid var(--rule); border-bottom: 1px solid var(--hair); }
+.ar-figs > div { display: flex; flex-direction: column; gap: 6px; min-width: 0; padding: 12px 12px 14px 0; }
+.ar-figs > div + div { padding-left: 14px; border-left: 1px solid var(--hair); }
+.ar-figs b { font: 900 52px/.86 var(--ff); font-stretch: 72%; letter-spacing: -.03em; white-space: nowrap; }
+.ar-figs b small { font-size: 17px; font-weight: 700; margin-left: 3px; letter-spacing: 0; }
+.ar-figs b.z { font-weight: 300; color: var(--muted); }
+.ar-figs .sig b { color: var(--sig); }
+.ar-figs .sig span { color: var(--sig-text); }
+.ar-figs span { font-size: 12.5px; font-weight: 600; color: var(--muted); }
+
+/* stage ramp track */
+.ar-ramp { display: flex; gap: 2px; }
+.ar-ramp i { width: 14px; height: 8px; opacity: .28; }
+.ar-ramp i.on { opacity: 1; }
+.ar-track { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: 3px; }
+.ar-track li { display: flex; flex-direction: column; gap: 6px; min-width: 0; font: 500 11.5px/1.25 var(--fm); color: var(--muted); }
+.ar-track li .b { height: 8px; opacity: .3; }
+.ar-track li.done .b { opacity: 1; }
+.ar-track li.cur .b { opacity: 1; height: 14px; margin-top: -6px; }
+.ar-track li.cur.sig .b { box-shadow: inset 0 -4px 0 var(--sig); }
+.ar-track li.cur { color: var(--text); font-weight: 600; }
+.ar-track li.cur.sig { color: var(--sig-text); }
+
+/* quote (agent words) */
+.ar-q { display: flex; flex-direction: column; gap: 8px; padding: 2px 0 0 18px; border-left: 4px solid var(--sig); }
+.ar-q.ink { border-left-color: var(--text); }
+.ar-q.done { border-left-color: var(--s7); }
+.ar-q.off { border-left-color: var(--hair); }
+.ar-q h3 { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; font: 800 14px var(--ff); color: var(--sig-text); }
+.ar-q.ink h3, .ar-q.done h3, .ar-q.off h3 { color: var(--text); }
+.ar-q h3 .mono { margin-left: auto; font-weight: 500; font-size: 12px; }
+.ar-q blockquote { font: 400 19px/1.42 var(--fs); overflow-wrap: anywhere; }
+.ar-q blockquote code, .ar-id { font: 500 .78em var(--fm); overflow-wrap: anywhere; }
+
+/* footnote row with copy */
+.ar-pfn { display: grid; grid-template-columns: 22px minmax(0, 1fr) auto; align-items: center; column-gap: 0; padding-top: 6px; border-top: 1px solid var(--hair); font: 400 14px/1.4 var(--fs); }
+.ar-pfn .k { font: 600 11.5px var(--fm); color: var(--st-text); }
+.ar-pfn code { font: 500 12.5px var(--fm); overflow-wrap: anywhere; }
+
+/* notes */
+.ar-notes { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 32px; row-gap: 10px; padding-top: 10px; border-top: 1px solid var(--hair); }
+.ar-notes li { display: grid; grid-template-columns: 22px minmax(0, 1fr); font: 400 14.5px/1.45 var(--fs); }
+.ar-notes li .k { font: 600 11.5px/1.9 var(--fm); color: var(--st-text); }
+.ar-notes li i { font-style: italic; }
+
+/* tables */
+.ar .ttl { position: relative; padding: 0; border: 0; background: transparent; color: var(--text); font: 700 14px/1.3 var(--ff); text-align: left; text-decoration: none; overflow-wrap: anywhere; cursor: pointer; }
+.ar .ttl::after { content: ""; position: absolute; left: -4px; right: -4px; top: 50%; height: max(44px, calc(100% + 8px)); transform: translateY(-50%); }
+.ar .ttl:hover { text-decoration: underline; text-underline-offset: 3px; }
+.ar-tbl { width: 100%; border-collapse: collapse; table-layout: fixed; }
+.ar-tbl th { height: 30px; padding: 0 10px 0 0; text-align: left; font: 700 12px var(--ff); color: var(--muted); border-bottom: 1px solid var(--rule); vertical-align: bottom; }
+.ar-tbl td { overflow-wrap: break-word; padding: 10px 10px 10px 0; border-bottom: 1px solid var(--hair); vertical-align: top; }
+.ar-tbl tr.sel td { background: var(--soft); }
+.ar-tbl tr.sel td:first-child { box-shadow: inset 3px 0 0 var(--text); padding-left: 8px; }
+.ar-tbl .ix { font: 500 12.5px var(--fm); color: var(--muted); }
+.ar-tbl .stg { display: inline-flex; align-items: center; gap: 7px; font-size: 13px; white-space: nowrap; }
+.ar-tbl .ag { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; white-space: nowrap; }
+.ar-tbl .m { font: 500 12.5px var(--fm); color: var(--muted); }
+.ar-tbl .m.sig, .ar .sigt { color: var(--sig-text); font-weight: 600; }
+.ar-st { display: inline-flex; align-items: center; gap: 7px; font-weight: 700; font-size: 13px; white-space: nowrap; }
+.ar-st .u { width: 11px; height: 11px; }
+.ar-st.needs { color: var(--sig-text); }
+.ar-facts { display: flex; flex-wrap: wrap; gap: 4px 10px; margin-top: 4px; font: 500 12px/1.35 var(--fm); color: var(--muted); }
+.ar-facts > span { display: inline-flex; align-items: center; gap: 5px; overflow-wrap: anywhere; }
+.ar-facts .p { color: var(--text); font-weight: 600; }
+
+/* key/value rows */
+.ar-kv { display: grid; grid-template-columns: max-content minmax(0, 1fr); column-gap: 16px; }
+.ar-kv > dt, .ar-kv > dd { padding: 9px 0; border-top: 1px solid var(--hair); }
+.ar-kv > dt { font-weight: 700; font-size: 13px; }
+.ar-kv > dd { overflow-wrap: anywhere; }
+
+/* fields */
+.ar-field { display: flex; flex-direction: column; gap: 6px; }
+.ar-field > label, .ar .lab { font-weight: 700; font-size: 14px; }
+.ar-in, .ar-sel, .ar-ta { width: 100%; min-height: 44px; padding: 0 10px; border: 1px solid var(--rule); border-radius: 0; background: var(--field); color: var(--text); font: 400 16px/1.45 var(--ff); }
+.ar-ta { min-height: 88px; padding: 10px 12px; resize: vertical; }
+.ar-in::placeholder, .ar-ta::placeholder { color: var(--muted); }
+.ar-hint { font: 500 12px/1.4 var(--fm); color: var(--muted); }
+
+/* status bar */
+.ar-status { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 20px; min-height: 32px; padding: 0 40px; border-top: 1px solid var(--rule); font: 500 12px var(--fm); color: var(--muted); }
+.ar-status .sig { color: var(--sig-text); font-weight: 600; }
+.ar-status .r { margin-left: auto; display: flex; flex-wrap: wrap; gap: 16px; }
+
+.ar.bd { display: grid; grid-template-columns: 64px minmax(0, 1fr); }
+.ar.bd > .ar-rail { grid-row: 1; }
+.bd-body { display: flex; flex-direction: column; min-width: 0; }
+.bd-body > main { flex: 1; }
+
+</style><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible+Next:ital,wght@1,400&amp;display=swap" data-font-variant=""><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible+Next:ital,wght@1,700&amp;display=swap" data-font-variant=""><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:ital,wght@1,400..800&amp;display=swap" data-font-variant=""><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:ital,wght@1,400..700&amp;display=swap" data-font-variant=""><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Sans:ital,wght@1,400..700&amp;display=swap" data-font-variant=""><style data-dc-editor-style="">body:not([data-dc-editor-overlay-hidden]) [data-dc-editor-hover][data-dc-editor-hover-stroke]:not([data-dc-editor-selected]){filter:drop-shadow(0 0 calc(1*var(--dc-chrome-unit,1px)) color-mix(in srgb,#2a78d6 90%,transparent)) drop-shadow(0 0 calc(2*var(--dc-chrome-unit,1px)) color-mix(in srgb,#2a78d6 55%,transparent))!important;}body:not([data-dc-editor-overlay-hidden]):not([data-dc-editor-proxy="copy"]) [data-dc-editor-dragging],body:not([data-dc-editor-overlay-hidden]):not([data-dc-editor-proxy]) [data-dc-dragging],body[data-dc-editor-brk]:not([data-dc-editor-overlay-hidden]) [data-dc-drag-follower]{outline:calc(2*var(--dc-chrome-unit,1px)) solid #2a78d6!important;outline-offset:calc(-1*var(--dc-chrome-unit,1px))!important;opacity:0.55!important;}body[data-dc-editor-proxy="move"]:not([data-dc-editor-overlay-hidden]) [data-dc-editor-dragging],body[data-dc-editor-proxy="move"]:not([data-dc-editor-overlay-hidden]) [data-dc-dragging],body[data-dc-editor-proxy="move"]:not([data-dc-editor-overlay-hidden]) [data-dc-editor-dragging]>*,body[data-dc-editor-proxy="move"]:not([data-dc-editor-overlay-hidden]) [data-dc-dragging]>*{opacity:0!important;outline:none!important;}[data-dc-editor-drag-proxy],[data-dc-editor-drag-proxy] *{pointer-events:none!important;}body[data-dc-editor-on]:not([data-dc-editor-tool="interact"]) *{cursor:default!important;user-select:none!important;}body[data-dc-editor-on]:not([data-dc-editor-tool="interact"]) :not([data-dc-editor-overlay-root]):not([data-dc-editor-overlay-root] *){pointer-events:auto!important;transition:none!important;animation:none!important;}body[data-dc-editor-on][data-dc-editor-brk]:not([data-dc-editor-overlay-hidden]) [data-dc-editor-dragging]:not([data-dc-editor-overlay-root]) :not([data-dc-editor-overlay-root]),body[data-dc-editor-on][data-dc-editor-brk]:not([data-dc-editor-overlay-hidden]) [data-dc-dragging]:not([data-dc-editor-overlay-root]) :not([data-dc-editor-overlay-root]),body[data-dc-editor-on][data-dc-editor-brk]:not([data-dc-editor-overlay-hidden]) [data-dc-drag-follower]:not([data-dc-editor-overlay-root]),body[data-dc-editor-on][data-dc-editor-brk]:not([data-dc-editor-overlay-hidden]) [data-dc-drag-follower]:not([data-dc-editor-overlay-root]) :not([data-dc-editor-overlay-root]),body[data-dc-editor-move][data-dc-editor-brk]:not([data-dc-editor-overlay-hidden]) [data-dc-editor-dragging]:not([data-dc-editor-overlay-root]) :not([data-dc-editor-overlay-root]),body[data-dc-editor-move][data-dc-editor-brk]:not([data-dc-editor-overlay-hidden]) [data-dc-dragging]:not([data-dc-editor-overlay-root]) :not([data-dc-editor-overlay-root]),body[data-dc-editor-move][data-dc-editor-brk]:not([data-dc-editor-overlay-hidden]) [data-dc-drag-follower]:not([data-dc-editor-overlay-root]),body[data-dc-editor-move][data-dc-editor-brk]:not([data-dc-editor-overlay-hidden]) [data-dc-drag-follower]:not([data-dc-editor-overlay-root]) :not([data-dc-editor-overlay-root]){pointer-events:none!important;}body[data-dc-editor-move] :not([data-dc-editor-overlay-root]):not([data-dc-editor-overlay-root] *){pointer-events:auto!important;transition:none!important;animation-duration:0s!important;animation-delay:0s!important;}body[data-dc-editor-on][data-dc-editor-tool="rect"] *,body[data-dc-editor-on][data-dc-editor-tool="frame"] *,body[data-dc-editor-on][data-dc-editor-tool="grid"] *,body[data-dc-editor-on][data-dc-editor-tool="oval"] *,body[data-dc-editor-on][data-dc-editor-tool="arrow"] *,body[data-dc-editor-on][data-dc-editor-tool="line"] *{cursor:crosshair!important;}body[data-dc-editor-on][data-dc-editor-tool="text"] *{cursor:text!important;}body[data-dc-editor-on][data-dc-editor-tool="draw"] *{cursor:url('data:image/svg+xml,%3Csvg%20xmlns=%22http://www.w3.org/2000/svg%22%20width=%2216%22%20height=%2216%22%20viewBox=%220%200%2016%2016%22%3E%3Cpath%20d=%22M2%2014l1-4%208-8a2.1%202.1%200%200%201%203%203l-8%208-4%201z%22%20fill=%22%23333%22%20stroke=%22%23fff%22%20stroke-width=%221%22/%3E%3C/svg%3E') 1 15, crosshair!important;}body[data-dc-editor-on]:not([data-dc-editor-tool]) [data-drags-parent],body[data-dc-editor-on]:not([data-dc-editor-tool]) [data-drags-parent] *{cursor:grab!important;}body[data-dc-editor-on]:not([data-dc-editor-tool]) [data-drags-parent]:active,body[data-dc-editor-on]:not([data-dc-editor-tool]) [data-drags-parent]:active *{cursor:grabbing!important;}body[data-dc-editor-on] [data-dc-editor-editing][contenteditable][contenteditable],body[data-dc-editor-on] [data-dc-editor-editing][contenteditable][contenteditable] *,body[data-dc-editor-on] [data-dc-editor-svg-editing]{cursor:text!important;}body[data-dc-editor-on] [data-dc-editor-editing="import"]{outline:none!important;}html:not([data-dc-canvas]):has(body[data-dc-editor-on]:not([data-dc-capturing]) .sc-host){background:var(--dc-editor-backdrop,#ededeb);}html:not([data-dc-canvas]) body[data-dc-editor-on]:not([data-dc-capturing]):has(.sc-host){background:var(--dc-editor-backdrop,#ededeb);}html:not([data-dc-canvas]) body[data-dc-editor-on] .sc-host:not(.sc-host .sc-host){min-height:calc(100vh - var(--dc-editor-host-vpad,0px));}html:not([data-dc-canvas]) body[data-dc-editor-on]:not([data-dc-capturing]) .sc-host:not(.sc-host .sc-host){background:var(--dc-editor-host-bg,#fff);}html[data-dc-frameless],html[data-dc-frameless] body[data-dc-editor-on],html[data-dc-frameless] body[data-dc-editor-on] .sc-host:not(.sc-host .sc-host){background:transparent!important;min-height:0!important;}html:has(body[data-dc-capturing]),body[data-dc-capturing]{transition:none!important;}html[data-dc-canvas]{overflow:hidden;}html[data-dc-canvas] body[data-dc-editor-on] .sc-host:not(.sc-host .sc-host)::before{content:"";position:absolute;left:-100000px;top:-100000px;width:200000px;height:200000px;pointer-events:none;background:repeating-linear-gradient(45deg,var(--dc-editor-hatch-ink,rgba(0,0,0,.05)) 0 8px,transparent 8px 16px);clip-path:polygon(0 0,100% 0,100% 50%,50% 50%,50% 100%,0 100%);}</style></head>
+<body>
+<div id="dc-root"><div class="sc-host" data-sc-name="SP-Settings-Studio"><div data-product="superpipeline" data-accent="product" data-dc-tpl="3" class="ar bd" data-vibe="studio" data-theme="light" style="min-height: 1980px;"><nav data-dc-tpl="4" class="ar-rail" aria-label="Superpipeline">
+  <a data-dc-tpl="5" class="ar-mark" href="#home" aria-label="Superpipeline home"><svg data-dc-tpl="6" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path data-dc-tpl="7" d="M6 6h9a3 3 0 0 1 0 6H9a3 3 0 0 0 0 6h9"></path><circle data-dc-tpl="8" cx="6" cy="6" r="2"></circle><circle data-dc-tpl="9" cx="18" cy="18" r="2"></circle></svg></a>
+  <a data-dc-tpl="10" class="ar-nav" href="#plan" aria-current="page" aria-label="Plan" aria-keyshortcuts="G P"><svg data-dc-tpl="11" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect data-dc-tpl="12" x="3" y="4" width="5" height="16" rx="1"></rect><rect data-dc-tpl="13" x="10" y="4" width="5" height="11" rx="1"></rect><rect data-dc-tpl="14" x="17" y="4" width="4" height="7" rx="1"></rect></svg><span data-dc-tpl="15" class="tip" aria-hidden="true">Plan <span data-dc-tpl="16" class="kbd">G P</span></span></a>
+  <a data-dc-tpl="17" class="ar-nav" href="#operate" aria-label="Operate, 4 need you" aria-keyshortcuts="G O"><svg data-dc-tpl="18" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path data-dc-tpl="19" d="M3 12h4l3-7 4 14 3-7h4"></path></svg><span data-dc-tpl="20" class="ct" aria-hidden="true">4</span><span data-dc-tpl="21" class="tip" aria-hidden="true">Operate · 4 need you <span data-dc-tpl="22" class="kbd">G O</span></span></a>
+  <a data-dc-tpl="23" class="ar-nav" href="#workspace" aria-label="Workspace" aria-keyshortcuts="G W"><svg data-dc-tpl="24" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle data-dc-tpl="25" cx="9" cy="8" r="3.5"></circle><path data-dc-tpl="26" d="M2.5 20c.8-3.6 3.4-5.5 6.5-5.5s5.7 1.9 6.5 5.5"></path><path data-dc-tpl="27" d="M16 4.5a3.5 3.5 0 0 1 0 7M18 14.8c1.8.8 3 2.6 3.5 5.2"></path></svg><span data-dc-tpl="28" class="tip" aria-hidden="true">Workspace <span data-dc-tpl="29" class="kbd">G W</span></span></a>
+  <span data-dc-tpl="30" style="flex: 1 1 0%;"></span>
+  <button data-dc-tpl="31" class="ar-nav" type="button" aria-label="Dark theme"><svg data-dc-tpl="32" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path data-dc-tpl="33" d="M20 14.5A8 8 0 0 1 9.5 4 8 8 0 1 0 20 14.5z"></path></svg><span data-dc-tpl="34" class="tip" aria-hidden="true">Dark theme</span></button>
+  <button data-dc-tpl="35" class="ar-nav" type="button" aria-label="Appearance" aria-haspopup="dialog"><svg data-dc-tpl="36" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle data-dc-tpl="37" cx="12" cy="12" r="4"></circle><path data-dc-tpl="38" d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"></path></svg><span data-dc-tpl="39" class="tip" aria-hidden="true">Appearance</span></button>
+  <button data-dc-tpl="40" class="ar-acct" type="button" aria-label="Ira Mehta, account" aria-haspopup="menu">IM<span data-dc-tpl="41" class="tip" aria-hidden="true">Ira Mehta</span></button>
+  <button data-dc-tpl="42" class="ar-nav" type="button" aria-label="Sign out"><svg data-dc-tpl="43" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path data-dc-tpl="44" d="M15 4h4v16h-4M10 8l-4 4 4 4M6 12h10"></path></svg><span data-dc-tpl="45" class="tip" aria-hidden="true">Sign out</span></button></nav><div data-dc-tpl="46" class="bd-body"><header data-dc-tpl="47" class="ar-top">
+  <div data-dc-tpl="48" class="ar-board"><span data-dc-tpl="49" class="kick">Superpipeline · settings</span><button data-dc-tpl="50" class="ar-sw" type="button" aria-haspopup="menu" aria-label="Board: Developer Experience. Change board">Developer Experience <svg data-dc-tpl="51" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path data-dc-tpl="52" d="M6 9l6 6 6-6"></path></svg></button></div>
+  <label data-dc-tpl="53" class="ar-cmd"><span data-dc-tpl="54" class="sr">Search or run a command</span><span data-dc-tpl="55" class="box"><svg data-dc-tpl="56" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle data-dc-tpl="57" cx="11" cy="11" r="7"></circle><path data-dc-tpl="58" d="M20 20l-4-4"></path></svg><input data-dc-tpl="59" type="search" placeholder="Search or run a command" aria-keyshortcuts="Meta+K"><span data-dc-tpl="60" class="kbd" aria-hidden="true">⌘K</span></span></label>
+  <span data-dc-tpl="61" class="ar-live" role="status" title="Live: changes appear as they happen"><i data-dc-tpl="62" aria-hidden="true"></i>Live</span>
+  <button data-dc-tpl="63" class="ar-btn" type="button" aria-keyshortcuts="N"><svg data-dc-tpl="64" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path data-dc-tpl="65" d="M12 5v14M5 12h14"></path></svg>New card <span data-dc-tpl="66" class="kbd" aria-hidden="true">N</span></button></header><main data-dc-tpl="67" class="st-main" id="main"><div data-dc-tpl="68" class="st-head">
+  <a data-dc-tpl="69" href="#" class="ar-lk quiet"><svg data-dc-tpl="70" aria-hidden="true" focusable="false" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path data-dc-tpl="71" d="M15 6l-6 6 6 6"></path></svg>Back to the board</a>
+  <span data-dc-tpl="72" class="kick">Board settings</span>
+  <h1 data-dc-tpl="73">Developer Experience</h1>
+  <p data-dc-tpl="74" class="st-lede">Each section saves on its own. Budget caps live in <a data-dc-tpl="75" href="#">Operate → Spend</a>.</p></div><div data-dc-tpl="76" class="st-split"><div data-dc-tpl="77" class="st-stack">
+  <section data-dc-tpl="78" class="ar-sec" aria-labelledby="nm-h">
+    <div data-dc-tpl="79" class="hd"><span data-dc-tpl="80" class="no">01</span><h2 data-dc-tpl="81" id="nm-h">Name</h2><span data-dc-tpl="82" class="r"><span data-dc-tpl="83" class="st-state"><svg data-dc-tpl="84" aria-hidden="true" focusable="false" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path data-dc-tpl="85" d="M5 12.5l4.5 4.5L19 7.5"></path></svg>Saved</span></span></div>
+    <form data-dc-tpl="86" class="st-row">
+      <div data-dc-tpl="87" class="ar-field" style="flex: 1 1 260px;"><label data-dc-tpl="88" for="bd-name">Board name</label><input data-dc-tpl="89" id="bd-name" class="ar-in" value="Developer Experience"></div>
+      <button data-dc-tpl="90" type="button" class="ar-btn2" disabled="">Rename</button>
+    </form>
+  </section>
+
+  <section data-dc-tpl="91" class="ar-sec" aria-labelledby="pl-h">
+    <div data-dc-tpl="92" class="hd"><span data-dc-tpl="93" class="no">02</span><h2 data-dc-tpl="94" id="pl-h">Pipeline</h2><span data-dc-tpl="95" class="r"><span data-dc-tpl="96" class="st-state"><svg data-dc-tpl="97" aria-hidden="true" focusable="false" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path data-dc-tpl="98" d="M5 12.5l4.5 4.5L19 7.5"></path></svg>Saved</span><button data-dc-tpl="99" type="button" class="ar-btn" disabled="">Save pipeline</button></span></div>
+    <p data-dc-tpl="100" class="st-sub">7 stages a card moves through, in order. Open a stage to edit it.</p>
+    <ol data-dc-tpl="101" class="st-list"><li data-dc-tpl="102"><details data-dc-tpl="103" class="st-stage"><summary data-dc-tpl="104">
+    <span data-dc-tpl="105" class="st-no">01</span>
+    <span data-dc-tpl="106" class="st-sw c1" aria-hidden="true"></span>
+    <span data-dc-tpl="107" class="st-line"><span data-dc-tpl="108" class="st-name">Reported</span><span data-dc-tpl="109" class="st-own"><svg data-dc-tpl="110" aria-hidden="true" focusable="false" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle data-dc-tpl="111" cx="12" cy="8" r="3.5"></circle><path data-dc-tpl="112" d="M5 20c1.2-3.5 4-5 7-5s5.8 1.5 7 5"></path></svg>A person</span><span data-dc-tpl="113" class="st-rule">Rule: Describe one problem a developer hit. What you did, what happened, what you expected. Include the version, commit or environment — a bug report without one costs the reproduce stage its first hour.</span></span>
+    <span data-dc-tpl="114" class="st-ct">1 card<br data-dc-tpl="115">no WIP limit</span>
+    <span data-dc-tpl="116" class="st-chev" aria-hidden="true"><svg data-dc-tpl="117" aria-hidden="true" focusable="false" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path data-dc-tpl="118" d="M6 9l6 6 6-6"></path></svg></span>
+  </summary></details></li><li data-dc-tpl="119"><details data-dc-tpl="120" class="st-stage" open=""><summary data-dc-tpl="121">
+    <span data-dc-tpl="122" class="st-no">02</span>
+    <span data-dc-tpl="123" class="st-sw c2" aria-hidden="true"></span>
+    <span data-dc-tpl="124" class="st-line"><span data-dc-tpl="125" class="st-name">Reproduce</span><span data-dc-tpl="126" class="st-own"><svg data-dc-tpl="127" aria-hidden="true" focusable="false" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect data-dc-tpl="128" x="5" y="8" width="14" height="11" rx="3"></rect><path data-dc-tpl="129" d="M12 8V4"></path><circle data-dc-tpl="130" cx="9.5" cy="13.5" r="1"></circle><circle data-dc-tpl="131" cx="14.5" cy="13.5" r="1"></circle></svg>Agent with diagnostics</span><span data-dc-tpl="132" class="st-rule">Rule: Make the problem happen on purpose. Until it can be reproduced on demand, nothing after this stage can tell a fix from a coincidence.</span></span>
+    <span data-dc-tpl="133" class="st-ct">1 card<br data-dc-tpl="134">no WIP limit</span>
+    <span data-dc-tpl="135" class="st-chev" aria-hidden="true"><svg data-dc-tpl="136" aria-hidden="true" focusable="false" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path data-dc-tpl="137" d="M6 9l6 6 6-6"></path></svg></span>
+  </summary><div data-dc-tpl="138" class="stage-body">
+    <div data-dc-tpl="139" class="ar-field"><label data-dc-tpl="140" for="st-name">Stage name</label><input data-dc-tpl="141" id="st-name" class="ar-in" value="Reproduce"></div>
+    <div data-dc-tpl="142" class="ar-field"><span data-dc-tpl="143" class="lab">Key</span><p data-dc-tpl="144" class="st-key"><span data-dc-tpl="145" class="code">reproduce</span><span data-dc-tpl="146" class="ar-hint">fixed — cards, runs and gates refer to it</span></p></div>
+    <div data-dc-tpl="147" class="ar-field full"><span data-dc-tpl="148" class="lab" id="st-own">Who works this stage</span>
+      <div data-dc-tpl="149" class="st-seg" role="group" aria-labelledby="st-own"><button data-dc-tpl="150" type="button" aria-pressed="false"><svg data-dc-tpl="151" aria-hidden="true" focusable="false" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle data-dc-tpl="152" cx="12" cy="8" r="3.5"></circle><path data-dc-tpl="153" d="M5 20c1.2-3.5 4-5 7-5s5.8 1.5 7 5"></path></svg>A person</button><button data-dc-tpl="154" type="button" aria-pressed="true"><svg data-dc-tpl="155" aria-hidden="true" focusable="false" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect data-dc-tpl="156" x="5" y="8" width="14" height="11" rx="3"></rect><path data-dc-tpl="157" d="M12 8V4"></path><circle data-dc-tpl="158" cx="9.5" cy="13.5" r="1"></circle><circle data-dc-tpl="159" cx="14.5" cy="13.5" r="1"></circle></svg>An agent</button></div></div>
+    <div data-dc-tpl="160" class="ar-field"><label data-dc-tpl="161" for="st-cap">Capability</label><input data-dc-tpl="162" id="st-cap" class="ar-in" value="diagnostics"><p data-dc-tpl="163" class="ar-hint">Comma-separated. Agents holding it claim cards here. Saves when you leave the field.</p></div>
+    <p data-dc-tpl="164" class="ar-hint" style="align-self: end;">With two or more capabilities, choose “needs all” or “any one” here.</p>
+    <div data-dc-tpl="165" class="ar-field"><label data-dc-tpl="166" for="st-wip">WIP limit</label><input data-dc-tpl="167" id="st-wip" class="ar-in" type="number" min="0" placeholder="No limit"></div>
+    <div data-dc-tpl="168" class="ar-field"><span data-dc-tpl="169" class="lab">Approval</span><label data-dc-tpl="170" class="st-check"><input data-dc-tpl="171" type="checkbox"><span data-dc-tpl="172">Approval gate — a person approves before a card leaves this stage</span></label></div>
+    <div data-dc-tpl="173" class="ar-field full"><label data-dc-tpl="174" for="st-rule">Standing rule for this stage</label><textarea data-dc-tpl="175" id="st-rule" class="ar-ta st-ta">Make the problem happen on purpose. Until it can be reproduced on demand, nothing after this stage can tell a fix from a coincidence.</textarea>
+      <p data-dc-tpl="176" class="st-saved"><svg data-dc-tpl="177" aria-hidden="true" focusable="false" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path data-dc-tpl="178" d="M5 12.5l4.5 4.5L19 7.5"></path></svg>Rule saved · 2 min ago</p></div>
+    <div data-dc-tpl="179" class="st-foot">
+      <button data-dc-tpl="180" type="button" class="ar-btn2"><svg data-dc-tpl="181" aria-hidden="true" focusable="false" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path data-dc-tpl="182" d="M12 19V5M6 11l6-6 6 6"></path></svg>Move earlier</button>
+      <button data-dc-tpl="183" type="button" class="ar-btn2"><svg data-dc-tpl="184" aria-hidden="true" focusable="false" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path data-dc-tpl="185" d="M12 5v14M6 13l6 6 6-6"></path></svg>Move later</button>
+      <span data-dc-tpl="186" class="st-here">1 card here</span>
+      <button data-dc-tpl="187" type="button" class="ar-btn2 btn-destructive" disabled=""><svg data-dc-tpl="188" aria-hidden="true" focusable="false" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path data-dc-tpl="189" d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"></path></svg>Remove stage</button>
+    </div>
+    <p data-dc-tpl="190" class="ar-hint full">A stage holding cards cannot be removed until they are moved; the last stage cannot be removed.</p>
+  </div></details></li><li data-dc-tpl="191"><details data-dc-tpl="192" class="st-stage"><summary data-dc-tpl="193">
+    <span data-dc-tpl="194" class="st-no">03</span>
+    <span data-dc-tpl="195" class="st-sw c3" aria-hidden="true"></span>
+    <span data-dc-tpl="196" class="st-line"><span data-dc-tpl="197" class="st-name">Failing test</span><span data-dc-tpl="198" class="st-own"><svg data-dc-tpl="199" aria-hidden="true" focusable="false" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect data-dc-tpl="200" x="5" y="8" width="14" height="11" rx="3"></rect><path data-dc-tpl="201" d="M12 8V4"></path><circle data-dc-tpl="202" cx="9.5" cy="13.5" r="1"></circle><circle data-dc-tpl="203" cx="14.5" cy="13.5" r="1"></circle></svg>Agent with testing</span><span data-dc-tpl="204" class="st-rule none">No standing rule</span></span>
+    <span data-dc-tpl="205" class="st-ct">3 cards<br data-dc-tpl="206">no WIP limit</span>
+    <span data-dc-tpl="207" class="st-chev" aria-hidden="true"><svg data-dc-tpl="208" aria-hidden="true" focusable="false" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path data-dc-tpl="209" d="M6 9l6 6 6-6"></path></svg></span>
+  </summary></details></li><li data-dc-tpl="210"><details data-dc-tpl="211" class="st-stage"><summary data-dc-tpl="212">
+    <span data-dc-tpl="213" class="st-no">04</span>
+    <span data-dc-tpl="214" class="st-sw c4" aria-hidden="true"></span>
+    <span data-dc-tpl="215" class="st-line"><span data-dc-tpl="216" class="st-name">Fix</span><span data-dc-tpl="217" class="st-own"><svg data-dc-tpl="218" aria-hidden="true" focusable="false" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect data-dc-tpl="219" x="5" y="8" width="14" height="11" rx="3"></rect><path data-dc-tpl="220" d="M12 8V4"></path><circle data-dc-tpl="221" cx="9.5" cy="13.5" r="1"></circle><circle data-dc-tpl="222" cx="14.5" cy="13.5" r="1"></circle></svg>Agent with code</span><span data-dc-tpl="223" class="st-rule none">No standing rule</span></span>
+    <span data-dc-tpl="224" class="st-ct">1 card<br data-dc-tpl="225">no WIP limit</span>
+    <span data-dc-tpl="226" class="st-chev" aria-hidden="true"><svg data-dc-tpl="227" aria-hidden="true" focusable="false" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path data-dc-tpl="228" d="M6 9l6 6 6-6"></path></svg></span>
+  </summary></details></li><li data-dc-tpl="229"><details data-dc-tpl="230" class="st-stage"><summary data-dc-tpl="231">
+    <span data-dc-tpl="232" class="st-no">05</span>
+    <span data-dc-tpl="233" class="st-sw c5" aria-hidden="true"></span>
+    <span data-dc-tpl="234" class="st-line"><span data-dc-tpl="235" class="st-name">Integrate</span><span data-dc-tpl="236" class="st-own"><svg data-dc-tpl="237" aria-hidden="true" focusable="false" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect data-dc-tpl="238" x="5" y="8" width="14" height="11" rx="3"></rect><path data-dc-tpl="239" d="M12 8V4"></path><circle data-dc-tpl="240" cx="9.5" cy="13.5" r="1"></circle><circle data-dc-tpl="241" cx="14.5" cy="13.5" r="1"></circle></svg>Agent with integration or api or testing</span><span data-dc-tpl="242" class="st-rule none">No standing rule</span></span>
+    <span data-dc-tpl="243" class="st-ct">0 cards<br data-dc-tpl="244">no WIP limit</span>
+    <span data-dc-tpl="245" class="st-chev" aria-hidden="true"><svg data-dc-tpl="246" aria-hidden="true" focusable="false" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path data-dc-tpl="247" d="M6 9l6 6 6-6"></path></svg></span>
+  </summary></details></li><li data-dc-tpl="248"><details data-dc-tpl="249" class="st-stage"><summary data-dc-tpl="250">
+    <span data-dc-tpl="251" class="st-no">06</span>
+    <span data-dc-tpl="252" class="st-sw c6" aria-hidden="true"></span>
+    <span data-dc-tpl="253" class="st-line"><span data-dc-tpl="254" class="st-name">Signed off</span><span data-dc-tpl="255" class="st-own"><svg data-dc-tpl="256" aria-hidden="true" focusable="false" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle data-dc-tpl="257" cx="12" cy="8" r="3.5"></circle><path data-dc-tpl="258" d="M5 20c1.2-3.5 4-5 7-5s5.8 1.5 7 5"></path></svg>A person</span><span data-dc-tpl="259" class="st-tag"><svg data-dc-tpl="260" aria-hidden="true" focusable="false" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path data-dc-tpl="261" d="M5 21V8l7-5 7 5v13"></path><path data-dc-tpl="262" d="M9 21v-6h6v6"></path></svg>Approval gate</span><span data-dc-tpl="263" class="st-rule none">No standing rule</span></span>
+    <span data-dc-tpl="264" class="st-ct">0 cards<br data-dc-tpl="265">no WIP limit</span>
+    <span data-dc-tpl="266" class="st-chev" aria-hidden="true"><svg data-dc-tpl="267" aria-hidden="true" focusable="false" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path data-dc-tpl="268" d="M6 9l6 6 6-6"></path></svg></span>
+  </summary></details></li><li data-dc-tpl="269"><details data-dc-tpl="270" class="st-stage"><summary data-dc-tpl="271">
+    <span data-dc-tpl="272" class="st-no">07</span>
+    <span data-dc-tpl="273" class="st-sw c7" aria-hidden="true"></span>
+    <span data-dc-tpl="274" class="st-line"><span data-dc-tpl="275" class="st-name">Shipped</span><span data-dc-tpl="276" class="st-own"><svg data-dc-tpl="277" aria-hidden="true" focusable="false" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle data-dc-tpl="278" cx="12" cy="8" r="3.5"></circle><path data-dc-tpl="279" d="M5 20c1.2-3.5 4-5 7-5s5.8 1.5 7 5"></path></svg>A person</span><span data-dc-tpl="280" class="st-rule none">No standing rule</span></span>
+    <span data-dc-tpl="281" class="st-ct">1 card<br data-dc-tpl="282">no WIP limit</span>
+    <span data-dc-tpl="283" class="st-chev" aria-hidden="true"><svg data-dc-tpl="284" aria-hidden="true" focusable="false" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path data-dc-tpl="285" d="M6 9l6 6 6-6"></path></svg></span>
+  </summary></details></li>
+    </ol>
+    <form data-dc-tpl="286" class="st-row st-add">
+      <div data-dc-tpl="287" class="ar-field" style="flex: 1 1 240px;"><label data-dc-tpl="288" for="st-add">Add a stage</label><input data-dc-tpl="289" id="st-add" class="ar-in" placeholder="Stage name"></div>
+      <button data-dc-tpl="290" type="button" class="ar-btn2"><svg data-dc-tpl="291" aria-hidden="true" focusable="false" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path data-dc-tpl="292" d="M12 5v14M5 12h14"></path></svg>Add</button>
+      <p data-dc-tpl="293" class="ar-hint" style="flex-basis: 100%;">A stage's key is made from its name and can't change later. To rename a key, add a stage and remove the old one.</p>
+    </form>
+  </section></div><div data-dc-tpl="294" class="st-stack">
+  <section data-dc-tpl="295" class="ar-sec" aria-labelledby="sc-h">
+    <div data-dc-tpl="296" class="hd"><span data-dc-tpl="297" class="no">03</span><h2 data-dc-tpl="298" id="sc-h">Schedules</h2></div>
+    <p data-dc-tpl="299" class="st-sub">Cards that open themselves on a cadence.</p>
+    <p data-dc-tpl="300" class="st-empty">No recurring cards on this board yet. Each one you add lists its cadence, time zone, target stage, next and last run, and who set it up, with Pause and Remove.</p>
+    <form data-dc-tpl="301" class="st-grid" aria-label="Add a recurring card">
+      <div data-dc-tpl="302" class="ar-field full"><label data-dc-tpl="303" for="sc-t">Card title</label><input data-dc-tpl="304" id="sc-t" class="ar-in" placeholder="e.g. Weekly dependency check"></div>
+      <div data-dc-tpl="305" class="ar-field"><label data-dc-tpl="306" for="sc-r">Cadence</label><input data-dc-tpl="307" id="sc-r" class="ar-in" placeholder="daily at 09:00"></div>
+      <div data-dc-tpl="308" class="ar-field"><label data-dc-tpl="309" for="sc-z">Time zone</label><input data-dc-tpl="310" id="sc-z" class="ar-in" placeholder="e.g. Asia/Kolkata"></div>
+      <div data-dc-tpl="311" class="ar-field"><label data-dc-tpl="312" for="sc-s">Opens in stage</label><select data-dc-tpl="313" id="sc-s" class="ar-sel"><option data-dc-tpl="314">First stage (Reported)</option><option data-dc-tpl="315">Reproduce</option><option data-dc-tpl="316">Failing test</option><option data-dc-tpl="317">Fix</option><option data-dc-tpl="318">Integrate</option><option data-dc-tpl="319">Signed off</option><option data-dc-tpl="320">Shipped</option></select></div>
+      <div data-dc-tpl="321" class="ar-field"><label data-dc-tpl="322" for="sc-p">Priority</label><input data-dc-tpl="323" id="sc-p" class="ar-in" type="number" min="1" placeholder="e.g. 2"></div>
+      <div data-dc-tpl="324" class="ar-field full"><label data-dc-tpl="325" for="sc-o">If the previous card is still open</label><select data-dc-tpl="326" id="sc-o" class="ar-sel"><option data-dc-tpl="327">Skip this one</option><option data-dc-tpl="328">Open another anyway</option></select></div>
+      <details data-dc-tpl="329" class="full st-how"><summary data-dc-tpl="330" class="ar-lk quiet"><svg data-dc-tpl="331" aria-hidden="true" focusable="false" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle data-dc-tpl="332" cx="12" cy="12" r="8.5"></circle><path data-dc-tpl="333" d="M12 11v5M12 8v.5"></path></svg>How to write a cadence</summary>
+        <p data-dc-tpl="334" class="ar-hint">every 30 minutes · every 2 hours · every 3 days · daily at 09:00 · weekly on mon at 09:00 · monthly on 1 at 09:00 (day 1–28). Schedules are checked every five minutes, so a card may open up to five minutes late.</p></details>
+      <div data-dc-tpl="335" class="full"><button data-dc-tpl="336" type="button" class="ar-btn2"><svg data-dc-tpl="337" aria-hidden="true" focusable="false" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path data-dc-tpl="338" d="M12 5v14M5 12h14"></path></svg>Add schedule</button></div>
+    </form>
+  </section>
+
+  <section data-dc-tpl="339" class="ar-sec" aria-labelledby="gh-h">
+    <div data-dc-tpl="340" class="hd"><span data-dc-tpl="341" class="no">04</span><h2 data-dc-tpl="342" id="gh-h" class="st-gh"><svg data-dc-tpl="343" aria-hidden="true" focusable="false" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path data-dc-tpl="344" d="M9 19c-4 1.5-4-2-6-2.5M15 21v-3.5c0-1 .1-1.4-.5-2 2.8-.3 5.5-1.4 5.5-6a4.6 4.6 0 0 0-1.3-3.2 4.2 4.2 0 0 0-.1-3.2s-1-.3-3.4 1.3a11.6 11.6 0 0 0-6.2 0C6.6 2.8 5.6 3.1 5.6 3.1a4.2 4.2 0 0 0-.1 3.2A4.6 4.6 0 0 0 4.2 9.5c0 4.6 2.7 5.7 5.5 6-.6.6-.6 1.2-.5 2V21"></path></svg>GitHub</h2><span data-dc-tpl="345" class="r">Not set up</span></div>
+    <ol data-dc-tpl="346" class="st-steps"><li data-dc-tpl="347"><span data-dc-tpl="348" class="k">1</span><span data-dc-tpl="349">In your repository open Settings → Webhooks → Add webhook.</span></li><li data-dc-tpl="350"><span data-dc-tpl="351" class="k">2</span><span data-dc-tpl="352">Paste the payload URL and the secret below. Content type: <span data-dc-tpl="353" class="code">application/json</span>.</span></li><li data-dc-tpl="354"><span data-dc-tpl="355" class="k">3</span><span data-dc-tpl="356">Turn on “Open a card for each new GitHub issue” and save.</span></li></ol>
+    <div data-dc-tpl="357" class="ar-field"><label data-dc-tpl="358" for="gh-url">Payload URL</label><div data-dc-tpl="359" class="st-copy"><input data-dc-tpl="360" id="gh-url" class="ar-in" readonly="" value="https://app.superpipeline.dev/v1/boards/brd_134a0ddb6d434478/webhooks/github?tenant=tnt_vibes"><button data-dc-tpl="361" type="button" class="ar-btn2"><svg data-dc-tpl="362" aria-hidden="true" focusable="false" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect data-dc-tpl="363" x="8" y="8" width="12" height="12" rx="2"></rect><path data-dc-tpl="364" d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"></path></svg>Copy</button></div></div>
+    <div data-dc-tpl="365" class="ar-field"><label data-dc-tpl="366" for="gh-sec">Secret <span data-dc-tpl="367" class="ar-hint">· not set</span></label><div data-dc-tpl="368" class="st-copy"><input data-dc-tpl="369" id="gh-sec" class="ar-in" placeholder="Generate or paste a secret"><button data-dc-tpl="370" type="button" class="ar-btn2">Generate</button><button data-dc-tpl="371" type="button" class="ar-btn2" disabled="" aria-label="Copy secret"><svg data-dc-tpl="372" aria-hidden="true" focusable="false" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect data-dc-tpl="373" x="8" y="8" width="12" height="12" rx="2"></rect><path data-dc-tpl="374" d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"></path></svg>Copy</button></div></div>
+    <label data-dc-tpl="375" class="st-check"><input data-dc-tpl="376" type="checkbox"><span data-dc-tpl="377">Open a card for each new GitHub issue</span></label>
+    <p data-dc-tpl="378" class="st-note"><svg data-dc-tpl="379" aria-hidden="true" focusable="false" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle data-dc-tpl="380" cx="12" cy="12" r="8.5"></circle><path data-dc-tpl="381" d="M12 11v5M12 8v.5"></path></svg><span data-dc-tpl="382">Saving carries your dispatch authority onto every card this trigger opens. Without it, no agent can claim those cards.</span></p>
+    <div data-dc-tpl="383"><button data-dc-tpl="384" type="button" class="ar-btn">Save GitHub settings</button></div>
+  </section>
+
+  <section data-dc-tpl="385" class="ar-sec" aria-labelledby="ap-h">
+    <div data-dc-tpl="386" class="hd"><span data-dc-tpl="387" class="no">05</span><h2 data-dc-tpl="388" id="ap-h">Agent profiles</h2></div>
+    <p data-dc-tpl="389" class="st-sub">Named run settings (model and so on) an agent can claim with.</p>
+    <p data-dc-tpl="390" class="st-empty">No profiles yet.</p>
+    <form data-dc-tpl="391" class="st-row">
+      <div data-dc-tpl="392" class="ar-field" style="flex: 1 1 140px;"><label data-dc-tpl="393" for="ap-k">Key</label><input data-dc-tpl="394" id="ap-k" class="ar-in" placeholder="e.g. opus-careful"></div>
+      <div data-dc-tpl="395" class="ar-field" style="flex: 1 1 140px;"><label data-dc-tpl="396" for="ap-m">Model</label><input data-dc-tpl="397" id="ap-m" class="ar-in" placeholder="Model name"></div>
+      <button data-dc-tpl="398" type="button" class="ar-btn2"><svg data-dc-tpl="399" aria-hidden="true" focusable="false" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path data-dc-tpl="400" d="M12 5v14M5 12h14"></path></svg>Add</button>
+    </form>
+  </section></div></div></main><footer data-dc-tpl="401" class="ar-status" aria-label="Status">
+  <span data-dc-tpl="402">Board settings · Developer Experience</span><span data-dc-tpl="403">7 cards</span><span data-dc-tpl="404" class="sig">4 need you</span><span data-dc-tpl="405">synced 13:51</span>
+  <span data-dc-tpl="406" class="r"><span data-dc-tpl="407">⌘K commands</span><span data-dc-tpl="408">N new card</span></span></footer></div></div></div></div>
+
+
+
+</body></html>

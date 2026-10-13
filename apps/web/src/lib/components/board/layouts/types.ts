@@ -1,14 +1,10 @@
+// apps/web/src/lib/components/board/layouts/types.ts
 import type { Phase, Vibe } from '@superjackfruit/vibekit';
-import type { AttentionItem } from '$lib/components/attention/attention';
-import type { CardSummary, StageSummary } from '../card-summary';
+import type { BoardModel } from '../board-model';
 
 export interface BoardLayoutProps {
-  summaries: CardSummary[];
-  stages: StageSummary[];
-  attention: AttentionItem[];
-  phase: Phase;
+  model: BoardModel;
   vibe: Vibe;
-  boardName: string;
-  cardCount: number;
+  phase: Phase;
   onCompose: () => void;
 }

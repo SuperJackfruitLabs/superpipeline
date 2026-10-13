@@ -1,0 +1,134 @@
+<!-- apps/web/src/lib/components/operate/layouts/OperatePaper.svelte -->
+<script lang="ts">
+  import { viewport } from '$lib/viewport.svelte';
+  import { untrack } from 'svelte';
+  /** SP-Operate-Paper: "The desk" — letters waiting on you, the digest, and the ledger. */
+  import { Button, Face } from '@superjackfruit/vibekit';
+  import LineIcon from '$lib/components/parts/LineIcon.svelte';
+  import { moveTargets } from '../operate-data';
+  import { CapsUi, OperateUi } from '../operate-ui.svelte';
+  import { cut140, letters, moveOptionLabel, paperCap, paperMastEnd, paperMastLine, paperMeta, resumeOptions, RESUME_LABEL, staleLine, stopHint, usd, when } from '../operate-words';
+  import type { NeedRow, OperateLayoutProps } from './types';
+  import './operate-paper.css';
+
+  let { model, ui: uiProp, caps: capsProp }: OperateLayoutProps = $props();
+  const ui = untrack(() => uiProp) ?? new OperateUi(() => model);
+  const caps = untrack(() => capsProp) ?? new CapsUi(() => model);
+  const go = (e: MouseEvent, id: string, log = false) => { e.preventDefault(); if (log) model.openLog(id); else model.open(id); };
+  const events = (g: (typeof model.groups)[number]) => (ui.earlierOpen[g.cardId] ? [g.latest, ...g.earlier] : [g.latest]);
+  const hasCap = $derived(model.spend.cap !== null || model.spend.cardCap !== null);
+</script>
+
+{#snippet face(name: string | null, iconUrl: string | null, size: number, mood: 'needs' | 'working' | 'resting')}
+  {#if name}<Face id={name} label={name} {mood} {size} src={iconUrl ?? undefined} />{:else}<span class="noface" aria-hidden="true" style="width: {size}px; height: {size}px;"></span>{/if}
+{/snippet}
+
+{#snippet resumeForm(row: NeedRow)}
+  {@const id = row.item.cardId}
+  <form class="letter-resume" aria-label="Resume {row.agentName ?? 'this card'}" onsubmit={(e) => { e.preventDefault(); void ui.send(row); }}>
+    <label>Resume at<select class="select" id="resume-at-{id}" bind:value={ui.resumeAt}>{#each resumeOptions(model.stages, row.item.stageKey) as o (o.key)}<option value={o.key}>{o.label}</option>{/each}</select></label>
+    <label>{RESUME_LABEL}<textarea class="select" bind:value={ui.text}></textarea></label>
+    <div class="acts"><Button variant="primary" class="btn-sm" type="submit" aria-disabled={ui.canSend ? 'false' : 'true'}><LineIcon name="play" />Send back to work</Button><button class="more" type="button" onclick={() => ui.cancel()}>Cancel</button></div>
+  </form>
+{/snippet}
+
+<div class="op-pp"><div class="paper">
+  <header class="mast">
+    <div>
+      <p class="mast__eyebrow">Superpipeline · Operate · {model.boardName}</p>
+      <svelte:element this={viewport.phone ? 'h2' : 'h1'} class="op-title">The desk</svelte:element>
+      <p class="mast__line">{paperMastLine(model.nowMs, model.phase, model.needs.length, model.running.length)}</p>
+    </div>
+    <p class="mast__end">{paperMastEnd(model.boardName, model.cardCount)}<br>Times in UTC</p>
+  </header>
+  <div class="cols">
+    <section class="col" id="letters" aria-labelledby="k1">
+      <div class="kick"><h2 id="k1">Waiting on you</h2><span class="kick__n" class:kick__n--needs={model.needs.length > 0}>{letters(model.needs.length)}</span><a class="lnk" href="/workspace/needs-you">All boards <LineIcon name="arrow" size={14} /></a></div>
+      {#if model.needs.length === 0}<p class="prose">Nothing is waiting on you.</p>{/if}
+      {#each model.needs as row (row.item.id)}
+        {@const id = row.item.cardId}
+        {@const noOwner = row.item.kind === 'no-owner'}
+        {@const meta = paperMeta(row)}
+        <article class="letter" aria-labelledby="l-{id}" data-attention-row={row.item.kind}>
+          <p class="letter__meta"><span class="flag">{meta[0]}</span>{#each meta.slice(1) as m (m)}<span>{m}</span>{/each}</p>
+          <h3 id="l-{id}"><a href={model.cardHref(id)} onclick={(e: MouseEvent) => go(e, id)}>{row.item.title}</a></h3>
+          {#if noOwner}
+            <blockquote class="quote quote--board">{row.item.instruction}</blockquote>
+          {:else if row.item.detail}
+            <blockquote class="quote">“{ui.expanded[id] ? row.item.detail : cut140(row.item.detail)}”{#if row.item.detail.length > 140}<button class="more" type="button" aria-expanded={ui.expanded[id] ? 'true' : 'false'} style="margin-left: var(--vk-space-2);" onclick={() => ui.toggle(id)}>{ui.expanded[id] ? 'Show less' : 'Show all'}</button>{/if}</blockquote>
+          {/if}
+          <div class="sig">{@render face(row.agentName, row.iconUrl, 28, 'needs')}<span>{row.agentName ? `— ${row.agentName}` : '— the board · unclaimed'}</span></div>
+          {#if !noOwner}<p class="hint">{stopHint(row.item)}</p>{/if}
+          {#if ui.resuming === id}
+            {@render resumeForm(row)}
+          {:else if noOwner}
+            <div class="acts">
+              <label class="vk-visually-hidden" for="mv-{id}">Move to stage</label>
+              <select class="select" id="mv-{id}" bind:value={ui.moveTo[id]}>{#each moveTargets(model.stages, row.item.stageKey) as s (s.key)}<option value={s.key}>{moveOptionLabel('paper', s, model.agents)}</option>{/each}</select>
+              <Button variant="primary" class="btn-sm" type="button" onclick={() => ui.move(row)}><LineIcon name="move" />Move card</Button>
+              <Button variant="secondary" class="btn-sm" href={model.cardHref(id)} onclick={(e: MouseEvent) => go(e, id)}>Open card</Button>
+              <Button variant="quiet" class="btn-sm" href="/workspace/capabilities">Staff an agent</Button>
+            </div>
+          {:else}
+            <div class="acts">
+              {#each row.actions as a (a)}
+                {#if a === 'resume'}<Button variant="primary" class="btn-sm" type="button" aria-expanded="false" onclick={() => ui.openResume(row)}><LineIcon name="play" />Resume</Button>
+                {:else if a === 'review' || a === 'answer'}<Button variant="primary" class="btn-sm" href={model.cardHref(id)} onclick={(e: MouseEvent) => go(e, id)}>{a === 'review' ? 'Review' : 'Answer'}</Button>
+                {:else if a === 'open'}<Button variant="secondary" class="btn-sm" href={model.cardHref(id)} onclick={(e: MouseEvent) => go(e, id)}>Open card</Button>
+                {:else if a === 'log'}<Button variant="quiet" class="btn-sm" href={model.cardHref(id)} onclick={(e: MouseEvent) => go(e, id, true)}>Open log</Button>
+                {:else if a === 'staff'}<Button variant="quiet" class="btn-sm" href="/workspace/capabilities">Staff an agent</Button>{/if}
+              {/each}
+            </div>
+          {/if}
+          {#if ui.refusals[id]}<p class="hint" role="alert" style="color: var(--vk-color-signal-text);">{ui.refusals[id]}</p>{/if}
+        </article>
+      {/each}
+    </section>
+    <section class="col" aria-labelledby="k2">
+      <div class="kick"><h2 id="k2">Since you last looked</h2><span class="kick__n">{model.unread} unread</span></div>
+      <div class="toggle" role="group" aria-label="Which activity"><button type="button" aria-pressed={model.showRead ? 'false' : 'true'} onclick={() => (model.showRead = false)}>Unread only</button><button type="button" aria-pressed={model.showRead ? 'true' : 'false'} onclick={() => (model.showRead = true)}>Show all</button></div>
+      {#if model.groups.length === 0}<p class="prose">{model.showRead ? 'Nothing has happened on this board yet.' : 'Nothing unread.'}</p>{/if}
+      {#each model.groups as g (g.cardId)}
+        <div class="dig">
+          <h3>{@render face(g.agentName, g.iconUrl, 22, g.need ? 'needs' : 'resting')}<a href={model.cardHref(g.cardId)} onclick={(e: MouseEvent) => go(e, g.cardId)}>{g.title}</a></h3>
+          {#each events(g) as n (n.seq)}
+            <div class="dig__row"><p><span class="dig__t">{when(n)}</span>{staleLine(n, 'paper', g.need?.item.kind ?? null) ?? ` — ${n.body} `}{#if g.need}<a href="#letters" class="lnk" style="min-height: 0px; display: inline;">The reason is in its letter.</a>{/if}</p>{#if !n.read}<button class="tick" type="button" aria-label="Mark read" onclick={() => model.markRead(n.seq)}><LineIcon name="tick" size={18} /></button>{/if}</div>
+          {/each}
+          <div class="acts" style="margin-top: var(--vk-space-1);">
+            {#if g.need?.actions.includes('resume')}<Button variant="secondary" class="btn-sm" type="button" onclick={() => ui.fromActivity(g.need!, 'letters')}>Resume</Button>
+            {:else if g.need?.actions.includes('move')}<Button variant="secondary" class="btn-sm" type="button" onclick={() => ui.fromActivity(g.need!, 'letters')}>Move</Button>{/if}
+            {#if g.earlier.length > 0}<button class="more" type="button" aria-expanded={ui.earlierOpen[g.cardId] ? 'true' : 'false'} onclick={() => ui.toggleEarlier(g.cardId)}>Earlier reminders</button>{/if}
+          </div>
+        </div>
+      {/each}
+    </section>
+    <aside class="col" aria-label="At work and the ledger">
+      <section aria-labelledby="k3">
+        <div class="kick"><h2 id="k3">At work</h2><span class="kick__n">{model.running.length}</span></div>
+        {#if model.running.length === 0}
+          <p class="prose">No agent is working anything right now.</p>
+        {:else}
+          {#each model.running as r (r.cardId)}<p class="prose">{r.agentName ?? 'An agent'} on <a class="lnk" style="min-height: 0px; display: inline;" href={model.cardHref(r.cardId)} onclick={(e: MouseEvent) => go(e, r.cardId)}>{r.title}</a>, in {r.stageName}{r.costUsd > 0 ? ` · ${usd(r.costUsd)}` : ''}.</p>{/each}
+        {/if}
+      </section>
+      <section class="box" aria-labelledby="k4">
+        <div class="kick"><h2 id="k4">The ledger</h2><span class="kick__n">last 7 days</span></div>
+        {#if model.usageError}<p class="small">Couldn't load spend — {model.usageError}</p>{/if}
+        <p class="figure">{usd(model.spend.total)}</p>
+        <p class="prose" style="font-style: italic;">{paperCap(model.spend.cap)}</p>
+        <p class="small">{model.spend.top.length === 0 ? 'No agent has spent anything this week.' : `${model.spend.top[0]!.name} spent the most this week.`}</p>
+        {#if caps.editing}
+          <div class="caps">
+            <label>Board cap $<input class="select" inputmode="decimal" placeholder="none" bind:value={caps.board} /></label>
+            <label>Card cap $<input class="select" inputmode="decimal" placeholder="none" bind:value={caps.card} /></label>
+            {#each [caps.boardError, caps.cardError, caps.refused].filter(Boolean) as msg (msg)}<p class="hint" role="alert" style="color: var(--vk-color-signal-text);">{msg}</p>{/each}
+            <div class="acts"><Button variant="primary" class="btn-sm" type="button" disabled={caps.saving} onclick={() => caps.save()}>Save caps</Button><button class="more" type="button" onclick={() => caps.cancel(model.spend)}>Cancel</button></div>
+          </div>
+        {:else}
+          <div class="acts"><Button variant="secondary" class="btn-sm" type="button" onclick={() => caps.start(model.spend)}>{hasCap ? 'Change the caps' : 'Set a budget cap'}</Button></div>
+        {/if}
+        <a class="lnk" href="/b/{model.boardId}/operate/telemetry">Details <LineIcon name="arrow" size={14} /></a>
+      </section>
+    </aside>
+  </div>
+</div></div>

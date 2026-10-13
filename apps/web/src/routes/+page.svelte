@@ -19,6 +19,7 @@
   <Onboarding />
 {:else}
   <main class="flex flex-1 flex-col items-center justify-center gap-3 text-center">
+    <h1 class="sr-only">Opening your board</h1>
     <div class="mono text-muted-foreground flex items-center gap-2 text-xs"><span class="live-dot"></span>finding your board…</div>
   </main>
 {/if}

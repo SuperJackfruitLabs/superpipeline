@@ -8,6 +8,7 @@ import type { Component } from 'svelte';
 import { tick } from 'svelte';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, fireEvent, render, screen } from '@testing-library/svelte';
+import { expectBusy, type BusyForm } from '../busy-contract';
 
 /** The class a button panel gives its primary action: the Button variant or vibekit's own. */
 export const PRIMARY = /\bbg-primary\b|\bvk-button--primary\b/;
@@ -29,7 +30,19 @@ export const gatePanelProps = (over: Record<string, unknown> = {}): any => ({
   ...over,
 });
 
-export function gatePanelContract(C: Component<any>, o: { decision: 'button' | 'radio'; submit?: string }): void {
+/** The words a panel prints for the contract's fixture gate; pre-sweep panels use the defaults. */
+export interface GateWords {
+  heading: RegExp; subjectHeading: RegExp; subjectId: string | null; digest: string | RegExp; canonical: RegExp;
+  region: RegExp; noteId: string; errorBeforeControls: boolean; lead?: string | RegExp; noteLabel?: string | RegExp; seal?: [RegExp, RegExp]; count?: (n: number) => string; noPlaceholder?: boolean;
+}
+export const OLD_GATE_WORDS: GateWords = {
+  heading: /awaiting your review/, subjectHeading: /Immutable approval subject · revision 4/, subjectId: 'sub_1',
+  digest: 'sha256:3f9ac21e77aa', canonical: /"post": "Hello"/, region: /canonical JSON/i, noteId: 'gate-note-gat_1', errorBeforeControls: true,
+};
+
+export function gatePanelContract(C: Component<any>, o: { decision: 'button' | 'radio'; submit?: string; words?: GateWords; busy?: BusyForm }): void {
+  const w = o.words ?? OLD_GATE_WORDS;
+  const busy = o.busy ?? { kind: 'disabled' };
   const choose = async (name: string) => {
     await fireEvent.click(screen.getByRole(o.decision, { name }));
     if (o.decision === 'radio') await fireEvent.click(screen.getByRole('button', { name: o.submit! }));
@@ -39,27 +52,27 @@ export function gatePanelContract(C: Component<any>, o: { decision: 'button' | '
 
     it('shows the heading, the lead, the subject, the seal and the note', () => {
       render(C, gatePanelProps());
-      expect(screen.getByText(/awaiting your review/)).toBeTruthy();
-      expect(screen.getByText('Draft ready.')).toBeTruthy();
-      expect(screen.getByText(/Immutable approval subject · revision 4/)).toBeTruthy();
-      expect(screen.getByText('sub_1')).toBeTruthy();
-      expect(screen.getByText('sha256:3f9ac21e77aa')).toBeTruthy();
-      expect(screen.getByText(/"post": "Hello"/)).toBeTruthy();
-      expect(screen.getByText(/Approving exactly this version/)).toBeTruthy();
-      expect(screen.getByText(/sealed 3f9a·c21e/)).toBeTruthy();
-      const note = screen.getByLabelText('Add a note (optional)');
-      expect(note.getAttribute('id')).toBe('gate-note-gat_1');
+      expect(screen.getByText(w.heading)).toBeTruthy();
+      expect(screen.getByText(w.lead ?? 'Draft ready.')).toBeTruthy();
+      expect(screen.getByText(w.subjectHeading)).toBeTruthy();
+      if (w.subjectId) expect(screen.getByText(w.subjectId)).toBeTruthy();
+      expect(screen.getByText(w.digest)).toBeTruthy();
+      expect(screen.getByText(w.canonical)).toBeTruthy();
+      expect(screen.getByText(w.seal?.[0] ?? /Approving exactly this version/)).toBeTruthy();
+      expect(screen.getByText(w.seal?.[1] ?? /sealed 3f9a·c21e/)).toBeTruthy();
+      const note = screen.getByLabelText(w.noteLabel ?? 'Add a note (optional)');
+      expect(note.getAttribute('id')).toBe(w.noteId);
       expect(note.getAttribute('maxlength')).toBe('8192');
-      expect(note.getAttribute('placeholder')).toMatch(/Recorded with your decision/);
+      if (!w.noPlaceholder) expect(note.getAttribute('placeholder')).toMatch(/Recorded with your decision/);
       expect(note.getAttribute('aria-invalid')).not.toBe('true');
-      expect(screen.getByText('0 / 8192')).toBeTruthy();
+      expect(screen.getByText((w.count ?? ((n) => `${n} / 8192`))(0))).toBeTruthy();
     });
 
     it('keeps a scrolling subject reachable by keyboard', () => {
       render(C, gatePanelProps());
-      const region = screen.getByRole('region', { name: /canonical JSON/i });
+      const region = screen.getByRole('region', { name: w.region });
       expect(region.getAttribute('tabindex')).toBe('0');
-      expect(region.textContent).toContain('"post": "Hello"');
+      expect(region.textContent).toMatch(w.canonical);
     });
 
     it('offers every option', () => {
@@ -81,23 +94,27 @@ export function gatePanelContract(C: Component<any>, o: { decision: 'button' | '
     it('the note travels with the decision', async () => {
       resolveGate.mockReset().mockResolvedValue(new Response('{}', { status: 200 }));
       render(C, gatePanelProps());
-      await fireEvent.input(screen.getByLabelText('Add a note (optional)'), { target: { value: 'checked' } });
-      expect(screen.getByText('7 / 8192')).toBeTruthy();
+      await fireEvent.input(screen.getByLabelText(w.noteLabel ?? 'Add a note (optional)'), { target: { value: 'checked' } });
+      expect(screen.getByText((w.count ?? ((n) => `${n} / 8192`))(7))).toBeTruthy();
       await choose('Approve');
       expect(resolveGate).toHaveBeenCalledWith('brd_1', 'gat_1', 'approve', 'checked', subject);
     });
 
-    it('disables the decision controls while a decision is in flight', async () => {
+    it('holds the decision controls while a decision is in flight', async () => {
       let settle!: (r: Response) => void;
       resolveGate.mockReset().mockReturnValue(new Promise<Response>((r) => (settle = r)));
       render(C, gatePanelProps());
       await choose('Approve');
       await tick();
-      const controls = o.decision === 'button'
-        ? ['Approve', 'Request changes', 'Reject'].map((n) => screen.getByRole('button', { name: n }))
-        : [screen.getByRole('button', { name: o.submit! })];
-      for (const c of controls) expect((c as HTMLButtonElement).disabled).toBe(true);
-      settle(new Response('{}', { status: 200 }));
+      const labels = o.decision === 'button' ? ['Approve', 'Request changes', 'Reject'] : [o.submit!];
+      const controls = labels.map((n) => screen.getByRole('button', { name: n }));
+      try {
+        expectBusy(controls, busy, labels);
+        if (busy.kind === 'aria') {
+          await fireEvent.click(controls[controls.length - 1]);
+          expect(resolveGate, 'a click on a busy control is ignored').toHaveBeenCalledTimes(1);
+        }
+      } finally { settle(new Response('{}', { status: 200 })); }
       await tick();
     });
 
@@ -113,13 +130,14 @@ export function gatePanelContract(C: Component<any>, o: { decision: 'button' | '
       expect(screen.getByRole('alert').textContent).toContain('Gate already decided (409)');
     });
 
-    it('puts the gate error beside the controls: after the subject, right before the decision', () => {
+    it('puts the gate error beside the controls', () => {
       render(C, gatePanelProps({ error: 'Gate already decided (409)' }));
       const alert = screen.getByRole('alert');
       const follows = (a: Element, b: Element) => !!(a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING);
-      expect(follows(screen.getByRole('region', { name: /canonical JSON/i }), alert)).toBe(true);
-      const control = o.decision === 'button' ? screen.getAllByRole('button').find((b) => /Approve|Request changes|Reject/.test(b.textContent ?? ''))! : screen.getByRole('button', { name: o.submit! });
-      expect(follows(alert, control)).toBe(true);
+      expect(follows(screen.getByRole('region', { name: w.region }), alert)).toBe(true);
+      const controls = o.decision === 'button' ? screen.getAllByRole('button').filter((b) => /Approve|Request changes|Reject/.test(b.textContent ?? '')) : [screen.getByRole('button', { name: o.submit! })];
+      if (w.errorBeforeControls) expect(follows(alert, controls[0]!)).toBe(true);
+      else expect(follows(controls.at(-1)!, alert), 'Daylight puts it under the buttons (Card-States E)').toBe(true);
     });
 
     if (o.decision === 'radio') {

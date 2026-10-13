@@ -13,7 +13,8 @@ import { test, expect } from '@playwright/test';
  * sideways. The rule is set on the drawer body so a new section cannot forget it, and this holds
  * it there.
  */
-const API = 'http://localhost:8787';
+import { PORTS } from '../scripts/ports';
+const API = PORTS.apiUrl;
 const TENANT = { 'X-Tenant-Id': 'tnt_dev', 'Content-Type': 'application/json' };
 const PIPELINE = [{ key: 'intake', name: 'Intake', order: 0, ownerKind: 'human' }];
 
@@ -73,7 +74,7 @@ test('the page itself never scrolls sideways on a phone', async ({ page, request
 
   await page.setViewportSize(PHONE);
   await page.goto(`/b/${board.boardId}`);
-  await expect(page.getByRole('button', { name: /in Intake/ }).first()).toBeVisible();
+  await expect(page.getByRole('button', { name: /in Intake/i }).first()).toBeVisible();
 
   // A card TITLE with no spaces is the same hazard one level out: the board, not the drawer.
   const horizontal = await page.evaluate(() => ({

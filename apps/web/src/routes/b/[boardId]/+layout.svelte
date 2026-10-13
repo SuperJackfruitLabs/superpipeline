@@ -14,12 +14,14 @@
   import { page } from '$app/state';
   import { replaceState } from '$app/navigation';
   import { app } from '$lib/stores/app.svelte';
-  import BoardHeader from '$lib/components/shell/BoardHeader.svelte';
   import CardDrawer from '$lib/components/CardDrawer.svelte';
+  import { viewport } from '$lib/viewport.svelte';
   import BrandMark from '$lib/components/BrandMark.svelte';
 
   let { children } = $props();
 
+  /** A phone card is a full-screen sheet in normal flow: the board behind it is hidden, so the page is the card alone. */
+  const phoneCard = $derived(viewport.narrow && !!app.openCardId);
   const boardId = $derived(page.params.boardId!);
 
   $effect(() => {
@@ -50,15 +52,13 @@
 </script>
 
 {#if app.board}
-  <BoardHeader />
-  <main class="min-h-0 flex-1 overflow-auto">
-    {@render children()}
-  </main>
+  <div style:display={phoneCard ? 'none' : 'contents'}>{@render children()}</div>
   {#if app.openCardId}
     <CardDrawer />
   {/if}
 {:else}
-  <main class="flex flex-1 flex-col items-center justify-center gap-3 text-center">
+  <main class="min-h-viewport flex flex-col items-center justify-center gap-3 text-center">
+    <h1 class="sr-only">Loading the board</h1>
     <BrandMark class="size-7" />
     <div class="mono text-muted-foreground flex items-center gap-2 text-xs">
       <span class="live-dot"></span>{app.error ?? 'establishing link to the board…'}

@@ -9,6 +9,15 @@
  * Counted from `blockedBy.length > 0`, the same field the tile's ⛔ badge reads — never a second
  * expression for "is this card blocked".
  */
-export function blockedCountInStage(cards: Array<{ blockedBy: unknown[] }>): number {
-  return cards.filter((c) => c.blockedBy.length > 0).length;
+/**
+ * THE rule for "blocked" on a board: a card is held only while it is still waiting on a blocker. A
+ * finished or closed card keeps its badge (history) but is not held by anything. Every board, vibe
+ * and count reads this one function.
+ */
+export function isHeld(c: { state: string; blockedBy: unknown[] }): boolean {
+  return c.blockedBy.length > 0 && c.state !== 'completed' && c.state !== 'canceled' && c.state !== 'rejected';
+}
+
+export function blockedCountInStage(cards: Array<{ state: string; blockedBy: unknown[] }>): number {
+  return cards.filter(isHeld).length;
 }

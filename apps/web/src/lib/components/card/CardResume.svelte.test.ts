@@ -33,7 +33,7 @@ const card = (over: Partial<Card>): Card => ({
   id: 'crd_1', title: 'Add login', ownerUserId: 'usr_a', currentStageKey: 'build', state: 'input-required', priority: 0,
   costUsd: 0, overBudget: false, attemptCount: 1, queuedBy: null, queuedByAgentId: null, queuedGrant: null, labels: [],
   dueAt: null, archivedAt: null, parentCardId: null, openChildCount: 0, costUsdRollup: 0, blockedBy: [], projectId: null,
-  milestoneId: null, needsHuman: { reason: 'blocked', detail: 'the staging database is down' }, ...over,
+  milestoneId: null, lastAgentId: null, queuedGrantOwner: null, stageSince: '2026-10-08T10:00:00Z', createdAt: '2026-10-08T09:00:00Z', needsHuman: { reason: 'blocked', detail: 'the staging database is down' }, ...over,
 });
 
 /** The resume POST — the client may fetch a hub token first (`withAuthority`). */

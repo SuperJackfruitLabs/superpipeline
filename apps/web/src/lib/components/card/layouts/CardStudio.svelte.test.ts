@@ -1,182 +1,129 @@
+// apps/web/src/lib/components/card/layouts/CardStudio.svelte.test.ts
 // @vitest-environment jsdom
-/**
- * Studio's card is a dashboard (spec §5.2): a header with the numbers and the stage track, a
- * readout of what the agent needs, Spec/Log/Links/Talk/Cost tabs, and a command bar that stays in
- * view at the end of the scrolling body.
- */
-import { describe, it, expect, afterEach } from 'vitest';
-import { render, screen, cleanup, fireEvent } from '@testing-library/svelte';
-import { createRawSnippet } from 'svelte';
+/** The Studio drawer: bar, figures, ramp, 01-03, and 04 as five tabs. */
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { cleanup, fireEvent, render, screen, within } from '@testing-library/svelte';
 import CardStudio from './CardStudio.svelte';
-import { CARD_SECTION_KEYS, type CardCounts, type CardLayoutProps, type CardSections } from './types';
-import type { CardLead } from '../card-lead';
+import { fakeApi } from '../testing/fakes';
+import { mountModel } from '../testing/mount-model.svelte';
 
-// jsdom has no ResizeObserver; the body pads by the bars' measured height with one.
-globalThis.ResizeObserver ??= class { observe() {} unobserve() {} disconnect() {} } as never;
+vi.mock('$lib/stores/app.svelte', async () => ({ app: (await import('../testing/fakes')).fakeApp }));
+vi.mock('$lib/api', async (orig) => ({ ...(await orig<typeof import('$lib/api')>()), ...(await import('../testing/fakes')).fakeApi }));
+vi.mock('$lib/superlibrary', async (orig) => ({ ...(await orig<typeof import('$lib/superlibrary')>()), relatedForCard: vi.fn(async () => []) }));
+vi.mock('$app/navigation', () => ({ goto: vi.fn() }));
+beforeEach(() => { vi.useFakeTimers({ toFake: ['Date'] }); vi.setSystemTime(new Date('2026-10-11T08:21:00.000Z')); });
+afterEach(() => { cleanup(); vi.useRealTimers(); });
 
-afterEach(() => cleanup());
+const words = (el: Element) => (el.textContent ?? '').replace(/\s+/g, ' ').trim();
 
-const sections = Object.fromEntries(
-  CARD_SECTION_KEYS.map((k) => [k, createRawSnippet(() => ({ render: () => `<p>SECTION-${k}</p>` }))]),
-) as unknown as CardSections;
+async function mount() {
+  const { model, dispose } = mountModel();
+  await vi.waitFor(() => expect(model.detailLoaded).toBe(true));
+  const onClose = vi.fn();
+  const r = render(CardStudio, { model, vibe: 'studio', phase: 'noon', personName: 'Ira Mehta', gate: model.gateBinding, question: model.questionBinding, pageHref: model.pageHref, onClose });
+  return { model, dispose, onClose, ...r };
+}
 
-const lead = (over: Partial<CardLead> = {}): CardLead => ({
-  kind: 'stopped', needsYou: true, agentId: 'agt_r', sentence: 'Handoff refused twice.', source: 'needs-human', at: '2026-10-11T09:30:00Z', ...over,
-});
-const counts: CardCounts = { criteria: 3, planSteps: 2, specFields: 1, runs: 4, links: 2, children: 3, openChildren: 1, decisions: 0, refs: 5, attempts: 1, deliveryActive: false, description: true, handoff: false, cost: false };
-
-const props = (extra: Partial<CardLayoutProps> = {}): CardLayoutProps => ({
-  card: { id: 'crd_abcd1234', title: 'Fix the thing', attemptCount: 2, state: 'stuck', costUsd: 1.5 } as never,
-  vibe: 'studio', phase: 'noon', boardName: 'Board', personName: 'Pat',
-  stages: [{ key: 'a', name: 'Todo' }, { key: 'b', name: 'Doing' }, { key: 'c', name: 'Done' }] as never, stageIndex: 1, stageName: 'Doing', ageHours: 3, lead: lead(),
-  agent: { id: 'agt_r', name: 'Sample agent', iconUrl: null, mood: 'needs' },
-  sections, counts, editing: false, gate: null, question: null, ...extra,
-});
-
-const before = (a: string | Element, b: string | Element) => {
-  const A = typeof a === 'string' ? screen.getByText(a) : a, B = typeof b === 'string' ? screen.getByText(b) : b;
-  return !!(A.compareDocumentPosition(B) & Node.DOCUMENT_POSITION_FOLLOWING);
-};
-const panel = (name: string) => document.getElementById(screen.getByRole('tab', { name }).getAttribute('aria-controls')!)!;
-const inside = (tab: string, keys: string[]) => keys.forEach((k) => expect(panel(tab).contains(screen.getByText(`SECTION-${k}`)), k).toBe(true));
-
-describe('CardStudio', () => {
-  it('has the header bar, the title and the readout', () => {
-    render(CardStudio, props());
-    expect(screen.getByText('‹ Board / 1234')).toBeTruthy();
-    expect(screen.getByText(/^\d\d:\d\d FULL DAYLIGHT|^\d\d:\d\d .+/).textContent).toMatch(/^\d\d:\d\d \S/);
-    const h = screen.getByRole('heading', { level: 2 });
-    expect(h.id).toBe('drawer-title');
-    expect(h.textContent).toBe('Fix the thing');
-    const readout = document.querySelector('.readout')!;
-    expect(readout.textContent).toContain('Sample agent');
-    expect(readout.textContent).toContain('Handoff refused twice.');
+describe('CardStudio (4605)', () => {
+  it('heads the drawer: way back, card id, clock, Open, title, kicker, Edit beside the title', async () => {
+    const { onClose, dispose } = await mount();
+    const dialog = screen.getByRole('dialog', { name: 'Diagnose Melissa and Anna Supermessage silence — trace actual failing hop' });
+    expect(dialog.classList.contains('vk-drawer'), 'the frame is vibekit’s Drawer').toBe(true);
+    expect(within(dialog).getByText(/Developer Experience · stage 02 Reproduce/).getAttribute('data-tone'), 'a person is needed now').toBe('needs');
+    expect(screen.getByText('Card 4605')).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Copy card id 4605' })).toBeTruthy();
+    expect(screen.getByText('13:51 · midday')).toBeTruthy();
+    const open = screen.getByRole('link', { name: 'Open in new window, Shift O' });
+    expect(open.className).toContain('vk-button--tool');
+    expect(open.getAttribute('href')).toBe('/b/brd_134a0ddb6d434478/c/card_05823a57e8224605/page');
+    expect(screen.getByRole('button', { name: /^Edit/ }).closest('.vk-overlay__aside'), 'Edit sits beside the title').toBeTruthy();
+    await fireEvent.click(screen.getByRole('link', { name: 'Developer Experience' }));
+    expect(onClose).toHaveBeenCalledTimes(1);
+    dispose();
   });
-
-  it('shows the six numbers', () => {
-    render(CardStudio, props());
-    const tiles = [...document.querySelectorAll('[aria-label="Card numbers"] > *')].map((e) => e.textContent!.replace(/\s+/g, ' ').trim());
-    expect(tiles).toEqual(['stage 2/3', 'attempts 2', 'stuck for 3h', 'cost $1.50', 'blocks 2', 'sub-tasks 1/3']);
+  it('six figures, the ramp, and who and what', async () => {
+    const { dispose } = await mount();
+    const figs = [...document.querySelectorAll('.ar-figs > div')].map(words);
+    expect(figs).toEqual(['2of 7Stage', '2Attempts', '2daysWaiting on you', '$0.00Cost · no estimate', '0Blocks', '0of 0Sub-tasks open']);
+    expect(screen.getByRole('list', { name: 'Stages: stage 2 of 7, Reproduce, stopped' })).toBeTruthy();
+    const who = [...document.querySelectorAll('.cd-who > *')].map(words).join(' ');
+    expect(who).toContain('State Waiting on you');
+    expect(who).toContain('Agent Unclaimed (error-eric ran attempt 2)');
+    expect(who).toContain('Asked by super-chotu');
+    expect(who).toContain('Priority P3 Due none Labels none');
+    dispose();
   });
-
-  it('draws the stage track', () => {
-    render(CardStudio, props());
-    expect(screen.getByLabelText('Stages')).toBeTruthy();
+  it('01 says why it stopped, with the session id footnoted and copyable', async () => {
+    const { dispose } = await mount();
+    expect(screen.getByText('Why it stopped')).toBeTruthy();
+    expect(screen.getByText('error-eric · Stopped · needs you')).toBeTruthy();
+    expect(document.querySelectorAll('blockquote code')).toHaveLength(4);
+    expect(document.querySelector('blockquote .fn')!.textContent).toBe('1');
+    expect(screen.getAllByRole('button', { name: /Copy session id/ }).length).toBeGreaterThan(0);
+    dispose();
   });
-
-  it('has five tabs with their counts, Spec first', () => {
-    render(CardStudio, props());
-    expect(screen.getAllByRole('tab').map((t) => t.textContent)).toEqual(['Spec', 'Log 4', 'Links 10', 'Talk', 'Cost']);
-    expect(screen.getByRole('tab', { name: 'Spec' }).getAttribute('aria-selected')).toBe('true');
+  it('03 is the reply: resume at the current stage, a note, the hint', async () => {
+    const { dispose } = await mount();
+    const at = screen.getByLabelText('Resume at stage') as HTMLSelectElement;
+    expect([...at.options].map((o) => o.textContent)).toEqual(['01 Reported', '02 Reproduce (this stage)']);
+    expect(at.value, 'resume defaults to the card’s current stage').toBe('reproduce');
+    expect(screen.getByText('Note needed · 0/8000')).toBeTruthy();
+    await fireEvent.click(screen.getByRole('button', { name: /Send back to work/ }));
+    expect(screen.getByText('Add a note for error-eric first.')).toBeTruthy();
+    expect(document.activeElement).toBe(screen.getByLabelText(/Note to error-eric/));
+    dispose();
   });
-
-  it('puts each section in its tab', () => {
-    render(CardStudio, props());
-    inside('Spec', ['description', 'criteria', 'plan', 'details', 'project', 'facts']);
-    inside('Log 4', ['activity', 'decisions', 'handoff', 'attempts']);
-    inside('Links 10', ['links', 'subtasks', 'references', 'related']);
-    inside('Talk', ['comments']);
-    inside('Cost', ['cost', 'delivery']);
+  it('04 has five tabs with counts; arrow keys move between them', async () => {
+    const { dispose } = await mount();
+    const tabs = screen.getAllByRole('tab');
+    expect(tabs.map(words)).toEqual(['Spec 10', 'Log 2', 'Links 5', 'Talk 0', 'Cost $0.00']);
+    expect(tabs[0]!.getAttribute('aria-selected')).toBe('true');
+    expect(screen.getAllByRole('button', { name: 'Show more' })).toHaveLength(5);
+    tabs[0]!.focus();
+    await fireEvent.keyDown(tabs[0]!, { key: 'ArrowRight' });
+    expect(tabs[1]!.getAttribute('aria-selected')).toBe('true');
+    expect(screen.getByText('Latest run', { exact: false })).toBeTruthy();
+    expect(screen.getByText(/Asked by super-chotu, an agent/)).toBeTruthy();
+    await fireEvent.keyDown(tabs[1]!, { key: 'End' });
+    expect(tabs[4]!.getAttribute('aria-selected')).toBe('true');
+    expect(screen.getByText('Delivery: none approved on this card.')).toBeTruthy();
+    dispose();
   });
-
-  it('keeps every section in the DOM exactly once, hidden or not', () => {
-    render(CardStudio, props());
-    for (const k of CARD_SECTION_KEYS.filter((k) => k !== 'editForm')) expect(screen.getAllByText(`SECTION-${k}`)).toHaveLength(1);
-    expect(panel('Cost').hidden).toBe(true);
+  it('the foot has Archive and Delete as vibekit danger Button', async () => {
+    const { dispose } = await mount();
+    const foot = document.querySelector('[data-section="cardActions"]') as HTMLElement;
+    expect(within(foot).getByRole('button', { name: /Archive card/ })).toBeTruthy();
+    expect(within(foot).getByRole('button', { name: 'Delete card' }).className, 'vibekit’s danger Button, the ink outline').toContain('vk-button--danger');
+    dispose();
   });
-
-  it('puts the status row and the edit button above the tabs, and the card actions after them', () => {
-    render(CardStudio, props());
-    const tablist = screen.getByRole('tablist');
-    expect(before('SECTION-status', tablist)).toBe(true);
-    expect(before('SECTION-editButton', tablist)).toBe(true);
-    expect(before(panel('Cost'), 'SECTION-cardActions')).toBe(true);
+  it('editing swaps in the edit form; the dialog keeps its name', async () => {
+    const { model, dispose } = await mount();
+    await fireEvent.click(screen.getByRole('button', { name: /^Edit/ }));
+    expect(model.edit.editing).toBe(true);
+    expect(screen.getByRole('dialog', { name: /Diagnose Melissa and Anna/ })).toBeTruthy();
+    expect(screen.getByPlaceholderText('Title')).toBeTruthy();
+    dispose();
   });
-
-  it('puts the error first in the body and the resume bar last', () => {
-    render(CardStudio, props());
-    expect(before('SECTION-error', screen.getByRole('tablist'))).toBe(true);
-    expect(before('SECTION-cardActions', 'SECTION-resume')).toBe(true);
+  it('resume: Send back to work keeps focus and its label while sending', async () => {
+    const { dispose } = await mount();
+    let settle!: (r: Response) => void;
+    fakeApi.resumeCard.mockImplementationOnce(() => new Promise<Response>((r) => (settle = r)));
+    await fireEvent.input(screen.getByLabelText(/Note to error-eric/), { target: { value: 'look at the bridge' } });
+    const send = screen.getByRole('button', { name: /Send back to work/ }) as HTMLButtonElement;
+    send.focus();
+    await fireEvent.click(send);
+    await vi.waitFor(() => expect(send.getAttribute('aria-disabled')).toBe('true'));
+    expect(send.disabled).toBe(false);
+    expect(document.activeElement).toBe(send);
+    expect(screen.getAllByRole('status').map((s) => s.textContent)).toContain('Sending…');
+    await fireEvent.click(send);
+    expect(fakeApi.resumeCard).toHaveBeenCalledTimes(1);
+    settle(new Response('{}', { status: 200 }));
+    dispose();
   });
-
-  it('puts the question command bar after the tabs and the actions', () => {
-    const question = { model: { text: '', error: null, answering: false, send: () => {} }, elicitation: { id: 'eli_1', agentId: 'agt_r', question: 'Run?', signal: 'question', options: [{ name: 'y', title: 'Yes' }] }, agent: { id: 'agt_r', name: 'Sample agent', iconUrl: null, mood: 'needs' } } as never;
-    const { container } = render(CardStudio, props({ question }));
-    const bar = container.querySelector('.command-bar')!;
-    expect(bar.compareDocumentPosition(screen.getByText('SECTION-cardActions')) & Node.DOCUMENT_POSITION_PRECEDING).toBeTruthy();
-    expect(bar.compareDocumentPosition(screen.getByText('SECTION-resume')) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
-  });
-
-  it('the command bar has no overflow or transform ancestor between it and the scrolling body', () => {
-    const question = { model: { text: '', error: null, answering: false, send: () => {} }, elicitation: { id: 'eli_1', agentId: 'agt_r', question: 'Run?', signal: 'question', options: [{ name: 'y', title: 'Yes' }] }, agent: { id: 'agt_r', name: 'Sample agent', iconUrl: null, mood: 'needs' } } as never;
-    const { container } = render(CardStudio, props({ question }));
-    const scroller = container.querySelector('.overflow-y-auto.flex-1')!;
-    for (let e = container.querySelector('.command-bar')!.parentElement; e && e !== scroller; e = e.parentElement) {
-      expect(e.className, e.tagName).not.toMatch(/\boverflow|\btransform|\btranslate/);
-    }
-    expect(scroller.contains(container.querySelector('.command-bar'))).toBe(true);
-    expect((scroller as HTMLElement).style.scrollPaddingBottom).toMatch(/^\d+px$/);
-  });
-
-  it('shows the edit form while editing and keeps the title, visually hidden', async () => {
-    render(CardStudio, props({ editing: true }));
-    expect(screen.getAllByText('SECTION-editForm')).toHaveLength(1);
-    // The title stays for the dialog's name, visually hidden.
-    expect(screen.getByRole('heading', { level: 2 }).classList.contains('sr-only')).toBe(true);
-  });
-
-  it('puts the edit form in the scrolling body, not the capped header', () => {
-    render(CardStudio, props({ editing: true }));
-    const form = screen.getByText('SECTION-editForm');
-    expect(screen.getByRole('region', { name: 'Card summary' }).contains(form)).toBe(false);
-    expect(before('SECTION-error', form)).toBe(true);
-  });
-
-  it('caps the header so a long reason cannot push the body off a phone', () => {
-    const { container } = render(CardStudio, props());
-    const head = container.querySelector('[aria-label="Card summary"]')!;
-    expect(head.className).toMatch(/max-h-\[40dvh\]/);
-    expect(head.className).toMatch(/overflow-y-auto/);
-    expect(head.getAttribute('tabindex')).toBe('0');
-  });
-
-  it('leaves room for the close button', () => {
-    const { container } = render(CardStudio, props());
-    expect(container.querySelector('.pr-12, .pr-14')).toBeTruthy();
-  });
-
-  it('switches tabs', async () => {
-    render(CardStudio, props());
-    await fireEvent.click(screen.getByRole('tab', { name: 'Talk' }));
-    expect(panel('Talk').hidden).toBe(false);
-    expect(panel('Spec').hidden).toBe(true);
-  });
-});
-
-describe('CardStudio gate and question frames', () => {
-  const gate = { boardId: 'b', gate: { id: 'gat_1', cardId: 'c', status: 'pending', options: [], approvalSubject: { id: 'sub_1', digest: 'sha256:3f9ac21e77aa', schema: 's', revision: 4, canonical: { post: 'Hello' } } }, error: null, onResponse: async () => true } as never;
-  it('shows the heading, lead and approval subject above the tabs, and only the bar after them', () => {
-    const { container } = render(CardStudio, props({ gate }));
-    const tablist = screen.getByRole('tablist');
-    for (const t of [screen.getByText(/awaiting your review/), screen.getByText(/Immutable approval subject/), screen.getByRole('region', { name: /canonical JSON/ })]) {
-      expect(!!(t.compareDocumentPosition(tablist) & Node.DOCUMENT_POSITION_FOLLOWING), t.textContent!).toBe(true);
-    }
-    const bar = container.querySelector('.command-bar')!;
-    expect(!!(tablist.compareDocumentPosition(bar) & Node.DOCUMENT_POSITION_FOLLOWING)).toBe(true);
-    expect(bar.contains(screen.getByRole('button', { name: 'Approve' }))).toBe(true);
-    expect(container.querySelector('.command-bar')!.parentElement!.contains(screen.getByText('SECTION-resume'))).toBe(true);
-  });
-  it('shows the question once, in the readout above the tabs', () => {
-    const question = { model: { text: '', error: null, answering: false, send: () => {} }, elicitation: { id: 'eli_1', agentId: 'agt_r', question: 'Shall I run the tests?', signal: 'question', options: [{ name: 'y', title: 'Yes' }] }, agent: { id: 'agt_r', name: 'Sample agent', iconUrl: null, mood: 'needs' } } as never;
-    render(CardStudio, props({ question, lead: lead({ kind: 'question', sentence: 'Shall I run the tests?', source: 'question' }) }));
-    expect(!!(screen.getByText('Shall I run the tests?').compareDocumentPosition(screen.getByRole('tablist')) & Node.DOCUMENT_POSITION_FOLLOWING)).toBe(true);
-  });
-  it('in the resume state the bar caps its height and scrolls on its own', () => {
-    const { container } = render(CardStudio, props());
-    const bar = container.querySelector('.resume-bar')!;
-    expect(bar.className).toMatch(/max-h-\[35dvh\]/);
-    expect(bar.className).toMatch(/overflow-y-auto/);
-    expect(bar.parentElement!.className).toMatch(/\bsticky\b/);
-    expect(bar.contains(screen.getByText('SECTION-resume'))).toBe(true);
+  it('opens inside the drawer (vibekit focuses its first control; the reference is drawn unfocused, so the pixel step blurs it)', async () => {
+    const { dispose } = await mount();
+    await vi.waitFor(() => expect(document.activeElement!.closest('.vk-drawer')).toBeTruthy());
+    dispose();
   });
 });

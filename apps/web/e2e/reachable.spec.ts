@@ -19,7 +19,8 @@ import { test, expect, type Page } from '@playwright/test';
  */
 
 const BOARD_KEY = 'superpipeline.boardId';
-const API = 'http://localhost:8787';
+import { PORTS } from '../scripts/ports';
+const API = PORTS.apiUrl;
 const TENANT = { 'X-Tenant-Id': 'tnt_dev', 'Content-Type': 'application/json' };
 
 const PIPELINE = [
@@ -64,7 +65,9 @@ async function overflowing(page: Page): Promise<string[]> {
     return [...document.querySelectorAll('*')]
       .filter((el) => {
         const r = el.getBoundingClientRect();
-        return r.width > 0 && r.height > 0 && r.right > window.innerWidth + 1 && !scrollableAncestor(el);
+        // A decorative piece its own box clips on purpose (the Daylight phone header's sun, half off its sky card) is not content.
+        const decorClipped = el.closest('[aria-hidden="true"]') && el.parentElement && getComputedStyle(el.parentElement).overflow !== 'visible';
+        return r.width > 0 && r.height > 0 && r.right > window.innerWidth + 1 && !scrollableAncestor(el) && !decorClipped;
       })
       .slice(0, 10)
       .map((el) => `${el.tagName.toLowerCase()}.${(el.className || '').toString().split(' ')[0]}`);
@@ -89,6 +92,8 @@ async function tooSmall(page: Page): Promise<string[]> {
           ? ((el as HTMLElement).offsetParent ?? el).getBoundingClientRect()
           : el.getBoundingClientRect(),
       }))
+      // Clipped out of sight until focused (vibekit's skip link): not a target anyone can see to tap.
+      .filter(({ el }) => getComputedStyle(el).clipPath !== 'inset(50%)')
       .filter(({ r }) => r.width > 0 && r.height > 0 && (r.width < 24 || r.height < 24))
       .map(({ el, r }) => `${(el.getAttribute('aria-label') || el.textContent || '?').trim().slice(0, 24)} ${Math.round(r.width)}x${Math.round(r.height)}`),
   );
@@ -102,7 +107,11 @@ async function withoutFocusRing(page: Page): Promise<string[]> {
       const r = el.getBoundingClientRect();
       if (r.width === 0 || r.height === 0) continue;
       el.focus();
-      if (getComputedStyle(el).outlineStyle === 'none') {
+      // A stretched title draws its ring on `::after` (Daylight) or on the tile that holds it (the pre-sweep tile).
+      const after = getComputedStyle(el, '::after');
+      const holder = el.closest('.tile');
+      const ring = el.hasAttribute('data-stretch-target') ? (after.outlineStyle !== 'none' || !holder ? after : getComputedStyle(holder)) : getComputedStyle(el);
+      if (ring.outlineStyle === 'none') {
         out.push((el.getAttribute('aria-label') || el.textContent || '?').trim().slice(0, 28));
       }
     }
@@ -120,7 +129,7 @@ for (const [name, size] of [['a phone', PHONE], ['a desktop', DESKTOP]] as const
 
     test('nothing is clipped off the right edge', async ({ page }) => {
       await page.goto(`/b/${boardId}`);
-      await expect(page.getByText('Intake', { exact: true })).toBeVisible();
+      await expect(page.getByText(/^Intake\b/).first()).toBeVisible();
 
       expect(await overflowing(page)).toEqual([]);
       // The body must not scroll sideways either — clipped and scrollable are different failures,
@@ -131,13 +140,13 @@ for (const [name, size] of [['a phone', PHONE], ['a desktop', DESKTOP]] as const
 
     test('every interactive target meets the 24px floor', async ({ page }) => {
       await page.goto(`/b/${boardId}`);
-      await expect(page.getByText('Intake', { exact: true })).toBeVisible();
+      await expect(page.getByText(/^Intake\b/).first()).toBeVisible();
       expect(await tooSmall(page)).toEqual([]);
     });
 
     test('every rendered control shows focus', async ({ page }) => {
       await page.goto(`/b/${boardId}`);
-      await expect(page.getByText('Intake', { exact: true })).toBeVisible();
+      await expect(page.getByText(/^Intake\b/).first()).toBeVisible();
       expect(await withoutFocusRing(page)).toEqual([]);
     });
 
@@ -145,7 +154,7 @@ for (const [name, size] of [['a phone', PHONE], ['a desktop', DESKTOP]] as const
       // The audit's severe finding in one assertion: on a phone, Agents was off-screen, and with
       // it capabilities, members, tokens and the fleet link.
       await page.goto(`/b/${boardId}`);
-      const workspace = page.getByRole('link', { name: /workspace/i }).or(page.getByRole('button', { name: /workspace|agents/i })).first();
+      const workspace = page.getByRole('link', { name: /^workspace/i }).or(page.getByRole('button', { name: /^(workspace|agents)/i })).first();
       await expect(workspace).toBeVisible();
       await workspace.click();
       await expect(page.getByRole('heading', { name: /agents/i }).or(page.getByText(/capabilit/i)).first()).toBeVisible();
@@ -157,7 +166,8 @@ for (const [name, size] of [['a phone', PHONE], ['a desktop', DESKTOP]] as const
       // scanning for unreferenced components, and pinned here so it cannot happen again.
       await page.goto(`/b/${boardId}`);
       await page.getByRole('button', { name: /Reachable E2E/ }).first().click();
-      await expect(page.getByRole('menuitem', { name: '+ New board' })).toBeVisible();
+      // The board switcher (SP-Dlg-BoardSwitcher) ends with New board.
+      await expect(page.getByRole('dialog', { name: 'Find a board' }).getByRole('button', { name: 'New board' })).toBeVisible();
     });
 
     test('every stage is reachable', async ({ page }) => {
@@ -165,7 +175,8 @@ for (const [name, size] of [['a phone', PHONE], ['a desktop', DESKTOP]] as const
       // phone the lanes were a squeezed desktop layout.
       await page.goto(`/b/${boardId}`);
       for (const stage of ['Intake', 'Plan', 'Build', 'Security review', 'Sign-off', 'Shipped']) {
-        await expect(page.getByText(stage, { exact: true }).first()).toBeAttached();
+        // The phone boards print a stage with its count or owner beside it ("Intake 3", "Plan · planning · nobody").
+        await expect(page.getByText(new RegExp(`^${stage}\\b`)).first()).toBeAttached();
       }
     });
   });

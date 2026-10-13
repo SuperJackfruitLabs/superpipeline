@@ -29,6 +29,10 @@ describe('BoardDO — notifications (docs/07 §7)', () => {
       expect(gate?.cardId).toBe(c.value.id);
       expect(gate?.userId).toBe('usr_owner');
       expect(gate?.read).toBe(false);
+      // The board log reads "Notification: <text>", so the event carries the text itself.
+      const events = await board.getEvents(500);
+      const ev = [...events].reverse().find((e) => e.type === 'notification');
+      expect((ev?.payload as { body?: string }).body).toBe(gate?.body);
     });
   });
 

@@ -12,18 +12,22 @@
  */
 import {
   appearanceCookie,
+  accentFor,
   appearanceFromCookieHeader,
   defaultTimeStrength,
   DEFAULT_APPEARANCE,
   htmlAttributes,
   phaseAt,
   resolveTheme,
+  withAccent,
+  type AccentChoice,
   type Appearance,
   type Phase,
   type Place,
   type Theme,
 } from '@superjackfruit/vibekit';
 
+const PRODUCT = 'superpipeline' as const;
 const PLACE_KEY = 'superpipeline.place';
 const LEGACY_THEME_KEY = 'superpipeline.theme';
 const TICK_MS = 60_000;
@@ -58,6 +62,7 @@ export class AppearanceStore {
   place = $state<Place | null>(null);
   pickerOpen = $state(false);
   theme: Theme = $derived(resolveTheme(this.value.theme, this.phase));
+  accent: AccentChoice = $derived(accentFor(this.value, PRODUCT));
 
   #timer: ReturnType<typeof setInterval> | undefined;
   #now: () => Date = () => new Date();
@@ -102,6 +107,10 @@ export class AppearanceStore {
     this.#apply(true);
   }
 
+  setAccent(choice: AccentChoice): void {
+    this.set(withAccent(this.value, PRODUCT, choice));
+  }
+
   /** Light or Dark, explicitly: the opposite of what is showing now. */
   toggleTheme(): void {
     this.set({ theme: this.theme === 'dark' ? 'light' : 'dark' });
@@ -143,7 +152,13 @@ export class AppearanceStore {
 
   #apply(animate: boolean): void {
     this.phase = this.#phaseNow();
-    const attrs = htmlAttributes(this.value, this.phase);
+    // data-vibe and data-theme belong to VibeRoot; this store writes only the three it owns.
+    const all = htmlAttributes(this.value, this.phase, PRODUCT);
+    const attrs: Record<string, string> = {
+      'data-phase': all['data-phase'],
+      'data-time': all['data-time'],
+      'data-accent': all['data-accent'],
+    };
     const el = document.documentElement;
     if (Object.entries(attrs).every(([k, v]) => el.getAttribute(k) === v)) return;
     const paint = () => {

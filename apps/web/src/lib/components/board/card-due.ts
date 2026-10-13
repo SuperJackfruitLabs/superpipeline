@@ -1,7 +1,7 @@
 /**
  * A card is overdue the day AFTER its due date, and never once it is finished.
  *
- * Extracted from CardTile so it can be tested: it used to be an inline `$derived` comparing a
+ * Extracted from the old board tile so it can be tested: it used to be an inline `$derived` comparing a
  * `spec.due` blob value against `Date.now()`, which no test could reach and no test covered.
  *
  * `today` is a parameter rather than read from the clock — the same reason the DO's sweep takes

@@ -1,0 +1,58 @@
+/* Ported verbatim from e2e/reference/mockups/SP-Workspace-Agents-Studio (prefixes wa-, menu, mi, tokrow, disc-ico, where .wa-main) by scripts/pixel/extract-css.mjs. */
+.wa-main { display: flex; flex-direction: column; gap: 36px; padding: 24px 0 40px; }
+:where(.wa-main) .wa-head { display: flex; flex-direction: column; gap: 14px; }
+:where(.wa-main) .wa-head > .ar-lk { align-self: flex-start; }
+:where(.wa-main) .wa-hero { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: end; column-gap: 24px; }
+:where(.wa-main) .wa-hero .big { font: 900 120px/.8 var(--ff); font-stretch: 72%; letter-spacing: -.04em; }
+:where(.wa-main) .wa-hero .txt { display: flex; flex-direction: column; gap: 6px; }
+:where(.wa-main) .wa-hero h1 { font: 800 36px/1.05 var(--ff); font-stretch: 82%; letter-spacing: -.015em; }
+:where(.wa-main) .wa-hero p { max-width: 720px; font: 400 17px/1.45 var(--fs); }
+:where(.wa-main) .wa-tabs { display: flex; flex-wrap: wrap; gap: 4px 28px; border-bottom: 1px solid var(--hair); }
+:where(.wa-main) .wa-ct { display: inline-grid; place-items: center; min-width: 20px; height: 20px; padding: 0 5px; border-radius: 2px; background: var(--vk-color-signal-text); color: var(--vk-color-primary-fg); font: 600 12px/1 var(--fm); }
+:where(.wa-main) .wa-tok { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; padding: 14px 16px; border: 1.5px solid var(--rule); border-radius: 2px; }
+:where(.wa-main) .wa-tok .ico { display: inline-grid; flex: none; }
+:where(.wa-main) .wa-tok .msg { flex: 1 1 280px; font: 400 16px/1.45 var(--fs); }
+:where(.wa-main) .wa-tok .msg strong { font: 800 14px var(--ff); }
+:where(.wa-main) .wa-tok .box { flex: 1 1 320px; min-width: 0; padding: 10px 12px; border: 1px solid var(--rule); border-radius: 0; background: var(--field); font: 500 14px var(--fm); overflow-wrap: anywhere; }
+:where(.wa-main) .wa-notes li { grid-template-columns: 28px minmax(0, 1fr); }
+:where(.wa-main) .wa-notes li .k { display: inline-grid; padding-top: 2px; }
+:where(.wa-main) .wa-notes b { font: 700 14px var(--ff); }
+:where(.wa-main) .ar-tbl.wa-tbl td { vertical-align: middle; }
+:where(.wa-main) .wa-tbl td.wa-f { line-height: 0; }
+:where(.wa-main) .ar-tbl.wa-tbl tr.sel td { vertical-align: top; padding-top: 16px; padding-bottom: 20px; }
+:where(.wa-main) .wa-nm { font: 700 15px/1.3 var(--ff); overflow-wrap: anywhere; }
+:where(.wa-main) .wa-meta { font-size: 13px; line-height: 1.4; color: var(--muted); }
+:where(.wa-main) .wa-body { font-size: 14px; }
+:where(.wa-main) .wa-n { white-space: nowrap; }
+:where(.wa-main) .wa-linked { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 600; white-space: nowrap; }
+:where(.wa-main) .wa-caps { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; min-width: 0; }
+:where(.wa-main) .wa-cap { display: inline-flex; align-items: center; min-height: 24px; padding: 0 8px; border: 1px solid var(--rule); border-radius: 2px; font: 500 12px/1.2 var(--fm); white-space: nowrap; }
+:where(.wa-main) .wa-pick { display: inline-flex; align-items: center; gap: 4px; min-height: 36px; padding: 0 10px; border: 1px solid var(--rule); border-radius: 2px; background: transparent; color: var(--text); font: 500 13px/1 var(--fm); white-space: nowrap; cursor: pointer; }
+:where(.wa-main) .wa-pick[aria-pressed="true"] { background: var(--text); color: var(--bg); }
+:where(.wa-main) .wa-pick[aria-pressed="false"][data-unused] { color: var(--vk-color-faint); border-color: var(--hair); }
+:where(.wa-main) .wa-act { text-align: right; }
+:where(.wa-main) .wa-edit { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px 24px; }
+:where(.wa-main) .wa-new { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 2fr); gap: 16px 24px; align-items: start; }
+:where(.wa-main) .wa-edit .ar-in[id$="newcap"], :where(.wa-main) .wa-new .ar-in#na-new { width: 200px; min-height: 36px; }
+:where(.wa-main) .menu { position: relative; display: inline-block; text-align: left; }
+:where(.wa-main) .menu > summary { list-style: none; cursor: pointer; }
+:where(.wa-main) .menu > summary::-webkit-details-marker { display: none; }
+:where(.wa-main) .disc-ico { display: inline-grid; transition: transform var(--vk-motion-fast) var(--vk-motion-easing); }
+:where(.wa-main) .menu[open] > summary .disc-ico { transform: rotate(180deg); }
+:where(.wa-main) .menu-pop { position: absolute; right: 0; top: calc(100% + 6px); z-index: 5; width: 430px; display: flex; flex-direction: column; padding: 8px; border: 1.5px solid var(--rule); border-radius: 2px; background: var(--paper); }
+:where(.wa-main) .mi { display: flex; align-items: center; gap: 12px; min-height: 44px; padding: 0 10px; border: 0; border-radius: 2px; background: transparent; color: var(--text); font: 600 14px var(--ff); text-align: left; white-space: nowrap; cursor: pointer; }
+:where(.wa-main) .mi svg { flex: none; }
+:where(.wa-main) .mi:hover { background: var(--soft); }
+:where(.wa-main) .mi .wa-meta { font: 500 12px var(--fm); }
+:where(.wa-main) .mi-danger { color: var(--text); }
+:where(.wa-main) .mi-group { display: flex; flex-direction: column; gap: 2px; margin: 8px 0; padding: 8px 0; border-top: 1px solid var(--hair); border-bottom: 1px solid var(--hair); }
+:where(.wa-main) .mi-group > .kick, :where(.wa-main) .mi-group > .wa-meta { padding: 0 10px; }
+:where(.wa-main) .tokrow { display: grid; grid-template-columns: 1fr auto auto; align-items: center; gap: 8px; padding-left: 10px; }
+:where(.wa-main) .tokrow .wa-meta { font: 500 12px var(--fm); }
+/* The Annual tab row the workspace draws itself (the Annual base keeps only the shell's own tabs out). Its `.wa-notes` columns are left to the base, as in the reference's cascade. */
+:where(.wa-main) .ar-tab { position: relative; display: inline-flex; align-items: center; gap: 6px; min-height: 48px; padding: 0; border: 0; background: transparent; color: var(--muted); font: 700 14px var(--ff); text-decoration: none; white-space: nowrap; cursor: pointer; }
+:where(.wa-main) .ar-tab[aria-current="page"], :where(.wa-main) .ar-tab[aria-pressed="true"], :where(.wa-main) .ar-tab[aria-selected="true"] { color: var(--text); }
+:where(.wa-main) .ar-tab[aria-current="page"]::after, :where(.wa-main) .ar-tab[aria-pressed="true"]::after, :where(.wa-main) .ar-tab[aria-selected="true"]::after { content: ""; position: absolute; left: 0; right: 0; bottom: -1px; height: 3px; background: var(--text); }
+:where(.wa-main) .ar-tab .mono { font-size: 12px; font-weight: 500; }
+/* Hand deltas. The shell draws Studio's 40px side gutter, so the page keeps only its own top and bottom padding; the title is an h2 on phones, with the h1's type. */
+:where(.wa-main) .wa-hero h2 { font: 800 36px/1.05 var(--ff); font-stretch: 82%; letter-spacing: -.015em; }

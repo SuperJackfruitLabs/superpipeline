@@ -1,0 +1,59 @@
+/* Ported verbatim from e2e/reference/mockups/SP-Phone-Board-Daylight (prefixes step, lane, lh, tile, trow, stg, mv, tt, chips, chip, bub, say, meta, agent, mood, due, act, note, empties, sep, match ^\.(ico|sr)$, where .pd-board) by scripts/pixel/extract-css.mjs. */
+:where(.pd-board) .ico {width:20px;height:20px;flex:none;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+:where(.pd-board) .sr {position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip-path:inset(50%);white-space:nowrap;border:0}
+:where(.pd-board) .step {display:flex;flex-wrap:wrap;gap:6px;padding:14px 16px 6px}
+:where(.pd-board) .step a {display:inline-flex;align-items:center;gap:6px;min-height:44px;padding:0 12px;border-radius:var(--vk-radius-pill);background:var(--vk-color-surface);border:1px solid var(--vk-color-line);text-decoration:none;font-size:15px;color:var(--vk-color-text)}
+:where(.pd-board) .step a b {font-family:var(--vk-font-mono);font-size:13px;font-weight:500}
+:where(.pd-board) .step a[aria-current="true"] {background:var(--vk-color-primary);color:var(--vk-color-primary-fg);border-color:var(--vk-color-primary)}
+:where(.pd-board) .step a.needs {background:var(--vk-color-signal-wash);color:var(--vk-color-signal-text);border-color:var(--vk-color-signal);font-weight:700}
+:where(.pd-board) .step a.empty {color:var(--vk-color-muted);border-style:dashed}
+:where(.pd-board) .lane {display:flex;flex-direction:column;gap:12px;padding:16px}
+:where(.pd-board) .lh {display:flex;flex-direction:column;gap:2px}
+:where(.pd-board) .lh h2 {font-family:var(--vk-font-display);font-size:20px;font-weight:700;display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
+:where(.pd-board) .lh h2 .n {font-family:var(--vk-font-mono);font-size:14px;font-weight:500;color:var(--vk-color-muted)}
+:where(.pd-board) .lh p {font-size:14px;color:var(--vk-color-muted)}
+:where(.pd-board) .lane.wants {background:var(--vk-color-signal-wash);border-top:2px solid var(--vk-color-signal)}
+:where(.pd-board) .lane.wants .lh h2 {color:var(--vk-color-signal-text)}
+:where(.pd-board) .tile {position:relative;display:flex;flex-direction:column;gap:10px;padding:14px 14px 14px 18px;background:var(--vk-color-surface);border-radius:var(--vk-radius-md);border:1px solid var(--vk-color-line);overflow:hidden}
+:where(.pd-board) .tile::before {content:"";position:absolute;left:0;top:0;bottom:0;width:5px;background:transparent}
+:where(.pd-board) .tile.p1::before {background:var(--vk-color-signal)}
+:where(.pd-board) .tile.p2::before {background:var(--vk-color-primary)}
+:where(.pd-board) .trow {display:flex;align-items:center;gap:8px;justify-content:space-between}
+:where(.pd-board) .stg {font-size:13px;color:var(--vk-color-muted);overflow-wrap:anywhere;min-width:0}
+:where(.pd-board) .mv {display:inline-flex;align-items:center;gap:4px;min-height:44px;padding:0 10px;margin:-10px -6px -10px 0;border:0;background:transparent;border-radius:var(--vk-radius-sm);font-size:14px;color:var(--vk-color-muted);cursor:pointer}
+:where(.pd-board) .tt {display:block;width:100%;border:0;background:transparent;padding:0;text-align:left;font-family:var(--vk-font-display);font-size:18px;line-height:1.25;font-weight:650;cursor:pointer;overflow-wrap:anywhere}
+:where(.pd-board) .chips {display:flex;flex-wrap:wrap;gap:6px}
+:where(.pd-board) .chip {display:inline-flex;align-items:center;gap:5px;min-height:26px;padding:2px 10px;border-radius:var(--vk-radius-pill);background:var(--vk-color-raised);border:1px solid var(--vk-color-line);font-size:13px;color:var(--vk-color-text);max-width:100%;overflow-wrap:anywhere}
+:where(.pd-board) .chip .ico {width:14px;height:14px}
+:where(.pd-board) .chip.ref {font-family:var(--vk-font-mono);font-size:12px;border-radius:var(--vk-radius-sm)}
+:where(.pd-board) .chip.blk {background:var(--vk-color-surface);border-color:var(--vk-color-muted)}
+:where(.pd-board) .bub {display:flex;gap:10px;align-items:flex-start}
+:where(.pd-board) .bub .say {flex:1;min-width:0;background:var(--vk-mood-needs);color:var(--vk-face-ink);border-radius:4px var(--vk-radius-md) var(--vk-radius-md) var(--vk-radius-md);padding:10px 12px;display:flex;flex-direction:column;gap:4px}
+:where(.pd-board) .say .who {font-size:13px;font-weight:700}
+:where(.pd-board) .say p {font-size:15px;line-height:1.45;overflow-wrap:anywhere;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+:where(.pd-board) .say button {align-self:flex-start;min-height:32px;border:0;background:transparent;padding:0;font-weight:700;font-size:14px;text-decoration:underline;text-underline-offset:3px;color:var(--vk-face-ink);cursor:pointer}
+:where(.pd-board) .meta {display:flex;flex-wrap:wrap;align-items:center;gap:6px 12px;font-size:14px;color:var(--vk-color-muted)}
+:where(.pd-board) .agent {display:inline-flex;align-items:center;gap:6px;color:var(--vk-color-text)}
+:where(.pd-board) .mood {font-size:13px;color:var(--vk-color-muted)}
+:where(.pd-board) .due {display:inline-flex;align-items:center;gap:4px;color:var(--vk-color-signal-text);font-weight:700}
+:where(.pd-board) .due .ico {width:16px;height:16px}
+:where(.pd-board) .act {display:flex;gap:8px}
+:where(.pd-board) .note {font-size:14px;color:var(--vk-color-muted);padding:12px 14px;border:1px dashed var(--vk-color-line);border-radius:var(--vk-radius-md);background:var(--vk-color-surface)}
+:where(.pd-board) .note a {font-weight:700}
+:where(.pd-board) .empties {margin:0 16px 20px;padding:12px 14px;border:1px dashed var(--vk-color-line);border-radius:var(--vk-radius-md);display:flex;flex-direction:column;gap:6px}
+:where(.pd-board) .empties h2 {font-size:15px;font-weight:700}
+:where(.pd-board) .empties li {font-size:14px;color:var(--vk-color-muted);overflow-wrap:anywhere}
+:where(.pd-board) .empties li b {color:var(--vk-color-text);font-weight:600}
+:where(.pd-board) .sep {height:1px;background:var(--vk-color-line);margin:0 16px}
+/* Hand-written: the board root takes no box, so the reference's `.r` flex column lays out the lanes directly. */
+.pd-board { display: contents; font-size: 16px; line-height: 1.45; }
+/* The reference's link keeps the browser's underline (the app resets it). */
+:where(.pd-board) .chip.ref { text-decoration: underline; }
+/* "Read the rest" opens the 3-line clamp in place. */
+:where(.pd-board) .say p.open { display: block; overflow: visible; }
+/* A block box around each tile (the lane's flex item), positioned for the move menu; the same size as the tile. */
+:where(.pd-board) .pd-tilebox { position: relative; }
+/* The action is a vibekit Button; the page only places it (layout, as the reference's `.btn.go` does). */
+:where(.pd-board) .act .vk-button { flex: 1; }
+/* A one-line title is still a 44px target (the reference's titles all wrap onto two lines or more). */
+:where(.pd-board) .tt { min-height: 44px; }

@@ -14,7 +14,7 @@ const card = (over: Partial<Card> = {}): Card => ({
   id: `crd_${++n}`, title: `Card ${n}`, spec: null, ownerUserId: 'usr_a', currentStageKey: 'a', state: 'submitted', priority: 0,
   costUsd: 0, overBudget: false, attemptCount: 0, delegateAgentId: null, queuedBy: null, queuedByAgentId: null, queuedGrant: null,
   labels: [], dueAt: null, archivedAt: null, parentCardId: null, openChildCount: 0, costUsdRollup: 0, blockedBy: [],
-  projectId: null, milestoneId: null, stateSince: '2026-10-11T09:00:00Z', ...over,
+  projectId: null, milestoneId: null, stateSince: '2026-10-11T09:00:00Z', lastAgentId: null, queuedGrantOwner: null, stageSince: '2026-10-11T09:00:00Z', createdAt: '2026-10-10T09:00:00Z', ...over,
 });
 const board = (cards: Card[], extra: Partial<BoardSnapshot> = {}): BoardSnapshot =>
   ({ boardId: 'brd_1', tenantId: 'tnt', name: 'Board', stages, cards, gates: [], elicitations: [], references: [], usage: { cardUsdCap: 2 }, stale: { enabled: true, afterHours: 24 }, ...extra }) as unknown as BoardSnapshot;
@@ -38,16 +38,17 @@ describe('summarize', () => {
     expect(out[3]!.mood).toBe('thinking');
   });
 
-  it('shows three known labels and counts the rest; an unknown (deleted) label renders nothing and is not counted', () => {
-    // Matches today's tile: a deleted label id draws no chip and is not in the "+N".
+  it('shows three known labels and counts every other id, a deleted label included (G8)', () => {
     const known = new Map([...ctx.labels, ['a', { name: 'a', colour: '' }], ['b', { name: 'b', colour: '' }], ['c', { name: 'c', colour: '' }], ['d', { name: 'd', colour: '' }]]);
     const c = card({ labels: ['lbl_1', 'gone', 'a', 'b', 'c', 'd'] });
     const [s] = summarize(board([c]), [c], { ...ctx, labels: known });
     expect(s!.labels.map((l) => l.name)).toEqual(['ux', 'a', 'b']);
-    expect(s!.moreLabels).toBe(2);
-    const [t] = summarize(board([card({ labels: ['gone'] })]), [card({ labels: ['gone'] })], ctx);
+    expect(s!.labelsAll).toBe(6);
+    expect(s!.moreLabels).toBe(3);
+    const gone = card({ labels: ['gone'] });
+    const [t] = summarize(board([gone]), [gone], ctx);
     expect(t!.labels).toEqual([]);
-    expect(t!.moreLabels).toBe(0);
+    expect(t!.moreLabels).toBe(1);
   });
 
   it('an agent-queued card keeps its "asked by" chip even when the queuing agent row is gone', () => {

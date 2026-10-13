@@ -41,6 +41,8 @@
   // docs/superpowers/plans/2026-10-06-p4-cutover.md step 2.4): from this deploy on, every hub token
   // is refused. There is no dual-accept; rollback is reverting this change. See docs/12-deploy.md.
   "vars": {
+    // Shown to people, never trusted: the origin the GitHub webhook URL is built on.
+    "PUBLIC_APP_ORIGIN": "https://app.superpipeline.dev",
     // The Organization plane (accounts issuer contract §1, production values). Plain vars, not
     // secrets: they name whom to believe and grant nothing. They change only through a merged PR,
     // because CI's `wrangler deploy` on every merge would drop a hand-set `--var`.

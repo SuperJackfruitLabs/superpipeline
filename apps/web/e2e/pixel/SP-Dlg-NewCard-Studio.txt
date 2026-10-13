@@ -1,0 +1,83 @@
+<div class="fg" data-vibe="studio" data-theme="light"><div class="scrim"></div><section class="dlg nc" role="dialog" aria-modal="true" aria-labelledby="nc-title">
+  <div class="nc-head">
+    <div style="flex: 1 1 0%; min-width: 0px;">
+      <div class="eyebrow">New card</div>
+      <button class="nc-board" type="button" aria-haspopup="listbox" aria-label="Board: Developer Experience. Change board">on Developer Experience <svg 16/></button>
+    </div>
+    <button class="icon-btn" type="button" aria-label="Close without saving"><svg 20/></button>
+  </div>
+  <div class="nc-body">
+    <div>
+      <h2 class="dlg-title" id="nc-title">What needs doing?</h2>
+      <p class="nc-lead">One sentence in, a drafted brief out. Edit anything before dispatch.</p>
+    </div>
+    <label class="vk-visually-hidden" for="nc-sentence">Describe it in a sentence</label>
+    <textarea class="nc-sentence" id="nc-sentence" rows="2">Fix the highest-severity blocker found in the clean-room journey, with red-test evidence before any fix.</textarea>
+    <div class="nc-draftrow">
+      <button class="vk-button vk-button--secondary" type="button"><svg 18/> Draft again</button>
+      <span class="nc-drafted"><span class="vk-face" style="--vk-face-size: 24px;"><svg aria-label="super-chotu, done" mood=done 24/></span><span><strong style="color: var(--vk-color-text);">super-chotu</strong> drafted the title and brief from your sentence. Change anything.</span></span>
+    </div>
+    <div class="nc-grid">
+      <div class="nc-col">
+        <div class="vk-field">
+          <label class="vk-field__label" for="nc-t">Card title</label>
+          <input class="vk-field__input" id="nc-t" value="Fix the highest-severity blocker found in the clean-room journey">
+        </div>
+        <div class="vk-field">
+          <label class="vk-field__label" for="nc-b">Brief for the agent</label>
+          <p class="vk-field__hint" id="nc-bh">What done looks like, and anything it should not do.</p>
+          <div class="nc-brief-wrap">
+            <textarea class="nc-brief" id="nc-b" aria-describedby="nc-bh" rows="9">Done looks like:
+• The blocker is reproduced from a clean room and named in one sentence.
+• A failing test lands first, with the red run attached as evidence.
+• The fix turns that test green and changes nothing else.
+Do not:
+• Push to the Forge mirror or to GitHub without an approval.
+• Close the card without the evidence link.</textarea>
+            <span class="nc-brief-tag"><svg 12/> Drafted · not sent yet</span>
+          </div>
+        </div>
+      </div>
+      <div class="nc-col">
+        <div class="vk-field">
+          <label class="vk-field__label" for="nc-s">Starts in stage</label>
+          <div class="nc-selwrap"><select class="vk-field__input nc-select" id="nc-s"><option>Reported · a person</option><option>Reproduce · error-eric</option><option>Failing test · tester-tim</option><option>Fix · 2 agents</option><option>Integrate · 3 agents</option><option>Signed off · approval gate</option><option>Shipped · a person</option></select><svg 16/></div>
+        </div>
+        <div class="nc-row2">
+          <div class="vk-field">
+            <label class="vk-field__label" for="nc-p">Project <span class="opt">(optional)</span></label>
+            <div class="nc-selwrap"><select class="vk-field__input nc-select" id="nc-p"><option>No project</option><option>Building in public — Marketing &amp; Community flow</option><option>Guild — Forge workspaces and checkpoint recovery</option><option>Marketing &amp; Community — Melissa and Anna onboarding</option><option>SJL Active Portfolio</option><option>SJL Operating Baseline</option></select><svg 16/></div>
+          </div>
+          <div class="vk-field">
+            <label class="vk-field__label" for="nc-d">Due <span class="opt">(optional)</span></label>
+            <div class="nc-due"><input class="vk-field__input" id="nc-d" type="date" value="2026-10-18"><button class="link small" type="button">Clear</button></div>
+          </div>
+        </div>
+        <fieldset class="vk-field" style="border: 0px; padding: 0px; margin: 0px;">
+          <legend class="vk-field__label" style="margin-bottom: 8px;">Priority</legend>
+          <div class="nc-prio"><div class="vk-segmented" role="radiogroup" aria-label="Priority">
+            <button class="vk-segmented__item" type="button" role="radio" aria-checked="false" data-state="unchecked">None</button>
+            <button class="vk-segmented__item" type="button" role="radio" aria-checked="true" data-state="checked">P1</button>
+            <button class="vk-segmented__item" type="button" role="radio" aria-checked="false" data-state="unchecked">P2</button>
+            <button class="vk-segmented__item" type="button" role="radio" aria-checked="false" data-state="unchecked">P3</button>
+            <button class="vk-segmented__item" type="button" role="radio" aria-checked="false" data-state="unchecked">P4</button>
+          </div></div>
+        </fieldset>
+        <div class="vk-field">
+          <span class="vk-field__label" id="nc-l">Labels</span>
+          <div class="nc-labels" role="group" aria-labelledby="nc-l">
+            <span class="nc-label">clean-room<button type="button" aria-label="Remove label clean-room"><svg 14/></button></span>
+            <span class="nc-label">evidence-required<button type="button" aria-label="Remove label evidence-required"><svg 14/></button></span>
+            <span class="nc-label">superpipeline<button type="button" aria-label="Remove label superpipeline"><svg 14/></button></span>
+            <button class="nc-addlabel" type="button"><svg 14/> Add label</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="nc-foot">
+    <div class="grow small muted" style="display: flex; align-items: center; gap: 8px;"><svg 16/><span>Goes to <strong style="color: var(--vk-color-text);">Reported</strong> on Developer Experience, where a person picks it up.</span></div>
+    <span class="small muted"><span class="kbd">⌘</span> <span class="kbd">↵</span> to dispatch</span>
+    <button class="vk-button vk-button--secondary" type="button">Cancel</button>
+    <button class="vk-button vk-button--primary" type="button">Dispatch</button>
+  </div></section></div>

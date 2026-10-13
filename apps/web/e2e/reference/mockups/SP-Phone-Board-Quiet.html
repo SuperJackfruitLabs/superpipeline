@@ -1,0 +1,1042 @@
+<!doctype html>
+<html data-product="superpipeline" data-accent="product" lang="en" style="touch-action: pan-x pan-y; overscroll-behavior: none; --dc-chrome-unit: 1.0209424083769634px;"><head><link rel="stylesheet" href="_vibekit-0.0.10/vibekit.css" data-vibekit="0.0.10"><style>
+    .sc-placeholder{background:color-mix(in srgb,currentColor 8%,transparent);
+      border:1px solid color-mix(in srgb,currentColor 50%,transparent);
+      border-radius:2px;box-sizing:border-box;overflow:hidden}
+    @keyframes sc-shine{0%{background-position:100% 50%}100%{background-position:0% 50%}}
+    html.sc-dc-streaming .sc-placeholder,
+    html.sc-dc-streaming .sc-interp.sc-missing{position:relative;
+      background:color-mix(in srgb,currentColor 5%,transparent);
+      border-color:transparent}
+    html.sc-dc-streaming .sc-placeholder::before,
+    html.sc-dc-streaming .sc-interp.sc-missing::before{content:'';
+      position:absolute;inset:0;pointer-events:none;
+      background:linear-gradient(90deg,rgba(217,119,87,0) 25%,rgba(247,225,211,.95) 37%,rgba(217,119,87,0) 63%);
+      background-size:400% 100%;animation:sc-shine 1.4s ease infinite}
+    html.sc-dc-streaming .sc-placeholder:nth-child(n+9 of .sc-placeholder)::before,
+    html.sc-dc-streaming .sc-interp.sc-missing:nth-child(n+9 of .sc-interp.sc-missing)::before{animation:none;
+      background:color-mix(in srgb,currentColor 8%,transparent)}
+    .sc-placeholder-error{padding:4px 8px;font:11px/1.4 ui-monospace,monospace;
+      color:color-mix(in srgb,currentColor 70%,transparent);word-break:break-word}
+    .sc-interp.sc-missing{display:inline-block;width:2em;height:1em;overflow:hidden;
+      vertical-align:text-bottom;background:rgba(255,255,255,.3);border:1px solid rgba(0,0,0,.5);
+      border-radius:2px;box-sizing:border-box;color:transparent;
+      user-select:none}
+    .sc-interp.sc-unresolved{font-family:ui-monospace,monospace;font-size:.85em;
+      color:color-mix(in srgb,currentColor 50%,transparent);
+      background:color-mix(in srgb,currentColor 10%,transparent);border-radius:3px;
+      padding:0 3px}
+    .sc-host.sc-has-error{position:relative}
+    .sc-logic-error{position:absolute;top:8px;left:8px;z-index:2147483647;max-width:60ch;
+      padding:6px 10px;background:#b00020;color:#fff;font:12px/1.4 ui-monospace,monospace;
+      border-radius:4px;white-space:pre-wrap;pointer-events:none}
+    /* Mirrors PRINT_BASELINE_CSS in apps/web deck-stage-export.ts — keep both
+       in sync until dc-runtime regains a build step. */
+    @media print {
+      @page { margin: 0.5cm; }
+      figure, table { break-inside: avoid; }
+      #dc-root, #dc-root > .sc-host { height: auto; }
+      *, *::before, *::after {
+        print-color-adjust: exact; -webkit-print-color-adjust: exact;
+        backdrop-filter: none !important; -webkit-backdrop-filter: none !important;
+        animation-delay: -99s !important; animation-duration: .001s !important;
+        animation-iteration-count: 1 !important; animation-fill-mode: both !important;
+        animation-play-state: running !important; transition-duration: 0s !important;
+      }
+    }
+  </style>
+
+
+<meta charset="utf-8">
+<title>Developer Experience board, Quiet phone</title>
+<base href="/appifact/SP-Phone-Board-Quiet.dc.html">
+
+
+
+
+
+<style>x-dc{display:none!important}</style>
+
+<style>@import url("https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&family=Azeret+Mono:wght@400;500;600&family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..600&display=swap");
+
+ 
+
+:root {
+  color-scheme: light;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  --vk-font-body: "Figtree", system-ui, sans-serif;
+  --vk-font-display: "Bricolage Grotesque", system-ui, sans-serif;
+  --vk-font-mono: "Martian Mono", ui-monospace, monospace;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+}
+
+[data-vibe="daylight"][data-theme="light"] {
+  color-scheme: light;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  --vk-font-body: "Figtree", system-ui, sans-serif;
+  --vk-font-display: "Bricolage Grotesque", system-ui, sans-serif;
+  --vk-font-mono: "Martian Mono", ui-monospace, monospace;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+}
+
+[data-vibe="daylight"][data-theme="dark"] {
+  color-scheme: dark;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  --vk-font-body: "Figtree", system-ui, sans-serif;
+  --vk-font-display: "Bricolage Grotesque", system-ui, sans-serif;
+  --vk-font-mono: "Martian Mono", ui-monospace, monospace;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+}
+
+[data-vibe="paper"][data-theme="light"] {
+  color-scheme: light;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  --vk-font-body: "Geist", system-ui, sans-serif;
+  --vk-font-display: "Newsreader", "Georgia", serif;
+  --vk-font-mono: "Martian Mono", ui-monospace, monospace;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+}
+
+[data-vibe="paper"][data-theme="dark"] {
+  color-scheme: dark;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  --vk-font-body: "Geist", system-ui, sans-serif;
+  --vk-font-display: "Newsreader", "Georgia", serif;
+  --vk-font-mono: "Martian Mono", ui-monospace, monospace;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+}
+
+[data-vibe="studio"][data-theme="light"] {
+  color-scheme: light;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  --vk-font-body: "Archivo", system-ui, sans-serif;
+  --vk-font-display: "Archivo", system-ui, sans-serif;
+  --vk-font-mono: "Azeret Mono", ui-monospace, monospace;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  --vk-font-serif: "Newsreader", Georgia, serif;
+
+
+
+
+
+
+
+
+
+
+}
+
+[data-vibe="studio"][data-theme="dark"] {
+  color-scheme: dark;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  --vk-font-body: "Archivo", system-ui, sans-serif;
+  --vk-font-display: "Archivo", system-ui, sans-serif;
+  --vk-font-mono: "Azeret Mono", ui-monospace, monospace;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  --vk-font-serif: "Newsreader", Georgia, serif;
+
+
+
+
+
+
+
+
+
+
+}
+
+[data-vibe="quiet"][data-theme="light"] {
+  color-scheme: light;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  --vk-font-body: "Atkinson Hyperlegible Next", system-ui, sans-serif;
+  --vk-font-display: "Atkinson Hyperlegible Next", system-ui, sans-serif;
+  --vk-font-mono: "Martian Mono", ui-monospace, monospace;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+}
+
+[data-vibe="quiet"][data-theme="dark"] {
+  color-scheme: dark;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  --vk-font-body: "Atkinson Hyperlegible Next", system-ui, sans-serif;
+  --vk-font-display: "Atkinson Hyperlegible Next", system-ui, sans-serif;
+  --vk-font-mono: "Martian Mono", ui-monospace, monospace;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+}
+
+ 
+:root {
+  --vk-text-sm: clamp(0.8125rem, 0.78rem + 0.15vw, 0.875rem);
+  --vk-text-md: clamp(1rem, 0.96rem + 0.2vw, 1.0625rem);
+  --vk-text-lg: clamp(1.25rem, 1.1rem + 0.6vw, 1.5rem);
+  --vk-text-xl: clamp(1.75rem, 1.4rem + 1.6vw, 2.5rem);
+  --vk-focus: 0 0 0 3px var(--vk-color-bg), 0 0 0 5px var(--vk-color-text);
+
+}
+
+html {
+  background: var(--vk-color-bg);
+  color: var(--vk-color-text);
+  font-family: var(--vk-font-body);
+  font-size: 100%;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  font-size: var(--vk-text-md);
+  line-height: 1.5;
+}
+
+:focus-visible {
+   
+  outline: 2px solid var(--vk-color-text);
+  outline-offset: 2px;
+  box-shadow: var(--vk-focus);
+}
+
+ 
+.vk-visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  
+  *, *::before, *::after {
+    animation: none !important;
+    transition-duration: 0ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+[data-motion="reduce"],
+[data-motion="reduce"] *,
+[data-motion="reduce"]::before,
+[data-motion="reduce"]::after,
+[data-motion="reduce"] *::before,
+[data-motion="reduce"] *::after {
+  --vk-motion-fast: 0ms;
+  --vk-motion-base: 0ms;
+  animation: none !important;
+  transition-duration: 0ms !important;
+  scroll-behavior: auto !important;
+}
+
+
+
+@media (forced-colors: active) {
+  :focus-visible {
+    outline: 2px solid CanvasText;
+    box-shadow: none;
+  }
+}
+ 
+
+
+
+
+
+
+
+
+ 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ 
+
+
+
+
+
+
+
+
+
+
+
+
+
+.vk-toast {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--vk-space-3);
+  min-height: var(--vk-target-min);
+  padding: 0 var(--vk-space-5);
+  border-radius: var(--vk-radius-pill);
+  background: var(--vk-color-primary);
+  color: var(--vk-color-primary-fg);
+  font: 600 var(--vk-text-sm) / 1.2 var(--vk-font-body);
+}
+.vk-toast__action { min-height: var(--vk-target-min); border: 0; background: transparent; color: inherit; font: inherit; text-decoration: underline; cursor: pointer; }
+ 
+.vk-toast__action:focus-visible { outline-color: currentColor; box-shadow: var(--vk-focus); }
+
+.vk-sky {
+  --vk-sky-top: var(--vk-sky-noon-top);
+  --vk-sky-bottom: var(--vk-sky-noon-bottom);
+  --vk-sky-text: var(--vk-sky-noon-text);
+  --vk-sky-sun: var(--vk-sky-noon-sun);
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(180deg, var(--vk-sky-top), var(--vk-sky-bottom));
+  color: var(--vk-sky-text);
+}
+.vk-sky[data-phase="dawn"] { --vk-sky-top: var(--vk-sky-dawn-top); --vk-sky-bottom: var(--vk-sky-dawn-bottom); --vk-sky-text: var(--vk-sky-dawn-text); --vk-sky-sun: var(--vk-sky-dawn-sun); }
+.vk-sky[data-phase="morning"] { --vk-sky-top: var(--vk-sky-morning-top); --vk-sky-bottom: var(--vk-sky-morning-bottom); --vk-sky-text: var(--vk-sky-morning-text); --vk-sky-sun: var(--vk-sky-morning-sun); }
+.vk-sky[data-phase="golden"] { --vk-sky-top: var(--vk-sky-golden-top); --vk-sky-bottom: var(--vk-sky-golden-bottom); --vk-sky-text: var(--vk-sky-golden-text); --vk-sky-sun: var(--vk-sky-golden-sun); }
+.vk-sky[data-phase="dusk"] { --vk-sky-top: var(--vk-sky-dusk-top); --vk-sky-bottom: var(--vk-sky-dusk-bottom); --vk-sky-text: var(--vk-sky-dusk-text); --vk-sky-sun: var(--vk-sky-dusk-sun); }
+.vk-sky[data-phase="night"] { --vk-sky-top: var(--vk-sky-night-top); --vk-sky-bottom: var(--vk-sky-night-bottom); --vk-sky-text: var(--vk-sky-night-text); --vk-sky-sun: var(--vk-sky-night-sun); }
+.vk-sky__sun {
+  position: absolute;
+  top: var(--vk-space-5);
+  right: var(--vk-space-6);
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: var(--vk-sky-sun);
+  box-shadow: 0 0 48px 12px color-mix(in oklch, var(--vk-sky-sun) 45%, transparent);
+}
+.vk-sky__content { position: relative; padding: var(--vk-space-5); }
+[data-time="subtle"] .vk-sky { background: color-mix(in oklch, var(--vk-sky-top) 30%, var(--vk-color-bg)); color: var(--vk-color-text); }
+[data-time="subtle"] .vk-sky__sun { display: none; }
+[data-time="off"] .vk-sky { background: var(--vk-color-bg); color: var(--vk-color-text); }
+[data-time="off"] .vk-sky__sun { display: none; }
+[data-vibe="studio"] .vk-sky__sun { width: 10px; height: 10px; box-shadow: 0 0 10px 2px var(--vk-sky-sun); }
+[data-vibe="quiet"] .vk-sky__sun, [data-vibe="paper"] .vk-sky__sun { display: none; }
+
+
+
+
+
+
+
+
+
+
+@media (forced-colors: active) {
+  
+  .vk-toast { border: 1px solid CanvasText; }
+}
+
+ 
+.sl-danger{ white-space: nowrap; } .r .vk-button{ white-space: nowrap; }
+
+ 
+
+
+
+
+
+ 
+a[href*="CardPage"], a[class*="btn"], button[class*="btn"], a[class*="-button"], button[class*="-button"]{ white-space: nowrap; flex-shrink: 0; } .r .vk-button{ white-space: nowrap; flex-shrink: 0; }
+
+ 
+a[href*="CardPage"], a[class*="icon"][style*="width: auto"], button[class*="icon"][style*="width: auto"] { display: inline-flex !important; flex-direction: row !important; align-items: center !important; justify-content: center; gap: 8px; }
+</style>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Azeret+Mono:ital,wght@1,400&amp;display=swap" data-font-variant=""><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Azeret+Mono:ital,wght@1,500&amp;display=swap" data-font-variant=""><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Azeret+Mono:ital,wght@1,600&amp;display=swap" data-font-variant=""><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible+Next:wght@400;700&amp;family=Bricolage+Grotesque:opsz,wght@12..96,400..800&amp;family=Figtree:wght@400..800&amp;family=Geist:wght@400..700&amp;family=Instrument+Sans:wght@400..700&amp;family=Martian+Mono:wght@400..600&amp;family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..600&amp;display=swap" data-dc-tpl="1"><style data-dc-tpl="2">
+body{margin:0}
+.r{width:390px;box-sizing:border-box;background:var(--vk-color-bg);color:var(--vk-color-text);font-family:var(--vk-font-body);font-size:16px;line-height:1.45;display:flex;flex-direction:column}
+.r *,.r *::before,.r *::after{box-sizing:border-box}
+.r h1,.r h2,.r h3,.r h4,.r p,.r ul,.r ol,.r dl,.r dd,.r figure{margin:0}
+.r ul,.r ol{padding:0;list-style:none}
+:where(.r button:where(:not(.vk-button)),.r select,.r textarea,.r input){font:inherit;color:inherit}
+.r a{color:var(--vk-color-text);text-underline-offset:3px}
+.wrap{overflow-wrap:anywhere;min-width:0}
+.mono{font-family:var(--vk-font-mono)}
+.muted{color:var(--vk-color-muted)}
+.ico{width:20px;height:20px;flex:none;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.ib{min-width:44px;min-height:44px;display:inline-flex;align-items:center;justify-content:center;border:0;background:transparent;border-radius:var(--vk-radius-sm);cursor:pointer;color:var(--vk-color-text);padding:0}
+.face{flex:none;display:inline-flex;line-height:0}
+.face svg{border-radius:50%}
+.sr{position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip-path:inset(50%);white-space:nowrap;border:0}
+/* shell: plain text, no icons */
+.pq-skip { position: absolute; left: var(--vk-space-4); top: -200px; z-index: 2; display: inline-flex; align-items: center; min-height: 44px; padding: 0 var(--vk-space-4); background: var(--vk-color-surface); border: 2px solid var(--vk-color-text); border-radius: var(--vk-radius-sm); color: var(--vk-color-text); font-weight: 700; text-decoration: underline; }
+.pq-skip:focus { top: var(--vk-space-2); }
+.pq{position:relative;display:flex;flex-direction:column;gap:2px;padding:6px 16px 10px;background:var(--vk-color-bg);border-bottom:1px solid var(--vk-color-line);font-size:17px}
+.pq-row{display:flex;flex-wrap:wrap;align-items:center;gap:0 16px}
+.pq a,.pq-link{display:inline-flex;align-items:center;min-height:44px;padding:0;border:0;background:transparent;color:var(--vk-color-text);font:inherit;text-decoration:underline;text-underline-offset:4px;cursor:pointer}
+.pq-link[aria-pressed="true"]{font-weight:700;text-decoration:none}
+.pq-board{overflow-wrap:anywhere}
+.pq-board b{font-weight:700}
+.pq-dash,.pq-dot{color:var(--vk-color-muted)}
+.pq-btn{display:inline-flex;align-items:center;min-height:44px;padding:0 14px;border:2px solid var(--vk-color-text);border-radius:var(--vk-radius-sm);background:var(--vk-color-surface);color:var(--vk-color-text);font:inherit;font-weight:700;cursor:pointer}
+.pq-view{display:inline-flex;flex-wrap:wrap;align-items:center;gap:0 8px}
+.pqb{position:sticky;bottom:0;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));background:var(--vk-color-bg);border-top:2px solid var(--vk-color-text);margin-top:auto;padding:0 4px}
+.pqb a{min-height:52px;display:flex;align-items:center;justify-content:center;text-align:center;font-size:16px;color:var(--vk-color-text);text-decoration:underline;text-underline-offset:4px}
+.pqb a[aria-current="page"]{font-weight:700;text-decoration:none}
+.pqb .need{font-weight:700;color:var(--vk-color-signal-text)}
+.pq a:focus-visible,.pq button:focus-visible,.pqb a:focus-visible{outline:3px solid var(--vk-color-text);outline-offset:2px}
+
+.r{font-size:17px;line-height:1.5}
+.hd{padding:20px 16px 8px;display:flex;flex-direction:column;gap:4px}
+.hd h1{font-size:28px;line-height:1.2;font-weight:700;overflow-wrap:anywhere}
+.lkw{align-self:flex-start}
+.grp{padding:20px 16px 4px;display:flex;flex-direction:column}
+.grp h2{font-size:21px;font-weight:700;padding-bottom:8px}
+.it{position:relative;display:flex;flex-direction:column;gap:6px;padding:14px 0 14px 18px;border-top:1px solid var(--vk-color-line)}
+.it.nd::before{content:"";position:absolute;left:0;top:14px;bottom:14px;width:5px;background:var(--vk-color-signal)}
+.it.plain{padding-left:0}
+.tr{display:flex;gap:8px;align-items:flex-start}
+.tt{flex:1;min-width:0;border:0;background:transparent;padding:0;text-align:left;font-size:18px;line-height:1.35;font-weight:700;cursor:pointer;overflow-wrap:anywhere;color:var(--vk-color-text)}
+.mvw{flex:none;margin-top:-10px}
+.mvt{min-width:44px}
+.mt{display:flex;align-items:center;gap:6px;flex-wrap:wrap;color:var(--vk-color-muted);font-size:16px}
+.mt .face svg{filter:saturate(0.4)}
+.rs{overflow-wrap:anywhere}
+.fs{font-size:15px;color:var(--vk-color-text);overflow-wrap:anywhere}
+.fs .od{font-weight:700;color:var(--vk-color-signal-text)}
+details.full summary{min-height:44px;display:flex;align-items:center;cursor:pointer;text-decoration:underline;text-underline-offset:4px;font-size:16px}
+details.full p{overflow-wrap:anywhere;padding-bottom:6px}
+.ac{align-self:flex-start;min-height:44px;display:inline-flex;align-items:center;font-size:17px;font-weight:700;text-decoration:underline;text-underline-offset:4px}
+.nn{padding:10px 0;border-top:1px solid var(--vk-color-line);color:var(--vk-color-muted)}
+.tbl{width:100%;border-collapse:collapse;font-size:15px}
+.tbl caption{text-align:left;font-size:21px;font-weight:700;padding-bottom:8px}
+.tbl th,.tbl td{text-align:left;vertical-align:top;padding:8px 12px 8px 0;border-top:1px solid var(--vk-color-line);overflow-wrap:anywhere}
+.tbl thead th{font-size:14px;color:var(--vk-color-muted);font-weight:700}
+.tbl td.n{white-space:nowrap}
+</style><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible+Next:ital,wght@1,400&amp;display=swap" data-font-variant=""><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible+Next:ital,wght@1,700&amp;display=swap" data-font-variant=""><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:ital,wght@1,400..800&amp;display=swap" data-font-variant=""><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:ital,wght@1,400..700&amp;display=swap" data-font-variant=""><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Sans:ital,wght@1,400..700&amp;display=swap" data-font-variant=""><style data-dc-editor-style="">body:not([data-dc-editor-overlay-hidden]) [data-dc-editor-hover][data-dc-editor-hover-stroke]:not([data-dc-editor-selected]){filter:drop-shadow(0 0 calc(1*var(--dc-chrome-unit,1px)) color-mix(in srgb,#2a78d6 90%,transparent)) drop-shadow(0 0 calc(2*var(--dc-chrome-unit,1px)) color-mix(in srgb,#2a78d6 55%,transparent))!important;}body:not([data-dc-editor-overlay-hidden]):not([data-dc-editor-proxy="copy"]) [data-dc-editor-dragging],body:not([data-dc-editor-overlay-hidden]):not([data-dc-editor-proxy]) [data-dc-dragging],body[data-dc-editor-brk]:not([data-dc-editor-overlay-hidden]) [data-dc-drag-follower]{outline:calc(2*var(--dc-chrome-unit,1px)) solid #2a78d6!important;outline-offset:calc(-1*var(--dc-chrome-unit,1px))!important;opacity:0.55!important;}body[data-dc-editor-proxy="move"]:not([data-dc-editor-overlay-hidden]) [data-dc-editor-dragging],body[data-dc-editor-proxy="move"]:not([data-dc-editor-overlay-hidden]) [data-dc-dragging],body[data-dc-editor-proxy="move"]:not([data-dc-editor-overlay-hidden]) [data-dc-editor-dragging]>*,body[data-dc-editor-proxy="move"]:not([data-dc-editor-overlay-hidden]) [data-dc-dragging]>*{opacity:0!important;outline:none!important;}[data-dc-editor-drag-proxy],[data-dc-editor-drag-proxy] *{pointer-events:none!important;}body[data-dc-editor-on]:not([data-dc-editor-tool="interact"]) *{cursor:default!important;user-select:none!important;}body[data-dc-editor-on]:not([data-dc-editor-tool="interact"]) :not([data-dc-editor-overlay-root]):not([data-dc-editor-overlay-root] *){pointer-events:auto!important;transition:none!important;animation:none!important;}body[data-dc-editor-on][data-dc-editor-brk]:not([data-dc-editor-overlay-hidden]) [data-dc-editor-dragging]:not([data-dc-editor-overlay-root]) :not([data-dc-editor-overlay-root]),body[data-dc-editor-on][data-dc-editor-brk]:not([data-dc-editor-overlay-hidden]) [data-dc-dragging]:not([data-dc-editor-overlay-root]) :not([data-dc-editor-overlay-root]),body[data-dc-editor-on][data-dc-editor-brk]:not([data-dc-editor-overlay-hidden]) [data-dc-drag-follower]:not([data-dc-editor-overlay-root]),body[data-dc-editor-on][data-dc-editor-brk]:not([data-dc-editor-overlay-hidden]) [data-dc-drag-follower]:not([data-dc-editor-overlay-root]) :not([data-dc-editor-overlay-root]),body[data-dc-editor-move][data-dc-editor-brk]:not([data-dc-editor-overlay-hidden]) [data-dc-editor-dragging]:not([data-dc-editor-overlay-root]) :not([data-dc-editor-overlay-root]),body[data-dc-editor-move][data-dc-editor-brk]:not([data-dc-editor-overlay-hidden]) [data-dc-dragging]:not([data-dc-editor-overlay-root]) :not([data-dc-editor-overlay-root]),body[data-dc-editor-move][data-dc-editor-brk]:not([data-dc-editor-overlay-hidden]) [data-dc-drag-follower]:not([data-dc-editor-overlay-root]),body[data-dc-editor-move][data-dc-editor-brk]:not([data-dc-editor-overlay-hidden]) [data-dc-drag-follower]:not([data-dc-editor-overlay-root]) :not([data-dc-editor-overlay-root]){pointer-events:none!important;}body[data-dc-editor-move] :not([data-dc-editor-overlay-root]):not([data-dc-editor-overlay-root] *){pointer-events:auto!important;transition:none!important;animation-duration:0s!important;animation-delay:0s!important;}body[data-dc-editor-on][data-dc-editor-tool="rect"] *,body[data-dc-editor-on][data-dc-editor-tool="frame"] *,body[data-dc-editor-on][data-dc-editor-tool="grid"] *,body[data-dc-editor-on][data-dc-editor-tool="oval"] *,body[data-dc-editor-on][data-dc-editor-tool="arrow"] *,body[data-dc-editor-on][data-dc-editor-tool="line"] *{cursor:crosshair!important;}body[data-dc-editor-on][data-dc-editor-tool="text"] *{cursor:text!important;}body[data-dc-editor-on][data-dc-editor-tool="draw"] *{cursor:url('data:image/svg+xml,%3Csvg%20xmlns=%22http://www.w3.org/2000/svg%22%20width=%2216%22%20height=%2216%22%20viewBox=%220%200%2016%2016%22%3E%3Cpath%20d=%22M2%2014l1-4%208-8a2.1%202.1%200%200%201%203%203l-8%208-4%201z%22%20fill=%22%23333%22%20stroke=%22%23fff%22%20stroke-width=%221%22/%3E%3C/svg%3E') 1 15, crosshair!important;}body[data-dc-editor-on]:not([data-dc-editor-tool]) [data-drags-parent],body[data-dc-editor-on]:not([data-dc-editor-tool]) [data-drags-parent] *{cursor:grab!important;}body[data-dc-editor-on]:not([data-dc-editor-tool]) [data-drags-parent]:active,body[data-dc-editor-on]:not([data-dc-editor-tool]) [data-drags-parent]:active *{cursor:grabbing!important;}body[data-dc-editor-on] [data-dc-editor-editing][contenteditable][contenteditable],body[data-dc-editor-on] [data-dc-editor-editing][contenteditable][contenteditable] *,body[data-dc-editor-on] [data-dc-editor-svg-editing]{cursor:text!important;}body[data-dc-editor-on] [data-dc-editor-editing="import"]{outline:none!important;}html:not([data-dc-canvas]):has(body[data-dc-editor-on]:not([data-dc-capturing]) .sc-host){background:var(--dc-editor-backdrop,#ededeb);}html:not([data-dc-canvas]) body[data-dc-editor-on]:not([data-dc-capturing]):has(.sc-host){background:var(--dc-editor-backdrop,#ededeb);}html:not([data-dc-canvas]) body[data-dc-editor-on] .sc-host:not(.sc-host .sc-host){min-height:calc(100vh - var(--dc-editor-host-vpad,0px));}html:not([data-dc-canvas]) body[data-dc-editor-on]:not([data-dc-capturing]) .sc-host:not(.sc-host .sc-host){background:var(--dc-editor-host-bg,#fff);}html[data-dc-frameless],html[data-dc-frameless] body[data-dc-editor-on],html[data-dc-frameless] body[data-dc-editor-on] .sc-host:not(.sc-host .sc-host){background:transparent!important;min-height:0!important;}html:has(body[data-dc-capturing]),body[data-dc-capturing]{transition:none!important;}html[data-dc-canvas]{overflow:hidden;}html[data-dc-canvas] body[data-dc-editor-on] .sc-host:not(.sc-host .sc-host)::before{content:"";position:absolute;left:-100000px;top:-100000px;width:200000px;height:200000px;pointer-events:none;background:repeating-linear-gradient(45deg,var(--dc-editor-hatch-ink,rgba(0,0,0,.05)) 0 8px,transparent 8px 16px);clip-path:polygon(0 0,100% 0,100% 50%,50% 50%,50% 100%,0 100%);}</style></head>
+<body>
+<div id="dc-root"><div class="sc-host" data-sc-name="SP-Phone-Board-Quiet"><div data-product="superpipeline" data-accent="product" data-dc-tpl="3" class="r" data-vibe="quiet" data-theme="light" style="background: var(--vk-color-bg); color: var(--vk-color-text); font-family: var(--vk-font-body);"><header data-dc-tpl="4" class="pq"><a data-dc-tpl="5" class="pq-skip" href="#content">Skip to content</a><div data-dc-tpl="6" class="pq-row"><span data-dc-tpl="7" class="pq-board">Board: <b data-dc-tpl="8">Developer Experience</b> <span data-dc-tpl="9" class="pq-dash" aria-hidden="true">—</span> <button data-dc-tpl="10" class="pq-link" type="button" aria-haspopup="menu" aria-label="Switch board: Developer Experience">Change board</button></span><span data-dc-tpl="11" class="sr" role="status">Live</span></div><div data-dc-tpl="12" class="pq-row"><button data-dc-tpl="13" class="pq-btn" type="button" aria-label="Search cards, agents and actions (⌘K)">Search</button><button data-dc-tpl="14" class="pq-btn" type="button">New card</button><button data-dc-tpl="15" class="pq-link" type="button" aria-haspopup="dialog">Filter</button></div><div data-dc-tpl="16" class="pq-row"><div data-dc-tpl="17" class="pq-view" role="group" aria-label="View">View: <button data-dc-tpl="18" class="pq-link" type="button" aria-pressed="true">Board</button><span data-dc-tpl="19" class="pq-dot" aria-hidden="true">·</span><button data-dc-tpl="20" class="pq-link" type="button" aria-pressed="false">List</button><span data-dc-tpl="21" class="pq-dot" aria-hidden="true">·</span><button data-dc-tpl="22" class="pq-link" type="button" aria-pressed="false">Projects</button></div></div></header><header data-dc-tpl="23" class="hd" id="content" tabindex="-1"><h1 data-dc-tpl="24">Developer Experience</h1><p data-dc-tpl="25" class="muted">Superpipeline · 7 cards · 4 need your decision</p><div class="lkw"><button data-dc-tpl="26" type="button" class="vk-button vk-button--text">Write a new card</button></div></header><section data-dc-tpl="27" class="grp" aria-labelledby="g1"><h2 data-dc-tpl="28" id="g1">Needs your decision (4)</h2><article data-dc-tpl="29" class="it nd"><div data-dc-tpl="30" class="tr"><h3 data-dc-tpl="31" style="flex: 1 1 0%; min-width: 0px; display: flex;"><button data-dc-tpl="32" class="tt" type="button" aria-label="Diagnose Melissa and Anna Supermessage silence — trace actual failing hop. In Reproduce. Enter opens, M moves.">Diagnose Melissa and Anna Supermessage silence — trace actual failing hop</button></h3><div class="mvw"><button data-dc-tpl="33" type="button" aria-haspopup="menu" class="vk-button vk-button--text mvt">Move</button></div></div><p data-dc-tpl="34" class="mt"><span data-dc-tpl="35" class="face"><svg data-dc-tpl="36" viewBox="-2 -4 68 70" width="20" height="20" role="img" aria-label="error-eric, needs you" data-mood="needs"><circle data-dc-tpl="37" cx="32" cy="32" r="30" fill="var(--vk-mood-needs)"></circle><path data-dc-tpl="38" d="M28 4 Q32 -2 36 4 Q34 8 32 6 Q30 8 28 4Z" fill="rgb(107 74 43)"></path><g data-dc-tpl="39" data-eyes="open"><ellipse data-dc-tpl="40" cx="23" cy="28" rx="4" ry="2.4" fill="var(--vk-face-ink)"></ellipse><ellipse data-dc-tpl="41" cx="41" cy="28" rx="4" ry="2.4" fill="var(--vk-face-ink)"></ellipse></g><circle data-dc-tpl="42" cx="17" cy="37" r="4" fill="rgb(255 158 138 / 0.5)"></circle><circle data-dc-tpl="43" cx="47" cy="37" r="4" fill="rgb(255 158 138 / 0.5)"></circle><path data-dc-tpl="44" d="M24 44 Q32 38 40 44" fill="none" stroke="var(--vk-face-ink)" stroke-width="3" stroke-linecap="round"></path></svg></span>error-eric · Reproduce · 2 days · attempt 2</p><p data-dc-tpl="45" class="rs">Stopped. Not reproduced end-to-end: Melissa’s live ACP session acps_8f86d4e4-1cf2-457b-beb8-0ffb529d9023 reached Hermes and produced a model reply, while Anna has no local ACP dispatch; first failing hop cannot be identified without one fresh DM event_id/room_id/timestamp per agent plus AgentPod hub matrix-inbound/control-pair/ACP/matrix-outbound logs, matrix_rooms/ACP metadata, homeserver send-event metadata, and Supermessage sync ingestion for those event IDs.</p><details data-dc-tpl="46" class="full"><summary data-dc-tpl="47">Show the full reason</summary><p data-dc-tpl="48">No Accounts defect established; no issue filed.</p></details><p data-dc-tpl="49" class="fs">Priority 3 · asked by super-chotu · $0.00 · AgentPod v0.1.91 Matrix inbound bridge contract</p><a data-dc-tpl="50" class="ac" href="#card">Decide</a></article><article data-dc-tpl="51" class="it nd"><div data-dc-tpl="52" class="tr"><h3 data-dc-tpl="53" style="flex: 1 1 0%; min-width: 0px; display: flex;"><button data-dc-tpl="54" class="tt" type="button" aria-label="AgentPod: connector interface and generic effects ledger, state machine and executor. In Failing test. Enter opens, M moves.">AgentPod: connector interface and generic effects ledger, state machine and executor</button></h3><div class="mvw"><button data-dc-tpl="55" type="button" aria-haspopup="menu" class="vk-button vk-button--text mvt">Move</button></div></div><p data-dc-tpl="56" class="mt"><span data-dc-tpl="57" class="face"><svg data-dc-tpl="58" viewBox="-2 -4 68 70" width="20" height="20" role="img" aria-label="tester-tim, needs you" data-mood="needs"><circle data-dc-tpl="59" cx="32" cy="32" r="30" fill="var(--vk-mood-needs)"></circle><circle data-dc-tpl="60" cx="32" cy="4" r="7" fill="rgb(94 90 156)"></circle><g data-dc-tpl="61" data-eyes="open"><ellipse data-dc-tpl="62" cx="23" cy="28" rx="3.2" ry="3.2" fill="var(--vk-face-ink)"></ellipse><ellipse data-dc-tpl="63" cx="41" cy="28" rx="3.2" ry="3.2" fill="var(--vk-face-ink)"></ellipse></g><path data-dc-tpl="64" d="M24 44 Q32 38 40 44" fill="none" stroke="var(--vk-face-ink)" stroke-width="3" stroke-linecap="round"></path></svg></span>tester-tim · Failing test · 33 hours</p><p data-dc-tpl="65" class="rs">Stopped. Blocked on the forgeDestinationHold: operator must provide the authoritative writable Forge repository URL for SuperJackfruitLabs/agentpod and grant Tester Tim's station write access.</p><details data-dc-tpl="66" class="full"><summary data-dc-tpl="67">Show the full reason</summary><p data-dc-tpl="68">The matching URL ssh://git@forge.superjackfruit.com:2222/SuperJackfruitLabs/agentpod.git authenticates as tester-tim and is readable, but push is refused with “Mirror Repository SuperJackfruitLabs/agentpod is read-only”. Local red-test commit 7a444f3a and verbatim failure evidence are preserved at https://app.superlibrary.dev/a/itm_569034f61d1b4b1a; no GitHub push was attempted.</p></details><p data-dc-tpl="69" class="fs">Priority 2 · asked by super-chotu · $0.00 · Deterministic X publisher red-test evidence</p><a data-dc-tpl="70" class="ac" href="#card">Decide</a></article><article data-dc-tpl="71" class="it nd"><div data-dc-tpl="72" class="tr"><h3 data-dc-tpl="73" style="flex: 1 1 0%; min-width: 0px; display: flex;"><button data-dc-tpl="74" class="tt" type="button" aria-label="Superpipeline: manual-delivery completion and approval-subject hardening. In Fix. Enter opens, M moves.">Superpipeline: manual-delivery completion and approval-subject hardening</button></h3><div class="mvw"><button data-dc-tpl="75" type="button" aria-haspopup="menu" class="vk-button vk-button--text mvt">Move</button></div></div><p data-dc-tpl="76" class="mt"><span data-dc-tpl="77" class="face"><svg data-dc-tpl="78" viewBox="-2 -4 68 70" width="20" height="20" role="img" aria-label="coder-kai, needs you" data-mood="needs"><circle data-dc-tpl="79" cx="32" cy="32" r="30" fill="var(--vk-mood-needs)"></circle><g data-dc-tpl="80" data-eyes="open"><ellipse data-dc-tpl="81" cx="23" cy="28" rx="3.2" ry="4.2" fill="var(--vk-face-ink)"></ellipse><ellipse data-dc-tpl="82" cx="41" cy="28" rx="3.2" ry="4.2" fill="var(--vk-face-ink)"></ellipse></g><circle data-dc-tpl="83" cx="17" cy="37" r="4" fill="rgb(255 158 138 / 0.5)"></circle><circle data-dc-tpl="84" cx="47" cy="37" r="4" fill="rgb(255 158 138 / 0.5)"></circle><path data-dc-tpl="85" d="M24 44 Q32 38 40 44" fill="none" stroke="var(--vk-face-ink)" stroke-width="3" stroke-linecap="round"></path></svg></span>coder-kai · Fix · 33 hours · attempt 5</p><p data-dc-tpl="86" class="rs">Stopped. This stage was not finished twice — first: the handoff is missing commit; then, after one automatic rework: the handoff is missing commit.</p><p data-dc-tpl="87" class="fs">No priority · $0.00 · test(api): pin manual delivery reminder</p><a data-dc-tpl="88" class="ac" href="#card">Decide</a></article><article data-dc-tpl="89" class="it nd"><div data-dc-tpl="90" class="tr"><h3 data-dc-tpl="91" style="flex: 1 1 0%; min-width: 0px; display: flex;"><button data-dc-tpl="92" class="tt" type="button" aria-label="Fix the highest-severity blocker found in the clean-room journey. In Reported. Enter opens, M moves.">Fix the highest-severity blocker found in the clean-room journey</button></h3><div class="mvw"><button data-dc-tpl="93" type="button" aria-haspopup="menu" class="vk-button vk-button--text mvt">Move</button></div></div><p data-dc-tpl="94" class="mt"><span data-dc-tpl="95" class="face"><svg data-dc-tpl="96" viewBox="-2 -4 68 70" width="20" height="20" role="img" aria-label="super-chotu, resting" data-mood="resting"><circle data-dc-tpl="97" cx="32" cy="32" r="30" fill="var(--vk-mood-resting)"></circle><path data-dc-tpl="98" d="M8 22 Q12 4 32 3 Q52 4 56 22 Q44 14 32 15 Q20 14 8 22Z" fill="rgb(35 35 58)"></path><g data-dc-tpl="99" data-eyes="closed"><path data-dc-tpl="100" d="M19 29 Q23 32 27 29 M37 29 Q41 32 45 29" fill="none" stroke="var(--vk-face-ink)" stroke-width="2.6" stroke-linecap="round"></path></g><path data-dc-tpl="101" d="M27 43 Q32 45 37 43" fill="none" stroke="var(--vk-face-ink)" stroke-width="3" stroke-linecap="round"></path></svg></span>asked by super-chotu · Reported · 2 days</p><p data-dc-tpl="102" class="rs">Not started. Reported is a person's stage.</p><p data-dc-tpl="103" class="fs">Priority 1 · labels: clean-room, evidence-required, superpipeline, and 1 more · <span data-dc-tpl="104" class="od">Due 6 October, overdue</span></p><a data-dc-tpl="105" class="ac" href="#card">Open</a></article></section><section data-dc-tpl="106" class="grp" aria-labelledby="g2"><h2 data-dc-tpl="107" id="g2">In progress (0)</h2><p data-dc-tpl="108" class="nn">None.</p></section><section data-dc-tpl="109" class="grp" aria-labelledby="g3"><h2 data-dc-tpl="110" id="g3">Waiting to start (2)</h2><article data-dc-tpl="111" class="it plain"><div data-dc-tpl="112" class="tr"><h3 data-dc-tpl="113" style="flex: 1 1 0%; min-width: 0px; display: flex;"><button data-dc-tpl="114" class="tt" type="button" aria-label="Integrate editorial workflows and prove no-write publishing acceptance. In Failing test. Enter opens, M moves.">Integrate editorial workflows and prove no-write publishing acceptance</button></h3><div class="mvw"><button data-dc-tpl="115" type="button" aria-haspopup="menu" class="vk-button vk-button--text mvt">Move</button></div></div><p data-dc-tpl="116" class="mt">Not picked up yet · Failing test · 2 days</p><p data-dc-tpl="117" class="fs">Priority 2 · blocked by 3 cards · asked by super-chotu</p><a data-dc-tpl="118" class="ac" href="#card">Open</a></article><article data-dc-tpl="119" class="it plain"><div data-dc-tpl="120" class="tr"><h3 data-dc-tpl="121" style="flex: 1 1 0%; min-width: 0px; display: flex;"><button data-dc-tpl="122" class="tt" type="button" aria-label="agentpod-connectors: X connector (connector x). In Failing test. Enter opens, M moves.">agentpod-connectors: X connector (connector x)</button></h3><div class="mvw"><button data-dc-tpl="123" type="button" aria-haspopup="menu" class="vk-button vk-button--text mvt">Move</button></div></div><p data-dc-tpl="124" class="mt">Not picked up yet · Failing test · 33 hours</p><p data-dc-tpl="125" class="fs">Blocked by 1 card</p><a data-dc-tpl="126" class="ac" href="#card">Open</a></article></section><section data-dc-tpl="127" class="grp" aria-labelledby="g4"><h2 data-dc-tpl="128" id="g4">Done (1)</h2><article data-dc-tpl="129" class="it plain"><div data-dc-tpl="130" class="tr"><h3 data-dc-tpl="131" style="flex: 1 1 0%; min-width: 0px; display: flex;"><button data-dc-tpl="132" class="tt" type="button" aria-label="Build immutable approval subjects and digest-bound gates. In Shipped. Enter opens, M moves.">Build immutable approval subjects and digest-bound gates</button></h3><div class="mvw"><button data-dc-tpl="133" type="button" aria-haspopup="menu" class="vk-button vk-button--text mvt">Move</button></div></div><p data-dc-tpl="134" class="mt">Completed yesterday · Shipped · 15 attempts</p><p data-dc-tpl="135" class="fs">Priority 2 · $0.00</p><a data-dc-tpl="136" class="ac" href="#card">Open</a></article></section><section data-dc-tpl="137" class="grp" aria-labelledby="g5"><h2 data-dc-tpl="138" id="g5">Closed (0)</h2><p data-dc-tpl="139" class="nn">None.</p></section><section data-dc-tpl="140" class="grp" style="padding-bottom: 24px;"><table data-dc-tpl="141" class="tbl"><caption data-dc-tpl="142">Stages</caption><thead data-dc-tpl="143"><tr data-dc-tpl="144"><th data-dc-tpl="145" scope="col">Stage</th><th data-dc-tpl="146" scope="col">Cards</th><th data-dc-tpl="147" scope="col">Who works it</th></tr></thead><tbody data-dc-tpl="148"><tr data-dc-tpl="149"><th data-dc-tpl="150" scope="row">1. Reported</th><td data-dc-tpl="151" class="n">1</td><td data-dc-tpl="152">a person</td></tr><tr data-dc-tpl="153"><th data-dc-tpl="154" scope="row">2. Reproduce</th><td data-dc-tpl="155" class="n">1</td><td data-dc-tpl="156">diagnostics: error-eric</td></tr><tr data-dc-tpl="157"><th data-dc-tpl="158" scope="row">3. Failing test</th><td data-dc-tpl="159" class="n">3, 2 blocked</td><td data-dc-tpl="160">testing: tester-tim</td></tr><tr data-dc-tpl="161"><th data-dc-tpl="162" scope="row">4. Fix</th><td data-dc-tpl="163" class="n">1</td><td data-dc-tpl="164">code: 2 agents</td></tr><tr data-dc-tpl="165"><th data-dc-tpl="166" scope="row">5. Integrate</th><td data-dc-tpl="167" class="n">empty</td><td data-dc-tpl="168">integration</td></tr><tr data-dc-tpl="169"><th data-dc-tpl="170" scope="row">6. Signed off</th><td data-dc-tpl="171" class="n">empty</td><td data-dc-tpl="172">gate: approval by a person</td></tr><tr data-dc-tpl="173"><th data-dc-tpl="174" scope="row">7. Shipped</th><td data-dc-tpl="175" class="n">1</td><td data-dc-tpl="176">a person</td></tr></tbody></table></section><nav data-dc-tpl="177" class="pqb" aria-label="Main"><a data-dc-tpl="178" href="#plan" aria-current="page">Plan</a><a data-dc-tpl="179" href="#operate">Operate&nbsp;<span data-dc-tpl="180" class="need">(4)</span><span data-dc-tpl="181" class="sr"> need you</span></a><a data-dc-tpl="182" href="#workspace">Workspace</a><a data-dc-tpl="183" href="#you" aria-haspopup="menu">You<span data-dc-tpl="184" class="sr">, Ira Mehta</span></a></nav></div></div></div>
+
+
+
+</body></html>

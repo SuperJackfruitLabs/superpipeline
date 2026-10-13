@@ -1,0 +1,4 @@
+/* Paper desktop shell: the product's own pieces beside vibekit's frame. Values from SP-Board-Paper's .mh-showing and .mh-btn .cnt. */
+.ps-shell { min-height: 100svh; }
+.ps-note { margin-left: auto; font-family: var(--vk-font-display); font-style: italic; font-size: 16px; color: var(--vk-color-muted); }
+.ps-cnt { font-weight: 400; color: var(--vk-color-muted); }

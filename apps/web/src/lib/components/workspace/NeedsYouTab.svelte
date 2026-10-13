@@ -1,57 +1,40 @@
+<!-- apps/web/src/lib/components/workspace/NeedsYouTab.svelte -->
 <script lang="ts">
-  /**
-   * Everything waiting on you, across every board in the workspace — one list, from
-   * `GET /v1/stale?attention=1`. The per-board panel in Operate shows the same rows for one board.
-   */
-  import { onMount } from 'svelte';
-  import { goto } from '$app/navigation';
-  import { listAttention, resumeCard, type StaleCard } from '$lib/api';
-  import { itemsFromStale, type AttentionItem } from '$lib/components/attention/attention';
-  import { refusalOf } from '$lib/components/attention/refusal';
-  import NeedsYouList from '$lib/components/attention/NeedsYouList.svelte';
+  import { untrack } from 'svelte';
+  import { Button } from '@superjackfruit/vibekit';
+  import LineIcon from '$lib/components/parts/LineIcon.svelte';
+  import { NeedsModel } from './needs-model.svelte';
+  import { needsHeadMeta, unansweredFoot } from './needs-row';
+  import PanelTag from './PanelTag.svelte';
+  import WorkspaceNeedsRow from './WorkspaceNeedsRow.svelte';
+  import type { WorkspaceTabProps } from './types';
 
-  let cards = $state<StaleCard[] | null>(null);
-  let unanswered = $state(0);
-  let error = $state<string | null>(null);
-  const items = $derived(cards ? itemsFromStale(cards) : []);
-
-  async function load(): Promise<void> {
-    try {
-      const res = await listAttention();
-      cards = res.cards;
-      unanswered = res.boardsUnanswered;
-      error = null;
-    } catch (e) {
-      error = e instanceof Error ? e.message : String(e);
-    }
-  }
-
-  async function resume(it: AttentionItem, comment: string): Promise<string | null> {
-    const refused = await refusalOf(await resumeCard(it.boardId, it.cardId, comment));
-    if (!refused) await load();
-    return refused;
-  }
-
-  onMount(() => void load());
+  let { review, initial }: WorkspaceTabProps = $props();
+  const model = new NeedsModel(untrack(() => initial));
+  // Loaded during init (ssr is off): the busy mark is held before the first paint.
+  void model.load();
+  const foot = $derived(model.unanswered > 0 ? unansweredFoot(model.unanswered) : (review?.note ?? null));
 </script>
 
-{#if error}
-  <p class="text-coral text-sm" role="alert">Could not load what is waiting: {error}</p>
-{:else if cards === null}
-  <p class="text-muted-foreground text-sm">Loading…</p>
-{:else}
-  <NeedsYouList
-    {items}
-    showBoard
-    empty="Nothing on any board is waiting on you."
-    onOpen={(it) => void goto(`/b/${it.boardId}/c/${it.cardId}`)}
-    onResume={resume}
-  >
-    {#snippet header()}
-      <button onclick={() => void load()} class="text-muted-foreground hover:text-foreground mono text-[11px]" style="min-height:var(--tap)">Refresh</button>
-    {/snippet}
-  </NeedsYouList>
-  {#if unanswered > 0}
-    <p class="text-muted-foreground mt-2 text-xs">{unanswered} board{unanswered === 1 ? '' : 's'} did not answer; this list may be incomplete.</p>
+{#snippet refreshIcon()}<LineIcon name="refresh" />{/snippet}
+
+<section class="panel" aria-labelledby="nt-h">
+  <div class="panel-head">
+    {#if review}<PanelTag text={review.tag} />{/if}
+    <h2 class="t-h2" id="nt-h" style="flex-basis: 100%;">Waiting on you, across every board{#if model.cards !== null}{' '}{#if model.items.length > 0}<span class="count-signal" style="vertical-align: middle;">{model.items.length}</span>{:else}<span class="count" style="vertical-align: middle;">0</span>{/if}{/if}</h2>
+    {#if model.cards !== null}<p class="t-meta" style="flex: 1 1 0%;">{needsHeadMeta(model.unanswered)}</p>{/if}
+    <Button variant="secondary" class="btn-sm" type="button" icon={refreshIcon} aria-disabled={model.refreshing && model.cards !== null ? 'true' : undefined} onclick={() => { if (!model.refreshing) void model.load(); }}>{model.refreshing && model.cards !== null ? 'Refreshing…' : 'Refresh'}</Button>
+  </div>
+  {#if model.error}
+    <p class="panel-body t-meta" role="alert">Could not load what is waiting: {model.error}</p>
+  {:else if model.cards === null}
+    <p class="panel-body t-meta" role="status">Loading…</p>
+  {:else if model.items.length === 0}
+    <p class="panel-body t-body">Nothing on any board is waiting on you.</p>
+  {:else}
+    <ol style="list-style: none; margin: 0px; padding: 0px;">
+      {#each model.items as item (item.id)}<WorkspaceNeedsRow {item} {model} />{/each}
+    </ol>
   {/if}
-{/if}
+  {#if foot}<p class="t-meta" style="padding: var(--vk-space-3) var(--vk-space-5); border-top: 1px solid var(--vk-color-line);">{foot}</p>{/if}
+</section>

@@ -1,0 +1,50 @@
+/* Ported verbatim from e2e/reference/mockups/SP-Card-States-Studio.html (prefixes ss) by scripts/pixel/extract-css.mjs. */
+.ar.ss { display: flex; flex-direction: column; gap: 32px; padding: 40px 40px 56px; }
+.ss-head { display: flex; flex-direction: column; gap: 10px; padding-bottom: 20px; border-bottom: 1.5px solid var(--rule); }
+.ss-head h1 { font: 800 52px/1 var(--ff); font-stretch: 80%; letter-spacing: -.02em; }
+.ss-head p { max-width: 760px; font: 400 18px/1.45 var(--fs); }
+.ss-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 40px 32px; align-items: start; }
+.ss-cell { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+.ss-label { display: flex; align-items: baseline; gap: 12px; padding-top: 10px; border-top: 1.5px solid var(--rule); }
+.ss-label .no { font: 500 12px var(--fm); color: var(--muted); }
+.ss-label b { font: 800 16px var(--ff); }
+.ss-panel { display: flex; flex-direction: column; min-width: 0; background: var(--paper); border: 1px solid var(--hair); }
+.ss-bar { display: flex; align-items: center; gap: 8px; padding: 10px 18px; border-bottom: 1px solid var(--hair); font: 500 12px var(--fm); color: var(--muted); }
+.ss-body { display: flex; flex-direction: column; gap: 16px; padding: 18px; }
+.ss-title { font: 800 22px/1.12 var(--ff); font-stretch: 85%; letter-spacing: -.01em; overflow-wrap: anywhere; }
+.ss-cmd { display: flex; flex-direction: column; gap: 12px; padding: 16px 18px 18px; border-top: 1.5px solid var(--rule); }
+.ss-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px; }
+.ss .ar-q blockquote { font-size: 17px; }
+.ss .ar-track li { font-size: 11px; }
+.ss-subj { width: 100%; border-collapse: collapse; table-layout: fixed; }
+.ss-subj th, .ss-subj td { padding: 8px 10px 8px 0; border-top: 1px solid var(--hair); text-align: left; vertical-align: top; overflow-wrap: anywhere; }
+.ss-subj th { width: 88px; font: 700 12.5px var(--ff); color: var(--muted); }
+.ss-subj td.serif { font: 400 15.5px/1.45 var(--fs); }
+.ss-subj .mono { font-size: 12.5px; }
+.ss-seal { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; padding: 10px 0 0; border-top: 1.5px solid var(--rule); font-size: 13px; font-weight: 700; }
+.ss-seal .mono { font-weight: 500; }
+.ss-banner { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; padding: 12px 18px; background: var(--text); color: var(--bg); font: 800 14px var(--ff); }
+.ss-banner span { margin-left: auto; font: 500 12px var(--fm); }
+.ss-figs { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); border-top: 1.5px solid var(--rule); border-bottom: 1px solid var(--hair); }
+.ss-figs > div { display: flex; flex-direction: column; gap: 6px; padding: 10px 8px 12px 0; min-width: 0; }
+.ss-figs > div + div { padding-left: 10px; border-left: 1px solid var(--hair); }
+.ss-figs b { font: 900 30px/.95 var(--ff); font-stretch: 72%; overflow-wrap: anywhere; }
+.ss-figs b.st { display: inline-flex; align-items: center; gap: 6px; }
+.ss-figs b.st .u { width: 14px; height: 14px; }
+.ss-figs span { font-size: 12px; font-weight: 600; color: var(--muted); }
+.ss-kv { width: 100%; border-collapse: collapse; }
+.ss-kv td { padding: 8px 10px 8px 0; border-top: 1px solid var(--hair); vertical-align: top; overflow-wrap: anywhere; }
+.ss-kv td:first-child { width: 96px; font: 700 12.5px var(--ff); color: var(--muted); }
+.ss-ag { display: inline-flex; align-items: center; gap: 6px; }
+.ss-err { color: var(--text); font-weight: 700; }
+.ss-field-bad .ar-ta { border-width: 2px; }
+.ss-alert { display: grid; grid-template-columns: 20px minmax(0, 1fr); gap: 10px; flex-basis: 100%; padding: 12px 14px; border: 1.5px solid var(--rule); background: var(--bg); }
+.ss-alert b { font-weight: 800; }
+.ss-sk { display: block; height: 12px; background: linear-gradient(90deg, var(--soft) 40%, var(--hair) 50%, var(--soft) 60%); background-size: 300% 100%; animation: ss-fill 1.4s linear infinite; }
+.ss-figs .ss-sk { width: 70%; height: 26px; }
+@keyframes ss-fill { from { background-position: 100% 0; } to { background-position: 0 0; } }
+
+/* ---- deltas: not in the reference ---- */
+.ar.ss .ss-alert .ar-lk { min-height: 0; }
+.ar.ss .ss-err { display: flex; gap: 6px; align-items: center; }
+.ar.ss .ss-panel { container: ssp / inline-size; }

@@ -62,7 +62,8 @@ export async function resolvePlaneUser(request: Request, env: Env, cfg: OrgPlane
     console.warn('org-plane: a verified human could not be provisioned (unverified address, or an address held by a still-hub-mapped account)');
     return null;
   }
-  return { userId: human.userId, tenantId, role: human.role, mayDispatch: claims.mayDispatch };
+  // A token minted on a person's behalf (`act`) is the bridge speaking for them; the app's own is the web.
+  return { userId: human.userId, tenantId, role: human.role, mayDispatch: claims.mayDispatch, via: claims.act?.sub ? 'matrix' : 'web' };
 }
 
 export async function resolvePlaneAgent(request: Request, env: Env, cfg: OrgPlaneConfig): Promise<AgentPrincipal | null> {

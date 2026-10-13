@@ -1,0 +1,7 @@
+/* Ported verbatim from e2e/reference/mockups/SP-List-Daylight.html (prefixes bar__lbl, sum) by scripts/pixel/extract-css.mjs. */
+/* Hand edit: scoped to the vibekit Masthead sub-bar the toolbar is drawn in (the reference's .dy-sub is not in the app). */
+@scope (.vk-masthead) {
+.bar__lbl { font-size: var(--vk-text-sm); color: var(--vk-sky-text); font-weight: 600; margin-left: var(--vk-space-3); }
+.sum { margin-left: auto; font-size: var(--vk-text-sm); color: var(--vk-sky-text); }
+
+}

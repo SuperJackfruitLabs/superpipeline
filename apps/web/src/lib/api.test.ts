@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { setAgentPrincipal, setWorkspaceFleet, getWorkspace, issueAgentToken, revokeAgentToken, getAgents, getHubPrincipals, getBoard, resolveGate, setUnauthorizedHandler, BOARD_TEMPLATES, createCard, listLabels, getSchedules, createSchedule, updateSchedule, deleteSchedule, addLink, removeLink, listLinks, archiveCard, unarchiveCard, splitCard, listProjects, getProject, createProject, updateProject, deleteProject, createMilestone, deleteMilestone, getProjectRollup, type Card } from './api';
+import { setAgentPrincipal, setWorkspaceFleet, getWorkspace, issueAgentToken, revokeAgentToken, getAgents, getHubPrincipals, getBoard, resolveGate, setUnauthorizedHandler, BOARD_TEMPLATES, createCard, listLabels, getSchedules, createSchedule, updateSchedule, deleteSchedule, addLink, removeLink, listLinks, archiveCard, unarchiveCard, splitCard, listProjects, getProject, createProject, updateProject, deleteProject, createMilestone, deleteMilestone, getProjectRollup, renewSession, type Card } from './api';
 import { capabilityTag } from '@superpipeline/contract';
 import { forgetHubToken } from './hub-token';
 
@@ -54,6 +54,10 @@ describe('Card', () => {
       blockedBy: [],
       projectId: null,
       milestoneId: null,
+      lastAgentId: null,
+      queuedGrantOwner: null,
+      stageSince: '2026-10-08T10:00:00Z',
+      createdAt: '2026-10-08T09:00:00Z',
     };
     expect(card.projectId).toBeNull();
     expect(card.milestoneId).toBeNull();
@@ -987,5 +991,26 @@ describe('getProjectRollup', () => {
   it('throws on failure rather than inventing a zeroed or falsely-complete rollup', async () => {
     vi.stubGlobal('fetch', vi.fn(async () => new Response('nope', { status: 500 })));
     await expect(getProjectRollup('prj_1')).rejects.toThrow('getProjectRollup failed (500)');
+  });
+});
+
+
+describe('renewSession', () => {
+  it('posts same-origin to /hub/session and reads each answer', async () => {
+    const fetchSpy = vi.fn(async () => Response.json({ ok: true }));
+    vi.stubGlobal('fetch', fetchSpy);
+    expect(await renewSession()).toEqual({ ok: true });
+    const [url, init] = fetchSpy.mock.calls[0] as unknown as [string, RequestInit];
+    expect(url).toBe('/hub/session');
+    expect(init).toMatchObject({ method: 'POST', credentials: 'same-origin' });
+
+    vi.stubGlobal('fetch', vi.fn(async () => Response.json({ ok: false, reason: 'login_required', issuer: 'accounts.superjackfruit.com', reauthorize: '/auth/login' })));
+    expect(await renewSession()).toEqual({ ok: false, reason: 'login_required', issuer: 'accounts.superjackfruit.com', reauthorize: '/auth/login' });
+    vi.stubGlobal('fetch', vi.fn(async () => Response.json({ ok: false, reason: 'plane_unavailable', retryable: true }, { status: 503 })));
+    expect(await renewSession()).toEqual({ ok: false, reason: 'plane_unavailable', retryable: true });
+    vi.stubGlobal('fetch', vi.fn(async () => { throw new TypeError('offline'); }));
+    expect(await renewSession()).toEqual({ ok: false, reason: 'plane_unavailable', retryable: true });
+    vi.stubGlobal('fetch', vi.fn(async () => new Response('<html>', { status: 404 })));
+    expect(await renewSession()).toEqual({ ok: false, reason: 'no_refresh' });
   });
 });

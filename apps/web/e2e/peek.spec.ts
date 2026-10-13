@@ -1,10 +1,11 @@
-import { test, expect } from '@playwright/test';
+import { test, expect, type Page } from '@playwright/test';
 
-// Daylight's peek (spec §5.1): a 320px aside from 1440px up; pointing at a tile changes it, its
-// button opens the card. Below 1440px it is not rendered at all.
+// Daylight's peek (Board-Daylight §3.4): from 1440px, pointing at or focusing a tile opens a peek
+// beside it after 300 ms; Esc or "Close peek" shuts it and puts focus back on the title.
 
 const BOARD_KEY = 'superpipeline.boardId';
-const API = 'http://localhost:8787';
+import { PORTS } from '../scripts/ports';
+const API = PORTS.apiUrl;
 const TENANT = { 'X-Tenant-Id': 'tnt_dev', 'Content-Type': 'application/json' };
 const STAGES = [
   { key: 'backlog', name: 'Backlog', order: 0 },
@@ -17,61 +18,56 @@ test.beforeEach(async ({ page, request }) => {
   await page.addInitScript(([key, id]) => window.localStorage.setItem(key, id), [BOARD_KEY, boardId]);
 });
 
-async function compose(page: import('@playwright/test').Page, title: string) {
+async function compose(page: Page, title: string) {
   await page.getByRole('button', { name: 'New card' }).click();
   await page.getByLabel('Card title').fill(title);
   await page.getByRole('button', { name: 'Dispatch' }).click();
-  await expect(page.locator('.tile', { hasText: title })).toBeVisible();
+  await expect(page.locator('[data-card-id]', { hasText: title })).toBeVisible();
 }
+const titleOf = (page: Page, t: string) => page.getByRole('button', { name: new RegExp(`^${t}, in `) });
+const peek = (page: Page) => page.getByRole('complementary', { name: 'Peek' });
 
-test('at 1440px the peek follows the pointer and its button opens the card', async ({ page }) => {
+test('at 1440px pointing at a tile opens its peek, and the peek opens the card', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto('/');
   await compose(page, 'First peek card');
   await compose(page, 'Second peek card');
-  const peek = page.getByRole('complementary', { name: 'Peek' });
-  await expect(peek).toBeVisible();
-  await page.locator('.tile', { hasText: 'Second peek card' }).hover();
-  await expect(peek.getByText('Second peek card')).toBeVisible();
-  await page.locator('.tile', { hasText: 'First peek card' }).hover();
-  await expect(peek.getByText('First peek card')).toBeVisible();
-  await peek.getByRole('button', { name: 'Open' }).click();
+  await titleOf(page, 'Second peek card').hover();
+  await expect(peek(page).getByRole('heading', { name: 'Second peek card' })).toBeVisible();
+  await titleOf(page, 'First peek card').hover();
+  await expect(peek(page).getByRole('heading', { name: 'First peek card' })).toBeVisible();
+  await expect(peek(page)).toHaveCount(1);
+  await peek(page).getByRole('button', { name: 'Open card to read it all' }).click();
   await expect(page.getByRole('dialog').getByText('First peek card').first()).toBeVisible();
 });
 
-test('keyboard focus on a tile moves the peek too', async ({ page }) => {
+test('focus opens the peek; Esc closes it, keeps focus on the title and does not reopen', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto('/');
   await compose(page, 'Focus peek card');
-  await page.locator('.tile', { hasText: 'Focus peek card' }).getByRole('button', { name: /Focus peek card, in/ }).focus();
-  await expect(page.getByRole('complementary', { name: 'Peek' }).getByText('Focus peek card')).toBeVisible();
+  await titleOf(page, 'Focus peek card').focus();
+  await expect(peek(page).getByRole('heading', { name: 'Focus peek card' })).toBeVisible();
+  await page.keyboard.press('Escape');
+  await expect(peek(page)).toHaveCount(0);
+  await expect(titleOf(page, 'Focus peek card')).toBeFocused();
+  await page.waitForTimeout(500);
+  await expect(peek(page)).toHaveCount(0);
 });
 
-test('P on a tile pins that card in the peek and moves focus to its button', async ({ page }) => {
+test('Close peek closes it', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto('/');
-  for (const t of ['Peek one', 'Peek two', 'Peek three']) await compose(page, t);
-  const peek = page.getByRole('complementary', { name: 'Peek' });
-  const open = (t: string) => page.locator('.tile', { hasText: t }).getByRole('button', { name: new RegExp(`^${t}, in .* P to show it in the peek\\.$`) });
-  await open('Peek two').focus();
-  await page.keyboard.press('p');
-  await expect(peek.getByText('Peek two')).toBeVisible();
-  await expect(peek.getByRole('button', { name: 'Open' })).toBeFocused();
-  // Walking on through the board does not repin it: the peek stays where the person pinned it.
-  await open('Peek one').focus();
-  await page.keyboard.press('p');
-  await expect(peek.getByText('Peek one')).toBeVisible();
-  await open('Peek one').focus();
-  for (let i = 0; i < 6; i++) { await page.keyboard.press('Tab'); await page.waitForTimeout(200); }
-  await expect(peek.getByText('Peek one')).toBeVisible();
-  await peek.getByRole('button', { name: 'Open' }).focus();
-  await page.keyboard.press('Enter');
-  await expect(page.getByRole('dialog').getByText('Peek one').first()).toBeVisible();
+  await compose(page, 'Closable peek card');
+  await titleOf(page, 'Closable peek card').hover();
+  await peek(page).getByRole('button', { name: 'Close peek' }).click();
+  await expect(peek(page)).toHaveCount(0);
 });
 
 test('below 1440px there is no peek', async ({ page }) => {
   await page.setViewportSize({ width: 1280, height: 800 });
   await page.goto('/');
   await compose(page, 'Narrow card');
-  await expect(page.getByRole('complementary', { name: 'Peek' })).toHaveCount(0);
+  await titleOf(page, 'Narrow card').hover();
+  await page.waitForTimeout(500);
+  await expect(peek(page)).toHaveCount(0);
 });

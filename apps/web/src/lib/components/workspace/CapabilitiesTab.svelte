@@ -1,195 +1,75 @@
+<!-- apps/web/src/lib/components/workspace/CapabilitiesTab.svelte -->
 <script lang="ts">
-  /**
-   * The capability registry — and the two counts that make a mismatch visible.
-   *
-   * A capability held by agents and named by no stage is an agent that can claim nothing: the bug
-   * that shipped, where thirteen agents carried `claim` (a token scope) and matched no lane. A
-   * capability named by a stage and held by nobody is a lane no one can work. Neither is knowable
-   * without counting, which is why the counts are the point rather than decoration.
-   */
-  import {
-    getCapabilities,
-    createCapability,
-    updateCapability,
-    deleteCapability,
-    addImplication,
-    removeImplication,
-    type CapabilityRecord,
-  } from '$lib/api';
-  import { Button } from '$lib/components/ui/button';
+  import { Button, Face } from '@superjackfruit/vibekit';
+  import LineIcon from '$lib/components/parts/LineIcon.svelte';
+  import { CapabilitiesModel } from './capabilities-model.svelte';
+  import { agentCountText, capsHeading, holdersOf, INFERRED_TITLE } from './capability-notes';
+  import { similarText } from './workspace-words';
+  import PanelTag from './PanelTag.svelte';
+  import type { WorkspaceTabProps } from './types';
 
-  let capabilities = $state<CapabilityRecord[]>([]);
-  let newKey = $state('');
-  let error = $state<string | null>(null);
-  /** Existing keys the one just added looks like. A hint from the server, never a refusal. */
-  let similar = $state<string[]>([]);
-  /** Which capability's "implies" row is open. One at a time; this is a rare act. */
-  let implyingFor = $state<string | null>(null);
-  let implyTo = $state('');
-
-  const orphans = $derived(capabilities.filter((c) => c.boardCount === 0 && c.agentCount > 0));
-  const unstaffed = $derived(capabilities.filter((c) => c.agentCount === 0 && c.boardCount > 0));
-
-  async function refresh(): Promise<void> {
-    capabilities = await getCapabilities();
-  }
-  $effect(() => { void refresh(); });
-
-  async function add(): Promise<void> {
-    const key = newKey.trim();
-    if (key === '') return;
-    error = null;
-    similar = [];
-    const res = await createCapability({ key });
-    const body = (await res.json().catch(() => null)) as { error?: string; similar?: string[] } | null;
-    if (!res.ok) {
-      error = body?.error ?? `Adding failed (${res.status})`;
-      return;
-    }
-    // Named, not refused: only a person knows whether `cdoe` was a typo for `code` or a word they
-    // meant. Refusing would dead-end a legitimate first move and still miss every existing typo.
-    similar = body?.similar ?? [];
-    newKey = '';
-    await refresh();
-  }
-
-  async function imply(from: string): Promise<void> {
-    const to = implyTo.trim();
-    if (to === '') return;
-    error = null;
-    const res = await addImplication(from, to);
-    if (!res.ok) {
-      const body = (await res.json().catch(() => null)) as { error?: string } | null;
-      error = body?.error ?? `Could not record that (${res.status})`;
-      return;
-    }
-    implyTo = '';
-    implyingFor = null;
-    await refresh();
-  }
-
-  async function unimply(from: string, to: string): Promise<void> {
-    error = null;
-    await removeImplication(from, to);
-    await refresh();
-  }
-
-  async function describe(c: CapabilityRecord, description: string): Promise<void> {
-    error = null;
-    await updateCapability(c.id, { description });
-    await refresh();
-  }
-
-  async function remove(c: CapabilityRecord): Promise<void> {
-    error = null;
-    const res = await deleteCapability(c.id);
-    if (!res.ok) {
-      const body = (await res.json().catch(() => null)) as { error?: string } | null;
-      error = body?.error ?? `Removing failed (${res.status})`;
-    }
-    await refresh();
-  }
+  let { review }: WorkspaceTabProps = $props();
+  const model = new CapabilitiesModel();
+  // Loaded during init (ssr is off): the busy mark is held before the first paint.
+  void model.refresh();
 </script>
 
-{#if orphans.length > 0}
-  <p class="border-coral/40 text-coral mb-3 rounded-[9px] border px-3 py-2 text-xs leading-relaxed" style="background:color-mix(in srgb, var(--coral) 8%, transparent)">
-    <b>{orphans.map((c) => c.key).join(', ')}</b> — held by agents, asked for by no board stage. An
-    agent holding only these can claim nothing.
-  </p>
-{/if}
-{#if unstaffed.length > 0}
-  <p class="text-muted-foreground mb-3 text-xs leading-relaxed">
-    <b>{unstaffed.map((c) => c.key).join(', ')}</b> — asked for by a stage, held by no agent. Those
-    lanes will hold cards nothing can claim.
-  </p>
-{/if}
+{#snippet plusIcon()}<LineIcon name="plus" size={14} />{/snippet}
 
-<div class="space-y-2">
-  {#each capabilities as c (c.id)}
-    <div class="bg-surface border-border rounded-[10px] border px-3 py-2.5">
-      <div class="flex items-center gap-2">
-        <span class="mono min-w-0 flex-1 truncate text-sm">{c.key}</span>
-        <span class="mono text-muted-foreground shrink-0 text-[11px]" title="{c.agentCount} agent(s) hold this · {c.boardCount} board(s) ask for it">
-          {c.agentCount} agent{c.agentCount === 1 ? '' : 's'} ·
-          <span style="color:{c.boardCount === 0 ? 'var(--coral)' : 'inherit'}">{c.boardCount} board{c.boardCount === 1 ? '' : 's'}</span>
-        </span>
-        {#if c.origin === 'inferred'}
-          <span class="border-border text-muted-foreground shrink-0 rounded-[4px] border px-1 text-[9px]" title="Nobody defined this — it turned up in use">inferred</span>
-        {/if}
-        <button onclick={() => void remove(c)} aria-label="Remove capability {c.key}" class="text-muted-foreground hover:text-coral tap shrink-0 rounded-[6px]">
-          <svg class="size-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" /></svg>
-        </button>
-      </div>
-      <input
-        value={c.description ?? ''}
-        onblur={(e) => { const v = e.currentTarget.value; if (v !== (c.description ?? '')) void describe(c, v); }}
-        placeholder="what does this capability mean?"
-        aria-label="Description for {c.key}"
-        class="bg-inset border-border focus:border-marigold mt-1.5 w-full rounded-[6px] border px-2 py-1 text-[11px]"
-      />
-
-      <!--
-        Implication. Routing stays exact string equality; this is how a workspace says one
-        capability is a kind of another without making the match fuzzy. An agent holding this key
-        can claim lanes asking for anything listed here.
-      -->
-      <div class="mt-1.5 flex flex-wrap items-center gap-1.5">
-        <span class="text-muted-foreground mono text-[10px]">implies</span>
-        {#each c.implies ?? [] as to (to)}
-          <span class="bg-inset border-border mono inline-flex items-center gap-1 rounded-[5px] border px-1.5 py-0.5 text-[10px]">
-            {to}
-            <button
-              onclick={() => void unimply(c.key, to)}
-              aria-label="Stop {c.key} implying {to}"
-              class="text-muted-foreground hover:text-coral"
-            >×</button>
-          </span>
+<section class={review?.span2 ? 'panel span2' : 'panel'} aria-labelledby="ct-h">
+  <div class="panel-head" style="flex-direction: column; align-items: flex-start;">
+    {#if review}<PanelTag text={review.tag} />{/if}
+    <h2 class="t-h2" id="ct-h">{model.capabilities === null ? 'Capabilities' : capsHeading(model.rows.length)}</h2>
+    <p class="t-meta">What agents can do. A board stage asks for one; an agent holding it claims the card.</p>
+  </div>
+  {#if model.capabilities === null}
+    <p class="panel-body t-meta" role="status">Loading capabilities…</p>
+  {:else}
+    {#if model.notes.length > 0 || review?.note}
+      <div class="panel-body" style="display: flex; flex-direction: column; gap: var(--vk-space-2); border-bottom: 1px solid var(--vk-color-line);">
+        {#each model.notes as n (n.key)}
+          <div class="note"><LineIcon name="info" size={20} /><p class="t-body" style="font-size: 0.9375rem;"><strong>{n.key}</strong> {n.text} <a href={n.link.href}>{n.link.label}</a>{n.tail}</p></div>
         {/each}
-        {#if implyingFor === c.key}
-          <input
-            bind:value={implyTo}
-            placeholder="capability"
-            aria-label="{c.key} implies"
-            onkeydown={(e) => { if (e.key === 'Enter') { e.preventDefault(); void imply(c.key); } }}
-            onblur={() => { if (implyTo.trim() === '') implyingFor = null; }}
-            class="bg-inset border-border focus:border-marigold mono w-28 rounded-[5px] border px-1.5 py-0.5 text-[10px]"
-          />
-          <button onclick={() => void imply(c.key)} class="text-marigold mono text-[10px]">add</button>
-        {:else}
-          <button
-            onclick={() => { implyingFor = c.key; implyTo = ''; }}
-            aria-label="Add what {c.key} implies"
-            class="text-muted-foreground hover:text-foreground mono text-[10px]"
-          >+</button>
-        {/if}
+        {#if review?.note}<p class="t-meta">{review.note}</p>{/if}
       </div>
-    </div>
-  {/each}
-
-  {#if capabilities.length === 0}
-    <p class="text-muted-foreground text-sm">
-      Nothing yet. A board stage with an agent owner adds one, or name one below.
-    </p>
+    {/if}
+    <ul style="list-style: none; margin: 0px; padding: 0px;">
+      {#each model.rows as c (c.id)}
+        <li class="crow">
+          <div style="min-width: 0px;">
+            <p class="t-h3">{c.key}</p>
+            <p class="t-meta" style="display: flex; gap: 8px; align-items: center;"><span class="stack">{#each holdersOf(c, model.agents) as a (a.id)}<span class="face" style="width: 24px; height: 24px;"><Face id={a.name} label={a.name} mood="resting" size={24} src={a.iconUrl ?? undefined} /></span>{/each}</span>{agentCountText(c.agentCount)}</p>
+          </div>
+          <div style="min-width: 0px;">
+            <label class="sr" for="cd-{c.key}">Description of {c.key}</label>
+            <input class="input" id="cd-{c.key}" placeholder="Add a description" value={c.description ?? ''} style="min-height: 44px;" onblur={(e) => void model.describe(c, e.currentTarget.value)} />
+          </div>
+          <div class="caps">
+            {#each c.implies ?? [] as to (to)}
+              <span class="chip chip-line">implies {to}<button class="iconbtn" aria-label="Remove implies {to}" type="button" style="width: 28px; height: 28px;" onclick={() => void model.unimply(c.key, to)}><LineIcon name="close" size={14} /></button></span>
+            {/each}
+            {#if c.boardCount === 0}<span class="chip chip-line">no board asks</span>{/if}
+            {#if c.origin === 'inferred'}<span class="chip chip-line" title={INFERRED_TITLE}>inferred</span>{/if}
+            {#if model.implyingFor === c.key}
+              <form style="display: inline-flex; gap: 6px;" onsubmit={(e) => { e.preventDefault(); void model.imply(c.key); }}>
+                <label class="sr" for="im-{c.key}">{c.key} implies</label>
+                <input class="input" id="im-{c.key}" placeholder="e.g. analysis" style="width: 160px; min-height: 36px;" bind:value={model.implyTo} />
+                <Button variant="secondary" class="btn-sm" type="submit">Add</Button>
+              </form>
+            {:else}
+              <Button variant="quiet" icon={plusIcon} aria-label="Add an implied capability to {c.key}" type="button" style="min-height: 44px; font-size: 0.875rem;" onclick={() => model.startImply(c.key)}>Implies…</Button>
+            {/if}
+          </div>
+          <button class="iconbtn" aria-label="Remove {c.key}" type="button" onclick={() => void model.remove(c)}><LineIcon name="trash" /></button>
+        </li>
+      {/each}
+    </ul>
   {/if}
-</div>
-
-<div class="mt-4 flex gap-2">
-  <input
-    bind:value={newKey}
-    placeholder="add a capability"
-    aria-label="New capability"
-    onkeydown={(e) => { if (e.key === 'Enter') { e.preventDefault(); void add(); } }}
-    class="bg-inset border-border focus:border-marigold mono min-w-0 flex-1 rounded-[8px] border px-3 py-2 text-xs"
-  />
-  <Button variant="outline" onclick={() => void add()} disabled={newKey.trim() === ''}>Add</Button>
-</div>
-
-{#if similar.length > 0}
-  <p class="text-muted-foreground mt-2 text-xs leading-relaxed" data-testid="similar-hint">
-    This workspace already has <b class="mono">{similar.join(', ')}</b>. If one of those is what you
-    meant, remove the new one — routing is exact string equality, so two spellings are two
-    capabilities.
-  </p>
-{/if}
-
-{#if error}<p class="text-coral mt-3 text-xs leading-relaxed">{error}</p>{/if}
+  <form class="panel-body" style="border-top: 1px solid var(--vk-color-line); display: flex; flex-wrap: wrap; gap: var(--vk-space-2); align-items: flex-end;" onsubmit={(e) => { e.preventDefault(); void model.add(); }}>
+    <div class="field" style="flex: 1 1 220px;"><label for="cap-new">Add a capability</label><input class="input" id="cap-new" placeholder="e.g. diagnostics" bind:value={model.newKey} /></div>
+    <Button variant="secondary" class="btn-sm" type="submit">Add</Button>
+    <p class="hint" style="flex-basis: 100%;">If the name is close to one you have, a “similar to …” hint appears after you add it.</p>
+    {#if model.similar.length > 0}<p class="hint" role="status" style="flex-basis: 100%;">{similarText(model.similar)}</p>{/if}
+    {#if model.error}<p class="hint" role="alert" style="flex-basis: 100%; color: var(--vk-color-signal-text);">{model.error}</p>{/if}
+  </form>
+</section>

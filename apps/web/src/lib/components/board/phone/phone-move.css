@@ -1,0 +1,4 @@
+/* Hand-written: where a phone card's move menu opens. CardMoveMenu (bare) draws only the menu, absolutely
+   positioned below its nearest positioned ancestor; this zero-height anchor sits under the card's Move control. */
+.ph-mvanchor { position: absolute; right: 8px; top: 52px; height: 0; width: 0; z-index: 20; }
+.ph-mvanchor > [role="menu"] { right: 0; }

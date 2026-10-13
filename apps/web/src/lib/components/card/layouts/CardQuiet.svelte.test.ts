@@ -1,147 +1,118 @@
+// apps/web/src/lib/components/card/layouts/CardQuiet.svelte.test.ts
 // @vitest-environment jsdom
-/**
- * Quiet's card is one plain page (spec §5.2): a way back, the title, one meta line, the decision,
- * then every fact under its own heading in a fixed order. No disclosure is added by the layout.
- */
-import { describe, it, expect, afterEach, vi } from 'vitest';
-import { render, screen, cleanup, fireEvent } from '@testing-library/svelte';
-import { createRawSnippet } from 'svelte';
+/** The Quiet drawer: one signal-edged fieldset, then plain sections in two columns. */
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { cleanup, fireEvent, render, screen, within } from '@testing-library/svelte';
 import CardQuiet from './CardQuiet.svelte';
-import { CARD_SECTION_KEYS, type CardCounts, type CardLayoutProps, type CardSections } from './types';
-import type { CardLead } from '../card-lead';
+import { fakeApi } from '../testing/fakes';
+import { mountModel } from '../testing/mount-model.svelte';
 
-const closeCard = vi.hoisted(() => vi.fn());
-vi.mock('$lib/stores/app.svelte', () => ({ app: { closeCard } }));
+vi.mock('$lib/stores/app.svelte', async () => ({ app: (await import('../testing/fakes')).fakeApp }));
+vi.mock('$lib/api', async (orig) => ({ ...(await orig<typeof import('$lib/api')>()), ...(await import('../testing/fakes')).fakeApi }));
+vi.mock('$lib/superlibrary', async (orig) => ({ ...(await orig<typeof import('$lib/superlibrary')>()), relatedForCard: vi.fn(async () => []) }));
+vi.mock('$app/navigation', () => ({ goto: vi.fn() }));
+beforeEach(() => { vi.useFakeTimers({ toFake: ['Date'] }); vi.setSystemTime(new Date('2026-10-11T08:21:00.000Z')); });
+afterEach(() => { cleanup(); vi.useRealTimers(); });
 
-afterEach(() => { cleanup(); closeCard.mockReset(); });
+const words = (el: Element) => (el.textContent ?? '').replace(/\s+/g, ' ').trim();
 
-const sections = Object.fromEntries(
-  CARD_SECTION_KEYS.map((k) => [k, createRawSnippet(() => ({ render: () => `<p>SECTION-${k}</p>` }))]),
-) as unknown as CardSections;
+async function mount() {
+  const { model, dispose } = mountModel();
+  await vi.waitFor(() => expect(model.detailLoaded).toBe(true));
+  const onClose = vi.fn();
+  const r = render(CardQuiet, { model, vibe: 'quiet', phase: 'noon', personName: 'Ira Mehta', gate: model.gateBinding, question: model.questionBinding, pageHref: model.pageHref, onClose });
+  return { model, dispose, onClose, ...r };
+}
 
-const lead = (over: Partial<CardLead> = {}): CardLead => ({
-  kind: 'stopped', needsYou: true, agentId: 'agt_r', sentence: 'Handoff refused twice.', source: 'needs-human', at: null, ...over,
-});
-
-const props = (l: CardLead, extra: Partial<CardLayoutProps> = {}): CardLayoutProps => ({
-  card: { id: 'crd_1', title: 'Fix the thing', state: 'stopped' } as never,
-  vibe: 'quiet', phase: 'noon', boardName: 'Board', personName: 'Pat',
-  stages: [{ key: 'a', name: 'Todo' }, { key: 'b', name: 'Doing' }, { key: 'c', name: 'Done' }] as never,
-  stageIndex: 1, stageName: 'Doing', ageHours: 3, lead: l,
-  agent: { id: 'agt_r', name: 'Sample agent', iconUrl: null, mood: 'needs' },
-  sections, counts: {} as never, editing: false, gate: null, question: null, ...extra,
-});
-
-const before = (a: string | Element, b: string | Element) => {
-  const A = typeof a === 'string' ? screen.getByText(a) : a, B = typeof b === 'string' ? screen.getByText(b) : b;
-  return !!(A.compareDocumentPosition(B) & Node.DOCUMENT_POSITION_FOLLOWING);
-};
-const h3 = (name: string) => screen.getByRole('heading', { level: 3, name });
-const sectionOf = (name: string) => h3(name).closest('section')!;
-
-describe('CardQuiet', () => {
-  it('has a way back that closes the drawer, the title and the meta line', async () => {
-    render(CardQuiet, props(lead()));
-    await fireEvent.click(screen.getByRole('button', { name: '← Board board' }));
-    expect(closeCard).toHaveBeenCalledOnce();
-    const h = screen.getByRole('heading', { level: 2 });
-    expect(h.id).toBe('drawer-title');
-    expect(h.textContent).toBe('Fix the thing');
-    expect(screen.getByText('Stage 2 of 3: Doing · Agent: Sample agent · stopped 3h ago')).toBeTruthy();
+describe('CardQuiet (4605)', () => {
+  it('heads the drawer: way back, Open, the title and the meta sentence', async () => {
+    const { onClose, dispose } = await mount();
+    const dialog = screen.getByRole('dialog', { name: 'Diagnose Melissa and Anna Supermessage silence — trace actual failing hop' });
+    expect(dialog.classList.contains('vk-drawer'), 'the frame is vibekit’s Drawer').toBe(true);
+    expect(within(dialog).getByText('Stage 2 of 7: Reproduce · Agent: none holding it (error-eric ran attempt 2) · Waiting on you for 2 days')).toBeTruthy();
+    const open = screen.getByRole('link', { name: 'Open in new window' });
+    expect(open.className).toContain('vk-button--tool');
+    expect(open.getAttribute('href')).toBe('/b/brd_134a0ddb6d434478/c/card_05823a57e8224605/page');
+    await fireEvent.click(screen.getByRole('link', { name: '← Developer Experience board' }));
+    expect(onClose).toHaveBeenCalledTimes(1);
+    dispose();
   });
-
-  it('omits the age when it is unknown', () => {
-    render(CardQuiet, props(lead(), { ageHours: null }));
-    expect(screen.getByText('Stage 2 of 3: Doing · Agent: Sample agent · stopped')).toBeTruthy();
+  it('the decision fieldset says who stopped, what they wrote, and asks for the reply', async () => {
+    const { dispose } = await mount();
+    const set = document.querySelector('fieldset[data-section="resume"]') as HTMLElement;
+    expect(within(set).getByText('Your decision is needed')).toBeTruthy();
+    expect(within(set).getByText('error-eric stopped on Thursday 8 October at 19:41 and wrote:')).toBeTruthy();
+    expect(set.querySelectorAll('.qcd-said .qcd-id')).toHaveLength(1);
+    const at = screen.getByLabelText('Resume at stage') as HTMLSelectElement;
+    expect([...at.options].map((o) => o.textContent)).toEqual(['Stage 1: Reported', 'Stage 2: Reproduce (this stage)']);
+    expect(at.value, 'resume defaults to the card’s current stage').toBe('reproduce');
+    expect(screen.getByText('You must write a note before sending. Up to 8000 characters.')).toBeTruthy();
+    await fireEvent.click(screen.getByRole('button', { name: 'Send back to work' }));
+    expect(screen.getByText('Add a note for error-eric first.')).toBeTruthy();
+    dispose();
   });
-
-  it('puts the error first, then the decision before every heading', () => {
-    render(CardQuiet, props(lead()));
-    expect(before('SECTION-error', 'Handoff refused twice.')).toBe(true);
-    expect(before('Handoff refused twice.', h3('Details'))).toBe(true);
-    expect(before('SECTION-resume', h3('Details'))).toBe(true);
+  it('plain sections: details, brief, history, comments, links, the rest', async () => {
+    const { dispose } = await mount();
+    expect([...document.querySelectorAll('.qcd-sec > h3')].map((h) => h.textContent)).toEqual([
+      'Details', 'Description', 'Acceptance criteria', 'Plan', 'Brief details (10)', 'History (2 runs)', 'Decisions', 'Comments', 'Links (0)',
+      'Sub-tasks, Project, Cost, Delivery', 'References and related prior work', 'Card actions',
+    ]);
+    const who = [...document.querySelectorAll('[data-section="status"] > *')].map(words).join(' | ');
+    expect(who).toContain('None holding it.');
+    expect(who).toContain('super-chotu, an agent allowed to dispatch the one working it');
+    expect(screen.getAllByRole('button', { name: 'Show more' })).toHaveLength(5);
+    expect(screen.getByText('Nothing blocks this card and it blocks nothing.')).toBeTruthy();
+    expect(screen.getByText('github · agentpod · inbound.ts lines 379–786')).toBeTruthy();
+    dispose();
   });
-
-  it('wraps a stopped card in a fieldset around the lead and the resume snippet', () => {
-    render(CardQuiet, props(lead()));
-    const group = screen.getByRole('group', { name: 'Your decision is needed' });
-    expect(group.tagName).toBe('FIELDSET');
-    expect(group.contains(screen.getByText('Handoff refused twice.'))).toBe(true);
-    expect(group.contains(screen.getByText('SECTION-resume'))).toBe(true);
+  it('card actions: Archive, and an ink-outlined Delete', async () => {
+    const { dispose } = await mount();
+    const foot = document.querySelector('[data-section="cardActions"]') as HTMLElement;
+    expect(within(foot).getByRole('button', { name: 'Archive card' })).toBeTruthy();
+    expect(within(foot).getByRole('button', { name: 'Delete card' }).className).toContain('vk-button--danger');
+    dispose();
   });
-
-  it('has no fieldset when nothing needs you, but still shows the lead and resume once', () => {
-    const { container } = render(CardQuiet, props(lead({ kind: 'working', needsYou: false })));
-    expect(container.querySelector('fieldset')).toBeNull();
-    expect(screen.getByText('Handoff refused twice.')).toBeTruthy();
-    expect(screen.getAllByText('SECTION-resume')).toHaveLength(1);
+  it('editing swaps in the edit form; the dialog keeps its name', async () => {
+    const { model, dispose } = await mount();
+    await fireEvent.click(screen.getByRole('button', { name: 'Edit card' }));
+    expect(model.edit.editing).toBe(true);
+    expect(screen.getByRole('dialog', { name: /Diagnose Melissa and Anna/ })).toBeTruthy();
+    dispose();
   });
-
-  it('has the headings in order, each holding its snippets', () => {
-    render(CardQuiet, props(lead()));
-    const order: [string, string[]][] = [
-      ['Details', ['status', 'facts', 'details', 'editButton']],
-      ['Description', ['description']],
-      ['Acceptance criteria', ['criteria']],
-      ['Plan', ['plan']],
-      ['History', ['activity']],
-      ['Decisions', ['decisions']],
-      ['Comments', ['comments']],
-      ['Links', ['links']],
-      ['Sub-tasks', ['subtasks']],
-      ['Project', ['project']],
-      ['Handoff', ['handoff']],
-      ['Cost', ['cost']],
-      ['Attempts', ['attempts']],
-      ['Delivery', ['delivery']],
-      ['References', ['references']],
-      ['Related prior work', ['related']],
-      ['Card actions', ['cardActions']],
-    ];
-    order.forEach(([name, keys], i) => {
-      keys.forEach((k) => expect(sectionOf(name).contains(screen.getByText(`SECTION-${k}`)), `${name}/${k}`).toBe(true));
-      if (i > 0) expect(before(h3(order[i - 1][0]), h3(name)), name).toBe(true);
-    });
+  it('resume keeps focus and its label while sending, and says Sending…', async () => {
+    const { dispose } = await mount();
+    let settle!: (r: Response) => void;
+    fakeApi.resumeCard.mockImplementationOnce(() => new Promise<Response>((r) => (settle = r)));
+    await fireEvent.input(screen.getByLabelText('What changed, or what should the agent do differently? It reads this.'), { target: { value: 'look at the bridge' } });
+    const send = screen.getByRole('button', { name: 'Send back to work' }) as HTMLButtonElement;
+    send.focus();
+    await fireEvent.click(send);
+    await vi.waitFor(() => expect(send.getAttribute('aria-disabled')).toBe('true'));
+    expect(send.disabled).toBe(false);
+    expect(document.activeElement).toBe(send);
+    expect(screen.getAllByRole('status').map((s) => s.textContent)).toContain('Sending…');
+    await fireEvent.click(send);
+    expect(fakeApi.resumeCard).toHaveBeenCalledTimes(1);
+    settle(new Response('{}', { status: 200 }));
+    dispose();
   });
-
-  it('keeps every section exactly once and adds no disclosure', () => {
-    const { container } = render(CardQuiet, props(lead()));
-    for (const k of CARD_SECTION_KEYS.filter((k) => k !== 'editForm')) expect(screen.getAllByText(`SECTION-${k}`), k).toHaveLength(1);
-    expect(container.querySelector('details')).toBeNull();
+  it('comment keeps focus and its label while posting, and says Posting…', async () => {
+    const { dispose } = await mount();
+    let settle!: (r: Response) => void;
+    fakeApi.postComment.mockClear().mockImplementationOnce(() => new Promise<Response>((r) => (settle = r)));
+    await fireEvent.input(screen.getByLabelText('Add a comment'), { target: { value: 'hello' } });
+    const post = screen.getByRole('button', { name: 'Comment' }) as HTMLButtonElement;
+    post.focus();
+    await fireEvent.click(post);
+    await vi.waitFor(() => expect(post.getAttribute('aria-disabled')).toBe('true'));
+    expect(document.activeElement).toBe(post);
+    expect(screen.getAllByRole('status').map((s) => s.textContent)).toContain('Posting…');
+    settle(new Response('{}', { status: 201 }));
+    dispose();
   });
-
-  it('shows the edit form while editing, the title kept for the dialog’s name but visually hidden', () => {
-    render(CardQuiet, props(lead(), { editing: true }));
-    expect(screen.getAllByText('SECTION-editForm')).toHaveLength(1);
-    const h = screen.getByRole('heading', { level: 2 });
-    expect(h.id).toBe('drawer-title');
-    expect(h.classList.contains('sr-only')).toBe(true);
-  });
-
-  const EMPTY: CardCounts = { criteria: 0, planSteps: 0, specFields: 0, runs: 0, links: 0, children: 0, openChildren: 0, decisions: 0, refs: 0, attempts: 0, deliveryActive: false, description: false, handoff: false, cost: false };
-  const FULL: CardCounts = { criteria: 2, planSteps: 3, specFields: 1, runs: 2, links: 1, children: 1, openChildren: 1, decisions: 1, refs: 1, attempts: 2, deliveryActive: true, description: true, handoff: true, cost: true };
-  const SAYS_NONE = ['Description', 'Acceptance criteria', 'Plan', 'Decisions', 'Handoff', 'Cost', 'Attempts', 'Delivery'];
-
-  it('says "None." under every heading whose section is empty, and keeps the heading', () => {
-    render(CardQuiet, props(lead(), { counts: EMPTY }));
-    for (const name of SAYS_NONE) expect(sectionOf(name).textContent, name).toContain('None.');
-    // Sections that carry their own empty state or controls say nothing extra.
-    for (const name of ['Details', 'History', 'Comments', 'Links', 'Sub-tasks', 'Project', 'References', 'Card actions']) expect(sectionOf(name).textContent, name).not.toContain('None.');
-  });
-
-  it('says nothing extra when the sections hold something', () => {
-    const { container } = render(CardQuiet, props(lead(), { counts: FULL }));
-    expect(container.textContent).not.toContain('None.');
-  });
-
-  it('counts a single attempt as one, not none', () => {
-    render(CardQuiet, props(lead(), { counts: { ...EMPTY, attempts: 1 } }));
-    expect(sectionOf('Attempts').textContent).toContain('One attempt.');
-  });
-
-  it('is one 640px column and leaves room for the close button', () => {
-    const { container } = render(CardQuiet, props(lead()));
-    expect(container.querySelector('.max-w-\\[640px\\]')).toBeTruthy();
-    expect(container.querySelector('.pr-12, .pr-14')).toBeTruthy();
+  it('opens inside the drawer (vibekit focuses its first control; the pixel step blurs it)', async () => {
+    const { dispose } = await mount();
+    await vi.waitFor(() => expect(document.activeElement!.closest('.vk-drawer')).toBeTruthy());
+    dispose();
   });
 });

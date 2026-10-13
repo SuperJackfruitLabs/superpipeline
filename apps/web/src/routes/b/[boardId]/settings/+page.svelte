@@ -1,23 +1,27 @@
 <script lang="ts">
   /**
-   * Board settings, as a route.
-   *
-   * It was a modal, which was defensible when it held a rename field and a webhook secret. It now
-   * holds the pipeline editor — add, reorder, retitle, WIP limits, gates, owners — which is not
-   * modal-sized work.
-   *
-   * Budget caps are deliberately NOT here. They moved to Operate › Spend, beside the figures they
-   * cap, because a control belongs next to its consequence.
+   * Board settings, as a route: name, pipeline, schedules, GitHub and agent profiles.
+   * Budget caps live on Operate › Spend, beside the figures they cap.
    */
+  import { appearance } from '$lib/appearance.svelte';
+  import { SETTINGS_LAYOUTS } from '$lib/layouts';
+  import AppShell from '$lib/components/shell/AppShell.svelte';
+  import { shellModel } from '$lib/components/shell/shell-model.svelte';
+  import { needsPart } from '$lib/components/shell/shell-words';
+  import { plural } from '$lib/words';
   import { app } from '$lib/stores/app.svelte';
-  import BoardSettings from '$lib/components/BoardSettings.svelte';
+
+  const vibe = $derived(appearance.value.vibe);
+  const Layout = $derived(SETTINGS_LAYOUTS[vibe]);
+  // Only Studio's Settings reference draws a status line.
+  const status = $derived(vibe === 'studio' ? shellModel.pageStatus([`Board settings · ${app.board?.name ?? ''}`, plural(shellModel.liveCount, 'card', 'cards'), needsPart(shellModel.needsCount)]) : null);
 </script>
 
-<div class="p-3">
-  <a href="/b/{app.boardId}" class="text-muted-foreground hover:text-foreground mono mb-2 inline-flex items-center gap-1 text-[11px]" style="min-height:var(--tap)">
-    <span aria-hidden="true">←</span> Board
-  </a>
+<AppShell here="plan" section="settings" boardName={app.board?.name ?? 'Untitled board'} view={null} showing={null} {status} bleed={vibe === 'quiet'} ownHeading>
   {#if app.board}
-    <BoardSettings board={app.board} onChanged={() => void app.refresh()} />
+    <!-- Keyed on the board, so switching boards re-seeds the draft; a refresh of the same board keeps it and the rule-saved times. -->
+    {#key app.boardId}<Layout board={app.board} {vibe} onChanged={() => void app.refresh()} />{/key}
+  {:else}
+    <div class="page"><p class="t-meta" role="status">Loading board settings…</p></div>
   {/if}
-</div>
+</AppShell>

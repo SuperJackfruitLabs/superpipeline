@@ -100,11 +100,11 @@ D1 migrations and seeds `tnt_dev` / `usr_dev`; run it before the first board wri
 Start these in separate terminals, from the repository root:
 
 ```bash
-pnpm --filter @superpipeline/api dev   # local Worker on :8787
+pnpm --filter @superpipeline/api dev   # local Worker on :8787 (SP_API_PORT to change)
 ```
 
 ```bash
-pnpm --filter @superpipeline/web dev   # frontend on :5173
+pnpm --filter @superpipeline/web dev   # frontend on :5173 (SP_WEB_PORT to change)
 ```
 
 Open `http://localhost:5173`. Vite proxies `/v1`, `/auth`, and `/mcp` to the local Worker.

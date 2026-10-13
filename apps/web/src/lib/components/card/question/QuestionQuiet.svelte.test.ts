@@ -4,28 +4,20 @@ import { cleanup, fireEvent, screen } from '@testing-library/svelte';
 import { ask, mountQuestion, questionPanelContract } from './question-panel.contract';
 import QuestionQuiet from './QuestionQuiet.svelte';
 
-questionPanelContract(QuestionQuiet, { decision: 'radio', submit: 'Submit decision', noteLabel: 'Note for Sample agent (optional)' });
+questionPanelContract(QuestionQuiet, { decision: 'radio', submit: 'Submit decision', noteLabel: 'Note for Sample agent (optional)', answerLabel: /^Your answer/, busy: { kind: 'aria', status: 'Sending…' },
+  words: { heading: 'Your answer is needed', waiting: 'Sample agent asked:', auth: 'Your sign-in is needed' } });
 
 describe('QuestionQuiet', () => {
   afterEach(() => cleanup());
-  it('is a plain form under one legend', () => {
-    const { container } = mountQuestion(QuestionQuiet, ask());
-    expect(screen.getByRole('group', { name: 'Your decision is needed' }).tagName).toBe('FIELDSET');
-    expect(container.querySelector('.elicitation')).toBeTruthy();
-  });
-
-  it('keeps the error beside the submit button', async () => {
-    mountQuestion(QuestionQuiet, ask());
-    await fireEvent.click(screen.getByRole('button', { name: 'Submit decision' }));
-    const alert = await screen.findByRole('alert');
-    expect(alert.parentElement).toBe(screen.getByRole('button', { name: 'Submit decision' }).parentElement);
-  });
-
-  it('says the answer goes straight back to the waiting agent', () => {
+  it('is one fieldset under one legend, with the caption the reference prints', () => {
     const { container } = mountQuestion(QuestionQuiet, ask({ options: [] }));
-    expect(container.querySelector('textarea')!.placeholder).toMatch(/straight back to the waiting agent/);
-    cleanup();
-    const withOptions = mountQuestion(QuestionQuiet, ask());
-    expect(withOptions.container.querySelector('textarea')!.placeholder).toMatch(/straight back to the waiting agent/);
+    expect(screen.getByRole('group', { name: 'Your answer is needed' }).tagName).toBe('FIELDSET');
+    expect(container.querySelector('.elicitation')).toBeTruthy();
+    expect(screen.getByText('If empty: “Type an answer first.”')).toBeTruthy();
+  });
+  it('an empty free answer says to type one, as an alert', async () => {
+    mountQuestion(QuestionQuiet, ask({ options: [] }));
+    await fireEvent.click(screen.getByRole('button', { name: 'Send answer' }));
+    expect((await screen.findByRole('alert')).textContent).toContain('Type an answer first.');
   });
 });

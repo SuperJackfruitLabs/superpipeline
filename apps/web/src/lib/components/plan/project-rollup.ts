@@ -8,16 +8,16 @@
  * turns them into the sentence every rollup number must carry: never a total, a progress bar, or
  * a cost figure with no "as of" line beside it.
  */
-import type { ProjectRollup } from '$lib/api';
+import type { Project, ProjectHealth, ProjectRollup, ProjectState } from '$lib/api';
 
-function formatTime(iso: string): string {
+function formatTime(iso: string, timeZone?: string): string {
   try {
     const d = new Date(iso);
     if (Number.isNaN(d.getTime())) return iso;
     // `hour12: false`, not the environment default: the brief's own example ("as of 14:32") is
     // 24-hour, and a rollup's provenance should read the same way regardless of which locale the
     // browser happens to be in.
-    return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
+    return d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false, ...(timeZone ? { timeZone } : {}) });
   } catch {
     return iso;
   }
@@ -28,8 +28,8 @@ function formatTime(iso: string): string {
  * reach every board. A cross-board number presented as live is the one dishonesty this design
  * would otherwise introduce — this is the sentence that heads it off.
  */
-export function formatAsOf(rollup: Pick<ProjectRollup, 'computedAt' | 'partial' | 'boardsUnanswered'>): string {
-  const time = formatTime(rollup.computedAt);
+export function formatAsOf(rollup: Pick<ProjectRollup, 'computedAt' | 'partial' | 'boardsUnanswered'>, timeZone?: string): string {
+  const time = formatTime(rollup.computedAt, timeZone);
   if (!rollup.partial) return `as of ${time}`;
   const n = rollup.boardsUnanswered;
   return `as of ${time} · incomplete (${n} board${n === 1 ? '' : 's'} did not answer)`;
@@ -80,11 +80,51 @@ export interface RollupSegment {
  * exactly one of those per call, for every input, including a `partial` rollup, where it carries
  * the unanswered-board count rather than being omitted.
  */
-export function rollupSegments(rollup: RollupSegmentsInput): RollupSegment[] {
+// ProjectsStudio reads segments by position (figure, cost, provenance); the order is fixed by the tests.
+export function rollupSegments(rollup: RollupSegmentsInput, timeZone?: string): RollupSegment[] {
   const overdue = rollup.cardsOverdue > 0 ? ` · ${rollup.cardsOverdue} overdue` : '';
   return [
     { kind: 'figure', text: `${rollup.cardsDone}/${rollup.cardsTotal} cards done` },
     { kind: 'figure', text: fmtUsd(rollup.costUsd) },
-    { kind: 'provenance', text: `${formatAsOf(rollup)}${overdue}` },
+    { kind: 'provenance', text: `${formatAsOf(rollup, timeZone)}${overdue}` },
   ];
+}
+
+export const STATE_LABEL: Record<ProjectState, string> = { planned: 'Planned', active: 'Active', paused: 'Paused', completed: 'Completed', canceled: 'Canceled' };
+export const HEALTH_LABEL: Record<ProjectHealth, string> = { 'on-track': 'On track', 'at-risk': 'At risk', 'off-track': 'Off track' };
+/** Studio's state square (`.u.<x>`) per project state. */
+export const STUDIO_UNIT: Record<ProjectState, string> = { planned: 'queued', active: 'act', paused: 'off', completed: 'done', canceled: 'off' };
+
+export const GROUP_ORDER = [
+  { state: 'active', label: 'Active', id: 'g-act' },
+  { state: 'planned', label: 'Planned', id: 'g-plan' },
+  { state: 'paused', label: 'Paused', id: 'g-pause' },
+  { state: 'completed', label: 'Completed', id: 'g-done' },
+  { state: 'canceled', label: 'Canceled', id: 'g-cancel' },
+] as const satisfies ReadonlyArray<{ state: ProjectState; label: string; id: string }>;
+
+export interface ProjectGroup { state: ProjectState; label: string; id: string; projects: Project[] }
+
+/** Non-empty groups in GROUP_ORDER; inside a group the server's order (name A–Z) is kept. */
+export function groupProjects(ps: Project[]): ProjectGroup[] {
+  return GROUP_ORDER.map((g) => ({ ...g, projects: ps.filter((p) => p.state === g.state) })).filter((g) => g.projects.length > 0);
+}
+
+export function projectsSummary(ps: Project[]): string {
+  if (ps.length === 0) return 'No projects yet.';
+  const parts = groupProjects(ps).map((g) => `${g.projects.length} ${g.label.toLowerCase()}`);
+  return `${ps.length} project${ps.length === 1 ? '' : 's'} · ${parts.join(', ')}.`;
+}
+
+function dateGB(iso: string): string {
+  return new Date(`${iso.slice(0, 10)}T00:00:00Z`).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' });
+}
+export function fmtTarget(iso: string | null): string {
+  return iso ? `Target ${dateGB(iso)}` : 'No target date';
+}
+export function milestoneDate(iso: string): string {
+  return dateGB(iso);
+}
+export function milestonesMeta(n: number): string {
+  return n === 0 ? '· none yet' : `· ${n}`;
 }

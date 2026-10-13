@@ -1,7 +1,7 @@
 /**
  * The "Add blocker" dialogue's logic (Task 17b, Step 1b) — kept out of the `.svelte` file so it
  * can be tested without rendering (this project's Vitest config cannot import a `.svelte` file,
- * same reason `board/card-due.ts` exists beside `CardTile.svelte`).
+ * same reason `board/card-due.ts` is a plain module).
  *
  * A cross-board pick must be told apart from a same-board one BEFORE the request is sent, never
  * after: a person who asks for a blocker and gets one that silently enforces nothing has already

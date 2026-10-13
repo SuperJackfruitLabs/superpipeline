@@ -9,16 +9,22 @@
   import '../app.css';
   import { onMount } from 'svelte';
   import { goto } from '$app/navigation';
+  import { page } from '$app/state';
   import { takeReturnTo } from '$lib/reconnect';
   import { app } from '$lib/stores/app.svelte';
+  import { VibeRoot } from '@superjackfruit/vibekit';
   import { appearance } from '$lib/appearance.svelte';
-  import Rail from '$lib/components/shell/Rail.svelte';
-  import BottomNav from '$lib/components/shell/BottomNav.svelte';
-  import CommandPalette from '$lib/components/CommandPalette.svelte';
-  import AppearanceDialog from '$lib/components/shell/AppearanceDialog.svelte';
+  import PaletteMount from '$lib/components/dialogs/PaletteMount.svelte';
+  import BoardSwitcherPopover from '$lib/components/dialogs/BoardSwitcherPopover.svelte';
+  import AppearanceDialog from '$lib/components/dialogs/AppearanceDialog.svelte';
   import Landing from '$lib/components/Landing.svelte';
   import { closeCardOnEscape } from '$lib/escape';
+  import { auth } from '$lib/auth-recovery.svelte';
   import BrandMark from '$lib/components/BrandMark.svelte';
+  import ReconnectDialog from '$lib/components/dialogs/ReconnectDialog.svelte';
+  import ReconnectToast from '$lib/components/dialogs/ReconnectToast.svelte';
+  import NewCardDialog from '$lib/components/dialogs/NewCardDialog.svelte';
+  import MoveCardDialog from '$lib/components/dialogs/MoveCardDialog.svelte';
 
   let { children } = $props();
 
@@ -36,25 +42,38 @@
 </script>
 
 <svelte:window
-  onkeydown={(e) => closeCardOnEscape(e, () => app.closeCard())}
+  onkeydown={(e) => { if (auth.state !== 'expired') closeCardOnEscape(e, () => app.closeCard()); }}
 />
 
+<VibeRoot vibe={appearance.value.vibe} theme={appearance.theme}>
 {#if app.authState === 'loading'}
   <main class="min-h-viewport safe-x flex flex-col items-center justify-center gap-3 text-center">
+    <h1 class="sr-only">Loading Superpipeline</h1>
     <BrandMark class="size-7" />
     <div class="wordmark text-lg">superpipeline</div>
     <div class="mono text-muted-foreground flex items-center gap-2 text-xs"><span class="live-dot"></span>loading your boards…</div>
   </main>
 {:else if app.authState === 'signed-out'}
   <Landing />
-{:else}
-  <div class="app-shell h-viewport flex overflow-hidden">
-    <Rail />
-    <div class="flex min-w-0 flex-1 flex-col">
-      {@render children()}
-      <BottomNav />
-    </div>
-  </div>
-  <CommandPalette />
+{:else if page.data.shell === 'bare'}
+  <!-- A page that draws its own frame (the card page, dev galleries): no rail, top bar or tabs. -->
+  {@render children()}
+  <PaletteMount />
+  <BoardSwitcherPopover />
   <AppearanceDialog />
+  <NewCardDialog />
+  <MoveCardDialog />
+{:else}
+  <!-- The document scrolls: the phone's sticky bottom bar and the full-page pixel comparisons depend on it. -->
+  <div class="app-root">{@render children()}</div>
+  <PaletteMount />
+  <BoardSwitcherPopover />
+  <AppearanceDialog />
+  <NewCardDialog />
+  <MoveCardDialog />
 {/if}
+<!-- Every move, in every vibe, is said here: a moved tile or row changes column and unmounts. -->
+<p class="vk-visually-hidden" role="status" aria-live="polite">{app.moveSaid}</p>
+<ReconnectToast />
+<ReconnectDialog />
+</VibeRoot>

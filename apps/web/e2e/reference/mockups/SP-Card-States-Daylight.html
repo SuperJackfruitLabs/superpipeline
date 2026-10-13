@@ -1,0 +1,1167 @@
+<!doctype html>
+<html data-product="superpipeline" data-accent="product" lang="en" style="touch-action: pan-x pan-y; overscroll-behavior: none; --dc-chrome-unit: 1px;"><head><link rel="stylesheet" href="_vibekit-0.0.10/vibekit.css" data-vibekit="0.0.10"><style>
+    .sc-placeholder{background:color-mix(in srgb,currentColor 8%,transparent);
+      border:1px solid color-mix(in srgb,currentColor 50%,transparent);
+      border-radius:2px;box-sizing:border-box;overflow:hidden}
+    @keyframes sc-shine{0%{background-position:100% 50%}100%{background-position:0% 50%}}
+    html.sc-dc-streaming .sc-placeholder,
+    html.sc-dc-streaming .sc-interp.sc-missing{position:relative;
+      background:color-mix(in srgb,currentColor 5%,transparent);
+      border-color:transparent}
+    html.sc-dc-streaming .sc-placeholder::before,
+    html.sc-dc-streaming .sc-interp.sc-missing::before{content:'';
+      position:absolute;inset:0;pointer-events:none;
+      background:linear-gradient(90deg,rgba(217,119,87,0) 25%,rgba(247,225,211,.95) 37%,rgba(217,119,87,0) 63%);
+      background-size:400% 100%;animation:sc-shine 1.4s ease infinite}
+    html.sc-dc-streaming .sc-placeholder:nth-child(n+9 of .sc-placeholder)::before,
+    html.sc-dc-streaming .sc-interp.sc-missing:nth-child(n+9 of .sc-interp.sc-missing)::before{animation:none;
+      background:color-mix(in srgb,currentColor 8%,transparent)}
+    .sc-placeholder-error{padding:4px 8px;font:11px/1.4 ui-monospace,monospace;
+      color:color-mix(in srgb,currentColor 70%,transparent);word-break:break-word}
+    .sc-interp.sc-missing{display:inline-block;width:2em;height:1em;overflow:hidden;
+      vertical-align:text-bottom;background:rgba(255,255,255,.3);border:1px solid rgba(0,0,0,.5);
+      border-radius:2px;box-sizing:border-box;color:transparent;
+      user-select:none}
+    .sc-interp.sc-unresolved{font-family:ui-monospace,monospace;font-size:.85em;
+      color:color-mix(in srgb,currentColor 50%,transparent);
+      background:color-mix(in srgb,currentColor 10%,transparent);border-radius:3px;
+      padding:0 3px}
+    .sc-host.sc-has-error{position:relative}
+    .sc-logic-error{position:absolute;top:8px;left:8px;z-index:2147483647;max-width:60ch;
+      padding:6px 10px;background:#b00020;color:#fff;font:12px/1.4 ui-monospace,monospace;
+      border-radius:4px;white-space:pre-wrap;pointer-events:none}
+    /* Mirrors PRINT_BASELINE_CSS in apps/web deck-stage-export.ts — keep both
+       in sync until dc-runtime regains a build step. */
+    @media print {
+      @page { margin: 0.5cm; }
+      figure, table { break-inside: avoid; }
+      #dc-root, #dc-root > .sc-host { height: auto; }
+      *, *::before, *::after {
+        print-color-adjust: exact; -webkit-print-color-adjust: exact;
+        backdrop-filter: none !important; -webkit-backdrop-filter: none !important;
+        animation-delay: -99s !important; animation-duration: .001s !important;
+        animation-iteration-count: 1 !important; animation-fill-mode: both !important;
+        animation-play-state: running !important; transition-duration: 0s !important;
+      }
+    }
+  </style>
+
+
+<meta charset="utf-8">
+<title>Card states, Daylight</title>
+<base href="/appifact/SP-Card-States-Daylight.dc.html">
+
+
+
+
+
+<style>x-dc{display:none!important}</style>
+
+<style>@import url("https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&family=Azeret+Mono:wght@400;500;600&family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..600&display=swap");
+
+ 
+
+:root {
+  color-scheme: light;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  --vk-font-body: "Figtree", system-ui, sans-serif;
+  --vk-font-display: "Bricolage Grotesque", system-ui, sans-serif;
+  --vk-font-mono: "Martian Mono", ui-monospace, monospace;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+}
+
+[data-vibe="daylight"][data-theme="light"] {
+  color-scheme: light;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  --vk-font-body: "Figtree", system-ui, sans-serif;
+  --vk-font-display: "Bricolage Grotesque", system-ui, sans-serif;
+  --vk-font-mono: "Martian Mono", ui-monospace, monospace;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+}
+
+[data-vibe="daylight"][data-theme="dark"] {
+  color-scheme: dark;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  --vk-font-body: "Figtree", system-ui, sans-serif;
+  --vk-font-display: "Bricolage Grotesque", system-ui, sans-serif;
+  --vk-font-mono: "Martian Mono", ui-monospace, monospace;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+}
+
+[data-vibe="paper"][data-theme="light"] {
+  color-scheme: light;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  --vk-font-body: "Geist", system-ui, sans-serif;
+  --vk-font-display: "Newsreader", "Georgia", serif;
+  --vk-font-mono: "Martian Mono", ui-monospace, monospace;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+}
+
+[data-vibe="paper"][data-theme="dark"] {
+  color-scheme: dark;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  --vk-font-body: "Geist", system-ui, sans-serif;
+  --vk-font-display: "Newsreader", "Georgia", serif;
+  --vk-font-mono: "Martian Mono", ui-monospace, monospace;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+}
+
+[data-vibe="studio"][data-theme="light"] {
+  color-scheme: light;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  --vk-font-body: "Archivo", system-ui, sans-serif;
+  --vk-font-display: "Archivo", system-ui, sans-serif;
+  --vk-font-mono: "Azeret Mono", ui-monospace, monospace;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  --vk-font-serif: "Newsreader", Georgia, serif;
+
+
+
+
+
+
+
+
+
+
+}
+
+[data-vibe="studio"][data-theme="dark"] {
+  color-scheme: dark;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  --vk-font-body: "Archivo", system-ui, sans-serif;
+  --vk-font-display: "Archivo", system-ui, sans-serif;
+  --vk-font-mono: "Azeret Mono", ui-monospace, monospace;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  --vk-font-serif: "Newsreader", Georgia, serif;
+
+
+
+
+
+
+
+
+
+
+}
+
+[data-vibe="quiet"][data-theme="light"] {
+  color-scheme: light;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  --vk-font-body: "Atkinson Hyperlegible Next", system-ui, sans-serif;
+  --vk-font-display: "Atkinson Hyperlegible Next", system-ui, sans-serif;
+  --vk-font-mono: "Martian Mono", ui-monospace, monospace;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+}
+
+[data-vibe="quiet"][data-theme="dark"] {
+  color-scheme: dark;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  --vk-font-body: "Atkinson Hyperlegible Next", system-ui, sans-serif;
+  --vk-font-display: "Atkinson Hyperlegible Next", system-ui, sans-serif;
+  --vk-font-mono: "Martian Mono", ui-monospace, monospace;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+}
+
+ 
+:root {
+  --vk-text-sm: clamp(0.8125rem, 0.78rem + 0.15vw, 0.875rem);
+  --vk-text-md: clamp(1rem, 0.96rem + 0.2vw, 1.0625rem);
+  --vk-text-lg: clamp(1.25rem, 1.1rem + 0.6vw, 1.5rem);
+  --vk-text-xl: clamp(1.75rem, 1.4rem + 1.6vw, 2.5rem);
+  --vk-focus: 0 0 0 3px var(--vk-color-bg), 0 0 0 5px var(--vk-color-text);
+
+}
+
+html {
+  background: var(--vk-color-bg);
+  color: var(--vk-color-text);
+  font-family: var(--vk-font-body);
+  font-size: 100%;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  font-size: var(--vk-text-md);
+  line-height: 1.5;
+}
+
+:focus-visible {
+   
+  outline: 2px solid var(--vk-color-text);
+  outline-offset: 2px;
+  box-shadow: var(--vk-focus);
+}
+
+ 
+.vk-visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  
+  *, *::before, *::after {
+    animation: none !important;
+    transition-duration: 0ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+[data-motion="reduce"],
+[data-motion="reduce"] *,
+[data-motion="reduce"]::before,
+[data-motion="reduce"]::after,
+[data-motion="reduce"] *::before,
+[data-motion="reduce"] *::after {
+  --vk-motion-fast: 0ms;
+  --vk-motion-base: 0ms;
+  animation: none !important;
+  transition-duration: 0ms !important;
+  scroll-behavior: auto !important;
+}
+
+
+
+@media (forced-colors: active) {
+  :focus-visible {
+    outline: 2px solid CanvasText;
+    box-shadow: none;
+  }
+}
+ 
+
+
+
+
+
+
+
+
+ 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ 
+
+
+
+
+
+
+
+
+
+
+
+
+
+.vk-toast {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--vk-space-3);
+  min-height: var(--vk-target-min);
+  padding: 0 var(--vk-space-5);
+  border-radius: var(--vk-radius-pill);
+  background: var(--vk-color-primary);
+  color: var(--vk-color-primary-fg);
+  font: 600 var(--vk-text-sm) / 1.2 var(--vk-font-body);
+}
+.vk-toast__action { min-height: var(--vk-target-min); border: 0; background: transparent; color: inherit; font: inherit; text-decoration: underline; cursor: pointer; }
+ 
+.vk-toast__action:focus-visible { outline-color: currentColor; box-shadow: var(--vk-focus); }
+
+.vk-sky {
+  --vk-sky-top: var(--vk-sky-noon-top);
+  --vk-sky-bottom: var(--vk-sky-noon-bottom);
+  --vk-sky-text: var(--vk-sky-noon-text);
+  --vk-sky-sun: var(--vk-sky-noon-sun);
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(180deg, var(--vk-sky-top), var(--vk-sky-bottom));
+  color: var(--vk-sky-text);
+}
+.vk-sky[data-phase="dawn"] { --vk-sky-top: var(--vk-sky-dawn-top); --vk-sky-bottom: var(--vk-sky-dawn-bottom); --vk-sky-text: var(--vk-sky-dawn-text); --vk-sky-sun: var(--vk-sky-dawn-sun); }
+.vk-sky[data-phase="morning"] { --vk-sky-top: var(--vk-sky-morning-top); --vk-sky-bottom: var(--vk-sky-morning-bottom); --vk-sky-text: var(--vk-sky-morning-text); --vk-sky-sun: var(--vk-sky-morning-sun); }
+.vk-sky[data-phase="golden"] { --vk-sky-top: var(--vk-sky-golden-top); --vk-sky-bottom: var(--vk-sky-golden-bottom); --vk-sky-text: var(--vk-sky-golden-text); --vk-sky-sun: var(--vk-sky-golden-sun); }
+.vk-sky[data-phase="dusk"] { --vk-sky-top: var(--vk-sky-dusk-top); --vk-sky-bottom: var(--vk-sky-dusk-bottom); --vk-sky-text: var(--vk-sky-dusk-text); --vk-sky-sun: var(--vk-sky-dusk-sun); }
+.vk-sky[data-phase="night"] { --vk-sky-top: var(--vk-sky-night-top); --vk-sky-bottom: var(--vk-sky-night-bottom); --vk-sky-text: var(--vk-sky-night-text); --vk-sky-sun: var(--vk-sky-night-sun); }
+.vk-sky__sun {
+  position: absolute;
+  top: var(--vk-space-5);
+  right: var(--vk-space-6);
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: var(--vk-sky-sun);
+  box-shadow: 0 0 48px 12px color-mix(in oklch, var(--vk-sky-sun) 45%, transparent);
+}
+.vk-sky__content { position: relative; padding: var(--vk-space-5); }
+[data-time="subtle"] .vk-sky { background: color-mix(in oklch, var(--vk-sky-top) 30%, var(--vk-color-bg)); color: var(--vk-color-text); }
+[data-time="subtle"] .vk-sky__sun { display: none; }
+[data-time="off"] .vk-sky { background: var(--vk-color-bg); color: var(--vk-color-text); }
+[data-time="off"] .vk-sky__sun { display: none; }
+[data-vibe="studio"] .vk-sky__sun { width: 10px; height: 10px; box-shadow: 0 0 10px 2px var(--vk-sky-sun); }
+[data-vibe="quiet"] .vk-sky__sun, [data-vibe="paper"] .vk-sky__sun { display: none; }
+
+
+
+
+
+
+
+
+
+
+@media (forced-colors: active) {
+  
+  .vk-toast { border: 1px solid CanvasText; }
+}
+
+ 
+.sl-danger{ white-space: nowrap; } .ds .vk-button{ white-space: nowrap; }
+
+ 
+
+
+
+
+
+ 
+a[href*="CardPage"], a[class*="btn"], button[class*="btn"], a[class*="-button"], button[class*="-button"]{ white-space: nowrap; flex-shrink: 0; } .ds .vk-button{ white-space: nowrap; flex-shrink: 0; }
+
+ 
+a[href*="CardPage"], a[class*="icon"][style*="width: auto"], button[class*="icon"][style*="width: auto"] { display: inline-flex !important; flex-direction: row !important; align-items: center !important; justify-content: center; gap: 8px; }
+</style>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Azeret+Mono:ital,wght@1,400&amp;display=swap" data-font-variant=""><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Azeret+Mono:ital,wght@1,500&amp;display=swap" data-font-variant=""><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Azeret+Mono:ital,wght@1,600&amp;display=swap" data-font-variant=""><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible+Next:wght@400;700&amp;family=Bricolage+Grotesque:opsz,wght@12..96,400..800&amp;family=Figtree:wght@400..800&amp;family=Geist:wght@400..700&amp;family=Instrument+Sans:wght@400..700&amp;family=Martian+Mono:wght@400..600&amp;family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..600&amp;display=swap" data-dc-tpl="1"><style data-dc-tpl="2">
+.ds { padding: var(--vk-space-6) var(--vk-space-6) var(--vk-space-7); display: flex; flex-direction: column; gap: var(--vk-space-5); }
+.ds * { box-sizing: border-box; }
+.ds-h1 { margin: 0; font: 700 2rem/1.1 var(--vk-font-display); }
+.ds-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(400px, 100%), 1fr)); gap: var(--vk-space-5); align-items: start; }
+.ds-cell { display: flex; flex-direction: column; gap: var(--vk-space-2); min-width: 0; }
+.ds-label { font: 700 var(--vk-text-sm)/1.3 var(--vk-font-body); color: var(--vk-color-muted); }
+.ds-label b { color: var(--vk-color-text); }
+.ds-card { background: var(--vk-color-surface); border-radius: var(--vk-radius-lg); box-shadow: 0 0 0 1px var(--vk-color-line), 0 12px 32px color-mix(in oklch, var(--vk-color-text) 10%, transparent); padding: var(--vk-space-5); display: flex; flex-direction: column; gap: var(--vk-space-4); min-width: 0; }
+.ds-eyebrow { font: 700 12px/1.2 var(--vk-font-body); color: var(--vk-color-muted); letter-spacing: 0.02em; }
+.ds-title { margin: 0; font: 700 1.2rem/1.25 var(--vk-font-display); text-wrap: pretty; }
+.ds-track { list-style: none; margin: 0; padding: 0; display: flex; gap: 3px; }
+.ds-track li { flex: 1 1 0; display: flex; flex-direction: column; gap: 4px; font: 600 12px/1.2 var(--vk-font-body); color: var(--vk-color-muted); min-width: 0; }
+.ds-track li.cur { flex: 2.8 1 0; color: var(--vk-color-text); font-weight: 800; }
+.ds-track li.sig { color: var(--vk-color-signal-text); }
+.ds-track .bar { height: 7px; border-radius: var(--vk-radius-pill); background: var(--vk-color-line); }
+.ds-track li.done .bar { background: var(--vk-color-success); }
+.ds-track li.cur .bar { background: var(--vk-color-primary); }
+.ds-track li.sig .bar { background: var(--vk-color-signal); }
+.ds-track li.fin .bar { background: var(--vk-color-success); }
+.ds-msg { display: grid; grid-template-columns: 36px minmax(0, 1fr); gap: var(--vk-space-3); align-items: start; }
+.ds-bubble { border-radius: 6px var(--vk-radius-md) var(--vk-radius-md) var(--vk-radius-md); padding: var(--vk-space-3) var(--vk-space-4); background: var(--vk-color-raised); display: flex; flex-direction: column; gap: 4px; }
+.ds-bubble--sig { background: var(--vk-color-signal-wash); }
+.ds-who { font: 700 12px/1.2 var(--vk-font-body); color: var(--vk-color-muted); }
+.ds-bubble--sig .ds-who { color: var(--vk-color-signal-text); }
+.ds-say { margin: 0; font-size: 1.05rem; line-height: 1.5; overflow-wrap: anywhere; }
+.ds-time { font-size: 12px; color: var(--vk-color-muted); }
+.ds-flag { display: inline-flex; align-items: center; gap: 6px; font: 700 var(--vk-text-sm)/1 var(--vk-font-body); color: var(--vk-color-signal-text); }
+.ds-post { border: 2px solid var(--vk-color-line); border-radius: var(--vk-radius-md); overflow: hidden; }
+.ds-posthead { display: flex; align-items: center; gap: var(--vk-space-2); flex-wrap: wrap; padding: var(--vk-space-3) var(--vk-space-4); background: var(--vk-color-raised); font-size: 12px; }
+.ds-postbody { padding: var(--vk-space-4); display: flex; flex-direction: column; gap: var(--vk-space-3); max-height: 24rem; overflow: auto; }
+.ds-mono { font: 400 11.5px/1.4 var(--vk-font-mono); color: var(--vk-color-muted); overflow-wrap: anywhere; }
+.ds-dl { margin: 0; display: flex; flex-direction: column; gap: var(--vk-space-2); font-size: var(--vk-text-sm); }
+.ds-dl dt { font-weight: 700; }
+.ds-dl dd { margin: 2px 0 0; line-height: 1.5; }
+.ds-seal { display: flex; align-items: center; gap: var(--vk-space-2); font-size: 12px; color: var(--vk-color-muted); padding: var(--vk-space-2) var(--vk-space-4); border-top: 1px solid var(--vk-color-line); flex-wrap: wrap; }
+
+.ds-count { font-size: 12px; color: var(--vk-color-muted); text-align: right; }
+.ds-btns { display: flex; flex-wrap: wrap; gap: var(--vk-space-2); align-items: center; }
+
+.ds-quiet { font-size: var(--vk-text-sm); color: var(--vk-color-muted); margin: 0; }
+.ds-raw > summary { display: inline-flex; min-height: 44px; align-items: center; cursor: pointer; font-size: var(--vk-text-sm); text-decoration: underline; text-underline-offset: 3px; }
+.ds-banner { display: grid; grid-template-columns: 24px minmax(0, 1fr); gap: var(--vk-space-3); padding: var(--vk-space-4); border-radius: var(--vk-radius-md); background: var(--vk-color-ground); }
+.ds-banner b { display: block; }
+.ds-done { display: grid; grid-template-columns: 44px minmax(0, 1fr); gap: var(--vk-space-3); align-items: center; padding: var(--vk-space-4); border-radius: var(--vk-radius-md); background: var(--vk-color-success-wash); color: var(--vk-color-success-text); }
+.ds-check { display: grid; place-items: center; width: 44px; height: 44px; border-radius: 50%; background: var(--vk-color-success); color: var(--vk-color-success-text); }
+.ds-done b { font: 700 1.3rem/1.1 var(--vk-font-display); display: block; }
+.ds-hand { border-left: 3px solid var(--vk-color-success); padding: var(--vk-space-1) 0 var(--vk-space-1) var(--vk-space-4); display: flex; flex-direction: column; gap: 4px; }
+.ds-alert { display: grid; grid-template-columns: 20px minmax(0, 1fr); gap: var(--vk-space-2); padding: var(--vk-space-3) var(--vk-space-4); border-radius: var(--vk-radius-sm); background: var(--vk-color-signal-wash); color: var(--vk-color-text); box-shadow: inset 0 0 0 2px var(--vk-color-signal); font-size: var(--vk-text-sm); line-height: 1.45; }
+.ds-alert b { color: var(--vk-color-signal-text); }
+.ds-sk { border-radius: var(--vk-radius-pill); background: var(--vk-color-raised); height: 14px; }
+.ds-sk--blk { border-radius: var(--vk-radius-md); height: 88px; }
+@keyframes ds-breathe { 50% { opacity: 0.55; } }
+.ds-load .ds-sk { animation: ds-breathe 1.6s ease-in-out infinite; }
+.ds-chip { display: inline-flex; align-items: center; gap: 6px; min-height: 28px; padding: 2px 10px 2px 3px; border-radius: var(--vk-radius-pill); background: var(--vk-color-raised); font-size: 12px; }
+.ds-row { display: flex; gap: var(--vk-space-2); flex-wrap: wrap; align-items: center; }
+</style><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible+Next:ital,wght@1,400&amp;display=swap" data-font-variant=""><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible+Next:ital,wght@1,700&amp;display=swap" data-font-variant=""><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:ital,wght@1,400..800&amp;display=swap" data-font-variant=""><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:ital,wght@1,400..700&amp;display=swap" data-font-variant=""><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Sans:ital,wght@1,400..700&amp;display=swap" data-font-variant=""><style data-dc-editor-style="">body:not([data-dc-editor-overlay-hidden]) [data-dc-editor-hover][data-dc-editor-hover-stroke]:not([data-dc-editor-selected]){filter:drop-shadow(0 0 calc(1*var(--dc-chrome-unit,1px)) color-mix(in srgb,#2a78d6 90%,transparent)) drop-shadow(0 0 calc(2*var(--dc-chrome-unit,1px)) color-mix(in srgb,#2a78d6 55%,transparent))!important;}body:not([data-dc-editor-overlay-hidden]):not([data-dc-editor-proxy="copy"]) [data-dc-editor-dragging],body:not([data-dc-editor-overlay-hidden]):not([data-dc-editor-proxy]) [data-dc-dragging],body[data-dc-editor-brk]:not([data-dc-editor-overlay-hidden]) [data-dc-drag-follower]{outline:calc(2*var(--dc-chrome-unit,1px)) solid #2a78d6!important;outline-offset:calc(-1*var(--dc-chrome-unit,1px))!important;opacity:0.55!important;}body[data-dc-editor-proxy="move"]:not([data-dc-editor-overlay-hidden]) [data-dc-editor-dragging],body[data-dc-editor-proxy="move"]:not([data-dc-editor-overlay-hidden]) [data-dc-dragging],body[data-dc-editor-proxy="move"]:not([data-dc-editor-overlay-hidden]) [data-dc-editor-dragging]>*,body[data-dc-editor-proxy="move"]:not([data-dc-editor-overlay-hidden]) [data-dc-dragging]>*{opacity:0!important;outline:none!important;}[data-dc-editor-drag-proxy],[data-dc-editor-drag-proxy] *{pointer-events:none!important;}body[data-dc-editor-on]:not([data-dc-editor-tool="interact"]) *{cursor:default!important;user-select:none!important;}body[data-dc-editor-on]:not([data-dc-editor-tool="interact"]) :not([data-dc-editor-overlay-root]):not([data-dc-editor-overlay-root] *){pointer-events:auto!important;transition:none!important;animation:none!important;}body[data-dc-editor-on][data-dc-editor-brk]:not([data-dc-editor-overlay-hidden]) [data-dc-editor-dragging]:not([data-dc-editor-overlay-root]) :not([data-dc-editor-overlay-root]),body[data-dc-editor-on][data-dc-editor-brk]:not([data-dc-editor-overlay-hidden]) [data-dc-dragging]:not([data-dc-editor-overlay-root]) :not([data-dc-editor-overlay-root]),body[data-dc-editor-on][data-dc-editor-brk]:not([data-dc-editor-overlay-hidden]) [data-dc-drag-follower]:not([data-dc-editor-overlay-root]),body[data-dc-editor-on][data-dc-editor-brk]:not([data-dc-editor-overlay-hidden]) [data-dc-drag-follower]:not([data-dc-editor-overlay-root]) :not([data-dc-editor-overlay-root]),body[data-dc-editor-move][data-dc-editor-brk]:not([data-dc-editor-overlay-hidden]) [data-dc-editor-dragging]:not([data-dc-editor-overlay-root]) :not([data-dc-editor-overlay-root]),body[data-dc-editor-move][data-dc-editor-brk]:not([data-dc-editor-overlay-hidden]) [data-dc-dragging]:not([data-dc-editor-overlay-root]) :not([data-dc-editor-overlay-root]),body[data-dc-editor-move][data-dc-editor-brk]:not([data-dc-editor-overlay-hidden]) [data-dc-drag-follower]:not([data-dc-editor-overlay-root]),body[data-dc-editor-move][data-dc-editor-brk]:not([data-dc-editor-overlay-hidden]) [data-dc-drag-follower]:not([data-dc-editor-overlay-root]) :not([data-dc-editor-overlay-root]){pointer-events:none!important;}body[data-dc-editor-move] :not([data-dc-editor-overlay-root]):not([data-dc-editor-overlay-root] *){pointer-events:auto!important;transition:none!important;animation-duration:0s!important;animation-delay:0s!important;}body[data-dc-editor-on][data-dc-editor-tool="rect"] *,body[data-dc-editor-on][data-dc-editor-tool="frame"] *,body[data-dc-editor-on][data-dc-editor-tool="grid"] *,body[data-dc-editor-on][data-dc-editor-tool="oval"] *,body[data-dc-editor-on][data-dc-editor-tool="arrow"] *,body[data-dc-editor-on][data-dc-editor-tool="line"] *{cursor:crosshair!important;}body[data-dc-editor-on][data-dc-editor-tool="text"] *{cursor:text!important;}body[data-dc-editor-on][data-dc-editor-tool="draw"] *{cursor:url('data:image/svg+xml,%3Csvg%20xmlns=%22http://www.w3.org/2000/svg%22%20width=%2216%22%20height=%2216%22%20viewBox=%220%200%2016%2016%22%3E%3Cpath%20d=%22M2%2014l1-4%208-8a2.1%202.1%200%200%201%203%203l-8%208-4%201z%22%20fill=%22%23333%22%20stroke=%22%23fff%22%20stroke-width=%221%22/%3E%3C/svg%3E') 1 15, crosshair!important;}body[data-dc-editor-on]:not([data-dc-editor-tool]) [data-drags-parent],body[data-dc-editor-on]:not([data-dc-editor-tool]) [data-drags-parent] *{cursor:grab!important;}body[data-dc-editor-on]:not([data-dc-editor-tool]) [data-drags-parent]:active,body[data-dc-editor-on]:not([data-dc-editor-tool]) [data-drags-parent]:active *{cursor:grabbing!important;}body[data-dc-editor-on] [data-dc-editor-editing][contenteditable][contenteditable],body[data-dc-editor-on] [data-dc-editor-editing][contenteditable][contenteditable] *,body[data-dc-editor-on] [data-dc-editor-svg-editing]{cursor:text!important;}body[data-dc-editor-on] [data-dc-editor-editing="import"]{outline:none!important;}html:not([data-dc-canvas]):has(body[data-dc-editor-on]:not([data-dc-capturing]) .sc-host){background:var(--dc-editor-backdrop,#ededeb);}html:not([data-dc-canvas]) body[data-dc-editor-on]:not([data-dc-capturing]):has(.sc-host){background:var(--dc-editor-backdrop,#ededeb);}html:not([data-dc-canvas]) body[data-dc-editor-on] .sc-host:not(.sc-host .sc-host){min-height:calc(100vh - var(--dc-editor-host-vpad,0px));}html:not([data-dc-canvas]) body[data-dc-editor-on]:not([data-dc-capturing]) .sc-host:not(.sc-host .sc-host){background:var(--dc-editor-host-bg,#fff);}html[data-dc-frameless],html[data-dc-frameless] body[data-dc-editor-on],html[data-dc-frameless] body[data-dc-editor-on] .sc-host:not(.sc-host .sc-host){background:transparent!important;min-height:0!important;}html:has(body[data-dc-capturing]),body[data-dc-capturing]{transition:none!important;}html[data-dc-canvas]{overflow:hidden;}html[data-dc-canvas] body[data-dc-editor-on] .sc-host:not(.sc-host .sc-host)::before{content:"";position:absolute;left:-100000px;top:-100000px;width:200000px;height:200000px;pointer-events:none;background:repeating-linear-gradient(45deg,var(--dc-editor-hatch-ink,rgba(0,0,0,.05)) 0 8px,transparent 8px 16px);clip-path:polygon(0 0,100% 0,100% 50%,50% 50%,50% 100%,0 100%);}</style></head>
+<body>
+<div id="dc-root"><div class="sc-host" data-sc-name="SP-Card-States-Daylight"><div data-product="superpipeline" data-accent="product" data-dc-tpl="3" class="ds" data-vibe="daylight" data-theme="light" style="background: var(--vk-color-bg); color: var(--vk-color-text); font-family: var(--vk-font-body);">
+  <div data-dc-tpl="4" style="display: flex; flex-direction: column; gap: 4px;">
+    <h1 data-dc-tpl="5" class="ds-h1">Card states · Daylight</h1>
+    <p data-dc-tpl="6" class="ds-quiet">Each panel is the top of the card drawer. Coral appears only where a person is needed now.</p>
+  </div>
+
+  <div data-dc-tpl="7" class="ds-grid">
+
+    
+    <div data-dc-tpl="8" class="ds-cell">
+      <span data-dc-tpl="9" class="ds-label"><b data-dc-tpl="10">A · Approval gate</b>: the subject is shown before the buttons</span>
+      <section data-dc-tpl="11" class="ds-card" aria-labelledby="a-t">
+        <span data-dc-tpl="12" class="ds-eyebrow">Research &amp; Intelligence · Recommendation</span>
+        <h2 data-dc-tpl="13" id="a-t" class="ds-title">P4 exit test: one-paragraph synthesis of ‘why the organization plane exists’ (gate test — approve from Matrix)</h2>
+        <ol data-dc-tpl="14" class="ds-track" aria-label="Stage 5 of 6, Recommendation, awaiting review">
+          <li data-dc-tpl="15" class="done" title="1 · Question"><span data-dc-tpl="16" class="bar"></span>1</li><li data-dc-tpl="17" class="done" title="2 · Gather"><span data-dc-tpl="18" class="bar"></span>2</li><li data-dc-tpl="19" class="done" title="3 · Measure"><span data-dc-tpl="20" class="bar"></span>3</li><li data-dc-tpl="21" class="done" title="4 · Synthesise"><span data-dc-tpl="22" class="bar"></span>4</li><li data-dc-tpl="23" class="cur sig" aria-current="step"><span data-dc-tpl="24" class="bar"></span>5 · Recommendation</li><li data-dc-tpl="25" title="6 · Filed"><span data-dc-tpl="26" class="bar"></span>6</li>
+        </ol>
+        <div data-dc-tpl="27" class="ds-msg">
+          <span data-dc-tpl="28" class="vk-face vk-face--picture" data-mood="needs" style="--vk-face-size: 36px;"><svg data-dc-tpl="29" viewBox="-2 -4 68 70" width="36" height="36" role="img" aria-label="research-ray, needs you" data-mood="needs"><circle data-dc-tpl="30" cx="32" cy="32" r="30" fill="var(--vk-mood-needs)"></circle><circle data-dc-tpl="31" cx="32" cy="4" r="7" fill="rgb(35 35 58)"></circle><g data-dc-tpl="32" data-eyes="open"><ellipse data-dc-tpl="33" cx="23" cy="28" rx="4" ry="2.4" fill="var(--vk-face-ink)"></ellipse><ellipse data-dc-tpl="34" cx="41" cy="28" rx="4" ry="2.4" fill="var(--vk-face-ink)"></ellipse></g><circle data-dc-tpl="35" cx="17" cy="37" r="4" fill="rgb(255 158 138 / 0.5)"></circle><circle data-dc-tpl="36" cx="47" cy="37" r="4" fill="rgb(255 158 138 / 0.5)"></circle><path data-dc-tpl="37" d="M24 44 Q32 38 40 44" fill="none" stroke="var(--vk-face-ink)" stroke-width="3" stroke-linecap="round"></path></svg></span>
+          <div data-dc-tpl="38" class="ds-bubble ds-bubble--sig"><span data-dc-tpl="39" class="ds-who">research-ray · needs you</span><p data-dc-tpl="40" class="ds-say">All done, ready for your review.</p><span data-dc-tpl="41" class="ds-time">Today, 12:48</span></div>
+        </div>
+        <span data-dc-tpl="42" class="ds-flag"><svg data-dc-tpl="43" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path data-dc-tpl="44" d="M5 21V4h11l-2 4 2 4H5"></path></svg> Awaiting your review</span>
+        <div data-dc-tpl="45" class="ds-post">
+          <div data-dc-tpl="46" class="ds-posthead"><b data-dc-tpl="47">Approval subject</b><span data-dc-tpl="48">· revision 2</span><span data-dc-tpl="49" class="ds-mono" style="margin-left: auto;">digest 9f3a·c2e1 <button data-dc-tpl="50" class="vk-button vk-button--quiet" type="button" aria-label="Copy the full digest" style="min-height: 32px; padding: 0px 4px;"><svg data-dc-tpl="51" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect data-dc-tpl="52" x="9" y="9" width="11" height="11" rx="2"></rect><path data-dc-tpl="53" d="M5 15V5a1 1 0 0 1 1-1h9"></path></svg></button></span></div>
+          <div data-dc-tpl="54" class="ds-postbody">
+            <dl data-dc-tpl="55" class="ds-dl">
+              <div data-dc-tpl="56"><dt data-dc-tpl="57">Kind</dt><dd data-dc-tpl="58">Recommendation, one paragraph</dd></div>
+              <div data-dc-tpl="59"><dt data-dc-tpl="60">Synthesis</dt><dd data-dc-tpl="61">The organization plane exists so that one issuer, Accounts, says who a person or an agent is in every product. Before it, each product kept its own users and tokens, so a grant made in one place meant nothing in the next. With one issuer, a workspace, its members and its agents are defined once, and every product checks the same token.</dd></div>
+              <div data-dc-tpl="62"><dt data-dc-tpl="63">Sources</dt><dd data-dc-tpl="64">Organization plane cutover record, 7 Oct</dd></div>
+            </dl>
+            <details data-dc-tpl="65" class="ds-raw"><summary data-dc-tpl="66">View raw JSON</summary></details>
+          </div>
+          <div data-dc-tpl="67" class="ds-seal"><svg data-dc-tpl="68" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle data-dc-tpl="69" cx="12" cy="10" r="6"></circle><path data-dc-tpl="70" d="M9 15l-2 6 5-2 5 2-2-6"></path></svg> Approving exactly this version · sealed 9f3a·c2e1</div>
+        </div>
+        <div data-dc-tpl="71" class="vk-field">
+          <label data-dc-tpl="72" class="vk-field__label" for="gate-note-a">Add a note (optional)</label>
+          <textarea data-dc-tpl="73" id="gate-note-a" class="vk-field__input" maxlength="8192" placeholder="Recorded with your decision. Request changes needs one: it threads into the agent’s next attempt."></textarea>
+          <span data-dc-tpl="74" class="ds-count">0 / 8192</span>
+        </div>
+        <div data-dc-tpl="75" class="ds-btns">
+          <button type="button" class="vk-button vk-button--primary"><span class="vk-button__icon" aria-hidden="true"><svg data-dc-tpl="77" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path data-dc-tpl="78" d="M5 12.5l4.5 4.5L19 7"></path></svg></span>Approve</button>
+          <button type="button" class="vk-button vk-button--secondary">Request changes</button>
+          <button type="button" class="vk-button vk-button--quiet">Reject</button>
+        </div>
+      </section>
+    </div>
+
+    
+    <div data-dc-tpl="81" class="ds-cell">
+      <span data-dc-tpl="82" class="ds-label"><b data-dc-tpl="83">B · Agent question</b>: asked once, then the answer box</span>
+      <section data-dc-tpl="84" class="ds-card" aria-labelledby="b-t">
+        <span data-dc-tpl="85" class="ds-eyebrow">Guild Operations &amp; Automation · Build</span>
+        <h2 data-dc-tpl="86" id="b-t" class="ds-title">Guild Operations &amp; Automation fixture card 1</h2>
+        <ol data-dc-tpl="87" class="ds-track" aria-label="Stage 3 of 5, Build, question pending">
+          <li data-dc-tpl="88" class="done" title="1 · Intake"><span data-dc-tpl="89" class="bar"></span>1</li><li data-dc-tpl="90" class="done" title="2 · Shape"><span data-dc-tpl="91" class="bar"></span>2</li><li data-dc-tpl="92" class="cur sig" aria-current="step"><span data-dc-tpl="93" class="bar"></span>3 · Build</li><li data-dc-tpl="94" title="4 · Review"><span data-dc-tpl="95" class="bar"></span>4</li><li data-dc-tpl="96" title="5 · Done"><span data-dc-tpl="97" class="bar"></span>5</li>
+        </ol>
+        <div data-dc-tpl="98" class="ds-msg">
+          <span data-dc-tpl="99" class="vk-face vk-face--picture" data-mood="needs" style="--vk-face-size: 36px;"><svg data-dc-tpl="100" viewBox="-2 -4 68 70" width="36" height="36" role="img" aria-label="optimizer-ollie, needs you" data-mood="needs"><circle data-dc-tpl="101" cx="32" cy="32" r="30" fill="var(--vk-mood-needs)"></circle><path data-dc-tpl="102" d="M28 4 Q32 -2 36 4 Q34 8 32 6 Q30 8 28 4Z" fill="rgb(194 112 61)"></path><g data-dc-tpl="103" data-eyes="open"><ellipse data-dc-tpl="104" cx="23" cy="28" rx="3.2" ry="3.2" fill="var(--vk-face-ink)"></ellipse><ellipse data-dc-tpl="105" cx="41" cy="28" rx="3.2" ry="3.2" fill="var(--vk-face-ink)"></ellipse></g><path data-dc-tpl="106" d="M24 44 Q32 38 40 44" fill="none" stroke="var(--vk-face-ink)" stroke-width="3" stroke-linecap="round"></path></svg></span>
+          <div data-dc-tpl="107" class="ds-bubble ds-bubble--sig"><span data-dc-tpl="108" class="ds-who">optimizer-ollie · has a question</span><p data-dc-tpl="109" class="ds-say">The handoff needs a commit, and the fix is still on an unmerged branch. Should I hand on the branch commit, or wait until it is merged?</p><span data-dc-tpl="110" class="ds-time">Today, 07:40</span></div>
+        </div>
+        <form data-dc-tpl="111" style="display: flex; flex-direction: column; gap: var(--vk-space-3); margin-left: 48px;">
+          <div class="vk-field"><label class="vk-field__label" for="b-ans">Your answer</label> <p class="vk-field__hint" id="b-ans-hint">With no answer: “Type an answer first.”</p> <textarea placeholder="It goes straight back to optimizer-ollie." class="vk-field__input vk-field__input--textarea" id="b-ans" rows="4" aria-describedby="b-ans-hint"></textarea>  </div>
+          <div data-dc-tpl="116" class="ds-btns"><button type="submit" class="vk-button vk-button--primary"><span class="vk-button__icon" aria-hidden="true"><svg data-dc-tpl="118" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path data-dc-tpl="119" d="M4 12l16-8-6 16-2-7z"></path></svg></span>Send answer</button></div>
+        </form>
+      </section>
+    </div>
+
+    
+    <div data-dc-tpl="120" class="ds-cell">
+      <span data-dc-tpl="121" class="ds-label"><b data-dc-tpl="122">C · Archived</b>: no live controls, no coral</span>
+      <section data-dc-tpl="123" class="ds-card" aria-labelledby="c-t">
+        <div data-dc-tpl="124" class="ds-banner" role="status"><svg data-dc-tpl="125" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect data-dc-tpl="126" x="3" y="4" width="18" height="5" rx="1"></rect><path data-dc-tpl="127" d="M5 9v10h14V9M10 13h4"></path></svg><div data-dc-tpl="128"><b data-dc-tpl="129">Archived 9 Oct</b><span data-dc-tpl="130" class="ds-quiet">Its pending review was cancelled when the card was archived.</span></div></div>
+        <span data-dc-tpl="131" class="ds-eyebrow">Marketing &amp; Community · Messaging approval</span>
+        <h2 data-dc-tpl="132" id="c-t" class="ds-title">Coordinator dispatch canary — Melissa</h2>
+        <ol data-dc-tpl="133" class="ds-track" aria-label="Stopped at stage 3 of 8, Messaging approval, archived">
+          <li data-dc-tpl="134" class="done" title="1 · Requested"><span data-dc-tpl="135" class="bar"></span>1</li><li data-dc-tpl="136" class="done" title="2 · Messaging brief"><span data-dc-tpl="137" class="bar"></span>2</li><li data-dc-tpl="138" class="cur" aria-current="step"><span data-dc-tpl="139" class="bar"></span>3 · Messaging approval</li><li data-dc-tpl="140" title="4 · Cleared to publish"><span data-dc-tpl="141" class="bar"></span>4</li><li data-dc-tpl="142" title="5 · Community triage"><span data-dc-tpl="143" class="bar"></span>5</li><li data-dc-tpl="144" title="6 · Reply approval"><span data-dc-tpl="145" class="bar"></span>6</li><li data-dc-tpl="146" title="7 · Cleared to reply"><span data-dc-tpl="147" class="bar"></span>7</li><li data-dc-tpl="148" title="8 · Done"><span data-dc-tpl="149" class="bar"></span>8</li>
+        </ol>
+        <div data-dc-tpl="150" class="ds-row"><span data-dc-tpl="151" class="ds-chip"><svg data-dc-tpl="152" viewBox="-2 -4 68 70" width="24" height="24" aria-hidden="true" focusable="false" data-mood="resting"><circle data-dc-tpl="153" cx="32" cy="32" r="30" fill="var(--vk-mood-resting)"></circle><circle data-dc-tpl="154" cx="32" cy="4" r="7" fill="rgb(47 107 90)"></circle><g data-dc-tpl="155" data-eyes="closed"><path data-dc-tpl="156" d="M19 29 Q23 32 27 29 M37 29 Q41 32 45 29" fill="none" stroke="var(--vk-face-ink)" stroke-width="2.6" stroke-linecap="round"></path></g><circle data-dc-tpl="157" cx="17" cy="37" r="4" fill="rgb(255 158 138 / 0.5)"></circle><circle data-dc-tpl="158" cx="47" cy="37" r="4" fill="rgb(255 158 138 / 0.5)"></circle><path data-dc-tpl="159" d="M27 43 Q32 45 37 43" fill="none" stroke="var(--vk-face-ink)" stroke-width="3" stroke-linecap="round"></path></svg> message-melissa · last worked it</span><span data-dc-tpl="160" class="ds-chip" style="padding-left: 10px;">Owner · Ira Mehta</span></div>
+        <p data-dc-tpl="161" class="ds-quiet">Verify Super Chotu can dispatch Message Melissa. Produce a DRAFT three-sentence messaging brief for workspace operators about registering an agent.</p>
+        <div data-dc-tpl="162" class="ds-btns"><button type="button" class="vk-button vk-button--primary"><span class="vk-button__icon" aria-hidden="true"><svg data-dc-tpl="164" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path data-dc-tpl="165" d="M4 12a8 8 0 1 0 2.4-5.7"></path><path data-dc-tpl="166" d="M4 4v4h4"></path></svg></span>Restore</button><span data-dc-tpl="167" class="ds-quiet">Puts it back on the board at Messaging approval.</span></div>
+      </section>
+    </div>
+
+    
+    <div data-dc-tpl="168" class="ds-cell">
+      <span data-dc-tpl="169" class="ds-label"><b data-dc-tpl="170">D · Done</b>: who finished it, when, and what it handed on</span>
+      <section data-dc-tpl="171" class="ds-card" aria-labelledby="d-t">
+        <span data-dc-tpl="172" class="ds-eyebrow">Agent Onboarding · Resident</span>
+        <h2 data-dc-tpl="173" id="d-t" class="ds-title">Onboard Message Melissa — marketing and messaging</h2>
+        <div data-dc-tpl="174" class="ds-done" role="status"><span data-dc-tpl="175" class="ds-check"><svg data-dc-tpl="176" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path data-dc-tpl="177" d="M5 12.5l4.5 4.5L19 7"></path></svg></span><div data-dc-tpl="178"><b data-dc-tpl="179">Done</b><span data-dc-tpl="180" style="font-size: var(--vk-text-sm);">Reached Resident on Thu 8 Oct, 19:26 · 5 attempts</span></div></div>
+        <div data-dc-tpl="181" class="ds-msg">
+          <span data-dc-tpl="182" class="vk-face vk-face--picture" data-mood="done" style="--vk-face-size: 36px;"><svg data-dc-tpl="183" viewBox="-2 -4 68 70" width="36" height="36" role="img" aria-label="onboarding-olivia, done" data-mood="done"><circle data-dc-tpl="184" cx="32" cy="32" r="30" fill="var(--vk-mood-done)"></circle><circle data-dc-tpl="185" cx="32" cy="4" r="7" fill="rgb(94 90 156)"></circle><g data-dc-tpl="186" data-eyes="open"><ellipse data-dc-tpl="187" cx="23" cy="28" rx="3.2" ry="4.2" fill="var(--vk-face-ink)"></ellipse><ellipse data-dc-tpl="188" cx="41" cy="28" rx="3.2" ry="4.2" fill="var(--vk-face-ink)"></ellipse></g><circle data-dc-tpl="189" cx="17" cy="37" r="4" fill="rgb(255 158 138 / 0.5)"></circle><circle data-dc-tpl="190" cx="47" cy="37" r="4" fill="rgb(255 158 138 / 0.5)"></circle><path data-dc-tpl="191" d="M20 39 Q32 51 44 39" fill="none" stroke="var(--vk-face-ink)" stroke-width="3" stroke-linecap="round"></path></svg></span>
+          <div data-dc-tpl="192" class="ds-bubble"><span data-dc-tpl="193" class="ds-who">onboarding-olivia · finished it</span><p data-dc-tpl="194" class="ds-say">Melissa is resident. Her identity, router description and portrait are in place, and you credentialed her at the resident gate.</p><span data-dc-tpl="195" class="ds-time">Thu 8 Oct, 19:26</span></div>
+        </div>
+        <div data-dc-tpl="196" class="ds-hand"><b data-dc-tpl="197" style="font-size: var(--vk-text-sm);">Handed on</b><span data-dc-tpl="198" class="ds-quiet">Profile, router description, safe profile and portrait drafted through this pipeline. No posting, DMs or scheduling without separate operator authorisation.</span></div>
+        <div data-dc-tpl="199" class="ds-row"><span data-dc-tpl="200" class="ds-chip" style="padding-left: 10px;">Owner · Ira Mehta</span><span data-dc-tpl="201" class="ds-chip"><svg data-dc-tpl="202" viewBox="-2 -4 68 70" width="24" height="24" aria-hidden="true" focusable="false" data-mood="resting"><circle data-dc-tpl="203" cx="32" cy="32" r="30" fill="var(--vk-mood-resting)"></circle><path data-dc-tpl="204" d="M8 22 Q12 4 32 3 Q52 4 56 22 Q44 14 32 15 Q20 14 8 22Z" fill="rgb(35 35 58)"></path><g data-dc-tpl="205" data-eyes="closed"><path data-dc-tpl="206" d="M19 29 Q23 32 27 29 M37 29 Q41 32 45 29" fill="none" stroke="var(--vk-face-ink)" stroke-width="2.6" stroke-linecap="round"></path></g><path data-dc-tpl="207" d="M27 43 Q32 45 37 43" fill="none" stroke="var(--vk-face-ink)" stroke-width="3" stroke-linecap="round"></path></svg> Asked by super-chotu</span><span data-dc-tpl="208" class="ds-chip" style="padding-left: 10px;">P2</span></div>
+      </section>
+    </div>
+
+    
+    <div data-dc-tpl="209" class="ds-cell">
+      <span data-dc-tpl="210" class="ds-label"><b data-dc-tpl="211">E · Decision error</b>: shown beside the buttons, not at the top</span>
+      <section data-dc-tpl="212" class="ds-card" aria-labelledby="e-t">
+        <span data-dc-tpl="213" class="ds-eyebrow">Research &amp; Intelligence · Recommendation</span>
+        <h2 data-dc-tpl="214" id="e-t" class="ds-title">P4 exit test: one-paragraph synthesis of ‘why the organization plane exists’ (gate test — approve from Matrix)</h2>
+        <div class="vk-field" data-invalid="true"><label class="vk-field__label" for="gate-note-e">Say what needs to change</label>  <textarea class="vk-field__input vk-field__input--textarea" id="gate-note-e" rows="4" maxlength="8192" aria-invalid="true" aria-describedby="gate-note-e-error"></textarea>  <p class="vk-field__error" id="gate-note-e-error"><svg class="vk-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 3 2 21h20L12 3z"></path><path d="M12 10v5"></path><path d="M12 18h.01"></path></svg>Request changes needs a note: it threads into the agent’s next attempt.</p></div>
+        <div data-dc-tpl="219" class="ds-btns">
+          <button type="button" class="vk-button vk-button--primary"><span class="vk-button__icon" aria-hidden="true"><svg data-dc-tpl="221" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path data-dc-tpl="222" d="M5 12.5l4.5 4.5L19 7"></path></svg></span>Approve</button>
+          <button type="button" class="vk-button vk-button--secondary">Request changes</button>
+          <button type="button" class="vk-button vk-button--quiet">Reject</button>
+        </div>
+        <div data-dc-tpl="225" class="ds-alert" role="alert"><svg data-dc-tpl="226" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path data-dc-tpl="227" d="M12 3l9 17H3z"></path><path data-dc-tpl="228" d="M12 10v4M12 17v.5"></path></svg><div data-dc-tpl="229"><b data-dc-tpl="230">Not recorded.</b> This gate was already decided from Matrix by Ira Mehta at 13:02. <button style="min-height: 44px; margin: -12px 0px; font-size: var(--vk-text-sm);" type="button" class="vk-button vk-button--quiet">Refresh to see it</button></div></div>
+      </section>
+    </div>
+
+    
+    <div data-dc-tpl="232" class="ds-cell">
+      <span data-dc-tpl="233" class="ds-label"><b data-dc-tpl="234">F · Loading</b>: the shape of the card, and words for screen readers</span>
+      <section data-dc-tpl="235" class="ds-card ds-load" aria-busy="true" aria-labelledby="f-t">
+        <span data-dc-tpl="236" class="ds-eyebrow">Developer Experience</span>
+        <h2 data-dc-tpl="237" id="f-t" class="ds-title">Diagnose Melissa and Anna Supermessage silence — trace actual failing hop</h2>
+        <div data-dc-tpl="238" class="ds-row" style="gap: 3px;"><span data-dc-tpl="239" class="ds-sk" style="flex: 1 1 0%; height: 7px;"></span><span data-dc-tpl="240" class="ds-sk" style="flex: 2.8 1 0%; height: 7px;"></span><span data-dc-tpl="241" class="ds-sk" style="flex: 1 1 0%; height: 7px;"></span><span data-dc-tpl="242" class="ds-sk" style="flex: 1 1 0%; height: 7px;"></span><span data-dc-tpl="243" class="ds-sk" style="flex: 1 1 0%; height: 7px;"></span></div>
+        <div data-dc-tpl="244" class="ds-msg">
+          <span data-dc-tpl="245" class="vk-face vk-face--picture" data-mood="thinking" style="--vk-face-size: 36px;"><svg data-dc-tpl="246" viewBox="-2 -4 68 70" width="36" height="36" role="img" aria-label="error-eric, thinking" data-mood="thinking"><circle data-dc-tpl="247" cx="32" cy="32" r="30" fill="var(--vk-mood-thinking)"></circle><path data-dc-tpl="248" d="M28 4 Q32 -2 36 4 Q34 8 32 6 Q30 8 28 4Z" fill="rgb(107 74 43)"></path><g data-dc-tpl="249" data-eyes="open"><ellipse data-dc-tpl="250" cx="23" cy="28" rx="4" ry="2.4" fill="var(--vk-face-ink)"></ellipse><ellipse data-dc-tpl="251" cx="41" cy="28" rx="4" ry="2.4" fill="var(--vk-face-ink)"></ellipse></g><circle data-dc-tpl="252" cx="17" cy="37" r="4" fill="rgb(255 158 138 / 0.5)"></circle><circle data-dc-tpl="253" cx="47" cy="37" r="4" fill="rgb(255 158 138 / 0.5)"></circle><path data-dc-tpl="254" d="M24 43 H40" fill="none" stroke="var(--vk-face-ink)" stroke-width="3" stroke-linecap="round"></path></svg></span>
+          <div data-dc-tpl="255" style="display: flex; flex-direction: column; gap: var(--vk-space-2);"><span data-dc-tpl="256" class="ds-sk" style="width: 40%;"></span><span data-dc-tpl="257" class="ds-sk ds-sk--blk"></span></div>
+        </div>
+        <p data-dc-tpl="258" class="ds-quiet" role="status">Loading what error-eric said and the card’s history…</p>
+      </section>
+    </div>
+
+  </div></div></div></div>
+
+
+
+</body></html>

@@ -1,0 +1,72 @@
+<div class="fg" data-vibe="studio" data-theme="light"><div class="scrim"></div><section class="dlg pal" role="dialog" aria-modal="true" aria-label="Command palette">
+  <div class="pal-in">
+    <svg 20/>
+    <label class="vk-visually-hidden" for="pal-q">Search cards, boards, agents and actions</label>
+    <input id="pal-q" role="combobox" aria-expanded="true" aria-controls="pal-list" aria-autocomplete="list" autocomplete="off" placeholder="Jump to a card, board, agent, or action…" value="agent">
+    <button class="icon-btn" type="button" aria-label="Clear the search"><svg 18/></button>
+    <span class="kbd">esc</span>
+  </div>
+  <div class="pal-count" role="status">8 matches for “agent”</div>
+  <div class="pal-list" id="pal-list" role="listbox" aria-label="Results">
+      <div role="group" aria-label="Cards">
+        <div class="pal-gh"><span>Cards</span><span>2 results</span></div>
+          <div class="pal-item" role="option" aria-selected="true" data-selected="true">
+            <span class="pal-ic"><svg 16/></span>
+            <span class="pal-text"><span class="pal-label"><mark>Agent</mark>Pod: connector interface and generic effects ledger, state machine and executor</span><span class="pal-sub">Developer Experience · Failing test · stopped 33h</span></span>
+            <span class="chip chip--needs">Waiting on you</span>
+            <span class="pal-meta mono">#58f8</span>
+            <span class="pal-enter">↵ Open card</span>
+          </div>
+          <div class="pal-item" role="option" aria-selected="false" data-selected="false">
+            <span class="pal-ic"><svg 16/></span>
+            <span class="pal-text"><span class="pal-label"><mark>agent</mark>pod-connectors: X connector (connector x)</span><span class="pal-sub">Developer Experience · Failing test · Blocked</span></span>
+            <span class="pal-meta mono">#481f</span>
+          </div>
+      </div>
+      <div role="group" aria-label="Boards">
+        <div class="pal-gh"><span>Boards</span><span>1 result</span></div>
+          <div class="pal-item" role="option" aria-selected="false" data-selected="false">
+            <span class="pal-ic"><svg 16/></span>
+            <span class="pal-text"><span class="pal-label"><mark>Agent</mark> Onboarding</span><span class="pal-sub">20 cards</span></span>
+            <span class="pal-meta mono"></span>
+          </div>
+      </div>
+      <div role="group" aria-label="Agents">
+        <div class="pal-gh"><span>Agents</span><span>4 results</span></div>
+          <div class="pal-item" role="option" aria-selected="false" data-selected="false">
+            <span class="pal-ic pal-ic--face"><span class="vk-face" style="--vk-face-size: 28px;"><svg mood=resting 28/></span></span>
+            <span class="pal-text"><span class="pal-label">error-eric</span><span class="pal-sub">diagnostics</span></span>
+            <span class="pal-meta mono"></span>
+          </div>
+          <div class="pal-item" role="option" aria-selected="false" data-selected="false">
+            <span class="pal-ic pal-ic--face"><span class="vk-face" style="--vk-face-size: 28px;"><svg mood=resting 28/></span></span>
+            <span class="pal-text"><span class="pal-label">tester-tim</span><span class="pal-sub">testing</span></span>
+            <span class="pal-meta mono"></span>
+          </div>
+          <div class="pal-item" role="option" aria-selected="false" data-selected="false">
+            <span class="pal-ic pal-ic--face"><span class="vk-face" style="--vk-face-size: 28px;"><svg mood=resting 28/></span></span>
+            <span class="pal-text"><span class="pal-label">devops-dave</span><span class="pal-sub">release</span></span>
+            <span class="pal-meta mono"></span>
+          </div>
+          <div class="pal-item" role="option" aria-selected="false" data-selected="false">
+            <span class="pal-ic pal-ic--face"><span class="vk-face" style="--vk-face-size: 28px;"><svg mood=resting 28/></span></span>
+            <span class="pal-text"><span class="pal-label">vulnerability-victor</span><span class="pal-sub">security-review</span></span>
+            <span class="pal-meta mono"></span>
+          </div>
+      </div>
+      <div role="group" aria-label="Actions">
+        <div class="pal-gh"><span>Actions</span><span>1 result</span></div>
+          <div class="pal-item" role="option" aria-selected="false" data-selected="false">
+            <span class="pal-ic"><svg 16/></span>
+            <span class="pal-text"><span class="pal-label">Workspace</span><span class="pal-sub">agents, capabilities, labels and people</span></span>
+            <span class="pal-meta mono"></span>
+          </div>
+      </div>
+  </div>
+  <div class="pal-foot">
+    <span><span class="kbd">↑</span><span class="kbd">↓</span> move</span>
+    <span><span class="kbd">↵</span> open</span>
+    <span><span class="kbd">esc</span> close</span>
+    <span class="grow"></span>
+    <span><span class="kbd">⌘</span><span class="kbd">K</span> opens this anywhere</span>
+  </div></section></div>

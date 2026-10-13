@@ -705,7 +705,7 @@ describe('GET /v1/projects/:id/rollup', () => {
  * route silently deciding it already has).
  */
 describe('POST /v1/boards/:id/cards — body whitelisting (Task 19 follow-up)', () => {
-  it('ignores projectId, and any other unexpected key, in the create body — not rejected, just not applied', async () => {
+  it('ignores an unexpected key in the create body — not rejected, just not applied; projectId is a named field now (dialogs D-2)', async () => {
     const t = 'tnt_prj_rest_createwhitelist';
     await insertTenant(t, 'prj-rest-createwhitelist');
     const b = await board(t);
@@ -715,7 +715,6 @@ describe('POST /v1/boards/:id/cards — body whitelisting (Task 19 follow-up)', 
       headers: dev(t),
       body: JSON.stringify({
         title: 'Sneaky',
-        projectId: 'prj_should_be_ignored',
         someOtherUnexpectedKey: 'whatever',
       }),
     });
@@ -725,5 +724,6 @@ describe('POST /v1/boards/:id/cards — body whitelisting (Task 19 follow-up)', 
     const { card } = await res.json<{ card: { title: string; projectId: string | null } }>();
     expect(card.title).toBe('Sneaky');
     expect(card.projectId).toBeNull();
+    expect((card as Record<string, unknown>).someOtherUnexpectedKey).toBeUndefined();
   });
 });

@@ -1,0 +1,62 @@
+/* Ported verbatim from e2e/reference/mockups/SP-Card-States-Daylight.html (prefixes ds) by scripts/pixel/extract-css.mjs. */
+.ds .vk-button { white-space: nowrap; }
+.ds .vk-button { white-space: nowrap; flex-shrink: 0; }
+.ds { padding: var(--vk-space-6) var(--vk-space-6) var(--vk-space-7); display: flex; flex-direction: column; gap: var(--vk-space-5); }
+.ds * { box-sizing: border-box; }
+.ds-h1 { margin: 0; font: 700 2rem/1.1 var(--vk-font-display); }
+.ds-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(400px, 100%), 1fr)); gap: var(--vk-space-5); align-items: start; }
+.ds-cell { display: flex; flex-direction: column; gap: var(--vk-space-2); min-width: 0; }
+.ds-label { font: 700 var(--vk-text-sm)/1.3 var(--vk-font-body); color: var(--vk-color-muted); }
+.ds-label b { color: var(--vk-color-text); }
+.ds-card { background: var(--vk-color-surface); border-radius: var(--vk-radius-lg); box-shadow: 0 0 0 1px var(--vk-color-line), 0 12px 32px color-mix(in oklch, var(--vk-color-text) 10%, transparent); padding: var(--vk-space-5); display: flex; flex-direction: column; gap: var(--vk-space-4); min-width: 0; }
+.ds-eyebrow { font: 700 12px/1.2 var(--vk-font-body); color: var(--vk-color-muted); letter-spacing: 0.02em; }
+.ds-title { margin: 0; font: 700 1.2rem/1.25 var(--vk-font-display); text-wrap: pretty; }
+.ds-track { list-style: none; margin: 0; padding: 0; display: flex; gap: 3px; }
+.ds-track li { flex: 1 1 0; display: flex; flex-direction: column; gap: 4px; font: 600 12px/1.2 var(--vk-font-body); color: var(--vk-color-muted); min-width: 0; }
+.ds-track li.cur { flex: 2.8 1 0; color: var(--vk-color-text); font-weight: 800; }
+.ds-track li.sig { color: var(--vk-color-signal-text); }
+.ds-track .bar { height: 7px; border-radius: var(--vk-radius-pill); background: var(--vk-color-line); }
+.ds-track li.done .bar { background: var(--vk-color-success); }
+.ds-track li.cur .bar { background: var(--vk-color-primary); }
+.ds-track li.sig .bar { background: var(--vk-color-signal); }
+.ds-track li.fin .bar { background: var(--vk-color-success); }
+.ds-msg { display: grid; grid-template-columns: 36px minmax(0, 1fr); gap: var(--vk-space-3); align-items: start; }
+.ds-bubble { border-radius: 6px var(--vk-radius-md) var(--vk-radius-md) var(--vk-radius-md); padding: var(--vk-space-3) var(--vk-space-4); background: var(--vk-color-raised); display: flex; flex-direction: column; gap: 4px; }
+.ds-bubble--sig { background: var(--vk-color-signal-wash); }
+.ds-who { font: 700 12px/1.2 var(--vk-font-body); color: var(--vk-color-muted); }
+.ds-bubble--sig .ds-who { color: var(--vk-color-signal-text); }
+.ds-say { margin: 0; font-size: 1.05rem; line-height: 1.5; overflow-wrap: anywhere; }
+.ds-time { font-size: 12px; color: var(--vk-color-muted); }
+.ds-flag { display: inline-flex; align-items: center; gap: 6px; font: 700 var(--vk-text-sm)/1 var(--vk-font-body); color: var(--vk-color-signal-text); }
+.ds-post { border: 2px solid var(--vk-color-line); border-radius: var(--vk-radius-md); overflow: hidden; }
+.ds-posthead { display: flex; align-items: center; gap: var(--vk-space-2); flex-wrap: wrap; padding: var(--vk-space-3) var(--vk-space-4); background: var(--vk-color-raised); font-size: 12px; }
+.ds-postbody { padding: var(--vk-space-4); display: flex; flex-direction: column; gap: var(--vk-space-3); max-height: 24rem; overflow: auto; }
+.ds-mono { font: 400 11.5px/1.4 var(--vk-font-mono); color: var(--vk-color-muted); overflow-wrap: anywhere; }
+.ds-dl { margin: 0; display: flex; flex-direction: column; gap: var(--vk-space-2); font-size: var(--vk-text-sm); }
+.ds-dl dt { font-weight: 700; }
+.ds-dl dd { margin: 2px 0 0; line-height: 1.5; }
+.ds-seal { display: flex; align-items: center; gap: var(--vk-space-2); font-size: 12px; color: var(--vk-color-muted); padding: var(--vk-space-2) var(--vk-space-4); border-top: 1px solid var(--vk-color-line); flex-wrap: wrap; }
+.ds-count { font-size: 12px; color: var(--vk-color-muted); text-align: right; }
+/* Hand edit: the reference draws the count inside the Field (its 8px gap); vibekit Field takes no children, so the count follows it and gives back 8px of the cell's 16px gap. */
+.ds-count { margin-top: calc(var(--vk-space-2) - var(--vk-space-4)); }
+.ds-btns { display: flex; flex-wrap: wrap; gap: var(--vk-space-2); align-items: center; }
+.ds-quiet { font-size: var(--vk-text-sm); color: var(--vk-color-muted); margin: 0; }
+.ds-raw > summary { display: inline-flex; min-height: 44px; align-items: center; cursor: pointer; font-size: var(--vk-text-sm); text-decoration: underline; text-underline-offset: 3px; }
+.ds-banner { display: grid; grid-template-columns: 24px minmax(0, 1fr); gap: var(--vk-space-3); padding: var(--vk-space-4); border-radius: var(--vk-radius-md); background: var(--vk-color-ground); }
+.ds-banner b { display: block; }
+.ds-done { display: grid; grid-template-columns: 44px minmax(0, 1fr); gap: var(--vk-space-3); align-items: center; padding: var(--vk-space-4); border-radius: var(--vk-radius-md); background: var(--vk-color-success-wash); color: var(--vk-color-success-text); }
+.ds-check { display: grid; place-items: center; width: 44px; height: 44px; border-radius: 50%; background: var(--vk-color-success); color: var(--vk-color-success-text); }
+.ds-done b { font: 700 1.3rem/1.1 var(--vk-font-display); display: block; }
+.ds-hand { border-left: 3px solid var(--vk-color-success); padding: var(--vk-space-1) 0 var(--vk-space-1) var(--vk-space-4); display: flex; flex-direction: column; gap: 4px; }
+.ds-alert { display: grid; grid-template-columns: 20px minmax(0, 1fr); gap: var(--vk-space-2); padding: var(--vk-space-3) var(--vk-space-4); border-radius: var(--vk-radius-sm); background: var(--vk-color-signal-wash); color: var(--vk-color-text); box-shadow: inset 0 0 0 2px var(--vk-color-signal); font-size: var(--vk-text-sm); line-height: 1.45; }
+.ds-alert b { color: var(--vk-color-signal-text); }
+.ds-sk { border-radius: var(--vk-radius-pill); background: var(--vk-color-raised); height: 14px; }
+.ds-sk--blk { border-radius: var(--vk-radius-md); height: 88px; }
+@keyframes ds-breathe { 50% { opacity: 0.55; } }
+.ds-load .ds-sk { animation: ds-breathe 1.6s ease-in-out infinite; }
+.ds-chip { display: inline-flex; align-items: center; gap: 6px; min-height: 28px; padding: 2px 10px 2px 3px; border-radius: var(--vk-radius-pill); background: var(--vk-color-raised); font-size: 12px; }
+.ds-row { display: flex; gap: var(--vk-space-2); flex-wrap: wrap; align-items: center; }
+
+/* ---- deltas: the reference root carries these inline ---- */
+.ds { background: var(--vk-color-bg); color: var(--vk-color-text); font-family: var(--vk-font-body); }
+@media (prefers-reduced-motion: reduce) { .ds-load .ds-sk { animation: none; } }

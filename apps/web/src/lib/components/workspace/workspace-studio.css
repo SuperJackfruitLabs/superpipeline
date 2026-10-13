@@ -1,0 +1,67 @@
+/* Ported verbatim from e2e/reference/mockups/SP-Workspace-Other-Studio (prefixes wo-, face, match ^\.ar-sec > \.hd (\.kick|\.r \.ar-btn2)$, where .wo-main) by scripts/pixel/extract-css.mjs. */
+/* Placement (hand edit): the shell draws Studio's 40px gutters, so the page's own sides are 0 (as .wa-main). */
+.wo-main { flex: 1; display: flex; flex-direction: column; gap: 36px; padding: 24px 0 40px; min-width: 0; }
+:where(.wo-main) .wo-head { display: flex; flex-direction: column; gap: 10px; }
+:where(.wo-main) .wo-head .back { align-self: flex-start; }
+:where(.wo-main) .wo-head h1 { font: 800 44px/1.02 var(--ff); font-stretch: 82%; letter-spacing: -.02em; }
+:where(.wo-main) .wo-head .lede { max-width: 760px; font: 400 18px/1.45 var(--fs); }
+:where(.wo-main) .wo-tabs { display: flex; flex-wrap: wrap; gap: 4px 28px; margin-top: 6px; border-bottom: 1px solid var(--hair); }
+:where(.wo-main) .wo-ct { display: inline-grid; place-items: center; min-width: 20px; height: 20px; padding: 0 5px; border-radius: 2px; background: var(--vk-color-signal-text); color: var(--vk-color-primary-fg); font: 700 12px/1 var(--fm); }
+:where(.wo-main) .ar-sec > .hd .kick { font-size: 11px; }
+:where(.wo-main) .ar-sec > .hd .r .ar-btn2 { min-height: 44px; }
+:where(.wo-main) .wo-lede { max-width: 760px; font: 400 16px/1.45 var(--fs); }
+:where(.wo-main) .wo-tbl td.top { vertical-align: top; }
+:where(.wo-main) .wo-kind { display: inline-flex; align-items: center; gap: 7px; font-weight: 800; font-size: 13px; white-space: nowrap; }
+:where(.wo-main) .wo-kind.needs { color: var(--sig-text); }
+:where(.wo-main) .wo-sub { margin-top: 4px; font: 500 12px/1.4 var(--fm); color: var(--muted); overflow-wrap: anywhere; }
+:where(.wo-main) .wo-plain { font: 400 15.5px/1.45 var(--fs); overflow-wrap: anywhere; }
+:where(.wo-main) .wo-need .ar-q blockquote { font-size: 15.5px; }
+:where(.wo-main) .wo-need .ar-q .ar-lk { align-self: flex-start; min-height: 32px; }
+:where(.wo-main) .wo-ins { margin-top: 8px; font: 400 14px/1.4 var(--fs); font-style: italic; color: var(--muted); }
+:where(.wo-main) .wo-acts { display: flex; flex-wrap: wrap; gap: 6px; }
+/* Left out: the reference's `.wo-tbl td`, `.wo-need td`, `.wo-kind .u`, `.wo-resume td`, `.wo-note .ar-lk` and `.wo-acts .ar-btn(2)` rules. In its cascade they come before the Annual base's `.ar-tbl td`, `.ar .u`, `.ar .ar-lk` and `.ar .ar-btn` at the same specificity, so the base wins and they draw nothing. */
+:where(.wo-main) .wo-resume form { display: flex; flex-direction: column; gap: 10px; padding: 14px 16px; border-left: 4px solid var(--text); background: var(--soft); }
+:where(.wo-main) .wo-resume .row { display: flex; flex-wrap: wrap; gap: 8px; }
+:where(.wo-main) .wo-foot { padding-top: 10px; border-top: 1px solid var(--hair); font: 400 14.5px/1.45 var(--fs); color: var(--muted); }
+:where(.wo-main) .wo-note { display: flex; flex-direction: column; gap: 6px; padding: 2px 0 2px 18px; border-left: 4px solid var(--text); }
+:where(.wo-main) .wo-note p { font: 400 16px/1.45 var(--fs); }
+:where(.wo-main) .wo-note .ar-lk::after { content: ""; position: absolute; left: 0; right: 0; top: 50%; height: max(44px, 100%); transform: translateY(-50%); }
+:where(.wo-main) .wo-cap { font: 800 15px/1.3 var(--ff); }
+:where(.wo-main) .wo-who { display: flex; align-items: center; gap: 8px; margin-top: 4px; font: 500 12px var(--fm); color: var(--muted); }
+:where(.wo-main) .wo-stack { display: inline-flex; }
+:where(.wo-main) .wo-stack svg + svg { margin-left: -5px; }
+:where(.wo-main) .wo-stack svg { border-radius: 50%; box-shadow: 0 0 0 2px var(--bg); }
+:where(.wo-main) .wo-caps { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; }
+:where(.wo-main) .wo-tag { display: inline-flex; align-items: center; gap: 4px; min-height: 24px; padding: 0 8px; border: 1px solid var(--rule); border-radius: 2px; font: 500 12px/1.2 var(--fm); white-space: nowrap; }
+:where(.wo-main) .wo-x { position: relative; display: inline-grid; place-items: center; width: 22px; height: 22px; margin-right: -6px; border: 0; background: transparent; color: var(--text); cursor: pointer; }
+:where(.wo-main) .wo-x:hover { background: var(--text); color: var(--bg); }
+:where(.wo-main) .wo-del { border: 0; background: transparent; box-shadow: inset 0 0 0 2.5px var(--rule); }
+:where(.wo-main) .wo-del:disabled { opacity: .45; cursor: not-allowed; }
+:where(.wo-main) .wo-del:disabled:hover { background: transparent; color: var(--text); }
+:where(.wo-main) .wo-sw { position: relative; display: block; width: 28px; height: 28px; border: 0; border-radius: 2px; box-shadow: inset 0 0 0 1px var(--rule); cursor: pointer; }
+:where(.wo-main) .wo-sw::after { content: ""; position: absolute; inset: -8px; }
+:where(.wo-main) .wo-add { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 10px 12px; padding-top: 4px; }
+:where(.wo-main) .wo-add .ar-field { flex: 1 1 240px; min-width: 0; }
+:where(.wo-main) .wo-add .ar-hint { flex-basis: 100%; }
+:where(.wo-main) .wo-split { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 40px; align-items: start; }
+:where(.wo-main) .wo-stackcol { display: flex; flex-direction: column; gap: 36px; min-width: 0; }
+:where(.wo-main) .wo-ini { width: 36px; height: 36px; font-size: 13px; border-radius: 2px; }
+:where(.wo-main) .wo-person { display: flex; align-items: center; gap: 12px; }
+:where(.wo-main) .wo-person b { display: block; font-size: 15px; }
+:where(.wo-main) .wo-inv { display: grid; grid-template-columns: minmax(0, 1fr) 150px auto; gap: 10px 12px; align-items: end; }
+:where(.wo-main) .wo-inv .ar-hint { grid-column: 1 / -1; }
+:where(.wo-main) .wo-kv { grid-template-columns: minmax(150px, max-content) minmax(0, 1fr) auto; }
+:where(.wo-main) .wo-kv > dt span { display: block; font: 400 13px/1.4 var(--fs); color: var(--muted); font-weight: 400; }
+:where(.wo-main) .wo-kv > dd { display: flex; align-items: center; }
+:where(.wo-main) .wo-kv > dt, :where(.wo-main) .wo-kv > dd { padding: 12px 0; }
+:where(.wo-main) .wo-kv .ok { display: inline-flex; align-items: center; gap: 6px; font-weight: 700; }
+/* Hand delta: the AgentPod import picker on Connections uses the Agents chip look. */
+:where(.wo-main) .wa-caps { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; min-width: 0; }
+:where(.wo-main) .wa-pick { display: inline-flex; align-items: center; gap: 4px; min-height: 36px; padding: 0 10px; border: 1px solid var(--rule); background: transparent; }
+:where(.wo-main) .wa-pick[aria-pressed="true"] { background: var(--text); color: var(--bg); }
+@media (max-width: 1099.98px) { :where(.wo-main) .wo-split { grid-template-columns: minmax(0, 1fr); } }
+/* The Annual tab row the workspace header draws (as .wa-main's): the reference's .ar-tab, 48px and 700. */
+:where(.wo-main) .ar-tab { position: relative; display: inline-flex; align-items: center; gap: 6px; min-height: 48px; padding: 0; border: 0; background: transparent; color: var(--muted); font: 700 14px var(--ff); text-decoration: none; white-space: nowrap; cursor: pointer; }
+:where(.wo-main) .ar-tab[aria-current="page"], :where(.wo-main) .ar-tab[aria-pressed="true"], :where(.wo-main) .ar-tab[aria-selected="true"] { color: var(--text); }
+:where(.wo-main) .ar-tab[aria-current="page"]::after, :where(.wo-main) .ar-tab[aria-pressed="true"]::after, :where(.wo-main) .ar-tab[aria-selected="true"]::after { content: ""; position: absolute; left: 0; right: 0; bottom: -1px; height: 3px; background: var(--text); }
+:where(.wo-main) .ar-tab .mono { font-size: 12px; font-weight: 500; }

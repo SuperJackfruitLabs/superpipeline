@@ -1,0 +1,59 @@
+/* Ported verbatim from e2e/reference/mockups/SP-Phone-Board-Studio (prefixes pb-main, pb-hero, pb-lede, pb-qf, pb-figs, pb-sm, pb-card, pb-stages) by scripts/pixel/extract-css.mjs. */
+/* Hand edit: `.pb-hero h1` is `.pb-hero h2` here (PhoneHeader owns the page's h1). */
+.pb-main { display: flex; flex-direction: column; gap: 28px; padding: 18px 16px 28px; }
+.pb-hero { display: grid; grid-template-columns: auto minmax(0, 1fr); column-gap: 14px; align-items: end; }
+.pb-hero .big { font: 900 112px/.78 var(--ff); font-stretch: 72%; letter-spacing: -.04em; color: var(--sig); }
+.pb-hero h2 { font: 800 26px/1.05 var(--ff); font-stretch: 82%; letter-spacing: -.015em; }
+.pb-lede { font: 400 16.5px/1.45 var(--fs); }
+.pb-qf { display: flex; flex-wrap: wrap; gap: 4px 12px; } /* Hand edit: the gap stands in for the reference button rules, which vibekit Button now draws. */
+.pb-qf b { font: 500 12px var(--fm); }
+.pb-qf .sig b { color: var(--sig-text); font-weight: 600; }
+.pb-figs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); border-top: 1.5px solid var(--rule); }
+.pb-figs > div { display: flex; flex-direction: column; gap: 4px; padding: 10px 10px 12px 0; border-bottom: 1px solid var(--hair); }
+.pb-figs > div:nth-child(2n) { padding-left: 12px; border-left: 1px solid var(--hair); }
+.pb-figs b { font: 900 40px/.9 var(--ff); font-stretch: 72%; letter-spacing: -.02em; }
+.pb-figs b.z { font-weight: 300; color: var(--muted); }
+.pb-figs b small { font-size: 14px; font-weight: 700; margin-left: 3px; letter-spacing: 0; }
+.pb-figs .sig b { color: var(--sig); }
+.pb-figs .sig span { color: var(--sig-text); }
+.pb-figs span { font-size: 12.5px; font-weight: 600; color: var(--muted); }
+.pb-sm { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; }
+.pb-sm a { display: flex; flex-direction: column; gap: 4px; min-height: 44px; color: var(--text); text-decoration: none; }
+.pb-sm .band { height: 5px; }
+.pb-sm .no { font: 500 10.5px var(--fm); color: var(--muted); }
+.pb-sm .n { font: 900 30px/.9 var(--ff); font-stretch: 72%; }
+.pb-sm .z .n { font-weight: 300; color: var(--muted); }
+.pb-sm .units { display: flex; flex-wrap: wrap; gap: 2px; min-height: 12px; padding-bottom: 6px; border-bottom: 1px solid var(--rule); }
+.pb-sm .u { width: 12px; height: 12px; }
+.pb-card { display: flex; flex-direction: column; gap: 10px; padding: 14px 0 16px; border-top: 1.5px solid var(--rule); }
+.pb-card .rl { display: flex; align-items: center; gap: 8px; font: 700 12px var(--ff); letter-spacing: .08em; text-transform: uppercase; }
+.pb-card .rl .ix { font: 500 12px var(--fm); letter-spacing: 0; color: var(--muted); }
+.pb-card .rl .u { width: 11px; height: 11px; }
+.pb-card .rl.needs { color: var(--sig-text); }
+.pb-card .rl .age { margin-left: auto; font: 500 12px var(--fm); letter-spacing: 0; color: var(--muted); }
+.pb-card h3 { font: 800 18px/1.25 var(--ff); }
+.pb-card h3 .ttl { font-size: 18px; font-weight: 800; }
+.pb-card .stg { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; font-size: 13px; }
+.pb-card dl { display: grid; grid-template-columns: 1.6fr 1fr 1fr 1.3fr; border-top: 1px solid var(--hair); }
+.pb-card dl > div { display: flex; flex-direction: column; gap: 3px; padding: 8px 6px 0 0; min-width: 0; }
+.pb-card dt { font: 500 11px var(--fm); color: var(--muted); text-transform: uppercase; letter-spacing: .04em; }
+.pb-card dd { display: flex; align-items: center; gap: 5px; font-size: 13px; font-weight: 700; }
+.pb-card dd.sig { color: var(--sig-text); }
+.pb-card .nx { display: flex; align-items: center; gap: 8px; }
+.pb-card .nx p { flex: 1; min-width: 0; font: 400 15.5px/1.4 var(--fs); overflow-wrap: anywhere; }
+.pb-card .nx p.q { font: 500 12px/1.4 var(--fm); color: var(--muted); }
+.pb-stages summary { display: flex; align-items: center; gap: 10px; min-height: 44px; padding-top: 10px; border-top: 1.5px solid var(--rule); cursor: pointer; list-style: none; }
+.pb-stages summary::-webkit-details-marker { display: none; }
+.pb-stages summary .no { font: 500 12px var(--fm); color: var(--muted); }
+.pb-stages summary h2 { font: 800 16px var(--ff); }
+.pb-stages summary .r { margin-left: auto; font: 500 12px var(--fm); color: var(--muted); }
+.pb-stages li { display: grid; grid-template-columns: 14px minmax(0, 1fr) 28px; column-gap: 10px; align-items: baseline; padding: 9px 0; border-top: 1px solid var(--hair); }
+.pb-stages li .chip { align-self: center; }
+.pb-stages li b { font-weight: 700; }
+.pb-stages li .o { grid-column: 2; font: 500 12px/1.4 var(--fm); color: var(--muted); overflow-wrap: anywhere; }
+.pb-stages li .c { grid-column: 3; grid-row: 1; text-align: right; font: 900 22px/1 var(--ff); font-stretch: 72%; }
+.pb-stages .gate { padding: 0 4px; border: 1px solid var(--rule); font: 700 10.5px var(--ff); letter-spacing: .06em; color: var(--text); }
+/* Hand-written: a card anchors its move menu. */
+.pb-card { position: relative; }
+/* A one-line title is still a 44px target. The quick filter's toggles and the Move button are vibekit's. */
+.pb-card .ttl { min-height: 44px; text-align: left; }

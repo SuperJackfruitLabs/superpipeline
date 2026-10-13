@@ -1,0 +1,892 @@
+{
+  "boardId": "brd_0435b5ea3d4d4e44",
+  "tenantId": "tnt_vibes",
+  "name": "Planning & Roadmap",
+  "stages": [
+    {
+      "key": "proposed",
+      "name": "Proposed",
+      "order": 0,
+      "ownerKind": "human",
+      "instructions": "Say what you want and why, in as few words as will carry it. The shape stage exists to make it specific — you do not need to do that work here.\n\nWhat is the problem, who has it, and what would be different if it were solved. A proposal written as a solution hides the problem it was meant to solve, and the shape stage will have to reverse-engineer it."
+    },
+    {
+      "key": "shape",
+      "name": "Shape",
+      "order": 1,
+      "ownerKind": "capability",
+      "owner": "planning",
+      "instructions": "Turn a proposal into something that can be argued with. You are not deciding whether to do it and you are not designing it — you are making it specific enough that the stages after you have something to push against.\n\nSay what problem this solves and for whom, in terms somebody outside the work would recognise. Then draw the fence: what is in, and — more useful — what is deliberately out. A scope with no exclusions has not been shaped, because everything is still arguably included.\n\n**Put the card in a project.** Work on this board almost always continues on another one; a card outside a project falls out of every rollup silently. If this follows research or feeds development, set the shared `projectId` and attach a reference to the specific card on the other board. Boards cannot link to each other — `blocks` and `relates` only work within one board — so the project plus a reference URL is how a reader gets from here to there.\n\nHand off:\n- `problem` — what is wrong today, and what changes for whom if it is fixed\n- `scope` — in, out, and the sentence that decides a borderline case\n\nIf the proposal is too vague to fence, `block` and say which question would unblock it. Shaping around an unknown produces a plan that collapses at the first contact with the work.",
+      "completion": {
+        "handoff": [
+          "problem",
+          "scope"
+        ]
+      }
+    },
+    {
+      "key": "architecture",
+      "name": "Architecture",
+      "order": 2,
+      "ownerKind": "capability",
+      "owner": "architecture",
+      "instructions": "Say how this should be built, and what else was considered.\n\nRead the shape. Propose one approach in enough detail that somebody could start: the pieces, where they live, what talks to what, and which existing things change. Name the boundaries — what is inside this change and what it must not touch.\n\n**Record at least one alternative and why it lost.** An approach presented alone cannot be reviewed, only accepted; the rejected option is what makes the chosen one a decision rather than a preference. If a reasonable alternative is simply more work for the same result, say that — it is a legitimate reason and a reader deserves to see it.\n\nWork within what exists. Read the code before proposing to restructure it, and prefer the pattern already in use over a better one introduced here for the first time.\n\nHand off:\n- `approach` — the design, concrete enough to act on\n- `alternatives` — what else was considered, and why this won\n\nIf the shape does not constrain the design enough to choose, `block` rather than picking one and presenting it as settled.",
+      "completion": {
+        "handoff": [
+          "approach",
+          "alternatives"
+        ]
+      }
+    },
+    {
+      "key": "risk",
+      "name": "Risk",
+      "order": 3,
+      "ownerKind": "capability",
+      "owner": "risk",
+      "instructions": "Say what could go wrong, and what would be done about it.\n\nTake the approach as given — you are not redesigning it. Name the specific ways it could fail or hurt: data that could be lost, work that could be blocked, people who could be interrupted, costs that could run. Say which are likely and which are merely possible, because a list that treats both the same is a list nobody will read twice.\n\nFor each risk worth naming, say what would reduce it or what would detect it early. A risk with no mitigation and no detection is a decision to accept it, and should be written that way so somebody can disagree on purpose.\n\nBe specific about blast radius. \"Could break things\" is not a risk; \"a failed migration leaves every card on the board unreadable until it is rolled back\" is.\n\nHand off:\n- `risks` — each one, with how likely and how bad\n- `mitigations` — per risk: reduce, detect, or knowingly accept\n\nIf the approach carries a risk that makes it the wrong approach, say so plainly here rather than softening it. This stage is the last one before a person is asked to approve.",
+      "completion": {
+        "handoff": [
+          "risks",
+          "mitigations"
+        ]
+      }
+    },
+    {
+      "key": "spec",
+      "name": "Spec",
+      "order": 4,
+      "ownerKind": "capability",
+      "owner": "documentation",
+      "instructions": "Write the thing somebody will build from.\n\nFold the shape, the approach and the risks into one document that stands on its own. Assume the reader was not in any of the earlier stages and knows the codebase less well than you do. State the decisions as decisions, with the reasoning kept where it changes what someone would do.\n\n**Write acceptance criteria that can be checked.** Each one should be something a person or a test could answer yes or no about. \"The page is faster\" cannot be checked; \"the largest contentful paint is under 2.5s on a 390px viewport\" can. These become the completion requirements of whichever board builds it, so vagueness here becomes an unenforceable stage there.\n\nPublish the document where the reader can reach it and attach it as a reference. A spec that exists only on the machine you wrote it on is not a spec anyone can build from.\n\nHand off:\n- `spec` — the document's URL, as attached\n- `acceptance` — the criteria, each one checkable\n\nIf the earlier stages disagree with each other, resolve it here and say which you followed. Carrying a contradiction into a spec hands it to whoever builds the thing.",
+      "completion": {
+        "handoff": [
+          "spec",
+          "acceptance"
+        ]
+      }
+    },
+    {
+      "key": "approved",
+      "name": "Approved",
+      "order": 5,
+      "ownerKind": "human",
+      "gate": "approval",
+      "instructions": "Decide whether this gets built.\n\nRead the risk stage before the approach — it is the part written to change your mind. An approach with no recorded alternative was not a decision, and is worth sending back.\n\nIf you approve, the work does not happen on this board. Create the card that builds it on the board that owns the work, put it in the **same project**, and attach a reference to the spec. A plan approved with no card after it is a plan that quietly expires — boards cannot link to each other, so the project is the only thing connecting them."
+    },
+    {
+      "key": "planned",
+      "name": "Planned",
+      "order": 6,
+      "ownerKind": "human",
+      "instructions": "The spec is published, approved, and a card exists on the board that will build it, in the same project.\n\nIf there is no card after this one, this is not planned — it is filed. Move it back rather than letting the board claim otherwise."
+    }
+  ],
+  "cards": [
+    {
+      "id": "card_d4fcd4ab9cb44de1",
+      "title": "Design Forge-first workspaces, Atelier migration and checkpoint recovery",
+      "spec": {
+        "description": "Design a complete Forge-first Guild workspace and checkpoint recovery system. Ira wants agents to work on Forge, all their workspaces represented there with regular checkpoints, and private Atelier present on Forge rather than only GitHub. Produce a code-grounded migration, identity/access and recovery plan before implementation or cutover; retain every existing commit and local workspace. Treat workspaces as selected working files, not wholesale copies of Hermes profiles or secret stores.",
+        "acceptanceCriteria": [
+          "Inventory all registered Guild agents/stations, actual workspaces, effective fetch/push URLs, actual SSH/Git attribution and intended repository visibility; distinguish station identity, node connectivity and per-repository read/write grants.",
+          "Forge is canonical for Guild work. Product code/checkpoints belong to their actual Forge project repo/card branches; internal artifacts remain in PRIVATE Atelier on Forge. Define isolated per-agent/card branches/worktrees and private workspace repositories where work has no product home. GitHub is not an automatic fallback; public mirroring requires separate explicit policy and content approval.",
+          "Plan operator-owned private Atelier provisioning/migration with full Git history/branches/tags, remote hash verification, visibility checks, worker access, references/defaults update, divergence checks and reversible cutover. Do not delete the authorized private GitHub repository or exposed public PR/history as part of this task.",
+          "Propose periodic checkpoints every 15 minutes while work is dirty, plus meaningful milestone/pre-handoff/pre-stop checkpoints. This cadence is a recommendation requiring design approval. No empty checkpoint commits or automatic merge; record remote commit URL and verify push before claiming a checkpoint. Bound costs, retries and failure alerts.",
+          "Never back up entire .hermes or profile directories. Explicitly exclude .env, auth files, station/device/SSH credentials, token stores, raw sessions/chats, private personal/customer material, logs, caches, node_modules, model weights and other generated/unreviewed data. Selected profile instructions/skills or resumable task manifests require separate classification and allowlisted inclusion.",
+          "Sanitized recovery manifests join agent/station/card, repo/branch/commit, task status/next step and versioned environment/setup requirements without secrets. Crash recovery and concurrent checkpointing preserve unfinished work, do not rewrite other agents' branches, and distinguish recoverability from authoritative board completion.",
+          "Use actual per-agent Git attribution/approved email and station key routing, not shared host Buddhimaan defaults or an accidental Coder Kai SSH identity. Do not mint keys, grant membership or reuse human/device authority during design; specify exact operator-owned remediation.",
+          "Define initial full no-write tests and live restore drills: recover a paused/crashed working task from a verified Forge checkpoint onto a clean authorized workspace, run its relevant tests and reconcile its existing Supi card without duplicate claims or reporting WIP as shipped.",
+          "Specify updates to agent instructions, new onboarding, current card targets and managed workspace/checkpoint tooling. Identify what AgentPod already supports before proposing new framework changes. Do not rely on prompts or unconfigured URL rewrites as technical enforcement.",
+          "Publish internal planning only to verified private Forge storage once authorized/available, or keep the working plan in this private card handoff and local protected workspace with an explicit artifact-publication blocker. No new GitHub pushes/PRs/comments/issues as a workaround. Return exact questions/prerequisites rather than fabricate access or completeness."
+        ],
+        "observedState": "Previous read-only checks on Guild shell authenticated to Forge as coder-kai and could read super-jackfruit-website, but matching SuperPipeline/AgentPod and ci-test reads were refused. Git URL rewrites existed only for website/ci-test, not SuperPipeline/AgentPod. Atelier was created and verified PRIVATE on GitHub, with artifact rules installed in 32 Guild profiles and 13 unfinished card specs; its Forge presence is not verified. These observations require a fresh read-only audit, not assumptions about current state or grants.",
+        "relatedProject": "prj_34b48f840daa4309",
+        "blockedImplementationCards": [
+          "card_8f2c1a5e58294d27",
+          "card_9ac2116a050840df",
+          "card_691a65ff98944697"
+        ],
+        "artifactRouting": {
+          "destination": "PRIVATE Atelier on verified Forge origin after operator provisioning/migration",
+          "rule": "No public or GitHub fallback. Keep private interim analysis on the existing card/local workspace if Forge is unavailable; do not report local files as remotely delivered artifacts."
+        },
+        "execution": "Shape then architecture/risk/spec through Planning & Roadmap, stopping at the human approval gate. No production code or migration/cutover in this planning card. Do not spawn background delegate_task children during board runs; finish substantive stage handoffs synchronously or block with exact missing prerequisite.",
+        "scope": "Full design and staged implementation proposal. No grants/membership/credentials/principal links, live board stage changes, destructive history rewrites, repository deletion, lifecycle restarts, bulk profile backup or public writes. Preserve existing work and classify every checkpoint destination."
+      },
+      "ownerUserId": "usr_b19776fac3c94df4",
+      "queuedBy": "usr_b19776fac3c94df4",
+      "queuedByAgentId": null,
+      "currentRunId": null,
+      "queuedGrant": [
+        "prn_00e5464a206549ff8c78",
+        "prn_097f1bab9af64454acf4",
+        "prn_0dd1c5f70e9c483bb062",
+        "prn_1f792d84b0134115840b",
+        "prn_2277a9809a0045febfb9",
+        "prn_2ca5bd6c383a44cb9874",
+        "prn_345f66cd3adc493daa65",
+        "prn_479d6b47ae3c48049b02",
+        "prn_491ae67d3e80484bb10a",
+        "prn_51644819c47d42b2a480",
+        "prn_5205c2e9346044bc8e96",
+        "prn_567e7a906d5848a99eaf",
+        "prn_87e0ceec9d0646e08401",
+        "prn_8cb28118aed4409694c7",
+        "prn_93bfc6b092ba46c88cd8",
+        "prn_9442ad4c029a42db8b5e",
+        "prn_9db6dbcefe2a449e8f92",
+        "prn_a22d817febdb4b91a9ec",
+        "prn_a27e234566a14851a568",
+        "prn_a809e81df17e442b8c9f",
+        "prn_bc6cb3f5d5404ad9bb30",
+        "prn_c3aad129b67743c6b4b7",
+        "prn_cdd1063f546b46689baa",
+        "prn_d1d74063a5de4689912e",
+        "prn_d200c177df9142108c49",
+        "prn_d360868949144535a675",
+        "prn_d53832782402439393ab",
+        "prn_d8178f4a05934b72892a",
+        "prn_d887c72a7b6e4f908e95",
+        "prn_dc9d662c322946e6baa6",
+        "prn_e20ddb577f304660b033",
+        "prn_fb1ed9133e474210838b",
+        "prn_f13e2d1aac384cce8cb6",
+        "prn_42e74b7cbd2f4f6d80ad",
+        "prn_49570258e83948d0a1da",
+        "prn_c1a37c9cff77424bbd95",
+        "prn_bd87006f16824a048fd5",
+        "prn_4c8dcd4786434ad8b06a",
+        "prn_637c581f8d784e83a92e",
+        "prn_19b4af85e3a44c0280fa",
+        "prn_1c5855e8d3734095bf8b",
+        "prn_3951b8445dd049d49f89",
+        "prn_51c2b92b9ed74070821b",
+        "prn_74ddd5d409d44fa194f8",
+        "prn_778d51ff29c545018c3c",
+        "prn_7e80f37357db405fa617",
+        "prn_8da27bc86efa49b0951c",
+        "prn_968510c374a34f26889f",
+        "prn_a412649f97434334894e",
+        "prn_ab0a5c8d309b4570abd0",
+        "prn_b003e5b1e56a4ecb8722",
+        "prn_bc7145aa57c44c4d960d",
+        "prn_c5a9929649cb46a4a1ac",
+        "prn_c72963d48079404489a1",
+        "prn_d2ed64cf2681497697b7",
+        "prn_ce6d1efc169a75f2245f",
+        "prn_a616f0ea47765dba885a"
+      ],
+      "labels": [],
+      "projectId": "prj_723fa1edac9f4328",
+      "milestoneId": null,
+      "dueAt": null,
+      "archivedAt": null,
+      "currentStageKey": "approved",
+      "state": "input-required",
+      "delegateAgentId": null,
+      "priority": 3,
+      "contextId": "ctx_0e3f14c893fb47d0",
+      "createdAt": "2026-10-08T11:22:58.296Z",
+      "updatedAt": "2026-10-09T19:22:35.473Z",
+      "stateSince": "2026-10-09T19:22:35.473Z",
+      "costUsd": 0,
+      "overBudget": false,
+      "attemptCount": 6,
+      "parentCardId": null,
+      "openChildCount": 0,
+      "costUsdRollup": 0,
+      "blockedBy": []
+    },
+    {
+      "id": "card_a5b92fd10c4d4a15",
+      "title": "Design publishing flow — selective LinkedIn, approval-driven X and feedback",
+      "spec": {
+        "description": "Design a production Marketing & Community workflow for Ira's building-in-public work. LinkedIn remains manually published with a target of two posts per week, selectively adapted from suitable stories; X is event-driven and may publish multiple times daily when warranted. Deliver a complete architecture and operator-applicable board/roster change plan before coding. X publishing must run only after a recorded human approval of the exact platform/account/copy/media/targets, and must verify the resulting public post before reporting success. Do not change live stages, roster, credentials or gates, or publish any content during design.",
+        "plan": [
+          "Shape the two channel paths and the independent community-feedback path; distinguish content briefs, final copy, review, human approval and execution.",
+          "Inspect SuperPipeline code, supported handoff/routing/gate contracts and event hooks, AgentPod station execution and existing xurl integration before choosing an implementation. Do not assume automatic lane skipping or arbitrary branching exists.",
+          "Design exact-copy approved payloads, reliable publication and verification, manual LinkedIn tracking, recurring planning and event-driven intake. State alternatives and blast radius.",
+          "Publish an accessible architecture/spec and staged implementation cards proposal, including human-owned stage/roster decisions, test fixtures and acceptance evidence. Stop at the planning approval gate, not implementation."
+        ],
+        "acceptanceCriteria": [
+          "LinkedIn targets two manually published posts each Asia/Calcutta week, with selective topic nomination rather than duplication of every X post. Track due drafts, approvals, reminders and manually supplied live permalinks; no LinkedIn publishing API or credentials required. Tuesday/Friday are proposed planning slots, not user-approved fixed times.",
+          "X accepts shipped outcomes, useful demos, decisions, lessons and verified failures whenever warranted, including multiple same-day posts. No artificial daily one-post limit or obligation to fill a quota; real API limits and duplicate/flood protection still apply.",
+          "Melissa owns audience, angle, channel selection and sequencing; Quill writes platform-native final copy; Lyra provides media when useful; Echo checks claims and sources; Ira approves final channel-specific payload; a scoped publisher execution path publishes X and verifies live author/full text/media/targets. Every stage has a supported capability and required roster prerequisites.",
+          "Approval binds an immutable revision with account, channel, ordered text/thread, media references/checksums, quote/reply targets and timing mode. Changed copy/media/targets requires fresh human approval; LinkedIn approval never authorizes X or vice versa. Record actor, gate ID, payload revision/digest and execution result.",
+          "Automatic X publication after the correct human gate is demonstrated without a second manual dispatch, with pause/kill control, stale/time-sensitive approval handling and scheduled release only if explicitly requested.",
+          "Persist publish intent/results and reconcile ambiguous timeout/crash outcomes before retrying; parallel claims and lease loss must not produce duplicates. Do not assume X provides universal idempotency. Partial threads resume only verified unpublished steps, never replay already posted items.",
+          "Read-back verification produces exact public post IDs/permalinks and records failures honestly; a successful POST response alone is not success. API auth/cost/rate-limit errors block or schedule bounded retries appropriately, not repeat writes blindly.",
+          "Anna produces source-linked feedback/reply drafts and product/docs recommendations. Community replies stay draft-only unless their exact target and text receive a separate human approval through a supported publishing route; no unsolicited DMs or automatic engagement.",
+          "Content calendar, source/evidence links, state, channel selection, feedback and execution URLs are tracked on project-linked cards; recurrence creates planning/collection work, never approval or public posting.",
+          "Live acceptance covers valid approval-to-X publication with operator-approved exact test copy, edit invalidation, wrong account/channel rejection, duplicate delivery, ambiguous network response, partial thread, auth/rate-limit failure, human pause and manual LinkedIn permalink capture. Test-only validation uses mocks/no-write mode until human approves a real public test.",
+          "Implementation plan separately names required operator-owned changes to existing board stages, roster, credentials/authority and approvals. No attempts to evade those boundaries or reuse human credentials for admin writes."
+        ],
+        "board": "brd_e247f164e060443f",
+        "projectId": "prj_34b48f840daa4309",
+        "confirmedAccount": {
+          "platform": "X",
+          "username": "fixture-user",
+          "id": "99980855",
+          "verification": "Coordinator xurl whoami read succeeded; this confirms identity/read access, not a live automatic publishing integration."
+        },
+        "currentState": "Marketing board currently has brief/triage lanes and human manual-publishing gates. Both coordinator canaries reached human review; no publisher path exists. Do not modify existing canary approvals while designing.",
+        "sourceReferences": [
+          "https://app.superpipeline.dev/b/brd_e247f164e060443f",
+          "https://github.com/SuperJackfruitLabs/superpipeline",
+          "https://github.com/SuperJackfruitLabs/accounts"
+        ],
+        "scope": "Full architecture/specification first. No coding, public writes, gate decisions, live board-stage changes, roster/credential provisioning or admin impersonation during this card. Use existing specialists, including Artistic Lyra, not a new agent roster.",
+        "architectureRework": "Previous architecture run ended with an interim response while background repo inspections were pending. The board rejected completion because approach and alternatives were missing. Reuse prior saved repo/code evidence; do not spawn background delegate_task children for this rework. Complete the architecture within the card execution, supplying both approach and alternatives handoff fields. Publish and reference any standalone design artifact through an authorized existing repository path. If required evidence/publication access is unavailable, explicitly block with the precise missing prerequisite rather than returning an in-progress sentence. No code, live stages, authority, gates or public social writes.",
+        "artifactRouting": {
+          "defaultRepository": "SuperJackfruitLabs/atelier",
+          "visibility": "PRIVATE",
+          "policyUrl": "https://github.com/SuperJackfruitLabs/atelier/blob/main/AGENTS.md",
+          "rule": "Internal artifacts and all Guild work default to Atelier. Deliver product code, tests, migrations, assets and intended product documentation in the actual project repository only when this task calls for that delivery. Internal strategy about a public product stays private. Verify destination visibility and classification before any push/PR/issue/comment/attachment; never use public fallback. No secrets/raw private messages. Public promotion requires separate approval of exact sanitized material. Preserve gate/authority/merge boundaries."
+        },
+        "privateSpecUrl": "https://github.com/SuperJackfruitLabs/atelier/blob/main/projects/building-in-public/specs/marketing-community-publishing-design.md",
+        "publicArtifactStatus": "Planning notes stay private.",
+        "coordinatorGateReview": {
+          "recommendation": "approve_planning_only",
+          "reviewedCommit": "db7f80aee61f59ef1fa03d84c52e55decbba5e75",
+          "specUrl": "https://github.com/SuperJackfruitLabs/atelier/blob/db7f80aee61f59ef1fa03d84c52e55decbba5e75/projects/building-in-public/specs/marketing-community-publishing-design.md",
+          "gateId": "gate_ea787a1cc9934022",
+          "summary": "Rechecked revised private artifact and final handoff: R1 immutable approval storage/resolution/invalidation/verify contract, R2 canonical capabilities and concrete definitions, R3 deterministic Hub executor plus typed credential-isolated station adapter, R4 supported human route/archive non-selection, R5 exact private commit handoff are resolved sufficiently for architecture approval.",
+          "tradeoffs": [
+            "Three additional project-linked linear boards preserve existing board/canaries.",
+            "One manual routing step after Melissa selection, before drafting; X publication after final approval is automatic.",
+            "Requires real SuperPipeline and AgentPod implementation, not merely stage edits."
+          ],
+          "scope": "Approval authorizes scoped implementation planning/work, not live stage/roster/credential changes or public publication. No-write acceptance and separate exact live-canary approval remain mandatory. Original review remains historical. Ira decides the gate."
+        }
+      },
+      "ownerUserId": "usr_b19776fac3c94df4",
+      "queuedBy": "prn_d8178f4a05934b72892a",
+      "queuedByAgentId": "agt_bb586732b807460c",
+      "currentRunId": null,
+      "queuedGrant": [
+        "prn_51644819c47d42b2a480",
+        "prn_51c2b92b9ed74070821b",
+        "prn_ab0a5c8d309b4570abd0",
+        "prn_5205c2e9346044bc8e96",
+        "prn_a616f0ea47765dba885a",
+        "prn_968510c374a34f26889f",
+        "prn_c5a9929649cb46a4a1ac",
+        "prn_bc6cb3f5d5404ad9bb30",
+        "prn_fb1ed9133e474210838b",
+        "prn_d887c72a7b6e4f908e95",
+        "prn_a412649f97434334894e",
+        "prn_778d51ff29c545018c3c",
+        "prn_19b4af85e3a44c0280fa",
+        "prn_d2ed64cf2681497697b7",
+        "prn_8da27bc86efa49b0951c",
+        "prn_ce6d1efc169a75f2245f",
+        "prn_bc7145aa57c44c4d960d",
+        "prn_1f792d84b0134115840b",
+        "prn_9442ad4c029a42db8b5e",
+        "prn_1c5855e8d3734095bf8b",
+        "prn_491ae67d3e80484bb10a",
+        "prn_dc9d662c322946e6baa6",
+        "prn_d200c177df9142108c49",
+        "prn_7e80f37357db405fa617",
+        "prn_2ca5bd6c383a44cb9874",
+        "prn_d8178f4a05934b72892a",
+        "prn_c72963d48079404489a1",
+        "prn_3951b8445dd049d49f89",
+        "prn_c3aad129b67743c6b4b7",
+        "prn_74ddd5d409d44fa194f8",
+        "prn_b003e5b1e56a4ecb8722",
+        "prn_567e7a906d5848a99eaf"
+      ],
+      "labels": [],
+      "projectId": "prj_34b48f840daa4309",
+      "milestoneId": null,
+      "dueAt": null,
+      "archivedAt": null,
+      "currentStageKey": "planned",
+      "state": "completed",
+      "delegateAgentId": null,
+      "priority": 2,
+      "contextId": "ctx_d3e14aa6ee154925",
+      "createdAt": "2026-10-08T09:11:37.123Z",
+      "updatedAt": "2026-10-08T10:27:39.271Z",
+      "stateSince": "2026-10-08T10:27:39.271Z",
+      "costUsd": 0,
+      "overBudget": false,
+      "attemptCount": 6,
+      "parentCardId": null,
+      "openChildCount": 0,
+      "costUsdRollup": 0,
+      "blockedBy": []
+    },
+    {
+      "id": "card_b84a4c33005c4db4",
+      "title": "Define the active SJL portfolio and select the next immediate outcome",
+      "spec": {
+        "objective": "Create an evidence-backed active portfolio for Super Jackfruit Labs, choose exactly one immediate company outcome, and load its delivery project and first executable card into SuperPipeline.",
+        "problem": "SJL has 21 repositories, ten boards, and thirty agents, but no explicit active portfolio. Without a constrained portfolio, every unfinished idea can look equally important and the guild can produce activity without a coherent company outcome.",
+        "repositoryScope": {
+          "organization": "SuperJackfruitLabs",
+          "expectedRepositoryCount": 21,
+          "classifications": [
+            "active-product",
+            "shared-infrastructure",
+            "incubating-experiment",
+            "historical-archived"
+          ]
+        },
+        "milestoneProgression": {
+          "M0 — Portfolio Truth": {
+            "target": "2026-10-04",
+            "completeWhen": [
+              "All 21 repositories are classified",
+              "Each active product has current maturity, release or deployment evidence, immediate unfinished outcome, dependencies, and an evidence source",
+              "Historical systems are not treated as current operating systems",
+              "The portfolio truth document is published at a reachable URL and attached to this card"
+            ]
+          },
+          "M1 — One Outcome Chosen": {
+            "target": "2026-10-04",
+            "completeWhen": [
+              "No more than three candidate initiatives remain active",
+              "Exactly one primary outcome is recommended",
+              "At most two secondary outcomes are named",
+              "A not-now list is explicit",
+              "Each candidate states beneficiary, observable change, why now, product owner, verification method, dependencies, and exclusions",
+              "The operator approves the primary outcome"
+            ]
+          },
+          "M2 — Delivery Project Loaded": {
+            "target": "2026-10-05",
+            "completeWhen": [
+              "A separate outcome-specific delivery project exists",
+              "Its milestones are measured in hours or at most 72 hours",
+              "Initial cards are on the boards that own the work",
+              "Every card belongs to the delivery project and has evidence requirements",
+              "Dependencies and references are recorded",
+              "The first delivery card is claimed and working"
+            ]
+          }
+        },
+        "stageRequirements": {
+          "shape": {
+            "mustProduce": [
+              "The portfolio decision problem and who needs the decision",
+              "In-scope and explicitly excluded repositories and claims",
+              "A rule for borderline classifications",
+              "A plan for publishing the portfolio truth artifact"
+            ]
+          },
+          "architecture": {
+            "mustProduce": [
+              "Ownership and dependency map for the active products",
+              "How Charter, SuperPipeline, AgentPod, SuperMessage, Estate, marketing, and the website relate without collapsing their boundaries",
+              "At least one rejected operating model and why it lost"
+            ]
+          },
+          "risk": {
+            "mustProduce": [
+              "Delivery, infrastructure, identity, cost, adoption, and attention risks",
+              "Likelihood, severity, blast radius, mitigation, and early detection for each material risk",
+              "The irreversible or difficult-to-reverse choices"
+            ]
+          },
+          "spec": {
+            "mustProduce": [
+              "A public or access-controlled durable portfolio document",
+              "The repository classification table with source links",
+              "One recommended primary outcome, at most two secondary outcomes, and a not-now list",
+              "Checkable acceptance criteria for the chosen outcome",
+              "The exact delivery project and initial card structure to create after approval"
+            ]
+          }
+        },
+        "constraints": [
+          "Do not import every repository or open issue as work",
+          "Do not revive archived Aether, Buddhimaan, Agent Factory, or Agent Studio infrastructure",
+          "Do not treat private plans as evidence of shipped capability",
+          "Use current repository source, releases, live deployments, and SuperPipeline/AgentPod evidence",
+          "No milestone longer than 72 hours unless an external dependency is named",
+          "No more than one primary company outcome",
+          "The project is not Planned until the outcome-specific delivery project exists and its first card is working"
+        ],
+        "definitionOfDone": [
+          "The portfolio truth artifact is attached",
+          "One primary outcome has operator approval",
+          "The delivery project exists with agent-cadence milestones",
+          "The first real delivery card is claimed and working",
+          "The new delivery project, not this portfolio card, owns implementation",
+          "SJL Active Portfolio can then be marked completed"
+        ],
+        "retryInstructions": {
+          "reason": "The previous Spec run ended with a progress response and omitted the required spec and acceptance handoff fields. SuperPipeline correctly refused completion.",
+          "requirements": [
+            "Work synchronously in this run; do not delegate background work that requires ending the turn before results return.",
+            "Read and reuse the existing draft at /tmp/active-portfolio-2026-10-04.md if it still exists, but independently verify its contents.",
+            "Resolve the observed 22-versus-expected-21 repository discrepancy explicitly; do not normalize it away.",
+            "Publish the final portfolio document at a durable reachable URL and attach it as a first-class card reference.",
+            "Complete the stage only with handoff.spec set to the published URL and handoff.acceptance set to the checkable acceptance criteria.",
+            "Do not return a progress update as the final response. Block with a precise reason if publication cannot be completed."
+          ]
+        },
+        "deliveryHandoff": {
+          "decisionMergeCommit": "6d9ad614f550d385dcdb1f9514393a8efc99e269",
+          "decisionUrl": "https://github.com/SuperJackfruitLabs/charter/blob/6d9ad614f550d385dcdb1f9514393a8efc99e269/decisions/2026-10-04-active-portfolio.md",
+          "approvalGateId": "gate_c70348663a814452",
+          "approvalResolvedAt": "2026-10-04T10:15:57.965Z",
+          "deliveryProjectId": "prj_23b93f2d16d54b27",
+          "milestones": {
+            "baseline": "mls_c0e1cc7b49ad48d5",
+            "blocker": "mls_84a0895ad61a4ec7",
+            "verification": "mls_a7ca0dd40e1a4035"
+          },
+          "cards": {
+            "baseline": {
+              "boardId": "brd_f47143722126442c",
+              "cardId": "card_9d48db2717044b69"
+            },
+            "blocker": {
+              "boardId": "brd_134a0ddb6d434478",
+              "cardId": "card_ace250c9c25342e4"
+            },
+            "verification": {
+              "boardId": "brd_6c298ec02d6b466b",
+              "cardId": "card_aaa7058a335a4211"
+            }
+          },
+          "firstRun": {
+            "runId": "run_2cff3e3f20dc4e41",
+            "stage": "proving",
+            "state": "working",
+            "agent": "analyst-echo"
+          },
+          "crossBoardDependencyRecording": "SuperPipeline card links are board-local; exact upstream board/card IDs are therefore recorded in the dependent card specs, while downstream cards remain in non-agent initial stages until their prerequisites resolve."
+        }
+      },
+      "ownerUserId": "usr_b19776fac3c94df4",
+      "queuedBy": "prn_d8178f4a05934b72892a",
+      "queuedByAgentId": "agt_bb586732b807460c",
+      "currentRunId": null,
+      "queuedGrant": [
+        "prn_51644819c47d42b2a480",
+        "prn_51c2b92b9ed74070821b",
+        "prn_ab0a5c8d309b4570abd0",
+        "prn_5205c2e9346044bc8e96",
+        "prn_968510c374a34f26889f",
+        "prn_c5a9929649cb46a4a1ac",
+        "prn_bc6cb3f5d5404ad9bb30",
+        "prn_fb1ed9133e474210838b",
+        "prn_d887c72a7b6e4f908e95",
+        "prn_a412649f97434334894e",
+        "prn_778d51ff29c545018c3c",
+        "prn_19b4af85e3a44c0280fa",
+        "prn_d2ed64cf2681497697b7",
+        "prn_8da27bc86efa49b0951c",
+        "prn_bc7145aa57c44c4d960d",
+        "prn_1f792d84b0134115840b",
+        "prn_9442ad4c029a42db8b5e",
+        "prn_1c5855e8d3734095bf8b",
+        "prn_491ae67d3e80484bb10a",
+        "prn_dc9d662c322946e6baa6",
+        "prn_d200c177df9142108c49",
+        "prn_7e80f37357db405fa617",
+        "prn_2ca5bd6c383a44cb9874",
+        "prn_d8178f4a05934b72892a",
+        "prn_c72963d48079404489a1",
+        "prn_3951b8445dd049d49f89",
+        "prn_c3aad129b67743c6b4b7",
+        "prn_74ddd5d409d44fa194f8",
+        "prn_b003e5b1e56a4ecb8722",
+        "prn_567e7a906d5848a99eaf"
+      ],
+      "labels": [
+        "lbl_f32be600c9954139",
+        "lbl_e9ccaacaa2f94509",
+        "lbl_a8ee8aafa6ba4f12"
+      ],
+      "projectId": "prj_a9456e15016f4bc7",
+      "milestoneId": "mls_78d810c6a6c84ecf",
+      "dueAt": "2026-10-05",
+      "archivedAt": null,
+      "currentStageKey": "planned",
+      "state": "completed",
+      "delegateAgentId": null,
+      "priority": 1,
+      "contextId": "ctx_7d4592b118ec4d0c",
+      "createdAt": "2026-10-04T09:36:05.017Z",
+      "updatedAt": "2026-10-04T10:22:01.249Z",
+      "stateSince": "2026-10-04T10:22:01.249Z",
+      "costUsd": 0,
+      "overBudget": false,
+      "attemptCount": 5,
+      "parentCardId": null,
+      "openChildCount": 0,
+      "costUsdRollup": 0,
+      "blockedBy": []
+    }
+  ],
+  "gates": [
+    {
+      "id": "gate_11098184c0514fed",
+      "cardId": "card_d4fcd4ab9cb44de1",
+      "stageKey": "approved",
+      "status": "pending",
+      "decision": null,
+      "options": [
+        {
+          "name": "approve",
+          "title": "Approve"
+        },
+        {
+          "name": "request_changes",
+          "title": "Request changes",
+          "interactive": true
+        },
+        {
+          "name": "reject",
+          "title": "Reject"
+        }
+      ],
+      "producedBy": "agt_c7466700d46e4687",
+      "createdAt": "2026-10-09T19:22:35.473Z",
+      "decidedBy": null,
+      "comment": null,
+      "resolvedAt": null,
+      "summary": "{\"acceptance\":[\"A versioned JSON/CSV census represents every authoritative registered Guild agent and every active or retained station/workspace exactly once at the proper grain, and reconciliation reports zero unexplained omissions or extras.\",\"Every workspace row records immutable agent ID, Forge principal ID/login, approved author name/email and approval evidence, station ID/key, node ID/connectivity, workspace ID/root/state, repository ID/canonical URL, configured and effective fetch/push URLs, URL/config origins, visibility, intended visibility, and separate timestamped read/write result…"
+    }
+  ],
+  "elicitations": [],
+  "references": [
+    {
+      "id": "ref_567bdd95a2044123",
+      "cardId": "card_b84a4c33005c4db4",
+      "url": "https://gist.github.com/fixture-user/8e24b3604da9f20adb86dbdda4906782",
+      "title": "SJL Active Portfolio — Shape Brief",
+      "subtitle": "Decision problem, scope fence, 22-repository census, classification rule, and publication plan",
+      "provider": "github",
+      "sourceType": "document",
+      "externalId": "8e24b3604da9f20adb86dbdda4906782",
+      "metadata": {
+        "stage": "shape",
+        "inventorySnapshot": "2026-10-04T09:37:27Z",
+        "observedRepositoryCount": 22,
+        "expectedRepositoryCount": 21
+      },
+      "syncState": "synced",
+      "lastSyncedAt": null,
+      "addedBy": "agent",
+      "runId": "run_fba8ff7890774772",
+      "createdAt": "2026-10-04T09:38:27.909Z",
+      "updatedAt": null
+    },
+    {
+      "id": "ref_a2c65bffebb643e1",
+      "cardId": "card_b84a4c33005c4db4",
+      "url": "https://gist.github.com/fixture-user/86dce83e634324f12be21c15f142ce45",
+      "title": "SJL Active Portfolio — Architecture Decision",
+      "subtitle": "Federated evidence snapshot, ownership/dependency map, interfaces, boundaries, failure behavior, and rejected operating models",
+      "provider": "github",
+      "sourceType": "document",
+      "externalId": "86dce83e634324f12be21c15f142ce45",
+      "metadata": {
+        "repositorySnapshotCount": 22,
+        "sourceReview": "current repository source at pinned SHAs",
+        "stage": "architecture"
+      },
+      "syncState": "synced",
+      "lastSyncedAt": null,
+      "addedBy": "agent",
+      "runId": "run_28ac569cda7c4c2d",
+      "createdAt": "2026-10-04T09:43:01.022Z",
+      "updatedAt": null
+    },
+    {
+      "id": "ref_5e37526a4b0a4d34",
+      "cardId": "card_b84a4c33005c4db4",
+      "url": "https://gist.github.com/fixture-user/992d6c277a3a9b642d7dc1736945d975",
+      "title": "SJL Active Portfolio — Risk Review",
+      "subtitle": "15 material risks with likelihood, severity, blast radius, controls, detection, owners, residual risk, and irreversible-step gates",
+      "provider": "github",
+      "sourceType": "document",
+      "externalId": "992d6c277a3a9b642d7dc1736945d975",
+      "metadata": {
+        "stage": "risk",
+        "riskCount": 15,
+        "criticalRisks": [
+          "confidential-publication",
+          "identity-authority"
+        ],
+        "reviewedApproach": "federated-timestamped-snapshot"
+      },
+      "syncState": "synced",
+      "lastSyncedAt": null,
+      "addedBy": "agent",
+      "runId": "run_8a74a981ccfc4f11",
+      "createdAt": "2026-10-04T09:46:02.342Z",
+      "updatedAt": null
+    },
+    {
+      "id": "ref_7056f47806c54123",
+      "cardId": "card_b84a4c33005c4db4",
+      "url": "https://github.com/SuperJackfruitLabs/charter/blob/8c408e47ec971006845525e91241c474494a7171/decisions/2026-10-04-active-portfolio.md",
+      "title": "SJL Active Portfolio — Decision and Delivery Specification",
+      "subtitle": "22-repository classification, one recommended primary outcome, binary acceptance criteria, and exact post-approval delivery structure",
+      "provider": "github",
+      "sourceType": "document",
+      "externalId": "8c408e47ec971006845525e91241c474494a7171",
+      "metadata": {
+        "access": "SJL Charter members",
+        "commit": "8c408e47ec971006845525e91241c474494a7171",
+        "expectedRepositoryCount": 21,
+        "observedRepositoryCount": 22,
+        "pullRequest": "https://github.com/SuperJackfruitLabs/charter/pull/16",
+        "stage": "spec"
+      },
+      "syncState": "synced",
+      "lastSyncedAt": null,
+      "addedBy": "agent",
+      "runId": "run_96726ef45b394d48",
+      "createdAt": "2026-10-04T10:04:02.606Z",
+      "updatedAt": null
+    },
+    {
+      "id": "ref_00b7f1148b2e497e",
+      "cardId": "card_a5b92fd10c4d4a15",
+      "url": "https://app.superpipeline.dev/b/brd_e247f164e060443f",
+      "title": "Existing Marketing & Community board",
+      "subtitle": "Marketing & Community board to inspect; no live changes during design",
+      "provider": "superpipeline",
+      "sourceType": "url",
+      "externalId": null,
+      "metadata": {
+        "projectId": "prj_34b48f840daa4309",
+        "relationship": "target-board-for-operator-plan"
+      },
+      "syncState": "synced",
+      "lastSyncedAt": null,
+      "addedBy": "agent",
+      "runId": "run_9674524cf4504f70",
+      "createdAt": "2026-10-08T09:13:21.500Z",
+      "updatedAt": null
+    },
+    {
+      "id": "ref_5a0b67e520544c1f",
+      "cardId": "card_a5b92fd10c4d4a15",
+      "url": "https://github.com/SuperJackfruitLabs/superpipeline",
+      "title": "SuperPipeline source",
+      "subtitle": "Current stage, gate, handoff, push and trigger implementation source",
+      "provider": "github",
+      "sourceType": "repo",
+      "externalId": "superjackfruitlabs/superpipeline",
+      "metadata": {
+        "relationship": "contract-source"
+      },
+      "syncState": "synced",
+      "lastSyncedAt": null,
+      "addedBy": "agent",
+      "runId": "run_9674524cf4504f70",
+      "createdAt": "2026-10-08T09:13:21.933Z",
+      "updatedAt": null
+    },
+    {
+      "id": "ref_8004692f62484152",
+      "cardId": "card_a5b92fd10c4d4a15",
+      "url": "https://github.com/SuperJackfruitLabs/agentpod",
+      "title": "AgentPod source",
+      "subtitle": "Station execution and SuperPipeline bridge source",
+      "provider": "github",
+      "sourceType": "repo",
+      "externalId": "superjackfruitlabs/agentpod",
+      "metadata": {
+        "relationship": "execution-runtime-source"
+      },
+      "syncState": "synced",
+      "lastSyncedAt": null,
+      "addedBy": "agent",
+      "runId": "run_9674524cf4504f70",
+      "createdAt": "2026-10-08T09:13:22.358Z",
+      "updatedAt": null
+    },
+    {
+      "id": "ref_4d4165a5f320411a",
+      "cardId": "card_a5b92fd10c4d4a15",
+      "url": "https://github.com/SuperJackfruitLabs/accounts",
+      "title": "Accounts / organization plane source",
+      "subtitle": "Principal and credential authority boundaries",
+      "provider": "github",
+      "sourceType": "repo",
+      "externalId": "superjackfruitlabs/accounts",
+      "metadata": {
+        "relationship": "identity-authority-source"
+      },
+      "syncState": "synced",
+      "lastSyncedAt": null,
+      "addedBy": "agent",
+      "runId": "run_9674524cf4504f70",
+      "createdAt": "2026-10-08T09:13:22.761Z",
+      "updatedAt": null
+    },
+    {
+      "id": "ref_efb7776f071c4fe9",
+      "cardId": "card_a5b92fd10c4d4a15",
+      "url": "https://github.com/xdevplatform/xurl",
+      "title": "xurl source",
+      "subtitle": "Official X API CLI proposed for scoped publisher execution",
+      "provider": "github",
+      "sourceType": "repo",
+      "externalId": "xdevplatform/xurl",
+      "metadata": {
+        "relationship": "x-api-client-source",
+        "observedVersion": "1.3.4"
+      },
+      "syncState": "synced",
+      "lastSyncedAt": null,
+      "addedBy": "agent",
+      "runId": "run_9674524cf4504f70",
+      "createdAt": "2026-10-08T09:13:23.182Z",
+      "updatedAt": null
+    },
+    {
+      "id": "ref_a10b1893d4884609",
+      "cardId": "card_a5b92fd10c4d4a15",
+      "url": "https://github.com/SuperJackfruitLabs/superpipeline/pull/162",
+      "title": "Approval-gated Marketing & Community publishing design",
+      "subtitle": "Review surface for the architecture-only publishing design",
+      "provider": "github",
+      "sourceType": "pull_request",
+      "externalId": "superjackfruitlabs/superpipeline#0",
+      "metadata": {
+        "headCommit": "b2a2c02fc2893288e1c6f76662a8bafb9fa6d51a",
+        "relationship": "review-surface",
+        "scope": "architecture-only"
+      },
+      "syncState": "synced",
+      "lastSyncedAt": null,
+      "addedBy": "agent",
+      "runId": "run_253b28c6cca94e37",
+      "createdAt": "2026-10-08T09:26:05.456Z",
+      "updatedAt": "2026-10-08T09:33:06.390Z"
+    },
+    {
+      "id": "ref_a0508296dff24d22",
+      "cardId": "card_a5b92fd10c4d4a15",
+      "url": "https://github.com/SuperJackfruitLabs/superpipeline/blob/docs/marketing-publishing-architecture/docs/superpowers/specs/2026-10-08-marketing-community-publishing-design.md",
+      "title": "Marketing & Community publishing flow — final architecture/spec",
+      "subtitle": "538-line buildable specification with selected approach, M1-M9 controls, operator plan, alternatives, and 20 yes/no acceptance criteria",
+      "provider": "github",
+      "sourceType": "file",
+      "externalId": "superjackfruitlabs/superpipeline@docs",
+      "metadata": {
+        "commit": "b2a2c02fc2893288e1c6f76662a8bafb9fa6d51a",
+        "relationship": "final-buildable-spec",
+        "scope": "docs-only; no live configuration or social writes"
+      },
+      "syncState": "synced",
+      "lastSyncedAt": null,
+      "addedBy": "agent",
+      "runId": "run_253b28c6cca94e37",
+      "createdAt": "2026-10-08T09:26:05.874Z",
+      "updatedAt": "2026-10-08T09:33:05.969Z"
+    },
+    {
+      "id": "ref_88f769addf964b4b",
+      "cardId": "card_a5b92fd10c4d4a15",
+      "url": "https://github.com/SuperJackfruitLabs/atelier/blob/db7f80aee61f59ef1fa03d84c52e55decbba5e75/projects/building-in-public/specs/marketing-community-publishing-design.md",
+      "title": "Marketing & Community publishing flow — revised private architecture/spec",
+      "subtitle": "Private exact revision resolving immutable gate binding, canonical capabilities, deterministic station execution, and no-publication routing",
+      "provider": "github",
+      "sourceType": "file",
+      "externalId": "SuperJackfruitLabs/atelier@db7f80aee61f59ef1fa03d84c52e55decbba5e75",
+      "metadata": {
+        "classification": "PRIVATE INTERNAL",
+        "commit": "db7f80aee61f59ef1fa03d84c52e55decbba5e75",
+        "relationship": "authoritative-spec-revision",
+        "reviewDelta": "R1-R5 resolved",
+        "scope": "architecture-only; no live configuration or social writes"
+      },
+      "syncState": "synced",
+      "lastSyncedAt": null,
+      "addedBy": "agent",
+      "runId": "run_91a34415dca04ac7",
+      "createdAt": "2026-10-08T10:16:29.390Z",
+      "updatedAt": null
+    },
+    {
+      "id": "ref_aa6edaeedf8a4583",
+      "cardId": "card_b84a4c33005c4db4",
+      "url": "https://gist.github.com/fixture-user/5b99bdf40b21d71d79183e0c83155250",
+      "title": "SJL Active Portfolio — Shape Brief (secret copy)",
+      "subtitle": "Replaces the public gist removed on 2026-10-08",
+      "provider": "url",
+      "sourceType": "url",
+      "externalId": null,
+      "metadata": null,
+      "syncState": "synced",
+      "lastSyncedAt": null,
+      "addedBy": "agent",
+      "runId": null,
+      "createdAt": "2026-10-08T18:15:12.761Z",
+      "updatedAt": null
+    },
+    {
+      "id": "ref_aa32796a3d3b4a94",
+      "cardId": "card_d4fcd4ab9cb44de1",
+      "url": "https://app.superlibrary.dev/a/itm_2f488918c40f437d",
+      "title": "Forge-first workspaces, Atelier migration, checkpoints and recovery",
+      "subtitle": "Build-ready spec; Forge Atelier publication blocked pending PRIVATE/access proof",
+      "provider": "superlibrary",
+      "sourceType": "artifact",
+      "externalId": "itm_2f488918c40f437d",
+      "metadata": {
+        "classification": "internal",
+        "publicationStatus": "provisional-private-handoff; canonical Forge Atelier publication blocked",
+        "sha256": "da4dfed0a83bb7a7326b2714fb96277c777331184b3a5c3f6b0e9855f04ba928"
+      },
+      "syncState": "synced",
+      "lastSyncedAt": null,
+      "addedBy": "agent",
+      "runId": "run_0a7208cf9f594e60",
+      "createdAt": "2026-10-09T17:12:44.255Z",
+      "updatedAt": null
+    },
+    {
+      "id": "ref_dc6f8b2f7cf24ca1",
+      "cardId": "card_d4fcd4ab9cb44de1",
+      "url": "https://app.superlibrary.dev/a/itm_78a5c2ed3255493d",
+      "title": "Forge identity/access census and private Atelier migration specification",
+      "subtitle": "Operator-requested split; checkpointing removed and parked",
+      "provider": "superlibrary",
+      "sourceType": "artifact",
+      "externalId": "itm_78a5c2ed3255493d",
+      "metadata": {
+        "classification": "internal",
+        "mainSpecSha256": "bdca919dec6bcf813b7e097ab2a1141bb3c386dfdc805b85360d699be4602eb6",
+        "packageSha256": "ab63c38f422ff75f494a46be49f960e595bb0bbf3f1f10f848a25f03f405c047",
+        "publicationStatus": "provisional-private-handoff; Forge Atelier publication blocked",
+        "scope": "identity/access census and private Atelier migration; checkpointing separately parked"
+      },
+      "syncState": "synced",
+      "lastSyncedAt": null,
+      "addedBy": "agent",
+      "runId": "run_735887df96c04ca5",
+      "createdAt": "2026-10-09T19:22:06.137Z",
+      "updatedAt": null
+    }
+  ],
+  "usage": {
+    "totalCostUsd": 0,
+    "estimatedCostUsd": 0,
+    "budgetUsd": null,
+    "cardUsdCap": null,
+    "overBudget": false
+  },
+  "github": {
+    "issueTrigger": false,
+    "webhookConfigured": false,
+    "triggerGrantCount": null
+  },
+  "stale": {
+    "enabled": true,
+    "afterHours": 24
+  }
+}

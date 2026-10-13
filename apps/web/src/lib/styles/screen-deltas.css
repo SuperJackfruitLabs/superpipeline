@@ -1,0 +1,23 @@
+/* Hand deltas to screen.css (the ported reference rules). Not generated: re-running extract-css never touches this file. */
+/* The workspace tabs are links: no underline and the muted colour, over Quiet's underlined links (that is what the reference's !important did). */
+.page .tabs a.tab { color: var(--vk-color-muted); text-decoration: none; }
+.page .tabs a.tab[aria-selected="true"] { color: var(--vk-color-text); }
+/* Hand delta: links read as links; Tailwind's preflight (also in this layer) would strip the underline the references get from the browser. */
+:where(.page) a { text-decoration: underline; }
+/* Hand delta: placement. The references put `.page` in their own frames (`.dy-main > .page`, `.pp-page`); the app's one shell per vibe draws Paper's 56px and Studio's 40px gutters itself, so Daylight adds its 16px and Paper none. Quiet's page is the reference's (1280px, centred). */
+[data-vibe="daylight"] :where(.page) { max-width: none; padding-left: 16px; padding-right: 16px; }
+[data-vibe="paper"] :where(.page) { max-width: none; padding-left: 0; padding-right: 0; }
+/* Hand delta (notes `pages.md` §6): phones get the 16px side gutter. */
+@media (max-width: 699.98px) { [data-vibe] :where(.page) { padding-left: 16px; padding-right: 16px; } }
+/* Hand delta: the back link on Settings and Spend (was inline style). A 44px target, muted, hugging its text. */
+.page a.back-link { display: inline-flex; align-items: center; gap: 4px; min-height: 44px; width: fit-content; color: var(--vk-color-muted); }
+/* Hand delta (fix round 1, isolated by probe): the references' one-line inputs keep the browser's `line-height: normal`;
+   the app's preflight sets `line-height: inherit`, so each .input took the page's 1.45 (23.2px) and drew its text off the
+   reference's baseline. Textareas keep their own 1.5. */
+:where(.page) input.input, :where(.page) select.input { line-height: normal; }
+/* Hand delta (fix round 1): the references draw placeholders in the browser's own colour; the app's preflight mixes
+   currentColor at 50%, a lighter grey, so every .input placeholder differed from the reference. */
+:where(.page) .input::placeholder { color: revert; opacity: revert; }
+/* Hand delta (fix round 1): screen.css's `:where(.page a)` has no specificity, so in this layer the preflight's
+   `a { color: inherit }` won and a link in muted text drew muted; the references draw every page link in ink. */
+:where(.page) a { color: var(--vk-color-text); }

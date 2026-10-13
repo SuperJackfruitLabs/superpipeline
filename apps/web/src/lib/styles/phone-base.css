@@ -1,0 +1,15 @@
+/* apps/web/src/lib/styles/phone-base.css
+   The phone frame's product-only rules, under every phone shell's .ph-root. vibekit draws the
+   header and the tab bar (PhoneHeader, PhoneTabBar); nothing here restyles them.
+   Root ported from e2e/reference/mockups/SP-Phone-Board-Daylight.html (.r, lines 3-16, the same in
+   the Paper and Quiet phone references). Deltas: .r → .ph-root; width:390px → width:100%;
+   + min-height:100dvh, so the bar meets the screen's foot on a short page. */
+.ph-root { width: 100%; min-height: 100dvh; box-sizing: border-box; background: var(--vk-color-bg); color: var(--vk-color-text); display: flex; flex-direction: column; }
+.ph-root > * { flex: 1; }
+/* The "You" glyph in the icon bars: the person's initials. Daylight's .av and Studio's .me, from
+   SP-Phone-Board-Daylight and SP-Phone-Board-Studio. */
+.ph-root .ph-you { display: inline-grid; place-items: center; box-sizing: border-box; font-size: 10px; font-weight: 800; }
+.ph-root[data-shell="daylight-phone"] .ph-you { width: 26px; height: 26px; border-radius: 50%; background: var(--vk-mood-resting); color: var(--vk-face-ink); }
+.ph-root[data-shell="studio-phone"] .ph-you { width: 22px; height: 22px; border: 1.5px solid currentColor; font-family: var(--vk-font-display); }
+/* A row of Quiet's header buttons and its view links (SP-Phone-Board-Quiet .pq-row: 16px apart). */
+.ph-root .ph-row { display: flex; flex-wrap: wrap; align-items: center; gap: 0 16px; min-width: 0; }

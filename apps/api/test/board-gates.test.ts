@@ -137,7 +137,10 @@ describe('BoardDO — approval gates', () => {
       await board.resolveGate({ gateId, decision: 'approve', decidedBy: 'usr_x' });
       const again = await board.resolveGate({ gateId, decision: 'approve', decidedBy: 'usr_y' });
       expect(again.ok).toBe(false);
-      if (!again.ok) expect(again.code).toBe('GATE_NOT_PENDING');
+      if (!again.ok) {
+        expect(again.code).toBe('GATE_NOT_PENDING');
+        expect(again.detail).toMatchObject({ reason: 'decided', decidedBy: 'usr_x', via: 'api' });
+      }
     });
   });
 

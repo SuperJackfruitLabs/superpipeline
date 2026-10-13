@@ -1,0 +1,38 @@
+/* Ported verbatim from e2e/reference/mockups/SP-Operate-Quiet.html (prefixes noface, wrap-any, btn-sm, q\b, q__, item, meta, dl, acts, form, lbl, inp, plain, ev, toggle, textbtn, money) by scripts/pixel/extract-css.mjs. */
+@scope (.op-q) {
+.noface { flex: none; display: inline-block; border-radius: 50%; border: 2px dashed var(--vk-color-faint); }
+.wrap-any { overflow-wrap: anywhere; }
+.q { padding: var(--vk-space-6) var(--vk-space-6) var(--vk-space-7); }
+.q__col { max-width: 54rem; }
+.q :is(h1, h2.op-title) { margin: 0; font: 700 2rem / 1.2 var(--vk-font-display); }
+.q__lede { margin: var(--vk-space-3) 0 0; font-size: 1.1875rem; line-height: 1.5; }
+.q a { color: var(--vk-color-text); text-decoration: underline; text-underline-offset: 4px; }
+.q h2 { margin: var(--vk-space-7) 0 var(--vk-space-3); font: 700 1.5rem / 1.25 var(--vk-font-display); padding-bottom: var(--vk-space-2); border-bottom: 2px solid var(--vk-color-text); }
+.q h2:first-of-type { margin-top: var(--vk-space-6); }
+.q__note { margin: 0 0 var(--vk-space-3); color: var(--vk-color-muted); font-size: 1rem; }
+.item { padding: var(--vk-space-4) 0 var(--vk-space-5) var(--vk-space-5); border-bottom: 1px solid var(--vk-color-line); position: relative; }
+.item--needs::before { content: ""; position: absolute; left: 0; top: var(--vk-space-4); bottom: var(--vk-space-5); width: 5px; background: var(--vk-color-signal); }
+.item h3 { margin: 0; font: 700 1.25rem / 1.35 var(--vk-font-body); }
+.meta { margin: var(--vk-space-2) 0 0; display: flex; align-items: center; gap: var(--vk-space-2); flex-wrap: wrap; font-size: 1.0625rem; }
+.dl { margin: var(--vk-space-3) 0 0; display: grid; grid-template-columns: 9rem minmax(0, 1fr); gap: var(--vk-space-2) var(--vk-space-4); font-size: 1.0625rem; line-height: 1.55; }
+.dl dt { font-weight: 700; }
+.dl dd { margin: 0; overflow-wrap: anywhere; }
+.acts { display: flex; flex-wrap: wrap; gap: var(--vk-space-3); margin-top: var(--vk-space-4); align-items: center; }
+.form { margin-top: var(--vk-space-4); padding: var(--vk-space-4); border: 2px solid var(--vk-color-line); display: grid; gap: var(--vk-space-4); }
+.form legend { font-weight: 700; padding: 0 var(--vk-space-2); }
+.lbl { display: grid; gap: var(--vk-space-2); font-weight: 700; font-size: 1.0625rem; }
+.inp { font: inherit; font-weight: 400; font-size: 1.0625rem; color: var(--vk-color-text); background: var(--vk-color-surface); border: 2px solid var(--vk-color-text); border-radius: var(--vk-radius-sm); min-height: 48px; padding: 0 var(--vk-space-3); max-width: 24rem; }
+textarea.inp { max-width: none; min-height: 96px; padding: var(--vk-space-3); }
+.plain { margin: 0; font-size: 1.0625rem; line-height: 1.55; }
+.ev { list-style: none; margin: var(--vk-space-2) 0 0; padding: 0; }
+.ev li { display: flex; gap: var(--vk-space-3); align-items: center; flex-wrap: wrap; font-size: 1.0625rem; padding: var(--vk-space-2) 0; }
+.toggle { display: flex; gap: var(--vk-space-4); align-items: center; font-size: 1.0625rem; margin-bottom: var(--vk-space-2); }
+.textbtn { min-height: 44px; padding: 0 var(--vk-space-2); border: 0; background: transparent; color: var(--vk-color-text); font: inherit; text-decoration: underline; text-underline-offset: 4px; cursor: pointer; }
+.textbtn[aria-pressed="true"] { font-weight: 700; text-decoration: none; }
+.money { font-size: 1.5rem; font-weight: 700; }
+
+@media (max-width: 599.98px) { .q { padding: var(--vk-space-5) 16px var(--vk-space-6); } .dl { grid-template-columns: minmax(0, 1fr); } .dl dd { margin-bottom: var(--vk-space-2); } }
+}
+/* Hand delta (fix round 1, isolated by probe): the reference's fieldset keeps the browser's 2px inline margins; the app's
+   preflight zeroes them, so the Resume form was 4px wider and 2px further left. */
+.form { margin-inline: 2px; }

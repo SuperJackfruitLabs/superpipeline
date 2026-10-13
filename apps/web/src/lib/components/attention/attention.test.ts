@@ -18,7 +18,7 @@ function card(over: Partial<Card>): Card {
     id: 'crd_1', title: 'Add login', ownerUserId: 'usr_a', currentStageKey: 'build', state: 'submitted', priority: 0,
     costUsd: 0, overBudget: false, attemptCount: 0, queuedBy: null, queuedByAgentId: null, queuedGrant: null, labels: [],
     dueAt: null, archivedAt: null, parentCardId: null, openChildCount: 0, costUsdRollup: 0, blockedBy: [], projectId: null,
-    milestoneId: null, stateSince: hoursAgo(1), ...over,
+    milestoneId: null, stateSince: hoursAgo(1), lastAgentId: null, queuedGrantOwner: null, stageSince: hoursAgo(1), createdAt: hoursAgo(5), ...over,
   };
 }
 
@@ -51,7 +51,7 @@ describe('itemsFromBoard — one row per reason, each saying what to do', () => 
     expect(it.kind).toBe('blocked');
     expect(it.detail).toBe('the staging database is down');
     expect(it.instruction).toMatch(/resume/i);
-    expect(it.actions).toEqual(['resume', 'open']);
+    expect(it.actions).toEqual(['resume', 'open', 'log']);
   });
 
   it('repeated-failure: the count and the last reason, with Resume and Open log', () => {
@@ -59,7 +59,7 @@ describe('itemsFromBoard — one row per reason, each saying what to do', () => 
     expect(it.kind).toBe('repeated-failure');
     expect(it.headline).toContain('2');
     expect(it.detail).toBe('out of memory');
-    expect(it.actions).toEqual(['resume', 'log']);
+    expect(it.actions).toEqual(['resume', 'open', 'log']);
   });
 
   it('a completion-check park reads as blocked, with both refusals in the detail', () => {
@@ -102,8 +102,8 @@ describe('itemsFromBoard — one row per reason, each saying what to do', () => 
   it('a card sitting in a stage nothing claims, past the threshold: "Nothing claims stage", with Move', () => {
     const it = one(board([card({ currentStageKey: 'requested', stateSince: hoursAgo(30) })]));
     expect(it.kind).toBe('no-owner');
-    expect(it.headline).toBe('Nothing claims stage requested');
-    expect(it.actions).toEqual(['move', 'open']);
+    expect(it.headline).toBe('nothing claims the Requested stage');
+    expect(it.actions).toEqual(['move', 'open', 'staff']);
   });
 
   it('…but not before the threshold, not when the board switched it off, and never for a claimable stage', () => {
@@ -124,16 +124,96 @@ describe('itemsFromStale — the workspace list uses the same rows', () => {
     summary: null, since: hoursAgo(5), ageHours: 5, next: 'resume it', ...over,
   });
 
-  it('maps each reason to the same kind and actions as the board panel', () => {
+  it('maps each reason to the board panel kinds; a stopped card offers Resume and Open (the reference draws no log here)', () => {
     const [blocked, refused, review, ownerless] = itemsFromStale([
       stale({}),
       stale({ cardId: 'a', why: { kind: 'needs-human', reason: 'not-authorised' } }),
       stale({ cardId: 'b', why: { kind: 'needs-human', reason: 'review', gateId: 'gate_1' }, summary: 'the release notes' }),
-      stale({ cardId: 'c', state: 'submitted', stageKey: 'requested', why: { kind: 'no-owner' } }),
+      stale({ cardId: 'c', state: 'submitted', stageKey: 'requested', stageName: 'Requested', why: { kind: 'no-owner' } }),
     ]);
     expect(blocked).toMatchObject({ kind: 'blocked', detail: 'vault sealed', boardId: 'brd_9', boardName: 'Ops', actions: ['resume', 'open'] });
     expect(refused).toMatchObject({ kind: 'refused', actions: ['staff'] });
     expect(review).toMatchObject({ kind: 'review', detail: 'the release notes', actions: ['review'] });
-    expect(ownerless).toMatchObject({ kind: 'no-owner', headline: 'Nothing claims stage requested' });
+    expect(ownerless).toMatchObject({ kind: 'no-owner', headline: 'nothing claims the Requested stage' });
+  });
+});
+
+import { sortAttention } from './attention';
+import { C1DFC, C4605, C58F8, C63AC, DX_AGENTS, DX_BOARD, DX_NOW } from '$lib/test/dx-snapshot';
+
+describe('itemsFromBoard on the Developer Experience board', () => {
+  const items = itemsFromBoard(DX_BOARD, DX_AGENTS, DX_NOW);
+
+  it('finds the four cards that need a person, each with its stage name', () => {
+    expect(items.map((i) => [i.cardId, i.kind, i.stageName])).toEqual([
+      [C4605.id, 'blocked', 'Reproduce'],
+      [C58F8.id, 'blocked', 'Failing test'],
+      [C63AC.id, 'no-owner', 'Reported'],
+      [C1DFC.id, 'blocked', 'Fix'],
+    ]);
+  });
+
+  it('says which stage nothing claims, by its name', () => {
+    expect(items.find((i) => i.kind === 'no-owner')).toMatchObject({ headline: 'nothing claims the Reported stage', actions: ['move', 'open', 'staff'], stageOrder: 0, attemptCount: 0 });
+  });
+
+  it('a stopped card offers resume, open and the log', () => {
+    expect(items.find((i) => i.cardId === C1DFC.id)).toMatchObject({ actions: ['resume', 'open', 'log'], stageOrder: 3, attemptCount: 5 });
+  });
+});
+
+describe('sortAttention', () => {
+  const items = itemsFromBoard(DX_BOARD, DX_AGENTS, DX_NOW);
+  const ids = (list: ReturnType<typeof sortAttention>) => list.map((i) => i.cardId);
+
+  it('stage mode: stage order, the unclaimed card last (Daylight, Paper, Studio)', () => {
+    expect(ids(sortAttention(items, 'stage'))).toEqual([C4605.id, C58F8.id, C1DFC.id, C63AC.id]);
+  });
+
+  it('urgency mode: most attempts first, the unclaimed card last (Quiet)', () => {
+    expect(ids(sortAttention(items, 'urgency'))).toEqual([C1DFC.id, C4605.id, C58F8.id, C63AC.id]);
+  });
+
+  it('breaks a tie by age, oldest first, then by title', () => {
+    const a = { ...items[0]!, cardId: 'a', title: 'B', stageOrder: 1, ageHours: 5 };
+    const b = { ...items[0]!, cardId: 'b', title: 'A', stageOrder: 1, ageHours: 9 };
+    const c = { ...items[0]!, cardId: 'c', title: 'A', stageOrder: 1, ageHours: 5 };
+    expect(ids(sortAttention([a, b, c], 'stage'))).toEqual(['b', 'c', 'a']);
+  });
+
+  it('does not reorder the array it was given', () => {
+    const copy = [...items];
+    sortAttention(items, 'urgency');
+    expect(items).toEqual(copy);
+  });
+});
+
+describe('itemsFromStale keeps the workspace actions', () => {
+  it('a workspace no-owner row offers open only (the reference draws Open alone), never move', () => {
+    const [row] = itemsFromStale([{ boardId: 'brd_9', boardName: 'Ops', cardId: 'c', title: 'T', ownerUserId: 'u', stageKey: 'requested', stageName: 'Requested', state: 'submitted', why: { kind: 'no-owner' }, summary: null, since: '2026-10-10T00:00:00Z', ageHours: 30, next: 'move it' }]);
+    expect(row).toMatchObject({ kind: 'no-owner', stageName: 'Requested', headline: 'nothing claims the Requested stage', actions: ['open'] });
+  });
+});
+
+describe('the workspace feed', () => {
+  it('names the stage nothing claims', () => {
+    const [item] = itemsFromStale([{
+      boardId: 'brd_134a0ddb6d434478', boardName: 'Developer Experience', cardId: 'card_ace250c9c25363ac', title: 'Fix the highest-severity blocker found in the clean-room journey',
+      ownerUserId: 'usr_b19776fac3c94df4', stageKey: 'reported', stageName: 'Reported', state: 'submitted', why: { kind: 'no-owner' }, summary: null,
+      since: '2026-10-08T09:51:00Z', ageHours: 70.5, next: '',
+    }]);
+    expect(item!.headline).toBe('nothing claims the Reported stage');
+    expect(item!.stageName).toBe('Reported');
+    expect(item!.actions).toEqual(['open']);
+  });
+});
+
+describe('workspace ages', () => {
+  it('are measured on the viewer\'s clock from `since`, not the server\'s ageHours', () => {
+    const [item] = itemsFromStale([{
+      boardId: 'brd_134a0ddb6d434478', boardName: 'Developer Experience', cardId: 'card_x', title: 'T', ownerUserId: 'usr_b19776fac3c94df4', stageKey: 'fix', stageName: 'Fix', state: 'input-required',
+      why: { kind: 'needs-human', reason: 'blocked' }, summary: null, since: '2026-10-10T08:21:00Z', ageHours: 99, next: '',
+    }], Date.parse('2026-10-11T08:21:00Z'));
+    expect(item!.ageHours).toBe(24);
   });
 });

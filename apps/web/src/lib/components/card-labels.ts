@@ -2,8 +2,8 @@
  * Resolve a card's label ids to display names via the client's catalogue, and decide whether it
  * is safe to write `labelNames` back to the server from what resolved.
  *
- * Extracted from `CardDrawer.svelte` so it can be tested — same reason `board/card-due.ts` exists
- * beside `CardTile.svelte`; a `.svelte` file cannot be imported by a plain Vitest unit test in
+ * Extracted from `CardDrawer.svelte` so it can be tested — same reason `board/card-due.ts` is a plain
+ * module; a `.svelte` file cannot be imported by a plain Vitest unit test in
  * this project's config.
  *
  * `card.labels` are ids; the free-text editor shows and edits NAMES, resolved through

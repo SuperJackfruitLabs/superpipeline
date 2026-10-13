@@ -76,7 +76,10 @@ export class GateDecisionModel {
       this.noteEl?.focus();
       return;
     }
-    this.needNote = false;
+    // A Request-changes note was written (or this is not a Request changes): only then is the
+    // needs-a-note error answered. An Approve after it leaves the error standing — the server's
+    // refusal and the local validation are two facts, shown together (Card-States E).
+    if (comment !== undefined) this.needNote = false;
     this.needPick = false;
     this.busy = true;
     try {

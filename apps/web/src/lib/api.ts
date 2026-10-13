@@ -6,7 +6,17 @@ import type { AgentScope } from '@superpipeline/contract';
  */
 import { hubAudienceToken, withAuthority } from './hub-token';
 
-const TENANT = 'tnt_dev';
+/** Dev builds only: the pixel suite points the client at its fixture tenant and person. */
+const devRead = (k: string): string | null => {
+  if (!import.meta.env.DEV) return null;
+  try {
+    return globalThis.localStorage?.getItem(k) ?? null;
+  } catch {
+    return null;
+  }
+};
+const TENANT = devRead('superpipeline.devTenant') || 'tnt_dev';
+const DEV_USER = devRead('superpipeline.devUser');
 
 /**
  * What to do when the server says the session is gone.
@@ -31,7 +41,11 @@ export function noteAuth(res: Response): Response {
   if (res.status === 401) onUnauthorized?.();
   return res;
 }
-const headers = { 'X-Tenant-Id': TENANT, 'Content-Type': 'application/json' };
+const headers: Record<string, string> = {
+  'X-Tenant-Id': TENANT,
+  'Content-Type': 'application/json',
+  ...(DEV_USER ? { 'X-User-Id': DEV_USER } : {}),
+};
 
 export interface User {
   userId: string;
@@ -44,6 +58,12 @@ export interface User {
 export interface BoardSummary {
   id: string;
   name: string;
+  /** Live (not archived) cards on the board. */
+  cardCount: number;
+  /** Of those, the ones that need a person now (the contract's `needsYou` rule). */
+  needsYouCount: number;
+  /** When a card on the board last changed (ISO), or null when never recorded. */
+  lastActivityAt: string | null;
 }
 
 export interface AgentToken {
@@ -56,6 +76,12 @@ export interface AgentToken {
 export interface AgentSummary {
   id: string;
   name: string;
+  /** Display role ("Diagnostics"); null reads as "agent". */
+  role: string | null;
+  /** Cards this agent holds across the workspace's boards (not archived, not finished). */
+  claimedCount: number;
+  /** Of those, the ones it is working right now. */
+  workingCount: number;
   capabilities: string[];
   /** Its mapped suite principal (`prn_…`), or null — the normal state for a standalone board. */
   externalId: string | null;
@@ -75,6 +101,8 @@ export interface AgentSummary {
 export interface Stage {
   /** The stage's standing rule, handed to every agent that claims a card here. */
   instructions?: string;
+  /** One line saying what happens here, printed on an empty board. */
+  summary?: string;
   key: string;
   name: string;
   order: number;
@@ -111,6 +139,13 @@ export interface Card {
   overBudget: boolean;
   attemptCount: number;
   delegateAgentId?: string | null;
+  /** The agent of the card's most recent run; null with no runs. */
+  lastAgentId: string | null;
+  /** Whose dispatch grant the queue ran on; null when not recorded. */
+  queuedGrantOwner: string | null;
+  /** When the card entered its current stage. */
+  stageSince: string;
+  createdAt: string;
   /**
    * Who authorised this card's dispatch — the third of a card's three identities, and the one this
    * client never declared.
@@ -188,6 +223,8 @@ export interface NeedsHuman {
   elicitationId?: string;
   detail?: string;
   failureCount?: number;
+  /** The agent's one-line version of `detail`. */
+  summary?: string;
 }
 
 /** A card waiting past a threshold, or waiting on a person (`GET /v1/stale`). */
@@ -250,6 +287,10 @@ export interface Attempt {
   handoff: unknown;
   /** Why this run died. Null for one that completed, or is still open. */
   failureReason: string | null;
+  startedAt: string;
+  endedAt: string | null;
+  /** The stage's completion verdict; `{ ok: false, missing }` is a refused hand-off ("sent back"). */
+  completion: { ok?: boolean; missing?: string[] } | null;
 }
 
 export interface Activity {
@@ -318,12 +359,36 @@ export interface UsageSummary {
   byModel: Array<{ model: string; costUsd: number; inputTokens: number; outputTokens: number }>;
   byAgent: Array<{ agentId: string; costUsd: number }>;
   byCard: Array<{ cardId: string; costUsd: number }>;
+  /** The last seven UTC days, oldest first, zero-filled, whatever the window. */
+  byDay: Array<{ day: string; costUsd: number }>;
 }
 
 export interface GateOption {
   name: string;
   title: string;
   interactive?: boolean;
+  /** One line saying what choosing this option does. */
+  description?: string;
+}
+
+/** Who decided a gate first, through which surface and when (the 409 body's fields). */
+export interface GateConflict {
+  decidedBy: string;
+  decidedAt: string;
+  via: 'matrix' | 'web' | 'api';
+}
+
+/** The 409 a gate answers when someone else decided it first — null for any other response. */
+export async function parseGateConflict(res: Response): Promise<GateConflict | null> {
+  if (res.status !== 409) return null;
+  try {
+    const e = ((await res.clone().json()) as { error?: Record<string, unknown> }).error;
+    if (e?.code !== 'GATE_NOT_PENDING' || e.reason !== 'decided') return null;
+    const via = e.via === 'matrix' || e.via === 'web' ? e.via : 'api';
+    return { decidedBy: String(e.decidedBy ?? ''), decidedAt: String(e.decidedAt ?? ''), via };
+  } catch {
+    return null;
+  }
 }
 
 export interface Gate {
@@ -404,6 +469,8 @@ export interface BoardSnapshot {
   tenantId: string | null;
   name: string | null;
   stages: Stage[];
+  /** The board's introduction, when it was created with one. */
+  intro?: { lede: string; composeHint: string };
   cards: Card[];
   gates: Gate[];
   elicitations: Elicitation[];
@@ -412,6 +479,8 @@ export interface BoardSnapshot {
   github: {
     issueTrigger: boolean;
     webhookConfigured: boolean;
+    /** Where to point the GitHub webhook for this board. */
+    webhookUrl: string;
     /**
      * How many principals the board's standing trigger grant names, or null when it has none.
      * Null with `issueTrigger` on means every card the integration creates will be refused at
@@ -547,7 +616,7 @@ export async function getBoard(boardId: string): Promise<BoardSnapshot> {
 export async function createCard(
   boardId: string,
   title: string,
-  detail?: { priority?: number; spec?: Record<string, unknown>; dueAt?: string },
+  detail?: { priority?: number; spec?: Record<string, unknown>; dueAt?: string; stageKey?: string; labelIds?: string[]; projectId?: string | null },
 ): Promise<void> {
   const res = await fetch(`/v1/boards/${boardId}/cards`, {
     method: 'POST',
@@ -559,6 +628,9 @@ export async function createCard(
       ...(detail?.priority !== undefined ? { priority: detail.priority } : {}),
       ...(detail?.spec ? { spec: detail.spec } : {}),
       ...(detail?.dueAt !== undefined ? { dueAt: detail.dueAt } : {}),
+      ...(detail?.stageKey !== undefined ? { stageKey: detail.stageKey } : {}),
+      ...(detail?.labelIds !== undefined ? { labelIds: detail.labelIds } : {}),
+      ...(detail?.projectId !== undefined ? { projectId: detail.projectId } : {}),
     }),
   });
   if (!res.ok) throw new Error(`createCard failed (${res.status})`);
@@ -921,6 +993,24 @@ export async function getMe(): Promise<User | null> {
   const res = await fetch('/auth/me', { headers });
   if (!res.ok) return null;
   return ((await res.json()) as { user: User | null }).user;
+}
+
+export type RenewReason = 'login_required' | 'no_refresh' | 'plane_unavailable' | 'unauthorized_after_renew';
+export type RenewResult = { ok: true } | { ok: false; reason: RenewReason; issuer?: string; reauthorize?: string; retryable?: boolean };
+
+/** Renew a lapsed session in the background (POST /hub/session). Never throws. */
+export async function renewSession(): Promise<RenewResult> {
+  let res: Response;
+  try {
+    res = await fetch('/hub/session', { method: 'POST', credentials: 'same-origin', headers });
+  } catch {
+    return { ok: false, reason: 'plane_unavailable', retryable: true };
+  }
+  if (res.status === 503) return { ok: false, reason: 'plane_unavailable', retryable: true };
+  const body = (await res.json().catch(() => null)) as { ok?: boolean; reason?: string; issuer?: string; reauthorize?: string } | null;
+  if (body?.ok === true) return { ok: true };
+  if (body?.reason === 'login_required') return { ok: false, reason: 'login_required', ...(body.issuer ? { issuer: body.issuer } : {}), ...(body.reauthorize ? { reauthorize: body.reauthorize } : {}) };
+  return { ok: false, reason: 'no_refresh' };
 }
 
 export async function logout(): Promise<void> {
@@ -1499,7 +1589,7 @@ export interface BoardFeedEvent {
  */
 export function openBoardSocket(boardId: string, onEvent: (event: BoardFeedEvent | null) => void): WebSocket {
   const proto = location.protocol === 'https:' ? 'wss' : 'ws';
-  const ws = new WebSocket(`${proto}://${location.host}/v1/boards/${boardId}/ws?tenant=${TENANT}`);
+  const ws = new WebSocket(`${proto}://${location.host}/v1/boards/${boardId}/ws?tenant=${TENANT}${DEV_USER ? `&user=${encodeURIComponent(DEV_USER)}` : ''}`);
   ws.addEventListener('message', (e) => {
     let parsed: BoardFeedEvent | null = null;
     try {

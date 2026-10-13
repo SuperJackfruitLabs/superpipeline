@@ -1,0 +1,35 @@
+/* Ported verbatim from e2e/reference/mockups/SP-Projects-Studio (prefixes pj-, disc-ico, match ^(details|\.ar \.u\.act), where .pj-main) by scripts/pixel/extract-css.mjs. */
+:where(.pj-main) details > summary { list-style: none; cursor: pointer; }
+:where(.pj-main) details > summary::-webkit-details-marker { display: none; }
+:where(.pj-main) .disc-ico { transition: transform var(--vk-motion-fast) var(--vk-motion-easing); display: inline-grid; }
+:where(.pj-main) details[open] > summary .disc-ico { transform: rotate(180deg); }
+.pj-main { flex: 1; display: flex; flex-direction: column; gap: 36px; padding: 24px 0 40px; }
+:where(.pj-main) .pj-new { display: flex; flex-direction: column; padding-top: 12px; border-top: 1.5px solid var(--rule); }
+:where(.pj-main) .pj-new > summary { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; min-height: 44px; }
+:where(.pj-main) .pj-create { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) auto; gap: 16px; align-items: end; max-width: 1040px; padding-top: 16px; }
+:where(.pj-main) .pj-acts { display: flex; gap: 8px; }
+:where(.pj-main) .pj-n { font: 500 12px var(--fm); color: var(--muted); }
+:where(.pj-main) .pj-list { display: flex; flex-direction: column; }
+:where(.pj-main) .pj-row { display: grid; grid-template-columns: 48px minmax(0, 1fr) 340px 44px; column-gap: 24px; row-gap: 6px; align-items: start; padding: 14px 0 8px; }
+:where(.pj-main) .pj-row + .pj-row { border-top: 1px solid var(--hair); }
+:where(.pj-main) .pj-ix { padding-top: 4px; font: 500 12.5px var(--fm); color: var(--muted); }
+:where(.pj-main) .pj-name { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+:where(.pj-main) .pj-t { font: 800 19px/1.25 var(--ff); font-stretch: 88%; letter-spacing: -.005em; overflow-wrap: break-word; }
+:where(.pj-main) .pj-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 18px; }
+:where(.pj-main) .pj-date { display: inline-flex; align-items: center; gap: 5px; font: 500 12px var(--fm); color: var(--muted); white-space: nowrap; }
+.ar :where(.pj-main) .u.act { background: linear-gradient(90deg, var(--s7) 50%, transparent 50%); box-shadow: inset 0 0 0 1.5px var(--s7); }
+:where(.pj-main) .pj-roll { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+:where(.pj-main) .pj-fig { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; font-size: 13px; font-weight: 600; color: var(--muted); }
+:where(.pj-main) .pj-fig strong { margin-right: 4px; font: 900 40px/.9 var(--ff); font-stretch: 72%; letter-spacing: -.02em; color: var(--text); }
+:where(.pj-main) .pj-cost { font: 600 15px var(--fm); color: var(--text); }
+:where(.pj-main) .pj-bar { height: 8px; box-shadow: inset 0 0 0 1px var(--rule); }
+:where(.pj-main) .pj-bar > i { display: block; height: 100%; background: var(--s7); }
+:where(.pj-main) .pj-load { display: flex; flex-direction: column; gap: 6px; padding-top: 6px; }
+:where(.pj-main) .pj-skel { height: 8px; background: var(--hair); }
+:where(.pj-main) .pj-del { border: 0; background: transparent; box-shadow: inset 0 0 0 2.5px var(--rule); }
+:where(.pj-main) .pj-ms { grid-column: 2 / 4; }
+:where(.pj-main) .pj-ms > summary { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; font: 700 14px var(--ff); }
+:where(.pj-main) .pj-msform { display: grid; grid-template-columns: minmax(0, 1fr) 200px auto; gap: 12px; align-items: end; padding: 4px 0 10px; }
+:where(.pj-main) .pj-note { padding-top: 10px; border-top: 1px solid var(--hair); font: 400 14.5px/1.45 var(--fs); color: var(--muted); }
+/* Hand delta: the shell draws Studio's 40px side gutter, so the page keeps only its own top and bottom padding. */
+:where(.pj-main) .ar-hero h2 { font: 800 44px/1.02 var(--ff); font-stretch: 82%; letter-spacing: -.02em; }

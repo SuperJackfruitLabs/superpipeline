@@ -11,7 +11,8 @@
 import { test, expect } from '@playwright/test';
 
 const BOARD_KEY = 'superpipeline.boardId';
-const API = 'http://localhost:8787';
+import { PORTS } from '../scripts/ports';
+const API = PORTS.apiUrl;
 const TENANT = { 'X-Tenant-Id': 'tnt_dev', 'Content-Type': 'application/json' };
 const STAGES = [
   { key: 'backlog', name: 'Backlog', order: 0 },
@@ -47,7 +48,7 @@ test.describe('on a phone', () => {
 
     // The rail is what ate the screen. Below 900px it is not rendered at all — the bottom bar is
     // the navigation, so there is exactly one <nav> rather than one hidden behind another.
-    const navs = page.getByRole('navigation', { name: 'Main' });
+    const navs = page.getByRole('navigation', { name: 'Superpipeline' });
     await expect(navs).toHaveCount(1);
     const box = await navs.boundingBox();
     expect(box!.width).toBeGreaterThan(300); // the bottom bar spans the screen; the rail was 84px
@@ -65,29 +66,29 @@ test.describe('on a phone', () => {
     // drawer existed because a 208px rail could not fit beside a 390px board; the fix was not a
     // better drawer but a bottom bar, so the assertions move to it rather than being deleted.
     await page.goto('/');
-    await expect(page.getByText('Backlog', { exact: true })).toBeVisible();
+    await expect(page.getByText(/^Backlog\b/).first()).toBeVisible();
 
-    const nav = page.getByRole('navigation', { name: 'Main' });
+    const nav = page.getByRole('navigation', { name: 'Superpipeline' });
     for (const name of ['Plan', 'Operate', 'Workspace']) {
       await expect(nav.getByRole('link', { name })).toBeVisible();
     }
 
     await nav.getByRole('link', { name: 'Operate' }).click();
     await expect(page).toHaveURL(/\/operate$/);
-    await expect(page.getByRole('heading', { name: 'Needs you' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Needs you', exact: true })).toBeVisible();
 
     await nav.getByRole('link', { name: 'Workspace' }).click();
     await expect(page).toHaveURL(/\/workspace\/agents$/);
 
     await nav.getByRole('link', { name: 'Plan' }).click();
-    await expect(page.getByText('Backlog', { exact: true })).toBeVisible();
+    await expect(page.getByText(/^Backlog\b/).first()).toBeVisible();
   });
 
   test('every navigation target clears the touch floor', async ({ page }) => {
     // The audit measured eight controls under 24x24. A bottom bar whose targets are hard to hit
     // is the same failure wearing a different layout.
     await page.goto('/');
-    const nav = page.getByRole('navigation', { name: 'Main' });
+    const nav = page.getByRole('navigation', { name: 'Superpipeline' });
     for (const name of ['Plan', 'Operate', 'Workspace']) {
       const box = await nav.getByRole('link', { name }).boundingBox();
       expect(box!.height).toBeGreaterThanOrEqual(44);
@@ -98,7 +99,7 @@ test.describe('on a phone', () => {
     // The actual complaint. A 208px rail on a 390px screen leaves 182px of
     // board, so this asserts the first column is genuinely reachable.
     await page.goto('/');
-    const column = page.getByText('Backlog', { exact: true }).first();
+    const column = page.getByText(/^Backlog\b/).first();
     await expect(column).toBeInViewport();
   });
 });
@@ -109,7 +110,7 @@ test.describe('on a desktop', () => {
     await expect(page.getByText('Backlog', { exact: true })).toBeVisible();
     // One navigation at a time: the rail above 900px, the bottom bar below it. Both at once was
     // the shape of the `max-[900px]:`/`min-[900px]:` bug the restructure was careful to avoid.
-    const links = page.getByRole('navigation', { name: 'Main' }).getByRole('link', { name: 'Plan' });
+    const links = page.getByRole('navigation', { name: 'Superpipeline' }).getByRole('link', { name: 'Plan' });
     await expect(links).toHaveCount(1);
     await expect(links).toBeVisible();
   });

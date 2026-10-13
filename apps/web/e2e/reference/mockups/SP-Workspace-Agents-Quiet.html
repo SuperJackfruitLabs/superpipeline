@@ -1,0 +1,1589 @@
+<!doctype html>
+<html data-product="superpipeline" data-accent="product" lang="en" style="touch-action: pan-x pan-y; overscroll-behavior: none; --dc-chrome-unit: 1.0344827586206897px;"><head><link rel="stylesheet" href="_vibekit-0.0.10/vibekit.css" data-vibekit="0.0.10"><style>
+    .sc-placeholder{background:color-mix(in srgb,currentColor 8%,transparent);
+      border:1px solid color-mix(in srgb,currentColor 50%,transparent);
+      border-radius:2px;box-sizing:border-box;overflow:hidden}
+    @keyframes sc-shine{0%{background-position:100% 50%}100%{background-position:0% 50%}}
+    html.sc-dc-streaming .sc-placeholder,
+    html.sc-dc-streaming .sc-interp.sc-missing{position:relative;
+      background:color-mix(in srgb,currentColor 5%,transparent);
+      border-color:transparent}
+    html.sc-dc-streaming .sc-placeholder::before,
+    html.sc-dc-streaming .sc-interp.sc-missing::before{content:'';
+      position:absolute;inset:0;pointer-events:none;
+      background:linear-gradient(90deg,rgba(217,119,87,0) 25%,rgba(247,225,211,.95) 37%,rgba(217,119,87,0) 63%);
+      background-size:400% 100%;animation:sc-shine 1.4s ease infinite}
+    html.sc-dc-streaming .sc-placeholder:nth-child(n+9 of .sc-placeholder)::before,
+    html.sc-dc-streaming .sc-interp.sc-missing:nth-child(n+9 of .sc-interp.sc-missing)::before{animation:none;
+      background:color-mix(in srgb,currentColor 8%,transparent)}
+    .sc-placeholder-error{padding:4px 8px;font:11px/1.4 ui-monospace,monospace;
+      color:color-mix(in srgb,currentColor 70%,transparent);word-break:break-word}
+    .sc-interp.sc-missing{display:inline-block;width:2em;height:1em;overflow:hidden;
+      vertical-align:text-bottom;background:rgba(255,255,255,.3);border:1px solid rgba(0,0,0,.5);
+      border-radius:2px;box-sizing:border-box;color:transparent;
+      user-select:none}
+    .sc-interp.sc-unresolved{font-family:ui-monospace,monospace;font-size:.85em;
+      color:color-mix(in srgb,currentColor 50%,transparent);
+      background:color-mix(in srgb,currentColor 10%,transparent);border-radius:3px;
+      padding:0 3px}
+    .sc-host.sc-has-error{position:relative}
+    .sc-logic-error{position:absolute;top:8px;left:8px;z-index:2147483647;max-width:60ch;
+      padding:6px 10px;background:#b00020;color:#fff;font:12px/1.4 ui-monospace,monospace;
+      border-radius:4px;white-space:pre-wrap;pointer-events:none}
+    /* Mirrors PRINT_BASELINE_CSS in apps/web deck-stage-export.ts — keep both
+       in sync until dc-runtime regains a build step. */
+    @media print {
+      @page { margin: 0.5cm; }
+      figure, table { break-inside: avoid; }
+      #dc-root, #dc-root > .sc-host { height: auto; }
+      *, *::before, *::after {
+        print-color-adjust: exact; -webkit-print-color-adjust: exact;
+        backdrop-filter: none !important; -webkit-backdrop-filter: none !important;
+        animation-delay: -99s !important; animation-duration: .001s !important;
+        animation-iteration-count: 1 !important; animation-fill-mode: both !important;
+        animation-play-state: running !important; transition-duration: 0s !important;
+      }
+    }
+  </style>
+
+
+<meta charset="utf-8">
+<title>Workspace agents · Quiet</title>
+<base href="/appifact/SP-Workspace-Agents-Quiet.dc.html">
+
+
+
+
+
+<style>x-dc{display:none!important}</style>
+
+<style>@import url("https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&family=Azeret+Mono:wght@400;500;600&family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..600&display=swap");
+
+ 
+
+:root {
+  color-scheme: light;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  --vk-font-body: "Figtree", system-ui, sans-serif;
+  --vk-font-display: "Bricolage Grotesque", system-ui, sans-serif;
+  --vk-font-mono: "Martian Mono", ui-monospace, monospace;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+}
+
+[data-vibe="daylight"][data-theme="light"] {
+  color-scheme: light;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  --vk-font-body: "Figtree", system-ui, sans-serif;
+  --vk-font-display: "Bricolage Grotesque", system-ui, sans-serif;
+  --vk-font-mono: "Martian Mono", ui-monospace, monospace;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+}
+
+[data-vibe="daylight"][data-theme="dark"] {
+  color-scheme: dark;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  --vk-font-body: "Figtree", system-ui, sans-serif;
+  --vk-font-display: "Bricolage Grotesque", system-ui, sans-serif;
+  --vk-font-mono: "Martian Mono", ui-monospace, monospace;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+}
+
+[data-vibe="paper"][data-theme="light"] {
+  color-scheme: light;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  --vk-font-body: "Geist", system-ui, sans-serif;
+  --vk-font-display: "Newsreader", "Georgia", serif;
+  --vk-font-mono: "Martian Mono", ui-monospace, monospace;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+}
+
+[data-vibe="paper"][data-theme="dark"] {
+  color-scheme: dark;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  --vk-font-body: "Geist", system-ui, sans-serif;
+  --vk-font-display: "Newsreader", "Georgia", serif;
+  --vk-font-mono: "Martian Mono", ui-monospace, monospace;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+}
+
+[data-vibe="studio"][data-theme="light"] {
+  color-scheme: light;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  --vk-font-body: "Archivo", system-ui, sans-serif;
+  --vk-font-display: "Archivo", system-ui, sans-serif;
+  --vk-font-mono: "Azeret Mono", ui-monospace, monospace;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  --vk-font-serif: "Newsreader", Georgia, serif;
+
+
+
+
+
+
+
+
+
+
+}
+
+[data-vibe="studio"][data-theme="dark"] {
+  color-scheme: dark;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  --vk-font-body: "Archivo", system-ui, sans-serif;
+  --vk-font-display: "Archivo", system-ui, sans-serif;
+  --vk-font-mono: "Azeret Mono", ui-monospace, monospace;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  --vk-font-serif: "Newsreader", Georgia, serif;
+
+
+
+
+
+
+
+
+
+
+}
+
+[data-vibe="quiet"][data-theme="light"] {
+  color-scheme: light;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  --vk-font-body: "Atkinson Hyperlegible Next", system-ui, sans-serif;
+  --vk-font-display: "Atkinson Hyperlegible Next", system-ui, sans-serif;
+  --vk-font-mono: "Martian Mono", ui-monospace, monospace;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+}
+
+[data-vibe="quiet"][data-theme="dark"] {
+  color-scheme: dark;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  --vk-font-body: "Atkinson Hyperlegible Next", system-ui, sans-serif;
+  --vk-font-display: "Atkinson Hyperlegible Next", system-ui, sans-serif;
+  --vk-font-mono: "Martian Mono", ui-monospace, monospace;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+}
+
+ 
+:root {
+  --vk-text-sm: clamp(0.8125rem, 0.78rem + 0.15vw, 0.875rem);
+  --vk-text-md: clamp(1rem, 0.96rem + 0.2vw, 1.0625rem);
+  --vk-text-lg: clamp(1.25rem, 1.1rem + 0.6vw, 1.5rem);
+  --vk-text-xl: clamp(1.75rem, 1.4rem + 1.6vw, 2.5rem);
+  --vk-focus: 0 0 0 3px var(--vk-color-bg), 0 0 0 5px var(--vk-color-text);
+
+}
+
+html {
+  background: var(--vk-color-bg);
+  color: var(--vk-color-text);
+  font-family: var(--vk-font-body);
+  font-size: 100%;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  font-size: var(--vk-text-md);
+  line-height: 1.5;
+}
+
+:focus-visible {
+   
+  outline: 2px solid var(--vk-color-text);
+  outline-offset: 2px;
+  box-shadow: var(--vk-focus);
+}
+
+ 
+.vk-visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  
+  *, *::before, *::after {
+    animation: none !important;
+    transition-duration: 0ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+[data-motion="reduce"],
+[data-motion="reduce"] *,
+[data-motion="reduce"]::before,
+[data-motion="reduce"]::after,
+[data-motion="reduce"] *::before,
+[data-motion="reduce"] *::after {
+  --vk-motion-fast: 0ms;
+  --vk-motion-base: 0ms;
+  animation: none !important;
+  transition-duration: 0ms !important;
+  scroll-behavior: auto !important;
+}
+
+
+
+@media (forced-colors: active) {
+  :focus-visible {
+    outline: 2px solid CanvasText;
+    box-shadow: none;
+  }
+}
+ 
+
+
+
+
+
+
+
+
+ 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ 
+
+
+
+
+
+
+
+
+
+
+
+
+
+.vk-toast {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--vk-space-3);
+  min-height: var(--vk-target-min);
+  padding: 0 var(--vk-space-5);
+  border-radius: var(--vk-radius-pill);
+  background: var(--vk-color-primary);
+  color: var(--vk-color-primary-fg);
+  font: 600 var(--vk-text-sm) / 1.2 var(--vk-font-body);
+}
+.vk-toast__action { min-height: var(--vk-target-min); border: 0; background: transparent; color: inherit; font: inherit; text-decoration: underline; cursor: pointer; }
+ 
+.vk-toast__action:focus-visible { outline-color: currentColor; box-shadow: var(--vk-focus); }
+
+.vk-sky {
+  --vk-sky-top: var(--vk-sky-noon-top);
+  --vk-sky-bottom: var(--vk-sky-noon-bottom);
+  --vk-sky-text: var(--vk-sky-noon-text);
+  --vk-sky-sun: var(--vk-sky-noon-sun);
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(180deg, var(--vk-sky-top), var(--vk-sky-bottom));
+  color: var(--vk-sky-text);
+}
+.vk-sky[data-phase="dawn"] { --vk-sky-top: var(--vk-sky-dawn-top); --vk-sky-bottom: var(--vk-sky-dawn-bottom); --vk-sky-text: var(--vk-sky-dawn-text); --vk-sky-sun: var(--vk-sky-dawn-sun); }
+.vk-sky[data-phase="morning"] { --vk-sky-top: var(--vk-sky-morning-top); --vk-sky-bottom: var(--vk-sky-morning-bottom); --vk-sky-text: var(--vk-sky-morning-text); --vk-sky-sun: var(--vk-sky-morning-sun); }
+.vk-sky[data-phase="golden"] { --vk-sky-top: var(--vk-sky-golden-top); --vk-sky-bottom: var(--vk-sky-golden-bottom); --vk-sky-text: var(--vk-sky-golden-text); --vk-sky-sun: var(--vk-sky-golden-sun); }
+.vk-sky[data-phase="dusk"] { --vk-sky-top: var(--vk-sky-dusk-top); --vk-sky-bottom: var(--vk-sky-dusk-bottom); --vk-sky-text: var(--vk-sky-dusk-text); --vk-sky-sun: var(--vk-sky-dusk-sun); }
+.vk-sky[data-phase="night"] { --vk-sky-top: var(--vk-sky-night-top); --vk-sky-bottom: var(--vk-sky-night-bottom); --vk-sky-text: var(--vk-sky-night-text); --vk-sky-sun: var(--vk-sky-night-sun); }
+.vk-sky__sun {
+  position: absolute;
+  top: var(--vk-space-5);
+  right: var(--vk-space-6);
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: var(--vk-sky-sun);
+  box-shadow: 0 0 48px 12px color-mix(in oklch, var(--vk-sky-sun) 45%, transparent);
+}
+.vk-sky__content { position: relative; padding: var(--vk-space-5); }
+[data-time="subtle"] .vk-sky { background: color-mix(in oklch, var(--vk-sky-top) 30%, var(--vk-color-bg)); color: var(--vk-color-text); }
+[data-time="subtle"] .vk-sky__sun { display: none; }
+[data-time="off"] .vk-sky { background: var(--vk-color-bg); color: var(--vk-color-text); }
+[data-time="off"] .vk-sky__sun { display: none; }
+[data-vibe="studio"] .vk-sky__sun { width: 10px; height: 10px; box-shadow: 0 0 10px 2px var(--vk-sky-sun); }
+[data-vibe="quiet"] .vk-sky__sun, [data-vibe="paper"] .vk-sky__sun { display: none; }
+
+
+
+
+
+
+
+
+
+
+@media (forced-colors: active) {
+  
+  .vk-toast { border: 1px solid CanvasText; }
+}
+
+ 
+.sl-danger{ white-space: nowrap; } .sh-root .vk-button{ white-space: nowrap; }
+
+ 
+
+
+
+
+
+ 
+a[href*="CardPage"], a[class*="btn"], button[class*="btn"], a[class*="-button"], button[class*="-button"]{ white-space: nowrap; flex-shrink: 0; } .sh-root .vk-button{ white-space: nowrap; flex-shrink: 0; }
+
+ 
+a[href*="CardPage"], a[class*="icon"][style*="width: auto"], button[class*="icon"][style*="width: auto"] { display: inline-flex !important; flex-direction: row !important; align-items: center !important; justify-content: center; gap: 8px; }
+</style>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Azeret+Mono:ital,wght@1,400&amp;display=swap" data-font-variant=""><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Azeret+Mono:ital,wght@1,500&amp;display=swap" data-font-variant=""><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Azeret+Mono:ital,wght@1,600&amp;display=swap" data-font-variant=""><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&amp;family=Azeret+Mono:wght@400;500;600&amp;family=Atkinson+Hyperlegible+Next:wght@400;700&amp;family=Bricolage+Grotesque:opsz,wght@12..96,400..800&amp;family=Figtree:wght@400..800&amp;family=Geist:wght@400..700&amp;family=Instrument+Sans:wght@400..700&amp;family=Martian+Mono:wght@400..600&amp;family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..600&amp;display=swap" data-dc-tpl="1"><style data-dc-tpl="2">
+
+body { margin: 0; }
+:where(*, *::before, *::after) { box-sizing: border-box; }
+:where(a) { color: inherit; }
+:where(button:where(:not(.vk-button))) { font: inherit; color: inherit; }
+:where(.page) *, :where(.page) *::before, :where(.page) *::after { box-sizing: border-box; }
+
+
+:where(.page a) { color: var(--vk-color-text); text-underline-offset: 3px; }
+:where(.page button) { font-family: var(--vk-font-body); }
+:where(.page input, .page select, .page textarea) { font-family: var(--vk-font-body); font-size: 16px; color: var(--vk-color-text); }
+
+/* ---- type system: one scale, every screen ---- */
+.t-h1 { margin: 0; font: 700 2rem/1.15 var(--vk-font-display); letter-spacing: -0.01em; }
+.t-h2 { margin: 0; font: 700 1.25rem/1.3 var(--vk-font-display); }
+.t-h3 { margin: 0; font: 700 1rem/1.35 var(--vk-font-body); }
+.t-eyebrow { margin: 0; font: 600 0.8125rem/1.3 var(--vk-font-display); letter-spacing: 0.04em; color: var(--vk-color-muted); }
+.t-body { margin: 0; font-size: 1rem; line-height: 1.55; }
+.t-meta { margin: 0; font-size: 0.875rem; line-height: 1.45; color: var(--vk-color-muted); }
+.t-num { font-variant-numeric: tabular-nums; }
+.t-key { font-family: var(--vk-font-mono); font-size: 0.75rem; color: var(--vk-color-muted); overflow-wrap: anywhere; }
+[data-vibe="quiet"] .t-h1 { font-size: 1.875rem; }
+[data-vibe="quiet"] .page a { text-decoration: underline; }
+
+/* ---- shell ---- */
+.page { width: 100%; max-width: 1280px; margin: 0 auto; padding: var(--vk-space-6) var(--vk-space-6) var(--vk-space-7); display: flex; flex-direction: column; gap: var(--vk-space-5); }
+
+/* ---- shared pieces ---- */
+.panel { background: var(--vk-color-surface); border: 1px solid var(--vk-color-line); border-radius: var(--vk-radius-md); }
+.panel-head { display: flex; flex-wrap: wrap; align-items: center; gap: var(--vk-space-3); padding: var(--vk-space-4) var(--vk-space-5); border-bottom: 1px solid var(--vk-color-line); }
+.panel-body { padding: var(--vk-space-4) var(--vk-space-5); }
+.chip { display: inline-flex; align-items: center; gap: 4px; min-height: 26px; padding: 2px 10px; border-radius: var(--vk-radius-pill); background: var(--vk-color-raised); color: var(--vk-color-text); font-size: 0.8125rem; font-weight: 600; line-height: 1.2; overflow-wrap: anywhere; }
+.chip-line { background: transparent; box-shadow: inset 0 0 0 1px var(--vk-color-line); color: var(--vk-color-muted); }
+.chip-ok { background: var(--vk-color-success-wash); color: var(--vk-color-success-text); }
+.chip-signal { background: var(--vk-color-signal-wash); color: var(--vk-color-signal-text); box-shadow: inset 0 0 0 1px var(--vk-color-signal); }
+.count-signal { display: inline-grid; place-items: center; min-width: 22px; height: 22px; padding: 0 6px; border-radius: var(--vk-radius-pill); background: var(--vk-color-signal-text); color: var(--vk-color-primary-fg); font-size: 0.75rem; font-weight: 700; }
+.count { display: inline-grid; place-items: center; min-width: 22px; height: 22px; padding: 0 6px; border-radius: var(--vk-radius-pill); background: var(--vk-color-raised); color: var(--vk-color-muted); font-size: 0.75rem; font-weight: 700; }
+
+.face { display: inline-block; flex: none; line-height: 0; }
+.face svg { display: block; width: 100%; height: 100%; }
+.field { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.field label, .field .lbl { font-size: 0.875rem; font-weight: 600; }
+.input { width: 100%; min-height: 44px; padding: 0 var(--vk-space-3); border: 1.5px solid var(--vk-color-faint); border-radius: var(--vk-radius-sm); background: var(--vk-color-surface); color: var(--vk-color-text); font-size: 16px; }
+textarea.input { padding: var(--vk-space-3); min-height: 96px; line-height: 1.5; resize: vertical; }
+.input[readonly] { background: var(--vk-color-raised); border-color: var(--vk-color-line); }
+.hint { margin: 0; font-size: 0.8125rem; color: var(--vk-color-muted); }
+.saved { display: inline-flex; align-items: center; gap: 6px; font-size: 0.875rem; color: var(--vk-color-success-text); }
+.unsaved { display: inline-flex; align-items: center; gap: 6px; font-size: 0.875rem; color: var(--vk-color-muted); }
+.tabs { display: flex; flex-wrap: wrap; gap: var(--vk-space-1); border-bottom: 1px solid var(--vk-color-line); }
+.tab { display: inline-flex; align-items: center; gap: var(--vk-space-2); min-height: 48px; padding: 0 var(--vk-space-4); color: var(--vk-color-muted) !important; text-decoration: none !important; font-weight: 600; border-bottom: 3px solid transparent; margin-bottom: -1px; }
+.tab[aria-selected="true"] { color: var(--vk-color-text) !important; border-bottom-color: var(--vk-color-primary); }
+.check { display: inline-flex; align-items: flex-start; gap: var(--vk-space-2); min-height: 44px; padding-top: 10px; cursor: pointer; }
+.check input { width: 20px; height: 20px; margin: 2px 0 0; accent-color: var(--vk-color-primary); }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+details > summary { list-style: none; cursor: pointer; }
+details > summary::-webkit-details-marker { display: none; }
+.disc-ico { transition: transform var(--vk-motion-fast) var(--vk-motion-easing); display: inline-grid; }
+details[open] > summary .disc-ico { transform: rotate(180deg); }
+.note { display: flex; gap: var(--vk-space-3); align-items: flex-start; padding: var(--vk-space-3) var(--vk-space-4); border-radius: var(--vk-radius-sm); background: var(--vk-color-raised); font-size: 0.9375rem; }
+[data-vibe="quiet"] .panel { border-width: 1px; }
+
+
+.alist { list-style: none; margin: 0; padding: 0; }
+.arow { display: grid; grid-template-columns: 32px minmax(180px, 1.2fr) minmax(0, 2fr) auto 92px auto; align-items: center; gap: var(--vk-space-4); padding: var(--vk-space-3) var(--vk-space-5); border-top: 1px solid var(--vk-color-line); min-height: 64px; }
+.arow:first-child { border-top: 0; }
+.arow-edit { grid-template-columns: 32px minmax(0, 1fr); align-items: start; background: var(--vk-color-raised); }
+.editgrid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--vk-space-4); }
+.caps { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; min-width: 0; }
+.pick { border: 0; cursor: pointer; min-height: 36px; padding: 0 12px; }
+.pick[aria-pressed="true"] { background: var(--vk-color-primary); color: var(--vk-color-primary-fg); }
+.pick[aria-pressed="false"] { background: var(--vk-color-surface); box-shadow: inset 0 0 0 1px var(--vk-color-line); color: var(--vk-color-muted); }
+.linked { display: inline-flex; align-items: center; gap: 6px; color: var(--vk-color-success-text); white-space: nowrap; }
+.menu { position: relative; }
+.menu > summary { gap: 6px; }
+.menu-pop { position: absolute; right: 0; top: calc(100% + 6px); z-index: 5; width: 430px; display: flex; flex-direction: column; padding: var(--vk-space-2); background: var(--vk-color-surface); border: 1px solid var(--vk-color-line); border-radius: var(--vk-radius-md); box-shadow: 0 12px 32px color-mix(in oklch, var(--vk-color-text) 18%, transparent); }
+.mi svg { flex: none; }
+.mi { white-space: nowrap; }
+.mi { display: flex; align-items: center; gap: var(--vk-space-3); min-height: 44px; padding: 0 var(--vk-space-3); border: 0; border-radius: var(--vk-radius-sm); background: transparent; color: var(--vk-color-text); font-size: 0.9375rem; text-align: left; cursor: pointer; }
+.mi:hover { background: var(--vk-color-raised); }
+.mi-danger { color: var(--vk-color-text); }
+.mi-group { display: flex; flex-direction: column; gap: 2px; margin: var(--vk-space-2) 0; padding: var(--vk-space-2) 0; border-top: 1px solid var(--vk-color-line); border-bottom: 1px solid var(--vk-color-line); }
+.tokrow { display: grid; grid-template-columns: 1fr auto auto; align-items: center; gap: var(--vk-space-2); padding-left: var(--vk-space-3); }
+.legend { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--vk-space-4); }
+.legend > div { display: flex; gap: var(--vk-space-3); align-items: flex-start; }
+.banner { display: flex; flex-wrap: wrap; align-items: center; gap: var(--vk-space-3); padding: var(--vk-space-4) var(--vk-space-5); border-radius: var(--vk-radius-md); background: var(--vk-color-success-wash); color: var(--vk-color-text); }
+.tokbox { flex: 1 1 320px; min-width: 0; padding: 10px var(--vk-space-3); border-radius: var(--vk-radius-sm); background: var(--vk-color-surface); font-family: var(--vk-font-mono); font-size: 0.875rem; overflow-wrap: anywhere; }
+.colhead { display: grid; grid-template-columns: 32px minmax(180px, 1.2fr) minmax(0, 2fr) auto 92px auto; gap: var(--vk-space-4); padding: var(--vk-space-3) var(--vk-space-5); border-bottom: 1px solid var(--vk-color-line); }
+.pick[aria-pressed][data-unused] { color: var(--vk-color-faint); }
+.revoke { background: var(--vk-color-surface); color: var(--vk-color-text); box-shadow: inset 0 0 0 2px var(--vk-color-text); }
+
+
+
+/* Quiet shell: plain text navigation, no rail, no icons (donor: SP-Board-Quiet) */
+.sh-root { min-height: 100%; display: flex; flex-direction: column; background: var(--vk-color-bg); color: var(--vk-color-text); font-family: var(--vk-font-body); font-size: 16px; line-height: 1.45; }
+.qn { position: relative; background: var(--vk-color-bg); color: var(--vk-color-text); border-bottom: 1px solid var(--vk-color-line); font-family: var(--vk-font-body); font-size: 18px; line-height: 1.4; }
+.qn *, .qn *::before, .qn *::after { box-sizing: border-box; }
+.qn-skip { position: absolute; left: var(--vk-space-6); top: -200px; z-index: 2; display: inline-flex; align-items: center; min-height: 44px; padding: 0 var(--vk-space-4); background: var(--vk-color-surface); border: 2px solid var(--vk-color-text); border-radius: var(--vk-radius-sm); color: var(--vk-color-text); font-weight: 700; }
+.qn-skip:focus { top: var(--vk-space-2); }
+.qn-row { display: flex; flex-wrap: wrap; align-items: center; gap: 0 var(--vk-space-5); min-height: 60px; padding: var(--vk-space-1) var(--vk-space-6); }
+.qn-row + .qn-row { border-top: 1px solid var(--vk-color-line); }
+.qn a, .qn-link { display: inline-flex; align-items: center; min-height: 44px; padding: 0; border: 0; background: transparent; color: var(--vk-color-text); font: inherit; text-decoration: underline; text-underline-offset: 4px; cursor: pointer; }
+.qn a[aria-current="page"], .qn-link[aria-pressed="true"] { font-weight: 700; text-decoration: none; }
+.qn a.qn-name { font-weight: 700; text-decoration: none; margin-right: var(--vk-space-3); }
+.qn-links { display: flex; flex-wrap: wrap; align-items: center; gap: 0 var(--vk-space-5); margin: 0; padding: 0; list-style: none; }
+.qn-need { margin-left: 0.3em; font-weight: 700; color: var(--vk-color-signal-text); }
+.qn-end { margin-left: auto; display: flex; flex-wrap: wrap; align-items: center; gap: 0 var(--vk-space-5); }
+.qn-dash { color: var(--vk-color-muted); }
+.qn-board { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 0 var(--vk-space-2); }
+.qn-board b { font-weight: 700; }
+.qn-btn { display: inline-flex; align-items: center; gap: var(--vk-space-2); min-height: 44px; padding: 0 var(--vk-space-4); border: 2px solid var(--vk-color-text); border-radius: var(--vk-radius-sm); background: var(--vk-color-surface); color: var(--vk-color-text); font: inherit; font-size: 17px; font-weight: 700; white-space: nowrap; cursor: pointer; }
+.qn-kbd { font: 400 14px/1 var(--vk-font-mono); color: var(--vk-color-muted); }
+.qn-view { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 0 var(--vk-space-2); }
+.qn-view .qn-dot { color: var(--vk-color-muted); }
+.qn-live { color: var(--vk-color-muted); font-size: 17px; }
+.qn-live b { color: var(--vk-color-success-text); }
+.qn-note { color: var(--vk-color-muted); font-size: 17px; }
+.qn a:focus-visible, .qn button:focus-visible { outline: 3px solid var(--vk-color-text); outline-offset: 3px; }
+
+</style><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible+Next:ital,wght@1,400&amp;display=swap" data-font-variant=""><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible+Next:ital,wght@1,700&amp;display=swap" data-font-variant=""><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:ital,wght@1,400..800&amp;display=swap" data-font-variant=""><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:ital,wght@1,400..700&amp;display=swap" data-font-variant=""><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Sans:ital,wght@1,400..700&amp;display=swap" data-font-variant=""><style data-dc-editor-style="">body:not([data-dc-editor-overlay-hidden]) [data-dc-editor-hover][data-dc-editor-hover-stroke]:not([data-dc-editor-selected]){filter:drop-shadow(0 0 calc(1*var(--dc-chrome-unit,1px)) color-mix(in srgb,#2a78d6 90%,transparent)) drop-shadow(0 0 calc(2*var(--dc-chrome-unit,1px)) color-mix(in srgb,#2a78d6 55%,transparent))!important;}body:not([data-dc-editor-overlay-hidden]):not([data-dc-editor-proxy="copy"]) [data-dc-editor-dragging],body:not([data-dc-editor-overlay-hidden]):not([data-dc-editor-proxy]) [data-dc-dragging],body[data-dc-editor-brk]:not([data-dc-editor-overlay-hidden]) [data-dc-drag-follower]{outline:calc(2*var(--dc-chrome-unit,1px)) solid #2a78d6!important;outline-offset:calc(-1*var(--dc-chrome-unit,1px))!important;opacity:0.55!important;}body[data-dc-editor-proxy="move"]:not([data-dc-editor-overlay-hidden]) [data-dc-editor-dragging],body[data-dc-editor-proxy="move"]:not([data-dc-editor-overlay-hidden]) [data-dc-dragging],body[data-dc-editor-proxy="move"]:not([data-dc-editor-overlay-hidden]) [data-dc-editor-dragging]>*,body[data-dc-editor-proxy="move"]:not([data-dc-editor-overlay-hidden]) [data-dc-dragging]>*{opacity:0!important;outline:none!important;}[data-dc-editor-drag-proxy],[data-dc-editor-drag-proxy] *{pointer-events:none!important;}body[data-dc-editor-on]:not([data-dc-editor-tool="interact"]) *{cursor:default!important;user-select:none!important;}body[data-dc-editor-on]:not([data-dc-editor-tool="interact"]) :not([data-dc-editor-overlay-root]):not([data-dc-editor-overlay-root] *){pointer-events:auto!important;transition:none!important;animation:none!important;}body[data-dc-editor-on][data-dc-editor-brk]:not([data-dc-editor-overlay-hidden]) [data-dc-editor-dragging]:not([data-dc-editor-overlay-root]) :not([data-dc-editor-overlay-root]),body[data-dc-editor-on][data-dc-editor-brk]:not([data-dc-editor-overlay-hidden]) [data-dc-dragging]:not([data-dc-editor-overlay-root]) :not([data-dc-editor-overlay-root]),body[data-dc-editor-on][data-dc-editor-brk]:not([data-dc-editor-overlay-hidden]) [data-dc-drag-follower]:not([data-dc-editor-overlay-root]),body[data-dc-editor-on][data-dc-editor-brk]:not([data-dc-editor-overlay-hidden]) [data-dc-drag-follower]:not([data-dc-editor-overlay-root]) :not([data-dc-editor-overlay-root]),body[data-dc-editor-move][data-dc-editor-brk]:not([data-dc-editor-overlay-hidden]) [data-dc-editor-dragging]:not([data-dc-editor-overlay-root]) :not([data-dc-editor-overlay-root]),body[data-dc-editor-move][data-dc-editor-brk]:not([data-dc-editor-overlay-hidden]) [data-dc-dragging]:not([data-dc-editor-overlay-root]) :not([data-dc-editor-overlay-root]),body[data-dc-editor-move][data-dc-editor-brk]:not([data-dc-editor-overlay-hidden]) [data-dc-drag-follower]:not([data-dc-editor-overlay-root]),body[data-dc-editor-move][data-dc-editor-brk]:not([data-dc-editor-overlay-hidden]) [data-dc-drag-follower]:not([data-dc-editor-overlay-root]) :not([data-dc-editor-overlay-root]){pointer-events:none!important;}body[data-dc-editor-move] :not([data-dc-editor-overlay-root]):not([data-dc-editor-overlay-root] *){pointer-events:auto!important;transition:none!important;animation-duration:0s!important;animation-delay:0s!important;}body[data-dc-editor-on][data-dc-editor-tool="rect"] *,body[data-dc-editor-on][data-dc-editor-tool="frame"] *,body[data-dc-editor-on][data-dc-editor-tool="grid"] *,body[data-dc-editor-on][data-dc-editor-tool="oval"] *,body[data-dc-editor-on][data-dc-editor-tool="arrow"] *,body[data-dc-editor-on][data-dc-editor-tool="line"] *{cursor:crosshair!important;}body[data-dc-editor-on][data-dc-editor-tool="text"] *{cursor:text!important;}body[data-dc-editor-on][data-dc-editor-tool="draw"] *{cursor:url('data:image/svg+xml,%3Csvg%20xmlns=%22http://www.w3.org/2000/svg%22%20width=%2216%22%20height=%2216%22%20viewBox=%220%200%2016%2016%22%3E%3Cpath%20d=%22M2%2014l1-4%208-8a2.1%202.1%200%200%201%203%203l-8%208-4%201z%22%20fill=%22%23333%22%20stroke=%22%23fff%22%20stroke-width=%221%22/%3E%3C/svg%3E') 1 15, crosshair!important;}body[data-dc-editor-on]:not([data-dc-editor-tool]) [data-drags-parent],body[data-dc-editor-on]:not([data-dc-editor-tool]) [data-drags-parent] *{cursor:grab!important;}body[data-dc-editor-on]:not([data-dc-editor-tool]) [data-drags-parent]:active,body[data-dc-editor-on]:not([data-dc-editor-tool]) [data-drags-parent]:active *{cursor:grabbing!important;}body[data-dc-editor-on] [data-dc-editor-editing][contenteditable][contenteditable],body[data-dc-editor-on] [data-dc-editor-editing][contenteditable][contenteditable] *,body[data-dc-editor-on] [data-dc-editor-svg-editing]{cursor:text!important;}body[data-dc-editor-on] [data-dc-editor-editing="import"]{outline:none!important;}html:not([data-dc-canvas]):has(body[data-dc-editor-on]:not([data-dc-capturing]) .sc-host){background:var(--dc-editor-backdrop,#ededeb);}html:not([data-dc-canvas]) body[data-dc-editor-on]:not([data-dc-capturing]):has(.sc-host){background:var(--dc-editor-backdrop,#ededeb);}html:not([data-dc-canvas]) body[data-dc-editor-on] .sc-host:not(.sc-host .sc-host){min-height:calc(100vh - var(--dc-editor-host-vpad,0px));}html:not([data-dc-canvas]) body[data-dc-editor-on]:not([data-dc-capturing]) .sc-host:not(.sc-host .sc-host){background:var(--dc-editor-host-bg,#fff);}html[data-dc-frameless],html[data-dc-frameless] body[data-dc-editor-on],html[data-dc-frameless] body[data-dc-editor-on] .sc-host:not(.sc-host .sc-host){background:transparent!important;min-height:0!important;}html:has(body[data-dc-capturing]),body[data-dc-capturing]{transition:none!important;}html[data-dc-canvas]{overflow:hidden;}html[data-dc-canvas] body[data-dc-editor-on] .sc-host:not(.sc-host .sc-host)::before{content:"";position:absolute;left:-100000px;top:-100000px;width:200000px;height:200000px;pointer-events:none;background:repeating-linear-gradient(45deg,var(--dc-editor-hatch-ink,rgba(0,0,0,.05)) 0 8px,transparent 8px 16px);clip-path:polygon(0 0,100% 0,100% 50%,50% 50%,50% 100%,0 100%);}</style></head>
+<body>
+<div id="dc-root"><div class="sc-host" data-sc-name="SP-Workspace-Agents-Quiet"><div data-product="superpipeline" data-accent="product" data-dc-tpl="3" class="sh-root" data-vibe="quiet" data-theme="light" style="background: var(--vk-color-bg); color: var(--vk-color-text); font-family: var(--vk-font-body); min-height: 2900px;"><header data-dc-tpl="4" class="qn"><div data-dc-tpl="5" class="qn-row"><a data-dc-tpl="6" class="qn-skip" href="#content">Skip to content</a><a data-dc-tpl="7" class="qn-name" href="#home" aria-label="Superpipeline home">Superpipeline</a><nav data-dc-tpl="8" aria-label="Superpipeline"><ul data-dc-tpl="9" class="qn-links"><li data-dc-tpl="10"><a data-dc-tpl="11" href="#plan">Plan</a></li><li data-dc-tpl="12"><a data-dc-tpl="13" href="#operate">Operate <span data-dc-tpl="14" class="qn-need">(7 need you)</span></a></li><li data-dc-tpl="15"><a data-dc-tpl="16" href="#workspace" aria-current="page">Workspace</a></li></ul></nav><div data-dc-tpl="17" class="qn-end"><button data-dc-tpl="18" class="qn-link" type="button" aria-haspopup="dialog">Appearance</button><button data-dc-tpl="19" class="qn-link" type="button" aria-pressed="false">Dark theme</button><span data-dc-tpl="20"><a data-dc-tpl="21" href="#account" aria-haspopup="menu">Ira Mehta</a> <span data-dc-tpl="22" class="qn-dash" aria-hidden="true">—</span> <button data-dc-tpl="23" class="qn-link" type="button">Sign out</button></span></div></div></header><main data-dc-tpl="24" class="page" id="content" tabindex="-1"><div data-dc-tpl="25" style="display: flex; flex-direction: column; gap: var(--vk-space-3);">
+  <a data-dc-tpl="26" href="#" class="t-meta" style="display: inline-flex; align-items: center; gap: 4px; min-height: 32px; width: fit-content; color: var(--vk-color-muted);"><svg data-dc-tpl="27" aria-hidden="true" focusable="false" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path data-dc-tpl="28" d="M15 6l-6 6 6 6"></path></svg>Back to Developer Experience</a>
+  <div data-dc-tpl="29" style="display: flex; flex-wrap: wrap; align-items: flex-end; gap: var(--vk-space-4); justify-content: space-between;">
+    <div data-dc-tpl="30" style="display: flex; flex-direction: column; gap: 6px; min-width: 0px;">
+      <p data-dc-tpl="31" class="t-eyebrow">Workspace · shared by every board</p>
+      <h1 data-dc-tpl="32" class="t-h1">Workspace</h1>
+      <p data-dc-tpl="33" class="t-body" style="color: var(--vk-color-muted); max-width: 70ch;">The agents that can claim cards on your boards. A card in a stage goes to an agent holding that stage's capability.</p>
+    </div>
+  </div>
+  <div data-dc-tpl="34" class="tabs" role="tablist" aria-label="Workspace"><a data-dc-tpl="35" class="tab" role="tab" aria-selected="false" href="#">Needs you<span data-dc-tpl="36" class="count-signal">7</span><span data-dc-tpl="37" class="sr"> waiting on you</span></a><a data-dc-tpl="38" class="tab" role="tab" aria-selected="true" href="#">Agents<span data-dc-tpl="39" class="count">22</span></a><a data-dc-tpl="40" class="tab" role="tab" aria-selected="false" href="#">Capabilities<span data-dc-tpl="41" class="count">19</span></a><a data-dc-tpl="42" class="tab" role="tab" aria-selected="false" href="#">Labels<span data-dc-tpl="43" class="count">3</span></a><a data-dc-tpl="44" class="tab" role="tab" aria-selected="false" href="#">People<span data-dc-tpl="45" class="count">1</span></a><a data-dc-tpl="46" class="tab" role="tab" aria-selected="false" href="#">Connections</a></div></div><div data-dc-tpl="47" class="banner" role="status">
+  <svg data-dc-tpl="48" aria-hidden="true" focusable="false" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle data-dc-tpl="49" cx="8" cy="15" r="4"></circle><path data-dc-tpl="50" d="M11 12l9-9M17 6l3 3M15 8l2 2"></path></svg>
+  <p data-dc-tpl="51" class="t-body" style="flex: 1 1 280px;"><strong data-dc-tpl="52">writer-quill's token.</strong> Copy it now — it won't be shown again.</p>
+  <code data-dc-tpl="53" class="tokbox" aria-label="New token for writer-quill">spa_••••••••••••••••••••••••••••••••••••••••••••••••</code>
+  <button type="button" class="vk-button vk-button--secondary btn-sm"><span class="vk-button__icon" aria-hidden="true"><svg data-dc-tpl="55" aria-hidden="true" focusable="false" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect data-dc-tpl="56" x="8" y="8" width="12" height="12" rx="2"></rect><path data-dc-tpl="57" d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"></path></svg></span>Copy token</button>
+  <button type="button" class="vk-button vk-button--quiet btn-sm">Done</button></div><section data-dc-tpl="59" class="panel" aria-labelledby="agents-h">
+  <div data-dc-tpl="60" class="panel-head">
+    <h2 data-dc-tpl="61" class="t-h2" id="agents-h">22 agents</h2>
+    <span data-dc-tpl="62" class="t-meta">All linked to AgentPod · none working right now</span>
+    <a style="margin-left: auto; text-decoration: none;" href="#new-agent" class="vk-button vk-button--primary btn-sm"><span class="vk-button__icon" aria-hidden="true"><svg data-dc-tpl="64" aria-hidden="true" focusable="false" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path data-dc-tpl="65" d="M12 5v14M5 12h14"></path></svg></span>New agent</a>
+  </div>
+  <div data-dc-tpl="66" class="panel-body legend" style="border-bottom: 1px solid var(--vk-color-line);">
+    <div data-dc-tpl="67"><span data-dc-tpl="68" class="linked"><svg data-dc-tpl="69" aria-hidden="true" focusable="false" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path data-dc-tpl="70" d="M5 12.5l4.5 4.5L19 7.5"></path></svg></span><p data-dc-tpl="71" class="t-meta"><strong data-dc-tpl="72" style="color: var(--vk-color-text);">Linked to AgentPod</strong> — this agent has an AgentPod identity, so it signs in as itself and its work shows under its own name.</p></div>
+    <div data-dc-tpl="73"><span data-dc-tpl="74"><svg data-dc-tpl="75" aria-hidden="true" focusable="false" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle data-dc-tpl="76" cx="8" cy="15" r="4"></circle><path data-dc-tpl="77" d="M11 12l9-9M17 6l3 3M15 8l2 2"></path></svg></span><p data-dc-tpl="78" class="t-meta"><strong data-dc-tpl="79" style="color: var(--vk-color-text);">Tokens</strong> — access keys it uses to reach this workspace. Revoke one from <em data-dc-tpl="80">Actions</em> if a station is retired.</p></div>
+    <div data-dc-tpl="81"><span data-dc-tpl="82"><svg data-dc-tpl="83" aria-hidden="true" focusable="false" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle data-dc-tpl="84" cx="5" cy="12" r="1.4"></circle><circle data-dc-tpl="85" cx="12" cy="12" r="1.4"></circle><circle data-dc-tpl="86" cx="19" cy="12" r="1.4"></circle></svg></span><p data-dc-tpl="87" class="t-meta"><strong data-dc-tpl="88" style="color: var(--vk-color-text);">Actions</strong> — edit, issue or revoke tokens, unlink, delete.</p></div>
+  </div>
+  <div data-dc-tpl="89" class="colhead t-eyebrow" aria-hidden="true"><span data-dc-tpl="90"></span><span data-dc-tpl="91">Agent</span><span data-dc-tpl="92">Capabilities</span><span data-dc-tpl="93">AgentPod</span><span data-dc-tpl="94">Tokens</span><span data-dc-tpl="95" style="min-width: 116px;"></span></div>
+  <ul data-dc-tpl="96" class="alist">
+  <li data-dc-tpl="97" class="arow">
+    <span data-dc-tpl="98" class="face" style="width: 32px; height: 32px;"><svg data-dc-tpl="99" viewBox="-2 -4 68 70" width="32" height="32" role="img" aria-label="research-ray, resting" data-mood="resting"><circle data-dc-tpl="100" cx="32" cy="32" r="30" fill="var(--vk-mood-resting)"></circle><circle data-dc-tpl="101" cx="32" cy="4" r="7" fill="rgb(35 35 58)"></circle><g data-dc-tpl="102" data-eyes="closed"><path data-dc-tpl="103" d="M19 29 Q23 32 27 29 M37 29 Q41 32 45 29" fill="none" stroke="var(--vk-face-ink)" stroke-width="2.6" stroke-linecap="round"></path></g><circle data-dc-tpl="104" cx="17" cy="37" r="4" fill="rgb(255 158 138 / 0.5)"></circle><circle data-dc-tpl="105" cx="47" cy="37" r="4" fill="rgb(255 158 138 / 0.5)"></circle><path data-dc-tpl="106" d="M27 43 Q32 45 37 43" fill="none" stroke="var(--vk-face-ink)" stroke-width="3" stroke-linecap="round"></path></svg></span>
+    <div data-dc-tpl="107" style="min-width: 0px;"><p data-dc-tpl="108" class="t-h3" style="overflow-wrap: anywhere;">research-ray</p><p data-dc-tpl="109" class="t-meta">Resting · nothing claimed</p></div>
+    <div data-dc-tpl="110" class="caps"><span data-dc-tpl="111" class="chip chip-line">research</span></div>
+    <p data-dc-tpl="112" class="t-meta linked"><svg data-dc-tpl="113" aria-hidden="true" focusable="false" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path data-dc-tpl="114" d="M5 12.5l4.5 4.5L19 7.5"></path></svg><span data-dc-tpl="115">Linked to AgentPod</span></p>
+    <p data-dc-tpl="116" class="t-meta t-num" style="color: var(--vk-color-text);">5 tokens</p>
+    <details data-dc-tpl="117" class="menu">
+      <summary data-dc-tpl="118" class="vk-button vk-button--secondary btn-sm" aria-label="Actions for research-ray" style="min-width: 116px;">Actions <span data-dc-tpl="119" class="disc-ico"><svg data-dc-tpl="120" aria-hidden="true" focusable="false" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path data-dc-tpl="121" d="M6 9l6 6 6-6"></path></svg></span></summary>
+      <div data-dc-tpl="122" class="menu-pop" role="menu" aria-label="Actions for research-ray">
+        <button data-dc-tpl="123" type="button" role="menuitem" class="mi"><svg data-dc-tpl="124" aria-hidden="true" focusable="false" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path data-dc-tpl="125" d="M4 20h4L19 9l-4-4L4 16z"></path></svg>Edit agent</button>
+        <button data-dc-tpl="126" type="button" role="menuitem" class="mi"><svg data-dc-tpl="127" aria-hidden="true" focusable="false" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle data-dc-tpl="128" cx="8" cy="15" r="4"></circle><path data-dc-tpl="129" d="M11 12l9-9M17 6l3 3M15 8l2 2"></path></svg>Issue a token</button>
+        <button data-dc-tpl="130" type="button" role="menuitem" class="mi"><svg data-dc-tpl="131" aria-hidden="true" focusable="false" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle data-dc-tpl="132" cx="8" cy="15" r="4"></circle><path data-dc-tpl="133" d="M11 12l9-9M17 6l3 3M15 8l2 2"></path></svg>Issue a run-only token<span data-dc-tpl="134" class="t-meta" style="margin-left: auto;">can run cards, not change them</span></button>
+        <button data-dc-tpl="135" type="button" role="menuitem" class="mi"><svg data-dc-tpl="136" aria-hidden="true" focusable="false" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path data-dc-tpl="137" d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"></path><path data-dc-tpl="138" d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"></path></svg>Unlink from AgentPod</button>
+        <div data-dc-tpl="139" class="mi-group">
+          <p data-dc-tpl="140" class="t-eyebrow" style="padding: 0 var(--vk-space-3);">5 tokens in use</p>
+          <div data-dc-tpl="141" class="tokrow"><span data-dc-tpl="142" class="t-body">Token 1</span><span data-dc-tpl="143" class="t-meta">issued to research-ray</span><button aria-label="Revoke token 1 of research-ray" type="button" class="vk-button vk-button--primary btn-sm revoke">Revoke</button></div><div data-dc-tpl="145" class="tokrow"><span data-dc-tpl="146" class="t-body">Token 2</span><span data-dc-tpl="147" class="t-meta">issued to research-ray</span><button aria-label="Revoke token 2 of research-ray" type="button" class="vk-button vk-button--primary btn-sm revoke">Revoke</button></div>
+          <p data-dc-tpl="149" class="t-meta" style="padding: 0 var(--vk-space-3);">and 3 more · <a data-dc-tpl="150" href="#">show all 5</a></p>
+        </div>
+        <button data-dc-tpl="151" type="button" role="menuitem" class="mi mi-danger"><svg data-dc-tpl="152" aria-hidden="true" focusable="false" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path data-dc-tpl="153" d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"></path></svg>Delete agent…</button>
+      </div>
+    </details>
+  </li><li data-dc-tpl="154" class="arow">
+    <span data-dc-tpl="155" class="face" style="width: 32px; height: 32px;"><svg data-dc-tpl="156" viewBox="-2 -4 68 70" width="32" height="32" role="img" aria-label="optimizer-ollie, resting" data-mood="resting"><circle data-dc-tpl="157" cx="32" cy="32" r="30" fill="var(--vk-mood-resting)"></circle><path data-dc-tpl="158" d="M28 4 Q32 -2 36 4 Q34 8 32 6 Q30 8 28 4Z" fill="rgb(194 112 61)"></path><g data-dc-tpl="159" data-eyes="closed"><path data-dc-tpl="160" d="M19 29 Q23 32 27 29 M37 29 Q41 32 45 29" fill="none" stroke="var(--vk-face-ink)" stroke-width="2.6" stroke-linecap="round"></path></g><path data-dc-tpl="161" d="M27 43 Q32 45 37 43" fill="none" stroke="var(--vk-face-ink)" stroke-width="3" stroke-linecap="round"></path></svg></span>
+    <div data-dc-tpl="162" style="min-width: 0px;"><p data-dc-tpl="163" class="t-h3" style="overflow-wrap: anywhere;">optimizer-ollie</p><p data-dc-tpl="164" class="t-meta">Resting · nothing claimed</p></div>
+    <div data-dc-tpl="165" class="caps"><span data-dc-tpl="166" class="chip chip-line">code</span></div>
+    <p data-dc-tpl="167" class="t-meta linked"><svg data-dc-tpl="168" aria-hidden="true" focusable="false" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path data-dc-tpl="169" d="M5 12.5l4.5 4.5L19 7.5"></path></svg><span data-dc-tpl="170">Linked to AgentPod</span></p>
+    <p data-dc-tpl="171" class="t-meta t-num" style="color: var(--vk-color-text);">2 tokens</p>
+    <details data-dc-tpl="172" class="menu">
+      <summary data-dc-tpl="173" class="vk-button vk-button--secondary btn-sm" aria-label="Actions for optimizer-ollie" style="min-width: 116px;">Actions <span data-dc-tpl="174" class="disc-ico"><svg data-dc-tpl="175" aria-hidden="true" focusable="false" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path data-dc-tpl="176" d="M6 9l6 6 6-6"></path></svg></span></summary>
+      <div data-dc-tpl="177" class="menu-pop" role="menu" aria-label="Actions for optimizer-ollie">
+        <button data-dc-tpl="178" type="button" role="menuitem" class="mi"><svg data-dc-tpl="179" aria-hidden="true" focusable="false" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path data-dc-tpl="180" d="M4 20h4L19 9l-4-4L4 16z"></path></svg>Edit agent</button>
+        <button data-dc-tpl="181" type="button" role="menuitem" class="mi"><svg data-dc-tpl="182" aria-hidden="true" focusable="false" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle data-dc-tpl="183" cx="8" cy="15" r="4"></circle><path data-dc-tpl="184" d="M11 12l9-9M17 6l3 3M15 8l2 2"></path></svg>Issue a token</button>
+        <button data-dc-tpl="185" type="button" role="menuitem" class="mi"><svg data-dc-tpl="186" aria-hidden="true" focusable="false" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle data-dc-tpl="187" cx="8" cy="15" r="4"></circle><path data-dc-tpl="188" d="M11 12l9-9M17 6l3 3M15 8l2 2"></path></svg>Issue a run-only token<span data-dc-tpl="189" class="t-meta" style="margin-left: auto;">can run cards, not change them</span></button>
+        <button data-dc-tpl="190" type="button" role="menuitem" class="mi"><svg data-dc-tpl="191" aria-hidden="true" focusable="false" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path data-dc-tpl="192" d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"></path><path data-dc-tpl="193" d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"></path></svg>Unlink from AgentPod</button>
+        <div data-dc-tpl="194" class="mi-group">
+          <p data-dc-tpl="195" class="t-eyebrow" style="padding: 0 var(--vk-space-3);">2 tokens in use</p>
+          <div data-dc-tpl="196" class="tokrow"><span data-dc-tpl="197" class="t-body">Token 1</span><span data-dc-tpl="198" class="t-meta">issued to optimizer-ollie</span><button aria-label="Revoke token 1 of optimizer-ollie" type="button" class="vk-button vk-button--primary btn-sm revoke">Revoke</button></div><div data-dc-tpl="200" class="tokrow"><span data-dc-tpl="201" class="t-body">Token 2</span><span data-dc-tpl="202" class="t-meta">issued to optimizer-ollie</span><button aria-label="Revoke token 2 of optimizer-ollie" type="button" class="vk-button vk-button--primary btn-sm revoke">Revoke</button></div>
+          
+        </div>
+        <button data-dc-tpl="204" type="button" role="menuitem" class="mi mi-danger"><svg data-dc-tpl="205" aria-hidden="true" focusable="false" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path data-dc-tpl="206" d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"></path></svg>Delete agent…</button>
+      </div>
+    </details>
+  </li><li data-dc-tpl="207" class="arow">
+    <span data-dc-tpl="208" class="face" style="width: 32px; height: 32px;"><svg data-dc-tpl="209" viewBox="-2 -4 68 70" width="32" height="32" role="img" aria-label="writer-quill, resting" data-mood="resting"><circle data-dc-tpl="210" cx="32" cy="32" r="30" fill="var(--vk-mood-resting)"></circle><path data-dc-tpl="211" d="M28 4 Q32 -2 36 4 Q34 8 32 6 Q30 8 28 4Z" fill="rgb(94 90 156)"></path><g data-dc-tpl="212" data-eyes="closed"><path data-dc-tpl="213" d="M19 29 Q23 32 27 29 M37 29 Q41 32 45 29" fill="none" stroke="var(--vk-face-ink)" stroke-width="2.6" stroke-linecap="round"></path></g><circle data-dc-tpl="214" cx="17" cy="37" r="4" fill="rgb(255 158 138 / 0.5)"></circle><circle data-dc-tpl="215" cx="47" cy="37" r="4" fill="rgb(255 158 138 / 0.5)"></circle><path data-dc-tpl="216" d="M27 43 Q32 45 37 43" fill="none" stroke="var(--vk-face-ink)" stroke-width="3" stroke-linecap="round"></path></svg></span>
+    <div data-dc-tpl="217" style="min-width: 0px;"><p data-dc-tpl="218" class="t-h3" style="overflow-wrap: anywhere;">writer-quill</p><p data-dc-tpl="219" class="t-meta">Resting · nothing claimed</p></div>
+    <div data-dc-tpl="220" class="caps"><span data-dc-tpl="221" class="chip chip-line">writing</span></div>
+    <p data-dc-tpl="222" class="t-meta linked"><svg data-dc-tpl="223" aria-hidden="true" focusable="false" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path data-dc-tpl="224" d="M5 12.5l4.5 4.5L19 7.5"></path></svg><span data-dc-tpl="225">Linked to AgentPod</span></p>
+    <p data-dc-tpl="226" class="t-meta t-num" style="color: var(--vk-color-text);">3 tokens</p>
+    <details data-dc-tpl="227" class="menu">
+      <summary data-dc-tpl="228" class="vk-button vk-button--secondary btn-sm" aria-label="Actions for writer-quill" style="min-width: 116px;">Actions <span data-dc-tpl="229" class="disc-ico"><svg data-dc-tpl="230" aria-hidden="true" focusable="false" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path data-dc-tpl="231" d="M6 9l6 6 6-6"></path></svg></span></summary>
+      <div data-dc-tpl="232" class="menu-pop" role="menu" aria-label="Actions for writer-quill">
+        <button data-dc-tpl="233" type="button" role="menuitem" class="mi"><svg data-dc-tpl="234" aria-hidden="true" focusable="false" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path data-dc-tpl="235" d="M4 20h4L19 9l-4-4L4 16z"></path></svg>Edit agent</button>
+        <button data-dc-tpl="236" type="button" role="menuitem" class="mi"><svg data-dc-tpl="237" aria-hidden="true" focusable="false" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle data-dc-tpl="238" cx="8" cy="15" r="4"></circle><path data-dc-tpl="239" d="M11 12l9-9M17 6l3 3M15 8l2 2"></path></svg>Issue a token</button>
+        <button data-dc-tpl="240" type="button" role="menuitem" class="mi"><svg data-dc-tpl="241" aria-hidden="true" focusable="false" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle data-dc-tpl="242" cx="8" cy="15" r="4"></circle><path data-dc-tpl="243" d="M11 12l9-9M17 6l3 3M15 8l2 2"></path></svg>Issue a run-only token<span data-dc-tpl="244" class="t-meta" style="margin-left: auto;">can run cards, not change them</span></button>
+        <button data-dc-tpl="245" type="button" role="menuitem" class="mi"><svg data-dc-tpl="246" aria-hidden="true" focusable="false" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path data-dc-tpl="247" d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"></path><path data-dc-tpl="248" d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"></path></svg>Unlink from AgentPod</button>
+        <div data-dc-tpl="249" class="mi-group">
+          <p data-dc-tpl="250" class="t-eyebrow" style="padding: 0 var(--vk-space-3);">3 tokens in use</p>
+          <div data-dc-tpl="251" class="tokrow"><span data-dc-tpl="252" class="t-body">Token 1</span><span data-dc-tpl="253" class="t-meta">issued to writer-quill</span><button aria-label="Revoke token 1 of writer-quill" type="button" class="vk-button vk-button--primary btn-sm revoke">Revoke</button></div><div data-dc-tpl="255" class="tokrow"><span data-dc-tpl="256" class="t-body">Token 2</span><span data-dc-tpl="257" class="t-meta">issued to writer-quill</span><button aria-label="Revoke token 2 of writer-quill" type="button" class="vk-button vk-button--primary btn-sm revoke">Revoke</button></div>
+          <p data-dc-tpl="259" class="t-meta" style="padding: 0 var(--vk-space-3);">and 1 more · <a data-dc-tpl="260" href="#">show all 3</a></p>
+        </div>
+        <button data-dc-tpl="261" type="button" role="menuitem" class="mi mi-danger"><svg data-dc-tpl="262" aria-hidden="true" focusable="false" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path data-dc-tpl="263" d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"></path></svg>Delete agent…</button>
+      </div>
+    </details>
+  </li><li data-dc-tpl="264" class="arow">
+    <span data-dc-tpl="265" class="face" style="width: 32px; height: 32px;"><svg data-dc-tpl="266" viewBox="-2 -4 68 70" width="32" height="32" role="img" aria-label="strategy-sam, resting" data-mood="resting"><circle data-dc-tpl="267" cx="32" cy="32" r="30" fill="var(--vk-mood-resting)"></circle><g data-dc-tpl="268" data-eyes="closed"><path data-dc-tpl="269" d="M19 29 Q23 32 27 29 M37 29 Q41 32 45 29" fill="none" stroke="var(--vk-face-ink)" stroke-width="2.6" stroke-linecap="round"></path></g><path data-dc-tpl="270" d="M27 43 Q32 45 37 43" fill="none" stroke="var(--vk-face-ink)" stroke-width="3" stroke-linecap="round"></path></svg></span>
+    <div data-dc-tpl="271" style="min-width: 0px;"><p data-dc-tpl="272" class="t-h3" style="overflow-wrap: anywhere;">strategy-sam</p><p data-dc-tpl="273" class="t-meta">Resting · nothing claimed</p></div>
+    <div data-dc-tpl="274" class="caps"><span data-dc-tpl="275" class="chip chip-line">planning</span></div>
+    <p data-dc-tpl="276" class="t-meta linked"><svg data-dc-tpl="277" aria-hidden="true" focusable="false" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path data-dc-tpl="278" d="M5 12.5l4.5 4.5L19 7.5"></path></svg><span data-dc-tpl="279">Linked to AgentPod</span></p>
+    <p data-dc-tpl="280" class="t-meta t-num" style="color: var(--vk-color-text);">2 tokens</p>
+    <details data-dc-tpl="281" class="menu">
+      <summary data-dc-tpl="282" class="vk-button vk-button--secondary btn-sm" aria-label="Actions for strategy-sam" style="min-width: 116px;">Actions <span data-dc-tpl="283" class="disc-ico"><svg data-dc-tpl="284" aria-hidden="true" focusable="false" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path data-dc-tpl="285" d="M6 9l6 6 6-6"></path></svg></span></summary>
+      <div data-dc-tpl="286" class="menu-pop" role="menu" aria-label="Actions for strategy-sam">
+        <button data-dc-tpl="287" type="button" role="menuitem" class="mi"><svg data-dc-tpl="288" aria-hidden="true" focusable="false" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path data-dc-tpl="289" d="M4 20h4L19 9l-4-4L4 16z"></path></svg>Edit agent</button>
+        <button data-dc-tpl="290" type="button" role="menuitem" class="mi"><svg data-dc-tpl="291" aria-hidden="true" focusable="false" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle data-dc-tpl="292" cx="8" cy="15" r="4"></circle><path data-dc-tpl="293" d="M11 12l9-9M17 6l3 3M15 8l2 2"></path></svg>Issue a token</button>
+        <button data-dc-tpl="294" type="button" role="menuitem" class="mi"><svg data-dc-tpl="295" aria-hidden="true" focusable="false" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle data-dc-tpl="296" cx="8" cy="15" r="4"></circle><path data-dc-tpl="297" d="M11 12l9-9M17 6l3 3M15 8l2 2"></path></svg>Issue a run-only token<span data-dc-tpl="298" class="t-meta" style="margin-left: auto;">can run cards, not change them</span></button>
+        <button data-dc-tpl="299" type="button" role="menuitem" class="mi"><svg data-dc-tpl="300" aria-hidden="true" focusable="false" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path data-dc-tpl="301" d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"></path><path data-dc-tpl="302" d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"></path></svg>Unlink from AgentPod</button>
+        <div data-dc-tpl="303" class="mi-group">
+          <p data-dc-tpl="304" class="t-eyebrow" style="padding: 0 var(--vk-space-3);">2 tokens in use</p>
+          <div data-dc-tpl="305" class="tokrow"><span data-dc-tpl="306" class="t-body">Token 1</span><span data-dc-tpl="307" class="t-meta">issued to strategy-sam</span><button aria-label="Revoke token 1 of strategy-sam" type="button" class="vk-button vk-button--primary btn-sm revoke">Revoke</button></div><div data-dc-tpl="309" class="tokrow"><span data-dc-tpl="310" class="t-body">Token 2</span><span data-dc-tpl="311" class="t-meta">issued to strategy-sam</span><button aria-label="Revoke token 2 of strategy-sam" type="button" class="vk-button vk-button--primary btn-sm revoke">Revoke</button></div>
+          
+        </div>
+        <button data-dc-tpl="313" type="button" role="menuitem" class="mi mi-danger"><svg data-dc-tpl="314" aria-hidden="true" focusable="false" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path data-dc-tpl="315" d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"></path></svg>Delete agent…</button>
+      </div>
+    </details>
+  </li><li data-dc-tpl="316" class="arow">
+    <span data-dc-tpl="317" class="face" style="width: 32px; height: 32px;"><svg data-dc-tpl="318" viewBox="-2 -4 68 70" width="32" height="32" role="img" aria-label="predictor-paul, resting" data-mood="resting"><circle data-dc-tpl="319" cx="32" cy="32" r="30" fill="var(--vk-mood-resting)"></circle><g data-dc-tpl="320" data-eyes="closed"><path data-dc-tpl="321" d="M19 29 Q23 32 27 29 M37 29 Q41 32 45 29" fill="none" stroke="var(--vk-face-ink)" stroke-width="2.6" stroke-linecap="round"></path></g><circle data-dc-tpl="322" cx="17" cy="37" r="4" fill="rgb(255 158 138 / 0.5)"></circle><circle data-dc-tpl="323" cx="47" cy="37" r="4" fill="rgb(255 158 138 / 0.5)"></circle><path data-dc-tpl="324" d="M27 43 Q32 45 37 43" fill="none" stroke="var(--vk-face-ink)" stroke-width="3" stroke-linecap="round"></path></svg></span>
+    <div data-dc-tpl="325" style="min-width: 0px;"><p data-dc-tpl="326" class="t-h3" style="overflow-wrap: anywhere;">predictor-paul</p><p data-dc-tpl="327" class="t-meta">Resting · nothing claimed</p></div>
+    <div data-dc-tpl="328" class="caps"><span data-dc-tpl="329" class="chip chip-line">analysis</span></div>
+    <p data-dc-tpl="330" class="t-meta linked"><svg data-dc-tpl="331" aria-hidden="true" focusable="false" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path data-dc-tpl="332" d="M5 12.5l4.5 4.5L19 7.5"></path></svg><span data-dc-tpl="333">Linked to AgentPod</span></p>
+    <p data-dc-tpl="334" class="t-meta t-num" style="color: var(--vk-color-text);">2 tokens</p>
+    <details data-dc-tpl="335" class="menu">
+      <summary data-dc-tpl="336" class="vk-button vk-button--secondary btn-sm" aria-label="Actions for predictor-paul" style="min-width: 116px;">Actions <span data-dc-tpl="337" class="disc-ico"><svg data-dc-tpl="338" aria-hidden="true" focusable="false" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path data-dc-tpl="339" d="M6 9l6 6 6-6"></path></svg></span></summary>
+      <div data-dc-tpl="340" class="menu-pop" role="menu" aria-label="Actions for predictor-paul">
+        <button data-dc-tpl="341" type="button" role="menuitem" class="mi"><svg data-dc-tpl="342" aria-hidden="true" focusable="false" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path data-dc-tpl="343" d="M4 20h4L19 9l-4-4L4 16z"></path></svg>Edit agent</button>
+        <button data-dc-tpl="344" type="button" role="menuitem" class="mi"><svg data-dc-tpl="345" aria-hidden="true" focusable="false" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle data-dc-tpl="346" cx="8" cy="15" r="4"></circle><path data-dc-tpl="347" d="M11 12l9-9M17 6l3 3M15 8l2 2"></path></svg>Issue a token</button>
+        <button data-dc-tpl="348" type="button" role="menuitem" class="mi"><svg data-dc-tpl="349" aria-hidden="true" focusable="false" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle data-dc-tpl="350" cx="8" cy="15" r="4"></circle><path data-dc-tpl="351" d="M11 12l9-9M17 6l3 3M15 8l2 2"></path></svg>Issue a run-only token<span data-dc-tpl="352" class="t-meta" style="margin-left: auto;">can run cards, not change them</span></button>
+        <button data-dc-tpl="353" type="button" role="menuitem" class="mi"><svg data-dc-tpl="354" aria-hidden="true" focusable="false" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path data-dc-tpl="355" d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"></path><path data-dc-tpl="356" d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"></path></svg>Unlink from AgentPod</button>
+        <div data-dc-tpl="357" class="mi-group">
+          <p data-dc-tpl="358" class="t-eyebrow" style="padding: 0 var(--vk-space-3);">2 tokens in use</p>
+          <div data-dc-tpl="359" class="tokrow"><span data-dc-tpl="360" class="t-body">Token 1</span><span data-dc-tpl="361" class="t-meta">issued to predictor-paul</span><button aria-label="Revoke token 1 of predictor-paul" type="button" class="vk-button vk-button--primary btn-sm revoke">Revoke</button></div><div data-dc-tpl="363" class="tokrow"><span data-dc-tpl="364" class="t-body">Token 2</span><span data-dc-tpl="365" class="t-meta">issued to predictor-paul</span><button aria-label="Revoke token 2 of predictor-paul" type="button" class="vk-button vk-button--primary btn-sm revoke">Revoke</button></div>
+          
+        </div>
+        <button data-dc-tpl="367" type="button" role="menuitem" class="mi mi-danger"><svg data-dc-tpl="368" aria-hidden="true" focusable="false" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path data-dc-tpl="369" d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"></path></svg>Delete agent…</button>
+      </div>
+    </details>
+  </li><li data-dc-tpl="370" class="arow arow-edit">
+    <span data-dc-tpl="371" class="face" style="width: 32px; height: 32px;"><svg data-dc-tpl="372" viewBox="-2 -4 68 70" width="32" height="32" role="img" aria-label="analyst-echo, resting" data-mood="resting"><circle data-dc-tpl="373" cx="32" cy="32" r="30" fill="var(--vk-mood-resting)"></circle><path data-dc-tpl="374" d="M28 4 Q32 -2 36 4 Q34 8 32 6 Q30 8 28 4Z" fill="rgb(35 35 58)"></path><g data-dc-tpl="375" data-eyes="closed"><path data-dc-tpl="376" d="M19 29 Q23 32 27 29 M37 29 Q41 32 45 29" fill="none" stroke="var(--vk-face-ink)" stroke-width="2.6" stroke-linecap="round"></path></g><path data-dc-tpl="377" d="M27 43 Q32 45 37 43" fill="none" stroke="var(--vk-face-ink)" stroke-width="3" stroke-linecap="round"></path></svg></span>
+    <form data-dc-tpl="378" class="editgrid" aria-label="Edit analyst-echo">
+      <p data-dc-tpl="379" class="t-h3" style="grid-column: 1 / -1;">Editing analyst-echo</p>
+      <div data-dc-tpl="380" class="field"><label data-dc-tpl="381" for="ed-name">Name</label><input data-dc-tpl="382" id="ed-name" class="input" value="analyst-echo"></div>
+      <div data-dc-tpl="383" class="field"><label data-dc-tpl="384" for="ed-conc">Cards at once</label><input data-dc-tpl="385" id="ed-conc" class="input" type="number" min="1" value="1"><p data-dc-tpl="386" class="hint">How many cards it may hold at the same time.</p></div>
+      <div data-dc-tpl="387" class="field" style="grid-column: 1 / -1;"><span data-dc-tpl="388" class="lbl" id="ed-caps">Capabilities</span>
+        <div data-dc-tpl="389" class="caps" role="group" aria-labelledby="ed-caps"><button data-dc-tpl="390" type="button" class="chip pick" aria-pressed="true"><svg data-dc-tpl="391" aria-hidden="true" focusable="false" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path data-dc-tpl="392" d="M5 12.5l4.5 4.5L19 7.5"></path></svg>analysis</button><button data-dc-tpl="393" type="button" class="chip pick" aria-pressed="false">api</button><button data-dc-tpl="394" type="button" class="chip pick" aria-pressed="true"><svg data-dc-tpl="395" aria-hidden="true" focusable="false" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path data-dc-tpl="396" d="M5 12.5l4.5 4.5L19 7.5"></path></svg>claim-check</button><button data-dc-tpl="397" type="button" class="chip pick" aria-pressed="false">code</button><button data-dc-tpl="398" type="button" class="chip pick" aria-pressed="false" data-unused="">command</button><button data-dc-tpl="399" type="button" class="chip pick" aria-pressed="false">design</button><button data-dc-tpl="400" type="button" class="chip pick" aria-pressed="false">diagnostics</button><button data-dc-tpl="401" type="button" class="chip pick" aria-pressed="false">integration</button><button data-dc-tpl="402" type="button" class="chip pick" aria-pressed="false">maintenance</button><button data-dc-tpl="403" type="button" class="chip pick" aria-pressed="false">marketing</button><button data-dc-tpl="404" type="button" class="chip pick" aria-pressed="false">onboarding</button><button data-dc-tpl="405" type="button" class="chip pick" aria-pressed="false">planning</button><button data-dc-tpl="406" type="button" class="chip pick" aria-pressed="false">release</button><button data-dc-tpl="407" type="button" class="chip pick" aria-pressed="false">research</button><button data-dc-tpl="408" type="button" class="chip pick" aria-pressed="false">resilience</button><button data-dc-tpl="409" type="button" class="chip pick" aria-pressed="false">security</button><button data-dc-tpl="410" type="button" class="chip pick" aria-pressed="false">security-review</button><button data-dc-tpl="411" type="button" class="chip pick" aria-pressed="false">testing</button><button data-dc-tpl="412" type="button" class="chip pick" aria-pressed="false">writing</button>
+          <span data-dc-tpl="413" style="display: inline-flex; gap: 6px;"><label data-dc-tpl="414" class="sr" for="ed-newcap">New capability</label><input data-dc-tpl="415" id="ed-newcap" class="input" placeholder="Add a capability" style="width: 200px; min-height: 36px;"></span>
+        </div>
+        <p data-dc-tpl="416" class="hint">Faint chips: no board stage asks for this yet, so an agent holding only it can claim nothing.</p></div>
+      <div data-dc-tpl="417" class="field" style="grid-column: 1 / -1;"><label data-dc-tpl="418" for="ed-av">Picture (optional)</label><input data-dc-tpl="419" id="ed-av" class="input" type="url" placeholder="https://… leave empty to keep the generated face"></div>
+      <div data-dc-tpl="420" style="grid-column: 1 / -1; display: flex; gap: var(--vk-space-2);"><button type="button" class="vk-button vk-button--primary btn-sm">Save</button><button type="button" class="vk-button vk-button--quiet btn-sm">Cancel</button></div>
+    </form>
+  </li><li data-dc-tpl="423" class="arow">
+    <span data-dc-tpl="424" class="face" style="width: 32px; height: 32px;"><svg data-dc-tpl="425" viewBox="-2 -4 68 70" width="32" height="32" role="img" aria-label="cleaner-cody, resting" data-mood="resting"><circle data-dc-tpl="426" cx="32" cy="32" r="30" fill="var(--vk-mood-resting)"></circle><circle data-dc-tpl="427" cx="32" cy="4" r="7" fill="rgb(94 90 156)"></circle><g data-dc-tpl="428" data-eyes="closed"><path data-dc-tpl="429" d="M19 29 Q23 32 27 29 M37 29 Q41 32 45 29" fill="none" stroke="var(--vk-face-ink)" stroke-width="2.6" stroke-linecap="round"></path></g><path data-dc-tpl="430" d="M27 43 Q32 45 37 43" fill="none" stroke="var(--vk-face-ink)" stroke-width="3" stroke-linecap="round"></path></svg></span>
+    <div data-dc-tpl="431" style="min-width: 0px;"><p data-dc-tpl="432" class="t-h3" style="overflow-wrap: anywhere;">cleaner-cody</p><p data-dc-tpl="433" class="t-meta">Resting · nothing claimed</p></div>
+    <div data-dc-tpl="434" class="caps"><span data-dc-tpl="435" class="chip chip-line">maintenance</span></div>
+    <p data-dc-tpl="436" class="t-meta linked"><svg data-dc-tpl="437" aria-hidden="true" focusable="false" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path data-dc-tpl="438" d="M5 12.5l4.5 4.5L19 7.5"></path></svg><span data-dc-tpl="439">Linked to AgentPod</span></p>
+    <p data-dc-tpl="440" class="t-meta t-num" style="color: var(--vk-color-text);">2 tokens</p>
+    <details data-dc-tpl="441" class="menu">
+      <summary data-dc-tpl="442" class="vk-button vk-button--secondary btn-sm" aria-label="Actions for cleaner-cody" style="min-width: 116px;">Actions <span data-dc-tpl="443" class="disc-ico"><svg data-dc-tpl="444" aria-hidden="true" focusable="false" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path data-dc-tpl="445" d="M6 9l6 6 6-6"></path></svg></span></summary>
+      <div data-dc-tpl="446" class="menu-pop" role="menu" aria-label="Actions for cleaner-cody">
+        <button data-dc-tpl="447" type="button" role="menuitem" class="mi"><svg data-dc-tpl="448" aria-hidden="true" focusable="false" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path data-dc-tpl="449" d="M4 20h4L19 9l-4-4L4 16z"></path></svg>Edit agent</button>
+        <button data-dc-tpl="450" type="button" role="menuitem" class="mi"><svg data-dc-tpl="451" aria-hidden="true" focusable="false" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle data-dc-tpl="452" cx="8" cy="15" r="4"></circle><path data-dc-tpl="453" d="M11 12l9-9M17 6l3 3M15 8l2 2"></path></svg>Issue a token</button>
+        <button data-dc-tpl="454" type="button" role="menuitem" class="mi"><svg data-dc-tpl="455" aria-hidden="true" focusable="false" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle data-dc-tpl="456" cx="8" cy="15" r="4"></circle><path data-dc-tpl="457" d="M11 12l9-9M17 6l3 3M15 8l2 2"></path></svg>Issue a run-only token<span data-dc-tpl="458" class="t-meta" style="margin-left: auto;">can run cards, not change them</span></button>
+        <button data-dc-tpl="459" type="button" role="menuitem" class="mi"><svg data-dc-tpl="460" aria-hidden="true" focusable="false" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path data-dc-tpl="461" d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"></path><path data-dc-tpl="462" d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"></path></svg>Unlink from AgentPod</button>
+        <div data-dc-tpl="463" class="mi-group">
+          <p data-dc-tpl="464" class="t-eyebrow" style="padding: 0 var(--vk-space-3);">2 tokens in use</p>
+          <div data-dc-tpl="465" class="tokrow"><span data-dc-tpl="466" class="t-body">Token 1</span><span data-dc-tpl="467" class="t-meta">issued to cleaner-cody</span><button aria-label="Revoke token 1 of cleaner-cody" type="button" class="vk-button vk-button--primary btn-sm revoke">Revoke</button></div><div data-dc-tpl="469" class="tokrow"><span data-dc-tpl="470" class="t-body">Token 2</span><span data-dc-tpl="471" class="t-meta">issued to cleaner-cody</span><button aria-label="Revoke token 2 of cleaner-cody" type="button" class="vk-button vk-button--primary btn-sm revoke">Revoke</button></div>
+          
+        </div>
+        <button data-dc-tpl="473" type="button" role="menuitem" class="mi mi-danger"><svg data-dc-tpl="474" aria-hidden="true" focusable="false" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path data-dc-tpl="475" d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"></path></svg>Delete agent…</button>
+      </div>
+    </details>
+  </li><li data-dc-tpl="476" class="arow">
+    <span data-dc-tpl="477" class="face" style="width: 32px; height: 32px;"><svg data-dc-tpl="478" viewBox="-2 -4 68 70" width="32" height="32" role="img" aria-label="coder-kai, resting" data-mood="resting"><circle data-dc-tpl="479" cx="32" cy="32" r="30" fill="var(--vk-mood-resting)"></circle><g data-dc-tpl="480" data-eyes="closed"><path data-dc-tpl="481" d="M19 29 Q23 32 27 29 M37 29 Q41 32 45 29" fill="none" stroke="var(--vk-face-ink)" stroke-width="2.6" stroke-linecap="round"></path></g><circle data-dc-tpl="482" cx="17" cy="37" r="4" fill="rgb(255 158 138 / 0.5)"></circle><circle data-dc-tpl="483" cx="47" cy="37" r="4" fill="rgb(255 158 138 / 0.5)"></circle><path data-dc-tpl="484" d="M27 43 Q32 45 37 43" fill="none" stroke="var(--vk-face-ink)" stroke-width="3" stroke-linecap="round"></path></svg></span>
+    <div data-dc-tpl="485" style="min-width: 0px;"><p data-dc-tpl="486" class="t-h3" style="overflow-wrap: anywhere;">coder-kai</p><p data-dc-tpl="487" class="t-meta">Resting · nothing claimed</p></div>
+    <div data-dc-tpl="488" class="caps"><span data-dc-tpl="489" class="chip chip-line">code</span></div>
+    <p data-dc-tpl="490" class="t-meta linked"><svg data-dc-tpl="491" aria-hidden="true" focusable="false" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path data-dc-tpl="492" d="M5 12.5l4.5 4.5L19 7.5"></path></svg><span data-dc-tpl="493">Linked to AgentPod</span></p>
+    <p data-dc-tpl="494" class="t-meta t-num" style="color: var(--vk-color-text);">6 tokens</p>
+    <details data-dc-tpl="495" class="menu">
+      <summary data-dc-tpl="496" class="vk-button vk-button--secondary btn-sm" aria-label="Actions for coder-kai" style="min-width: 116px;">Actions <span data-dc-tpl="497" class="disc-ico"><svg data-dc-tpl="498" aria-hidden="true" focusable="false" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path data-dc-tpl="499" d="M6 9l6 6 6-6"></path></svg></span></summary>
+      <div data-dc-tpl="500" class="menu-pop" role="menu" aria-label="Actions for coder-kai">
+        <button data-dc-tpl="501" type="button" role="menuitem" class="mi"><svg data-dc-tpl="502" aria-hidden="true" focusable="false" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path data-dc-tpl="503" d="M4 20h4L19 9l-4-4L4 16z"></path></svg>Edit agent</button>
+        <button data-dc-tpl="504" type="button" role="menuitem" class="mi"><svg data-dc-tpl="505" aria-hidden="true" focusable="false" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle data-dc-tpl="506" cx="8" cy="15" r="4"></circle><path data-dc-tpl="507" d="M11 12l9-9M17 6l3 3M15 8l2 2"></path></svg>Issue a token</button>
+        <button data-dc-tpl="508" type="button" role="menuitem" class="mi"><svg data-dc-tpl="509" aria-hidden="true" focusable="false" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle data-dc-tpl="510" cx="8" cy="15" r="4"></circle><path data-dc-tpl="511" d="M11 12l9-9M17 6l3 3M15 8l2 2"></path></svg>Issue a run-only token<span data-dc-tpl="512" class="t-meta" style="margin-left: auto;">can run cards, not change them</span></button>
+        <button data-dc-tpl="513" type="button" role="menuitem" class="mi"><svg data-dc-tpl="514" aria-hidden="true" focusable="false" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path data-dc-tpl="515" d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"></path><path data-dc-tpl="516" d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"></path></svg>Unlink from AgentPod</button>
+        <div data-dc-tpl="517" class="mi-group">
+          <p data-dc-tpl="518" class="t-eyebrow" style="padding: 0 var(--vk-space-3);">6 tokens in use</p>
+          <div data-dc-tpl="519" class="tokrow"><span data-dc-tpl="520" class="t-body">Token 1</span><span data-dc-tpl="521" class="t-meta">issued to coder-kai</span><button aria-label="Revoke token 1 of coder-kai" type="button" class="vk-button vk-button--primary btn-sm revoke">Revoke</button></div><div data-dc-tpl="523" class="tokrow"><span data-dc-tpl="524" class="t-body">Token 2</span><span data-dc-tpl="525" class="t-meta">issued to coder-kai</span><button aria-label="Revoke token 2 of coder-kai" type="button" class="vk-button vk-button--primary btn-sm revoke">Revoke</button></div>
+          <p data-dc-tpl="527" class="t-meta" style="padding: 0 var(--vk-space-3);">and 4 more · <a data-dc-tpl="528" href="#">show all 6</a></p>
+        </div>
+        <button data-dc-tpl="529" type="button" role="menuitem" class="mi mi-danger"><svg data-dc-tpl="530" aria-hidden="true" focusable="false" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path data-dc-tpl="531" d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"></path></svg>Delete agent…</button>
+      </div>
+    </details>
+  </li><li data-dc-tpl="532" class="arow">
+    <span data-dc-tpl="533" class="face" style="width: 32px; height: 32px;"><svg data-dc-tpl="534" viewBox="-2 -4 68 70" width="32" height="32" role="img" aria-label="project-manager-pete, resting" data-mood="resting"><circle data-dc-tpl="535" cx="32" cy="32" r="30" fill="var(--vk-mood-resting)"></circle><g data-dc-tpl="536" data-eyes="closed"><path data-dc-tpl="537" d="M19 29 Q23 32 27 29 M37 29 Q41 32 45 29" fill="none" stroke="var(--vk-face-ink)" stroke-width="2.6" stroke-linecap="round"></path></g><circle data-dc-tpl="538" cx="17" cy="37" r="4" fill="rgb(255 158 138 / 0.5)"></circle><circle data-dc-tpl="539" cx="47" cy="37" r="4" fill="rgb(255 158 138 / 0.5)"></circle><path data-dc-tpl="540" d="M27 43 Q32 45 37 43" fill="none" stroke="var(--vk-face-ink)" stroke-width="3" stroke-linecap="round"></path></svg></span>
+    <div data-dc-tpl="541" style="min-width: 0px;"><p data-dc-tpl="542" class="t-h3" style="overflow-wrap: anywhere;">project-manager-pete</p><p data-dc-tpl="543" class="t-meta">Resting · nothing claimed</p></div>
+    <div data-dc-tpl="544" class="caps"><span data-dc-tpl="545" class="chip chip-line">planning</span></div>
+    <p data-dc-tpl="546" class="t-meta linked"><svg data-dc-tpl="547" aria-hidden="true" focusable="false" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path data-dc-tpl="548" d="M5 12.5l4.5 4.5L19 7.5"></path></svg><span data-dc-tpl="549">Linked to AgentPod</span></p>
+    <p data-dc-tpl="550" class="t-meta t-num" style="color: var(--vk-color-text);">2 tokens</p>
+    <details data-dc-tpl="551" class="menu">
+      <summary data-dc-tpl="552" class="vk-button vk-button--secondary btn-sm" aria-label="Actions for project-manager-pete" style="min-width: 116px;">Actions <span data-dc-tpl="553" class="disc-ico"><svg data-dc-tpl="554" aria-hidden="true" focusable="false" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path data-dc-tpl="555" d="M6 9l6 6 6-6"></path></svg></span></summary>
+      <div data-dc-tpl="556" class="menu-pop" role="menu" aria-label="Actions for project-manager-pete">
+        <button data-dc-tpl="557" type="button" role="menuitem" class="mi"><svg data-dc-tpl="558" aria-hidden="true" focusable="false" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path data-dc-tpl="559" d="M4 20h4L19 9l-4-4L4 16z"></path></svg>Edit agent</button>
+        <button data-dc-tpl="560" type="button" role="menuitem" class="mi"><svg data-dc-tpl="561" aria-hidden="true" focusable="false" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle data-dc-tpl="562" cx="8" cy="15" r="4"></circle><path data-dc-tpl="563" d="M11 12l9-9M17 6l3 3M15 8l2 2"></path></svg>Issue a token</button>
+        <button data-dc-tpl="564" type="button" role="menuitem" class="mi"><svg data-dc-tpl="565" aria-hidden="true" focusable="false" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle data-dc-tpl="566" cx="8" cy="15" r="4"></circle><path data-dc-tpl="567" d="M11 12l9-9M17 6l3 3M15 8l2 2"></path></svg>Issue a run-only token<span data-dc-tpl="568" class="t-meta" style="margin-left: auto;">can run cards, not change them</span></button>
+        <button data-dc-tpl="569" type="button" role="menuitem" class="mi"><svg data-dc-tpl="570" aria-hidden="true" focusable="false" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path data-dc-tpl="571" d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"></path><path data-dc-tpl="572" d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"></path></svg>Unlink from AgentPod</button>
+        <div data-dc-tpl="573" class="mi-group">
+          <p data-dc-tpl="574" class="t-eyebrow" style="padding: 0 var(--vk-space-3);">2 tokens in use</p>
+          <div data-dc-tpl="575" class="tokrow"><span data-dc-tpl="576" class="t-body">Token 1</span><span data-dc-tpl="577" class="t-meta">issued to project-manager-pete</span><button aria-label="Revoke token 1 of project-manager-pete" type="button" class="vk-button vk-button--primary btn-sm revoke">Revoke</button></div><div data-dc-tpl="579" class="tokrow"><span data-dc-tpl="580" class="t-body">Token 2</span><span data-dc-tpl="581" class="t-meta">issued to project-manager-pete</span><button aria-label="Revoke token 2 of project-manager-pete" type="button" class="vk-button vk-button--primary btn-sm revoke">Revoke</button></div>
+          
+        </div>
+        <button data-dc-tpl="583" type="button" role="menuitem" class="mi mi-danger"><svg data-dc-tpl="584" aria-hidden="true" focusable="false" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path data-dc-tpl="585" d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"></path></svg>Delete agent…</button>
+      </div>
+    </details>
+  </li><li data-dc-tpl="586" class="arow">
+    <span data-dc-tpl="587" class="face" style="width: 32px; height: 32px;"><svg data-dc-tpl="588" viewBox="-2 -4 68 70" width="32" height="32" role="img" aria-label="controller-casey, resting" data-mood="resting"><circle data-dc-tpl="589" cx="32" cy="32" r="30" fill="var(--vk-mood-resting)"></circle><g data-dc-tpl="590" data-eyes="closed"><path data-dc-tpl="591" d="M19 29 Q23 32 27 29 M37 29 Q41 32 45 29" fill="none" stroke="var(--vk-face-ink)" stroke-width="2.6" stroke-linecap="round"></path></g><path data-dc-tpl="592" d="M27 43 Q32 45 37 43" fill="none" stroke="var(--vk-face-ink)" stroke-width="3" stroke-linecap="round"></path></svg></span>
+    <div data-dc-tpl="593" style="min-width: 0px;"><p data-dc-tpl="594" class="t-h3" style="overflow-wrap: anywhere;">controller-casey</p><p data-dc-tpl="595" class="t-meta">Resting · nothing claimed</p></div>
+    <div data-dc-tpl="596" class="caps"><span data-dc-tpl="597" class="chip chip-line">planning</span></div>
+    <p data-dc-tpl="598" class="t-meta linked"><svg data-dc-tpl="599" aria-hidden="true" focusable="false" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path data-dc-tpl="600" d="M5 12.5l4.5 4.5L19 7.5"></path></svg><span data-dc-tpl="601">Linked to AgentPod</span></p>
+    <p data-dc-tpl="602" class="t-meta t-num" style="color: var(--vk-color-text);">2 tokens</p>
+    <details data-dc-tpl="603" class="menu">
+      <summary data-dc-tpl="604" class="vk-button vk-button--secondary btn-sm" aria-label="Actions for controller-casey" style="min-width: 116px;">Actions <span data-dc-tpl="605" class="disc-ico"><svg data-dc-tpl="606" aria-hidden="true" focusable="false" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path data-dc-tpl="607" d="M6 9l6 6 6-6"></path></svg></span></summary>
+      <div data-dc-tpl="608" class="menu-pop" role="menu" aria-label="Actions for controller-casey">
+        <button data-dc-tpl="609" type="button" role="menuitem" class="mi"><svg data-dc-tpl="610" aria-hidden="true" focusable="false" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path data-dc-tpl="611" d="M4 20h4L19 9l-4-4L4 16z"></path></svg>Edit agent</button>
+        <button data-dc-tpl="612" type="button" role="menuitem" class="mi"><svg data-dc-tpl="613" aria-hidden="true" focusable="false" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle data-dc-tpl="614" cx="8" cy="15" r="4"></circle><path data-dc-tpl="615" d="M11 12l9-9M17 6l3 3M15 8l2 2"></path></svg>Issue a token</button>
+        <button data-dc-tpl="616" type="button" role="menuitem" class="mi"><svg data-dc-tpl="617" aria-hidden="true" focusable="false" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle data-dc-tpl="618" cx="8" cy="15" r="4"></circle><path data-dc-tpl="619" d="M11 12l9-9M17 6l3 3M15 8l2 2"></path></svg>Issue a run-only token<span data-dc-tpl="620" class="t-meta" style="margin-left: auto;">can run cards, not change them</span></button>
+        <button data-dc-tpl="621" type="button" role="menuitem" class="mi"><svg data-dc-tpl="622" aria-hidden="true" focusable="false" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path data-dc-tpl="623" d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"></path><path data-dc-tpl="624" d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"></path></svg>Unlink from AgentPod</button>
+        <div data-dc-tpl="625" class="mi-group">
+          <p data-dc-tpl="626" class="t-eyebrow" style="padding: 0 var(--vk-space-3);">2 tokens in use</p>
+          <div data-dc-tpl="627" class="tokrow"><span data-dc-tpl="628" class="t-body">Token 1</span><span data-dc-tpl="629" class="t-meta">issued to controller-casey</span><button aria-label="Revoke token 1 of controller-casey" type="button" class="vk-button vk-button--primary btn-sm revoke">Revoke</button></div><div data-dc-tpl="631" class="tokrow"><span data-dc-tpl="632" class="t-body">Token 2</span><span data-dc-tpl="633" class="t-meta">issued to controller-casey</span><button aria-label="Revoke token 2 of controller-casey" type="button" class="vk-button vk-button--primary btn-sm revoke">Revoke</button></div>
+          
+        </div>
+        <button data-dc-tpl="635" type="button" role="menuitem" class="mi mi-danger"><svg data-dc-tpl="636" aria-hidden="true" focusable="false" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path data-dc-tpl="637" d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"></path></svg>Delete agent…</button>
+      </div>
+    </details>
+  </li><li data-dc-tpl="638" class="arow">
+    <span data-dc-tpl="639" class="face" style="width: 32px; height: 32px;"><svg data-dc-tpl="640" viewBox="-2 -4 68 70" width="32" height="32" role="img" aria-label="super-chotu, resting" data-mood="resting"><circle data-dc-tpl="641" cx="32" cy="32" r="30" fill="var(--vk-mood-resting)"></circle><path data-dc-tpl="642" d="M8 22 Q12 4 32 3 Q52 4 56 22 Q44 14 32 15 Q20 14 8 22Z" fill="rgb(35 35 58)"></path><g data-dc-tpl="643" data-eyes="closed"><path data-dc-tpl="644" d="M19 29 Q23 32 27 29 M37 29 Q41 32 45 29" fill="none" stroke="var(--vk-face-ink)" stroke-width="2.6" stroke-linecap="round"></path></g><path data-dc-tpl="645" d="M27 43 Q32 45 37 43" fill="none" stroke="var(--vk-face-ink)" stroke-width="3" stroke-linecap="round"></path></svg></span>
+    <div data-dc-tpl="646" style="min-width: 0px;"><p data-dc-tpl="647" class="t-h3" style="overflow-wrap: anywhere;">super-chotu</p><p data-dc-tpl="648" class="t-meta">Resting · nothing claimed</p></div>
+    <div data-dc-tpl="649" class="caps"><span data-dc-tpl="650" class="chip chip-line">command</span></div>
+    <p data-dc-tpl="651" class="t-meta linked"><svg data-dc-tpl="652" aria-hidden="true" focusable="false" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path data-dc-tpl="653" d="M5 12.5l4.5 4.5L19 7.5"></path></svg><span data-dc-tpl="654">Linked to AgentPod</span></p>
+    <p data-dc-tpl="655" class="t-meta t-num" style="color: var(--vk-color-text);">1 token</p>
+    <details data-dc-tpl="656" class="menu">
+      <summary data-dc-tpl="657" class="vk-button vk-button--secondary btn-sm" aria-label="Actions for super-chotu" style="min-width: 116px;">Actions <span data-dc-tpl="658" class="disc-ico"><svg data-dc-tpl="659" aria-hidden="true" focusable="false" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path data-dc-tpl="660" d="M6 9l6 6 6-6"></path></svg></span></summary>
+      <div data-dc-tpl="661" class="menu-pop" role="menu" aria-label="Actions for super-chotu">
+        <button data-dc-tpl="662" type="button" role="menuitem" class="mi"><svg data-dc-tpl="663" aria-hidden="true" focusable="false" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path data-dc-tpl="664" d="M4 20h4L19 9l-4-4L4 16z"></path></svg>Edit agent</button>
+        <button data-dc-tpl="665" type="button" role="menuitem" class="mi"><svg data-dc-tpl="666" aria-hidden="true" focusable="false" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle data-dc-tpl="667" cx="8" cy="15" r="4"></circle><path data-dc-tpl="668" d="M11 12l9-9M17 6l3 3M15 8l2 2"></path></svg>Issue a token</button>
+        <button data-dc-tpl="669" type="button" role="menuitem" class="mi"><svg data-dc-tpl="670" aria-hidden="true" focusable="false" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle data-dc-tpl="671" cx="8" cy="15" r="4"></circle><path data-dc-tpl="672" d="M11 12l9-9M17 6l3 3M15 8l2 2"></path></svg>Issue a run-only token<span data-dc-tpl="673" class="t-meta" style="margin-left: auto;">can run cards, not change them</span></button>
+        <button data-dc-tpl="674" type="button" role="menuitem" class="mi"><svg data-dc-tpl="675" aria-hidden="true" focusable="false" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path data-dc-tpl="676" d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"></path><path data-dc-tpl="677" d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"></path></svg>Unlink from AgentPod</button>
+        <div data-dc-tpl="678" class="mi-group">
+          <p data-dc-tpl="679" class="t-eyebrow" style="padding: 0 var(--vk-space-3);">1 token in use</p>
+          <div data-dc-tpl="680" class="tokrow"><span data-dc-tpl="681" class="t-body">Token 1</span><span data-dc-tpl="682" class="t-meta">issued to super-chotu</span><button aria-label="Revoke token 1 of super-chotu" type="button" class="vk-button vk-button--primary btn-sm revoke">Revoke</button></div>
+          
+        </div>
+        <button data-dc-tpl="684" type="button" role="menuitem" class="mi mi-danger"><svg data-dc-tpl="685" aria-hidden="true" focusable="false" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path data-dc-tpl="686" d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"></path></svg>Delete agent…</button>
+      </div>
+    </details>
+  </li><li data-dc-tpl="687" class="arow">
+    <span data-dc-tpl="688" class="face" style="width: 32px; height: 32px;"><svg data-dc-tpl="689" viewBox="-2 -4 68 70" width="32" height="32" role="img" aria-label="threat-hunter-theo, resting" data-mood="resting"><circle data-dc-tpl="690" cx="32" cy="32" r="30" fill="var(--vk-mood-resting)"></circle><g data-dc-tpl="691" data-eyes="closed"><path data-dc-tpl="692" d="M19 29 Q23 32 27 29 M37 29 Q41 32 45 29" fill="none" stroke="var(--vk-face-ink)" stroke-width="2.6" stroke-linecap="round"></path></g><circle data-dc-tpl="693" cx="17" cy="37" r="4" fill="rgb(255 158 138 / 0.5)"></circle><circle data-dc-tpl="694" cx="47" cy="37" r="4" fill="rgb(255 158 138 / 0.5)"></circle><path data-dc-tpl="695" d="M27 43 Q32 45 37 43" fill="none" stroke="var(--vk-face-ink)" stroke-width="3" stroke-linecap="round"></path></svg></span>
+    <div data-dc-tpl="696" style="min-width: 0px;"><p data-dc-tpl="697" class="t-h3" style="overflow-wrap: anywhere;">threat-hunter-theo</p><p data-dc-tpl="698" class="t-meta">Resting · nothing claimed</p></div>
+    <div data-dc-tpl="699" class="caps"><span data-dc-tpl="700" class="chip chip-line">security</span></div>
+    <p data-dc-tpl="701" class="t-meta linked"><svg data-dc-tpl="702" aria-hidden="true" focusable="false" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path data-dc-tpl="703" d="M5 12.5l4.5 4.5L19 7.5"></path></svg><span data-dc-tpl="704">Linked to AgentPod</span></p>
+    <p data-dc-tpl="705" class="t-meta t-num" style="color: var(--vk-color-text);">2 tokens</p>
+    <details data-dc-tpl="706" class="menu">
+      <summary data-dc-tpl="707" class="vk-button vk-button--secondary btn-sm" aria-label="Actions for threat-hunter-theo" style="min-width: 116px;">Actions <span data-dc-tpl="708" class="disc-ico"><svg data-dc-tpl="709" aria-hidden="true" focusable="false" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path data-dc-tpl="710" d="M6 9l6 6 6-6"></path></svg></span></summary>
+      <div data-dc-tpl="711" class="menu-pop" role="menu" aria-label="Actions for threat-hunter-theo">
+        <button data-dc-tpl="712" type="button" role="menuitem" class="mi"><svg data-dc-tpl="713" aria-hidden="true" focusable="false" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path data-dc-tpl="714" d="M4 20h4L19 9l-4-4L4 16z"></path></svg>Edit agent</button>
+        <button data-dc-tpl="715" type="button" role="menuitem" class="mi"><svg data-dc-tpl="716" aria-hidden="true" focusable="false" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle data-dc-tpl="717" cx="8" cy="15" r="4"></circle><path data-dc-tpl="718" d="M11 12l9-9M17 6l3 3M15 8l2 2"></path></svg>Issue a token</button>
+        <button data-dc-tpl="719" type="button" role="menuitem" class="mi"><svg data-dc-tpl="720" aria-hidden="true" focusable="false" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle data-dc-tpl="721" cx="8" cy="15" r="4"></circle><path data-dc-tpl="722" d="M11 12l9-9M17 6l3 3M15 8l2 2"></path></svg>Issue a run-only token<span data-dc-tpl="723" class="t-meta" style="margin-left: auto;">can run cards, not change them</span></button>
+        <button data-dc-tpl="724" type="button" role="menuitem" class="mi"><svg data-dc-tpl="725" aria-hidden="true" focusable="false" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path data-dc-tpl="726" d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"></path><path data-dc-tpl="727" d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"></path></svg>Unlink from AgentPod</button>
+        <div data-dc-tpl="728" class="mi-group">
+          <p data-dc-tpl="729" class="t-eyebrow" style="padding: 0 var(--vk-space-3);">2 tokens in use</p>
+          <div data-dc-tpl="730" class="tokrow"><span data-dc-tpl="731" class="t-body">Token 1</span><span data-dc-tpl="732" class="t-meta">issued to threat-hunter-theo</span><button aria-label="Revoke token 1 of threat-hunter-theo" type="button" class="vk-button vk-button--primary btn-sm revoke">Revoke</button></div><div data-dc-tpl="734" class="tokrow"><span data-dc-tpl="735" class="t-body">Token 2</span><span data-dc-tpl="736" class="t-meta">issued to threat-hunter-theo</span><button aria-label="Revoke token 2 of threat-hunter-theo" type="button" class="vk-button vk-button--primary btn-sm revoke">Revoke</button></div>
+          
+        </div>
+        <button data-dc-tpl="738" type="button" role="menuitem" class="mi mi-danger"><svg data-dc-tpl="739" aria-hidden="true" focusable="false" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path data-dc-tpl="740" d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"></path></svg>Delete agent…</button>
+      </div>
+    </details>
+  </li><li data-dc-tpl="741" class="arow">
+    <span data-dc-tpl="742" class="face" style="width: 32px; height: 32px;"><svg data-dc-tpl="743" viewBox="-2 -4 68 70" width="32" height="32" role="img" aria-label="onboarding-olivia, resting" data-mood="resting"><circle data-dc-tpl="744" cx="32" cy="32" r="30" fill="var(--vk-mood-resting)"></circle><circle data-dc-tpl="745" cx="32" cy="4" r="7" fill="rgb(94 90 156)"></circle><g data-dc-tpl="746" data-eyes="closed"><path data-dc-tpl="747" d="M19 29 Q23 32 27 29 M37 29 Q41 32 45 29" fill="none" stroke="var(--vk-face-ink)" stroke-width="2.6" stroke-linecap="round"></path></g><circle data-dc-tpl="748" cx="17" cy="37" r="4" fill="rgb(255 158 138 / 0.5)"></circle><circle data-dc-tpl="749" cx="47" cy="37" r="4" fill="rgb(255 158 138 / 0.5)"></circle><path data-dc-tpl="750" d="M27 43 Q32 45 37 43" fill="none" stroke="var(--vk-face-ink)" stroke-width="3" stroke-linecap="round"></path></svg></span>
+    <div data-dc-tpl="751" style="min-width: 0px;"><p data-dc-tpl="752" class="t-h3" style="overflow-wrap: anywhere;">onboarding-olivia</p><p data-dc-tpl="753" class="t-meta">Resting · nothing claimed</p></div>
+    <div data-dc-tpl="754" class="caps"><span data-dc-tpl="755" class="chip chip-line">onboarding</span></div>
+    <p data-dc-tpl="756" class="t-meta linked"><svg data-dc-tpl="757" aria-hidden="true" focusable="false" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path data-dc-tpl="758" d="M5 12.5l4.5 4.5L19 7.5"></path></svg><span data-dc-tpl="759">Linked to AgentPod</span></p>
+    <p data-dc-tpl="760" class="t-meta t-num" style="color: var(--vk-color-text);">2 tokens</p>
+    <details data-dc-tpl="761" class="menu">
+      <summary data-dc-tpl="762" class="vk-button vk-button--secondary btn-sm" aria-label="Actions for onboarding-olivia" style="min-width: 116px;">Actions <span data-dc-tpl="763" class="disc-ico"><svg data-dc-tpl="764" aria-hidden="true" focusable="false" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path data-dc-tpl="765" d="M6 9l6 6 6-6"></path></svg></span></summary>
+      <div data-dc-tpl="766" class="menu-pop" role="menu" aria-label="Actions for onboarding-olivia">
+        <button data-dc-tpl="767" type="button" role="menuitem" class="mi"><svg data-dc-tpl="768" aria-hidden="true" focusable="false" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path data-dc-tpl="769" d="M4 20h4L19 9l-4-4L4 16z"></path></svg>Edit agent</button>
+        <button data-dc-tpl="770" type="button" role="menuitem" class="mi"><svg data-dc-tpl="771" aria-hidden="true" focusable="false" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle data-dc-tpl="772" cx="8" cy="15" r="4"></circle><path data-dc-tpl="773" d="M11 12l9-9M17 6l3 3M15 8l2 2"></path></svg>Issue a token</button>
+        <button data-dc-tpl="774" type="button" role="menuitem" class="mi"><svg data-dc-tpl="775" aria-hidden="true" focusable="false" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle data-dc-tpl="776" cx="8" cy="15" r="4"></circle><path data-dc-tpl="777" d="M11 12l9-9M17 6l3 3M15 8l2 2"></path></svg>Issue a run-only token<span data-dc-tpl="778" class="t-meta" style="margin-left: auto;">can run cards, not change them</span></button>
+        <button data-dc-tpl="779" type="button" role="menuitem" class="mi"><svg data-dc-tpl="780" aria-hidden="true" focusable="false" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path data-dc-tpl="781" d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"></path><path data-dc-tpl="782" d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"></path></svg>Unlink from AgentPod</button>
+        <div data-dc-tpl="783" class="mi-group">
+          <p data-dc-tpl="784" class="t-eyebrow" style="padding: 0 var(--vk-space-3);">2 tokens in use</p>
+          <div data-dc-tpl="785" class="tokrow"><span data-dc-tpl="786" class="t-body">Token 1</span><span data-dc-tpl="787" class="t-meta">issued to onboarding-olivia</span><button aria-label="Revoke token 1 of onboarding-olivia" type="button" class="vk-button vk-button--primary btn-sm revoke">Revoke</button></div><div data-dc-tpl="789" class="tokrow"><span data-dc-tpl="790" class="t-body">Token 2</span><span data-dc-tpl="791" class="t-meta">issued to onboarding-olivia</span><button aria-label="Revoke token 2 of onboarding-olivia" type="button" class="vk-button vk-button--primary btn-sm revoke">Revoke</button></div>
+          
+        </div>
+        <button data-dc-tpl="793" type="button" role="menuitem" class="mi mi-danger"><svg data-dc-tpl="794" aria-hidden="true" focusable="false" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path data-dc-tpl="795" d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"></path></svg>Delete agent…</button>
+      </div>
+    </details>
+  </li><li data-dc-tpl="796" class="arow">
+    <span data-dc-tpl="797" class="face" style="width: 32px; height: 32px;"><svg data-dc-tpl="798" viewBox="-2 -4 68 70" width="32" height="32" role="img" aria-label="artistic-lyra, resting" data-mood="resting"><circle data-dc-tpl="799" cx="32" cy="32" r="30" fill="var(--vk-mood-resting)"></circle><circle data-dc-tpl="800" cx="32" cy="4" r="7" fill="rgb(94 90 156)"></circle><g data-dc-tpl="801" data-eyes="closed"><path data-dc-tpl="802" d="M19 29 Q23 32 27 29 M37 29 Q41 32 45 29" fill="none" stroke="var(--vk-face-ink)" stroke-width="2.6" stroke-linecap="round"></path></g><path data-dc-tpl="803" d="M27 43 Q32 45 37 43" fill="none" stroke="var(--vk-face-ink)" stroke-width="3" stroke-linecap="round"></path></svg></span>
+    <div data-dc-tpl="804" style="min-width: 0px;"><p data-dc-tpl="805" class="t-h3" style="overflow-wrap: anywhere;">artistic-lyra</p><p data-dc-tpl="806" class="t-meta">Resting · nothing claimed</p></div>
+    <div data-dc-tpl="807" class="caps"><span data-dc-tpl="808" class="chip chip-line">design</span></div>
+    <p data-dc-tpl="809" class="t-meta linked"><svg data-dc-tpl="810" aria-hidden="true" focusable="false" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path data-dc-tpl="811" d="M5 12.5l4.5 4.5L19 7.5"></path></svg><span data-dc-tpl="812">Linked to AgentPod</span></p>
+    <p data-dc-tpl="813" class="t-meta t-num" style="color: var(--vk-color-text);">2 tokens</p>
+    <details data-dc-tpl="814" class="menu">
+      <summary data-dc-tpl="815" class="vk-button vk-button--secondary btn-sm" aria-label="Actions for artistic-lyra" style="min-width: 116px;">Actions <span data-dc-tpl="816" class="disc-ico"><svg data-dc-tpl="817" aria-hidden="true" focusable="false" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path data-dc-tpl="818" d="M6 9l6 6 6-6"></path></svg></span></summary>
+      <div data-dc-tpl="819" class="menu-pop" role="menu" aria-label="Actions for artistic-lyra">
+        <button data-dc-tpl="820" type="button" role="menuitem" class="mi"><svg data-dc-tpl="821" aria-hidden="true" focusable="false" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path data-dc-tpl="822" d="M4 20h4L19 9l-4-4L4 16z"></path></svg>Edit agent</button>
+        <button data-dc-tpl="823" type="button" role="menuitem" class="mi"><svg data-dc-tpl="824" aria-hidden="true" focusable="false" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle data-dc-tpl="825" cx="8" cy="15" r="4"></circle><path data-dc-tpl="826" d="M11 12l9-9M17 6l3 3M15 8l2 2"></path></svg>Issue a token</button>
+        <button data-dc-tpl="827" type="button" role="menuitem" class="mi"><svg data-dc-tpl="828" aria-hidden="true" focusable="false" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle data-dc-tpl="829" cx="8" cy="15" r="4"></circle><path data-dc-tpl="830" d="M11 12l9-9M17 6l3 3M15 8l2 2"></path></svg>Issue a run-only token<span data-dc-tpl="831" class="t-meta" style="margin-left: auto;">can run cards, not change them</span></button>
+        <button data-dc-tpl="832" type="button" role="menuitem" class="mi"><svg data-dc-tpl="833" aria-hidden="true" focusable="false" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path data-dc-tpl="834" d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"></path><path data-dc-tpl="835" d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"></path></svg>Unlink from AgentPod</button>
+        <div data-dc-tpl="836" class="mi-group">
+          <p data-dc-tpl="837" class="t-eyebrow" style="padding: 0 var(--vk-space-3);">2 tokens in use</p>
+          <div data-dc-tpl="838" class="tokrow"><span data-dc-tpl="839" class="t-body">Token 1</span><span data-dc-tpl="840" class="t-meta">issued to artistic-lyra</span><button aria-label="Revoke token 1 of artistic-lyra" type="button" class="vk-button vk-button--primary btn-sm revoke">Revoke</button></div><div data-dc-tpl="842" class="tokrow"><span data-dc-tpl="843" class="t-body">Token 2</span><span data-dc-tpl="844" class="t-meta">issued to artistic-lyra</span><button aria-label="Revoke token 2 of artistic-lyra" type="button" class="vk-button vk-button--primary btn-sm revoke">Revoke</button></div>
+          
+        </div>
+        <button data-dc-tpl="846" type="button" role="menuitem" class="mi mi-danger"><svg data-dc-tpl="847" aria-hidden="true" focusable="false" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path data-dc-tpl="848" d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"></path></svg>Delete agent…</button>
+      </div>
+    </details>
+  </li><li data-dc-tpl="849" class="arow">
+    <span data-dc-tpl="850" class="face" style="width: 32px; height: 32px;"><svg data-dc-tpl="851" viewBox="-2 -4 68 70" width="32" height="32" role="img" aria-label="chaos-charlie, resting" data-mood="resting"><circle data-dc-tpl="852" cx="32" cy="32" r="30" fill="var(--vk-mood-resting)"></circle><circle data-dc-tpl="853" cx="32" cy="4" r="7" fill="rgb(107 74 43)"></circle><g data-dc-tpl="854" data-eyes="closed"><path data-dc-tpl="855" d="M19 29 Q23 32 27 29 M37 29 Q41 32 45 29" fill="none" stroke="var(--vk-face-ink)" stroke-width="2.6" stroke-linecap="round"></path></g><path data-dc-tpl="856" d="M27 43 Q32 45 37 43" fill="none" stroke="var(--vk-face-ink)" stroke-width="3" stroke-linecap="round"></path></svg></span>
+    <div data-dc-tpl="857" style="min-width: 0px;"><p data-dc-tpl="858" class="t-h3" style="overflow-wrap: anywhere;">chaos-charlie</p><p data-dc-tpl="859" class="t-meta">Resting · nothing claimed</p></div>
+    <div data-dc-tpl="860" class="caps"><span data-dc-tpl="861" class="chip chip-line">resilience</span></div>
+    <p data-dc-tpl="862" class="t-meta linked"><svg data-dc-tpl="863" aria-hidden="true" focusable="false" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path data-dc-tpl="864" d="M5 12.5l4.5 4.5L19 7.5"></path></svg><span data-dc-tpl="865">Linked to AgentPod</span></p>
+    <p data-dc-tpl="866" class="t-meta t-num" style="color: var(--vk-color-text);">2 tokens</p>
+    <details data-dc-tpl="867" class="menu">
+      <summary data-dc-tpl="868" class="vk-button vk-button--secondary btn-sm" aria-label="Actions for chaos-charlie" style="min-width: 116px;">Actions <span data-dc-tpl="869" class="disc-ico"><svg data-dc-tpl="870" aria-hidden="true" focusable="false" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path data-dc-tpl="871" d="M6 9l6 6 6-6"></path></svg></span></summary>
+      <div data-dc-tpl="872" class="menu-pop" role="menu" aria-label="Actions for chaos-charlie">
+        <button data-dc-tpl="873" type="button" role="menuitem" class="mi"><svg data-dc-tpl="874" aria-hidden="true" focusable="false" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path data-dc-tpl="875" d="M4 20h4L19 9l-4-4L4 16z"></path></svg>Edit agent</button>
+        <button data-dc-tpl="876" type="button" role="menuitem" class="mi"><svg data-dc-tpl="877" aria-hidden="true" focusable="false" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle data-dc-tpl="878" cx="8" cy="15" r="4"></circle><path data-dc-tpl="879" d="M11 12l9-9M17 6l3 3M15 8l2 2"></path></svg>Issue a token</button>
+        <button data-dc-tpl="880" type="button" role="menuitem" class="mi"><svg data-dc-tpl="881" aria-hidden="true" focusable="false" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle data-dc-tpl="882" cx="8" cy="15" r="4"></circle><path data-dc-tpl="883" d="M11 12l9-9M17 6l3 3M15 8l2 2"></path></svg>Issue a run-only token<span data-dc-tpl="884" class="t-meta" style="margin-left: auto;">can run cards, not change them</span></button>
+        <button data-dc-tpl="885" type="button" role="menuitem" class="mi"><svg data-dc-tpl="886" aria-hidden="true" focusable="false" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path data-dc-tpl="887" d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"></path><path data-dc-tpl="888" d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"></path></svg>Unlink from AgentPod</button>
+        <div data-dc-tpl="889" class="mi-group">
+          <p data-dc-tpl="890" class="t-eyebrow" style="padding: 0 var(--vk-space-3);">2 tokens in use</p>
+          <div data-dc-tpl="891" class="tokrow"><span data-dc-tpl="892" class="t-body">Token 1</span><span data-dc-tpl="893" class="t-meta">issued to chaos-charlie</span><button aria-label="Revoke token 1 of chaos-charlie" type="button" class="vk-button vk-button--primary btn-sm revoke">Revoke</button></div><div data-dc-tpl="895" class="tokrow"><span data-dc-tpl="896" class="t-body">Token 2</span><span data-dc-tpl="897" class="t-meta">issued to chaos-charlie</span><button aria-label="Revoke token 2 of chaos-charlie" type="button" class="vk-button vk-button--primary btn-sm revoke">Revoke</button></div>
+          
+        </div>
+        <button data-dc-tpl="899" type="button" role="menuitem" class="mi mi-danger"><svg data-dc-tpl="900" aria-hidden="true" focusable="false" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path data-dc-tpl="901" d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"></path></svg>Delete agent…</button>
+      </div>
+    </details>
+  </li><li data-dc-tpl="902" class="arow">
+    <span data-dc-tpl="903" class="face" style="width: 32px; height: 32px;"><svg data-dc-tpl="904" viewBox="-2 -4 68 70" width="32" height="32" role="img" aria-label="tester-tim, resting" data-mood="resting"><circle data-dc-tpl="905" cx="32" cy="32" r="30" fill="var(--vk-mood-resting)"></circle><circle data-dc-tpl="906" cx="32" cy="4" r="7" fill="rgb(94 90 156)"></circle><g data-dc-tpl="907" data-eyes="closed"><path data-dc-tpl="908" d="M19 29 Q23 32 27 29 M37 29 Q41 32 45 29" fill="none" stroke="var(--vk-face-ink)" stroke-width="2.6" stroke-linecap="round"></path></g><path data-dc-tpl="909" d="M27 43 Q32 45 37 43" fill="none" stroke="var(--vk-face-ink)" stroke-width="3" stroke-linecap="round"></path></svg></span>
+    <div data-dc-tpl="910" style="min-width: 0px;"><p data-dc-tpl="911" class="t-h3" style="overflow-wrap: anywhere;">tester-tim</p><p data-dc-tpl="912" class="t-meta">Resting · nothing claimed</p></div>
+    <div data-dc-tpl="913" class="caps"><span data-dc-tpl="914" class="chip chip-line">testing</span></div>
+    <p data-dc-tpl="915" class="t-meta linked"><svg data-dc-tpl="916" aria-hidden="true" focusable="false" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path data-dc-tpl="917" d="M5 12.5l4.5 4.5L19 7.5"></path></svg><span data-dc-tpl="918">Linked to AgentPod</span></p>
+    <p data-dc-tpl="919" class="t-meta t-num" style="color: var(--vk-color-text);">2 tokens</p>
+    <details data-dc-tpl="920" class="menu">
+      <summary data-dc-tpl="921" class="vk-button vk-button--secondary btn-sm" aria-label="Actions for tester-tim" style="min-width: 116px;">Actions <span data-dc-tpl="922" class="disc-ico"><svg data-dc-tpl="923" aria-hidden="true" focusable="false" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path data-dc-tpl="924" d="M6 9l6 6 6-6"></path></svg></span></summary>
+      <div data-dc-tpl="925" class="menu-pop" role="menu" aria-label="Actions for tester-tim">
+        <button data-dc-tpl="926" type="button" role="menuitem" class="mi"><svg data-dc-tpl="927" aria-hidden="true" focusable="false" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path data-dc-tpl="928" d="M4 20h4L19 9l-4-4L4 16z"></path></svg>Edit agent</button>
+        <button data-dc-tpl="929" type="button" role="menuitem" class="mi"><svg data-dc-tpl="930" aria-hidden="true" focusable="false" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle data-dc-tpl="931" cx="8" cy="15" r="4"></circle><path data-dc-tpl="932" d="M11 12l9-9M17 6l3 3M15 8l2 2"></path></svg>Issue a token</button>
+        <button data-dc-tpl="933" type="button" role="menuitem" class="mi"><svg data-dc-tpl="934" aria-hidden="true" focusable="false" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle data-dc-tpl="935" cx="8" cy="15" r="4"></circle><path data-dc-tpl="936" d="M11 12l9-9M17 6l3 3M15 8l2 2"></path></svg>Issue a run-only token<span data-dc-tpl="937" class="t-meta" style="margin-left: auto;">can run cards, not change them</span></button>
+        <button data-dc-tpl="938" type="button" role="menuitem" class="mi"><svg data-dc-tpl="939" aria-hidden="true" focusable="false" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path data-dc-tpl="940" d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"></path><path data-dc-tpl="941" d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"></path></svg>Unlink from AgentPod</button>
+        <div data-dc-tpl="942" class="mi-group">
+          <p data-dc-tpl="943" class="t-eyebrow" style="padding: 0 var(--vk-space-3);">2 tokens in use</p>
+          <div data-dc-tpl="944" class="tokrow"><span data-dc-tpl="945" class="t-body">Token 1</span><span data-dc-tpl="946" class="t-meta">issued to tester-tim</span><button aria-label="Revoke token 1 of tester-tim" type="button" class="vk-button vk-button--primary btn-sm revoke">Revoke</button></div><div data-dc-tpl="948" class="tokrow"><span data-dc-tpl="949" class="t-body">Token 2</span><span data-dc-tpl="950" class="t-meta">issued to tester-tim</span><button aria-label="Revoke token 2 of tester-tim" type="button" class="vk-button vk-button--primary btn-sm revoke">Revoke</button></div>
+          
+        </div>
+        <button data-dc-tpl="952" type="button" role="menuitem" class="mi mi-danger"><svg data-dc-tpl="953" aria-hidden="true" focusable="false" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path data-dc-tpl="954" d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"></path></svg>Delete agent…</button>
+      </div>
+    </details>
+  </li><li data-dc-tpl="955" class="arow">
+    <span data-dc-tpl="956" class="face" style="width: 32px; height: 32px;"><svg data-dc-tpl="957" viewBox="-2 -4 68 70" width="32" height="32" role="img" aria-label="error-eric, resting" data-mood="resting"><circle data-dc-tpl="958" cx="32" cy="32" r="30" fill="var(--vk-mood-resting)"></circle><path data-dc-tpl="959" d="M28 4 Q32 -2 36 4 Q34 8 32 6 Q30 8 28 4Z" fill="rgb(107 74 43)"></path><g data-dc-tpl="960" data-eyes="closed"><path data-dc-tpl="961" d="M19 29 Q23 32 27 29 M37 29 Q41 32 45 29" fill="none" stroke="var(--vk-face-ink)" stroke-width="2.6" stroke-linecap="round"></path></g><circle data-dc-tpl="962" cx="17" cy="37" r="4" fill="rgb(255 158 138 / 0.5)"></circle><circle data-dc-tpl="963" cx="47" cy="37" r="4" fill="rgb(255 158 138 / 0.5)"></circle><path data-dc-tpl="964" d="M27 43 Q32 45 37 43" fill="none" stroke="var(--vk-face-ink)" stroke-width="3" stroke-linecap="round"></path></svg></span>
+    <div data-dc-tpl="965" style="min-width: 0px;"><p data-dc-tpl="966" class="t-h3" style="overflow-wrap: anywhere;">error-eric</p><p data-dc-tpl="967" class="t-meta">Resting · nothing claimed</p></div>
+    <div data-dc-tpl="968" class="caps"><span data-dc-tpl="969" class="chip chip-line">diagnostics</span></div>
+    <p data-dc-tpl="970" class="t-meta linked"><svg data-dc-tpl="971" aria-hidden="true" focusable="false" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path data-dc-tpl="972" d="M5 12.5l4.5 4.5L19 7.5"></path></svg><span data-dc-tpl="973">Linked to AgentPod</span></p>
+    <p data-dc-tpl="974" class="t-meta t-num" style="color: var(--vk-color-text);">2 tokens</p>
+    <details data-dc-tpl="975" class="menu">
+      <summary data-dc-tpl="976" class="vk-button vk-button--secondary btn-sm" aria-label="Actions for error-eric" style="min-width: 116px;">Actions <span data-dc-tpl="977" class="disc-ico"><svg data-dc-tpl="978" aria-hidden="true" focusable="false" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path data-dc-tpl="979" d="M6 9l6 6 6-6"></path></svg></span></summary>
+      <div data-dc-tpl="980" class="menu-pop" role="menu" aria-label="Actions for error-eric">
+        <button data-dc-tpl="981" type="button" role="menuitem" class="mi"><svg data-dc-tpl="982" aria-hidden="true" focusable="false" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path data-dc-tpl="983" d="M4 20h4L19 9l-4-4L4 16z"></path></svg>Edit agent</button>
+        <button data-dc-tpl="984" type="button" role="menuitem" class="mi"><svg data-dc-tpl="985" aria-hidden="true" focusable="false" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle data-dc-tpl="986" cx="8" cy="15" r="4"></circle><path data-dc-tpl="987" d="M11 12l9-9M17 6l3 3M15 8l2 2"></path></svg>Issue a token</button>
+        <button data-dc-tpl="988" type="button" role="menuitem" class="mi"><svg data-dc-tpl="989" aria-hidden="true" focusable="false" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle data-dc-tpl="990" cx="8" cy="15" r="4"></circle><path data-dc-tpl="991" d="M11 12l9-9M17 6l3 3M15 8l2 2"></path></svg>Issue a run-only token<span data-dc-tpl="992" class="t-meta" style="margin-left: auto;">can run cards, not change them</span></button>
+        <button data-dc-tpl="993" type="button" role="menuitem" class="mi"><svg data-dc-tpl="994" aria-hidden="true" focusable="false" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path data-dc-tpl="995" d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"></path><path data-dc-tpl="996" d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"></path></svg>Unlink from AgentPod</button>
+        <div data-dc-tpl="997" class="mi-group">
+          <p data-dc-tpl="998" class="t-eyebrow" style="padding: 0 var(--vk-space-3);">2 tokens in use</p>
+          <div data-dc-tpl="999" class="tokrow"><span data-dc-tpl="1000" class="t-body">Token 1</span><span data-dc-tpl="1001" class="t-meta">issued to error-eric</span><button aria-label="Revoke token 1 of error-eric" type="button" class="vk-button vk-button--primary btn-sm revoke">Revoke</button></div><div data-dc-tpl="1003" class="tokrow"><span data-dc-tpl="1004" class="t-body">Token 2</span><span data-dc-tpl="1005" class="t-meta">issued to error-eric</span><button aria-label="Revoke token 2 of error-eric" type="button" class="vk-button vk-button--primary btn-sm revoke">Revoke</button></div>
+          
+        </div>
+        <button data-dc-tpl="1007" type="button" role="menuitem" class="mi mi-danger"><svg data-dc-tpl="1008" aria-hidden="true" focusable="false" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path data-dc-tpl="1009" d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"></path></svg>Delete agent…</button>
+      </div>
+    </details>
+  </li><li data-dc-tpl="1010" class="arow">
+    <span data-dc-tpl="1011" class="face" style="width: 32px; height: 32px;"><svg data-dc-tpl="1012" viewBox="-2 -4 68 70" width="32" height="32" role="img" aria-label="integration-ian, resting" data-mood="resting"><circle data-dc-tpl="1013" cx="32" cy="32" r="30" fill="var(--vk-mood-resting)"></circle><g data-dc-tpl="1014" data-eyes="closed"><path data-dc-tpl="1015" d="M19 29 Q23 32 27 29 M37 29 Q41 32 45 29" fill="none" stroke="var(--vk-face-ink)" stroke-width="2.6" stroke-linecap="round"></path></g><circle data-dc-tpl="1016" cx="17" cy="37" r="4" fill="rgb(255 158 138 / 0.5)"></circle><circle data-dc-tpl="1017" cx="47" cy="37" r="4" fill="rgb(255 158 138 / 0.5)"></circle><path data-dc-tpl="1018" d="M27 43 Q32 45 37 43" fill="none" stroke="var(--vk-face-ink)" stroke-width="3" stroke-linecap="round"></path></svg></span>
+    <div data-dc-tpl="1019" style="min-width: 0px;"><p data-dc-tpl="1020" class="t-h3" style="overflow-wrap: anywhere;">integration-ian</p><p data-dc-tpl="1021" class="t-meta">Resting · nothing claimed</p></div>
+    <div data-dc-tpl="1022" class="caps"><span data-dc-tpl="1023" class="chip chip-line">integration</span></div>
+    <p data-dc-tpl="1024" class="t-meta linked"><svg data-dc-tpl="1025" aria-hidden="true" focusable="false" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path data-dc-tpl="1026" d="M5 12.5l4.5 4.5L19 7.5"></path></svg><span data-dc-tpl="1027">Linked to AgentPod</span></p>
+    <p data-dc-tpl="1028" class="t-meta t-num" style="color: var(--vk-color-text);">2 tokens</p>
+    <details data-dc-tpl="1029" class="menu">
+      <summary data-dc-tpl="1030" class="vk-button vk-button--secondary btn-sm" aria-label="Actions for integration-ian" style="min-width: 116px;">Actions <span data-dc-tpl="1031" class="disc-ico"><svg data-dc-tpl="1032" aria-hidden="true" focusable="false" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path data-dc-tpl="1033" d="M6 9l6 6 6-6"></path></svg></span></summary>
+      <div data-dc-tpl="1034" class="menu-pop" role="menu" aria-label="Actions for integration-ian">
+        <button data-dc-tpl="1035" type="button" role="menuitem" class="mi"><svg data-dc-tpl="1036" aria-hidden="true" focusable="false" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path data-dc-tpl="1037" d="M4 20h4L19 9l-4-4L4 16z"></path></svg>Edit agent</button>
+        <button data-dc-tpl="1038" type="button" role="menuitem" class="mi"><svg data-dc-tpl="1039" aria-hidden="true" focusable="false" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle data-dc-tpl="1040" cx="8" cy="15" r="4"></circle><path data-dc-tpl="1041" d="M11 12l9-9M17 6l3 3M15 8l2 2"></path></svg>Issue a token</button>
+        <button data-dc-tpl="1042" type="button" role="menuitem" class="mi"><svg data-dc-tpl="1043" aria-hidden="true" focusable="false" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle data-dc-tpl="1044" cx="8" cy="15" r="4"></circle><path data-dc-tpl="1045" d="M11 12l9-9M17 6l3 3M15 8l2 2"></path></svg>Issue a run-only token<span data-dc-tpl="1046" class="t-meta" style="margin-left: auto;">can run cards, not change them</span></button>
+        <button data-dc-tpl="1047" type="button" role="menuitem" class="mi"><svg data-dc-tpl="1048" aria-hidden="true" focusable="false" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path data-dc-tpl="1049" d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"></path><path data-dc-tpl="1050" d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"></path></svg>Unlink from AgentPod</button>
+        <div data-dc-tpl="1051" class="mi-group">
+          <p data-dc-tpl="1052" class="t-eyebrow" style="padding: 0 var(--vk-space-3);">2 tokens in use</p>
+          <div data-dc-tpl="1053" class="tokrow"><span data-dc-tpl="1054" class="t-body">Token 1</span><span data-dc-tpl="1055" class="t-meta">issued to integration-ian</span><button aria-label="Revoke token 1 of integration-ian" type="button" class="vk-button vk-button--primary btn-sm revoke">Revoke</button></div><div data-dc-tpl="1057" class="tokrow"><span data-dc-tpl="1058" class="t-body">Token 2</span><span data-dc-tpl="1059" class="t-meta">issued to integration-ian</span><button aria-label="Revoke token 2 of integration-ian" type="button" class="vk-button vk-button--primary btn-sm revoke">Revoke</button></div>
+          
+        </div>
+        <button data-dc-tpl="1061" type="button" role="menuitem" class="mi mi-danger"><svg data-dc-tpl="1062" aria-hidden="true" focusable="false" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path data-dc-tpl="1063" d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"></path></svg>Delete agent…</button>
+      </div>
+    </details>
+  </li><li data-dc-tpl="1064" class="arow">
+    <span data-dc-tpl="1065" class="face" style="width: 32px; height: 32px;"><svg data-dc-tpl="1066" viewBox="-2 -4 68 70" width="32" height="32" role="img" aria-label="api-alan, resting" data-mood="resting"><circle data-dc-tpl="1067" cx="32" cy="32" r="30" fill="var(--vk-mood-resting)"></circle><path data-dc-tpl="1068" d="M8 22 Q12 4 32 3 Q52 4 56 22 Q44 14 32 15 Q20 14 8 22Z" fill="rgb(35 35 58)"></path><g data-dc-tpl="1069" data-eyes="closed"><path data-dc-tpl="1070" d="M19 29 Q23 32 27 29 M37 29 Q41 32 45 29" fill="none" stroke="var(--vk-face-ink)" stroke-width="2.6" stroke-linecap="round"></path></g><path data-dc-tpl="1071" d="M27 43 Q32 45 37 43" fill="none" stroke="var(--vk-face-ink)" stroke-width="3" stroke-linecap="round"></path></svg></span>
+    <div data-dc-tpl="1072" style="min-width: 0px;"><p data-dc-tpl="1073" class="t-h3" style="overflow-wrap: anywhere;">api-alan</p><p data-dc-tpl="1074" class="t-meta">Resting · nothing claimed</p></div>
+    <div data-dc-tpl="1075" class="caps"><span data-dc-tpl="1076" class="chip chip-line">api</span></div>
+    <p data-dc-tpl="1077" class="t-meta linked"><svg data-dc-tpl="1078" aria-hidden="true" focusable="false" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path data-dc-tpl="1079" d="M5 12.5l4.5 4.5L19 7.5"></path></svg><span data-dc-tpl="1080">Linked to AgentPod</span></p>
+    <p data-dc-tpl="1081" class="t-meta t-num" style="color: var(--vk-color-text);">2 tokens</p>
+    <details data-dc-tpl="1082" class="menu">
+      <summary data-dc-tpl="1083" class="vk-button vk-button--secondary btn-sm" aria-label="Actions for api-alan" style="min-width: 116px;">Actions <span data-dc-tpl="1084" class="disc-ico"><svg data-dc-tpl="1085" aria-hidden="true" focusable="false" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path data-dc-tpl="1086" d="M6 9l6 6 6-6"></path></svg></span></summary>
+      <div data-dc-tpl="1087" class="menu-pop" role="menu" aria-label="Actions for api-alan">
+        <button data-dc-tpl="1088" type="button" role="menuitem" class="mi"><svg data-dc-tpl="1089" aria-hidden="true" focusable="false" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path data-dc-tpl="1090" d="M4 20h4L19 9l-4-4L4 16z"></path></svg>Edit agent</button>
+        <button data-dc-tpl="1091" type="button" role="menuitem" class="mi"><svg data-dc-tpl="1092" aria-hidden="true" focusable="false" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle data-dc-tpl="1093" cx="8" cy="15" r="4"></circle><path data-dc-tpl="1094" d="M11 12l9-9M17 6l3 3M15 8l2 2"></path></svg>Issue a token</button>
+        <button data-dc-tpl="1095" type="button" role="menuitem" class="mi"><svg data-dc-tpl="1096" aria-hidden="true" focusable="false" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle data-dc-tpl="1097" cx="8" cy="15" r="4"></circle><path data-dc-tpl="1098" d="M11 12l9-9M17 6l3 3M15 8l2 2"></path></svg>Issue a run-only token<span data-dc-tpl="1099" class="t-meta" style="margin-left: auto;">can run cards, not change them</span></button>
+        <button data-dc-tpl="1100" type="button" role="menuitem" class="mi"><svg data-dc-tpl="1101" aria-hidden="true" focusable="false" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path data-dc-tpl="1102" d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"></path><path data-dc-tpl="1103" d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"></path></svg>Unlink from AgentPod</button>
+        <div data-dc-tpl="1104" class="mi-group">
+          <p data-dc-tpl="1105" class="t-eyebrow" style="padding: 0 var(--vk-space-3);">2 tokens in use</p>
+          <div data-dc-tpl="1106" class="tokrow"><span data-dc-tpl="1107" class="t-body">Token 1</span><span data-dc-tpl="1108" class="t-meta">issued to api-alan</span><button aria-label="Revoke token 1 of api-alan" type="button" class="vk-button vk-button--primary btn-sm revoke">Revoke</button></div><div data-dc-tpl="1110" class="tokrow"><span data-dc-tpl="1111" class="t-body">Token 2</span><span data-dc-tpl="1112" class="t-meta">issued to api-alan</span><button aria-label="Revoke token 2 of api-alan" type="button" class="vk-button vk-button--primary btn-sm revoke">Revoke</button></div>
+          
+        </div>
+        <button data-dc-tpl="1114" type="button" role="menuitem" class="mi mi-danger"><svg data-dc-tpl="1115" aria-hidden="true" focusable="false" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path data-dc-tpl="1116" d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"></path></svg>Delete agent…</button>
+      </div>
+    </details>
+  </li><li data-dc-tpl="1117" class="arow">
+    <span data-dc-tpl="1118" class="face" style="width: 32px; height: 32px;"><svg data-dc-tpl="1119" viewBox="-2 -4 68 70" width="32" height="32" role="img" aria-label="devops-dave, resting" data-mood="resting"><circle data-dc-tpl="1120" cx="32" cy="32" r="30" fill="var(--vk-mood-resting)"></circle><path data-dc-tpl="1121" d="M28 4 Q32 -2 36 4 Q34 8 32 6 Q30 8 28 4Z" fill="rgb(47 107 90)"></path><g data-dc-tpl="1122" data-eyes="closed"><path data-dc-tpl="1123" d="M19 29 Q23 32 27 29 M37 29 Q41 32 45 29" fill="none" stroke="var(--vk-face-ink)" stroke-width="2.6" stroke-linecap="round"></path></g><path data-dc-tpl="1124" d="M27 43 Q32 45 37 43" fill="none" stroke="var(--vk-face-ink)" stroke-width="3" stroke-linecap="round"></path></svg></span>
+    <div data-dc-tpl="1125" style="min-width: 0px;"><p data-dc-tpl="1126" class="t-h3" style="overflow-wrap: anywhere;">devops-dave</p><p data-dc-tpl="1127" class="t-meta">Resting · nothing claimed</p></div>
+    <div data-dc-tpl="1128" class="caps"><span data-dc-tpl="1129" class="chip chip-line">release</span></div>
+    <p data-dc-tpl="1130" class="t-meta linked"><svg data-dc-tpl="1131" aria-hidden="true" focusable="false" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path data-dc-tpl="1132" d="M5 12.5l4.5 4.5L19 7.5"></path></svg><span data-dc-tpl="1133">Linked to AgentPod</span></p>
+    <p data-dc-tpl="1134" class="t-meta t-num" style="color: var(--vk-color-text);">2 tokens</p>
+    <details data-dc-tpl="1135" class="menu">
+      <summary data-dc-tpl="1136" class="vk-button vk-button--secondary btn-sm" aria-label="Actions for devops-dave" style="min-width: 116px;">Actions <span data-dc-tpl="1137" class="disc-ico"><svg data-dc-tpl="1138" aria-hidden="true" focusable="false" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path data-dc-tpl="1139" d="M6 9l6 6 6-6"></path></svg></span></summary>
+      <div data-dc-tpl="1140" class="menu-pop" role="menu" aria-label="Actions for devops-dave">
+        <button data-dc-tpl="1141" type="button" role="menuitem" class="mi"><svg data-dc-tpl="1142" aria-hidden="true" focusable="false" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path data-dc-tpl="1143" d="M4 20h4L19 9l-4-4L4 16z"></path></svg>Edit agent</button>
+        <button data-dc-tpl="1144" type="button" role="menuitem" class="mi"><svg data-dc-tpl="1145" aria-hidden="true" focusable="false" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle data-dc-tpl="1146" cx="8" cy="15" r="4"></circle><path data-dc-tpl="1147" d="M11 12l9-9M17 6l3 3M15 8l2 2"></path></svg>Issue a token</button>
+        <button data-dc-tpl="1148" type="button" role="menuitem" class="mi"><svg data-dc-tpl="1149" aria-hidden="true" focusable="false" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle data-dc-tpl="1150" cx="8" cy="15" r="4"></circle><path data-dc-tpl="1151" d="M11 12l9-9M17 6l3 3M15 8l2 2"></path></svg>Issue a run-only token<span data-dc-tpl="1152" class="t-meta" style="margin-left: auto;">can run cards, not change them</span></button>
+        <button data-dc-tpl="1153" type="button" role="menuitem" class="mi"><svg data-dc-tpl="1154" aria-hidden="true" focusable="false" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path data-dc-tpl="1155" d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"></path><path data-dc-tpl="1156" d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"></path></svg>Unlink from AgentPod</button>
+        <div data-dc-tpl="1157" class="mi-group">
+          <p data-dc-tpl="1158" class="t-eyebrow" style="padding: 0 var(--vk-space-3);">2 tokens in use</p>
+          <div data-dc-tpl="1159" class="tokrow"><span data-dc-tpl="1160" class="t-body">Token 1</span><span data-dc-tpl="1161" class="t-meta">issued to devops-dave</span><button aria-label="Revoke token 1 of devops-dave" type="button" class="vk-button vk-button--primary btn-sm revoke">Revoke</button></div><div data-dc-tpl="1163" class="tokrow"><span data-dc-tpl="1164" class="t-body">Token 2</span><span data-dc-tpl="1165" class="t-meta">issued to devops-dave</span><button aria-label="Revoke token 2 of devops-dave" type="button" class="vk-button vk-button--primary btn-sm revoke">Revoke</button></div>
+          
+        </div>
+        <button data-dc-tpl="1167" type="button" role="menuitem" class="mi mi-danger"><svg data-dc-tpl="1168" aria-hidden="true" focusable="false" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path data-dc-tpl="1169" d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"></path></svg>Delete agent…</button>
+      </div>
+    </details>
+  </li><li data-dc-tpl="1170" class="arow">
+    <span data-dc-tpl="1171" class="face" style="width: 32px; height: 32px;"><svg data-dc-tpl="1172" viewBox="-2 -4 68 70" width="32" height="32" role="img" aria-label="vulnerability-victor, resting" data-mood="resting"><circle data-dc-tpl="1173" cx="32" cy="32" r="30" fill="var(--vk-mood-resting)"></circle><path data-dc-tpl="1174" d="M28 4 Q32 -2 36 4 Q34 8 32 6 Q30 8 28 4Z" fill="rgb(35 35 58)"></path><g data-dc-tpl="1175" data-eyes="closed"><path data-dc-tpl="1176" d="M19 29 Q23 32 27 29 M37 29 Q41 32 45 29" fill="none" stroke="var(--vk-face-ink)" stroke-width="2.6" stroke-linecap="round"></path></g><circle data-dc-tpl="1177" cx="17" cy="37" r="4" fill="rgb(255 158 138 / 0.5)"></circle><circle data-dc-tpl="1178" cx="47" cy="37" r="4" fill="rgb(255 158 138 / 0.5)"></circle><path data-dc-tpl="1179" d="M27 43 Q32 45 37 43" fill="none" stroke="var(--vk-face-ink)" stroke-width="3" stroke-linecap="round"></path></svg></span>
+    <div data-dc-tpl="1180" style="min-width: 0px;"><p data-dc-tpl="1181" class="t-h3" style="overflow-wrap: anywhere;">vulnerability-victor</p><p data-dc-tpl="1182" class="t-meta">Resting · nothing claimed</p></div>
+    <div data-dc-tpl="1183" class="caps"><span data-dc-tpl="1184" class="chip chip-line">security-review</span></div>
+    <p data-dc-tpl="1185" class="t-meta linked"><svg data-dc-tpl="1186" aria-hidden="true" focusable="false" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path data-dc-tpl="1187" d="M5 12.5l4.5 4.5L19 7.5"></path></svg><span data-dc-tpl="1188">Linked to AgentPod</span></p>
+    <p data-dc-tpl="1189" class="t-meta t-num" style="color: var(--vk-color-text);">2 tokens</p>
+    <details data-dc-tpl="1190" class="menu">
+      <summary data-dc-tpl="1191" class="vk-button vk-button--secondary btn-sm" aria-label="Actions for vulnerability-victor" style="min-width: 116px;">Actions <span data-dc-tpl="1192" class="disc-ico"><svg data-dc-tpl="1193" aria-hidden="true" focusable="false" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path data-dc-tpl="1194" d="M6 9l6 6 6-6"></path></svg></span></summary>
+      <div data-dc-tpl="1195" class="menu-pop" role="menu" aria-label="Actions for vulnerability-victor">
+        <button data-dc-tpl="1196" type="button" role="menuitem" class="mi"><svg data-dc-tpl="1197" aria-hidden="true" focusable="false" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path data-dc-tpl="1198" d="M4 20h4L19 9l-4-4L4 16z"></path></svg>Edit agent</button>
+        <button data-dc-tpl="1199" type="button" role="menuitem" class="mi"><svg data-dc-tpl="1200" aria-hidden="true" focusable="false" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle data-dc-tpl="1201" cx="8" cy="15" r="4"></circle><path data-dc-tpl="1202" d="M11 12l9-9M17 6l3 3M15 8l2 2"></path></svg>Issue a token</button>
+        <button data-dc-tpl="1203" type="button" role="menuitem" class="mi"><svg data-dc-tpl="1204" aria-hidden="true" focusable="false" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle data-dc-tpl="1205" cx="8" cy="15" r="4"></circle><path data-dc-tpl="1206" d="M11 12l9-9M17 6l3 3M15 8l2 2"></path></svg>Issue a run-only token<span data-dc-tpl="1207" class="t-meta" style="margin-left: auto;">can run cards, not change them</span></button>
+        <button data-dc-tpl="1208" type="button" role="menuitem" class="mi"><svg data-dc-tpl="1209" aria-hidden="true" focusable="false" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path data-dc-tpl="1210" d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"></path><path data-dc-tpl="1211" d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"></path></svg>Unlink from AgentPod</button>
+        <div data-dc-tpl="1212" class="mi-group">
+          <p data-dc-tpl="1213" class="t-eyebrow" style="padding: 0 var(--vk-space-3);">2 tokens in use</p>
+          <div data-dc-tpl="1214" class="tokrow"><span data-dc-tpl="1215" class="t-body">Token 1</span><span data-dc-tpl="1216" class="t-meta">issued to vulnerability-victor</span><button aria-label="Revoke token 1 of vulnerability-victor" type="button" class="vk-button vk-button--primary btn-sm revoke">Revoke</button></div><div data-dc-tpl="1218" class="tokrow"><span data-dc-tpl="1219" class="t-body">Token 2</span><span data-dc-tpl="1220" class="t-meta">issued to vulnerability-victor</span><button aria-label="Revoke token 2 of vulnerability-victor" type="button" class="vk-button vk-button--primary btn-sm revoke">Revoke</button></div>
+          
+        </div>
+        <button data-dc-tpl="1222" type="button" role="menuitem" class="mi mi-danger"><svg data-dc-tpl="1223" aria-hidden="true" focusable="false" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path data-dc-tpl="1224" d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"></path></svg>Delete agent…</button>
+      </div>
+    </details>
+  </li><li data-dc-tpl="1225" class="arow">
+    <span data-dc-tpl="1226" class="face" style="width: 32px; height: 32px;"><svg data-dc-tpl="1227" viewBox="-2 -4 68 70" width="32" height="32" role="img" aria-label="message-melissa, resting" data-mood="resting"><circle data-dc-tpl="1228" cx="32" cy="32" r="30" fill="var(--vk-mood-resting)"></circle><circle data-dc-tpl="1229" cx="32" cy="4" r="7" fill="rgb(47 107 90)"></circle><g data-dc-tpl="1230" data-eyes="closed"><path data-dc-tpl="1231" d="M19 29 Q23 32 27 29 M37 29 Q41 32 45 29" fill="none" stroke="var(--vk-face-ink)" stroke-width="2.6" stroke-linecap="round"></path></g><circle data-dc-tpl="1232" cx="17" cy="37" r="4" fill="rgb(255 158 138 / 0.5)"></circle><circle data-dc-tpl="1233" cx="47" cy="37" r="4" fill="rgb(255 158 138 / 0.5)"></circle><path data-dc-tpl="1234" d="M27 43 Q32 45 37 43" fill="none" stroke="var(--vk-face-ink)" stroke-width="3" stroke-linecap="round"></path></svg></span>
+    <div data-dc-tpl="1235" style="min-width: 0px;"><p data-dc-tpl="1236" class="t-h3" style="overflow-wrap: anywhere;">message-melissa</p><p data-dc-tpl="1237" class="t-meta">Resting · nothing claimed</p></div>
+    <div data-dc-tpl="1238" class="caps"><span data-dc-tpl="1239" class="chip chip-line">marketing</span></div>
+    <p data-dc-tpl="1240" class="t-meta linked"><svg data-dc-tpl="1241" aria-hidden="true" focusable="false" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path data-dc-tpl="1242" d="M5 12.5l4.5 4.5L19 7.5"></path></svg><span data-dc-tpl="1243">Linked to AgentPod</span></p>
+    <p data-dc-tpl="1244" class="t-meta t-num" style="color: var(--vk-color-text);">1 token</p>
+    <details data-dc-tpl="1245" class="menu">
+      <summary data-dc-tpl="1246" class="vk-button vk-button--secondary btn-sm" aria-label="Actions for message-melissa" style="min-width: 116px;">Actions <span data-dc-tpl="1247" class="disc-ico"><svg data-dc-tpl="1248" aria-hidden="true" focusable="false" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path data-dc-tpl="1249" d="M6 9l6 6 6-6"></path></svg></span></summary>
+      <div data-dc-tpl="1250" class="menu-pop" role="menu" aria-label="Actions for message-melissa">
+        <button data-dc-tpl="1251" type="button" role="menuitem" class="mi"><svg data-dc-tpl="1252" aria-hidden="true" focusable="false" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path data-dc-tpl="1253" d="M4 20h4L19 9l-4-4L4 16z"></path></svg>Edit agent</button>
+        <button data-dc-tpl="1254" type="button" role="menuitem" class="mi"><svg data-dc-tpl="1255" aria-hidden="true" focusable="false" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle data-dc-tpl="1256" cx="8" cy="15" r="4"></circle><path data-dc-tpl="1257" d="M11 12l9-9M17 6l3 3M15 8l2 2"></path></svg>Issue a token</button>
+        <button data-dc-tpl="1258" type="button" role="menuitem" class="mi"><svg data-dc-tpl="1259" aria-hidden="true" focusable="false" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle data-dc-tpl="1260" cx="8" cy="15" r="4"></circle><path data-dc-tpl="1261" d="M11 12l9-9M17 6l3 3M15 8l2 2"></path></svg>Issue a run-only token<span data-dc-tpl="1262" class="t-meta" style="margin-left: auto;">can run cards, not change them</span></button>
+        <button data-dc-tpl="1263" type="button" role="menuitem" class="mi"><svg data-dc-tpl="1264" aria-hidden="true" focusable="false" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path data-dc-tpl="1265" d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"></path><path data-dc-tpl="1266" d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"></path></svg>Unlink from AgentPod</button>
+        <div data-dc-tpl="1267" class="mi-group">
+          <p data-dc-tpl="1268" class="t-eyebrow" style="padding: 0 var(--vk-space-3);">1 token in use</p>
+          <div data-dc-tpl="1269" class="tokrow"><span data-dc-tpl="1270" class="t-body">Token 1</span><span data-dc-tpl="1271" class="t-meta">issued to message-melissa</span><button aria-label="Revoke token 1 of message-melissa" type="button" class="vk-button vk-button--primary btn-sm revoke">Revoke</button></div>
+          
+        </div>
+        <button data-dc-tpl="1273" type="button" role="menuitem" class="mi mi-danger"><svg data-dc-tpl="1274" aria-hidden="true" focusable="false" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path data-dc-tpl="1275" d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"></path></svg>Delete agent…</button>
+      </div>
+    </details>
+  </li>
+  </ul></section><section data-dc-tpl="1276" class="panel" id="new-agent" aria-labelledby="new-h">
+  <div data-dc-tpl="1277" class="panel-head"><h2 data-dc-tpl="1278" class="t-h2" id="new-h">New agent</h2><span data-dc-tpl="1279" class="t-meta">Creates the agent and issues its first token, shown once.</span></div>
+  <form data-dc-tpl="1280" class="panel-body" style="display: grid; grid-template-columns: minmax(0px, 1fr) minmax(0px, 2fr); gap: var(--vk-space-4); align-items: start;">
+    <div data-dc-tpl="1281" class="field"><label data-dc-tpl="1282" for="na-name">Name</label><input data-dc-tpl="1283" id="na-name" class="input" placeholder="e.g. tester-tim"></div>
+    <div data-dc-tpl="1284" class="field"><span data-dc-tpl="1285" class="lbl" id="na-caps">Capabilities</span><div data-dc-tpl="1286" class="caps" role="group" aria-labelledby="na-caps"><button data-dc-tpl="1287" type="button" class="chip pick" aria-pressed="false">analysis</button><button data-dc-tpl="1288" type="button" class="chip pick" aria-pressed="false">api</button><button data-dc-tpl="1289" type="button" class="chip pick" aria-pressed="false">claim-check</button><button data-dc-tpl="1290" type="button" class="chip pick" aria-pressed="false">code</button><button data-dc-tpl="1291" type="button" class="chip pick" aria-pressed="false" data-unused="">command</button><button data-dc-tpl="1292" type="button" class="chip pick" aria-pressed="false">design</button><button data-dc-tpl="1293" type="button" class="chip pick" aria-pressed="false">diagnostics</button><button data-dc-tpl="1294" type="button" class="chip pick" aria-pressed="false">integration</button><button data-dc-tpl="1295" type="button" class="chip pick" aria-pressed="false">maintenance</button><button data-dc-tpl="1296" type="button" class="chip pick" aria-pressed="false">marketing</button><button data-dc-tpl="1297" type="button" class="chip pick" aria-pressed="false">onboarding</button><button data-dc-tpl="1298" type="button" class="chip pick" aria-pressed="false">planning</button><button data-dc-tpl="1299" type="button" class="chip pick" aria-pressed="false">release</button><button data-dc-tpl="1300" type="button" class="chip pick" aria-pressed="false">research</button><button data-dc-tpl="1301" type="button" class="chip pick" aria-pressed="false">resilience</button><button data-dc-tpl="1302" type="button" class="chip pick" aria-pressed="false">security</button><button data-dc-tpl="1303" type="button" class="chip pick" aria-pressed="false">security-review</button><button data-dc-tpl="1304" type="button" class="chip pick" aria-pressed="false">testing</button><button data-dc-tpl="1305" type="button" class="chip pick" aria-pressed="false">writing</button><label data-dc-tpl="1306" class="sr" for="na-new">New capability</label><input data-dc-tpl="1307" id="na-new" class="input" placeholder="Add a capability" style="width: 200px; min-height: 36px;"></div></div>
+    <div data-dc-tpl="1308" style="grid-column: 1 / -1;"><button type="button" class="vk-button vk-button--primary btn-sm" disabled="">Create agent and issue token</button></div>
+  </form></section></main></div></div></div>
+
+
+
+</body></html>

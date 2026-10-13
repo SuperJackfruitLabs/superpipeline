@@ -72,7 +72,10 @@ export interface AgentRecord {
 }
 
 /** An agent record, plus what bounds it when it queues work of its own (migration 0015). */
-export type AgentRecordWithQueueing = AgentRecord & AgentQueueingPolicy;
+export type AgentRecordWithQueueing = AgentRecord & AgentQueueingPolicy & {
+  /** Display role ("Diagnostics", migration 0018). Null reads as plain "agent". */
+  role?: string | null;
+};
 
 /** Where an agent is also known, as a suite principal outside superpipeline. */
 export interface AgentExternalMapping {
@@ -727,16 +730,17 @@ export async function listAgents(db: D1Database, tenantId: string): Promise<Agen
     .prepare(
       `SELECT id, tenant_id AS tenantId, name, capabilities_json AS caps, icon_url AS iconUrl, concurrency,
               external_id AS externalId, external_source AS externalSource,
-              owner_user_id AS ownerUserId, may_queue_to_json AS mayQueueTo, queue_ceiling_per_hour AS ceiling,
+              owner_user_id AS ownerUserId, may_queue_to_json AS mayQueueTo, queue_ceiling_per_hour AS ceiling, role,
               COALESCE((SELECT json_group_array(t.id) FROM agent_tokens t WHERE t.agent_id = a.id AND t.revoked_at IS NULL), '[]') AS tokenIdsJson
        FROM agents a WHERE tenant_id = ? ORDER BY created_at ASC`,
     )
     .bind(tenantId)
-    .all<{ id: string; tenantId: string; name: string; caps: string; iconUrl: string | null; concurrency: number; externalId: string | null; externalSource: string | null; ownerUserId: string | null; mayQueueTo: string | null; ceiling: number | null; tokenIdsJson: string }>();
+    .all<{ id: string; tenantId: string; name: string; caps: string; iconUrl: string | null; concurrency: number; externalId: string | null; externalSource: string | null; ownerUserId: string | null; mayQueueTo: string | null; ceiling: number | null; role: string | null; tokenIdsJson: string }>();
   return results.map((r) => ({
     id: r.id,
     tenantId: r.tenantId,
     name: r.name,
+    role: r.role ?? null,
     capabilities: JSON.parse(r.caps),
     iconUrl: r.iconUrl,
     concurrency: Number(r.concurrency ?? 1),
@@ -790,13 +794,30 @@ export async function recordBoard(
     .run();
 }
 
-export async function listBoards(db: D1Database, tenantId: string): Promise<Array<{ id: string; name: string }>> {
+export async function listBoards(
+  db: D1Database,
+  tenantId: string,
+): Promise<Array<{ id: string; name: string; updatedAt: string | null }>> {
   // Through `tenantScopedSelect`, not around it. The guard's whole claim is that "there is NO
   // unscoped query builder" — and until this, every production read was hand-written SQL and the
   // builder was used only by its own tests. A guard nothing routes through guards nothing.
-  const q = tenantScopedSelect('boards', tenantId, { columns: ['id', 'name'] });
-  const { results } = await db.prepare(`${q.sql} ORDER BY created_at DESC`).bind(...q.params).all<{ id: string; name: string }>();
-  return results;
+  const q = tenantScopedSelect('boards', tenantId, { columns: ['id', 'name', 'COALESCE(updated_at, created_at) AS updated_at'] });
+  const { results } = await db
+    .prepare(`${q.sql} ORDER BY created_at DESC`)
+    .bind(...q.params)
+    .all<{ id: string; name: string; updated_at: string | null }>();
+  return results.map((r) => ({ id: r.id, name: r.name, updatedAt: isoOrNull(r.updated_at) }));
+}
+
+/** D1's `datetime('now')` is `YYYY-MM-DD HH:MM:SS` in UTC; the API speaks ISO-8601. */
+function isoOrNull(v: string | null): string | null {
+  if (!v) return null;
+  return /^\d{4}-\d\d-\d\d \d\d:\d\d:\d\d$/.test(v) ? `${v.replace(' ', 'T')}Z` : v;
+}
+
+/** A card write happened on this board: move its "last activity" forward. */
+export async function touchBoard(db: D1Database, tenantId: string, boardId: string, at: string): Promise<void> {
+  await db.prepare(`UPDATE boards SET updated_at = ? WHERE id = ? AND tenant_id = ?`).bind(at, boardId, tenantId).run();
 }
 
 /**

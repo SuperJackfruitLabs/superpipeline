@@ -14,7 +14,7 @@ import type { Stage } from '$lib/api';
 afterEach(cleanup);
 
 const item = (over: Partial<AttentionItem>): AttentionItem => ({
-  id: 'x', kind: 'blocked', boardId: 'brd_1', boardName: 'Releases', cardId: 'crd_1', title: 'Add login', stageKey: 'build',
+  id: 'x', kind: 'blocked', boardId: 'brd_1', boardName: 'Releases', cardId: 'crd_1', title: 'Add login', stageKey: 'build', stageName: 'Build',
   headline: 'stopped and is waiting on you', detail: 'the staging database is down',
   instruction: 'Read why it stopped, fix that, then resume it with a note the agent will read.',
   actions: ['resume', 'open'], ageHours: 3, ...over,
@@ -83,8 +83,8 @@ describe('AttentionRow', () => {
   });
 
   it('an ownerless-stage row moves the card with a stage picker that leaves out where it is', async () => {
-    const { onMove } = setup(item({ kind: 'no-owner', stageKey: 'requested', headline: 'Nothing claims stage requested', detail: null, actions: ['move', 'open'] }));
-    expect(screen.getByText(/Nothing claims stage requested/)).toBeTruthy();
+    const { onMove } = setup(item({ kind: 'no-owner', stageKey: 'requested', headline: 'nothing claims the Requested stage', detail: null, actions: ['move', 'open'] }));
+    expect(screen.getByText(/nothing claims the Requested stage/)).toBeTruthy();
     await fireEvent.click(screen.getByRole('button', { name: 'Move' }));
     const picker = screen.getByLabelText(/move to/i) as HTMLSelectElement;
     expect([...picker.options].filter((o) => !o.disabled).map((o) => o.value)).toEqual(['build']);

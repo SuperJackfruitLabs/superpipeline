@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { passesArchivedFilter, passesProjectFilter } from './card-filters';
+import { activeFilterCount, noFilters } from './card-filters';
 
 describe('passesArchivedFilter', () => {
   it('shows a never-archived card (archivedAt: null) when the filter is off', () => {
@@ -42,5 +43,14 @@ describe('passesProjectFilter', () => {
 
   it('hides a card belonging to a different project', () => {
     expect(passesProjectFilter('prj_1', 'prj_2')).toBe(false);
+  });
+});
+
+
+describe('activeFilterCount', () => {
+  it('counts each filter that is on, once', () => {
+    expect(activeFilterCount(noFilters())).toBe(0);
+    expect(activeFilterCount({ ...noFilters(), states: ['working', 'submitted'], labels: ['lbl_0259a14014754f69'], showArchived: true })).toBe(3);
+    expect(activeFilterCount({ ...noFilters(), minPriority: 0, projectId: 'prj_34b48f840daa4309' })).toBe(2);
   });
 });

@@ -1,12 +1,13 @@
+// apps/web/src/lib/components/card/layouts/types.ts
 /**
- * What a card layout is handed (spec §3.5, §7.5). The drawer shell owns the data and every
- * control; a layout only chooses where each of the 23 sections goes and how the question and the
- * gate are drawn. `layout-parity.test.ts` holds every layout to rendering each section once.
+ * What a card surface is handed (spec §7.5, amendments §7.3–§7.4). The model owns the data and
+ * every control; a layout only draws it. Every element a layout draws for one of the 23 sections
+ * carries `data-section="<key>"` (an empty one is `<span hidden data-section>`), and
+ * `card-layouts.svelte.test.ts` holds every layout to each key exactly once.
  */
-import type { Snippet } from 'svelte';
 import type { Mood, Phase, Vibe } from '@superjackfruit/vibekit';
-import type { Card, Elicitation, Gate, GateDecision, Stage } from '$lib/api';
-import type { CardLead } from '../card-lead';
+import type { Elicitation, Gate, GateConflict, GateDecision } from '$lib/api';
+import type { CardModel } from '../card-model.svelte';
 import type { QuestionAnswer } from '../question/question-answer.svelte';
 
 export const CARD_SECTION_KEYS = [
@@ -15,29 +16,30 @@ export const CARD_SECTION_KEYS = [
   'related', 'references', 'cardActions',
 ] as const;
 export type CardSectionKey = (typeof CARD_SECTION_KEYS)[number];
-export type CardSections = Readonly<Record<CardSectionKey, Snippet>>;
 
-/** `description`, `handoff`, `cost`: whether that section has anything to show (Quiet says "None." under an empty one). */
+/** `description`, `handoff`, `cost`: whether that section has anything to show. */
 export interface CardCounts { criteria: number; planSteps: number; specFields: number; runs: number; links: number; children: number; openChildren: number; decisions: number; refs: number; attempts: number; deliveryActive: boolean; description: boolean; handoff: boolean; cost: boolean }
 export interface CardAgent { id: string | null; name: string; iconUrl: string | null; mood: Mood }
-export interface GateBinding { boardId: string; gate: Gate; error: string | null; onResponse: (d: GateDecision, r: Response) => Promise<boolean> }
+export interface GateBinding {
+  boardId: string; gate: Gate; error: string | null; conflict: GateConflict | null; conflictWho: string;
+  onResponse: (d: GateDecision, r: Response) => Promise<boolean>;
+  onRefresh: () => Promise<void>;
+}
 export interface QuestionBinding { model: QuestionAnswer; elicitation: Elicitation; agent: CardAgent }
 
 export interface CardLayoutProps {
-  card: Card;
+  model: CardModel;
   vibe: Vibe;
   phase: Phase;
-  boardName: string;
+  /** `app.user?.name ?? app.user?.login ?? 'there'` */
   personName: string;
-  stages: Stage[];
-  stageIndex: number;
-  stageName: string;
-  ageHours: number | null;
-  lead: CardLead;
-  agent: CardAgent;
-  sections: CardSections;
-  counts: CardCounts;
-  editing: boolean;
   gate: GateBinding | null;
   question: QuestionBinding | null;
+  /** `/b/{boardId}/c/{cardId}/page` */
+  pageHref: string;
+  onClose: () => void;
 }
+export type CardPageProps = Omit<CardLayoutProps, 'onClose'> & { boardHref: string };
+export type CardStateCellKey = 'gate' | 'question' | 'archived' | 'done' | 'error' | 'loading';
+export interface CardStateCell { model: CardModel; gate: GateBinding | null; question: QuestionBinding | null }
+export interface CardStatesProps { cells: Record<CardStateCellKey, CardStateCell>; vibe: Vibe; phase: Phase }

@@ -1,63 +1,122 @@
 <script lang="ts">
   /**
-   * Plan — the shape of the work.
-   *
-   * Owns what used to sit in the topbar and could not fit there: the view toggle and the filter.
-   * Both belong to this mode rather than to the app, which is half of why the header stopped
-   * overflowing.
+   * Plan: the board, the list or the projects, inside the vibe's shell. The view switch and the
+   * Filter button live in the shell now; `?view=` picks the view from a link.
    */
+  import { page } from '$app/state';
+  import { getUsage } from '$lib/api';
   import { app } from '$lib/stores/app.svelte';
   import { appearance } from '$lib/appearance.svelte';
-  import { BOARD_LAYOUTS } from '$lib/layouts';
-  import { itemsFromBoard } from '$lib/components/attention/attention';
+  import { viewport } from '$lib/viewport.svelte';
+  import { BOARD_EMPTY_FORMS, BOARD_LAYOUTS, LIST_LAYOUTS } from '$lib/layouts';
+  import { viewFromSearch } from '$lib/view-param';
+  import BoardEmpty from '$lib/components/board/BoardEmpty.svelte';
+  import { buildBoardModel } from '$lib/components/board/board-model';
   import { stageSummaries, summarize } from '$lib/components/board/card-summary';
-  import ListView from './ListView.svelte';
+  import DlGreeting from '$lib/components/board/daylight/DlGreeting.svelte';
+  import PdHello from '$lib/components/board/daylight/PdHello.svelte';
+  import AppShell from '$lib/components/shell/AppShell.svelte';
+  import { shellModel } from '$lib/components/shell/shell-model.svelte';
+  import { needsPart, PROJECTS_NOTE } from '$lib/components/shell/shell-words';
+  import { plural } from '$lib/words';
   import ProjectView from './ProjectView.svelte';
-  import FilterBar from './FilterBar.svelte';
+  import { buildRows, filtersActive, groupRows, nextSort, quickCounts } from './list/list-model';
+  import { ListUi } from './list/list-ui.svelte';
+  import type { ListLayoutProps } from './list/types';
 
-  const summaries = $derived(app.board ? summarize(app.board, app.filteredCards(), { agents: app.agents, members: app.members, labels: app.labelById(), nowMs: Date.now() }) : []);
-  const stageList = $derived(app.board ? stageSummaries(app.board, app.filteredCards(), app.agents) : []);
-  const attention = $derived(app.board ? itemsFromBoard(app.board, app.agents) : []);
+  $effect(() => {
+    const v = viewFromSearch(page.url.searchParams);
+    if (v) app.setView(v);
+  });
+
+  const vibe = $derived(appearance.value.vibe);
+
+  /** The week's spend, for the Studio figures; fetched once per board. */
+  let spend7d = $state<number | null>(null);
+  $effect(() => {
+    const id = app.board?.boardId;
+    if (!id) return;
+    let live = true;
+    void app.markBusy(getUsage(id, '7d').then((u) => { if (live) spend7d = u.totalCostUsd; }, () => { if (live) spend7d = null; }));
+    return () => { live = false; };
+  });
+
+  const me = $derived(app.user ? { id: app.user.userId, name: shellModel.userName, initials: shellModel.initials } : null);
+  const model = $derived(
+    app.board ? buildBoardModel(app.board, app.filteredCards(), { agents: app.agents, members: app.members, labels: app.labelById(), nowMs: Date.now(), me, spend7d }) : null,
+  );
+  /** No live card at all (filters ignored): the board explains itself instead of drawing empty lanes. */
+  const empty = $derived(!!app.board && app.board.cards.every((c) => c.archivedAt !== null));
+  /** The empty board explains itself on a phone too; its stylesheet folds to one column below 900px. */
+  const showEmpty = $derived(empty);
+  // Studio's empty board keeps the page gutters (SP-Board-Empty-Studio: the card at x 104, 1296 wide); its full board bleeds.
+  /** Daylight's greeting sits in the shell's sky (the band on a desktop, the hello on a phone); not on an empty board (O-13). */
+  const greet = $derived(vibe === 'daylight' && app.view === 'board' && model !== null && !empty);
+
+  const List = $derived(LIST_LAYOUTS[vibe]);
+  /** The List's transient state lives here, so a re-mounted layout keeps it. */
+  const listUi = new ListUi();
+  const listProps = $derived.by((): ListLayoutProps | null => {
+    const board = app.board;
+    if (!board || app.view !== 'list') return null;
+    const cards = app.filteredCards();
+    const stageList = stageSummaries(board, cards, app.agents);
+    const rows = buildRows(summarize(board, cards, { agents: app.agents, members: app.members, labels: app.labelById(), nowMs: Date.now() }), { boardId: board.boardId ?? '', agents: app.agents });
+    return {
+      ui: listUi,
+      boardId: board.boardId ?? '', boardName: board.name ?? '', stageCount: board.stages.length,
+      groups: groupRows(rows, app.listGroupBy, app.listSort, stageList, app.members, app.agents),
+      emptyStages: app.listGroupBy === 'stage' ? stageList.filter((s) => s.count === 0).map((s) => s.name) : [],
+      cardCount: rows.length, needsCount: rows.filter((r) => r.state.needsYou).length,
+      quickCounts: quickCounts(rows), totalCostUsd: rows.reduce((a, r) => a + r.s.cost, 0),
+      groupBy: app.listGroupBy, sort: app.listSort, filtersOn: filtersActive(app.filters),
+      hasCards: board.cards.some((c) => !c.archivedAt),
+      stages: [...board.stages].sort((a, b) => a.order - b.order).map((s) => ({ key: s.key, name: s.name })),
+      onGroupBy: (g) => (app.listGroupBy = g),
+      onSort: (k) => (app.listSort = nextSort(app.listSort, k)),
+      onSetSort: (s) => (app.listSort = s),
+      onMove: (id, key) => app.moveCard(id, key),
+      onOpen: (id) => app.openCard(id),
+      onOpenMoveDialog: (id) => app.openMoveDialog(id),
+    };
+  });
+
+  const projects = $derived(app.view === 'projects');
+  const status = $derived(
+    app.view !== 'board' && vibe !== 'studio'
+      ? null // only Studio's List and Projects references draw a status line
+      : projects
+        ? shellModel.pageStatus([plural(app.projects.length, 'project', 'projects'), `${plural(shellModel.liveCount, 'card', 'cards')} on this board`, needsPart(shellModel.needsCount)])
+        : shellModel.boardStatus,
+  );
 </script>
 
-<div class="flex h-full min-h-0 flex-col">
-  <div class="border-border flex items-center gap-2 border-b px-3 py-2">
-    <div class="border-border inline-flex overflow-hidden rounded-[7px] border text-xs">
-      <button
-        onclick={() => app.setView('board')}
-        aria-pressed={app.view === 'board'}
-        class="mono px-2.5 {app.view === 'board' ? 'bg-marigold text-primary-foreground' : 'text-muted-foreground hover:text-foreground'}"
-        style="min-height:var(--tap)"
-      >Board</button>
-      <button
-        onclick={() => app.setView('list')}
-        aria-pressed={app.view === 'list'}
-        class="mono border-border border-l px-2.5 {app.view === 'list' ? 'bg-marigold text-primary-foreground' : 'text-muted-foreground hover:text-foreground'}"
-        style="min-height:var(--tap)"
-      >List</button>
-      <button
-        onclick={() => app.setView('projects')}
-        aria-pressed={app.view === 'projects'}
-        class="mono border-border border-l px-2.5 {app.view === 'projects' ? 'bg-marigold text-primary-foreground' : 'text-muted-foreground hover:text-foreground'}"
-        style="min-height:var(--tap)"
-      >Projects</button>
-    </div>
-    <!-- The card filters (state/owner/label/project…) describe a list of CARDS, which this view
-         stops being the moment "Projects" is selected — no `FilterBar` for a screen with no cards
-         in it. -->
-    {#if app.view !== 'projects'}
-      <FilterBar />
-    {/if}
-  </div>
+{#snippet listTools()}{#if listProps && List.toolbar}<List.toolbar {...listProps} />{/if}{/snippet}
+{#snippet dlSky()}{#if model}{#if viewport.phone}<PdHello {model} phase={shellModel.phonePhase} firstName={shellModel.firstName} />{:else}<DlGreeting {model} phase={appearance.phase} firstName={shellModel.firstName} />{/if}{/if}{/snippet}
 
-  <div class="min-h-0 flex-1 overflow-auto">
-    {#if app.view === 'board'}
-      {@const Board = BOARD_LAYOUTS[appearance.value.vibe]}
-      <Board {summaries} stages={stageList} {attention} phase={appearance.phase} vibe={appearance.value.vibe} boardName={app.board?.name ?? ''} cardCount={app.filteredCards().length} onCompose={() => app.requestCompose()} />
-    {:else if app.view === 'list'}
-      <ListView />
-    {:else}
-      <ProjectView />
-    {/if}
-  </div>
-</div>
+<AppShell
+  here="plan"
+  section={app.view}
+  boardName={app.board?.name ?? 'Untitled board'}
+  view={app.view}
+  showing={projects ? PROJECTS_NOTE : shellModel.showing}
+  paperShowing={projects ? PROJECTS_NOTE : shellModel.paperShowing}
+  editionCount={shellModel.editionCount}
+  studioSubRight={projects ? null : shellModel.studioSubRight}
+  {status}
+  sky={greet ? dlSky : undefined}
+  bleed={(app.view === 'board' && !(showEmpty && vibe === 'studio')) || vibe === 'quiet'}
+  subTools={app.view === 'list' && List.toolbar ? listTools : undefined}
+  ownHeading={projects || (app.view === 'list' && vibe !== 'daylight')}
+>
+  {#if model && app.view === 'board' && showEmpty}
+    <BoardEmpty {model} intro={app.board?.intro} form={BOARD_EMPTY_FORMS[vibe]} {me} onCompose={() => app.requestCompose()} />
+  {:else if model && app.view === 'board'}
+    {@const Board = BOARD_LAYOUTS[vibe][viewport.phone ? 'phone' : 'desktop']}
+    <Board {model} {vibe} phase={appearance.phase} onCompose={() => app.requestCompose()} />
+  {:else if app.view === 'list'}
+    {#if listProps}<List.body {...listProps} />{/if}
+  {:else if app.view === 'projects'}
+    <ProjectView />
+  {/if}
+</AppShell>

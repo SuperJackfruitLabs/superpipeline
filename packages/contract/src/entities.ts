@@ -103,6 +103,8 @@ export const Stage = z.object({
    * is a document that belongs in a reference.
    */
   instructions: z.string().min(1).max(4000).optional(),
+  /** One line saying what happens in this stage, printed on an empty board. */
+  summary: z.string().max(200).optional(),
   gate: StageGate.default('none'),
   /** Opts a human approval gate into an immutable, digest-bound subject contract. */
   approvalSubjectSchema: z.string().min(1).optional(),
@@ -129,6 +131,8 @@ export const Board = z.object({
   tenantId: TenantId,
   name: z.string().min(1),
   stages: z.array(Stage).min(1),
+  /** What the board does and what to type into its compose box. Optional. */
+  intro: z.object({ lede: z.string().max(400), composeHint: z.string().max(400) }).optional(),
   ...timestamps,
 });
 export type Board = z.infer<typeof Board>;
@@ -152,6 +156,8 @@ export const Agent = z
     concurrency: z.number().int().min(1).default(1),
     externalId: z.string().min(1).nullish(),
     externalSource: z.string().min(1).nullish(),
+    /** Display role ("Diagnostics"), shown beside the name. Optional. */
+    role: z.string().nullish(),
     ...timestamps,
   })
   .refine((a) => (a.externalId == null) === (a.externalSource == null), {
@@ -190,6 +196,12 @@ export const Card = z.object({
   ownerUserId: UserId,
   currentStageKey: z.string().min(1),
   delegateAgentId: AgentId.optional(),
+  /** The agent of the card's most recent run (`CardView.lastAgentId`); null with no runs. */
+  lastAgentId: AgentId.nullable().optional(),
+  /** Whose dispatch grant the queue ran on (`CardView.queuedGrantOwner`). */
+  queuedGrantOwner: z.string().nullable().optional(),
+  /** When the card entered its current stage. */
+  stageSince: z.string().optional(),
   priority: z.number().int().default(0),
   labels: z.array(z.string()).default([]),
   /**
@@ -243,8 +255,24 @@ export const ElicitationOption = z.object({
   promptFill: z.string().optional(),
   /** Whether picking this option invites free text alongside it. */
   interactive: z.boolean().optional(),
+  /** One line saying what picking this option does. Optional; printed under the option by some surfaces. */
+  description: z.string().optional(),
 });
 export type ElicitationOption = z.infer<typeof ElicitationOption>;
+
+/** The 409 (code GATE_NOT_PENDING, reason decided) a gate answers when it was already decided: who, through which surface, and when. */
+export const GateResolveConflict = z.object({
+  error: z.object({
+    code: z.literal('GATE_NOT_PENDING'),
+    message: z.string(),
+    /** `decided` when someone resolved it; the other reason (`cancelled`) carries no decider. */
+    reason: z.literal('decided'),
+    decidedBy: z.string(),
+    decidedAt: z.string(),
+    via: z.enum(['matrix', 'web', 'api']),
+  }),
+});
+export type GateResolveConflict = z.infer<typeof GateResolveConflict>;
 
 /**
  * An agent's open question to a human, persisted so it can be answered (docs/04 §4).

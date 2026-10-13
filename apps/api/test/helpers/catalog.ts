@@ -13,6 +13,7 @@ import projectRollupPartial from '../../migrations/0014_project_rollup_partial.s
 import agentQueueing from '../../migrations/0015_agent_queueing.sql?raw';
 import boardProvenance from '../../migrations/0016_board_provenance.sql?raw';
 import orgPlaneTenantUnique from '../../migrations/0017_org_plane_tenant_unique.sql?raw';
+import agentRole from '../../migrations/0018_agent_role.sql?raw';
 
 /** Create the catalog tables on the test D1 (mirrors migrations/0001_catalog.sql). */
 const STATEMENTS = [
@@ -150,5 +151,9 @@ export async function setupCatalog(): Promise<void> {
   // 0017 makes an Organization-plane workspace map to exactly one tenant (partial unique index).
   if (!(await indexExists('tenants_org_plane_unique'))) {
     for (const s of statementsOf(orgPlaneTenantUnique)) await env.DB.prepare(s).run();
+  }
+  // 0018 gives an agent a display role.
+  if (!(await tableHasColumn('agents', 'role'))) {
+    for (const s of statementsOf(agentRole)) await env.DB.prepare(s).run();
   }
 }

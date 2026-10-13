@@ -248,4 +248,10 @@ describe('agent external mapping', () => {
     expect(Agent.safeParse({ ...base, externalId: '', externalSource: 'org-plane' }).success).toBe(false);
     expect(Agent.safeParse({ ...base, externalId: 'prn_1', externalSource: '' }).success).toBe(false);
   });
+
+  it('a card may carry lastAgentId, queuedGrantOwner and stageSince, each nullable', () => {
+    const base = { id: 'card_abc123', boardId: 'brd_abc123', tenantId: 'tnt_abc123', contextId: 'ctx_abc123', title: 'T', ownerUserId: 'usr_abc123', currentStageKey: 's', createdAt: '2026-10-08T14:11:45Z', updatedAt: '2026-10-08T14:11:45Z' };
+    expect(Card.parse({ ...base, lastAgentId: null, queuedGrantOwner: null, stageSince: '2026-10-08T14:11:45Z' })).toMatchObject({ lastAgentId: null, stageSince: '2026-10-08T14:11:45Z' });
+    expect(Card.parse({ ...base, lastAgentId: 'agt_abc123', queuedGrantOwner: 'usr_abc123' }).lastAgentId).toBe('agt_abc123');
+  });
 });

@@ -1,5 +1,7 @@
 /** Worker bindings + config (docs/02-architecture.md). */
 export interface Env {
+  /** The app's public origin, used to build URLs shown to people (the GitHub webhook URL). Plain var in wrangler.jsonc. */
+  PUBLIC_APP_ORIGIN?: string;
   /** D1 catalog — tenants, users, memberships, boards index, agents, agent_tokens (P0). */
   DB: D1Database;
   /** One Board Durable Object instance per (tenant, board) — the live authority (P1). */
@@ -73,6 +75,12 @@ export interface Env {
   SUPERWITNESS_REPORTER_CREDENTIAL?: string;
   /** When "true", accept dev-mode X-Tenant-Id / X-Agent-Id headers (local + tests). Never in prod. */
   DEV_AUTH?: string;
+  /**
+   * When "true" (and DEV_AUTH is "true"), `POST /v1/dev/fixture` replaces a tenant with a fixture
+   * world. Only `pnpm --filter @superpipeline/api dev:pixel` and the test suite set it. Never in
+   * wrangler.jsonc (test/dev-fixture.test.ts fails if it appears there).
+   */
+  FIXTURE_IMPORT?: string;
   /** Static web assets (the SPA), served for non-API routes when deployed same-origin. */
   ASSETS?: Fetcher;
 }

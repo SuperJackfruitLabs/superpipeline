@@ -1,0 +1,1254 @@
+<!doctype html>
+<html data-product="superpipeline" data-accent="product" lang="en" style="touch-action: pan-x pan-y; overscroll-behavior: none; --dc-chrome-unit: 1.052160953800298px;"><head><link rel="stylesheet" href="_vibekit-0.0.10/vibekit.css" data-vibekit="0.0.10"><style>
+    .sc-placeholder{background:color-mix(in srgb,currentColor 8%,transparent);
+      border:1px solid color-mix(in srgb,currentColor 50%,transparent);
+      border-radius:2px;box-sizing:border-box;overflow:hidden}
+    @keyframes sc-shine{0%{background-position:100% 50%}100%{background-position:0% 50%}}
+    html.sc-dc-streaming .sc-placeholder,
+    html.sc-dc-streaming .sc-interp.sc-missing{position:relative;
+      background:color-mix(in srgb,currentColor 5%,transparent);
+      border-color:transparent}
+    html.sc-dc-streaming .sc-placeholder::before,
+    html.sc-dc-streaming .sc-interp.sc-missing::before{content:'';
+      position:absolute;inset:0;pointer-events:none;
+      background:linear-gradient(90deg,rgba(217,119,87,0) 25%,rgba(247,225,211,.95) 37%,rgba(217,119,87,0) 63%);
+      background-size:400% 100%;animation:sc-shine 1.4s ease infinite}
+    html.sc-dc-streaming .sc-placeholder:nth-child(n+9 of .sc-placeholder)::before,
+    html.sc-dc-streaming .sc-interp.sc-missing:nth-child(n+9 of .sc-interp.sc-missing)::before{animation:none;
+      background:color-mix(in srgb,currentColor 8%,transparent)}
+    .sc-placeholder-error{padding:4px 8px;font:11px/1.4 ui-monospace,monospace;
+      color:color-mix(in srgb,currentColor 70%,transparent);word-break:break-word}
+    .sc-interp.sc-missing{display:inline-block;width:2em;height:1em;overflow:hidden;
+      vertical-align:text-bottom;background:rgba(255,255,255,.3);border:1px solid rgba(0,0,0,.5);
+      border-radius:2px;box-sizing:border-box;color:transparent;
+      user-select:none}
+    .sc-interp.sc-unresolved{font-family:ui-monospace,monospace;font-size:.85em;
+      color:color-mix(in srgb,currentColor 50%,transparent);
+      background:color-mix(in srgb,currentColor 10%,transparent);border-radius:3px;
+      padding:0 3px}
+    .sc-host.sc-has-error{position:relative}
+    .sc-logic-error{position:absolute;top:8px;left:8px;z-index:2147483647;max-width:60ch;
+      padding:6px 10px;background:#b00020;color:#fff;font:12px/1.4 ui-monospace,monospace;
+      border-radius:4px;white-space:pre-wrap;pointer-events:none}
+    /* Mirrors PRINT_BASELINE_CSS in apps/web deck-stage-export.ts — keep both
+       in sync until dc-runtime regains a build step. */
+    @media print {
+      @page { margin: 0.5cm; }
+      figure, table { break-inside: avoid; }
+      #dc-root, #dc-root > .sc-host { height: auto; }
+      *, *::before, *::after {
+        print-color-adjust: exact; -webkit-print-color-adjust: exact;
+        backdrop-filter: none !important; -webkit-backdrop-filter: none !important;
+        animation-delay: -99s !important; animation-duration: .001s !important;
+        animation-iteration-count: 1 !important; animation-fill-mode: both !important;
+        animation-play-state: running !important; transition-duration: 0s !important;
+      }
+    }
+  </style>
+
+
+<meta charset="utf-8">
+<title>Board projects · Paper</title>
+<base href="/appifact/SP-Projects-Paper.dc.html">
+
+
+
+
+
+<style>x-dc{display:none!important}</style>
+
+<style>@import url("https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&family=Azeret+Mono:wght@400;500;600&family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..600&display=swap");
+
+ 
+
+:root {
+  color-scheme: light;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  --vk-font-body: "Figtree", system-ui, sans-serif;
+  --vk-font-display: "Bricolage Grotesque", system-ui, sans-serif;
+  --vk-font-mono: "Martian Mono", ui-monospace, monospace;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+}
+
+[data-vibe="daylight"][data-theme="light"] {
+  color-scheme: light;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  --vk-font-body: "Figtree", system-ui, sans-serif;
+  --vk-font-display: "Bricolage Grotesque", system-ui, sans-serif;
+  --vk-font-mono: "Martian Mono", ui-monospace, monospace;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+}
+
+[data-vibe="daylight"][data-theme="dark"] {
+  color-scheme: dark;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  --vk-font-body: "Figtree", system-ui, sans-serif;
+  --vk-font-display: "Bricolage Grotesque", system-ui, sans-serif;
+  --vk-font-mono: "Martian Mono", ui-monospace, monospace;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+}
+
+[data-vibe="paper"][data-theme="light"] {
+  color-scheme: light;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  --vk-font-body: "Geist", system-ui, sans-serif;
+  --vk-font-display: "Newsreader", "Georgia", serif;
+  --vk-font-mono: "Martian Mono", ui-monospace, monospace;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+}
+
+[data-vibe="paper"][data-theme="dark"] {
+  color-scheme: dark;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  --vk-font-body: "Geist", system-ui, sans-serif;
+  --vk-font-display: "Newsreader", "Georgia", serif;
+  --vk-font-mono: "Martian Mono", ui-monospace, monospace;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+}
+
+[data-vibe="studio"][data-theme="light"] {
+  color-scheme: light;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  --vk-font-body: "Archivo", system-ui, sans-serif;
+  --vk-font-display: "Archivo", system-ui, sans-serif;
+  --vk-font-mono: "Azeret Mono", ui-monospace, monospace;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  --vk-font-serif: "Newsreader", Georgia, serif;
+
+
+
+
+
+
+
+
+
+
+}
+
+[data-vibe="studio"][data-theme="dark"] {
+  color-scheme: dark;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  --vk-font-body: "Archivo", system-ui, sans-serif;
+  --vk-font-display: "Archivo", system-ui, sans-serif;
+  --vk-font-mono: "Azeret Mono", ui-monospace, monospace;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  --vk-font-serif: "Newsreader", Georgia, serif;
+
+
+
+
+
+
+
+
+
+
+}
+
+[data-vibe="quiet"][data-theme="light"] {
+  color-scheme: light;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  --vk-font-body: "Atkinson Hyperlegible Next", system-ui, sans-serif;
+  --vk-font-display: "Atkinson Hyperlegible Next", system-ui, sans-serif;
+  --vk-font-mono: "Martian Mono", ui-monospace, monospace;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+}
+
+[data-vibe="quiet"][data-theme="dark"] {
+  color-scheme: dark;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  --vk-font-body: "Atkinson Hyperlegible Next", system-ui, sans-serif;
+  --vk-font-display: "Atkinson Hyperlegible Next", system-ui, sans-serif;
+  --vk-font-mono: "Martian Mono", ui-monospace, monospace;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+}
+
+ 
+:root {
+  --vk-text-sm: clamp(0.8125rem, 0.78rem + 0.15vw, 0.875rem);
+  --vk-text-md: clamp(1rem, 0.96rem + 0.2vw, 1.0625rem);
+  --vk-text-lg: clamp(1.25rem, 1.1rem + 0.6vw, 1.5rem);
+  --vk-text-xl: clamp(1.75rem, 1.4rem + 1.6vw, 2.5rem);
+  --vk-focus: 0 0 0 3px var(--vk-color-bg), 0 0 0 5px var(--vk-color-text);
+
+}
+
+html {
+  background: var(--vk-color-bg);
+  color: var(--vk-color-text);
+  font-family: var(--vk-font-body);
+  font-size: 100%;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  font-size: var(--vk-text-md);
+  line-height: 1.5;
+}
+
+:focus-visible {
+   
+  outline: 2px solid var(--vk-color-text);
+  outline-offset: 2px;
+  box-shadow: var(--vk-focus);
+}
+
+ 
+.vk-visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  
+  *, *::before, *::after {
+    animation: none !important;
+    transition-duration: 0ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+[data-motion="reduce"],
+[data-motion="reduce"] *,
+[data-motion="reduce"]::before,
+[data-motion="reduce"]::after,
+[data-motion="reduce"] *::before,
+[data-motion="reduce"] *::after {
+  --vk-motion-fast: 0ms;
+  --vk-motion-base: 0ms;
+  animation: none !important;
+  transition-duration: 0ms !important;
+  scroll-behavior: auto !important;
+}
+
+
+
+@media (forced-colors: active) {
+  :focus-visible {
+    outline: 2px solid CanvasText;
+    box-shadow: none;
+  }
+}
+ 
+
+
+
+
+
+
+
+
+ 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ 
+
+
+
+
+
+
+
+
+
+
+
+
+
+.vk-toast {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--vk-space-3);
+  min-height: var(--vk-target-min);
+  padding: 0 var(--vk-space-5);
+  border-radius: var(--vk-radius-pill);
+  background: var(--vk-color-primary);
+  color: var(--vk-color-primary-fg);
+  font: 600 var(--vk-text-sm) / 1.2 var(--vk-font-body);
+}
+.vk-toast__action { min-height: var(--vk-target-min); border: 0; background: transparent; color: inherit; font: inherit; text-decoration: underline; cursor: pointer; }
+ 
+.vk-toast__action:focus-visible { outline-color: currentColor; box-shadow: var(--vk-focus); }
+
+.vk-sky {
+  --vk-sky-top: var(--vk-sky-noon-top);
+  --vk-sky-bottom: var(--vk-sky-noon-bottom);
+  --vk-sky-text: var(--vk-sky-noon-text);
+  --vk-sky-sun: var(--vk-sky-noon-sun);
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(180deg, var(--vk-sky-top), var(--vk-sky-bottom));
+  color: var(--vk-sky-text);
+}
+.vk-sky[data-phase="dawn"] { --vk-sky-top: var(--vk-sky-dawn-top); --vk-sky-bottom: var(--vk-sky-dawn-bottom); --vk-sky-text: var(--vk-sky-dawn-text); --vk-sky-sun: var(--vk-sky-dawn-sun); }
+.vk-sky[data-phase="morning"] { --vk-sky-top: var(--vk-sky-morning-top); --vk-sky-bottom: var(--vk-sky-morning-bottom); --vk-sky-text: var(--vk-sky-morning-text); --vk-sky-sun: var(--vk-sky-morning-sun); }
+.vk-sky[data-phase="golden"] { --vk-sky-top: var(--vk-sky-golden-top); --vk-sky-bottom: var(--vk-sky-golden-bottom); --vk-sky-text: var(--vk-sky-golden-text); --vk-sky-sun: var(--vk-sky-golden-sun); }
+.vk-sky[data-phase="dusk"] { --vk-sky-top: var(--vk-sky-dusk-top); --vk-sky-bottom: var(--vk-sky-dusk-bottom); --vk-sky-text: var(--vk-sky-dusk-text); --vk-sky-sun: var(--vk-sky-dusk-sun); }
+.vk-sky[data-phase="night"] { --vk-sky-top: var(--vk-sky-night-top); --vk-sky-bottom: var(--vk-sky-night-bottom); --vk-sky-text: var(--vk-sky-night-text); --vk-sky-sun: var(--vk-sky-night-sun); }
+.vk-sky__sun {
+  position: absolute;
+  top: var(--vk-space-5);
+  right: var(--vk-space-6);
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: var(--vk-sky-sun);
+  box-shadow: 0 0 48px 12px color-mix(in oklch, var(--vk-sky-sun) 45%, transparent);
+}
+.vk-sky__content { position: relative; padding: var(--vk-space-5); }
+[data-time="subtle"] .vk-sky { background: color-mix(in oklch, var(--vk-sky-top) 30%, var(--vk-color-bg)); color: var(--vk-color-text); }
+[data-time="subtle"] .vk-sky__sun { display: none; }
+[data-time="off"] .vk-sky { background: var(--vk-color-bg); color: var(--vk-color-text); }
+[data-time="off"] .vk-sky__sun { display: none; }
+[data-vibe="studio"] .vk-sky__sun { width: 10px; height: 10px; box-shadow: 0 0 10px 2px var(--vk-sky-sun); }
+[data-vibe="quiet"] .vk-sky__sun, [data-vibe="paper"] .vk-sky__sun { display: none; }
+
+
+
+
+
+
+
+
+
+
+@media (forced-colors: active) {
+  
+  .vk-toast { border: 1px solid CanvasText; }
+}
+
+ 
+.sl-danger{ white-space: nowrap; }
+
+ 
+
+
+
+
+
+ 
+a[href*="CardPage"], a[class*="btn"], button[class*="btn"], a[class*="-button"], button[class*="-button"]{ white-space: nowrap; flex-shrink: 0; }
+
+ 
+a[href*="CardPage"], a[class*="icon"][style*="width: auto"], button[class*="icon"][style*="width: auto"] { display: inline-flex !important; flex-direction: row !important; align-items: center !important; justify-content: center; gap: 8px; }
+</style>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Azeret+Mono:ital,wght@1,400&amp;display=swap" data-font-variant=""><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Azeret+Mono:ital,wght@1,500&amp;display=swap" data-font-variant=""><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Azeret+Mono:ital,wght@1,600&amp;display=swap" data-font-variant=""><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&amp;family=Azeret+Mono:wght@400;500;600&amp;family=Atkinson+Hyperlegible+Next:wght@400;700&amp;family=Bricolage+Grotesque:opsz,wght@12..96,400..800&amp;family=Figtree:wght@400..800&amp;family=Geist:wght@400..700&amp;family=Instrument+Sans:wght@400..700&amp;family=Martian+Mono:wght@400..600&amp;family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..600&amp;display=swap" data-dc-tpl="1"><style data-dc-tpl="2">
+
+body { margin: 0; }
+:where(*, *::before, *::after) { box-sizing: border-box; }
+:where(a) { color: inherit; }
+:where(button:where(:not(.vk-button))) { font: inherit; color: inherit; }
+:where(.page) *, :where(.page) *::before, :where(.page) *::after { box-sizing: border-box; }
+
+
+:where(.page a) { color: var(--vk-color-text); text-underline-offset: 3px; }
+:where(.page button) { font-family: var(--vk-font-body); }
+:where(.page input, .page select, .page textarea) { font-family: var(--vk-font-body); font-size: 16px; color: var(--vk-color-text); }
+
+/* ---- type system: one scale, every screen ---- */
+.t-h1 { margin: 0; font: 700 2rem/1.15 var(--vk-font-display); letter-spacing: -0.01em; }
+.t-h2 { margin: 0; font: 700 1.25rem/1.3 var(--vk-font-display); }
+.t-h3 { margin: 0; font: 700 1rem/1.35 var(--vk-font-body); }
+.t-eyebrow { margin: 0; font: 600 0.8125rem/1.3 var(--vk-font-display); letter-spacing: 0.04em; color: var(--vk-color-muted); }
+.t-body { margin: 0; font-size: 1rem; line-height: 1.55; }
+.t-meta { margin: 0; font-size: 0.875rem; line-height: 1.45; color: var(--vk-color-muted); }
+.t-num { font-variant-numeric: tabular-nums; }
+.t-key { font-family: var(--vk-font-mono); font-size: 0.75rem; color: var(--vk-color-muted); overflow-wrap: anywhere; }
+[data-vibe="paper"] .t-h1, [data-vibe="paper"] .t-h2 { font-weight: 500; }
+[data-vibe="paper"] .t-eyebrow { font-style: italic; letter-spacing: 0.01em; font-size: 0.9375rem; font-weight: 400; }
+
+/* ---- shell ---- */
+.iconbtn { width: 44px; height: 44px; display: inline-grid; place-items: center; border: 0; border-radius: var(--vk-radius-sm); background: transparent; color: var(--vk-color-text); cursor: pointer; }
+.iconbtn:hover { background: var(--vk-color-raised); }
+.page { width: 100%; max-width: 1280px; margin: 0 auto; padding: var(--vk-space-6) var(--vk-space-6) var(--vk-space-7); display: flex; flex-direction: column; gap: var(--vk-space-5); }
+
+/* ---- shared pieces ---- */
+.panel { background: var(--vk-color-surface); border: 1px solid var(--vk-color-line); border-radius: var(--vk-radius-md); }
+.panel-head { display: flex; flex-wrap: wrap; align-items: center; gap: var(--vk-space-3); padding: var(--vk-space-4) var(--vk-space-5); border-bottom: 1px solid var(--vk-color-line); }
+.panel-body { padding: var(--vk-space-4) var(--vk-space-5); }
+.chip { display: inline-flex; align-items: center; gap: 4px; min-height: 26px; padding: 2px 10px; border-radius: var(--vk-radius-pill); background: var(--vk-color-raised); color: var(--vk-color-text); font-size: 0.8125rem; font-weight: 600; line-height: 1.2; overflow-wrap: anywhere; }
+.chip-line { background: transparent; box-shadow: inset 0 0 0 1px var(--vk-color-line); color: var(--vk-color-muted); }
+.chip-ok { background: var(--vk-color-success-wash); color: var(--vk-color-success-text); }
+.chip-signal { background: var(--vk-color-signal-wash); color: var(--vk-color-signal-text); box-shadow: inset 0 0 0 1px var(--vk-color-signal); }
+.count-signal { display: inline-grid; place-items: center; min-width: 22px; height: 22px; padding: 0 6px; border-radius: var(--vk-radius-pill); background: var(--vk-color-signal-text); color: var(--vk-color-primary-fg); font-size: 0.75rem; font-weight: 700; }
+.count { display: inline-grid; place-items: center; min-width: 22px; height: 22px; padding: 0 6px; border-radius: var(--vk-radius-pill); background: var(--vk-color-raised); color: var(--vk-color-muted); font-size: 0.75rem; font-weight: 700; }
+
+.face { display: inline-block; flex: none; line-height: 0; }
+.face svg { display: block; width: 100%; height: 100%; }
+.field { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.field label, .field .lbl { font-size: 0.875rem; font-weight: 600; }
+.input { width: 100%; min-height: 44px; padding: 0 var(--vk-space-3); border: 1.5px solid var(--vk-color-faint); border-radius: var(--vk-radius-sm); background: var(--vk-color-surface); color: var(--vk-color-text); font-size: 16px; }
+textarea.input { padding: var(--vk-space-3); min-height: 96px; line-height: 1.5; resize: vertical; }
+.input[readonly] { background: var(--vk-color-raised); border-color: var(--vk-color-line); }
+.hint { margin: 0; font-size: 0.8125rem; color: var(--vk-color-muted); }
+.saved { display: inline-flex; align-items: center; gap: 6px; font-size: 0.875rem; color: var(--vk-color-success-text); }
+.unsaved { display: inline-flex; align-items: center; gap: 6px; font-size: 0.875rem; color: var(--vk-color-muted); }
+.tabs { display: flex; flex-wrap: wrap; gap: var(--vk-space-1); border-bottom: 1px solid var(--vk-color-line); }
+.tab { display: inline-flex; align-items: center; gap: var(--vk-space-2); min-height: 48px; padding: 0 var(--vk-space-4); color: var(--vk-color-muted) !important; text-decoration: none !important; font-weight: 600; border-bottom: 3px solid transparent; margin-bottom: -1px; }
+.tab[aria-selected="true"] { color: var(--vk-color-text) !important; border-bottom-color: var(--vk-color-primary); }
+.check { display: inline-flex; align-items: flex-start; gap: var(--vk-space-2); min-height: 44px; padding-top: 10px; cursor: pointer; }
+.check input { width: 20px; height: 20px; margin: 2px 0 0; accent-color: var(--vk-color-primary); }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+details > summary { list-style: none; cursor: pointer; }
+details > summary::-webkit-details-marker { display: none; }
+.disc-ico { transition: transform var(--vk-motion-fast) var(--vk-motion-easing); display: inline-grid; }
+details[open] > summary .disc-ico { transform: rotate(180deg); }
+.note { display: flex; gap: var(--vk-space-3); align-items: flex-start; padding: var(--vk-space-3) var(--vk-space-4); border-radius: var(--vk-radius-sm); background: var(--vk-color-raised); font-size: 0.9375rem; }
+[data-vibe="paper"] .panel { border-radius: var(--vk-radius-sm); }
+
+
+.seg { display: inline-flex; gap: 4px; padding: 4px; border-radius: var(--vk-radius-md); background: var(--vk-color-raised); }
+.seg button { min-height: 40px; padding: 0 var(--vk-space-4); border: 0; border-radius: calc(var(--vk-radius-md) - 4px); background: transparent; color: var(--vk-color-muted); font-size: 0.9375rem; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; }
+.seg button[aria-pressed="true"] { background: var(--vk-color-surface); color: var(--vk-color-text); box-shadow: 0 var(--vk-lift) 0 var(--vk-color-ground); }
+.pgrid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--vk-space-4); align-items: start; }
+.pcard { display: flex; flex-direction: column; gap: var(--vk-space-3); padding: var(--vk-space-4) var(--vk-space-5) var(--vk-space-3); }
+.ptitle { margin: 0; font: 700 1.125rem/1.3 var(--vk-font-display); overflow-wrap: anywhere; }
+[data-vibe="paper"] .ptitle { font-weight: 500; font-size: 1.25rem; }
+.bar { height: 8px; border-radius: var(--vk-radius-pill); background: var(--vk-color-raised); overflow: hidden; }
+.bar > i { display: block; height: 100%; background: var(--vk-color-success); border-radius: inherit; }
+.skel { height: 8px; border-radius: var(--vk-radius-pill); background: linear-gradient(90deg, var(--vk-color-raised), var(--vk-color-line), var(--vk-color-raised)); }
+.pfoot { display: flex; align-items: flex-start; gap: var(--vk-space-2); border-top: 1px solid var(--vk-color-line); padding-top: var(--vk-space-2); }
+.pfoot details { flex: 1; min-width: 0; }
+.pfoot summary { min-height: 44px; display: flex; align-items: center; gap: 6px; font-size: 0.9375rem; font-weight: 600; }
+.msform { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: var(--vk-space-2); align-items: end; padding-bottom: var(--vk-space-2); }
+.msform > .field:first-child { grid-column: 1 / -1; }
+.group-h { display: flex; align-items: baseline; gap: var(--vk-space-2); }
+.createform { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) auto; gap: var(--vk-space-3); align-items: end; padding: var(--vk-space-4) var(--vk-space-5); }
+.ph-note { display: flex; gap: var(--vk-space-2); align-items: center; padding: var(--vk-space-2) var(--vk-space-4); border-radius: var(--vk-radius-sm); background: var(--vk-color-raised); font-size: 0.875rem; color: var(--vk-color-muted); }
+
+
+
+/* Paper shell: a masthead, no rail (donor: SP-Board-Paper) */
+.mh { padding: 0 var(--mh-gutter, 56px); background: var(--vk-color-bg); color: var(--vk-color-text); font-family: var(--vk-font-body); }
+.mh *, .mh *::before, .mh *::after { box-sizing: border-box; }
+.mh a { color: inherit; }
+:where(.mh button:where(:not(.vk-button))) { font: inherit; color: inherit; }
+.mh .mh-top { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 24px; margin-top: 16px; padding: 6px 0; border-top: 1px solid var(--vk-color-text); }
+.mh .mh-name { display: inline-flex; align-items: center; min-height: 48px; margin-right: auto; font-family: var(--vk-font-display); font-variant-caps: all-small-caps; font-size: 32px; font-weight: 600; letter-spacing: 0.07em; line-height: 1; text-decoration: none; }
+.mh .mh-date { margin: 0; font-family: var(--vk-font-display); font-style: italic; font-size: 17px; color: var(--vk-color-muted); }
+.mh .mh-quiet { display: flex; flex-wrap: wrap; align-items: center; }
+.mh .mh-quiet > * + * { border-left: 1px solid var(--vk-color-line); }
+.mh .mh-q { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; padding: 0 12px; border: 0; background: transparent; font-size: 14px; color: var(--vk-color-muted); cursor: pointer; list-style: none; }
+.mh .mh-q[aria-pressed="true"] { color: var(--vk-color-text); }
+.mh .mh-q:hover { color: var(--vk-color-text); text-decoration: underline; text-underline-offset: 4px; }
+.mh .mh-acct { position: relative; }
+.mh .mh-acct > summary::-webkit-details-marker { display: none; }
+.mh .mh-acct > summary { color: var(--vk-color-text); }
+.mh .mh-menu { position: absolute; right: 0; top: 100%; z-index: 5; display: flex; flex-direction: column; min-width: 200px; padding: 6px; background: var(--vk-color-surface); border: 1px solid var(--vk-color-text); border-radius: var(--vk-radius-sm); }
+.mh .mh-menu p { margin: 0; padding: 8px 10px; font-size: 13px; color: var(--vk-color-muted); border-bottom: 1px solid var(--vk-color-line); }
+.mh .mh-menu button { min-height: 44px; padding: 0 10px; border: 0; background: transparent; text-align: left; font-size: 15px; cursor: pointer; }
+.mh .mh-menu button:hover { text-decoration: underline; text-underline-offset: 4px; }
+.mh .mh-sections { display: flex; flex-wrap: wrap; align-items: center; border-top: 1px solid var(--vk-color-line); border-bottom: 1px solid var(--vk-color-line); }
+.mh .mh-sec { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; padding: 0 20px; font-size: 15px; color: var(--vk-color-muted); text-decoration: none; }
+.mh .mh-sec:first-child { padding-left: 0; }
+.mh .mh-sec + .mh-sec { border-left: 1px solid var(--vk-color-line); }
+.mh .mh-sec:hover { color: var(--vk-color-text); }
+.mh .mh-sec[aria-current="page"] { font-family: var(--vk-font-display); font-style: italic; font-size: 18px; color: var(--vk-color-text); text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 6px; }
+.mh .mh-sec .n { color: var(--vk-color-signal-text); font-weight: 700; font-style: normal; font-family: var(--vk-font-body); font-size: 14px; }
+.mh .mh-live { display: inline-flex; align-items: center; gap: 8px; margin-left: auto; font-size: 12.5px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--vk-color-muted); }
+.mh .mh-live b { color: var(--vk-color-success-text); font-weight: 700; }
+.mh .mh-livedot { width: 8px; height: 8px; border-radius: 50%; background: var(--vk-color-success); box-shadow: 0 0 0 3px var(--vk-color-success-wash); }
+.mh .mh-ed { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 10px 20px; padding: 22px 0 10px; }
+.mh .mh-title { margin: 0; font-family: var(--vk-font-display); font-size: 46px; font-weight: 500; line-height: 1.05; letter-spacing: -0.012em; }
+.mh .mh-title--sm { font-size: 30px; }
+.mh .mh-change { display: inline-flex; align-items: center; min-height: 44px; padding: 0; border: 0; background: transparent; font-size: 14px; color: var(--vk-color-muted); text-decoration: underline; text-underline-offset: 4px; cursor: pointer; }
+.mh .mh-change:hover { color: var(--vk-color-text); }
+.mh .mh-acts { display: flex; flex-wrap: wrap; gap: 8px; margin-left: auto; }
+.mh .mh-btn { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; height: 44px; line-height: 1; padding: 0 14px; border: 1px solid var(--vk-color-line); border-radius: var(--vk-radius-sm); background: transparent; font-size: 15px; font-weight: 600; text-decoration: none; white-space: nowrap; cursor: pointer; }
+.mh .mh-btn:hover { border-color: var(--vk-color-text); }
+.mh .mh-btn--write { border-color: var(--vk-color-text); font-family: var(--vk-font-display); font-style: italic; font-weight: 500; font-size: 17px; }
+.mh .mh-kbd { padding: 1px 6px; border: 1px solid var(--vk-color-line); border-radius: var(--vk-radius-sm); font: 12px/1.4 var(--vk-font-mono); color: var(--vk-color-faint); }
+.mh .mh-tabs { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 28px; border-bottom: 3px double var(--vk-color-text); }
+.mh .mh-tabs [role="group"] { display: flex; gap: 24px; }
+.mh .mh-tab { min-height: 44px; padding: 0 2px; border: 0; border-bottom: 2px solid transparent; background: transparent; font-variant-caps: all-small-caps; font-size: 17px; font-weight: 600; letter-spacing: 0.09em; color: var(--vk-color-muted); cursor: pointer; }
+.mh .mh-tab:hover { color: var(--vk-color-text); }
+.mh .mh-tab[aria-pressed="true"] { color: var(--vk-color-text); border-bottom-color: var(--vk-color-text); }
+.mh .mh-showing { margin-left: auto; font-family: var(--vk-font-display); font-style: italic; font-size: 16px; color: var(--vk-color-muted); }
+/* the page shares the masthead's 56px gutter */
+.pp-page { max-width: none; padding-left: 56px; padding-right: 56px; }
+
+</style><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible+Next:ital,wght@1,400&amp;display=swap" data-font-variant=""><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible+Next:ital,wght@1,700&amp;display=swap" data-font-variant=""><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:ital,wght@1,400..800&amp;display=swap" data-font-variant=""><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:ital,wght@1,400..700&amp;display=swap" data-font-variant=""><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Sans:ital,wght@1,400..700&amp;display=swap" data-font-variant=""><style data-dc-editor-style="">body:not([data-dc-editor-overlay-hidden]) [data-dc-editor-hover][data-dc-editor-hover-stroke]:not([data-dc-editor-selected]){filter:drop-shadow(0 0 calc(1*var(--dc-chrome-unit,1px)) color-mix(in srgb,#2a78d6 90%,transparent)) drop-shadow(0 0 calc(2*var(--dc-chrome-unit,1px)) color-mix(in srgb,#2a78d6 55%,transparent))!important;}body:not([data-dc-editor-overlay-hidden]):not([data-dc-editor-proxy="copy"]) [data-dc-editor-dragging],body:not([data-dc-editor-overlay-hidden]):not([data-dc-editor-proxy]) [data-dc-dragging],body[data-dc-editor-brk]:not([data-dc-editor-overlay-hidden]) [data-dc-drag-follower]{outline:calc(2*var(--dc-chrome-unit,1px)) solid #2a78d6!important;outline-offset:calc(-1*var(--dc-chrome-unit,1px))!important;opacity:0.55!important;}body[data-dc-editor-proxy="move"]:not([data-dc-editor-overlay-hidden]) [data-dc-editor-dragging],body[data-dc-editor-proxy="move"]:not([data-dc-editor-overlay-hidden]) [data-dc-dragging],body[data-dc-editor-proxy="move"]:not([data-dc-editor-overlay-hidden]) [data-dc-editor-dragging]>*,body[data-dc-editor-proxy="move"]:not([data-dc-editor-overlay-hidden]) [data-dc-dragging]>*{opacity:0!important;outline:none!important;}[data-dc-editor-drag-proxy],[data-dc-editor-drag-proxy] *{pointer-events:none!important;}body[data-dc-editor-on]:not([data-dc-editor-tool="interact"]) *{cursor:default!important;user-select:none!important;}body[data-dc-editor-on]:not([data-dc-editor-tool="interact"]) :not([data-dc-editor-overlay-root]):not([data-dc-editor-overlay-root] *){pointer-events:auto!important;transition:none!important;animation:none!important;}body[data-dc-editor-on][data-dc-editor-brk]:not([data-dc-editor-overlay-hidden]) [data-dc-editor-dragging]:not([data-dc-editor-overlay-root]) :not([data-dc-editor-overlay-root]),body[data-dc-editor-on][data-dc-editor-brk]:not([data-dc-editor-overlay-hidden]) [data-dc-dragging]:not([data-dc-editor-overlay-root]) :not([data-dc-editor-overlay-root]),body[data-dc-editor-on][data-dc-editor-brk]:not([data-dc-editor-overlay-hidden]) [data-dc-drag-follower]:not([data-dc-editor-overlay-root]),body[data-dc-editor-on][data-dc-editor-brk]:not([data-dc-editor-overlay-hidden]) [data-dc-drag-follower]:not([data-dc-editor-overlay-root]) :not([data-dc-editor-overlay-root]),body[data-dc-editor-move][data-dc-editor-brk]:not([data-dc-editor-overlay-hidden]) [data-dc-editor-dragging]:not([data-dc-editor-overlay-root]) :not([data-dc-editor-overlay-root]),body[data-dc-editor-move][data-dc-editor-brk]:not([data-dc-editor-overlay-hidden]) [data-dc-dragging]:not([data-dc-editor-overlay-root]) :not([data-dc-editor-overlay-root]),body[data-dc-editor-move][data-dc-editor-brk]:not([data-dc-editor-overlay-hidden]) [data-dc-drag-follower]:not([data-dc-editor-overlay-root]),body[data-dc-editor-move][data-dc-editor-brk]:not([data-dc-editor-overlay-hidden]) [data-dc-drag-follower]:not([data-dc-editor-overlay-root]) :not([data-dc-editor-overlay-root]){pointer-events:none!important;}body[data-dc-editor-move] :not([data-dc-editor-overlay-root]):not([data-dc-editor-overlay-root] *){pointer-events:auto!important;transition:none!important;animation-duration:0s!important;animation-delay:0s!important;}body[data-dc-editor-on][data-dc-editor-tool="rect"] *,body[data-dc-editor-on][data-dc-editor-tool="frame"] *,body[data-dc-editor-on][data-dc-editor-tool="grid"] *,body[data-dc-editor-on][data-dc-editor-tool="oval"] *,body[data-dc-editor-on][data-dc-editor-tool="arrow"] *,body[data-dc-editor-on][data-dc-editor-tool="line"] *{cursor:crosshair!important;}body[data-dc-editor-on][data-dc-editor-tool="text"] *{cursor:text!important;}body[data-dc-editor-on][data-dc-editor-tool="draw"] *{cursor:url('data:image/svg+xml,%3Csvg%20xmlns=%22http://www.w3.org/2000/svg%22%20width=%2216%22%20height=%2216%22%20viewBox=%220%200%2016%2016%22%3E%3Cpath%20d=%22M2%2014l1-4%208-8a2.1%202.1%200%200%201%203%203l-8%208-4%201z%22%20fill=%22%23333%22%20stroke=%22%23fff%22%20stroke-width=%221%22/%3E%3C/svg%3E') 1 15, crosshair!important;}body[data-dc-editor-on]:not([data-dc-editor-tool]) [data-drags-parent],body[data-dc-editor-on]:not([data-dc-editor-tool]) [data-drags-parent] *{cursor:grab!important;}body[data-dc-editor-on]:not([data-dc-editor-tool]) [data-drags-parent]:active,body[data-dc-editor-on]:not([data-dc-editor-tool]) [data-drags-parent]:active *{cursor:grabbing!important;}body[data-dc-editor-on] [data-dc-editor-editing][contenteditable][contenteditable],body[data-dc-editor-on] [data-dc-editor-editing][contenteditable][contenteditable] *,body[data-dc-editor-on] [data-dc-editor-svg-editing]{cursor:text!important;}body[data-dc-editor-on] [data-dc-editor-editing="import"]{outline:none!important;}html:not([data-dc-canvas]):has(body[data-dc-editor-on]:not([data-dc-capturing]) .sc-host){background:var(--dc-editor-backdrop,#ededeb);}html:not([data-dc-canvas]) body[data-dc-editor-on]:not([data-dc-capturing]):has(.sc-host){background:var(--dc-editor-backdrop,#ededeb);}html:not([data-dc-canvas]) body[data-dc-editor-on] .sc-host:not(.sc-host .sc-host){min-height:calc(100vh - var(--dc-editor-host-vpad,0px));}html:not([data-dc-canvas]) body[data-dc-editor-on]:not([data-dc-capturing]) .sc-host:not(.sc-host .sc-host){background:var(--dc-editor-host-bg,#fff);}html[data-dc-frameless],html[data-dc-frameless] body[data-dc-editor-on],html[data-dc-frameless] body[data-dc-editor-on] .sc-host:not(.sc-host .sc-host){background:transparent!important;min-height:0!important;}html:has(body[data-dc-capturing]),body[data-dc-capturing]{transition:none!important;}html[data-dc-canvas]{overflow:hidden;}html[data-dc-canvas] body[data-dc-editor-on] .sc-host:not(.sc-host .sc-host)::before{content:"";position:absolute;left:-100000px;top:-100000px;width:200000px;height:200000px;pointer-events:none;background:repeating-linear-gradient(45deg,var(--dc-editor-hatch-ink,rgba(0,0,0,.05)) 0 8px,transparent 8px 16px);clip-path:polygon(0 0,100% 0,100% 50%,50% 50%,50% 100%,0 100%);}</style></head>
+<body>
+<div id="dc-root"><div class="sc-host" data-sc-name="SP-Projects-Paper"><div data-product="superpipeline" data-accent="product" data-dc-tpl="3" data-vibe="paper" data-theme="light" style="background: var(--vk-color-bg); color: var(--vk-color-text); font-family: var(--vk-font-body); min-height: 1380px; font-size: 16px; line-height: 1.45;"><header data-dc-tpl="4" class="mh"><div data-dc-tpl="5" class="mh-top"><a data-dc-tpl="6" class="mh-name" href="#board" aria-label="Superpipeline home">Superpipeline</a><p data-dc-tpl="7" class="mh-date">Sunday 11 October · in full daylight</p><div data-dc-tpl="8" class="mh-quiet"><button data-dc-tpl="9" class="mh-q" type="button" aria-haspopup="dialog">Appearance</button><button data-dc-tpl="10" class="mh-q" type="button" aria-pressed="false">Dark theme</button><details data-dc-tpl="11" class="mh-acct"><summary data-dc-tpl="12" class="mh-q" aria-haspopup="menu">Ira Mehta<svg data-dc-tpl="13" aria-hidden="true" focusable="false" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="flex: 0 0 auto;"><path data-dc-tpl="14" d="M6 9l6 6 6-6"></path></svg></summary><div data-dc-tpl="15" class="mh-menu" role="menu"><p data-dc-tpl="16">Signed in as Ira Mehta</p><button data-dc-tpl="17" type="button" role="menuitem">Sign out</button></div></details></div></div><div data-dc-tpl="18" class="mh-sections"><nav data-dc-tpl="19" aria-label="Superpipeline" style="display: flex; flex-wrap: wrap; align-items: center;"><a data-dc-tpl="20" class="mh-sec" href="#plan" aria-current="page">Plan</a><a data-dc-tpl="21" class="mh-sec" href="#operate">Operate <span data-dc-tpl="22" class="n">(4)</span><span data-dc-tpl="23" class="vk-visually-hidden"> need you</span></a><a data-dc-tpl="24" class="mh-sec" href="#workspace">Workspace</a></nav><span data-dc-tpl="25" class="mh-live" role="status" title="Live: changes arrive as they happen"><span data-dc-tpl="26" class="mh-livedot" aria-hidden="true"></span><b data-dc-tpl="27">Live</b> · changes appear as they happen</span></div><div data-dc-tpl="28" class="mh-ed"><p data-dc-tpl="29" class="mh-title mh-title--sm">Developer Experience</p><button data-dc-tpl="30" class="mh-change" type="button" aria-haspopup="menu" aria-label="Change board, now Developer Experience">Change board</button><div data-dc-tpl="31" class="mh-acts"><button data-dc-tpl="32" class="mh-btn" type="button" aria-label="Search cards, agents and actions"><svg data-dc-tpl="33" aria-hidden="true" focusable="false" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="flex: 0 0 auto;"><circle data-dc-tpl="34" cx="11" cy="11" r="7"></circle><path data-dc-tpl="35" d="M20 20l-4-4"></path></svg>Search<span data-dc-tpl="36" class="mh-kbd">⌘K</span></button><button data-dc-tpl="37" class="mh-btn mh-btn--write" type="button"><svg data-dc-tpl="38" aria-hidden="true" focusable="false" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="flex: 0 0 auto;"><path data-dc-tpl="39" d="M4 20h4L19 9l-4-4L4 16v4z"></path></svg>Write a new card</button></div></div><div data-dc-tpl="40" class="mh-tabs"><div data-dc-tpl="41" role="group" aria-label="View"><button data-dc-tpl="42" class="mh-tab" type="button" aria-pressed="false">Board</button><button data-dc-tpl="43" class="mh-tab" type="button" aria-pressed="false">List</button><button data-dc-tpl="44" class="mh-tab" type="button" aria-pressed="true">Projects</button></div><span data-dc-tpl="45" class="mh-showing">Projects group cards across boards. Filters don’t apply here.</span></div></header><main data-dc-tpl="46" class="page pp-page" id="main">
+  <div data-dc-tpl="47" style="display: flex; flex-wrap: wrap; align-items: flex-end; gap: var(--vk-space-3);">
+    <div data-dc-tpl="48" style="display: flex; flex-direction: column; gap: 4px; flex: 1 1 300px;">
+      <p data-dc-tpl="49" class="t-eyebrow">Developer Experience · Plan</p>
+      <h1 data-dc-tpl="50" class="t-h1">Projects</h1>
+      <p data-dc-tpl="51" class="t-body" style="color: var(--vk-color-muted);">5 projects · 3 active, 2 completed. Each shows how many of its cards are done and what they cost.</p>
+    </div>
+  </div>
+
+  <details data-dc-tpl="52" class="panel" open="">
+    <summary data-dc-tpl="53" class="panel-head" style="border-bottom: 1px solid var(--vk-color-line);"><span data-dc-tpl="54" class="vk-button vk-button--primary btn-sm"><svg data-dc-tpl="55" aria-hidden="true" focusable="false" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path data-dc-tpl="56" d="M12 5v14M5 12h14"></path></svg>Project</span><span data-dc-tpl="57" class="t-meta">Name it and, if you like, give it a target date.</span></summary>
+    <form data-dc-tpl="58" class="createform" aria-label="New project">
+      <div data-dc-tpl="59" class="field"><label data-dc-tpl="60" for="np-name">Project name</label><input data-dc-tpl="61" id="np-name" class="input" placeholder="e.g. Clean-room journey fixes"></div>
+      <div data-dc-tpl="62" class="field"><label data-dc-tpl="63" for="np-date">Target date (optional)</label><input data-dc-tpl="64" id="np-date" class="input" type="date"></div>
+      <div data-dc-tpl="65" style="display: flex; gap: var(--vk-space-2);"><button type="button" class="vk-button vk-button--primary btn-sm" disabled="">Create</button><button type="button" class="vk-button vk-button--quiet btn-sm">Cancel</button></div>
+    </form>
+  </details>
+
+  
+
+  <section data-dc-tpl="73" aria-labelledby="g-act" style="display: flex; flex-direction: column; gap: var(--vk-space-3);">
+    <div data-dc-tpl="74" class="group-h"><h2 data-dc-tpl="75" class="t-h2" id="g-act">Active</h2><span data-dc-tpl="76" class="count">3</span></div>
+    <div data-dc-tpl="77" class="pgrid"><article data-dc-tpl="78" class="panel pcard" aria-labelledby="pj-0">
+  <div data-dc-tpl="79" style="display: flex; gap: var(--vk-space-2); align-items: flex-start;">
+    <h3 data-dc-tpl="80" class="ptitle" id="pj-0" style="flex: 1 1 0%;">Building in public — Marketing &amp; Community flow</h3>
+  </div>
+  <div data-dc-tpl="81" style="display: flex; flex-wrap: wrap; gap: 6px 10px; align-items: center;"><span data-dc-tpl="82" class="chip ">Active</span><span data-dc-tpl="83" class="t-meta">No target date</span></div>
+  
+  
+    <div data-dc-tpl="94" aria-busy="true" style="display: flex; flex-direction: column; gap: 6px;">
+      <div data-dc-tpl="95" class="skel"></div>
+      <p data-dc-tpl="96" class="t-meta">Loading rollup…</p>
+    </div>
+  
+  <div data-dc-tpl="97" class="pfoot">
+    <details data-dc-tpl="98" open="">
+      <summary data-dc-tpl="99"><span data-dc-tpl="100" class="disc-ico"><svg data-dc-tpl="101" aria-hidden="true" focusable="false" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path data-dc-tpl="102" d="M6 9l6 6 6-6"></path></svg></span>Milestones <span data-dc-tpl="103" class="t-meta" style="font-weight: 400;">· none yet</span></summary>
+      <form data-dc-tpl="104" class="msform" aria-label="Add a milestone to Building in public — Marketing &amp; Community flow">
+        <div data-dc-tpl="105" class="field"><label data-dc-tpl="106" for="ms-0">Milestone</label><input data-dc-tpl="107" id="ms-0" class="input" placeholder="Name"></div>
+        <div data-dc-tpl="108" class="field"><label data-dc-tpl="109" for="md-0">Date</label><input data-dc-tpl="110" id="md-0" class="input" type="date"></div>
+        <button type="button" class="vk-button vk-button--secondary btn-sm">Add</button>
+      </form>
+    </details>
+    <button data-dc-tpl="112" type="button" class="iconbtn" aria-label="Delete project Building in public — Marketing &amp; Community flow"><svg data-dc-tpl="113" aria-hidden="true" focusable="false" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path data-dc-tpl="114" d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"></path></svg></button>
+  </div></article><article data-dc-tpl="115" class="panel pcard" aria-labelledby="pj-1">
+  <div data-dc-tpl="116" style="display: flex; gap: var(--vk-space-2); align-items: flex-start;">
+    <h3 data-dc-tpl="117" class="ptitle" id="pj-1" style="flex: 1 1 0%;">Guild — Forge workspaces and checkpoint recovery</h3>
+  </div>
+  <div data-dc-tpl="118" style="display: flex; flex-wrap: wrap; gap: 6px 10px; align-items: center;"><span data-dc-tpl="119" class="chip ">Active</span><span data-dc-tpl="120" class="t-meta">No target date</span></div>
+  
+  
+    <div data-dc-tpl="131" aria-busy="true" style="display: flex; flex-direction: column; gap: 6px;">
+      <div data-dc-tpl="132" class="skel"></div>
+      <p data-dc-tpl="133" class="t-meta">Loading rollup…</p>
+    </div>
+  
+  <div data-dc-tpl="134" class="pfoot">
+    <details data-dc-tpl="135">
+      <summary data-dc-tpl="136"><span data-dc-tpl="137" class="disc-ico"><svg data-dc-tpl="138" aria-hidden="true" focusable="false" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path data-dc-tpl="139" d="M6 9l6 6 6-6"></path></svg></span>Milestones <span data-dc-tpl="140" class="t-meta" style="font-weight: 400;">· none yet</span></summary>
+      <form data-dc-tpl="141" class="msform" aria-label="Add a milestone to Guild — Forge workspaces and checkpoint recovery">
+        <div data-dc-tpl="142" class="field"><label data-dc-tpl="143" for="ms-1">Milestone</label><input data-dc-tpl="144" id="ms-1" class="input" placeholder="Name"></div>
+        <div data-dc-tpl="145" class="field"><label data-dc-tpl="146" for="md-1">Date</label><input data-dc-tpl="147" id="md-1" class="input" type="date"></div>
+        <button type="button" class="vk-button vk-button--secondary btn-sm">Add</button>
+      </form>
+    </details>
+    <button data-dc-tpl="149" type="button" class="iconbtn" aria-label="Delete project Guild — Forge workspaces and checkpoint recovery"><svg data-dc-tpl="150" aria-hidden="true" focusable="false" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path data-dc-tpl="151" d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"></path></svg></button>
+  </div></article><article data-dc-tpl="152" class="panel pcard" aria-labelledby="pj-2">
+  <div data-dc-tpl="153" style="display: flex; gap: var(--vk-space-2); align-items: flex-start;">
+    <h3 data-dc-tpl="154" class="ptitle" id="pj-2" style="flex: 1 1 0%;">Marketing &amp; Community — Melissa and Anna onboarding</h3>
+  </div>
+  <div data-dc-tpl="155" style="display: flex; flex-wrap: wrap; gap: 6px 10px; align-items: center;"><span data-dc-tpl="156" class="chip ">Active</span><span data-dc-tpl="157" class="t-meta">No target date</span></div>
+  
+  
+    <div data-dc-tpl="168" aria-busy="true" style="display: flex; flex-direction: column; gap: 6px;">
+      <div data-dc-tpl="169" class="skel"></div>
+      <p data-dc-tpl="170" class="t-meta">Loading rollup…</p>
+    </div>
+  
+  <div data-dc-tpl="171" class="pfoot">
+    <details data-dc-tpl="172">
+      <summary data-dc-tpl="173"><span data-dc-tpl="174" class="disc-ico"><svg data-dc-tpl="175" aria-hidden="true" focusable="false" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path data-dc-tpl="176" d="M6 9l6 6 6-6"></path></svg></span>Milestones <span data-dc-tpl="177" class="t-meta" style="font-weight: 400;">· none yet</span></summary>
+      <form data-dc-tpl="178" class="msform" aria-label="Add a milestone to Marketing &amp; Community — Melissa and Anna onboarding">
+        <div data-dc-tpl="179" class="field"><label data-dc-tpl="180" for="ms-2">Milestone</label><input data-dc-tpl="181" id="ms-2" class="input" placeholder="Name"></div>
+        <div data-dc-tpl="182" class="field"><label data-dc-tpl="183" for="md-2">Date</label><input data-dc-tpl="184" id="md-2" class="input" type="date"></div>
+        <button type="button" class="vk-button vk-button--secondary btn-sm">Add</button>
+      </form>
+    </details>
+    <button data-dc-tpl="186" type="button" class="iconbtn" aria-label="Delete project Marketing &amp; Community — Melissa and Anna onboarding"><svg data-dc-tpl="187" aria-hidden="true" focusable="false" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path data-dc-tpl="188" d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"></path></svg></button>
+  </div></article></div>
+  </section>
+  <section data-dc-tpl="189" aria-labelledby="g-done" style="display: flex; flex-direction: column; gap: var(--vk-space-3);">
+    <div data-dc-tpl="190" class="group-h"><h2 data-dc-tpl="191" class="t-h2" id="g-done">Completed</h2><span data-dc-tpl="192" class="count">2</span></div>
+    <div data-dc-tpl="193" class="pgrid"><article data-dc-tpl="194" class="panel pcard" aria-labelledby="pj-3">
+  <div data-dc-tpl="195" style="display: flex; gap: var(--vk-space-2); align-items: flex-start;">
+    <h3 data-dc-tpl="196" class="ptitle" id="pj-3" style="flex: 1 1 0%;">SJL Active Portfolio</h3>
+  </div>
+  <div data-dc-tpl="197" style="display: flex; flex-wrap: wrap; gap: 6px 10px; align-items: center;"><span data-dc-tpl="198" class="chip chip-line">Completed</span><span data-dc-tpl="199" class="chip chip-ok"><svg data-dc-tpl="200" aria-hidden="true" focusable="false" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path data-dc-tpl="201" d="M5 12.5l4.5 4.5L19 7.5"></path></svg>On track</span><span data-dc-tpl="202" class="t-meta" style="display: inline-flex; align-items: center; gap: 4px;"><svg data-dc-tpl="203" aria-hidden="true" focusable="false" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect data-dc-tpl="204" x="4" y="5" width="16" height="15" rx="2"></rect><path data-dc-tpl="205" d="M4 10h16M9 3v4M15 3v4"></path></svg>Target 5 Oct 2026</span></div>
+  
+  
+    <div data-dc-tpl="216" aria-busy="true" style="display: flex; flex-direction: column; gap: 6px;">
+      <div data-dc-tpl="217" class="skel"></div>
+      <p data-dc-tpl="218" class="t-meta">Loading rollup…</p>
+    </div>
+  
+  <div data-dc-tpl="219" class="pfoot">
+    <details data-dc-tpl="220">
+      <summary data-dc-tpl="221"><span data-dc-tpl="222" class="disc-ico"><svg data-dc-tpl="223" aria-hidden="true" focusable="false" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path data-dc-tpl="224" d="M6 9l6 6 6-6"></path></svg></span>Milestones <span data-dc-tpl="225" class="t-meta" style="font-weight: 400;">· none yet</span></summary>
+      <form data-dc-tpl="226" class="msform" aria-label="Add a milestone to SJL Active Portfolio">
+        <div data-dc-tpl="227" class="field"><label data-dc-tpl="228" for="ms-3">Milestone</label><input data-dc-tpl="229" id="ms-3" class="input" placeholder="Name"></div>
+        <div data-dc-tpl="230" class="field"><label data-dc-tpl="231" for="md-3">Date</label><input data-dc-tpl="232" id="md-3" class="input" type="date"></div>
+        <button type="button" class="vk-button vk-button--secondary btn-sm">Add</button>
+      </form>
+    </details>
+    <button data-dc-tpl="234" type="button" class="iconbtn" aria-label="Delete project SJL Active Portfolio"><svg data-dc-tpl="235" aria-hidden="true" focusable="false" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path data-dc-tpl="236" d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"></path></svg></button>
+  </div></article><article data-dc-tpl="237" class="panel pcard" aria-labelledby="pj-4">
+  <div data-dc-tpl="238" style="display: flex; gap: var(--vk-space-2); align-items: flex-start;">
+    <h3 data-dc-tpl="239" class="ptitle" id="pj-4" style="flex: 1 1 0%;">SJL Operating Baseline</h3>
+  </div>
+  <div data-dc-tpl="240" style="display: flex; flex-wrap: wrap; gap: 6px 10px; align-items: center;"><span data-dc-tpl="241" class="chip chip-line">Completed</span><span data-dc-tpl="242" class="chip chip-ok"><svg data-dc-tpl="243" aria-hidden="true" focusable="false" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path data-dc-tpl="244" d="M5 12.5l4.5 4.5L19 7.5"></path></svg>On track</span><span data-dc-tpl="245" class="t-meta" style="display: inline-flex; align-items: center; gap: 4px;"><svg data-dc-tpl="246" aria-hidden="true" focusable="false" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect data-dc-tpl="247" x="4" y="5" width="16" height="15" rx="2"></rect><path data-dc-tpl="248" d="M4 10h16M9 3v4M15 3v4"></path></svg>Target 9 Oct 2026</span></div>
+  
+  
+    <div data-dc-tpl="259" aria-busy="true" style="display: flex; flex-direction: column; gap: 6px;">
+      <div data-dc-tpl="260" class="skel"></div>
+      <p data-dc-tpl="261" class="t-meta">Loading rollup…</p>
+    </div>
+  
+  <div data-dc-tpl="262" class="pfoot">
+    <details data-dc-tpl="263">
+      <summary data-dc-tpl="264"><span data-dc-tpl="265" class="disc-ico"><svg data-dc-tpl="266" aria-hidden="true" focusable="false" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path data-dc-tpl="267" d="M6 9l6 6 6-6"></path></svg></span>Milestones <span data-dc-tpl="268" class="t-meta" style="font-weight: 400;">· none yet</span></summary>
+      <form data-dc-tpl="269" class="msform" aria-label="Add a milestone to SJL Operating Baseline">
+        <div data-dc-tpl="270" class="field"><label data-dc-tpl="271" for="ms-4">Milestone</label><input data-dc-tpl="272" id="ms-4" class="input" placeholder="Name"></div>
+        <div data-dc-tpl="273" class="field"><label data-dc-tpl="274" for="md-4">Date</label><input data-dc-tpl="275" id="md-4" class="input" type="date"></div>
+        <button type="button" class="vk-button vk-button--secondary btn-sm">Add</button>
+      </form>
+    </details>
+    <button data-dc-tpl="277" type="button" class="iconbtn" aria-label="Delete project SJL Operating Baseline"><svg data-dc-tpl="278" aria-hidden="true" focusable="false" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path data-dc-tpl="279" d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"></path></svg></button>
+  </div></article></div>
+  </section>
+  <p data-dc-tpl="280" class="t-meta">If a rollup fails, the card says “Rollup unavailable” with the reason instead of showing a number. Deleting a project asks first.</p></main></div></div></div>
+
+
+
+</body></html>

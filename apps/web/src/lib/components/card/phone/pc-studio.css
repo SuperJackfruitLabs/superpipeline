@@ -1,0 +1,108 @@
+/* Ported verbatim from e2e/reference/mockups/SP-Phone-Card-Studio (prefixes pc-, cd-pill) by scripts/pixel/extract-css.mjs. */
+.pc-bar { display: flex; align-items: center; gap: 4px; padding: 6px 8px 6px 4px; border-bottom: 1px solid var(--rule); }
+.pc-bar .back { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; padding: 0 8px; border: 0; background: transparent; color: var(--text); font: 700 13px var(--ff); white-space: nowrap; cursor: pointer; }
+.pc-bar .sid { display: inline-flex; align-items: center; gap: 4px; min-height: 44px; padding: 0 6px; border: 0; background: transparent; color: var(--muted); font: 500 12px var(--fm); cursor: pointer; }
+.pc-bar .clk { margin-left: auto; font: 500 11.5px var(--fm); color: var(--muted); white-space: nowrap; }
+.pc-in { display: flex; flex-direction: column; gap: 24px; padding: 16px 16px 24px; }
+.pc-hd { display: flex; flex-direction: column; gap: 10px; }
+.pc-hd .tl { display: flex; align-items: flex-start; gap: 8px; }
+.pc-hd h2 { flex: 1; font: 800 26px/1.06 var(--ff); font-stretch: 82%; letter-spacing: -.01em; overflow-wrap: anywhere; }
+.pc-figs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); border-top: 1.5px solid var(--rule); }
+.pc-figs > div { display: flex; flex-direction: column; gap: 4px; padding: 10px 6px 12px 0; border-bottom: 1px solid var(--hair); min-width: 0; }
+.pc-figs > div:not(:nth-child(3n+1)) { padding-left: 10px; border-left: 1px solid var(--hair); }
+.pc-figs dt { order: 2; font-size: 12px; font-weight: 600; color: var(--muted); }
+.pc-figs dd { font: 900 34px/.9 var(--ff); font-stretch: 72%; letter-spacing: -.02em; white-space: nowrap; }
+.pc-figs dd small { font-size: 13px; font-weight: 700; margin-left: 2px; letter-spacing: 0; }
+.pc-figs dd.z { font-weight: 300; color: var(--muted); }
+.pc-trk p { margin-top: 8px; font: 500 11.5px var(--fm); color: var(--muted); }
+.pc-trk p b { color: var(--sig-text); font-weight: 600; }
+.pc-cmd { display: flex; flex-direction: column; gap: 12px; padding: 14px; border: 1.5px solid var(--rule); background: var(--paper); }
+.pc-cmd .h { display: flex; align-items: baseline; gap: 8px; font: 800 15px var(--ff); }
+.pc-cmd .h .mono { margin-left: auto; font-size: 12px; font-weight: 500; color: var(--muted); }
+.pc-arch { display: flex; flex-direction: column; gap: 10px; padding: 14px; background: var(--text); color: var(--bg); }
+.pc-arch h3 { display: flex; align-items: center; gap: 8px; font: 800 15px var(--ff); }
+.pc-arch p { font: 400 16px/1.4 var(--fs); }
+.pc-arch .ar-btn { align-self: flex-start; }
+.pc-arch :focus-visible { outline-color: var(--bg); }
+.pc-srow { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 12px; padding: 4px 0; border-top: 1px solid var(--hair); border-bottom: 1px solid var(--hair); font-size: 13.5px; }
+.pc-srow .chipx { display: inline-flex; align-items: center; gap: 6px; }
+.pc-tabs { display: flex; gap: 16px; overflow-x: auto; border-bottom: 1px solid var(--hair); }
+.pc-tabs .ar-tab b { font: 500 11.5px var(--fm); color: var(--muted); margin-left: 4px; }
+.pc-pane { display: flex; flex-direction: column; gap: 12px; }
+.pc-pane h3 { margin-top: 10px; padding-top: 10px; border-top: 1.5px solid var(--rule); font: 800 14px var(--ff); }
+.pc-pane h3:first-child { margin-top: 0; }
+.pc-pane h3 .mono { margin-left: 6px; font-weight: 500; font-size: 12px; color: var(--muted); }
+.pc-pane .p { font: 400 16px/1.48 var(--fs); overflow-wrap: anywhere; }
+.pc-pane .note { font-size: 13px; color: var(--muted); }
+.pc-fx3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.pc-fx3 > div { display: flex; flex-direction: column; gap: 2px; }
+.pc-fx3 dt { font: 500 11px var(--fm); color: var(--muted); text-transform: uppercase; }
+.pc-fx3 dd { font-weight: 700; }
+.pc-nl { counter-reset: n; }
+.pc-nl li { counter-increment: n; display: grid; grid-template-columns: 24px minmax(0, 1fr); padding: 8px 0; border-top: 1px solid var(--hair); font-size: 14.5px; overflow-wrap: anywhere; }
+.pc-nl li::before { content: counter(n, decimal-leading-zero); font: 500 12px/1.7 var(--fm); color: var(--muted); }
+.pc-det summary { display: block; min-height: 44px; cursor: pointer; list-style: none; }
+.pc-det summary::-webkit-details-marker { display: none; }
+.pc-det summary h3 { text-decoration: underline; text-decoration-thickness: 1.5px; text-underline-offset: 4px; }
+.pc-det summary h3 .mono { display: block; margin: 4px 0 0; text-decoration: none; }
+.pc-det[open] summary h3 { text-decoration: none; }
+.pc-grp h4 { margin-top: 6px; font: 700 12px var(--ff); letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
+.pc-kv > div { padding: 8px 0; border-top: 1px solid var(--hair); }
+.pc-kv dt { font-weight: 700; font-size: 13.5px; }
+.pc-kv dd { margin-top: 2px; font-size: 14.5px; overflow-wrap: anywhere; }
+.pc-kv .id { font: 500 12px var(--fm); overflow-wrap: anywhere; }
+.pc-kv a, .pc-pane a { text-underline-offset: 3px; }
+.pc-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.pc-run { border-top: 1px solid var(--hair); }
+.pc-run summary { display: flex; flex-direction: column; gap: 2px; min-height: 44px; padding: 8px 0; cursor: pointer; }
+.pc-run summary .rt { font-weight: 800; }
+.pc-run summary .rm { font: 500 12px var(--fm); color: var(--muted); }
+.pc-ev li { display: grid; grid-template-columns: 74px minmax(0, 1fr); gap: 2px 10px; padding: 8px 0 8px 12px; border-left: 2px solid var(--hair); font-size: 14px; }
+.pc-ev .evt { font-weight: 800; }
+.pc-ev .tm { grid-column: 2; font: 500 11.5px var(--fm); color: var(--muted); }
+.pc-att li { display: grid; grid-template-columns: 22px minmax(0, 1fr) auto; gap: 2px 8px; align-items: center; padding: 8px 0; border-top: 1px solid var(--hair); font-size: 14px; }
+.pc-att li > span:last-child { grid-column: 2 / 4; color: var(--muted); font-size: 13px; }
+.pc-att .who { display: inline-flex; align-items: center; gap: 6px; font-weight: 700; }
+.pc-refs li { border-top: 1px solid var(--hair); }
+.pc-refs a { display: flex; flex-direction: column; gap: 3px; padding: 10px 0; text-decoration: none; }
+.pc-refs a b { text-decoration: underline; text-underline-offset: 3px; overflow-wrap: anywhere; }
+.pc-refs a span { font: 400 14.5px/1.4 var(--fs); }
+.pc-refs a small { font: 500 11.5px var(--fm); color: var(--muted); overflow-wrap: anywhere; }
+.pc-add { display: flex; gap: 8px; }
+.pc-add .ar-in { flex: 1; min-width: 0; }
+.pc-foot { display: flex; flex-wrap: wrap; gap: 10px; padding: 14px 16px 18px; border-top: 1.5px solid var(--rule); }
+.cd-pill { display: inline-flex; align-items: center; gap: 7px; font-weight: 800; white-space: nowrap; }
+.cd-pill .u { width: 11px; height: 11px; }
+.cd-pill.needs { color: var(--sig-text); }
+
+/* delta: the reference's `.ph`-rooted rules (prefix `ph` would also take the shell's `.ph-*`). */
+.pcard--studio .ar-track li { font-size: 0; }
+.pcard--studio .ar-q blockquote { font-size: 17px; }
+
+/* layout-only: the heading over a gate or a question, in the annual report's kicker voice. */
+.pcard--studio .pc-flag { margin: 0 0 6px; font: 600 12px/1.3 var(--vk-font-mono); letter-spacing: 0.08em; text-transform: uppercase; }
+
+/* layout-only: the bar's two icon tools keep their 18px footprint and a 44px target (margin gives the room back). */
+.pcard--studio .pc-bar .ph-ib { box-sizing: border-box; min-width: 44px; min-height: 44px; display: inline-grid; place-items: center; margin: -13px; }
+/* layout-only: a long board name gives way (ellipsis) instead of pushing the bar past the screen. */
+.pcard--studio .pc-bar .back { min-width: 0; flex: 0 1 auto; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pcard--studio .pc-bar > :not(.back) { flex: none; }
+.pcard--studio { overflow-x: clip; }
+
+/* The Annual-report phone controls the reference defines (scoped with no added specificity). */
+:where(.pcard--studio) .ar-ini { flex: none; display: inline-grid; place-items: center; background: var(--text); color: var(--bg); font-family: var(--ff); font-weight: 800; line-height: 1; }
+:where(.pcard--studio) .ar-lk { position: relative; display: inline-flex; align-items: center; gap: 6px; min-height: 44px; padding: 0 8px 0 0; border: 0; background: transparent; color: var(--text); font: 700 13.5px var(--ff); text-decoration: underline; text-decoration-thickness: 1.5px; text-underline-offset: 3px; white-space: nowrap; cursor: pointer; }
+:where(.pcard--studio) .ar-lk.quiet { color: var(--muted); }
+:where(.pcard--studio) .ar-ib { position: relative; display: inline-grid; place-items: center; flex: none; width: 44px; height: 44px; border: 1px solid var(--rule); border-radius: 2px; background: transparent; color: var(--text); text-decoration: none; cursor: pointer; }
+:where(.pcard--studio) .ar-ib:hover { background: var(--text); color: var(--bg); }
+:where(.pcard--studio) .ar-tab { position: relative; display: inline-flex; align-items: center; gap: 6px; min-height: 48px; padding: 0; border: 0; background: transparent; color: var(--muted); font: 700 14px var(--ff); text-decoration: none; white-space: nowrap; cursor: pointer; }
+:where(.pcard--studio) .ar-tab[aria-current="page"], :where(.pcard--studio) .ar-tab[aria-pressed="true"], :where(.pcard--studio) .ar-tab[aria-selected="true"] { color: var(--text); }
+:where(.pcard--studio) .ar-tab[aria-current="page"]::after, :where(.pcard--studio) .ar-tab[aria-pressed="true"]::after, :where(.pcard--studio) .ar-tab[aria-selected="true"]::after { content: ""; position: absolute; left: 0; right: 0; bottom: -1px; height: 3px; background: var(--text); }
+:where(.pcard--studio) .ar-tab .mono { font-size: 12px; font-weight: 500; }
+:where(.pcard--studio) .ar-field { display: flex; flex-direction: column; gap: 6px; }
+:where(.pcard--studio) .ar-field > label, .ar :where(.pcard--studio) .lab { font-weight: 700; font-size: 14px; }
+:where(.pcard--studio) .ar-in, :where(.pcard--studio) .ar-sel, :where(.pcard--studio) .ar-ta { width: 100%; min-height: 44px; padding: 0 10px; border: 1px solid var(--rule); border-radius: 0; background: var(--field); color: var(--text); font: 400 16px/1.45 var(--ff); }
+:where(.pcard--studio) .ar-in::placeholder, :where(.pcard--studio) .ar-ta::placeholder { color: var(--muted); }
+:where(.pcard--studio) .pc-arch .ar-btn { align-self: flex-start; }
+:where(.pcard--studio) .pc-tabs .ar-tab b { font: 500 11.5px var(--fm); color: var(--muted); margin-left: 4px; }
+:where(.pcard--studio) .pc-add .ar-in { flex: 1; min-width: 0; }

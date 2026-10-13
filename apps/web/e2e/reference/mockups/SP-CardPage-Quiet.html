@@ -1,0 +1,1160 @@
+<!doctype html>
+<html data-product="superpipeline" data-accent="product" lang="en" style="touch-action: pan-x pan-y; overscroll-behavior: none; --dc-chrome-unit: 1px;"><head><link rel="stylesheet" href="_vibekit-0.0.10/vibekit.css" data-vibekit="0.0.10"><style>
+    .sc-placeholder{background:color-mix(in srgb,currentColor 8%,transparent);
+      border:1px solid color-mix(in srgb,currentColor 50%,transparent);
+      border-radius:2px;box-sizing:border-box;overflow:hidden}
+    @keyframes sc-shine{0%{background-position:100% 50%}100%{background-position:0% 50%}}
+    html.sc-dc-streaming .sc-placeholder,
+    html.sc-dc-streaming .sc-interp.sc-missing{position:relative;
+      background:color-mix(in srgb,currentColor 5%,transparent);
+      border-color:transparent}
+    html.sc-dc-streaming .sc-placeholder::before,
+    html.sc-dc-streaming .sc-interp.sc-missing::before{content:'';
+      position:absolute;inset:0;pointer-events:none;
+      background:linear-gradient(90deg,rgba(217,119,87,0) 25%,rgba(247,225,211,.95) 37%,rgba(217,119,87,0) 63%);
+      background-size:400% 100%;animation:sc-shine 1.4s ease infinite}
+    html.sc-dc-streaming .sc-placeholder:nth-child(n+9 of .sc-placeholder)::before,
+    html.sc-dc-streaming .sc-interp.sc-missing:nth-child(n+9 of .sc-interp.sc-missing)::before{animation:none;
+      background:color-mix(in srgb,currentColor 8%,transparent)}
+    .sc-placeholder-error{padding:4px 8px;font:11px/1.4 ui-monospace,monospace;
+      color:color-mix(in srgb,currentColor 70%,transparent);word-break:break-word}
+    .sc-interp.sc-missing{display:inline-block;width:2em;height:1em;overflow:hidden;
+      vertical-align:text-bottom;background:rgba(255,255,255,.3);border:1px solid rgba(0,0,0,.5);
+      border-radius:2px;box-sizing:border-box;color:transparent;
+      user-select:none}
+    .sc-interp.sc-unresolved{font-family:ui-monospace,monospace;font-size:.85em;
+      color:color-mix(in srgb,currentColor 50%,transparent);
+      background:color-mix(in srgb,currentColor 10%,transparent);border-radius:3px;
+      padding:0 3px}
+    .sc-host.sc-has-error{position:relative}
+    .sc-logic-error{position:absolute;top:8px;left:8px;z-index:2147483647;max-width:60ch;
+      padding:6px 10px;background:#b00020;color:#fff;font:12px/1.4 ui-monospace,monospace;
+      border-radius:4px;white-space:pre-wrap;pointer-events:none}
+    /* Mirrors PRINT_BASELINE_CSS in apps/web deck-stage-export.ts — keep both
+       in sync until dc-runtime regains a build step. */
+    @media print {
+      @page { margin: 0.5cm; }
+      figure, table { break-inside: avoid; }
+      #dc-root, #dc-root > .sc-host { height: auto; }
+      *, *::before, *::after {
+        print-color-adjust: exact; -webkit-print-color-adjust: exact;
+        backdrop-filter: none !important; -webkit-backdrop-filter: none !important;
+        animation-delay: -99s !important; animation-duration: .001s !important;
+        animation-iteration-count: 1 !important; animation-fill-mode: both !important;
+        animation-play-state: running !important; transition-duration: 0s !important;
+      }
+    }
+  </style>
+
+
+<meta charset="utf-8">
+<title>Card page, Quiet</title>
+<base href="/appifact/SP-CardPage-Quiet.dc.html">
+
+
+
+
+
+<style>x-dc{display:none!important}</style>
+
+<style>@import url("https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&family=Azeret+Mono:wght@400;500;600&family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..600&display=swap");
+
+ 
+
+:root {
+  color-scheme: light;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  --vk-font-body: "Figtree", system-ui, sans-serif;
+  --vk-font-display: "Bricolage Grotesque", system-ui, sans-serif;
+  --vk-font-mono: "Martian Mono", ui-monospace, monospace;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+}
+
+[data-vibe="daylight"][data-theme="light"] {
+  color-scheme: light;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  --vk-font-body: "Figtree", system-ui, sans-serif;
+  --vk-font-display: "Bricolage Grotesque", system-ui, sans-serif;
+  --vk-font-mono: "Martian Mono", ui-monospace, monospace;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+}
+
+[data-vibe="daylight"][data-theme="dark"] {
+  color-scheme: dark;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  --vk-font-body: "Figtree", system-ui, sans-serif;
+  --vk-font-display: "Bricolage Grotesque", system-ui, sans-serif;
+  --vk-font-mono: "Martian Mono", ui-monospace, monospace;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+}
+
+[data-vibe="paper"][data-theme="light"] {
+  color-scheme: light;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  --vk-font-body: "Geist", system-ui, sans-serif;
+  --vk-font-display: "Newsreader", "Georgia", serif;
+  --vk-font-mono: "Martian Mono", ui-monospace, monospace;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+}
+
+[data-vibe="paper"][data-theme="dark"] {
+  color-scheme: dark;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  --vk-font-body: "Geist", system-ui, sans-serif;
+  --vk-font-display: "Newsreader", "Georgia", serif;
+  --vk-font-mono: "Martian Mono", ui-monospace, monospace;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+}
+
+[data-vibe="studio"][data-theme="light"] {
+  color-scheme: light;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  --vk-font-body: "Archivo", system-ui, sans-serif;
+  --vk-font-display: "Archivo", system-ui, sans-serif;
+  --vk-font-mono: "Azeret Mono", ui-monospace, monospace;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  --vk-font-serif: "Newsreader", Georgia, serif;
+
+
+
+
+
+
+
+
+
+
+}
+
+[data-vibe="studio"][data-theme="dark"] {
+  color-scheme: dark;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  --vk-font-body: "Archivo", system-ui, sans-serif;
+  --vk-font-display: "Archivo", system-ui, sans-serif;
+  --vk-font-mono: "Azeret Mono", ui-monospace, monospace;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  --vk-font-serif: "Newsreader", Georgia, serif;
+
+
+
+
+
+
+
+
+
+
+}
+
+[data-vibe="quiet"][data-theme="light"] {
+  color-scheme: light;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  --vk-font-body: "Atkinson Hyperlegible Next", system-ui, sans-serif;
+  --vk-font-display: "Atkinson Hyperlegible Next", system-ui, sans-serif;
+  --vk-font-mono: "Martian Mono", ui-monospace, monospace;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+}
+
+[data-vibe="quiet"][data-theme="dark"] {
+  color-scheme: dark;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  --vk-font-body: "Atkinson Hyperlegible Next", system-ui, sans-serif;
+  --vk-font-display: "Atkinson Hyperlegible Next", system-ui, sans-serif;
+  --vk-font-mono: "Martian Mono", ui-monospace, monospace;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+}
+
+ 
+:root {
+  --vk-text-sm: clamp(0.8125rem, 0.78rem + 0.15vw, 0.875rem);
+  --vk-text-md: clamp(1rem, 0.96rem + 0.2vw, 1.0625rem);
+  --vk-text-lg: clamp(1.25rem, 1.1rem + 0.6vw, 1.5rem);
+  --vk-text-xl: clamp(1.75rem, 1.4rem + 1.6vw, 2.5rem);
+  --vk-focus: 0 0 0 3px var(--vk-color-bg), 0 0 0 5px var(--vk-color-text);
+
+}
+
+html {
+  background: var(--vk-color-bg);
+  color: var(--vk-color-text);
+  font-family: var(--vk-font-body);
+  font-size: 100%;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  font-size: var(--vk-text-md);
+  line-height: 1.5;
+}
+
+:focus-visible {
+   
+  outline: 2px solid var(--vk-color-text);
+  outline-offset: 2px;
+  box-shadow: var(--vk-focus);
+}
+
+ 
+.vk-visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  
+  *, *::before, *::after {
+    animation: none !important;
+    transition-duration: 0ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+[data-motion="reduce"],
+[data-motion="reduce"] *,
+[data-motion="reduce"]::before,
+[data-motion="reduce"]::after,
+[data-motion="reduce"] *::before,
+[data-motion="reduce"] *::after {
+  --vk-motion-fast: 0ms;
+  --vk-motion-base: 0ms;
+  animation: none !important;
+  transition-duration: 0ms !important;
+  scroll-behavior: auto !important;
+}
+
+
+
+@media (forced-colors: active) {
+  :focus-visible {
+    outline: 2px solid CanvasText;
+    box-shadow: none;
+  }
+}
+ 
+
+
+
+
+
+
+
+
+ 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ 
+
+
+
+
+
+
+
+
+
+
+
+
+
+.vk-toast {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--vk-space-3);
+  min-height: var(--vk-target-min);
+  padding: 0 var(--vk-space-5);
+  border-radius: var(--vk-radius-pill);
+  background: var(--vk-color-primary);
+  color: var(--vk-color-primary-fg);
+  font: 600 var(--vk-text-sm) / 1.2 var(--vk-font-body);
+}
+.vk-toast__action { min-height: var(--vk-target-min); border: 0; background: transparent; color: inherit; font: inherit; text-decoration: underline; cursor: pointer; }
+ 
+.vk-toast__action:focus-visible { outline-color: currentColor; box-shadow: var(--vk-focus); }
+
+.vk-sky {
+  --vk-sky-top: var(--vk-sky-noon-top);
+  --vk-sky-bottom: var(--vk-sky-noon-bottom);
+  --vk-sky-text: var(--vk-sky-noon-text);
+  --vk-sky-sun: var(--vk-sky-noon-sun);
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(180deg, var(--vk-sky-top), var(--vk-sky-bottom));
+  color: var(--vk-sky-text);
+}
+.vk-sky[data-phase="dawn"] { --vk-sky-top: var(--vk-sky-dawn-top); --vk-sky-bottom: var(--vk-sky-dawn-bottom); --vk-sky-text: var(--vk-sky-dawn-text); --vk-sky-sun: var(--vk-sky-dawn-sun); }
+.vk-sky[data-phase="morning"] { --vk-sky-top: var(--vk-sky-morning-top); --vk-sky-bottom: var(--vk-sky-morning-bottom); --vk-sky-text: var(--vk-sky-morning-text); --vk-sky-sun: var(--vk-sky-morning-sun); }
+.vk-sky[data-phase="golden"] { --vk-sky-top: var(--vk-sky-golden-top); --vk-sky-bottom: var(--vk-sky-golden-bottom); --vk-sky-text: var(--vk-sky-golden-text); --vk-sky-sun: var(--vk-sky-golden-sun); }
+.vk-sky[data-phase="dusk"] { --vk-sky-top: var(--vk-sky-dusk-top); --vk-sky-bottom: var(--vk-sky-dusk-bottom); --vk-sky-text: var(--vk-sky-dusk-text); --vk-sky-sun: var(--vk-sky-dusk-sun); }
+.vk-sky[data-phase="night"] { --vk-sky-top: var(--vk-sky-night-top); --vk-sky-bottom: var(--vk-sky-night-bottom); --vk-sky-text: var(--vk-sky-night-text); --vk-sky-sun: var(--vk-sky-night-sun); }
+.vk-sky__sun {
+  position: absolute;
+  top: var(--vk-space-5);
+  right: var(--vk-space-6);
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: var(--vk-sky-sun);
+  box-shadow: 0 0 48px 12px color-mix(in oklch, var(--vk-sky-sun) 45%, transparent);
+}
+.vk-sky__content { position: relative; padding: var(--vk-space-5); }
+[data-time="subtle"] .vk-sky { background: color-mix(in oklch, var(--vk-sky-top) 30%, var(--vk-color-bg)); color: var(--vk-color-text); }
+[data-time="subtle"] .vk-sky__sun { display: none; }
+[data-time="off"] .vk-sky { background: var(--vk-color-bg); color: var(--vk-color-text); }
+[data-time="off"] .vk-sky__sun { display: none; }
+[data-vibe="studio"] .vk-sky__sun { width: 10px; height: 10px; box-shadow: 0 0 10px 2px var(--vk-sky-sun); }
+[data-vibe="quiet"] .vk-sky__sun, [data-vibe="paper"] .vk-sky__sun { display: none; }
+
+
+
+
+
+
+
+
+
+
+@media (forced-colors: active) {
+  
+  .vk-toast { border: 1px solid CanvasText; }
+}
+
+ 
+.sl-danger{ white-space: nowrap; } .qp .vk-button{ white-space: nowrap; }
+
+ 
+
+
+
+
+
+ 
+a[href*="CardPage"], a[class*="btn"], button[class*="btn"], a[class*="-button"], button[class*="-button"]{ white-space: nowrap; flex-shrink: 0; } .qp .vk-button{ white-space: nowrap; flex-shrink: 0; }
+
+ 
+a[href*="CardPage"], a[class*="icon"][style*="width: auto"], button[class*="icon"][style*="width: auto"] { display: inline-flex !important; flex-direction: row !important; align-items: center !important; justify-content: center; gap: 8px; }
+</style>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Azeret+Mono:ital,wght@1,400&amp;display=swap" data-font-variant=""><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Azeret+Mono:ital,wght@1,500&amp;display=swap" data-font-variant=""><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Azeret+Mono:ital,wght@1,600&amp;display=swap" data-font-variant=""><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible+Next:wght@400;700&amp;family=Bricolage+Grotesque:opsz,wght@12..96,400..800&amp;family=Figtree:wght@400..800&amp;family=Geist:wght@400..700&amp;family=Instrument+Sans:wght@400..700&amp;family=Martian+Mono:wght@400..600&amp;family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..600&amp;display=swap" data-dc-tpl="1"><style data-dc-tpl="2">
+.qp { min-height: 900px; font-size: 1.125rem; line-height: 1.55; }
+.qp * { box-sizing: border-box; }
+.qp a { color: var(--vk-color-text); text-decoration: underline; text-underline-offset: 3px; }
+.qp p { margin: 0; }
+.qp-skip { position: absolute; left: var(--vk-space-3); top: -60px; padding: var(--vk-space-2) var(--vk-space-3); background: var(--vk-color-surface); border: 2px solid var(--vk-color-text); }
+.qp-skip:focus { top: var(--vk-space-2); }
+.qp-bar { border-bottom: 1px solid var(--vk-color-line); }
+.qp-in { max-width: 1320px; margin: 0 auto; padding: 0 var(--vk-space-6); }
+.qp-row { display: flex; flex-wrap: wrap; align-items: center; gap: var(--vk-space-2) var(--vk-space-5); min-height: 56px; }
+.qp-row a, .qp-row .qp-link { min-height: 44px; display: inline-flex; align-items: center; }
+.qp-link { border: 0; background: transparent; padding: 0; color: var(--vk-color-text); font: inherit; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
+.qp-name { font-weight: 700; }
+.qp-main { padding: var(--vk-space-6) var(--vk-space-6) var(--vk-space-7); max-width: 1320px; margin: 0 auto; display: flex; flex-direction: column; gap: var(--vk-space-5); }
+.qp h1 { margin: 0; font: 700 2rem/1.25 var(--vk-font-display); text-wrap: pretty; max-width: 1000px; }
+.qp-meta { color: var(--vk-color-muted); }
+.qp-stages { margin: 0; padding-left: 1.6em; display: flex; flex-wrap: wrap; gap: 4px var(--vk-space-6); }
+.qp-stages li { min-width: 0; }
+.qp-stages li[aria-current] { font-weight: 700; }
+.qp-cols { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: var(--vk-space-7); align-items: start; }
+.qp-col { display: flex; flex-direction: column; gap: var(--vk-space-5); min-width: 0; }
+.qp fieldset { margin: 0; border: 3px solid var(--vk-color-signal); border-radius: var(--vk-radius-sm); padding: var(--vk-space-4) var(--vk-space-5) var(--vk-space-5); display: flex; flex-direction: column; gap: var(--vk-space-4); min-width: 0; }
+.qp legend { padding: 0 var(--vk-space-2); font: 700 1.3rem/1.2 var(--vk-font-body); }
+.qp-said { overflow-wrap: anywhere; }
+.qp-id { font-family: var(--vk-font-mono); font-size: 0.85em; overflow-wrap: anywhere; }
+.qp-by { display: flex; align-items: center; gap: var(--vk-space-2); font-weight: 700; flex-wrap: wrap; }
+
+
+.qp h2 { margin: 0; font: 700 1.35rem/1.3 var(--vk-font-body); padding-top: var(--vk-space-3); border-top: 1px solid var(--vk-color-line); }
+.qp h3 { margin: 0; font: 700 1.125rem/1.3 var(--vk-font-body); }
+.qp-sec { display: flex; flex-direction: column; gap: var(--vk-space-3); }
+.qp-dl { margin: 0; display: grid; grid-template-columns: minmax(8.5em, max-content) minmax(0, 1fr); gap: 6px var(--vk-space-5); }
+.qp-dl dt { font-weight: 700; }
+.qp-dl dd { margin: 0; overflow-wrap: anywhere; }
+.qp-clamp { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; overflow: hidden; }
+.qp-dl dd .qp-link { min-height: 44px; display: inline-flex; align-items: center; }
+.qp ul, .qp ol { margin: 0; padding-left: 1.4em; display: flex; flex-direction: column; gap: 6px; }
+.qp-acts { display: flex; gap: var(--vk-space-4); flex-wrap: wrap; align-items: center; }
+.qp-acts a { min-height: 44px; display: inline-flex; align-items: center; }
+.qp-face { display: inline-flex; vertical-align: -5px; filter: grayscale(0.6); }
+.qp-ini { display: inline-grid; place-items: center; width: 24px; height: 24px; border-radius: 50%; border: 1px solid var(--vk-color-text); font: 700 10px/1 var(--vk-font-body); vertical-align: -5px; }
+</style><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible+Next:ital,wght@1,400&amp;display=swap" data-font-variant=""><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible+Next:ital,wght@1,700&amp;display=swap" data-font-variant=""><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:ital,wght@1,400..800&amp;display=swap" data-font-variant=""><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:ital,wght@1,400..700&amp;display=swap" data-font-variant=""><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Sans:ital,wght@1,400..700&amp;display=swap" data-font-variant=""><style data-dc-editor-style="">body:not([data-dc-editor-overlay-hidden]) [data-dc-editor-hover][data-dc-editor-hover-stroke]:not([data-dc-editor-selected]){filter:drop-shadow(0 0 calc(1*var(--dc-chrome-unit,1px)) color-mix(in srgb,#2a78d6 90%,transparent)) drop-shadow(0 0 calc(2*var(--dc-chrome-unit,1px)) color-mix(in srgb,#2a78d6 55%,transparent))!important;}body:not([data-dc-editor-overlay-hidden]):not([data-dc-editor-proxy="copy"]) [data-dc-editor-dragging],body:not([data-dc-editor-overlay-hidden]):not([data-dc-editor-proxy]) [data-dc-dragging],body[data-dc-editor-brk]:not([data-dc-editor-overlay-hidden]) [data-dc-drag-follower]{outline:calc(2*var(--dc-chrome-unit,1px)) solid #2a78d6!important;outline-offset:calc(-1*var(--dc-chrome-unit,1px))!important;opacity:0.55!important;}body[data-dc-editor-proxy="move"]:not([data-dc-editor-overlay-hidden]) [data-dc-editor-dragging],body[data-dc-editor-proxy="move"]:not([data-dc-editor-overlay-hidden]) [data-dc-dragging],body[data-dc-editor-proxy="move"]:not([data-dc-editor-overlay-hidden]) [data-dc-editor-dragging]>*,body[data-dc-editor-proxy="move"]:not([data-dc-editor-overlay-hidden]) [data-dc-dragging]>*{opacity:0!important;outline:none!important;}[data-dc-editor-drag-proxy],[data-dc-editor-drag-proxy] *{pointer-events:none!important;}body[data-dc-editor-on]:not([data-dc-editor-tool="interact"]) *{cursor:default!important;user-select:none!important;}body[data-dc-editor-on]:not([data-dc-editor-tool="interact"]) :not([data-dc-editor-overlay-root]):not([data-dc-editor-overlay-root] *){pointer-events:auto!important;transition:none!important;animation:none!important;}body[data-dc-editor-on][data-dc-editor-brk]:not([data-dc-editor-overlay-hidden]) [data-dc-editor-dragging]:not([data-dc-editor-overlay-root]) :not([data-dc-editor-overlay-root]),body[data-dc-editor-on][data-dc-editor-brk]:not([data-dc-editor-overlay-hidden]) [data-dc-dragging]:not([data-dc-editor-overlay-root]) :not([data-dc-editor-overlay-root]),body[data-dc-editor-on][data-dc-editor-brk]:not([data-dc-editor-overlay-hidden]) [data-dc-drag-follower]:not([data-dc-editor-overlay-root]),body[data-dc-editor-on][data-dc-editor-brk]:not([data-dc-editor-overlay-hidden]) [data-dc-drag-follower]:not([data-dc-editor-overlay-root]) :not([data-dc-editor-overlay-root]),body[data-dc-editor-move][data-dc-editor-brk]:not([data-dc-editor-overlay-hidden]) [data-dc-editor-dragging]:not([data-dc-editor-overlay-root]) :not([data-dc-editor-overlay-root]),body[data-dc-editor-move][data-dc-editor-brk]:not([data-dc-editor-overlay-hidden]) [data-dc-dragging]:not([data-dc-editor-overlay-root]) :not([data-dc-editor-overlay-root]),body[data-dc-editor-move][data-dc-editor-brk]:not([data-dc-editor-overlay-hidden]) [data-dc-drag-follower]:not([data-dc-editor-overlay-root]),body[data-dc-editor-move][data-dc-editor-brk]:not([data-dc-editor-overlay-hidden]) [data-dc-drag-follower]:not([data-dc-editor-overlay-root]) :not([data-dc-editor-overlay-root]){pointer-events:none!important;}body[data-dc-editor-move] :not([data-dc-editor-overlay-root]):not([data-dc-editor-overlay-root] *){pointer-events:auto!important;transition:none!important;animation-duration:0s!important;animation-delay:0s!important;}body[data-dc-editor-on][data-dc-editor-tool="rect"] *,body[data-dc-editor-on][data-dc-editor-tool="frame"] *,body[data-dc-editor-on][data-dc-editor-tool="grid"] *,body[data-dc-editor-on][data-dc-editor-tool="oval"] *,body[data-dc-editor-on][data-dc-editor-tool="arrow"] *,body[data-dc-editor-on][data-dc-editor-tool="line"] *{cursor:crosshair!important;}body[data-dc-editor-on][data-dc-editor-tool="text"] *{cursor:text!important;}body[data-dc-editor-on][data-dc-editor-tool="draw"] *{cursor:url('data:image/svg+xml,%3Csvg%20xmlns=%22http://www.w3.org/2000/svg%22%20width=%2216%22%20height=%2216%22%20viewBox=%220%200%2016%2016%22%3E%3Cpath%20d=%22M2%2014l1-4%208-8a2.1%202.1%200%200%201%203%203l-8%208-4%201z%22%20fill=%22%23333%22%20stroke=%22%23fff%22%20stroke-width=%221%22/%3E%3C/svg%3E') 1 15, crosshair!important;}body[data-dc-editor-on]:not([data-dc-editor-tool]) [data-drags-parent],body[data-dc-editor-on]:not([data-dc-editor-tool]) [data-drags-parent] *{cursor:grab!important;}body[data-dc-editor-on]:not([data-dc-editor-tool]) [data-drags-parent]:active,body[data-dc-editor-on]:not([data-dc-editor-tool]) [data-drags-parent]:active *{cursor:grabbing!important;}body[data-dc-editor-on] [data-dc-editor-editing][contenteditable][contenteditable],body[data-dc-editor-on] [data-dc-editor-editing][contenteditable][contenteditable] *,body[data-dc-editor-on] [data-dc-editor-svg-editing]{cursor:text!important;}body[data-dc-editor-on] [data-dc-editor-editing="import"]{outline:none!important;}html:not([data-dc-canvas]):has(body[data-dc-editor-on]:not([data-dc-capturing]) .sc-host){background:var(--dc-editor-backdrop,#ededeb);}html:not([data-dc-canvas]) body[data-dc-editor-on]:not([data-dc-capturing]):has(.sc-host){background:var(--dc-editor-backdrop,#ededeb);}html:not([data-dc-canvas]) body[data-dc-editor-on] .sc-host:not(.sc-host .sc-host){min-height:calc(100vh - var(--dc-editor-host-vpad,0px));}html:not([data-dc-canvas]) body[data-dc-editor-on]:not([data-dc-capturing]) .sc-host:not(.sc-host .sc-host){background:var(--dc-editor-host-bg,#fff);}html[data-dc-frameless],html[data-dc-frameless] body[data-dc-editor-on],html[data-dc-frameless] body[data-dc-editor-on] .sc-host:not(.sc-host .sc-host){background:transparent!important;min-height:0!important;}html:has(body[data-dc-capturing]),body[data-dc-capturing]{transition:none!important;}html[data-dc-canvas]{overflow:hidden;}html[data-dc-canvas] body[data-dc-editor-on] .sc-host:not(.sc-host .sc-host)::before{content:"";position:absolute;left:-100000px;top:-100000px;width:200000px;height:200000px;pointer-events:none;background:repeating-linear-gradient(45deg,var(--dc-editor-hatch-ink,rgba(0,0,0,.05)) 0 8px,transparent 8px 16px);clip-path:polygon(0 0,100% 0,100% 50%,50% 50%,50% 100%,0 100%);}</style></head>
+<body>
+<div id="dc-root"><div class="sc-host" data-sc-name="SP-CardPage-Quiet"><div data-product="superpipeline" data-accent="product" data-dc-tpl="3" class="qp" data-vibe="quiet" data-theme="light" style="position: relative; background: var(--vk-color-bg); color: var(--vk-color-text); font-family: var(--vk-font-body);">
+  <a data-dc-tpl="4" class="qp-skip" href="#content">Skip to content</a>
+
+  <header data-dc-tpl="5" class="qp-bar">
+    <div data-dc-tpl="6" class="qp-in">
+      <nav data-dc-tpl="7" class="qp-row" aria-label="Card window">
+        <span data-dc-tpl="8" class="qp-name">Superpipeline</span>
+        <a data-dc-tpl="9" href="SP-Board-Quiet.dc.html">Back to Developer Experience board</a>
+        <span data-dc-tpl="10" style="flex: 1 1 auto;"></span>
+        <button data-dc-tpl="11" class="qp-link" type="button" aria-haspopup="dialog">Appearance</button>
+        <span data-dc-tpl="12">Ira Mehta — <a data-dc-tpl="13" href="#">Sign out</a></span>
+      </nav>
+    </div>
+  </header>
+
+  <main data-dc-tpl="14" class="qp-main" id="content">
+    <div data-dc-tpl="15" class="qp-row" style="min-height: 0px; gap: var(--vk-space-2) var(--vk-space-5);">
+      <span data-dc-tpl="16">Opened from Developer Experience · <a data-dc-tpl="17" href="SP-Board-Quiet.dc.html">Back to the board</a></span>
+      <span data-dc-tpl="18">Card id <span data-dc-tpl="19" class="qp-id">4605</span> · <button data-dc-tpl="20" class="qp-link" type="button" aria-label="Copy card id 4605">Copy</button></span>
+      <button data-dc-tpl="21" class="qp-link" type="button">Copy link to this card</button>
+      <a data-dc-tpl="22" href="#">Edit card</a>
+    </div>
+
+    <h1 data-dc-tpl="23">Diagnose Melissa and Anna Supermessage silence — trace actual failing hop</h1>
+    <p data-dc-tpl="24" class="qp-meta">Waiting on you for 2 days · Stage 2 of 7: Reproduce · Attempt 2 · Priority P3 · No due date · No labels</p>
+
+    <section data-dc-tpl="25" class="qp-sec" aria-labelledby="qp-stages-h">
+      <h3 data-dc-tpl="26" id="qp-stages-h">Stages</h3>
+      <ol data-dc-tpl="27" class="qp-stages">
+        <li data-dc-tpl="28">Reported (done)</li>
+        <li data-dc-tpl="29" aria-current="step">Reproduce (stopped here)</li>
+        <li data-dc-tpl="30">Failing test (next)</li>
+        <li data-dc-tpl="31">Fix</li>
+        <li data-dc-tpl="32">Integrate</li>
+        <li data-dc-tpl="33">Signed off</li>
+        <li data-dc-tpl="34">Shipped</li>
+      </ol>
+    </section>
+
+    <section data-dc-tpl="35" class="qp-sec" aria-labelledby="qp-people-h">
+      <h3 data-dc-tpl="36" id="qp-people-h">People</h3>
+      <dl data-dc-tpl="37" class="qp-dl">
+        <dt data-dc-tpl="38">Agent</dt><dd data-dc-tpl="39"><span data-dc-tpl="40" class="qp-face"><svg data-dc-tpl="41" viewBox="-2 -4 68 70" width="24" height="24" aria-hidden="true" focusable="false" data-mood="resting"><circle data-dc-tpl="42" cx="32" cy="32" r="30" fill="var(--vk-mood-resting)"></circle><path data-dc-tpl="43" d="M28 4 Q32 -2 36 4 Q34 8 32 6 Q30 8 28 4Z" fill="rgb(107 74 43)"></path><g data-dc-tpl="44" data-eyes="closed"><path data-dc-tpl="45" d="M19 29 Q23 32 27 29 M37 29 Q41 32 45 29" fill="none" stroke="var(--vk-face-ink)" stroke-width="2.6" stroke-linecap="round"></path></g><circle data-dc-tpl="46" cx="17" cy="37" r="4" fill="rgb(255 158 138 / 0.5)"></circle><circle data-dc-tpl="47" cx="47" cy="37" r="4" fill="rgb(255 158 138 / 0.5)"></circle><path data-dc-tpl="48" d="M27 43 Q32 45 37 43" fill="none" stroke="var(--vk-face-ink)" stroke-width="3" stroke-linecap="round"></path></svg></span> None holding it. error-eric ran attempt 2 of Reproduce.</dd>
+        <dt data-dc-tpl="49">Owner</dt><dd data-dc-tpl="50"><span data-dc-tpl="51" class="qp-ini" aria-hidden="true">IM</span> Ira Mehta</dd>
+        <dt data-dc-tpl="52">Asked by</dt><dd data-dc-tpl="53"><span data-dc-tpl="54" class="qp-face"><svg data-dc-tpl="55" viewBox="-2 -4 68 70" width="24" height="24" aria-hidden="true" focusable="false" data-mood="resting"><circle data-dc-tpl="56" cx="32" cy="32" r="30" fill="var(--vk-mood-resting)"></circle><path data-dc-tpl="57" d="M8 22 Q12 4 32 3 Q52 4 56 22 Q44 14 32 15 Q20 14 8 22Z" fill="rgb(35 35 58)"></path><g data-dc-tpl="58" data-eyes="closed"><path data-dc-tpl="59" d="M19 29 Q23 32 27 29 M37 29 Q41 32 45 29" fill="none" stroke="var(--vk-face-ink)" stroke-width="2.6" stroke-linecap="round"></path></g><path data-dc-tpl="60" d="M27 43 Q32 45 37 43" fill="none" stroke="var(--vk-face-ink)" stroke-width="3" stroke-linecap="round"></path></svg></span> super-chotu, an agent allowed to dispatch the one working it</dd>
+      </dl>
+    </section>
+
+    <div data-dc-tpl="61" class="qp-cols">
+      <div data-dc-tpl="62" class="qp-col">
+        <fieldset data-dc-tpl="63">
+          <legend data-dc-tpl="64">Your decision is needed</legend>
+          <p data-dc-tpl="65" class="qp-by"><span data-dc-tpl="66" class="qp-face"><svg data-dc-tpl="67" viewBox="-2 -4 68 70" width="24" height="24" aria-hidden="true" focusable="false" data-mood="needs"><circle data-dc-tpl="68" cx="32" cy="32" r="30" fill="var(--vk-mood-needs)"></circle><path data-dc-tpl="69" d="M28 4 Q32 -2 36 4 Q34 8 32 6 Q30 8 28 4Z" fill="rgb(107 74 43)"></path><g data-dc-tpl="70" data-eyes="open"><ellipse data-dc-tpl="71" cx="23" cy="28" rx="4" ry="2.4" fill="var(--vk-face-ink)"></ellipse><ellipse data-dc-tpl="72" cx="41" cy="28" rx="4" ry="2.4" fill="var(--vk-face-ink)"></ellipse></g><circle data-dc-tpl="73" cx="17" cy="37" r="4" fill="rgb(255 158 138 / 0.5)"></circle><circle data-dc-tpl="74" cx="47" cy="37" r="4" fill="rgb(255 158 138 / 0.5)"></circle><path data-dc-tpl="75" d="M24 44 Q32 38 40 44" fill="none" stroke="var(--vk-face-ink)" stroke-width="3" stroke-linecap="round"></path></svg></span>error-eric stopped on Thursday 8 October at 19:41 and wrote:</p>
+          <p data-dc-tpl="76" class="qp-said">not reproduced end-to-end: Melissa’s live ACP session <span data-dc-tpl="77" class="qp-id">acps_8f86d4e4-1cf2-457b-beb8-0ffb529d9023</span> reached Hermes and produced a model reply, while Anna has no local ACP dispatch; first failing hop cannot be identified without one fresh DM event_id/room_id/timestamp per agent plus AgentPod hub matrix-inbound/control-pair/ACP/matrix-outbound logs, matrix_rooms/ACP metadata, homeserver send-event metadata, and Supermessage sync ingestion for those event IDs. No Accounts defect established; no issue filed.</p>
+          <p data-dc-tpl="78"><button data-dc-tpl="79" class="qp-link" type="button" style="min-height: 44px;">Copy session id</button></p>
+          <div class="vk-field"><label class="vk-field__label" for="qp-resume-at">Resume at stage</label>  <span class="vk-field__select"><select style="max-width: 360px;" class="vk-field__input" id="qp-resume-at"><option value="reported">Stage 1: Reported</option><option value="reproduce" selected="">Stage 2: Reproduce (this stage)</option></select></span>  </div>
+          <div class="vk-field"><label class="vk-field__label" for="qp-note">What changed, or what should the agent do differently? It reads this.</label> <p class="vk-field__hint" id="qp-note-hint">You must write a note before sending. Up to 8000 characters.</p> <textarea class="vk-field__input vk-field__input--textarea" id="qp-note" rows="4" maxlength="8000" aria-describedby="qp-note-hint"></textarea>  </div>
+          <div data-dc-tpl="89" class="qp-acts"><button type="submit" class="vk-button vk-button--primary">Send back to work</button></div>
+        </fieldset>
+
+        <section data-dc-tpl="91" class="qp-sec" aria-labelledby="qp-desc">
+          <h2 data-dc-tpl="92" id="qp-desc">Description</h2>
+          <p data-dc-tpl="93">Reproduce and localize why the existing AgentPod bridge Matrix identities for Message Melissa and Audience Anna do not respond to Ira in Supermessage. Produce an evidence-backed diagnosis and exact repair proposal; do not attribute silence to missing grants without live evidence.</p>
+        </section>
+
+        <section data-dc-tpl="94" class="qp-sec" aria-labelledby="qp-ac">
+          <h2 data-dc-tpl="95" id="qp-ac">Acceptance criteria (5)</h2>
+          <ol data-dc-tpl="96"><li data-dc-tpl="97">Trace user DM ingress, room routing/bridge identity, control-pair authorization, station dispatch, ACP transport/model request and reply delivery; identify the first failing hop for each agent.</li><li data-dc-tpl="98">Check real current shared-profile servicing rather than stale local gateway_state.json; these profiles are not separately startable.</li><li data-dc-tpl="99">Check credential availability by presence only; never print .env, tokens or secret files. Profiles were cloned without messaging tokens intentionally because identities are bridge-owned.</li><li data-dc-tpl="100">Read current AgentPod, Hermes and Accounts contracts/code; do not use retired Fleet grant endpoints or guess API behavior.</li><li data-dc-tpl="101">Report separately what was reproduced, what cannot be accessed and the exact bounded repair needed; link evidence and preserve tenant/principal boundaries.</li></ol>
+        </section>
+
+        <section data-dc-tpl="102" class="qp-sec" aria-labelledby="qp-brief">
+          <h2 data-dc-tpl="103" id="qp-brief">Brief details (10)</h2>
+          <h3 data-dc-tpl="104">What to do</h3>
+          <dl data-dc-tpl="105" class="qp-dl"><dt data-dc-tpl="106">Rework</dt><dd data-dc-tpl="107"><span data-dc-tpl="108" class="qp-clamp">Previous run ended with interim prose while child traces were pending; board rejected completion because repro and observed were missing. Do not spawn background delegate_task children on this rework: finish the bounded diagnosis in this card session.</span><button data-dc-tpl="109" class="qp-link" type="button" aria-expanded="false">Show more</button></dd><dt data-dc-tpl="110">Required evidence</dt><dd data-dc-tpl="111">5 items, listed under Things to prove.</dd></dl>
+          <h3 data-dc-tpl="112">Who it is about</h3>
+          <dl data-dc-tpl="113" class="qp-dl"><dt data-dc-tpl="114">Message Melissa</dt><dd data-dc-tpl="115">@agent_message-melissa:id.agentpod.dev · onboarding card</dd><dt data-dc-tpl="116">Audience Anna</dt><dd data-dc-tpl="117">@agent_audience-anna:id.agentpod.dev · onboarding card</dd></dl>
+          <h3 data-dc-tpl="118">Background</h3>
+          <dl data-dc-tpl="119" class="qp-dl"><dt data-dc-tpl="120">Context</dt><dd data-dc-tpl="121"><span data-dc-tpl="122" class="qp-clamp">Ira states his own mayDispatch grant already includes both agents and has now added them to Super Chotu's grant. The coordinator station JWT observed immediately after this still contained the original 30-principal list; distinguish token propagation from configured grants.</span><button data-dc-tpl="123" class="qp-link" type="button" aria-expanded="false">Show more</button></dd><dt data-dc-tpl="124">Latest confirmed grant</dt><dd data-dc-tpl="125">Super Chotu fresh station JWT now contains both Melissa and Anna principals in mayDispatch (32 total). Token propagation is confirmed; do not continue treating the grant as missing.</dd></dl>
+          <h3 data-dc-tpl="126">Rules</h3>
+          <dl data-dc-tpl="127" class="qp-dl"><dt data-dc-tpl="128">Scope</dt><dd data-dc-tpl="129"><span data-dc-tpl="130" class="qp-clamp">Diagnosis and repair proposal only. No gate decisions, credentials, principal links, grants, board policy, membership, service lifecycle changes or bypasses. No public posts or third-party messages.</span><button data-dc-tpl="131" class="qp-link" type="button" aria-expanded="false">Show more</button></dd><dt data-dc-tpl="132">Accounts issues</dt><dd data-dc-tpl="133"><span data-dc-tpl="134" class="qp-clamp">If the investigation identifies an Accounts implementation defect, raise a GitHub issue in SuperJackfruitLabs/accounts. No confirmed Accounts defect means no speculative issue.</span><button data-dc-tpl="135" class="qp-link" type="button" aria-expanded="false">Show more</button></dd></dl>
+          <h3 data-dc-tpl="136">Where work goes</h3>
+          <dl data-dc-tpl="137" class="qp-dl"><dt data-dc-tpl="138">Repository</dt><dd data-dc-tpl="139">SuperJackfruitLabs/atelier · private · <a data-dc-tpl="140" href="https://github.com/SuperJackfruitLabs/atelier/blob/main/AGENTS.md">policy</a></dd><dt data-dc-tpl="141">Routing rule</dt><dd data-dc-tpl="142"><span data-dc-tpl="143" class="qp-clamp">Internal artifacts and all Guild work default to Atelier. Verify destination visibility and classification before any push, PR, issue, comment or attachment; never use public fallback.</span><button data-dc-tpl="144" class="qp-link" type="button" aria-expanded="false">Show more</button></dd></dl>
+          <div data-dc-tpl="145" class="qp-acts"><a data-dc-tpl="146" href="#">View raw JSON</a><button data-dc-tpl="147" class="qp-link" type="button" style="min-height: 44px;">Copy</button></div>
+        </section>
+
+        <section data-dc-tpl="148" class="qp-sec" aria-labelledby="qp-plan">
+          <h2 data-dc-tpl="149" id="qp-plan">Plan</h2><p data-dc-tpl="150">error-eric did not post a plan for this card.</p>
+        </section>
+
+        <section data-dc-tpl="151" class="qp-sec" aria-labelledby="qp-links">
+          <h2 data-dc-tpl="152" id="qp-links">Links (0)</h2>
+          <p data-dc-tpl="153">Nothing blocks this card and it blocks nothing.</p>
+          <div data-dc-tpl="154" class="qp-acts"><a data-dc-tpl="155" href="#">Add link</a></div>
+        </section>
+
+        <section data-dc-tpl="156" class="qp-sec" aria-labelledby="qp-refs">
+          <h2 data-dc-tpl="157" id="qp-refs">References and related prior work</h2>
+          <ul data-dc-tpl="158"><li data-dc-tpl="159"><a data-dc-tpl="160" href="https://github.com/SuperJackfruitLabs/agentpod/blob/3f625b618d443aa8ef1dad7c04d3ddd14dcf6708/apps/hub/src/services/matrix-as/inbound.ts#L379-L786">AgentPod v0.1.91 Matrix inbound bridge contract</a> (github · agentpod · inbound.ts lines 379–786)</li><li data-dc-tpl="161"><a data-dc-tpl="162" href="https://github.com/SuperJackfruitLabs/agentpod/blob/3f625b618d443aa8ef1dad7c04d3ddd14dcf6708/apps/hub/src/services/matrix-as/outbound.ts#L373-L486">AgentPod v0.1.91 Matrix reply delivery contract</a> (github · agentpod · outbound.ts lines 373–486)</li><li data-dc-tpl="163"><a data-dc-tpl="164" href="https://github.com/SuperJackfruitLabs/agentpod/blob/3f625b618d443aa8ef1dad7c04d3ddd14dcf6708/apps/hub/src/services/acp-transport.ts#L90-L248">AgentPod v0.1.91 ACP transport contract</a> (github · agentpod · acp-transport.ts lines 90–248)</li><li data-dc-tpl="165"><a data-dc-tpl="166" href="https://github.com/SuperJackfruitLabs/accounts/blob/77ca37e43cd6f98d0799ecbdd230b857404d77ec/src/issuer/claims.ts#L17-L43">Accounts current claims/grant contract</a> (github · accounts · claims.ts lines 17–43)</li><li data-dc-tpl="167"><a data-dc-tpl="168" href="https://github.com/NousResearch/hermes-agent/blob/0b70608a58ac4a8d4505cff15302695350ff6ccc/acp_adapter/server.py#L818-L883">Hermes ACP adapter at the reproduced build</a> (github · hermes-agent · server.py lines 818–883)</li><li data-dc-tpl="169">No related prior work found in Superlibrary.</li></ul>
+        </section>
+      </div>
+
+      <div data-dc-tpl="170" class="qp-col">
+        <section data-dc-tpl="171" class="qp-sec" aria-labelledby="qp-hist">
+          <h2 data-dc-tpl="172" id="qp-hist">History (2 runs)</h2>
+          <p data-dc-tpl="173">From Reported: queued by super-chotu on 8 Oct with the brief above. No earlier stage output.</p>
+          <h3 data-dc-tpl="174">Attempt 2, Reproduce, error-eric</h3>
+          <p data-dc-tpl="175">Stopped at 19:41 on 8 October. 14 events, no errors.</p>
+          <ol data-dc-tpl="176"><li data-dc-tpl="177">18:50 Started Rework run on this card session; read prior persisted evidence first.</li><li data-dc-tpl="178">19:41 Stopped: Blocked. Waiting on you; the reason is shown at the top of this card.</li></ol>
+          <div data-dc-tpl="179" class="qp-acts"><a data-dc-tpl="180" href="#">Show tool calls (all 14 events)</a></div>
+          <h3 data-dc-tpl="181">Attempt 1, Reproduce, error-eric</h3>
+          <p data-dc-tpl="182">Sent back at 12:11 on 8 October. 9 events, no errors.</p>
+        </section>
+
+        <section data-dc-tpl="183" class="qp-sec" aria-labelledby="qp-dec">
+          <h2 data-dc-tpl="184" id="qp-dec">Decisions</h2>
+          <p data-dc-tpl="185">None yet.</p>
+        </section>
+
+        <section data-dc-tpl="186" class="qp-sec" aria-labelledby="qp-com">
+          <h2 data-dc-tpl="187" id="qp-com">Comments</h2>
+          <p data-dc-tpl="188">No comments yet. The agent that works this card reads them.</p>
+          <div class="vk-field"><label class="vk-field__label" for="qp-comment">Add a comment</label>  <textarea style="min-height: 96px;" class="vk-field__input vk-field__input--textarea" id="qp-comment" rows="4" maxlength="8192"></textarea>  </div>
+          <div data-dc-tpl="192" class="qp-acts"><button type="button" class="vk-button vk-button--secondary">Comment</button></div>
+        </section>
+
+        <section data-dc-tpl="194" class="qp-sec" aria-labelledby="qp-cost">
+          <h2 data-dc-tpl="195" id="qp-cost">Sub-tasks, project, cost and delivery</h2>
+          <dl data-dc-tpl="196" class="qp-dl"><dt data-dc-tpl="197">Sub-tasks</dt><dd data-dc-tpl="198">None (0 open of 0). <a data-dc-tpl="199" href="#">Add a sub-task</a></dd><dt data-dc-tpl="200">Project</dt><dd data-dc-tpl="201">Marketing &amp; Community — Melissa and Anna onboarding · no milestone. <a data-dc-tpl="202" href="#">Change project</a></dd><dt data-dc-tpl="203">Cost</dt><dd data-dc-tpl="204">$0.00, no estimate yet</dd><dt data-dc-tpl="205">Attempts</dt><dd data-dc-tpl="206">1: error-eric, $0.00, sent back. 2: error-eric, $0.00, stopped.</dd><dt data-dc-tpl="207">Delivery</dt><dd data-dc-tpl="208">None approved</dd></dl>
+        </section>
+
+        <section data-dc-tpl="209" class="qp-sec" aria-labelledby="qp-act">
+          <h2 data-dc-tpl="210" id="qp-act">Card actions</h2>
+          <div data-dc-tpl="211" class="qp-acts"><a data-dc-tpl="212" href="#">Edit card</a><button type="button" class="vk-button vk-button--secondary">Archive card</button><button style="background: var(--vk-color-surface); color: var(--vk-color-text); box-shadow: inset 0 0 0 2px var(--vk-color-text);" type="button" class="vk-button vk-button--primary">Delete card</button></div>
+        </section>
+      </div>
+    </div>
+
+    <p data-dc-tpl="215" style="border-top: 1px solid var(--vk-color-line); padding-top: var(--vk-space-4);">Opened from Developer Experience · <a data-dc-tpl="216" href="SP-Board-Quiet.dc.html">Back to the board</a></p>
+  </main></div></div></div>
+
+
+
+</body></html>

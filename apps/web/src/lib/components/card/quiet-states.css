@@ -1,0 +1,35 @@
+/* Ported verbatim from e2e/reference/mockups/SP-Card-States-Quiet.html (prefixes qs) by scripts/pixel/extract-css.mjs. */
+.qcs { padding: var(--vk-space-6) var(--vk-space-6) var(--vk-space-7); display: flex; flex-direction: column; gap: var(--vk-space-5); font-size: 1.0625rem; line-height: 1.55; }
+.qcs * { box-sizing: border-box; }
+.qcs h1 { margin: 0; font: 700 1.75rem/1.2 var(--vk-font-display); }
+.qcs p { margin: 0; }
+.qcs a { color: var(--vk-color-text); text-decoration: underline; text-underline-offset: 3px; }
+.qcs-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(400px, 100%), 1fr)); gap: var(--vk-space-6) var(--vk-space-5); align-items: start; }
+.qcs-cell { display: flex; flex-direction: column; gap: var(--vk-space-2); min-width: 0; }
+.qcs-label { font-weight: 700; color: var(--vk-color-muted); }
+.qcs-panel { background: var(--vk-color-surface); border: 2px solid var(--vk-color-line); border-radius: var(--vk-radius-sm); padding: var(--vk-space-4) var(--vk-space-5) var(--vk-space-5); display: flex; flex-direction: column; gap: var(--vk-space-3); min-width: 0; }
+.qcs h2 { margin: 0; font: 700 1.3rem/1.3 var(--vk-font-display); text-wrap: pretty; }
+.qcs-meta { color: var(--vk-color-muted); }
+.qcs fieldset { margin: 0; border: 3px solid var(--vk-color-signal); border-radius: var(--vk-radius-sm); padding: var(--vk-space-3) var(--vk-space-4) var(--vk-space-4); display: flex; flex-direction: column; gap: var(--vk-space-3); min-width: 0; }
+.qcs fieldset.plain { border-color: var(--vk-color-line); }
+.qcs legend { padding: 0 var(--vk-space-2); font-weight: 700; font-size: 1.125rem; }
+.qcs-by { display: flex; align-items: center; gap: var(--vk-space-2); font-weight: 700; }
+.qcs-face { display: inline-flex; filter: grayscale(0.6); }
+.qcs-subject { border: 2px solid var(--vk-color-line); border-radius: var(--vk-radius-sm); padding: var(--vk-space-3) var(--vk-space-4); display: flex; flex-direction: column; gap: var(--vk-space-2); }
+.qcs-dl { margin: 0; display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 4px var(--vk-space-4); }
+.qcs-dl dt { font-weight: 700; }
+.qcs-dl dd { margin: 0; overflow-wrap: anywhere; }
+.qcs-mono { font-family: var(--vk-font-mono); font-size: 0.85em; overflow-wrap: anywhere; }
+.qcs-radio { display: grid; grid-template-columns: 24px minmax(0, 1fr); gap: var(--vk-space-2); align-items: start; min-height: 44px; padding: 6px 0; cursor: pointer; }
+.qcs-radio input { width: 20px; height: 20px; margin: 3px 0 0; accent-color: var(--vk-color-text); }
+.qcs-row { display: flex; gap: var(--vk-space-3); flex-wrap: wrap; align-items: center; }
+.qcs-notice { border: 2px solid var(--vk-color-text); border-radius: var(--vk-radius-sm); padding: var(--vk-space-3) var(--vk-space-4); display: flex; flex-direction: column; gap: 4px; }
+.qcs-notice--ok { border-color: var(--vk-color-success-text); background: var(--vk-color-success-wash); color: var(--vk-color-success-text); }
+.qcs-alert { border: 3px solid var(--vk-color-signal); border-radius: var(--vk-radius-sm); padding: var(--vk-space-3) var(--vk-space-4); }
+.qcs-alert b { color: var(--vk-color-signal-text); }
+
+/* ---- deltas: not in the reference ---- */
+.qcs-linkbtn { display: inline; padding: 14px 4px; margin: -14px -4px; border: 0; background: transparent; font: inherit; color: var(--vk-color-text); text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
+.qcs-row--alert { align-items: flex-start; }
+.qcs-row--alert > .vk-button { flex: 0 0 auto; }
+.qcs-hint { display: block; }

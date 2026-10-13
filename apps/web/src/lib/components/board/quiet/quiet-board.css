@@ -1,0 +1,28 @@
+/* Ported verbatim from e2e/reference/mockups/SP-Board-Quiet.html (prefixes qt) by scripts/pixel/extract-css.mjs. */
+.qt { width: 100%; max-width: 860px; margin: 0 auto; padding: 40px 32px 72px; display: flex; flex-direction: column; gap: 32px; font-size: 18px; line-height: 1.55; }
+.qt a { text-decoration: underline; text-underline-offset: 4px; }
+.qt-sub { margin: 6px 0 0; color: var(--vk-color-muted); }
+.qt-lede { margin: 14px 0 0; font-size: 19px; }
+.qt-newcard { display: inline-flex; align-items: center; min-height: 44px; margin-top: 8px; padding: 0; border: 0; background: transparent; font-size: 18px; font-weight: 700; text-decoration: underline; text-underline-offset: 4px; cursor: pointer; }
+.qt h2 { margin: 0; font-size: 22px; font-weight: 700; }
+.qt-zero { display: flex; flex-direction: column; gap: 6px; margin: 0; padding: 0; list-style: none; }
+.qt-zero li { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; padding: 10px 0; border-bottom: 1px solid var(--vk-color-line); }
+.qt-zero h2 { font-size: 20px; }
+.qt-zero span { color: var(--vk-color-muted); }
+.qt-list { margin: 12px 0 0; padding: 0; list-style: none; border-top: 1px solid var(--vk-color-line); }
+.qt-item { display: flex; flex-direction: column; gap: 6px; padding: 18px 0; border-bottom: 1px solid var(--vk-color-line); overflow-wrap: anywhere; }
+.qt-item h3 { margin: 0; font-size: 19px; line-height: 1.4; font-weight: 700; }
+.qt-titlebtn { all: unset; cursor: pointer; text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 4px; text-decoration-color: var(--vk-color-line); }
+.qt-titlebtn:focus-visible { outline: 3px solid var(--vk-color-text); outline-offset: 3px; }
+.qt-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; color: var(--vk-color-muted); font-size: 17px; }
+.qt-facts { margin: 0; font-size: 16px; color: var(--vk-color-text); }
+.qt-acts { display: flex; flex-wrap: wrap; gap: 4px 20px; }
+.qt-acts a, .qt-acts button { display: inline-flex; align-items: center; min-height: 44px; padding: 0; border: 0; background: transparent; font-size: 17px; font-weight: 700; text-decoration: underline; text-underline-offset: 4px; cursor: pointer; }
+.qt-more { display: inline-flex; align-items: center; min-height: 48px; margin-top: 12px; padding: 0 18px; border: 2px solid var(--vk-color-text); border-radius: var(--vk-radius-sm); background: var(--vk-color-surface); font-size: 17px; font-weight: 700; cursor: pointer; }
+.qt-table { width: 100%; border-collapse: collapse; margin-top: 12px; font-size: 16px; }
+.qt-table th, .qt-table td { padding: 10px 12px 10px 0; text-align: left; vertical-align: top; border-bottom: 1px solid var(--vk-color-line); overflow-wrap: anywhere; }
+.qt-table th { font-weight: 700; }
+.qt-table td.n { font-variant-numeric: tabular-nums; }
+.qt-item { position: relative; }
+/* The shell's masthead is the page's one h1; the board's own title is an h2 drawn as the reference's h1. */
+.qt .qt-title { margin: 0; font-size: 34px; line-height: 1.2; font-weight: 700; }

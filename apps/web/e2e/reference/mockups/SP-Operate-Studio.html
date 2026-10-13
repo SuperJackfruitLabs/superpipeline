@@ -1,0 +1,1311 @@
+<!doctype html>
+<html data-product="superpipeline" data-accent="product" lang="en" style="touch-action: pan-x pan-y; overscroll-behavior: none; --dc-chrome-unit: 1px;"><head><link rel="stylesheet" href="_vibekit-0.0.10/vibekit.css" data-vibekit="0.0.10"><style>
+    .sc-placeholder{background:color-mix(in srgb,currentColor 8%,transparent);
+      border:1px solid color-mix(in srgb,currentColor 50%,transparent);
+      border-radius:2px;box-sizing:border-box;overflow:hidden}
+    @keyframes sc-shine{0%{background-position:100% 50%}100%{background-position:0% 50%}}
+    html.sc-dc-streaming .sc-placeholder,
+    html.sc-dc-streaming .sc-interp.sc-missing{position:relative;
+      background:color-mix(in srgb,currentColor 5%,transparent);
+      border-color:transparent}
+    html.sc-dc-streaming .sc-placeholder::before,
+    html.sc-dc-streaming .sc-interp.sc-missing::before{content:'';
+      position:absolute;inset:0;pointer-events:none;
+      background:linear-gradient(90deg,rgba(217,119,87,0) 25%,rgba(247,225,211,.95) 37%,rgba(217,119,87,0) 63%);
+      background-size:400% 100%;animation:sc-shine 1.4s ease infinite}
+    html.sc-dc-streaming .sc-placeholder:nth-child(n+9 of .sc-placeholder)::before,
+    html.sc-dc-streaming .sc-interp.sc-missing:nth-child(n+9 of .sc-interp.sc-missing)::before{animation:none;
+      background:color-mix(in srgb,currentColor 8%,transparent)}
+    .sc-placeholder-error{padding:4px 8px;font:11px/1.4 ui-monospace,monospace;
+      color:color-mix(in srgb,currentColor 70%,transparent);word-break:break-word}
+    .sc-interp.sc-missing{display:inline-block;width:2em;height:1em;overflow:hidden;
+      vertical-align:text-bottom;background:rgba(255,255,255,.3);border:1px solid rgba(0,0,0,.5);
+      border-radius:2px;box-sizing:border-box;color:transparent;
+      user-select:none}
+    .sc-interp.sc-unresolved{font-family:ui-monospace,monospace;font-size:.85em;
+      color:color-mix(in srgb,currentColor 50%,transparent);
+      background:color-mix(in srgb,currentColor 10%,transparent);border-radius:3px;
+      padding:0 3px}
+    .sc-host.sc-has-error{position:relative}
+    .sc-logic-error{position:absolute;top:8px;left:8px;z-index:2147483647;max-width:60ch;
+      padding:6px 10px;background:#b00020;color:#fff;font:12px/1.4 ui-monospace,monospace;
+      border-radius:4px;white-space:pre-wrap;pointer-events:none}
+    /* Mirrors PRINT_BASELINE_CSS in apps/web deck-stage-export.ts — keep both
+       in sync until dc-runtime regains a build step. */
+    @media print {
+      @page { margin: 0.5cm; }
+      figure, table { break-inside: avoid; }
+      #dc-root, #dc-root > .sc-host { height: auto; }
+      *, *::before, *::after {
+        print-color-adjust: exact; -webkit-print-color-adjust: exact;
+        backdrop-filter: none !important; -webkit-backdrop-filter: none !important;
+        animation-delay: -99s !important; animation-duration: .001s !important;
+        animation-iteration-count: 1 !important; animation-fill-mode: both !important;
+        animation-play-state: running !important; transition-duration: 0s !important;
+      }
+    }
+  </style>
+
+
+<meta charset="utf-8">
+<title>Operate · Studio</title>
+<base href="/appifact/SP-Operate-Studio.dc.html">
+
+
+
+
+
+<style>x-dc{display:none!important}</style>
+
+<style>@import url("https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&family=Azeret+Mono:wght@400;500;600&family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..600&display=swap");
+
+ 
+
+:root {
+  color-scheme: light;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  --vk-font-body: "Figtree", system-ui, sans-serif;
+  --vk-font-display: "Bricolage Grotesque", system-ui, sans-serif;
+  --vk-font-mono: "Martian Mono", ui-monospace, monospace;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+}
+
+[data-vibe="daylight"][data-theme="light"] {
+  color-scheme: light;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  --vk-font-body: "Figtree", system-ui, sans-serif;
+  --vk-font-display: "Bricolage Grotesque", system-ui, sans-serif;
+  --vk-font-mono: "Martian Mono", ui-monospace, monospace;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+}
+
+[data-vibe="daylight"][data-theme="dark"] {
+  color-scheme: dark;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  --vk-font-body: "Figtree", system-ui, sans-serif;
+  --vk-font-display: "Bricolage Grotesque", system-ui, sans-serif;
+  --vk-font-mono: "Martian Mono", ui-monospace, monospace;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+}
+
+[data-vibe="paper"][data-theme="light"] {
+  color-scheme: light;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  --vk-font-body: "Geist", system-ui, sans-serif;
+  --vk-font-display: "Newsreader", "Georgia", serif;
+  --vk-font-mono: "Martian Mono", ui-monospace, monospace;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+}
+
+[data-vibe="paper"][data-theme="dark"] {
+  color-scheme: dark;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  --vk-font-body: "Geist", system-ui, sans-serif;
+  --vk-font-display: "Newsreader", "Georgia", serif;
+  --vk-font-mono: "Martian Mono", ui-monospace, monospace;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+}
+
+[data-vibe="studio"][data-theme="light"] {
+  color-scheme: light;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  --vk-font-body: "Archivo", system-ui, sans-serif;
+  --vk-font-display: "Archivo", system-ui, sans-serif;
+  --vk-font-mono: "Azeret Mono", ui-monospace, monospace;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  --vk-font-serif: "Newsreader", Georgia, serif;
+
+
+
+
+
+
+
+
+
+
+}
+
+[data-vibe="studio"][data-theme="dark"] {
+  color-scheme: dark;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  --vk-font-body: "Archivo", system-ui, sans-serif;
+  --vk-font-display: "Archivo", system-ui, sans-serif;
+  --vk-font-mono: "Azeret Mono", ui-monospace, monospace;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  --vk-font-serif: "Newsreader", Georgia, serif;
+
+
+
+
+
+
+
+
+
+
+}
+
+[data-vibe="quiet"][data-theme="light"] {
+  color-scheme: light;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  --vk-font-body: "Atkinson Hyperlegible Next", system-ui, sans-serif;
+  --vk-font-display: "Atkinson Hyperlegible Next", system-ui, sans-serif;
+  --vk-font-mono: "Martian Mono", ui-monospace, monospace;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+}
+
+[data-vibe="quiet"][data-theme="dark"] {
+  color-scheme: dark;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  --vk-font-body: "Atkinson Hyperlegible Next", system-ui, sans-serif;
+  --vk-font-display: "Atkinson Hyperlegible Next", system-ui, sans-serif;
+  --vk-font-mono: "Martian Mono", ui-monospace, monospace;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+}
+
+ 
+:root {
+  --vk-text-sm: clamp(0.8125rem, 0.78rem + 0.15vw, 0.875rem);
+  --vk-text-md: clamp(1rem, 0.96rem + 0.2vw, 1.0625rem);
+  --vk-text-lg: clamp(1.25rem, 1.1rem + 0.6vw, 1.5rem);
+  --vk-text-xl: clamp(1.75rem, 1.4rem + 1.6vw, 2.5rem);
+  --vk-focus: 0 0 0 3px var(--vk-color-bg), 0 0 0 5px var(--vk-color-text);
+
+}
+
+html {
+  background: var(--vk-color-bg);
+  color: var(--vk-color-text);
+  font-family: var(--vk-font-body);
+  font-size: 100%;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  font-size: var(--vk-text-md);
+  line-height: 1.5;
+}
+
+:focus-visible {
+   
+  outline: 2px solid var(--vk-color-text);
+  outline-offset: 2px;
+  box-shadow: var(--vk-focus);
+}
+
+ 
+.vk-visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  
+  *, *::before, *::after {
+    animation: none !important;
+    transition-duration: 0ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+[data-motion="reduce"],
+[data-motion="reduce"] *,
+[data-motion="reduce"]::before,
+[data-motion="reduce"]::after,
+[data-motion="reduce"] *::before,
+[data-motion="reduce"] *::after {
+  --vk-motion-fast: 0ms;
+  --vk-motion-base: 0ms;
+  animation: none !important;
+  transition-duration: 0ms !important;
+  scroll-behavior: auto !important;
+}
+
+
+
+@media (forced-colors: active) {
+  :focus-visible {
+    outline: 2px solid CanvasText;
+    box-shadow: none;
+  }
+}
+ 
+
+
+
+
+
+
+
+
+ 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ 
+
+
+
+
+
+
+
+
+
+
+
+
+
+.vk-toast {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--vk-space-3);
+  min-height: var(--vk-target-min);
+  padding: 0 var(--vk-space-5);
+  border-radius: var(--vk-radius-pill);
+  background: var(--vk-color-primary);
+  color: var(--vk-color-primary-fg);
+  font: 600 var(--vk-text-sm) / 1.2 var(--vk-font-body);
+}
+.vk-toast__action { min-height: var(--vk-target-min); border: 0; background: transparent; color: inherit; font: inherit; text-decoration: underline; cursor: pointer; }
+ 
+.vk-toast__action:focus-visible { outline-color: currentColor; box-shadow: var(--vk-focus); }
+
+.vk-sky {
+  --vk-sky-top: var(--vk-sky-noon-top);
+  --vk-sky-bottom: var(--vk-sky-noon-bottom);
+  --vk-sky-text: var(--vk-sky-noon-text);
+  --vk-sky-sun: var(--vk-sky-noon-sun);
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(180deg, var(--vk-sky-top), var(--vk-sky-bottom));
+  color: var(--vk-sky-text);
+}
+.vk-sky[data-phase="dawn"] { --vk-sky-top: var(--vk-sky-dawn-top); --vk-sky-bottom: var(--vk-sky-dawn-bottom); --vk-sky-text: var(--vk-sky-dawn-text); --vk-sky-sun: var(--vk-sky-dawn-sun); }
+.vk-sky[data-phase="morning"] { --vk-sky-top: var(--vk-sky-morning-top); --vk-sky-bottom: var(--vk-sky-morning-bottom); --vk-sky-text: var(--vk-sky-morning-text); --vk-sky-sun: var(--vk-sky-morning-sun); }
+.vk-sky[data-phase="golden"] { --vk-sky-top: var(--vk-sky-golden-top); --vk-sky-bottom: var(--vk-sky-golden-bottom); --vk-sky-text: var(--vk-sky-golden-text); --vk-sky-sun: var(--vk-sky-golden-sun); }
+.vk-sky[data-phase="dusk"] { --vk-sky-top: var(--vk-sky-dusk-top); --vk-sky-bottom: var(--vk-sky-dusk-bottom); --vk-sky-text: var(--vk-sky-dusk-text); --vk-sky-sun: var(--vk-sky-dusk-sun); }
+.vk-sky[data-phase="night"] { --vk-sky-top: var(--vk-sky-night-top); --vk-sky-bottom: var(--vk-sky-night-bottom); --vk-sky-text: var(--vk-sky-night-text); --vk-sky-sun: var(--vk-sky-night-sun); }
+.vk-sky__sun {
+  position: absolute;
+  top: var(--vk-space-5);
+  right: var(--vk-space-6);
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: var(--vk-sky-sun);
+  box-shadow: 0 0 48px 12px color-mix(in oklch, var(--vk-sky-sun) 45%, transparent);
+}
+.vk-sky__content { position: relative; padding: var(--vk-space-5); }
+[data-time="subtle"] .vk-sky { background: color-mix(in oklch, var(--vk-sky-top) 30%, var(--vk-color-bg)); color: var(--vk-color-text); }
+[data-time="subtle"] .vk-sky__sun { display: none; }
+[data-time="off"] .vk-sky { background: var(--vk-color-bg); color: var(--vk-color-text); }
+[data-time="off"] .vk-sky__sun { display: none; }
+[data-vibe="studio"] .vk-sky__sun { width: 10px; height: 10px; box-shadow: 0 0 10px 2px var(--vk-sky-sun); }
+[data-vibe="quiet"] .vk-sky__sun, [data-vibe="paper"] .vk-sky__sun { display: none; }
+
+
+
+
+
+
+
+
+
+
+@media (forced-colors: active) {
+  
+  .vk-toast { border: 1px solid CanvasText; }
+}
+
+ 
+.sl-danger{ white-space: nowrap; } .ar .vk-button{ white-space: nowrap; }
+
+ 
+
+
+
+
+
+ 
+a[href*="CardPage"], a[class*="btn"], button[class*="btn"], a[class*="-button"], button[class*="-button"]{ white-space: nowrap; flex-shrink: 0; } .ar .vk-button{ white-space: nowrap; flex-shrink: 0; }
+
+ 
+a[href*="CardPage"], a[class*="icon"][style*="width: auto"], button[class*="icon"][style*="width: auto"] { display: inline-flex !important; flex-direction: row !important; align-items: center !important; justify-content: center; gap: 8px; }
+</style>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Azeret+Mono:ital,wght@1,400&amp;display=swap" data-font-variant=""><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Azeret+Mono:ital,wght@1,500&amp;display=swap" data-font-variant=""><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Azeret+Mono:ital,wght@1,600&amp;display=swap" data-font-variant=""><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&amp;family=Azeret+Mono:wght@400;500;600&amp;family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..600&amp;display=swap" data-dc-tpl="1"><style data-dc-tpl="2">
+
+:where(.ar) *, :where(.ar) *::before, :where(.ar) *::after { box-sizing: border-box; }
+:where(.ar) :where(h1, h2, h3, h4, p, ul, ol, dl, dd, dt, table, form, blockquote, figure, fieldset) { margin: 0; padding: 0; }
+:where(.ar) :where(ul, ol) { list-style: none; }
+:where(.ar) :where(fieldset) { border: 0; min-width: 0; }
+:where(.ar) :where(button:where(:not(.vk-button)), input, select, textarea) { font: inherit; color: inherit; }
+:where(.ar) :where(a) { color: inherit; }
+body { margin: 0; }
+/* local alias layer: every value comes from the Studio (Annual report) tokens in vk.css */
+.ar {
+  --bg: var(--vk-color-bg); --paper: var(--vk-color-surface); --text: var(--vk-color-text); --muted: var(--vk-color-muted);
+  --rule: var(--vk-color-rule); --hair: var(--vk-color-line); --field: var(--vk-color-raised);
+  --soft: color-mix(in srgb, var(--vk-color-text) 6%, var(--vk-color-bg));
+  --s1: var(--vk-stage-1); --s2: var(--vk-stage-2); --s3: var(--vk-stage-3); --s4: var(--vk-stage-4); --s5: var(--vk-stage-5); --s6: var(--vk-stage-6); --s7: var(--vk-stage-7);
+  --st-text: var(--vk-color-stage-text);
+  --sig: var(--vk-color-signal); --sig-text: var(--vk-color-signal-text); --sig-wash: var(--vk-color-signal-wash); --sig-fg: var(--vk-face-ink);
+  --ff: var(--vk-font-body); --fm: var(--vk-font-mono); --fs: var(--vk-font-serif);
+  background: var(--bg); color: var(--text); font: 400 14px/1.45 var(--ff); font-variant-numeric: tabular-nums lining-nums;
+}
+.ar :focus-visible { outline: 3px solid var(--text); outline-offset: 3px; box-shadow: none; }
+.ar .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.ar .h44, .op-seg button { position: relative; }
+.op-seg button::after, .ar .ar-lk[style*="min-height: 0"]::after { content: ""; position: absolute; left: 0; right: 0; top: 50%; height: max(44px, 100%); transform: translateY(-50%); }
+.ar .h44::after { content: ""; position: absolute; left: 0; right: 0; top: 50%; height: max(44px, 100%); transform: translateY(-50%); }
+.ar .kick { font: 700 12px/1.2 var(--ff); letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
+.ar .mono { font-family: var(--fm); }
+.ar .muted { color: var(--muted); }
+.ar .serif { font-family: var(--fs); }
+.ar .fn { font: 600 11px/1 var(--fm); vertical-align: super; margin-left: 2px; color: var(--st-text); }
+.ar .kbd { display: inline-block; padding: 2px 5px; border: 1px solid currentColor; border-radius: 2px; font: 500 11px/1 var(--fm); white-space: nowrap; }
+.ar .chip { display: inline-block; flex: none; width: 10px; height: 10px; }
+.ar .c1 { background: var(--s1); } .ar .c2 { background: var(--s2); } .ar .c3 { background: var(--s3); } .ar .c4 { background: var(--s4); } .ar .c5 { background: var(--s5); } .ar .c6 { background: var(--s6); } .ar .c7 { background: var(--s7); }
+.ar .u { display: inline-block; flex: none; width: 18px; height: 18px; }
+.ar .u.needs { background: var(--sig); }
+.ar .u.blocked { background: repeating-linear-gradient(135deg, var(--s5) 0 1.5px, transparent 1.5px 4px); box-shadow: inset 0 0 0 1.5px var(--s5); }
+.ar .u.queued { box-shadow: inset 0 0 0 1.5px var(--s5); }
+.ar .u.done { background: var(--s7); }
+.ar .u.off { box-shadow: inset 0 0 0 1.5px var(--muted); }
+.ar .ar-ini { flex: none; display: inline-grid; place-items: center; background: var(--text); color: var(--bg); font-family: var(--ff); font-weight: 800; line-height: 1; }
+.ar svg[data-mood] { flex: none; }
+
+/* buttons */
+.ar .ar-btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 44px; padding: 0 16px; border: 0; border-radius: 2px; background: var(--text); color: var(--bg); font: 800 14px var(--ff); white-space: nowrap; text-decoration: none; cursor: pointer; }
+.ar .ar-btn .kbd { border-color: currentColor; }
+.ar .ar-btn2 { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 44px; padding: 0 14px; border: 1px solid var(--rule); border-radius: 2px; background: transparent; color: var(--text); font: 700 14px var(--ff); white-space: nowrap; text-decoration: none; cursor: pointer; }
+.ar .ar-btn2:hover { background: var(--text); color: var(--bg); }
+.ar .ar-lk { position: relative; display: inline-flex; align-items: center; gap: 6px; min-height: 44px; padding: 0 8px 0 0; border: 0; background: transparent; color: var(--text); font: 700 13.5px var(--ff); text-decoration: underline; text-decoration-thickness: 1.5px; text-underline-offset: 3px; white-space: nowrap; cursor: pointer; }
+.ar .ar-lk.quiet { color: var(--muted); }
+.ar .ar-ib { position: relative; display: inline-grid; place-items: center; flex: none; width: 44px; height: 44px; border: 1px solid var(--rule); border-radius: 2px; background: transparent; color: var(--text); text-decoration: none; cursor: pointer; }
+.ar .ar-ib:hover { background: var(--text); color: var(--bg); }
+
+/* rail */
+.ar-rail { position: relative; z-index: 3; display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 16px 0; background: var(--text); color: var(--bg); }
+.ar-mark { display: grid; place-items: center; width: 44px; height: 44px; margin-bottom: 16px; background: var(--bg); color: var(--text); text-decoration: none; }
+.ar-nav { position: relative; display: grid; place-items: center; width: 44px; height: 44px; border: 0; border-radius: 2px; background: transparent; color: var(--bg); text-decoration: none; cursor: pointer; }
+.ar-nav:hover { outline: 1px solid var(--bg); outline-offset: -1px; }
+.ar-rail .ar-nav:focus-visible, .ar-rail .ar-mark:focus-visible, .ar-rail .ar-acct:focus-visible { outline-color: var(--bg); }
+.ar-nav[aria-current="page"] { background: var(--bg); color: var(--text); }
+.ar-nav .ct { position: absolute; right: -3px; top: -3px; min-width: 18px; height: 18px; padding: 0 4px; background: var(--vk-color-signal-text); color: var(--vk-color-primary-fg); font: 800 12px/18px var(--ff); text-align: center; }
+.ar-nav .tip, .ar-acct .tip { position: absolute; left: 54px; top: 50%; transform: translateY(-50%); display: none; align-items: center; gap: 8px; padding: 6px 10px; border: 1px solid var(--rule); background: var(--bg); color: var(--text); font: 700 13px var(--ff); white-space: nowrap; pointer-events: none; }
+.ar-nav:hover .tip, .ar-nav:focus-visible .tip, .ar-acct:hover .tip, .ar-acct:focus-visible .tip { display: inline-flex; }
+.ar-acct { position: relative; width: 44px; height: 44px; margin-top: 4px; border: 1.5px solid var(--bg); border-radius: 2px; background: transparent; color: var(--bg); font: 800 14px var(--ff); cursor: pointer; }
+
+/* masthead */
+.ar-top { display: flex; align-items: center; gap: 20px; min-height: 76px; padding: 0 24px 0 40px; border-bottom: 1px solid var(--rule); }
+.ar-board { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.ar-sw { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 0; border: 0; background: transparent; color: var(--text); font: 800 28px/1 var(--ff); font-stretch: 80%; letter-spacing: -.01em; white-space: nowrap; cursor: pointer; }
+.ar-sw:hover { text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: 5px; }
+.ar-cmd { flex: 1; max-width: 480px; margin-left: auto; display: flex; align-items: center; min-height: 44px; cursor: text; }
+.ar-cmd .box { flex: 1; display: flex; align-items: center; gap: 10px; height: 44px; padding: 0 10px; border-bottom: 1.5px solid var(--rule); color: var(--muted); }
+.ar-cmd input { flex: 1; min-width: 0; border: 0; background: transparent; font: 500 16px var(--ff); outline: none; color: var(--text); }
+.ar-cmd input::placeholder { color: var(--muted); }
+.ar-cmd:focus-within .box { outline: 3px solid var(--text); outline-offset: 2px; }
+.ar-live { display: inline-flex; align-items: center; gap: 6px; font: 700 12px var(--ff); letter-spacing: .1em; text-transform: uppercase; white-space: nowrap; }
+.ar-live i { width: 8px; height: 8px; background: var(--st-text); }
+
+/* sub bar */
+.ar-sub { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 24px; min-height: 48px; padding: 0 40px; border-bottom: 1px solid var(--hair); }
+.ar-tab { position: relative; display: inline-flex; align-items: center; gap: 6px; min-height: 48px; padding: 0; border: 0; background: transparent; color: var(--muted); font: 700 14px var(--ff); text-decoration: none; white-space: nowrap; cursor: pointer; }
+.ar-tab[aria-current="page"], .ar-tab[aria-pressed="true"], .ar-tab[aria-selected="true"] { color: var(--text); }
+.ar-tab[aria-current="page"]::after, .ar-tab[aria-pressed="true"]::after, .ar-tab[aria-selected="true"]::after { content: ""; position: absolute; left: 0; right: 0; bottom: -1px; height: 3px; background: var(--text); }
+.ar-tab .mono { font-size: 12px; font-weight: 500; }
+.ar-fl { position: relative; display: inline-flex; align-items: center; gap: 6px; height: 32px; padding: 0 12px; border: 1px solid var(--rule); border-radius: 2px; background: transparent; color: var(--text); font: 700 13px var(--ff); white-space: nowrap; cursor: pointer; }
+.ar-fl i { font: 500 12px var(--fm); font-style: normal; color: var(--muted); }
+.ar-sub .r { margin-left: auto; font: 500 12px var(--fm); color: var(--muted); white-space: nowrap; }
+
+/* hero */
+.ar-hero { display: grid; grid-template-columns: auto minmax(0, 1fr); column-gap: 28px; align-items: end; }
+.ar-hero .big { font: 900 184px/.78 var(--ff); font-stretch: 72%; letter-spacing: -.04em; color: var(--sig); }
+.ar-hero .big.ink { color: var(--text); }
+.ar-hero .txt { display: flex; flex-direction: column; gap: 12px; padding-bottom: 4px; }
+.ar-hero h1 { font: 800 44px/1.02 var(--ff); font-stretch: 82%; letter-spacing: -.02em; }
+.ar-hero p { max-width: 640px; font: 400 18px/1.45 var(--fs); }
+
+/* numbered sections */
+.ar-sec { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+.ar-sec > .hd { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 14px; padding-top: 10px; border-top: 1.5px solid var(--rule); }
+.ar-sec > .hd .no { font: 500 12px var(--fm); color: var(--muted); }
+.ar-sec > .hd h2 { font: 800 16px/1.2 var(--ff); }
+.ar-sec > .hd .r { margin-left: auto; display: inline-flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; font: 500 12px var(--fm); color: var(--muted); }
+
+/* figures row */
+.ar-figs { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); border-top: 1.5px solid var(--rule); border-bottom: 1px solid var(--hair); }
+.ar-figs > div { display: flex; flex-direction: column; gap: 6px; min-width: 0; padding: 12px 12px 14px 0; }
+.ar-figs > div + div { padding-left: 14px; border-left: 1px solid var(--hair); }
+.ar-figs b { font: 900 52px/.86 var(--ff); font-stretch: 72%; letter-spacing: -.03em; white-space: nowrap; }
+.ar-figs b small { font-size: 17px; font-weight: 700; margin-left: 3px; letter-spacing: 0; }
+.ar-figs b.z { font-weight: 300; color: var(--muted); }
+.ar-figs .sig b { color: var(--sig); }
+.ar-figs .sig span { color: var(--sig-text); }
+.ar-figs span { font-size: 12.5px; font-weight: 600; color: var(--muted); }
+
+/* stage ramp track */
+.ar-ramp { display: flex; gap: 2px; }
+.ar-ramp i { width: 14px; height: 8px; opacity: .28; }
+.ar-ramp i.on { opacity: 1; }
+.ar-track { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: 3px; }
+.ar-track li { display: flex; flex-direction: column; gap: 6px; min-width: 0; font: 500 11.5px/1.25 var(--fm); color: var(--muted); }
+.ar-track li .b { height: 8px; opacity: .3; }
+.ar-track li.done .b { opacity: 1; }
+.ar-track li.cur .b { opacity: 1; height: 14px; margin-top: -6px; }
+.ar-track li.cur.sig .b { box-shadow: inset 0 -4px 0 var(--sig); }
+.ar-track li.cur { color: var(--text); font-weight: 600; }
+.ar-track li.cur.sig { color: var(--sig-text); }
+
+/* quote (agent words) */
+.ar-q { display: flex; flex-direction: column; gap: 8px; padding: 2px 0 0 18px; border-left: 4px solid var(--sig); }
+.ar-q.ink { border-left-color: var(--text); }
+.ar-q.done { border-left-color: var(--s7); }
+.ar-q.off { border-left-color: var(--hair); }
+.ar-q h3 { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; font: 800 14px var(--ff); color: var(--sig-text); }
+.ar-q.ink h3, .ar-q.done h3, .ar-q.off h3 { color: var(--text); }
+.ar-q h3 .mono { margin-left: auto; font-weight: 500; font-size: 12px; }
+.ar-q blockquote { font: 400 19px/1.42 var(--fs); overflow-wrap: anywhere; }
+.ar-q blockquote code, .ar-id { font: 500 .78em var(--fm); overflow-wrap: anywhere; }
+
+/* footnote row with copy */
+.ar-pfn { display: grid; grid-template-columns: 22px minmax(0, 1fr) auto; align-items: center; column-gap: 0; padding-top: 6px; border-top: 1px solid var(--hair); font: 400 14px/1.4 var(--fs); }
+.ar-pfn .k { font: 600 11.5px var(--fm); color: var(--st-text); }
+.ar-pfn code { font: 500 12.5px var(--fm); overflow-wrap: anywhere; }
+
+/* notes */
+.ar-notes { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 32px; row-gap: 10px; padding-top: 10px; border-top: 1px solid var(--hair); }
+.ar-notes li { display: grid; grid-template-columns: 22px minmax(0, 1fr); font: 400 14.5px/1.45 var(--fs); }
+.ar-notes li .k { font: 600 11.5px/1.9 var(--fm); color: var(--st-text); }
+.ar-notes li i { font-style: italic; }
+
+/* tables */
+.ar .ttl { position: relative; padding: 0; border: 0; background: transparent; color: var(--text); font: 700 14px/1.3 var(--ff); text-align: left; text-decoration: none; overflow-wrap: anywhere; cursor: pointer; }
+.ar .ttl::after { content: ""; position: absolute; left: -4px; right: -4px; top: 50%; height: max(44px, calc(100% + 8px)); transform: translateY(-50%); }
+.ar .ttl:hover { text-decoration: underline; text-underline-offset: 3px; }
+.ar-tbl { width: 100%; border-collapse: collapse; table-layout: fixed; }
+.ar-tbl th { height: 30px; padding: 0 10px 0 0; text-align: left; font: 700 12px var(--ff); color: var(--muted); border-bottom: 1px solid var(--rule); vertical-align: bottom; }
+.ar-tbl td { overflow-wrap: break-word; padding: 10px 10px 10px 0; border-bottom: 1px solid var(--hair); vertical-align: top; }
+.ar-tbl tr.sel td { background: var(--soft); }
+.ar-tbl tr.sel td:first-child { box-shadow: inset 3px 0 0 var(--text); padding-left: 8px; }
+.ar-tbl .ix { font: 500 12.5px var(--fm); color: var(--muted); }
+.ar-tbl .stg { display: inline-flex; align-items: center; gap: 7px; font-size: 13px; white-space: nowrap; }
+.ar-tbl .ag { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; white-space: nowrap; }
+.ar-tbl .m { font: 500 12.5px var(--fm); color: var(--muted); }
+.ar-tbl .m.sig, .ar .sigt { color: var(--sig-text); font-weight: 600; }
+.ar-st { display: inline-flex; align-items: center; gap: 7px; font-weight: 700; font-size: 13px; white-space: nowrap; }
+.ar-st .u { width: 11px; height: 11px; }
+.ar-st.needs { color: var(--sig-text); }
+.ar-facts { display: flex; flex-wrap: wrap; gap: 4px 10px; margin-top: 4px; font: 500 12px/1.35 var(--fm); color: var(--muted); }
+.ar-facts > span { display: inline-flex; align-items: center; gap: 5px; overflow-wrap: anywhere; }
+.ar-facts .p { color: var(--text); font-weight: 600; }
+
+/* key/value rows */
+.ar-kv { display: grid; grid-template-columns: max-content minmax(0, 1fr); column-gap: 16px; }
+.ar-kv > dt, .ar-kv > dd { padding: 9px 0; border-top: 1px solid var(--hair); }
+.ar-kv > dt { font-weight: 700; font-size: 13px; }
+.ar-kv > dd { overflow-wrap: anywhere; }
+
+/* fields */
+.ar-field { display: flex; flex-direction: column; gap: 6px; }
+.ar-field > label, .ar .lab { font-weight: 700; font-size: 14px; }
+.ar-in, .ar-sel, .ar-ta { width: 100%; min-height: 44px; padding: 0 10px; border: 1px solid var(--rule); border-radius: 0; background: var(--field); color: var(--text); font: 400 16px/1.45 var(--ff); }
+.ar-ta { min-height: 88px; padding: 10px 12px; resize: vertical; }
+.ar-in::placeholder, .ar-ta::placeholder { color: var(--muted); }
+.ar-hint { font: 500 12px/1.4 var(--fm); color: var(--muted); }
+
+/* status bar */
+.ar-status { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 20px; min-height: 32px; padding: 0 40px; border-top: 1px solid var(--rule); font: 500 12px var(--fm); color: var(--muted); }
+.ar-status .sig { color: var(--sig-text); font-weight: 600; }
+.ar-status .r { margin-left: auto; display: flex; flex-wrap: wrap; gap: 16px; }
+
+
+.ar.op { display: grid; grid-template-columns: 64px minmax(0, 1fr); }
+.op-body { display: flex; flex-direction: column; min-width: 0; }
+.op-main { flex: 1; display: flex; flex-direction: column; gap: 36px; padding: 24px 40px 40px; }
+.op-line { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 20px; min-height: 44px; padding-bottom: 8px; border-bottom: 1px solid var(--hair); }
+.op-line .keys { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 13px; color: var(--muted); }
+.op-line .keys > span { display: inline-flex; align-items: center; gap: 4px; }
+.op-line .r { margin-left: auto; font: 500 12px var(--fm); color: var(--muted); white-space: nowrap; }
+.op-tbl td { padding-top: 14px; padding-bottom: 14px; }
+.op-kind { display: inline-flex; align-items: center; gap: 7px; font-weight: 800; font-size: 13px; color: var(--sig-text); white-space: nowrap; }
+.op-kind .u { width: 11px; height: 11px; }
+.op-sub { margin-top: 4px; display: flex; align-items: center; gap: 6px; font: 500 12px var(--fm); color: var(--muted); }
+.op-why { font: 400 15.5px/1.45 var(--fs); overflow-wrap: anywhere; }
+.op-why.clamp { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+.op-acts { display: flex; flex-wrap: wrap; gap: 6px; }
+.op-acts .ar-btn, .op-acts .ar-btn2 { min-height: 44px; padding: 0 12px; font-size: 13.5px; }
+.op-split { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); gap: 40px; align-items: start; }
+.op-stack { display: flex; flex-direction: column; gap: 36px; min-width: 0; }
+.op-seg { display: inline-flex; border: 1px solid var(--rule); }
+.op-seg button { min-height: 32px; padding: 0 12px; border: 0; background: transparent; color: var(--text); font: 700 12px var(--ff); letter-spacing: .08em; text-transform: uppercase; cursor: pointer; }
+.op-seg button[aria-pressed="true"] { background: var(--text); color: var(--bg); }
+.op-grp td { padding: 14px 0 8px; border-bottom: 1px solid var(--hair); }
+.op-grp .in { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px; }
+.op-grp .in .end { margin-left: auto; display: flex; gap: 6px; }
+.op-ev td { font-size: 14px; }
+.op-tick { display: grid; place-items: center; width: 44px; height: 44px; margin: -12px 0; border: 0; background: transparent; color: var(--muted); cursor: pointer; }
+.op-tick:hover { color: var(--text); }
+.op-empty { padding: 14px 0; border-top: 1px solid var(--hair); font: 400 16px/1.45 var(--fs); color: var(--muted); }
+.op-cap { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.op-cap .row { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 8px; }
+.op-bar { height: 10px; box-shadow: inset 0 0 0 1px var(--hair); }
+
+</style><style data-dc-editor-style="">body:not([data-dc-editor-overlay-hidden]) [data-dc-editor-hover][data-dc-editor-hover-stroke]:not([data-dc-editor-selected]){filter:drop-shadow(0 0 calc(1*var(--dc-chrome-unit,1px)) color-mix(in srgb,#2a78d6 90%,transparent)) drop-shadow(0 0 calc(2*var(--dc-chrome-unit,1px)) color-mix(in srgb,#2a78d6 55%,transparent))!important;}body:not([data-dc-editor-overlay-hidden]):not([data-dc-editor-proxy="copy"]) [data-dc-editor-dragging],body:not([data-dc-editor-overlay-hidden]):not([data-dc-editor-proxy]) [data-dc-dragging],body[data-dc-editor-brk]:not([data-dc-editor-overlay-hidden]) [data-dc-drag-follower]{outline:calc(2*var(--dc-chrome-unit,1px)) solid #2a78d6!important;outline-offset:calc(-1*var(--dc-chrome-unit,1px))!important;opacity:0.55!important;}body[data-dc-editor-proxy="move"]:not([data-dc-editor-overlay-hidden]) [data-dc-editor-dragging],body[data-dc-editor-proxy="move"]:not([data-dc-editor-overlay-hidden]) [data-dc-dragging],body[data-dc-editor-proxy="move"]:not([data-dc-editor-overlay-hidden]) [data-dc-editor-dragging]>*,body[data-dc-editor-proxy="move"]:not([data-dc-editor-overlay-hidden]) [data-dc-dragging]>*{opacity:0!important;outline:none!important;}[data-dc-editor-drag-proxy],[data-dc-editor-drag-proxy] *{pointer-events:none!important;}body[data-dc-editor-on]:not([data-dc-editor-tool="interact"]) *{cursor:default!important;user-select:none!important;}body[data-dc-editor-on]:not([data-dc-editor-tool="interact"]) :not([data-dc-editor-overlay-root]):not([data-dc-editor-overlay-root] *){pointer-events:auto!important;transition:none!important;animation:none!important;}body[data-dc-editor-on][data-dc-editor-brk]:not([data-dc-editor-overlay-hidden]) [data-dc-editor-dragging]:not([data-dc-editor-overlay-root]) :not([data-dc-editor-overlay-root]),body[data-dc-editor-on][data-dc-editor-brk]:not([data-dc-editor-overlay-hidden]) [data-dc-dragging]:not([data-dc-editor-overlay-root]) :not([data-dc-editor-overlay-root]),body[data-dc-editor-on][data-dc-editor-brk]:not([data-dc-editor-overlay-hidden]) [data-dc-drag-follower]:not([data-dc-editor-overlay-root]),body[data-dc-editor-on][data-dc-editor-brk]:not([data-dc-editor-overlay-hidden]) [data-dc-drag-follower]:not([data-dc-editor-overlay-root]) :not([data-dc-editor-overlay-root]),body[data-dc-editor-move][data-dc-editor-brk]:not([data-dc-editor-overlay-hidden]) [data-dc-editor-dragging]:not([data-dc-editor-overlay-root]) :not([data-dc-editor-overlay-root]),body[data-dc-editor-move][data-dc-editor-brk]:not([data-dc-editor-overlay-hidden]) [data-dc-dragging]:not([data-dc-editor-overlay-root]) :not([data-dc-editor-overlay-root]),body[data-dc-editor-move][data-dc-editor-brk]:not([data-dc-editor-overlay-hidden]) [data-dc-drag-follower]:not([data-dc-editor-overlay-root]),body[data-dc-editor-move][data-dc-editor-brk]:not([data-dc-editor-overlay-hidden]) [data-dc-drag-follower]:not([data-dc-editor-overlay-root]) :not([data-dc-editor-overlay-root]){pointer-events:none!important;}body[data-dc-editor-move] :not([data-dc-editor-overlay-root]):not([data-dc-editor-overlay-root] *){pointer-events:auto!important;transition:none!important;animation-duration:0s!important;animation-delay:0s!important;}body[data-dc-editor-on][data-dc-editor-tool="rect"] *,body[data-dc-editor-on][data-dc-editor-tool="frame"] *,body[data-dc-editor-on][data-dc-editor-tool="grid"] *,body[data-dc-editor-on][data-dc-editor-tool="oval"] *,body[data-dc-editor-on][data-dc-editor-tool="arrow"] *,body[data-dc-editor-on][data-dc-editor-tool="line"] *{cursor:crosshair!important;}body[data-dc-editor-on][data-dc-editor-tool="text"] *{cursor:text!important;}body[data-dc-editor-on][data-dc-editor-tool="draw"] *{cursor:url('data:image/svg+xml,%3Csvg%20xmlns=%22http://www.w3.org/2000/svg%22%20width=%2216%22%20height=%2216%22%20viewBox=%220%200%2016%2016%22%3E%3Cpath%20d=%22M2%2014l1-4%208-8a2.1%202.1%200%200%201%203%203l-8%208-4%201z%22%20fill=%22%23333%22%20stroke=%22%23fff%22%20stroke-width=%221%22/%3E%3C/svg%3E') 1 15, crosshair!important;}body[data-dc-editor-on]:not([data-dc-editor-tool]) [data-drags-parent],body[data-dc-editor-on]:not([data-dc-editor-tool]) [data-drags-parent] *{cursor:grab!important;}body[data-dc-editor-on]:not([data-dc-editor-tool]) [data-drags-parent]:active,body[data-dc-editor-on]:not([data-dc-editor-tool]) [data-drags-parent]:active *{cursor:grabbing!important;}body[data-dc-editor-on] [data-dc-editor-editing][contenteditable][contenteditable],body[data-dc-editor-on] [data-dc-editor-editing][contenteditable][contenteditable] *,body[data-dc-editor-on] [data-dc-editor-svg-editing]{cursor:text!important;}body[data-dc-editor-on] [data-dc-editor-editing="import"]{outline:none!important;}html:not([data-dc-canvas]):has(body[data-dc-editor-on]:not([data-dc-capturing]) .sc-host){background:var(--dc-editor-backdrop,#ededeb);}html:not([data-dc-canvas]) body[data-dc-editor-on]:not([data-dc-capturing]):has(.sc-host){background:var(--dc-editor-backdrop,#ededeb);}html:not([data-dc-canvas]) body[data-dc-editor-on] .sc-host:not(.sc-host .sc-host){min-height:calc(100vh - var(--dc-editor-host-vpad,0px));}html:not([data-dc-canvas]) body[data-dc-editor-on]:not([data-dc-capturing]) .sc-host:not(.sc-host .sc-host){background:var(--dc-editor-host-bg,#fff);}html[data-dc-frameless],html[data-dc-frameless] body[data-dc-editor-on],html[data-dc-frameless] body[data-dc-editor-on] .sc-host:not(.sc-host .sc-host){background:transparent!important;min-height:0!important;}html:has(body[data-dc-capturing]),body[data-dc-capturing]{transition:none!important;}html[data-dc-canvas]{overflow:hidden;}html[data-dc-canvas] body[data-dc-editor-on] .sc-host:not(.sc-host .sc-host)::before{content:"";position:absolute;left:-100000px;top:-100000px;width:200000px;height:200000px;pointer-events:none;background:repeating-linear-gradient(45deg,var(--dc-editor-hatch-ink,rgba(0,0,0,.05)) 0 8px,transparent 8px 16px);clip-path:polygon(0 0,100% 0,100% 50%,50% 50%,50% 100%,0 100%);}</style></head>
+<body>
+<div id="dc-root"><div class="sc-host" data-sc-name="SP-Operate-Studio"><div data-product="superpipeline" data-accent="product" data-dc-tpl="3" class="ar op" data-vibe="studio" data-theme="light"><nav data-dc-tpl="4" class="ar-rail" aria-label="Superpipeline">
+  <a data-dc-tpl="5" class="ar-mark" href="#home" aria-label="Superpipeline home"><svg data-dc-tpl="6" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path data-dc-tpl="7" d="M6 6h9a3 3 0 0 1 0 6H9a3 3 0 0 0 0 6h9"></path><circle data-dc-tpl="8" cx="6" cy="6" r="2"></circle><circle data-dc-tpl="9" cx="18" cy="18" r="2"></circle></svg></a>
+  <a data-dc-tpl="10" class="ar-nav" href="#plan" aria-label="Plan" aria-keyshortcuts="G P"><svg data-dc-tpl="11" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect data-dc-tpl="12" x="3" y="4" width="5" height="16" rx="1"></rect><rect data-dc-tpl="13" x="10" y="4" width="5" height="11" rx="1"></rect><rect data-dc-tpl="14" x="17" y="4" width="4" height="7" rx="1"></rect></svg><span data-dc-tpl="15" class="tip" aria-hidden="true">Plan <span data-dc-tpl="16" class="kbd">G P</span></span></a>
+  <a data-dc-tpl="17" class="ar-nav" href="#operate" aria-current="page" aria-label="Operate, 4 need you" aria-keyshortcuts="G O"><svg data-dc-tpl="18" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path data-dc-tpl="19" d="M3 12h4l3-7 4 14 3-7h4"></path></svg><span data-dc-tpl="20" class="ct" aria-hidden="true">4</span><span data-dc-tpl="21" class="tip" aria-hidden="true">Operate · 4 need you <span data-dc-tpl="22" class="kbd">G O</span></span></a>
+  <a data-dc-tpl="23" class="ar-nav" href="#workspace" aria-label="Workspace" aria-keyshortcuts="G W"><svg data-dc-tpl="24" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle data-dc-tpl="25" cx="9" cy="8" r="3.5"></circle><path data-dc-tpl="26" d="M2.5 20c.8-3.6 3.4-5.5 6.5-5.5s5.7 1.9 6.5 5.5"></path><path data-dc-tpl="27" d="M16 4.5a3.5 3.5 0 0 1 0 7M18 14.8c1.8.8 3 2.6 3.5 5.2"></path></svg><span data-dc-tpl="28" class="tip" aria-hidden="true">Workspace <span data-dc-tpl="29" class="kbd">G W</span></span></a>
+  <span data-dc-tpl="30" style="flex: 1 1 0%;"></span>
+  <button data-dc-tpl="31" class="ar-nav" type="button" aria-label="Dark theme"><svg data-dc-tpl="32" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path data-dc-tpl="33" d="M20 14.5A8 8 0 0 1 9.5 4 8 8 0 1 0 20 14.5z"></path></svg><span data-dc-tpl="34" class="tip" aria-hidden="true">Dark theme</span></button>
+  <button data-dc-tpl="35" class="ar-nav" type="button" aria-label="Appearance" aria-haspopup="dialog"><svg data-dc-tpl="36" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle data-dc-tpl="37" cx="12" cy="12" r="4"></circle><path data-dc-tpl="38" d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"></path></svg><span data-dc-tpl="39" class="tip" aria-hidden="true">Appearance</span></button>
+  <button data-dc-tpl="40" class="ar-acct" type="button" aria-label="Ira Mehta, account" aria-haspopup="menu">IM<span data-dc-tpl="41" class="tip" aria-hidden="true">Ira Mehta</span></button>
+  <button data-dc-tpl="42" class="ar-nav" type="button" aria-label="Sign out"><svg data-dc-tpl="43" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path data-dc-tpl="44" d="M15 4h4v16h-4M10 8l-4 4 4 4M6 12h10"></path></svg><span data-dc-tpl="45" class="tip" aria-hidden="true">Sign out</span></button></nav><div data-dc-tpl="46" class="op-body"><header data-dc-tpl="47" class="ar-top">
+  <div data-dc-tpl="48" class="ar-board"><span data-dc-tpl="49" class="kick">Superpipeline · operate</span><button data-dc-tpl="50" class="ar-sw" type="button" aria-haspopup="menu" aria-label="Board: Developer Experience. Change board">Developer Experience <svg data-dc-tpl="51" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path data-dc-tpl="52" d="M6 9l6 6 6-6"></path></svg></button></div>
+  <label data-dc-tpl="53" class="ar-cmd"><span data-dc-tpl="54" class="sr">Search or run a command</span><span data-dc-tpl="55" class="box"><svg data-dc-tpl="56" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle data-dc-tpl="57" cx="11" cy="11" r="7"></circle><path data-dc-tpl="58" d="M20 20l-4-4"></path></svg><input data-dc-tpl="59" type="search" placeholder="Search or run a command" aria-keyshortcuts="Meta+K"><span data-dc-tpl="60" class="kbd" aria-hidden="true">⌘K</span></span></label>
+  <span data-dc-tpl="61" class="ar-live" role="status" title="Live: changes appear as they happen"><i data-dc-tpl="62" aria-hidden="true"></i>Live</span>
+  <button data-dc-tpl="63" class="ar-btn" type="button" aria-keyshortcuts="N"><svg data-dc-tpl="64" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path data-dc-tpl="65" d="M12 5v14M5 12h14"></path></svg>New card <span data-dc-tpl="66" class="kbd" aria-hidden="true">N</span></button></header><main data-dc-tpl="67" class="op-main">
+  <div data-dc-tpl="68" class="op-line">
+    <span data-dc-tpl="69" class="kick">Operate · Developer Experience</span>
+    <span data-dc-tpl="70" class="keys" aria-label="Keyboard"><span data-dc-tpl="71"><span data-dc-tpl="72" class="kbd">J</span><span data-dc-tpl="73" class="kbd">K</span> select</span><span data-dc-tpl="74"><span data-dc-tpl="75" class="kbd">R</span> resume</span><span data-dc-tpl="76"><span data-dc-tpl="77" class="kbd">M</span> move</span><span data-dc-tpl="78"><span data-dc-tpl="79" class="kbd">O</span> open</span><span data-dc-tpl="80"><span data-dc-tpl="81" class="kbd">.</span> mark read</span></span>
+    <span data-dc-tpl="82" class="r">13:51 · midday · times UTC</span>
+  </div>
+
+  <div data-dc-tpl="83" class="ar-hero">
+    <span data-dc-tpl="84" class="big" aria-hidden="true">4</span>
+    <div data-dc-tpl="85" class="txt">
+      <span data-dc-tpl="86" class="kick">Operate</span>
+      <h1 data-dc-tpl="87"><span data-dc-tpl="88" class="sr">4 </span>cards on this board need you, and nothing is running</h1>
+      <p data-dc-tpl="89">Three stopped and are waiting to be resumed; one sits in a stage no agent works and needs moving. No agent is working anything, and nothing has been spent this week.</p>
+    </div>
+  </div>
+
+  <section data-dc-tpl="90" class="ar-sec" aria-labelledby="op-f">
+    <div data-dc-tpl="91" class="hd"><span data-dc-tpl="92" class="no">01</span><h2 data-dc-tpl="93" id="op-f">Operations in figures</h2><span data-dc-tpl="94" class="r">last 7 days</span></div>
+    <div data-dc-tpl="95" class="ar-figs">
+      <div data-dc-tpl="96" class="sig"><b data-dc-tpl="97">4</b><span data-dc-tpl="98">Needs you</span></div>
+      <div data-dc-tpl="99"><b data-dc-tpl="100" class="z">0</b><span data-dc-tpl="101">Running</span></div>
+      <div data-dc-tpl="102"><b data-dc-tpl="103" class="z">$0.00</b><span data-dc-tpl="104">Spend · 7 days</span></div>
+      <div data-dc-tpl="105"><b data-dc-tpl="106" class="z">—</b><span data-dc-tpl="107">Budget cap · none set</span></div>
+      <div data-dc-tpl="108"><b data-dc-tpl="109">19</b><span data-dc-tpl="110">Unread activity</span></div>
+    </div>
+  </section>
+
+  <section data-dc-tpl="111" class="ar-sec" id="needs" aria-labelledby="op-n">
+    <div data-dc-tpl="112" class="hd"><span data-dc-tpl="113" class="no">02</span><h2 data-dc-tpl="114" id="op-n">Needs you</h2><span data-dc-tpl="115" class="r"><span data-dc-tpl="116" class="sigt">4</span><a data-dc-tpl="117" class="ar-lk" href="#workspace-needs" style="min-height: 0px;">All boards <svg data-dc-tpl="118" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path data-dc-tpl="119" d="M5 12h14M14 7l5 5-5 5"></path></svg></a></span></div>
+    <table data-dc-tpl="120" class="ar-tbl op-tbl">
+      <thead data-dc-tpl="121"><tr data-dc-tpl="122"><th data-dc-tpl="123" scope="col" style="width: 30px;">No.</th><th data-dc-tpl="124" scope="col" style="width: 100px;">Kind</th><th data-dc-tpl="125" scope="col">Card · stage</th><th data-dc-tpl="126" scope="col" style="width: 116px;">Agent</th><th data-dc-tpl="127" scope="col" style="width: 44px;">Age</th><th data-dc-tpl="128" scope="col" style="width: 40px;">Att.</th><th data-dc-tpl="129" scope="col" style="width: 30%;">Why it stopped</th><th data-dc-tpl="130" scope="col" style="width: 200px;">Actions</th></tr></thead>
+      <tbody data-dc-tpl="131"><tr data-dc-tpl="132" class="sel" aria-current="true">
+  <td data-dc-tpl="133"><span data-dc-tpl="134" class="ix">01</span></td>
+  <td data-dc-tpl="135"><span data-dc-tpl="136" class="op-kind"><span data-dc-tpl="137" class="u needs"></span>Stopped</span></td>
+  <td data-dc-tpl="138"><a data-dc-tpl="139" class="ttl" href="SP-Card-Studio.dc.html">Diagnose Melissa and Anna Supermessage silence — trace actual failing hop</a><div data-dc-tpl="140" class="op-sub"><span data-dc-tpl="141" class="chip c2"></span>Reproduce</div></td>
+  <td data-dc-tpl="142"><span data-dc-tpl="143" class="ag"><svg data-dc-tpl="144" viewBox="-2 -4 68 70" width="20" height="20" aria-hidden="true" focusable="false" data-mood="needs"><circle data-dc-tpl="145" cx="32" cy="32" r="30" fill="var(--vk-mood-needs)"></circle><path data-dc-tpl="146" d="M28 4 Q32 -2 36 4 Q34 8 32 6 Q30 8 28 4Z" fill="rgb(107 74 43)"></path><g data-dc-tpl="147" data-eyes="open"><ellipse data-dc-tpl="148" cx="23" cy="28" rx="4" ry="2.4" fill="var(--vk-face-ink)"></ellipse><ellipse data-dc-tpl="149" cx="41" cy="28" rx="4" ry="2.4" fill="var(--vk-face-ink)"></ellipse></g><circle data-dc-tpl="150" cx="17" cy="37" r="4" fill="rgb(255 158 138 / 0.5)"></circle><circle data-dc-tpl="151" cx="47" cy="37" r="4" fill="rgb(255 158 138 / 0.5)"></circle><path data-dc-tpl="152" d="M24 44 Q32 38 40 44" fill="none" stroke="var(--vk-face-ink)" stroke-width="3" stroke-linecap="round"></path></svg>error-eric</span></td>
+  <td data-dc-tpl="153"><span data-dc-tpl="154" class="m">2d</span></td>
+  <td data-dc-tpl="155"><span data-dc-tpl="156" class="m">2</span></td>
+  <td data-dc-tpl="157"><p data-dc-tpl="158" class="op-why clamp">not reproduced end-to-end: Melissa’s live ACP session acps_8f86d4e4-1cf2-457b-beb8-0ffb529d9023 reached Hermes and produced a model reply, while Anna has no local ACP dispatch; first failing hop cannot be identified without one fresh DM event_id/room_id/timestamp per agent plus AgentPod hub matrix-inbound/control-pair/ACP/matrix-outbound logs, matrix_rooms/ACP metadata, homeserver send-event metadata, and Supermessage sync ingestion for those event IDs. No Accounts defect established; no issue filed.</p><button data-dc-tpl="159" class="ar-lk" type="button" aria-expanded="false">Show all</button></td>
+  <td data-dc-tpl="160"><div data-dc-tpl="161" class="op-acts"><button data-dc-tpl="162" class="ar-btn" type="button" aria-keyshortcuts="R">Resume <span data-dc-tpl="163" class="kbd" aria-hidden="true">R</span></button><a data-dc-tpl="164" class="ar-btn2" href="SP-Card-Studio.dc.html" aria-keyshortcuts="O">Open <span data-dc-tpl="165" class="kbd" aria-hidden="true">O</span></a><a data-dc-tpl="166" class="ar-lk" href="#log">Log</a></div></td></tr><tr data-dc-tpl="167">
+  <td data-dc-tpl="168"><span data-dc-tpl="169" class="ix">02</span></td>
+  <td data-dc-tpl="170"><span data-dc-tpl="171" class="op-kind"><span data-dc-tpl="172" class="u needs"></span>Stopped</span></td>
+  <td data-dc-tpl="173"><a data-dc-tpl="174" class="ttl" href="SP-Card-Studio.dc.html">AgentPod: connector interface and generic effects ledger, state machine and executor</a><div data-dc-tpl="175" class="op-sub"><span data-dc-tpl="176" class="chip c3"></span>Failing test</div></td>
+  <td data-dc-tpl="177"><span data-dc-tpl="178" class="ag"><svg data-dc-tpl="179" viewBox="-2 -4 68 70" width="20" height="20" aria-hidden="true" focusable="false" data-mood="needs"><circle data-dc-tpl="180" cx="32" cy="32" r="30" fill="var(--vk-mood-needs)"></circle><circle data-dc-tpl="181" cx="32" cy="4" r="7" fill="rgb(94 90 156)"></circle><g data-dc-tpl="182" data-eyes="open"><ellipse data-dc-tpl="183" cx="23" cy="28" rx="3.2" ry="3.2" fill="var(--vk-face-ink)"></ellipse><ellipse data-dc-tpl="184" cx="41" cy="28" rx="3.2" ry="3.2" fill="var(--vk-face-ink)"></ellipse></g><path data-dc-tpl="185" d="M24 44 Q32 38 40 44" fill="none" stroke="var(--vk-face-ink)" stroke-width="3" stroke-linecap="round"></path></svg>tester-tim</span></td>
+  <td data-dc-tpl="186"><span data-dc-tpl="187" class="m">33h</span></td>
+  <td data-dc-tpl="188"><span data-dc-tpl="189" class="m">1</span></td>
+  <td data-dc-tpl="190"><p data-dc-tpl="191" class="op-why clamp">Blocked on the forgeDestinationHold: operator must provide the authoritative writable Forge repository URL for SuperJackfruitLabs/agentpod and grant Tester Tim's station write access. The matching URL ssh://git@forge.superjackfruit.com:2222/SuperJackfruitLabs/agentpod.git authenticates as tester-tim and is readable, but push is refused with “Mirror Repository SuperJackfruitLabs/agentpod is read-only”. Local red-test commit 7a444f3a and verbatim failure evidence are preserved at https://app.superlibrary.dev/a/itm_569034f61d1b4b1a; no GitHub push was attempted.</p><button data-dc-tpl="192" class="ar-lk" type="button" aria-expanded="false">Show all</button></td>
+  <td data-dc-tpl="193"><div data-dc-tpl="194" class="op-acts"><button data-dc-tpl="195" class="ar-btn" type="button" aria-keyshortcuts="R">Resume <span data-dc-tpl="196" class="kbd" aria-hidden="true">R</span></button><a data-dc-tpl="197" class="ar-btn2" href="SP-Card-Studio.dc.html" aria-keyshortcuts="O">Open <span data-dc-tpl="198" class="kbd" aria-hidden="true">O</span></a><a data-dc-tpl="199" class="ar-lk" href="#log">Log</a></div></td></tr><tr data-dc-tpl="200">
+  <td data-dc-tpl="201"><span data-dc-tpl="202" class="ix">03</span></td>
+  <td data-dc-tpl="203"><span data-dc-tpl="204" class="op-kind"><span data-dc-tpl="205" class="u needs"></span>Stopped</span></td>
+  <td data-dc-tpl="206"><a data-dc-tpl="207" class="ttl" href="SP-Card-Studio.dc.html">Superpipeline: manual-delivery completion and approval-subject hardening</a><div data-dc-tpl="208" class="op-sub"><span data-dc-tpl="209" class="chip c4"></span>Fix</div></td>
+  <td data-dc-tpl="210"><span data-dc-tpl="211" class="ag"><svg data-dc-tpl="212" viewBox="-2 -4 68 70" width="20" height="20" aria-hidden="true" focusable="false" data-mood="needs"><circle data-dc-tpl="213" cx="32" cy="32" r="30" fill="var(--vk-mood-needs)"></circle><g data-dc-tpl="214" data-eyes="open"><ellipse data-dc-tpl="215" cx="23" cy="28" rx="3.2" ry="4.2" fill="var(--vk-face-ink)"></ellipse><ellipse data-dc-tpl="216" cx="41" cy="28" rx="3.2" ry="4.2" fill="var(--vk-face-ink)"></ellipse></g><circle data-dc-tpl="217" cx="17" cy="37" r="4" fill="rgb(255 158 138 / 0.5)"></circle><circle data-dc-tpl="218" cx="47" cy="37" r="4" fill="rgb(255 158 138 / 0.5)"></circle><path data-dc-tpl="219" d="M24 44 Q32 38 40 44" fill="none" stroke="var(--vk-face-ink)" stroke-width="3" stroke-linecap="round"></path></svg>coder-kai</span></td>
+  <td data-dc-tpl="220"><span data-dc-tpl="221" class="m">33h</span></td>
+  <td data-dc-tpl="222"><span data-dc-tpl="223" class="m"><span data-dc-tpl="224" class="sigt">5</span></span></td>
+  <td data-dc-tpl="225"><p data-dc-tpl="226" class="op-why">this stage was not finished twice — first: the handoff is missing commit; then, after one automatic rework: the handoff is missing commit</p></td>
+  <td data-dc-tpl="227"><div data-dc-tpl="228" class="op-acts"><button data-dc-tpl="229" class="ar-btn" type="button" aria-keyshortcuts="R">Resume <span data-dc-tpl="230" class="kbd" aria-hidden="true">R</span></button><a data-dc-tpl="231" class="ar-btn2" href="SP-Card-Studio.dc.html" aria-keyshortcuts="O">Open <span data-dc-tpl="232" class="kbd" aria-hidden="true">O</span></a><a data-dc-tpl="233" class="ar-lk" href="#log">Log</a></div></td></tr><tr data-dc-tpl="234">
+  <td data-dc-tpl="235"><span data-dc-tpl="236" class="ix">04</span></td>
+  <td data-dc-tpl="237"><span data-dc-tpl="238" class="op-kind"><span data-dc-tpl="239" class="u needs"></span>No owner</span></td>
+  <td data-dc-tpl="240"><a data-dc-tpl="241" class="ttl" href="SP-Card-Studio.dc.html">Fix the highest-severity blocker found in the clean-room journey</a><div data-dc-tpl="242" class="op-sub"><span data-dc-tpl="243" class="chip c1"></span>Reported · due 2026-10-06, overdue</div></td>
+  <td data-dc-tpl="244"><span data-dc-tpl="245" class="ag"><span data-dc-tpl="246" class="m">Unclaimed</span></span></td>
+  <td data-dc-tpl="247"><span data-dc-tpl="248" class="m">2d</span></td>
+  <td data-dc-tpl="249"><span data-dc-tpl="250" class="m">—</span></td>
+  <td data-dc-tpl="251"><p data-dc-tpl="252" class="op-why" style="font-family: var(--ff); font-size: 14px;">No agent works this stage and no review is asked for here, so it will sit forever. Move it to a stage someone works.</p></td>
+  <td data-dc-tpl="253"><div data-dc-tpl="254" class="op-acts"><button data-dc-tpl="255" class="ar-btn" type="button" aria-haspopup="menu" aria-keyshortcuts="M">Move… <span data-dc-tpl="256" class="kbd" aria-hidden="true">M</span></button><a data-dc-tpl="257" class="ar-btn2" href="SP-Card-Studio.dc.html" aria-keyshortcuts="O">Open <span data-dc-tpl="258" class="kbd" aria-hidden="true">O</span></a><a data-dc-tpl="259" class="ar-lk" href="#capabilities">Staff an agent</a></div></td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <div data-dc-tpl="260" class="op-split">
+    <section data-dc-tpl="261" class="ar-sec" aria-labelledby="op-a">
+      <div data-dc-tpl="262" class="hd"><span data-dc-tpl="263" class="no">03</span><h2 data-dc-tpl="264" id="op-a">Activity</h2><span data-dc-tpl="265" class="r">19 unread · by card <span data-dc-tpl="266" class="op-seg" role="group" aria-label="Which activity"><button data-dc-tpl="267" type="button" aria-pressed="true">Unread</button><button data-dc-tpl="268" type="button" aria-pressed="false">All</button></span></span></div>
+      <table data-dc-tpl="269" class="ar-tbl">
+        <thead data-dc-tpl="270"><tr data-dc-tpl="271"><th data-dc-tpl="272" scope="col" style="width: 64px;">Time</th><th data-dc-tpl="273" scope="col" style="width: 72px;">Kind</th><th data-dc-tpl="274" scope="col">What</th><th data-dc-tpl="275" scope="col" style="width: 44px;"><span data-dc-tpl="276" class="sr">Mark read</span></th></tr></thead>
+        <tbody data-dc-tpl="277"><tr data-dc-tpl="278" class="op-grp"><td data-dc-tpl="279" colspan="4"><div data-dc-tpl="280" class="in"><svg data-dc-tpl="281" viewBox="-2 -4 68 70" width="20" height="20" aria-hidden="true" focusable="false" data-mood="needs"><circle data-dc-tpl="282" cx="32" cy="32" r="30" fill="var(--vk-mood-needs)"></circle><g data-dc-tpl="283" data-eyes="open"><ellipse data-dc-tpl="284" cx="23" cy="28" rx="3.2" ry="4.2" fill="var(--vk-face-ink)"></ellipse><ellipse data-dc-tpl="285" cx="41" cy="28" rx="3.2" ry="4.2" fill="var(--vk-face-ink)"></ellipse></g><circle data-dc-tpl="286" cx="17" cy="37" r="4" fill="rgb(255 158 138 / 0.5)"></circle><circle data-dc-tpl="287" cx="47" cy="37" r="4" fill="rgb(255 158 138 / 0.5)"></circle><path data-dc-tpl="288" d="M24 44 Q32 38 40 44" fill="none" stroke="var(--vk-face-ink)" stroke-width="3" stroke-linecap="round"></path></svg><a data-dc-tpl="289" class="ttl" href="SP-Card-Studio.dc.html">Superpipeline: manual-delivery completion and approval-subject hardening</a><span data-dc-tpl="290" class="end"><button data-dc-tpl="291" class="ar-btn2" type="button" style="min-height: 44px;">Resume</button><button data-dc-tpl="292" class="ar-lk quiet" type="button" aria-expanded="false">Earlier</button></span></div></td></tr><tr data-dc-tpl="293" class="op-ev"><td data-dc-tpl="294"><span data-dc-tpl="295" class="m">22:50</span></td><td data-dc-tpl="296"><span data-dc-tpl="297" class="kick">Stale</span></td><td data-dc-tpl="298">Still stopped 24h later in Fix. <a data-dc-tpl="299" class="ar-lk" href="#needs" style="min-height: 0px;">reason ↑</a></td><td data-dc-tpl="300"><button data-dc-tpl="301" class="op-tick" type="button" aria-label="Mark read"><svg data-dc-tpl="302" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path data-dc-tpl="303" d="M5 12l5 5 9-10"></path></svg></button></td></tr><tr data-dc-tpl="304" class="op-grp"><td data-dc-tpl="305" colspan="4"><div data-dc-tpl="306" class="in"><svg data-dc-tpl="307" viewBox="-2 -4 68 70" width="20" height="20" aria-hidden="true" focusable="false" data-mood="needs"><circle data-dc-tpl="308" cx="32" cy="32" r="30" fill="var(--vk-mood-needs)"></circle><circle data-dc-tpl="309" cx="32" cy="4" r="7" fill="rgb(94 90 156)"></circle><g data-dc-tpl="310" data-eyes="open"><ellipse data-dc-tpl="311" cx="23" cy="28" rx="3.2" ry="3.2" fill="var(--vk-face-ink)"></ellipse><ellipse data-dc-tpl="312" cx="41" cy="28" rx="3.2" ry="3.2" fill="var(--vk-face-ink)"></ellipse></g><path data-dc-tpl="313" d="M24 44 Q32 38 40 44" fill="none" stroke="var(--vk-face-ink)" stroke-width="3" stroke-linecap="round"></path></svg><a data-dc-tpl="314" class="ttl" href="SP-Card-Studio.dc.html">AgentPod: connector interface and generic effects ledger, state machine and executor</a><span data-dc-tpl="315" class="end"><button data-dc-tpl="316" class="ar-btn2" type="button" style="min-height: 44px;">Resume</button><button data-dc-tpl="317" class="ar-lk quiet" type="button" aria-expanded="false">Earlier</button></span></div></td></tr><tr data-dc-tpl="318" class="op-ev"><td data-dc-tpl="319"><span data-dc-tpl="320" class="m">22:25</span></td><td data-dc-tpl="321"><span data-dc-tpl="322" class="kick">Stale</span></td><td data-dc-tpl="323">Still stopped 24h later in Failing test. <a data-dc-tpl="324" class="ar-lk" href="#needs" style="min-height: 0px;">reason ↑</a></td><td data-dc-tpl="325"><button data-dc-tpl="326" class="op-tick" type="button" aria-label="Mark read"><svg data-dc-tpl="327" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path data-dc-tpl="328" d="M5 12l5 5 9-10"></path></svg></button></td></tr><tr data-dc-tpl="329" class="op-grp"><td data-dc-tpl="330" colspan="4"><div data-dc-tpl="331" class="in"><svg data-dc-tpl="332" viewBox="-2 -4 68 70" width="20" height="20" aria-hidden="true" focusable="false" data-mood="needs"><circle data-dc-tpl="333" cx="32" cy="32" r="30" fill="var(--vk-mood-needs)"></circle><path data-dc-tpl="334" d="M28 4 Q32 -2 36 4 Q34 8 32 6 Q30 8 28 4Z" fill="rgb(107 74 43)"></path><g data-dc-tpl="335" data-eyes="open"><ellipse data-dc-tpl="336" cx="23" cy="28" rx="4" ry="2.4" fill="var(--vk-face-ink)"></ellipse><ellipse data-dc-tpl="337" cx="41" cy="28" rx="4" ry="2.4" fill="var(--vk-face-ink)"></ellipse></g><circle data-dc-tpl="338" cx="17" cy="37" r="4" fill="rgb(255 158 138 / 0.5)"></circle><circle data-dc-tpl="339" cx="47" cy="37" r="4" fill="rgb(255 158 138 / 0.5)"></circle><path data-dc-tpl="340" d="M24 44 Q32 38 40 44" fill="none" stroke="var(--vk-face-ink)" stroke-width="3" stroke-linecap="round"></path></svg><a data-dc-tpl="341" class="ttl" href="SP-Card-Studio.dc.html">Diagnose Melissa and Anna Supermessage silence — trace actual failing hop</a><span data-dc-tpl="342" class="end"><button data-dc-tpl="343" class="ar-btn2" type="button" style="min-height: 44px;">Resume</button><button data-dc-tpl="344" class="ar-lk quiet" type="button" aria-expanded="false">Earlier</button></span></div></td></tr><tr data-dc-tpl="345" class="op-ev"><td data-dc-tpl="346"><span data-dc-tpl="347" class="m">14:11</span></td><td data-dc-tpl="348"><span data-dc-tpl="349" class="kick">Stale</span></td><td data-dc-tpl="350">Still stopped 24h later in Reproduce. <a data-dc-tpl="351" class="ar-lk" href="#needs" style="min-height: 0px;">reason ↑</a></td><td data-dc-tpl="352"><button data-dc-tpl="353" class="op-tick" type="button" aria-label="Mark read"><svg data-dc-tpl="354" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path data-dc-tpl="355" d="M5 12l5 5 9-10"></path></svg></button></td></tr><tr data-dc-tpl="356" class="op-grp"><td data-dc-tpl="357" colspan="4"><div data-dc-tpl="358" class="in"><span data-dc-tpl="359" class="u off" aria-hidden="true" style="width: 20px; height: 20px;"></span><a data-dc-tpl="360" class="ttl" href="SP-Card-Studio.dc.html">Fix the highest-severity blocker found in the clean-room journey</a><span data-dc-tpl="361" class="end"><button data-dc-tpl="362" class="ar-btn2" type="button" aria-haspopup="menu" style="min-height: 44px;">Move…</button><button data-dc-tpl="363" class="ar-lk quiet" type="button" aria-expanded="false">Earlier</button></span></div></td></tr><tr data-dc-tpl="364" class="op-ev"><td data-dc-tpl="365"><span data-dc-tpl="366" class="m">09:55</span></td><td data-dc-tpl="367"><span data-dc-tpl="368" class="kick">Stale</span></td><td data-dc-tpl="369">Still unclaimed 48h in Reported. <a data-dc-tpl="370" class="ar-lk" href="#needs" style="min-height: 0px;">reason ↑</a></td><td data-dc-tpl="371"><button data-dc-tpl="372" class="op-tick" type="button" aria-label="Mark read"><svg data-dc-tpl="373" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path data-dc-tpl="374" d="M5 12l5 5 9-10"></path></svg></button></td></tr>
+        </tbody>
+      </table>
+    </section>
+    <div data-dc-tpl="375" class="op-stack">
+      <section data-dc-tpl="376" class="ar-sec" aria-labelledby="op-r">
+        <div data-dc-tpl="377" class="hd"><span data-dc-tpl="378" class="no">04</span><h2 data-dc-tpl="379" id="op-r">Running</h2><span data-dc-tpl="380" class="r">0</span></div>
+        <table data-dc-tpl="381" class="ar-tbl"><thead data-dc-tpl="382"><tr data-dc-tpl="383"><th data-dc-tpl="384" scope="col">Agent</th><th data-dc-tpl="385" scope="col">Card · stage</th><th data-dc-tpl="386" scope="col" style="width: 64px;">Cost</th></tr></thead>
+        <tbody data-dc-tpl="387"><tr data-dc-tpl="388"><td data-dc-tpl="389" colspan="3" class="serif muted" style="font-size: 16px;">No agent is working anything right now.</td></tr></tbody></table>
+      </section>
+      <section data-dc-tpl="390" class="ar-sec" aria-labelledby="op-s">
+        <div data-dc-tpl="391" class="hd"><span data-dc-tpl="392" class="no">05</span><h2 data-dc-tpl="393" id="op-s">Spend</h2><span data-dc-tpl="394" class="r">last 7 days · <a data-dc-tpl="395" class="ar-lk" href="#telemetry" style="min-height: 0px;">Detail <svg data-dc-tpl="396" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path data-dc-tpl="397" d="M5 12h14M14 7l5 5-5 5"></path></svg></a></span></div>
+        <div data-dc-tpl="398" class="ar-figs" style="grid-auto-flow: row; border-bottom: 0px;"><div data-dc-tpl="399"><b data-dc-tpl="400" class="z">$0.00</b><span data-dc-tpl="401">No cap set</span></div></div>
+        <div data-dc-tpl="402" class="op-bar" aria-hidden="true"></div>
+        <table data-dc-tpl="403" class="ar-tbl"><thead data-dc-tpl="404"><tr data-dc-tpl="405"><th data-dc-tpl="406" scope="col">Top agents</th><th data-dc-tpl="407" scope="col" style="width: 64px;">$</th></tr></thead><tbody data-dc-tpl="408"><tr data-dc-tpl="409"><td data-dc-tpl="410" colspan="2" class="serif muted" style="font-size: 16px;">No agent spend in the window.</td></tr></tbody></table>
+        <form data-dc-tpl="411" class="op-cap" aria-label="Set a budget cap">
+          <div data-dc-tpl="412" class="ar-field"><label data-dc-tpl="413" for="op-bc">Board cap $</label><input data-dc-tpl="414" id="op-bc" class="ar-in" type="text" inputmode="decimal" placeholder="none"></div>
+          <div data-dc-tpl="415" class="ar-field"><label data-dc-tpl="416" for="op-cc">Card cap $</label><input data-dc-tpl="417" id="op-cc" class="ar-in" type="text" inputmode="decimal" placeholder="none"></div>
+          <div data-dc-tpl="418" class="row"><button data-dc-tpl="419" class="ar-btn" type="button">Save caps</button><button data-dc-tpl="420" class="ar-lk quiet" type="button">Cancel</button></div>
+        </form>
+      </section>
+    </div>
+  </div></main><footer data-dc-tpl="421" class="ar-status" aria-label="Status">
+  <span data-dc-tpl="422">7 cards</span><span data-dc-tpl="423" class="sig">4 need you</span><span data-dc-tpl="424">0 running</span><span data-dc-tpl="425">19 unread</span><span data-dc-tpl="426">synced 13:51</span>
+  <span data-dc-tpl="427" class="r"><span data-dc-tpl="428">⌘K commands</span><span data-dc-tpl="429">N new card</span></span></footer></div></div></div></div>
+
+
+
+</body></html>

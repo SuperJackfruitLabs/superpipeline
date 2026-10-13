@@ -16,6 +16,7 @@
  */
 import type { AgentSummary, Stage } from '../../api';
 import { displayAgent } from '../../names';
+import { plural } from '../../words';
 
 export interface StageOwnerLabel {
   kind: 'agent' | 'capability' | 'human';
@@ -90,4 +91,31 @@ export function stageOwner(stage: Stage, agents: AgentSummary[]): StageOwnerLabe
     undeclared: declaredBy.length === 0,
     caveat: declaredBy.length === 0 ? CAVEAT : '',
   };
+}
+
+/** One declarer by name, several as a count ("2 agents"). */
+function holders(names: string[]): string {
+  return names.length === 1 ? names[0]! : plural(names.length, 'agent', 'agents');
+}
+
+/** Who works a stage, as the desktop boards print it: "testing · tester-tim", "code · 2 agents", "a person · approval". */
+export function ownerLong(stage: Stage, agents: AgentSummary[]): string {
+  const o = stageOwner(stage, agents);
+  if (o.kind !== 'capability' || o.label === 'no capability set') return o.label;
+  if (o.undeclared) return `${o.label} · nobody declares it`;
+  return `${o.label} · ${holders(o.declaredBy)}`;
+}
+
+/**
+ * The phone form: one capability keeps its holder ("diagnostics · error-eric"), a multi-capability
+ * stage shows only its primary capability ("integration"), a gate says who decides. Quiet phone
+ * passes `sep = ': '`.
+ */
+export function ownerShort(stage: Stage, agents: AgentSummary[], sep = ' · '): string {
+  const o = stageOwner(stage, agents);
+  if (o.kind === 'human') return stage.gate === 'approval' ? `gate${sep}approval by a person` : 'a person';
+  if (o.kind === 'agent') return o.label;
+  const { caps } = requirement(stage);
+  if (caps.length !== 1) return stage.owner ?? o.label;
+  return `${caps[0]}${sep}${o.undeclared ? 'nobody' : holders(o.declaredBy)}`;
 }

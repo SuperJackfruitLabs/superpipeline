@@ -1,0 +1,91 @@
+/* vibekit 0.0.4 Button rules (components/button.css), layered as vibekit.css layers them. The phone boards draw their buttons with the 0.0.4 Button the app uses; every other rule on these pages stays 0.0.1. Do not edit. */
+@layer vk.components {
+/* Button (component spec §2.4/8). Colours come from private variables, set by variant, vibe and state. */
+.vk-button {
+  --_bg: var(--vk-color-primary);
+  --_fg: var(--vk-color-primary-fg);
+  --_edge: transparent;
+  --_edge-w: 0px;
+  --_lift: 0 var(--vk-lift) 0 var(--vk-color-ground);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--vk-space-2);
+  min-height: var(--vk-target-min);
+  padding: 0 var(--vk-space-5);
+  border: 0;
+  border-radius: var(--vk-radius-md);
+  /* Important inside a layer beats every normal declaration outside it, so a container's colour rule for links cannot repaint a
+     button (Review Focus 3). Variants and states change the private variables, never these two properties. */
+  color: var(--_fg) !important;
+  background: var(--_bg) !important;
+  box-shadow: inset 0 0 0 var(--_edge-w) var(--_edge), var(--_lift);
+  font: 600 var(--vk-text-md) / 1 var(--vk-font-body);
+  text-decoration: none;
+  white-space: nowrap;
+  flex-shrink: 0;
+  cursor: pointer;
+  transition: transform var(--vk-motion-fast) var(--vk-motion-easing), box-shadow var(--vk-motion-fast) var(--vk-motion-easing);
+}
+
+/* Per vibe, before the variants, so a variant's own padding still wins. */
+:where([data-vibe="paper"]) .vk-button { padding: 0 16px; border-radius: var(--vk-radius-sm); font: 600 15px / 1 var(--vk-font-body); }
+/* Annual report's ink slab has no lift. */
+:where([data-vibe="studio"]) .vk-button { --_lift: 0 0 0 transparent; padding: 0 16px; font: 800 14px / 1 var(--vk-font-body); }
+:where([data-vibe="quiet"]) .vk-button { min-height: 48px; padding: 0 20px; border-radius: var(--vk-radius-sm); font: 700 17px / 1 var(--vk-font-body); }
+
+.vk-button--primary { --_bg: var(--vk-color-primary); --_fg: var(--vk-color-primary-fg); }
+.vk-button--secondary { --_bg: var(--vk-color-surface); --_fg: var(--vk-color-text); --_edge: var(--vk-color-line); --_edge-w: 2px; }
+.vk-button--quiet { --_bg: transparent; --_fg: var(--vk-color-text); --_lift: 0 0 0 transparent; padding: 0 var(--vk-space-2); text-decoration: underline; text-underline-offset: 4px; }
+/* text: a shell's plain text control, no box (the Paper shell mockup .mh-q, the Quiet shell mockup .qn-link, the Studio shell mockup .ar-lk). */
+.vk-button--text { --_bg: transparent; --_fg: var(--vk-color-text); --_lift: 0 0 0 transparent; --_edge-w: 0px; gap: 6px; padding: 0; font-weight: 400; }
+.vk-button--text:hover { text-decoration: underline; text-underline-offset: 4px; }
+.vk-button--signal { --_bg: var(--vk-color-signal-wash); --_fg: var(--vk-color-signal-text); --_edge: var(--vk-color-signal); --_edge-w: 2px; }
+.vk-button--danger { --_bg: var(--vk-color-surface); --_fg: var(--vk-color-text); --_edge: var(--vk-color-text); --_edge-w: 2px; --_lift: 0 0 0 transparent; }
+/* ghost: the muted hairline for a secondary action beside the main ones (the Paper board mockup .pp-btn.ghost). */
+.vk-button--ghost { --_bg: transparent; --_fg: var(--vk-color-muted); --_edge: var(--vk-color-line); --_edge-w: 1px; --_lift: 0 0 0 transparent; }
+.vk-button--ghost:hover { --_fg: var(--vk-color-text); --_edge: var(--vk-color-text); }
+.vk-button--sm { min-height: 36px; padding: 0 var(--vk-space-3); font-size: var(--vk-text-sm); }
+
+:where([data-vibe="paper"]) .vk-button--secondary { --_bg: transparent; --_edge: var(--vk-color-text); --_edge-w: 1px; }
+/* The Paper board mockup's .pp-btn, for signal (its reply) and ghost: a 1px border outside 16px of padding (17px here, the
+   edge being drawn inside), 6px gaps, the page's 1.45 line, and the signal on a 1px edge. Paper's secondary keeps 0.0.3's
+   form (16px, 8px gaps), which the other Paper mockups draw. */
+:where([data-vibe="paper"]) .vk-button--signal, :where([data-vibe="paper"]) .vk-button--ghost { gap: 6px; padding: 0 17px; line-height: 1.45; }
+:where([data-vibe="paper"]) .vk-button--signal { --_edge-w: 1px; --_lift: 0 0 0 transparent; }
+:where([data-vibe="paper"]) .vk-button--sm { padding: 0 var(--vk-space-3); }
+:where([data-vibe="studio"]) .vk-button--secondary { --_bg: transparent; --_edge: var(--vk-color-rule); --_edge-w: 1.5px; font-weight: 700; }
+:where([data-vibe="studio"]) .vk-button--secondary:hover { --_bg: var(--vk-color-text); --_fg: var(--vk-color-bg); }
+:where([data-vibe="studio"]) .vk-button--danger { --_bg: transparent; --_edge: var(--vk-color-rule); --_edge-w: 2.5px; }
+:where([data-vibe="studio"]) .vk-button--sm { gap: 6px; min-height: 32px; padding: 0 12px; font-size: 13px; font-weight: 700; }
+:where([data-vibe="studio"]) .vk-button--secondary.vk-button--sm { --_edge-w: 1px; padding: 0 13px; }
+:where([data-vibe="quiet"]) .vk-button--secondary { --_edge: var(--vk-color-text); }
+
+.vk-button:active { transform: translateY(1px); }
+.vk-button:disabled, .vk-button[aria-disabled="true"] { opacity: 0.5; cursor: not-allowed; }
+.vk-button[aria-busy="true"] { opacity: 1; --_bg: var(--vk-color-raised); --_fg: var(--vk-color-muted); --_edge: var(--vk-color-line); --_edge-w: 2px; }
+.vk-button[aria-pressed="true"] { --_bg: var(--vk-color-primary); --_fg: var(--vk-color-primary-fg); }
+
+/* text, per vibe. Pressed is the ink word, never a filled box. */
+.vk-button--text[aria-pressed="true"] { --_bg: transparent; --_fg: var(--vk-color-text); }
+.vk-button--text:active { transform: none; }
+:where([data-vibe="daylight"]) .vk-button--text { padding: 0 8px; font-weight: 600; font-size: 15px; }
+:where([data-vibe="paper"]) .vk-button--text { --_fg: var(--vk-color-muted); padding: 0 12px; font: 400 14px / 1 var(--vk-font-body); }
+:where([data-vibe="paper"]) .vk-button--text:hover, :where([data-vibe="paper"]) .vk-button--text[aria-pressed="true"] { --_fg: var(--vk-color-text); }
+:where([data-vibe="studio"]) .vk-button--text { padding: 0 8px 0 0; font: 700 13.5px / 1 var(--vk-font-body); text-decoration: underline; text-decoration-thickness: 1.5px; text-underline-offset: 3px; }
+:where([data-vibe="quiet"]) .vk-button--text { min-height: var(--vk-target-min); padding: 0; font: 400 18px / 1.4 var(--vk-font-body); text-decoration: underline; text-underline-offset: 4px; }
+:where([data-vibe="quiet"]) .vk-button--text:hover { text-decoration-thickness: 2px; }
+:where([data-vibe="quiet"]) .vk-button--text[aria-pressed="true"] { font-weight: 700; text-decoration: none; }
+/* Focus adds the ring to the button's own edge and lift, so focus never loses them. */
+.vk-button:focus-visible { box-shadow: var(--vk-focus), inset 0 0 0 var(--_edge-w) var(--_edge), var(--_lift); }
+
+.vk-button__icon { display: inline-grid; place-items: center; }
+.vk-button__stack { display: inline-grid; }
+.vk-button__stack > * { grid-area: 1 / 1; }
+.vk-button__text[data-shown="false"] { visibility: hidden; }
+
+@media (forced-colors: active) {
+  .vk-button { border: 1px solid ButtonText; }
+}
+.vk-button--busy { pointer-events: none; }
+}

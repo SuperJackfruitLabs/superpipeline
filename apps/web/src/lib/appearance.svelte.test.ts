@@ -9,7 +9,7 @@ const writer = (c: string) => { written.push(c); document.cookie = c; };
 
 function reset(): void {
   document.cookie = 'vk_appearance=; Max-Age=0; Path=/';
-  for (const a of ['data-vibe', 'data-theme', 'data-phase', 'data-time']) html().removeAttribute(a);
+  for (const a of ['data-vibe', 'data-theme', 'data-phase', 'data-time', 'data-accent']) html().removeAttribute(a);
   localStorage.clear();
   written.length = 0;
 }
@@ -21,8 +21,6 @@ describe('AppearanceStore', () => {
 
   it('a first visit is Daylight following the sun: light at noon', () => {
     s.init(at(13));
-    expect(html().getAttribute('data-vibe')).toBe('daylight');
-    expect(html().getAttribute('data-theme')).toBe('light');
     expect(html().getAttribute('data-phase')).toBe('noon');
     expect(html().getAttribute('data-time')).toBe('strong');
   });
@@ -30,15 +28,12 @@ describe('AppearanceStore', () => {
   it('following the sun is dark at night', () => {
     s.init(at(23));
     expect(s.theme).toBe('dark');
-    expect(html().getAttribute('data-theme')).toBe('dark');
   });
 
   it('reads the cookie', () => {
     document.cookie = 'vk_appearance=paper.dark.subtle.0; Path=/';
     s.init(at(13));
-    expect(s.value).toEqual({ vibe: 'paper', theme: 'dark', timeStrength: 'subtle', useLocation: false });
-    expect(html().getAttribute('data-vibe')).toBe('paper');
-    expect(html().getAttribute('data-theme')).toBe('dark');
+    expect(s.value).toMatchObject({ vibe: 'paper', theme: 'dark', timeStrength: 'subtle', useLocation: false });
   });
 
   it('a malformed cookie falls back to the defaults and does not throw', () => {
@@ -54,7 +49,6 @@ describe('AppearanceStore', () => {
     const c = written.at(-1)!;
     expect(c).toMatch(/^vk_appearance=studio\.sun\.strong\.0; /);
     expect(c).not.toMatch(/Domain=/i);
-    expect(html().getAttribute('data-vibe')).toBe('studio');
   });
 
   it('choosing Quiet turns time of day off while it was still the default', () => {
@@ -136,5 +130,35 @@ describe('AppearanceStore', () => {
 
   it('rounds a place to one decimal', () => {
     expect(roughPlace({ latitude: 51.5072, longitude: -0.1276 })).toEqual({ latitude: 51.5, longitude: -0.1 });
+  });
+});
+
+describe('accent', () => {
+  it('defaults to the product colour, writes the choice into the cookie and paints data-accent', () => {
+    let cookie = '';
+    reset();
+    document.documentElement.setAttribute('data-product', 'superpipeline');
+    const store = new AppearanceStore((c) => { cookie = c; });
+    store.init();
+    expect(store.accent).toBe('product');
+    store.setAccent('violet');
+    expect(cookie).toMatch(/superpipeline:violet/);
+    expect(document.documentElement.dataset.accent).toBe('violet');
+    store.setAccent('product');
+    expect(cookie).not.toMatch(/superpipeline:/);
+    expect(document.documentElement.dataset.accent).toBe('product');
+    store.dispose();
+  });
+  it('leaves data-vibe and data-theme to VibeRoot (one owner per attribute)', () => {
+    reset();
+    const el = document.documentElement;
+    const store = new AppearanceStore(() => {});
+    store.init();
+    store.setAccent('jade');
+    expect(el.dataset.accent).toBe('jade');
+    expect(el.dataset.phase).toBeTruthy();
+    expect(el.hasAttribute('data-vibe')).toBe(false);
+    expect(el.hasAttribute('data-theme')).toBe(false);
+    store.dispose();
   });
 });

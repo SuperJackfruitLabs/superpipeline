@@ -15,7 +15,7 @@
 import type { Env } from '../env';
 import { planeAudience } from './hub-jwt';
 import { random256, challengeFor, constantTimeEqual, readCookie, TOKEN_COOKIE } from './hub-oauth';
-import { entitles, orgPlaneMode, verifyOrgPlaneToken, type OrgPlaneConfig } from './org-plane';
+import { entitles, orgPlaneMode, verifyOrgPlaneToken, type OrgPlaneClaims, type OrgPlaneConfig } from './org-plane';
 import { ensureOrgTenant, provisionOrgHuman } from './org-tenancy';
 import { productNotEnabled } from './org-plane-resolve';
 import { signSession, sessionSetCookie, sessionClearCookie, SESSION_TTL_MS } from './session';
@@ -174,7 +174,7 @@ export async function handlePlaneSignInRoute(
       headers.set('Location', '/?signin=no-account');
       return new Response(null, { status: 302, headers });
     }
-    const name = claims.email ?? 'Member';
+    const name = displayName(claims);
     const session = await signSession({ userId: human.userId, tenantId, name, exp: Date.now() + SESSION_TTL_MS }, env.SESSION_SECRET);
     headers.set('Location', '/');
     headers.append('Set-Cookie', sessionSetCookie(session, { secure: true }));
@@ -268,4 +268,100 @@ export async function handlePlaneSignInRoute(
 
   // /hub/callback: the plane is never configured to redirect here.
   return Response.json({ error: 'not used when signing in through the organization plane' }, { status: 404 });
+}
+
+const DEV_ISSUER = 'accounts.superjackfruit.com';
+const unavailable = () => Response.json({ ok: false, reason: 'plane_unavailable', retryable: true }, { status: 503, headers: { 'Retry-After': '5', 'Cache-Control': 'no-store' } });
+const answerJson = (body: Record<string, unknown>, headers: Headers = new Headers()) => {
+  headers.set('Cache-Control', 'no-store');
+  return Response.json(body, { headers });
+};
+
+/** The session's display name (D-4): the plane's `name` claim, else the email, else "Member". */
+export function displayName(claims: { name?: unknown; email?: string }): string {
+  return typeof claims.name === 'string' && claims.name.trim() !== '' ? claims.name.trim() : claims.email ?? 'Member';
+}
+
+/** A signed session for a renewed token, or null when it is not a person who may sign in here. */
+async function sessionFromClaims(env: Env, claims: OrgPlaneClaims): Promise<string | null> {
+  if (!entitles(claims) || claims.principalKind !== 'human' || claims.act) return null;
+  const tenantId = await ensureOrgTenant(env.DB, claims.org);
+  const human = await provisionOrgHuman(env.DB, tenantId, claims);
+  if (!human) return null;
+  return signSession({ userId: human.userId, tenantId, name: displayName(claims), exp: Date.now() + SESSION_TTL_MS }, env.SESSION_SECRET!);
+}
+
+/**
+ * Defence in depth against a cross-site POST. The refresh cookie is SameSite=Strict, so a browser
+ * never sends it on a cross-site request anyway; this refuses one outright, before anything is
+ * spent: a `Sec-Fetch-Site` other than same-origin/none, or an `Origin` that is not this app's.
+ */
+function crossSiteRefusal(request: Request, env: Env): Response | null {
+  const site = request.headers.get('Sec-Fetch-Site');
+  const origin = request.headers.get('Origin');
+  let foreign = site !== null && site !== 'same-origin' && site !== 'none';
+  if (!foreign && origin !== null) {
+    try { foreign = origin !== new URL(planeAudience(request, env)).origin; } catch { foreign = true; }
+  }
+  return foreign ? Response.json({ ok: false, reason: 'forbidden' }, { status: 403, headers: { 'Cache-Control': 'no-store' } }) : null;
+}
+
+/**
+ * POST /hub/session: renew a lapsed session without leaving the page. It lives under /hub/ because the
+ * refresh cookie is Path=/hub. It spends the refresh cookie, re-signs the session and rotates the
+ * cookies exactly as /hub/token does. No token ever appears in the body: the answer is {ok} and a
+ * reason, and the credentials travel only as HttpOnly cookies. A refused grant is NOT a sign-out,
+ * so the refresh cookie is left for another tab that may already hold a newer one. GitHub sign-in
+ * has no refresh token, so it answers no_refresh and mints nothing.
+ */
+export async function handleSessionRenewal(
+  request: Request,
+  env: Env,
+  fetchImpl: typeof fetch = fetch,
+  sleep: (ms: number) => Promise<void> = (ms) => new Promise((r) => setTimeout(r, ms)),
+): Promise<Response> {
+  if (request.method !== 'POST') return Response.json({ error: 'method not allowed' }, { status: 405, headers: { Allow: 'POST' } });
+  const mode = orgPlaneMode(env);
+  if (mode.kind === 'off') {
+    if (env.DEV_AUTH === 'true') {
+      // Dev stub, steered by the refresh cookie: `refused` and `slow` let e2e reach both outcomes.
+      // It mints nothing: dev sign-in is the X-Tenant-Id header, which needs no renewal.
+      const v = readCookie(request, REFRESH_COOKIE);
+      if (v === 'refused') return answerJson({ ok: false, reason: 'login_required', issuer: DEV_ISSUER, reauthorize: '/auth/login' });
+      if (v === 'slow') await sleep(10_000);
+      return answerJson({ ok: true });
+    }
+    return answerJson({ ok: false, reason: 'no_refresh' });
+  }
+  const crossSite = crossSiteRefusal(request, env);
+  if (crossSite) return crossSite;
+  if (mode.kind === 'invalid' || !env.SESSION_SECRET) return unavailable();
+  const { cfg } = mode;
+  const issuer = new URL(cfg.issuer).host;
+  const refused = () => answerJson({ ok: false, reason: 'login_required', issuer, reauthorize: '/auth/login' });
+
+  const refresh = readCookie(request, REFRESH_COOKIE);
+  if (!refresh) return answerJson({ ok: false, reason: 'no_refresh' });
+  const grant = await tokenGrant(cfg, { grant_type: 'refresh_token', refresh_token: refresh }, fetchImpl);
+  if (!grant.ok) return grant.refused ? refused() : unavailable();
+  const tokens = grant.tokens;
+  const claims = await verifyOrgPlaneToken(tokens.access_token!, cfg, cfg.audience, fetchImpl);
+  if (claims && !entitles(claims)) return refused();
+  const session = claims ? await sessionFromClaims(env, claims) : null;
+  if (!session) return refused();
+
+  const headers = new Headers();
+  headers.append('Set-Cookie', sessionSetCookie(session, { secure: true }));
+  headers.append('Set-Cookie', tokenCookie(tokens.access_token!, ttlOf(tokens)));
+  let next: string | null = tokens.refresh_token ?? null;
+  if (next) {
+    const hub = await hubAudienceToken(cfg, env, next, fetchImpl);
+    if (hub) {
+      headers.append('Set-Cookie', hubAudCookie(hub.access_token!, ttlOf(hub)));
+      if (hub.refresh_token) next = hub.refresh_token;
+    }
+  }
+  // The plane rotates refresh tokens: the old one is spent, so the cookie always carries the newest.
+  headers.append('Set-Cookie', refreshCookie(next ?? '', next ? REFRESH_MAX_AGE_S : 0));
+  return answerJson({ ok: true }, headers);
 }

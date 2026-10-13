@@ -1,278 +1,155 @@
+<!-- apps/web/src/lib/components/Telemetry.svelte -->
 <script lang="ts">
-  import { getUsage, getBoardEvents, type UsageSummary, type BoardEvent } from '$lib/api';
+  import { Button, Face } from '@superjackfruit/vibekit';
+  import { viewport } from '$lib/viewport.svelte';
+  /** Spend, in detail — by day, agent, board, model and card, plus the board's own log. */
+  import './operate/spend.css';
+  import PageMain from '$lib/components/parts/PageMain.svelte';
+  import LineIcon from '$lib/components/parts/LineIcon.svelte';
+  import { displayAgent } from '$lib/names';
   import { app } from '$lib/stores/app.svelte';
-  import AgentFace from '$lib/components/AgentFace.svelte';
-  import { appearance } from '$lib/appearance.svelte';
-  import { FACE_VARIANT } from '$lib/layouts';
+  import BoardLog from './operate/BoardLog.svelte';
+  import BudgetCaps from './operate/BudgetCaps.svelte';
+  import { avgPerCard, barHeight, budgetLine, busiestLine, cardsWithSpend, chartLabel, compactCount, dayLabel, dayRange, pctOf, tokenPair, usd } from './operate/spend-format';
+  import { TelemetryModel } from './operate/telemetry-model.svelte';
+  import type { SpendLayoutProps } from './operate/spend-types';
 
-  // ---- reactive data ----
-  let usage = $state<UsageSummary | null>(null);
-  let loading = $state(false);
-  // Distinct from `usage === null`: a failed fetch used to arrive as a zeroed summary, so a
-  // broken telemetry API read exactly like a board that had spent nothing.
-  let usageError = $state<string | null>(null);
-  let events = $state<BoardEvent[]>([]);
-  let eventsError = $state<string | null>(null);
-  let window_ = $state<'5h' | '7d'>('7d');
-
-  // ---- derived from store ----
-  const board = $derived(app.board);
-  const agents = $derived(app.agents);
-  const boardId = $derived(app.boardId);
-
-  // budget metrics from board snapshot
-  const totalCost = $derived(board?.usage.totalCostUsd ?? 0);
-  const budgetUsd = $derived(board?.usage.budgetUsd ?? null);
-  const overBudget = $derived(board?.usage.overBudget ?? false);
-  const burnPct = $derived(
-    budgetUsd && budgetUsd > 0 ? Math.min(100, Math.round((totalCost / budgetUsd) * 100)) : 0,
-  );
-
-  // token totals from usage report
-  const totalInput = $derived(usage?.totalInputTokens ?? 0);
-  const totalOutput = $derived(usage?.totalOutputTokens ?? 0);
-  const totalTokens = $derived(totalInput + totalOutput);
-
-  // avg cost per card — derived from usage window (consistent data window)
-  const avgCostPerCard = $derived(
-    usage && usage.byCard.length > 0
-      ? usage.totalCostUsd / Math.max(1, usage.byCard.length)
-      : null,
-  );
-
-  // helper: agent name from id
-  function agentName(id: string): string {
-    return agents.find((a) => a.id === id)?.name ?? id;
-  }
-
-  // helper: card title from id
-  function cardTitle(id: string): string {
-    return board?.cards.find((c) => c.id === id)?.title ?? id;
-  }
-
-  // helper: format USD
-  function usd(n: number): string {
-    return '$' + n.toFixed(2);
-  }
-
-  // helper: format token count
-  function fmtK(n: number): string {
-    return n >= 1000 ? (n / 1000).toFixed(1) + 'k' : String(n);
-  }
-
-  // max cost for bar scaling
-  const maxAgentCost = $derived(
-    usage?.byAgent.length ? Math.max(...usage.byAgent.map((a) => a.costUsd), 0.001) : 0.001,
-  );
-  const maxModelCost = $derived(
-    usage?.byModel.length ? Math.max(...usage.byModel.map((m) => m.costUsd), 0.001) : 0.001,
-  );
-  const maxCardCost = $derived(
-    usage?.byCard.length ? Math.max(...usage.byCard.map((c) => c.costUsd), 0.001) : 0.001,
-  );
-
-  // ---- fetch ----
-  async function load(id: string, win: '5h' | '7d') {
-    loading = true;
-    usageError = null;
-    try {
-      usage = await getUsage(id, win);
-    } catch (e) {
-      usage = null;
-      usageError = e instanceof Error ? e.message : String(e);
-    } finally {
-      loading = false;
-    }
-    eventsError = null;
-    try {
-      events = await getBoardEvents(id, 60);
-    } catch (e) {
-      events = [];
-      eventsError = e instanceof Error ? e.message : String(e);
-    }
-  }
-
-  function eventSummary(e: BoardEvent): string {
-    const p = e.payload as Record<string, unknown>;
-    const bits = ['cardId', 'agentId', 'to', 'from', 'name', 'reason', 'decision']
-      .filter((k) => typeof p[k] === 'string')
-      .map((k) => `${k}=${p[k] as string}`);
-    return bits.join(' · ');
-  }
-
-  function timeOf(iso: string): string {
-    return iso.slice(11, 19);
-  }
-
-  // re-fetch whenever boardId or window changes (covers first render too)
-  $effect(() => {
-    if (boardId) load(boardId, window_);
-  });
+  const _props: SpendLayoutProps = $props();
+  const model = new TelemetryModel();
+  $effect(() => { if (app.boardId) void model.load(app.boardId, model.window_); });
+  const u = $derived(model.usage);
+  const budget = $derived(budgetLine(model.spend, model.budgetUsd, model.overBudget));
+  const fill = $derived(model.budgetUsd ? Math.min(100, pctOf(model.spend, model.budgetUsd)) : 0);
+  const maxOf = (xs: number[]) => Math.max(0.000001, ...xs);
+  function setCap(e: MouseEvent): void { e.preventDefault(); document.getElementById('cap-b1')?.focus(); }
 </script>
 
-<div class="tele-pad scroll flex-1 overflow-y-auto">
-  <!-- header row -->
-  <div class="mb-4 flex items-end justify-between gap-4 flex-wrap">
-    <div>
-      <div class="eyebrow mb-1">telemetry</div>
-      <h1 class="wordmark text-xl">Agent telemetry</h1>
-      <p class="text-muted-foreground mt-1 text-sm">
-        {board?.name ?? 'Board'} · last
-        <button
-          class="mono inline-flex items-center px-1 align-middle text-xs underline underline-offset-2 hover:text-foreground transition"
-          style="min-height:max(var(--tap),28px)"
-          onclick={() => { window_ = window_ === '7d' ? '5h' : '7d'; }}
-        >
-          {window_ === '7d' ? '7 days' : '5 hours'}
-        </button>
-        {#if loading}<span class="mono text-muted-foreground text-xs ml-2">loading…</span>{/if}
-        {#if usageError}<span class="mono text-coral text-xs ml-2">couldn't load usage — {usageError}</span>{/if}
-      </p>
+{#snippet empty(title: string, body: string)}
+  <div class="emptyp"><p class="t-body">{title}</p><p class="t-meta">{body}</p></div>
+{/snippet}
+{#snippet pending()}
+  {#if model.usageError}
+    <div class="emptyp"><p class="t-body">Couldn't load spend — {model.usageError}. <Button variant="quiet"  type="button" onclick={() => app.boardId && void model.load(app.boardId, model.window_)}>Try again</Button></p></div>
+  {:else}
+    <div class="emptyp"><p class="t-meta" role="status">Loading spend…</p></div>
+  {/if}
+{/snippet}
+
+<PageMain scope="scr-spend">
+  <div style="display: flex; flex-direction: column; gap: var(--vk-space-2);">
+    <a class="t-meta back-link" href="/b/{app.boardId}/operate"><LineIcon name="chev-left" size={16} />Back to Operate</a>
+    <p class="t-eyebrow">Operate · spend, in detail</p>
+    <div style="display: flex; flex-wrap: wrap; align-items: flex-end; gap: var(--vk-space-4);">
+      <div style="flex: 1 1 320px; display: flex; flex-direction: column; gap: 4px;">
+        <svelte:element this={viewport.phone ? 'h2' : 'h1'} class="t-h1">Agent spend</svelte:element>
+        <p class="t-body" style="color: var(--vk-color-muted);">{model.board?.name ?? ''} · what agents cost, by day, agent, board, model and card.</p>
+      </div>
+      <div class="seg" role="group" aria-label="Time window">
+        <button aria-pressed={model.window_ === '7d'} type="button" onclick={() => (model.window_ = '7d')}>Last 7 days</button>
+        <button aria-pressed={model.window_ === '5h'} type="button" onclick={() => (model.window_ = '5h')}>Last 5 hours</button>
+      </div>
     </div>
   </div>
 
-  <!-- ===== metric cards ===== -->
-  <div class="tele-grid">
-    <!-- Spend / budget -->
-    <div class="tele-metric">
-      <div class="tele-metric-k">Spend / budget</div>
-      <div class="tele-metric-v" style={overBudget ? 'color:var(--coral)' : ''}>
-        {usd(totalCost)}
-        {#if budgetUsd}<small class="text-muted-foreground font-medium text-sm">/ {usd(budgetUsd)}</small>{/if}
-      </div>
-      {#if budgetUsd}
-        <div class="tele-burn" class:tele-burn-over={overBudget}>
-          <i style="width:{burnPct}%"></i>
-        </div>
-        <div
-          class="mono mt-1 text-[10px]"
-          style={overBudget ? 'color:var(--coral)' : 'color:var(--muted-foreground)'}
-        >
-          {burnPct}% of budget used{overBudget ? ' · over budget' : ''}
-        </div>
+  <div class="tiles">
+    <div class="panel tile">
+      <p class="t-eyebrow">Spend vs budget</p>
+      <p class="big">{u ? usd(model.spend) : '—'}</p>
+      <div class="bar" role="img" aria-label="{fill}% of budget used"><i style="width: {fill}%;{model.overBudget ? ' background: var(--vk-color-signal);' : ''}"></i></div>
+      <p class="t-meta">{budget.text}{#if budget.setCap}<a href="#caps1" onclick={setCap}>Set a cap</a>{/if}</p>
+    </div>
+    <div class="panel tile">
+      <p class="t-eyebrow">Average cost per card</p>
+      <p class="big">{u ? avgPerCard(u.totalCostUsd, u.byCard.length) : '—'}</p>
+      <p class="t-meta">{u ? cardsWithSpend(u.byCard.length) : 'Loading spend…'}</p>
+    </div>
+    <div class="panel tile">
+      <p class="t-eyebrow">Tokens</p>
+      <p class="big">{u ? compactCount(u.totalInputTokens + u.totalOutputTokens) : '—'}</p>
+      <p class="t-meta">{u ? tokenPair(u.totalInputTokens, u.totalOutputTokens) : 'Loading spend…'}</p>
+    </div>
+    <div class="panel tile">
+      <p class="t-eyebrow">Unpriced records</p>
+      <p class="big">{u ? String(u.unpricedRecords) : '—'}</p>
+      <p class="t-meta">Usage records without cost data</p>
+    </div>
+  </div>
+
+  <section class="panel" aria-labelledby="day-h1">
+    <div class="panel-head">
+      <h2 class="t-h2" id="day-h1">Spend by day</h2>
+      <span class="t-meta">{dayRange(model.days.map((d) => d.day))}</span>
+      <span class="t-meta" style="margin-left: auto;">{u ? busiestLine(model.days) : 'Loading spend…'}</span>
+    </div>
+    <div class="chart" role="img" aria-label={chartLabel(model.days)}>
+      {#each model.days as d (d.day)}
+        <div class="col"><span class="t-meta t-num">{usd(d.costUsd)}</span><span class={d.costUsd === 0 ? 'b zero' : 'b'} style="height: {barHeight(d.costUsd, model.maxDay)}px;"></span></div>
+      {/each}
+    </div>
+    <div class="days" aria-hidden="true">{#each model.days as d (d.day)}<span class="t-meta">{dayLabel(d.day)}</span>{/each}</div>
+  </section>
+
+  <div class="grid2">
+    <section class="panel" aria-label="Spend by agent">
+      <div class="panel-head"><h2 class="t-h2">By agent</h2></div>
+      {#if !u}{@render pending()}
+      {:else if u.byAgent.length === 0}{@render empty('No agent cost data yet.', 'Agents on this board have not reported cost in this window. When they do, each shows with its face, a bar and its total.')}
       {:else}
-        <div class="mono text-muted-foreground mt-1 text-[10px]">no budget cap set</div>
-      {/if}
-    </div>
-
-    <!-- Avg cost / card -->
-    <div class="tele-metric">
-      <div class="tele-metric-k">Avg cost / card</div>
-      <div class="tele-metric-v">{avgCostPerCard !== null ? usd(avgCostPerCard) : '—'}</div>
-      <div class="mono text-muted-foreground mt-1 text-[10px]">
-        {usage?.byCard.length ?? 0} cards with spend in window
-      </div>
-    </div>
-
-    <!-- Total tokens -->
-    <div class="tele-metric">
-      <div class="tele-metric-k">Total tokens</div>
-      <div class="tele-metric-v">{fmtK(totalTokens)}</div>
-      <div class="mono text-muted-foreground mt-1 text-[10px]">
-        in {fmtK(totalInput)} · out {fmtK(totalOutput)}
-      </div>
-    </div>
-
-    <!-- Unpriced records -->
-    <div class="tele-metric">
-      <div class="tele-metric-k">Unpriced records</div>
-      <div class="tele-metric-v">{usage?.unpricedRecords ?? 0}</div>
-      <div class="mono text-muted-foreground mt-1 text-[10px]">records without cost data</div>
-    </div>
-  </div>
-
-  <!-- ===== two-column panels ===== -->
-  <div class="tele-two">
-    <!-- By agent -->
-    <div class="tele-panel">
-      <div class="tele-panel-h">By agent</div>
-      {#if usage?.byAgent.length}
-        <div class="tele-bars">
-          {#each usage.byAgent as row (row.agentId)}
-            {@const name = agentName(row.agentId)}
-            {@const pct = Math.round((row.costUsd / maxAgentCost) * 100)}
-            <div class="tele-barrow">
-              <span class="flex items-center gap-1.5 truncate">
-                <AgentFace agentId={row.agentId} name={name} iconUrl={agents.find((a) => a.id === row.agentId)?.iconUrl ?? null} size={20} variant={FACE_VARIANT[appearance.value.vibe]} withName />
-              </span>
-              <span class="tele-track"><i style="width:{pct}%"></i></span>
-              <span class="tele-num">{usd(row.costUsd)}</span>
-            </div>
+        {@const max = maxOf(u.byAgent.map((a) => a.costUsd))}
+        <ul style="list-style: none; margin: 0; padding: 0;">
+          {#each u.byAgent as a (a.agentId)}
+            {@const name = displayAgent(a.agentId, app.agents)}
+            <li class="rrow"><span class="face" style="width: 24px; height: 24px;"><Face id={name} label={name} mood="resting" size={24} /></span><span class="t-body">{name}</span><div class="bar"><i style="width: {pctOf(a.costUsd, max)}%;"></i></div><span class="money t-num">{usd(a.costUsd)}</span></li>
           {/each}
-        </div>
-      {:else}
-        <p class="tele-empty">No agent cost data yet.</p>
+        </ul>
       {/if}
-    </div>
-
-    <!-- By model -->
-    <div class="tele-panel">
-      <div class="tele-panel-h">By model</div>
-      {#if usage?.byModel.length}
-        <div class="tele-bars">
-          {#each usage.byModel as row (row.model)}
-            {@const pct = Math.round((row.costUsd / maxModelCost) * 100)}
-            <div class="tele-barrow">
-              <span class="mono truncate text-xs">{row.model}</span>
-              <span class="tele-track"><i style="width:{pct}%"></i></span>
-              <span class="tele-num">{usd(row.costUsd)}</span>
-            </div>
+    </section>
+    <section class="panel" aria-label="Spend by board">
+      <div class="panel-head"><h2 class="t-h2">By board</h2><span class="t-meta">all your boards</span></div>
+      {#if !u || model.boardTotals === null}{@render pending()}
+      {:else if model.boardTotals.every((b) => b.costUsd === 0)}{@render empty('No board recorded spend.', 'Your boards side by side, this one highlighted, once any of them records cost.')}
+      {:else}
+        {@const max = maxOf(model.boardTotals.map((b) => b.costUsd))}
+        <ul style="list-style: none; margin: 0; padding: 0;">
+          {#each model.boardTotals as b, i (b.id)}
+            <li class={b.id === app.boardId ? 'rrow here' : 'rrow'}><span class="t-meta t-num">{i + 1}</span><span class="t-body">{b.name}</span><div class="bar"><i style="width: {pctOf(b.costUsd, max)}%;"></i></div><span class="money t-num">{usd(b.costUsd)}</span></li>
           {/each}
-        </div>
-      {:else}
-        <p class="tele-empty">No model cost data yet.</p>
+        </ul>
       {/if}
-    </div>
+    </section>
+    <section class="panel" aria-label="Spend by model">
+      <div class="panel-head"><h2 class="t-h2">By model</h2></div>
+      {#if !u}{@render pending()}
+      {:else if u.byModel.length === 0}{@render empty('No model cost data yet.', 'Each model the agents used, with its total.')}
+      {:else}
+        {@const max = maxOf(u.byModel.map((m) => m.costUsd))}
+        <ul style="list-style: none; margin: 0; padding: 0;">
+          {#each u.byModel as m, i (m.model)}
+            <li class="rrow"><span class="t-meta t-num">{i + 1}</span><span class="t-body">{m.model}</span><div class="bar"><i style="width: {pctOf(m.costUsd, max)}%;"></i></div><span class="money t-num">{usd(m.costUsd)}</span></li>
+          {/each}
+        </ul>
+      {/if}
+    </section>
+    <section class="panel" aria-label="Top spenders by card">
+      <div class="panel-head"><h2 class="t-h2">Top spenders · by card</h2></div>
+      {#if !u}{@render pending()}
+      {:else if u.byCard.length === 0}{@render empty('No card cost data yet.', 'The eight cards that cost the most, linked to the card.')}
+      {:else}
+        {@const top = [...u.byCard].sort((a, b) => b.costUsd - a.costUsd).slice(0, 8)}
+        {@const max = maxOf(top.map((c) => c.costUsd))}
+        <ul style="list-style: none; margin: 0; padding: 0;">
+          {#each top as c, i (c.cardId)}
+            <li class="rrow"><span class="t-meta t-num">{i + 1}</span><a class="t-body" href="/b/{app.boardId}/c/{c.cardId}" style="overflow-wrap: anywhere;">{model.cardTitle(c.cardId) ?? c.cardId}</a><div class="bar"><i style="width: {pctOf(c.costUsd, max)}%;"></i></div><span class="money t-num">{usd(c.costUsd)}</span></li>
+          {/each}
+        </ul>
+      {/if}
+    </section>
+    <BudgetCaps suffix="1" />
+    <section class="panel" aria-label="Coming next">
+      <div class="panel-head"><h2 class="t-h2">Coming next</h2></div>
+      <div class="panel-body"><p class="t-body" style="color: var(--vk-color-muted);">Success rate, time in stage, throughput and gate rejections arrive with telemetry aggregation (tier 2).</p></div>
+    </section>
   </div>
 
-  <!-- By card (full width) -->
-  <div class="tele-panel mt-3">
-    <div class="tele-panel-h">Top spenders · by card</div>
-    {#if usage?.byCard.length}
-      <div class="tele-bars">
-        {#each usage.byCard.slice(0, 8) as row (row.cardId)}
-          {@const title = cardTitle(row.cardId)}
-          {@const pct = Math.round((row.costUsd / maxCardCost) * 100)}
-          <div class="tele-barrow tele-barrow-wide">
-            <span class="truncate text-xs">{title}</span>
-            <span class="tele-track"><i style="width:{pct}%"></i></span>
-            <span class="tele-num">{usd(row.costUsd)}</span>
-          </div>
-        {/each}
-      </div>
-    {:else}
-      <p class="tele-empty">No card cost data yet.</p>
-    {/if}
-  </div>
-
-  <!--
-    The board log.
-
-    `BoardDO.getEvents` had no route and no caller: every state change was appended to `events`
-    and there was no way to read them back, so the only audit trail the product keeps was
-    unreachable — which is the same as not keeping one.
-  -->
-  <div class="tele-panel mt-5">
-    <div class="eyebrow mb-2">board log</div>
-    {#if eventsError}
-      <p class="tele-empty">Couldn't load the board log — {eventsError}</p>
-    {:else if events.length === 0}
-      <p class="tele-empty">Nothing has happened on this board yet.</p>
-    {:else}
-      <div class="space-y-1">
-        {#each [...events].reverse() as e (e.seq)}
-          <div class="mono flex items-baseline gap-2 text-[11px]">
-            <span class="text-muted-foreground shrink-0">{timeOf(e.ts)}</span>
-            <span class="shrink-0">{e.type}</span>
-            <span class="text-muted-foreground truncate">{eventSummary(e)}</span>
-          </div>
-        {/each}
-      </div>
-    {/if}
-  </div>
-
-  <!-- Tier 2 note -->
-  <p class="eyebrow mt-5 leading-relaxed">
-    success rate · time-in-stage · throughput · gate-rejection — coming with the telemetry aggregation (Tier 2)
-  </p>
-</div>
+  <BoardLog events={model.events} error={model.eventsError} collapsedRows={8} fullLogHref="/b/{app.boardId}/operate/log" />
+</PageMain>

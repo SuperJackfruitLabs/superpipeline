@@ -1,0 +1,402 @@
+{
+ "SP-Board-Daylight": {
+  "w": 1440,
+  "h": 1148,
+  "title": "Board \u00b7 Daylight"
+ },
+ "SP-Board-Paper": {
+  "w": 1440,
+  "h": 1913,
+  "title": "Board \u00b7 Paper"
+ },
+ "SP-Board-Studio": {
+  "w": 1440,
+  "h": 2541,
+  "title": "Board \u00b7 Studio"
+ },
+ "SP-Board-Quiet": {
+  "w": 1440,
+  "h": 2297,
+  "title": "Board \u00b7 Quiet (Agent Onboarding)"
+ },
+ "SP-Card-Daylight": {
+  "w": 1440,
+  "h": 3120,
+  "title": "Stopped card \u00b7 Daylight"
+ },
+ "SP-Card-Paper": {
+  "w": 1440,
+  "h": 3500,
+  "title": "Stopped card \u00b7 Paper"
+ },
+ "SP-Card-Studio": {
+  "w": 1440,
+  "h": 3099,
+  "title": "Stopped card \u00b7 Studio"
+ },
+ "SP-Card-Quiet": {
+  "w": 1440,
+  "h": 3712,
+  "title": "Stopped card \u00b7 Quiet"
+ },
+ "SP-CardPage-Daylight": {
+  "w": 1440,
+  "h": 4192,
+  "title": "Card page \u00b7 Daylight"
+ },
+ "SP-CardPage-Paper": {
+  "w": 1440,
+  "h": 4011,
+  "title": "Card page \u00b7 Paper"
+ },
+ "SP-CardPage-Studio": {
+  "w": 1440,
+  "h": 2964,
+  "title": "Card page \u00b7 Studio"
+ },
+ "SP-CardPage-Quiet": {
+  "w": 1440,
+  "h": 4164,
+  "title": "Card page \u00b7 Quiet"
+ },
+ "SP-Card-States-Daylight": {
+  "w": 1440,
+  "h": 1831,
+  "title": "Card states \u00b7 Daylight"
+ },
+ "SP-Card-States-Paper": {
+  "w": 1440,
+  "h": 2225,
+  "title": "Card states \u00b7 Paper"
+ },
+ "SP-Card-States-Studio": {
+  "w": 1440,
+  "h": 2161,
+  "title": "Card states \u00b7 Studio"
+ },
+ "SP-Card-States-Quiet": {
+  "w": 1440,
+  "h": 2496,
+  "title": "Card states \u00b7 Quiet"
+ },
+ "SP-Operate-Daylight": {
+  "w": 1440,
+  "h": 2093,
+  "title": "Operate \u00b7 Daylight"
+ },
+ "SP-Operate-Paper": {
+  "w": 1440,
+  "h": 1900,
+  "title": "Operate \u00b7 Paper"
+ },
+ "SP-Operate-Studio": {
+  "w": 1440,
+  "h": 1910,
+  "title": "Operate \u00b7 Studio"
+ },
+ "SP-Operate-Quiet": {
+  "w": 1440,
+  "h": 3263,
+  "title": "Operate \u00b7 Quiet"
+ },
+ "SP-List-Daylight": {
+  "w": 1440,
+  "h": 1293,
+  "title": "List \u00b7 Daylight"
+ },
+ "SP-List-Paper": {
+  "w": 1440,
+  "h": 1650,
+  "title": "List \u00b7 Paper"
+ },
+ "SP-List-Studio": {
+  "w": 1440,
+  "h": 1457,
+  "title": "List \u00b7 Studio"
+ },
+ "SP-List-Quiet": {
+  "w": 1440,
+  "h": 2201,
+  "title": "List \u00b7 Quiet"
+ },
+ "SP-Board-Empty-Daylight": {
+  "w": 1440,
+  "h": 970,
+  "title": "Empty board \u00b7 Daylight"
+ },
+ "SP-Board-Empty-Paper": {
+  "w": 1440,
+  "h": 1060,
+  "title": "Empty board \u00b7 Paper"
+ },
+ "SP-Board-Empty-Studio": {
+  "w": 1440,
+  "h": 820,
+  "title": "Empty board \u00b7 Studio"
+ },
+ "SP-Board-Empty-Quiet": {
+  "w": 1440,
+  "h": 960,
+  "title": "Empty board \u00b7 Quiet"
+ },
+ "SP-Projects-Daylight": {
+  "w": 1440,
+  "h": 1311,
+  "title": "Board projects \u00b7 Daylight"
+ },
+ "SP-Projects-Paper": {
+  "w": 1440,
+  "h": 1412,
+  "title": "Board projects \u00b7 Paper"
+ },
+ "SP-Projects-Studio": {
+  "w": 1440,
+  "h": 1494,
+  "title": "Board projects \u00b7 Studio"
+ },
+ "SP-Projects-Quiet": {
+  "w": 1440,
+  "h": 1340,
+  "title": "Board projects \u00b7 Quiet"
+ },
+ "SP-Workspace-Agents-Daylight": {
+  "w": 1440,
+  "h": 2971,
+  "title": "Workspace agents \u00b7 Daylight"
+ },
+ "SP-Workspace-Agents-Paper": {
+  "w": 1440,
+  "h": 3079,
+  "title": "Workspace agents \u00b7 Paper"
+ },
+ "SP-Workspace-Agents-Studio": {
+  "w": 1440,
+  "h": 2900,
+  "title": "Workspace agents \u00b7 Studio"
+ },
+ "SP-Workspace-Agents-Quiet": {
+  "w": 1440,
+  "h": 3030,
+  "title": "Workspace agents \u00b7 Quiet"
+ },
+ "SP-Workspace-Other-Daylight": {
+  "w": 1440,
+  "h": 4156,
+  "title": "Workspace tabs \u00b7 Daylight"
+ },
+ "SP-Workspace-Other-Paper": {
+  "w": 1440,
+  "h": 4289,
+  "title": "Workspace tabs \u00b7 Paper"
+ },
+ "SP-Workspace-Other-Studio": {
+  "w": 1440,
+  "h": 4006,
+  "title": "Workspace tabs \u00b7 Studio"
+ },
+ "SP-Workspace-Other-Quiet": {
+  "w": 1440,
+  "h": 4320,
+  "title": "Workspace tabs \u00b7 Quiet"
+ },
+ "SP-Settings-Daylight": {
+  "w": 1440,
+  "h": 1967,
+  "title": "Board settings \u00b7 Daylight"
+ },
+ "SP-Settings-Paper": {
+  "w": 1440,
+  "h": 2074,
+  "title": "Board settings \u00b7 Paper"
+ },
+ "SP-Settings-Studio": {
+  "w": 1440,
+  "h": 2083,
+  "title": "Board settings \u00b7 Studio"
+ },
+ "SP-Settings-Quiet": {
+  "w": 1440,
+  "h": 2000,
+  "title": "Board settings \u00b7 Quiet"
+ },
+ "SP-Spend-Daylight": {
+  "w": 1440,
+  "h": 1997,
+  "title": "Agent spend \u00b7 Daylight"
+ },
+ "SP-Spend-Paper": {
+  "w": 1440,
+  "h": 2107,
+  "title": "Agent spend \u00b7 Paper"
+ },
+ "SP-Spend-Studio": {
+  "w": 1440,
+  "h": 2140,
+  "title": "Agent spend \u00b7 Studio"
+ },
+ "SP-Spend-Quiet": {
+  "w": 1440,
+  "h": 2020,
+  "title": "Agent spend \u00b7 Quiet"
+ },
+ "SP-Phone-Board-Daylight": {
+  "w": 390,
+  "h": 3729,
+  "title": "Board phone \u00b7 Daylight"
+ },
+ "SP-Phone-Board-Paper": {
+  "w": 390,
+  "h": 2983,
+  "title": "Board phone \u00b7 Paper"
+ },
+ "SP-Phone-Board-Studio": {
+  "w": 390,
+  "h": 2861,
+  "title": "Board phone \u00b7 Studio"
+ },
+ "SP-Phone-Board-Quiet": {
+  "w": 390,
+  "h": 3435,
+  "title": "Board phone \u00b7 Quiet"
+ },
+ "SP-Phone-Card-Daylight": {
+  "w": 390,
+  "h": 3068,
+  "title": "Card phone \u00b7 Daylight"
+ },
+ "SP-Phone-Card-Paper": {
+  "w": 390,
+  "h": 3902,
+  "title": "Card phone \u00b7 Paper"
+ },
+ "SP-Phone-Card-Studio": {
+  "w": 390,
+  "h": 3406,
+  "title": "Card phone \u00b7 Studio"
+ },
+ "SP-Phone-Card-Quiet": {
+  "w": 390,
+  "h": 4714,
+  "title": "Card phone \u00b7 Quiet"
+ },
+ "SP-Dlg-NewCard-Daylight": {
+  "w": 1440,
+  "h": 900,
+  "title": "New card \u00b7 Daylight"
+ },
+ "SP-Dlg-NewCard-Paper": {
+  "w": 1440,
+  "h": 900,
+  "title": "New card \u00b7 Paper"
+ },
+ "SP-Dlg-NewCard-Studio": {
+  "w": 1440,
+  "h": 900,
+  "title": "New card \u00b7 Studio"
+ },
+ "SP-Dlg-NewCard-Quiet": {
+  "w": 1440,
+  "h": 900,
+  "title": "New card \u00b7 Quiet"
+ },
+ "SP-Dlg-Palette-Daylight": {
+  "w": 1440,
+  "h": 900,
+  "title": "Command palette \u00b7 Daylight"
+ },
+ "SP-Dlg-Palette-Paper": {
+  "w": 1440,
+  "h": 900,
+  "title": "Command palette \u00b7 Paper"
+ },
+ "SP-Dlg-Palette-Studio": {
+  "w": 1440,
+  "h": 900,
+  "title": "Command palette \u00b7 Studio"
+ },
+ "SP-Dlg-Palette-Quiet": {
+  "w": 1440,
+  "h": 900,
+  "title": "Command palette \u00b7 Quiet"
+ },
+ "SP-Dlg-Appearance-Daylight": {
+  "w": 1440,
+  "h": 1295,
+  "title": "Appearance \u00b7 Daylight"
+ },
+ "SP-Dlg-Appearance-Paper": {
+  "w": 1440,
+  "h": 1313,
+  "title": "Appearance \u00b7 Paper"
+ },
+ "SP-Dlg-Appearance-Studio": {
+  "w": 1440,
+  "h": 1353,
+  "title": "Appearance \u00b7 Studio"
+ },
+ "SP-Dlg-Appearance-Quiet": {
+  "w": 1440,
+  "h": 1299,
+  "title": "Appearance \u00b7 Quiet"
+ },
+ "SP-Dlg-Move-Daylight": {
+  "w": 1440,
+  "h": 900,
+  "title": "Move card \u00b7 Daylight"
+ },
+ "SP-Dlg-Move-Paper": {
+  "w": 1440,
+  "h": 900,
+  "title": "Move card \u00b7 Paper"
+ },
+ "SP-Dlg-Move-Studio": {
+  "w": 1440,
+  "h": 900,
+  "title": "Move card \u00b7 Studio"
+ },
+ "SP-Dlg-Move-Quiet": {
+  "w": 1440,
+  "h": 900,
+  "title": "Move card \u00b7 Quiet"
+ },
+ "SP-Dlg-Reconnect-Daylight": {
+  "w": 1440,
+  "h": 900,
+  "title": "Reconnect \u00b7 Daylight"
+ },
+ "SP-Dlg-Reconnect-Paper": {
+  "w": 1440,
+  "h": 900,
+  "title": "Reconnect \u00b7 Paper"
+ },
+ "SP-Dlg-Reconnect-Studio": {
+  "w": 1440,
+  "h": 900,
+  "title": "Reconnect \u00b7 Studio"
+ },
+ "SP-Dlg-Reconnect-Quiet": {
+  "w": 1440,
+  "h": 900,
+  "title": "Reconnect \u00b7 Quiet"
+ },
+ "SP-Dlg-BoardSwitcher-Daylight": {
+  "w": 1440,
+  "h": 900,
+  "title": "Board switcher \u00b7 Daylight"
+ },
+ "SP-Dlg-BoardSwitcher-Paper": {
+  "w": 1440,
+  "h": 900,
+  "title": "Board switcher \u00b7 Paper"
+ },
+ "SP-Dlg-BoardSwitcher-Studio": {
+  "w": 1440,
+  "h": 900,
+  "title": "Board switcher \u00b7 Studio"
+ },
+ "SP-Dlg-BoardSwitcher-Quiet": {
+  "w": 1440,
+  "h": 900,
+  "title": "Board switcher \u00b7 Quiet"
+ }
+}

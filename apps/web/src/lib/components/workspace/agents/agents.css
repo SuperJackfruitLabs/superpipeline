@@ -1,0 +1,37 @@
+/* Ported verbatim from e2e/reference/mockups/SP-Workspace-Agents-Daylight, SP-Workspace-Agents-Paper, SP-Workspace-Agents-Quiet (prefixes alist, arow, editgrid, caps, pick, linked, menu, mi, tokrow, legend, banner, tokbox, colhead, where .scr-ws-agents) by scripts/pixel/extract-css.mjs. */
+:where(.scr-ws-agents) .alist { list-style: none; margin: 0; padding: 0; }
+:where(.scr-ws-agents) .arow { display: grid; grid-template-columns: 32px minmax(180px, 1.2fr) minmax(0, 2fr) auto 92px auto; align-items: center; gap: var(--vk-space-4); padding: var(--vk-space-3) var(--vk-space-5); border-top: 1px solid var(--vk-color-line); min-height: 64px; }
+:where(.scr-ws-agents) .arow:first-child { border-top: 0; }
+:where(.scr-ws-agents) .arow-edit { grid-template-columns: 32px minmax(0, 1fr); align-items: start; background: var(--vk-color-raised); }
+:where(.scr-ws-agents) .editgrid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--vk-space-4); }
+:where(.scr-ws-agents) .caps { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; min-width: 0; }
+:where(.scr-ws-agents) .pick { border: 0; cursor: pointer; min-height: 36px; padding: 0 12px; }
+:where(.scr-ws-agents) .pick[aria-pressed="true"] { background: var(--vk-color-primary); color: var(--vk-color-primary-fg); }
+:where(.scr-ws-agents) .pick[aria-pressed="false"] { background: var(--vk-color-surface); box-shadow: inset 0 0 0 1px var(--vk-color-line); color: var(--vk-color-muted); }
+:where(.scr-ws-agents) .linked { display: inline-flex; align-items: center; gap: 6px; color: var(--vk-color-success-text); white-space: nowrap; }
+:where(.scr-ws-agents) .menu { position: relative; }
+:where(.scr-ws-agents) .menu > summary { gap: 6px; }
+:where(.scr-ws-agents) .menu-pop { position: absolute; right: 0; top: calc(100% + 6px); z-index: 5; width: 430px; display: flex; flex-direction: column; padding: var(--vk-space-2); background: var(--vk-color-surface); border: 1px solid var(--vk-color-line); border-radius: var(--vk-radius-md); box-shadow: 0 12px 32px color-mix(in oklch, var(--vk-color-text) 18%, transparent); }
+:where(.scr-ws-agents) .mi svg { flex: none; }
+:where(.scr-ws-agents) .mi { white-space: nowrap; }
+:where(.scr-ws-agents) .mi { display: flex; align-items: center; gap: var(--vk-space-3); min-height: 44px; padding: 0 var(--vk-space-3); border: 0; border-radius: var(--vk-radius-sm); background: transparent; color: var(--vk-color-text); font-size: 0.9375rem; text-align: left; cursor: pointer; }
+:where(.scr-ws-agents) .mi:hover { background: var(--vk-color-raised); }
+:where(.scr-ws-agents) .mi-danger { color: var(--vk-color-text); }
+:where(.scr-ws-agents) .mi-group { display: flex; flex-direction: column; gap: 2px; margin: var(--vk-space-2) 0; padding: var(--vk-space-2) 0; border-top: 1px solid var(--vk-color-line); border-bottom: 1px solid var(--vk-color-line); }
+:where(.scr-ws-agents) .tokrow { display: grid; grid-template-columns: 1fr auto auto; align-items: center; gap: var(--vk-space-2); padding-left: var(--vk-space-3); }
+:where(.scr-ws-agents) .legend { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--vk-space-4); }
+:where(.scr-ws-agents) .legend > div { display: flex; gap: var(--vk-space-3); align-items: flex-start; }
+:where(.scr-ws-agents) .banner { display: flex; flex-wrap: wrap; align-items: center; gap: var(--vk-space-3); padding: var(--vk-space-4) var(--vk-space-5); border-radius: var(--vk-radius-md); background: var(--vk-color-success-wash); color: var(--vk-color-text); }
+:where(.scr-ws-agents) .tokbox { flex: 1 1 320px; min-width: 0; padding: 10px var(--vk-space-3); border-radius: var(--vk-radius-sm); background: var(--vk-color-surface); font-family: var(--vk-font-mono); font-size: 0.875rem; overflow-wrap: anywhere; }
+:where(.scr-ws-agents) .colhead { display: grid; grid-template-columns: 32px minmax(180px, 1.2fr) minmax(0, 2fr) auto 92px auto; gap: var(--vk-space-4); padding: var(--vk-space-3) var(--vk-space-5); border-bottom: 1px solid var(--vk-color-line); }
+:where(.scr-ws-agents) .pick[aria-pressed][data-unused] { color: var(--vk-color-faint); }
+/* Hand deltas: the load skeleton (not drawn by the reference) and the narrow layout (notes `pages.md` §6, OL L2404). */
+:where(.scr-ws-agents) .skel { border-radius: var(--vk-radius-sm); background: var(--vk-color-raised); }
+@media (max-width: 899.98px) {
+  :where(.scr-ws-agents) .colhead { display: none; }
+  :where(.scr-ws-agents) .arow { grid-template-columns: 32px minmax(0, 1fr) auto; }
+  :where(.scr-ws-agents) .arow > .caps, :where(.scr-ws-agents) .arow > .linked, :where(.scr-ws-agents) .arow > .t-num { grid-column: 2 / -1; }
+  :where(.scr-ws-agents) .editgrid, :where(.scr-ws-agents) .legend, :where(.scr-ws-agents) .new-agent-form { grid-template-columns: minmax(0, 1fr) !important; }
+  :where(.scr-ws-agents) .menu-pop { width: min(430px, calc(100vw - 32px)); }
+  :where(.scr-ws-agents) .tokbox { flex-basis: 100%; }
+}

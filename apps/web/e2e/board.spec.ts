@@ -5,7 +5,8 @@ import { test, expect } from '@playwright/test';
 // target-size floor; they are first-class fields in the sheet.
 
 const BOARD_KEY = 'superpipeline.boardId';
-const API = 'http://localhost:8787';
+import { PORTS } from '../scripts/ports';
+const API = PORTS.apiUrl;
 // The app talks to the API as the dev workspace (tnt_dev) when the server runs with DEV_AUTH on.
 const TENANT = { 'X-Tenant-Id': 'tnt_dev', 'Content-Type': 'application/json' };
 const DEFAULT_STAGES = [
@@ -30,7 +31,7 @@ test('renders the pipeline columns and connects live', async ({ page }) => {
   for (const col of ['Backlog', 'Ready', 'In Progress', 'Review', 'Done']) {
     await expect(page.getByText(col, { exact: true })).toBeVisible();
   }
-  await expect(page.getByText('live', { exact: true })).toBeVisible();
+  await expect(page.locator('[data-live="on"]').first()).toBeVisible();
 });
 
 test('creates a card via the composer', async ({ page }) => {
@@ -47,13 +48,13 @@ test('moves a card to another column via drag', async ({ page }) => {
   await page.getByLabel('Card title').fill('Draggable task');
   await page.getByRole('button', { name: 'Dispatch' }).click();
 
-  const card = page.locator('.tile', { hasText: 'Draggable task' });
+  const card = page.locator('[data-card-id]', { hasText: 'Draggable task' });
   await expect(card).toBeVisible();
 
-  const ready = page.locator('section').filter({ has: page.getByText('Ready', { exact: true }) });
+  const ready = page.locator('[data-lane="ready"]');
   await card.dragTo(ready);
 
-  await expect(ready.locator('.tile', { hasText: 'Draggable task' })).toBeVisible();
+  await expect(page.locator('[data-lane="ready"] [data-card-id]', { hasText: 'Draggable task' })).toBeVisible();
 });
 
 test('streams a new card to a second client in real time', async ({ browser }) => {

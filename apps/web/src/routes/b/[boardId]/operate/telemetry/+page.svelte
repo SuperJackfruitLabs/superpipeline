@@ -1,18 +1,19 @@
+<!-- apps/web/src/routes/b/[boardId]/operate/telemetry/+page.svelte (whole file) -->
 <script lang="ts">
-  /**
-   * Spend, in detail — by model, by card, over a window, plus the board's own event log.
-   *
-   * A sub-view rather than more sections on Operate: the summary answers "are we fine", and these
-   * answer "where did it go", which is a question you go looking for rather than one that should
-   * be on screen every time.
-   */
-  import Telemetry from '$lib/components/Telemetry.svelte';
+  /** Spend, in detail: "where did it go", next to Operate's "are we fine". */
+  import { appearance } from '$lib/appearance.svelte';
+  import { SPEND_LAYOUTS } from '$lib/layouts';
+  import AppShell from '$lib/components/shell/AppShell.svelte';
+  import { shellModel } from '$lib/components/shell/shell-model.svelte';
+  import { needsPart } from '$lib/components/shell/shell-words';
   import { app } from '$lib/stores/app.svelte';
+
+  const vibe = $derived(appearance.value.vibe);
+  const Layout = $derived(SPEND_LAYOUTS[vibe]);
+  // Only Studio's Spend reference draws a status line.
+  const status = $derived(vibe === 'studio' ? shellModel.pageStatus(['Spend', needsPart(shellModel.attentionCount)]) : null);
 </script>
 
-<div class="p-3">
-  <a href="/b/{app.boardId}/operate" class="text-muted-foreground hover:text-foreground mono mb-2 inline-flex items-center gap-1 text-[11px]" style="min-height:var(--tap)">
-    <span aria-hidden="true">←</span> Operate
-  </a>
-  <Telemetry />
-</div>
+<AppShell here="operate" section="spend" boardName={app.board?.name ?? 'Untitled board'} view={null} showing={null} {status} bleed={vibe === 'quiet'} ownHeading>
+  <Layout {vibe} />
+</AppShell>

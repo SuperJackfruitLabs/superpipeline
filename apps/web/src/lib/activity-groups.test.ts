@@ -38,6 +38,9 @@ const attempt = (runId: string, stageKey: string, outcome = 'completed'): Attemp
   // this file is about GROUPING the stream, and how a run ended is `stage-account.ts`'s subject.
   handoff: null,
   failureReason: null,
+  startedAt: '2026-10-08T10:00:00Z',
+  endedAt: '2026-10-08T10:05:00Z',
+  completion: null,
 });
 
 describe('groupActivities', () => {

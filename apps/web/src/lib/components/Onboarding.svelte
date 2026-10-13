@@ -4,7 +4,8 @@
    */
   import { goto } from '$app/navigation';
   import { app } from '$lib/stores/app.svelte';
-  import { BOARD_TEMPLATES, logout } from '$lib/api';
+  import { BOARD_TEMPLATES,  } from '$lib/api';
+  import { signOut } from '$lib/components/shell/account';
   import { Button } from '$lib/components/ui/button';
   import BrandMark from '$lib/components/BrandMark.svelte';
 
@@ -60,7 +61,7 @@
     </div>
   </div>
 
-  <button onclick={() => void logout().then(() => location.reload())} class="text-muted-foreground hover:text-foreground mono tap self-start text-xs">sign out</button>
+  <button onclick={() => void signOut()} class="text-muted-foreground hover:text-foreground mono tap self-start text-xs">sign out</button>
   {#if error}<p class="text-coral mono text-xs">{error}</p>{/if}
 </div>
 </main>

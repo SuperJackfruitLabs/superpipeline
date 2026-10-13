@@ -2,7 +2,8 @@ import { test, expect } from '@playwright/test';
 
 // The UI talks to the API as tenant 'tnt_dev' (see src/lib/api.ts), so the E2E drives the agent
 // under the same tenant and points the board at the resulting gate.
-const API = 'http://localhost:8787';
+import { PORTS } from '../scripts/ports';
+const API = PORTS.apiUrl;
 const TENANT = { 'X-Tenant-Id': 'tnt_dev', 'Content-Type': 'application/json' };
 
 const REVIEW_PIPELINE = [
@@ -37,10 +38,10 @@ test('a human approves an agent-opened gate from the board', async ({ page, requ
   await page.addInitScript((id) => window.localStorage.setItem('superpipeline.boardId', id), boardId);
   await page.goto('/');
 
-  const review = page.locator('section').filter({ has: page.getByText('Review', { exact: true }) });
-  await expect(review.locator('.tile', { hasText: 'Launch post' })).toBeVisible();
+  const review = page.locator('[data-lane="review"]');
+  await expect(review.locator('[data-card-id]', { hasText: 'Launch post' })).toBeVisible();
   // The tile no longer decides (a decision there had no way to carry a note): it opens the drawer.
-  await page.getByRole('button', { name: '⚑ Review' }).click();
+  await page.getByRole('button', { name: 'Review', exact: true }).click();
   const note = page.getByLabel('Add a note (optional)');
   await expect(note).toBeVisible();
   await expect(page.getByRole('button', { name: 'Approve' })).toBeVisible();
@@ -53,8 +54,8 @@ test('a human approves an agent-opened gate from the board', async ({ page, requ
   expect(sent.postDataJSON().comment).toBe('checked the diff');
   const gateId = sent.url().match(/\/gates\/([^/]+)\/resolve$/)![1];
 
-  const publish = page.locator('section').filter({ has: page.getByText('Publish', { exact: true }) });
-  await expect(publish.locator('.tile', { hasText: 'Launch post' })).toBeVisible();
+  const publish = page.locator('[data-lane="publish"]');
+  await expect(publish.locator('[data-card-id]', { hasText: 'Launch post' })).toBeVisible();
 
   const { gate } = await (await request.get(`${API}/v1/boards/${boardId}/gates/${gateId}`, { headers: TENANT })).json();
   expect(gate.status).toBe('resolved');
@@ -79,7 +80,8 @@ test.describe('on a phone', () => {
     });
     await page.addInitScript((id) => window.localStorage.setItem('superpipeline.boardId', id), boardId);
     await page.goto('/');
-    await page.getByRole('button', { name: '⚑ Review' }).click();
+    // The phone board's tile action is the needs word itself (the desktop board's is '⚑ Review').
+    await page.getByRole('button', { name: /^(⚑ )?Review$/ }).first().click();
 
     const note = page.getByLabel('Add a note (optional)');
     await expect(note).toBeVisible();

@@ -1,216 +1,75 @@
+<!-- apps/web/src/lib/components/workspace/ConnectionsTab.svelte -->
 <script lang="ts">
-  /**
-   * Where this workspace is also known.
-   *
-   * The fleet link comes first and the agent picker second, because that is the order the two acts
-   * have to happen in: linking an agent to a principal resolves nothing while the fleet that
-   * principal belongs to is unlinked — `resolveHubAgent` maps the claim's tenant through this row
-   * and refuses when it is missing.
-   */
-  import { app } from '$lib/stores/app.svelte';
-  import {
-    getWorkspace, setWorkspaceFleet, getForgeHost, setForgeHost, getHubPrincipals, getAgents, getCapabilities, createAgent,
-    type WorkspaceTenant, type HubPrincipal, type AgentSummary, type CapabilityRecord,
-  } from '$lib/api';
-  import { beginHubAuthorization, hubStatus } from '$lib/hub-token';
-  import CapabilityPicker from '$lib/components/CapabilityPicker.svelte';
-  import { Button } from '$lib/components/ui/button';
+  import { Button } from '@superjackfruit/vibekit';
+  import LineIcon from '$lib/components/parts/LineIcon.svelte';
+  import CapabilityChips from './agents/CapabilityChips.svelte';
+  import { ConnectionsModel } from './connections-model.svelte';
+  import PanelTag from './PanelTag.svelte';
+  import type { WorkspaceTabProps } from './types';
 
-  let workspace = $state<WorkspaceTenant | null>(null);
-  let agents = $state<AgentSummary[]>([]);
-  let capabilities = $state<CapabilityRecord[]>([]);
-  let editingFleet = $state(false);
-  let fleetInput = $state('');
-  let error = $state<string | null>(null);
-  let saving = $state(false);
-
-  let hubConfigured = $state(false);
-  let principals = $state<HubPrincipal[] | null>(null);
-  let connecting = $state(false);
-  let picked = $state<string[]>([]);
-  let importCaps = $state<string[]>([]);
-  let importing = $state(false);
-  let importResult = $state<string | null>(null);
-
-  const linkable = $derived(
-    (principals ?? []).filter((p) => !agents.some((a) => a.externalId === p.id)),
-  );
-
-  async function refresh(): Promise<void> {
-    [workspace, agents, capabilities] = await Promise.all([
-      getWorkspace().catch(() => null),
-      getAgents().catch(() => []),
-      getCapabilities().catch(() => []),
-    ]);
-    const status = await hubStatus().catch(() => ({ configured: false }));
-    hubConfigured = status.configured;
-    if (hubConfigured) principals = await getHubPrincipals().catch(() => null);
-  }
-  $effect(() => { void refresh(); });
-
-  async function saveFleet(): Promise<void> {
-    saving = true;
-    error = null;
-    try {
-      const v = fleetInput.trim();
-      const res = await setWorkspaceFleet(v === '' ? null : v);
-      if (!res.ok) {
-        const body = (await res.json().catch(() => null)) as { error?: string } | null;
-        error = body?.error ?? `Linking failed (${res.status})`;
-        return;
-      }
-      editingFleet = false;
-      await refresh();
-    } finally {
-      saving = false;
-    }
-  }
-
-  async function connect(): Promise<void> {
-    connecting = true;
-    try {
-      await beginHubAuthorization();
-    } finally {
-      connecting = false;
-    }
-  }
-
-  async function addPicked(): Promise<void> {
-    if (picked.length === 0 || importCaps.length === 0) return;
-    importing = true;
-    importResult = null;
-    const failures: string[] = [];
-    try {
-      for (const id of picked) {
-        const p = linkable.find((x) => x.id === id);
-        if (!p) continue;
-        try {
-          // Named by handle, not station key — a board reads like a team, not a config file.
-          await createAgent(p.handle, [...importCaps], p.id);
-        } catch (e) {
-          failures.push(`${p.handle}: ${e instanceof Error ? e.message : String(e)}`);
-        }
-      }
-      picked = [];
-      importResult = failures.length === 0 ? null : failures.join('; ');
-      await refresh();
-    } finally {
-      importing = false;
-    }
-  }
-
-  /**
-   * The forge host.
-   *
-   * Recognition has to be TOLD which host is a forge — there is one github.com, and a Forgejo
-   * instance is wherever its operator put it. Until this is set, every link to the workspace's
-   * own repositories is stored as a generic `url`: no durable id, nothing to dedupe against and
-   * nothing a webhook could ever match.
-   */
-  let forgeHost = $state<string | null>(null);
-  let editingForge = $state(false);
-  let forgeInput = $state('');
-  let forgeError = $state<string | null>(null);
-
-  $effect(() => {
-    void getForgeHost().then((h) => (forgeHost = h));
-  });
-
-  async function saveForge(): Promise<void> {
-    forgeError = null;
-    const next = forgeInput.trim();
-    const res = await setForgeHost(next === '' ? null : next);
-    if (!res.ok) {
-      forgeError = next === '' ? `Could not clear the forge (${res.status}).` : 'That is a host, not a URL — `forge.example.com`.';
-      return;
-    }
-    forgeHost = await getForgeHost();
-    editingForge = false;
-  }
+  let { review }: WorkspaceTabProps = $props();
+  const model = new ConnectionsModel();
+  // Loaded during init (ssr is off): the busy mark is held before the first paint.
+  void model.refresh();
 </script>
 
-<section class="bg-surface border-border mb-2 rounded-[10px] border px-3 py-2.5">
-  <div class="eyebrow mb-1.5">forge</div>
-  {#if editingForge}
-    <div class="flex flex-wrap items-center gap-2">
-      <input
-        bind:value={forgeInput}
-        placeholder="forge.example.com  (empty to clear)"
-        aria-label="Forge host"
-        class="bg-inset border-border focus:border-marigold mono min-w-0 flex-1 rounded-[6px] border px-2 py-1 text-[11px]"
-      />
-      <button onclick={() => void saveForge()} class="mono text-[11px]" style="color:var(--marigold);min-height:var(--tap)">save</button>
-      <button onclick={() => (editingForge = false)} class="text-muted-foreground mono text-[11px]" style="min-height:var(--tap)">cancel</button>
-    </div>
-    {#if forgeError}<p class="text-coral mt-1 text-[11px]">{forgeError}</p>{/if}
-  {:else if forgeHost}
-    <div class="mono flex items-center gap-2 text-[11px]">
-      <span class="truncate">{forgeHost}</span>
-      <button onclick={() => { editingForge = true; forgeInput = forgeHost ?? ''; }} class="text-muted-foreground hover:text-foreground ml-auto" style="min-height:var(--tap)">change</button>
-    </div>
+<section class="panel" aria-labelledby="cn-h">
+  <div class="panel-head" style="flex-direction: column; align-items: flex-start;">
+    {#if review}<PanelTag text={review.tag} />{/if}
+    <h2 class="t-h2" id="cn-h">Connections</h2>
+    <p class="t-meta">Where agents push code and where they come from.</p>
+  </div>
+  {#if model.loading}
+    <p class="panel-body t-meta" role="status">Loading connections…</p>
   {:else}
-    <div class="flex flex-wrap items-center gap-2">
-      <p class="text-muted-foreground min-w-0 flex-1 text-[11px] leading-relaxed">
-        No forge set — links to your own repositories are stored as plain URLs, with nothing a webhook can match.
-      </p>
-      <button onclick={() => { editingForge = true; forgeInput = ''; }} class="mono text-[11px]" style="color:var(--marigold);min-height:var(--tap)">set</button>
+    <div class="kv">
+      <div><p class="t-h3">Forge host</p><p class="t-meta">Where agents push branches</p></div>
+      {#if model.editingForge}
+        <form style="display: flex; gap: var(--vk-space-2);" onsubmit={(e) => { e.preventDefault(); void model.saveForge(); }}>
+          <label class="sr" for="cn-forge">Forge host</label><input class="input" id="cn-forge" placeholder="forge.example.com" bind:value={model.forgeInput} />
+          <Button variant="primary" class="btn-sm" type="submit">Save</Button>
+        </form>
+        <Button variant="quiet" class="btn-sm" type="button" onclick={() => (model.editingForge = false)}>Cancel</Button>
+      {:else}
+        <p class="mono">{model.forgeHost ?? 'Not set'}</p>
+        <Button variant="secondary" class="btn-sm" type="button" onclick={() => model.startForge()}>Change</Button>
+      {/if}
     </div>
+    {#if model.forgeError}<p class="hint" role="alert" style="padding: 0 var(--vk-space-5); color: var(--vk-color-signal-text);">{model.forgeError}</p>{/if}
+    <div class="kv">
+      <div><p class="t-h3">AgentPod fleet</p><p class="t-meta">Where your agents run</p></div>
+      {#if model.editingFleet}
+        <form style="display: flex; gap: var(--vk-space-2);" onsubmit={(e) => { e.preventDefault(); void model.saveFleet(); }}>
+          <label class="sr" for="cn-fleet">Fleet id</label><input class="input" id="cn-fleet" placeholder="fleet_…" bind:value={model.fleetInput} />
+          <Button variant="primary" class="btn-sm" type="submit" aria-disabled={model.saving ? 'true' : undefined}>Save</Button>
+        </form>
+        <Button variant="quiet" class="btn-sm" type="button" onclick={() => (model.editingFleet = false)}>Cancel</Button>
+      {:else}
+        {#if model.workspace?.externalId}
+          <p class="t-body" title={model.workspace.externalId} style="display: flex; align-items: center; gap: 6px; color: var(--vk-color-success-text);"><LineIcon name="check" size={18} />Linked</p>
+        {:else}
+          <p class="t-body" style="color: var(--vk-color-muted);">Not linked</p>
+        {/if}
+        <Button variant="secondary" class="btn-sm" type="button" onclick={() => model.startFleet()}>Change</Button>
+      {/if}
+    </div>
+    <div class="kv">
+      <div><p class="t-h3">Add from AgentPod</p><p class="t-meta">Bring fleet agents in as workspace agents</p></div>
+      {#if model.linkable.length === 0}
+        <p class="t-body">Every agent in the fleet already has one here.</p>
+      {:else}
+        <div style="display: flex; flex-direction: column; gap: var(--vk-space-2); min-width: 0;" data-testid="hub-principal-list">
+          <div class="caps">{#each model.linkable as p (p.id)}<button class="chip pick" type="button" aria-pressed={model.picked.includes(p.id)} title={p.id} onclick={() => model.togglePicked(p.id)}>{p.handle}</button>{/each}</div>
+          <span class="lbl" id="cn-caps">Capabilities they can claim</span>
+          <CapabilityChips bind:selected={model.importCaps} bind:typed={model.importTyped} registry={model.capabilities} labelledBy="cn-caps" inputId="cn-newcap" form="page" wrapInput />
+          <Button variant="primary" class="btn-sm" type="button" data-testid="add-picked-agents" aria-disabled={model.importing || model.picked.length === 0 || model.importCaps.length === 0 ? 'true' : undefined} onclick={() => void model.addPicked()}>{model.importing ? 'Adding…' : `Add ${model.picked.length || ''}`.trim()}</Button>
+          {#if model.importResult}<p class="hint" role="alert" data-testid="import-failures">{model.importResult}</p>{/if}
+        </div>
+      {/if}
+      <Button variant="secondary" class="btn-sm" type="button" data-testid="connect-hub" aria-disabled={model.connecting ? 'true' : undefined} onclick={() => void model.connect()}>{model.connecting ? 'Connecting…' : 'Connect to AgentPod'}</Button>
+    </div>
+    {#if model.error}<p class="hint" role="alert" style="padding: 0 var(--vk-space-5); color: var(--vk-color-signal-text);">{model.error}</p>{/if}
+    <span class="sr" role="status">{model.saving ? 'Saving the fleet…' : model.importing ? 'Adding the agents…' : model.connecting ? 'Connecting to AgentPod…' : ''}</span>
   {/if}
+  {#if review?.note}<p class="t-meta" style="padding: var(--vk-space-3) var(--vk-space-5); border-top: 1px solid var(--vk-color-line);">{review.note}</p>{/if}
 </section>
-
-<section class="bg-surface border-border rounded-[10px] border px-3 py-2.5">
-  <div class="eyebrow mb-1.5">agentpod fleet</div>
-  {#if editingFleet}
-    <div class="flex flex-wrap items-center gap-2">
-      <input bind:value={fleetInput} placeholder="fleet_…  (empty to unlink)" class="bg-inset border-border focus:border-marigold mono min-w-0 flex-1 rounded-[6px] border px-2 py-1 text-[11px]" />
-      <button onclick={() => void saveFleet()} disabled={saving} class="mono text-[11px]" style="color:var(--marigold);min-height:var(--tap)">save</button>
-      <button onclick={() => (editingFleet = false)} class="text-muted-foreground mono text-[11px]" style="min-height:var(--tap)">cancel</button>
-    </div>
-  {:else if workspace?.externalId}
-    <div class="mono flex items-center gap-2 text-[11px]">
-      <span class="truncate">{workspace.externalId}</span>
-      <button onclick={() => { editingFleet = true; fleetInput = workspace?.externalId ?? ''; }} class="text-muted-foreground hover:text-foreground ml-auto" style="min-height:var(--tap)">change</button>
-    </div>
-  {:else}
-    <div class="flex flex-wrap items-center gap-2">
-      <p class="text-muted-foreground min-w-0 flex-1 text-[11px] leading-relaxed">
-        Not linked to an AgentPod fleet — link one so the tokens its hub issues are accepted here.
-      </p>
-      <button onclick={() => { editingFleet = true; fleetInput = ''; }} class="mono text-[11px]" style="color:var(--marigold);min-height:var(--tap)">link</button>
-    </div>
-  {/if}
-</section>
-
-{#if hubConfigured}
-  <section class="mt-3">
-    {#if principals === null}
-      <Button variant="outline" onclick={connect} disabled={connecting} data-testid="connect-hub">
-        {connecting ? 'Connecting…' : 'Connect to AgentPod'}
-      </Button>
-    {:else if linkable.length === 0}
-      <p class="text-muted-foreground text-xs">Every agent in the fleet already has one here.</p>
-    {:else}
-      <div class="eyebrow mb-2">add from agentpod</div>
-      <div class="flex flex-wrap gap-1.5" data-testid="hub-principal-list">
-        {#each linkable as p (p.id)}
-          <button
-            onclick={() => (picked = picked.includes(p.id) ? picked.filter((x) => x !== p.id) : [...picked, p.id])}
-            title={p.id}
-            class="mono rounded-[6px] border px-2.5 text-[11px] {picked.includes(p.id) ? 'border-marigold text-marigold' : 'border-border text-muted-foreground hover:text-foreground'}"
-            style="min-height:var(--tap)"
-          >{picked.includes(p.id) ? '✓ ' : ''}{p.handle}</button>
-        {/each}
-      </div>
-      <div class="text-muted-foreground mt-2.5 mb-1.5 text-xs">capabilities they can claim:</div>
-      <CapabilityPicker bind:selected={importCaps} registry={capabilities} id="import" />
-      {#if importResult}<p class="text-coral mt-2 text-xs" data-testid="import-failures">{importResult}</p>{/if}
-      <div class="mt-3 flex justify-end">
-        <Button onclick={addPicked} disabled={importing || picked.length === 0 || importCaps.length === 0} data-testid="add-picked-agents">
-          {importing ? 'Adding…' : `Add ${picked.length || ''}`.trim()}
-        </Button>
-      </div>
-    {/if}
-  </section>
-{/if}
-
-{#if error}<p class="text-coral mt-3 text-xs leading-relaxed">{error}</p>{/if}

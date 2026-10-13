@@ -1,0 +1,115 @@
+<div class="fg" data-vibe="quiet" data-theme="light"><div class="scrim"></div><section class="dlg mv" role="dialog" aria-modal="true" aria-labelledby="mv-t" aria-describedby="mv-now">
+  <div class="mv-head">
+    <div style="flex: 1 1 0%; min-width: 0px;">
+      <div class="eyebrow" id="mv-t">Move card</div>
+      <p class="mv-card">AgentPod: connector interface and generic effects ledger, state machine and executor</p>
+      <p class="mv-now" id="mv-now">Now in <strong style="color: var(--vk-color-text);">Failing test</strong> · <span class="vk-face" style="--vk-face-size: 20px;"><svg aria-label="tester-tim, needs you" mood=needs 20/></span> tester-tim stopped 33h ago <span class="chip chip--needs">Waiting on you</span></p>
+    </div>
+    <button class="icon-btn" type="button" aria-label="Close without moving"><svg 20/></button>
+  </div>
+  <div class="mv-body">
+    <fieldset>
+      <legend>Move to</legend>
+      <div class="mv-list">
+          <label class="st" data-checked="false" data-here="false">
+            <input type="radio" name="stage" value="Reported">
+            <span class="st-mark" aria-hidden="true"><span class="st-dot"></span></span>
+            <span style="min-width: 0px;">
+              <span class="st-name">Reported
+              </span>
+              <span class="st-owner">
+                a person
+              </span>
+            </span>
+            <span class="st-right"><span>1 card</span><span class="st-dir">back</span></span>
+          </label>
+          <label class="st" data-checked="false" data-here="false">
+            <input type="radio" name="stage" value="Reproduce">
+            <span class="st-mark" aria-hidden="true"><span class="st-dot"></span></span>
+            <span style="min-width: 0px;">
+              <span class="st-name">Reproduce
+              </span>
+              <span class="st-owner">
+                <span class="vk-face" style="--vk-face-size: 20px;"><svg mood=resting 20/></span>
+                diagnostics · error-eric
+              </span>
+            </span>
+            <span class="st-right"><span>1 card</span><span class="st-dir">back</span></span>
+          </label>
+          <label class="st" data-checked="false" data-here="true">
+            <input type="radio" name="stage" disabled="" value="Failing test">
+            <span class="st-mark" aria-hidden="true"><span class="st-dot"></span></span>
+            <span style="min-width: 0px;">
+              <span class="st-name">Failing test
+                <span class="chip">Here now</span>
+              </span>
+              <span class="st-owner">
+                <span class="vk-face" style="--vk-face-size: 20px;"><svg mood=needs 20/></span>
+                testing · tester-tim
+              </span>
+            </span>
+            <span class="st-right"><span>3 cards · 2 blocked</span><span class="st-dir"></span></span>
+          </label>
+          <label class="st" data-checked="true" data-here="false">
+            <input type="radio" name="stage" value="Fix" checked="">
+            <span class="st-mark" aria-hidden="true"><span class="st-dot"></span></span>
+            <span style="min-width: 0px;">
+              <span class="st-name">Fix
+              </span>
+              <span class="st-owner">
+                code · 2 agents
+              </span>
+            </span>
+            <span class="st-right"><span>1 card</span><span class="st-dir">forward</span></span>
+          </label>
+          <label class="st" data-checked="false" data-here="false">
+            <input type="radio" name="stage" value="Integrate">
+            <span class="st-mark" aria-hidden="true"><span class="st-dot"></span></span>
+            <span style="min-width: 0px;">
+              <span class="st-name">Integrate
+              </span>
+              <span class="st-owner">
+                integration or api or testing · 3 agents
+              </span>
+            </span>
+            <span class="st-right"><span>Empty</span><span class="st-dir">forward</span></span>
+          </label>
+          <label class="st" data-checked="false" data-here="false">
+            <input type="radio" name="stage" value="Signed off">
+            <span class="st-mark" aria-hidden="true"><span class="st-dot"></span></span>
+            <span style="min-width: 0px;">
+              <span class="st-name">Signed off
+                <span class="chip chip--gate"><svg 12/> Approval gate</span>
+              </span>
+              <span class="st-owner">
+                a person · approval
+              </span>
+            </span>
+            <span class="st-right"><span>Empty</span><span class="st-dir">forward</span></span>
+          </label>
+          <label class="st" data-checked="false" data-here="false">
+            <input type="radio" name="stage" value="Shipped">
+            <span class="st-mark" aria-hidden="true"><span class="st-dot"></span></span>
+            <span style="min-width: 0px;">
+              <span class="st-name">Shipped
+              </span>
+              <span class="st-owner">
+                a person
+              </span>
+            </span>
+            <span class="st-right"><span>1 card</span><span class="st-dir">forward</span></span>
+          </label>
+      </div>
+    </fieldset>
+    <p class="mv-then"><svg 18/><span>In Fix: One of the 2 agents with code picks it up.</span></p>
+    <div class="mv-keys">
+      <span><span class="kbd">Alt</span>+<span class="kbd">←</span><span class="kbd">→</span> moves one stage from the board</span>
+      <span><span class="kbd">M</span> opens this on a card</span>
+      <span><span class="kbd">esc</span> closes</span>
+    </div>
+    <p class="vk-visually-hidden" aria-live="polite"></p>
+  </div>
+  <div class="mv-foot">
+    <button class="vk-button vk-button--secondary" type="button">Cancel</button>
+    <button class="vk-button vk-button--primary" type="button">Move to Fix</button>
+  </div></section></div>

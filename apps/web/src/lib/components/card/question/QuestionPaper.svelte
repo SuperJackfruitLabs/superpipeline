@@ -1,30 +1,48 @@
+<!-- apps/web/src/lib/components/card/question/QuestionPaper.svelte -->
 <script lang="ts">
-  import type { Mood, Vibe } from '@superjackfruit/vibekit';
+  /** An agent's question in Paper (SP-Card-States-Paper B): the letter asks once, then the reply. */
+  import '../paper-states.css';
+  import { Button, Face, Field, type Vibe } from '@superjackfruit/vibekit';
   import type { Elicitation } from '$lib/api';
+  import { PAPER_CAPTIONS, firstName, paperWhen } from '../paper-words';
+  import type { CardAgent } from '../layouts/types';
   import type { QuestionAnswer } from './question-answer.svelte';
 
-  /** `showQuestion` false: the caller (Paper's letter) already says the question. */
-  let { model, elicitation, agent, showQuestion = true }: { model: QuestionAnswer; elicitation: Elicitation; agent: { id: string | null; name: string; iconUrl: string | null; mood: Mood }; vibe: Vibe; showQuestion?: boolean } = $props();
+  /** `showQuestion` false: the caller already says the question. */
+  let { model, elicitation, agent, personName = 'there', showQuestion = true }: { model: QuestionAnswer; elicitation: Elicitation; agent: CardAgent; vibe: Vibe; personName?: string; showQuestion?: boolean } = $props();
+  const id = $derived(`q-answer-${elicitation.id}`);
+  const name = $derived(agent.name || 'The agent');
+  // Busy keeps the button enabled (aria-disabled, clicks ignored) so it keeps focus.
+  const send = (e: Event) => { e.preventDefault(); if (!model.answering) void model.submit(); };
 </script>
 
-<section class="sec elicitation" aria-labelledby="q-{elicitation.id}">
-  <h3 id="q-{elicitation.id}" class="eyebrow text-signal-text">⚑ {elicitation.signal === 'auth' ? 'awaiting your sign-in' : 'awaiting your answer'}</h3>
-  <p class="eyebrow mt-1" title={elicitation.agentId}>{agent.name} is waiting</p>
-  {#if showQuestion}<p class="agent-voice mt-2 whitespace-pre-wrap">{elicitation.question}</p>{/if}
-  {#if model.error}<p role="alert" class="text-signal-text mt-2 text-sm">{model.error}</p>{/if}
-  <fieldset class="mt-3">
-    <legend class="font-display">Your reply</legend>
+<div class="elicitation" style="display: contents">
+  {#if showQuestion}
+    <p class="pcs-dear">Dear {firstName(personName)},</p>
+    <p class="pcs-voice" style="white-space: pre-wrap">{elicitation.question}</p>
+    <div class="pcs-sign">
+      <Face id={name} label={name} mood="needs" size={32} />
+      <div><span class="n">{name}</span><p class="pcs-small">{elicitation.createdAt ? paperWhen(elicitation.createdAt, new Date().toISOString()) : ''}{elicitation.signal === 'auth' ? `${elicitation.createdAt ? ' · ' : ''}needs you to sign in` : ''}</p></div>
+    </div>
+  {/if}
+  <form class="pcs-reply" onsubmit={send}>
+    <h3 class="pcs-h">Your reply</h3>
     {#if elicitation.options.length > 0}
-      {#each elicitation.options as opt (opt.name)}
-        <label class="flex min-h-[var(--vk-target-min)] items-center gap-3">
-          <input type="radio" name="q-{elicitation.id}" value={opt.name} bind:group={model.selected} class="size-5" /> {opt.title}
-        </label>
-      {/each}
-      <textarea bind:value={model.text} rows="2" aria-label="Add a note for the agent (optional)" placeholder="Add a note for the agent (optional)…" class="bg-surface mt-2 w-full resize-none rounded-[var(--vk-radius-md)] border-2 px-2.5 py-2 text-base outline-none" style="border-color:var(--vk-color-line)"></textarea>
-      <button type="button" class="vk-button vk-button--primary mt-2" disabled={model.answering} onclick={() => model.submit()}>Send reply</button>
+      <fieldset class="pcs-choices">
+        <legend>Your answer</legend>
+        {#each elicitation.options as opt (opt.name)}
+          <label class="pcs-choice"><input type="radio" name="q-{elicitation.id}" value={opt.name} bind:group={model.selected} /><span><b>{opt.title}</b></span></label>
+        {/each}
+      </fieldset>
+      <Field {id} control="textarea" rows={4} label="Add a note for the agent (optional)" bind:value={model.text} />
+      {#if model.error}<p class="vk-field__error" role="alert">{model.error}</p>{/if}
+      <div class="pcs-row"><Button type="submit" aria-disabled={model.answering ? 'true' : undefined} aria-busy={model.answering ? 'true' : undefined}>Send reply</Button></div>
     {:else}
-      <textarea bind:value={model.text} rows="3" aria-label="Your answer" placeholder="Your answer — this goes straight back to the waiting agent…" class="bg-surface w-full resize-none rounded-[var(--vk-radius-md)] border-2 px-2.5 py-2 text-base outline-none" style="border-color:var(--vk-color-line)"></textarea>
-      <button type="button" class="vk-button vk-button--primary mt-2" disabled={model.answering} onclick={() => model.send()}>Send answer</button>
+      <Field {id} control="textarea" rows={4} label="Your answer goes straight back to {name}" hint={model.error ? undefined : PAPER_CAPTIONS.question} error={model.error ?? undefined} bind:value={model.text} />
+      <!-- Field draws the error; this says it out loud when it appears. -->
+      <span class="vk-visually-hidden" role="alert">{model.error ?? ''}</span>
+      <div class="pcs-row"><Button type="submit" aria-disabled={model.answering ? 'true' : undefined} aria-busy={model.answering ? 'true' : undefined}>Send answer</Button></div>
     {/if}
-  </fieldset>
-</section>
+    <span class="vk-visually-hidden" role="status">{model.answering ? 'Sending…' : ''}</span>
+  </form>
+</div>

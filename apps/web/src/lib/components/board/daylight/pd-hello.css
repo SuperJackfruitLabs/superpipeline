@@ -1,0 +1,10 @@
+/* Ported verbatim from e2e/reference/mockups/SP-Phone-Board-Daylight (prefixes pd-hello, crew, where .pd-hello) by scripts/pixel/extract-css.mjs. */
+.pd-hello {position:relative;display:flex;flex-direction:column;gap:12px;padding-top:8px;border-top:1px solid color-mix(in oklch,var(--vk-color-surface) 50%,transparent)}
+:where(.pd-hello) .crew {display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+:where(.pd-hello) .crew ul {display:flex;gap:6px}
+:where(.pd-hello) .crew li {display:flex;line-height:0;border-radius:50%;box-shadow:0 0 0 2px var(--vk-color-surface)}
+:where(.pd-hello) .crew small {font-size:14px;color:inherit}
+/* Hand-written: from `.greet h1` / `.greet p`. The heading is an h2 here: PhoneHeader owns the page's h1. The shell's sky sets the text colour for the phase and theme, so the crew caption inherits it. */
+.pd-hello { font-size: 16px; line-height: 1.45; }
+.pd-hello h2 { font-family: var(--vk-font-display); font-size: 26px; line-height: 1.15; font-weight: 700; padding-right: 56px; text-wrap: balance; }
+.pd-hello p { font-size: 17px; padding-right: 56px; }

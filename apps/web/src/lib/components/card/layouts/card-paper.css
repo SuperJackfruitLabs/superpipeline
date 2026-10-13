@@ -1,0 +1,82 @@
+/* Ported verbatim from e2e/reference/mockups/SP-Card-Paper.html (prefixes pp-) by scripts/pixel/extract-css.mjs. */
+.pcd-back { display: inline-flex; align-items: center; gap: 4px; min-height: 44px; color: var(--vk-color-muted); text-decoration: none; font-size: var(--vk-text-sm); }
+.pcd-back:hover { text-decoration: underline; }
+.pcd-line { margin: 0; font: 500 12.5px/1.9 var(--vk-font-body); letter-spacing: 0.08em; text-transform: uppercase; color: var(--vk-color-muted); display: flex; flex-wrap: wrap; column-gap: var(--vk-space-3); }
+.pcd-line b { color: var(--vk-color-text); font-weight: 600; }
+.pcd-line .sig { color: var(--vk-color-signal-text); }
+.pcd-meta { display: inline-flex; align-items: center; font: 400 11.5px/1 var(--vk-font-mono); letter-spacing: 0; text-transform: none; color: var(--vk-color-faint); }
+.pcd-copy { display: inline-grid; place-items: center; min-width: 44px; min-height: 44px; margin: -14px 0; border: 0; background: transparent; color: var(--vk-color-muted); cursor: pointer; }
+.pcd-rule { border: 0; border-top: 1px solid var(--vk-color-line); margin: 0; }
+.pcd-letter { display: flex; flex-direction: column; gap: var(--vk-space-4); }
+.pcd-dear { margin: 0; font: italic 400 1.35rem/1.3 var(--vk-font-display); }
+.pcd-voice { margin: 0; font: 400 1.22rem/1.6 var(--vk-font-display); overflow-wrap: anywhere; text-wrap: pretty; }
+.pcd-id { font: 400 0.78em/1.4 var(--vk-font-mono); overflow-wrap: anywhere; }
+.pcd-sign { display: flex; align-items: center; gap: var(--vk-space-3); }
+.pcd-sign .n { font: italic 500 1.15rem/1.2 var(--vk-font-display); }
+.pcd-sign .r { font-size: var(--vk-text-sm); color: var(--vk-color-muted); }
+.pcd-h { margin: 0; font: italic 500 1.5rem/1.2 var(--vk-font-display); }
+.pcd-reply { display: flex; flex-direction: column; gap: var(--vk-space-4); padding: var(--vk-space-5); border: 1px solid var(--vk-color-line); border-radius: var(--vk-radius-sm); background: var(--vk-color-raised); }
+.pcd-grid { display: grid; grid-template-columns: minmax(0, 270px) minmax(0, 1fr); gap: var(--vk-space-4); align-items: start; }
+.pcd-small { font-size: var(--vk-text-sm); color: var(--vk-color-muted); }
+.pcd-enc { border-top: 1px solid var(--vk-color-line); }
+.pcd-enc:last-of-type { border-bottom: 1px solid var(--vk-color-line); }
+.pcd-enc > summary { list-style: none; display: flex; align-items: baseline; gap: var(--vk-space-3); min-height: 56px; padding: var(--vk-space-3) 0; cursor: pointer; }
+.pcd-enc > summary::-webkit-details-marker { display: none; }
+.pcd-enc > summary .t { font: 500 1.2rem/1.3 var(--vk-font-display); }
+.pcd-enc > summary .c { font-size: var(--vk-text-sm); color: var(--vk-color-muted); }
+.pcd-enc > summary .o { margin-left: auto; font-size: var(--vk-text-sm); color: var(--vk-color-muted); text-decoration: underline; text-underline-offset: 3px; }
+.pcd-encbody { padding: 0 0 var(--vk-space-5); display: flex; flex-direction: column; gap: var(--vk-space-4); }
+.pcd-p { margin: 0; line-height: 1.6; text-wrap: pretty; }
+.pcd-ul { margin: 0; padding-left: 1.2em; display: flex; flex-direction: column; gap: 6px; line-height: 1.5; }
+.pcd-sc { margin: 0; font: 600 11.5px/1.2 var(--vk-font-body); letter-spacing: 0.12em; text-transform: uppercase; color: var(--vk-color-muted); }
+.pcd-groups { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; gap: var(--vk-space-5); border-top: 1px solid var(--vk-color-line); padding-top: var(--vk-space-4); }
+.pcd-groups > div { display: flex; flex-direction: column; gap: var(--vk-space-3); min-width: 0; }
+.pcd-dl { margin: 0; display: flex; flex-direction: column; gap: var(--vk-space-3); }
+.pcd-dl dt { font-weight: 600; font-size: var(--vk-text-sm); }
+.pcd-dl dd { margin: 2px 0 0; font: 400 1rem/1.45 var(--vk-font-display); overflow-wrap: anywhere; }
+.pcd-link { color: var(--vk-color-text); text-underline-offset: 3px; }
+.pcd-more { display: inline-block; min-height: 44px; margin: -12px 0; padding: 0 2px; border: 0; background: transparent; color: var(--vk-color-text); font: 600 var(--vk-text-sm)/44px var(--vk-font-body); text-decoration: underline; text-underline-offset: 3px; cursor: pointer; white-space: nowrap; }
+.pcd-danger { background: var(--vk-color-surface); color: var(--vk-color-text); box-shadow: inset 0 0 0 2px var(--vk-color-text); }
+.pcd-meter { height: 4px; background: var(--vk-color-line); }
+.pcd-meter i { display: block; height: 100%; background: var(--vk-color-text); }
+.pcd-foot { display: flex; gap: var(--vk-space-3); flex-wrap: wrap; align-items: center; }
+
+/* ---- deltas: not in the reference ---- */
+/* vibekit's Drawer draws the sheet (frame, scrim, kicker, title, close); .pcd is its content. */
+.pcd { container: pcd / inline-size; display: flex; flex-direction: column; gap: var(--vk-space-5); min-width: 0; }
+.pcd, .pcd *, .pcd *::before, .pcd *::after { box-sizing: border-box; }
+.pcd:focus, .pcd:focus-visible { outline: none; box-shadow: none; }
+.pcd { font-family: var(--vk-font-body); }
+.pcd-ul { list-style: disc; }
+.pcd-lines { margin-top: -12px; }
+.pcd .vk-button { white-space: nowrap; flex-shrink: 0; }
+.pcd-bar { display: flex; align-items: center; flex-wrap: wrap; gap: var(--vk-space-2) var(--vk-space-3); min-width: 0; }
+.pcd-p--brief { font: 400 1.1rem/1.6 var(--vk-font-display); }
+.pcd-two { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: var(--vk-space-5); }
+.pcd-two > div { display: flex; flex-direction: column; gap: var(--vk-space-2); min-width: 0; }
+.pcd-foot--split { justify-content: space-between; }
+.pcd-foot--split > span:last-child { display: flex; align-items: center; gap: var(--vk-space-4); }
+.pcd-small--flush { margin: 0; }
+.pcd-block { display: block; }
+.pcd-encs > .pcd-sc { margin-bottom: var(--vk-space-2); }
+/* A link-styled button drawn like the reference's inline <a>: padding makes a 44px hit box, the equal negative margin takes it back. */
+.pcd-linkbtn { display: inline; padding: 14px 8px; margin: -14px -8px; border: 0; background: transparent; font: inherit; color: var(--vk-color-text); text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
+.pcd a.pcd-link, .pcd a.pcd-back { text-decoration: underline; }
+.pcd-back { text-decoration: none; }
+.pcd-raw { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; font: 400 11.5px/1.5 var(--vk-font-mono); max-height: 16rem; overflow: auto; }
+.pcd-log { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--vk-space-3); }
+.pcd-log li { display: grid; grid-template-columns: 24px minmax(0, 1fr); gap: var(--vk-space-3); font-size: var(--vk-text-sm); line-height: 1.45; }
+.pcd-log .t { display: block; color: var(--vk-color-muted); font: 400 11px/1.6 var(--vk-font-mono); }
+.pcd-log .stop { color: var(--vk-color-signal-text); }
+.pcd-adds { display: flex; flex-direction: column; gap: var(--vk-space-3); }
+.pcd-row { display: flex; align-items: center; gap: var(--vk-space-3); flex-wrap: wrap; }
+.pcd-row > .vk-field { width: 100%; }
+/* The gate, question and state blocks (pcs-*) at letter size inside the sheet. */
+.pcd .pcs-dear { font: italic 400 1.35rem/1.3 var(--vk-font-display); }
+.pcd .pcs-voice { font: 400 1.22rem/1.6 var(--vk-font-display); }
+.pcd .pcs-sign .n { font: italic 500 1.15rem/1.2 var(--vk-font-display); }
+.pcd .pcs-h { font: italic 500 1.5rem/1.2 var(--vk-font-display); }
+.pcd .pcs-title { font: 500 1.4rem/1.2 var(--vk-font-display); }
+@container pcd (max-width: 620px) { .pcd-grid, .pcd-two, .pcd-groups { grid-template-columns: minmax(0, 1fr); } }
+@media (prefers-reduced-motion: reduce) { .pcd * { animation: none; } }
+.pcd-linkbtn.pcd-small { font-size: var(--vk-text-sm); }

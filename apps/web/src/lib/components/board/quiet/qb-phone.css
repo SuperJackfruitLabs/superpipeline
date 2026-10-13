@@ -1,0 +1,37 @@
+/* Ported verbatim from e2e/reference/mockups/SP-Phone-Board-Quiet (prefixes hd, lk, grp, it, tr, tt, mvb, mt, rs, fs, full, ac, nn, tbl, match ^\.(ico|sr|muted)$, where .qb-board) by scripts/pixel/extract-css.mjs. */
+:where(.qb-board) .muted {color:var(--vk-color-muted)}
+:where(.qb-board) .ico {width:20px;height:20px;flex:none;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+:where(.qb-board) .sr {position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip-path:inset(50%);white-space:nowrap;border:0}
+:where(.qb-board) .hd {padding:20px 16px 8px;display:flex;flex-direction:column;gap:4px}
+:where(.qb-board) .hd h2 {font-size:28px;line-height:1.2;font-weight:700;overflow-wrap:anywhere}
+:where(.qb-board) .grp {padding:20px 16px 4px;display:flex;flex-direction:column}
+:where(.qb-board) .grp h2 {font-size:21px;font-weight:700;padding-bottom:8px}
+:where(.qb-board) .it {position:relative;display:flex;flex-direction:column;gap:6px;padding:14px 0 14px 18px;border-top:1px solid var(--vk-color-line)}
+:where(.qb-board) .it.nd::before {content:"";position:absolute;left:0;top:14px;bottom:14px;width:5px;background:var(--vk-color-signal)}
+:where(.qb-board) .it.plain {padding-left:0}
+:where(.qb-board) .tr {display:flex;gap:8px;align-items:flex-start}
+:where(.qb-board) .tth {flex:1 1 0%;min-width:0;display:flex}
+:where(.qb-board) .tt {flex:1;min-width:0;border:0;background:transparent;padding:0;text-align:left;font-size:18px;line-height:1.35;font-weight:700;cursor:pointer;overflow-wrap:anywhere;color:var(--vk-color-text)}
+:where(.qb-board) .mt {display:flex;align-items:center;gap:6px;flex-wrap:wrap;color:var(--vk-color-muted);font-size:16px}
+:where(.qb-board) .mt .face svg {filter:saturate(0.4)}
+:where(.qb-board) .rs {overflow-wrap:anywhere}
+:where(.qb-board) .fs {font-size:15px;color:var(--vk-color-text);overflow-wrap:anywhere}
+:where(.qb-board) .fs .od {font-weight:700;color:var(--vk-color-signal-text)}
+:where(.qb-board) details.full summary {min-height:44px;display:flex;align-items:center;cursor:pointer;text-decoration:underline;text-underline-offset:4px;font-size:16px}
+:where(.qb-board) details.full p {overflow-wrap:anywhere;padding-bottom:6px}
+:where(.qb-board) .ac {align-self:flex-start;min-height:44px;display:inline-flex;align-items:center;font-size:17px;font-weight:700;text-decoration:underline;text-underline-offset:4px}
+:where(.qb-board) .nn {padding:10px 0;border-top:1px solid var(--vk-color-line);color:var(--vk-color-muted)}
+:where(.qb-board) .tbl {width:100%;border-collapse:collapse;font-size:15px}
+:where(.qb-board) .tbl caption {text-align:left;font-size:21px;font-weight:700;padding-bottom:8px}
+:where(.qb-board) .tbl th, :where(.qb-board) .tbl td {text-align:left;vertical-align:top;padding:8px 12px 8px 0;border-top:1px solid var(--vk-color-line);overflow-wrap:anywhere}
+:where(.qb-board) .tbl thead th {font-size:14px;color:var(--vk-color-muted);font-weight:700}
+:where(.qb-board) .tbl td.n {white-space:nowrap}
+/* Hand edit: `.hd h1` is `.hd h2` above (PhoneHeader owns the page's h1). */
+/* Hand-written: from `.r{font-size:17px;line-height:1.5}`; the root takes no box but its children inherit. */
+.qb-board { display: contents; font-size: 17px; line-height: 1.5; }
+:where(.qb-board) .mt .face { display: flex; line-height: 0; }
+/* vibekit Buttons (Write a new card, Move, Answer/Review) sit in layout-only wrappers: the reference's .lk/.mvb/.ac places. */
+:where(.qb-board) .lkw, :where(.qb-board) .acw { align-self: flex-start; }
+:where(.qb-board) .mvw { flex: none; margin-top: -10px; }
+/* A one-line title is still a 44px target (the reference's titles all wrap onto two lines or more). */
+:where(.qb-board) .tt { min-height: 44px; }

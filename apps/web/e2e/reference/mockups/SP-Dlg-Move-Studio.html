@@ -1,0 +1,1640 @@
+<!doctype html>
+<html data-product="superpipeline" data-accent="product" lang="en" style="touch-action: pan-x pan-y; overscroll-behavior: none; --dc-chrome-unit: 1.0440835266821347px;"><head><link rel="stylesheet" href="_vibekit-0.0.10/vibekit.css" data-vibekit="0.0.10"><style>
+    .sc-placeholder{background:color-mix(in srgb,currentColor 8%,transparent);
+      border:1px solid color-mix(in srgb,currentColor 50%,transparent);
+      border-radius:2px;box-sizing:border-box;overflow:hidden}
+    @keyframes sc-shine{0%{background-position:100% 50%}100%{background-position:0% 50%}}
+    html.sc-dc-streaming .sc-placeholder,
+    html.sc-dc-streaming .sc-interp.sc-missing{position:relative;
+      background:color-mix(in srgb,currentColor 5%,transparent);
+      border-color:transparent}
+    html.sc-dc-streaming .sc-placeholder::before,
+    html.sc-dc-streaming .sc-interp.sc-missing::before{content:'';
+      position:absolute;inset:0;pointer-events:none;
+      background:linear-gradient(90deg,rgba(217,119,87,0) 25%,rgba(247,225,211,.95) 37%,rgba(217,119,87,0) 63%);
+      background-size:400% 100%;animation:sc-shine 1.4s ease infinite}
+    html.sc-dc-streaming .sc-placeholder:nth-child(n+9 of .sc-placeholder)::before,
+    html.sc-dc-streaming .sc-interp.sc-missing:nth-child(n+9 of .sc-interp.sc-missing)::before{animation:none;
+      background:color-mix(in srgb,currentColor 8%,transparent)}
+    .sc-placeholder-error{padding:4px 8px;font:11px/1.4 ui-monospace,monospace;
+      color:color-mix(in srgb,currentColor 70%,transparent);word-break:break-word}
+    .sc-interp.sc-missing{display:inline-block;width:2em;height:1em;overflow:hidden;
+      vertical-align:text-bottom;background:rgba(255,255,255,.3);border:1px solid rgba(0,0,0,.5);
+      border-radius:2px;box-sizing:border-box;color:transparent;
+      user-select:none}
+    .sc-interp.sc-unresolved{font-family:ui-monospace,monospace;font-size:.85em;
+      color:color-mix(in srgb,currentColor 50%,transparent);
+      background:color-mix(in srgb,currentColor 10%,transparent);border-radius:3px;
+      padding:0 3px}
+    .sc-host.sc-has-error{position:relative}
+    .sc-logic-error{position:absolute;top:8px;left:8px;z-index:2147483647;max-width:60ch;
+      padding:6px 10px;background:#b00020;color:#fff;font:12px/1.4 ui-monospace,monospace;
+      border-radius:4px;white-space:pre-wrap;pointer-events:none}
+    /* Mirrors PRINT_BASELINE_CSS in apps/web deck-stage-export.ts — keep both
+       in sync until dc-runtime regains a build step. */
+    @media print {
+      @page { margin: 0.5cm; }
+      figure, table { break-inside: avoid; }
+      #dc-root, #dc-root > .sc-host { height: auto; }
+      *, *::before, *::after {
+        print-color-adjust: exact; -webkit-print-color-adjust: exact;
+        backdrop-filter: none !important; -webkit-backdrop-filter: none !important;
+        animation-delay: -99s !important; animation-duration: .001s !important;
+        animation-iteration-count: 1 !important; animation-fill-mode: both !important;
+        animation-play-state: running !important; transition-duration: 0s !important;
+      }
+    }
+  </style>
+
+
+  <meta charset="utf-8">
+  <title>Move card · Studio</title>
+  <base href="/appifact/SP-Dlg-Move-Studio.dc.html">
+
+
+
+
+
+<style>x-dc{display:none!important}</style>
+
+  <style>@import url("https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&family=Azeret+Mono:wght@400;500;600&family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..600&display=swap");
+
+ 
+
+:root {
+  color-scheme: light;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  --vk-font-body: "Figtree", system-ui, sans-serif;
+  --vk-font-display: "Bricolage Grotesque", system-ui, sans-serif;
+  --vk-font-mono: "Martian Mono", ui-monospace, monospace;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+}
+
+[data-vibe="daylight"][data-theme="light"] {
+  color-scheme: light;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  --vk-font-body: "Figtree", system-ui, sans-serif;
+  --vk-font-display: "Bricolage Grotesque", system-ui, sans-serif;
+  --vk-font-mono: "Martian Mono", ui-monospace, monospace;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+}
+
+[data-vibe="daylight"][data-theme="dark"] {
+  color-scheme: dark;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  --vk-font-body: "Figtree", system-ui, sans-serif;
+  --vk-font-display: "Bricolage Grotesque", system-ui, sans-serif;
+  --vk-font-mono: "Martian Mono", ui-monospace, monospace;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+}
+
+[data-vibe="paper"][data-theme="light"] {
+  color-scheme: light;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  --vk-font-body: "Geist", system-ui, sans-serif;
+  --vk-font-display: "Newsreader", "Georgia", serif;
+  --vk-font-mono: "Martian Mono", ui-monospace, monospace;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+}
+
+[data-vibe="paper"][data-theme="dark"] {
+  color-scheme: dark;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  --vk-font-body: "Geist", system-ui, sans-serif;
+  --vk-font-display: "Newsreader", "Georgia", serif;
+  --vk-font-mono: "Martian Mono", ui-monospace, monospace;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+}
+
+[data-vibe="studio"][data-theme="light"] {
+  color-scheme: light;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  --vk-font-body: "Archivo", system-ui, sans-serif;
+  --vk-font-display: "Archivo", system-ui, sans-serif;
+  --vk-font-mono: "Azeret Mono", ui-monospace, monospace;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  --vk-font-serif: "Newsreader", Georgia, serif;
+
+
+
+
+
+
+
+
+
+
+}
+
+[data-vibe="studio"][data-theme="dark"] {
+  color-scheme: dark;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  --vk-font-body: "Archivo", system-ui, sans-serif;
+  --vk-font-display: "Archivo", system-ui, sans-serif;
+  --vk-font-mono: "Azeret Mono", ui-monospace, monospace;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  --vk-font-serif: "Newsreader", Georgia, serif;
+
+
+
+
+
+
+
+
+
+
+}
+
+[data-vibe="quiet"][data-theme="light"] {
+  color-scheme: light;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  --vk-font-body: "Atkinson Hyperlegible Next", system-ui, sans-serif;
+  --vk-font-display: "Atkinson Hyperlegible Next", system-ui, sans-serif;
+  --vk-font-mono: "Martian Mono", ui-monospace, monospace;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+}
+
+[data-vibe="quiet"][data-theme="dark"] {
+  color-scheme: dark;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  --vk-font-body: "Atkinson Hyperlegible Next", system-ui, sans-serif;
+  --vk-font-display: "Atkinson Hyperlegible Next", system-ui, sans-serif;
+  --vk-font-mono: "Martian Mono", ui-monospace, monospace;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+}
+
+ 
+:root {
+  --vk-text-sm: clamp(0.8125rem, 0.78rem + 0.15vw, 0.875rem);
+  --vk-text-md: clamp(1rem, 0.96rem + 0.2vw, 1.0625rem);
+  --vk-text-lg: clamp(1.25rem, 1.1rem + 0.6vw, 1.5rem);
+  --vk-text-xl: clamp(1.75rem, 1.4rem + 1.6vw, 2.5rem);
+  --vk-focus: 0 0 0 3px var(--vk-color-bg), 0 0 0 5px var(--vk-color-text);
+
+}
+
+html {
+  background: var(--vk-color-bg);
+  color: var(--vk-color-text);
+  font-family: var(--vk-font-body);
+  font-size: 100%;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  font-size: var(--vk-text-md);
+  line-height: 1.5;
+}
+
+:focus-visible {
+   
+  outline: 2px solid var(--vk-color-text);
+  outline-offset: 2px;
+  box-shadow: var(--vk-focus);
+}
+
+ 
+.vk-visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  
+  *, *::before, *::after {
+    animation: none !important;
+    transition-duration: 0ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+[data-motion="reduce"],
+[data-motion="reduce"] *,
+[data-motion="reduce"]::before,
+[data-motion="reduce"]::after,
+[data-motion="reduce"] *::before,
+[data-motion="reduce"] *::after {
+  --vk-motion-fast: 0ms;
+  --vk-motion-base: 0ms;
+  animation: none !important;
+  transition-duration: 0ms !important;
+  scroll-behavior: auto !important;
+}
+
+
+
+@media (forced-colors: active) {
+  :focus-visible {
+    outline: 2px solid CanvasText;
+    box-shadow: none;
+  }
+}
+ 
+
+
+
+
+
+
+
+
+ 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ 
+
+
+
+
+
+
+
+
+
+
+
+
+
+.vk-toast {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--vk-space-3);
+  min-height: var(--vk-target-min);
+  padding: 0 var(--vk-space-5);
+  border-radius: var(--vk-radius-pill);
+  background: var(--vk-color-primary);
+  color: var(--vk-color-primary-fg);
+  font: 600 var(--vk-text-sm) / 1.2 var(--vk-font-body);
+}
+.vk-toast__action { min-height: var(--vk-target-min); border: 0; background: transparent; color: inherit; font: inherit; text-decoration: underline; cursor: pointer; }
+ 
+.vk-toast__action:focus-visible { outline-color: currentColor; box-shadow: var(--vk-focus); }
+
+.vk-sky {
+  --vk-sky-top: var(--vk-sky-noon-top);
+  --vk-sky-bottom: var(--vk-sky-noon-bottom);
+  --vk-sky-text: var(--vk-sky-noon-text);
+  --vk-sky-sun: var(--vk-sky-noon-sun);
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(180deg, var(--vk-sky-top), var(--vk-sky-bottom));
+  color: var(--vk-sky-text);
+}
+.vk-sky[data-phase="dawn"] { --vk-sky-top: var(--vk-sky-dawn-top); --vk-sky-bottom: var(--vk-sky-dawn-bottom); --vk-sky-text: var(--vk-sky-dawn-text); --vk-sky-sun: var(--vk-sky-dawn-sun); }
+.vk-sky[data-phase="morning"] { --vk-sky-top: var(--vk-sky-morning-top); --vk-sky-bottom: var(--vk-sky-morning-bottom); --vk-sky-text: var(--vk-sky-morning-text); --vk-sky-sun: var(--vk-sky-morning-sun); }
+.vk-sky[data-phase="golden"] { --vk-sky-top: var(--vk-sky-golden-top); --vk-sky-bottom: var(--vk-sky-golden-bottom); --vk-sky-text: var(--vk-sky-golden-text); --vk-sky-sun: var(--vk-sky-golden-sun); }
+.vk-sky[data-phase="dusk"] { --vk-sky-top: var(--vk-sky-dusk-top); --vk-sky-bottom: var(--vk-sky-dusk-bottom); --vk-sky-text: var(--vk-sky-dusk-text); --vk-sky-sun: var(--vk-sky-dusk-sun); }
+.vk-sky[data-phase="night"] { --vk-sky-top: var(--vk-sky-night-top); --vk-sky-bottom: var(--vk-sky-night-bottom); --vk-sky-text: var(--vk-sky-night-text); --vk-sky-sun: var(--vk-sky-night-sun); }
+.vk-sky__sun {
+  position: absolute;
+  top: var(--vk-space-5);
+  right: var(--vk-space-6);
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: var(--vk-sky-sun);
+  box-shadow: 0 0 48px 12px color-mix(in oklch, var(--vk-sky-sun) 45%, transparent);
+}
+.vk-sky__content { position: relative; padding: var(--vk-space-5); }
+[data-time="subtle"] .vk-sky { background: color-mix(in oklch, var(--vk-sky-top) 30%, var(--vk-color-bg)); color: var(--vk-color-text); }
+[data-time="subtle"] .vk-sky__sun { display: none; }
+[data-time="off"] .vk-sky { background: var(--vk-color-bg); color: var(--vk-color-text); }
+[data-time="off"] .vk-sky__sun { display: none; }
+[data-vibe="studio"] .vk-sky__sun { width: 10px; height: 10px; box-shadow: 0 0 10px 2px var(--vk-sky-sun); }
+[data-vibe="quiet"] .vk-sky__sun, [data-vibe="paper"] .vk-sky__sun { display: none; }
+
+
+
+
+
+
+
+
+
+
+@media (forced-colors: active) {
+  
+  .vk-toast { border: 1px solid CanvasText; }
+}
+
+ 
+.sl-danger{ white-space: nowrap; } .art .vk-button{ white-space: nowrap; }
+
+ 
+
+
+
+
+
+ 
+a[href*="CardPage"], a[class*="btn"], button[class*="btn"], a[class*="-button"], button[class*="-button"]{ white-space: nowrap; flex-shrink: 0; } .art .vk-button{ white-space: nowrap; flex-shrink: 0; }
+
+ 
+a[href*="CardPage"], a[class*="icon"][style*="width: auto"], button[class*="icon"][style*="width: auto"] { display: inline-flex !important; flex-direction: row !important; align-items: center !important; justify-content: center; gap: 8px; }
+</style>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Azeret+Mono:ital,wght@1,400&amp;display=swap" data-font-variant=""><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Azeret+Mono:ital,wght@1,500&amp;display=swap" data-font-variant=""><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Azeret+Mono:ital,wght@1,600&amp;display=swap" data-font-variant=""><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&amp;family=Azeret+Mono:wght@400;500;600&amp;family=Atkinson+Hyperlegible+Next:wght@400;700&amp;family=Bricolage+Grotesque:opsz,wght@12..96,400..800&amp;family=Figtree:wght@400..800&amp;family=Geist:wght@400..700&amp;family=Instrument+Sans:wght@400..700&amp;family=Martian+Mono:wght@400..600&amp;family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..600&amp;display=swap" data-dc-tpl="1"><style data-dc-tpl="2">
+body { margin: 0; }
+.art, .art * { box-sizing: border-box; }
+.art { position: relative; width: 1440px; height: 900px; overflow: hidden; font-size: var(--vk-text-md); line-height: 1.45; }
+:where(.fg) button { font-family: inherit; }
+:where(.fg) :focus-visible { outline: 2px solid var(--vk-color-text); outline-offset: 2px; }
+:where(.fg) .is-focus { outline: 2px solid var(--vk-color-text); outline-offset: 2px; box-shadow: var(--vk-focus); }
+
+/* ---- the two layers: the real board behind, the dialog in front ---- */
+.backdrop { position: absolute; inset: 0; overflow: hidden; z-index: 0; }
+.fg { position: absolute; inset: 0; pointer-events: none; }
+.fg > * { pointer-events: auto; }
+
+/* ---- the board behind: SP-Board-Studio, scoped to .backdrop ---- */
+
+:where(.backdrop) :where(.ar) *, :where(.backdrop) :where(.ar) *::before, :where(.backdrop) :where(.ar) *::after { box-sizing: border-box; }
+:where(.backdrop) :where(.ar) :where(h1, h2, h3, h4, p, ul, ol, dl, dd, dt, table, form, blockquote, figure, fieldset) { margin: 0; padding: 0; }
+:where(.backdrop) :where(.ar) :where(ul, ol) { list-style: none; }
+:where(.backdrop) :where(.ar) :where(fieldset) { border: 0; min-width: 0; }
+:where(.backdrop) :where(.ar) :where(button:where(:not(.vk-button)), input, select, textarea) { font: inherit; color: inherit; }
+:where(.backdrop) :where(.ar) :where(a) { color: inherit; }
+
+/* local alias layer: every value comes from the Studio (Annual report) tokens in vk.css */
+:where(.backdrop) .ar {
+  --bg: var(--vk-color-bg); --paper: var(--vk-color-surface); --text: var(--vk-color-text); --muted: var(--vk-color-muted);
+  --rule: var(--vk-color-rule); --hair: var(--vk-color-line); --field: var(--vk-color-raised);
+  --soft: color-mix(in srgb, var(--vk-color-text) 6%, var(--vk-color-bg));
+  --s1: var(--vk-stage-1); --s2: var(--vk-stage-2); --s3: var(--vk-stage-3); --s4: var(--vk-stage-4); --s5: var(--vk-stage-5); --s6: var(--vk-stage-6); --s7: var(--vk-stage-7);
+  --st-text: var(--vk-color-stage-text);
+  --sig: var(--vk-color-signal); --sig-text: var(--vk-color-signal-text); --sig-wash: var(--vk-color-signal-wash); --sig-fg: var(--vk-face-ink);
+  --ff: var(--vk-font-body); --fm: var(--vk-font-mono); --fs: var(--vk-font-serif);
+  background: var(--bg); color: var(--text); font: 400 14px/1.45 var(--ff); font-variant-numeric: tabular-nums lining-nums;
+}
+:where(.backdrop) .ar :focus-visible { outline: 3px solid var(--text); outline-offset: 3px; box-shadow: none; }
+:where(.backdrop) .ar .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+:where(.backdrop) .ar .h44 { position: relative; }
+:where(.backdrop) .ar .h44::after { content: ""; position: absolute; left: 0; right: 0; top: 50%; height: max(44px, 100%); transform: translateY(-50%); }
+:where(.backdrop) .ar .kick { font: 700 12px/1.2 var(--ff); letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
+:where(.backdrop) .ar .mono { font-family: var(--fm); }
+:where(.backdrop) .ar .muted { color: var(--muted); }
+:where(.backdrop) .ar .serif { font-family: var(--fs); }
+:where(.backdrop) .ar .fn { font: 600 11px/1 var(--fm); vertical-align: super; margin-left: 2px; color: var(--st-text); }
+:where(.backdrop) .ar .kbd { display: inline-block; padding: 2px 5px; border: 1px solid currentColor; border-radius: 2px; font: 500 11px/1 var(--fm); white-space: nowrap; }
+:where(.backdrop) .ar .chip { display: inline-block; flex: none; width: 10px; height: 10px; }
+:where(.backdrop) .ar .c1 { background: var(--s1); } :where(.backdrop) .ar .c2 { background: var(--s2); } :where(.backdrop) .ar .c3 { background: var(--s3); } :where(.backdrop) .ar .c4 { background: var(--s4); } :where(.backdrop) .ar .c5 { background: var(--s5); } :where(.backdrop) .ar .c6 { background: var(--s6); } :where(.backdrop) .ar .c7 { background: var(--s7); }
+:where(.backdrop) .ar .u { display: inline-block; flex: none; width: 18px; height: 18px; }
+:where(.backdrop) .ar .u.needs { background: var(--sig); }
+:where(.backdrop) .ar .u.blocked { background: repeating-linear-gradient(135deg, var(--s5) 0 1.5px, transparent 1.5px 4px); box-shadow: inset 0 0 0 1.5px var(--s5); }
+:where(.backdrop) .ar .u.queued { box-shadow: inset 0 0 0 1.5px var(--s5); }
+:where(.backdrop) .ar .u.done { background: var(--s7); }
+:where(.backdrop) .ar .u.off { box-shadow: inset 0 0 0 1.5px var(--muted); }
+:where(.backdrop) .ar .ar-ini { flex: none; display: inline-grid; place-items: center; background: var(--text); color: var(--bg); font-family: var(--ff); font-weight: 800; line-height: 1; }
+:where(.backdrop) .ar svg[data-mood] { flex: none; }
+
+/* buttons */
+:where(.backdrop) .ar .ar-btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 44px; padding: 0 16px; border: 0; border-radius: 2px; background: var(--text); color: var(--bg); font: 800 14px var(--ff); white-space: nowrap; text-decoration: none; cursor: pointer; }
+:where(.backdrop) .ar .ar-btn .kbd { border-color: currentColor; }
+:where(.backdrop) .ar .ar-btn2 { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 44px; padding: 0 14px; border: 1px solid var(--rule); border-radius: 2px; background: transparent; color: var(--text); font: 700 14px var(--ff); white-space: nowrap; text-decoration: none; cursor: pointer; }
+:where(.backdrop) .ar .ar-btn2:hover { background: var(--text); color: var(--bg); }
+:where(.backdrop) .ar .ar-lk { position: relative; display: inline-flex; align-items: center; gap: 6px; min-height: 44px; padding: 0 8px 0 0; border: 0; background: transparent; color: var(--text); font: 700 13.5px var(--ff); text-decoration: underline; text-decoration-thickness: 1.5px; text-underline-offset: 3px; white-space: nowrap; cursor: pointer; }
+:where(.backdrop) .ar .ar-lk.quiet { color: var(--muted); }
+:where(.backdrop) .ar .ar-ib { position: relative; display: inline-grid; place-items: center; flex: none; width: 44px; height: 44px; border: 1px solid var(--rule); border-radius: 2px; background: transparent; color: var(--text); text-decoration: none; cursor: pointer; }
+:where(.backdrop) .ar .ar-ib:hover { background: var(--text); color: var(--bg); }
+
+/* rail */
+:where(.backdrop) .ar-rail { position: relative; z-index: 3; display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 16px 0; background: var(--text); color: var(--bg); }
+:where(.backdrop) .ar-mark { display: grid; place-items: center; width: 44px; height: 44px; margin-bottom: 16px; background: var(--bg); color: var(--text); text-decoration: none; }
+:where(.backdrop) .ar-nav { position: relative; display: grid; place-items: center; width: 44px; height: 44px; border: 0; border-radius: 2px; background: transparent; color: var(--bg); text-decoration: none; cursor: pointer; }
+:where(.backdrop) .ar-nav:hover { outline: 1px solid var(--bg); outline-offset: -1px; }
+:where(.backdrop) .ar-rail .ar-nav:focus-visible, :where(.backdrop) .ar-rail .ar-mark:focus-visible, :where(.backdrop) .ar-rail .ar-acct:focus-visible { outline-color: var(--bg); }
+:where(.backdrop) .ar-nav[aria-current="page"] { background: var(--bg); color: var(--text); }
+:where(.backdrop) .ar-nav .ct { position: absolute; right: -3px; top: -3px; min-width: 18px; height: 18px; padding: 0 4px; background: var(--sig-text); color: var(--vk-color-primary-fg); font: 800 12px/18px var(--ff); text-align: center; }
+:where(.backdrop) .ar-nav .tip, :where(.backdrop) .ar-acct .tip { position: absolute; left: 54px; top: 50%; transform: translateY(-50%); display: none; align-items: center; gap: 8px; padding: 6px 10px; border: 1px solid var(--rule); background: var(--bg); color: var(--text); font: 700 13px var(--ff); white-space: nowrap; pointer-events: none; }
+:where(.backdrop) .ar-nav:hover .tip, :where(.backdrop) .ar-nav:focus-visible .tip, :where(.backdrop) .ar-acct:hover .tip, :where(.backdrop) .ar-acct:focus-visible .tip { display: inline-flex; }
+:where(.backdrop) .ar-acct { position: relative; width: 44px; height: 44px; margin-top: 4px; border: 1.5px solid var(--bg); border-radius: 2px; background: transparent; color: var(--bg); font: 800 14px var(--ff); cursor: pointer; }
+
+/* masthead */
+:where(.backdrop) .ar-top { display: flex; align-items: center; gap: 20px; min-height: 76px; padding: 0 24px 0 40px; border-bottom: 1px solid var(--rule); }
+:where(.backdrop) .ar-board { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+:where(.backdrop) .ar-sw { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 0; border: 0; background: transparent; color: var(--text); font: 800 28px/1 var(--ff); font-stretch: 80%; letter-spacing: -.01em; white-space: nowrap; cursor: pointer; }
+:where(.backdrop) .ar-sw:hover { text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: 5px; }
+:where(.backdrop) .ar-cmd { flex: 1; max-width: 480px; margin-left: auto; display: flex; align-items: center; min-height: 44px; cursor: text; }
+:where(.backdrop) .ar-cmd .box { flex: 1; display: flex; align-items: center; gap: 10px; height: 44px; padding: 0 10px; border-bottom: 1.5px solid var(--rule); color: var(--muted); }
+:where(.backdrop) .ar-cmd input { flex: 1; min-width: 0; border: 0; background: transparent; font: 500 16px var(--ff); outline: none; color: var(--text); }
+:where(.backdrop) .ar-cmd input::placeholder { color: var(--muted); }
+:where(.backdrop) .ar-cmd:focus-within .box { outline: 3px solid var(--text); outline-offset: 2px; }
+:where(.backdrop) .ar-live { display: inline-flex; align-items: center; gap: 6px; font: 700 12px var(--ff); letter-spacing: .1em; text-transform: uppercase; white-space: nowrap; }
+:where(.backdrop) .ar-live i { width: 8px; height: 8px; background: var(--st-text); }
+
+/* sub bar */
+:where(.backdrop) .ar-sub { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 24px; min-height: 48px; padding: 0 40px; border-bottom: 1px solid var(--hair); }
+:where(.backdrop) .ar-tab { position: relative; display: inline-flex; align-items: center; gap: 6px; min-height: 48px; padding: 0; border: 0; background: transparent; color: var(--muted); font: 700 14px var(--ff); text-decoration: none; white-space: nowrap; cursor: pointer; }
+:where(.backdrop) .ar-tab[aria-current="page"], :where(.backdrop) .ar-tab[aria-pressed="true"], :where(.backdrop) .ar-tab[aria-selected="true"] { color: var(--text); }
+:where(.backdrop) .ar-tab[aria-current="page"]::after, :where(.backdrop) .ar-tab[aria-pressed="true"]::after, :where(.backdrop) .ar-tab[aria-selected="true"]::after { content: ""; position: absolute; left: 0; right: 0; bottom: -1px; height: 3px; background: var(--text); }
+:where(.backdrop) .ar-tab .mono { font-size: 12px; font-weight: 500; }
+:where(.backdrop) .ar-fl { position: relative; display: inline-flex; align-items: center; gap: 6px; height: 32px; padding: 0 12px; border: 1px solid var(--rule); border-radius: 2px; background: transparent; color: var(--text); font: 700 13px var(--ff); white-space: nowrap; cursor: pointer; }
+:where(.backdrop) .ar-fl i { font: 500 12px var(--fm); font-style: normal; color: var(--muted); }
+:where(.backdrop) .ar-sub .r { margin-left: auto; font: 500 12px var(--fm); color: var(--muted); white-space: nowrap; }
+
+/* hero */
+:where(.backdrop) .ar-hero { display: grid; grid-template-columns: auto minmax(0, 1fr); column-gap: 28px; align-items: end; }
+:where(.backdrop) .ar-hero .big { font: 900 184px/.78 var(--ff); font-stretch: 72%; letter-spacing: -.04em; color: var(--sig); }
+:where(.backdrop) .ar-hero .big.ink { color: var(--text); }
+:where(.backdrop) .ar-hero .txt { display: flex; flex-direction: column; gap: 12px; padding-bottom: 4px; }
+:where(.backdrop) .ar-hero h1 { font: 800 44px/1.02 var(--ff); font-stretch: 82%; letter-spacing: -.02em; }
+:where(.backdrop) .ar-hero p { max-width: 640px; font: 400 18px/1.45 var(--fs); }
+
+/* numbered sections */
+:where(.backdrop) .ar-sec { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+:where(.backdrop) .ar-sec > .hd { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 14px; padding-top: 10px; border-top: 1.5px solid var(--rule); }
+:where(.backdrop) .ar-sec > .hd .no { font: 500 12px var(--fm); color: var(--muted); }
+:where(.backdrop) .ar-sec > .hd h2 { font: 800 16px/1.2 var(--ff); }
+:where(.backdrop) .ar-sec > .hd .r { margin-left: auto; display: inline-flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; font: 500 12px var(--fm); color: var(--muted); }
+
+/* figures row */
+:where(.backdrop) .ar-figs { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); border-top: 1.5px solid var(--rule); border-bottom: 1px solid var(--hair); }
+:where(.backdrop) .ar-figs > div { display: flex; flex-direction: column; gap: 6px; min-width: 0; padding: 12px 12px 14px 0; }
+:where(.backdrop) .ar-figs > div + div { padding-left: 14px; border-left: 1px solid var(--hair); }
+:where(.backdrop) .ar-figs b { font: 900 52px/.86 var(--ff); font-stretch: 72%; letter-spacing: -.03em; white-space: nowrap; }
+:where(.backdrop) .ar-figs b small { font-size: 17px; font-weight: 700; margin-left: 3px; letter-spacing: 0; }
+:where(.backdrop) .ar-figs b.z { font-weight: 300; color: var(--muted); }
+:where(.backdrop) .ar-figs .sig b { color: var(--sig); }
+:where(.backdrop) .ar-figs .sig span { color: var(--sig-text); }
+:where(.backdrop) .ar-figs span { font-size: 12.5px; font-weight: 600; color: var(--muted); }
+
+/* stage ramp track */
+:where(.backdrop) .ar-ramp { display: flex; gap: 2px; }
+:where(.backdrop) .ar-ramp i { width: 14px; height: 8px; opacity: .28; }
+:where(.backdrop) .ar-ramp i.on { opacity: 1; }
+:where(.backdrop) .ar-track { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: 3px; }
+:where(.backdrop) .ar-track li { display: flex; flex-direction: column; gap: 6px; min-width: 0; font: 500 11.5px/1.25 var(--fm); color: var(--muted); }
+:where(.backdrop) .ar-track li .b { height: 8px; opacity: .3; }
+:where(.backdrop) .ar-track li.done .b { opacity: 1; }
+:where(.backdrop) .ar-track li.cur .b { opacity: 1; height: 14px; margin-top: -6px; }
+:where(.backdrop) .ar-track li.cur.sig .b { box-shadow: inset 0 -4px 0 var(--sig); }
+:where(.backdrop) .ar-track li.cur { color: var(--text); font-weight: 600; }
+:where(.backdrop) .ar-track li.cur.sig { color: var(--sig-text); }
+
+/* quote (agent words) */
+:where(.backdrop) .ar-q { display: flex; flex-direction: column; gap: 8px; padding: 2px 0 0 18px; border-left: 4px solid var(--sig); }
+:where(.backdrop) .ar-q.ink { border-left-color: var(--text); }
+:where(.backdrop) .ar-q.done { border-left-color: var(--s7); }
+:where(.backdrop) .ar-q.off { border-left-color: var(--hair); }
+:where(.backdrop) .ar-q h3 { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; font: 800 14px var(--ff); color: var(--sig-text); }
+:where(.backdrop) .ar-q.ink h3, :where(.backdrop) .ar-q.done h3, :where(.backdrop) .ar-q.off h3 { color: var(--text); }
+:where(.backdrop) .ar-q h3 .mono { margin-left: auto; font-weight: 500; font-size: 12px; }
+:where(.backdrop) .ar-q blockquote { font: 400 19px/1.42 var(--fs); overflow-wrap: anywhere; }
+:where(.backdrop) .ar-q blockquote code, :where(.backdrop) .ar-id { font: 500 .78em var(--fm); overflow-wrap: anywhere; }
+
+/* footnote row with copy */
+:where(.backdrop) .ar-pfn { display: grid; grid-template-columns: 22px minmax(0, 1fr) auto; align-items: center; column-gap: 0; padding-top: 6px; border-top: 1px solid var(--hair); font: 400 14px/1.4 var(--fs); }
+:where(.backdrop) .ar-pfn .k { font: 600 11.5px var(--fm); color: var(--st-text); }
+:where(.backdrop) .ar-pfn code { font: 500 12.5px var(--fm); overflow-wrap: anywhere; }
+
+/* notes */
+:where(.backdrop) .ar-notes { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 32px; row-gap: 10px; padding-top: 10px; border-top: 1px solid var(--hair); }
+:where(.backdrop) .ar-notes li { display: grid; grid-template-columns: 22px minmax(0, 1fr); font: 400 14.5px/1.45 var(--fs); }
+:where(.backdrop) .ar-notes li .k { font: 600 11.5px/1.9 var(--fm); color: var(--st-text); }
+:where(.backdrop) .ar-notes li i { font-style: italic; }
+
+/* tables */
+:where(.backdrop) .ar .ttl { position: relative; padding: 0; border: 0; background: transparent; color: var(--text); font: 700 14px/1.3 var(--ff); text-align: left; text-decoration: none; overflow-wrap: anywhere; cursor: pointer; }
+:where(.backdrop) .ar .ttl::after { content: ""; position: absolute; left: -4px; right: -4px; top: 50%; height: max(44px, calc(100% + 8px)); transform: translateY(-50%); }
+:where(.backdrop) .ar .ttl:hover { text-decoration: underline; text-underline-offset: 3px; }
+:where(.backdrop) .ar-tbl { width: 100%; border-collapse: collapse; table-layout: fixed; }
+:where(.backdrop) .ar-tbl th { height: 30px; padding: 0 10px 0 0; text-align: left; font: 700 12px var(--ff); color: var(--muted); border-bottom: 1px solid var(--rule); vertical-align: bottom; }
+:where(.backdrop) .ar-tbl td { overflow-wrap: break-word; padding: 10px 10px 10px 0; border-bottom: 1px solid var(--hair); vertical-align: top; }
+:where(.backdrop) .ar-tbl tr.sel td { background: var(--soft); }
+:where(.backdrop) .ar-tbl tr.sel td:first-child { box-shadow: inset 3px 0 0 var(--text); padding-left: 8px; }
+:where(.backdrop) .ar-tbl .ix { font: 500 12.5px var(--fm); color: var(--muted); }
+:where(.backdrop) .ar-tbl .stg { display: inline-flex; align-items: center; gap: 7px; font-size: 13px; white-space: nowrap; }
+:where(.backdrop) .ar-tbl .ag { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; white-space: nowrap; }
+:where(.backdrop) .ar-tbl .m { font: 500 12.5px var(--fm); color: var(--muted); }
+:where(.backdrop) .ar-tbl .m.sig, :where(.backdrop) .ar .sigt { color: var(--sig-text); font-weight: 600; }
+:where(.backdrop) .ar-st { display: inline-flex; align-items: center; gap: 7px; font-weight: 700; font-size: 13px; white-space: nowrap; }
+:where(.backdrop) .ar-st .u { width: 11px; height: 11px; }
+:where(.backdrop) .ar-st.needs { color: var(--sig-text); }
+:where(.backdrop) .ar-facts { display: flex; flex-wrap: wrap; gap: 4px 10px; margin-top: 4px; font: 500 12px/1.35 var(--fm); color: var(--muted); }
+:where(.backdrop) .ar-facts > span { display: inline-flex; align-items: center; gap: 5px; overflow-wrap: anywhere; }
+:where(.backdrop) .ar-facts .p { color: var(--text); font-weight: 600; }
+
+/* key/value rows */
+:where(.backdrop) .ar-kv { display: grid; grid-template-columns: max-content minmax(0, 1fr); column-gap: 16px; }
+:where(.backdrop) .ar-kv > dt, :where(.backdrop) .ar-kv > dd { padding: 9px 0; border-top: 1px solid var(--hair); }
+:where(.backdrop) .ar-kv > dt { font-weight: 700; font-size: 13px; }
+:where(.backdrop) .ar-kv > dd { overflow-wrap: anywhere; }
+
+/* fields */
+:where(.backdrop) .ar-field { display: flex; flex-direction: column; gap: 6px; }
+:where(.backdrop) .ar-field > label, :where(.backdrop) .ar .lab { font-weight: 700; font-size: 14px; }
+:where(.backdrop) .ar-in, :where(.backdrop) .ar-sel, :where(.backdrop) .ar-ta { width: 100%; min-height: 44px; padding: 0 10px; border: 1px solid var(--rule); border-radius: 0; background: var(--field); color: var(--text); font: 400 16px/1.45 var(--ff); }
+:where(.backdrop) .ar-ta { min-height: 88px; padding: 10px 12px; resize: vertical; }
+:where(.backdrop) .ar-in::placeholder, :where(.backdrop) .ar-ta::placeholder { color: var(--muted); }
+:where(.backdrop) .ar-hint { font: 500 12px/1.4 var(--fm); color: var(--muted); }
+
+/* status bar */
+:where(.backdrop) .ar-status { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 20px; min-height: 32px; padding: 0 40px; border-top: 1px solid var(--rule); font: 500 12px var(--fm); color: var(--muted); }
+:where(.backdrop) .ar-status .sig { color: var(--sig-text); font-weight: 600; }
+:where(.backdrop) .ar-status .r { margin-left: auto; display: flex; flex-wrap: wrap; gap: 16px; }
+
+:where(.backdrop) .ar.bd { display: grid; grid-template-columns: 64px minmax(0, 1fr); }
+:where(.backdrop) .ar.bd > .ar-rail { grid-row: 1; }
+:where(.backdrop) .bd-body { display: flex; flex-direction: column; min-width: 0; }
+:where(.backdrop) .bd-grid { flex: 1; display: grid; grid-template-columns: minmax(0, 1fr) 400px; }
+:where(.backdrop) .bd-main { min-width: 0; display: flex; flex-direction: column; gap: 36px; padding: 24px 40px 40px; }
+:where(.backdrop) .bd-qf { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 0; }
+:where(.backdrop) .bd-qf .lb { margin-right: 14px; }
+:where(.backdrop) .bd-qf button { position: relative; display: inline-flex; align-items: baseline; gap: 6px; min-height: 44px; padding: 0 14px; border: 0; border-left: 1px solid var(--hair); background: transparent; color: var(--muted); font: 700 14px var(--ff); white-space: nowrap; cursor: pointer; }
+:where(.backdrop) .bd-qf button:first-of-type { border-left: 0; padding-left: 0; }
+:where(.backdrop) .bd-qf button b { font: 500 12.5px var(--fm); }
+:where(.backdrop) .bd-qf button[aria-pressed="true"] { color: var(--text); text-decoration: underline; text-decoration-thickness: 3px; text-underline-offset: 8px; }
+:where(.backdrop) .bd-qf button.sig b { color: var(--sig-text); font-weight: 600; }
+:where(.backdrop) .bd-qf .r { margin-left: auto; font: 500 12px var(--fm); color: var(--muted); white-space: nowrap; }
+
+/* small multiples */
+:where(.backdrop) .ar-sm { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); column-gap: 12px; }
+:where(.backdrop) .ar-mul { display: flex; flex-direction: column; gap: 8px; min-width: 0; color: var(--text); text-decoration: none; }
+:where(.backdrop) .ar-mul .band { height: 6px; }
+:where(.backdrop) .ar-mul .lb { display: flex; flex-direction: column; gap: 1px; }
+:where(.backdrop) .ar-mul .lb .mono { font-size: 11.5px; color: var(--muted); }
+:where(.backdrop) .ar-mul .nm { font: 700 13.5px/1.2 var(--ff); white-space: nowrap; }
+:where(.backdrop) .ar-mul:hover .nm { text-decoration: underline; text-underline-offset: 3px; }
+:where(.backdrop) .ar-mul .n { font: 900 72px/.9 var(--ff); font-stretch: 72%; letter-spacing: -.03em; }
+:where(.backdrop) .ar-mul.z .n { font-weight: 300; color: var(--muted); }
+:where(.backdrop) .ar-mul .units { display: flex; flex-wrap: wrap; gap: 3px; min-height: 18px; padding-bottom: 8px; border-bottom: 1px solid var(--rule); }
+:where(.backdrop) .ar-mul .note { font: 500 12.5px/1.35 var(--ff); color: var(--muted); overflow-wrap: anywhere; }
+:where(.backdrop) .ar-mul .who { font: 500 11.5px/1.35 var(--fm); color: var(--muted); overflow-wrap: anywhere; }
+:where(.backdrop) .ar-mul .gate { align-self: flex-start; padding: 1px 5px; border: 1px solid var(--rule); font: 700 11px/1.4 var(--ff); letter-spacing: .08em; text-transform: uppercase; color: var(--text); }
+
+/* share bar */
+:where(.backdrop) .ar-share { display: grid; grid-template-columns: 3fr 2fr 1fr; column-gap: 3px; row-gap: 8px; }
+:where(.backdrop) .ar-share .lab { display: flex; align-items: baseline; gap: 8px; font: 700 13.5px var(--ff); white-space: nowrap; }
+:where(.backdrop) .ar-share .lab b { font: 900 48px/.9 var(--ff); font-stretch: 72%; letter-spacing: -.02em; }
+:where(.backdrop) .ar-share .lab.s { color: var(--sig-text); }
+:where(.backdrop) .ar-share .lab.s b { color: var(--sig); }
+:where(.backdrop) .ar-share i { height: 14px; }
+:where(.backdrop) .ar-share .needs { background: var(--sig); }
+:where(.backdrop) .ar-share .blocked { background: repeating-linear-gradient(135deg, var(--s5) 0 1.5px, transparent 1.5px 5px); box-shadow: inset 0 0 0 1.5px var(--s5); }
+:where(.backdrop) .ar-share .done { background: var(--s7); }
+
+:where(.backdrop) .bd-move { display: inline-flex; align-items: center; gap: 6px; min-height: 36px; padding: 0 10px; border: 1px solid var(--rule); border-radius: 2px; background: transparent; color: var(--text); font: 700 13px var(--ff); white-space: nowrap; cursor: pointer; }
+:where(.backdrop) .bd-move:hover { background: var(--text); color: var(--bg); }
+:where(.backdrop) .ar-tbl td.mv { padding-right: 0; text-align: right; }
+
+/* needs-you panel */
+:where(.backdrop) .bd-panel { min-width: 0; display: flex; flex-direction: column; gap: 22px; padding: 24px 28px 32px; border-left: 1px solid var(--rule); background: var(--paper); }
+:where(.backdrop) .bd-panel > header h2 { margin-top: 6px; font: 800 30px/1.04 var(--ff); font-stretch: 82%; letter-spacing: -.015em; }
+:where(.backdrop) .bd-panel > header p { margin-top: 8px; font: 400 16px/1.45 var(--fs); }
+:where(.backdrop) .bd-need { display: flex; flex-direction: column; gap: 10px; padding-top: 14px; border-top: 1.5px solid var(--rule); }
+:where(.backdrop) .bd-need .row { display: flex; align-items: baseline; gap: 10px; }
+:where(.backdrop) .bd-need .row .mono { font-size: 12px; color: var(--muted); }
+:where(.backdrop) .bd-need .row .age { margin-left: auto; color: var(--sig-text); font-weight: 600; }
+:where(.backdrop) .bd-need h3 { font: 800 17px/1.25 var(--ff); overflow-wrap: anywhere; }
+:where(.backdrop) .bd-need .by { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; font-size: 13px; color: var(--muted); }
+:where(.backdrop) .bd-need .by b { color: var(--text); font-weight: 700; }
+:where(.backdrop) .bd-need .by .stg { display: inline-flex; align-items: center; gap: 6px; }
+:where(.backdrop) .bd-need .acts { display: flex; flex-wrap: wrap; gap: 8px; }
+:where(.backdrop) .bd-keys { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 8px 14px; padding-top: 14px; border-top: 1px solid var(--hair); font-size: 13px; }
+:where(.backdrop) .bd-keys dt { display: flex; gap: 4px; }
+
+/* ---- dialog backdrop adjustments ---- */
+:where(.backdrop) .ar.bd { height: 100%; grid-template-rows: minmax(0, 1fr); }
+:where(.backdrop) .ar.bd > .bd-body { min-height: 0; overflow: hidden; }
+:where(.backdrop) .ar.bd .bd-grid { min-height: 0; overflow: hidden; }
+
+/* ---- the dialog ---- */
+/* ---------- scrim + dialog ---------- */
+:where(.fg) .scrim { position: absolute; inset: 0; background: color-mix(in oklch, var(--vk-color-text) 36%, transparent); }
+:where(.fg)[data-theme="dark"] .scrim { background: color-mix(in oklch, var(--vk-color-bg) 70%, transparent); }
+:where(.fg) .dlg { position: absolute; background: var(--vk-color-surface); color: var(--vk-color-text); border-radius: var(--vk-radius-lg); box-shadow: 0 0 0 1px var(--vk-color-line), 0 28px 70px color-mix(in oklch, var(--vk-color-text) 26%, transparent); }
+:where(.fg)[data-theme="dark"] .dlg { box-shadow: 0 0 0 1px var(--vk-color-line), 0 28px 70px color-mix(in oklch, var(--vk-color-bg) 80%, transparent); }
+
+:where(.fg)[data-vibe="studio"] .dlg { border-radius: var(--vk-radius-sm); }
+
+:where(.fg) .eyebrow { font: 600 13px/1.2 var(--vk-font-display); color: var(--vk-color-muted); letter-spacing: .01em; }
+:where(.fg)[data-vibe="studio"] .eyebrow { font: 700 12px/1.2 var(--vk-font-body); text-transform: uppercase; letter-spacing: .1em; }
+
+:where(.fg) .dlg-title { margin: 0; font: 700 var(--vk-text-lg)/1.2 var(--vk-font-display); }
+
+:where(.fg)[data-vibe="studio"] .dlg-title { font: 800 28px/1.05 var(--vk-font-body); font-stretch: 82%; letter-spacing: -.015em; }
+:where(.fg) .muted { color: var(--vk-color-muted); }
+:where(.fg) .small { font-size: var(--vk-text-sm); }
+:where(.fg) .mono { font-family: var(--vk-font-mono); }
+:where(.fg) .kbd { display: inline-block; font: 500 11px/1 var(--vk-font-mono); padding: 4px 6px; border-radius: 6px; background: var(--vk-color-raised); border: 1px solid var(--vk-color-line); color: var(--vk-color-muted); }
+:where(.fg) .icon-btn { width: 44px; height: 44px; flex: none; display: inline-grid; place-items: center; border: 0; background: transparent; color: var(--vk-color-muted); border-radius: var(--vk-radius-sm); cursor: pointer; }
+:where(.fg) .icon-btn:hover { background: var(--vk-color-raised); color: var(--vk-color-text); }
+:where(.fg) .link { color: var(--vk-color-text); text-decoration: underline; text-underline-offset: 3px; background: none; border: 0; padding: 0 4px; min-height: 44px; font: inherit; cursor: pointer; }
+:where(.fg) .rule { height: 1px; background: var(--vk-color-line); border: 0; margin: 0; }
+
+:where(.fg) .wrap { overflow-wrap: anywhere; }
+
+:where(.fg) .mv { left: 400px; top: 36px; width: 640px; display: flex; flex-direction: column; }
+:where(.fg) .mv-head { display: flex; gap: 12px; align-items: flex-start; padding: 22px 20px 0 28px; }
+:where(.fg) .mv-card { margin: 6px 0 0; font: 600 18px/1.3 var(--vk-font-display); overflow-wrap: anywhere; }
+
+:where(.fg) .mv-now { margin: 6px 0 0; display: flex; flex-wrap: wrap; gap: 8px; align-items: center; font-size: 14px; color: var(--vk-color-muted); }
+:where(.fg) .mv-body { padding: 16px 28px 0; }
+:where(.fg) .mv fieldset { border: 0; margin: 0; padding: 0; }
+:where(.fg) .mv legend { padding: 0; margin-bottom: 8px; font: 700 15px/1.3 var(--vk-font-display); }
+:where(.fg) .mv-list { display: flex; flex-direction: column; }
+:where(.fg) .st { position: relative; display: grid; grid-template-columns: 28px minmax(0, 1fr) auto; gap: 12px; align-items: center; min-height: 56px; padding: 6px 12px 6px 6px; border-radius: var(--vk-radius-sm); cursor: pointer; }
+:where(.fg) .st input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+:where(.fg) .st:hover { background: var(--vk-color-raised); }
+:where(.fg) .st[data-checked="true"] { background: var(--vk-color-raised); box-shadow: inset 0 0 0 2px var(--vk-color-text); }
+:where(.fg) .st:focus-within { outline: 2px solid var(--vk-color-text); outline-offset: 2px; }
+:where(.fg) .st[data-here="true"] { cursor: default; background: transparent; }
+:where(.fg) .st-mark { position: relative; width: 28px; height: 100%; display: grid; place-items: center; }
+:where(.fg) .st-mark::before { content: ""; position: absolute; left: 13px; top: -6px; bottom: -6px; width: 2px; background: var(--vk-color-line); }
+:where(.fg) .st:first-child .st-mark::before { top: 50%; }
+:where(.fg) .st:last-child .st-mark::before { bottom: 50%; }
+:where(.fg) .st-dot { position: relative; width: 16px; height: 16px; border-radius: 50%; background: var(--vk-color-surface); box-shadow: inset 0 0 0 2px var(--vk-color-faint); }
+:where(.fg) .st[data-checked="true"] .st-dot { background: var(--vk-color-text); box-shadow: 0 0 0 3px var(--vk-color-surface); }
+:where(.fg) .st[data-here="true"] .st-dot { width: 20px; height: 20px; background: var(--vk-color-primary); box-shadow: 0 0 0 4px var(--vk-color-raised); }
+:where(.fg)[data-vibe="studio"] .st-dot { border-radius: 0; }
+:where(.fg) .st-name { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-weight: 600; font-size: 16px; }
+:where(.fg) .st-owner { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--vk-color-muted); margin-top: 1px; }
+:where(.fg) .st-right { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--vk-color-muted); }
+:where(.fg) .st-dir { font: 500 11px/1 var(--vk-font-mono); color: var(--vk-color-faint); text-transform: uppercase; letter-spacing: .06em; }
+:where(.fg) .mv-then { margin: 14px 0 0; padding: 12px 14px; border-radius: var(--vk-radius-sm); background: var(--vk-color-raised); display: flex; gap: 10px; align-items: flex-start; font-size: 14px; }
+:where(.fg) .mv-keys { margin: 12px 0 0; display: flex; flex-wrap: wrap; gap: 14px; font-size: 13px; color: var(--vk-color-muted); }
+:where(.fg) .mv-keys span { display: inline-flex; gap: 4px; align-items: center; }
+:where(.fg) .mv-foot { display: flex; gap: 12px; align-items: center; justify-content: flex-end; padding: 16px 28px 20px; margin-top: 16px; border-top: 1px solid var(--vk-color-line); }
+:where(.fg) .chip { display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; border-radius: var(--vk-radius-pill); background: var(--vk-color-raised); border: 1px solid var(--vk-color-line); font-size: 12px; color: var(--vk-color-muted); line-height: 1.4; }
+:where(.fg) .chip--needs { background: var(--vk-color-signal-wash); color: var(--vk-color-signal-text); border-color: var(--vk-color-signal); font-weight: 700; }
+:where(.fg) .chip--gate { background: transparent; border-color: var(--vk-color-text); color: var(--vk-color-text); font-weight: 600; }
+:where(.fg)[data-vibe="studio"] .chip { border-radius: 0; font-family: var(--vk-font-mono); font-size: 11.5px; text-transform: none; letter-spacing: 0; }
+
+/* the dialog itself */
+:where(.fg)[data-vibe="studio"] .scrim { background: color-mix(in srgb, var(--vk-color-text) 45%, transparent); }
+:where(.fg)[data-vibe="studio"][data-theme="dark"] .scrim, :where(.fg)[data-vibe="studio"][data-theme="dark"] .scrim { background: color-mix(in srgb, var(--vk-color-ground) 72%, transparent); }
+:where(.fg)[data-vibe="studio"] .dlg { border-radius: 2px; box-shadow: 0 0 0 1.5px var(--vk-color-rule), 0 28px 70px color-mix(in srgb, var(--vk-color-text) 24%, transparent); }
+:where(.fg)[data-vibe="studio"] .kbd { border-radius: 2px; background: transparent; border-color: currentColor; }
+:where(.fg)[data-vibe="studio"] .chip--needs { background: transparent; }
+:where(.fg)[data-vibe="studio"] .chip--done { background: transparent; border-color: var(--vk-stage-7); color: var(--vk-color-text); }
+</style><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible+Next:ital,wght@1,400&amp;display=swap" data-font-variant=""><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible+Next:ital,wght@1,700&amp;display=swap" data-font-variant=""><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:ital,wght@1,400..800&amp;display=swap" data-font-variant=""><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:ital,wght@1,400..700&amp;display=swap" data-font-variant=""><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Sans:ital,wght@1,400..700&amp;display=swap" data-font-variant=""><style data-dc-editor-style="">body:not([data-dc-editor-overlay-hidden]) [data-dc-editor-hover][data-dc-editor-hover-stroke]:not([data-dc-editor-selected]){filter:drop-shadow(0 0 calc(1*var(--dc-chrome-unit,1px)) color-mix(in srgb,#2a78d6 90%,transparent)) drop-shadow(0 0 calc(2*var(--dc-chrome-unit,1px)) color-mix(in srgb,#2a78d6 55%,transparent))!important;}body:not([data-dc-editor-overlay-hidden]):not([data-dc-editor-proxy="copy"]) [data-dc-editor-dragging],body:not([data-dc-editor-overlay-hidden]):not([data-dc-editor-proxy]) [data-dc-dragging],body[data-dc-editor-brk]:not([data-dc-editor-overlay-hidden]) [data-dc-drag-follower]{outline:calc(2*var(--dc-chrome-unit,1px)) solid #2a78d6!important;outline-offset:calc(-1*var(--dc-chrome-unit,1px))!important;opacity:0.55!important;}body[data-dc-editor-proxy="move"]:not([data-dc-editor-overlay-hidden]) [data-dc-editor-dragging],body[data-dc-editor-proxy="move"]:not([data-dc-editor-overlay-hidden]) [data-dc-dragging],body[data-dc-editor-proxy="move"]:not([data-dc-editor-overlay-hidden]) [data-dc-editor-dragging]>*,body[data-dc-editor-proxy="move"]:not([data-dc-editor-overlay-hidden]) [data-dc-dragging]>*{opacity:0!important;outline:none!important;}[data-dc-editor-drag-proxy],[data-dc-editor-drag-proxy] *{pointer-events:none!important;}body[data-dc-editor-on]:not([data-dc-editor-tool="interact"]) *{cursor:default!important;user-select:none!important;}body[data-dc-editor-on]:not([data-dc-editor-tool="interact"]) :not([data-dc-editor-overlay-root]):not([data-dc-editor-overlay-root] *){pointer-events:auto!important;transition:none!important;animation:none!important;}body[data-dc-editor-on][data-dc-editor-brk]:not([data-dc-editor-overlay-hidden]) [data-dc-editor-dragging]:not([data-dc-editor-overlay-root]) :not([data-dc-editor-overlay-root]),body[data-dc-editor-on][data-dc-editor-brk]:not([data-dc-editor-overlay-hidden]) [data-dc-dragging]:not([data-dc-editor-overlay-root]) :not([data-dc-editor-overlay-root]),body[data-dc-editor-on][data-dc-editor-brk]:not([data-dc-editor-overlay-hidden]) [data-dc-drag-follower]:not([data-dc-editor-overlay-root]),body[data-dc-editor-on][data-dc-editor-brk]:not([data-dc-editor-overlay-hidden]) [data-dc-drag-follower]:not([data-dc-editor-overlay-root]) :not([data-dc-editor-overlay-root]),body[data-dc-editor-move][data-dc-editor-brk]:not([data-dc-editor-overlay-hidden]) [data-dc-editor-dragging]:not([data-dc-editor-overlay-root]) :not([data-dc-editor-overlay-root]),body[data-dc-editor-move][data-dc-editor-brk]:not([data-dc-editor-overlay-hidden]) [data-dc-dragging]:not([data-dc-editor-overlay-root]) :not([data-dc-editor-overlay-root]),body[data-dc-editor-move][data-dc-editor-brk]:not([data-dc-editor-overlay-hidden]) [data-dc-drag-follower]:not([data-dc-editor-overlay-root]),body[data-dc-editor-move][data-dc-editor-brk]:not([data-dc-editor-overlay-hidden]) [data-dc-drag-follower]:not([data-dc-editor-overlay-root]) :not([data-dc-editor-overlay-root]){pointer-events:none!important;}body[data-dc-editor-move] :not([data-dc-editor-overlay-root]):not([data-dc-editor-overlay-root] *){pointer-events:auto!important;transition:none!important;animation-duration:0s!important;animation-delay:0s!important;}body[data-dc-editor-on][data-dc-editor-tool="rect"] *,body[data-dc-editor-on][data-dc-editor-tool="frame"] *,body[data-dc-editor-on][data-dc-editor-tool="grid"] *,body[data-dc-editor-on][data-dc-editor-tool="oval"] *,body[data-dc-editor-on][data-dc-editor-tool="arrow"] *,body[data-dc-editor-on][data-dc-editor-tool="line"] *{cursor:crosshair!important;}body[data-dc-editor-on][data-dc-editor-tool="text"] *{cursor:text!important;}body[data-dc-editor-on][data-dc-editor-tool="draw"] *{cursor:url('data:image/svg+xml,%3Csvg%20xmlns=%22http://www.w3.org/2000/svg%22%20width=%2216%22%20height=%2216%22%20viewBox=%220%200%2016%2016%22%3E%3Cpath%20d=%22M2%2014l1-4%208-8a2.1%202.1%200%200%201%203%203l-8%208-4%201z%22%20fill=%22%23333%22%20stroke=%22%23fff%22%20stroke-width=%221%22/%3E%3C/svg%3E') 1 15, crosshair!important;}body[data-dc-editor-on]:not([data-dc-editor-tool]) [data-drags-parent],body[data-dc-editor-on]:not([data-dc-editor-tool]) [data-drags-parent] *{cursor:grab!important;}body[data-dc-editor-on]:not([data-dc-editor-tool]) [data-drags-parent]:active,body[data-dc-editor-on]:not([data-dc-editor-tool]) [data-drags-parent]:active *{cursor:grabbing!important;}body[data-dc-editor-on] [data-dc-editor-editing][contenteditable][contenteditable],body[data-dc-editor-on] [data-dc-editor-editing][contenteditable][contenteditable] *,body[data-dc-editor-on] [data-dc-editor-svg-editing]{cursor:text!important;}body[data-dc-editor-on] [data-dc-editor-editing="import"]{outline:none!important;}html:not([data-dc-canvas]):has(body[data-dc-editor-on]:not([data-dc-capturing]) .sc-host){background:var(--dc-editor-backdrop,#ededeb);}html:not([data-dc-canvas]) body[data-dc-editor-on]:not([data-dc-capturing]):has(.sc-host){background:var(--dc-editor-backdrop,#ededeb);}html:not([data-dc-canvas]) body[data-dc-editor-on] .sc-host:not(.sc-host .sc-host){min-height:calc(100vh - var(--dc-editor-host-vpad,0px));}html:not([data-dc-canvas]) body[data-dc-editor-on]:not([data-dc-capturing]) .sc-host:not(.sc-host .sc-host){background:var(--dc-editor-host-bg,#fff);}html[data-dc-frameless],html[data-dc-frameless] body[data-dc-editor-on],html[data-dc-frameless] body[data-dc-editor-on] .sc-host:not(.sc-host .sc-host){background:transparent!important;min-height:0!important;}html:has(body[data-dc-capturing]),body[data-dc-capturing]{transition:none!important;}html[data-dc-canvas]{overflow:hidden;}html[data-dc-canvas] body[data-dc-editor-on] .sc-host:not(.sc-host .sc-host)::before{content:"";position:absolute;left:-100000px;top:-100000px;width:200000px;height:200000px;pointer-events:none;background:repeating-linear-gradient(45deg,var(--dc-editor-hatch-ink,rgba(0,0,0,.05)) 0 8px,transparent 8px 16px);clip-path:polygon(0 0,100% 0,100% 50%,50% 50%,50% 100%,0 100%);}</style></head>
+<body>
+<div id="dc-root"><div class="sc-host" data-sc-name="SP-Dlg-Move-Studio"><div data-product="superpipeline" data-accent="product" data-dc-tpl="3" class="art" data-vibe="studio" data-theme="light" style="background: var(--vk-color-bg); color: var(--vk-color-text); font-family: var(--vk-font-body);"><div data-dc-tpl="4" class="backdrop" aria-hidden="true" inert=""><div data-product="superpipeline" data-accent="product" data-dc-tpl="5" class="ar bd" data-vibe="studio" data-theme="light"><nav data-dc-tpl="6" class="ar-rail" aria-label="Superpipeline">
+  <a data-dc-tpl="7" class="ar-mark" href="#home" aria-label="Superpipeline home"><svg data-dc-tpl="8" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path data-dc-tpl="9" d="M6 6h9a3 3 0 0 1 0 6H9a3 3 0 0 0 0 6h9"></path><circle data-dc-tpl="10" cx="6" cy="6" r="2"></circle><circle data-dc-tpl="11" cx="18" cy="18" r="2"></circle></svg></a>
+  <a data-dc-tpl="12" class="ar-nav" href="#plan" aria-current="page" aria-label="Plan" aria-keyshortcuts="G P"><svg data-dc-tpl="13" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect data-dc-tpl="14" x="3" y="4" width="5" height="16" rx="1"></rect><rect data-dc-tpl="15" x="10" y="4" width="5" height="11" rx="1"></rect><rect data-dc-tpl="16" x="17" y="4" width="4" height="7" rx="1"></rect></svg><span data-dc-tpl="17" class="tip" aria-hidden="true">Plan <span data-dc-tpl="18" class="kbd">G P</span></span></a>
+  <a data-dc-tpl="19" class="ar-nav" href="#operate" aria-label="Operate, 4 need you" aria-keyshortcuts="G O"><svg data-dc-tpl="20" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path data-dc-tpl="21" d="M3 12h4l3-7 4 14 3-7h4"></path></svg><span data-dc-tpl="22" class="ct" aria-hidden="true">4</span><span data-dc-tpl="23" class="tip" aria-hidden="true">Operate · 4 need you <span data-dc-tpl="24" class="kbd">G O</span></span></a>
+  <a data-dc-tpl="25" class="ar-nav" href="#workspace" aria-label="Workspace" aria-keyshortcuts="G W"><svg data-dc-tpl="26" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle data-dc-tpl="27" cx="9" cy="8" r="3.5"></circle><path data-dc-tpl="28" d="M2.5 20c.8-3.6 3.4-5.5 6.5-5.5s5.7 1.9 6.5 5.5"></path><path data-dc-tpl="29" d="M16 4.5a3.5 3.5 0 0 1 0 7M18 14.8c1.8.8 3 2.6 3.5 5.2"></path></svg><span data-dc-tpl="30" class="tip" aria-hidden="true">Workspace <span data-dc-tpl="31" class="kbd">G W</span></span></a>
+  <span data-dc-tpl="32" style="flex: 1 1 0%;"></span>
+  <button data-dc-tpl="33" class="ar-nav" type="button" aria-label="Dark theme"><svg data-dc-tpl="34" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path data-dc-tpl="35" d="M20 14.5A8 8 0 0 1 9.5 4 8 8 0 1 0 20 14.5z"></path></svg><span data-dc-tpl="36" class="tip" aria-hidden="true">Dark theme</span></button>
+  <button data-dc-tpl="37" class="ar-nav" type="button" aria-label="Appearance" aria-haspopup="dialog"><svg data-dc-tpl="38" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle data-dc-tpl="39" cx="12" cy="12" r="4"></circle><path data-dc-tpl="40" d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"></path></svg><span data-dc-tpl="41" class="tip" aria-hidden="true">Appearance</span></button>
+  <button data-dc-tpl="42" class="ar-acct" type="button" aria-label="Ira Mehta, account" aria-haspopup="menu">IM<span data-dc-tpl="43" class="tip" aria-hidden="true">Ira Mehta</span></button>
+  <button data-dc-tpl="44" class="ar-nav" type="button" aria-label="Sign out"><svg data-dc-tpl="45" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path data-dc-tpl="46" d="M15 4h4v16h-4M10 8l-4 4 4 4M6 12h10"></path></svg><span data-dc-tpl="47" class="tip" aria-hidden="true">Sign out</span></button></nav><div data-dc-tpl="48" class="bd-body"><header data-dc-tpl="49" class="ar-top">
+  <div data-dc-tpl="50" class="ar-board"><span data-dc-tpl="51" class="kick">Superpipeline · board</span><button data-dc-tpl="52" class="ar-sw" type="button" aria-haspopup="menu" aria-label="Board: Developer Experience. Change board">Developer Experience <svg data-dc-tpl="53" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path data-dc-tpl="54" d="M6 9l6 6 6-6"></path></svg></button></div>
+  <label data-dc-tpl="55" class="ar-cmd"><span data-dc-tpl="56" class="sr">Search or run a command</span><span data-dc-tpl="57" class="box"><svg data-dc-tpl="58" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle data-dc-tpl="59" cx="11" cy="11" r="7"></circle><path data-dc-tpl="60" d="M20 20l-4-4"></path></svg><input data-dc-tpl="61" type="search" placeholder="Search or run a command" aria-keyshortcuts="Meta+K"><span data-dc-tpl="62" class="kbd" aria-hidden="true">⌘K</span></span></label>
+  <span data-dc-tpl="63" class="ar-live" role="status" title="Live: changes appear as they happen"><i data-dc-tpl="64" aria-hidden="true"></i>Live</span>
+  <button data-dc-tpl="65" class="ar-btn" type="button" aria-keyshortcuts="N"><svg data-dc-tpl="66" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path data-dc-tpl="67" d="M12 5v14M5 12h14"></path></svg>New card <span data-dc-tpl="68" class="kbd" aria-hidden="true">N</span></button></header><div data-dc-tpl="69" class="ar-sub">
+  <div data-dc-tpl="70" role="group" aria-label="View" style="display: flex; gap: 24px;"><button data-dc-tpl="71" class="ar-tab" type="button" aria-pressed="true">Board</button><button data-dc-tpl="72" class="ar-tab" type="button" aria-pressed="false">List <span data-dc-tpl="73" class="mono">7</span></button><button data-dc-tpl="74" class="ar-tab" type="button" aria-pressed="false">Projects <span data-dc-tpl="75" class="mono">3</span></button></div>
+  <button data-dc-tpl="76" class="ar-fl h44" type="button" aria-haspopup="dialog" aria-keyshortcuts="F"><svg data-dc-tpl="77" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path data-dc-tpl="78" d="M4 5h16l-6 8v6l-4-2v-4z"></path></svg>Filter cards <i data-dc-tpl="79">none on</i></button>
+  <span data-dc-tpl="80" class="ar-hint">Showing all 7 cards</span>
+  <span data-dc-tpl="81" class="r">The board at 13:51 · midday · Sunday 11 October</span></div><div data-dc-tpl="82" class="bd-grid"><main data-dc-tpl="83" class="bd-main">
+  <div data-dc-tpl="84" class="bd-qf" role="group" aria-label="Quick filter">
+    <span data-dc-tpl="85" class="kick lb">Show</span>
+    <button data-dc-tpl="86" type="button" aria-pressed="true">All <b data-dc-tpl="87">7</b></button>
+    <button data-dc-tpl="88" type="button" aria-pressed="false" class="sig">Need you <b data-dc-tpl="89">4</b></button>
+    <button data-dc-tpl="90" type="button" aria-pressed="false">Working <b data-dc-tpl="91">0</b></button>
+    <button data-dc-tpl="92" type="button" aria-pressed="false">Queued <b data-dc-tpl="93">2</b></button>
+    <button data-dc-tpl="94" type="button" aria-pressed="false">Done <b data-dc-tpl="95">1</b></button>
+  </div>
+
+  <div data-dc-tpl="96" class="ar-hero">
+    <span data-dc-tpl="97" class="big" aria-hidden="true">4</span>
+    <div data-dc-tpl="98" class="txt">
+      <span data-dc-tpl="99" class="kick">The state of the board</span>
+      <h1 data-dc-tpl="100"><span data-dc-tpl="101" class="sr">4 </span>of 7 cards are waiting on a person</h1>
+      <p data-dc-tpl="102">One sits in a stage nobody works and is five days overdue;<sup data-dc-tpl="103" class="fn">1</sup> one stopped in Failing test on its first try;<sup data-dc-tpl="104" class="fn">2</sup> one stopped in Fix after five tries;<sup data-dc-tpl="105" class="fn">3</sup> one stopped in Reproduce after two tries.<sup data-dc-tpl="106" class="fn">4</sup> Two more are queued behind a blocker,<sup data-dc-tpl="107" class="fn">5</sup> and one has shipped.<sup data-dc-tpl="108" class="fn">6</sup></p>
+    </div>
+  </div>
+
+  <section data-dc-tpl="109" class="ar-sec" aria-labelledby="bd-fig-h">
+    <div data-dc-tpl="110" class="hd"><span data-dc-tpl="111" class="no">01</span><h2 data-dc-tpl="112" id="bd-fig-h">The board in figures</h2><span data-dc-tpl="113" class="r">this week</span></div>
+    <div data-dc-tpl="114" class="ar-figs">
+      <div data-dc-tpl="115"><b data-dc-tpl="116">7</b><span data-dc-tpl="117">Cards</span></div>
+      <div data-dc-tpl="118" class="sig"><b data-dc-tpl="119">4</b><span data-dc-tpl="120">Need you</span></div>
+      <div data-dc-tpl="121"><b data-dc-tpl="122" class="z">0</b><span data-dc-tpl="123">Working</span></div>
+      <div data-dc-tpl="124"><b data-dc-tpl="125" class="z">$0.00</b><span data-dc-tpl="126">Spend this week<sup data-dc-tpl="127" class="fn">7</sup></span></div>
+      <div data-dc-tpl="128"><b data-dc-tpl="129" class="z">0</b><span data-dc-tpl="130">Over budget</span></div>
+      <div data-dc-tpl="131"><b data-dc-tpl="132">1</b><span data-dc-tpl="133">Overdue</span></div>
+    </div>
+  </section>
+
+  <section data-dc-tpl="134" class="ar-sec" aria-labelledby="bd-sm-h">
+    <div data-dc-tpl="135" class="hd"><span data-dc-tpl="136" class="no">02</span><h2 data-dc-tpl="137" id="bd-sm-h">Where the cards are, stage by stage</h2><span data-dc-tpl="138" class="r">1 square = 1 card · stages darken towards Shipped</span></div>
+    <div data-dc-tpl="139" class="ar-sm"><a data-dc-tpl="140" class="ar-mul" href="#stage-1" aria-label="Stage 1, Reported: 1 card, waiting on you. Worked by a person"><span data-dc-tpl="141" class="band c1"></span><span data-dc-tpl="142" class="lb"><span data-dc-tpl="143" class="mono">01</span><span data-dc-tpl="144" class="nm">Reported</span></span><span data-dc-tpl="145" class="n" aria-hidden="true">1</span><span data-dc-tpl="146" class="units" aria-hidden="true"><span data-dc-tpl="147" class="u needs"></span></span><span data-dc-tpl="148" class="who">a person</span><span data-dc-tpl="149" class="note">Overdue since 6 Oct<sup data-dc-tpl="150" class="fn">1</sup></span></a><a data-dc-tpl="151" class="ar-mul" href="#stage-2" aria-label="Stage 2, Reproduce: 1 card, waiting on you. Worked by error-eric"><span data-dc-tpl="152" class="band c2"></span><span data-dc-tpl="153" class="lb"><span data-dc-tpl="154" class="mono">02</span><span data-dc-tpl="155" class="nm">Reproduce</span></span><span data-dc-tpl="156" class="n" aria-hidden="true">1</span><span data-dc-tpl="157" class="units" aria-hidden="true"><span data-dc-tpl="158" class="u needs"></span></span><span data-dc-tpl="159" class="who">diagnostics · error-eric</span><span data-dc-tpl="160" class="note">Stopped after 2 tries<sup data-dc-tpl="161" class="fn">4</sup></span></a><a data-dc-tpl="162" class="ar-mul" href="#stage-3" aria-label="Stage 3, Failing test: 3 cards, 1 waiting on you, 2 blocked. Worked by tester-tim"><span data-dc-tpl="163" class="band c3"></span><span data-dc-tpl="164" class="lb"><span data-dc-tpl="165" class="mono">03</span><span data-dc-tpl="166" class="nm">Failing test</span></span><span data-dc-tpl="167" class="n" aria-hidden="true">3</span><span data-dc-tpl="168" class="units" aria-hidden="true"><span data-dc-tpl="169" class="u needs"></span><span data-dc-tpl="170" class="u blocked"></span><span data-dc-tpl="171" class="u blocked"></span></span><span data-dc-tpl="172" class="who">testing · tester-tim</span><span data-dc-tpl="173" class="note">2 blocked, 1 stopped<sup data-dc-tpl="174" class="fn">2</sup></span></a><a data-dc-tpl="175" class="ar-mul" href="#stage-4" aria-label="Stage 4, Fix: 1 card, waiting on you. Code, 2 agents"><span data-dc-tpl="176" class="band c4"></span><span data-dc-tpl="177" class="lb"><span data-dc-tpl="178" class="mono">04</span><span data-dc-tpl="179" class="nm">Fix</span></span><span data-dc-tpl="180" class="n" aria-hidden="true">1</span><span data-dc-tpl="181" class="units" aria-hidden="true"><span data-dc-tpl="182" class="u needs"></span></span><span data-dc-tpl="183" class="who">code · 2 agents</span><span data-dc-tpl="184" class="note">Stopped after 5 tries<sup data-dc-tpl="185" class="fn">3</sup></span></a><a data-dc-tpl="186" class="ar-mul z" href="#stage-5" aria-label="Stage 5, Integrate: 0 cards. Integration or api or testing, 3 agents"><span data-dc-tpl="187" class="band c5"></span><span data-dc-tpl="188" class="lb"><span data-dc-tpl="189" class="mono">05</span><span data-dc-tpl="190" class="nm">Integrate</span></span><span data-dc-tpl="191" class="n" aria-hidden="true">0</span><span data-dc-tpl="192" class="units" aria-hidden="true"></span><span data-dc-tpl="193" class="who">integration or api or testing · 3 agents</span><span data-dc-tpl="194" class="note">Empty</span></a><a data-dc-tpl="195" class="ar-mul z" href="#stage-6" aria-label="Stage 6, Signed off: 0 cards. Approval gate, a person"><span data-dc-tpl="196" class="band c6"></span><span data-dc-tpl="197" class="lb"><span data-dc-tpl="198" class="mono">06</span><span data-dc-tpl="199" class="nm">Signed off</span></span><span data-dc-tpl="200" class="n" aria-hidden="true">0</span><span data-dc-tpl="201" class="units" aria-hidden="true"></span><span data-dc-tpl="202" class="gate">Gate · approval</span><span data-dc-tpl="203" class="who">a person · approval</span><span data-dc-tpl="204" class="note">Empty</span></a><a data-dc-tpl="205" class="ar-mul" href="#stage-7" aria-label="Stage 7, Shipped: 1 card, done. A person"><span data-dc-tpl="206" class="band c7"></span><span data-dc-tpl="207" class="lb"><span data-dc-tpl="208" class="mono">07</span><span data-dc-tpl="209" class="nm">Shipped</span></span><span data-dc-tpl="210" class="n" aria-hidden="true">1</span><span data-dc-tpl="211" class="units" aria-hidden="true"><span data-dc-tpl="212" class="u done"></span></span><span data-dc-tpl="213" class="who">a person</span><span data-dc-tpl="214" class="note">Done<sup data-dc-tpl="215" class="fn">6</sup></span></a>
+    </div>
+  </section>
+
+  <section data-dc-tpl="216" class="ar-sec" aria-labelledby="bd-st-h">
+    <div data-dc-tpl="217" class="hd"><span data-dc-tpl="218" class="no">03</span><h2 data-dc-tpl="219" id="bd-st-h">What state they are in</h2><span data-dc-tpl="220" class="r">share of 7 cards</span></div>
+    <div data-dc-tpl="221" class="ar-share" role="img" aria-label="4 waiting on you, 2 queued and blocked, 1 done" style="grid-template-columns: 4fr 2fr 1fr;">
+      <span data-dc-tpl="222" class="lab s"><b data-dc-tpl="223">4</b>waiting on you</span><span data-dc-tpl="224" class="lab"><b data-dc-tpl="225">2</b>queued, blocked</span><span data-dc-tpl="226" class="lab"><b data-dc-tpl="227">1</b>done</span>
+      <i data-dc-tpl="228" class="needs"></i><i data-dc-tpl="229" class="blocked"></i><i data-dc-tpl="230" class="done"></i>
+    </div>
+  </section>
+
+  <section data-dc-tpl="231" class="ar-sec" aria-labelledby="bd-tb-h">
+    <div data-dc-tpl="232" class="hd"><span data-dc-tpl="233" class="no">04</span><h2 data-dc-tpl="234" id="bd-tb-h">Every card, people needed first</h2><span data-dc-tpl="235" class="r"><span data-dc-tpl="236"><span data-dc-tpl="237" class="kbd">↑</span> <span data-dc-tpl="238" class="kbd">↓</span> row</span><span data-dc-tpl="239"><span data-dc-tpl="240" class="kbd">Enter</span> open</span><span data-dc-tpl="241"><span data-dc-tpl="242" class="kbd">M</span> move</span><span data-dc-tpl="243"><span data-dc-tpl="244" class="kbd">Alt</span> + <span data-dc-tpl="245" class="kbd">←</span> <span data-dc-tpl="246" class="kbd">→</span> stage</span></span></div>
+    <table data-dc-tpl="247" class="ar-tbl">
+      <caption data-dc-tpl="248" class="sr">7 cards, people needed first</caption>
+      <thead data-dc-tpl="249"><tr data-dc-tpl="250"><th data-dc-tpl="251" scope="col" style="width: 32px;">No.</th><th data-dc-tpl="252" scope="col">Card</th><th data-dc-tpl="253" scope="col" style="width: 116px;">Stage</th><th data-dc-tpl="254" scope="col" style="width: 112px;">Agent</th><th data-dc-tpl="255" scope="col" style="width: 44px;">Tries</th><th data-dc-tpl="256" scope="col" style="width: 44px;">Age</th><th data-dc-tpl="257" scope="col" style="width: 92px;">Due</th><th data-dc-tpl="258" scope="col" style="width: 140px;">State</th><th data-dc-tpl="259" scope="col" style="width: 84px;"><span data-dc-tpl="260" class="sr">Move</span></th></tr></thead>
+      <tbody data-dc-tpl="261"><tr data-dc-tpl="262">
+  <td data-dc-tpl="263"><span data-dc-tpl="264" class="ix">01</span></td>
+  <td data-dc-tpl="265"><button data-dc-tpl="266" class="ttl" type="button" aria-label="Fix the highest-severity blocker found in the clean-room journey, in Reported. Enter to open, M to move, Alt with left or right arrow to move between stages.">Fix the highest-severity blocker found in the clean-room journey</button><sup data-dc-tpl="267" class="fn">1</sup><div data-dc-tpl="268" class="ar-facts"><span data-dc-tpl="269" class="p">P1</span><span data-dc-tpl="270">clean-room</span><span data-dc-tpl="271">evidence-required</span><span data-dc-tpl="272">superpipeline</span><span data-dc-tpl="273" title="1 more label">+1</span><span data-dc-tpl="274"><svg data-dc-tpl="275" viewBox="-2 -4 68 70" width="14" height="14" aria-hidden="true" focusable="false" data-mood="working"><circle data-dc-tpl="276" cx="32" cy="32" r="30" fill="var(--vk-mood-working)"></circle><path data-dc-tpl="277" d="M8 22 Q12 4 32 3 Q52 4 56 22 Q44 14 32 15 Q20 14 8 22Z" fill="rgb(35 35 58)"></path><g data-dc-tpl="278" data-eyes="open"><ellipse data-dc-tpl="279" cx="23" cy="28" rx="4" ry="2.4" fill="var(--vk-face-ink)"></ellipse><ellipse data-dc-tpl="280" cx="41" cy="28" rx="4" ry="2.4" fill="var(--vk-face-ink)"></ellipse></g><path data-dc-tpl="281" d="M22 41 Q32 47 42 41" fill="none" stroke="var(--vk-face-ink)" stroke-width="3" stroke-linecap="round"></path></svg>asked by super-chotu</span></div></td>
+  <td data-dc-tpl="282"><span data-dc-tpl="283" class="stg"><span data-dc-tpl="284" class="chip c1"></span>Reported</span><div data-dc-tpl="285" style="margin-top: 6px;"><span data-dc-tpl="286" class="ar-ramp" role="img" aria-label="Stage 1 of 7: Reported. Stages: Reported, Reproduce, Failing test, Fix, Integrate, Signed off, Shipped"><i data-dc-tpl="287" class="c1 on"></i><i data-dc-tpl="288" class="c2"></i><i data-dc-tpl="289" class="c3"></i><i data-dc-tpl="290" class="c4"></i><i data-dc-tpl="291" class="c5"></i><i data-dc-tpl="292" class="c6"></i><i data-dc-tpl="293" class="c7"></i></span></div></td>
+  <td data-dc-tpl="294"><span data-dc-tpl="295" class="ag"><span data-dc-tpl="296" class="ar-ini" aria-hidden="true" style="width: 20px; height: 20px; font-size: 8px;">IM</span><span data-dc-tpl="297"><span data-dc-tpl="298" class="sr">Ira Mehta, </span>You</span></span></td>
+  <td data-dc-tpl="299"><span data-dc-tpl="300" class="m">0</span></td>
+  <td data-dc-tpl="301"><span data-dc-tpl="302" class="m">2d</span></td>
+  <td data-dc-tpl="303"><span data-dc-tpl="304" class="m sig">Overdue · 6 Oct</span></td>
+  <td data-dc-tpl="305"><span data-dc-tpl="306" class="ar-st needs"><span data-dc-tpl="307" class="u needs"></span>Waiting on you</span></td>
+  <td data-dc-tpl="308" class="mv"><button data-dc-tpl="309" class="bd-move h44" type="button" aria-haspopup="menu" aria-label="Move Fix the highest-severity blocker found in the clean-room journey to another stage"><svg data-dc-tpl="310" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path data-dc-tpl="311" d="M7 7l-4 4 4 4M17 9l4 4-4 4M3 11h12M9 13h12"></path></svg>Move</button></td></tr><tr data-dc-tpl="312">
+  <td data-dc-tpl="313"><span data-dc-tpl="314" class="ix">02</span></td>
+  <td data-dc-tpl="315"><button data-dc-tpl="316" class="ttl" type="button" aria-label="AgentPod: connector interface and generic effects ledger, state machine and executor, in Failing test. Enter to open, M to move, Alt with left or right arrow to move between stages.">AgentPod: connector interface and generic effects ledger, state machine and executor</button><sup data-dc-tpl="317" class="fn">2</sup><div data-dc-tpl="318" class="ar-facts"><span data-dc-tpl="319" class="p">P2</span><span data-dc-tpl="320">Deterministic X publisher red-test evidence</span><span data-dc-tpl="321"><svg data-dc-tpl="322" viewBox="-2 -4 68 70" width="14" height="14" aria-hidden="true" focusable="false" data-mood="working"><circle data-dc-tpl="323" cx="32" cy="32" r="30" fill="var(--vk-mood-working)"></circle><path data-dc-tpl="324" d="M8 22 Q12 4 32 3 Q52 4 56 22 Q44 14 32 15 Q20 14 8 22Z" fill="rgb(35 35 58)"></path><g data-dc-tpl="325" data-eyes="open"><ellipse data-dc-tpl="326" cx="23" cy="28" rx="4" ry="2.4" fill="var(--vk-face-ink)"></ellipse><ellipse data-dc-tpl="327" cx="41" cy="28" rx="4" ry="2.4" fill="var(--vk-face-ink)"></ellipse></g><path data-dc-tpl="328" d="M22 41 Q32 47 42 41" fill="none" stroke="var(--vk-face-ink)" stroke-width="3" stroke-linecap="round"></path></svg>asked by super-chotu</span></div></td>
+  <td data-dc-tpl="329"><span data-dc-tpl="330" class="stg"><span data-dc-tpl="331" class="chip c3"></span>Failing test</span><div data-dc-tpl="332" style="margin-top: 6px;"><span data-dc-tpl="333" class="ar-ramp" role="img" aria-label="Stage 3 of 7: Failing test, stopped. Stages: Reported, Reproduce, Failing test, Fix, Integrate, Signed off, Shipped"><i data-dc-tpl="334" class="c1 on"></i><i data-dc-tpl="335" class="c2 on"></i><i data-dc-tpl="336" class="c3 on"></i><i data-dc-tpl="337" class="c4"></i><i data-dc-tpl="338" class="c5"></i><i data-dc-tpl="339" class="c6"></i><i data-dc-tpl="340" class="c7"></i></span></div></td>
+  <td data-dc-tpl="341"><span data-dc-tpl="342" class="ag"><svg data-dc-tpl="343" viewBox="-2 -4 68 70" width="20" height="20" aria-hidden="true" focusable="false" data-mood="needs"><circle data-dc-tpl="344" cx="32" cy="32" r="30" fill="var(--vk-mood-needs)"></circle><circle data-dc-tpl="345" cx="32" cy="4" r="7" fill="rgb(94 90 156)"></circle><g data-dc-tpl="346" data-eyes="open"><ellipse data-dc-tpl="347" cx="23" cy="28" rx="3.2" ry="3.2" fill="var(--vk-face-ink)"></ellipse><ellipse data-dc-tpl="348" cx="41" cy="28" rx="3.2" ry="3.2" fill="var(--vk-face-ink)"></ellipse></g><path data-dc-tpl="349" d="M24 44 Q32 38 40 44" fill="none" stroke="var(--vk-face-ink)" stroke-width="3" stroke-linecap="round"></path></svg>tester-tim</span></td>
+  <td data-dc-tpl="350"><span data-dc-tpl="351" class="m">1</span></td>
+  <td data-dc-tpl="352"><span data-dc-tpl="353" class="m">33h</span></td>
+  <td data-dc-tpl="354"><span data-dc-tpl="355" class="m">—</span></td>
+  <td data-dc-tpl="356"><span data-dc-tpl="357" class="ar-st needs"><span data-dc-tpl="358" class="u needs"></span>Waiting on you</span></td>
+  <td data-dc-tpl="359" class="mv"><button data-dc-tpl="360" class="bd-move h44" type="button" aria-haspopup="menu" aria-label="Move AgentPod: connector interface and generic effects ledger, state machine and executor to another stage"><svg data-dc-tpl="361" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path data-dc-tpl="362" d="M7 7l-4 4 4 4M17 9l4 4-4 4M3 11h12M9 13h12"></path></svg>Move</button></td></tr><tr data-dc-tpl="363">
+  <td data-dc-tpl="364"><span data-dc-tpl="365" class="ix">03</span></td>
+  <td data-dc-tpl="366"><button data-dc-tpl="367" class="ttl" type="button" aria-label="Superpipeline: manual-delivery completion and approval-subject hardening, in Fix. Enter to open, M to move, Alt with left or right arrow to move between stages.">Superpipeline: manual-delivery completion and approval-subject hardening</button><sup data-dc-tpl="368" class="fn">3</sup><div data-dc-tpl="369" class="ar-facts"><span data-dc-tpl="370">test(api): pin manual delivery reminder</span></div></td>
+  <td data-dc-tpl="371"><span data-dc-tpl="372" class="stg"><span data-dc-tpl="373" class="chip c4"></span>Fix</span><div data-dc-tpl="374" style="margin-top: 6px;"><span data-dc-tpl="375" class="ar-ramp" role="img" aria-label="Stage 4 of 7: Fix, stopped. Stages: Reported, Reproduce, Failing test, Fix, Integrate, Signed off, Shipped"><i data-dc-tpl="376" class="c1 on"></i><i data-dc-tpl="377" class="c2 on"></i><i data-dc-tpl="378" class="c3 on"></i><i data-dc-tpl="379" class="c4 on"></i><i data-dc-tpl="380" class="c5"></i><i data-dc-tpl="381" class="c6"></i><i data-dc-tpl="382" class="c7"></i></span></div></td>
+  <td data-dc-tpl="383"><span data-dc-tpl="384" class="ag"><svg data-dc-tpl="385" viewBox="-2 -4 68 70" width="20" height="20" aria-hidden="true" focusable="false" data-mood="needs"><circle data-dc-tpl="386" cx="32" cy="32" r="30" fill="var(--vk-mood-needs)"></circle><g data-dc-tpl="387" data-eyes="open"><ellipse data-dc-tpl="388" cx="23" cy="28" rx="3.2" ry="4.2" fill="var(--vk-face-ink)"></ellipse><ellipse data-dc-tpl="389" cx="41" cy="28" rx="3.2" ry="4.2" fill="var(--vk-face-ink)"></ellipse></g><circle data-dc-tpl="390" cx="17" cy="37" r="4" fill="rgb(255 158 138 / 0.5)"></circle><circle data-dc-tpl="391" cx="47" cy="37" r="4" fill="rgb(255 158 138 / 0.5)"></circle><path data-dc-tpl="392" d="M24 44 Q32 38 40 44" fill="none" stroke="var(--vk-face-ink)" stroke-width="3" stroke-linecap="round"></path></svg>coder-kai</span></td>
+  <td data-dc-tpl="393"><span data-dc-tpl="394" class="m"><span data-dc-tpl="395" class="m sig">5</span></span></td>
+  <td data-dc-tpl="396"><span data-dc-tpl="397" class="m">33h</span></td>
+  <td data-dc-tpl="398"><span data-dc-tpl="399" class="m">—</span></td>
+  <td data-dc-tpl="400"><span data-dc-tpl="401" class="ar-st needs"><span data-dc-tpl="402" class="u needs"></span>Waiting on you</span></td>
+  <td data-dc-tpl="403" class="mv"><button data-dc-tpl="404" class="bd-move h44" type="button" aria-haspopup="menu" aria-label="Move Superpipeline: manual-delivery completion and approval-subject hardening to another stage"><svg data-dc-tpl="405" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path data-dc-tpl="406" d="M7 7l-4 4 4 4M17 9l4 4-4 4M3 11h12M9 13h12"></path></svg>Move</button></td></tr><tr data-dc-tpl="407">
+  <td data-dc-tpl="408"><span data-dc-tpl="409" class="ix">04</span></td>
+  <td data-dc-tpl="410"><button data-dc-tpl="411" class="ttl" type="button" aria-label="Diagnose Melissa and Anna Supermessage silence — trace actual failing hop, in Reproduce. Enter to open, M to move, Alt with left or right arrow to move between stages.">Diagnose Melissa and Anna Supermessage silence — trace actual failing hop</button><sup data-dc-tpl="412" class="fn">4</sup><div data-dc-tpl="413" class="ar-facts"><span data-dc-tpl="414" class="p">P3</span><span data-dc-tpl="415">AgentPod v0.1.91 Matrix inbound bridge contract</span><span data-dc-tpl="416"><svg data-dc-tpl="417" viewBox="-2 -4 68 70" width="14" height="14" aria-hidden="true" focusable="false" data-mood="working"><circle data-dc-tpl="418" cx="32" cy="32" r="30" fill="var(--vk-mood-working)"></circle><path data-dc-tpl="419" d="M8 22 Q12 4 32 3 Q52 4 56 22 Q44 14 32 15 Q20 14 8 22Z" fill="rgb(35 35 58)"></path><g data-dc-tpl="420" data-eyes="open"><ellipse data-dc-tpl="421" cx="23" cy="28" rx="4" ry="2.4" fill="var(--vk-face-ink)"></ellipse><ellipse data-dc-tpl="422" cx="41" cy="28" rx="4" ry="2.4" fill="var(--vk-face-ink)"></ellipse></g><path data-dc-tpl="423" d="M22 41 Q32 47 42 41" fill="none" stroke="var(--vk-face-ink)" stroke-width="3" stroke-linecap="round"></path></svg>asked by super-chotu</span></div></td>
+  <td data-dc-tpl="424"><span data-dc-tpl="425" class="stg"><span data-dc-tpl="426" class="chip c2"></span>Reproduce</span><div data-dc-tpl="427" style="margin-top: 6px;"><span data-dc-tpl="428" class="ar-ramp" role="img" aria-label="Stage 2 of 7: Reproduce, stopped. Stages: Reported, Reproduce, Failing test, Fix, Integrate, Signed off, Shipped"><i data-dc-tpl="429" class="c1 on"></i><i data-dc-tpl="430" class="c2 on"></i><i data-dc-tpl="431" class="c3"></i><i data-dc-tpl="432" class="c4"></i><i data-dc-tpl="433" class="c5"></i><i data-dc-tpl="434" class="c6"></i><i data-dc-tpl="435" class="c7"></i></span></div></td>
+  <td data-dc-tpl="436"><span data-dc-tpl="437" class="ag"><svg data-dc-tpl="438" viewBox="-2 -4 68 70" width="20" height="20" aria-hidden="true" focusable="false" data-mood="needs"><circle data-dc-tpl="439" cx="32" cy="32" r="30" fill="var(--vk-mood-needs)"></circle><path data-dc-tpl="440" d="M28 4 Q32 -2 36 4 Q34 8 32 6 Q30 8 28 4Z" fill="rgb(107 74 43)"></path><g data-dc-tpl="441" data-eyes="open"><ellipse data-dc-tpl="442" cx="23" cy="28" rx="4" ry="2.4" fill="var(--vk-face-ink)"></ellipse><ellipse data-dc-tpl="443" cx="41" cy="28" rx="4" ry="2.4" fill="var(--vk-face-ink)"></ellipse></g><circle data-dc-tpl="444" cx="17" cy="37" r="4" fill="rgb(255 158 138 / 0.5)"></circle><circle data-dc-tpl="445" cx="47" cy="37" r="4" fill="rgb(255 158 138 / 0.5)"></circle><path data-dc-tpl="446" d="M24 44 Q32 38 40 44" fill="none" stroke="var(--vk-face-ink)" stroke-width="3" stroke-linecap="round"></path></svg>error-eric</span></td>
+  <td data-dc-tpl="447"><span data-dc-tpl="448" class="m"><span data-dc-tpl="449" class="m sig">2</span></span></td>
+  <td data-dc-tpl="450"><span data-dc-tpl="451" class="m">2d</span></td>
+  <td data-dc-tpl="452"><span data-dc-tpl="453" class="m">—</span></td>
+  <td data-dc-tpl="454"><span data-dc-tpl="455" class="ar-st needs"><span data-dc-tpl="456" class="u needs"></span>Waiting on you</span></td>
+  <td data-dc-tpl="457" class="mv"><button data-dc-tpl="458" class="bd-move h44" type="button" aria-haspopup="menu" aria-label="Move Diagnose Melissa and Anna Supermessage silence — trace actual failing hop to another stage"><svg data-dc-tpl="459" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path data-dc-tpl="460" d="M7 7l-4 4 4 4M17 9l4 4-4 4M3 11h12M9 13h12"></path></svg>Move</button></td></tr><tr data-dc-tpl="461">
+  <td data-dc-tpl="462"><span data-dc-tpl="463" class="ix">05</span></td>
+  <td data-dc-tpl="464"><button data-dc-tpl="465" class="ttl" type="button" aria-label="Integrate editorial workflows and prove no-write publishing acceptance, in Failing test. Enter to open, M to move, Alt with left or right arrow to move between stages.">Integrate editorial workflows and prove no-write publishing acceptance</button><sup data-dc-tpl="466" class="fn">5</sup><div data-dc-tpl="467" class="ar-facts"><span data-dc-tpl="468" class="p">P2</span><span data-dc-tpl="469" title="Blocked by another card. This card will not be claimed"><svg data-dc-tpl="470" viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect data-dc-tpl="471" x="5" y="11" width="14" height="9"></rect><path data-dc-tpl="472" d="M8 11V8a4 4 0 0 1 8 0v3"></path></svg>Blocked</span><span data-dc-tpl="473"><svg data-dc-tpl="474" viewBox="-2 -4 68 70" width="14" height="14" aria-hidden="true" focusable="false" data-mood="working"><circle data-dc-tpl="475" cx="32" cy="32" r="30" fill="var(--vk-mood-working)"></circle><path data-dc-tpl="476" d="M8 22 Q12 4 32 3 Q52 4 56 22 Q44 14 32 15 Q20 14 8 22Z" fill="rgb(35 35 58)"></path><g data-dc-tpl="477" data-eyes="open"><ellipse data-dc-tpl="478" cx="23" cy="28" rx="4" ry="2.4" fill="var(--vk-face-ink)"></ellipse><ellipse data-dc-tpl="479" cx="41" cy="28" rx="4" ry="2.4" fill="var(--vk-face-ink)"></ellipse></g><path data-dc-tpl="480" d="M22 41 Q32 47 42 41" fill="none" stroke="var(--vk-face-ink)" stroke-width="3" stroke-linecap="round"></path></svg>asked by super-chotu</span></div></td>
+  <td data-dc-tpl="481"><span data-dc-tpl="482" class="stg"><span data-dc-tpl="483" class="chip c3"></span>Failing test</span><div data-dc-tpl="484" style="margin-top: 6px;"><span data-dc-tpl="485" class="ar-ramp" role="img" aria-label="Stage 3 of 7: Failing test. Stages: Reported, Reproduce, Failing test, Fix, Integrate, Signed off, Shipped"><i data-dc-tpl="486" class="c1 on"></i><i data-dc-tpl="487" class="c2 on"></i><i data-dc-tpl="488" class="c3 on"></i><i data-dc-tpl="489" class="c4"></i><i data-dc-tpl="490" class="c5"></i><i data-dc-tpl="491" class="c6"></i><i data-dc-tpl="492" class="c7"></i></span></div></td>
+  <td data-dc-tpl="493"><span data-dc-tpl="494" class="m">Unclaimed</span></td>
+  <td data-dc-tpl="495"><span data-dc-tpl="496" class="m">0</span></td>
+  <td data-dc-tpl="497"><span data-dc-tpl="498" class="m">2d</span></td>
+  <td data-dc-tpl="499"><span data-dc-tpl="500" class="m">—</span></td>
+  <td data-dc-tpl="501"><span data-dc-tpl="502" class="ar-st"><span data-dc-tpl="503" class="u blocked"></span>Queued · blocked</span></td>
+  <td data-dc-tpl="504" class="mv"><button data-dc-tpl="505" class="bd-move h44" type="button" aria-haspopup="menu" aria-label="Move Integrate editorial workflows and prove no-write publishing acceptance to another stage"><svg data-dc-tpl="506" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path data-dc-tpl="507" d="M7 7l-4 4 4 4M17 9l4 4-4 4M3 11h12M9 13h12"></path></svg>Move</button></td></tr><tr data-dc-tpl="508">
+  <td data-dc-tpl="509"><span data-dc-tpl="510" class="ix">06</span></td>
+  <td data-dc-tpl="511"><button data-dc-tpl="512" class="ttl" type="button" aria-label="agentpod-connectors: X connector (connector x), in Failing test. Enter to open, M to move, Alt with left or right arrow to move between stages.">agentpod-connectors: X connector (connector x)</button><sup data-dc-tpl="513" class="fn">5</sup><div data-dc-tpl="514" class="ar-facts"><span data-dc-tpl="515" title="Blocked by another card. This card will not be claimed"><svg data-dc-tpl="516" viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect data-dc-tpl="517" x="5" y="11" width="14" height="9"></rect><path data-dc-tpl="518" d="M8 11V8a4 4 0 0 1 8 0v3"></path></svg>Blocked</span></div></td>
+  <td data-dc-tpl="519"><span data-dc-tpl="520" class="stg"><span data-dc-tpl="521" class="chip c3"></span>Failing test</span><div data-dc-tpl="522" style="margin-top: 6px;"><span data-dc-tpl="523" class="ar-ramp" role="img" aria-label="Stage 3 of 7: Failing test. Stages: Reported, Reproduce, Failing test, Fix, Integrate, Signed off, Shipped"><i data-dc-tpl="524" class="c1 on"></i><i data-dc-tpl="525" class="c2 on"></i><i data-dc-tpl="526" class="c3 on"></i><i data-dc-tpl="527" class="c4"></i><i data-dc-tpl="528" class="c5"></i><i data-dc-tpl="529" class="c6"></i><i data-dc-tpl="530" class="c7"></i></span></div></td>
+  <td data-dc-tpl="531"><span data-dc-tpl="532" class="m">Unclaimed</span></td>
+  <td data-dc-tpl="533"><span data-dc-tpl="534" class="m">0</span></td>
+  <td data-dc-tpl="535"><span data-dc-tpl="536" class="m">33h</span></td>
+  <td data-dc-tpl="537"><span data-dc-tpl="538" class="m">—</span></td>
+  <td data-dc-tpl="539"><span data-dc-tpl="540" class="ar-st"><span data-dc-tpl="541" class="u blocked"></span>Queued · blocked</span></td>
+  <td data-dc-tpl="542" class="mv"><button data-dc-tpl="543" class="bd-move h44" type="button" aria-haspopup="menu" aria-label="Move agentpod-connectors: X connector (connector x) to another stage"><svg data-dc-tpl="544" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path data-dc-tpl="545" d="M7 7l-4 4 4 4M17 9l4 4-4 4M3 11h12M9 13h12"></path></svg>Move</button></td></tr><tr data-dc-tpl="546">
+  <td data-dc-tpl="547"><span data-dc-tpl="548" class="ix">07</span></td>
+  <td data-dc-tpl="549"><button data-dc-tpl="550" class="ttl" type="button" aria-label="Build immutable approval subjects and digest-bound gates, in Shipped. Enter to open, M to move, Alt with left or right arrow to move between stages.">Build immutable approval subjects and digest-bound gates</button><sup data-dc-tpl="551" class="fn">6</sup><div data-dc-tpl="552" class="ar-facts"><span data-dc-tpl="553" class="p">P2</span><span data-dc-tpl="554">test(api): pin immutable approval subject binding</span></div></td>
+  <td data-dc-tpl="555"><span data-dc-tpl="556" class="stg"><span data-dc-tpl="557" class="chip c7"></span>Shipped</span><div data-dc-tpl="558" style="margin-top: 6px;"><span data-dc-tpl="559" class="ar-ramp" role="img" aria-label="Stage 7 of 7: Shipped. Stages: Reported, Reproduce, Failing test, Fix, Integrate, Signed off, Shipped"><i data-dc-tpl="560" class="c1 on"></i><i data-dc-tpl="561" class="c2 on"></i><i data-dc-tpl="562" class="c3 on"></i><i data-dc-tpl="563" class="c4 on"></i><i data-dc-tpl="564" class="c5 on"></i><i data-dc-tpl="565" class="c6 on"></i><i data-dc-tpl="566" class="c7 on"></i></span></div></td>
+  <td data-dc-tpl="567"><span data-dc-tpl="568" class="m">Shipped</span></td>
+  <td data-dc-tpl="569"><span data-dc-tpl="570" class="m">15</span></td>
+  <td data-dc-tpl="571"><span data-dc-tpl="572" class="m">—</span></td>
+  <td data-dc-tpl="573"><span data-dc-tpl="574" class="m">—</span></td>
+  <td data-dc-tpl="575"><span data-dc-tpl="576" class="ar-st"><span data-dc-tpl="577" class="u done"></span>Done</span></td>
+  <td data-dc-tpl="578" class="mv"><button data-dc-tpl="579" class="bd-move h44" type="button" aria-haspopup="menu" aria-label="Move Build immutable approval subjects and digest-bound gates to another stage"><svg data-dc-tpl="580" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path data-dc-tpl="581" d="M7 7l-4 4 4 4M17 9l4 4-4 4M3 11h12M9 13h12"></path></svg>Move</button></td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section data-dc-tpl="582" aria-labelledby="bd-fn-h">
+    <h2 data-dc-tpl="583" id="bd-fn-h" class="sr">Notes</h2>
+    <ol data-dc-tpl="584" class="ar-notes">
+      <li data-dc-tpl="585"><span data-dc-tpl="586" class="k">1</span><span data-dc-tpl="587">Card 01 is yours, in Reported. It was due on <i data-dc-tpl="588">6 October</i>. No agent works this stage and no review is asked for here, so it will sit until it is moved.</span></li>
+      <li data-dc-tpl="589"><span data-dc-tpl="590" class="k">2</span><span data-dc-tpl="591">Card 02 stopped on tester-tim’s first try, 33 hours ago: it needs a writable Forge URL for agentpod.</span></li>
+      <li data-dc-tpl="592"><span data-dc-tpl="593" class="k">3</span><span data-dc-tpl="594">Card 03 stopped in Fix after five tries: missing commit ×2.</span></li>
+      <li data-dc-tpl="595"><span data-dc-tpl="596" class="k">4</span><span data-dc-tpl="597">Card 04 stopped in Reproduce after two tries: no fresh DM event to trace; needs one per agent.</span></li>
+      <li data-dc-tpl="598"><span data-dc-tpl="599" class="k">5</span><span data-dc-tpl="600">Cards 05 and 06 are queued in Failing test behind another card. Nobody has claimed them; each starts on its own when unblocked.</span></li>
+      <li data-dc-tpl="601"><span data-dc-tpl="602" class="k">6</span><span data-dc-tpl="603">Shipped, nothing to do: <i data-dc-tpl="604">Build immutable approval subjects and digest-bound gates.</i></span></li>
+      <li data-dc-tpl="605"><span data-dc-tpl="606" class="k">7</span><span data-dc-tpl="607">No card has spent anything yet: every card’s cost reads <i data-dc-tpl="608">—</i>.</span></li>
+    </ol>
+  </section></main><aside data-dc-tpl="609" class="bd-panel" aria-labelledby="bd-nd-h">
+  <header data-dc-tpl="610">
+    <span data-dc-tpl="611" class="kick">Needs you now · 4</span>
+    <h2 data-dc-tpl="612" id="bd-nd-h">Four cards are waiting for a decision</h2>
+    <p data-dc-tpl="613">Each one says what it needs. Answer here, or open the card for the whole story.</p>
+  </header><article data-dc-tpl="614" class="bd-need" aria-labelledby="nd-01">
+  <div data-dc-tpl="615" class="row"><span data-dc-tpl="616" class="mono">01</span><span data-dc-tpl="617" class="kick">Waiting on you</span><span data-dc-tpl="618" class="mono age">2d</span></div>
+  <h3 data-dc-tpl="619" id="nd-01">Fix the highest-severity blocker found in the clean-room journey</h3>
+  <div data-dc-tpl="620" class="by"><span data-dc-tpl="621" class="ar-ini" aria-hidden="true" style="width: 20px; height: 20px; font-size: 8px;">IM</span><b data-dc-tpl="622">You</b><span data-dc-tpl="623" class="stg"><span data-dc-tpl="624" class="chip c1"></span>Reported</span><span data-dc-tpl="625" class="mono">1/7</span></div>
+  <p data-dc-tpl="626" class="serif" style="font-size: 16.5px; line-height: 1.45;">No agent works this stage and no review is asked for here, so it will sit forever. Move it to a stage someone works.</p>
+  <div data-dc-tpl="627" class="acts"><button data-dc-tpl="628" class="ar-btn" type="button" aria-haspopup="menu"><svg data-dc-tpl="629" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path data-dc-tpl="630" d="M7 7l-4 4 4 4M17 9l4 4-4 4M3 11h12M9 13h12"></path></svg>Move it</button><a data-dc-tpl="631" class="ar-btn2" href="SP-Card-Studio.dc.html">Open</a></div></article><article data-dc-tpl="632" class="bd-need" aria-labelledby="nd-02">
+  <div data-dc-tpl="633" class="row"><span data-dc-tpl="634" class="mono">02</span><span data-dc-tpl="635" class="kick">Waiting on you</span><span data-dc-tpl="636" class="mono age">33h</span></div>
+  <h3 data-dc-tpl="637" id="nd-02">AgentPod: connector interface and generic effects ledger, state machine and executor</h3>
+  <div data-dc-tpl="638" class="by"><svg data-dc-tpl="639" viewBox="-2 -4 68 70" width="20" height="20" aria-hidden="true" focusable="false" data-mood="needs"><circle data-dc-tpl="640" cx="32" cy="32" r="30" fill="var(--vk-mood-needs)"></circle><circle data-dc-tpl="641" cx="32" cy="4" r="7" fill="rgb(94 90 156)"></circle><g data-dc-tpl="642" data-eyes="open"><ellipse data-dc-tpl="643" cx="23" cy="28" rx="3.2" ry="3.2" fill="var(--vk-face-ink)"></ellipse><ellipse data-dc-tpl="644" cx="41" cy="28" rx="3.2" ry="3.2" fill="var(--vk-face-ink)"></ellipse></g><path data-dc-tpl="645" d="M24 44 Q32 38 40 44" fill="none" stroke="var(--vk-face-ink)" stroke-width="3" stroke-linecap="round"></path></svg><b data-dc-tpl="646">tester-tim</b><span data-dc-tpl="647" class="stg"><span data-dc-tpl="648" class="chip c3"></span>Failing test</span><span data-dc-tpl="649" class="mono">3/7</span></div>
+  <p data-dc-tpl="650" class="serif" style="font-size: 16.5px; line-height: 1.45;">Stopped. Needs a writable Forge URL for agentpod.</p>
+  <div data-dc-tpl="651" class="acts"><button data-dc-tpl="652" class="ar-btn" type="button">Read why and resume</button></div></article><article data-dc-tpl="653" class="bd-need" aria-labelledby="nd-03">
+  <div data-dc-tpl="654" class="row"><span data-dc-tpl="655" class="mono">03</span><span data-dc-tpl="656" class="kick">Waiting on you</span><span data-dc-tpl="657" class="mono age">33h</span></div>
+  <h3 data-dc-tpl="658" id="nd-03">Superpipeline: manual-delivery completion and approval-subject hardening</h3>
+  <div data-dc-tpl="659" class="by"><svg data-dc-tpl="660" viewBox="-2 -4 68 70" width="20" height="20" aria-hidden="true" focusable="false" data-mood="needs"><circle data-dc-tpl="661" cx="32" cy="32" r="30" fill="var(--vk-mood-needs)"></circle><g data-dc-tpl="662" data-eyes="open"><ellipse data-dc-tpl="663" cx="23" cy="28" rx="3.2" ry="4.2" fill="var(--vk-face-ink)"></ellipse><ellipse data-dc-tpl="664" cx="41" cy="28" rx="3.2" ry="4.2" fill="var(--vk-face-ink)"></ellipse></g><circle data-dc-tpl="665" cx="17" cy="37" r="4" fill="rgb(255 158 138 / 0.5)"></circle><circle data-dc-tpl="666" cx="47" cy="37" r="4" fill="rgb(255 158 138 / 0.5)"></circle><path data-dc-tpl="667" d="M24 44 Q32 38 40 44" fill="none" stroke="var(--vk-face-ink)" stroke-width="3" stroke-linecap="round"></path></svg><b data-dc-tpl="668">coder-kai</b><span data-dc-tpl="669" class="stg"><span data-dc-tpl="670" class="chip c4"></span>Fix</span><span data-dc-tpl="671" class="mono">4/7</span></div>
+  <p data-dc-tpl="672" class="serif" style="font-size: 16.5px; line-height: 1.45;">Stopped. Missing commit ×2.</p>
+  <div data-dc-tpl="673" class="acts"><button data-dc-tpl="674" class="ar-btn" type="button">Read why and resume</button></div></article><article data-dc-tpl="675" class="bd-need" aria-labelledby="nd-04">
+  <div data-dc-tpl="676" class="row"><span data-dc-tpl="677" class="mono">04</span><span data-dc-tpl="678" class="kick">Waiting on you</span><span data-dc-tpl="679" class="mono age">2d</span></div>
+  <h3 data-dc-tpl="680" id="nd-04">Diagnose Melissa and Anna Supermessage silence — trace actual failing hop</h3>
+  <div data-dc-tpl="681" class="by"><svg data-dc-tpl="682" viewBox="-2 -4 68 70" width="20" height="20" aria-hidden="true" focusable="false" data-mood="needs"><circle data-dc-tpl="683" cx="32" cy="32" r="30" fill="var(--vk-mood-needs)"></circle><path data-dc-tpl="684" d="M28 4 Q32 -2 36 4 Q34 8 32 6 Q30 8 28 4Z" fill="rgb(107 74 43)"></path><g data-dc-tpl="685" data-eyes="open"><ellipse data-dc-tpl="686" cx="23" cy="28" rx="4" ry="2.4" fill="var(--vk-face-ink)"></ellipse><ellipse data-dc-tpl="687" cx="41" cy="28" rx="4" ry="2.4" fill="var(--vk-face-ink)"></ellipse></g><circle data-dc-tpl="688" cx="17" cy="37" r="4" fill="rgb(255 158 138 / 0.5)"></circle><circle data-dc-tpl="689" cx="47" cy="37" r="4" fill="rgb(255 158 138 / 0.5)"></circle><path data-dc-tpl="690" d="M24 44 Q32 38 40 44" fill="none" stroke="var(--vk-face-ink)" stroke-width="3" stroke-linecap="round"></path></svg><b data-dc-tpl="691">error-eric</b><span data-dc-tpl="692" class="stg"><span data-dc-tpl="693" class="chip c2"></span>Reproduce</span><span data-dc-tpl="694" class="mono">2/7</span></div>
+  <p data-dc-tpl="695" class="serif" style="font-size: 16.5px; line-height: 1.45;">Stopped. No fresh DM event to trace; needs one per agent.</p>
+  <div data-dc-tpl="696" class="acts"><button data-dc-tpl="697" class="ar-btn" type="button">Read why and resume</button></div></article>
+  <dl data-dc-tpl="698" class="bd-keys" aria-label="Keyboard">
+    <dt data-dc-tpl="699"><span data-dc-tpl="700" class="kbd">⌘K</span></dt><dd data-dc-tpl="701">Search or run a command</dd>
+    <dt data-dc-tpl="702"><span data-dc-tpl="703" class="kbd">N</span></dt><dd data-dc-tpl="704">New card</dd>
+    <dt data-dc-tpl="705"><span data-dc-tpl="706" class="kbd">F</span></dt><dd data-dc-tpl="707">Filter cards</dd>
+    <dt data-dc-tpl="708"><span data-dc-tpl="709" class="kbd">M</span></dt><dd data-dc-tpl="710">Move the selected card</dd>
+  </dl></aside></div><footer data-dc-tpl="711" class="ar-status" aria-label="Status">
+  <span data-dc-tpl="712">7 cards</span><span data-dc-tpl="713" class="sig">4 need you</span><span data-dc-tpl="714">2 blocked</span><span data-dc-tpl="715">1 shipped</span><span data-dc-tpl="716">synced 13:51</span>
+  <span data-dc-tpl="717" class="r"><span data-dc-tpl="718">⌘K commands</span><span data-dc-tpl="719">N new card</span></span></footer></div></div></div><div data-product="superpipeline" data-accent="product" data-dc-tpl="720" class="fg" data-vibe="studio" data-theme="light"><div data-dc-tpl="721" class="scrim"></div><section data-dc-tpl="722" class="dlg mv" role="dialog" aria-modal="true" aria-labelledby="mv-t" aria-describedby="mv-now">
+  <div data-dc-tpl="723" class="mv-head">
+    <div data-dc-tpl="724" style="flex: 1 1 0%; min-width: 0px;">
+      <div data-dc-tpl="725" class="eyebrow" id="mv-t">Move card</div>
+      <p data-dc-tpl="726" class="mv-card">AgentPod: connector interface and generic effects ledger, state machine and executor</p>
+      <p data-dc-tpl="727" class="mv-now" id="mv-now">Now in <strong data-dc-tpl="728" style="color: var(--vk-color-text);">Failing test</strong> · <span data-dc-tpl="729" class="vk-face" style="--vk-face-size: 20px;"><svg data-dc-tpl="730" viewBox="-2 -4 68 70" width="20" height="20" role="img" aria-label="tester-tim, needs you" data-mood="needs"><circle data-dc-tpl="731" cx="32" cy="32" r="30" fill="var(--vk-mood-needs)"></circle><circle data-dc-tpl="732" cx="32" cy="4" r="7" fill="rgb(94 90 156)"></circle><g data-dc-tpl="733" data-eyes="open"><ellipse data-dc-tpl="734" cx="23" cy="28" rx="3.2" ry="3.2" fill="var(--vk-face-ink)"></ellipse><ellipse data-dc-tpl="735" cx="41" cy="28" rx="3.2" ry="3.2" fill="var(--vk-face-ink)"></ellipse></g><path data-dc-tpl="736" d="M24 44 Q32 38 40 44" fill="none" stroke="var(--vk-face-ink)" stroke-width="3" stroke-linecap="round"></path></svg></span> tester-tim stopped 33h ago <span data-dc-tpl="737" class="chip chip--needs">Waiting on you</span></p>
+    </div>
+    <button type="button" class="vk-iconbutton vk-iconbutton--studio" aria-label="Close without moving"><span class="vk-iconbutton__glyph" aria-hidden="true"><svg data-dc-tpl="739" aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path data-dc-tpl="740" d="M6 6l12 12M18 6L6 18"></path></svg></span></button>
+  </div>
+  <div data-dc-tpl="741" class="mv-body">
+    <fieldset data-dc-tpl="742">
+      <legend data-dc-tpl="743">Move to</legend>
+      <div data-dc-tpl="744" class="mv-list">
+        
+          <label data-dc-tpl="746" class="st" data-checked="false" data-here="false">
+            <input data-dc-tpl="747" type="radio" name="stage" value="Reported">
+            <span data-dc-tpl="748" class="st-mark" aria-hidden="true"><span data-dc-tpl="749" class="st-dot"></span></span>
+            <span data-dc-tpl="750" style="min-width: 0px;">
+              <span data-dc-tpl="751" class="st-name"><span class="sc-interp">Reported</span>
+                
+                
+              </span>
+              <span data-dc-tpl="758" class="st-owner">
+                
+                
+                <span class="sc-interp">a person</span>
+              </span>
+            </span>
+            <span data-dc-tpl="778" class="st-right"><span data-dc-tpl="779"><span class="sc-interp">1 card</span></span><span data-dc-tpl="780" class="st-dir"><span class="sc-interp">back</span></span></span>
+          </label>
+        
+          <label data-dc-tpl="746" class="st" data-checked="false" data-here="false">
+            <input data-dc-tpl="747" type="radio" name="stage" value="Reproduce">
+            <span data-dc-tpl="748" class="st-mark" aria-hidden="true"><span data-dc-tpl="749" class="st-dot"></span></span>
+            <span data-dc-tpl="750" style="min-width: 0px;">
+              <span data-dc-tpl="751" class="st-name"><span class="sc-interp">Reproduce</span>
+                
+                
+              </span>
+              <span data-dc-tpl="758" class="st-owner">
+                <span data-dc-tpl="760" class="vk-face" style="--vk-face-size: 20px;"><svg data-dc-tpl="761" viewBox="-2 -4 68 70" width="20" height="20" aria-hidden="true" data-mood="resting"><circle data-dc-tpl="762" cx="32" cy="32" r="30" fill="var(--vk-mood-resting)"></circle><path data-dc-tpl="763" d="M28 4 Q32 -2 36 4 Q34 8 32 6 Q30 8 28 4Z" fill="rgb(107 74 43)"></path><g data-dc-tpl="764" data-eyes="closed"><path data-dc-tpl="765" d="M19 29 Q23 32 27 29 M37 29 Q41 32 45 29" fill="none" stroke="var(--vk-face-ink)" stroke-width="2.6" stroke-linecap="round"></path></g><circle data-dc-tpl="766" cx="17" cy="37" r="4" fill="rgb(255 158 138 / 0.5)"></circle><circle data-dc-tpl="767" cx="47" cy="37" r="4" fill="rgb(255 158 138 / 0.5)"></circle><path data-dc-tpl="768" d="M27 43 Q32 45 37 43" fill="none" stroke="var(--vk-face-ink)" stroke-width="3" stroke-linecap="round"></path></svg></span>
+                
+                <span class="sc-interp">diagnostics · error-eric</span>
+              </span>
+            </span>
+            <span data-dc-tpl="778" class="st-right"><span data-dc-tpl="779"><span class="sc-interp">1 card</span></span><span data-dc-tpl="780" class="st-dir"><span class="sc-interp">back</span></span></span>
+          </label>
+        
+          <label data-dc-tpl="746" class="st" data-checked="false" data-here="true">
+            <input data-dc-tpl="747" type="radio" name="stage" disabled="" value="Failing test">
+            <span data-dc-tpl="748" class="st-mark" aria-hidden="true"><span data-dc-tpl="749" class="st-dot"></span></span>
+            <span data-dc-tpl="750" style="min-width: 0px;">
+              <span data-dc-tpl="751" class="st-name"><span class="sc-interp">Failing test</span>
+                <span data-dc-tpl="753" class="chip">Here now</span>
+                
+              </span>
+              <span data-dc-tpl="758" class="st-owner">
+                
+                <span data-dc-tpl="770" class="vk-face" style="--vk-face-size: 20px;"><svg data-dc-tpl="771" viewBox="-2 -4 68 70" width="20" height="20" aria-hidden="true" data-mood="needs"><circle data-dc-tpl="772" cx="32" cy="32" r="30" fill="var(--vk-mood-needs)"></circle><circle data-dc-tpl="773" cx="32" cy="4" r="7" fill="rgb(94 90 156)"></circle><g data-dc-tpl="774" data-eyes="open"><ellipse data-dc-tpl="775" cx="23" cy="28" rx="3.2" ry="3.2" fill="var(--vk-face-ink)"></ellipse><ellipse data-dc-tpl="776" cx="41" cy="28" rx="3.2" ry="3.2" fill="var(--vk-face-ink)"></ellipse></g><path data-dc-tpl="777" d="M24 44 Q32 38 40 44" fill="none" stroke="var(--vk-face-ink)" stroke-width="3" stroke-linecap="round"></path></svg></span>
+                <span class="sc-interp">testing · tester-tim</span>
+              </span>
+            </span>
+            <span data-dc-tpl="778" class="st-right"><span data-dc-tpl="779"><span class="sc-interp">3 cards · 2 blocked</span></span><span data-dc-tpl="780" class="st-dir"><span class="sc-interp"></span></span></span>
+          </label>
+        
+          <label data-dc-tpl="746" class="st" data-checked="true" data-here="false">
+            <input data-dc-tpl="747" type="radio" name="stage" value="Fix" checked="">
+            <span data-dc-tpl="748" class="st-mark" aria-hidden="true"><span data-dc-tpl="749" class="st-dot"></span></span>
+            <span data-dc-tpl="750" style="min-width: 0px;">
+              <span data-dc-tpl="751" class="st-name"><span class="sc-interp">Fix</span>
+                
+                
+              </span>
+              <span data-dc-tpl="758" class="st-owner">
+                
+                
+                <span class="sc-interp">code · 2 agents</span>
+              </span>
+            </span>
+            <span data-dc-tpl="778" class="st-right"><span data-dc-tpl="779"><span class="sc-interp">1 card</span></span><span data-dc-tpl="780" class="st-dir"><span class="sc-interp">forward</span></span></span>
+          </label>
+        
+          <label data-dc-tpl="746" class="st" data-checked="false" data-here="false">
+            <input data-dc-tpl="747" type="radio" name="stage" value="Integrate">
+            <span data-dc-tpl="748" class="st-mark" aria-hidden="true"><span data-dc-tpl="749" class="st-dot"></span></span>
+            <span data-dc-tpl="750" style="min-width: 0px;">
+              <span data-dc-tpl="751" class="st-name"><span class="sc-interp">Integrate</span>
+                
+                
+              </span>
+              <span data-dc-tpl="758" class="st-owner">
+                
+                
+                <span class="sc-interp">integration or api or testing · 3 agents</span>
+              </span>
+            </span>
+            <span data-dc-tpl="778" class="st-right"><span data-dc-tpl="779"><span class="sc-interp">Empty</span></span><span data-dc-tpl="780" class="st-dir"><span class="sc-interp">forward</span></span></span>
+          </label>
+        
+          <label data-dc-tpl="746" class="st" data-checked="false" data-here="false">
+            <input data-dc-tpl="747" type="radio" name="stage" value="Signed off">
+            <span data-dc-tpl="748" class="st-mark" aria-hidden="true"><span data-dc-tpl="749" class="st-dot"></span></span>
+            <span data-dc-tpl="750" style="min-width: 0px;">
+              <span data-dc-tpl="751" class="st-name"><span class="sc-interp">Signed off</span>
+                
+                <span data-dc-tpl="755" class="chip chip--gate"><svg data-dc-tpl="756" aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path data-dc-tpl="757" d="M5 21V4M5 4h11l-2 4 2 4H5"></path></svg> Approval gate</span>
+              </span>
+              <span data-dc-tpl="758" class="st-owner">
+                
+                
+                <span class="sc-interp">a person · approval</span>
+              </span>
+            </span>
+            <span data-dc-tpl="778" class="st-right"><span data-dc-tpl="779"><span class="sc-interp">Empty</span></span><span data-dc-tpl="780" class="st-dir"><span class="sc-interp">forward</span></span></span>
+          </label>
+        
+          <label data-dc-tpl="746" class="st" data-checked="false" data-here="false">
+            <input data-dc-tpl="747" type="radio" name="stage" value="Shipped">
+            <span data-dc-tpl="748" class="st-mark" aria-hidden="true"><span data-dc-tpl="749" class="st-dot"></span></span>
+            <span data-dc-tpl="750" style="min-width: 0px;">
+              <span data-dc-tpl="751" class="st-name"><span class="sc-interp">Shipped</span>
+                
+                
+              </span>
+              <span data-dc-tpl="758" class="st-owner">
+                
+                
+                <span class="sc-interp">a person</span>
+              </span>
+            </span>
+            <span data-dc-tpl="778" class="st-right"><span data-dc-tpl="779"><span class="sc-interp">1 card</span></span><span data-dc-tpl="780" class="st-dir"><span class="sc-interp">forward</span></span></span>
+          </label>
+        
+      </div>
+    </fieldset>
+    <p data-dc-tpl="781" class="mv-then"><svg data-dc-tpl="782" aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path data-dc-tpl="783" d="M5 12h14M13 6l6 6-6 6"></path></svg><span data-dc-tpl="784"><span class="sc-interp">In Fix: One of the 2 agents with code picks it up.</span></span></p>
+    <div data-dc-tpl="785" class="mv-keys">
+      <span data-dc-tpl="786"><span data-dc-tpl="787" class="kbd">Alt</span>+<span data-dc-tpl="788" class="kbd">←</span><span data-dc-tpl="789" class="kbd">→</span> moves one stage from the board</span>
+      <span data-dc-tpl="790"><span data-dc-tpl="791" class="kbd">M</span> opens this on a card</span>
+      <span data-dc-tpl="792"><span data-dc-tpl="793" class="kbd">esc</span> closes</span>
+    </div>
+    <p data-dc-tpl="794" class="vk-visually-hidden" aria-live="polite"><span class="sc-interp"></span></p>
+  </div>
+  <div data-dc-tpl="795" class="mv-foot">
+    <button type="button" class="vk-button vk-button--secondary">Cancel</button>
+    <button type="button" class="vk-button vk-button--primary"> <span class="sc-interp">Move to Fix</span></button>
+  </div></section></div></div></div></div>
+
+
+
+</body></html>

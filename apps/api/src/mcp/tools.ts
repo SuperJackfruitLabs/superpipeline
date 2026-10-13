@@ -421,11 +421,12 @@ export function registerSuperpipelineTools(server: McpServer, deps: ToolDeps): v
         'Mark the run blocked on something you cannot fix and a person must look into; releases the lease and ' +
         'ends the work. To ask a person something and carry on once they answer, use superpipeline_complete with ' +
         'outcome "needs-person" instead.',
-      inputSchema: { boardId: z.string(), runId: z.string(), leaseEpoch: z.number().int().min(0), reason: z.string().min(1) },
+      inputSchema: { boardId: z.string(), runId: z.string(), leaseEpoch: z.number().int().min(0), reason: z.string().min(1),
+        summary: z.string().min(1).max(120).optional().describe('One line a person can read at a glance; the reason stays the full account.') },
       annotations: { readOnlyHint: false, destructiveHint: true, idempotentHint: false },
     },
-    async ({ boardId, runId, leaseEpoch, reason }) =>
-      fromResult(await deps.boardStub(boardId).block({ runId, leaseEpoch, agentId: auth.agentId, reason })),
+    async ({ boardId, runId, leaseEpoch, reason, summary }) =>
+      fromResult(await deps.boardStub(boardId).block({ runId, leaseEpoch, agentId: auth.agentId, reason, summary })),
   );
 
   register(

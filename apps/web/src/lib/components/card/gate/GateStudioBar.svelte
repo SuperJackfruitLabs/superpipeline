@@ -1,43 +1,58 @@
-<!-- The decision: a note and the options, on a bar that stays in view at the end of the card. -->
+<!-- apps/web/src/lib/components/card/gate/GateStudioBar.svelte -->
 <script lang="ts">
-  import type { Gate, GateDecision } from '$lib/api';
-  import { Button } from '$lib/components/ui/button';
+  /**
+   * Studio's decision bar (`.ss-cmd`): the note, one button per option, and the alert beside them.
+   * Key hints and A/C shortcuts only when the host wires `registerKeys` (the drawer and cell A).
+   */
+  import '../studio/card-studio.css';
+  import '../studio/card-states-studio.css';
+  import type { Gate, GateConflict, GateDecision } from '$lib/api';
+  import Icon from '$lib/components/parts/Icon.svelte';
+  import { studioConflict } from '../studio/studio-format';
   import { GATE_NOTE_MAX, GateDecisionModel, roleOf } from './gate-decision.svelte';
 
-  let { boardId, gate, error, onResponse }: {
-    boardId: string; gate: Gate; error: string | null;
-    onResponse: (d: GateDecision, r: Response) => Promise<boolean>;
+  let { boardId, gate, error, onResponse, conflict = null, conflictWho = '', registerKeys, onRefresh = () => {} }: {
+    boardId: string; gate: Gate; error: string | null; onResponse: (d: GateDecision, r: Response) => Promise<boolean>;
+    conflict?: GateConflict | null; conflictWho?: string; registerKeys?: (h: (e: KeyboardEvent) => boolean) => void; onRefresh?: () => void | Promise<void>;
   } = $props();
 
+  const uid = $props.id();
   const model = new GateDecisionModel(() => ({ boardId, gate, onResponse }));
   $effect(() => model.follow(gate.id));
-  const ordered = $derived([...model.options].sort((a, b) => ['changes', 'reject', 'approve'].indexOf(roleOf(a.name)!) - ['changes', 'reject', 'approve'].indexOf(roleOf(b.name)!)));
-
-  /** One line until there is more to say; grows to six lines, then scrolls. */
-  function grow(el: HTMLTextAreaElement | undefined) {
-    if (!el) return;
-    el.style.height = 'auto';
-    const line = parseFloat(getComputedStyle(el).lineHeight) || 24;
-    el.style.height = `${Math.min(el.scrollHeight, line * 6)}px`;
-  }
+  const keys = $derived(!!registerKeys);
+  const KEY = { approve: 'A', changes: 'C' } as const;
+  const CLS = { approve: 'ar-btn', changes: 'ar-btn2', reject: 'ar-lk quiet' } as const;
+  const ORDER = ['approve', 'changes', 'reject'] as const;
+  const ordered = $derived([...model.options].sort((a, b) => ORDER.indexOf(roleOf(a.name)!) - ORDER.indexOf(roleOf(b.name)!)));
   $effect(() => {
-    model.note;
-    grow(model.noteEl);
+    registerKeys?.((e) => {
+      const role = e.key.toLowerCase() === 'a' ? 'approve' : e.key.toLowerCase() === 'c' ? 'changes' : null;
+      const opt = role && model.options.find((o) => roleOf(o.name) === role);
+      if (!opt) return false;
+      if (!model.busy) void model.decide(opt.name);
+      return true;
+    });
   });
+  // Busy keeps the buttons enabled (aria-disabled, clicks ignored) so the pressed one keeps focus.
+  const choose = (name: string) => { if (!model.busy) void model.decide(name); };
 </script>
 
-<div class="command-bar bg-surface border-border sticky bottom-0 -mx-1 border-t px-1 py-2 max-h-[35dvh] overflow-y-auto">
-  {#if error}<p role="alert" class="text-signal-text bg-surface font-mono mb-2.5 rounded-[var(--vk-radius-md)] border-2 px-3 py-2 text-xs" style="border-color:var(--vk-color-signal)">{error}</p>{/if}
-  <label for="gate-note-{gate.id}" class="text-muted-foreground mb-1 block text-xs">{model.needNote ? 'Say what needs to change' : 'Add a note (optional)'}</label>
-  <textarea id="gate-note-{gate.id}" bind:this={model.noteEl} bind:value={model.note} maxlength={GATE_NOTE_MAX} rows="1" aria-invalid={model.needNote}
-    placeholder="Recorded with your decision. Request changes needs one: it threads into the agent's next attempt."
-    class="bg-surface font-mono w-full resize-none rounded-[var(--vk-radius-md)] border-2 px-2.5 py-2 text-base outline-none"
-    style="border-color:{model.needNote ? 'var(--vk-color-signal)' : 'var(--vk-color-line)'}"></textarea>
-  <div class="text-muted-foreground font-mono mt-1 text-right text-[11px]">{model.note.length} / {GATE_NOTE_MAX}</div>
-  <div class="mt-1 flex flex-wrap gap-2">
-    {#each ordered as opt (opt.name)}
-      {@const role = roleOf(opt.name)}
-      <Button variant={role === 'approve' ? 'default' : 'outline'} disabled={model.busy} onclick={() => model.decide(opt.name)} class="flex-1" style="min-height:var(--tap)">{opt.title}</Button>
-    {/each}
+<div class="ss-cmd">
+  <div class="ar-field" class:ss-field-bad={model.needNote}>
+    <label for="{uid}-note">{#if model.needNote}Say what needs to change{:else}Add a note (optional) <span class="ar-hint">· {model.note.length}/{GATE_NOTE_MAX}</span>{/if}</label>
+    <textarea id="{uid}-note" class="ar-ta" bind:this={model.noteEl} bind:value={model.note} maxlength={GATE_NOTE_MAX} aria-invalid={model.needNote ? 'true' : undefined} aria-describedby={model.needNote ? `${uid}-e` : undefined} placeholder={model.needNote ? undefined : 'Recorded with your decision. Request changes needs one.'}></textarea>
+    {#if model.needNote}<p id="{uid}-e" class="ss-err"><Icon name="alert" size={15} strokeWidth={1.75} />Request changes needs a note.</p>{/if}
   </div>
+  <div class="ss-row">
+    {#each ordered as opt (opt.name)}
+      {@const role = roleOf(opt.name)!}
+      <button class={CLS[role]} type="button" aria-disabled={model.busy ? 'true' : undefined} aria-keyshortcuts={keys && role !== 'reject' ? KEY[role] : undefined} onclick={() => choose(opt.name)}>{opt.title}{#if keys && role !== 'reject'} <span class="kbd" aria-hidden="true">{KEY[role]}</span>{/if}</button>
+    {/each}
+    {#if conflict}
+      <div class="ss-alert" role="alert"><Icon name="alert" size={18} strokeWidth={1.75} /><div><b>Not recorded.</b> {studioConflict(conflict, conflictWho)} <button class="ar-lk" type="button" onclick={() => void onRefresh()}>Refresh</button></div></div>
+    {:else if error}
+      <div class="ss-alert" role="alert"><Icon name="alert" size={18} strokeWidth={1.75} /><div>{error}</div></div>
+    {/if}
+  </div>
+  <span class="vk-visually-hidden" role="status">{model.busy ? 'Recording…' : ''}</span>
 </div>

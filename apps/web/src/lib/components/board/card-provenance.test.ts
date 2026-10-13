@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { cardProvenance } from './card-provenance';
+import { cardProvenance, queuedAgentName } from './card-provenance';
 
 /**
  * Who asked for this card.
@@ -137,5 +137,20 @@ describe('the grant is inspectable, not just stored (U7)', () => {
       unmapped as never,
     );
     expect(p.grantCoversDelegate).toBeNull();
+  });
+});
+
+describe('queuedAgentName (the tile chip)', () => {
+  it('names a listed agent', () => {
+    expect(queuedAgentName(cardProvenance(card({ queuedBy: 'prn_kai', queuedByAgentId: 'agt_kai' }) as never, MEMBERS as never, AGENTS as never))).toBe('Coder Kai');
+  });
+  it('an agent the board does not list is "an agent", never its short id', () => {
+    const p = cardProvenance(card({ queuedBy: 'prn_unknown_x', queuedByAgentId: 'agt_1111eeee1111eeee' }) as never, MEMBERS as never, AGENTS as never);
+    expect(p.byAgent).toBe(true);
+    expect(queuedAgentName(p)).toBe('an agent');
+    expect(queuedAgentName(p)).not.toMatch(/\b(?:agt|prn)_|…/);
+  });
+  it('a person-queued card has no agent chip name', () => {
+    expect(queuedAgentName(cardProvenance(card() as never, MEMBERS as never, AGENTS as never))).toBe('');
   });
 });

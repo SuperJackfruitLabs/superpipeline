@@ -78,3 +78,11 @@ export function cardProvenance(card: Card, members: Member[], agents: AgentSumma
       grant === null || delegatePrincipal === null ? null : grant.includes(delegatePrincipal),
   };
 }
+
+/**
+ * The queueing agent as a tile names it: its listed name, else "an agent" — never the short id
+ * `queuedByName` falls back to (the card model's rule for an agent the board does not list).
+ */
+export function queuedAgentName(p: Pick<CardProvenance, 'byAgent' | 'agent'>): string {
+  return p.byAgent ? p.agent?.name?.trim() || 'an agent' : '';
+}

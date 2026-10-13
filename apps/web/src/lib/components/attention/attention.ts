@@ -12,6 +12,7 @@
  */
 import type { AgentSummary, BoardSnapshot, Card, NeedsHuman, StaleCard, Stage } from '$lib/api';
 import { displayAgent } from '$lib/names';
+import { needsYou } from '@superpipeline/contract';
 
 export type AttentionKind =
   | 'review'
@@ -40,6 +41,12 @@ export interface AttentionItem {
   cardId: string;
   title: string;
   stageKey: string;
+  /** The stage as the board names it ("Failing test"), for sentences. */
+  stageName: string;
+  /** The stage's `order` on its board. Absent on workspace rows, which span boards. */
+  stageOrder?: number;
+  /** Runs the card has had. Absent on workspace rows. */
+  attemptCount?: number;
   /** One line: what has happened. */
   headline: string;
   /** The card's, the agent's or the reviewer's own words, when there are any. Text, never HTML. */
@@ -83,7 +90,7 @@ function forNeeds(base: Base, reason: NeedsHuman['reason'] | 'sub-tasks', detail
         ...base, id, kind: 'repeated-failure', detail,
         headline: `failed ${failureCount ?? 'several'} times in a row — the board stopped retrying`,
         instruction: 'Read the log, fix what keeps failing, then resume it with a note saying what changed.',
-        actions: ['resume', 'log'],
+        actions: ['resume', 'open', 'log'],
       };
     case 'not-authorised':
       return {
@@ -118,7 +125,7 @@ function forNeeds(base: Base, reason: NeedsHuman['reason'] | 'sub-tasks', detail
         ...base, id, kind: 'blocked', detail,
         headline: 'stopped and is waiting on you',
         instruction: 'Read why it stopped, fix that, then resume it with a note the agent will read.',
-        actions: ['resume', 'open'],
+        actions: ['resume', 'open', 'log'],
       };
   }
 }
@@ -128,10 +135,11 @@ function ownerless(base: Base, workspace: boolean): AttentionItem {
     ...base,
     id: `no-owner:${base.boardId}:${base.cardId}`,
     kind: 'no-owner',
-    headline: `Nothing claims stage ${base.stageKey}`,
+    headline: `nothing claims the ${base.stageName} stage`,
     detail: null,
     instruction: 'No agent works this stage and no review is asked for here, so it will sit forever. Move it to a stage someone works.',
-    actions: workspace ? ['open'] : ['move', 'open'],
+    // The workspace list only opens the card (SP-Workspace-Other: Unowned rows draw Open alone).
+    actions: workspace ? ['open'] : ['move', 'open', 'staff'],
   };
 }
 
@@ -140,11 +148,26 @@ export function itemsFromBoard(board: BoardSnapshot, agents: AgentSummary[], now
   const out: AttentionItem[] = [];
   const boardId = board.boardId ?? '';
   const stale = board.stale ?? { enabled: true, afterHours: 24 };
+  // Which cards appear is decided by the contract's one rule, the same one the API's board-list
+  // counts use; what each row SAYS is decided below.
+  const ctx = {
+    stages: board.stages,
+    pendingGateCardIds: new Set(board.gates.filter((g) => g.status === 'pending').map((g) => g.cardId)),
+    pendingQuestionCardIds: new Set(board.elicitations.filter((e) => e.status === 'pending').map((e) => e.cardId)),
+    staleAfterHours: stale.afterHours,
+    staleEnabled: stale.enabled,
+    nowMs,
+  };
   for (const c of board.cards) {
-    if (c.archivedAt) continue;
+    if (!needsYou(c, ctx)) continue;
     const since = c.stateSince ? Date.parse(c.stateSince) : Number.NaN;
     const ageHours = Number.isNaN(since) ? null : Math.max(0, (nowMs - since) / 3600_000);
-    const base: Base = { boardId, boardName: board.name, cardId: c.id, title: c.title, stageKey: c.currentStageKey, ageHours };
+    const stage = board.stages.find((s) => s.key === c.currentStageKey);
+    const base: Base = {
+      boardId, boardName: board.name, cardId: c.id, title: c.title, stageKey: c.currentStageKey,
+      stageName: stage?.name ?? c.currentStageKey, stageOrder: stage?.order ?? Number.MAX_SAFE_INTEGER,
+      attemptCount: c.attemptCount, ageHours,
+    };
     const gate = board.gates.find((g) => g.cardId === c.id && g.status === 'pending');
     const ask = board.elicitations.find((e) => e.cardId === c.id && e.status === 'pending');
     if (gate) {
@@ -178,12 +201,37 @@ function fromCard(base: Base, c: Card): AttentionItem {
   return forNeeds(base, reason, needs?.detail ?? null, needs?.failureCount);
 }
 
-/** The rows for the workspace list, from `GET /v1/stale?attention=1`. */
-export function itemsFromStale(cards: StaleCard[]): AttentionItem[] {
+/**
+ * The rows for the workspace list, from `GET /v1/stale?attention=1`. The age is the viewer's: measured
+ * from `since` on this clock (the server's `ageHours` is its own clock's), falling back to it.
+ * A stopped card offers Resume and Open here; its log is one click further, on the card (SP-Workspace-Other).
+ */
+export function itemsFromStale(cards: StaleCard[], nowMs: number = Date.now()): AttentionItem[] {
   return cards.map((s) => {
-    const base: Base = { boardId: s.boardId, boardName: s.boardName, cardId: s.cardId, title: s.title, stageKey: s.stageKey, ageHours: s.ageHours };
+    const since = s.since ? Date.parse(s.since) : Number.NaN;
+    const ageHours = Number.isNaN(since) ? s.ageHours : Math.max(0, (nowMs - since) / 3600_000);
+    const base: Base = { boardId: s.boardId, boardName: s.boardName, cardId: s.cardId, title: s.title, stageKey: s.stageKey, stageName: s.stageName, ageHours };
     if (s.why.kind === 'no-owner') return ownerless(base, true);
     const detail = s.why.reason === 'review' ? s.summary : (s.why.detail ?? null);
-    return forNeeds(base, s.why.reason, detail, s.why.failureCount);
+    const item = forNeeds(base, s.why.reason, detail, s.why.failureCount);
+    return item.kind === 'blocked' ? { ...item, actions: item.actions.filter((a) => a !== 'log') } : item;
   });
+}
+
+/** No-owner rows go last: nobody is waiting on an answer from them, only on a move. */
+const sortRank = (i: AttentionItem): number => (i.kind === 'no-owner' ? 1 : 0);
+
+/**
+ * The order a list of needs is read in. `stage`: the board's own order (Daylight, Paper, Studio).
+ * `urgency`: the card that has burned the most runs first (Quiet's "Most urgent first").
+ * Ties: the card waiting longest, then the title. Returns a new array.
+ */
+export function sortAttention(items: AttentionItem[], mode: 'stage' | 'urgency'): AttentionItem[] {
+  return [...items].sort(
+    (a, b) =>
+      sortRank(a) - sortRank(b) ||
+      (mode === 'stage' ? (a.stageOrder ?? 0) - (b.stageOrder ?? 0) : (b.attemptCount ?? 0) - (a.attemptCount ?? 0)) ||
+      (b.ageHours ?? -1) - (a.ageHours ?? -1) ||
+      a.title.localeCompare(b.title),
+  );
 }

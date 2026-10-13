@@ -1,8 +1,9 @@
+
 /**
  * Pure predicates from `AppStore.filteredCards` (`app.svelte.ts`), extracted so they can be
  * tested: `app.svelte.ts` uses Svelte 5 runes (`$state`) and cannot be imported by a plain Vitest
  * unit test in this project's config (no `$lib` alias, no rune compilation outside SvelteKit) —
- * the same reason `card-due.ts` exists beside `CardTile.svelte`.
+ * the same reason `board/card-due.ts` is a plain module.
  */
 
 /**
@@ -29,4 +30,29 @@ export function passesArchivedFilter(showArchived: boolean, archivedAt: string |
 export function passesProjectFilter(filterProjectId: string | null, cardProjectId: string | null): boolean {
   if (!filterProjectId) return true;
   return cardProjectId === filterProjectId;
+}
+
+/** The filter shape `AppStore.filters` holds (`CardFilters` in app.svelte.ts). */
+export interface FilterShape {
+  states: string[];
+  owners: string[];
+  minPriority: number | null;
+  needsReview: boolean;
+  live: boolean;
+  overBudget: boolean;
+  labels: string[];
+  showArchived: boolean;
+  projectId: string | null;
+}
+
+export function noFilters(): FilterShape {
+  return { states: [], owners: [], minPriority: null, needsReview: false, live: false, overBudget: false, labels: [], showArchived: false, projectId: null };
+}
+
+/** How many filters are on, each counted once: the "Filter cards · none on / 2 on" figure. */
+export function activeFilterCount(f: FilterShape): number {
+  return [
+    f.states.length > 0, f.owners.length > 0, f.minPriority !== null, f.needsReview, f.live, f.overBudget,
+    f.labels.length > 0, f.showArchived, f.projectId !== null,
+  ].filter(Boolean).length;
 }

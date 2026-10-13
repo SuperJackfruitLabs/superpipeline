@@ -1,0 +1,140 @@
+{
+  "boardId": "brd_511653e16d5e4689",
+  "tenantId": "tnt_vibes",
+  "name": "superwitness canary",
+  "stages": [
+    {
+      "key": "work",
+      "name": "Work",
+      "order": 0,
+      "ownerKind": "capability",
+      "owner": "code",
+      "requires": {
+        "any": [
+          "code"
+        ]
+      },
+      "instructions": "This board is superwitness's nightly canary. It checks that one work run can be\nobserved end to end. It is not real work, and nobody reads the output.\n\nDo exactly what the card's spec asks, and nothing more:\n\n1. Write the file the spec names, in your workspace, containing the line it gives.\n2. Reply with one sentence that repeats that line.\n3. Complete the run with `superpipeline_complete`.\n\nDo not run shell commands, open pull requests, push, or touch any repository."
+    },
+    {
+      "key": "review",
+      "name": "Review",
+      "order": 1,
+      "ownerKind": "human",
+      "gate": "approval"
+    },
+    {
+      "key": "done",
+      "name": "Done",
+      "order": 2,
+      "ownerKind": "human"
+    }
+  ],
+  "cards": [
+    {
+      "id": "card_bfc53a1555fe4fed",
+      "title": "P4 exit test: gate approved from Matrix",
+      "spec": {},
+      "ownerUserId": "usr_b19776fac3c94df4",
+      "queuedBy": "usr_b19776fac3c94df4",
+      "queuedByAgentId": null,
+      "currentRunId": null,
+      "queuedGrant": [
+        "prn_00e5464a206549ff8c78",
+        "prn_097f1bab9af64454acf4",
+        "prn_0dd1c5f70e9c483bb062",
+        "prn_1f792d84b0134115840b",
+        "prn_2277a9809a0045febfb9",
+        "prn_2ca5bd6c383a44cb9874",
+        "prn_345f66cd3adc493daa65",
+        "prn_479d6b47ae3c48049b02",
+        "prn_491ae67d3e80484bb10a",
+        "prn_51644819c47d42b2a480",
+        "prn_5205c2e9346044bc8e96",
+        "prn_567e7a906d5848a99eaf",
+        "prn_87e0ceec9d0646e08401",
+        "prn_8cb28118aed4409694c7",
+        "prn_93bfc6b092ba46c88cd8",
+        "prn_9442ad4c029a42db8b5e",
+        "prn_9db6dbcefe2a449e8f92",
+        "prn_a22d817febdb4b91a9ec",
+        "prn_a27e234566a14851a568",
+        "prn_a809e81df17e442b8c9f",
+        "prn_bc6cb3f5d5404ad9bb30",
+        "prn_c3aad129b67743c6b4b7",
+        "prn_cdd1063f546b46689baa",
+        "prn_d1d74063a5de4689912e",
+        "prn_d200c177df9142108c49",
+        "prn_d360868949144535a675",
+        "prn_d53832782402439393ab",
+        "prn_d8178f4a05934b72892a",
+        "prn_d887c72a7b6e4f908e95",
+        "prn_dc9d662c322946e6baa6",
+        "prn_e20ddb577f304660b033",
+        "prn_fb1ed9133e474210838b",
+        "prn_f13e2d1aac384cce8cb6",
+        "prn_42e74b7cbd2f4f6d80ad",
+        "prn_49570258e83948d0a1da",
+        "prn_c1a37c9cff77424bbd95",
+        "prn_bd87006f16824a048fd5",
+        "prn_4c8dcd4786434ad8b06a",
+        "prn_637c581f8d784e83a92e",
+        "prn_19b4af85e3a44c0280fa",
+        "prn_1c5855e8d3734095bf8b",
+        "prn_3951b8445dd049d49f89",
+        "prn_51c2b92b9ed74070821b",
+        "prn_74ddd5d409d44fa194f8",
+        "prn_778d51ff29c545018c3c",
+        "prn_7e80f37357db405fa617",
+        "prn_8da27bc86efa49b0951c",
+        "prn_968510c374a34f26889f",
+        "prn_a412649f97434334894e",
+        "prn_ab0a5c8d309b4570abd0",
+        "prn_b003e5b1e56a4ecb8722",
+        "prn_bc7145aa57c44c4d960d",
+        "prn_c5a9929649cb46a4a1ac",
+        "prn_c72963d48079404489a1",
+        "prn_d2ed64cf2681497697b7"
+      ],
+      "labels": [],
+      "projectId": null,
+      "milestoneId": null,
+      "dueAt": null,
+      "archivedAt": "2026-10-07T04:09:11.374Z",
+      "currentStageKey": "work",
+      "state": "submitted",
+      "delegateAgentId": null,
+      "priority": 0,
+      "contextId": "ctx_694f2fff94214f00",
+      "createdAt": "2026-10-07T03:56:35.258Z",
+      "updatedAt": "2026-10-07T04:09:12.747Z",
+      "stateSince": "2026-10-07T04:09:12.747Z",
+      "costUsd": 0,
+      "overBudget": false,
+      "attemptCount": 0,
+      "parentCardId": null,
+      "openChildCount": 0,
+      "costUsdRollup": 0,
+      "blockedBy": []
+    }
+  ],
+  "gates": [],
+  "elicitations": [],
+  "references": [],
+  "usage": {
+    "totalCostUsd": 0,
+    "estimatedCostUsd": 0,
+    "budgetUsd": null,
+    "cardUsdCap": null,
+    "overBudget": false
+  },
+  "github": {
+    "issueTrigger": false,
+    "webhookConfigured": false,
+    "triggerGrantCount": null
+  },
+  "stale": {
+    "enabled": true,
+    "afterHours": 24
+  }
+}

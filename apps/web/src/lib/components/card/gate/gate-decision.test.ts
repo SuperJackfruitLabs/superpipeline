@@ -83,4 +83,19 @@ describe('GateDecisionModel', () => {
   it('the seal skips the algorithm prefix', () => {
     expect(sealOf('sha256:3f9ac21e77')).toBe('3f9a·c21e');
   });
+  it('keeps the needs-a-note error when a later decision is refused by the server (Card-States E)', async () => {
+    onResponse.mockResolvedValue(false);
+    await m.decide('request_changes');
+    expect(m.needNote).toBe(true);
+    await m.decide('approve');
+    expect(resolveGate).toHaveBeenCalledTimes(1);
+    expect(m.needNote, 'an Approve with an empty note must not clear the Request-changes error').toBe(true);
+  });
+
+  it('clears the needs-a-note error once a note is written and sent', async () => {
+    await m.decide('request_changes');
+    m.note = 'Cite the cutover record.';
+    await m.decide('request_changes');
+    expect(m.needNote).toBe(false);
+  });
 });

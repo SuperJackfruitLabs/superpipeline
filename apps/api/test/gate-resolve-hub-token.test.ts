@@ -194,7 +194,12 @@ describe('resolving a gate with a hub token', () => {
       expect((await send()).status).toBe(200);
       const second = await send();
       expect(second.status).toBe(409);
-      expect((await second.json<{ error: { code: string } }>()).error.code).toBe('GATE_NOT_PENDING');
+      const err = (await second.json<{ error: { code: string; reason: string; decidedBy: string; decidedAt: string; via: string } }>()).error;
+      expect(err.code).toBe('GATE_NOT_PENDING');
+      // The first decision came in on a hub token, so the surface is derived as matrix.
+      expect(err).toMatchObject({ reason: 'decided', via: 'matrix' });
+      expect(err.decidedBy).not.toBe('');
+      expect(Date.parse(err.decidedAt)).not.toBeNaN();
     });
   });
 

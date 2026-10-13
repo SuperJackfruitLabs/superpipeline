@@ -5,7 +5,7 @@ import { newId } from '../ids';
 import { grantPermitsAgent, isControlPairEnforced } from '../auth/grant-match';
 import { capabilityTag, normalizeRequirement, stageCapabilitiesMet } from '@superpipeline/contract';
 import { parseElicitationOptions } from './elicitation';
-import { evaluateCompletion, type CompletionRequirement } from '@superpipeline/contract';
+import { evaluateCompletion, needsYou, type CompletionRequirement } from '@superpipeline/contract';
 import { outcomeInputError, returnStageError, routeOutcome, type StageOutcome } from '@superpipeline/contract';
 import { verifyGithubSignature, verifyForgeSignature } from '../references/github-signature';
 import { mapGithubEvent } from '../references/github-events';
@@ -30,6 +30,8 @@ import {
 import { logReporter } from '../superwitness/log';
 import { agentNamesFor, principalIdsFor } from '../db/catalog';
 import { SUBSCRIBABLE_EVENTS, cardIdsOf, isRecordEvent, type RecordPushBody } from '../push/events';
+
+class FixtureColumnError extends Error {}
 
 /** JSON-serializable value — used for everything that crosses the Durable Object RPC boundary. */
 export type JsonValue = string | number | boolean | null | JsonValue[] | { [key: string]: JsonValue };
@@ -354,12 +356,31 @@ export interface StagePatch {
   gate?: 'none' | 'approval';
   wipLimit?: number | null;
   instructions?: string | null;
+  /** `null` removes it. */
+  summary?: string | null;
   completion?: CompletionRequirement | null;
   /** `null` removes it — the stage stops judging. */
   returnStage?: string | null;
 }
 
 export const STAGE_INSTRUCTIONS_MAX = 4000;
+
+/** The longest a stage's one-line summary may be, matching `Stage.summary` in `@superpipeline/contract`. */
+export const STAGE_SUMMARY_MAX = 200;
+
+/** The longest either line of a board's introduction may be. */
+export const BOARD_INTRO_MAX = 400;
+
+/** What is wrong with a board introduction, or null. */
+export function boardIntroError(i: unknown): string | null {
+  if (typeof i !== 'object' || i === null || Array.isArray(i)) return 'intro must be an object with a lede and a composeHint';
+  const r = i as Record<string, unknown>;
+  for (const k of ['lede', 'composeHint'] as const) {
+    if (typeof r[k] !== 'string' || (r[k] as string).trim() === '') return `intro.${k} must be a non-empty string`;
+    if ((r[k] as string).length > BOARD_INTRO_MAX) return `intro.${k} is over ${BOARD_INTRO_MAX} characters`;
+  }
+  return null;
+}
 
 /**
  * What is wrong with one stage's own fields, or null.
@@ -400,7 +421,10 @@ export function completionShapeError(c: unknown): string | null {
   return null;
 }
 
-export function stageFieldError(s: Pick<StageDef, 'key' | 'wipLimit' | 'instructions'>): string | null {
+export function stageFieldError(s: Pick<StageDef, 'key' | 'wipLimit' | 'instructions' | 'summary'>): string | null {
+  if (s.summary !== undefined && (typeof s.summary !== 'string' || s.summary.length > STAGE_SUMMARY_MAX)) {
+    return `stage "${s.key}" summary must be a string of at most ${STAGE_SUMMARY_MAX} characters`;
+  }
   if (s.wipLimit !== undefined && (!Number.isInteger(s.wipLimit) || s.wipLimit < 1)) {
     return `stage "${s.key}" needs a WIP limit of at least 1, or none`;
   }
@@ -458,6 +482,8 @@ export interface StageDef {
    * given and `stages()` parses it straight back. Declared so that stays true on purpose.
    */
   instructions?: string;
+  /** One line saying what happens in this stage, printed on an empty board. Optional. */
+  summary?: string;
   /** Stage routing strategy (docs/05 §7): `pipeline` (sequential handoff, default) vs `manager`. */
   routing?: 'pipeline' | 'manager';
 }
@@ -507,6 +533,8 @@ export interface BoardInit {
   tenantId: string;
   name: string;
   stages: StageDef[];
+  /** The board's introduction: what it does and what to type into the compose box. */
+  intro?: { lede: string; composeHint: string };
 }
 
 /**
@@ -531,6 +559,8 @@ export interface CardNeedsHuman {
   detail?: string;
   /** How many attempts have failed, when the breaker tripped. */
   failureCount?: number;
+  /** The agent's one-line version of `detail`, written by the agent when it stops. Never generated here. */
+  summary?: string;
 }
 
 export interface CardView {
@@ -584,6 +614,12 @@ export interface CardView {
   currentStageKey: string;
   state: TaskState;
   delegateAgentId: string | null;
+  /** The agent of this card's most recent run, whatever its status; null with no runs. */
+  lastAgentId: string | null;
+  /** Whose dispatch grant the queuer acted on, recorded when it was queued; null when not recorded. */
+  queuedGrantOwner: string | null;
+  /** When the card entered its current stage (state changes inside a stage do not move it). */
+  stageSince: string;
   /**
    * The run currently holding this card, or null when nobody is working it.
    *
@@ -845,6 +881,8 @@ export interface UsageSummary {
   byModel: Array<{ model: string; costUsd: number; inputTokens: number; outputTokens: number }>;
   byAgent: Array<{ agentId: string; costUsd: number }>;
   byCard: Array<{ cardId: string; costUsd: number }>;
+  /** The last seven UTC days, oldest first, zero-filled — whatever window the other totals use. */
+  byDay: Array<{ day: string; costUsd: number }>;
 }
 
 export interface BoardEvent {
@@ -863,6 +901,8 @@ export interface GateOption {
   title: string;
   promptFill?: string;
   interactive?: boolean;
+  /** One line saying what choosing this option does; printed under the option by some vibes. */
+  description?: string;
 }
 
 /**
@@ -1127,6 +1167,8 @@ export interface BoardSnapshot {
   tenantId: string | null;
   name: string | null;
   stages: StageDef[];
+  /** The introduction the board was created with, when it has one. */
+  intro?: { lede: string; composeHint: string };
   cards: CardView[];
   gates: GateView[];
   /** The questions agents are currently blocked on, waiting for a human (docs/04 §4). */
@@ -1136,6 +1178,8 @@ export interface BoardSnapshot {
   github: {
     issueTrigger: boolean;
     webhookConfigured: boolean;
+    /** Where to point the GitHub webhook for this board. */
+    webhookUrl: string;
     /**
      * How many principals the board's standing trigger grant names, or null when
      * no grant is recorded.
@@ -1290,7 +1334,9 @@ export type BoardErrorCode =
   | 'GATE_PENDING'
   | 'INVALID_STALE_SETTINGS';
 
-export type Result<T> = { ok: true; value: T } | { ok: false; code: BoardErrorCode; message: string };
+export type Result<T> =
+  | { ok: true; value: T }
+  | { ok: false; code: BoardErrorCode; message: string; detail?: Record<string, unknown> };
 
 /** One superwitness outbox row (superwitness app spec §3.5), as `getRunReportOutbox` returns it. */
 export interface RunReportOutboxRow {
@@ -1312,12 +1358,22 @@ export interface RunReportDrainResult {
 
 /** The Board DO's RPC surface as the Worker calls it — hand-typed to avoid deep RPC type instantiation. */
 export interface BoardStub {
+  /** How many live cards the board holds and how many of them need a person now. */
+  summaryCounts(): Promise<{ cardCount: number; needsYouCount: number }>;
+  /** Cards each agent holds on this board right now, and of those how many it works now. */
+  agentLoad(): Promise<Record<string, { claimed: number; working: number }>>;
+  /** Dev only (FIXTURE_IMPORT): replace this board's rows with a fixture. src/dev/fixture.ts. */
+  importFixture(board: import('../dev/fixture-types').FixtureBoard): Promise<
+    { ok: true; cards: number } | { ok: false; code: 'FIXTURE_IMPORT_DISABLED' | 'UNKNOWN_COLUMN'; detail?: string }
+  >;
   drainRunReports(): Promise<RunReportDrainResult>;
   enqueueAllRunReports(): Promise<Result<{ enqueued: number; pending: number; dead: number }>>;
   init(board: BoardInit): Promise<BoardSnapshot>;
   createCard(input: {
     /** What the queuer was permitted to dispatch, as granted at this moment. */
     queuedGrant?: string[] | null;
+    /** Whose grant `queuedGrant` is. */
+    queuedGrantOwner?: string | null;
     /** The principal who dispatched it, when that is not the owner (the agent case). */
     queuedBy?: string | null;
     /** The agent that queued it, if an agent did. */
@@ -1327,6 +1383,9 @@ export interface BoardStub {
     spec?: JsonValue;
     priority?: number;
     dueAt?: string;
+    projectId?: string | null;
+    stageKey?: string;
+    labels?: string[];
   }): Promise<Result<CardView>>;
   /** Split a card into a sub-task: a claimable card of its own, linked back with a `parent` edge. */
   createChildCard(
@@ -1356,6 +1415,8 @@ export interface BoardStub {
      * agent that queued it first.
      */
     queuedByAgentId?: string | null,
+    /** Whose grant `queuedGrant` is. */
+    queuedGrantOwner?: string | null,
   ): Promise<Result<CardView>>;
   /** One card, in the same projection the board snapshot carries. */
   getCardView(cardId: string): Promise<Result<CardView>>;
@@ -1390,7 +1451,7 @@ export interface BoardStub {
   heartbeat(input: RunVerbInput): Promise<Result<{ acknowledged: true }>>;
   postActivity(input: AgentActivityInput): Promise<Result<{ accepted: true; cardState: TaskState }>>;
   complete(input: CompleteVerbInput): Promise<Result<CardView>>;
-  block(input: RunVerbInput & { reason: string }): Promise<Result<CardView>>;
+  block(input: RunVerbInput & { reason: string; summary?: string }): Promise<Result<CardView>>;
   fail(input: RunVerbInput & { reason: string }): Promise<Result<CardView>>;
   release(input: RunVerbInput & { reason?: string }): Promise<Result<CardView>>;
   submitForReview(input: RunVerbInput & { output?: JsonValue }): Promise<Result<CardView>>;
@@ -1427,6 +1488,7 @@ export interface BoardStub {
     toStageKey?: string;
     actor: { id: string; name: string | null };
     queuedGrant?: string[] | null;
+    queuedGrantOwner?: string | null;
   }): Promise<Result<{ card: CardView; comment: CommentView }>>;
   /** Tombstone a comment. Only its human author may; an agent's comment is never deleted. */
   deleteComment(input: { cardId: string; commentId: string; userId: string }): Promise<Result<CommentView>>;
@@ -1523,6 +1585,8 @@ export interface BoardStub {
     comment?: string;
     approvalSubjectId?: string;
     approvalSubjectDigest?: string;
+    /** The surface the decision came through; recorded so a later conflict can say where. */
+    via?: 'matrix' | 'web' | 'api';
   }): Promise<Result<CardView>>;
   updateApprovalDelivery(input: {
     gateId: string;
@@ -1998,6 +2062,25 @@ export class BoardDO extends DurableObject<Env> {
     } catch {
       // column already exists
     }
+    try {
+      this.sql.exec(`ALTER TABLE cards ADD COLUMN queued_grant_owner TEXT`);
+    } catch {
+      // column already exists
+    }
+    try {
+      this.sql.exec(`ALTER TABLE cards ADD COLUMN stage_since TEXT`);
+    } catch {
+      // column already exists
+    }
+    // When the card entered its current stage. state_since moves on a state OR a stage change; this
+    // moves on a stage change only, so "in Reproduce for 2 days" survives a stop inside the stage.
+    this.sql.exec(
+      `CREATE TRIGGER IF NOT EXISTS cards_stage_since AFTER UPDATE OF current_stage_key ON cards
+       WHEN NEW.current_stage_key IS NOT OLD.current_stage_key
+       BEGIN
+         UPDATE cards SET stage_since = COALESCE(NEW.updated_at, NEW.created_at) WHERE id = NEW.id;
+       END`,
+    );
     // Only `project_id` is indexed: `projectSummary` is the one query that filters cards by it,
     // and nothing here looks cards up by `milestone_id` on its own.
     this.sql.exec(`CREATE INDEX IF NOT EXISTS idx_cards_project ON cards(project_id)`);
@@ -2031,6 +2114,12 @@ export class BoardDO extends DurableObject<Env> {
       )`,
     );
     this.sql.exec(`CREATE INDEX IF NOT EXISTS idx_gates_card ON gates(card_id)`);
+    /** The surface a gate was decided through (matrix, web, api). Null on gates decided before this column. */
+    try {
+      this.sql.exec(`ALTER TABLE gates ADD COLUMN decided_via TEXT`);
+    } catch {
+      // column already exists
+    }
     /**
      * The run whose work this gate judges (charter -> decisions/2026-09-29-evidence-joins-on-the-
      * work-run.md, decision 4), so a human's rejection can be attributed to the run and the
@@ -2262,6 +2351,54 @@ export class BoardDO extends DurableObject<Env> {
 
   // ----- RPC: board lifecycle -----
 
+  /**
+   * Replace every row of this board with a fixture (fixtures-and-harness.md §A.9.3). Dev only and
+   * gated here as well as at the route. Writes rows exactly as given — historical timestamps
+   * included — emits nothing and schedules no alarm, so the stale sweep never runs on a fixture.
+   */
+  async importFixture(board: import('../dev/fixture-types').FixtureBoard): Promise<
+    { ok: true; cards: number } | { ok: false; code: 'FIXTURE_IMPORT_DISABLED' | 'UNKNOWN_COLUMN'; detail?: string }
+  > {
+    if (this.env.FIXTURE_IMPORT !== 'true') return { ok: false, code: 'FIXTURE_IMPORT_DISABLED' };
+    const TABLES = ['meta', 'cards', 'runs', 'activities', 'events', 'usage_records', 'notifications', 'gates', 'approval_subjects',
+      'approval_delivery_events', 'elicitations', 'card_references', 'card_links', 'card_comments', 'schedules', 'profiles',
+      'push_configs', 'push_deliveries', 'run_reports', 'webhook_deliveries'] as const;
+    const columns = (t: string) => new Set((this.sql.exec(`PRAGMA table_info(${t})`).toArray() as Array<{ name: string }>).map((r) => r.name));
+    const insert = (table: string, rows: Array<Record<string, unknown>>) => {
+      const known = columns(table);
+      for (const row of rows) {
+        const keys = Object.keys(row);
+        const bad = keys.find((k) => !known.has(k));
+        if (bad) throw new FixtureColumnError(`${table}.${bad}`);
+        this.sql.exec(`INSERT INTO ${table} (${keys.join(', ')}) VALUES (${keys.map(() => '?').join(', ')})`, ...keys.map((k) => row[k] as SqlStorageValue));
+      }
+    };
+    try {
+      this.ctx.storage.transactionSync(() => {
+        for (const t of TABLES) this.sql.exec(`DELETE FROM ${t}`);
+        insert('meta', Object.entries(board.meta).map(([k, v]) => ({ k, v })));
+        insert('cards', board.cards);
+        insert('runs', board.runs);
+        insert('activities', board.activities);
+        insert('events', [...board.events].sort((a, b) => a.ts.localeCompare(b.ts)).map((e) => ({ type: e.type, payload_json: JSON.stringify(e.payload), ts: e.ts })));
+        insert('notifications', [...board.notifications].sort((a, b) => a.created_at.localeCompare(b.created_at)));
+        insert('gates', board.gates);
+        insert('approval_subjects', board.approvalSubjects.map(({ canonical_bytes_b64, ...rest }) => ({
+          ...rest, canonical_bytes: Uint8Array.from(atob(canonical_bytes_b64), (c) => c.charCodeAt(0)),
+        })));
+        insert('elicitations', board.elicitations);
+        insert('card_references', board.references);
+        insert('card_links', board.links);
+        insert('card_comments', board.comments);
+      });
+    } catch (e) {
+      if (e instanceof FixtureColumnError) return { ok: false, code: 'UNKNOWN_COLUMN', detail: e.message };
+      throw e;
+    }
+    await this.ctx.storage.deleteAlarm();
+    return { ok: true, cards: board.cards.length };
+  }
+
   async init(board: BoardInit): Promise<BoardSnapshot> {
     if (!this.getMeta('boardId')) {
       // Same normalisation as `setStages`: a board created with a mis-spelled capability owner is
@@ -2273,6 +2410,7 @@ export class BoardDO extends DurableObject<Env> {
       this.setMeta('tenantId', board.tenantId);
       this.setMeta('name', board.name);
       this.setMeta('stages', JSON.stringify(stages));
+      if (board.intro) this.setMeta('intro', JSON.stringify(board.intro));
       this.emit('board.initialized', { boardId: board.id, tenantId: board.tenantId });
     }
     return this.snapshot();
@@ -2281,6 +2419,8 @@ export class BoardDO extends DurableObject<Env> {
   async createCard(input: {
     /** What the queuer was permitted to dispatch, as granted at this moment. */
     queuedGrant?: string[] | null;
+    /** Whose grant `queuedGrant` is; recorded as `CardView.queuedGrantOwner`. */
+    queuedGrantOwner?: string | null;
     /**
      * The principal who dispatched this card, when it is not the owner.
      *
@@ -2309,19 +2449,26 @@ export class BoardDO extends DurableObject<Env> {
      * 21's, parked deliberately rather than added here.
      */
     projectId?: string | null;
+    /** The stage to start in; the first stage when absent. Must be one of the board's stage keys. */
+    stageKey?: string;
+    /** Label ids to attach at creation. The route has already checked they are the workspace's. */
+    labels?: string[];
   }): Promise<Result<CardView>> {
     if (!this.getMeta('boardId')) {
       return { ok: false, code: 'NOT_INITIALIZED', message: 'board is not initialized' };
     }
-    const first = this.stages()[0];
+    const first = input.stageKey !== undefined ? this.stages().find((st) => st.key === input.stageKey) : this.stages()[0];
+    if (input.stageKey !== undefined && !first) {
+      return { ok: false, code: 'UNKNOWN_STAGE', message: `no such stage on this board: ${input.stageKey}` };
+    }
     if (!first) return { ok: false, code: 'NOT_INITIALIZED', message: 'board has no stages' };
     const id = newId('card');
     const contextId = newId('ctx');
     const now = this.now();
     this.sql.exec(
       `INSERT INTO cards
-        (id, title, spec_json, owner_user_id, current_stage_key, state, priority, context_id, created_at, updated_at, queued_by, queued_by_agent_id, queued_grant, due_at, project_id)
-       VALUES (?, ?, ?, ?, ?, 'submitted', ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        (id, title, spec_json, owner_user_id, current_stage_key, state, priority, context_id, created_at, updated_at, queued_by, queued_by_agent_id, queued_grant, due_at, project_id, queued_grant_owner, stage_since, labels)
+       VALUES (?, ?, ?, ?, ?, 'submitted', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       id,
       input.title,
       JSON.stringify((this.getMeta('dueBackfillDone') ? stripStaleSpecKeys(input.spec) : input.spec) ?? {}),
@@ -2339,6 +2486,9 @@ export class BoardDO extends DurableObject<Env> {
       input.queuedGrant ? JSON.stringify(input.queuedGrant) : null,
       input.dueAt ?? null,
       input.projectId ?? null,
+      input.queuedGrantOwner ?? null,
+      now,
+      JSON.stringify([...new Set(input.labels ?? [])]),
     );
     const card = this.mustGetCard(id);
     this.emit('card.created', { card });
@@ -2389,6 +2539,7 @@ export class BoardDO extends DurableObject<Env> {
       spec: input.spec,
       priority: input.priority ?? parent.priority,
       queuedGrant: parent.queuedGrant,
+      queuedGrantOwner: parent.queuedGrantOwner,
       // Same reasoning one step further: a sub-task of a card the coordinator asked for was not
       // asked for by a person, and `queuedBy` has to follow or the child's authority would be the
       // owner's rather than the authority the parent's grant was issued against.
@@ -2636,6 +2787,8 @@ export class BoardDO extends DurableObject<Env> {
      * agent that queued it first.
      */
     queuedByAgentId?: string | null,
+    /** Whose grant `queuedGrant` is. */
+    queuedGrantOwner?: string | null,
   ): Promise<Result<CardView>> {
     if (!this.getMeta('boardId')) {
       return { ok: false, code: 'NOT_INITIALIZED', message: 'board is not initialized' };
@@ -2709,7 +2862,8 @@ export class BoardDO extends DurableObject<Env> {
               -- mover sets it to ITSELF, for the same reason it sets queued_by: whoever re-queued
               -- the card is who the record has to name.
               queued_by_agent_id = CASE WHEN ? IS NULL THEN queued_by_agent_id ELSE ? END,
-              queued_grant = CASE WHEN ? IS NULL THEN queued_grant ELSE ? END WHERE id = ?`,
+              queued_grant = CASE WHEN ? IS NULL THEN queued_grant ELSE ? END,
+              queued_grant_owner = CASE WHEN ? IS NULL THEN queued_grant_owner ELSE ? END WHERE id = ?`,
       target.key,
       now,
       actorUserId ?? null,
@@ -2719,6 +2873,9 @@ export class BoardDO extends DurableObject<Env> {
       // recorded authority standing rather than blanking it.
       queuedGrant === undefined || queuedGrant === null ? null : JSON.stringify(queuedGrant),
       queuedGrant === undefined || queuedGrant === null ? null : JSON.stringify(queuedGrant),
+      // Paired with the grant: written only when the grant is, so the two never describe different people.
+      queuedGrant === undefined || queuedGrant === null ? null : JSON.stringify(queuedGrant),
+      queuedGrantOwner ?? null,
       cardId,
     );
     const updated = this.mustGetCard(cardId);
@@ -2766,6 +2923,7 @@ export class BoardDO extends DurableObject<Env> {
     toStageKey?: string;
     actor: { id: string; name: string | null };
     queuedGrant?: string[] | null;
+    queuedGrantOwner?: string | null;
   }): Promise<Result<{ card: CardView; comment: CommentView }>> {
     if (!this.getMeta('boardId')) return { ok: false, code: 'NOT_INITIALIZED', message: 'board is not initialized' };
     const card = this.getCard(input.cardId);
@@ -2820,7 +2978,8 @@ export class BoardDO extends DurableObject<Env> {
       `UPDATE cards SET current_stage_key = ?, state = 'submitted', delegate_agent_id = NULL, current_run_id = NULL,
               failure_count = 0, needs_human_json = NULL, completion_rework_json = NULL, pending_advance_json = NULL,
               auto_returns = 0, handoff_json = ?, updated_at = ?, queued_by = ?, queued_by_agent_id = NULL,
-              queued_grant = CASE WHEN ? IS NULL THEN queued_grant ELSE ? END
+              queued_grant = CASE WHEN ? IS NULL THEN queued_grant ELSE ? END,
+              queued_grant_owner = CASE WHEN ? IS NULL THEN queued_grant_owner ELSE ? END
         WHERE id = ?`,
       targetKey,
       JSON.stringify(merged),
@@ -2828,6 +2987,8 @@ export class BoardDO extends DurableObject<Env> {
       input.actor.id,
       grant,
       grant,
+      grant,
+      input.queuedGrantOwner ?? null,
       card.id,
     );
     const comment = await this.addComment({ cardId: card.id, author: { kind: 'human', ...input.actor }, body: input.comment });
@@ -3125,6 +3286,10 @@ export class BoardDO extends DurableObject<Env> {
     if (patch.instructions !== undefined) {
       if (patch.instructions === null) delete next.instructions;
       else next.instructions = patch.instructions;
+    }
+    if (patch.summary !== undefined) {
+      if (patch.summary === null) delete next.summary;
+      else next.summary = patch.summary;
     }
     if (patch.completion !== undefined) {
       if (patch.completion === null) delete next.completion;
@@ -5837,6 +6002,41 @@ export class BoardDO extends DurableObject<Env> {
     return { ok: true, value: this.mustGetCard(cardId) };
   }
 
+  /**
+   * How many live cards this board holds and how many need a person now, by the contract's one
+   * `needsYou` rule — the same one the web attention lists use, so a count and the list it opens
+   * cannot disagree.
+   */
+  async summaryCounts(): Promise<{ cardCount: number; needsYouCount: number }> {
+    if (!this.getMeta('boardId')) return { cardCount: 0, needsYouCount: 0 };
+    const stale = this.staleSettings();
+    const ctx = {
+      stages: this.stages(),
+      pendingGateCardIds: new Set(this.pendingGates().map((g) => g.cardId)),
+      pendingQuestionCardIds: new Set(this.pendingElicitations().map((e) => e.cardId)),
+      staleAfterHours: stale.afterHours,
+      staleEnabled: stale.enabled,
+      nowMs: Date.now(),
+    };
+    const live = this.allCards().filter((c) => !c.archivedAt);
+    return { cardCount: live.length, needsYouCount: live.filter((c) => needsYou(c, ctx)).length };
+  }
+
+  /** Cards each agent holds on this board right now (claimed) and, of those, works now (working). */
+  async agentLoad(): Promise<Record<string, { claimed: number; working: number }>> {
+    const out: Record<string, { claimed: number; working: number }> = {};
+    for (const r of this.sql
+      .exec(
+        `SELECT delegate_agent_id AS a, COUNT(*) AS n, SUM(CASE WHEN state = 'working' THEN 1 ELSE 0 END) AS w
+           FROM cards WHERE delegate_agent_id IS NOT NULL AND archived_at IS NULL AND state NOT IN ('completed', 'rejected', 'canceled')
+          GROUP BY delegate_agent_id`,
+      )
+      .toArray()) {
+      out[r.a as string] = { claimed: Number(r.n), working: Number(r.w) };
+    }
+    return out;
+  }
+
   /** Resolve a pending approval gate (docs/08 §6). Enforces separation of duties. */
   async resolveGate(input: {
     gateId: string;
@@ -5845,11 +6045,27 @@ export class BoardDO extends DurableObject<Env> {
     comment?: string;
     approvalSubjectId?: string;
     approvalSubjectDigest?: string;
+    via?: 'matrix' | 'web' | 'api';
   }): Promise<Result<CardView>> {
     const gate = this.sql.exec(`SELECT * FROM gates WHERE id = ?`, input.gateId).toArray()[0];
     if (!gate) return { ok: false, code: 'GATE_NOT_FOUND', message: `gate not found: ${input.gateId}` };
     if ((gate.status as string) !== 'pending') {
-      return { ok: false, code: 'GATE_NOT_PENDING', message: 'gate is already resolved' };
+      // Same code and status as ever, so a client that matches GATE_NOT_PENDING keeps working; the
+      // flat `reason` and the decider fields are additive and tell a decided gate from a cancelled one.
+      if ((gate.status as string) === 'resolved') {
+        return {
+          ok: false,
+          code: 'GATE_NOT_PENDING',
+          message: 'gate is already resolved',
+          detail: {
+            reason: 'decided',
+            decidedBy: (gate.decided_by as string | null) ?? '',
+            decidedAt: (gate.resolved_at as string | null) ?? '',
+            via: ((gate.decided_via as string | null) ?? 'api') as 'matrix' | 'web' | 'api',
+          },
+        };
+      }
+      return { ok: false, code: 'GATE_NOT_PENDING', message: 'gate is already resolved', detail: { reason: 'cancelled' } };
     }
     if (input.decidedBy === (gate.produced_by as string)) {
       return { ok: false, code: 'SEPARATION_OF_DUTIES', message: 'the producer cannot resolve their own gate' };
@@ -5889,11 +6105,12 @@ export class BoardDO extends DurableObject<Env> {
     const cardId = gate.card_id as string;
     const now = this.now();
     this.sql.exec(
-      `UPDATE gates SET status = 'resolved', decision = ?, comment = ?, decided_by = ?, resolved_at = ? WHERE id = ?`,
+      `UPDATE gates SET status = 'resolved', decision = ?, comment = ?, decided_by = ?, resolved_at = ?, decided_via = ? WHERE id = ?`,
       input.decision,
       input.comment ?? null,
       input.decidedBy,
       now,
+      input.via ?? 'api',
       input.gateId,
     );
     if (boundSubjectId && (input.decision === 'approve_manual' || input.decision === 'approve_automatic')) {
@@ -6252,7 +6469,7 @@ export class BoardDO extends DurableObject<Env> {
   }
 
   /** Escalate to a human — the card parks in input-required (docs/08 §6 — gates resolve in P3). */
-  async block(input: RunVerbInput & { reason: string }): Promise<Result<CardView>> {
+  async block(input: RunVerbInput & { reason: string; summary?: string }): Promise<Result<CardView>> {
     const auth = this.authorizeRun(input);
     if (!auth.ok) return auth;
     const run = auth.run;
@@ -6263,7 +6480,8 @@ export class BoardDO extends DurableObject<Env> {
     // The block is the reason now, and it REPLACES any question this run asked — those
     // were just cancelled, and a card pointing at a cancelled question sends somebody
     // to something that no longer exists.
-    this.parkForHuman(cardId, { reason: 'blocked', detail: input.reason });
+    const summary = input.summary?.trim().slice(0, 120);
+    this.parkForHuman(cardId, { reason: 'blocked', detail: input.reason, ...(summary ? { summary } : {}) });
     this.sql.exec(
       `UPDATE cards SET state = 'input-required', delegate_agent_id = NULL, current_run_id = NULL, updated_at = ? WHERE id = ?`,
       now,
@@ -7841,7 +8059,7 @@ export class BoardDO extends DurableObject<Env> {
       body,
       this.now(),
     );
-    this.emit('notification', { kind, cardId, userId });
+    this.emit('notification', { kind, cardId, userId, body });
   }
 
   private emit(type: string, payload: Record<string, unknown>): void {
@@ -7905,6 +8123,12 @@ export class BoardDO extends DurableObject<Env> {
     for (const r of this.sql.exec(`SELECT card_id, COUNT(*) AS n FROM runs GROUP BY card_id`).toArray()) {
       attemptsByCard.set(r.card_id as string, Number(r.n));
     }
+    const lastAgentByCard = new Map<string, string>();
+    for (const r of this.sql
+      .exec(`SELECT r.card_id, r.agent_id FROM runs r WHERE r.id = (SELECT x.id FROM runs x WHERE x.card_id = r.card_id ORDER BY x.started_at DESC, x.id DESC LIMIT 1)`)
+      .toArray()) {
+      lastAgentByCard.set(r.card_id as string, r.agent_id as string);
+    }
     // Child → parent, over every `parent` edge on the board — one row per child, so a direct map.
     const parentByChild = new Map<string, string>();
     for (const r of this.sql.exec(`SELECT to_card_id, from_card_id FROM card_links WHERE kind = 'parent'`).toArray()) {
@@ -7956,6 +8180,7 @@ export class BoardDO extends DurableObject<Env> {
         return this.rowToCard(r, {
           costUsd: costByCard.get(id) ?? 0,
           attemptCount: attemptsByCard.get(id) ?? 0,
+          lastAgentId: lastAgentByCard.get(id) ?? null,
           parentCardId: parentByChild.get(id) ?? null,
           openChildCount: openChildCountByParent.get(id) ?? 0,
           childrenCost: childrenCostByParent.get(id) ?? 0,
@@ -7969,6 +8194,7 @@ export class BoardDO extends DurableObject<Env> {
     pre?: {
       costUsd: number;
       attemptCount: number;
+      lastAgentId: string | null;
       parentCardId: string | null;
       openChildCount: number;
       childrenCost: number;
@@ -7986,6 +8212,9 @@ export class BoardDO extends DurableObject<Env> {
     // (its length, or `pre?.blockedBy ?? fallback`) risks mistaking that legitimate empty answer for
     // a missing one. Branching on `pre` — the presence of the whole precomputed object, never the
     // field's own value — is the one test that can't make that mistake for any of the four.
+    const lastAgentId = pre
+      ? pre.lastAgentId
+      : ((this.sql.exec(`SELECT agent_id FROM runs WHERE card_id = ? ORDER BY started_at DESC, id DESC LIMIT 1`, id).toArray()[0]?.agent_id as string | undefined) ?? null);
     const parentCardId = pre ? pre.parentCardId : this.parentIdOf(id);
     const openChildCount = pre ? pre.openChildCount : this.openChildCount(id);
     const childrenCost = pre ? pre.childrenCost : this.childrenCost(id);
@@ -8016,6 +8245,9 @@ export class BoardDO extends DurableObject<Env> {
       currentStageKey: row.current_stage_key as string,
       state: row.state as TaskState,
       delegateAgentId: (row.delegate_agent_id as string | null) ?? null,
+      lastAgentId,
+      queuedGrantOwner: (row.queued_grant_owner as string | null) ?? null,
+      stageSince: (row.stage_since as string | null) ?? (row.state_since as string | null) ?? (row.created_at as string),
       priority: Number(row.priority),
       contextId: row.context_id as string,
       createdAt: row.created_at as string,
@@ -8202,6 +8434,16 @@ export class BoardDO extends DurableObject<Env> {
       .exec(`SELECT card_id, SUM(cost_usd) AS cost FROM usage_records${w} GROUP BY card_id ORDER BY cost DESC`, ...p)
       .toArray()
       .map((r) => ({ cardId: r.card_id as string, costUsd: Number(r.cost) }));
+    // The Spend chart's seven bars: the last seven UTC days, oldest first, independent of the window.
+    const nowMs = Date.parse(this.now());
+    const days = Array.from({ length: 7 }, (_, i) => new Date(nowMs - (6 - i) * 86_400_000).toISOString().slice(0, 10));
+    const daySums = new Map<string, number>();
+    for (const r of this.sql
+      .exec(`SELECT substr(ts, 1, 10) AS day, SUM(cost_usd) AS c FROM usage_records WHERE ts >= ? GROUP BY day`, `${days[0]}T00:00:00Z`)
+      .toArray()) {
+      daySums.set(r.day as string, Number(r.c));
+    }
+    const byDay = days.map((day) => ({ day, costUsd: daySums.get(day) ?? 0 }));
     return {
       totalCostUsd: Number(totals.cost),
       estimatedCostUsd: Number(totals.est),
@@ -8211,16 +8453,21 @@ export class BoardDO extends DurableObject<Env> {
       byModel,
       byAgent,
       byCard,
+      byDay,
     };
   }
 
   private snapshot(): BoardSnapshot {
     const boardId = this.getMeta('boardId');
+    const introJson = this.getMeta('intro');
+    const intro = introJson ? (JSON.parse(introJson) as { lede: string; composeHint: string }) : null;
+    const tenantId = this.getMeta('tenantId');
     return {
       boardId,
-      tenantId: this.getMeta('tenantId'),
+      tenantId,
       name: this.getMeta('name'),
       stages: this.stages(),
+      ...(intro ? { intro } : {}),
       cards: boardId ? this.allCards() : [],
       gates: boardId ? this.pendingGates() : [],
       elicitations: boardId ? this.pendingElicitations() : [],
@@ -8229,6 +8476,7 @@ export class BoardDO extends DurableObject<Env> {
       github: {
         issueTrigger: this.getMeta('githubIssueTrigger') === '1',
         webhookConfigured: this.getMeta('githubWebhookSecret') !== null,
+        webhookUrl: `${this.env.PUBLIC_APP_ORIGIN ?? 'https://app.superpipeline.dev'}/v1/boards/${boardId}/webhooks/github?tenant=${tenantId}`,
         triggerGrantCount: this.triggerGrant()?.length ?? null,
       },
       stale: this.staleSettings(),

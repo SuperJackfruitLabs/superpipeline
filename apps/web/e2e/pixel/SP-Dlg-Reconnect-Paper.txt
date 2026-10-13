@@ -1,0 +1,46 @@
+<div class="fg" data-vibe="paper" data-theme="light"><div class="dr-wrap" aria-hidden="true" inert=""><aside class="dr" aria-label="Card">
+  <div class="dr-head">
+    <div style="flex: 1 1 0%; min-width: 0px;">
+      <div class="eyebrow">Developer Experience · Reproduce</div>
+      <h2 class="dr-title">Diagnose Melissa and Anna Supermessage silence — trace actual failing hop</h2>
+    </div>
+    <button class="icon-btn" type="button" aria-label="Close card"><svg 20/></button>
+  </div>
+  <div class="dr-body">
+    <ol class="vk-stages" aria-label="Stages">
+      <li class="vk-stages__step" data-state="done"><span class="vk-stages__bar" aria-hidden="true"></span><span class="vk-stages__name">Reported</span></li>
+      <li class="vk-stages__step" data-state="stopped"><span class="vk-stages__bar" aria-hidden="true"></span><span class="vk-stages__name">Reproduce</span></li>
+      <li class="vk-stages__step"><span class="vk-stages__bar" aria-hidden="true"></span><span class="vk-stages__name">Failing test</span></li>
+      <li class="vk-stages__step"><span class="vk-stages__bar" aria-hidden="true"></span><span class="vk-stages__name">Fix</span></li>
+      <li class="vk-stages__step"><span class="vk-stages__bar" aria-hidden="true"></span><span class="vk-stages__name">Integrate</span></li>
+      <li class="vk-stages__step"><span class="vk-stages__bar" aria-hidden="true"></span><span class="vk-stages__name">Signed off</span></li>
+      <li class="vk-stages__step"><span class="vk-stages__bar" aria-hidden="true"></span><span class="vk-stages__name">Shipped</span></li>
+    </ol>
+    <div class="dr-lead"><span class="vk-face" style="--vk-face-size: 32px;"><svg aria-label="error-eric, needs you" mood=needs 32/></span><div><p>not reproduced end-to-end: Melissa’s live ACP session acps_8f86d4e4-1cf2-457b-beb8-0ffb529d9023 reached Hermes and produced a model reply, while Anna has no local ACP dispatch; first failing hop cannot be identified without one fresh DM event_id/room_id/timestamp per agent plus AgentPod hub matrix-inbound/control-pair/ACP/matrix-outbound logs, matrix_rooms/ACP metadata, homeserver send-event metadata, and Supermessage sync ingestion for those event IDs.</p><button class="link small" type="button" style="padding-left: 0px;">Read the full reason</button></div></div>
+    <div class="dr-panel">
+      <p class="dr-sec">Stopped · waiting on you</p>
+      <label class="vk-field__label" for="dr-n">Note for error-eric</label>
+      <textarea class="dr-note" id="dr-n" placeholder="What changed, or what should error-eric do differently? It reads this."></textarea>
+      <div style="display: flex; gap: 10px;"><button class="vk-button vk-button--primary" type="button">Send back to work</button><button class="vk-button vk-button--secondary" type="button">Cancel</button></div>
+    </div>
+    <p class="dr-sec">History</p>
+    <div class="dr-tl">
+      <div><span class="vk-face" style="--vk-face-size: 24px;"><svg mood=needs 24/></span> error-eric stopped · 2 days ago</div>
+      <div><span class="vk-face" style="--vk-face-size: 24px;"><svg mood=working 24/></span> error-eric was sent back: repro and observed missing · 2 days ago</div>
+    </div>
+  </div></aside></div><div class="scrim"></div>
+  <section class="dlg rc" role="alertdialog" aria-modal="true" aria-labelledby="rc-t" aria-describedby="rc-d">
+    <span class="rc-ic" aria-hidden="true"><svg 22/></span>
+    <div>
+      <h2 class="dlg-title" id="rc-t">Sign in again to keep going</h2>
+      <p class="rc-lead" id="rc-d" style="margin-top: 8px;">Your sign-in has expired, and it could not be renewed in the background. Once you sign in, you return to this card.</p>
+    </div>
+    <div class="rc-back"><svg 18/><div><span class="small muted">You will come back to</span><b>Diagnose Melissa and Anna Supermessage silence — trace actual failing hop</b><span class="small muted">Developer Experience · Reproduce</span></div></div>
+    <div class="rc-who"><span class="bd-avatar">RG</span>Signing in as <strong style="color: var(--vk-color-text);">Rakesh Gangwar</strong></div>
+    <a class="vk-button vk-button--primary rc-btn" href="#sign-in" style="text-decoration: none;">Sign in again</a>
+    <details>
+      <summary>What happened</summary>
+      <p>Your sign-in with accounts.superjackfruit.com ended, so it could not be renewed in the background. Your place is saved: after you sign in, you come back here.</p>
+      <p class="mono" style="font-size: 12px; color: var(--vk-color-faint);">Reason: refresh refused (login_required)</p>
+    </details>
+  </section></div>

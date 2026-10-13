@@ -61,6 +61,14 @@ afterEach(() => {
 const props = { boardId: 'brd_1', cardId: 'crd_1', currentUserId: 'usr_me', onFeed, coalesceMs: 0 };
 
 describe('CardComments', () => {
+  it('holds the empty-thread line while loading, so the composer does not move under a focused cursor', async () => {
+    const { container } = render(CardComments, props);
+    const composer = screen.getByRole('textbox', { name: 'Add a comment' });
+    const line = composer.closest('form')!.previousElementSibling!;
+    expect(line.textContent).toBe('Loading comments…');
+    expect(await screen.findByText(/^No comments yet/)).toBe(line);
+    expect(container.contains(composer)).toBe(true);
+  });
   it('lists each comment with its author, whether a person or an agent wrote it, and when', async () => {
     thread = [
       base({ body: 'Please cover the expired path' }),

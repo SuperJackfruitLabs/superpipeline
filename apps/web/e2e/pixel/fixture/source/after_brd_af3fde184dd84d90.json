@@ -1,0 +1,77 @@
+{
+  "boardId": "brd_af3fde184dd84d90",
+  "tenantId": "tnt_vibes",
+  "name": "Guild Operations & Automation",
+  "stages": [
+    {
+      "key": "intake",
+      "name": "Intake",
+      "order": 0,
+      "ownerKind": "human"
+    },
+    {
+      "key": "shape",
+      "name": "Shape",
+      "order": 1,
+      "ownerKind": "capability",
+      "owner": "planning",
+      "instructions": "Turn this request into something a builder can start on without asking you a question.\n\nA shaped card answers three things: what outcome counts as done, what is deliberately out of\nscope, and which parts are unknown enough to need a decision before work begins.\n\n  out of scope  name it explicitly. Scope grows silently when nobody wrote down what was excluded,\n                and the build stage has no way to know what you already considered and rejected.\n  unknowns      list them as questions, not as risks. A question has an answer someone can give;\n                a risk sits there looking important and blocks nobody.\n\nDo not design the implementation. Decide what is worth building and why; leave how to the stage\nthat builds it. A shape that specifies the code has not reduced the work, it has moved it.\n\nComplete with a `plan` in your handoff: the outcome, the exclusions, and the open questions. If the\nrequest is too vague to shape — and some are — **block the card with the question that would unblock\nit** rather than shaping something plausible. A confidently shaped guess costs more than an honest\nstop, because the build stage will believe it.",
+      "completion": {
+        "handoff": [
+          "plan"
+        ]
+      }
+    },
+    {
+      "key": "build",
+      "name": "Build",
+      "order": 2,
+      "ownerKind": "capability",
+      "owner": "code",
+      "wipLimit": 3,
+      "instructions": "Build what the shape stage specified, and nothing it excluded.\n\nWork on the card's own branch, so the review stage can read what you produced even if it runs on\nanother machine.\n\n  directory   ./.guild/<cardId>/ inside the directory you start in.\n  branch      card/<cardId>.\n  repository  the card's target, cloned by its ordinary GitHub URL — forge-primary repositories are\n              rewritten to forge automatically, and your station key authenticates the push.\n\nRead the shape's `plan` handoff first, including its exclusions. If you find yourself building\nsomething it excluded, stop and say why in a blocking comment — the exclusion was a decision\nsomeone made, and quietly reversing it is how a shaped card becomes an unshaped one.\n\nPush your work. Complete with a `url` in your handoff pointing at what you produced, and attach the\nforge commit as a reference. The reference proves the work left this station rather than describing\nwork that stayed on it.",
+      "completion": {
+        "handoff": [
+          "url"
+        ],
+        "reference": {
+          "provider": "forge",
+          "sourceType": "commit"
+        }
+      }
+    },
+    {
+      "key": "review",
+      "name": "Review",
+      "order": 3,
+      "ownerKind": "human",
+      "gate": "approval"
+    },
+    {
+      "key": "done",
+      "name": "Done",
+      "order": 4,
+      "ownerKind": "human"
+    }
+  ],
+  "cards": [],
+  "gates": [],
+  "elicitations": [],
+  "references": [],
+  "usage": {
+    "totalCostUsd": 0,
+    "estimatedCostUsd": 0,
+    "budgetUsd": null,
+    "cardUsdCap": null,
+    "overBudget": false
+  },
+  "github": {
+    "issueTrigger": false,
+    "webhookConfigured": false,
+    "triggerGrantCount": null
+  },
+  "stale": {
+    "enabled": true,
+    "afterHours": 24
+  }
+}

@@ -25,6 +25,7 @@ function asOption(raw: JsonValue): GateOption | null {
   const option: GateOption = { name, title };
   if (typeof o.promptFill === 'string') option.promptFill = o.promptFill;
   if (typeof o.interactive === 'boolean') option.interactive = o.interactive;
+  if (typeof o.description === 'string' && o.description.trim() !== '') option.description = o.description.trim();
   return option;
 }
 

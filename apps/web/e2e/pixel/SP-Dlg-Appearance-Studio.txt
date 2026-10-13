@@ -1,0 +1,100 @@
+<div class="fg acc" data-vibe="studio" data-theme="light" data-accent="gold"><div class="scrim"></div><section class="dlg ap" role="dialog" aria-modal="true" aria-labelledby="ap-title" aria-describedby="ap-sub">
+  <div class="ap-head">
+    <div style="flex: 1 1 0%;">
+      <h2 class="dlg-title" id="ap-title">Appearance</h2>
+      <p class="ap-hint" id="ap-sub">Vibe, light or dark and time of day apply to every product on this device. The accent belongs to Superpipeline alone.</p>
+    </div>
+    <button class="icon-btn" type="button" aria-label="Close appearance"><svg 20/></button>
+  </div>
+  <div class="ap-body">
+    <fieldset>
+      <legend>Vibe</legend>
+      <p class="ap-hint">A vibe changes <strong>the layout of your boards and cards</strong>, not only the colours and type. Operate, settings and Workspace keep one layout in every vibe. Every action stays in every vibe.</p>
+      <div class="ap-vibes">
+      <label class="vc acc" data-vibe="daylight" data-theme="light" data-accent="gold" data-checked="false">
+        <input type="radio" name="vibe" value="daylight">
+        <div class="pv" aria-hidden="true"><div class="pv-dl-sky">Good afternoon</div><div class="pv-dl-cols"><div class="pv-dl-col"><div class="pv-dl-tile" data-n="1"><i style="background: var(--vk-mood-needs);"></i><s></s></div><div class="pv-dl-tile"><i style="background: var(--vk-mood-working);"></i><s></s></div></div><div class="pv-dl-col"><div class="pv-dl-tile"><i style="background: var(--vk-mood-thinking);"></i><s></s></div></div><div class="pv-dl-col"><div class="pv-dl-tile"><i style="background: var(--vk-mood-done);"></i><s></s></div><div class="pv-dl-tile"><i style="background: var(--vk-mood-done);"></i><s></s></div></div></div></div>
+        <span class="vc-name">Daylight<span class="vc-tick" aria-hidden="true"><svg 14/></span></span>
+        <span class="vc-sw" aria-hidden="true"><i style="background: var(--vk-color-bg);"></i><i style="background: var(--vk-color-surface);"></i><i style="background: var(--vk-color-primary);"></i><i style="background: var(--vk-accent);"></i><i style="background: var(--vk-color-signal);"></i></span>
+        <span class="vc-desc">Playful and sunlit. <b>Board:</b> columns with faces. <b>Card:</b> a conversation.</span>
+      </label>
+      <label class="vc acc" data-vibe="paper" data-theme="light" data-accent="gold" data-checked="false">
+        <input type="radio" name="vibe" value="paper">
+        <div class="pv pv-pp" aria-hidden="true"><div class="pv-pp-mast">Developer Experience</div><div class="pv-pp-cols"><div class="pv-pp-col"><span class="pv-pp-h">Waiting on you</span><span class="pv-pp-q"><b>Dear Rakesh,</b> I stopped, and I’d rather ask than guess…</span><span class="pv-pp-l"></span></div><div class="pv-pp-col"><span class="pv-pp-h">In progress</span><span class="pv-pp-l"></span><span class="pv-pp-l" style="width: 70%;"></span><span class="pv-pp-l"></span></div><div class="pv-pp-col"><span class="pv-pp-h">Shipped</span><span class="pv-pp-l"></span><span class="pv-pp-l" style="width: 60%;"></span></div></div></div>
+        <span class="vc-name">Paper<span class="vc-tick" aria-hidden="true"><svg 14/></span></span>
+        <span class="vc-sw" aria-hidden="true"><i style="background: var(--vk-color-bg);"></i><i style="background: var(--vk-color-surface);"></i><i style="background: var(--vk-color-primary);"></i><i style="background: var(--vk-accent);"></i><i style="background: var(--vk-color-signal);"></i></span>
+        <span class="vc-desc">Calm and editorial. <b>Board:</b> a front page. <b>Card:</b> a letter.</span>
+      </label>
+      <label class="vc acc" data-vibe="studio" data-theme="light" data-accent="gold" data-checked="true">
+        <input type="radio" name="vibe" value="studio" checked="">
+        <div class="pv pv-st" aria-hidden="true"><div class="pv-ar-hero"><b>4</b><span><s></s><s></s></span></div><div class="pv-ar-sm"><span><i style="background: var(--vk-stage-1);"></i><u><em data-k="n"></em></u></span><span><i style="background: var(--vk-stage-2);"></i><u><em data-k="n"></em></u></span><span><i style="background: var(--vk-stage-3);"></i><u><em data-k="n"></em><em data-k="b"></em><em data-k="b"></em></u></span><span><i style="background: var(--vk-stage-4);"></i><u><em data-k="n"></em></u></span><span><i style="background: var(--vk-stage-5);"></i><u></u></span><span><i style="background: var(--vk-stage-6);"></i><u></u></span><span><i style="background: var(--vk-stage-7);"></i><u><em data-k="d"></em></u></span></div><div class="pv-ar-rows"><s></s><s style="width: 80%;"></s></div></div>
+        <span class="vc-name">Studio<span class="vc-tick" aria-hidden="true"><svg 14/></span></span>
+        <span class="vc-sw" aria-hidden="true"><i style="background: var(--vk-color-bg);"></i><i style="background: var(--vk-color-primary);"></i><i style="background: var(--vk-stage-5);"></i><i style="background: var(--vk-accent);"></i><i style="background: var(--vk-color-signal);"></i></span>
+        <span class="vc-desc">An annual report: warm paper, ink and one blue. <b>Board:</b> a report led by one big figure. <b>Card:</b> a profile with footnotes.</span>
+      </label>
+      <label class="vc acc" data-vibe="quiet" data-theme="light" data-accent="gold" data-checked="false">
+        <input type="radio" name="vibe" value="quiet">
+        <div class="pv pv-qt" aria-hidden="true"><span class="pv-qt-h">Developer Experience</span><span class="pv-qt-g">Needs your decision (4)</span><div class="pv-qt-i" data-n="1"><s></s><u></u></div><div class="pv-qt-i" data-n="1"><s style="width: 70%;"></s><u></u></div><span class="pv-qt-g">In progress (0)</span><span class="pv-qt-g">Waiting to start (2)</span><div class="pv-qt-i"><s style="width: 60%;"></s><u></u></div></div>
+        <span class="vc-name">Quiet<span class="vc-tick" aria-hidden="true"><svg 14/></span></span>
+        <span class="vc-sw" aria-hidden="true"><i style="background: var(--vk-color-bg);"></i><i style="background: var(--vk-color-surface);"></i><i style="background: var(--vk-color-primary);"></i><i style="background: var(--vk-accent);"></i><i style="background: var(--vk-color-signal);"></i></span>
+        <span class="vc-desc">Plain and focused. <b>Board:</b> one list by urgency. <b>Card:</b> a form.</span>
+      </label>
+      </div>
+    </fieldset>
+    <fieldset>
+      <legend>Accent for Superpipeline</legend>
+      <p class="ap-hint">The accent marks this product: its mark, the page you are on, the selected tab, links and the focus ring. Each product keeps its own, so with one vibe everywhere you can still tell them apart. Accents are never orange: orange stays for <strong>a person is needed now</strong>. <a class="ac-link" href="Accent-Palette.dc.html">See every accent’s contrast</a></p>
+      <div class="ac-sec">
+        <div class="ac-left">
+          <div class="ac-grid">
+          <label class="sw acc" data-vibe="studio" data-theme="light" data-accent="gold" data-checked="true"><input type="radio" name="accent" value="product" checked=""><span class="sw-chip" aria-hidden="true"><span class="sw-tick"><svg 18/></span></span><span class="sw-txt"><span class="sw-name">Product colour</span><span class="sw-sub">Gold, Superpipeline’s own</span></span><span class="sw-wash" aria-hidden="true"></span></label><label class="sw acc" data-vibe="studio" data-theme="light" data-accent="gold" data-checked="false"><input type="radio" name="accent" value="gold"><span class="sw-chip" aria-hidden="true"><span class="sw-tick"><svg 18/></span></span><span class="sw-txt"><span class="sw-name">Gold</span><span class="sw-sub">Same as the product colour</span></span><span class="sw-wash" aria-hidden="true"></span></label><label class="sw acc" data-vibe="studio" data-theme="light" data-accent="moss" data-checked="false"><input type="radio" name="accent" value="moss"><span class="sw-chip" aria-hidden="true"><span class="sw-tick"><svg 18/></span></span><span class="sw-txt"><span class="sw-name">Moss</span><span class="sw-sub">Leaf green</span></span><span class="sw-wash" aria-hidden="true"></span></label><label class="sw acc" data-vibe="studio" data-theme="light" data-accent="jade" data-checked="false"><input type="radio" name="accent" value="jade"><span class="sw-chip" aria-hidden="true"><span class="sw-tick"><svg 18/></span></span><span class="sw-txt"><span class="sw-name">Jade</span><span class="sw-sub">Superwitness’s colour</span></span><span class="sw-wash" aria-hidden="true"></span></label><label class="sw acc" data-vibe="studio" data-theme="light" data-accent="teal" data-checked="false"><input type="radio" name="accent" value="teal"><span class="sw-chip" aria-hidden="true"><span class="sw-tick"><svg 18/></span></span><span class="sw-txt"><span class="sw-name">Teal</span><span class="sw-sub">Blue-green</span></span><span class="sw-wash" aria-hidden="true"></span></label><label class="sw acc" data-vibe="studio" data-theme="light" data-accent="azure" data-checked="false"><input type="radio" name="accent" value="azure"><span class="sw-chip" aria-hidden="true"><span class="sw-tick"><svg 18/></span></span><span class="sw-txt"><span class="sw-name">Azure</span><span class="sw-sub">Sea blue</span></span><span class="sw-wash" aria-hidden="true"></span></label><label class="sw acc" data-vibe="studio" data-theme="light" data-accent="cobalt" data-checked="false"><input type="radio" name="accent" value="cobalt"><span class="sw-chip" aria-hidden="true"><span class="sw-tick"><svg 18/></span></span><span class="sw-txt"><span class="sw-name">Cobalt</span><span class="sw-sub">AgentPod’s colour</span></span><span class="sw-wash" aria-hidden="true"></span></label><label class="sw acc" data-vibe="studio" data-theme="light" data-accent="violet" data-checked="false"><input type="radio" name="accent" value="violet"><span class="sw-chip" aria-hidden="true"><span class="sw-tick"><svg 18/></span></span><span class="sw-txt"><span class="sw-name">Violet</span><span class="sw-sub">Supermessage’s colour</span></span><span class="sw-wash" aria-hidden="true"></span></label><label class="sw acc" data-vibe="studio" data-theme="light" data-accent="plum" data-checked="false"><input type="radio" name="accent" value="plum"><span class="sw-chip" aria-hidden="true"><span class="sw-tick"><svg 18/></span></span><span class="sw-txt"><span class="sw-name">Plum</span><span class="sw-sub">Superlibrary’s colour</span></span><span class="sw-wash" aria-hidden="true"></span></label>
+          </div>
+          <p class="ac-others"><span>Your other products keep their own:</span>
+          <span class="ac-other acc" data-vibe="studio" data-theme="light" data-accent="plum"><span class="ac-mk" aria-hidden="true"></span><b>Superlibrary</b> Plum</span><span class="ac-other acc" data-vibe="studio" data-theme="light" data-accent="cobalt"><span class="ac-mk" aria-hidden="true"></span><b>AgentPod</b> Cobalt</span><span class="ac-other acc" data-vibe="studio" data-theme="light" data-accent="jade"><span class="ac-mk" aria-hidden="true"></span><b>Superwitness</b> Jade</span><span class="ac-other acc" data-vibe="studio" data-theme="light" data-accent="violet"><span class="ac-mk" aria-hidden="true"></span><b>Supermessage</b> Violet</span></p>
+        </div>
+        <div class="pva" role="img" aria-label="Preview of the accent Gold (the product colour) on the product mark, the page you are on, the selected tab, a link and the focus ring. The orange for a person needed now does not change.">
+          <span class="pva-eyebrow">Preview · Gold (the product colour)</span>
+          <div class="pva-top"><span class="pva-mark"><svg 18/></span><span>Superpipeline</span></div>
+          <div class="pva-nav"><span class="pva-ni" data-on="true">Plan</span><span class="pva-ni">Operate <i class="pva-bub">4</i></span><span class="pva-ni">Workspace</span></div>
+          <div class="pva-tabs"><span data-on="true">Board</span><span>List</span><span>Projects</span></div>
+          <p class="pva-line">Evidence is ready. <span class="ac-link">Open in new window</span></p>
+          <div class="pva-row"><span class="pva-btn">Done</span><span class="pva-chip">Waiting on you</span></div>
+          <span class="pva-cap">Focus ring in the accent; the button stays ink; the orange stays for you.</span>
+          <div class="pva-ramp"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div><span class="pva-cap">Stages, Reported to Shipped: one colour family from the accent.</span>
+        </div>
+      </div>
+    </fieldset>
+    <div class="ap-row">
+      <div class="ap-col">
+        <fieldset>
+          <legend>Light or dark</legend>
+          <div class="vk-segmented" role="radiogroup" aria-label="Light or dark">
+          <button class="vk-segmented__item" type="button" role="radio" aria-checked="true" data-state="checked">Follow the sun</button><button class="vk-segmented__item" type="button" role="radio" aria-checked="false" data-state="unchecked">Light</button><button class="vk-segmented__item" type="button" role="radio" aria-checked="false" data-state="unchecked">Dark</button>
+        </div>
+          <p class="ap-hint">Light by day, dark after dusk. It is midday, so it is light now.</p>
+        </fieldset>
+        <fieldset>
+          <legend>Time of day</legend>
+          <div class="vk-segmented" role="radiogroup" aria-label="Time of day">
+          <button class="vk-segmented__item" type="button" role="radio" aria-checked="true" data-state="checked">Strong</button><button class="vk-segmented__item" type="button" role="radio" aria-checked="false" data-state="unchecked">Subtle</button><button class="vk-segmented__item" type="button" role="radio" aria-checked="false" data-state="unchecked">Off</button>
+        </div>
+          <p class="ap-hint">Strong: the full sky and greeting where the vibe shows them. Quiet starts with this off.</p>
+        </fieldset>
+      </div>
+      <div class="ap-col">
+        <div>
+          <span class="ap-hint" id="ap-loc-l" style="display: block; margin: 0px; font: 700 16px/1.3 var(--vk-font-display); color: var(--vk-color-text);">Use my location for the sun</span>
+          <button class="ap-switch" type="button" role="switch" aria-checked="false" aria-labelledby="ap-loc-l" aria-describedby="ap-loc-d"><span class="ap-track" aria-hidden="true"><i></i></span><span>Off</span></button>
+          <p class="ap-means" id="ap-loc-d"><svg 18/><span>Off: the sun follows your time zone, Asia/Kolkata, and the day runs 6:00 to 18:00. Turn it on for real sunrise and sunset; your browser will ask first.</span></p>
+        </div>
+        <div class="vk-sky ap-readout" data-phase="noon" role="status">
+          <div class="vk-sky__sun"></div>
+          <div class="vk-sky__content"><span class="small">Now</span><b>Midday, 13:51 · the board at a glance</b></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="ap-foot">
+    <span class="grow">Every change applies at once and is saved on this device.</span>
+    <button class="vk-button vk-button--primary" type="button">Done</button>
+  </div></section></div>

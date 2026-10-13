@@ -1,0 +1,1186 @@
+<!doctype html>
+<html data-product="superpipeline" data-accent="product" lang="en" style="touch-action: pan-x pan-y; overscroll-behavior: none; --dc-chrome-unit: 1.0440835266821347px;"><head><link rel="stylesheet" href="_vibekit-0.0.10/vibekit.css" data-vibekit="0.0.10"><style>
+    .sc-placeholder{background:color-mix(in srgb,currentColor 8%,transparent);
+      border:1px solid color-mix(in srgb,currentColor 50%,transparent);
+      border-radius:2px;box-sizing:border-box;overflow:hidden}
+    @keyframes sc-shine{0%{background-position:100% 50%}100%{background-position:0% 50%}}
+    html.sc-dc-streaming .sc-placeholder,
+    html.sc-dc-streaming .sc-interp.sc-missing{position:relative;
+      background:color-mix(in srgb,currentColor 5%,transparent);
+      border-color:transparent}
+    html.sc-dc-streaming .sc-placeholder::before,
+    html.sc-dc-streaming .sc-interp.sc-missing::before{content:'';
+      position:absolute;inset:0;pointer-events:none;
+      background:linear-gradient(90deg,rgba(217,119,87,0) 25%,rgba(247,225,211,.95) 37%,rgba(217,119,87,0) 63%);
+      background-size:400% 100%;animation:sc-shine 1.4s ease infinite}
+    html.sc-dc-streaming .sc-placeholder:nth-child(n+9 of .sc-placeholder)::before,
+    html.sc-dc-streaming .sc-interp.sc-missing:nth-child(n+9 of .sc-interp.sc-missing)::before{animation:none;
+      background:color-mix(in srgb,currentColor 8%,transparent)}
+    .sc-placeholder-error{padding:4px 8px;font:11px/1.4 ui-monospace,monospace;
+      color:color-mix(in srgb,currentColor 70%,transparent);word-break:break-word}
+    .sc-interp.sc-missing{display:inline-block;width:2em;height:1em;overflow:hidden;
+      vertical-align:text-bottom;background:rgba(255,255,255,.3);border:1px solid rgba(0,0,0,.5);
+      border-radius:2px;box-sizing:border-box;color:transparent;
+      user-select:none}
+    .sc-interp.sc-unresolved{font-family:ui-monospace,monospace;font-size:.85em;
+      color:color-mix(in srgb,currentColor 50%,transparent);
+      background:color-mix(in srgb,currentColor 10%,transparent);border-radius:3px;
+      padding:0 3px}
+    .sc-host.sc-has-error{position:relative}
+    .sc-logic-error{position:absolute;top:8px;left:8px;z-index:2147483647;max-width:60ch;
+      padding:6px 10px;background:#b00020;color:#fff;font:12px/1.4 ui-monospace,monospace;
+      border-radius:4px;white-space:pre-wrap;pointer-events:none}
+    /* Mirrors PRINT_BASELINE_CSS in apps/web deck-stage-export.ts — keep both
+       in sync until dc-runtime regains a build step. */
+    @media print {
+      @page { margin: 0.5cm; }
+      figure, table { break-inside: avoid; }
+      #dc-root, #dc-root > .sc-host { height: auto; }
+      *, *::before, *::after {
+        print-color-adjust: exact; -webkit-print-color-adjust: exact;
+        backdrop-filter: none !important; -webkit-backdrop-filter: none !important;
+        animation-delay: -99s !important; animation-duration: .001s !important;
+        animation-iteration-count: 1 !important; animation-fill-mode: both !important;
+        animation-play-state: running !important; transition-duration: 0s !important;
+      }
+    }
+  </style>
+
+
+  <meta charset="utf-8">
+  <title>New card · Quiet</title>
+  <base href="/appifact/SP-Dlg-NewCard-Quiet.dc.html">
+
+
+
+
+
+<style>x-dc{display:none!important}</style>
+
+  <style>@import url("https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&family=Azeret+Mono:wght@400;500;600&family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..600&display=swap");
+
+ 
+
+:root {
+  color-scheme: light;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  --vk-font-body: "Figtree", system-ui, sans-serif;
+  --vk-font-display: "Bricolage Grotesque", system-ui, sans-serif;
+  --vk-font-mono: "Martian Mono", ui-monospace, monospace;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+}
+
+[data-vibe="daylight"][data-theme="light"] {
+  color-scheme: light;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  --vk-font-body: "Figtree", system-ui, sans-serif;
+  --vk-font-display: "Bricolage Grotesque", system-ui, sans-serif;
+  --vk-font-mono: "Martian Mono", ui-monospace, monospace;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+}
+
+[data-vibe="daylight"][data-theme="dark"] {
+  color-scheme: dark;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  --vk-font-body: "Figtree", system-ui, sans-serif;
+  --vk-font-display: "Bricolage Grotesque", system-ui, sans-serif;
+  --vk-font-mono: "Martian Mono", ui-monospace, monospace;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+}
+
+[data-vibe="paper"][data-theme="light"] {
+  color-scheme: light;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  --vk-font-body: "Geist", system-ui, sans-serif;
+  --vk-font-display: "Newsreader", "Georgia", serif;
+  --vk-font-mono: "Martian Mono", ui-monospace, monospace;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+}
+
+[data-vibe="paper"][data-theme="dark"] {
+  color-scheme: dark;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  --vk-font-body: "Geist", system-ui, sans-serif;
+  --vk-font-display: "Newsreader", "Georgia", serif;
+  --vk-font-mono: "Martian Mono", ui-monospace, monospace;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+}
+
+[data-vibe="studio"][data-theme="light"] {
+  color-scheme: light;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  --vk-font-body: "Archivo", system-ui, sans-serif;
+  --vk-font-display: "Archivo", system-ui, sans-serif;
+  --vk-font-mono: "Azeret Mono", ui-monospace, monospace;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  --vk-font-serif: "Newsreader", Georgia, serif;
+
+
+
+
+
+
+
+
+
+
+}
+
+[data-vibe="studio"][data-theme="dark"] {
+  color-scheme: dark;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  --vk-font-body: "Archivo", system-ui, sans-serif;
+  --vk-font-display: "Archivo", system-ui, sans-serif;
+  --vk-font-mono: "Azeret Mono", ui-monospace, monospace;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  --vk-font-serif: "Newsreader", Georgia, serif;
+
+
+
+
+
+
+
+
+
+
+}
+
+[data-vibe="quiet"][data-theme="light"] {
+  color-scheme: light;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  --vk-font-body: "Atkinson Hyperlegible Next", system-ui, sans-serif;
+  --vk-font-display: "Atkinson Hyperlegible Next", system-ui, sans-serif;
+  --vk-font-mono: "Martian Mono", ui-monospace, monospace;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+}
+
+[data-vibe="quiet"][data-theme="dark"] {
+  color-scheme: dark;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  --vk-font-body: "Atkinson Hyperlegible Next", system-ui, sans-serif;
+  --vk-font-display: "Atkinson Hyperlegible Next", system-ui, sans-serif;
+  --vk-font-mono: "Martian Mono", ui-monospace, monospace;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+}
+
+ 
+:root {
+  --vk-text-sm: clamp(0.8125rem, 0.78rem + 0.15vw, 0.875rem);
+  --vk-text-md: clamp(1rem, 0.96rem + 0.2vw, 1.0625rem);
+  --vk-text-lg: clamp(1.25rem, 1.1rem + 0.6vw, 1.5rem);
+  --vk-text-xl: clamp(1.75rem, 1.4rem + 1.6vw, 2.5rem);
+  --vk-focus: 0 0 0 3px var(--vk-color-bg), 0 0 0 5px var(--vk-color-text);
+
+}
+
+html {
+  background: var(--vk-color-bg);
+  color: var(--vk-color-text);
+  font-family: var(--vk-font-body);
+  font-size: 100%;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  font-size: var(--vk-text-md);
+  line-height: 1.5;
+}
+
+:focus-visible {
+   
+  outline: 2px solid var(--vk-color-text);
+  outline-offset: 2px;
+  box-shadow: var(--vk-focus);
+}
+
+ 
+.vk-visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  
+  *, *::before, *::after {
+    animation: none !important;
+    transition-duration: 0ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+[data-motion="reduce"],
+[data-motion="reduce"] *,
+[data-motion="reduce"]::before,
+[data-motion="reduce"]::after,
+[data-motion="reduce"] *::before,
+[data-motion="reduce"] *::after {
+  --vk-motion-fast: 0ms;
+  --vk-motion-base: 0ms;
+  animation: none !important;
+  transition-duration: 0ms !important;
+  scroll-behavior: auto !important;
+}
+
+
+
+@media (forced-colors: active) {
+  :focus-visible {
+    outline: 2px solid CanvasText;
+    box-shadow: none;
+  }
+}
+ 
+
+
+
+
+
+
+
+
+ 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ 
+
+
+
+
+
+
+
+
+
+
+
+
+
+.vk-toast {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--vk-space-3);
+  min-height: var(--vk-target-min);
+  padding: 0 var(--vk-space-5);
+  border-radius: var(--vk-radius-pill);
+  background: var(--vk-color-primary);
+  color: var(--vk-color-primary-fg);
+  font: 600 var(--vk-text-sm) / 1.2 var(--vk-font-body);
+}
+.vk-toast__action { min-height: var(--vk-target-min); border: 0; background: transparent; color: inherit; font: inherit; text-decoration: underline; cursor: pointer; }
+ 
+.vk-toast__action:focus-visible { outline-color: currentColor; box-shadow: var(--vk-focus); }
+
+.vk-sky {
+  --vk-sky-top: var(--vk-sky-noon-top);
+  --vk-sky-bottom: var(--vk-sky-noon-bottom);
+  --vk-sky-text: var(--vk-sky-noon-text);
+  --vk-sky-sun: var(--vk-sky-noon-sun);
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(180deg, var(--vk-sky-top), var(--vk-sky-bottom));
+  color: var(--vk-sky-text);
+}
+.vk-sky[data-phase="dawn"] { --vk-sky-top: var(--vk-sky-dawn-top); --vk-sky-bottom: var(--vk-sky-dawn-bottom); --vk-sky-text: var(--vk-sky-dawn-text); --vk-sky-sun: var(--vk-sky-dawn-sun); }
+.vk-sky[data-phase="morning"] { --vk-sky-top: var(--vk-sky-morning-top); --vk-sky-bottom: var(--vk-sky-morning-bottom); --vk-sky-text: var(--vk-sky-morning-text); --vk-sky-sun: var(--vk-sky-morning-sun); }
+.vk-sky[data-phase="golden"] { --vk-sky-top: var(--vk-sky-golden-top); --vk-sky-bottom: var(--vk-sky-golden-bottom); --vk-sky-text: var(--vk-sky-golden-text); --vk-sky-sun: var(--vk-sky-golden-sun); }
+.vk-sky[data-phase="dusk"] { --vk-sky-top: var(--vk-sky-dusk-top); --vk-sky-bottom: var(--vk-sky-dusk-bottom); --vk-sky-text: var(--vk-sky-dusk-text); --vk-sky-sun: var(--vk-sky-dusk-sun); }
+.vk-sky[data-phase="night"] { --vk-sky-top: var(--vk-sky-night-top); --vk-sky-bottom: var(--vk-sky-night-bottom); --vk-sky-text: var(--vk-sky-night-text); --vk-sky-sun: var(--vk-sky-night-sun); }
+.vk-sky__sun {
+  position: absolute;
+  top: var(--vk-space-5);
+  right: var(--vk-space-6);
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: var(--vk-sky-sun);
+  box-shadow: 0 0 48px 12px color-mix(in oklch, var(--vk-sky-sun) 45%, transparent);
+}
+.vk-sky__content { position: relative; padding: var(--vk-space-5); }
+[data-time="subtle"] .vk-sky { background: color-mix(in oklch, var(--vk-sky-top) 30%, var(--vk-color-bg)); color: var(--vk-color-text); }
+[data-time="subtle"] .vk-sky__sun { display: none; }
+[data-time="off"] .vk-sky { background: var(--vk-color-bg); color: var(--vk-color-text); }
+[data-time="off"] .vk-sky__sun { display: none; }
+[data-vibe="studio"] .vk-sky__sun { width: 10px; height: 10px; box-shadow: 0 0 10px 2px var(--vk-sky-sun); }
+[data-vibe="quiet"] .vk-sky__sun, [data-vibe="paper"] .vk-sky__sun { display: none; }
+
+
+
+
+
+
+
+
+
+
+@media (forced-colors: active) {
+  
+  .vk-toast { border: 1px solid CanvasText; }
+}
+
+ 
+.sl-danger{ white-space: nowrap; } .art .vk-button{ white-space: nowrap; }
+
+ 
+
+
+
+
+
+ 
+a[href*="CardPage"], a[class*="btn"], button[class*="btn"], a[class*="-button"], button[class*="-button"]{ white-space: nowrap; flex-shrink: 0; } .art .vk-button{ white-space: nowrap; flex-shrink: 0; }
+
+ 
+a[href*="CardPage"], a[class*="icon"][style*="width: auto"], button[class*="icon"][style*="width: auto"] { display: inline-flex !important; flex-direction: row !important; align-items: center !important; justify-content: center; gap: 8px; }
+</style>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Azeret+Mono:ital,wght@1,400&amp;display=swap" data-font-variant=""><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Azeret+Mono:ital,wght@1,500&amp;display=swap" data-font-variant=""><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Azeret+Mono:ital,wght@1,600&amp;display=swap" data-font-variant=""><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&amp;family=Azeret+Mono:wght@400;500;600&amp;family=Atkinson+Hyperlegible+Next:wght@400;700&amp;family=Bricolage+Grotesque:opsz,wght@12..96,400..800&amp;family=Figtree:wght@400..800&amp;family=Geist:wght@400..700&amp;family=Instrument+Sans:wght@400..700&amp;family=Martian+Mono:wght@400..600&amp;family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..600&amp;display=swap" data-dc-tpl="1"><style data-dc-tpl="2">
+body { margin: 0; }
+.art, .art * { box-sizing: border-box; }
+.art { position: relative; width: 1440px; height: 900px; overflow: hidden; font-size: var(--vk-text-md); line-height: 1.45; }
+:where(.fg) button { font-family: inherit; }
+:where(.fg) :focus-visible { outline: 2px solid var(--vk-color-text); outline-offset: 2px; }
+:where(.fg) .is-focus { outline: 2px solid var(--vk-color-text); outline-offset: 2px; box-shadow: var(--vk-focus); }
+
+/* ---- the two layers: the real board behind, the dialog in front ---- */
+.backdrop { position: absolute; inset: 0; overflow: hidden; z-index: 0; }
+.fg { position: absolute; inset: 0; pointer-events: none; }
+.fg > * { pointer-events: auto; }
+
+/* ---- the board behind: SP-Board-Quiet, scoped to .backdrop ---- */
+
+:where(.backdrop) * { box-sizing: border-box; }
+:where(.backdrop) a { color: inherit; }
+:where(.backdrop) button:where(:not(.vk-button)) { font: inherit; color: inherit; }
+:where(.backdrop) .sh-root { min-height: 100%; display: flex; flex-direction: column; background: var(--vk-color-bg); color: var(--vk-color-text); font-family: var(--vk-font-body); font-size: 16px; line-height: 1.45; }
+/* Quiet shell: plain text navigation, no rail, no icons */
+:where(.backdrop) .qn { position: relative; background: var(--vk-color-bg); color: var(--vk-color-text); border-bottom: 1px solid var(--vk-color-line); font-family: var(--vk-font-body); font-size: 18px; line-height: 1.4; }
+:where(.backdrop) .qn *, :where(.backdrop) .qn *::before, :where(.backdrop) .qn *::after { box-sizing: border-box; }
+:where(.backdrop) .qn-skip { position: absolute; left: var(--vk-space-6); top: -200px; z-index: 2; display: inline-flex; align-items: center; min-height: 44px; padding: 0 var(--vk-space-4); background: var(--vk-color-surface); border: 2px solid var(--vk-color-text); border-radius: var(--vk-radius-sm); color: var(--vk-color-text); font-weight: 700; }
+:where(.backdrop) .qn-skip:focus { top: var(--vk-space-2); }
+:where(.backdrop) .qn-row { display: flex; flex-wrap: wrap; align-items: center; gap: 0 var(--vk-space-5); min-height: 60px; padding: var(--vk-space-1) var(--vk-space-6); }
+:where(.backdrop) .qn-row + .qn-row { border-top: 1px solid var(--vk-color-line); }
+:where(.backdrop) .qn a, :where(.backdrop) .qn-link { display: inline-flex; align-items: center; min-height: 44px; padding: 0; border: 0; background: transparent; color: var(--vk-color-text); font: inherit; text-decoration: underline; text-underline-offset: 4px; cursor: pointer; }
+:where(.backdrop) .qn a[aria-current="page"], :where(.backdrop) .qn-link[aria-pressed="true"] { font-weight: 700; text-decoration: none; }
+:where(.backdrop) .qn a.qn-name { font-weight: 700; text-decoration: none; margin-right: var(--vk-space-3); }
+:where(.backdrop) .qn-links { display: flex; flex-wrap: wrap; align-items: center; gap: 0 var(--vk-space-5); margin: 0; padding: 0; list-style: none; }
+:where(.backdrop) .qn-need { margin-left: 0.3em; font-weight: 700; color: var(--vk-color-signal-text); }
+:where(.backdrop) .qn-end { margin-left: auto; display: flex; flex-wrap: wrap; align-items: center; gap: 0 var(--vk-space-5); }
+:where(.backdrop) .qn-dash { color: var(--vk-color-muted); }
+:where(.backdrop) .qn-board { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 0 var(--vk-space-2); }
+:where(.backdrop) .qn-board b { font-weight: 700; }
+:where(.backdrop) .qn-btn { display: inline-flex; align-items: center; gap: var(--vk-space-2); min-height: 44px; padding: 0 var(--vk-space-4); border: 2px solid var(--vk-color-text); border-radius: var(--vk-radius-sm); background: var(--vk-color-surface); color: var(--vk-color-text); font: inherit; font-size: 17px; font-weight: 700; cursor: pointer; }
+:where(.backdrop) .qn-kbd { font: 400 14px/1 var(--vk-font-mono); color: var(--vk-color-muted); }
+:where(.backdrop) .qn-view { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 0 var(--vk-space-2); }
+:where(.backdrop) .qn-view .qn-dot { color: var(--vk-color-muted); }
+:where(.backdrop) .qn-live { color: var(--vk-color-muted); font-size: 17px; }
+:where(.backdrop) .qn-live b { color: var(--vk-color-success-text); }
+:where(.backdrop) .qn-note { color: var(--vk-color-muted); font-size: 17px; }
+:where(.backdrop) .qn a:focus-visible, :where(.backdrop) .qn button:focus-visible { outline: 3px solid var(--vk-color-text); outline-offset: 3px; }
+
+:where(.backdrop) .qt { width: 100%; max-width: 860px; margin: 0 auto; padding: 40px 32px 72px; display: flex; flex-direction: column; gap: 32px; font-size: 18px; line-height: 1.55; }
+:where(.backdrop) .qt a { text-decoration: underline; text-underline-offset: 4px; }
+:where(.backdrop) .qt h1 { margin: 0; font-size: 34px; line-height: 1.2; font-weight: 700; }
+:where(.backdrop) .qt-sub { margin: 6px 0 0; color: var(--vk-color-muted); }
+:where(.backdrop) .qt-lede { margin: 14px 0 0; font-size: 19px; }
+:where(.backdrop) .qt-newcard { display: inline-flex; align-items: center; min-height: 44px; margin-top: 8px; padding: 0; border: 0; background: transparent; font-size: 18px; font-weight: 700; text-decoration: underline; text-underline-offset: 4px; cursor: pointer; }
+:where(.backdrop) .qt h2 { margin: 0; font-size: 22px; font-weight: 700; }
+:where(.backdrop) .qt-zero { display: flex; flex-direction: column; gap: 6px; margin: 0; padding: 0; list-style: none; }
+:where(.backdrop) .qt-zero li { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; padding: 10px 0; border-bottom: 1px solid var(--vk-color-line); }
+:where(.backdrop) .qt-zero h2 { font-size: 20px; }
+:where(.backdrop) .qt-zero span { color: var(--vk-color-muted); }
+:where(.backdrop) .qt-list { margin: 12px 0 0; padding: 0; list-style: none; border-top: 1px solid var(--vk-color-line); }
+:where(.backdrop) .qt-item { display: flex; flex-direction: column; gap: 6px; padding: 18px 0; border-bottom: 1px solid var(--vk-color-line); overflow-wrap: anywhere; }
+:where(.backdrop) .qt-item h3 { margin: 0; font-size: 19px; line-height: 1.4; font-weight: 700; }
+:where(.backdrop) .qt-titlebtn { all: unset; cursor: pointer; text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 4px; text-decoration-color: var(--vk-color-line); }
+:where(.backdrop) .qt-titlebtn:focus-visible { outline: 3px solid var(--vk-color-text); outline-offset: 3px; }
+:where(.backdrop) .qt-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; color: var(--vk-color-muted); font-size: 17px; }
+
+:where(.backdrop) .qt-facts { margin: 0; font-size: 16px; color: var(--vk-color-text); }
+:where(.backdrop) .qt-acts { display: flex; flex-wrap: wrap; gap: 4px 20px; }
+:where(.backdrop) .qt-acts a, :where(.backdrop) .qt-acts button { display: inline-flex; align-items: center; min-height: 44px; padding: 0; border: 0; background: transparent; font-size: 17px; font-weight: 700; text-decoration: underline; text-underline-offset: 4px; cursor: pointer; }
+:where(.backdrop) .qt-more { display: inline-flex; align-items: center; min-height: 48px; margin-top: 12px; padding: 0 18px; border: 2px solid var(--vk-color-text); border-radius: var(--vk-radius-sm); background: var(--vk-color-surface); font-size: 17px; font-weight: 700; cursor: pointer; }
+:where(.backdrop) .qt-table { width: 100%; border-collapse: collapse; margin-top: 12px; font-size: 16px; }
+:where(.backdrop) .qt-table th, :where(.backdrop) .qt-table td { padding: 10px 12px 10px 0; text-align: left; vertical-align: top; border-bottom: 1px solid var(--vk-color-line); overflow-wrap: anywhere; }
+:where(.backdrop) .qt-table th { font-weight: 700; }
+:where(.backdrop) .qt-table td.n { font-variant-numeric: tabular-nums; }
+
+/* ---- dialog backdrop adjustments ---- */
+
+/* ---- the dialog ---- */
+/* ---------- scrim + dialog ---------- */
+:where(.fg) .scrim { position: absolute; inset: 0; background: color-mix(in oklch, var(--vk-color-text) 36%, transparent); }
+:where(.fg)[data-theme="dark"] .scrim { background: color-mix(in oklch, var(--vk-color-bg) 70%, transparent); }
+:where(.fg) .dlg { position: absolute; background: var(--vk-color-surface); color: var(--vk-color-text); border-radius: var(--vk-radius-lg); box-shadow: 0 0 0 1px var(--vk-color-line), 0 28px 70px color-mix(in oklch, var(--vk-color-text) 26%, transparent); }
+:where(.fg)[data-theme="dark"] .dlg { box-shadow: 0 0 0 1px var(--vk-color-line), 0 28px 70px color-mix(in oklch, var(--vk-color-bg) 80%, transparent); }
+
+:where(.fg)[data-vibe="quiet"] .dlg { box-shadow: 0 0 0 2px var(--vk-color-text); }
+:where(.fg) .eyebrow { font: 600 13px/1.2 var(--vk-font-display); color: var(--vk-color-muted); letter-spacing: .01em; }
+
+:where(.fg) .dlg-title { margin: 0; font: 700 var(--vk-text-lg)/1.2 var(--vk-font-display); }
+
+:where(.fg) .muted { color: var(--vk-color-muted); }
+:where(.fg) .small { font-size: var(--vk-text-sm); }
+:where(.fg) .mono { font-family: var(--vk-font-mono); }
+:where(.fg) .kbd { display: inline-block; font: 500 11px/1 var(--vk-font-mono); padding: 4px 6px; border-radius: 6px; background: var(--vk-color-raised); border: 1px solid var(--vk-color-line); color: var(--vk-color-muted); }
+:where(.fg) .icon-btn { width: 44px; height: 44px; flex: none; display: inline-grid; place-items: center; border: 0; background: transparent; color: var(--vk-color-muted); border-radius: var(--vk-radius-sm); cursor: pointer; }
+:where(.fg) .icon-btn:hover { background: var(--vk-color-raised); color: var(--vk-color-text); }
+:where(.fg) .link { color: var(--vk-color-text); text-decoration: underline; text-underline-offset: 3px; background: none; border: 0; padding: 0 4px; min-height: 44px; font: inherit; cursor: pointer; }
+:where(.fg) .rule { height: 1px; background: var(--vk-color-line); border: 0; margin: 0; }
+
+:where(.fg) .wrap { overflow-wrap: anywhere; }
+
+:where(.fg) .nc { left: 320px; top: 44px; width: 800px; display: flex; flex-direction: column; }
+:where(.fg) .nc-head { display: flex; align-items: flex-start; gap: 12px; padding: 22px 24px 4px 28px; }
+:where(.fg) .nc-board { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; padding: 0 12px; margin-left: -12px; border: 0; border-radius: var(--vk-radius-sm); background: transparent; color: var(--vk-color-text); font: 600 15px/1 var(--vk-font-body); cursor: pointer; }
+:where(.fg) .nc-body { padding: 4px 28px 0; display: flex; flex-direction: column; gap: 16px; }
+:where(.fg) .nc-lead { margin: 6px 0 0; color: var(--vk-color-muted); font-size: 15px; }
+
+:where(.fg) .nc-sentence { width: 100%; min-height: 76px; resize: none; padding: 14px 16px; border: 2px solid var(--vk-color-text); border-radius: var(--vk-radius-md); background: var(--vk-color-surface); color: var(--vk-color-text); font: 500 18px/1.4 var(--vk-font-body); box-shadow: var(--vk-focus); }
+
+:where(.fg) .nc-draftrow { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+:where(.fg) .nc-drafted { display: inline-flex; align-items: center; gap: 8px; font-size: 14px; color: var(--vk-color-muted); }
+:where(.fg) .nc-grid { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); gap: 20px; }
+:where(.fg) .nc-col { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+:where(.fg) .nc-brief { width: 100%; min-height: 214px; resize: none; padding: 12px 14px 40px; border: 2px solid var(--vk-color-faint); border-radius: var(--vk-radius-sm); background: var(--vk-color-surface); color: var(--vk-color-text); font: 400 15px/1.5 var(--vk-font-body); white-space: pre-wrap; }
+:where(.fg) .nc-brief-wrap { position: relative; }
+:where(.fg) .nc-brief-tag { position: absolute; right: 10px; bottom: 10px; display: inline-flex; gap: 6px; align-items: center; padding: 3px 8px; border-radius: var(--vk-radius-pill); background: var(--vk-mood-done); color: var(--vk-face-ink); font: 600 12px/1.3 var(--vk-font-body); }
+:where(.fg) .nc-select { appearance: none; width: 100%; padding-right: 40px; background-image: none; }
+:where(.fg) .nc-selwrap { position: relative; }
+:where(.fg) .nc-selwrap svg { position: absolute; right: 14px; top: 50%; margin-top: -8px; color: var(--vk-color-muted); pointer-events: none; }
+:where(.fg) .nc-row2 { display: grid; grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr); gap: 12px; }
+:where(.fg) .nc-labels { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+:where(.fg) .nc-label { display: inline-flex; align-items: center; gap: 2px; padding-left: 10px; border-radius: var(--vk-radius-pill); background: var(--vk-color-raised); border: 1px solid var(--vk-color-line); font-size: 13px; }
+:where(.fg) .nc-label button { width: 32px; height: 32px; border: 0; background: transparent; color: var(--vk-color-muted); display: grid; place-items: center; border-radius: 50%; cursor: pointer; }
+:where(.fg) .nc-addlabel { display: inline-flex; align-items: center; gap: 4px; min-height: 34px; padding: 0 10px; border: 1px dashed var(--vk-color-faint); border-radius: var(--vk-radius-pill); background: transparent; color: var(--vk-color-text); font-size: 13px; cursor: pointer; }
+:where(.fg) .nc-prio { display: flex; }
+:where(.fg) .nc-prio .vk-segmented { width: 100%; }
+:where(.fg) .nc-prio .vk-segmented__item{ flex: 1; }
+:where(.fg) .nc-due { display: flex; gap: 8px; align-items: center; }
+:where(.fg) .nc-due .vk-field__input { flex: 1; min-width: 0; }
+:where(.fg) .nc-where { display: flex; gap: 10px; align-items: flex-start; padding: 12px 14px; border-radius: var(--vk-radius-sm); background: var(--vk-color-raised); font-size: 14px; }
+:where(.fg) .nc-foot { display: flex; align-items: center; gap: 12px; padding: 18px 28px 22px; margin-top: 18px; border-top: 1px solid var(--vk-color-line); }
+:where(.fg) .nc-foot .grow { flex: 1; }
+
+
+
+/* the dialog itself */
+</style><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible+Next:ital,wght@1,400&amp;display=swap" data-font-variant=""><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible+Next:ital,wght@1,700&amp;display=swap" data-font-variant=""><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:ital,wght@1,400..800&amp;display=swap" data-font-variant=""><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:ital,wght@1,400..700&amp;display=swap" data-font-variant=""><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Sans:ital,wght@1,400..700&amp;display=swap" data-font-variant=""><style data-dc-editor-style="">body:not([data-dc-editor-overlay-hidden]) [data-dc-editor-hover][data-dc-editor-hover-stroke]:not([data-dc-editor-selected]){filter:drop-shadow(0 0 calc(1*var(--dc-chrome-unit,1px)) color-mix(in srgb,#2a78d6 90%,transparent)) drop-shadow(0 0 calc(2*var(--dc-chrome-unit,1px)) color-mix(in srgb,#2a78d6 55%,transparent))!important;}body:not([data-dc-editor-overlay-hidden]):not([data-dc-editor-proxy="copy"]) [data-dc-editor-dragging],body:not([data-dc-editor-overlay-hidden]):not([data-dc-editor-proxy]) [data-dc-dragging],body[data-dc-editor-brk]:not([data-dc-editor-overlay-hidden]) [data-dc-drag-follower]{outline:calc(2*var(--dc-chrome-unit,1px)) solid #2a78d6!important;outline-offset:calc(-1*var(--dc-chrome-unit,1px))!important;opacity:0.55!important;}body[data-dc-editor-proxy="move"]:not([data-dc-editor-overlay-hidden]) [data-dc-editor-dragging],body[data-dc-editor-proxy="move"]:not([data-dc-editor-overlay-hidden]) [data-dc-dragging],body[data-dc-editor-proxy="move"]:not([data-dc-editor-overlay-hidden]) [data-dc-editor-dragging]>*,body[data-dc-editor-proxy="move"]:not([data-dc-editor-overlay-hidden]) [data-dc-dragging]>*{opacity:0!important;outline:none!important;}[data-dc-editor-drag-proxy],[data-dc-editor-drag-proxy] *{pointer-events:none!important;}body[data-dc-editor-on]:not([data-dc-editor-tool="interact"]) *{cursor:default!important;user-select:none!important;}body[data-dc-editor-on]:not([data-dc-editor-tool="interact"]) :not([data-dc-editor-overlay-root]):not([data-dc-editor-overlay-root] *){pointer-events:auto!important;transition:none!important;animation:none!important;}body[data-dc-editor-on][data-dc-editor-brk]:not([data-dc-editor-overlay-hidden]) [data-dc-editor-dragging]:not([data-dc-editor-overlay-root]) :not([data-dc-editor-overlay-root]),body[data-dc-editor-on][data-dc-editor-brk]:not([data-dc-editor-overlay-hidden]) [data-dc-dragging]:not([data-dc-editor-overlay-root]) :not([data-dc-editor-overlay-root]),body[data-dc-editor-on][data-dc-editor-brk]:not([data-dc-editor-overlay-hidden]) [data-dc-drag-follower]:not([data-dc-editor-overlay-root]),body[data-dc-editor-on][data-dc-editor-brk]:not([data-dc-editor-overlay-hidden]) [data-dc-drag-follower]:not([data-dc-editor-overlay-root]) :not([data-dc-editor-overlay-root]),body[data-dc-editor-move][data-dc-editor-brk]:not([data-dc-editor-overlay-hidden]) [data-dc-editor-dragging]:not([data-dc-editor-overlay-root]) :not([data-dc-editor-overlay-root]),body[data-dc-editor-move][data-dc-editor-brk]:not([data-dc-editor-overlay-hidden]) [data-dc-dragging]:not([data-dc-editor-overlay-root]) :not([data-dc-editor-overlay-root]),body[data-dc-editor-move][data-dc-editor-brk]:not([data-dc-editor-overlay-hidden]) [data-dc-drag-follower]:not([data-dc-editor-overlay-root]),body[data-dc-editor-move][data-dc-editor-brk]:not([data-dc-editor-overlay-hidden]) [data-dc-drag-follower]:not([data-dc-editor-overlay-root]) :not([data-dc-editor-overlay-root]){pointer-events:none!important;}body[data-dc-editor-move] :not([data-dc-editor-overlay-root]):not([data-dc-editor-overlay-root] *){pointer-events:auto!important;transition:none!important;animation-duration:0s!important;animation-delay:0s!important;}body[data-dc-editor-on][data-dc-editor-tool="rect"] *,body[data-dc-editor-on][data-dc-editor-tool="frame"] *,body[data-dc-editor-on][data-dc-editor-tool="grid"] *,body[data-dc-editor-on][data-dc-editor-tool="oval"] *,body[data-dc-editor-on][data-dc-editor-tool="arrow"] *,body[data-dc-editor-on][data-dc-editor-tool="line"] *{cursor:crosshair!important;}body[data-dc-editor-on][data-dc-editor-tool="text"] *{cursor:text!important;}body[data-dc-editor-on][data-dc-editor-tool="draw"] *{cursor:url('data:image/svg+xml,%3Csvg%20xmlns=%22http://www.w3.org/2000/svg%22%20width=%2216%22%20height=%2216%22%20viewBox=%220%200%2016%2016%22%3E%3Cpath%20d=%22M2%2014l1-4%208-8a2.1%202.1%200%200%201%203%203l-8%208-4%201z%22%20fill=%22%23333%22%20stroke=%22%23fff%22%20stroke-width=%221%22/%3E%3C/svg%3E') 1 15, crosshair!important;}body[data-dc-editor-on]:not([data-dc-editor-tool]) [data-drags-parent],body[data-dc-editor-on]:not([data-dc-editor-tool]) [data-drags-parent] *{cursor:grab!important;}body[data-dc-editor-on]:not([data-dc-editor-tool]) [data-drags-parent]:active,body[data-dc-editor-on]:not([data-dc-editor-tool]) [data-drags-parent]:active *{cursor:grabbing!important;}body[data-dc-editor-on] [data-dc-editor-editing][contenteditable][contenteditable],body[data-dc-editor-on] [data-dc-editor-editing][contenteditable][contenteditable] *,body[data-dc-editor-on] [data-dc-editor-svg-editing]{cursor:text!important;}body[data-dc-editor-on] [data-dc-editor-editing="import"]{outline:none!important;}html:not([data-dc-canvas]):has(body[data-dc-editor-on]:not([data-dc-capturing]) .sc-host){background:var(--dc-editor-backdrop,#ededeb);}html:not([data-dc-canvas]) body[data-dc-editor-on]:not([data-dc-capturing]):has(.sc-host){background:var(--dc-editor-backdrop,#ededeb);}html:not([data-dc-canvas]) body[data-dc-editor-on] .sc-host:not(.sc-host .sc-host){min-height:calc(100vh - var(--dc-editor-host-vpad,0px));}html:not([data-dc-canvas]) body[data-dc-editor-on]:not([data-dc-capturing]) .sc-host:not(.sc-host .sc-host){background:var(--dc-editor-host-bg,#fff);}html[data-dc-frameless],html[data-dc-frameless] body[data-dc-editor-on],html[data-dc-frameless] body[data-dc-editor-on] .sc-host:not(.sc-host .sc-host){background:transparent!important;min-height:0!important;}html:has(body[data-dc-capturing]),body[data-dc-capturing]{transition:none!important;}html[data-dc-canvas]{overflow:hidden;}html[data-dc-canvas] body[data-dc-editor-on] .sc-host:not(.sc-host .sc-host)::before{content:"";position:absolute;left:-100000px;top:-100000px;width:200000px;height:200000px;pointer-events:none;background:repeating-linear-gradient(45deg,var(--dc-editor-hatch-ink,rgba(0,0,0,.05)) 0 8px,transparent 8px 16px);clip-path:polygon(0 0,100% 0,100% 50%,50% 50%,50% 100%,0 100%);}</style></head>
+<body>
+<div id="dc-root"><div class="sc-host" data-sc-name="SP-Dlg-NewCard-Quiet"><div data-product="superpipeline" data-accent="product" data-dc-tpl="3" class="art" data-vibe="quiet" data-theme="light" style="background: var(--vk-color-bg); color: var(--vk-color-text); font-family: var(--vk-font-body);"><div data-dc-tpl="4" class="backdrop" aria-hidden="true" inert=""><div data-product="superpipeline" data-accent="product" data-dc-tpl="5" class="sh-root" data-vibe="quiet" data-theme="light" style="background: var(--vk-color-bg); color: var(--vk-color-text); font-family: var(--vk-font-body); min-height: 100%;"><header data-dc-tpl="6" class="qn"><div data-dc-tpl="7" class="qn-row"><a data-dc-tpl="8" class="qn-skip" href="#content">Skip to content</a><a data-dc-tpl="9" class="qn-name" href="#home" aria-label="Superpipeline home">Superpipeline</a><nav data-dc-tpl="10" aria-label="Superpipeline"><ul data-dc-tpl="11" class="qn-links"><li data-dc-tpl="12"><a data-dc-tpl="13" href="#plan" aria-current="page">Plan</a></li><li data-dc-tpl="14"><a data-dc-tpl="15" href="#operate">Operate <span data-dc-tpl="16" class="qn-need">(4 need you)</span></a></li><li data-dc-tpl="17"><a data-dc-tpl="18" href="#workspace">Workspace</a></li></ul></nav><div data-dc-tpl="19" class="qn-end"><button data-dc-tpl="20" class="qn-link" type="button" aria-haspopup="dialog">Appearance</button><button data-dc-tpl="21" class="qn-link" type="button">Dark theme</button><span data-dc-tpl="22"><a data-dc-tpl="23" href="#account" aria-haspopup="menu">Ira Mehta</a> <span data-dc-tpl="24" class="qn-dash" aria-hidden="true">—</span> <button data-dc-tpl="25" class="qn-link" type="button">Sign out</button></span></div></div><div data-dc-tpl="26" class="qn-row"><span data-dc-tpl="27" class="qn-board">Board: <b data-dc-tpl="28">Developer Experience</b> <span data-dc-tpl="29" class="qn-dash" aria-hidden="true">—</span> <button data-dc-tpl="30" class="qn-link" type="button" aria-haspopup="menu" aria-label="Change board, now Developer Experience">Change board</button></span><span data-dc-tpl="31" class="qn-live" role="status" title="Live: changes arrive as they happen"><b data-dc-tpl="32">Live.</b> Changes appear as they happen.</span><button data-dc-tpl="33" class="qn-btn" type="button" aria-label="Search cards, agents and actions">Search <span data-dc-tpl="34" class="qn-kbd" aria-hidden="true">⌘K</span></button><button data-dc-tpl="35" class="qn-btn" type="button">New card</button><div data-dc-tpl="36" class="qn-view" role="group" aria-label="View">View: <button data-dc-tpl="37" class="qn-link" type="button" aria-pressed="true">Board</button> <span data-dc-tpl="38" class="qn-dot" aria-hidden="true">·</span> <button data-dc-tpl="39" class="qn-link" type="button" aria-pressed="false">List</button> <span data-dc-tpl="40" class="qn-dot" aria-hidden="true">·</span> <button data-dc-tpl="41" class="qn-link" type="button" aria-pressed="false">Projects</button></div><button data-dc-tpl="42" class="qn-link" type="button" aria-haspopup="dialog">Filter cards (none on)</button><span data-dc-tpl="43" class="qn-note">Showing all 7 cards</span></div></header><main data-dc-tpl="44" class="qt" id="content" tabindex="-1"><header data-dc-tpl="45"><h1 data-dc-tpl="46">Developer Experience</h1><p data-dc-tpl="47" class="qt-sub">Superpipeline · 7 cards · 4 need your decision</p><button data-dc-tpl="48" class="qt-newcard" type="button">Write a new card</button></header><section data-dc-tpl="49" aria-labelledby="qt-needs"><h2 data-dc-tpl="50" id="qt-needs">Needs your decision (4)</h2><ul data-dc-tpl="51" class="qt-list"><li data-dc-tpl="52" class="qt-item"><h3 data-dc-tpl="53"><button data-dc-tpl="54" class="qt-titlebtn" type="button" aria-label="Diagnose Melissa and Anna Supermessage silence — trace actual failing hop, in Reproduce. Enter to open, M to move, Alt with left or right arrow to move between stages.">Diagnose Melissa and Anna Supermessage silence — trace actual failing hop</button></h3><div data-dc-tpl="55" class="qt-meta"><span data-dc-tpl="56" class="vk-face " style="--vk-face-size: 20px;"><svg data-dc-tpl="57" viewBox="-2 -4 68 70" width="20" height="20" role="img" aria-label="error-eric, needs you" data-mood="needs"><circle data-dc-tpl="58" cx="32" cy="32" r="30" fill="var(--vk-mood-needs)"></circle><path data-dc-tpl="59" d="M28 4 Q32 -2 36 4 Q34 8 32 6 Q30 8 28 4Z" fill="rgb(107 74 43)"></path><g data-dc-tpl="60" data-eyes="open"><ellipse data-dc-tpl="61" cx="23" cy="28" rx="4" ry="2.4" fill="var(--vk-face-ink)"></ellipse><ellipse data-dc-tpl="62" cx="41" cy="28" rx="4" ry="2.4" fill="var(--vk-face-ink)"></ellipse></g><circle data-dc-tpl="63" cx="17" cy="37" r="4" fill="rgb(255 158 138 / 0.5)"></circle><circle data-dc-tpl="64" cx="47" cy="37" r="4" fill="rgb(255 158 138 / 0.5)"></circle><path data-dc-tpl="65" d="M24 44 Q32 38 40 44" fill="none" stroke="var(--vk-face-ink)" stroke-width="3" stroke-linecap="round"></path></svg></span>error-eric · Reproduce · 2 days · attempt 2</div><p data-dc-tpl="66" class="qt-facts">Priority 3 · asked by super-chotu · $0.00 · AgentPod v0.1.91 Matrix inbound bridge contract</p><div data-dc-tpl="67" class="qt-acts"><a data-dc-tpl="68" href="#card">Decide</a><button data-dc-tpl="69" type="button" aria-haspopup="menu" aria-label="Move Diagnose Melissa and Anna Supermessage silence — trace actual failing hop to another stage">Move to another stage</button></div></li><li data-dc-tpl="70" class="qt-item"><h3 data-dc-tpl="71"><button data-dc-tpl="72" class="qt-titlebtn" type="button" aria-label="AgentPod: connector interface and generic effects ledger, state machine and executor, in Failing test. Enter to open, M to move, Alt with left or right arrow to move between stages.">AgentPod: connector interface and generic effects ledger, state machine and executor</button></h3><div data-dc-tpl="73" class="qt-meta"><span data-dc-tpl="74" class="vk-face " style="--vk-face-size: 20px;"><svg data-dc-tpl="75" viewBox="-2 -4 68 70" width="20" height="20" role="img" aria-label="tester-tim, needs you" data-mood="needs"><circle data-dc-tpl="76" cx="32" cy="32" r="30" fill="var(--vk-mood-needs)"></circle><circle data-dc-tpl="77" cx="32" cy="4" r="7" fill="rgb(94 90 156)"></circle><g data-dc-tpl="78" data-eyes="open"><ellipse data-dc-tpl="79" cx="23" cy="28" rx="3.2" ry="3.2" fill="var(--vk-face-ink)"></ellipse><ellipse data-dc-tpl="80" cx="41" cy="28" rx="3.2" ry="3.2" fill="var(--vk-face-ink)"></ellipse></g><path data-dc-tpl="81" d="M24 44 Q32 38 40 44" fill="none" stroke="var(--vk-face-ink)" stroke-width="3" stroke-linecap="round"></path></svg></span>tester-tim · Failing test · 33 hours</div><p data-dc-tpl="82" class="qt-facts">Priority 2 · asked by super-chotu · $0.00 · Deterministic X publisher red-test evidence</p><div data-dc-tpl="83" class="qt-acts"><a data-dc-tpl="84" href="#card">Decide</a><button data-dc-tpl="85" type="button" aria-haspopup="menu" aria-label="Move AgentPod: connector interface and generic effects ledger, state machine and executor to another stage">Move to another stage</button></div></li><li data-dc-tpl="86" class="qt-item"><h3 data-dc-tpl="87"><button data-dc-tpl="88" class="qt-titlebtn" type="button" aria-label="Superpipeline: manual-delivery completion and approval-subject hardening, in Fix. Enter to open, M to move, Alt with left or right arrow to move between stages.">Superpipeline: manual-delivery completion and approval-subject hardening</button></h3><div data-dc-tpl="89" class="qt-meta"><span data-dc-tpl="90" class="vk-face " style="--vk-face-size: 20px;"><svg data-dc-tpl="91" viewBox="-2 -4 68 70" width="20" height="20" role="img" aria-label="coder-kai, needs you" data-mood="needs"><circle data-dc-tpl="92" cx="32" cy="32" r="30" fill="var(--vk-mood-needs)"></circle><g data-dc-tpl="93" data-eyes="open"><ellipse data-dc-tpl="94" cx="23" cy="28" rx="3.2" ry="4.2" fill="var(--vk-face-ink)"></ellipse><ellipse data-dc-tpl="95" cx="41" cy="28" rx="3.2" ry="4.2" fill="var(--vk-face-ink)"></ellipse></g><circle data-dc-tpl="96" cx="17" cy="37" r="4" fill="rgb(255 158 138 / 0.5)"></circle><circle data-dc-tpl="97" cx="47" cy="37" r="4" fill="rgb(255 158 138 / 0.5)"></circle><path data-dc-tpl="98" d="M24 44 Q32 38 40 44" fill="none" stroke="var(--vk-face-ink)" stroke-width="3" stroke-linecap="round"></path></svg></span>coder-kai · Fix · 33 hours · attempt 5</div><p data-dc-tpl="99" class="qt-facts">No priority · $0.00 · test(api): pin manual delivery reminder</p><div data-dc-tpl="100" class="qt-acts"><a data-dc-tpl="101" href="#card">Decide</a><button data-dc-tpl="102" type="button" aria-haspopup="menu" aria-label="Move Superpipeline: manual-delivery completion and approval-subject hardening to another stage">Move to another stage</button></div></li><li data-dc-tpl="103" class="qt-item"><h3 data-dc-tpl="104"><button data-dc-tpl="105" class="qt-titlebtn" type="button" aria-label="Fix the highest-severity blocker found in the clean-room journey, in Reported. Enter to open, M to move, Alt with left or right arrow to move between stages.">Fix the highest-severity blocker found in the clean-room journey</button></h3><div data-dc-tpl="106" class="qt-meta"><span data-dc-tpl="107" class="vk-face " style="--vk-face-size: 20px;"><svg data-dc-tpl="108" viewBox="-2 -4 68 70" width="20" height="20" role="img" aria-label="super-chotu, working" data-mood="working"><circle data-dc-tpl="109" cx="32" cy="32" r="30" fill="var(--vk-mood-working)"></circle><path data-dc-tpl="110" d="M8 22 Q12 4 32 3 Q52 4 56 22 Q44 14 32 15 Q20 14 8 22Z" fill="rgb(35 35 58)"></path><g data-dc-tpl="111" data-eyes="open"><ellipse data-dc-tpl="112" cx="23" cy="28" rx="4" ry="2.4" fill="var(--vk-face-ink)"></ellipse><ellipse data-dc-tpl="113" cx="41" cy="28" rx="4" ry="2.4" fill="var(--vk-face-ink)"></ellipse></g><path data-dc-tpl="114" d="M22 41 Q32 47 42 41" fill="none" stroke="var(--vk-face-ink)" stroke-width="3" stroke-linecap="round"></path></svg></span>asked by super-chotu · Reported · 2 days</div><p data-dc-tpl="115" class="qt-facts">Priority 1 · labels: clean-room, evidence-required, superpipeline, and 1 more · Due 6 October, overdue</p><div data-dc-tpl="116" class="qt-acts"><a data-dc-tpl="117" href="#card">Open</a><button data-dc-tpl="118" type="button" aria-haspopup="menu" aria-label="Move Fix the highest-severity blocker found in the clean-room journey to another stage">Move to another stage</button></div></li></ul></section><ul data-dc-tpl="119" class="qt-zero" aria-label="Empty groups"><li data-dc-tpl="120"><h2 data-dc-tpl="121">In progress (0)</h2><span data-dc-tpl="122">None.</span></li></ul><section data-dc-tpl="123" aria-labelledby="qt-wait"><h2 data-dc-tpl="124" id="qt-wait">Waiting to start (2)</h2><ul data-dc-tpl="125" class="qt-list"><li data-dc-tpl="126" class="qt-item"><h3 data-dc-tpl="127"><button data-dc-tpl="128" class="qt-titlebtn" type="button" aria-label="Integrate editorial workflows and prove no-write publishing acceptance, in Failing test. Enter to open, M to move, Alt with left or right arrow to move between stages.">Integrate editorial workflows and prove no-write publishing acceptance</button></h3><div data-dc-tpl="129" class="qt-meta">Not picked up yet · Failing test · 2 days</div><p data-dc-tpl="130" class="qt-facts">Priority 2 · blocked by 3 cards · asked by super-chotu</p><div data-dc-tpl="131" class="qt-acts"><a data-dc-tpl="132" href="#card">Open</a><button data-dc-tpl="133" type="button" aria-haspopup="menu" aria-label="Move Integrate editorial workflows and prove no-write publishing acceptance to another stage">Move to another stage</button></div></li><li data-dc-tpl="134" class="qt-item"><h3 data-dc-tpl="135"><button data-dc-tpl="136" class="qt-titlebtn" type="button" aria-label="agentpod-connectors: X connector (connector x), in Failing test. Enter to open, M to move, Alt with left or right arrow to move between stages.">agentpod-connectors: X connector (connector x)</button></h3><div data-dc-tpl="137" class="qt-meta">Not picked up yet · Failing test · 33 hours</div><p data-dc-tpl="138" class="qt-facts">Blocked by 1 card</p><div data-dc-tpl="139" class="qt-acts"><a data-dc-tpl="140" href="#card">Open</a><button data-dc-tpl="141" type="button" aria-haspopup="menu" aria-label="Move agentpod-connectors: X connector (connector x) to another stage">Move to another stage</button></div></li></ul></section><section data-dc-tpl="142" aria-labelledby="qt-done"><h2 data-dc-tpl="143" id="qt-done">Done (1)</h2><ul data-dc-tpl="144" class="qt-list"><li data-dc-tpl="145" class="qt-item"><h3 data-dc-tpl="146"><button data-dc-tpl="147" class="qt-titlebtn" type="button" aria-label="Build immutable approval subjects and digest-bound gates, in Shipped. Enter to open, M to move, Alt with left or right arrow to move between stages.">Build immutable approval subjects and digest-bound gates</button></h3><div data-dc-tpl="148" class="qt-meta">Completed yesterday · Shipped · 15 attempts</div><p data-dc-tpl="149" class="qt-facts">Priority 2 · $0.00</p><div data-dc-tpl="150" class="qt-acts"><a data-dc-tpl="151" href="#card">Open</a><button data-dc-tpl="152" type="button" aria-haspopup="menu" aria-label="Move Build immutable approval subjects and digest-bound gates to another stage">Move to another stage</button></div></li></ul></section><ul data-dc-tpl="153" class="qt-zero" aria-label="Closed"><li data-dc-tpl="154"><h2 data-dc-tpl="155">Closed (0)</h2><span data-dc-tpl="156">None.</span></li></ul><section data-dc-tpl="157" aria-labelledby="qt-stages"><h2 data-dc-tpl="158" id="qt-stages">Stages</h2><table data-dc-tpl="159" class="qt-table"><thead data-dc-tpl="160"><tr data-dc-tpl="161"><th data-dc-tpl="162" scope="col">Stage</th><th data-dc-tpl="163" scope="col">Cards</th><th data-dc-tpl="164" scope="col">Who works it</th><th data-dc-tpl="165" scope="col">Gate</th></tr></thead><tbody data-dc-tpl="166"><tr data-dc-tpl="167"><td data-dc-tpl="168">Reported</td><td data-dc-tpl="169" class="n">1</td><td data-dc-tpl="170">a person</td><td data-dc-tpl="171">—</td></tr><tr data-dc-tpl="172"><td data-dc-tpl="173">Reproduce</td><td data-dc-tpl="174" class="n">1</td><td data-dc-tpl="175">diagnostics · error-eric</td><td data-dc-tpl="176">—</td></tr><tr data-dc-tpl="177"><td data-dc-tpl="178">Failing test</td><td data-dc-tpl="179" class="n">3, 2 blocked</td><td data-dc-tpl="180">testing · tester-tim</td><td data-dc-tpl="181">—</td></tr><tr data-dc-tpl="182"><td data-dc-tpl="183">Fix</td><td data-dc-tpl="184" class="n">1</td><td data-dc-tpl="185">code · 2 agents</td><td data-dc-tpl="186">—</td></tr><tr data-dc-tpl="187"><td data-dc-tpl="188">Integrate</td><td data-dc-tpl="189" class="n">0 (empty)</td><td data-dc-tpl="190">integration or api or testing · 3 agents</td><td data-dc-tpl="191">—</td></tr><tr data-dc-tpl="192"><td data-dc-tpl="193">Signed off</td><td data-dc-tpl="194" class="n">0 (empty)</td><td data-dc-tpl="195">a person</td><td data-dc-tpl="196">Approval gate</td></tr><tr data-dc-tpl="197"><td data-dc-tpl="198">Shipped</td><td data-dc-tpl="199" class="n">1</td><td data-dc-tpl="200">a person</td><td data-dc-tpl="201">—</td></tr></tbody></table></section></main></div></div><div data-product="superpipeline" data-accent="product" data-dc-tpl="202" class="fg" data-vibe="quiet" data-theme="light"><div data-dc-tpl="203" class="scrim"></div><section data-dc-tpl="204" class="dlg nc" role="dialog" aria-modal="true" aria-labelledby="nc-title">
+  <div data-dc-tpl="205" class="nc-head">
+    <div data-dc-tpl="206" style="flex: 1 1 0%; min-width: 0px;">
+      <div data-dc-tpl="207" class="eyebrow">New card</div>
+      <button data-dc-tpl="208" class="nc-board" type="button" aria-haspopup="listbox" aria-label="Board: Developer Experience. Change board">on Developer Experience <svg data-dc-tpl="209" aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path data-dc-tpl="210" d="M6 9l6 6 6-6"></path></svg></button>
+    </div>
+    <button type="button" class="vk-iconbutton vk-iconbutton--quiet">Close without saving</button>
+  </div>
+  <div data-dc-tpl="214" class="nc-body">
+    <div data-dc-tpl="215">
+      <h2 data-dc-tpl="216" class="dlg-title" id="nc-title">What needs doing?</h2>
+      <p data-dc-tpl="217" class="nc-lead"><span class="sc-interp">Describe the work in one sentence. An agent writes a draft brief. You can change all of it before you dispatch.</span></p>
+    </div>
+    <label data-dc-tpl="218" class="vk-visually-hidden" for="nc-sentence">Describe it in a sentence</label>
+    <textarea data-dc-tpl="219" class="nc-sentence" id="nc-sentence" rows="2">Fix the highest-severity blocker found in the clean-room journey, with red-test evidence before any fix.</textarea>
+    <div data-dc-tpl="220" class="nc-draftrow">
+      <button type="button" class="vk-button vk-button--secondary"><span class="vk-button__icon" aria-hidden="true"><svg data-dc-tpl="222" aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path data-dc-tpl="223" d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"></path></svg></span>Draft again</button>
+      <span data-dc-tpl="224" class="nc-drafted"><span data-dc-tpl="225" class="vk-face" style="--vk-face-size: 24px;"><svg data-dc-tpl="226" viewBox="-2 -4 68 70" width="24" height="24" role="img" aria-label="super-chotu, done" data-mood="done"><circle data-dc-tpl="227" cx="32" cy="32" r="30" fill="var(--vk-mood-done)"></circle><path data-dc-tpl="228" d="M8 22 Q12 4 32 3 Q52 4 56 22 Q44 14 32 15 Q20 14 8 22Z" fill="rgb(35 35 58)"></path><g data-dc-tpl="229" data-eyes="open"><ellipse data-dc-tpl="230" cx="23" cy="28" rx="4" ry="2.4" fill="var(--vk-face-ink)"></ellipse><ellipse data-dc-tpl="231" cx="41" cy="28" rx="4" ry="2.4" fill="var(--vk-face-ink)"></ellipse></g><path data-dc-tpl="232" d="M20 39 Q32 51 44 39" fill="none" stroke="var(--vk-face-ink)" stroke-width="3" stroke-linecap="round"></path></svg></span><span data-dc-tpl="233"><strong data-dc-tpl="234" style="color: var(--vk-color-text);">super-chotu</strong> drafted the title and brief from your sentence. Change anything.</span></span>
+    </div>
+    <div data-dc-tpl="235" class="nc-grid">
+      <div data-dc-tpl="236" class="nc-col">
+        <div class="vk-field"><label class="vk-field__label" for="nc-t">Card title</label>  <input class="vk-field__input" id="nc-t" type="text" value="Fix the highest-severity blocker found in the clean-room journey"/>  </div>
+        <div data-dc-tpl="240" class="vk-field">
+          <label data-dc-tpl="241" class="vk-field__label" for="nc-b">Brief for the agent</label>
+          <p data-dc-tpl="242" class="vk-field__hint" id="nc-bh">What done looks like, and anything it should not do.</p>
+          <div data-dc-tpl="243" class="nc-brief-wrap">
+            <textarea data-dc-tpl="244" class="nc-brief" id="nc-b" aria-describedby="nc-bh" rows="9">Done looks like:
+• The blocker is reproduced from a clean room and named in one sentence.
+• A failing test lands first, with the red run attached as evidence.
+• The fix turns that test green and changes nothing else.
+
+Do not:
+• Push to the Forge mirror or to GitHub without an approval.
+• Close the card without the evidence link.</textarea>
+            <span data-dc-tpl="245" class="nc-brief-tag"><svg data-dc-tpl="246" aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path data-dc-tpl="247" d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"></path></svg> Drafted · not sent yet</span>
+          </div>
+        </div>
+      </div>
+      <div data-dc-tpl="248" class="nc-col">
+        <div data-dc-tpl="249" class="vk-field">
+          <label data-dc-tpl="250" class="vk-field__label" for="nc-s">Starts in stage</label>
+          <div data-dc-tpl="251" class="nc-selwrap"><select data-dc-tpl="252" class="vk-field__input nc-select" id="nc-s"><option data-dc-tpl="253">Reported · a person</option><option data-dc-tpl="254">Reproduce · error-eric</option><option data-dc-tpl="255">Failing test · tester-tim</option><option data-dc-tpl="256">Fix · 2 agents</option><option data-dc-tpl="257">Integrate · 3 agents</option><option data-dc-tpl="258">Signed off · approval gate</option><option data-dc-tpl="259">Shipped · a person</option></select><svg data-dc-tpl="260" aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path data-dc-tpl="261" d="M6 9l6 6 6-6"></path></svg></div>
+        </div>
+        <div data-dc-tpl="262" class="nc-row2">
+          <div data-dc-tpl="263" class="vk-field">
+            <label data-dc-tpl="264" class="vk-field__label" for="nc-p">Project <span data-dc-tpl="265" class="opt">(optional)</span></label>
+            <div data-dc-tpl="266" class="nc-selwrap"><select data-dc-tpl="267" class="vk-field__input nc-select" id="nc-p"><option data-dc-tpl="268">No project</option><option data-dc-tpl="269">Building in public — Marketing &amp; Community flow</option><option data-dc-tpl="270">Guild — Forge workspaces and checkpoint recovery</option><option data-dc-tpl="271">Marketing &amp; Community — Melissa and Anna onboarding</option><option data-dc-tpl="272">SJL Active Portfolio</option><option data-dc-tpl="273">SJL Operating Baseline</option></select><svg data-dc-tpl="274" aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path data-dc-tpl="275" d="M6 9l6 6 6-6"></path></svg></div>
+          </div>
+          <div data-dc-tpl="276" class="vk-field">
+            <label data-dc-tpl="277" class="vk-field__label" for="nc-d">Due <span data-dc-tpl="278" class="opt">(optional)</span></label>
+            <div data-dc-tpl="279" class="nc-due"><input data-dc-tpl="280" class="vk-field__input" id="nc-d" type="date" value="2026-10-18"><button data-dc-tpl="281" class="link small" type="button">Clear</button></div>
+          </div>
+        </div>
+        <fieldset data-dc-tpl="282" class="vk-field" style="border: 0px; padding: 0px; margin: 0px;">
+          <legend data-dc-tpl="283" class="vk-field__label" style="margin-bottom: 8px;">Priority</legend>
+          <div data-dc-tpl="284" class="nc-prio"><div class="vk-segmented vk-segmented--quiet vk-segmented--sm" aria-label="Priority" id="vk-r1" role="radiogroup" aria-required="false" aria-disabled="false" data-orientation="horizontal" data-radio-group-root=""><button class="vk-segmented__item" id="vk-r2" data-value="None" data-orientation="horizontal" data-state="unchecked" aria-checked="false" data-radio-group-item="" type="button" role="radio" tabindex="-1">None</button><button class="vk-segmented__item" id="vk-r3" data-value="P1" data-orientation="horizontal" data-state="checked" aria-checked="true" data-radio-group-item="" type="button" role="radio" tabindex="0">P1</button><button class="vk-segmented__item" id="vk-r4" data-value="P2" data-orientation="horizontal" data-state="unchecked" aria-checked="false" data-radio-group-item="" type="button" role="radio" tabindex="-1">P2</button><button class="vk-segmented__item" id="vk-r5" data-value="P3" data-orientation="horizontal" data-state="unchecked" aria-checked="false" data-radio-group-item="" type="button" role="radio" tabindex="-1">P3</button><button class="vk-segmented__item" id="vk-r6" data-value="P4" data-orientation="horizontal" data-state="unchecked" aria-checked="false" data-radio-group-item="" type="button" role="radio" tabindex="-1">P4</button></div></div>
+        </fieldset>
+        <div data-dc-tpl="291" class="vk-field">
+          <span data-dc-tpl="292" class="vk-field__label" id="nc-l">Labels</span>
+          <div data-dc-tpl="293" class="nc-labels" role="group" aria-labelledby="nc-l">
+            <span data-dc-tpl="294" class="nc-label">clean-room<button data-dc-tpl="295" type="button" aria-label="Remove label clean-room"><svg data-dc-tpl="296" aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path data-dc-tpl="297" d="M6 6l12 12M18 6L6 18"></path></svg></button></span>
+            <span data-dc-tpl="298" class="nc-label">evidence-required<button data-dc-tpl="299" type="button" aria-label="Remove label evidence-required"><svg data-dc-tpl="300" aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path data-dc-tpl="301" d="M6 6l12 12M18 6L6 18"></path></svg></button></span>
+            <span data-dc-tpl="302" class="nc-label">superpipeline<button data-dc-tpl="303" type="button" aria-label="Remove label superpipeline"><svg data-dc-tpl="304" aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path data-dc-tpl="305" d="M6 6l12 12M18 6L6 18"></path></svg></button></span>
+            <button data-dc-tpl="306" class="nc-addlabel" type="button"><svg data-dc-tpl="307" aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path data-dc-tpl="308" d="M12 5v14M5 12h14"></path></svg> Add label</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div data-dc-tpl="309" class="nc-foot">
+    <div data-dc-tpl="310" class="grow small muted" style="display: flex; align-items: center; gap: 8px;"><svg data-dc-tpl="311" aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex: 0 0 auto;"><rect data-dc-tpl="312" x="3" y="4" width="5" height="16" rx="1.5"></rect><rect data-dc-tpl="313" x="10" y="4" width="5" height="11" rx="1.5"></rect><rect data-dc-tpl="314" x="17" y="4" width="4" height="7" rx="1.5"></rect></svg><span data-dc-tpl="315">Goes to <strong data-dc-tpl="316" style="color: var(--vk-color-text);">Reported</strong> on Developer Experience, where a person picks it up.</span></div>
+    <span data-dc-tpl="317" class="small muted"><span data-dc-tpl="318" class="kbd">⌘</span> <span data-dc-tpl="319" class="kbd">↵</span> to dispatch</span>
+    <button type="button" class="vk-button vk-button--secondary">Cancel</button>
+    <button type="button" class="vk-button vk-button--primary">Dispatch</button>
+  </div></section></div></div></div></div>
+
+
+
+</body></html>

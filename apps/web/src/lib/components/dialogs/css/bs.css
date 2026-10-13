@@ -1,0 +1,31 @@
+/* Ported verbatim from e2e/reference/mockups/SP-Dlg-BoardSwitcher-Daylight, SP-Dlg-BoardSwitcher-Paper, SP-Dlg-BoardSwitcher-Studio, SP-Dlg-BoardSwitcher-Quiet (prefixes bs-acts, bs-del, bs-foot, link, kbd, chip, small, muted, grow; root :where(.fg) as .vk-dialog.bs) by scripts/pixel/extract-css.mjs. */
+/* Hand edit (vibekit 0.0.9): the "This board:" row is vibekit's CommandPalette actions row, which draws the .bs-acts frame; its links keep the reference's inline row. The footer's .grow is a direct child of vibekit's footer. */
+.vk-dialog.bs .muted { color: var(--vk-color-muted); }
+.vk-dialog.bs .small { font-size: var(--vk-text-sm); }
+.vk-dialog.bs .kbd { display: inline-block; font: 500 11px/1 var(--vk-font-mono); padding: 4px 6px; border-radius: 6px; background: var(--vk-color-raised); border: 1px solid var(--vk-color-line); color: var(--vk-color-muted); }
+.vk-dialog.bs .link { color: var(--vk-color-text); text-decoration: underline; text-underline-offset: 3px; background: none; border: 0; padding: 0 4px; min-height: 44px; font: inherit; cursor: pointer; }
+.vk-dialog.bs .vk-commandpalette__actions .link { display: inline-flex; gap: 6px; align-items: center; font-size: 14px; }
+.vk-dialog.bs .grow { flex: 1; font-size: 12px; color: var(--vk-color-muted); display: flex; gap: 6px; align-items: center; }
+.vk-dialog.bs .chip { display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; border-radius: var(--vk-radius-pill); background: var(--vk-color-raised); border: 1px solid var(--vk-color-line); font-size: 12px; color: var(--vk-color-muted); line-height: 1.4; }
+.vk-dialog.bs .chip--needs { background: var(--vk-color-signal-wash); color: var(--vk-color-signal-text); border-color: var(--vk-color-signal); font-weight: 700; }
+.vk-dialog.bs .bs-del { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; margin-left: auto; padding: 0 14px; border: 0; border-radius: var(--vk-radius-sm); background: var(--vk-color-surface); color: var(--vk-color-text); box-shadow: inset 0 0 0 2px var(--vk-color-text); font: 600 14px/1 var(--vk-font-body); cursor: pointer; }
+[data-vibe="studio"] .vk-dialog.bs .chip { border-radius: 0; font-family: var(--vk-font-mono); font-size: 11.5px; text-transform: none; letter-spacing: 0; }
+[data-vibe="studio"] .vk-dialog.bs .bs-del { background: transparent; box-shadow: inset 0 0 0 2.5px var(--vk-color-rule); border-radius: 2px; }
+[data-vibe="studio"] .vk-dialog.bs .kbd { border-radius: 2px; background: transparent; border-color: currentColor; }
+[data-vibe="studio"] .vk-dialog.bs .chip--needs { background: transparent; }
+[data-vibe="studio"] .vk-dialog.bs .chip--done { background: transparent; border-color: var(--vk-stage-7); color: var(--vk-color-text); }
+[data-vibe="quiet"] .vk-dialog.bs .chip { background: transparent; border-color: var(--vk-color-line); }
+
+.bs-layer .bs-anchor { position: absolute; display: inline-flex; align-items: center; }
+.bs-layer .bs-anchor .bs-trigger { background: var(--vk-color-surface); box-shadow: inset 0 0 0 2px var(--vk-color-text); color: var(--vk-color-text); cursor: pointer; }
+.bs-layer .bs-anchor .dy-switch { display: inline-flex; align-items: center; gap: 8px; min-height: 48px; padding: 0 12px 0 6px; border: 0; border-radius: var(--vk-radius-md); font: 700 28px/1.1 var(--vk-font-display); letter-spacing: -0.015em; text-align: left; }
+.bs-layer .bs-anchor--ed { align-items: flex-end; gap: 10px 20px; }
+.bs-layer .bs-anchor .mh-title { margin: 0; font-family: var(--vk-font-display); font-size: 46px; font-weight: 500; line-height: 1.05; letter-spacing: -0.012em; color: var(--vk-color-text); }
+.bs-layer .bs-anchor .mh-change { display: inline-flex; align-items: center; min-height: 44px; padding: 0 8px; margin-left: -8px; border: 0; border-radius: var(--vk-radius-sm); font: 400 14px/1 var(--vk-font-body); text-decoration: underline; text-underline-offset: 4px; }
+.bs-layer .bs-anchor.ar-board { flex-direction: column; align-items: flex-start; gap: 2px; }
+.bs-layer .bs-anchor .kick { font: 700 12px/1.2 var(--vk-font-body); letter-spacing: .1em; text-transform: uppercase; color: var(--vk-color-muted); }
+.bs-layer .bs-anchor .ar-sw { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 8px; margin-left: -8px; border: 0; border-radius: 2px; font: 800 28px/1 var(--vk-font-body); font-stretch: 80%; letter-spacing: -.01em; white-space: nowrap; }
+.bs-layer .bs-anchor.qn-board { flex-wrap: wrap; gap: 0 8px; min-height: 44px; font: 400 18px/1.4 var(--vk-font-body); color: var(--vk-color-text); }
+.bs-layer .bs-anchor.qn-board b { font-weight: 700; }
+.bs-layer .bs-anchor .qn-dash { color: var(--vk-color-muted); }
+.bs-layer .bs-anchor .qn-link { display: inline-flex; align-items: center; min-height: 44px; padding: 0 6px; border: 0; border-radius: var(--vk-radius-sm); font: inherit; text-decoration: underline; text-underline-offset: 4px; }

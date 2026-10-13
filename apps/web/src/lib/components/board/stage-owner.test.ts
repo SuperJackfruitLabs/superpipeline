@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { stageOwner } from './stage-owner';
+import { stageOwner, ownerLong, ownerShort } from './stage-owner';
+import { DX, ONBOARDING, AGENTS as FX_AGENTS } from '$lib/test/fixture-boards';
 
 /**
  * Who works a lane.
@@ -90,5 +91,27 @@ describe('stageOwner', () => {
     // all is malformed, and saying so beats a blank line.
     const got = stageOwner({ key: 'k', name: 'K', order: 0, ownerKind: 'capability' } as never, AGENTS);
     expect(got.label.length).toBeGreaterThan(0);
+  });
+});
+
+describe('ownerLong / ownerShort on the fixture boards', () => {
+  const st = (key: string) => DX.stages.find((s) => s.key === key)!;
+  it('long, as the desktop boards print it', () => {
+    expect(ownerLong(st('reproduce'), FX_AGENTS)).toBe('diagnostics · error-eric');
+    expect(ownerLong(st('fix'), FX_AGENTS)).toBe('code · 2 agents');
+    expect(ownerLong(st('integrate'), FX_AGENTS)).toBe('integration or api or testing · 3 agents');
+    expect(ownerLong(st('signed-off'), FX_AGENTS)).toBe('a person · approval');
+    expect(ownerLong(ONBOARDING.stages.find((s) => s.key === 'proving')!, FX_AGENTS)).toBe('claim-check or analysis · 2 agents');
+  });
+  it('short, with either separator', () => {
+    expect(ownerShort(st('reproduce'), FX_AGENTS)).toBe('diagnostics · error-eric');
+    expect(ownerShort(st('integrate'), FX_AGENTS)).toBe('integration');
+    expect(ownerShort(st('signed-off'), FX_AGENTS)).toBe('gate · approval by a person');
+    expect(ownerShort(st('reproduce'), FX_AGENTS, ': ')).toBe('diagnostics: error-eric');
+    expect(ownerShort(st('fix'), FX_AGENTS, ': ')).toBe('code: 2 agents');
+    expect(ownerShort(st('signed-off'), FX_AGENTS, ': ')).toBe('gate: approval by a person');
+  });
+  it('a capability nobody declares says so', () => {
+    expect(ownerLong({ key: 'x', name: 'X', order: 0, ownerKind: 'capability', owner: 'juggling' }, FX_AGENTS)).toBe('juggling · nobody declares it');
   });
 });

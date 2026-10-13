@@ -9,7 +9,8 @@ import { test, expect } from '@playwright/test';
  * both servers: the Vite dev server the suite drives, and the Worker (`wrangler dev`, serving the
  * built `apps/web/build`), which is what production is.
  */
-const ORIGINS = ['http://localhost:5173', 'http://localhost:8787'];
+import { PORTS } from '../scripts/ports';
+const ORIGINS = [PORTS.webUrl, PORTS.apiUrl];
 const FILES: [string, RegExp][] = [
   ['/manifest.webmanifest', /^application\/manifest\+json/],
   ['/icon-192.png', /^image\/png/],

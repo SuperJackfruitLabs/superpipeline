@@ -1,0 +1,34 @@
+/* Ported verbatim from e2e/reference/mockups/SP-Dlg-NewCard-Daylight, SP-Dlg-NewCard-Paper, SP-Dlg-NewCard-Studio, SP-Dlg-NewCard-Quiet (prefixes nc-, eyebrow, muted, small, kbd, link, mono, wrap; excluding nc-head, nc-foot, nc-body, nc-draftrow, nc-drafted, nc-brief-tag; root :where(.fg) as .vk-dialog.nc) by scripts/pixel/extract-css.mjs. */
+.vk-dialog.nc .eyebrow { font: 600 13px/1.2 var(--vk-font-display); color: var(--vk-color-muted); letter-spacing: .01em; }
+.vk-dialog.nc .muted { color: var(--vk-color-muted); }
+.vk-dialog.nc .small { font-size: var(--vk-text-sm); }
+.vk-dialog.nc .mono { font-family: var(--vk-font-mono); }
+.vk-dialog.nc .kbd { display: inline-block; font: 500 11px/1 var(--vk-font-mono); padding: 4px 6px; border-radius: 6px; background: var(--vk-color-raised); border: 1px solid var(--vk-color-line); color: var(--vk-color-muted); }
+.vk-dialog.nc .link { color: var(--vk-color-text); text-decoration: underline; text-underline-offset: 3px; background: none; border: 0; padding: 0 4px; min-height: 44px; font: inherit; cursor: pointer; }
+.vk-dialog.nc .wrap { overflow-wrap: anywhere; }
+.vk-dialog.nc .nc-board { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; padding: 0 12px; margin-left: -12px; border: 0; border-radius: var(--vk-radius-sm); background: transparent; color: var(--vk-color-text); font: 600 15px/1 var(--vk-font-body); cursor: pointer; }
+.vk-dialog.nc .nc-lead { margin: 6px 0 0; color: var(--vk-color-muted); font-size: 15px; }
+.vk-dialog.nc .nc-sentence { width: 100%; min-height: 76px; resize: none; padding: 14px 16px; border: 2px solid var(--vk-color-text); border-radius: var(--vk-radius-md); background: var(--vk-color-surface); color: var(--vk-color-text); font: 500 18px/1.4 var(--vk-font-body); box-shadow: var(--vk-focus); }
+.vk-dialog.nc .nc-grid { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); gap: 20px; }
+.vk-dialog.nc .nc-col { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+.vk-dialog.nc .nc-brief { width: 100%; min-height: 214px; resize: none; padding: 12px 14px 40px; border: 2px solid var(--vk-color-faint); border-radius: var(--vk-radius-sm); background: var(--vk-color-surface); color: var(--vk-color-text); font: 400 15px/1.5 var(--vk-font-body); white-space: pre-wrap; }
+.vk-dialog.nc .nc-brief-wrap { position: relative; }
+.vk-dialog.nc .nc-select { appearance: none; width: 100%; padding-right: 40px; background-image: none; }
+.vk-dialog.nc .nc-selwrap { position: relative; }
+.vk-dialog.nc .nc-selwrap svg { position: absolute; right: 14px; top: 50%; margin-top: -8px; color: var(--vk-color-muted); pointer-events: none; }
+.vk-dialog.nc .nc-row2 { display: grid; grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr); gap: 12px; }
+.vk-dialog.nc .nc-labels { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.vk-dialog.nc .nc-label { display: inline-flex; align-items: center; gap: 2px; padding-left: 10px; border-radius: var(--vk-radius-pill); background: var(--vk-color-raised); border: 1px solid var(--vk-color-line); font-size: 13px; }
+.vk-dialog.nc .nc-label button { width: 32px; height: 32px; border: 0; background: transparent; color: var(--vk-color-muted); display: grid; place-items: center; border-radius: 50%; cursor: pointer; }
+.vk-dialog.nc .nc-addlabel { display: inline-flex; align-items: center; gap: 4px; min-height: 34px; padding: 0 10px; border: 1px dashed var(--vk-color-faint); border-radius: var(--vk-radius-pill); background: transparent; color: var(--vk-color-text); font-size: 13px; cursor: pointer; }
+.vk-dialog.nc .nc-prio { display: flex; }
+.vk-dialog.nc .nc-prio .vk-segmented { width: 100%; }
+.vk-dialog.nc .nc-prio .vk-segmented__item { flex: 1; }
+.vk-dialog.nc .nc-due { display: flex; gap: 8px; align-items: center; }
+.vk-dialog.nc .nc-due .vk-field__input { flex: 1; min-width: 0; }
+.vk-dialog.nc .nc-where { display: flex; gap: 10px; align-items: flex-start; padding: 12px 14px; border-radius: var(--vk-radius-sm); background: var(--vk-color-raised); font-size: 14px; }
+[data-vibe="paper"] .vk-dialog.nc .eyebrow { font-style: italic; font-weight: 500; font-size: 14px; }
+[data-vibe="paper"] .vk-dialog.nc .nc-lead { font-family: var(--vk-font-display); font-style: italic; font-size: 17px; }
+[data-vibe="paper"] .vk-dialog.nc .nc-sentence { font-family: var(--vk-font-display); font-size: 20px; border-radius: var(--vk-radius-sm); }
+[data-vibe="studio"] .vk-dialog.nc .eyebrow { font: 700 12px/1.2 var(--vk-font-body); text-transform: uppercase; letter-spacing: .1em; }
+[data-vibe="studio"] .vk-dialog.nc .kbd { border-radius: 2px; background: transparent; border-color: currentColor; }

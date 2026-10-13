@@ -1,0 +1,35 @@
+/* Ported verbatim from e2e/reference/mockups/SP-Dlg-Move-Daylight, SP-Dlg-Move-Paper, SP-Dlg-Move-Studio, SP-Dlg-Move-Quiet (prefixes mv-, st, chip, kbd, muted, small; excluding mv-head, mv-foot, mv-body, mv-card; root :where(.fg) as .vk-dialog.mv) by scripts/pixel/extract-css.mjs. */
+.vk-dialog.mv .muted { color: var(--vk-color-muted); }
+.vk-dialog.mv .small { font-size: var(--vk-text-sm); }
+.vk-dialog.mv .kbd { display: inline-block; font: 500 11px/1 var(--vk-font-mono); padding: 4px 6px; border-radius: 6px; background: var(--vk-color-raised); border: 1px solid var(--vk-color-line); color: var(--vk-color-muted); }
+.vk-dialog.mv .mv-now { margin: 6px 0 0; display: flex; flex-wrap: wrap; gap: 8px; align-items: center; font-size: 14px; color: var(--vk-color-muted); }
+.vk-dialog.mv .mv-list { display: flex; flex-direction: column; }
+.vk-dialog.mv .st { position: relative; display: grid; grid-template-columns: 28px minmax(0, 1fr) auto; gap: 12px; align-items: center; min-height: 56px; padding: 6px 12px 6px 6px; border-radius: var(--vk-radius-sm); cursor: pointer; }
+.vk-dialog.mv .st input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+.vk-dialog.mv .st:hover { background: var(--vk-color-raised); }
+.vk-dialog.mv .st[data-checked="true"] { background: var(--vk-color-raised); box-shadow: inset 0 0 0 2px var(--vk-color-text); }
+.vk-dialog.mv .st:focus-within { outline: 2px solid var(--vk-color-text); outline-offset: 2px; }
+.vk-dialog.mv .st[data-here="true"] { cursor: default; background: transparent; }
+.vk-dialog.mv .st-mark { position: relative; width: 28px; height: 100%; display: grid; place-items: center; }
+.vk-dialog.mv .st-mark::before { content: ""; position: absolute; left: 13px; top: -6px; bottom: -6px; width: 2px; background: var(--vk-color-line); }
+.vk-dialog.mv .st:first-child .st-mark::before { top: 50%; }
+.vk-dialog.mv .st:last-child .st-mark::before { bottom: 50%; }
+.vk-dialog.mv .st-dot { position: relative; width: 16px; height: 16px; border-radius: 50%; background: var(--vk-color-surface); box-shadow: inset 0 0 0 2px var(--vk-color-faint); }
+.vk-dialog.mv .st[data-checked="true"] .st-dot { background: var(--vk-color-text); box-shadow: 0 0 0 3px var(--vk-color-surface); }
+.vk-dialog.mv .st[data-here="true"] .st-dot { width: 20px; height: 20px; background: var(--vk-color-primary); box-shadow: 0 0 0 4px var(--vk-color-raised); }
+.vk-dialog.mv .st-name { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-weight: 600; font-size: 16px; }
+.vk-dialog.mv .st-owner { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--vk-color-muted); margin-top: 1px; }
+.vk-dialog.mv .st-right { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--vk-color-muted); }
+.vk-dialog.mv .st-dir { font: 500 11px/1 var(--vk-font-mono); color: var(--vk-color-faint); text-transform: uppercase; letter-spacing: .06em; }
+.vk-dialog.mv .mv-then { margin: 14px 0 0; padding: 12px 14px; border-radius: var(--vk-radius-sm); background: var(--vk-color-raised); display: flex; gap: 10px; align-items: flex-start; font-size: 14px; }
+.vk-dialog.mv .mv-keys { margin: 12px 0 0; display: flex; flex-wrap: wrap; gap: 14px; font-size: 13px; color: var(--vk-color-muted); }
+.vk-dialog.mv .mv-keys span { display: inline-flex; gap: 4px; align-items: center; }
+.vk-dialog.mv .chip { display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; border-radius: var(--vk-radius-pill); background: var(--vk-color-raised); border: 1px solid var(--vk-color-line); font-size: 12px; color: var(--vk-color-muted); line-height: 1.4; }
+.vk-dialog.mv .chip--needs { background: var(--vk-color-signal-wash); color: var(--vk-color-signal-text); border-color: var(--vk-color-signal); font-weight: 700; }
+.vk-dialog.mv .chip--gate { background: transparent; border-color: var(--vk-color-text); color: var(--vk-color-text); font-weight: 600; }
+[data-vibe="studio"] .vk-dialog.mv .st-dot { border-radius: 0; }
+[data-vibe="studio"] .vk-dialog.mv .chip { border-radius: 0; font-family: var(--vk-font-mono); font-size: 11.5px; text-transform: none; letter-spacing: 0; }
+[data-vibe="studio"] .vk-dialog.mv .kbd { border-radius: 2px; background: transparent; border-color: currentColor; }
+[data-vibe="studio"] .vk-dialog.mv .chip--needs { background: transparent; }
+[data-vibe="studio"] .vk-dialog.mv .chip--done { background: transparent; border-color: var(--vk-stage-7); color: var(--vk-color-text); }
+[data-vibe="quiet"] .vk-dialog.mv .chip { background: transparent; border-color: var(--vk-color-line); }

@@ -1,0 +1,8 @@
+/* Ported verbatim from e2e/reference/mockups/SP-Operate-Daylight.html (prefixes sky, crew) by scripts/pixel/extract-css.mjs. */
+.op-greet .vk-sky__content { padding: var(--vk-space-3) var(--vk-space-5) var(--vk-space-5) var(--vk-space-5); border-top: 1px solid color-mix(in oklch, var(--vk-color-surface) 50%, transparent); margin: 0 16px; padding-left: 4px; padding-right: 4px; display: flex; align-items: center; gap: var(--vk-space-6); flex-wrap: wrap; }
+.op-greet :is(h1, h2.op-title) { margin: 0; font: 700 var(--vk-text-xl) / 1.1 var(--vk-font-display); letter-spacing: -0.01em; }
+.op-greet p { margin: var(--vk-space-2) 0 0; font-size: var(--vk-text-md); }
+.op-greet .crew { display: flex; align-items: center; gap: var(--vk-space-3); margin-left: auto; }
+.op-greet .crew__who { display: flex; align-items: center; gap: var(--vk-space-2); font-weight: 600; font-size: var(--vk-text-sm); }
+/* Hand edit: the reference frame's body text (16px/1.45), which the greeting's line inherits there; the app's frame is vibekit AppShell (17px/1.5). */
+.op-greet { font-size: 16px; line-height: 1.45; }

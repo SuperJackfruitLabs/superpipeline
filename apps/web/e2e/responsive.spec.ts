@@ -14,7 +14,8 @@ import { test, expect, type Page } from '@playwright/test';
  */
 
 const BOARD_KEY = 'superpipeline.boardId';
-const API = 'http://localhost:8787';
+import { PORTS } from '../scripts/ports';
+const API = PORTS.apiUrl;
 const TENANT = { 'X-Tenant-Id': 'tnt_dev', 'Content-Type': 'application/json' };
 const STAGES = [
   { key: 'backlog', name: 'Backlog', order: 0 },
@@ -59,7 +60,7 @@ for (const vp of WIDTHS) {
       await expect(page.getByRole('tab', { name: 'Agents' })).toBeVisible();
       expect(await pageScrollsSideways(page), '/workspace/agents').toBe(false);
       await page.goto('/workspace/needs-you');
-      await expect(page.getByRole('heading', { name: 'Needs you' })).toBeVisible();
+      await expect(page.getByRole('heading', { name: 'Waiting on you, across every board' })).toBeVisible();
       expect(await pageScrollsSideways(page), '/workspace/needs-you').toBe(false);
     });
 
@@ -69,40 +70,46 @@ for (const vp of WIDTHS) {
 
       if (vp.width < 900) {
         // The bottom nav's fourth item is a menu holding both.
-        await page.getByRole('button', { name: 'You' }).click();
+        await page.getByRole('button', { name: /^You/ }).click();
         await expect(page.getByRole('menuitem', { name: /sign out/i })).toBeInViewport();
         await page.getByRole('menuitem', { name: /theme/i }).click();
       } else {
-        await expect(page.getByRole('button', { name: 'Sign out' })).toBeInViewport();
-        await page.getByRole('button', { name: /toggle theme/i }).click();
+        await page.getByRole('navigation', { name: 'Superpipeline' }).getByRole('button', { name: /^Account/ }).click();
+        await expect(page.getByRole('menuitem', { name: 'Sign out' })).toBeInViewport();
+        await page.getByRole('menuitemcheckbox', { name: 'Dark theme' }).click();
       }
       await expect(page.locator('html')).toHaveAttribute('data-theme', /light|dark/);
 
       // And from the palette, at every width.
       await page.keyboard.press('Control+k');
       await page.getByPlaceholder(/jump to/i).fill('sign out');
-      // Scoped to the palette: at 900px and up the rail's own Sign out button would satisfy a bare query.
-      await expect(page.getByRole('dialog', { name: 'Command palette' }).getByRole('button', { name: /sign out/i })).toBeVisible();
+      // Scoped to the palette: the account menu's Sign out would satisfy a bare query.
+      await expect(page.getByRole('dialog', { name: 'Search cards, boards, agents and actions' }).getByRole('option', { name: /sign out/i })).toBeVisible();
     });
 
     if (vp.width === 768) {
-      test('a tablet sees at least two lanes side by side', async ({ page }) => {
+      test('a tablet draws the one-column phone board: its card is on screen and nothing scrolls sideways', async ({ page }) => {
         await page.goto(`/b/${boardId}`);
         await expect(page.getByText('Draft the onboarding checklist').first()).toBeVisible();
-        const whole = await page.locator('[data-lane]').evaluateAll((lanes) =>
-          lanes.filter((l) => {
-            const r = l.getBoundingClientRect();
-            return r.left >= 0 && r.right <= window.innerWidth && r.width > 0;
-          }).length,
-        );
-        expect(whole).toBeGreaterThanOrEqual(2);
+        expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+        // One column: no lane scroller, and every card sits at the same left edge.
+        const lanes = await page.evaluate(() => {
+          const scrollers = [...document.querySelectorAll('main *')].filter((e) => {
+            const o = getComputedStyle(e).overflowX;
+            return (o === 'auto' || o === 'scroll') && e.scrollWidth > e.clientWidth + 1;
+          });
+          const lefts = [...document.querySelectorAll('main article')].map((h) => Math.round(h.getBoundingClientRect().left));
+          return { scrollers: scrollers.length, lefts: [...new Set(lefts)] };
+        });
+        expect(lanes.scrollers).toBe(0);
+        expect(lanes.lefts).toHaveLength(1);
       });
     }
 
     if (vp.width === 1920) {
       test('Operate uses most of a wide screen', async ({ page }) => {
         await page.goto(`/b/${boardId}/operate`);
-        await expect(page.getByRole('heading', { name: 'Needs you' })).toBeVisible();
+        await expect(page.getByRole('heading', { name: 'Needs you', exact: true })).toBeVisible();
         const span = await page.locator('main section').evaluateAll((els) => {
           const rs = els.map((e) => e.getBoundingClientRect());
           return Math.max(...rs.map((r) => r.right)) - Math.min(...rs.map((r) => r.left));

@@ -12,6 +12,8 @@ export default defineConfig({
       miniflare: {
         bindings: {
           DEV_AUTH: 'true',
+          // The fixture import route (src/dev/fixture.ts) is tested here; production never sets it.
+          FIXTURE_IMPORT: 'true',
           // Enforcement is ON in wrangler.jsonc — it is production's posture —
           // and OFF here, because this suite tests board mechanics rather than
           // authorization. With it on, every test that queues a card without a

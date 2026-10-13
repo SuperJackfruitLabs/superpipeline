@@ -1,6 +1,7 @@
 import type { APIRequestContext, Page } from '@playwright/test';
 
-export const API = 'http://localhost:8787';
+import { PORTS } from '../../scripts/ports';
+export const API = PORTS.apiUrl;
 export const TENANT = { 'X-Tenant-Id': 'tnt_dev', 'Content-Type': 'application/json' };
 export const AGENT = { ...TENANT, 'X-Agent-Id': 'agt_r' };
 
@@ -47,7 +48,7 @@ export async function openBoard(page: Page, boardId: string): Promise<void> {
 
 /** Sets the person's appearance before any page script runs. */
 export async function setAppearance(page: Page, value: string): Promise<void> {
-  await page.context().addCookies([{ name: 'vk_appearance', value, url: 'http://localhost:5173' }]);
+  await page.context().addCookies([{ name: 'vk_appearance', value, url: PORTS.webUrl }]);
 }
 
 /** A pipeline whose review stage binds its gate to an immutable approval subject (needs a project and a decider). */
