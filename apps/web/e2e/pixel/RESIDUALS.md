@@ -10,7 +10,7 @@ Ratios are from the full pixel run on vibekit 0.0.10 (Node 22). A screen compare
 
 | Key | Ratio | Cause |
 |---|---|---|
-| SP-Card-Paper·dark | 0.895% | the focus ring the global :focus-visible drew on the drawer body is gone (adopt 0.0.9 fix); left: the reference's text-30% sheet shadow glows light in the derived dark (reference derived-dark) |
+| SP-Card-Paper·dark | 0.031% | the derived dark now casts the reference's sheet shadow as vibekit's dark shadow (fix round 2); left: the Resume note placeholder (vibekit Field textarea), the same 5 broken blocks as light |
 | SP-Phone-Board-Daylight#shell·dark | 0.818% | vibekit PhoneHeader: Live sits above the hello where the reference draws it in a row; sub-pixel sky residue |
 | SP-Workspace-Agents-Studio·light | 0.634% | Needs you 7 vs 4, vibekit Button; page content otherwise in place |
 | SP-Workspace-Agents-Studio·dark | 0.625% | Needs you 7 vs 4, vibekit Button; page content otherwise in place |
@@ -138,7 +138,7 @@ Ratios are from the full pixel run on vibekit 0.0.10 (Node 22). A screen compare
 | linux-x64 | SP-Board-Quiet#shell·light | fails | 0.131% | the board row's last view link, Projects, rasterises about 1px to one side under Linux FreeType once the row's widths accumulate sub-pixel offsets; everything else in the board and nav rows matches (CI linux-x64 part diff) |
 | linux-x64 | SP-Phone-Board-Quiet#shell·dark | fails | 0.523% | header part: vibekit PhoneHeader switcher: the Change board link's words draw 1px higher than the reference's under Linux FreeType hinting; tab-bar part: one pixel row of the Operate count |
 | linux-x64 | SP-Phone-Board-Quiet#shell·light | fails | 0.530% | header part: vibekit PhoneHeader switcher: the Change board link's words draw 1px higher than the reference's under Linux FreeType hinting; tab-bar part: one pixel row of the Operate count |
-| linux-x64 | SP-Dlg-Reconnect-Daylight·dark | passes | 0.000% | passes on linux-x64; the darwin residual (vibekit Button rasterising) does not occur under FreeType |
+| linux-x64 | SP-Dlg-Reconnect-Daylight·dark | either | 0.030% | flips between 0.000% and 0.030% (one broken block on vibekit's Sign in again Button) from run to run on linux-x64; focus, hover, transitions and font loading are ruled out on macOS, and the Linux run could not be reproduced locally |
 | linux-x64 | SP-Workspace-Agents-Quiet·dark | passes | 0.000% | passes on linux-x64; the darwin residual (t-meta line rasterising) does not occur under FreeType |
 | linux-x64 | SP-Workspace-Agents-Quiet·light | passes | 0.000% | passes on linux-x64; the darwin residual (t-meta line rasterising) does not occur under FreeType |
 | linux-x64 | SP-Workspace-Other-Paper·light | passes | 0.000% | passes on linux-x64; the darwin residual (sub-pixel icon and button rasterising) does not occur under FreeType |

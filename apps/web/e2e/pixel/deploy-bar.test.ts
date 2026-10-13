@@ -2,7 +2,7 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { DEPLOY_BAR, allowListVerdict } from './deploy-bar';
-import { EXPECTED_FAILURES, PLATFORM_OVERRIDES, currentPlatform, isExpectedFailure } from './expected-failures';
+import { EXPECTED_FAILURES, PLATFORM_OVERRIDES, currentPlatform, isEither, isExpectedFailure } from './expected-failures';
 
 describe('the deploy bar for allow-listed keys', () => {
   it('is 1%', () => expect(DEPLOY_BAR).toBe(0.01));
@@ -60,7 +60,7 @@ describe('per-platform verdicts', () => {
     expect(isExpectedFailure(fails, 'darwin-arm64')).toBe(EXPECTED_FAILURES.has(fails));
   });
   it('an override only says something the darwin list does not', () => {
-    for (const o of Object.values(PLATFORM_OVERRIDES)) for (const [k, v] of Object.entries(o)) expect(EXPECTED_FAILURES.has(k), k).toBe(v === 'passes');
+    for (const o of Object.values(PLATFORM_OVERRIDES)) for (const [k, v] of Object.entries(o)) if (v !== 'either') expect(EXPECTED_FAILURES.has(k), k).toBe(v === 'passes');
   });
   it('names the platform list in the ratchet message for an override', () => {
     expect(allowListVerdict('SP-X·dark', { ratio: 0, failed: false }, 'linux-x64')).toMatch(/passes now on linux-x64: remove its PLATFORM_OVERRIDES\['linux-x64'\] line/);
@@ -68,20 +68,37 @@ describe('per-platform verdicts', () => {
   });
 });
 
+describe('the either verdict (a key that flips between runs on one platform)', () => {
+  it('passes strictly or fails strictly within the bar, and nothing else', () => {
+    expect(allowListVerdict('SP-X·dark', { ratio: 0, failed: false }, 'linux-x64', true), 'a clean run is not a ratchet error').toBeNull();
+    expect(allowListVerdict('SP-X·dark', { ratio: 0.0003, failed: true }, 'linux-x64', true), 'a strict miss within the bar is allowed').toBeNull();
+    expect(allowListVerdict('SP-X·dark', { ratio: 0.011, failed: true }, 'linux-x64', true), 'the bar still holds').toMatch(/over the 1% deploy bar/);
+    expect(allowListVerdict('SP-X·dark', { ratio: 0, failed: false }, 'linux-x64'), 'without either, a pass is still a ratchet error').toMatch(/passes now/);
+  });
+  it('an either key is allowed to fail on its platform only', () => {
+    const o = PLATFORM_OVERRIDES['linux-x64']!;
+    const either = Object.keys(o).find((k) => o[k] === 'either')!;
+    expect(either, 'linux-x64 has one either key').toBeTruthy();
+    expect(isEither(either, 'linux-x64')).toBe(true);
+    expect(isExpectedFailure(either, 'linux-x64')).toBe(true);
+    expect(isEither(either, 'linux-arm64')).toBe(false);
+  });
+});
+
 describe('the documented per-platform overrides', () => {
   const src = readFileSync(new URL('./expected-failures.ts', import.meta.url), 'utf8');
-  const lines = src.split('\n').filter((l) => /^ {4}'[^']+': '(fails|passes)',/.test(l));
+  const lines = src.split('\n').filter((l) => /^ {4}'[^']+': '(fails|passes|either)',/.test(l));
   const residuals = readFileSync(new URL('./RESIDUALS.md', import.meta.url), 'utf8');
   const count = Object.values(PLATFORM_OVERRIDES).reduce((n, o) => n + Object.keys(o).length, 0);
   it('has one documented line per override', () => expect(lines.length).toBe(count));
   it('names a ratio, the platform and a cause on every override', () => {
-    for (const l of lines) expect(l, l).toMatch(/^ {4}'[^']+': '(fails|passes)', \/\/ \d+\.\d+% \(CI [a-z0-9]+-[a-z0-9]+\): \S.{10,}/);
+    for (const l of lines) expect(l, l).toMatch(/^ {4}'[^']+': '(fails|passes|either)', \/\/ \d+\.\d+% \(CI [a-z0-9]+-[a-z0-9]+\): \S.{10,}/);
   });
   it('a fails override is within the 1% bar', () => {
-    for (const l of lines) if (l.includes("'fails'")) expect(Number(/\/\/ (\d+\.\d+)%/.exec(l)![1]) / 100, l).toBeLessThanOrEqual(DEPLOY_BAR);
+    for (const l of lines) if (l.includes("'fails'") || l.includes("'either'")) expect(Number(/\/\/ (\d+\.\d+)%/.exec(l)![1]) / 100, l).toBeLessThanOrEqual(DEPLOY_BAR);
   });
   it('syncs both ways with RESIDUALS.md', () => {
-    const rows = [...residuals.matchAll(/^\| ([a-z0-9]+-[a-z0-9]+) \| (SP-[^ |]+) \| (fails|passes) \| (\d+\.\d+)% \|/gm)];
+    const rows = [...residuals.matchAll(/^\| ([a-z0-9]+-[a-z0-9]+) \| (SP-[^ |]+) \| (fails|passes|either) \| (\d+\.\d+)% \|/gm)];
     expect(rows.length).toBe(count);
     for (const l of lines) {
       const [, key, v] = /'([^']+)': '(\w+)'/.exec(l)!;
