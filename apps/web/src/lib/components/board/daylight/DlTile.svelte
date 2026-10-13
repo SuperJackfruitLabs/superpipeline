@@ -1,6 +1,7 @@
 <!-- apps/web/src/lib/components/board/daylight/DlTile.svelte -->
 <script lang="ts">
   /** One Daylight card tile (SB §3.3 Tiles). The title's ::after covers the tile, so the whole tile opens the card. */
+  import './priority-chip.css';
   import { Button, Face } from '@superjackfruit/vibekit';
   import type { Stage } from '$lib/api';
   import { app } from '$lib/stores/app.svelte';
@@ -12,10 +13,11 @@
   import { refLabel } from '../ref-chip';
   import { dueShort, moreLabelsTitle, tileAction, tileWho } from '../board-words';
   import type { CardSummary } from '../card-summary';
+  import type { PeekController } from './peek-controller';
   import DlPeek from './DlPeek.svelte';
 
-  let { s, stages, peekOpen, firstNeeds, onPeek, onPeekClose }: {
-    s: CardSummary; stages: Stage[]; peekOpen: boolean; firstNeeds: boolean; onPeek: (id: string) => void; onPeekClose: () => void;
+  let { s, stages, peekOpen, firstNeeds, peek }: {
+    s: CardSummary; stages: Stage[]; peekOpen: boolean; firstNeeds: boolean; peek: PeekController;
   } = $props();
 
   let moveOpen = $state(false);
@@ -38,8 +40,10 @@
   class:focused={peekOpen}
   data-card-id={s.id}
   use:cardDraggable={{ cardId: s.id }}
-  onpointerenter={() => onPeek(s.id)}
-  onfocusin={() => onPeek(s.id)}
+  onpointerenter={() => peek.pointerEnter(s.id)}
+  onpointerleave={() => peek.pointerLeave(s.id)}
+  onfocusin={() => peek.focusIn(s.id)}
+  onfocusout={(e) => { if (!e.currentTarget.contains(e.relatedTarget as Node | null)) peek.focusOut(s.id); }}
 >
   <h3>
     <button
@@ -58,7 +62,7 @@
   <CardMoveMenu bind:this={menu} bind:open={moveOpen} card={s.card} {stages} bare />
   {#if chips}
     <div class="dl-chips">
-      {#if s.priority > 0}<span class="vk-visually-hidden">Priority {s.priority}</span>{/if}
+      {#if s.priority > 0}<span class="vk-visually-hidden">Priority {s.priority}</span><span class="dl-chip dl-pri" aria-hidden="true">P{s.priority}</span>{/if}
       {#each s.labels as l (l.id)}<span class="dl-chip">{l.name}</span>{/each}
       {#if s.moreLabels > 0}<span class="dl-chip" title={moreLabelsTitle(s.moreLabels)}>+{s.moreLabels}</span>{/if}
       {#if s.blocked}<span class="dl-chip block" title="Blocked by another card. This card will not be claimed"><Icon name="blocked" size={13} strokeWidth={1.8} />Blocked</span>{/if}
@@ -85,5 +89,5 @@
     {/if}
   </div>
   {#if action}<div class="dl-act"><Button variant="signal" onclick={act}>{action.label}</Button></div>{/if}
-  {#if peekOpen}<DlPeek {s} actionLabel={action?.label ?? null} onAct={act} onClose={onPeekClose} />{/if}
+  {#if peekOpen}<DlPeek {s} actionLabel={action?.label ?? null} onAct={act} onClose={() => peek.close()} />{/if}
 </article>

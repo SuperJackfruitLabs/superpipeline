@@ -319,3 +319,20 @@ The SP-Dlg-Appearance artboards were 1200px tall and `.art` clipped the 1237–1
 | SP-Card-Paper | manifest `h` | 3500 | 3261: the reference's drawn height once the empty sections went (its scrim ended there; below it the reference drew ground) | Fix round 1: raise or lower the artboard to its content |
 | SP-Phone-Card-Daylight, -Paper, -Quiet, -Studio | the empty Plan ("error-eric did not post a plan for this card.") and empty Decisions ("No decisions on this card yet.") blocks | drawn | removed | Operator ruling (2026-10-13, O7) |
 | SP-Phone-Card-Daylight, -Paper, -Quiet | the "Show tool calls" button | one toggle after the run list, for every run at once | inside the open (newest) run, after its events: each run has its own toggle | Track X fix round 1 (R4): phone parity with the drawers' per-attempt tool calls (O15) |
+## Wave 1 Track Y: live-UI fixes (2026-10-13)
+
+| Artboard | Selector | Was | Now | Ruling |
+|---|---|---|---|---|
+| SP-Board-Daylight | each tile with a priority (`.dl-chips`, after the "Priority N" hidden text) | priority only as the coloured left edge (P3 nothing) | a `P1` to `P4` chip (`.dl-chip.dl-pri`, 12px mono bold), aria-hidden beside the hidden text | Live audit #12: Daylight shows priority in words, as the other vibes do |
+| SP-Phone-Board-Daylight | each tile with a priority (`.stg`) | priority only as the edge | a `P1` to `P4` pill (`.pd-pri`) after the stage line | Same |
+| SP-Operate-Daylight, SP-Operate-Quiet | each activity row's time | `22:50 UTC` and the three others, the server's UTC | the reader's clock (Asia/Kolkata in the harness): `04:20`, `03:55`, `19:41`, `15:25`, no "UTC" | Live audit #19: one time format, the user's own zone |
+| SP-Operate-Paper | each digest row's time, and the masthead's "Times in UTC" | UTC times, a "Times in UTC" line | the reader's clock, the line dropped (every time on the page is local) | Same |
+| SP-Operate-Studio | each event row's time, the op line, the sub-line's due date | UTC times, "· times UTC", `due 2026-10-06, overdue` | the reader's clock, the reminder dropped, `due 6 Oct, overdue` (the app's short date) | Same |
+| SP-Operate-Quiet | the lede | "Times are in UTC." | dropped | Same |
+
+## Wave 1 Track Y, fix round 1
+
+| Artboard | Selector | Was | Now | Ruling |
+|---|---|---|---|---|
+| SP-Spend-Daylight, SP-Spend-Paper, SP-Spend-Quiet, SP-Spend-Studio | every Board log row's time (68 per file, the plain and the raw lists) | the server's UTC `22:50:12` | the reader's clock, +5:30 in the harness's Asia/Kolkata (`04:20:12`) | Live audit #19: one time format, the user's own zone |
+| SP-Spend-* (all 4) | the log's meta line | "last 60 events, newest first · times in UTC" | "last 60 events, newest first" | Same |

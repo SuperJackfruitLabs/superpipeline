@@ -7,7 +7,7 @@
   import LineIcon from '$lib/components/parts/LineIcon.svelte';
   import { moveTargets } from '../operate-data';
   import { CapsUi, OperateUi } from '../operate-ui.svelte';
-  import { cut140, letters, moveOptionLabel, paperCap, paperMastEnd, paperMastLine, paperMeta, resumeOptions, RESUME_LABEL, staleLine, stopHint, usd, when } from '../operate-words';
+  import { cut140, letters, moveOptionLabel, paperCap, paperMastEnd, paperMastLine, paperMeta, resumeOptions, RESUME_LABEL, staleLine, noticeBody, stopHint, usd, when } from '../operate-words';
   import type { NeedRow, OperateLayoutProps } from './types';
   import './operate-paper.css';
 
@@ -39,7 +39,7 @@
       <svelte:element this={viewport.phone ? 'h2' : 'h1'} class="op-title">The desk</svelte:element>
       <p class="mast__line">{paperMastLine(model.nowMs, model.phase, model.needs.length, model.running.length)}</p>
     </div>
-    <p class="mast__end">{paperMastEnd(model.boardName, model.cardCount)}<br>Times in UTC</p>
+    <p class="mast__end">{paperMastEnd(model.boardName, model.cardCount)}</p>
   </header>
   <div class="cols">
     <section class="col" id="letters" aria-labelledby="k1">
@@ -92,7 +92,7 @@
         <div class="dig">
           <h3>{@render face(g.agentName, g.iconUrl, 22, g.need ? 'needs' : 'resting')}<a href={model.cardHref(g.cardId)} onclick={(e: MouseEvent) => go(e, g.cardId)}>{g.title}</a></h3>
           {#each events(g) as n (n.seq)}
-            <div class="dig__row"><p><span class="dig__t">{when(n)}</span>{staleLine(n, 'paper', g.need?.item.kind ?? null) ?? ` — ${n.body} `}{#if g.need}<a href="#letters" class="lnk" style="min-height: 0px; display: inline;">The reason is in its letter.</a>{/if}</p>{#if !n.read}<button class="tick" type="button" aria-label="Mark read" onclick={() => model.markRead(n.seq)}><LineIcon name="tick" size={18} /></button>{/if}</div>
+            <div class="dig__row"><p><span class="dig__t">{when(n)}</span>{staleLine(n, 'paper', g.need?.item.kind ?? null) ?? ` — ${noticeBody(n)} `}{#if g.need}<a href="#letters" class="lnk" style="min-height: 0px; display: inline;">The reason is in its letter.</a>{/if}</p>{#if !n.read}<button class="tick" type="button" aria-label="Mark read" onclick={() => model.markRead(n.seq)}><LineIcon name="tick" size={18} /></button>{/if}</div>
           {/each}
           <div class="acts" style="margin-top: var(--vk-space-1);">
             {#if g.need?.actions.includes('resume')}<Button variant="secondary" class="btn-sm" type="button" onclick={() => ui.fromActivity(g.need!, 'letters')}>Resume</Button>

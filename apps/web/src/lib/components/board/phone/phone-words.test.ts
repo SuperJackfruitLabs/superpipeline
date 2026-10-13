@@ -32,6 +32,7 @@ describe('wantsOrder', () => {
 describe('greeting band (Daylight phone)', () => {
   it('greets by first name', () => {
     expect(phoneHello('noon', 'Ira')).toBe('Good afternoon, Ira.');
+    expect(phoneHello('noon', '')).toBe('Good afternoon.');
   });
   it('says what wants you, in words', () => {
     expect(needsCounts(dxRows())).toEqual({ needs: 4, stopped: 3, noOwner: 1, questions: 0, reviews: 0 });

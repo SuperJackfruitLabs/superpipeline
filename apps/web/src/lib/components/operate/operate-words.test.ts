@@ -6,7 +6,7 @@ import {
   attemptsSignalOperate, cut140, daylightCap, daylightGreeting, daylightMeta, dayWords, greetingLabel, kindWord,
   localHM, moveOptionLabel, needCounts, paperCap, paperMastEnd, paperMastLine, paperMeta, quietLede, quietMeta,
   quietSpend, quietLine, resumeOptions, staleLine, stageOwnerText, studioCapFigure, studioHeroTitle, studioOpLine,
-  studioSub, summarySentenceDaylight, summarySentenceStudio, when, letters,
+  noticeBody, studioSub, summarySentenceDaylight, summarySentenceStudio, when, letters,
 } from './operate-words';
 import { needRows } from './operate-data';
 import { itemsFromBoard, sortAttention } from '$lib/components/attention/attention';
@@ -75,9 +75,16 @@ describe('cut140 and the attempts signal', () => {
 });
 
 describe('when and staleLine (classified by the attention kind, O-9)', () => {
-  it('UTC hours and minutes', () => {
-    expect(when(latest(C1DFC.id))).toBe('22:50');
-    expect(when(latest(C4605.id))).toBe('14:11');
+  it('the reader\'s own clock, hours and minutes', () => {
+    expect(when(latest(C1DFC.id), TZ)).toBe('04:20');
+    expect(when(latest(C4605.id), TZ)).toBe('19:41');
+    expect(when(latest(C4605.id), 'UTC')).toBe('14:11');
+  });
+  it('a date written inside a notice reads in the app\'s short form', () => {
+    const overdue = DX_NOTIFICATIONS.find((n) => n.kind === 'overdue')!;
+    expect(overdue.body).toContain('2026-10-06');
+    expect(noticeBody(overdue)).toBe('"Fix the highest-severity blocker found in the clean-room journey" was due 6 Oct');
+    expect(noticeBody({ ...overdue, body: 'nothing to change' })).toBe('nothing to change');
   });
   it('Daylight', () => {
     expect(staleLine(latest(C1DFC.id), 'daylight', 'blocked')).toBe('Still stopped a day later in Fix.');
@@ -93,13 +100,13 @@ describe('when and staleLine (classified by the attention kind, O-9)', () => {
     expect(staleLine(latest(C63AC.id), 'studio', 'no-owner')).toBe('Still unclaimed 48h in Reported. ');
   });
   it('Quiet, with the pointer to the reason', () => {
-    expect(quietLine(latest(C4605.id), 'blocked', true)).toBe('14:11 UTC: still stopped a day later in Reproduce. The reason is under Needs your decision.');
-    expect(quietLine(latest(C63AC.id), 'no-owner', true)).toBe('09:55 UTC: still unclaimed after two days in Reported. The reason is under Needs your decision.');
+    expect(quietLine(latest(C4605.id), 'blocked', true, TZ)).toBe('19:41: still stopped a day later in Reproduce. The reason is under Needs your decision.');
+    expect(quietLine(latest(C63AC.id), 'no-owner', true, TZ)).toBe('15:25: still unclaimed after two days in Reported. The reason is under Needs your decision.');
   });
   it('anything that is not a stale notice reads verbatim', () => {
     const rework = DX_NOTIFICATIONS.find((n) => n.kind === 'rework')!;
     expect(staleLine(rework, 'daylight', 'blocked')).toBeNull();
-    expect(quietLine(rework, 'blocked', false)).toBe('21:30 UTC: Sent back for one automatic rework: the handoff is missing commit');
+    expect(quietLine(rework, 'blocked', false, TZ)).toBe('03:00: Sent back for one automatic rework: the handoff is missing commit');
     const odd: Notification = { ...rework, kind: 'stale', body: 'Stale for a while' };
     expect(staleLine(odd, 'studio', 'blocked')).toBeNull();
   });
@@ -113,6 +120,7 @@ describe('sentences', () => {
     expect(daylightGreeting('noon', 'Rakesh', 4)).toBe('Good afternoon, Rakesh. 4 cards want you.');
     expect(daylightGreeting('noon', 'Rakesh', 1)).toBe('Good afternoon, Rakesh. 1 card wants you.');
     expect(daylightGreeting('noon', 'Rakesh', 0)).toBe('Good afternoon, Rakesh. Nothing needs you.');
+    expect(daylightGreeting('noon', '', 0)).toBe('Good afternoon. Nothing needs you.');
     expect(summarySentenceDaylight(counts, 0)).toBe('Three agents stopped and are waiting on you, and one card has nobody to pick it up. Nothing is running.');
     expect(summarySentenceDaylight({ s: 1, o: 0, other: 0 }, 2)).toBe('One agent stopped and is waiting on you. Two agents are working.');
   });
@@ -126,11 +134,11 @@ describe('sentences', () => {
     expect(studioHeroTitle(4, 0)).toEqual({ sr: '4 ', text: 'cards on this board need you, and nothing is running' });
     expect(studioHeroTitle(0, 0)).toEqual({ sr: '', text: 'Nothing on this board needs you' });
     expect(summarySentenceStudio(counts, 0, 0)).toBe('Three stopped and are waiting to be resumed; one sits in a stage no agent works and needs moving. No agent is working anything, and nothing has been spent this week.');
-    expect(studioOpLine(DX_NOW, 'noon', TZ)).toBe('13:51 · midday · times UTC');
+    expect(studioOpLine(DX_NOW, 'noon', TZ)).toBe('13:51 · midday');
     expect(localHM(DX_NOW, TZ)).toBe('13:51');
   });
   it('Quiet lede', () => {
-    expect(quietLede('Developer Experience', 4, 0)).toBe('Developer Experience. 4 cards need you. No agent is working. Times are in UTC. ');
+    expect(quietLede('Developer Experience', 4, 0)).toBe('Developer Experience. 4 cards need you. No agent is working. ');
   });
 });
 
@@ -150,7 +158,7 @@ describe('row meta per vibe', () => {
     expect(quietMeta(row(C63AC.id))).toBe('No owner in Reported · 2 days · due 6 October, overdue · ');
   });
   it('Studio sub-line', () => {
-    expect(studioSub(row(C63AC.id))).toBe('Reported · due 2026-10-06, overdue');
+    expect(studioSub(row(C63AC.id))).toBe('Reported · due 6 Oct, overdue');
     expect(studioSub(row(C4605.id))).toBe('Reproduce');
   });
 });

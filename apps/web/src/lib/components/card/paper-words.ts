@@ -99,7 +99,7 @@ export function paperWhen(iso: string, now: string, tz?: string): string {
   const d = parts(iso, tz);
   return ymd(iso, tz) === ymd(now, tz) ? `Today, ${d.hh}:${d.mm}` : `${d.weekdayLong} ${d.day} ${d.monthLong}, ${d.hh}:${d.mm}`;
 }
-const STATE_WORD: Readonly<Record<string, string>> = { working: 'Working', completed: 'Done', submitted: 'Queued', queued: 'Queued', rejected: 'Rejected', failed: 'Failed', 'input-required': 'Waiting on you' };
+export const STATE_WORD: Readonly<Record<string, string>> = { working: 'Working', completed: 'Done', submitted: 'Queued', queued: 'Queued', rejected: 'Rejected', failed: 'Failed', 'input-required': 'Waiting on you' };
 export function paperStateWord(o: { archived: boolean; needsYou: boolean; state: string; ageHours: number | null }): string {
   if (o.archived) return 'Archived';
   if (o.needsYou) return `Waiting on you · ${ageWords(o.ageHours ?? 0)}`;

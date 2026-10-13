@@ -47,7 +47,7 @@ describe('Telemetry', () => {
   it('collapses the log to eight rows and opens it on request', async () => {
     api.getUsage.mockResolvedValue(ZERO);
     const { container } = render(Telemetry, { vibe: 'daylight' });
-    await screen.findByText('last 10 events, newest first · times in UTC');
+    await screen.findByText('last 10 events, newest first');
     const rows = () => container.querySelectorAll('section[aria-labelledby="log-h"] > ol.log > li').length;
     expect(rows()).toBe(8);
     await fireEvent.click(screen.getByRole('button', { name: 'Show all 10 events' }));

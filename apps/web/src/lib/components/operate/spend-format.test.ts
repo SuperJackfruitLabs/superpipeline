@@ -92,7 +92,7 @@ describe('the board log', () => {
     expect(newestFirst([e(1, 'card.moved', '2026-10-10T09:55:20Z'), e(2, 'cards.stale_digest', '2026-10-10T22:50:12Z'), e(3, 'notification', '2026-10-10T22:50:12Z')]).map((x) => x.seq)).toEqual([2, 3, 1]);
   });
   it('counts what it shows', () => {
-    expect(logMeta(60)).toBe('last 60 events, newest first · times in UTC');
-    expect(logMeta(1)).toBe('last 1 event, newest first · times in UTC');
+    expect(logMeta(60)).toBe('last 60 events, newest first');
+    expect(logMeta(1)).toBe('last 1 event, newest first');
   });
 });

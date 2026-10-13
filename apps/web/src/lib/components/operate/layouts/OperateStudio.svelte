@@ -8,7 +8,7 @@
   import MoveMenu from '$lib/components/parts/MoveMenu.svelte';
   import { moveTargets } from '../operate-data';
   import { CapsUi, OperateUi } from '../operate-ui.svelte';
-  import { attemptsSignalOperate, kindCell, needCounts, resumeOptions, RESUME_LABEL, staleLine, studioAge, studioCapFigure, studioHeroTitle, studioOpLine, studioSub, summarySentenceStudio, usd, when } from '../operate-words';
+  import { attemptsSignalOperate, kindCell, needCounts, resumeOptions, RESUME_LABEL, staleLine, noticeBody, studioAge, studioCapFigure, studioHeroTitle, studioOpLine, studioSub, summarySentenceStudio, usd, when } from '../operate-words';
   import type { NeedRow, OperateLayoutProps } from './types';
   import './operate-studio.css';
 
@@ -169,7 +169,7 @@
             {#each model.groups as g (g.cardId)}
               <tr class="op-grp"><td colspan="4"><div class="in">{@render face(g.agentName, g.iconUrl, g.need ? 'needs' : 'resting')}<a class="ttl" href={model.cardHref(g.cardId)} onclick={(e: MouseEvent) => go(e, g.cardId)}>{g.title}</a><span class="end">{#if g.need?.actions.includes('resume')}<button class="ar-btn2" type="button" style="min-height: 44px;" onclick={() => { selected = model.needs.indexOf(g.need!); void ui.fromActivity(g.need!, 'needs'); }}>Resume</button>{:else if g.need?.actions.includes('move')}<button class="ar-btn2" type="button" aria-haspopup="menu" style="min-height: 44px;" onclick={() => { selected = model.needs.indexOf(g.need!); document.getElementById('needs')?.scrollIntoView?.({ block: 'start' }); openMenu(g.need!); }}>Move…</button>{/if}{#if g.earlier.length > 0}<button class="ar-lk quiet" type="button" aria-expanded={ui.earlierOpen[g.cardId] ? 'true' : 'false'} onclick={() => ui.toggleEarlier(g.cardId)}>Earlier</button>{/if}</span></div></td></tr>
               {#each events(g) as n (n.seq)}
-                <tr class="op-ev"><td><span class="m">{when(n)}</span></td><td><span class="kick">{kindCell(n)}</span></td><td>{staleLine(n, 'studio', g.need?.item.kind ?? null) ?? `${n.body} `}{#if g.need}<a class="ar-lk" href="#needs" style="min-height: 0px;">reason ↑</a>{/if}</td><td>{#if !n.read}<button class="op-tick" type="button" aria-label="Mark read" onclick={() => model.markRead(n.seq)}><LineIcon name="tick-ar" size={16} stroke={1.75} /></button>{/if}</td></tr>
+                <tr class="op-ev"><td><span class="m">{when(n)}</span></td><td><span class="kick">{kindCell(n)}</span></td><td>{staleLine(n, 'studio', g.need?.item.kind ?? null) ?? `${noticeBody(n)} `}{#if g.need}<a class="ar-lk" href="#needs" style="min-height: 0px;">reason ↑</a>{/if}</td><td>{#if !n.read}<button class="op-tick" type="button" aria-label="Mark read" onclick={() => model.markRead(n.seq)}><LineIcon name="tick-ar" size={16} stroke={1.75} /></button>{/if}</td></tr>
               {/each}
             {/each}
           </tbody>

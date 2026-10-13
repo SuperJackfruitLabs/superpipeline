@@ -13,7 +13,9 @@ import DlTile from './DlTile.svelte';
 
 const m = buildBoardModel(DX, DX.cards, boardCtx());
 const s = (id: string) => m.cards.find((c) => c.id === id)!;
-const props = (id: string, over: Record<string, unknown> = {}) => ({ s: s(id), stages: m.stageDefs, peekOpen: false, firstNeeds: false, onPeek: vi.fn(), onPeekClose: vi.fn(), ...over });
+const props = (id: string, over: Record<string, unknown> = {}) => ({ s: s(id), stages: m.stageDefs, peekOpen: false, firstNeeds: false, peek: peekStub(), ...over });
+
+const peekStub = () => ({ pointerEnter: vi.fn(), pointerLeave: vi.fn(), focusIn: vi.fn(), focusOut: vi.fn(), close: vi.fn() });
 
 beforeEach(() => store.openCard.mockClear());
 afterEach(cleanup);
@@ -38,9 +40,21 @@ describe('DlTile', () => {
     await tick();
     expect(store.openMoveDialog).toHaveBeenCalled(); // the Move dialog (SP-Dlg-Move) opens, not a menu
   });
+  it('shows priority as a P chip, for P3 and P4 too, and nothing for none', () => {
+    const { container } = render(DlTile, props(DX_IDS.c63ac));
+    expect(container.querySelector('.dl-pri')!.textContent).toBe('P1');
+    expect(container.querySelector('.dl-pri')!.getAttribute('aria-hidden')).toBe('true');
+  });
+  it('P3 and P4 are chips, not just an edge', async () => {
+    const { container, rerender } = render(DlTile, props(DX_IDS.c63ac, { s: { ...s(DX_IDS.c63ac), priority: 3 } }));
+    expect(container.querySelector('.dl-pri')!.textContent).toBe('P3');
+    await rerender(props(DX_IDS.c63ac, { s: { ...s(DX_IDS.c63ac), priority: 4 } }));
+    expect(container.querySelector('.dl-pri')!.textContent).toBe('P4');
+  });
   it('1dfc has no priority and no chips row at all', () => {
     const { container } = render(DlTile, props(DX_IDS.c1dfc));
     expect(container.querySelector('.dl-chips')).toBeNull();
+    expect(container.querySelector('.dl-pri')).toBeNull();
     expect(container.querySelector('.dl-ref')!.textContent).toBe('test(api): pin manual delivery reminder');
   });
   it('a blocked queued card says it is unclaimed and offers no action', () => {
@@ -50,14 +64,24 @@ describe('DlTile', () => {
     expect(container.querySelector('.dl-act')).toBeNull();
   });
   it('tells the board where the eye is, and shows the peek when asked', async () => {
-    const onPeek = vi.fn();
-    const { container, rerender } = render(DlTile, props(DX_IDS.c58f8, { onPeek }));
-    await fireEvent.pointerEnter(container.querySelector('article')!);
-    expect(onPeek).toHaveBeenCalledWith(DX_IDS.c58f8);
-    await rerender(props(DX_IDS.c58f8, { onPeek, peekOpen: true }));
-    const peek = screen.getByRole('complementary', { name: 'Peek' });
-    expect(peek.textContent).toContain('Peek · Failing test · 33h in this stage');
-    expect(peek.textContent).toContain('tester-tim · I’ve stopped and need you');
+    const peek = peekStub();
+    const { container, rerender } = render(DlTile, props(DX_IDS.c58f8, { peek }));
+    const article = container.querySelector('article')!;
+    await fireEvent.pointerEnter(article);
+    expect(peek.pointerEnter).toHaveBeenCalledWith(DX_IDS.c58f8);
+    await fireEvent.pointerLeave(article);
+    expect(peek.pointerLeave).toHaveBeenCalledWith(DX_IDS.c58f8);
+    await fireEvent.focusIn(article.querySelector('.dl-title')!);
+    expect(peek.focusIn).toHaveBeenCalledWith(DX_IDS.c58f8);
+    // focus moving to another control inside the card is not leaving it; moving out of it is
+    await fireEvent.focusOut(article.querySelector('.dl-title')!, { relatedTarget: article.querySelector('.dl-move') });
+    expect(peek.focusOut).not.toHaveBeenCalled();
+    await fireEvent.focusOut(article.querySelector('.dl-title')!, { relatedTarget: document.body });
+    expect(peek.focusOut).toHaveBeenCalledWith(DX_IDS.c58f8);
+    await rerender(props(DX_IDS.c58f8, { peek, peekOpen: true }));
+    const open = screen.getByRole('complementary', { name: 'Peek' });
+    expect(open.textContent).toContain('Peek · Failing test · 33h in this stage');
+    expect(open.textContent).toContain('tester-tim · I’ve stopped and need you');
     expect(container.querySelector('article')!.className).toMatch(/\bfocused\b/);
   });
   it('the first needs tile is the jump target', () => {

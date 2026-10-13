@@ -55,7 +55,8 @@ export function needsCounts(rows: readonly Pick<OrderRow, 'urgency' | 'kind'>[])
 }
 
 export function phoneHello(phase: Phase, firstName: string): string {
-  return `${greeting(phase, 'daylight').replace(/[.!]\s*$/, '')}, ${firstName}.`;
+  const hello = greeting(phase, 'daylight').replace(/[.!]\s*$/, '');
+  return firstName ? `${hello}, ${firstName}.` : `${hello}.`;
 }
 
 export function phoneHelloP(c: NeedsCounts): { strong: string; rest: string } {

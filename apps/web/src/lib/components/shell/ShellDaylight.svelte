@@ -48,7 +48,7 @@
   <span class="dy-faces" aria-hidden="true" title={m.crewTitle}>
     {#each m.crew.slice(0, 3) as c (c.id)}<Face id={c.name} label={c.name} mood={c.mood} size={20} />{/each}
   </span>
-  <span><b>{m.crewCount}</b>{m.crewLine}</span>
+  <span title={m.crewScopeTitle}><b>{m.crewCount}</b>{m.crewLine}</span>
 {/snippet}
 
 {#snippet foot()}

@@ -53,3 +53,14 @@ describe('ageWords', () => {
     expect(ageWords(0.4)).toBe('under an hour');
   });
 });
+
+describe('ageStage (the peek) agrees with the drawer', () => {
+  it('says under an hour, then short hours and days', async () => {
+    const { ageStage, ageWords } = await import('./age');
+    expect(ageStage(0.002)).toBe('under an hour');
+    expect(ageStage(0.002)).toBe(ageWords(0.002));
+    expect(ageStage(33)).toBe('33h');
+    expect(ageStage(50)).toBe('2d');
+    expect(ageStage(null)).toBe('—');
+  });
+});

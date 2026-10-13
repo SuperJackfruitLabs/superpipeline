@@ -71,12 +71,12 @@ test('the Operate count is the open board’s on a board and the workspace’s e
   const boardId = await seedBoard(request, 'Shell count', REVIEW_PIPELINE);
   await seedGatedCard(request, boardId, 'Count me in');
   await openBoard(page, boardId);
-  // vibekit's AppNav draws the count as a badge and says "1 needs you" or "n need you" to a screen reader.
+  // vibekit's AppNav draws the count as a badge; AppShell names the link with the count's scope (nav-scope.ts).
   const nav = page.getByRole('navigation', { name: 'Superpipeline' });
-  const operate = nav.getByRole('link', { name: /Operate\W+1 needs? you/ });
+  const operate = nav.getByRole('link', { name: /Operate\W+1 needs? you on this board/ });
   await expect(operate).toBeVisible();
   await expect(operate.locator('.vk-appnav__count')).toHaveText('1');
   // Off a board the badge counts everything waiting on you across the workspace: at least this one.
   await page.goto('/workspace/agents');
-  await expect(nav.getByRole('link', { name: /Operate\W+\d+ needs? you/ })).toBeVisible();
+  await expect(nav.getByRole('link', { name: /Operate\W+\d+ needs? you across all boards/ })).toBeVisible();
 });

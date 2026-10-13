@@ -88,7 +88,7 @@ export function eventSummary(e: BoardEvent): string {
   return ['cardId', 'agentId', 'to', 'from', 'name', 'reason', 'decision'].filter((k) => typeof p[k] === 'string').map((k) => `${k}=${p[k] as string}`).join(' · ');
 }
 export const rawLine = (e: BoardEvent) => { const s = eventSummary(e); return `${e.type}${s ? ` ${s}` : ''}`; };
-export const logMeta = (n: number) => `last ${n} ${n === 1 ? 'event' : 'events'}, newest first · times in UTC`;
+export const logMeta = (n: number) => `last ${n} ${n === 1 ? 'event' : 'events'}, newest first`;
 
 export function budgetLine(spend: number, budget: number | null, over: boolean): { text: string; setCap: boolean } {
   if (budget === null) return { text: 'No budget cap set · ', setCap: true };

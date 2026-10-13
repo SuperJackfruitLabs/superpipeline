@@ -11,6 +11,20 @@ beforeEach(() => { app.filters = noFilters(); app.filterOpen = false; });
 afterEach(cleanup);
 
 describe('FilterDialog', () => {
+  it('lists people and states in words', async () => {
+    const stub = (id: string, state: string, owner: string) => ({ id, state, ownerUserId: owner });
+    app.board = { cards: [stub('c1', 'submitted', 'usr_b19776fac3c94df4'), stub('c2', 'working', 'usr_ira')] } as never;
+    app.members = [{ userId: 'usr_ira', email: 'ira@vibes-fixture.invalid', name: 'Ira Mehta', role: 'owner', createdAt: '' }];
+    app.filterOpen = true;
+    render(FilterDialog);
+    await tick();
+    expect(screen.getByLabelText('Queued')).toBeTruthy();
+    expect(screen.getByLabelText('Ira Mehta')).toBeTruthy();
+    expect(screen.getByLabelText('someone')).toBeTruthy();
+    expect(screen.queryByLabelText('submitted')).toBeNull();
+    expect(screen.queryByLabelText('usr_b19776fac3c94df4')).toBeNull();
+    app.board = null;
+  });
   it('is closed until a shell opens it, and is vibekit’s Dialog', async () => {
     render(FilterDialog);
     expect(screen.queryByRole('dialog')).toBeNull();
