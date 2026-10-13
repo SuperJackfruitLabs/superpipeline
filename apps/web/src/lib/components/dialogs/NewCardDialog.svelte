@@ -13,7 +13,7 @@
   import Icon from '$lib/components/parts/Icon.svelte';
   import LabelPicker from './LabelPicker.svelte';
   import BoardPickButton from './BoardPickButton.svelte';
-  import { MOD_KEY, NC_LEAD, PRIORITY_OPTIONS } from './dialog-copy';
+  import { MOD_KEY, NC_LEAD, NC_LEAD_PERSON, PRIORITY_OPTIONS } from './dialog-copy';
   import { dispatchFoot, ownerShort } from './who-picks-up';
   import './css/nc.css';
   import './pickers.css';
@@ -41,6 +41,8 @@
   const stage = $derived(stages.find((s) => s.key === stageKey) ?? null);
   const foot = $derived(stage ? dispatchFoot(stage, boardName, app.agents) : null);
   const empty = $derived(title.trim() === '');
+  /** A person works this stage (#11): no "agent" in the brief's heading or the lead. */
+  const forPerson = $derived(stage?.ownerKind === 'human');
 
   let seen = untrack(() => app.composeRequest);
   $effect(() => {
@@ -94,14 +96,14 @@
 <Dialog bind:open title="What needs doing?" {eyebrow} width="800px" frame="sectioned" close="Close without saving" class="nc" onclose={close}>
   <!-- svelte-ignore a11y_no_static_element_interactions -->
   <div class="nc-content" data-dlg="nc" onkeydown={onkey}>
-    <p class="nc-lead">{NC_LEAD[appearance.value.vibe]}</p>
+    <p class="nc-lead">{(forPerson ? NC_LEAD_PERSON : NC_LEAD)[appearance.value.vibe]}</p>
     <label class="vk-visually-hidden" for="nc-sentence">Describe it in a sentence</label>
     <textarea class="nc-sentence" id="nc-sentence" rows="2" bind:value={sentence} data-autofocus></textarea>
     <div class="nc-grid">
       <div class="nc-col">
         <Field id="nc-t" label="Card title" bind:value={title} />
         <div class="vk-field">
-          <label class="vk-field__label" for="nc-b">Brief for the agent</label>
+          <label class="vk-field__label" for="nc-b">{forPerson ? 'What this card asks' : 'Brief for the agent'}</label>
           <p class="vk-field__hint" id="nc-bh">What done looks like, and anything it should not do.</p>
           <div class="nc-brief-wrap">
             <textarea class="nc-brief" id="nc-b" aria-describedby="nc-bh" rows="9" bind:value={brief}></textarea>
@@ -160,4 +162,12 @@
   :global(.vk-dialog.nc .nc-goes > svg) { flex: 0 0 auto; }
   :global(.vk-dialog.nc .nc-goes strong) { color: var(--vk-color-text); }
   :global(.vk-dialog.nc .nc-hint) { line-height: 1.45; }
+  /* #3, #4: Project and Due each take the whole row, so "No project" and the full date beside the calendar button fit in every vibe. */
+  :global(.vk-dialog.nc .nc-row2) { grid-template-columns: minmax(0, 1fr); }
+  /* #3, #4 on a phone: the two columns stack, so Project and Due get the dialog's full width. */
+  @media (max-width: 640px) { :global(.vk-dialog.nc .nc-grid) { grid-template-columns: minmax(0, 1fr); } }
+  /* #2: the head (title, board, Close) and the foot stay on screen; only the body scrolls. */
+  :global(.vk-dialog.nc) { overflow: hidden; }
+  :global(.vk-dialog.nc > .vk-overlay__head), :global(.vk-dialog.nc > .vk-overlay__actions) { flex: none; }
+  :global(.vk-dialog.nc > .vk-overlay__body) { flex: 1 1 auto; min-height: 0; overflow: auto; }
 </style>

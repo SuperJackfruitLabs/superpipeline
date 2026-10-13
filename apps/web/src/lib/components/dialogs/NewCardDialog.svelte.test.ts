@@ -55,7 +55,12 @@ describe('NewCardDialog', () => {
     expect(sentence.value).toBe('Fix the flaky login');
     expect(document.activeElement).toBe(sentence);
     expect(screen.getByRole('button', { name: 'Board: Developer Experience. Change board' }).textContent?.trim()).toBe('on Developer Experience');
+    // The first stage (Reported) is a person's (#11): no agent in the lead or the brief's heading.
+    expect(screen.getByText('Tell me in a sentence. You can change any of it before it goes.')).toBeTruthy();
+    expect(screen.getByRole('textbox', { name: 'What this card asks' })).toBeTruthy();
+    await fireEvent.change(screen.getByRole('combobox', { name: 'Starts in stage' }), { target: { value: 'reproduce' } });
     expect(screen.getByText('Tell me in a sentence. An agent drafts the brief, and you can change any of it before it goes.')).toBeTruthy();
+    expect(screen.getByRole('textbox', { name: 'Brief for the agent' })).toBeTruthy();
     expect(screen.queryByRole('button', { name: /Draft/ })).toBeNull();
     expect(document.querySelector('.nc-draftrow, .nc-brief-tag')).toBeNull();
   });
@@ -77,7 +82,7 @@ describe('NewCardDialog', () => {
     await fireEvent.click(dispatch);
     expect(dispatchCard).not.toHaveBeenCalled();
     await fireEvent.input(screen.getByRole('textbox', { name: 'Card title' }), { target: { value: 'Ship it' } });
-    await fireEvent.input(screen.getByRole('textbox', { name: 'Brief for the agent' }), { target: { value: 'Done looks like: shipped.' } });
+    await fireEvent.input(screen.getByRole('textbox', { name: 'What this card asks' }), { target: { value: 'Done looks like: shipped.' } });
     await fireEvent.click(screen.getByRole('radio', { name: 'P1' }));
     await fireEvent.click(screen.getByRole('button', { name: 'Add label' }));
     await fireEvent.click(screen.getByRole('option', { name: 'clean-room' }));

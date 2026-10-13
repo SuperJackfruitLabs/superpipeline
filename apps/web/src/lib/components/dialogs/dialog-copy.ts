@@ -9,6 +9,14 @@ export const NC_LEAD: Readonly<Record<Vibe, string>> = {
   quiet: 'Describe the work in one sentence. An agent writes a draft brief. You can change all of it before you dispatch.',
 };
 
+/** The lead when a person works the chosen stage (#11): the same words, without an agent drafting. */
+export const NC_LEAD_PERSON: Readonly<Record<Vibe, string>> = {
+  daylight: 'Tell me in a sentence. You can change any of it before it goes.',
+  paper: 'Describe it in a sentence. You may change any of it before it goes.',
+  studio: 'One sentence in. Edit anything before dispatch.',
+  quiet: 'Describe the work in one sentence. You can change all of it before you dispatch.',
+};
+
 export const PRIORITY_OPTIONS = [
   { value: '0', label: 'None' }, { value: '1', label: 'P1' }, { value: '2', label: 'P2' }, { value: '3', label: 'P3' }, { value: '4', label: 'P4' },
 ] as const;
