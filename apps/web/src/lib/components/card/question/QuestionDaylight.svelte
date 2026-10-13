@@ -21,7 +21,7 @@
     <Face id={name} label={name} mood="needs" size={36} ring="mood" />
     <div class="ds-bubble ds-bubble--sig">
       <span class="ds-who">{name} · {elicitation.signal === 'auth' ? 'needs you to sign in' : 'has a question'}</span>
-      <p class="ds-say" style="white-space: pre-wrap">{elicitation.question}</p>
+      <p class="ds-say" style="white-space: pre-wrap; overflow-wrap: anywhere">{elicitation.question}</p>
       {#if elicitation.createdAt}<span class="ds-time">{whenLabel(elicitation.createdAt, new Date())}</span>{/if}
     </div>
   </div>

@@ -167,7 +167,7 @@
 
       <section class="dp-card" aria-labelledby="h-talk" data-section="comments">
         <h2 id="h-talk" class="dp-h">Talk <small>{talkSummary(m.comments.comments.length)}</small></h2>
-        {#if m.comments.comments.length}<ul class="dp-ul">{#each m.comments.comments as c (c.id)}<li><b>{m.authorName(c.author)}</b> <span style="white-space: pre-wrap; overflow-wrap: anywhere">{c.deletedAt ? 'Comment deleted' : c.body}</span></li>{/each}</ul>{/if}
+        {#if m.comments.comments.length}<ul class="dp-ul">{#each m.comments.comments as c (c.id)}<li><b>{m.authorName(c.author)}</b> <span style="white-space: break-spaces; overflow-wrap: anywhere">{c.deletedAt ? 'Comment deleted' : c.body}</span></li>{/each}</ul>{/if}
         <p class="dp-small" style="margin: 0px;">The agent that works this card reads every comment.</p>
         <Field id="dp-comment" label="Add a comment" control="textarea" maxlength={8192} style="min-height: 88px;" placeholder="⌘ or Ctrl + Enter posts it" bind:value={m.comments.draft} onkeydown={commentKey} />
         {#if m.comments.error}<p class="vk-field__error" role="alert">{m.comments.error}</p>{/if}

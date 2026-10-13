@@ -363,7 +363,7 @@
       {#snippet talkBody()}
         <div data-section="comments" style="display: contents">
           {#if m.comments.comments.length}
-            <ul class="dd-ul">{#each m.comments.comments as c (c.id)}<li><b>{m.authorName(c.author)}</b> <span style="white-space: pre-wrap; overflow-wrap: anywhere">{c.deletedAt ? 'Comment deleted' : c.body}</span></li>{/each}</ul>
+            <ul class="dd-ul">{#each m.comments.comments as c (c.id)}<li><b>{m.authorName(c.author)}</b> <span style="white-space: break-spaces; overflow-wrap: anywhere">{c.deletedAt ? 'Comment deleted' : c.body}</span></li>{/each}</ul>
           {:else}<p class="dd-small" style="margin: 0px;">No comments yet. The agent that works this card reads them.</p>{/if}
           <Field id="dd-comment" label="Add a comment" control="textarea" maxlength={8192} placeholder="⌘ or Ctrl + Enter posts it" bind:value={m.comments.draft} onkeydown={commentKey} />
           {#if m.comments.error}<p class="vk-field__error" role="alert">{m.comments.error}</p>{/if}

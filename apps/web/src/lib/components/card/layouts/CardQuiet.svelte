@@ -162,7 +162,7 @@
     {#if m.decidedGates.length}<section class="qcd-sec" data-section="decisions"><h3>Decisions</h3>{#if m.decidedGates.length}<ul>{#each m.decidedGates as d (d.id)}<li>{d.decision ?? d.status} at {stageNameOf(d.stageKey)}{d.decidedBy ? `, by ${m.principalName(d.decidedBy)}` : ''}.</li>{/each}</ul>{:else}<p>None yet.</p>{/if}</section>{:else}<span hidden data-section="decisions"></span>{/if}
     <section class="qcd-sec" data-section="comments">
       <h3>Comments</h3>
-      {#if m.comments.comments.length}<ul>{#each m.comments.comments as c (c.id)}<li><b>{m.authorName(c.author)}:</b> <span style="white-space: pre-wrap">{c.deletedAt ? 'Comment deleted' : c.body}</span></li>{/each}</ul>{:else}<p>No comments yet. The agent that works this card reads them.</p>{/if}
+      {#if m.comments.comments.length}<ul>{#each m.comments.comments as c (c.id)}<li><b>{m.authorName(c.author)}:</b> <span style="white-space: break-spaces; overflow-wrap: anywhere">{c.deletedAt ? 'Comment deleted' : c.body}</span></li>{/each}</ul>{:else}<p>No comments yet. The agent that works this card reads them.</p>{/if}
       <Field id="qcd-comment" label="Add a comment" control="textarea" maxlength={8192} rows={4} style="min-height: 80px;" bind:value={m.comments.draft} />
       {#if m.comments.error}<p role="alert">{m.comments.error}</p>{/if}
       <div class="qcd-row"><Button variant="secondary" aria-disabled={m.comments.posting ? 'true' : undefined} onclick={() => { if (!m.comments.posting) void m.comments.submit(); }}>Comment</Button><span class="vk-visually-hidden" role="status">{m.comments.posting ? 'Posting…' : ''}</span></div>

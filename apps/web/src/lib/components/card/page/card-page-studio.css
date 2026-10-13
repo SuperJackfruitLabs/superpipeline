@@ -243,3 +243,4 @@
 .ar .ar-run:focus-visible { outline: 2px solid var(--vk-focus); outline-offset: 2px; }
 .ar .cd-ev td { min-width: 0; overflow-wrap: anywhere; }
 .ar .cd-details > summary { cursor: pointer; text-decoration: underline; text-underline-offset: 3px; }
+.ar .cd-ev { width: 100%; table-layout: fixed; }

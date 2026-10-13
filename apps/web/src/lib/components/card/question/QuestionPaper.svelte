@@ -19,7 +19,7 @@
 <div class="elicitation" style="display: contents">
   {#if showQuestion}
     <p class="pcs-dear">{paperSalutation(personName)}</p>
-    <p class="pcs-voice" style="white-space: pre-wrap">{elicitation.question}</p>
+    <p class="pcs-voice" style="white-space: pre-wrap; overflow-wrap: anywhere">{elicitation.question}</p>
     <div class="pcs-sign">
       <Face id={name} label={name} mood="needs" size={32} />
       <div><span class="n">{name}</span><p class="pcs-small">{elicitation.createdAt ? paperWhen(elicitation.createdAt, new Date().toISOString()) : ''}{elicitation.signal === 'auth' ? `${elicitation.createdAt ? ' · ' : ''}needs you to sign in` : ''}</p></div>

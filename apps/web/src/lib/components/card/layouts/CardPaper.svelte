@@ -308,7 +308,7 @@
     {#snippet lettersBody()}
       <div data-section="comments" style="display: contents">
         {#if m.comments.comments.length}
-          <ul class="pcd-ul">{#each m.comments.comments as c (c.id)}<li><b>{m.authorName(c.author)}</b> <span style="white-space: pre-wrap; overflow-wrap: anywhere">{c.deletedAt ? 'Comment deleted' : c.body}</span></li>{/each}</ul>
+          <ul class="pcd-ul">{#each m.comments.comments as c (c.id)}<li><b>{m.authorName(c.author)}</b> <span style="white-space: break-spaces; overflow-wrap: anywhere">{c.deletedAt ? 'Comment deleted' : c.body}</span></li>{/each}</ul>
         {/if}
         <Field id="pcd-comment" label="Write to whoever works this card. The agent reads it." control="textarea" maxlength={8192} rows={4} placeholder="⌘ or Ctrl + Enter posts it" bind:value={m.comments.draft} onkeydown={commentKey} />
         {#if m.comments.error}<p class="vk-field__error" role="alert">{m.comments.error}</p>{/if}

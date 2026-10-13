@@ -165,7 +165,7 @@
         {#if m.decidedGates.length}<section class="qp-sec" aria-labelledby="qp-dec" data-section="decisions"><h2 id="qp-dec">Decisions</h2>{#if m.decidedGates.length}<ul>{#each m.decidedGates as d (d.id)}<li>{d.decision ?? d.status} at {stageNameOf(d.stageKey)}{d.decidedBy ? `, by ${displayPrincipal(d.decidedBy, app.members)}` : ''}.</li>{/each}</ul>{:else}<p>None yet.</p>{/if}</section>{:else}<span hidden data-section="decisions"></span>{/if}
         <section class="qp-sec" aria-labelledby="qp-com" data-section="comments">
           <h2 id="qp-com">Comments</h2>
-          {#if m.comments.comments.length}<ul>{#each m.comments.comments as c (c.id)}<li><b>{m.authorName(c.author)}:</b> <span style="white-space: pre-wrap">{c.deletedAt ? 'Comment deleted' : c.body}</span></li>{/each}</ul>{:else}<p>No comments yet. The agent that works this card reads them.</p>{/if}
+          {#if m.comments.comments.length}<ul>{#each m.comments.comments as c (c.id)}<li><b>{m.authorName(c.author)}:</b> <span style="white-space: break-spaces; overflow-wrap: anywhere">{c.deletedAt ? 'Comment deleted' : c.body}</span></li>{/each}</ul>{:else}<p>No comments yet. The agent that works this card reads them.</p>{/if}
           <Field id="qp-comment" label="Add a comment" control="textarea" maxlength={8192} style="min-height: 96px;" bind:value={m.comments.draft} />
           {#if m.comments.error}<p role="alert">{m.comments.error}</p>{/if}
           <div class="qp-acts"><Button variant="secondary" aria-disabled={m.comments.posting ? 'true' : undefined} onclick={() => { if (!m.comments.posting) void m.comments.submit(); }}>Comment</Button><span class="vk-visually-hidden" role="status">{m.comments.posting ? 'Posting…' : ''}</span></div>
