@@ -9,6 +9,7 @@
   import { app } from '$lib/stores/app.svelte';
   import { noFilters } from '$lib/stores/card-filters';
   import { resolveProjectName } from './project-lookup';
+  import { ownerLabel, stateLabel } from './filter-words';
 
   const f = $derived(app.filters);
   const states = $derived(app.boardStates());
@@ -19,8 +20,8 @@
 
   /** One chip per active filter, each knowing how to switch itself off. */
   const active = $derived([
-    ...f.states.map((s) => ({ key: `state:${s}`, label: s, clear: () => (app.filters.states = f.states.filter((x) => x !== s)) })),
-    ...f.owners.map((o) => ({ key: `owner:${o}`, label: o, clear: () => (app.filters.owners = f.owners.filter((x) => x !== o)) })),
+    ...f.states.map((s) => ({ key: `state:${s}`, label: stateLabel(s), clear: () => (app.filters.states = f.states.filter((x) => x !== s)) })),
+    ...f.owners.map((o) => ({ key: `owner:${o}`, label: ownerLabel(o, app.members, app.agents), clear: () => (app.filters.owners = f.owners.filter((x) => x !== o)) })),
     ...(f.minPriority !== null ? [{ key: 'pri', label: `P${f.minPriority}+`, clear: () => (app.filters.minPriority = null) }] : []),
     ...(f.needsReview ? [{ key: 'rev', label: 'needs review', clear: () => (app.filters.needsReview = false) }] : []),
     ...(f.live ? [{ key: 'live', label: 'working', clear: () => (app.filters.live = false) }] : []),
@@ -54,7 +55,7 @@
   {#if states.length > 0}
     <fieldset class="mb-3"><legend class="eyebrow mb-1.5">state</legend>
       {#each states as s (s)}
-        <Choice type="checkbox" name="fd-state" value={s} label={s} bind:checked={() => f.states.includes(s), (on) => (app.filters.states = toggle(f.states, s, on))} />
+        <Choice type="checkbox" name="fd-state" value={s} label={stateLabel(s)} bind:checked={() => f.states.includes(s), (on) => (app.filters.states = toggle(f.states, s, on))} />
       {/each}
     </fieldset>
   {/if}
@@ -62,7 +63,7 @@
   {#if owners.length > 0}
     <fieldset class="mb-3"><legend class="eyebrow mb-1.5">owner</legend>
       {#each owners as o (o)}
-        <Choice type="checkbox" name="fd-owner" value={o} label={o} bind:checked={() => f.owners.includes(o), (on) => (app.filters.owners = toggle(f.owners, o, on))} />
+        <Choice type="checkbox" name="fd-owner" value={o} label={ownerLabel(o, app.members, app.agents)} bind:checked={() => f.owners.includes(o), (on) => (app.filters.owners = toggle(f.owners, o, on))} />
       {/each}
     </fieldset>
   {/if}
