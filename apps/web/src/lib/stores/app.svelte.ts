@@ -83,7 +83,9 @@ class AppStore {
   noteLoaded(): void {
     if (!import.meta.env.DEV || typeof document === 'undefined') return;
     const settled = this.authState !== 'ready' || this.needsBoard || this.board !== null;
-    document.documentElement.dataset.ready = String(this.#busy === 0 && settled);
+    // An open card is read once its log is in, not when the board is: the drawer mounts after the board.
+    const cardIn = !this.openCardId || this.cardDetailFor === this.openCardId;
+    document.documentElement.dataset.ready = String(this.#busy === 0 && settled && cardIn);
   }
 
   // auth + onboarding
@@ -162,6 +164,8 @@ class AppStore {
 
   // overlays
   openCardId = $state<string | null>(null);
+  /** The card whose log (activities, attempts) the open card has fetched; dev builds' data-ready waits for it. */
+  cardDetailFor: string | null = null;
   /**
    * Whether the navigation rail is showing on a narrow screen.
    *
@@ -651,9 +655,11 @@ class AppStore {
   }
   openCard(id: string): void {
     this.openCardId = id;
+    this.noteLoaded();
   }
   closeCard(): void {
     this.openCardId = null;
+    this.noteLoaded();
   }
   setView(v: View): void {
     this.view = v;

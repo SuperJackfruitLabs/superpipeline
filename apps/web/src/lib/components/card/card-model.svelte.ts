@@ -366,12 +366,14 @@ export class CardModel {
     const id = this.cardId;
     const bid = this.boardId;
     if (!id || !bid || this.#opts.holdDetail) return;
-    const [acts, atts, est, links] = await Promise.allSettled([getCardActivities(bid, id), getAttempts(bid, id), getEstimate(bid, id), listLinks(bid, id)]);
+    // Busy until the log is in, so a dev build's data-ready means the card can be read, not only the board.
+    const [acts, atts, est, links] = await app.markBusy(Promise.allSettled([getCardActivities(bid, id), getAttempts(bid, id), getEstimate(bid, id), listLinks(bid, id)]));
     if (this.cardId !== id) return;
     if (acts.status === 'fulfilled') this.detail = acts.value;
     if (atts.status === 'fulfilled') this.attempts = atts.value;
     if (est.status === 'fulfilled') this.estimate = est.value;
     if (links.status === 'fulfilled') this.edges = links.value;
+    if (this.surface !== 'gallery') { app.cardDetailFor = id; app.noteLoaded(); }
   }
 
   async #loadRelated(id: string): Promise<void> {
