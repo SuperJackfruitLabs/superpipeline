@@ -1,5 +1,6 @@
 <script lang="ts">
   import { Button } from '$lib/components/ui/button';
+  import { Dialog } from '@superjackfruit/vibekit';
   import { createBoard, getCapabilities, BOARD_TEMPLATES, type Stage, type CapabilityRecord } from '$lib/api';
   import { capabilityTag } from '@superpipeline/contract';
   import { onMount } from 'svelte';
@@ -145,23 +146,12 @@ function ownerParts(raw: string): string[] {
   }
 </script>
 
-{#if open}
-  <div class="fixed inset-0 z-40 flex items-center justify-center p-4" style="padding:max(1rem, env(safe-area-inset-top, 0px)) max(1rem, env(safe-area-inset-right, 0px)) max(1rem, env(safe-area-inset-bottom, 0px)) max(1rem, env(safe-area-inset-left, 0px))">
-    <button class="absolute inset-0 " style="background:var(--sp-scrim)" onclick={onClose} aria-label="Close" tabindex="-1"></button>
-    <div class="bg-surface border-border drawer-in relative flex max-h-full w-full max-w-xl flex-col rounded-[12px] border shadow-2xl">
-      <div class="border-border flex items-start justify-between gap-3 border-b p-6 pb-4">
-        <div>
-          <div class="eyebrow mb-1">new board</div>
-          <h2 class="wordmark text-lg leading-snug">Design a pipeline</h2>
-        </div>
-        <button onclick={onClose} aria-label="Close" class="text-muted-foreground hover:text-foreground tap shrink-0">
-          <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" /></svg>
-        </button>
-      </div>
-
-      <div class="touch-form flex-1 overflow-y-auto p-6">
+<!-- #10: vibekit's Dialog, as every other dialog: role, aria-modal, the title as its name, the focus trap and focus return. -->
+<Dialog bind:open={() => open, (v) => { if (!v) onClose(); }} title="Design a pipeline" eyebrow="new board" frame="sectioned" class="nb">
+      <div class="touch-form">
         <input
           bind:value={name}
+          aria-label="Board name"
           placeholder="Board name — e.g. Launch"
           class="bg-inset border-border focus:border-marigold w-full rounded-[7px] border px-3 py-2 text-sm outline-none"
         />
@@ -239,10 +229,15 @@ function ownerParts(raw: string): string[] {
         {#if error}<p class="text-coral mono mt-3 text-xs">{error}</p>{/if}
       </div>
 
-      <div class="border-border flex justify-end gap-2 border-t p-6 pt-4">
-        <Button variant="ghost" onclick={onClose}>Cancel</Button>
-        <Button onclick={create} disabled={creating || !valid}>{creating ? 'Creating…' : 'Create board'}</Button>
-      </div>
-    </div>
-  </div>
-{/if}
+  {#snippet actions()}
+    <Button variant="ghost" onclick={onClose}>Cancel</Button>
+    <Button onclick={create} disabled={creating || !valid}>{creating ? 'Creating…' : 'Create board'}</Button>
+  {/snippet}
+</Dialog>
+
+<style>
+  /* The head (title and Close) and the foot stay on screen; the stages scroll between them. */
+  :global(.vk-dialog.nb) { overflow: hidden; }
+  :global(.vk-dialog.nb > .vk-overlay__head), :global(.vk-dialog.nb > .vk-overlay__actions) { flex: none; }
+  :global(.vk-dialog.nb > .vk-overlay__body) { flex: 1 1 auto; min-height: 0; overflow: auto; padding-bottom: 4px; }
+</style>
