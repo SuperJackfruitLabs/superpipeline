@@ -52,7 +52,9 @@ jobs:
 
   pixel:
     needs: [test]
-    runs-on: ubuntu-latest
+    # Pinned to the Ubuntu the forge runner uses (catthehacker act-22.04): 24.04's system fonts and
+    # FreeType draw dialogs and cards 1-4% apart from the references, which 22.04 does not.
+    runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
