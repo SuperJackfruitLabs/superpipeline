@@ -99,10 +99,25 @@ from drift and lowers integration cost for the "any harness" promise.
 - **Coverage is judged on the normative tables**, not a global %: every spec table row must have a
   corresponding test id.
 
-## 8. Pixel suite
+## 8. Visual regression and the pixel conformance report
 
-The pixel suite renders the app and the approved Design-canvas references in the same Chromium and
-fails a screen that drifts from its mockup; a deploy bar of 1% holds for every screen, and the
-references, thresholds and masks are locked. CI runs it as the `pixel` job on Node 22 and uploads the
-report; a change to the lock needs a `Reference-Change:` trailer. See the
-[pixel suite](../apps/web/e2e/pixel/README.md).
+**The gate is the `visual` job.** It captures twenty of the app's own screens (four vibes: Board, the
+rich card's page and drawer, the phone board, the New card dialog) at the PR's base commit and at its
+head, one after the other in the same Playwright container, and compares them pixel for pixel. Nothing
+is stored and nothing is compared with a mockup. Any change fails the job unless a commit in the range
+carries a `Visual-Change: <why>` trailer; the log names each changed screen with its ratio and the
+bounding box of the difference. `deploy` waits for `test`, `e2e` and `visual`. Run it locally with
+`pnpm --filter @superpipeline/web visual:local` (HEAD~1 versus HEAD; informative on a Mac).
+
+**The pixel suite is a conformance report.** It renders the app and the approved Design-canvas
+references in the same Chromium and reports how far each screen has drifted from its mockup. The
+references are frozen at the approved design: ordinary product PRs do not touch references or the
+allow-list, and new features add no references. CI runs it as the `pixel` job (`continue-on-error`,
+not in `deploy.needs`) on pushes to main, nightly at 03:30 UTC, and on PRs that touch a design input,
+and ends with a drift summary. A change to the reference lock still needs a `Reference-Change:` trailer.
+See the [pixel suite](../apps/web/e2e/pixel/README.md), which also says how to run base-vs-head locally.
+
+**Real-shaped data.** `apps/web/e2e/rich-card.spec.ts` drives the fixture world's rich card (several
+attempts, tool calls on long unbroken strings, a long brief, correspondence) in every vibe, desktop and
+phone: attempts expand and collapse, tool calls toggle, Details open, nothing scrolls sideways, no raw
+id or email reaches visible text, the drawer opens at the top with Close visible.

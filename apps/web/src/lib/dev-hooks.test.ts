@@ -31,4 +31,15 @@ describe('dev-only overrides', () => {
     release(); await p; app.noteLoaded();
     expect(document.documentElement.dataset.ready).toBe('true');
   });
+  it('with a card open, is not ready until that card\'s log is in (the drawer mounts after the board)', async () => {
+    const { app } = await import('./stores/app.svelte');
+    app.openCard('card_a');
+    expect(document.documentElement.dataset.ready).not.toBe('true');
+    app.cardDetailFor = 'card_b'; app.noteLoaded();
+    expect(document.documentElement.dataset.ready, 'another card\'s log does not count').not.toBe('true');
+    app.cardDetailFor = 'card_a'; app.noteLoaded();
+    expect(document.documentElement.dataset.ready).toBe('true');
+    app.closeCard();
+    expect(document.documentElement.dataset.ready).toBe('true');
+  });
 });

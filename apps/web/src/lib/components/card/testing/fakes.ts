@@ -21,6 +21,8 @@ export const fakeApp = {
   closeCard: vi.fn(),
   openCard: vi.fn(),
   markBusy: vi.fn(<T>(p: Promise<T>) => p),
+  noteLoaded: vi.fn(),
+  cardDetailFor: null as string | null,
 };
 
 export const fakeApi = {

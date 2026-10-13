@@ -14,6 +14,7 @@
     const cardId = page.params.cardId;
     if (!cardId || !app.board) return;
     app.openCardId = app.board.cards.some((c) => c.id === cardId) ? cardId : null;
+    app.noteLoaded();
   });
 </script>
 

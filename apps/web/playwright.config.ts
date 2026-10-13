@@ -7,7 +7,7 @@ export default defineConfig({
   testDir: './e2e',
   // The pixel folder has its own config (e2e/pixel/playwright.pixel.config.ts, `pnpm test:pixel`);
   // its *.test.ts files are vitest files run by `pnpm test`.
-  testIgnore: ['pixel/**'],
+  testIgnore: ['pixel/**', 'visual/**'],
   fullyParallel: false,
   workers: 1,
   forbidOnly: !!process.env.CI,
@@ -28,7 +28,8 @@ export default defineConfig({
       // Build the web first so wrangler dev's assets.directory (apps/web/build) exists, then migrate
       // + seed the local D1 catalog (board create writes to it; tnt_dev must exist for the FKs). The
       // tests still hit the Vite server on the web port — the build only satisfies the Worker's assets check.
-      command: 'pnpm --filter @superpipeline/web build && pnpm --filter @superpipeline/api dev:setup && pnpm --filter @superpipeline/api dev',
+      // dev:pixel is dev plus FIXTURE_IMPORT, which rich-card.spec.ts uses to load the fixture world (tenant tnt_vibes).
+      command: 'pnpm --filter @superpipeline/web build && pnpm --filter @superpipeline/api dev:setup && pnpm --filter @superpipeline/api dev:pixel',
       url: `${PORTS.apiUrl}/health`,
       reuseExistingServer: !process.env.CI,
       timeout: 180_000,

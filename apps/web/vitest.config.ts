@@ -24,7 +24,7 @@ export default defineConfig({
   resolve: { conditions: ['browser'] },
   test: {
     // The pixel fixture's own invariants are plain vitest files that live beside the data they check.
-    include: ['src/**/*.{test,spec}.{js,ts}', 'e2e/pixel/**/*.test.ts', 'scripts/**/*.test.ts'],
+    include: ['src/**/*.{test,spec}.{js,ts}', 'e2e/pixel/**/*.test.ts', 'e2e/visual/**/*.test.ts', 'scripts/**/*.test.ts'],
     environment: 'node',
   },
 });

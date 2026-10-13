@@ -4,9 +4,13 @@ on:
   push:
     branches: [main]
   pull_request:
+  # Nightly pixel conformance report (03:30 UTC). Only the `pixel` job runs on the schedule.
+  schedule:
+    - cron: '30 3 * * *'
 
 jobs:
   test:
+    if: github.event_name != 'schedule'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -29,6 +33,7 @@ jobs:
         run: node apps/web/scripts/pixel/check-lock-change.mjs "${{ github.event.pull_request.base.sha || github.event.before }}"
 
   e2e:
+    if: github.event_name != 'schedule'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -50,41 +55,93 @@ jobs:
           path: apps/web/playwright-report
           retention-days: 14
 
-  pixel:
-    # No `needs: [test]`: the screens do not depend on the unit tests, and deploy already waits for
-    # all three, so waiting only added the unit tests' ~10 minutes to every verdict.
+  # The regression gate for how the app looks: ~20 key screens of the app itself at the PR's base and at its
+  # head, rendered one after the other in this one container, compared pixel for pixel. Nothing is stored and
+  # nothing is compared with a mockup, so cross-machine rendering cannot fail it. A change fails the job
+  # unless a commit in the range carries `Visual-Change: <why>`. See apps/web/e2e/pixel/README.md.
+  visual:
+    if: github.event_name != 'schedule'
     runs-on: ubuntu-22.04
+    timeout-minutes: 15
+    container:
+      image: mcr.microsoft.com/playwright:v1.61.0-jammy
+      options: --ipc=host
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      # The container runs as root over a checkout it did not create: git refuses to work in it otherwise.
+      - run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
+      - run: pnpm install --frozen-lockfile
+      - name: the image and the lockfile name the same Playwright
+        run: bash apps/web/scripts/pixel/image-guard.sh v1.61.0-jammy
+      # Both trees under the runner's temp dir, on the workspace's mount, so pnpm hardlinks from its store.
+      - name: base versus head
+        run: bash apps/web/scripts/visual/base-vs-head.sh "${{ github.event.pull_request.base.sha || github.event.before }}"
+        env:
+          CI: 'true'
+          VISUAL_TMP: ${{ runner.temp }}
+      # artifact v4 is GitHub only (forge: GHESNotSupportedError); on forge the job log carries each changed
+      # screen's name, ratio and bounding box instead.
+      - uses: actions/upload-artifact@v4
+        if: failure() && github.server_url == 'https://github.com'
+        with:
+          name: visual-diff
+          path: |
+            apps/web/test-results/visual/base
+            apps/web/test-results/visual/head
+            apps/web/test-results/visual/diff
+          retention-days: 14
+
+  # A conformance REPORT against the approved mockups, never a gate (continue-on-error, not in deploy.needs):
+  # pushes to main, nightly, and pull requests that touch a design input (scripts/pixel/design-inputs.mjs).
+  # The references are frozen at the approved design; the `visual` job is the regression gate.
+  pixel:
+    runs-on: ubuntu-22.04
+    continue-on-error: true
     # Playwright's own image: Chromium and its system fonts are already in it (no per-run apt
-    # install), and forge and GitHub render in the *same* userland. GitHub's 24.04 and forge's
-    # act-22.04 had drawn dialogs and cards 1-4% apart. The tag must equal the locked
+    # install), and forge and GitHub render in the *same* userland. The tag must equal the locked
     # @playwright/test version; the guard step below fails loudly if it does not.
     container:
       image: mcr.microsoft.com/playwright:v1.61.0-jammy
       options: --ipc=host
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
+      # A step output, not workflow `paths:` (which would skip the required jobs too).
+      - name: does this run touch a design input
+        id: scope
+        run: node apps/web/scripts/pixel/design-inputs.mjs "${{ github.event_name }}" "${{ github.event.pull_request.base.sha }}"
       - uses: pnpm/action-setup@v4
+        if: steps.scope.outputs.run == 'true'
       - uses: actions/setup-node@v4
+        if: steps.scope.outputs.run == 'true'
         with:
           node-version: 22
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+        if: steps.scope.outputs.run == 'true'
       - name: the image and the lockfile name the same Playwright
-        run: |
-          have="$(pnpm --filter @superpipeline/web exec playwright --version | awk '{print $2}')"
-          want="${PIXEL_IMAGE_TAG#v}"; want="${want%%-*}"
-          echo "playwright $have, image $want"
-          test "$have" = "$want" || { echo "::error::bump the pixel job's image to v$have-jammy"; exit 1; }
-        env:
-          PIXEL_IMAGE_TAG: v1.61.0-jammy
-      # References and app render in the same Chromium, with the same font files, in the same run:
-      # no stored screenshots, so platform rasterisation cancels out (fixtures-and-harness.md §B.8).
+        if: steps.scope.outputs.run == 'true'
+        run: bash apps/web/scripts/pixel/image-guard.sh v1.61.0-jammy
+      # References and app render in the same Chromium, with the same font files, in the same run.
       - run: mkdir -p apps/web/test-results/pixel-parts && pnpm --filter @superpipeline/web test:pixel
+        if: steps.scope.outputs.run == 'true'
         env:
           PIXEL_PARTS: '1'
           PIXEL_PARTS_DIR: ${{ github.workspace }}/apps/web/test-results/pixel-parts
+      - name: drift summary
+        if: always() && steps.scope.outputs.run == 'true'
+        run: node apps/web/scripts/pixel/drift-summary.mjs apps/web/test-results/pixel/results.json
       - uses: actions/upload-artifact@v4
-        if: always() && github.server_url == 'https://github.com'
+        if: always() && steps.scope.outputs.run == 'true' && github.server_url == 'https://github.com'
         with:
           name: pixel-report
           path: |
@@ -101,7 +158,7 @@ jobs:
   # Continuous deploy: after tests pass on a push to main, migrate the remote D1 + ship to Cloudflare.
   # Needs a CLOUDFLARE_API_TOKEN repo secret (Workers Scripts: Edit · D1: Edit, scoped to your account).
   deploy:
-    needs: [test, e2e, pixel]
+    needs: [test, e2e, visual]
     if: github.server_url == 'https://github.com' && github.ref == 'refs/heads/main' && github.event_name == 'push'
     runs-on: ubuntu-latest
     concurrency:
