@@ -37,8 +37,12 @@ test.beforeAll(async ({ browser }) => {
     const page = await context.newPage();
     await setAppearance(page, `${vibe}.light.strong.0`);
     await openBoard(page, boardId);
-    await page.goto(`/b/${boardId}`);
-    await expect(page.getByText('Fit card').first()).toBeVisible({ timeout: 120_000 });
+    // Vite may re-optimise its dependencies on the first visit and answer that page with "504 Outdated Optimize
+    // Dep", which leaves it blank for good; a fresh load after that gets the new bundle.
+    await expect(async () => {
+      await page.goto(`/b/${boardId}`);
+      await expect(page.getByText('Fit card').first()).toBeVisible({ timeout: 30_000 });
+    }).toPass({ timeout: 150_000 });
     await page.keyboard.press('n');
     await expect(page.getByRole('dialog', { name: 'What needs doing?' })).toBeVisible({ timeout: 60_000 });
     await context.close();
