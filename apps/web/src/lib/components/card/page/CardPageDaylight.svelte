@@ -36,6 +36,7 @@
     agentRole, briefSummary, criteriaCount, emptyNoteCaption, handoffLine, initials, linksSummary, pageSmall, planNone,
     planProgress, projectLine, provenanceLine, relatedLine, replySub, RESUME_PLACEHOLDER, subtasksLine, talkSummary, usd, whatHappenedSummary,
   } from '../card-words';
+  import { askedHeading } from '../card-words';
   import AccountMenu from './AccountMenu.svelte';
   import type { CardPageProps } from '../layouts/types';
 
@@ -177,7 +178,7 @@
 
     <section class="dp-col" aria-labelledby="h-brief">
       <div class="dp-card">
-        <h2 id="h-brief" class="dp-h"><Icon name="pushpin" size={18} /> What {agentName} was asked</h2>
+        <h2 id="h-brief" class="dp-h"><Icon name="pushpin" size={18} /> {askedHeading(m.stages[m.stageIndex], agentName)}</h2>
         {#if card.spec?.description}<p class="dp-p" data-section="description" style="white-space: pre-line">{String(card.spec.description)}</p>{:else}{@render hidden('description')}{/if}
         {#if m.acceptanceCriteria?.length}
           <h3 class="dp-h" style="font-size: var(--vk-text-md);">Done when <small>{criteriaCount(m.acceptanceCriteria.length)}</small></h3>

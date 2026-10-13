@@ -138,3 +138,8 @@ export function loadingBars(stages: number, stageIndex: number): number[] {
   const wide = Math.min(stageIndex, 1, n - 1);
   return Array.from({ length: n }, (_, i) => (i === wide ? 2.8 : 1));
 }
+
+/** The pinned brief's heading (#11): the agent's name only when an agent works the stage; neutral for a person's stage. */
+export function askedHeading(stage: Stage | undefined, agentName: string): string {
+  return stage?.ownerKind === 'human' ? 'What this card asks' : `What ${agentName} was asked`;
+}

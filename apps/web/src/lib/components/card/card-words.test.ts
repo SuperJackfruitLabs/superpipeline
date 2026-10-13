@@ -1,7 +1,7 @@
 // apps/web/src/lib/components/card/card-words.test.ts
 import { describe, expect, it } from 'vitest';
 import {
-  agentRole, archivedReason, archivedTitle, askedByTitle, attemptsLine, briefMeta, briefSummary, costSummary, criteriaCount,
+  agentRole, archivedReason, askedHeading, archivedTitle, askedByTitle, attemptsLine, briefMeta, briefSummary, costSummary, criteriaCount,
   doneLine, emptyNoteCaption, emptyNoteError, factItems, gateConflictSentence, grantLine, handoffLine, initials, linksSummary,
   loadingBars, loadingNote, noteHint, ownerChip, pageSmall, planNone, planProgress, projectLine, provenanceLine, relatedLine,
   replySub, restoreNote, RESUME_PLACEHOLDER, subtasksLine, talkSummary, unclaimedChip, usd, whatHappenedSummary,
@@ -118,5 +118,13 @@ describe('reply, archive, done, gate, loading', () => {
     expect(loadingNote('error-eric')).toBe('Loading what error-eric said and the card’s history…');
     expect(loadingBars(7, 1)).toEqual([1, 2.8, 1, 1, 1]);
     expect(loadingBars(3, 0)).toEqual([2.8, 1, 1]);
+  });
+});
+
+describe('askedHeading (#11)', () => {
+  it('names the agent only when an agent works the stage; neutral for a person-owned stage', () => {
+    expect(askedHeading({ key: 'review', name: 'Review', order: 1, ownerKind: 'human', owner: 'usr_fx_ira' }, 'error-eric')).toBe('What this card asks');
+    expect(askedHeading({ key: 'fix', name: 'Fix', order: 2, ownerKind: 'capability' }, 'error-eric')).toBe('What error-eric was asked');
+    expect(askedHeading(undefined, 'the agent')).toBe('What the agent was asked');
   });
 });

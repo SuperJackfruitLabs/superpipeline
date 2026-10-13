@@ -38,6 +38,7 @@
     linksSummary, ownerChip, planNone, planProgress, projectLine, provenanceLine, relatedLine, replySub, RESUME_PLACEHOLDER,
     subtasksLine, talkSummary, usd, whatHappenedSummary,
   } from '../card-words';
+  import { askedHeading } from '../card-words';
   import type { CardLayoutProps } from './types';
 
   let { model: m, vibe, gate, question, pageHref, onClose }: CardLayoutProps = $props();
@@ -164,7 +165,7 @@
     {#if m.archived}<CardStateDaylight kind="archived" model={m} />{/if}
 
     <details class="dd-pinned" bind:open={briefOpen}>
-      <summary aria-label="What {agentName} was asked"><Icon name="pushpin" size={18} /><span>What {agentName} was asked</span><span class="more">{briefMeta(!!card.spec?.description, m.counts.criteria, briefOpen)}</span></summary>
+      <summary aria-label={askedHeading(m.stages[m.stageIndex], agentName)}><Icon name="pushpin" size={18} /><span>{askedHeading(m.stages[m.stageIndex], agentName)}</span><span class="more">{briefMeta(!!card.spec?.description, m.counts.criteria, briefOpen)}</span></summary>
       <div style="padding: 0 var(--vk-space-4) var(--vk-space-4); display: flex; flex-direction: column; gap: var(--vk-space-3);">
         {#if card.spec?.description}<p class="dd-p" data-section="description" style="white-space: pre-line">{String(card.spec.description)}</p>{:else}{@render hidden('description')}{/if}
         {#if m.acceptanceCriteria?.length}
