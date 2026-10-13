@@ -1,6 +1,48 @@
-# Pixel suite
+# Pixel suite: a conformance report
 
 Compares the running app with the approved Design-canvas references, one test per artboard per theme.
+Since 2026-10-13 it is a **conformance report, not a gate** (operator decision): the CI `pixel` job is
+`continue-on-error` and `deploy` does not wait for it. It runs on pushes to main, nightly at 03:30 UTC,
+and on pull requests that touch a design input (`apps/web/vendor/**`, `e2e/reference/**`, `e2e/pixel/**`,
+`src/lib/components/shell/**`, `src/lib/styles/shell/**`, `src/app.html`; `scripts/pixel/design-inputs.mjs`),
+and ends its log with a one-paragraph drift summary.
+
+- The references are **frozen** at the approved design. Ordinary product PRs do not touch references,
+  masks, thresholds or the allow-list, and a new feature adds no reference.
+- The regression gate is the **`visual` job** (below): the app's own screens at the PR's base and at its
+  head, compared in one container.
+- `CORRECTIONS.md` and `RESIDUALS.md` stay as historical records of the redesign sweep.
+
+## The `visual` job: base versus head (the gate)
+
+Twenty screens of the app itself, light theme: per vibe, Board (desktop), the rich card's page and its
+drawer over the board (card 4605 on Developer Experience, two attempts), the phone board, and the New
+card dialog (`e2e/visual/screens.ts`, reusing this suite's fixture world, routes and steps; app side only,
+whole page, no masks). `scripts/visual/base-vs-head.sh` adds a git worktree at the base commit (PR base
+sha, or the push's `before`, else the merge base with origin/main: `lock-base.mjs` `chooseBase`),
+installs it, copies HEAD's `e2e/visual` into it, captures base then head on the same ports with the same
+frozen clock, reduced motion and awaited fonts, and compares the two folders with `compare.ts`
+(`e2e/visual/diff.spec.ts`, verdict in `e2e/visual/verdict.ts`). Nothing is stored in git and nothing is
+compared with a mockup, so cross-machine rendering cannot fail it.
+
+- **Any** differing pixel (past pixelmatch's per-pixel threshold 0.1) or a size change is a change. The
+  noise floor, measured by capturing one tree twice, is zero; if it ever is not, find the nondeterminism
+  rather than loosening the bar.
+- A change fails the job unless a commit in the range carries a **`Visual-Change: <why>`** trailer (same
+  mechanism as `Reference-Change:`). With it, the job passes and lists what changed.
+- The log prints every screen with its ratio, pixel count and the bounding box of the difference. On
+  GitHub a failed run also uploads the base, head and diff PNGs (`visual-diff`); on forge (no artifact v4)
+  the log is the report.
+
+### How to run base-vs-head locally
+
+    pnpm --filter @superpipeline/web visual:local        # HEAD~1 versus HEAD
+    bash apps/web/scripts/visual/base-vs-head.sh <ref>   # any base
+    pnpm --filter @superpipeline/web visual:self         # HEAD twice: the noise floor, must be zero
+
+Set `SP_API_PORT`/`SP_WEB_PORT` if another checkout holds the default ports. Output lands in
+`apps/web/test-results/visual/{base,head,diff}`. A Mac result is informative only; CI's Linux container is
+the verdict.
 
 ## Run it
 
@@ -29,9 +71,10 @@ block has more than 40% of its pixels differing; the page is exactly the artboar
 and 0.5% is a warning. A screen drawn in parts (the dialogs, the shell checks) passes or fails per part.
 A render error (no `[data-ready]`, a part that does not exist) always fails, with its own message.
 
-## The deploy bar
+## The 1% bar (report only since the CI v2 decision)
 
-Operator ruling (2026-10-13): every screen is within 1% of its mockup. `deploy-bar.ts` fails any key on
+Operator ruling (2026-10-13): every screen is within 1% of its mockup. It no longer holds deploys back
+(the `pixel` job is a report); it is what the report's verdict per screen means. `deploy-bar.ts` fails any key on
 the allow-list (`expected-failures.ts`) whose worst part is over 1%, and fails a listed key that now
 passes. `RESIDUALS.md` documents every listed key with its ratio and cause; `deploy-bar.test.ts` keeps
 it in step with the allow-list both ways (a key without a row, or a row without a key, fails). After a
