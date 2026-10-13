@@ -1,5 +1,6 @@
 <!-- apps/web/src/lib/components/workspace/LabelManager.svelte -->
 <script lang="ts">
+  import { autogrow } from '$lib/autogrow';
   import { Button } from '@superjackfruit/vibekit';
   import LineIcon from '$lib/components/parts/LineIcon.svelte';
   import { showsInferredBadge } from './label-manager';
@@ -28,8 +29,8 @@
     <ul style="list-style: none; margin: 0px; padding: 0px;">
       {#each model.labels as l (l.id)}
         <li class="lrow">
-          <button class="swatch" aria-label="Colour of {l.name}" type="button" style="background: {l.colour};" onclick={() => picker.open((c) => void model.recolour(l, c))}></button>
-          <span><label class="sr" for="lb-{l.name}">Name</label><input class="input" id="lb-{l.name}" value={l.name} style="min-height: 40px;" onblur={(e) => void model.rename(l, e.currentTarget.value)} onkeydown={(e) => { if (e.key === 'Enter') e.currentTarget.blur(); }} /></span>
+          <button class="swatch" aria-label="Colour of {l.name}" type="button" style="background: {l.colour};" onclick={() => picker.open((c) => void model.recolour(l, c), l.name)}></button>
+          <span><label class="sr" for="lb-{l.name}">Name</label><textarea class="input grow" id="lb-{l.name}" rows="1" use:autogrow={l.name} value={l.name} onblur={(e) => void model.rename(l, e.currentTarget.value)} onkeydown={(e) => { if (e.key === 'Enter') { e.preventDefault(); e.currentTarget.blur(); } }}></textarea></span>
           {#if showsInferredBadge(l.origin)}<span class="chip chip-line">inferred</span>{:else}<span></span>{/if}
           <button class="iconbtn" aria-label="Remove label {l.name}" type="button" disabled={model.removing === l.id} onclick={() => void model.remove(l)}><LineIcon name="trash" /></button>
         </li>
@@ -37,7 +38,7 @@
     </ul>
   {/if}
   <form class="panel-body" style="border-top: 1px solid var(--vk-color-line); display: flex; gap: var(--vk-space-2); align-items: flex-end;" onsubmit={(e) => { e.preventDefault(); void model.add(); }}>
-    <button class="swatch" aria-label="Colour of the new label" type="button" style="background: {model.newColour ?? 'var(--vk-mood-needs)'}; margin-bottom: 6px;" onclick={() => picker.open((c) => (model.newColour = c))}></button>
+    <button class="swatch" aria-label="Colour of the new label" type="button" style="background: {model.newColour ?? 'var(--vk-mood-needs)'}; margin-bottom: 6px;" onclick={() => picker.open((c) => (model.newColour = c), 'the new label')}></button>
     <div class="field" style="flex: 1 1 0%;"><label for="lb-new">New label</label><input class="input" id="lb-new" placeholder="Name" bind:value={model.newName} /></div>
     <Button variant="secondary" class="btn-sm" type="submit" aria-disabled={model.creating ? 'true' : undefined}>Add</Button>
     <span class="sr" role="status">{model.creating ? 'Adding the label…' : ''}</span>

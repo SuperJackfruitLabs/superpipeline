@@ -1,0 +1,43 @@
+/*
+ * Page fixes that must outrank both the ported reference CSS (layer base) and vibekit (layers vk.*),
+ * so this file is unlayered. One block per defect; the live-UI list is the index.
+ */
+
+/* 23: a field whose value must be read in full (the webhook URL, a capability's description) is a
+   textarea that grows with its text (lib/autogrow.ts). */
+textarea.grow { display: block; min-height: 44px; resize: none; overflow: hidden; overflow-wrap: anywhere; padding-block: 9px; line-height: 1.45; }
+textarea.grow[readonly] { cursor: text; }
+
+/* 24: the native <select>s of the settings forms: the app's own field frame and a chevron that clears the edge. */
+select.input, select.ar-sel {
+  appearance: none; -webkit-appearance: none;
+  padding-right: 40px;
+  background-image: linear-gradient(45deg, transparent 50%, currentColor 50%), linear-gradient(135deg, currentColor 50%, transparent 50%);
+  background-position: calc(100% - 22px) 50%, calc(100% - 15px) 50%;
+  background-size: 7px 7px, 7px 7px;
+  background-repeat: no-repeat;
+}
+
+/* 22: on the label rows the name field gets the width it needs: the "inferred" tag drops under it. */
+.scr-ws .lrow textarea.grow { min-height: 40px; }
+.scr-ws .ws-back { min-height: 32px; }
+.scr-ws .lrow > span:empty { display: none; }
+
+/* 25: on a phone every control a thumb must hit is 44px. Desktop sizes are untouched (this is the phone shell's width).
+   `!important` because the page stylesheets (and a few inline styles) set their own desktop minimums. */
+@media (max-width: 899.98px) {
+  .scr-ws .lrow { grid-template-columns: 44px minmax(0, 1fr) 44px; }
+  .scr-ws .lrow > :nth-child(3) { grid-column: 2; grid-row: 2; justify-self: start; }
+  .scr-ws .lrow > :nth-child(4) { grid-column: 3; grid-row: 1; }
+  .scr-ws .swatch, .wo-sw { width: 44px !important; height: 44px !important; }
+  .scr-ws .lrow textarea.grow, .scr-ws .ws-back, .scr-settings .seg button, .st-seg button, .op-seg button,
+  .ar-btn, .ar-btn2, .ar-ib, .wo-x, .iconbtn, .chip.pick, .wa-pick, .lnk,
+  .vk-appshell__main :is(input, select):not([type="checkbox"], [type="radio"], [type="color"]) { min-height: 44px !important; }
+  .ar-btn, .ar-btn2, .ar-ib, .wo-x, .iconbtn, .chip.pick, .wa-pick, .op-acts > a, a[href^="#show-all-"] { min-width: 44px !important; }
+  :is(.ar-lk, .acts > a, .op-acts > a, td > a, a[href^="#show-all-"]) { display: inline-flex !important; align-items: center; min-height: 44px !important; }
+  /* A card's title is a link inside a heading: the link is the row. */
+  .vk-appshell__main :is(h2, h3) > a { display: flex; align-items: center; min-height: 44px; }
+}
+
+/* 18: Daylight's phone header: the decorative sun sat on the Live chip (top-right of the title block); it goes lower, under it. */
+.vk-phoneheader--daylight .vk-phoneheader__sun { top: 176px !important; }

@@ -58,7 +58,7 @@
       <div class="hd"><span class="no">02</span><h2 id="bd-sm-h">Where the cards are, stage by stage</h2><span class="r">1 square = 1 card · stages darken towards {terminal}</span></div>
       <div class="ar-sm">
         {#each multiples(model) as x (x.stage.key)}
-          <a class="ar-mul" class:z={x.zero} href={x.href} aria-label={x.aria} onclick={(e) => toStage(e, x.href)}><span class="band {x.band}"></span><span class="lb"><span class="mono">{String(x.stage.index).padStart(2, '0')}</span><span class="nm">{x.stage.name}</span></span><span class="n" aria-hidden="true">{x.stage.count}</span><span class="units" aria-hidden="true">{#each x.units as u, i (i)}<span class="u {u}"></span>{/each}</span>{#if x.gate}<span class="gate">{x.gate}</span>{/if}<span class="who">{x.stage.ownerLong}</span><span class="note">{x.note.text}{#if x.note.fn}<sup class="fn">{x.note.fn}</sup>{/if}</span></a>
+          <a class="ar-mul" class:z={x.zero} href={x.href} aria-label={x.aria} onclick={(e) => toStage(e, x.href)}><span class="band {x.band}"></span><span class="lb"><span class="mono">{String(x.stage.index).padStart(2, '0')}</span><span class="nm">{x.stage.name}</span></span><span class="n" aria-hidden="true">{x.stage.count}</span><span class="units" aria-hidden="true">{#each x.units as u, i (i)}<span class="u {u}"></span>{/each}</span><span class="meta">{#if x.gate}<span class="gate">{x.gate}</span>{/if}<span class="who">{x.stage.ownerLong}</span></span><span class="note">{x.note.text}{#if x.note.fn}<sup class="fn">{x.note.fn}</sup>{/if}</span></a>
         {/each}
       </div>
     </section>

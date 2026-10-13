@@ -1,5 +1,6 @@
 <!-- apps/web/src/lib/components/BoardSettings.svelte -->
 <script lang="ts">
+  import { autogrow } from '$lib/autogrow';
   import { Button } from '@superjackfruit/vibekit';
   import './settings/board-settings.css';
   import { viewport } from '$lib/viewport.svelte';
@@ -73,7 +74,7 @@
           </ol>
           <div class="field">
             <label for="gh-url">Payload URL</label>
-            <div class="copyfield"><input class="input" id="gh-url" readonly value={model.webhookUrl} /><Button variant="secondary" type="button" onclick={() => void model.copy('url')} icon={ic_copy_16}>{model.copied === 'url' ? 'Copied' : 'Copy'}</Button></div>
+            <div class="copyfield"><textarea class="input grow" id="gh-url" rows="1" readonly use:autogrow={model.webhookUrl} value={model.webhookUrl}></textarea><Button variant="secondary" type="button" onclick={() => void model.copy('url')} icon={ic_copy_16}>{model.copied === 'url' ? 'Copied' : 'Copy'}</Button></div>
           </div>
           <div class="field">
             <label for="gh-sec">Secret <span class="t-meta" style="font-weight: 400;">· {board.github.webhookConfigured ? 'set' : 'not set'}</span></label>

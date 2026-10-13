@@ -1,5 +1,6 @@
 <!-- apps/web/src/lib/components/settings/BoardSettingsStudio.svelte -->
 <script lang="ts">
+  import { autogrow } from '$lib/autogrow';
   import './board-settings-studio.css';
   import { viewport } from '$lib/viewport.svelte';
   import LineIcon from '$lib/components/parts/LineIcon.svelte';
@@ -61,7 +62,7 @@
           <li><span class="k">2</span><span>Paste the payload URL and the secret below. Content type: <span class="code">application/json</span>.</span></li>
           <li><span class="k">3</span><span>Turn on “Open a card for each new GitHub issue” and save.</span></li>
         </ol>
-        <div class="ar-field"><label for="gh-url">Payload URL</label><div class="st-copy"><input class="ar-in" id="gh-url" readonly value={model.webhookUrl} /><button class="ar-btn2" type="button" onclick={() => void model.copy('url')}><LineIcon name="copy" size={16} />{model.copied === 'url' ? 'Copied' : 'Copy'}</button></div></div>
+        <div class="ar-field"><label for="gh-url">Payload URL</label><div class="st-copy"><textarea class="ar-in grow" id="gh-url" rows="1" readonly use:autogrow={model.webhookUrl} value={model.webhookUrl}></textarea><button class="ar-btn2" type="button" onclick={() => void model.copy('url')}><LineIcon name="copy" size={16} />{model.copied === 'url' ? 'Copied' : 'Copy'}</button></div></div>
         <div class="ar-field">
           <label for="gh-sec">Secret <span class="ar-hint">· {board.github.webhookConfigured ? 'set' : 'not set'}</span></label>
           <div class="st-copy">
