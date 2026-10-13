@@ -7,6 +7,10 @@ export function personName(user: User | null, members: Member[]): string {
   const m = members.find((x) => x.userId === user.userId);
   return m?.name?.trim() || user.name?.trim() || user.login || m?.email || '';
 }
+/** The name the card layouts carry as `personName`: the member row first, so a letter reads "Dear Rakesh," even when the session has no name. */
+export function cardPersonName(user: User | null, members: Member[]): string {
+  return personName(user, members) || 'there';
+}
 /**
  * Who a greeting addresses: the first name of the member row, else the session's name, else nobody.
  * Never the login or the email: those are how the person signs in, not what they are called.

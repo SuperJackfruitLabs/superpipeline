@@ -6,6 +6,7 @@
    */
   import { onDestroy } from 'svelte';
   import { app } from '$lib/stores/app.svelte';
+  import { cardPersonName } from '$lib/components/dialogs/person';
   import { appearance } from '$lib/appearance.svelte';
   import { viewport } from '$lib/viewport.svelte';
   import { CARD_LAYOUTS } from '$lib/layouts';
@@ -65,7 +66,7 @@
     {model}
     {vibe}
     phase={appearance.phase}
-    personName={app.user?.name ?? app.user?.login ?? 'there'}
+    personName={cardPersonName(app.user, app.members)}
     gate={model.gateBinding}
     question={model.questionBinding}
     pageHref={model.pageHref}
@@ -77,7 +78,7 @@
     {model}
     {vibe}
     phase={appearance.phase}
-    personName={app.user?.name ?? app.user?.login ?? 'there'}
+    personName={cardPersonName(app.user, app.members)}
     gate={model.gateBinding}
     question={model.questionBinding}
     pageHref={model.pageHref}
@@ -99,7 +100,7 @@
         {model}
         {vibe}
         phase={appearance.phase}
-        personName={app.user?.name ?? app.user?.login ?? 'there'}
+        personName={cardPersonName(app.user, app.members)}
         gate={model.gateBinding}
         question={model.questionBinding}
         pageHref={model.pageHref}

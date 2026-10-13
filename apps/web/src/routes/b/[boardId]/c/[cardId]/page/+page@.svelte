@@ -6,6 +6,7 @@
   import { page } from '$app/state';
   import { goto } from '$app/navigation';
   import { app } from '$lib/stores/app.svelte';
+  import { cardPersonName } from '$lib/components/dialogs/person';
   import { appearance } from '$lib/appearance.svelte';
   import { viewport } from '$lib/viewport.svelte';
   import { CARD_PAGE_LAYOUTS } from '$lib/layouts';
@@ -30,7 +31,7 @@
   const vibe = $derived(appearance.value.vibe);
   const Page = $derived(CARD_PAGE_LAYOUTS[vibe]);
   const ready = $derived(app.board?.boardId === boardId);
-  const personName = $derived(app.user?.name ?? app.user?.login ?? 'there');
+  const personName = $derived(cardPersonName(app.user, app.members));
 </script>
 
 <svelte:head><title>{model.card ? `${model.card.title} · ${model.boardName}` : 'Card · Superpipeline'}</title></svelte:head>

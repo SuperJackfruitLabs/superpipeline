@@ -1,6 +1,7 @@
 // apps/web/src/lib/components/dialogs/person.test.ts
 import { describe, expect, it } from 'vitest';
-import { firstName, greetingName, initials, personName } from './person';
+import { cardPersonName, firstName, greetingName, initials, personName } from './person';
+import { paperSalutation } from '../card/paper-words';
 
 describe('the signed-in person, by name', () => {
   it('prefers the workspace member name, then the session name, then the login', () => {
@@ -19,6 +20,13 @@ describe('the signed-in person, by name', () => {
     expect(greetingName(user, [])).toBe('');
     expect(greetingName({ ...user, name: 'ira@vibes-fixture.invalid' }, [])).toBe('');
     expect(greetingName(null, members)).toBe('');
+  });
+  it('the card layouts carry the member name, so a letter says "Dear Ira,", never the email', () => {
+    const user = { userId: 'usr_1', tenantId: 't', login: 'ira@vibes-fixture.invalid' };
+    const members = [{ userId: 'usr_1', email: 'ira@vibes-fixture.invalid', name: 'Ira Mehta', role: 'owner', createdAt: '' }] as never;
+    expect(paperSalutation(cardPersonName(user, members))).toBe('Dear Ira,');
+    expect(paperSalutation(cardPersonName(user, []))).toBe('Hello,');
+    expect(cardPersonName(null, [])).toBe('there');
   });
   it('takes a first name and two initials', () => {
     expect(firstName('Ira Mehta')).toBe('Ira');
