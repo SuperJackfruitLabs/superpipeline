@@ -7,6 +7,7 @@
  * Surface rule after a successful decision, archive or delete: drawer → `app.closeCard()`;
  * page → stay and `refresh()` (delete navigates to the board); gallery → nothing.
  */
+import { displayAuthor } from '$lib/names';
 import { untrack } from 'svelte';
 import { goto } from '$app/navigation';
 import { app } from '$lib/stores/app.svelte';
@@ -63,6 +64,10 @@ export class CardModel {
 
   // ---- local UI state ----
   showToolCalls = $state(false);
+  /** Which attempts the reader opened or closed (by run id); unset means the default (newest open). */
+  runOpen = $state<Record<string, boolean>>({});
+  /** Which attempts show their tool calls (by run id). Per attempt, so one run's toggle never moves another. */
+  runTools = $state<Record<string, boolean>>({});
   localError = $state<string | null>(null);
   gateError = $state<string | null>(null);
   gateConflict = $state<GateConflict | null>(null);
@@ -229,6 +234,13 @@ export class CardModel {
   /** The board's per-card spend cap, when one is set. */
   readonly cardUsdCap = $derived<number | null>(app.board?.usage?.cardUsdCap ?? null);
   /** A person's name from the workspace members; '' for nobody. */
+  /**
+   * A comment author's name from the same roster the attempts use (O12): never an id or an email.
+   * An agent nobody can name is "An agent"; a person nobody can name is "Someone".
+   */
+  authorName(a: { kind: 'human' | 'agent'; id: string; name: string | null }): string {
+    return displayAuthor(a, app.members, app.agents);
+  }
   principalName(id: string | null | undefined): string { return displayPrincipal(id, app.members); }
   readonly ownerName = $derived(this.card ? this.principalName(this.card.ownerUserId) : '');
 
@@ -309,12 +321,34 @@ export class CardModel {
     });
   }
 
+  /** Whether an attempt's timeline is open; the newest opens by default. */
+  isRunOpen(runId: string, newest: boolean): boolean {
+    return this.runOpen[runId] ?? newest;
+  }
+  toggleRun(runId: string, newest: boolean): void {
+    this.runOpen = { ...this.runOpen, [runId]: !this.isRunOpen(runId, newest) };
+  }
+  /** Close an attempt (and stop showing its tool calls), or open it. */
+  setRun(runId: string, open: boolean): void {
+    this.runOpen = { ...this.runOpen, [runId]: open };
+    if (!open && this.toolsShown(runId)) this.runTools = { ...this.runTools, [runId]: false };
+  }
+  /** Whether an attempt shows its tool calls as well as what the agent said. */
+  toolsShown(runId: string): boolean {
+    return this.runTools[runId] ?? false;
+  }
+  toggleTools(runId: string): void {
+    this.runTools = { ...this.runTools, [runId]: !this.toolsShown(runId) };
+  }
+
   #reset(): void {
     this.detail = null;
     this.attempts = [];
     this.estimate = null;
     this.edges = { links: [], externalLinks: [] };
     this.showToolCalls = false;
+    this.runOpen = {};
+    this.runTools = {};
     this.localError = null;
     this.gateError = null;
     this.gateConflict = null;

@@ -38,6 +38,10 @@ export function crewLine(crew: CrewMember[]): string {
   const working = named(crew, 'working').length;
   return working > 0 ? `${working} at work` : 'resting';
 }
+/** The rail's foot line with its scope: "4 agents on this board · 3 wait on you". */
+export function crewScopeTitle(crew: CrewMember[]): string {
+  return `${crewCount(crew)} on this board · ${crewLine(crew)}`;
+}
 export function crewTitle(crew: CrewMember[]): string {
   const n = named(crew, 'needs');
   const w = named(crew, 'working');

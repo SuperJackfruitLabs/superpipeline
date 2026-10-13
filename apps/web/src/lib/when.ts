@@ -15,6 +15,10 @@ export function clockHM(iso: string, tz?: string): string {
   const p = parts(iso, tz, { hour: '2-digit', minute: '2-digit' });
   return `${p.hour}:${p.minute}`;
 }
+export function clockHMS(iso: string, tz?: string): string {
+  const p = parts(iso, tz, { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+  return `${p.hour}:${p.minute}:${p.second}`;
+}
 export function dayMonth(iso: string, tz?: string): string {
   const p = parts(iso, tz, { day: 'numeric', month: 'short' });
   return `${p.day} ${p.month}`;

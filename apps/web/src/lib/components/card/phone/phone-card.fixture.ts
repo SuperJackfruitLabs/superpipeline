@@ -4,6 +4,7 @@
  * one-world record, the plan's spec.groups). Only the members the phone layouts touch are filled.
  */
 import type { CardModel } from '../card-model.svelte';
+import { displayAuthor } from '$lib/names';
 
 export const D4605 = 'not reproduced end-to-end: Melissa’s live ACP session acps_8f86d4e4-1cf2-457b-beb8-0ffb529d9023 reached Hermes and produced a model reply, while Anna has no local ACP dispatch; first failing hop cannot be identified without one fresh DM event_id/room_id/timestamp per agent plus AgentPod hub matrix-inbound/control-pair/ACP/matrix-outbound logs, matrix_rooms/ACP metadata, homeserver send-event metadata, and Supermessage sync ingestion for those event IDs. No Accounts defect established; no issue filed.';
 export const DESC = 'Reproduce and localize why the existing AgentPod bridge Matrix identities for Message Melissa and Audience Anna do not respond to Ira in Supermessage. Produce an evidence-backed diagnosis and exact repair proposal; do not attribute silence to missing grants without live evidence.';
@@ -88,7 +89,7 @@ export function model4605(): CardModel {
     counts: { criteria: 5, planSteps: 0, specFields: 10, runs: 2, links: 0, children: 0, openChildren: 0, decisions: 0, refs: 5, attempts: 2, deliveryActive: false, description: true, handoff: false, cost: false },
     handoff: null, related: { phase: 'ready', items: [] }, decidedGates: [], children: [],
     linkGroups: { blockedBy: [], resolvedBlockedBy: [], blocks: [], relates: [], supersedes: [], advisory: [] },
-    members: MEMBERS, agents: AGENTS, cardUsdCap: null, principalName: () => '', projects: [], allLabels: [], showToolCalls: false, localError: null, archiving: false, copied: null,
+    members: MEMBERS, agents: AGENTS, cardUsdCap: null, principalName: () => '', authorName: (a: { kind: 'human' | 'agent'; id: string; name: string | null }) => displayAuthor(a, MEMBERS, AGENTS), projects: [], allLabels: [], showToolCalls: false, localError: null, archiving: false, copied: null,
     edit: { editing: false, title: '', priority: 3, desc: '', ac: '', due: '', labels: [], saving: false, start() {}, async save() {}, cancel() {} },
     project: { start() {} },
     links: { openAdd() {}, async remove() {} },

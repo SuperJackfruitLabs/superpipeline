@@ -48,7 +48,7 @@
     {#each model.comments as c (c.id)}
       <li class="bg-inset border-border min-w-0 rounded-[8px] border px-3 py-2 text-[12px]">
         <div class="mono flex min-w-0 flex-wrap items-center gap-x-1.5 text-[10.5px]">
-          <span class="truncate font-semibold" title={c.author.id}>{c.author.name ?? c.author.id}</span>
+          <span class="truncate font-semibold" title={c.author.id}>{c.author.name ?? (c.author.kind === 'agent' ? 'An agent' : 'Someone')}</span>
           {#if c.author.kind === 'agent'}
             <span class="border-border text-muted-foreground rounded-[4px] border px-1 text-[9.5px]">agent</span>
           {/if}

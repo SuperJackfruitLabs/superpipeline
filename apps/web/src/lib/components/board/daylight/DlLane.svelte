@@ -7,11 +7,12 @@
   import Icon from '$lib/components/parts/Icon.svelte';
   import type { BoardStage } from '../board-model';
   import type { CardSummary } from '../card-summary';
+  import type { PeekController } from './peek-controller';
   import DlTile from './DlTile.svelte';
 
-  let { stage, cards, stages, peekId, firstNeedsId, onPeek, onPeekClose, style, onCollapse }: {
+  let { stage, cards, stages, peekId, firstNeedsId, peek, style, onCollapse }: {
     stage: BoardStage; cards: CardSummary[]; stages: Stage[]; peekId: string | null; firstNeedsId: string | null;
-    onPeek: (id: string) => void; onPeekClose: () => void; style?: string; onCollapse?: () => void;
+    peek: PeekController; style?: string; onCollapse?: () => void;
   } = $props();
   let over = $state(false);
 </script>
@@ -34,6 +35,6 @@
   </div>
   {#if cards.length === 0}<p class="dl-owner">No cards in this stage.</p>{/if}
   {#each cards as s (s.id)}
-    <DlTile {s} {stages} peekOpen={peekId === s.id} firstNeeds={s.id === firstNeedsId} {onPeek} {onPeekClose} />
+    <DlTile {s} {stages} peekOpen={peekId === s.id} firstNeeds={s.id === firstNeedsId} {peek} />
   {/each}
 </section>

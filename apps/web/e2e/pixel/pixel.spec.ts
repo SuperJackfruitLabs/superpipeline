@@ -7,7 +7,7 @@ import { renderApp } from './app';
 import { compare, type Result } from './compare';
 import { record, renderFailure, writeReport } from './report';
 import { seedWorld } from './fixture/seed';
-import { PLATFORM_OVERRIDES, currentPlatform, isExpectedFailure } from './expected-failures';
+import { PLATFORM_OVERRIDES, currentPlatform, isEither, isExpectedFailure } from './expected-failures';
 import { allowListVerdict } from './deploy-bar';
 
 const THEMES: Theme[] = ['light', 'dark'];
@@ -54,7 +54,7 @@ for (const screen of [...SCREENS, ...SHELL_CHECKS] as Screen[]) {
       const failed = results.some((r) => r.status === 'fail');
       // An allow-listed key must still fail the compare, and stay within the 1% deploy bar.
       if (allowed) {
-        const verdict = allowListVerdict(key, { ratio: Math.max(...results.map((r) => r.ratio)), failed }, overridden);
+        const verdict = allowListVerdict(key, { ratio: Math.max(...results.map((r) => r.ratio)), failed }, overridden, isEither(key));
         expect(verdict, verdict ?? '').toBeNull();
       }
       else expect(failed, `${key}: ratio ${(worst.ratio * 100).toFixed(3)}%, ${worst.brokenBlocks} broken blocks${worst.sizeMismatch ? `, size ${worst.sizeMismatch.ref.join('×')} vs ${worst.sizeMismatch.app.join('×')}` : ''} (report: test-results/pixel/index.html)`).toBe(false);

@@ -93,7 +93,7 @@ describe('CardStudio (4605)', () => {
     const { dispose } = await mount();
     const foot = document.querySelector('[data-section="cardActions"]') as HTMLElement;
     expect(within(foot).getByRole('button', { name: /Archive card/ })).toBeTruthy();
-    expect(within(foot).getByRole('button', { name: 'Delete card' }).className, 'vibekit’s danger Button, the ink outline').toContain('vk-button--danger');
+    expect(within(foot).getByRole('button', { name: 'Delete card' }).className, 'vibekit’s quiet Button: Delete is not the primary action').toContain('vk-button--quiet');
     dispose();
   });
   it('editing swaps in the edit form; the dialog keeps its name', async () => {

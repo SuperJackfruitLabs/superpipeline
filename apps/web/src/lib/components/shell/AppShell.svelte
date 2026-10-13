@@ -13,6 +13,7 @@
   import { SHELL_LAYOUTS } from '$lib/layouts';
   import { app } from '$lib/stores/app.svelte';
   import FilterDialog from '$lib/components/plan/FilterDialog.svelte';
+  import { nameOperateCount } from './nav-scope';
   import { createChordReader, isTypingTarget } from './shortcuts';
   import { shellModel } from './shell-model.svelte';
   import type { ShellProps } from './types';
@@ -21,6 +22,15 @@
   // The same query vibekit's AppShell is handed (`phoneQuery`), so the frame and its slots switch together.
   const phone = usePhone(PHONE_QUERY);
   const Shell = $derived(SHELL_LAYOUTS[appearance.value.vibe][phone.current ? 'phone' : 'desktop']);
+
+  // vibekit draws the nav's count as "3 need you"; say whose cards it counts (nav-scope.ts).
+  $effect(() => {
+    const boardScoped = props.boardName !== null && props.boardName !== undefined;
+    const n = shellModel.operateBadge(boardScoped);
+    void Shell;
+    const href = shellModel.operateHref;
+    queueMicrotask(() => nameOperateCount(document, href, n, boardScoped));
+  });
 
   const chords = createChordReader();
   function onKeydown(e: KeyboardEvent): void {

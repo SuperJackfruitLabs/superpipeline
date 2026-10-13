@@ -54,7 +54,7 @@ describe('CardQuiet (4605)', () => {
   it('plain sections: details, brief, history, comments, links, the rest', async () => {
     const { dispose } = await mount();
     expect([...document.querySelectorAll('.qcd-sec > h3')].map((h) => h.textContent)).toEqual([
-      'Details', 'Description', 'Acceptance criteria', 'Plan', 'Brief details (10)', 'History (2 runs)', 'Decisions', 'Comments', 'Links (0)',
+      'Details', 'Description', 'Acceptance criteria', 'Brief details (10)', 'History (2 runs)', 'Comments', 'Links (0)',
       'Sub-tasks, Project, Cost, Delivery', 'References and related prior work', 'Card actions',
     ]);
     const who = [...document.querySelectorAll('[data-section="status"] > *')].map(words).join(' | ');
@@ -69,7 +69,7 @@ describe('CardQuiet (4605)', () => {
     const { dispose } = await mount();
     const foot = document.querySelector('[data-section="cardActions"]') as HTMLElement;
     expect(within(foot).getByRole('button', { name: 'Archive card' })).toBeTruthy();
-    expect(within(foot).getByRole('button', { name: 'Delete card' }).className).toContain('vk-button--danger');
+    expect(within(foot).getByRole('button', { name: 'Delete card' }).className).toContain('vk-button--quiet');
     dispose();
   });
   it('editing swaps in the edit form; the dialog keeps its name', async () => {

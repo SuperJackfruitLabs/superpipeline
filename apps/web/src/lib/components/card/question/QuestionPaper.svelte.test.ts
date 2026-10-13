@@ -9,7 +9,7 @@ questionPanelContract(QuestionPaper, { decision: 'radio', submit: 'Send reply', 
 describe('QuestionPaper', () => {
   it('asks in a letter and answers as a reply', () => {
     mountQuestion(QuestionPaper, ask());
-    expect(screen.getByText('Dear there,')).toBeTruthy();
+    expect(screen.getByText('Hello,')).toBeTruthy();
     expect(screen.getByRole('radio', { name: 'Run the tests' })).toBeTruthy();
   });
   it('a free answer carries the caption the reference prints', () => {

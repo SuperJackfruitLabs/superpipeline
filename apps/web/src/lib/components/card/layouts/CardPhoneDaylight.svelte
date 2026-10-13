@@ -121,7 +121,7 @@
     {/if}
 
     <div class="secs">
-      <details class="sec" data-section="plan"><summary>Plan <span class="c">{v.planSummary}</span></summary><div class="in"><PhonePlan view={v} speaker={v.speaker} /></div></details>
+      {#if v.plan?.length}<details class="sec" data-section="plan"><summary>Plan <span class="c">{v.planSummary}</span></summary><div class="in"><PhonePlan view={v} speaker={v.speaker} /></div></details>{:else}<span hidden data-section="plan"></span>{/if}
       <details class="sec" data-section="details" open={!model.counts.description || hasStructuredDetail(v.groups, model.acceptanceCriteria)}><summary>Details <span class="c">{v.fieldsCount} fields</span></summary><div class="in"><PhoneDetails view={v} spec={c.spec} criteria={model.acceptanceCriteria} heading="Things to prove" boardId={model.boardId ?? ''} /></div></details>
       <details class="sec" data-section="project"><summary>Project <span class="c">{v.project.summary}</span></summary><div class="in">
         {#if v.project.line}<p>{v.project.line}</p><button class="lnk" type="button" onclick={() => model.project.start()}>Change project</button>
@@ -130,9 +130,9 @@
       <details class="sec" data-section="links"><summary>Links <span class="c">{model.counts.links}</span></summary><div class="in"><PhoneLinks view={v} {model} /></div></details>
       <details class="sec" data-section="subtasks"><summary>Sub-tasks <span class="c">{v.subtasks.count}</span></summary><div class="in"><PhoneSubtasks view={v} {model} /></div></details>
       <details class="sec" data-section="activity" open><summary>Session activity <span class="c">{model.counts.runs} {model.counts.runs === 1 ? 'run' : 'runs'}</span></summary><div class="in"><PhoneRuns view={v} {model} /></div></details>
-      <details class="sec" data-section="decisions"><summary>Decisions <span class="c">{v.decisions}</span></summary><div class="in">
+      {#if v.decisions}<details class="sec" data-section="decisions"><summary>Decisions <span class="c">{v.decisions}</span></summary><div class="in">
         {#if v.decisions === 0}<p class="muted">No decisions on this card yet.</p>{:else}<ul class="refs">{#each model.decidedGates as g (g.id)}<li class="rf"><b>{g.decision ?? g.status}</b></li>{/each}</ul>{/if}
-      </div></details>
+      </div></details>{:else}<span hidden data-section="decisions"></span>{/if}
       <details class="sec" data-section="comments"><summary>Comments <span class="c">{v.comments}</span></summary><div class="in"><PhoneComments {model} /></div></details>
       <details class="sec" data-section="handoff" open={model.counts.handoff}><summary>Handoff <span class="c">{v.handoff.summary}</span></summary><div class="in">{#if model.counts.handoff}<HandoffView handoff={model.handoff} testid="carried-handoff" />{:else}<p>{v.handoff.text}</p>{/if}</div></details>
       <details class="sec" data-section="cost"><summary>Cost <span class="c">{v.cost.amount}</span></summary><div class="in"><p><strong class="mono">{v.cost.amount}</strong>{v.cost.rest}</p></div></details>

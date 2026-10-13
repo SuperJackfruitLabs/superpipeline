@@ -1,5 +1,6 @@
 <!-- apps/web/src/lib/components/operate/BoardLog.svelte -->
 <script lang="ts">
+  import { clockHMS } from '$lib/when';
   import { Button } from '@superjackfruit/vibekit';
   import LineIcon from '$lib/components/parts/LineIcon.svelte';
   import { app } from '$lib/stores/app.svelte';
@@ -36,7 +37,7 @@
       {#each shown as e (e.seq)}
         {@const cardId = typeof e.payload.cardId === 'string' ? e.payload.cardId : null}
         <li class="lrow">
-          <span class="time">{e.ts.slice(11, 19)}</span>
+          <span class="time">{clockHMS(e.ts)}</span>
           <span class="t-body" style="font-size: 0.9375rem;">{eventLabel(e, app.board?.stages ?? [])}</span>
           {#if cardId}
             {@const t = title(cardId)}
@@ -55,7 +56,7 @@
       {/if}
       <details>
         <summary class="t-meta" style="min-height: 44px; display: flex; align-items: center; gap: 6px;"><span class="disc-ico"><LineIcon name="chev-down" size={16} /></span><span style="text-decoration: underline;">Show raw event names</span></summary>
-        <ol class="log">{#each list as e (e.seq)}<li class="lrow"><span class="time">{e.ts.slice(11, 19)}</span><span class="raw">{rawLine(e)}</span></li>{/each}</ol>
+        <ol class="log">{#each list as e (e.seq)}<li class="lrow"><span class="time">{clockHMS(e.ts)}</span><span class="raw">{rawLine(e)}</span></li>{/each}</ol>
       </details>
     </div>
   {/if}

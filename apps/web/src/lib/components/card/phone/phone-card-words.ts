@@ -89,7 +89,7 @@ export const dayShort = (iso: string): string => fmt('en-GB', { weekday: 'short'
 export const studioWhen = (iso: string): string => `${fmt('en-GB', { weekday: 'short', day: '2-digit', month: 'short' }).format(new Date(iso)).replace(',', '')} ${clockHM(iso)}`;
 const TYPE_WORD: Record<string, string> = { action: 'Did', response: 'Said', thought: 'Thought', prompt: 'You said', elicitation: 'Asked' };
 const TYPE_WORD_STUDIO: Record<string, string> = { action: 'Action', response: 'Response', thought: 'Thought', prompt: 'You', elicitation: 'Question' };
-export type EventRow = { key: number; verb: string; body: string; time: string; stop: boolean };
+export type EventRow = { key: number; verb: string; body: string; time: string; stop: boolean; parameter: unknown; result: unknown };
 export function eventRows(rows: Activity[], leadSentence: string | null, showToolCalls: boolean, form: 'plain' | 'studio' = 'plain'): EventRow[] {
   const { rows: shown } = visibleActivities(rows, isNarrative, showToolCalls, isControlRow);
   const words = form === 'studio' ? TYPE_WORD_STUDIO : TYPE_WORD;
@@ -100,7 +100,7 @@ export function eventRows(rows: Activity[], leadSentence: string | null, showToo
     prevDay = day;
     const stop = a.signal === 'stop' || a.type === 'error';
     const body = leadSentence && a.body?.trim() === leadSentence.trim() ? STOP_COPY : (a.body ?? '');
-    return { key: a.seq, verb: stop ? 'Stopped' : (a.action ?? words[a.type] ?? a.type), body, time, stop };
+    return { key: a.seq, verb: stop ? 'Stopped' : (a.action ?? words[a.type] ?? a.type), body, time, stop, parameter: a.parameter ?? null, result: a.result ?? null };
   });
 }
 

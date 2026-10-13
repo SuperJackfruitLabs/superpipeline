@@ -2,6 +2,7 @@
 <script lang="ts">
   /** One Daylight phone tile (SP-Phone-Board-Daylight `article.tile`), in the wants lane or a stage lane. */
   import '../phone/phone-move.css';
+  import './priority-chip.css';
   import { Button, Face } from '@superjackfruit/vibekit';
   import type { Stage } from '$lib/api';
   import CardMoveMenu from '../CardMoveMenu.svelte';
@@ -37,7 +38,7 @@
   <article class="tile" class:p1={s.priority === 1} class:p2={s.priority === 2}>
     {#if s.priority > 0}<span class="sr">Priority {s.priority}</span>{/if}
     <div class="trow">
-      <span class="stg">{pdStageLine(s)}</span>
+      <span class="stg">{pdStageLine(s)}{#if s.priority > 0}<span class="pd-pri" aria-hidden="true">P{s.priority}</span>{/if}</span>
       <button class="mv" type="button" aria-haspopup="menu" aria-label="Move {s.title} to another stage" aria-expanded={moveOpen} onclick={() => (moveOpen = !moveOpen)}><PhoneIcon name="move" />Move</button>
     </div>
     <h3><button class="tt" type="button" aria-label={phoneTitleLabel(s)} data-card-open={s.id} onclick={() => app.openCard(s.id)} onkeydown={onTitleKey}>{s.title}</button></h3>

@@ -10,6 +10,7 @@ import { appearance } from '$lib/appearance.svelte';
 import { getUsage, markNotificationRead, moveCard, resumeCard, setBudget, type UsageSummary } from '$lib/api';
 import { itemsFromBoard, sortAttention } from '$lib/components/attention/attention';
 import { refusalOf } from '$lib/components/attention/refusal';
+import { greetingName } from '../dialogs/person';
 import { activityGroups, needRows, parseCap, runningRows, spendView } from './operate-data';
 import type { CapResult, NeedRow, OperateModel } from './layouts/types';
 
@@ -41,7 +42,7 @@ export class OperateStore implements OperateModel {
   get usageError(): string | null { return this.#usageError; }
   get phase() { return appearance.phase; }
   get nowMs(): number { return Date.now(); }
-  get firstName(): string { return (app.user?.name ?? '').trim().split(' ')[0] ?? ''; }
+  get firstName(): string { return greetingName(app.user, app.members); }
 
   #loadUsage(id: string): void {
     this.#usageError = null;

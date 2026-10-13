@@ -2,7 +2,7 @@
 <script lang="ts">
   /** Studio's card page (SP-CardPage-Studio): an annual-report page for one card. */
   import './card-page-studio.css';
-  import { faceSvg, StageTrack } from '@superjackfruit/vibekit';
+  import { Button, faceSvg, StageTrack } from '@superjackfruit/vibekit';
   import { goto } from '$app/navigation';
   import { app } from '$lib/stores/app.svelte';
   import { appearance } from '$lib/appearance.svelte';
@@ -15,6 +15,7 @@
   import LinkAddForm from '../LinkAddForm.svelte';
   import HandoffView from '../HandoffView.svelte';
   import RawJson from '../RawJson.svelte';
+  import ToolCallDetails from '../ToolCallDetails.svelte';
   import SpecValueView from '../SpecValueView.svelte';
   import GateStudioFrame from '../gate/GateStudioFrame.svelte';
   import GateStudioBar from '../gate/GateStudioBar.svelte';
@@ -51,8 +52,6 @@
   const age = $derived(figAge(m.ageHours ?? 0));
   const face = (who: string, mood: 'needs' | 'resting' | 'working' | 'thinking' | 'done', size: number) => faceSvg(who, { mood, size, label: `${who}, ${mood === 'needs' ? 'needs you' : mood}` });
   const stopped = $derived(['stopped', 'failed', 'budget'].includes(lead.kind) && !m.archived);
-  const latest = $derived(runs[0]);
-  const latestRows = $derived(latest ? visibleActivities(latest.activities, isNarrative, m.showToolCalls, isControlRow).rows : []);
   let rawOpen = $state(false);
   $effect(() => m.comments.attach());
 
@@ -140,7 +139,7 @@
               <div class="ar-q cp-q" role="status">
                 <h3>{@html face(agentName, lead.needsYou ? 'needs' : 'working', 24)}{agentName}{lead.needsYou ? ' · Stopped · needs you' : ''}{#if lead.at}<span class="mono">{quoteWhen(lead.at, new Date())}</span>{/if}</h3>
                 <blockquote>{#each splitTokens(lead.sentence) as p, i (i)}{#if p.token}<code>{p.text}</code>{#if p.text === sid}<sup class="fn">1</sup>{/if}{:else}{p.text}{/if}{/each}</blockquote>
-                {#if sid}<div class="ar-pfn"><span class="k">1</span><span>Session <code>{sid}</code></span><button class="ar-lk" type="button" style="padding-right: 0px;" onclick={() => m.copySessionId(sid)}><Icon name="copy" size={14} strokeWidth={1.75} />Copy</button></div>{/if}
+                {#if sid}<div class="ar-pfn"><span class="k">1</span><span>Session <code>{sid}</code></span><button class="ar-lk" type="button" style="padding-right: 0px;" aria-label="Copy session id" onclick={() => m.copySessionId(sid)}><Icon name="copy" size={14} strokeWidth={1.75} />Copy</button></div>{/if}
               </div>
             {/if}
           </section>
@@ -160,7 +159,7 @@
         {#snippet talkR()}{commentsCount(m.comments.comments.length)} · <span class="kbd">C</span>{/snippet}
         <section class="ar-sec" aria-labelledby="cp-s3" data-section="comments">
           {@render hd(3, 'cp-s3', 'Talk', talkR)}
-          {#if m.comments.comments.length}{#each m.comments.comments as c (c.id)}<p class="cd-p"><b>{c.author.name ?? c.author.id}</b> <span style="white-space: pre-wrap">{c.deletedAt ? 'Comment deleted' : c.body}</span></p>{/each}{:else}<p class="cd-p">No comments yet. The agent that works this card reads them.</p>{/if}
+          {#if m.comments.comments.length}{#each m.comments.comments as c (c.id)}<p class="cd-p"><b>{m.authorName(c.author)}</b> <span style="white-space: break-spaces; overflow-wrap: anywhere">{c.deletedAt ? 'Comment deleted' : c.body}</span></p>{/each}{:else}<p class="cd-p">No comments yet. The agent that works this card reads them.</p>{/if}
           <div class="ar-field"><label for="cp-comment">Add a comment</label><textarea id="cp-comment" class="ar-ta" maxlength="8192" placeholder="⌘ or Ctrl + Enter posts it" bind:value={m.comments.draft} onkeydown={(e) => { if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) { e.preventDefault(); void m.comments.submit(); } }}></textarea></div>
           {#if m.comments.error}<p class="cd-p" role="alert">{m.comments.error}</p>{/if}
           <div><button class="ar-btn2" type="button" aria-disabled={m.comments.posting ? 'true' : undefined} onclick={() => { if (!m.comments.posting) void m.comments.submit(); }}>Comment</button><span class="vk-visually-hidden" role="status">{m.comments.posting ? 'Posting…' : ''}</span></div>
@@ -175,14 +174,14 @@
             <div>{#if card.spec?.description}<h3 class="cd-h">Description</h3><p class="cd-p" data-section="description">{String(card.spec.description)}</p>{:else}{@render hidden('description')}{/if}</div>
             <div>{#if m.acceptanceCriteria?.length}<h3 class="cd-h">Acceptance criteria <span class="mono">{m.acceptanceCriteria.length}</span></h3><ol class="cd-ol" data-section="criteria">{#each m.acceptanceCriteria as c, i (i)}<li><span>{c}</span></li>{/each}</ol>{:else}{@render hidden('criteria')}{/if}</div>
           </div>
-          <div data-section="plan"><h3 class="cd-h">Agent plan</h3>{#if m.plan}<ol class="cd-ol">{#each m.plan as st, i (i)}<li><span>{st.done ? '✓ ' : ''}{st.text}</span></li>{/each}</ol>{:else}<p class="note cd-p">{planNone(m.agent.name)}</p>{/if}</div>
+          {#if m.plan}<div data-section="plan"><h3 class="cd-h">Agent plan</h3>{#if m.plan}<ol class="cd-ol">{#each m.plan as st, i (i)}<li><span>{st.done ? '✓ ' : ''}{st.text}</span></li>{/each}</ol>{:else}<p class="note cd-p">{planNone(m.agent.name)}</p>{/if}</div>{:else}<span hidden data-section="plan"></span>{/if}
           <div data-section="details">
-            <div class="cd-acts" style="justify-content: space-between;"><h3 class="cd-h" style="margin: 0px;">Details <span class="mono">{specRowCount(groups)} fields</span></h3><span class="cd-acts"><button class="ar-lk" type="button" aria-expanded={rawOpen} onclick={() => (rawOpen = !rawOpen)}>View raw JSON</button><button class="ar-lk" type="button" onclick={() => m.copySpec()}><Icon name={m.copied === 'spec' ? 'check' : 'copy'} size={14} strokeWidth={1.75} />Copy</button></span></div>
+            <div class="cd-acts" style="justify-content: space-between;"><h3 class="cd-h" style="margin: 0px;">Details <span class="mono">{specRowCount(groups)} fields</span></h3><span class="cd-acts"><button class="ar-lk" type="button" aria-expanded={rawOpen} onclick={() => (rawOpen = !rawOpen)}>{rawOpen ? 'Hide raw JSON' : 'View raw JSON'}</button>{#if rawOpen}<button class="ar-lk" type="button" onclick={() => m.copySpec()}><Icon name={m.copied === 'spec' ? 'check' : 'copy'} size={14} strokeWidth={1.75} />Copy</button>{/if}</span></div>
             <table class="cd-dt">
               <caption class="sr">Brief details, {specRowCount(groups)} fields</caption>
               <tbody>{#each rows as r (r.key)}<tr class:g={r.first}>{#if r.first}<th scope="rowgroup" rowspan={r.span}>{r.group}</th>{/if}<th scope="row">{r.label}</th><td data-testid="spec-value-{r.key}"><SpecValueView value={r.value} v={{ clamp: 'cd-clamp', more: 'ar-lk', matrixLinks: false }} /></td></tr>{/each}</tbody>
             </table>
-            {#if rawOpen}<RawJson value={card.spec} />{/if}
+            {#if rawOpen}<RawJson value={card.spec} bare />{/if}
           </div>
           <div class="cd-acts" data-section="project">
             {#if m.project.editing}
@@ -211,25 +210,29 @@
       </div>
 
       <div>
-        {#snippet logR()}{m.counts.runs} run{m.counts.runs === 1 ? '' : 's'} · <button class="ar-lk" type="button" aria-pressed={m.showToolCalls} style="min-height: 0px;" onclick={() => (m.showToolCalls = !m.showToolCalls)}>{m.showToolCalls ? 'Hide tool calls' : 'Show tool calls'}</button>{/snippet}
+        {#snippet logR()}{m.counts.runs} run{m.counts.runs === 1 ? '' : 's'}{/snippet}
         <section class="ar-sec" aria-labelledby="cp-s6">
           {@render hd(6, 'cp-s6', 'Log', logR)}
           <div data-section="activity" style="display: contents">
             {#if q?.known}<p class="cd-p"><span class="kick">Provenance</span> {studioProvenance(q.queuedByName, q.byAgent, m.grantCovers, !!m.delegate.id)}</p>{/if}
             <table class="cd-dt">
               <thead><tr><th scope="col" style="width: 40px;">Run</th><th scope="col">Agent</th><th scope="col" style="width: 74px;">Outcome</th><th scope="col" style="width: 36px;">Ev</th><th scope="col" style="width: 92px;">Ended</th></tr></thead>
-              <tbody>{#each runs as g, ri (g.runId)}{@const a = m.attempts.find((x) => x.runId === g.runId)}{@const who = name(g.agentId) || 'An agent'}<tr><td class="m">#{(m.attempts.findIndex((x) => x.runId === g.runId) + 1) || runs.length - ri}</td><td><span class="ag">{@html face(who, ri === 0 && lead.needsYou ? 'needs' : 'resting', 20)}{who}</span></td><td class:sigt={ri === 0 && lead.needsYou}>{a ? outcomeWord(a) : 'Running'}</td><td class="m">{g.counts.total}</td><td class="m">{a?.endedAt ? runEnded(a.endedAt) : '—'}</td></tr>{/each}</tbody>
+              <tbody>{#each runs as g, ri (g.runId)}{@const a = m.attempts.find((x) => x.runId === g.runId)}{@const who = name(g.agentId) || 'An agent'}{@const no = (m.attempts.findIndex((x) => x.runId === g.runId) + 1) || runs.length - ri}{@const isOpen = m.isRunOpen(g.runId, ri === 0)}<tr><td class="m"><button class="ar-run" type="button" data-attempt-head={g.runId} aria-expanded={isOpen} aria-controls={isOpen ? `cp-run-${g.runId}` : undefined} aria-label="Run {no}, {isOpen ? 'hide' : 'show'} its log" onclick={() => m.toggleRun(g.runId, ri === 0)}>#{no}</button></td><td><span class="ag">{@html face(who, ri === 0 && lead.needsYou ? 'needs' : 'resting', 20)}{who}</span></td><td class:sigt={ri === 0 && lead.needsYou}>{a ? outcomeWord(a) : 'Running'}</td><td class="m">{g.counts.total}</td><td class="m">{a?.endedAt ? runEnded(a.endedAt) : '—'}</td></tr>{/each}</tbody>
             </table>
-            {#if latest}
-              <div>
-                <h3 class="cd-h">Latest run <span class="mono">{m.stages.find((s) => s.key === latest.stageKey)?.name ?? latest.stageKey} · {latest.counts.error} errors</span></h3>
-                <table class="cd-dt"><tbody>{#each latestRows as ev, ei (ev.seq)}<tr><td class="m" style={ei === 0 ? 'width: 52px;' : undefined}>{clockHM(ev.ts)}</td><td><span class:sigt={ev.signal === 'stop'}>{eventVerb(ev)}.</span> {ev.signal === 'stop' ? STOP_SENTENCE : ev.body}</td></tr>{/each}</tbody></table>
-              </div>
-            {/if}
+            {#each runs as g, ri (g.runId)}
+              {#if m.isRunOpen(g.runId, ri === 0)}
+                {@const tools = m.toolsShown(g.runId)}
+                {@const view = visibleActivities(g.activities, isNarrative, tools, isControlRow)}
+                <div id="cp-run-{g.runId}">
+                  <div class="cd-acts" style="justify-content: space-between;"><h3 class="cd-h" style="margin: 0px;">{ri === 0 ? 'Latest run' : `Run #${(m.attempts.findIndex((x) => x.runId === g.runId) + 1) || runs.length - ri}`} <span class="mono">{m.stages.find((s) => s.key === g.stageKey)?.name ?? g.stageKey} · {g.counts.error} errors</span></h3>{#if tools || (g.counts.action > 0 && !view.shownBecauseNoNarrative)}<button class="ar-lk" type="button" data-attempt-tools={g.runId} aria-pressed={tools} onclick={() => m.toggleTools(g.runId)}>{tools ? 'Hide tool calls' : 'Show tool calls'}</button>{/if}</div>
+                  <table class="cd-dt cd-ev"><tbody>{#each view.rows as ev, ei (ev.seq)}<tr><td class="m" style={ei === 0 ? 'width: 52px;' : undefined}>{clockHM(ev.ts)}</td><td><span class:sigt={ev.signal === 'stop'}>{eventVerb(ev)}.</span> {ev.signal === 'stop' && ri === 0 ? STOP_SENTENCE : ev.body}<ToolCallDetails parameter={ev.parameter} result={ev.result} cls="cd-details" /></td></tr>{/each}</tbody></table>
+                </div>
+              {/if}
+            {/each}
           </div>
           {#if m.counts.handoff}<div data-section="handoff"><span class="kick">Handoff</span><HandoffView handoff={m.handoff} testid="carried-handoff" /></div>
           {:else}<p class="cd-p" data-section="handoff"><span class="kick">Handoff</span> {handoffLine({ handoff: null, stageIndex: m.stageIndex, stages: m.stages, queuedByName: q?.queuedByName ?? 'someone', createdAt: card.createdAt })}</p>{/if}
-          <p class="cd-p" data-section="decisions"><span class="kick">Decisions</span> {m.decidedGates.length ? m.decidedGates.map((d) => `${d.decision ?? d.status} at ${d.stageKey}`).join('; ') : 'None yet.'}</p>
+          {#if m.decidedGates.length}<p class="cd-p" data-section="decisions"><span class="kick">Decisions</span> {m.decidedGates.length ? m.decidedGates.map((d) => `${d.decision ?? d.status} at ${d.stageKey}`).join('; ') : 'None yet.'}</p>{:else}<span hidden data-section="decisions"></span>{/if}
         </section>
         {#snippet costR()}{usd(card.costUsd)}{/snippet}
         <section class="ar-sec" aria-labelledby="cp-s7">
@@ -245,7 +248,7 @@
           {@render hd(8, 'cp-s8', 'Card actions', null)}
           <div class="cd-acts" data-section="cardActions">
             {#if !m.archived}<button class="ar-btn2" type="button" aria-disabled={m.archiving ? 'true' : undefined} onclick={() => { if (!m.archiving) void m.archive(); }}><Icon name="archive" size={15} strokeWidth={1.75} />Archive card</button><span class="vk-visually-hidden" role="status">{m.archiving ? 'Archiving…' : ''}</span>{/if}
-            <button class="ar-btn2" type="button" style="border: 0px; background: transparent; color: var(--text); box-shadow: inset 0 0 0 2.5px var(--rule);" onclick={() => m.remove()}>Delete card</button>
+            <Button variant="quiet" onclick={() => m.remove()}>Delete card</Button>
           </div>
         </section>
       </div>

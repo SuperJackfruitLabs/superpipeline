@@ -97,8 +97,8 @@ describe('CardPageDaylight (4605)', () => {
   });
   it('what happened: attempts newest first, the closed one ends at 12:11, tool calls counted', async () => {
     const { container, dispose } = await mount();
-    const runs = [...container.querySelectorAll<HTMLDetailsElement>('details.dp-run')];
-    expect(runs.map((r) => words(r.querySelector('summary')!))).toEqual([
+    const runs = [...container.querySelectorAll<HTMLElement>('div.dp-run')];
+    expect(runs.map((r) => words(r.querySelector('button[data-attempt-head]')!))).toEqual([
       'Attempt 2 · Reproduce stopped 14 events · 0 errors',
       'Attempt 1 · Reproduce sent back 9 events · 0 errors · 12:11',
     ]);
@@ -115,7 +115,7 @@ describe('CardPageDaylight (4605)', () => {
     const foot = container.querySelector('footer.dp-foot') as HTMLElement;
     expect(within(foot).getByRole('link', { name: 'Back to the board' }).getAttribute('href')).toBe('/b/brd_134a0ddb6d434478');
     // The reference's ink outline is vibekit's danger Button (surface, ink text, a 2px ink edge).
-    expect(within(foot).getByRole('button', { name: /Delete card/ }).classList.contains('vk-button--danger')).toBe(true);
+    expect(within(foot).getByRole('button', { name: /Delete card/ }).classList.contains('vk-button--quiet')).toBe(true);
     await fireEvent.click(within(foot).getByRole('button', { name: /Edit card/ }));
     expect(model.edit.editing).toBe(true);
     dispose();

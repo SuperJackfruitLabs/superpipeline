@@ -6,6 +6,7 @@
 import { greeting, type Mood, type Phase } from '@superjackfruit/vibekit';
 import type { AttentionKind } from '$lib/components/attention/attention';
 import type { BoardSnapshot, Stage } from '$lib/api';
+import { ageStage } from '$lib/age';
 import { numWord, plural } from '$lib/words';
 import type { BoardModel, BoardStage } from './board-model';
 import { refLabel } from './ref-chip';
@@ -31,7 +32,7 @@ export function personInitials(name: string): string {
 export function greetingLine(phase: Phase, firstName: string, needs: number): string {
   const hello = greeting(phase, 'daylight').replace(/[.?]$/, '');
   const tail = needs === 0 ? 'Nothing needs you.' : `${needs} ${needs === 1 ? 'card wants' : 'cards want'} you.`;
-  return `${hello}, ${firstName}. ${tail}`;
+  return `${firstName ? `${hello}, ${firstName}` : hello}. ${tail}`;
 }
 
 /** What the agent says in the peek bubble, after its name. */
@@ -43,7 +44,7 @@ export const KIND_SAYS: Partial<Record<AttentionKind, string>> = {
   'no-owner': 'nobody works this stage',
 };
 export const isStopped = (k: AttentionKind | null): boolean => k === 'blocked' || k === 'repeated-failure';
-export const peekEyebrow = (s: CardSummary): string => `Peek · ${s.stageName} · ${s.ageShort} in this stage`;
+export const peekEyebrow = (s: CardSummary): string => `Peek · ${s.stageName} · ${ageStage(s.ageHours)} in this stage`;
 export const moreLabelsTitle = (n: number): string => `${n} more ${n === 1 ? 'label' : 'labels'}`;
 
 export type TileWho =

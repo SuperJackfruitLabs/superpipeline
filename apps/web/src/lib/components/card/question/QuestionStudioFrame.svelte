@@ -13,6 +13,6 @@
 </script>
 
 <div class="elicitation" style="display: contents">
-  <div class="ar-q"><h3><Face id={name} label={name} mood="needs" size={24} ring="mood" />{quoteHeader(name, 'question')}{#if elicitation.createdAt}<span class="mono">{quoteWhen(elicitation.createdAt, new Date())}</span>{/if}</h3>{#if showQuestion}<blockquote style="white-space: pre-wrap">{elicitation.question}</blockquote>{/if}</div>
+  <div class="ar-q"><h3><Face id={name} label={name} mood="needs" size={24} ring="mood" />{quoteHeader(name, 'question')}{#if elicitation.createdAt}<span class="mono">{quoteWhen(elicitation.createdAt, new Date())}</span>{/if}</h3>{#if showQuestion}<blockquote style="white-space: pre-wrap; overflow-wrap: anywhere">{elicitation.question}</blockquote>{/if}</div>
   {#if elicitation.signal === 'auth'}<p class="ar-hint">Needs you to sign in.</p>{/if}
 </div>

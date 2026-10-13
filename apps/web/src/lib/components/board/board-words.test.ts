@@ -5,6 +5,7 @@ import { buildBoardModel } from './board-model';
 import { emptyHint, emptyLedeHtml, emptyTags, emptyWho } from './board-words';
 import { paperBy, paperFacts, paperKicker, paperQuote, paperReply, paperSection, pipelineParts } from './board-words';
 import { quietAction, quietBlocks, quietFacts, quietLede, quietMeta, quietStageRow, quietSub } from './board-words';
+import type { CardSummary } from './card-summary';
 import { daysOverdue, dlCols, dueLong, dueShort, greetingLine, needsAction, peekEyebrow, personInitials, stripLabel, stripOwner, tileAction, tileWho } from './board-words';
 
 const m = buildBoardModel(DX, DX.cards, boardCtx());
@@ -26,11 +27,18 @@ describe('Daylight words', () => {
     expect(greetingLine('noon', 'Rakesh', 1)).toBe('Good afternoon, Rakesh. 1 card wants you.');
     expect(greetingLine('noon', 'Rakesh', 0)).toBe('Good afternoon, Rakesh. Nothing needs you.');
   });
+  it('omits the name when none is known', () => {
+    expect(greetingLine('noon', '', 0)).toBe('Good afternoon. Nothing needs you.');
+  });
   it('initials are the first letters of the first two words', () => {
     expect(personInitials('Rakesh Gangwar')).toBe('RG');
     expect(personInitials('sam')).toBe('S');
   });
   it('the peek eyebrow', () => expect(peekEyebrow(by(DX_IDS.c58f8))).toBe('Peek · Failing test · 33h in this stage'));
+  it('the peek eyebrow says what the drawer says for a card moved moments ago', () => {
+    const fresh = { ...by(DX_IDS.c58f8), ageHours: 0.002, ageShort: '1d' } as CardSummary;
+    expect(peekEyebrow(fresh)).toBe('Peek · Failing test · under an hour in this stage');
+  });
   it('who is on each tile', () => {
     expect(tileWho(by(DX_IDS.c63ac))).toEqual({ kind: 'person', name: 'Rakesh Gangwar', initials: 'RG', text: 'With you', note: '· no agent works this stage' });
     expect(tileWho(by(DX_IDS.c4605))).toEqual({ kind: 'agent', name: 'error-eric', mood: 'needs', note: '· needs you' });

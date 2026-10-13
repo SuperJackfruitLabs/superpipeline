@@ -21,7 +21,7 @@
     <legend>{elicitation.signal === 'auth' ? 'Your sign-in is needed' : 'Your answer is needed'}</legend>
     {#if showQuestion}
       <p class="qcs-by"><span class="qcs-face"><Face id={name} label={name} mood="needs" size={20} /></span>{name} asked:</p>
-      <p style="white-space: pre-wrap">{elicitation.question}</p>
+      <p style="white-space: pre-wrap; overflow-wrap: anywhere">{elicitation.question}</p>
     {/if}
     {#if elicitation.options.length > 0}
       {#each elicitation.options as opt (opt.name)}

@@ -84,3 +84,14 @@
 /* ---- deltas ---- */
 .pg { background: var(--vk-color-bg); color: var(--vk-color-text); font-family: var(--vk-font-body); }
 .pg-sc--bare { border: 0; padding: 0; margin-top: var(--vk-space-2); }
+
+/* Every attempt opens (O11): the attempt's line is the button, drawn as the line it was. */
+.pg-atthead { all: unset; box-sizing: border-box; display: block; width: 100%; cursor: pointer; }
+.pg-atthead:focus-visible { outline: 2px solid var(--vk-focus); outline-offset: 2px; }
+.pg-attbody { display: flex; flex-direction: column; gap: var(--vk-space-3); min-width: 0; }
+.pg-log li > span { min-width: 0; overflow-wrap: anywhere; }
+.pg-details > summary { min-height: 44px; display: inline-flex; align-items: center; cursor: pointer; text-decoration: underline; text-underline-offset: 3px; color: var(--vk-color-muted); }
+
+/* One raw-JSON toggle (O8): a button drawn as the summary it replaced. */
+.pg-rawbtn { all: unset; min-height: 44px; min-width: 44px; display: inline-flex; align-items: center; cursor: pointer; text-decoration: underline; text-underline-offset: 3px; font-size: var(--vk-text-sm); }
+.pg-rawbtn:focus-visible { outline: 2px solid var(--vk-focus); outline-offset: 2px; }

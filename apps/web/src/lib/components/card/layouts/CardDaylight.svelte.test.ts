@@ -114,19 +114,19 @@ describe('CardDaylight (4605)', () => {
     await fireEvent.click(more[0]!);
     expect(more[0]!.getAttribute('aria-expanded')).toBe('true');
     expect(screen.getByText(/This continuation is only shown after Show more\./)).toBeTruthy();
-    expect(screen.getByText('error-eric did not post a plan for this card.')).toBeTruthy();
+    expect(screen.queryByText('error-eric did not post a plan for this card.'), 'an absent plan is hidden (O7)').toBeNull();
     expect(screen.getByText('Marketing & Community — Melissa and Anna onboarding · no milestone')).toBeTruthy();
     dispose();
   });
   it('what happened: newest run first and open, the stop row says why without repeating it', async () => {
     const { dispose } = await mount();
     const container = document.body;
-    const runs = [...container.querySelectorAll<HTMLDetailsElement>('details.dd-run')];
-    expect(runs.map((r) => words(r.querySelector('summary')!))).toEqual([
+    const runs = [...container.querySelectorAll<HTMLElement>('div.dd-run')];
+    expect(runs.map((r) => words(r.querySelector('button[data-attempt-head]')!))).toEqual([
       'Reproduce · error-eric stopped attempt 2 14 events · 0 errors',
       'Reproduce · error-eric sent back attempt 1 9 events · 0 errors',
     ]);
-    expect(runs.map((r) => r.open)).toEqual([true, false]);
+    expect(runs.map((r) => r.querySelector('button[data-attempt-head]')!.getAttribute('aria-expanded'))).toEqual(['true', 'false']);
     expect(runs[0]!.querySelector('.stop')!.textContent).toBe('Stopped Blocked. Waiting on you; the reason is shown at the top of this card.');
     expect(screen.getByText('From Reported: queued by super-chotu on 8 Oct with the brief above. No earlier stage output.')).toBeTruthy();
     expect(screen.getByText('Attempts: 1 · error-eric · $0.00 · sent back; 2 · error-eric · $0.00 · stopped')).toBeTruthy();
@@ -143,7 +143,7 @@ describe('CardDaylight (4605)', () => {
     expect(screen.getByText('Nothing blocks this card and it blocks nothing.')).toBeTruthy();
     const foot = container.querySelector('.dd-foot')!;
     expect(within(foot as HTMLElement).getByRole('button', { name: /Archive card/ })).toBeTruthy();
-    expect(within(foot as HTMLElement).getByRole('button', { name: /Delete card/ }).className).toContain('dd-danger');
+    expect(within(foot as HTMLElement).getByRole('button', { name: /Delete card/ }).className).toContain('vk-button--quiet');
     dispose();
   });
   it('editing swaps in the edit form; the dialog keeps its name', async () => {

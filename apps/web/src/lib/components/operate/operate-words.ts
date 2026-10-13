@@ -1,8 +1,8 @@
 // apps/web/src/lib/components/operate/operate-words.ts
 /**
  * Every sentence Operate prints, per vibe, as pure functions of the board (spec Operate §3.2).
- * Times on the page are UTC (a card's notices are stamped by the server); the Studio op line and
- * the shell's "synced" are the reader's local clock.
+ * Times on the page are the reader's own: a card's notices are stamped in UTC by the server and
+ * shown on the reader's clock, in the app's short date form, like the board's "synced".
  */
 import { greeting, type Phase, type Vibe } from '@superjackfruit/vibekit';
 import type { AgentSummary, Notification, Stage } from '$lib/api';
@@ -11,6 +11,7 @@ import { stageOwner } from '$lib/components/board/stage-owner';
 import { dueLong, dueShort } from '$lib/components/board/board-words';
 import { PAPER_PHASE } from '$lib/components/shell/shell-words';
 import { ageShort, ageWords } from '$lib/age';
+import { clockHM } from '$lib/when';
 import { numWord } from '$lib/words';
 import type { NeedRow } from './layouts/types';
 
@@ -49,8 +50,11 @@ export function dayWords(h: number): string {
   return d <= 10 ? `${numWord(d)} days` : `${d} days`;
 }
 
-/** A notice's UTC time, HH:MM. */
-export const when = (n: Notification): string => n.createdAt.slice(11, 16);
+/** A notice's time on the reader's clock, HH:MM (`timeZone` is for tests; the app passes none). */
+export const when = (n: Notification, timeZone?: string): string => clockHM(n.createdAt, timeZone);
+
+/** A notice's body, with any ISO date in it (the server writes "was due 2026-10-06") in the app's short form ("6 Oct"). */
+export const noticeBody = (n: Notification): string => n.body.replace(/\b\d{4}-\d{2}-\d{2}\b/g, (d) => dueShort(d));
 
 const STALE = /^Stuck (\d+)h in (.+?): /;
 
@@ -59,7 +63,7 @@ const STALE = /^Stuck (\d+)h in (.+?): /;
  * kind, never the notice's wording (O-9). Null for any other notice, or one that does not parse:
  * the caller prints the body verbatim.
  */
-export function staleLine(n: Notification, vibe: Vibe, needKind: AttentionKind | null): string | null {
+export function staleLine(n: Notification, vibe: Vibe, needKind: AttentionKind | null, timeZone?: string): string | null {
   if (n.kind !== 'stale') return null;
   const m = STALE.exec(n.body);
   if (!m) return null;
@@ -74,14 +78,14 @@ export function staleLine(n: Notification, vibe: Vibe, needKind: AttentionKind |
     case 'studio':
       return unclaimed ? `Still unclaimed ${h}h in ${stage}. ` : `Still stopped ${h}h later in ${stage}. `;
     case 'quiet':
-      return unclaimed ? `${when(n)} UTC: still unclaimed after ${dayWords(h)} in ${stage}.` : `${when(n)} UTC: still stopped ${dayWords(h)} later in ${stage}.`;
+      return unclaimed ? `${when(n, timeZone)}: still unclaimed after ${dayWords(h)} in ${stage}.` : `${when(n, timeZone)}: still stopped ${dayWords(h)} later in ${stage}.`;
   }
 }
 
 /** Quiet's one line per notice: time, what happened, and where the reason is. */
-export function quietLine(n: Notification, needKind: AttentionKind | null, hasNeed: boolean): string {
-  const line = staleLine(n, 'quiet', needKind);
-  if (line === null) return `${when(n)} UTC: ${n.body}`;
+export function quietLine(n: Notification, needKind: AttentionKind | null, hasNeed: boolean, timeZone?: string): string {
+  const line = staleLine(n, 'quiet', needKind, timeZone);
+  if (line === null) return `${when(n, timeZone)}: ${noticeBody(n)}`;
   return hasNeed ? `${line} The reason is under Needs your decision.` : line;
 }
 
@@ -119,7 +123,7 @@ export const greetingLabel = (phase: Phase): string => greeting(phase, 'daylight
 
 export function daylightGreeting(phase: Phase, firstName: string, n: number): string {
   const tail = n === 0 ? 'Nothing needs you.' : n === 1 ? '1 card wants you.' : `${n} cards want you.`;
-  return `${greetingLabel(phase)}, ${firstName}. ${tail}`;
+  return `${firstName ? `${greetingLabel(phase)}, ${firstName}` : greetingLabel(phase)}. ${tail}`;
 }
 
 export function summarySentenceDaylight(c: NeedCounts, r: number): string {
@@ -171,9 +175,9 @@ export function localHM(ms: number, timeZone?: string): string {
   return new Intl.DateTimeFormat('en-GB', { hour: '2-digit', minute: '2-digit', hourCycle: 'h23', timeZone }).format(ms);
 }
 
-/** The op line: the reader's local time (O-7), the phase word, and a reminder that rows are UTC. */
+/** The op line: the reader's local time (O-7) and the phase word; every time on the page is local too. */
 export function studioOpLine(nowMs: number, phase: Phase, timeZone?: string): string {
-  return `${localHM(nowMs, timeZone)} · ${greeting(phase, 'studio').toLowerCase()} · times UTC`;
+  return `${localHM(nowMs, timeZone)} · ${greeting(phase, 'studio').toLowerCase()}`;
 }
 
 export function studioHeroTitle(n: number, r: number): { sr: string; text: string } {
@@ -193,7 +197,7 @@ export function summarySentenceStudio(c: NeedCounts, r: number, spend7d: number)
 }
 
 export function studioSub(row: NeedRow): string {
-  if (row.item.kind === 'no-owner' && row.card.dueAt) return `${row.stage.name} · due ${row.card.dueAt}${row.overdue ? ', overdue' : ''}`;
+  if (row.item.kind === 'no-owner' && row.card.dueAt) return `${row.stage.name} · due ${dueShort(row.card.dueAt)}${row.overdue ? ', overdue' : ''}`;
   return row.stage.name;
 }
 
@@ -207,7 +211,7 @@ export function studioCapFigure(cap: number | null): { value: string; label: str
 export function quietLede(boardName: string, n: number, r: number): string {
   const needs = n === 0 ? 'Nothing needs you.' : `${n} card${n === 1 ? ' needs' : 's need'} you.`;
   const work = r === 0 ? ' No agent is working.' : ` ${r} ${r === 1 ? 'agent is' : 'agents are'} working.`;
-  return `${boardName}. ${needs}${work} Times are in UTC. `;
+  return `${boardName}. ${needs}${work} `;
 }
 
 export function quietMeta(row: NeedRow): string {

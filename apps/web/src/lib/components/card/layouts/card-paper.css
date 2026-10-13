@@ -63,7 +63,7 @@
 .pcd-linkbtn { display: inline; padding: 14px 8px; margin: -14px -8px; border: 0; background: transparent; font: inherit; color: var(--vk-color-text); text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
 .pcd a.pcd-link, .pcd a.pcd-back { text-decoration: underline; }
 .pcd-back { text-decoration: none; }
-.pcd-raw { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; font: 400 11.5px/1.5 var(--vk-font-mono); max-height: 16rem; overflow: auto; }
+.pcd-raw { margin: 0; white-space: break-spaces; overflow-wrap: anywhere; font: 400 11.5px/1.5 var(--vk-font-mono); max-height: 16rem; overflow: auto; }
 .pcd-log { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--vk-space-3); }
 .pcd-log li { display: grid; grid-template-columns: 24px minmax(0, 1fr); gap: var(--vk-space-3); font-size: var(--vk-text-sm); line-height: 1.45; }
 .pcd-log .t { display: block; color: var(--vk-color-muted); font: 400 11px/1.6 var(--vk-font-mono); }
@@ -80,3 +80,18 @@
 @container pcd (max-width: 620px) { .pcd-grid, .pcd-two, .pcd-groups { grid-template-columns: minmax(0, 1fr); } }
 @media (prefers-reduced-motion: reduce) { .pcd * { animation: none; } }
 .pcd-linkbtn.pcd-small { font-size: var(--vk-text-sm); }
+
+/* Every attempt opens (O11): the head is a button that reads as the attempt's line. */
+.pcd-att { display: flex; flex-direction: column; gap: var(--vk-space-3); }
+.pcd-atthead { all: unset; box-sizing: border-box; display: flex; align-items: baseline; gap: var(--vk-space-3); min-height: 44px; cursor: pointer; }
+.pcd-atthead .pcd-p { flex: 1; min-width: 0; }
+.pcd-atthead .o { font-size: var(--vk-text-sm); color: var(--vk-color-muted); text-decoration: underline; text-underline-offset: 3px; }
+.pcd-atthead:focus-visible { outline: 2px solid var(--vk-focus); outline-offset: 2px; }
+.pcd-attbody { display: flex; flex-direction: column; gap: var(--vk-space-3); min-width: 0; }
+.pcd-log li > span { min-width: 0; overflow-wrap: anywhere; }
+.pcd-details { font-size: var(--vk-text-sm); }
+.pcd-details > summary { min-height: 44px; display: inline-flex; align-items: center; text-decoration: underline; text-underline-offset: 3px; color: var(--vk-color-muted); }
+
+/* Change project (O9): the inline form is spaced, Save sits clear of the select. */
+.pcd-projform { display: flex; flex-direction: column; gap: var(--vk-space-3); margin-block: var(--vk-space-2); }
+.pcd-two--one { grid-template-columns: minmax(0, 1fr); }

@@ -21,6 +21,7 @@
   import HandoffView from '../HandoffView.svelte';
   import LibraryArtifact from '../LibraryArtifact.svelte';
   import RawJson from '../RawJson.svelte';
+  import ToolCallDetails from '../ToolCallDetails.svelte';
   import TokenText from '../TokenText.svelte';
   import SpecValueView from '../SpecValueView.svelte';
   import GateDaylight from '../gate/GateDaylight.svelte';
@@ -35,6 +36,7 @@
     agentRole, briefSummary, criteriaCount, emptyNoteCaption, handoffLine, initials, linksSummary, pageSmall, planNone,
     planProgress, projectLine, provenanceLine, relatedLine, replySub, RESUME_PLACEHOLDER, subtasksLine, talkSummary, usd, whatHappenedSummary,
   } from '../card-words';
+  import { askedHeading } from '../card-words';
   import AccountMenu from './AccountMenu.svelte';
   import type { CardPageProps } from '../layouts/types';
 
@@ -66,6 +68,7 @@
   function commentKey(e: KeyboardEvent): void {
     if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) { e.preventDefault(); void m.comments.submit(); }
   }
+  let rawOpen = $state(false);
 </script>
 
 {#snippet hidden(key: string)}<span hidden data-section={key}></span>{/snippet}
@@ -164,7 +167,7 @@
 
       <section class="dp-card" aria-labelledby="h-talk" data-section="comments">
         <h2 id="h-talk" class="dp-h">Talk <small>{talkSummary(m.comments.comments.length)}</small></h2>
-        {#if m.comments.comments.length}<ul class="dp-ul">{#each m.comments.comments as c (c.id)}<li><b>{c.author.name ?? c.author.id}</b> <span style="white-space: pre-wrap; overflow-wrap: anywhere">{c.deletedAt ? 'Comment deleted' : c.body}</span></li>{/each}</ul>{/if}
+        {#if m.comments.comments.length}<ul class="dp-ul">{#each m.comments.comments as c (c.id)}<li><b>{m.authorName(c.author)}</b> <span style="white-space: break-spaces; overflow-wrap: anywhere">{c.deletedAt ? 'Comment deleted' : c.body}</span></li>{/each}</ul>{/if}
         <p class="dp-small" style="margin: 0px;">The agent that works this card reads every comment.</p>
         <Field id="dp-comment" label="Add a comment" control="textarea" maxlength={8192} style="min-height: 88px;" placeholder="⌘ or Ctrl + Enter posts it" bind:value={m.comments.draft} onkeydown={commentKey} />
         {#if m.comments.error}<p class="vk-field__error" role="alert">{m.comments.error}</p>{/if}
@@ -175,7 +178,7 @@
 
     <section class="dp-col" aria-labelledby="h-brief">
       <div class="dp-card">
-        <h2 id="h-brief" class="dp-h"><Icon name="pushpin" size={18} /> What {agentName} was asked</h2>
+        <h2 id="h-brief" class="dp-h"><Icon name="pushpin" size={18} /> {askedHeading(m.stages[m.stageIndex], agentName)}</h2>
         {#if card.spec?.description}<p class="dp-p" data-section="description" style="white-space: pre-line">{String(card.spec.description)}</p>{:else}{@render hidden('description')}{/if}
         {#if m.acceptanceCriteria?.length}
           <h3 class="dp-h" style="font-size: var(--vk-text-md);">Done when <small>{criteriaCount(m.acceptanceCriteria.length)}</small></h3>
@@ -194,15 +197,16 @@
             {/each}
           </div>
           <div class="dp-row" style="gap: var(--vk-space-4);">
-            <details class="dp-raw"><summary>View raw JSON</summary><RawJson value={card.spec} /></details>
-            <Button variant="quiet" style="font-size: var(--vk-text-sm);" onclick={() => m.copySpec()}>{#snippet icon()}<Icon name={m.copied === 'spec' ? 'check' : 'copy'} size={14} />{/snippet}Copy</Button>
+            <button class="dp-rawbtn" type="button" aria-expanded={rawOpen} onclick={() => (rawOpen = !rawOpen)}>{rawOpen ? 'Hide raw JSON' : 'View raw JSON'}</button>
+            {#if rawOpen}<Button variant="quiet" style="font-size: var(--vk-text-sm);" onclick={() => m.copySpec()}>{#snippet icon()}<Icon name={m.copied === 'spec' ? 'check' : 'copy'} size={14} />{/snippet}Copy</Button>{/if}
           </div>
-        {:else}<p class="dp-p dp-small" data-section="details">No other details.</p>{/if}
-        <div data-section="plan" style="display: flex; flex-direction: column; gap: var(--vk-space-2);">
+          {#if rawOpen}<RawJson value={card.spec} bare />{/if}
+        {:else}<span hidden data-section="details"></span>{/if}
+        {#if m.plan}<div data-section="plan" style="display: flex; flex-direction: column; gap: var(--vk-space-2);">
           <div class="dp-row" style="justify-content: space-between;"><b>Agent plan</b><span class="dp-small">{m.plan ? planProgress(planDone, m.plan.length) : 'none yet'}</span></div>
           {#if m.plan}<div class="dp-meter"><i style="width: {Math.round((100 * planDone) / m.plan.length)}%;"></i></div><ul class="dp-plan">{#each m.plan as st, i (i)}<li class:done={st.done}><Icon name={st.done ? 'check' : 'chevron-right'} size={14} /><span>{st.text}</span></li>{/each}</ul>
           {:else}<p class="dp-p dp-small">{planNone(m.agent.name)}</p>{/if}
-        </div>
+        </div>{:else}<span hidden data-section="plan"></span>{/if}
         <div class="dp-row" style="justify-content: space-between;" data-section="project">
           {#if m.project.editing}
             <span style="flex: 1 1 16rem; min-width: 0px; display: flex; flex-direction: column; gap: var(--vk-space-2);">
@@ -252,22 +256,28 @@
         <h2 id="h-log" class="dp-h">What happened <small>{whatHappenedSummary(m.counts.runs, m.counts.decisions)}</small></h2>
         <div data-section="activity" style="display: contents">
           {#if q?.known}<p class="dp-small" style="margin: 0px;">{provenanceLine({ queuedByName: m.queuedByName, byAgent: q.byAgent, covers: m.grantCovers }, delegated ? m.delegate.name : null)}</p>{/if}
-          {#if runs.length === 0}<p class="dp-small" style="margin: 0px;">No recorded activity yet — this card hasn't been worked.</p>{/if}
+          
           {#each runs as g, ri (g.runId)}
             {@const a = attemptOf(g.runId)}
             {@const who = name(g.agentId) || 'An agent'}
             {@const latestNeeds = ri === 0 && lead.needsYou}
-            {@const view = visibleActivities(g.activities, isNarrative, m.showToolCalls, isControlRow)}
+            {@const tools = m.toolsShown(g.runId)}
+            {@const view = visibleActivities(g.activities, isNarrative, tools, isControlRow)}
             {@const hiddenCount = g.activities.length - visibleActivities(g.activities, isNarrative, false, isControlRow).rows.length}
-            <details class="dp-run" open={ri === 0}>
-              <summary><Face id={who} label={who} mood={latestNeeds ? 'needs' : 'resting'} size={24} /><b>Attempt {attemptNo(g.runId) || runs.length - ri} · {stageNameOf(g.stageKey)}</b><span class:dp-who={latestNeeds}>{a ? attemptWord(a) : (g.outcome ?? 'working')}</span><span class="dp-small">{g.counts.total} events · {g.counts.error} errors{ri > 0 && a?.endedAt ? ` · ${clockHM(a.endedAt)}` : ''}</span></summary>
+            {@const isOpen = m.isRunOpen(g.runId, ri === 0)}
+            <div class="dp-run">
+              <button class="dp-runhead" type="button" data-attempt-head={g.runId} aria-expanded={isOpen} aria-controls={isOpen ? `dp-run-${g.runId}` : undefined} onclick={() => m.toggleRun(g.runId, ri === 0)}><Face id={who} label={who} mood={latestNeeds ? 'needs' : 'resting'} size={24} /><b>Attempt {attemptNo(g.runId) || runs.length - ri} · {stageNameOf(g.stageKey)}</b><span class:dp-who={latestNeeds}>{a ? attemptWord(a) : (g.outcome ?? 'working')}</span><span class="dp-small">{g.counts.total} events · {g.counts.error} errors{ri > 0 && a?.endedAt ? ` · ${clockHM(a.endedAt)}` : ''}</span></button>
+              {#if isOpen}
+              <div id="dp-run-{g.runId}">
               <ol class="dp-tl" style="padding: var(--vk-space-2) var(--vk-space-4) 0;">
                 {#each view.rows as ev, ei (ev.seq)}
-                  <li><Face id={who} label={who} mood={ev.signal === 'stop' ? 'needs' : 'thinking'} size={24} /><span class:stop={ev.signal === 'stop'}><span class="k">{eventVerb(ev)}</span> {eventSentence(ev)}<br /><span class="t">{clockHM(ev.ts)}{ei === view.rows.length - 1 ? ` ${weekdayDayMonth(ev.ts)}` : ''}</span></span></li>
+                  <li><Face id={who} label={who} mood={ev.signal === 'stop' ? 'needs' : 'thinking'} size={24} /><span class:stop={ev.signal === 'stop'}><span class="k">{eventVerb(ev)}</span> {eventSentence(ev)}<br /><span class="t">{clockHM(ev.ts)}{ei === view.rows.length - 1 ? ` ${weekdayDayMonth(ev.ts)}` : ''}</span><ToolCallDetails parameter={ev.parameter} result={ev.result} cls="dp-raw" /></span></li>
                 {/each}
               </ol>
-              {#if hiddenCount > 0 || m.showToolCalls}<div style="padding: 0 var(--vk-space-4) var(--vk-space-3);"><Button variant="quiet" style="font-size: var(--vk-text-sm);" pressed={m.showToolCalls} onclick={() => (m.showToolCalls = !m.showToolCalls)}>{m.showToolCalls ? 'Hide tool calls' : `Show tool calls · ${hiddenCount} more events`}</Button></div>{/if}
-            </details>
+              {#if hiddenCount > 0 || tools}<div style="padding: 0 var(--vk-space-4) var(--vk-space-3);"><Button variant="quiet" style="font-size: var(--vk-text-sm);" data-attempt-tools={g.runId} pressed={tools} onclick={() => m.toggleTools(g.runId)}>{tools ? 'Hide tool calls' : `Show tool calls · ${hiddenCount} more events`}</Button></div>{/if}
+              </div>
+              {/if}
+            </div>
           {/each}
         </div>
         {#if m.counts.handoff}
@@ -275,7 +285,7 @@
         {:else}
           <div class="dp-small" data-section="handoff"><b style="color: var(--vk-color-text);">Handoff from {m.stages[m.stageIndex - 1]?.name ?? 'the queue'}</b><br />{handoffLine({ handoff: null, stageIndex: m.stageIndex, stages: m.stages, queuedByName: m.queuedByName || 'someone', createdAt: card.createdAt })}</div>
         {/if}
-        <div class="dp-small" data-section="decisions"><b style="color: var(--vk-color-text);">Decisions</b><br />{#if m.decidedGates.length}{#each m.decidedGates as d (d.id)}{d.decision ?? d.status} at {stageNameOf(d.stageKey)}{d.decidedBy ? ` by ${displayPrincipal(d.decidedBy, app.members)}` : ''}{d.comment ? ` — ${d.comment}` : ''}. {/each}{:else}None yet.{/if}</div>
+        {#if m.decidedGates.length}<div class="dp-small" data-section="decisions"><b style="color: var(--vk-color-text);">Decisions</b><br />{#if m.decidedGates.length}{#each m.decidedGates as d (d.id)}{d.decision ?? d.status} at {stageNameOf(d.stageKey)}{d.decidedBy ? ` by ${displayPrincipal(d.decidedBy, app.members)}` : ''}{d.comment ? ` — ${d.comment}` : ''}. {/each}{:else}None yet.{/if}</div>{:else}<span hidden data-section="decisions"></span>{/if}
       </div>
 
       <div class="dp-card">
@@ -299,7 +309,7 @@
       <Button variant="secondary" aria-disabled={m.archiving ? 'true' : undefined} onclick={() => { if (!m.archiving) void m.archive(); }}>{#snippet icon()}<Icon name="archive" size={18} />{/snippet}Archive card</Button>
       <span class="vk-visually-hidden" role="status">{m.archiving ? 'Archiving…' : ''}</span>
     {/if}
-    <Button variant="danger" onclick={() => m.remove()}>{#snippet icon()}<Icon name="trash" size={18} />{/snippet}Delete card</Button>
+    <Button variant="quiet" onclick={() => m.remove()}>{#snippet icon()}<Icon name="trash" size={18} />{/snippet}Delete card</Button>
     <span style="flex: 1 1 auto;"></span>
     <span class="dp-small">Opened from {m.boardName} · <a href={boardHref}>Back to the board</a></span>
   </footer>

@@ -25,3 +25,11 @@ describe('when', () => {
     expect(clockHM('2026-10-08T06:41:00Z', TZ)).toBe('12:11');
   });
 });
+
+import { clockHMS as _clockHMS } from './when';
+describe('clockHMS (the board log)', () => {
+  it('is the reader\'s clock with seconds', () => {
+    expect(_clockHMS('2026-10-09T22:50:12Z', 'Asia/Kolkata')).toBe('04:20:12');
+    expect(_clockHMS('2026-10-09T22:50:12Z', 'UTC')).toBe('22:50:12');
+  });
+});

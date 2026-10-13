@@ -6,6 +6,7 @@
    * sections — The brief (open), What happened, Links and references, Talk, Cost and delivery.
    * Every section key is drawn once (`data-section`); an empty one is a hidden marker.
    */
+  import { tick } from 'svelte';
   import './card-daylight.css';
   import '../daylight-states.css';
   import { Button, Drawer, Face, Field, IconButton, StageTrack, StateLabel } from '@superjackfruit/vibekit';
@@ -18,6 +19,7 @@
   import Icon from '$lib/components/parts/Icon.svelte';
   import HandoffView from '../HandoffView.svelte';
   import RawJson from '../RawJson.svelte';
+  import ToolCallDetails from '../ToolCallDetails.svelte';
   import LibraryArtifact from '../LibraryArtifact.svelte';
   import CardEditForm from '../CardEditForm.svelte';
   import DeliveryPanel from '../DeliveryPanel.svelte';
@@ -37,6 +39,8 @@
     linksSummary, ownerChip, planNone, planProgress, projectLine, provenanceLine, relatedLine, replySub, RESUME_PLACEHOLDER,
     subtasksLine, talkSummary, usd, whatHappenedSummary,
   } from '../card-words';
+  import { askedHeading } from '../card-words';
+  import { focusInPlace, openAtTop } from '../open-at-top';
   import type { CardLayoutProps } from './types';
 
   let { model: m, vibe, gate, question, pageHref, onClose }: CardLayoutProps = $props();
@@ -63,6 +67,7 @@
   const LINK_LABEL = { blockedBy: 'Blocked by', resolvedBlockedBy: 'Blocked by (resolved)', blocks: 'Blocks', relates: 'Relates to', supersedes: 'Supersedes', advisory: 'On other boards (advisory)' } as const;
 
   // The pinned brief folds while the agent needs you; re-decided only when the card or that changes.
+  let rawOpen = $state(false);
   let briefOpen = $state(false);
   let briefFor = '';
   $effect(() => {
@@ -95,6 +100,14 @@
   function commentKey(e: KeyboardEvent): void {
     if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) { e.preventDefault(); void m.comments.submit(); }
   }
+
+  // Change project (O9): the inline form takes focus where it is, never scrolling the card.
+  let projectWas = false;
+  $effect(() => {
+    const editing = m.project.editing;
+    if (editing && !projectWas) void tick().then(() => focusInPlace(document.querySelector('[data-project-form] select')));
+    projectWas = editing;
+  });
 </script>
 
 {#snippet hidden(key: string)}<span hidden data-section={key}></span>{/snippet}
@@ -120,7 +133,7 @@
 
 <Drawer open={true} head="stacked" title={card.title} eyebrow="{m.boardName} · {m.stageName}" eyebrowTone={lead.needsYou && !m.archived ? 'needs' : 'muted'} width={CARD_LAYOUTS.daylight.width} {tools} {aside} onclose={onClose}>
 <!-- data-autofocus: the Drawer opens with focus at the card itself, not on its first tool (the reference is drawn unfocused). -->
-<div class="dd-card" tabindex="-1" data-autofocus>
+<div class="dd-card" tabindex="-1" data-autofocus {@attach openAtTop}>
   <header class="dd-head">
     {#if editing}
       <div data-section="editForm"><CardEditForm model={m} /></div>
@@ -162,7 +175,7 @@
     {#if m.archived}<CardStateDaylight kind="archived" model={m} />{/if}
 
     <details class="dd-pinned" bind:open={briefOpen}>
-      <summary aria-label="What {agentName} was asked"><Icon name="pushpin" size={18} /><span>What {agentName} was asked</span><span class="more">{briefMeta(!!card.spec?.description, m.counts.criteria, briefOpen)}</span></summary>
+      <summary aria-label={askedHeading(m.stages[m.stageIndex], agentName)}><Icon name="pushpin" size={18} /><span>{askedHeading(m.stages[m.stageIndex], agentName)}</span><span class="more">{briefMeta(!!card.spec?.description, m.counts.criteria, briefOpen)}</span></summary>
       <div style="padding: 0 var(--vk-space-4) var(--vk-space-4); display: flex; flex-direction: column; gap: var(--vk-space-3);">
         {#if card.spec?.description}<p class="dd-p" data-section="description" style="white-space: pre-line">{String(card.spec.description)}</p>{:else}{@render hidden('description')}{/if}
         {#if m.acceptanceCriteria?.length}
@@ -236,27 +249,30 @@
             {/each}
           </div>
           <div class="dd-row" style="gap: var(--vk-space-5);">
-            <details class="dd-raw"><summary>View raw JSON</summary><RawJson value={card.spec} /></details>
-            <button class="vk-button vk-button--quiet" type="button" style="font-size: var(--vk-text-sm);" onclick={() => m.copySpec()}><Icon name={m.copied === 'spec' ? 'check' : 'copy'} size={18} /> Copy</button>
+            <button class="dd-rawbtn" type="button" aria-expanded={rawOpen} onclick={() => (rawOpen = !rawOpen)}>{rawOpen ? 'Hide raw JSON' : 'View raw JSON'}</button>
+            {#if rawOpen}<button class="vk-button vk-button--quiet" type="button" style="font-size: var(--vk-text-sm);" onclick={() => m.copySpec()}><Icon name={m.copied === 'spec' ? 'check' : 'copy'} size={18} /> Copy</button>{/if}
           </div>
-        {:else}<p class="dd-small" data-section="details" style="margin: 0px;">No other details.</p>{/if}
+          {#if rawOpen}<RawJson value={card.spec} bare />{/if}
+        {:else}<span hidden data-section="details"></span>{/if}
         <div class="dd-twocol">
-          <div data-section="plan" style="display: flex; flex-direction: column; gap: var(--vk-space-2);">
+          {#if m.plan}<div data-section="plan" style="display: flex; flex-direction: column; gap: var(--vk-space-2);">
             <div class="dd-row" style="justify-content: space-between;"><b>Agent plan</b><span class="dd-small">{m.plan ? planProgress(planDone, m.plan.length) : 'none yet'}</span></div>
             {#if m.plan}
               <div class="dd-meter"><i style="width: {Math.round((100 * planDone) / m.plan.length)}%;"></i></div>
               <ul class="dd-plan">{#each m.plan as step, i (i)}<li class:done={step.done}><Icon name={step.done ? 'check' : 'chevron-right'} size={14} /><span>{step.text}</span></li>{/each}</ul>
             {:else}<p class="dd-small" style="margin: 0px;">{planNone(m.agent.name)}</p>{/if}
-          </div>
+          </div>{:else}<span hidden data-section="plan"></span>{/if}
           <div data-section="project" style="display: flex; flex-direction: column; gap: var(--vk-space-2);">
             <b>Project</b>
             {#if m.project.editing}
+              <div class="dd-projform" data-project-form>
               <Field id="dd-project" label="Project" control="select" bind:value={m.project.projectId} onchange={() => void m.project.onProjectChange()}
                 options={[{ value: '', label: 'No project' }, ...app.projects.map((p) => ({ value: p.id, label: p.name }))]} />
               <Field id="dd-milestone" label="Milestone" control="select" bind:value={m.project.milestoneId} disabled={m.project.projectId === ''}
                 options={[{ value: '', label: 'No milestone' }, ...m.project.milestones.map((ms) => ({ value: ms.id, label: ms.name }))]} />
               {#if m.project.error}<p class="vk-field__error" role="alert">{m.project.error}</p>{/if}
               <div class="dd-row"><button class="vk-button vk-button--primary" type="button" disabled={m.project.saving} onclick={() => m.project.save()}>{m.project.saving ? 'Saving…' : 'Save'}</button><button class="vk-button vk-button--quiet" type="button" onclick={() => m.project.cancel()}>Cancel</button></div>
+              </div>
             {:else}
               <span style="font-size: var(--vk-text-sm); line-height: 1.45;">{m.projectName ? projectLine(m.projectName, m.milestoneName) : 'No project.'}</span>
               <button class="vk-button vk-button--secondary" type="button" style="align-self: flex-start;" onclick={() => m.project.start()}>{m.projectName ? 'Change project' : 'Assign to a project'}</button>
@@ -270,29 +286,35 @@
         <div data-section="activity" style="display: contents">
           <div class="dd-row" style="justify-content: space-between;">
             {#if q?.known}<span class="dd-small">{provenanceLine({ queuedByName: m.queuedByName, byAgent: q.byAgent, covers: m.grantCovers }, m.delegate.id ? m.delegate.name : null)}</span>{/if}
-            {#if runs.length}<button class="vk-button vk-button--quiet" type="button" style="font-size: var(--vk-text-sm);" aria-pressed={m.showToolCalls} onclick={() => (m.showToolCalls = !m.showToolCalls)}>{m.showToolCalls ? 'Hide tool calls' : 'Show tool calls'}</button>{/if}
           </div>
-          {#if runs.length === 0}<p class="dd-small" style="margin: 0px;">No recorded activity yet — this card hasn't been worked.</p>{/if}
+          
           {#each runs as g, ri (g.runId)}
             {@const a = attemptOf(g.runId)}
             {@const who = name(g.agentId) || 'An agent'}
             {@const latestNeeds = ri === 0 && lead.needsYou}
-            {@const view = visibleActivities(g.activities, isNarrative, m.showToolCalls, isControlRow)}
+            {@const tools = m.toolsShown(g.runId)}
+            {@const view = visibleActivities(g.activities, isNarrative, tools, isControlRow)}
             {@const entry = m.stageByRun.get(g.runId)}
-            <details class="dd-run" open={ri === 0}>
-              <summary><Face id={who} label={who} mood={latestNeeds ? 'needs' : 'resting'} size={24} /><b>{stageNameOf(g.stageKey)} · {who}</b><span class:dd-who={latestNeeds}>{a ? attemptWord(a) : (g.outcome ?? 'working')}</span><span>attempt {(m.attempts.findIndex((x) => x.runId === g.runId) + 1) || runs.length - ri}</span><span class="dd-small">{g.counts.total} events · {g.counts.error} errors</span></summary>
+            {@const isOpen = m.isRunOpen(g.runId, ri === 0)}
+            <div class="dd-run" data-attempt={g.runId}>
+              <button class="dd-runhead" type="button" data-attempt-head={g.runId} aria-expanded={isOpen} aria-controls={isOpen ? `dd-run-${g.runId}` : undefined} onclick={() => m.toggleRun(g.runId, ri === 0)}><Face id={who} label={who} mood={latestNeeds ? 'needs' : 'resting'} size={24} /><b>{stageNameOf(g.stageKey)} · {who}</b><span class:dd-who={latestNeeds}>{a ? attemptWord(a) : (g.outcome ?? 'working')}</span><span>attempt {(m.attempts.findIndex((x) => x.runId === g.runId) + 1) || runs.length - ri}</span><span class="dd-small">{g.counts.total} events · {g.counts.error} errors</span><span class="tw" aria-hidden="true"><Icon name="chevron-right" size={18} /></span></button>
+              {#if isOpen}
+              <div id="dd-run-{g.runId}">
               <ul class="dd-ev">
                 {#each view.rows as ev (ev.seq)}
                   <li>
                     <Face id={who} label={who} mood={ev.signal === 'stop' ? 'needs' : 'working'} size={24} />
-                    <span class:stop={ev.signal === 'stop'}><span class="k">{eventVerb(ev)}</span> {eventSentence(ev)}{#if ev.parameter !== null || ev.result !== null}<details class="dd-raw"><summary>Details</summary><RawJson value={{ parameter: ev.parameter, result: ev.result }} /></details>{/if}</span>
+                    <span class:stop={ev.signal === 'stop'}><span class="k">{eventVerb(ev)}</span> {eventSentence(ev)}<ToolCallDetails parameter={ev.parameter} result={ev.result} cls="dd-raw" /></span>
                     <span class="t">{clockHM(ev.ts)}</span>
                   </li>
                 {/each}
               </ul>
+              {#if tools || (g.counts.action > 0 && !view.shownBecauseNoNarrative)}<div style="padding: 0 var(--vk-space-4) var(--vk-space-3);"><button class="vk-button vk-button--quiet" type="button" style="font-size: var(--vk-text-sm);" data-attempt-tools={g.runId} aria-pressed={tools} onclick={() => m.toggleTools(g.runId)}>{tools ? 'Hide tool calls' : 'Show tool calls'}</button></div>{/if}
               {#if entry?.failureReason}<p class="dd-small" style="margin: 0 var(--vk-space-4) var(--vk-space-3);">{entry.failureReason}</p>
               {:else if entry && entry.handoff && typeof entry.handoff === 'object' && Object.keys(entry.handoff).length}<div style="padding: 0 var(--vk-space-4) var(--vk-space-3);"><HandoffView handoff={entry.handoff} testid="handed-on-{g.runId}" /></div>{/if}
-            </details>
+              </div>
+              {/if}
+            </div>
           {/each}
         </div>
         {#if m.decidedGates.length}
@@ -341,7 +363,7 @@
       {#snippet talkBody()}
         <div data-section="comments" style="display: contents">
           {#if m.comments.comments.length}
-            <ul class="dd-ul">{#each m.comments.comments as c (c.id)}<li><b>{c.author.name ?? c.author.id}</b> <span style="white-space: pre-wrap; overflow-wrap: anywhere">{c.deletedAt ? 'Comment deleted' : c.body}</span></li>{/each}</ul>
+            <ul class="dd-ul">{#each m.comments.comments as c (c.id)}<li><b>{m.authorName(c.author)}</b> <span style="white-space: break-spaces; overflow-wrap: anywhere">{c.deletedAt ? 'Comment deleted' : c.body}</span></li>{/each}</ul>
           {:else}<p class="dd-small" style="margin: 0px;">No comments yet. The agent that works this card reads them.</p>{/if}
           <Field id="dd-comment" label="Add a comment" control="textarea" maxlength={8192} placeholder="⌘ or Ctrl + Enter posts it" bind:value={m.comments.draft} onkeydown={commentKey} />
           {#if m.comments.error}<p class="vk-field__error" role="alert">{m.comments.error}</p>{/if}
@@ -356,14 +378,14 @@
           <div><span style="font: 700 2rem/1 var(--vk-font-display);">{usd(card.costUsd)}</span> <span class="dd-small">· {m.estimate?.estimatedUsd ? `of ${usd(m.estimate.estimatedUsd)} estimated` : 'no estimate yet'}</span></div>
           <div class="dd-meter"><i style="width: {m.costPct}%;"></i></div>
         </div>
-        {#if m.counts.deliveryActive}<div data-section="delivery"><DeliveryPanel model={m} /></div>{:else}<p class="dd-small" data-section="delivery" style="margin: 0px;">No approved delivery on this card.</p>{/if}
+        {#if m.counts.deliveryActive}<div data-section="delivery"><DeliveryPanel model={m} /></div>{:else}<span hidden data-section="delivery"></span>{/if}
       {/snippet}
       {@render sec('cost', 'Cost and delivery', costSummary(card.costUsd, m.estimate?.estimatedUsd ?? null, m.deliveryGate?.delivery?.mode ?? null), costBody)}
     </div>
 
     <div class="dd-foot" data-section="cardActions">
       {#if !m.archived}<button class="vk-button vk-button--secondary" type="button" disabled={m.archiving} onclick={() => m.archive()}><Icon name="archive" size={18} /> {m.archiving ? 'Archiving…' : 'Archive card'}</button>{/if}
-      <button class="vk-button dd-danger" type="button" onclick={() => m.remove()}><Icon name="trash" size={18} /> Delete card</button>
+      <Button variant="quiet" onclick={() => m.remove()}>{#snippet icon()}<Icon name="trash" size={18} />{/snippet}Delete card</Button>
     </div>
   </div>
 </div>

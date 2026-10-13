@@ -71,3 +71,45 @@ test('below 1440px there is no peek', async ({ page }) => {
   await page.waitForTimeout(500);
   await expect(peek(page)).toHaveCount(0);
 });
+
+test('the peek goes when the pointer and focus have left the card', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto('/');
+  await compose(page, 'Leaving peek card');
+  await titleOf(page, 'Leaving peek card').hover();
+  await expect(peek(page)).toHaveCount(1);
+  await page.mouse.move(2, 2);
+  await expect(peek(page)).toHaveCount(0);
+});
+
+test('the peek closes when the drawer opens and does not reopen by itself when it closes', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto('/');
+  await compose(page, 'Drawer peek card');
+  await titleOf(page, 'Drawer peek card').hover();
+  await expect(peek(page)).toHaveCount(1);
+  await titleOf(page, 'Drawer peek card').click();
+  await expect(page.getByRole('dialog')).toBeVisible();
+  await expect(peek(page)).toHaveCount(0);
+  await page.mouse.move(2, 2);
+  await page.keyboard.press('Escape');
+  await expect(page.getByRole('dialog')).toHaveCount(0);
+  await page.waitForTimeout(700);
+  await expect(peek(page)).toHaveCount(0);
+});
+
+test('after the drawer closes the peek stays shut, but a hover right after opens one', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto('/');
+  await compose(page, 'Closing card');
+  await compose(page, 'Next card');
+  await titleOf(page, 'Closing card').hover();
+  await titleOf(page, 'Closing card').click();
+  await expect(page.getByRole('dialog')).toBeVisible();
+  await page.mouse.move(2, 2);
+  await page.keyboard.press('Escape');
+  await expect(page.getByRole('dialog')).toHaveCount(0);
+  await expect(peek(page)).toHaveCount(0);
+  await titleOf(page, 'Closing card').hover();
+  await expect(peek(page).getByRole('heading', { name: 'Closing card' })).toBeVisible();
+});

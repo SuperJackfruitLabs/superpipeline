@@ -14,6 +14,7 @@
   import LinkAddForm from '../LinkAddForm.svelte';
   import HandoffView from '../HandoffView.svelte';
   import RawJson from '../RawJson.svelte';
+  import ToolCallDetails from '../ToolCallDetails.svelte';
   import TokenText from '../TokenText.svelte';
   import SpecValueView from '../SpecValueView.svelte';
   import GateQuiet from '../gate/GateQuiet.svelte';
@@ -114,15 +115,15 @@
           {#if lead.sentence}<section class="qp-sec"><p class="qp-by">{agentName} wrote:</p><p class="qp-said">{lead.sentence}</p></section>{/if}
           {@render hidden('resume')}
         {/if}
-        <section class="qp-sec" aria-labelledby="qp-desc"><h2 id="qp-desc">Description</h2>{#if card.spec?.description}<p data-section="description" style="white-space: pre-line">{String(card.spec.description)}</p>{:else}<p data-section="description">None.</p>{/if}</section>
-        <section class="qp-sec" aria-labelledby="qp-ac"><h2 id="qp-ac">Acceptance criteria ({m.counts.criteria})</h2>{#if m.acceptanceCriteria?.length}<ol data-section="criteria">{#each m.acceptanceCriteria as c, i (i)}<li>{c}</li>{/each}</ol>{:else}<p data-section="criteria">None.</p>{/if}</section>
+        {#if card.spec?.description}<section class="qp-sec" aria-labelledby="qp-desc"><h2 id="qp-desc">Description</h2><p data-section="description" style="white-space: pre-line">{String(card.spec.description)}</p></section>{:else}<span hidden data-section="description"></span>{/if}
+        {#if m.acceptanceCriteria?.length}<section class="qp-sec" aria-labelledby="qp-ac"><h2 id="qp-ac">Acceptance criteria ({m.counts.criteria})</h2><ol data-section="criteria">{#each m.acceptanceCriteria as c, i (i)}<li>{c}</li>{/each}</ol></section>{:else}<span hidden data-section="criteria"></span>{/if}
         <section class="qp-sec" aria-labelledby="qp-brief" data-section="details">
           <h2 id="qp-brief">Brief details ({specRowCount(groups)})</h2>
           {#each groups as g (g.label)}<h3>{g.label}</h3><dl class="qp-dl">{#each g.rows as r (r.key)}<dt>{r.label}</dt><dd data-testid="spec-value-{r.key}"><SpecValueView value={r.value} v={{ clamp: 'qp-clamp', more: 'qp-link', matrixLinks: false }} /></dd>{/each}</dl>{/each}
-          <div class="qp-acts"><a href="#raw" role="button" aria-expanded={rawOpen} onclick={act(() => (rawOpen = !rawOpen))}>View raw JSON</a><button class="qp-link" type="button" style="min-height: 44px;" onclick={() => m.copySpec()}>{m.copied === 'spec' ? 'Copied' : 'Copy'}</button></div>
-          {#if rawOpen}<RawJson value={card.spec} />{/if}
+          <div class="qp-acts"><a href="#raw" role="button" aria-expanded={rawOpen} onclick={act(() => (rawOpen = !rawOpen))}>{rawOpen ? 'Hide raw JSON' : 'View raw JSON'}</a>{#if rawOpen}<button class="qp-link" type="button" style="min-height: 44px;" onclick={() => m.copySpec()}>{m.copied === 'spec' ? 'Copied' : 'Copy'}</button>{/if}</div>
+          {#if rawOpen}<RawJson value={card.spec} bare />{/if}
         </section>
-        <section class="qp-sec" aria-labelledby="qp-plan" data-section="plan"><h2 id="qp-plan">Plan</h2>{#if m.plan}<ol>{#each m.plan as st, i (i)}<li>{st.text}{st.done ? ' (done)' : ''}</li>{/each}</ol>{:else}<p>{planNone(m.agent.name)}</p>{/if}</section>
+        {#if m.plan}<section class="qp-sec" aria-labelledby="qp-plan" data-section="plan"><h2 id="qp-plan">Plan</h2>{#if m.plan}<ol>{#each m.plan as st, i (i)}<li>{st.text}{st.done ? ' (done)' : ''}</li>{/each}</ol>{:else}<p>{planNone(m.agent.name)}</p>{/if}</section>{:else}<span hidden data-section="plan"></span>{/if}
         <section class="qp-sec" aria-labelledby="qp-links" data-section="links">
           <h2 id="qp-links">Links ({m.counts.links})</h2>
           {#if m.hasAnyLink}<ul>{#each [...m.linkGroups.blockedBy, ...m.linkGroups.blocks, ...m.linkGroups.relates] as row (row.title)}<li>{row.title} <button class="qp-link" type="button" onclick={() => m.links.remove(row.remove)}>Remove</button></li>{/each}</ul>{:else}<p>Nothing blocks this card and it blocks nothing.</p>{/if}
@@ -133,7 +134,7 @@
           <h2 id="qp-refs">References and related prior work</h2>
           <ul>
             {#each m.otherRefs as r, i (r.id)}<li data-section={i === 0 ? 'references' : undefined}>{#if safeHref(r.url)}<a href={safeHref(r.url)!}>{r.title ?? refLabel(r)}</a>{:else}{r.title ?? refLabel(r)}{/if} ({referenceSource(r)})</li>{/each}
-            {#if m.otherRefs.length === 0}<li data-section="references">No references.</li>{/if}
+            {#if m.otherRefs.length === 0}<li hidden data-section="references"></li>{/if}
             <li data-section="related">{relatedLine(m.related.phase, m.related.items.length)}</li>
           </ul>
         </section>
@@ -146,19 +147,25 @@
           <div data-section="activity" style="display: contents">
             {#each runs as g, ri (g.runId)}
               {@const a = m.attempts.find((x) => x.runId === g.runId)}
-              <h3>{quietHistoryHead((m.attempts.findIndex((x) => x.runId === g.runId) + 1) || runs.length - ri, stageNameOf(g.stageKey), name(g.agentId) || 'an agent')}</h3>
+              {@const no = (m.attempts.findIndex((x) => x.runId === g.runId) + 1) || runs.length - ri}
+              {@const isOpen = m.isRunOpen(g.runId, ri === 0)}
+              {@const tools = m.toolsShown(g.runId)}
+              <h3><button class="qp-att" type="button" data-attempt-head={g.runId} aria-expanded={isOpen} aria-controls={isOpen ? `qp-run-${g.runId}` : undefined} onclick={() => m.toggleRun(g.runId, ri === 0)}>{quietHistoryHead(no, stageNameOf(g.stageKey), name(g.agentId) || 'an agent')}</button></h3>
               <p>{quietHistoryLine(a ? attemptWord(a) : (g.outcome ?? 'working'), a?.endedAt ?? null, g.counts.total, g.counts.error)}</p>
-              {#if ri === 0}
-                <ol>{#each visibleActivities(g.activities, isNarrative, m.showToolCalls, isControlRow).rows as ev (ev.seq)}<li>{quietRow(ev)}</li>{/each}</ol>
-                <div class="qp-acts"><a href="#tools" role="button" aria-pressed={m.showToolCalls} onclick={act(() => (m.showToolCalls = !m.showToolCalls))}>{m.showToolCalls ? 'Hide tool calls' : `Show tool calls (all ${g.counts.total} events)`}</a></div>
+              {#if isOpen}
+                {@const view = visibleActivities(g.activities, isNarrative, tools, isControlRow)}
+                <div id="qp-run-{g.runId}" style="display: contents">
+                  <ol>{#each view.rows as ev (ev.seq)}<li>{quietRow(ev)}<ToolCallDetails parameter={ev.parameter} result={ev.result} cls="qp-details" /></li>{/each}</ol>
+                  {#if tools || (g.counts.action > 0 && !view.shownBecauseNoNarrative)}<div class="qp-acts"><button class="qp-lnk" type="button" data-attempt-tools={g.runId} aria-pressed={tools} onclick={() => m.toggleTools(g.runId)}>{tools ? 'Hide tool calls' : `Show tool calls (all ${g.counts.total} events)`}</button></div>{/if}
+                </div>
               {/if}
             {/each}
           </div>
         </section>
-        <section class="qp-sec" aria-labelledby="qp-dec" data-section="decisions"><h2 id="qp-dec">Decisions</h2>{#if m.decidedGates.length}<ul>{#each m.decidedGates as d (d.id)}<li>{d.decision ?? d.status} at {stageNameOf(d.stageKey)}{d.decidedBy ? `, by ${displayPrincipal(d.decidedBy, app.members)}` : ''}.</li>{/each}</ul>{:else}<p>None yet.</p>{/if}</section>
+        {#if m.decidedGates.length}<section class="qp-sec" aria-labelledby="qp-dec" data-section="decisions"><h2 id="qp-dec">Decisions</h2>{#if m.decidedGates.length}<ul>{#each m.decidedGates as d (d.id)}<li>{d.decision ?? d.status} at {stageNameOf(d.stageKey)}{d.decidedBy ? `, by ${displayPrincipal(d.decidedBy, app.members)}` : ''}.</li>{/each}</ul>{:else}<p>None yet.</p>{/if}</section>{:else}<span hidden data-section="decisions"></span>{/if}
         <section class="qp-sec" aria-labelledby="qp-com" data-section="comments">
           <h2 id="qp-com">Comments</h2>
-          {#if m.comments.comments.length}<ul>{#each m.comments.comments as c (c.id)}<li><b>{c.author.name ?? c.author.id}:</b> <span style="white-space: pre-wrap">{c.deletedAt ? 'Comment deleted' : c.body}</span></li>{/each}</ul>{:else}<p>No comments yet. The agent that works this card reads them.</p>{/if}
+          {#if m.comments.comments.length}<ul>{#each m.comments.comments as c (c.id)}<li><b>{m.authorName(c.author)}:</b> <span style="white-space: break-spaces; overflow-wrap: anywhere">{c.deletedAt ? 'Comment deleted' : c.body}</span></li>{/each}</ul>{:else}<p>No comments yet. The agent that works this card reads them.</p>{/if}
           <Field id="qp-comment" label="Add a comment" control="textarea" maxlength={8192} style="min-height: 96px;" bind:value={m.comments.draft} />
           {#if m.comments.error}<p role="alert">{m.comments.error}</p>{/if}
           <div class="qp-acts"><Button variant="secondary" aria-disabled={m.comments.posting ? 'true' : undefined} onclick={() => { if (!m.comments.posting) void m.comments.submit(); }}>Comment</Button><span class="vk-visually-hidden" role="status">{m.comments.posting ? 'Posting…' : ''}</span></div>
@@ -179,7 +186,7 @@
           <div class="qp-acts">
             <a href="#edit" role="button" onclick={act(() => m.edit.start())}>Edit card</a>
             {#if !m.archived}<Button variant="secondary" aria-disabled={m.archiving ? 'true' : undefined} onclick={() => { if (!m.archiving) void m.archive(); }}>Archive card</Button><span class="vk-visually-hidden" role="status">{m.archiving ? 'Archiving…' : ''}</span>{/if}
-            <Button style="background: var(--vk-color-surface); color: var(--vk-color-text); box-shadow: inset 0 0 0 2px var(--vk-color-text);" onclick={() => m.remove()}>Delete card</Button>
+            <Button variant="quiet" onclick={() => m.remove()}>Delete card</Button>
           </div>
         </section>
       </div>

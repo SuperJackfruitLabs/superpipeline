@@ -10,7 +10,7 @@ Ratios are from the full pixel run on vibekit 0.0.10 (Node 22). A screen compare
 
 | Key | Ratio | Cause |
 |---|---|---|
-| SP-Card-Paper·dark | 0.895% | the focus ring the global :focus-visible drew on the drawer body is gone (adopt 0.0.9 fix); left: the reference's text-30% sheet shadow glows light in the derived dark (reference derived-dark) |
+| SP-Card-Paper·dark | 0.031% | the derived dark now casts the reference's sheet shadow as vibekit's dark shadow (fix round 2); left: the Resume note placeholder (vibekit Field textarea), the same 5 broken blocks as light |
 | SP-Phone-Board-Daylight#shell·dark | 0.818% | vibekit PhoneHeader: Live sits above the hello where the reference draws it in a row; sub-pixel sky residue |
 | SP-Workspace-Agents-Studio·light | 0.634% | Needs you 7 vs 4, vibekit Button; page content otherwise in place |
 | SP-Workspace-Agents-Studio·dark | 0.625% | Needs you 7 vs 4, vibekit Button; page content otherwise in place |
@@ -76,8 +76,6 @@ Ratios are from the full pixel run on vibekit 0.0.10 (Node 22). A screen compare
 | SP-Dlg-Reconnect-Daylight·light | 0.108% | broken blocks only: vibekit Button (Sign in again) rasterises differently from the reference's render |
 | SP-Phone-Card-Studio·light | 0.104% | vibekit Button text and icons rasterise differently from the reference's render, and the Resume note's Field placeholder |
 | SP-Phone-Card-Studio·dark | 0.100% | vibekit Button text and icons rasterise differently from the reference's render, and the Resume note's Field placeholder |
-| SP-CardPage-Daylight·light | 0.095% | vibekit StageTrack page form since 0.0.6; copy/check glyphs |
-| SP-CardPage-Daylight·dark | 0.094% | vibekit StageTrack page form since 0.0.6; copy/check glyphs |
 | SP-Dlg-Appearance-Quiet·dark | 0.084% | within the bar since vibekit 0.0.10 and the picker's 1.45 type: the reference's 'See every accent's contrast' link is not drawn (its target is a mockup page the app does not have); the Paper preview's IN PROGRESS heading wraps in vibekit's preview frame; the Studio card's five swatches are vibekit's (bg, surface, primary, accent, signal) where the reference shows bg, primary, stage 5, accent, signal; Studio's readout Sky draws a smaller sun; the swatch wash strips and the foot's line rasterise a pixel off |
 | SP-Workspace-Agents-Daylight·dark | 0.079% | vibekit Daylight shell: the Masthead's Sky draws no sun at x≈830–910 where the reference's .dy-sky does, and the AppNav foot sets the account (IM) 6–16px and the theme button 5px lower than the reference's rail foot; the Tokens legend's t-meta line (same box and font) rasterises differently |
 | SP-Dlg-Appearance-Paper·dark | 0.074% | within the bar since vibekit 0.0.10 and the picker's 1.45 type: the reference's 'See every accent's contrast' link is not drawn (its target is a mockup page the app does not have); the Paper preview's IN PROGRESS heading wraps in vibekit's preview frame; the Studio card's five swatches are vibekit's (bg, surface, primary, accent, signal) where the reference shows bg, primary, stage 5, accent, signal; Studio's readout Sky draws a smaller sun; the swatch wash strips and the foot's line rasterise a pixel off |
@@ -140,7 +138,7 @@ Ratios are from the full pixel run on vibekit 0.0.10 (Node 22). A screen compare
 | linux-x64 | SP-Board-Quiet#shell·light | fails | 0.131% | the board row's last view link, Projects, rasterises about 1px to one side under Linux FreeType once the row's widths accumulate sub-pixel offsets; everything else in the board and nav rows matches (CI linux-x64 part diff) |
 | linux-x64 | SP-Phone-Board-Quiet#shell·dark | fails | 0.523% | header part: vibekit PhoneHeader switcher: the Change board link's words draw 1px higher than the reference's under Linux FreeType hinting; tab-bar part: one pixel row of the Operate count |
 | linux-x64 | SP-Phone-Board-Quiet#shell·light | fails | 0.530% | header part: vibekit PhoneHeader switcher: the Change board link's words draw 1px higher than the reference's under Linux FreeType hinting; tab-bar part: one pixel row of the Operate count |
-| linux-x64 | SP-Dlg-Reconnect-Daylight·dark | passes | 0.000% | passes on linux-x64; the darwin residual (vibekit Button rasterising) does not occur under FreeType |
+| linux-x64 | SP-Dlg-Reconnect-Daylight·dark | either | 0.030% | flips between 0.000% and 0.030% (one broken block on vibekit's Sign in again Button) from run to run on linux-x64; focus, hover, transitions and font loading are ruled out on macOS, and the Linux run could not be reproduced locally |
 | linux-x64 | SP-Workspace-Agents-Quiet·dark | passes | 0.000% | passes on linux-x64; the darwin residual (t-meta line rasterising) does not occur under FreeType |
 | linux-x64 | SP-Workspace-Agents-Quiet·light | passes | 0.000% | passes on linux-x64; the darwin residual (t-meta line rasterising) does not occur under FreeType |
 | linux-x64 | SP-Workspace-Other-Paper·light | passes | 0.000% | passes on linux-x64; the darwin residual (sub-pixel icon and button rasterising) does not occur under FreeType |

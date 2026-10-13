@@ -11,7 +11,7 @@ export const EXPECTED_FAILURES: ReadonlySet<string> = new Set([
   'SP-Board-Paper·light', // 0.069% (vibekit 0.0.10, full run): vibekit 0.0.3 Button: padding, border and the ghost Move differ (0.44%)
   'SP-Card-Daylight·dark', // 0.056% (vibekit 0.0.10, full run): the drawer bar's Open in new window is vibekit's 44px tool Button at x 1132 where the reference draws a 21px text link at x 1221; Copy is 76px (vibekit Button's icon slot) against the reference's 72px; the section twisties are vibekit's 18px chevron where the reference draws a 9×4.5px path
   'SP-Card-Daylight·light', // 0.219% (vibekit 0.0.10, full run): the capped drawer runs to 3120px over the reference's 2832px page, so its ground shows below; the drawer bar's Open in new window is vibekit's 44px tool Button where the reference draws a 21px text link; Copy is 76px against 72px (vibekit Button's icon slot)
-  'SP-Card-Paper·dark', // 0.895% (vibekit 0.0.10, full run): the focus ring the global :focus-visible drew on the drawer body is gone (adopt 0.0.9 fix); left: the reference's text-30% sheet shadow glows light in the derived dark (reference derived-dark)
+  'SP-Card-Paper·dark', // 0.031% (vibekit 0.0.10, full run): the derived dark now casts the reference's sheet shadow as vibekit's dark shadow (fix round 2); left: the Resume note placeholder (vibekit Field textarea), the same 5 broken blocks as light
   'SP-Card-Paper·light', // 0.131% (vibekit 0.0.10, full run): the Resume note placeholder (vibekit Field textarea)
   'SP-Card-Quiet·dark', // 0.059% (vibekit 0.0.10, full run): vibekit: the Drawer bar's back link and Open tool, and the Field select text
   'SP-Card-Quiet·light', // 0.061% (vibekit 0.0.10, full run): vibekit: the Drawer bar's back link and Open tool, and the Field select text
@@ -21,8 +21,6 @@ export const EXPECTED_FAILURES: ReadonlySet<string> = new Set([
   'SP-Card-States-Studio·light', // 0.472% (vibekit 0.0.10, full run): vibekit: StageTrack's cell form cuts a long current name to one line ('Messaging…') where the reference wraps it to two, which shifts what follows by 13px
   'SP-Card-Studio·dark', // 0.116% (vibekit 0.0.10, full run): vibekit: the Drawer bar (crumb row, Open tool)
   'SP-Card-Studio·light', // 0.122% (vibekit 0.0.10, full run): vibekit: the Drawer bar (crumb row, Open tool)
-  'SP-CardPage-Daylight·dark', // 0.094% (vibekit 0.0.10, full run): vibekit StageTrack page form since 0.0.6; copy/check glyphs
-  'SP-CardPage-Daylight·light', // 0.095% (vibekit 0.0.10, full run): vibekit StageTrack page form since 0.0.6; copy/check glyphs
   'SP-CardPage-Studio·dark', // 0.041% (vibekit 0.0.10, full run): the light causes; the light band is gone (harness fix)
   'SP-CardPage-Studio·light', // 0.043% (vibekit 0.0.10, full run): vibekit 0.0.4: its copy/link/edit/archive/send glyphs differ from the reference's Studio set, the 18px search glyph sits 2px off, Field select text rasterises differently (0.043%, 14 blocks)
   'SP-Dlg-Appearance-Daylight·dark', // 0.162% (vibekit 0.0.10, full run): within the bar since vibekit 0.0.10 and the picker's 1.45 type: the reference's 'See every accent's contrast' link is not drawn (its target is a mockup page the app does not have); the Paper preview's IN PROGRESS heading wraps in vibekit's preview frame; the Studio card's five swatches are vibekit's (bg, surface, primary, accent, signal) where the reference shows bg, primary, stage 5, accent, signal; Studio's readout Sky draws a smaller sun; the swatch wash strips and the foot's line rasterise a pixel off
@@ -131,11 +129,13 @@ export const currentPlatform = (): PlatformKey => `${process.platform}-${process
  * rasterises differently per platform and architecture (FreeType vs CoreText; arm64 and x64 Linux
  * disagree on 4 keys), so an override names the exact platform-arch. CI's linux-x64 is authoritative
  * for deploys. `fails`: the key fails strictly there but stays within the 1% bar; `passes`: it is on
- * the darwin list but passes there. The ratchet and the bar apply per platform: a `fails` key that
+ * the darwin list but passes there; `either`: it flips between passing and failing strictly from run to
+ * run there, for a cause that could not be made deterministic, so neither outcome is a ratchet signal (the
+ * 1% bar still holds; use it only with that cause logged). The ratchet and the bar apply per platform: a `fails` key that
  * passes, or a `passes` key that fails, fails the run. Each line is the ratio on that platform (from
  * CI's run) and its cause; RESIDUALS.md "Per platform" lists them.
  */
-export const PLATFORM_OVERRIDES: Readonly<Record<PlatformKey, Readonly<Record<string, 'fails' | 'passes'>>>> = {
+export const PLATFORM_OVERRIDES: Readonly<Record<PlatformKey, Readonly<Record<string, 'fails' | 'passes' | 'either'>>>> = {
   'linux-x64': {
     'SP-Dlg-NewCard-Daylight·dark': 'fails', // 0.030% (CI linux-x64): one broken block: the Add label chip's words and the label chips' × glyphs draw 1px higher than the reference's under Linux FreeType hinting
     'SP-CardPage-Paper·light': 'fails', // 0.043% (CI linux-x64): one broken block on the links and list markers the app's reset dropped (Change project and the crumbs drew no underline, Things to prove no decimals; restored in card-page-paper.css, so this may now pass)
@@ -145,7 +145,7 @@ export const PLATFORM_OVERRIDES: Readonly<Record<PlatformKey, Readonly<Record<st
     'SP-Board-Quiet#shell·light': 'fails', // 0.131% (CI linux-x64): the board row's last view link, Projects, rasterises about 1px to one side under Linux FreeType once the row's widths accumulate sub-pixel offsets; everything else in the board and nav rows matches (CI linux-x64 part diff)
     'SP-Phone-Board-Quiet#shell·dark': 'fails', // 0.523% (CI linux-x64): header part: vibekit PhoneHeader switcher: the Change board link's words draw 1px higher than the reference's under Linux FreeType hinting; tab-bar part: one pixel row of the Operate count
     'SP-Phone-Board-Quiet#shell·light': 'fails', // 0.530% (CI linux-x64): header part: vibekit PhoneHeader switcher: the Change board link's words draw 1px higher than the reference's under Linux FreeType hinting; tab-bar part: one pixel row of the Operate count
-    'SP-Dlg-Reconnect-Daylight·dark': 'passes', // 0.000% (CI linux-x64): passes on linux-x64; the darwin residual (vibekit Button rasterising) does not occur under FreeType
+    'SP-Dlg-Reconnect-Daylight·dark': 'either', // 0.030% (CI linux-x64): flips between 0.000% and 0.030% (one broken block on vibekit's Sign in again Button) from run to run on linux-x64; focus, hover, transitions and font loading are ruled out on macOS (the button is focused then blurred identically every run), and the Linux run could not be reproduced locally
     'SP-Workspace-Agents-Quiet·dark': 'passes', // 0.000% (CI linux-x64): passes on linux-x64; the darwin residual (t-meta line rasterising) does not occur under FreeType
     'SP-Workspace-Agents-Quiet·light': 'passes', // 0.000% (CI linux-x64): passes on linux-x64; the darwin residual (t-meta line rasterising) does not occur under FreeType
     'SP-Workspace-Other-Paper·light': 'passes', // 0.000% (CI linux-x64): passes on linux-x64; the darwin residual (sub-pixel icon and button rasterising) does not occur under FreeType
@@ -155,5 +155,10 @@ export const PLATFORM_OVERRIDES: Readonly<Record<PlatformKey, Readonly<Record<st
 /** Whether `key` is expected to fail the strict compare on `platform` (default: this process's). */
 export function isExpectedFailure(key: string, platform: PlatformKey = currentPlatform()): boolean {
   const o = PLATFORM_OVERRIDES[platform]?.[key];
-  return o === undefined ? EXPECTED_FAILURES.has(key) : o === 'fails';
+  return o === undefined ? EXPECTED_FAILURES.has(key) : o !== 'passes';
+}
+
+/** Whether `key` may pass or fail strictly (within the bar) on `platform`: it flips between runs there. */
+export function isEither(key: string, platform: PlatformKey = currentPlatform()): boolean {
+  return PLATFORM_OVERRIDES[platform]?.[key] === 'either';
 }

@@ -24,8 +24,19 @@ export function resolveReference(artboard: string, theme: Theme): RefSource | nu
   return existsSync(dark) ? { file: dark, derivedDark: false } : { file: light, derivedDark: true };
 }
 
+/**
+ * A mockup drawn for light casts its drop shadows in the text colour (`color-mix(… var(--vk-color-text) N%,
+ * transparent)`): dark ink on a light ground. Swapped to dark, the text colour is light, so the same rule
+ * makes the sheet glow. vibekit's own dark shadows (--vk-shadow-dialog, -drawer, -pop, -sheet) are the
+ * ground at 80%; the derived dark casts them that way. Only cast shadows change: an inset ring drawn in the
+ * text colour is a border and stays.
+ */
+const DARK_CAST = 'color-mix(in oklch, var(--vk-color-bg) 80%, transparent)';
+const darkenShadows = (html: string) => html.replace(/box-shadow:[^;}"]*/g, (decl) =>
+  decl.replace(/color-mix\(in oklch, var\(--vk-color-text\) \d+%, transparent\)/g, DARK_CAST));
+
 export function deriveDark(html: string): string {
-  const out = html.replace(/data-theme="light"/g, 'data-theme="dark"');
+  const out = darkenShadows(html.replace(/data-theme="light"/g, 'data-theme="dark"'));
   // The mockup paints <html> (and so the canvas past the artboard) from :root, which carries no theme:
   // swapping the artboard alone left a light band above and below a page drawn dark edge to edge.
   // <html> takes the artboard's vibe and the dark theme, so the canvas is painted dark too.

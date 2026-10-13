@@ -25,6 +25,12 @@ export function roman(n: number): string {
 const WORDS = ['zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten'];
 export const numberWord = (n: number): string => WORDS[n] ?? String(n);
 export const firstName = (name: string): string => name.trim().split(/\s+/)[0] ?? name;
+/** The letter's salutation (O13): the person's first name; never an email; "Hello," when no name is known. */
+export function paperSalutation(name: string | null | undefined): string {
+  const n = name?.trim() ?? '';
+  if (!n || n === 'there' || n.includes('@')) return 'Hello,';
+  return `Dear ${firstName(n)},`;
+}
 const s = (n: number) => (n === 1 ? '' : 's');
 
 export const reTitle = (title: string, gatePending: boolean): string => `Re: ${gatePending ? 'approval. ' : ''}${title}`;
@@ -93,7 +99,7 @@ export function paperWhen(iso: string, now: string, tz?: string): string {
   const d = parts(iso, tz);
   return ymd(iso, tz) === ymd(now, tz) ? `Today, ${d.hh}:${d.mm}` : `${d.weekdayLong} ${d.day} ${d.monthLong}, ${d.hh}:${d.mm}`;
 }
-const STATE_WORD: Readonly<Record<string, string>> = { working: 'Working', completed: 'Done', submitted: 'Queued', queued: 'Queued', rejected: 'Rejected', failed: 'Failed', 'input-required': 'Waiting on you' };
+export const STATE_WORD: Readonly<Record<string, string>> = { working: 'Working', completed: 'Done', submitted: 'Queued', queued: 'Queued', rejected: 'Rejected', failed: 'Failed', 'input-required': 'Waiting on you' };
 export function paperStateWord(o: { archived: boolean; needsYou: boolean; state: string; ageHours: number | null }): string {
   if (o.archived) return 'Archived';
   if (o.needsYou) return `Waiting on you · ${ageWords(o.ageHours ?? 0)}`;

@@ -300,3 +300,45 @@ The SP-Dlg-Appearance artboards were 1200px tall and `.art` clipped the 1237–1
 | Artboard | Selector | Was | Now | Ruling |
 |---|---|---|---|---|
 | every SP-\* reference (80 files) | `<link rel="stylesheet" data-vibekit>` | `_vibekit-0.0.9/vibekit.css` | `_vibekit-0.0.10/vibekit.css` | adopt 0.0.7 step 5 ruling, standing: references compare against the vibekit the app ships |
+
+## Wave 1 readability (card drawer and page, operator issues 2026-10-13)
+
+| Artboard | Selector | Was | Now | Ruling |
+|---|---|---|---|---|
+| SP-Card-* and SP-CardPage-* (all 8) | the brief's raw-JSON row: the Copy button after View raw JSON | Copy drawn beside the closed toggle | removed: Copy appears only while the JSON is shown, beside the one toggle | Operator issue O8 (2026-10-13): one raw-JSON toggle and one Copy, Copy only while the JSON is shown |
+| SP-Card-* and SP-CardPage-* (all 8) | the card-actions Delete card button | the dark primary Button (`vk-button--primary` with a page restyle) in Daylight and the Paper and Quiet pages, `vk-button--danger` in the Paper and Quiet drawers, an inline-restyled `ar-btn2` in Studio | vibekit's quiet Button (`vk-button vk-button--quiet`), no inline style; Archive stays the secondary action; the existing confirmation is unchanged | Wave 1 audit #9 (2026-10-13): Delete is not the primary action |
+| SP-Card-* and SP-CardPage-* (all 8) | the empty Plan block ("Agent plan · none yet", "error-eric did not post a plan for this card.", Quiet's "Plan: None yet.") and the empty Decisions block ("Decisions: none yet.", Quiet's Decisions section) | drawn with nothing to show and nothing to do | removed: a section with nothing to show and no action is hidden; sections that offer an action (Project, Comments, Links) stay | Operator ruling (2026-10-13, O7): empty sections stay out of the way |
+| SP-Card-Daylight | `.dl-groups` and the brief's plan/project grid | two columns, so a lone "Other details" group sat in a narrow left column | one column: the brief uses the full drawer width | Operator issue O2 (2026-10-13): the Daylight brief uses the full drawer width |
+
+### Fix round 1 (review of Track X)
+
+| Artboard | Selector | Was | Now | Ruling |
+|---|---|---|---|---|
+| SP-Card-Paper, SP-CardPage-Paper | the facts line's "No due date" and "No labels" | printed | removed (nothing to show, nothing to do; Edit card sets both) | Operator ruling (2026-10-13, O7) |
+| SP-Card-Paper | the brief's criteria/plan grid | two columns (1.4fr / 1fr) with the plan column empty | one column: with Plan hidden the criteria take the full width | Same |
+| SP-Card-Paper | manifest `h` | 3500 | 3261: the reference's drawn height once the empty sections went (its scrim ended there; below it the reference drew ground) | Fix round 1: raise or lower the artboard to its content |
+| SP-Phone-Card-Daylight, -Paper, -Quiet, -Studio | the empty Plan ("error-eric did not post a plan for this card.") and empty Decisions ("No decisions on this card yet.") blocks | drawn | removed | Operator ruling (2026-10-13, O7) |
+| SP-Phone-Card-Daylight, -Paper, -Quiet | the "Show tool calls" button | one toggle after the run list, for every run at once | inside the open (newest) run, after its events: each run has its own toggle | Track X fix round 1 (R4): phone parity with the drawers' per-attempt tool calls (O15) |
+## Wave 1 Track Y: live-UI fixes (2026-10-13)
+
+| Artboard | Selector | Was | Now | Ruling |
+|---|---|---|---|---|
+| SP-Board-Daylight | each tile with a priority (`.dl-chips`, after the "Priority N" hidden text) | priority only as the coloured left edge (P3 nothing) | a `P1` to `P4` chip (`.dl-chip.dl-pri`, 12px mono bold), aria-hidden beside the hidden text | Live audit #12: Daylight shows priority in words, as the other vibes do |
+| SP-Phone-Board-Daylight | each tile with a priority (`.stg`) | priority only as the edge | a `P1` to `P4` pill (`.pd-pri`) after the stage line | Same |
+| SP-Operate-Daylight, SP-Operate-Quiet | each activity row's time | `22:50 UTC` and the three others, the server's UTC | the reader's clock (Asia/Kolkata in the harness): `04:20`, `03:55`, `19:41`, `15:25`, no "UTC" | Live audit #19: one time format, the user's own zone |
+| SP-Operate-Paper | each digest row's time, and the masthead's "Times in UTC" | UTC times, a "Times in UTC" line | the reader's clock, the line dropped (every time on the page is local) | Same |
+| SP-Operate-Studio | each event row's time, the op line, the sub-line's due date | UTC times, "· times UTC", `due 2026-10-06, overdue` | the reader's clock, the reminder dropped, `due 6 Oct, overdue` (the app's short date) | Same |
+| SP-Operate-Quiet | the lede | "Times are in UTC." | dropped | Same |
+
+## Wave 1 Track Y, fix round 1
+
+| Artboard | Selector | Was | Now | Ruling |
+|---|---|---|---|---|
+| SP-Spend-Daylight, SP-Spend-Paper, SP-Spend-Quiet, SP-Spend-Studio | every Board log row's time (68 per file, the plain and the raw lists) | the server's UTC `22:50:12` | the reader's clock, +5:30 in the harness's Asia/Kolkata (`04:20:12`) | Live audit #19: one time format, the user's own zone |
+| SP-Spend-* (all 4) | the log's meta line | "last 60 events, newest first · times in UTC" | "last 60 events, newest first" | Same |
+
+### Fix round 2 (CI linux-x64)
+
+| Artboard | Selector | Was | Now | Ruling |
+|---|---|---|---|---|
+| every derived-dark reference (no `.dark.html`) | `box-shadow` values cast in `color-mix(in oklch, var(--vk-color-text) N%, transparent)` | swapped to dark unchanged, so the light text colour made a sheet glow (SP-Card-Paper·dark: 1.046% on CI, 0.895% on macOS) | `deriveDark` (reference.ts) casts them as vibekit's own dark shadow, `color-mix(in oklch, var(--vk-color-bg) 80%, transparent)`; inset rings in the text colour are borders and stay. SP-Card-Paper·dark: 0.031% on macOS | Fix round 2: the derived dark follows vibekit's dark shadow tokens (--vk-shadow-dialog/-drawer/-pop/-sheet), as the app does |

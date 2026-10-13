@@ -15,7 +15,7 @@
   import StructuredValue from '../StructuredValue.svelte';
   import { humanizeKey } from '../spec-groups';
   import { gateConflictSentence } from '../card-words';
-  import { PAPER_CAPTIONS, PAPER_HINT, digestPaper, firstName, paperWhen } from '../paper-words';
+  import { PAPER_CAPTIONS, PAPER_HINT, digestPaper, firstName, paperSalutation, paperWhen } from '../paper-words';
   import type { CardLead } from '../card-lead';
   import type { CardAgent } from '../layouts/types';
   import { GATE_NOTE_MAX, GateDecisionModel, roleOf, sealOf } from './gate-decision.svelte';
@@ -60,7 +60,7 @@
 
 {#if part === 'all'}
   {#if showLead}
-    <p class="pcs-dear">Dear {firstName(personName)},</p>
+    <p class="pcs-dear">{paperSalutation(personName)}</p>
     <p class="pcs-voice">{lead.sentence ?? gate.summary ?? 'Waiting for your review.'}</p>
     <div class="pcs-sign">
       <Face id={name} label={name} mood="needs" size={32} />

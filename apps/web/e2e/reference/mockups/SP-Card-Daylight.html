@@ -1034,7 +1034,7 @@ a[href*="CardPage"], a[class*="icon"][style*="width: auto"], button[class*="icon
 .dl-sec > summary .tw { margin-left: auto; color: var(--vk-color-muted); transition: transform var(--vk-motion-fast) var(--vk-motion-easing); }
 .dl-sec[open] > summary .tw { transform: rotate(90deg); }
 .dl-secbody { padding: 0 0 var(--vk-space-5); display: flex; flex-direction: column; gap: var(--vk-space-4); }
-.dl-groups { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; gap: var(--vk-space-3); }
+.dl-groups { display: grid; grid-template-columns: minmax(0, 1fr); align-items: start; gap: var(--vk-space-3); }
 .dl-group { background: var(--vk-color-raised); border-radius: var(--vk-radius-md); padding: var(--vk-space-4); display: flex; flex-direction: column; gap: var(--vk-space-3); min-width: 0; }
 .dl-group h4 { margin: 0; font: 700 var(--vk-text-sm)/1.2 var(--vk-font-body); color: var(--vk-color-muted); text-transform: uppercase; letter-spacing: 0.06em; }
 .dl-dl { margin: 0; display: flex; flex-direction: column; gap: var(--vk-space-3); }
@@ -1242,13 +1242,8 @@ a[href*="CardPage"], a[class*="icon"][style*="width: auto"], button[class*="icon
             </div>
             <div data-dc-tpl="364" class="dl-row" style="gap: var(--vk-space-5);">
               <details data-dc-tpl="365" class="dl-raw"><summary data-dc-tpl="366">View raw JSON</summary></details>
-              <button style="font-size: var(--vk-text-sm);" type="button" class="vk-button vk-button--quiet"><span class="vk-button__icon" aria-hidden="true"><svg data-dc-tpl="368" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect data-dc-tpl="369" x="9" y="9" width="11" height="11" rx="2"></rect><path data-dc-tpl="370" d="M5 15V5a1 1 0 0 1 1-1h9"></path></svg></span>Copy</button>
             </div>
-            <div data-dc-tpl="371" style="display: grid; grid-template-columns: minmax(0px, 1fr) minmax(0px, 1fr); gap: var(--vk-space-5);">
-              <div data-dc-tpl="372" style="display: flex; flex-direction: column; gap: var(--vk-space-2);">
-                <div data-dc-tpl="373" class="dl-row" style="justify-content: space-between;"><b data-dc-tpl="374">Agent plan</b><span data-dc-tpl="375" class="dl-small">none yet</span></div>
-                <p data-dc-tpl="376" class="dl-small" style="margin: 0px;">error-eric did not post a plan for this card.</p>
-              </div>
+            <div data-dc-tpl="371" style="display: grid; grid-template-columns: minmax(0px, 1fr); gap: var(--vk-space-5);">
               <div data-dc-tpl="377" style="display: flex; flex-direction: column; gap: var(--vk-space-2);">
                 <b data-dc-tpl="378">Project</b>
                 <span data-dc-tpl="379" style="font-size: var(--vk-text-sm); line-height: 1.45;">Marketing &amp; Community — Melissa and Anna onboarding · no milestone</span>
@@ -1313,7 +1308,7 @@ a[href*="CardPage"], a[class*="icon"][style*="width: auto"], button[class*="icon
 
       <div data-dc-tpl="515" class="dl-foot">
         <button type="button" class="vk-button vk-button--secondary"><span class="vk-button__icon" aria-hidden="true"><svg data-dc-tpl="517" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect data-dc-tpl="518" x="3" y="4" width="18" height="5" rx="1"></rect><path data-dc-tpl="519" d="M5 9v10h14V9M10 13h4"></path></svg></span>Archive card</button>
-        <button type="button" class="vk-button vk-button--primary dl-danger"><span class="vk-button__icon" aria-hidden="true"><svg data-dc-tpl="521" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path data-dc-tpl="522" d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"></path></svg></span>Delete card</button>
+        <button type="button" class="vk-button vk-button--quiet"><span class="vk-button__icon" aria-hidden="true"><svg data-dc-tpl="521" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path data-dc-tpl="522" d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"></path></svg></span>Delete card</button>
       </div>
     </div>
   </section></div></div></div>

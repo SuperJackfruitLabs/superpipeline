@@ -6,6 +6,7 @@
    * signal-edged fieldset (the decision, the question, or the reply) and the sections in two columns.
    * Every section key is drawn once (`data-section`).
    */
+  import { tick } from 'svelte';
   import './card-quiet.css';
   import '../quiet-states.css';
   import { Button, Drawer, Face, Field } from '@superjackfruit/vibekit';
@@ -18,6 +19,7 @@
   import HandoffView from '../HandoffView.svelte';
   import LibraryArtifact from '../LibraryArtifact.svelte';
   import RawJson from '../RawJson.svelte';
+  import ToolCallDetails from '../ToolCallDetails.svelte';
   import TokenText from '../TokenText.svelte';
   import SpecValueView from '../SpecValueView.svelte';
   import GateQuiet from '../gate/GateQuiet.svelte';
@@ -34,6 +36,7 @@
   import {
     quietAskedBy, quietAttempts, quietCost, quietDrawerMeta, quietHistoryHead, quietHistoryLine, quietResumeOption, quietRow, quietSubtasks, quietWho,
   } from '../quiet-words';
+  import { focusInPlace, openAtTop } from '../open-at-top';
   import type { CardLayoutProps } from './types';
 
   let { model: m, vibe, gate, question, pageHref, onClose }: CardLayoutProps = $props();
@@ -63,6 +66,14 @@
     e.preventDefault();
     onClose();
   }
+
+  // Change project (O9): the inline form takes focus where it is, never scrolling the card.
+  let projectWas = false;
+  $effect(() => {
+    const editing = m.project.editing;
+    if (editing && !projectWas) void tick().then(() => focusInPlace(document.querySelector('[data-project-form] select')));
+    projectWas = editing;
+  });
 </script>
 
 {#snippet hidden(key: string)}<span hidden data-section={key}></span>{/snippet}
@@ -70,7 +81,8 @@
 {#snippet tools()}<Button variant="tool" href={pageHref} target="_blank" rel="noopener" aria-label="Open in new window">Open in new window</Button>{/snippet}
 
 <Drawer open={true} head="stacked" title={card.title} description={meta} back={backLink} {tools} width={CARD_LAYOUTS.quiet.width} onclose={onClose}>
-<div class="qcd">
+<!-- data-autofocus: the Drawer opens with focus at the card itself, at the top (audit #1). -->
+<div class="qcd" tabindex="-1" data-autofocus {@attach openAtTop}>
   {#if m.archived}<CardStateQuiet kind="archived" model={m} />{/if}
   {#if m.localError}<p role="alert" data-section="error">{m.localError}</p>{:else}{@render hidden('error')}{/if}
   {#if editing}<div data-section="editForm"><CardEditForm model={m} /></div>{:else}{@render hidden('editForm')}{/if}
@@ -120,14 +132,14 @@
       </dl>
       <div class="qcd-row"><button class="qcd-ln" type="button" data-section="editButton" aria-pressed={editing} onclick={() => m.edit.start()}>Edit card</button></div>
     </section>
-    <section class="qcd-sec"><h3>Description</h3>{#if card.spec?.description}<p data-section="description" style="white-space: pre-line">{String(card.spec.description)}</p>{:else}<p data-section="description">None.</p>{/if}</section>
-    <section class="qcd-sec"><h3>Acceptance criteria</h3>{#if m.acceptanceCriteria?.length}<ul data-section="criteria">{#each m.acceptanceCriteria as c, i (i)}<li>{c}</li>{/each}</ul>{:else}<p data-section="criteria">None.</p>{/if}</section>
-    <section class="qcd-sec" data-section="plan"><h3>Plan</h3>{#if m.plan}<ol>{#each m.plan as st, i (i)}<li>{st.text}{st.done ? ' (done)' : ''}</li>{/each}</ol>{:else}<p>None yet.</p>{/if}</section>
+    {#if card.spec?.description}<section class="qcd-sec"><h3>Description</h3><p data-section="description" style="white-space: pre-line">{String(card.spec.description)}</p></section>{:else}<span hidden data-section="description"></span>{/if}
+    {#if m.acceptanceCriteria?.length}<section class="qcd-sec"><h3>Acceptance criteria</h3><ul data-section="criteria">{#each m.acceptanceCriteria as c, i (i)}<li>{c}</li>{/each}</ul></section>{:else}<span hidden data-section="criteria"></span>{/if}
+    {#if m.plan}<section class="qcd-sec" data-section="plan"><h3>Plan</h3>{#if m.plan}<ol>{#each m.plan as st, i (i)}<li>{st.text}{st.done ? ' (done)' : ''}</li>{/each}</ol>{:else}<p>None yet.</p>{/if}</section>{:else}<span hidden data-section="plan"></span>{/if}
     <section class="qcd-sec" data-section="details">
       <h3>Brief details ({specRowCount(groups)})</h3>
       {#each groups as g (g.label)}<h4>{g.label}</h4><dl class="qcd-dl">{#each g.rows as r (r.key)}<dt>{r.label}</dt><dd data-testid="spec-value-{r.key}"><SpecValueView value={r.value} v={{ more: 'qcd-lb', id: 'qcd-id', matrixLinks: true }} /></dd>{/each}</dl>{/each}
-      <div class="qcd-row"><button class="qcd-ln" type="button" aria-expanded={rawOpen} onclick={() => (rawOpen = !rawOpen)}>View raw JSON</button><button class="qcd-ln" type="button" onclick={() => m.copySpec()}>{m.copied === 'spec' ? 'Copied' : 'Copy'}</button></div>
-      {#if rawOpen}<RawJson value={card.spec} />{/if}
+      <div class="qcd-row"><button class="qcd-ln" type="button" aria-expanded={rawOpen} onclick={() => (rawOpen = !rawOpen)}>{rawOpen ? 'Hide raw JSON' : 'View raw JSON'}</button>{#if rawOpen}<button class="qcd-ln" type="button" onclick={() => m.copySpec()}>{m.copied === 'spec' ? 'Copied' : 'Copy'}</button>{/if}</div>
+      {#if rawOpen}<RawJson value={card.spec} bare />{/if}
     </section>
     <section class="qcd-sec">
       <h3>History ({m.counts.runs} run{m.counts.runs === 1 ? '' : 's'})</h3>
@@ -137,20 +149,20 @@
         <ul>
           {#each runs as g, ri (g.runId)}
             {@const a = m.attempts.find((x) => x.runId === g.runId)}
-            <li>{quietHistoryHead((m.attempts.findIndex((x) => x.runId === g.runId) + 1) || runs.length - ri, stageNameOf(g.stageKey), name(g.agentId) || 'an agent')}: {lcFirst(quietHistoryLine(a ? attemptWord(a) : (g.outcome ?? 'working'), a?.endedAt ?? null, g.counts.total, g.counts.error))}
-              {#if ri === 0}
-                <button class="qcd-ln" type="button" aria-pressed={m.showToolCalls} onclick={() => (m.showToolCalls = !m.showToolCalls)}>{m.showToolCalls ? 'Hide tool calls' : 'Show tool calls'}</button>
-                {#if m.showToolCalls}<ol>{#each visibleActivities(g.activities, isNarrative, m.showToolCalls, isControlRow).rows as ev (ev.seq)}<li>{quietRow(ev)}</li>{/each}</ol>{/if}
-              {/if}
+            {@const tools = m.toolsShown(g.runId)}
+            {@const expanded = m.isRunOpen(g.runId, false) || tools}
+            <li data-attempt={g.runId}><button class="qcd-att" type="button" data-attempt-head={g.runId} aria-expanded={expanded} aria-controls={expanded ? `qcd-run-${g.runId}` : undefined} onclick={() => m.setRun(g.runId, !expanded)}>{quietHistoryHead((m.attempts.findIndex((x) => x.runId === g.runId) + 1) || runs.length - ri, stageNameOf(g.stageKey), name(g.agentId) || 'an agent')}</button>: {lcFirst(quietHistoryLine(a ? attemptWord(a) : (g.outcome ?? 'working'), a?.endedAt ?? null, g.counts.total, g.counts.error))}
+              {#if g.counts.action > 0 && (ri === 0 || expanded)}<button class="qcd-ln" type="button" data-attempt-tools={g.runId} aria-pressed={tools} onclick={() => m.toggleTools(g.runId)}>{tools ? 'Hide tool calls' : 'Show tool calls'}</button>{/if}
+              {#if expanded}<ol id="qcd-run-{g.runId}">{#each visibleActivities(g.activities, isNarrative, tools, isControlRow).rows as ev (ev.seq)}<li>{quietRow(ev)}<ToolCallDetails parameter={ev.parameter} result={ev.result} cls="qcd-details" /></li>{/each}</ol>{/if}
             </li>
           {/each}
         </ul>
       </div>
     </section>
-    <section class="qcd-sec" data-section="decisions"><h3>Decisions</h3>{#if m.decidedGates.length}<ul>{#each m.decidedGates as d (d.id)}<li>{d.decision ?? d.status} at {stageNameOf(d.stageKey)}{d.decidedBy ? `, by ${m.principalName(d.decidedBy)}` : ''}.</li>{/each}</ul>{:else}<p>None yet.</p>{/if}</section>
+    {#if m.decidedGates.length}<section class="qcd-sec" data-section="decisions"><h3>Decisions</h3>{#if m.decidedGates.length}<ul>{#each m.decidedGates as d (d.id)}<li>{d.decision ?? d.status} at {stageNameOf(d.stageKey)}{d.decidedBy ? `, by ${m.principalName(d.decidedBy)}` : ''}.</li>{/each}</ul>{:else}<p>None yet.</p>{/if}</section>{:else}<span hidden data-section="decisions"></span>{/if}
     <section class="qcd-sec" data-section="comments">
       <h3>Comments</h3>
-      {#if m.comments.comments.length}<ul>{#each m.comments.comments as c (c.id)}<li><b>{c.author.name ?? c.author.id}:</b> <span style="white-space: pre-wrap">{c.deletedAt ? 'Comment deleted' : c.body}</span></li>{/each}</ul>{:else}<p>No comments yet. The agent that works this card reads them.</p>{/if}
+      {#if m.comments.comments.length}<ul>{#each m.comments.comments as c (c.id)}<li><b>{m.authorName(c.author)}:</b> <span style="white-space: break-spaces; overflow-wrap: anywhere">{c.deletedAt ? 'Comment deleted' : c.body}</span></li>{/each}</ul>{:else}<p>No comments yet. The agent that works this card reads them.</p>{/if}
       <Field id="qcd-comment" label="Add a comment" control="textarea" maxlength={8192} rows={4} style="min-height: 80px;" bind:value={m.comments.draft} />
       {#if m.comments.error}<p role="alert">{m.comments.error}</p>{/if}
       <div class="qcd-row"><Button variant="secondary" aria-disabled={m.comments.posting ? 'true' : undefined} onclick={() => { if (!m.comments.posting) void m.comments.submit(); }}>Comment</Button><span class="vk-visually-hidden" role="status">{m.comments.posting ? 'Posting…' : ''}</span></div>
@@ -166,7 +178,7 @@
       <h3>Sub-tasks, Project, Cost, Delivery</h3>
       <dl class="qcd-dl">
         <div data-section="subtasks" style="display: contents"><dt>Sub-tasks</dt><dd>{m.children.length === 0 ? 'None.' : quietSubtasks(card.openChildCount, m.children.length)} {#if subAdd}<span class="qcd-row"><label class="qcd-ln" for="qcd-sub">New sub-task title</label><input id="qcd-sub" class="vk-field__input" type="text" bind:value={m.subtasks.title} onkeydown={(e) => { if (e.key === 'Enter') void m.subtasks.add(); }} /><Button variant="secondary" aria-disabled={m.subtasks.adding ? 'true' : undefined} onclick={() => { if (!m.subtasks.adding) void m.subtasks.add(); }}>Add</Button></span>{:else}<button class="qcd-ln" type="button" onclick={() => (subAdd = true)}>Add a sub-task</button>{/if}</dd></div>
-        <div data-section="project" style="display: contents"><dt>Project</dt><dd>{#if m.project.editing}<Field id="qcd-project" label="Project" control="select" bind:value={m.project.projectId} onchange={() => void m.project.onProjectChange()} options={[{ value: '', label: 'No project' }, ...m.projects.map((p) => ({ value: p.id, label: p.name }))]} /> <Button aria-disabled={m.project.saving ? 'true' : undefined} onclick={() => { if (!m.project.saving) void m.project.save(); }}>Save</Button> <button class="qcd-ln" type="button" onclick={() => m.project.cancel()}>Cancel</button>{:else}{m.projectName ? `${projectLine(m.projectName, m.milestoneName)}.` : 'None.'} <button class="qcd-ln" type="button" onclick={() => m.project.start()}>{m.projectName ? 'Change project' : 'Assign to a project'}</button>{/if}</dd></div>
+        <div data-section="project" style="display: contents"><dt>Project</dt><dd>{#if m.project.editing}<span class="qcd-projform" data-project-form><Field id="qcd-project" label="Project" control="select" bind:value={m.project.projectId} onchange={() => void m.project.onProjectChange()} options={[{ value: '', label: 'No project' }, ...m.projects.map((p) => ({ value: p.id, label: p.name }))]} /><span class="qcd-row"><Button aria-disabled={m.project.saving ? 'true' : undefined} onclick={() => { if (!m.project.saving) void m.project.save(); }}>Save</Button><button class="qcd-ln" type="button" onclick={() => m.project.cancel()}>Cancel</button></span></span>{:else}{m.projectName ? `${projectLine(m.projectName, m.milestoneName)}.` : 'None.'} <button class="qcd-ln" type="button" onclick={() => m.project.start()}>{m.projectName ? 'Change project' : 'Assign to a project'}</button>{/if}</dd></div>
         <div data-section="cost" style="display: contents"><dt>Cost</dt><dd>{quietCost(card.costUsd, m.estimate?.estimatedUsd ?? null)}</dd></div>
         <div data-section="attempts" style="display: contents"><dt>Attempts</dt><dd>{quietAttempts(m.attempts, name)}</dd></div>
         <div data-section="delivery" style="display: contents"><dt>Delivery</dt><dd>{#if m.counts.deliveryActive}<DeliveryPanel model={m} />{:else}None approved{/if}</dd></div>
@@ -177,7 +189,7 @@
       <ul>
         {#each m.otherRefs as r, i (r.id)}<li data-section={i === 0 ? 'references' : undefined}>{#if safeHref(r.url)}<a href={safeHref(r.url)!} target="_blank" rel="noreferrer">{r.title ?? refLabel(r)}</a>{:else}{r.title ?? refLabel(r)}{/if}{r.subtitle ? `, ${r.subtitle}` : ''}<br /><span class="qcd-src">{referenceSource(r)}</span></li>{/each}
         {#each m.libraryRefs as l (l.ref.id)}<li><LibraryArtifact itemId={l.itemId} version={l.version} title={l.ref.title || l.itemId} open={false} /></li>{/each}
-        {#if m.otherRefs.length === 0}<li data-section="references">No references.</li>{/if}
+        {#if m.otherRefs.length === 0}<li hidden data-section="references"></li>{/if}
         <li data-section="related">{relatedLine(m.related.phase, m.related.items.length)}</li>
       </ul>
     </section>
@@ -185,7 +197,7 @@
       <h3>Card actions</h3>
       <div class="qcd-row">
         {#if !m.archived}<Button variant="secondary" aria-disabled={m.archiving ? 'true' : undefined} onclick={() => { if (!m.archiving) void m.archive(); }}>Archive card</Button><span class="vk-visually-hidden" role="status">{m.archiving ? 'Archiving…' : ''}</span>{/if}
-        <Button variant="danger" onclick={() => m.remove()}>Delete card</Button>
+        <Button variant="quiet" onclick={() => m.remove()}>Delete card</Button>
       </div>
     </section>
   </div>

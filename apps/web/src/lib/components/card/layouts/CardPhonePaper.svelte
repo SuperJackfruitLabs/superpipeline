@@ -4,6 +4,7 @@
   import '../phone/phone-card-shared.css';
   import '../phone/pc-paper.css';
   import { Button, Face } from '@superjackfruit/vibekit';
+  import { paperSalutation } from '../paper-words';
   import type { CardLayoutProps } from './types';
   import PhoneIcon from '$lib/components/parts/PhoneIcon.svelte';
   import PhoneDetails from '../phone/PhoneDetails.svelte';
@@ -31,7 +32,6 @@
   const enc = $derived(paperEnclosures(v, model));
   const eye = $derived(paperEye(lead.needsYou && !model.archived, c.archivedAt));
   const role = $derived((model.agents.find((a) => a.id === model.agent.id)?.role ?? 'agent').toLowerCase());
-  const firstName = $derived(personName.split(' ')[0] ?? personName);
 </script>
 
 <div class="ph-root pcard pcard--paper">
@@ -68,7 +68,7 @@
     <CardStatePaper kind="done" {model} /><div data-section="resume" hidden></div>
   {:else}
     <article class="paper" aria-label="Letter from {v.speaker}">
-      <p class="dear">Dear {firstName},</p>
+      <p class="dear">{paperSalutation(personName)}</p>
       {#if lead.sentence}<p class="voice">{sentenceCase(lead.sentence)}</p>{/if}
       <div class="sigb">
         <span class="portrait"><Face id={model.agent.id ?? v.lastAgent?.id ?? c.id} label={v.speaker} mood={lead.needsYou && !model.archived ? 'needs' : model.agent.mood} size={32} /></span>
@@ -98,7 +98,7 @@
     <details class="en"><summary><b>The brief</b><span>{enc.brief}</span></summary><div class="in">
       <h4>What was asked</h4><p class="wrap" data-section="description">{c.spec?.description ?? 'No description.'}</p>
       <h4>Things to prove</h4><ol class="nl" data-section="criteria">{#each model.acceptanceCriteria ?? [] as a, i (i)}<li>{a}</li>{/each}</ol>
-      <h4>Plan</h4><div class="sec-k" data-section="plan"><PhonePlan view={v} speaker={v.speaker} /></div>
+      {#if v.plan?.length}<h4>Plan</h4><div class="sec-k" data-section="plan"><PhonePlan view={v} speaker={v.speaker} /></div>{:else}<span hidden data-section="plan"></span>{/if}
       <h4>Details</h4><div class="sec-k" data-section="details"><PhoneDetails view={v} spec={c.spec} criteria={model.acceptanceCriteria} heading="Things to prove" boardId={model.boardId ?? ''} /></div>
       <h4>Project</h4><div class="sec-k" data-section="project">
         {#if v.project.line}<p>{v.project.line}</p><button class="lnk" type="button" onclick={() => model.project.start()}>Change project</button>
@@ -107,7 +107,7 @@
     </div></details>
     <details class="en"><summary><b>What happened</b><span>{enc.happened}</span></summary><div class="in">
       <h4>Session activity</h4><div class="sec-k" data-section="activity"><PhoneRuns view={v} {model} /></div>
-      <h4>Decisions</h4><p class="muted" data-section="decisions">{v.decisions ? `${v.decisions} decided` : 'No decisions on this card yet.'}</p>
+      {#if v.decisions}<h4>Decisions</h4><p class="muted" data-section="decisions">{v.decisions} decided</p>{:else}<span hidden data-section="decisions"></span>{/if}
       <h4>Handoff</h4>{#if model.counts.handoff}<div data-section="handoff"><HandoffView handoff={model.handoff} testid="carried-handoff" /></div>{:else}<p data-section="handoff">{v.handoff.text}</p>{/if}
       <h4>Attempts</h4><div class="sec-k" data-section="attempts"><PhoneAttempts view={v} /></div>
       <h4>Cost</h4><p data-section="cost"><strong class="mono">{v.cost.amount}</strong>{v.cost.rest}</p>

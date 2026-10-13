@@ -5,6 +5,7 @@
   import { app } from '$lib/stores/app.svelte';
   import { viewport } from '$lib/viewport.svelte';
   import { backLink } from './workspace-copy';
+  import { scopedNeedWords } from '$lib/components/shell/nav-scope';
   import { workspaceCounts, workspaceTabs, type WorkspaceTab } from './workspace-counts.svelte';
   let { current, description, form }: { current: WorkspaceTab; description: string; form: 'agents' | 'other' } = $props();
   const back = $derived(backLink(app.boardId, app.board?.name ?? null));
@@ -16,7 +17,7 @@
 {#snippet tabRow()}
   <div class="{p}-tabs" role="tablist" aria-label="Workspace">
     {#each tabs as t (t.id)}
-      <a class="ar-tab" role="tab" aria-selected={t.id === current} href="/workspace/{t.id}">{t.label}{#if t.count !== null}{#if t.signal}<span class="{p}-ct">{t.count}</span><span class="sr"> waiting on you</span>{:else}<span class="mono">{t.count}</span>{/if}{/if}</a>
+      <a class="ar-tab" role="tab" aria-selected={t.id === current} href="/workspace/{t.id}">{t.label}{#if t.count !== null}{#if t.signal}<span class="{p}-ct" aria-hidden="true">{t.count}</span><span class="sr">, {scopedNeedWords(t.count, false)}</span>{:else}<span class="mono">{t.count}</span>{/if}{/if}</a>
     {/each}
   </div>
 {/snippet}

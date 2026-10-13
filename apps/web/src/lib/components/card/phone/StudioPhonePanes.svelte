@@ -6,6 +6,7 @@
   import type { CardModel } from '../card-model.svelte';
   import PhoneIcon from '$lib/components/parts/PhoneIcon.svelte';
   import RawJson from '../RawJson.svelte';
+  import ToolCallDetails from '../ToolCallDetails.svelte';
   import HandoffView from '../HandoffView.svelte';
   import StructuredValue from '../StructuredValue.svelte';
   import { isPlainObject, normaliseValue, rawJson } from '../spec-details';
@@ -17,7 +18,14 @@
   let open = $state<Record<string, boolean>>({});
   let raw = $state(false);
   const id = $props.id();
-  const runsStudio = $derived(view.runs.map((r) => ({ ...r, rows: eventRows(model.activityGroups.find((g) => g.runId === r.key)?.activities ?? [], model.lead?.sentence ?? null, model.showToolCalls, 'studio') })));
+  /** Per run, like the drawers (X1–X3): which runs are open, which show their tool calls. */
+  let runOpen = $state<Record<string, boolean>>({});
+  let runTools = $state<Record<string, boolean>>({});
+  const runsStudio = $derived(view.runs.map((r) => {
+    const g = model.activityGroups.find((x) => x.runId === r.key);
+    const shown = runTools[r.key] ?? false;
+    return { ...r, isOpen: runOpen[r.key] ?? r.open, shown, actions: g?.counts.action ?? 0, rows: eventRows(g?.activities ?? [], model.lead?.sentence ?? null, shown, 'studio') };
+  }));
   /** What the run handed on, when it is a document (drawn as the drawer draws it). */
   const handedOn = (runId: string): Record<string, unknown> | null => {
     const h = model.stageByRun?.get(runId)?.handoff;
@@ -31,8 +39,8 @@
   <h3>Description</h3><p class="p" data-section="description">{c.spec?.description ?? 'No description.'}</p>
   <h3>Things to prove <span class="mono">{model.counts.criteria}</span></h3>
   <ol class="pc-nl" data-section="criteria">{#each model.acceptanceCriteria ?? [] as a, i (i)}<li><span>{a}</span></li>{/each}</ol>
-  <h3>Plan</h3>
-  <div data-section="plan" style="display: contents;">{#if view.plan?.length}<ol class="pc-nl">{#each view.plan as s, i (i)}<li><span>{s.done ? '✓ ' : ''}{s.text}</span></li>{/each}</ol>{:else}<p class="note">{view.speaker} did not post a plan for this card.</p>{/if}</div>
+  {#if view.plan?.length}<h3>Plan</h3>
+  <div data-section="plan" style="display: contents;"><ol class="pc-nl">{#each view.plan as s, i (i)}<li><span>{s.done ? '✓ ' : ''}{s.text}</span></li>{/each}</ol></div>{:else}<span hidden data-section="plan"></span>{/if}
   <details class="pc-det" data-section="details" data-testid="spec-details" open={!model.counts.description || hasStructuredDetail(view.groups, model.acceptanceCriteria)}>
     <summary><h3>Details <span class="mono">{studioDetailsSummary(view.groups.map((g) => g.label), view.fieldsCount)}</span></h3></summary>
     {#each view.groups as g (g.label)}
@@ -66,15 +74,19 @@
     <h3>Session activity <span class="mono">{model.counts.runs} {model.counts.runs === 1 ? 'run' : 'runs'}</span></h3>
     {#if view.grantLine}<p class="note">{view.grantLine}</p>{/if}
     {#each runsStudio as r (r.key)}
-      <details class="pc-run" open={r.open}>
-        <summary><span class="rt">{r.title}</span><span class="rm">{r.meta}</span></summary>
-        <ol class="pc-ev">{#each r.rows as e (e.key)}<li><span class="evt" class:sigt={e.stop}>{e.verb}</span><span>{e.body}</span><span class="tm">{e.time}</span></li>{/each}</ol>
-        {#if handedOn(r.key)}<HandoffView handoff={handedOn(r.key)} testid="handed-on-{r.key}" />{/if}
-      </details>
+      <div class="pc-run">
+        <button class="pc-runhead" type="button" data-attempt-head={r.key} aria-expanded={r.isOpen} aria-controls={r.isOpen ? `${id}-run-${r.key}` : undefined} onclick={() => (runOpen = { ...runOpen, [r.key]: !r.isOpen })}><span class="rt">{r.title}</span><span class="rm">{r.meta}</span></button>
+        {#if r.isOpen}
+          <div id="{id}-run-{r.key}">
+            <ol class="pc-ev">{#each r.rows as e (e.key)}<li><span class="evt" class:sigt={e.stop}>{e.verb}</span><span>{e.body}<ToolCallDetails parameter={e.parameter} result={e.result} cls="pc-tdet" /></span><span class="tm">{e.time}</span></li>{/each}</ol>
+            {#if r.actions > 0}<button class="ar-lk" type="button" data-attempt-tools={r.key} aria-pressed={r.shown} onclick={() => (runTools = { ...runTools, [r.key]: !r.shown })}>{r.shown ? 'Hide tool calls' : 'Show tool calls'}</button>{/if}
+            {#if handedOn(r.key)}<HandoffView handoff={handedOn(r.key)} testid="handed-on-{r.key}" />{/if}
+          </div>
+        {/if}
+      </div>
     {/each}
-    <button class="ar-lk" type="button" aria-pressed={model.showToolCalls} onclick={() => (model.showToolCalls = !model.showToolCalls)}>{model.showToolCalls ? 'Hide tool calls' : 'Show tool calls'}</button>
   </div>
-  <h3>Decisions</h3><p class="note" data-section="decisions">{view.decisions ? `${view.decisions} decided.` : 'No decisions on this card yet.'}</p>
+  {#if view.decisions}<h3>Decisions</h3><p class="note" data-section="decisions">{view.decisions} decided.</p>{:else}<span hidden data-section="decisions"></span>{/if}
   <h3>Handoff</h3>{#if model.counts.handoff}<div data-section="handoff"><HandoffView handoff={model.handoff} testid="carried-handoff" /></div>{:else}<p class="p" data-section="handoff">{view.handoff.text}</p>{/if}
   <h3>Attempts <span class="mono">{model.counts.attempts}</span></h3>
   <ol class="pc-att" data-section="attempts">
@@ -110,7 +122,7 @@
 {:else if pane === 'talk'}
   <div data-section="comments" style="display: contents;">
     <h3>Comments</h3>
-    {#if model.comments.comments.length === 0}<p class="note">No comments yet.</p>{:else}<ul class="pc-refs">{#each model.comments.comments as cm (cm.id)}<li><b>{cm.author.name ?? 'Someone'}</b> <span>{cm.body}</span></li>{/each}</ul>{/if}
+    {#if model.comments.comments.length === 0}<p class="note">No comments yet.</p>{:else}<ul class="pc-refs">{#each model.comments.comments as cm (cm.id)}<li><b>{model.authorName(cm.author)}</b> <span>{cm.body}</span></li>{/each}</ul>{/if}
     <div class="ar-field"><label for="pcm-{id}">Comment</label><textarea id="pcm-{id}" class="ar-in" rows="2" placeholder="Write a comment" maxlength="8192" bind:value={model.comments.draft} onkeydown={(e) => { if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) { e.preventDefault(); void model.comments.submit(); } }}></textarea></div>
     <div class="pc-row" style="justify-content: space-between;"><span class="note">⌘ or Ctrl + Enter to post</span><Button variant="secondary" class="ar-btn2" type="button" aria-disabled={model.comments.posting ? 'true' : undefined} onclick={() => { if (!model.comments.posting) void model.comments.submit(); }}>Comment</Button><span class="sr" role="status">{model.comments.posting ? 'Posting…' : ''}</span></div>
   </div>

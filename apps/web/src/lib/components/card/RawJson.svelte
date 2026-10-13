@@ -5,7 +5,8 @@
 <script lang="ts">
   import { rawJson } from './spec-details';
 
-  let { value }: { value: unknown } = $props();
+  /** `bare`: the caller owns the toggle and Copy; draw only the JSON (one toggle, one Copy per surface). */
+  let { value, bare = false }: { value: unknown; bare?: boolean } = $props();
 
   let open = $state(false);
   let copied = $state(false);
@@ -22,6 +23,9 @@
   }
 </script>
 
+{#if bare}
+<pre class="raw-pre bg-inset border-border mt-1 rounded-[5px] border px-2 py-1.5 font-mono text-[11px]" data-testid="raw-json">{text}</pre>
+{:else}
 <div class="raw mt-2">
   <div class="flex items-center gap-3">
     <button type="button" class="raw-btn text-[10.5px]" aria-expanded={open} onclick={() => (open = !open)}>
@@ -35,6 +39,7 @@
     <pre class="raw-pre bg-inset border-border mt-1 rounded-[5px] border px-2 py-1.5 font-mono text-[11px]">{text}</pre>
   {/if}
 </div>
+{/if}
 
 <style>
   .raw-btn {

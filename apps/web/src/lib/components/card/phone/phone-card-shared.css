@@ -70,3 +70,8 @@ html:has(.pcard-host) { scroll-padding-block: 96px; }
 .pcard h1, .pcard h2, .pcard h3, .pcard h4, .pcard p, .pcard ul, .pcard ol, .pcard dl, .pcard dd, .pcard figure { margin: 0; }
 .pcard ul, .pcard ol { padding: 0; list-style: none; }
 .pcard a { color: var(--vk-color-text); text-underline-offset: 3px; }
+/* Every run opens (R4): the head is a button drawn as the summary it replaced. */
+.pcard .runhead {all:unset;box-sizing:border-box;width:100%;min-height:44px;padding:8px 12px;display:flex;flex-direction:column;justify-content:center;cursor:pointer}
+.pcard .runhead:focus-visible {outline:2px solid var(--vk-focus);outline-offset:-2px}
+.pcard .ev li > span {min-width:0;overflow-wrap:anywhere}
+.pcard .pdet > summary {cursor:pointer;text-decoration:underline;text-underline-offset:3px}

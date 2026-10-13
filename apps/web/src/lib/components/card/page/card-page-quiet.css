@@ -43,3 +43,10 @@
 /* The reference relies on the browser's list markers; the app's preflight resets them. */
 .qp ol { list-style: decimal; }
 .qp ul { list-style: disc; }
+
+/* Every attempt opens (O15): the attempt's heading is the button; the tool-call toggle is a button drawn as the link it was. */
+.qp-att { all: unset; cursor: pointer; font: inherit; overflow-wrap: anywhere; }
+.qp-att:focus-visible, .qp-lnk:focus-visible { outline: 2px solid var(--vk-focus); outline-offset: 2px; }
+.qp-lnk { min-height: 44px; display: inline-flex; align-items: center; padding: 0; border: 0; background: transparent; color: var(--vk-color-text); font: inherit; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
+.qp-sec li { min-width: 0; overflow-wrap: anywhere; }
+.qp-details > summary { cursor: pointer; text-decoration: underline; text-underline-offset: 3px; }

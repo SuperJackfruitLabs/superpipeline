@@ -14,6 +14,7 @@
   import LinkAddForm from '../LinkAddForm.svelte';
   import HandoffView from '../HandoffView.svelte';
   import RawJson from '../RawJson.svelte';
+  import ToolCallDetails from '../ToolCallDetails.svelte';
   import TokenText from '../TokenText.svelte';
   import SpecValueView from '../SpecValueView.svelte';
   import GatePaper from '../gate/GatePaper.svelte';
@@ -25,7 +26,7 @@
   import { attemptWord, stripAria, stripKind, waitingWord } from '../state-words';
   import { emptyNoteError, handoffLine, initials, planNone, projectLine, relatedLine, RESUME_PLACEHOLDER, usd } from '../card-words';
   import {
-    firstName, paperAttempt, paperByline, paperCostLine, paperDateline, paperDeck, paperKicker, paperLinked, paperLogRow, paperLogTime,
+    firstName, paperSalutation, paperAttempt, paperByline, paperCostLine, paperDateline, paperDeck, paperKicker, paperLinked, paperLogRow, paperLogTime,
     paperProvenance, paperReplySub, paperRole, reTitle, roman,
   } from '../paper-words';
   import AccountMenu from './AccountMenu.svelte';
@@ -100,8 +101,8 @@
         <span>Stage <b>{m.stageIndex + 1} of {m.stages.length}, {m.stageName}</b></span>
         {#if card.attemptCount > 1}<span>Attempt <b>{card.attemptCount}</b></span>{/if}
         <span>Priority <b>{card.priority > 0 ? `P${card.priority}` : 'none'}</b></span>
-        {#if card.dueAt}<span>Due <b>{card.dueAt.slice(0, 10)}</b></span>{:else}<span>No due date</span>{/if}
-        {#if m.labels.length}<span>Labels <b>{m.labels.map((l) => l.name).join(', ')}</b></span>{:else}<span>No labels</span>{/if}
+        {#if card.dueAt}<span>Due <b>{card.dueAt.slice(0, 10)}</b></span>{/if}
+        {#if m.labels.length}<span>Labels <b>{m.labels.map((l) => l.name).join(', ')}</b></span>{/if}
         {#if m.projectName}<span>Project <b>{m.projectName}</b></span>{/if}
       </p>
     </section>
@@ -117,7 +118,7 @@
           <QuestionPaper model={question.model} elicitation={question.elicitation} agent={question.agent} {vibe} {personName} />
           {@render hidden('resume')}
         {:else}
-          <p class="pg-dear">Dear {firstName(personName)},</p>
+          <p class="pg-dear">{paperSalutation(personName)}</p>
           {#if lead.sentence}<p class="pg-voice"><TokenText text={lead.sentence} cls="pg-id" /></p>{/if}
           <div class="pg-sign">
             <Face id={agentName} label={agentName} mood={m.agent.mood} size={40} />
@@ -139,7 +140,7 @@
         {/if}
         <section class="pg-enc" aria-labelledby="pg-corr" data-section="comments">
           <h3 id="pg-corr"><span class="no">Enclosure V</span>Correspondence</h3>
-          {#if m.comments.comments.length}<ul class="pg-ul">{#each m.comments.comments as c (c.id)}<li><b>{c.author.name ?? c.author.id}</b> <span style="white-space: pre-wrap">{c.deletedAt ? 'Comment deleted' : c.body}</span></li>{/each}</ul>
+          {#if m.comments.comments.length}<ul class="pg-ul">{#each m.comments.comments as c (c.id)}<li><b>{m.authorName(c.author)}</b> <span style="white-space: break-spaces; overflow-wrap: anywhere">{c.deletedAt ? 'Comment deleted' : c.body}</span></li>{/each}</ul>
           {:else}<p class="pg-small" style="margin: 0px;">No letters yet. The agent that works this card reads them.</p>{/if}
           <Field id="pg-comment" label="Write to whoever works this card" control="textarea" maxlength={8192} style="min-height: 88px;" placeholder="⌘ or Ctrl + Enter posts it" bind:value={m.comments.draft} onkeydown={commentKey} />
           {#if m.comments.error}<p class="vk-field__error" role="alert">{m.comments.error}</p>{/if}
@@ -167,16 +168,14 @@
                 Project: {m.projectName ? projectLine(m.projectName, m.milestoneName) : 'none'} · <a href="#project" role="button" onclick={(e) => { e.preventDefault(); m.project.start(); }}>{m.projectName ? 'Change project' : 'Assign to a project'}</a>
               {/if}
             </span>
-            <span style="display: flex; gap: var(--vk-space-3); align-items: center;"><details class="pg-raw" bind:open={rawOpen}><summary>View raw JSON</summary>{#if rawOpen}<RawJson value={card.spec} />{/if}</details><button class="vk-button vk-button--quiet" type="button" style="font-size: var(--vk-text-sm);" onclick={() => m.copySpec()}><Icon name={m.copied === 'spec' ? 'check' : 'copy'} size={14} /> Copy</button></span>
+            <span style="display: flex; gap: var(--vk-space-3); align-items: center;"><button class="pg-rawbtn" type="button" aria-expanded={rawOpen} onclick={() => (rawOpen = !rawOpen)}>{rawOpen ? 'Hide raw JSON' : 'View raw JSON'}</button>{#if rawOpen}<button class="vk-button vk-button--quiet" type="button" style="font-size: var(--vk-text-sm);" onclick={() => m.copySpec()}><Icon name={m.copied === 'spec' ? 'check' : 'copy'} size={14} /> Copy</button>{/if}</span>{#if rawOpen}<RawJson value={card.spec} bare />{/if}
           </div>
         </section>
         <section class="pg-enc">
           <h3><span class="no">Enclosure II</span>Things to prove</h3>
           {#if m.acceptanceCriteria?.length}<ol class="pg-ol" data-section="criteria">{#each m.acceptanceCriteria as c, i (i)}<li>{c}</li>{/each}</ol>{:else}{@render hidden('criteria')}{/if}
-          <p class="pg-sc pg-sc--bare">Agent plan</p>
-          <div data-section="plan">
-            {#if m.plan}<ol class="pg-ol">{#each m.plan as st, i (i)}<li style={st.done ? 'text-decoration: line-through' : undefined}>{st.text}</li>{/each}</ol>{:else}<p class="pg-small" style="margin: 0px;">{planNone(m.agent.name)}</p>{/if}
-          </div>
+          {#if m.plan}<p class="pg-sc pg-sc--bare">Agent plan</p>
+          <div data-section="plan"><ol class="pg-ol">{#each m.plan as st, i (i)}<li style={st.done ? 'text-decoration: line-through' : undefined}>{st.text}</li>{/each}</ol></div>{:else}<span hidden data-section="plan"></span>{/if}
         </section>
         <section class="pg-enc">
           <h3><span class="no">Enclosure III</span>Who is waiting, and what is attached</h3>
@@ -185,7 +184,7 @@
             {#if m.hasAnyLink}{#each [...m.linkGroups.blockedBy, ...m.linkGroups.blocks, ...m.linkGroups.relates] as row (row.title)}<li data-section="links">{row.title} <button class="pg-lnk" type="button" onclick={() => m.links.remove(row.remove)}>Remove</button></li>{/each}
             {:else}<li data-section="links">Nothing blocks this card and it blocks nothing.</li>{/if}
             {#each m.otherRefs as r, i (r.id)}<li data-section={i === 0 ? 'references' : undefined}>Reference: {#if safeHref(r.url)}<a href={safeHref(r.url)!} target="_blank" rel="noreferrer">{r.title ?? refLabel(r)}</a>{:else}{r.title ?? refLabel(r)}{/if}{r.subtitle ? ` · ${r.subtitle}` : ''} · <span class="pg-mono">{referenceSource(r)}</span></li>{/each}
-            {#if m.otherRefs.length === 0}<li data-section="references">No references attached.</li>{/if}
+            {#if m.otherRefs.length === 0}<li hidden data-section="references"></li>{/if}
             <li data-section="related">{relatedLine(m.related.phase, m.related.items.length)}</li>
           </ul>
           <Button variant="secondary" style="align-self: flex-start;" onclick={() => m.links.openAdd()}>{#snippet icon()}<Icon name="link" size={16} />{/snippet}Add link</Button>
@@ -211,31 +210,36 @@
               {@const a = attemptOf(g.runId)}
               {@const who = name(g.agentId) || 'An agent'}
               {@const word = a ? attemptWord(a) : (g.outcome ?? 'working')}
-              <p class="pg-p" style={ri > 0 ? 'border-top: 1px solid var(--vk-color-line); padding-top: var(--vk-space-3);' : undefined}><b>Attempt {attemptNo(g.runId) || runs.length - ri}</b> · {who} · {paperAttempt(g.counts.total, g.counts.error, word, ri > 0 && a?.endedAt ? clockHM(a.endedAt) : null)}</p>
-              {#if ri === 0}
-                {@const rows = visibleActivities(g.activities, isNarrative, m.showToolCalls, isControlRow).rows}
+              {@const isOpen = m.isRunOpen(g.runId, ri === 0)}
+              {@const tools = m.toolsShown(g.runId)}
+              <button class="pg-atthead" type="button" data-attempt-head={g.runId} aria-expanded={isOpen} aria-controls={isOpen ? `pg-run-${g.runId}` : undefined} style={ri > 0 ? 'border-top: 1px solid var(--vk-color-line); padding-top: var(--vk-space-3);' : undefined} onclick={() => m.toggleRun(g.runId, ri === 0)}><span class="pg-p"><b>Attempt {attemptNo(g.runId) || runs.length - ri}</b> · {who} · {paperAttempt(g.counts.total, g.counts.error, word, ri > 0 && a?.endedAt ? clockHM(a.endedAt) : null)}</span></button>
+              {#if isOpen}
+                {@const view = visibleActivities(g.activities, isNarrative, tools, isControlRow)}
+                {@const rows = view.rows}
+                <div id="pg-run-{g.runId}" class="pg-attbody">
                 <ol class="pg-log">
-                  {#each rows as ev, ei (ev.seq)}<li><Face id={who} label={who} mood={ev.signal === 'stop' ? 'needs' : 'thinking'} size={24} /><span class:stop={ev.signal === 'stop' && lead.needsYou}>{paperLogRow(ev)}<span class="t">{paperLogTime(ev.ts, ei === rows.length - 1)}</span></span></li>{/each}
+                  {#each rows as ev, ei (ev.seq)}<li><Face id={who} label={who} mood={ev.signal === 'stop' ? 'needs' : 'thinking'} size={24} /><span class:stop={ev.signal === 'stop' && lead.needsYou && ri === 0}>{paperLogRow(ev)}<span class="t">{paperLogTime(ev.ts, ei === rows.length - 1)}</span><ToolCallDetails parameter={ev.parameter} result={ev.result} cls="pg-details" /></span></li>{/each}
                 </ol>
-                <button class="vk-button vk-button--quiet" type="button" style="align-self: flex-start; font-size: var(--vk-text-sm);" aria-pressed={m.showToolCalls} onclick={() => (m.showToolCalls = !m.showToolCalls)}>{m.showToolCalls ? 'Hide tool calls' : `Show tool calls · all ${g.counts.total} events`}</button>
+                {#if tools || (g.counts.action > 0 && !view.shownBecauseNoNarrative)}<button class="vk-button vk-button--quiet" type="button" style="align-self: flex-start; font-size: var(--vk-text-sm);" data-attempt-tools={g.runId} aria-pressed={tools} onclick={() => m.toggleTools(g.runId)}>{tools ? 'Hide tool calls' : `Show tool calls · all ${g.counts.total} events`}</button>{/if}
+                </div>
               {/if}
             {/each}
           </div>
-          <p class="pg-small" style="margin: 0px;" data-section="decisions">Decisions: {#if m.decidedGates.length}{m.decidedGates.map((d) => `${d.decision ?? d.status} at ${stageNameOf(d.stageKey)}`).join('; ')}.{:else}none yet.{/if}</p>
+          {#if m.decidedGates.length}<p class="pg-small" style="margin: 0px;" data-section="decisions">Decisions: {#if m.decidedGates.length}{m.decidedGates.map((d) => `${d.decision ?? d.status} at ${stageNameOf(d.stageKey)}`).join('; ')}.{:else}none yet.{/if}</p>{:else}<span hidden data-section="decisions"></span>{/if}
         </section>
         <section class="pg-enc">
           <h3><span class="no">Accounts</span>Cost and delivery</h3>
           <span class="pg-fig" data-section="cost">{usd(card.costUsd)}</span>
           <span class="pg-small" data-section="attempts">{paperCostLine(m.estimate?.estimatedUsd ?? null, m.attempts)}</span>
           <div class="pg-meter"><i style="width: {m.costPct}%;"></i></div>
-          {#if m.counts.deliveryActive}<div data-section="delivery"><DeliveryPanel model={m} /></div>{:else}<p class="pg-small" style="margin: 0px;" data-section="delivery">No approved delivery on this card.</p>{/if}
+          {#if m.counts.deliveryActive}<div data-section="delivery"><DeliveryPanel model={m} /></div>{:else}<span hidden data-section="delivery"></span>{/if}
         </section>
       </aside>
     </div>
 
     <footer class="pg-colophon" data-section="cardActions">
       {#if !m.archived}<Button variant="secondary" aria-disabled={m.archiving ? 'true' : undefined} onclick={() => { if (!m.archiving) void m.archive(); }}>{#snippet icon()}<Icon name="archive" size={16} />{/snippet}Archive card</Button><span class="vk-visually-hidden" role="status">{m.archiving ? 'Archiving…' : ''}</span>{/if}
-      <Button style="background: var(--vk-color-surface); color: var(--vk-color-text); box-shadow: inset 0 0 0 2px var(--vk-color-text);" onclick={() => m.remove()}>Delete card</Button>
+      <Button variant="quiet" onclick={() => m.remove()}>Delete card</Button>
       <span style="flex: 1 1 auto;"></span>
       <span class="pg-small">Opened from {m.boardName} · <a href={boardHref}>Back to the board</a> · card {m.shortId}</span>
     </footer>

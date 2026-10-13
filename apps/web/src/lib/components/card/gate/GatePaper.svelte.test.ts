@@ -6,7 +6,7 @@ import GatePaper from './GatePaper.svelte';
 
 gatePanelContract(GatePaper, { decision: 'radio', submit: 'Send reply', busy: { kind: 'aria', status: 'Recording…' }, words: {
   heading: /^Your reply$/, subjectHeading: /Enclosed: the approval subject/, subjectId: null, digest: /digest sha256:3f9ac21e…/,
-  canonical: /Hello/, region: /The approval subject/, noteId: 'gate-note-p-gat_1', errorBeforeControls: false,
+  canonical: /Hello(?!,)/, region: /The approval subject/, noteId: 'gate-note-p-gat_1', errorBeforeControls: false,
 } });
 
 describe('GatePaper', () => {
@@ -27,7 +27,7 @@ describe('GatePaper', () => {
   it('part="controls" draws only the reply: the choices and the button, no hints or note', () => {
     render(GatePaper, gatePanelProps({ part: 'controls' }));
     expect(screen.getByRole('radio', { name: 'Approve' })).toBeTruthy();
-    expect(screen.queryByText('Dear there,')).toBeNull();
+    expect(screen.queryByText('Hello,')).toBeNull();
     expect(screen.queryByLabelText('Add a note (optional)')).toBeNull();
     expect(screen.queryByText('Stop here.')).toBeNull();
   });

@@ -49,7 +49,8 @@ describe('CardPaper (4605)', () => {
     const facts = words(document.querySelector('[data-section="facts"]')!);
     expect(facts).toContain('Asked by super-chotu, an agent');
     expect(facts).toContain('Unclaimed');
-    expect(facts).toContain('Priority P3 No due date No labels');
+    expect(facts).toContain('Priority P3');
+    expect(facts, 'no due date and no labels are not printed (O7)').not.toMatch(/No due date|No labels/);
     expect(screen.getByRole('button', { name: 'Copy card id 4605' })).toBeTruthy();
     expect(document.querySelector('[data-section="status"] .sig'), 'signal colour only while a reply is needed').toBeTruthy();
     dispose();
@@ -105,18 +106,18 @@ describe('CardPaper (4605)', () => {
     expect(screen.getByText('5 items, listed under Things to prove.')).toBeTruthy();
     await fireEvent.click(more[0]!);
     expect(more[0]!.getAttribute('aria-expanded')).toBe('true');
-    expect(screen.getByText('error-eric did not post a plan for this card.')).toBeTruthy();
+    expect(screen.queryByText('error-eric did not post a plan for this card.'), 'an absent plan is hidden (O7)').toBeNull();
     expect(screen.getByText(/Project: Marketing & Community — Melissa and Anna onboarding · no milestone/)).toBeTruthy();
     dispose();
   });
   it('what happened: provenance, the attempts newest first, the stop row says why without repeating it', async () => {
     const { dispose } = await mount();
     expect(screen.getByText(/Asked by super-chotu \(an agent/)).toBeTruthy();
-    const attempts = [...document.querySelectorAll('[data-section="attempts"] > p')].map(words);
+    const attempts = [...document.querySelectorAll('[data-section="attempts"] button[data-attempt-head] .pcd-p')].map(words);
     expect(attempts).toEqual(['Attempt 2 · error-eric · 14 events · stopped at 19:41 Thu 8 Oct', 'Attempt 1 · error-eric · 9 events · sent back']);
     expect(words(document.querySelector('.pcd-log .stop')!)).toContain('Stopped. Blocked. Waiting on you; the reason is shown at the top of this card.');
     expect(screen.getByText('Cost $0.00, no estimate yet.')).toBeTruthy();
-    expect(screen.getByText('Decisions: none yet.')).toBeTruthy();
+    expect(screen.queryByText('Decisions: none yet.'), 'no decisions is hidden (O7)').toBeNull();
     dispose();
   });
   it('references name their source; the foot has Edit, Archive and an ink-outlined Delete', async () => {
@@ -127,7 +128,7 @@ describe('CardPaper (4605)', () => {
     const foot = document.querySelector('[data-section="cardActions"]') as HTMLElement;
     expect(within(foot).getByRole('button', { name: /Edit card/ })).toBeTruthy();
     expect(within(foot).getByRole('button', { name: /Archive card/ })).toBeTruthy();
-    expect(within(foot).getByRole('button', { name: 'Delete card' }).className).toContain('vk-button--danger');
+    expect(within(foot).getByRole('button', { name: 'Delete card' }).className).toContain('vk-button--quiet');
     dispose();
   });
   it('editing swaps in the edit form; the dialog keeps its name', async () => {

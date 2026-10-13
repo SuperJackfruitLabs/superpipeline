@@ -39,7 +39,8 @@ full run, update the ratio on the key and in `RESIDUALS.md` together. The list o
 
 The allow-list holds the darwin verdicts. `PLATFORM_OVERRIDES` (same file) flips a key per
 `${process.platform}-${process.arch}` (`linux-x64` is CI's runner, and authoritative): `fails` for a key
-that fails strictly only there, `passes` for a darwin-listed key that passes there. The ratchet and the
+that fails strictly only there, `passes` for a darwin-listed key that passes there, `either` for a key that flips between the two from run to
+run there for a cause that could not be made deterministic (logged; the 1% bar still holds). The ratchet and the
 1% bar apply per platform, and `RESIDUALS.md` "Per platform" lists every override with its ratio and cause.
 
 ## The world and determinism

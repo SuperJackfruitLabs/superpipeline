@@ -90,13 +90,13 @@
     <button class="lnk" type="button" data-section="editButton" onclick={() => model.edit.start()}><PhoneIcon name="pen" />Edit card</button>
     <details class="dsc" data-section="details" open={!model.counts.description || hasStructuredDetail(v.groups, model.acceptanceCriteria)}><summary>Show the {v.fieldsCount} fields of the brief</summary><div class="in"><PhoneDetails view={v} spec={c.spec} criteria={model.acceptanceCriteria} heading="Things to prove" boardId={model.boardId ?? ''} /></div></details>
   </section>
-  <section class="sx" aria-labelledby="s-desc" data-section="description"><h3 id="s-desc">Description</h3><p class="wrap">{c.spec?.description ?? 'None.'}</p></section>
+  {#if c.spec?.description}<section class="sx" aria-labelledby="s-desc" data-section="description"><h3 id="s-desc">Description</h3><p class="wrap">{c.spec.description}</p></section>{:else}<span hidden data-section="description"></span>{/if}
   <section class="sx" aria-labelledby="s-cri" data-section="criteria"><h3 id="s-cri">Acceptance criteria ({model.counts.criteria} things to prove)</h3>
     <details class="dsc"><summary>Show the {model.counts.criteria} things to prove</summary><div class="in"><ol class="nl">{#each model.acceptanceCriteria ?? [] as a, i (i)}<li>{a}</li>{/each}</ol></div></details>
   </section>
-  <section class="sx" aria-labelledby="s-plan" data-section="plan"><h3 id="s-plan">Plan</h3><PhonePlan view={v} speaker={v.speaker} /></section>
+  {#if v.plan?.length}<section class="sx" aria-labelledby="s-plan" data-section="plan"><h3 id="s-plan">Plan</h3><PhonePlan view={v} speaker={v.speaker} /></section>{:else}<span hidden data-section="plan"></span>{/if}
   <section class="sx" aria-labelledby="s-his" data-section="activity"><h3 id="s-his">History ({model.counts.runs} {model.counts.runs === 1 ? 'run' : 'runs'})</h3><PhoneRuns view={v} {model} /></section>
-  <section class="sx" aria-labelledby="s-dec" data-section="decisions"><h3 id="s-dec">Decisions</h3><p class="muted">{v.decisions ? `${v.decisions} decided.` : 'No decisions on this card yet.'}</p></section>
+  {#if v.decisions}<section class="sx" aria-labelledby="s-dec" data-section="decisions"><h3 id="s-dec">Decisions</h3><p class="muted">{v.decisions} decided.</p></section>{:else}<span hidden data-section="decisions"></span>{/if}
   <section class="sx" aria-labelledby="s-com" data-section="comments"><h3 id="s-com">Comments</h3><PhoneComments {model} /></section>
   <section class="sx" aria-labelledby="s-lnk" data-section="links"><h3 id="s-lnk">Links</h3><PhoneLinks view={v} {model} /></section>
   <section class="sx" aria-labelledby="s-sub" data-section="subtasks"><h3 id="s-sub">Sub-tasks</h3><PhoneSubtasks view={v} {model} /></section>
