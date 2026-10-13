@@ -17,7 +17,8 @@ export interface PeekOptions {
   returnWindow?: number;
 }
 
-export type PeekController = ReturnType<typeof createPeek>;
+/** What a tile and a lane need of the peek: where the eye is, and a way to close it. */
+export type PeekController = Pick<ReturnType<typeof createPeek>, 'pointerEnter' | 'pointerLeave' | 'focusIn' | 'focusOut' | 'close'>;
 
 export function createPeek(o: PeekOptions) {
   const delay = o.delay ?? 300;

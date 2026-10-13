@@ -300,3 +300,14 @@ The SP-Dlg-Appearance artboards were 1200px tall and `.art` clipped the 1237–1
 | Artboard | Selector | Was | Now | Ruling |
 |---|---|---|---|---|
 | every SP-\* reference (80 files) | `<link rel="stylesheet" data-vibekit>` | `_vibekit-0.0.9/vibekit.css` | `_vibekit-0.0.10/vibekit.css` | adopt 0.0.7 step 5 ruling, standing: references compare against the vibekit the app ships |
+
+## Wave 1 Track Y: live-UI fixes (2026-10-13)
+
+| Artboard | Selector | Was | Now | Ruling |
+|---|---|---|---|---|
+| SP-Board-Daylight | each tile with a priority (`.dl-chips`, after the "Priority N" hidden text) | priority only as the coloured left edge (P3 nothing) | a `P1` to `P4` chip (`.dl-chip.dl-pri`, 12px mono bold), aria-hidden beside the hidden text | Live audit #12: Daylight shows priority in words, as the other vibes do |
+| SP-Phone-Board-Daylight | each tile with a priority (`.stg`) | priority only as the edge | a `P1` to `P4` pill (`.pd-pri`) after the stage line | Same |
+| SP-Operate-Daylight, SP-Operate-Quiet | each activity row's time | `22:50 UTC` and the three others, the server's UTC | the reader's clock (Asia/Kolkata in the harness): `04:20`, `03:55`, `19:41`, `15:25`, no "UTC" | Live audit #19: one time format, the user's own zone |
+| SP-Operate-Paper | each digest row's time, and the masthead's "Times in UTC" | UTC times, a "Times in UTC" line | the reader's clock, the line dropped (every time on the page is local) | Same |
+| SP-Operate-Studio | each event row's time, the op line, the sub-line's due date | UTC times, "· times UTC", `due 2026-10-06, overdue` | the reader's clock, the reminder dropped, `due 6 Oct, overdue` (the app's short date) | Same |
+| SP-Operate-Quiet | the lede | "Times are in UTC." | dropped | Same |
