@@ -68,21 +68,13 @@ jobs:
         env:
           PIXEL_PARTS: '1'
           PIXEL_PARTS_DIR: ${{ github.workspace }}/apps/web/test-results/pixel-parts
-      # The report carries each failing part's reference, app and diff images — the only way to
-      # read a Linux-only difference, since CI is the one Linux amd64 renderer the suite answers to.
-      - uses: actions/upload-artifact@v3
-        if: always() && github.server_url != 'https://github.com'
+      - uses: actions/upload-artifact@v4
+        if: always() && github.server_url == 'https://github.com'
         with:
           name: pixel-report
           path: |
             apps/web/test-results/pixel
             apps/web/test-results/pixel-parts
-          retention-days: 14
-      - uses: actions/upload-artifact@v4
-        if: always() && github.server_url == 'https://github.com'
-        with:
-          name: pixel-report
-          path: apps/web/test-results/pixel
           retention-days: 14
 
   # Every deploy job below is gated on `github.server_url == 'https://github.com'`. This workflow
