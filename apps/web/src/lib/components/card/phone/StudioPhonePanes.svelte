@@ -31,8 +31,8 @@
   <h3>Description</h3><p class="p" data-section="description">{c.spec?.description ?? 'No description.'}</p>
   <h3>Things to prove <span class="mono">{model.counts.criteria}</span></h3>
   <ol class="pc-nl" data-section="criteria">{#each model.acceptanceCriteria ?? [] as a, i (i)}<li><span>{a}</span></li>{/each}</ol>
-  <h3>Plan</h3>
-  <div data-section="plan" style="display: contents;">{#if view.plan?.length}<ol class="pc-nl">{#each view.plan as s, i (i)}<li><span>{s.done ? '✓ ' : ''}{s.text}</span></li>{/each}</ol>{:else}<p class="note">{view.speaker} did not post a plan for this card.</p>{/if}</div>
+  {#if view.plan?.length}<h3>Plan</h3>
+  <div data-section="plan" style="display: contents;"><ol class="pc-nl">{#each view.plan as s, i (i)}<li><span>{s.done ? '✓ ' : ''}{s.text}</span></li>{/each}</ol></div>{:else}<span hidden data-section="plan"></span>{/if}
   <details class="pc-det" data-section="details" data-testid="spec-details" open={!model.counts.description || hasStructuredDetail(view.groups, model.acceptanceCriteria)}>
     <summary><h3>Details <span class="mono">{studioDetailsSummary(view.groups.map((g) => g.label), view.fieldsCount)}</span></h3></summary>
     {#each view.groups as g (g.label)}
@@ -74,7 +74,7 @@
     {/each}
     <button class="ar-lk" type="button" aria-pressed={model.showToolCalls} onclick={() => (model.showToolCalls = !model.showToolCalls)}>{model.showToolCalls ? 'Hide tool calls' : 'Show tool calls'}</button>
   </div>
-  <h3>Decisions</h3><p class="note" data-section="decisions">{view.decisions ? `${view.decisions} decided.` : 'No decisions on this card yet.'}</p>
+  {#if view.decisions}<h3>Decisions</h3><p class="note" data-section="decisions">{view.decisions} decided.</p>{:else}<span hidden data-section="decisions"></span>{/if}
   <h3>Handoff</h3>{#if model.counts.handoff}<div data-section="handoff"><HandoffView handoff={model.handoff} testid="carried-handoff" /></div>{:else}<p class="p" data-section="handoff">{view.handoff.text}</p>{/if}
   <h3>Attempts <span class="mono">{model.counts.attempts}</span></h3>
   <ol class="pc-att" data-section="attempts">

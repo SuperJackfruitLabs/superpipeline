@@ -94,3 +94,4 @@
 
 /* Change project (O9): the inline form is spaced, Save sits clear of the select. */
 .pcd-projform { display: flex; flex-direction: column; gap: var(--vk-space-3); margin-block: var(--vk-space-2); }
+.pcd-two--one { grid-template-columns: minmax(0, 1fr); }

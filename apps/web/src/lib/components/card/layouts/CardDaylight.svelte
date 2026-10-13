@@ -253,7 +253,7 @@
             {#if rawOpen}<button class="vk-button vk-button--quiet" type="button" style="font-size: var(--vk-text-sm);" onclick={() => m.copySpec()}><Icon name={m.copied === 'spec' ? 'check' : 'copy'} size={18} /> Copy</button>{/if}
           </div>
           {#if rawOpen}<RawJson value={card.spec} bare />{/if}
-        {:else}<p class="dd-small" data-section="details" style="margin: 0px;">No other details.</p>{/if}
+        {:else}<span hidden data-section="details"></span>{/if}
         <div class="dd-twocol">
           {#if m.plan}<div data-section="plan" style="display: flex; flex-direction: column; gap: var(--vk-space-2);">
             <div class="dd-row" style="justify-content: space-between;"><b>Agent plan</b><span class="dd-small">{m.plan ? planProgress(planDone, m.plan.length) : 'none yet'}</span></div>
@@ -287,7 +287,7 @@
           <div class="dd-row" style="justify-content: space-between;">
             {#if q?.known}<span class="dd-small">{provenanceLine({ queuedByName: m.queuedByName, byAgent: q.byAgent, covers: m.grantCovers }, m.delegate.id ? m.delegate.name : null)}</span>{/if}
           </div>
-          {#if runs.length === 0}<p class="dd-small" style="margin: 0px;">No recorded activity yet — this card hasn't been worked.</p>{/if}
+          
           {#each runs as g, ri (g.runId)}
             {@const a = attemptOf(g.runId)}
             {@const who = name(g.agentId) || 'An agent'}
@@ -378,7 +378,7 @@
           <div><span style="font: 700 2rem/1 var(--vk-font-display);">{usd(card.costUsd)}</span> <span class="dd-small">· {m.estimate?.estimatedUsd ? `of ${usd(m.estimate.estimatedUsd)} estimated` : 'no estimate yet'}</span></div>
           <div class="dd-meter"><i style="width: {m.costPct}%;"></i></div>
         </div>
-        {#if m.counts.deliveryActive}<div data-section="delivery"><DeliveryPanel model={m} /></div>{:else}<p class="dd-small" data-section="delivery" style="margin: 0px;">No approved delivery on this card.</p>{/if}
+        {#if m.counts.deliveryActive}<div data-section="delivery"><DeliveryPanel model={m} /></div>{:else}<span hidden data-section="delivery"></span>{/if}
       {/snippet}
       {@render sec('cost', 'Cost and delivery', costSummary(card.costUsd, m.estimate?.estimatedUsd ?? null, m.deliveryGate?.delivery?.mode ?? null), costBody)}
     </div>

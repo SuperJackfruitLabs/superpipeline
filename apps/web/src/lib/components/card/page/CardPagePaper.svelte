@@ -101,8 +101,8 @@
         <span>Stage <b>{m.stageIndex + 1} of {m.stages.length}, {m.stageName}</b></span>
         {#if card.attemptCount > 1}<span>Attempt <b>{card.attemptCount}</b></span>{/if}
         <span>Priority <b>{card.priority > 0 ? `P${card.priority}` : 'none'}</b></span>
-        {#if card.dueAt}<span>Due <b>{card.dueAt.slice(0, 10)}</b></span>{:else}<span>No due date</span>{/if}
-        {#if m.labels.length}<span>Labels <b>{m.labels.map((l) => l.name).join(', ')}</b></span>{:else}<span>No labels</span>{/if}
+        {#if card.dueAt}<span>Due <b>{card.dueAt.slice(0, 10)}</b></span>{/if}
+        {#if m.labels.length}<span>Labels <b>{m.labels.map((l) => l.name).join(', ')}</b></span>{/if}
         {#if m.projectName}<span>Project <b>{m.projectName}</b></span>{/if}
       </p>
     </section>
@@ -184,7 +184,7 @@
             {#if m.hasAnyLink}{#each [...m.linkGroups.blockedBy, ...m.linkGroups.blocks, ...m.linkGroups.relates] as row (row.title)}<li data-section="links">{row.title} <button class="pg-lnk" type="button" onclick={() => m.links.remove(row.remove)}>Remove</button></li>{/each}
             {:else}<li data-section="links">Nothing blocks this card and it blocks nothing.</li>{/if}
             {#each m.otherRefs as r, i (r.id)}<li data-section={i === 0 ? 'references' : undefined}>Reference: {#if safeHref(r.url)}<a href={safeHref(r.url)!} target="_blank" rel="noreferrer">{r.title ?? refLabel(r)}</a>{:else}{r.title ?? refLabel(r)}{/if}{r.subtitle ? ` · ${r.subtitle}` : ''} · <span class="pg-mono">{referenceSource(r)}</span></li>{/each}
-            {#if m.otherRefs.length === 0}<li data-section="references">No references attached.</li>{/if}
+            {#if m.otherRefs.length === 0}<li hidden data-section="references"></li>{/if}
             <li data-section="related">{relatedLine(m.related.phase, m.related.items.length)}</li>
           </ul>
           <Button variant="secondary" style="align-self: flex-start;" onclick={() => m.links.openAdd()}>{#snippet icon()}<Icon name="link" size={16} />{/snippet}Add link</Button>
@@ -232,7 +232,7 @@
           <span class="pg-fig" data-section="cost">{usd(card.costUsd)}</span>
           <span class="pg-small" data-section="attempts">{paperCostLine(m.estimate?.estimatedUsd ?? null, m.attempts)}</span>
           <div class="pg-meter"><i style="width: {m.costPct}%;"></i></div>
-          {#if m.counts.deliveryActive}<div data-section="delivery"><DeliveryPanel model={m} /></div>{:else}<p class="pg-small" style="margin: 0px;" data-section="delivery">No approved delivery on this card.</p>{/if}
+          {#if m.counts.deliveryActive}<div data-section="delivery"><DeliveryPanel model={m} /></div>{:else}<span hidden data-section="delivery"></span>{/if}
         </section>
       </aside>
     </div>

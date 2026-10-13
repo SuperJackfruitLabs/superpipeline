@@ -115,8 +115,8 @@
           {#if lead.sentence}<section class="qp-sec"><p class="qp-by">{agentName} wrote:</p><p class="qp-said">{lead.sentence}</p></section>{/if}
           {@render hidden('resume')}
         {/if}
-        <section class="qp-sec" aria-labelledby="qp-desc"><h2 id="qp-desc">Description</h2>{#if card.spec?.description}<p data-section="description" style="white-space: pre-line">{String(card.spec.description)}</p>{:else}<p data-section="description">None.</p>{/if}</section>
-        <section class="qp-sec" aria-labelledby="qp-ac"><h2 id="qp-ac">Acceptance criteria ({m.counts.criteria})</h2>{#if m.acceptanceCriteria?.length}<ol data-section="criteria">{#each m.acceptanceCriteria as c, i (i)}<li>{c}</li>{/each}</ol>{:else}<p data-section="criteria">None.</p>{/if}</section>
+        {#if card.spec?.description}<section class="qp-sec" aria-labelledby="qp-desc"><h2 id="qp-desc">Description</h2><p data-section="description" style="white-space: pre-line">{String(card.spec.description)}</p></section>{:else}<span hidden data-section="description"></span>{/if}
+        {#if m.acceptanceCriteria?.length}<section class="qp-sec" aria-labelledby="qp-ac"><h2 id="qp-ac">Acceptance criteria ({m.counts.criteria})</h2><ol data-section="criteria">{#each m.acceptanceCriteria as c, i (i)}<li>{c}</li>{/each}</ol></section>{:else}<span hidden data-section="criteria"></span>{/if}
         <section class="qp-sec" aria-labelledby="qp-brief" data-section="details">
           <h2 id="qp-brief">Brief details ({specRowCount(groups)})</h2>
           {#each groups as g (g.label)}<h3>{g.label}</h3><dl class="qp-dl">{#each g.rows as r (r.key)}<dt>{r.label}</dt><dd data-testid="spec-value-{r.key}"><SpecValueView value={r.value} v={{ clamp: 'qp-clamp', more: 'qp-link', matrixLinks: false }} /></dd>{/each}</dl>{/each}
@@ -134,7 +134,7 @@
           <h2 id="qp-refs">References and related prior work</h2>
           <ul>
             {#each m.otherRefs as r, i (r.id)}<li data-section={i === 0 ? 'references' : undefined}>{#if safeHref(r.url)}<a href={safeHref(r.url)!}>{r.title ?? refLabel(r)}</a>{:else}{r.title ?? refLabel(r)}{/if} ({referenceSource(r)})</li>{/each}
-            {#if m.otherRefs.length === 0}<li data-section="references">No references.</li>{/if}
+            {#if m.otherRefs.length === 0}<li hidden data-section="references"></li>{/if}
             <li data-section="related">{relatedLine(m.related.phase, m.related.items.length)}</li>
           </ul>
         </section>

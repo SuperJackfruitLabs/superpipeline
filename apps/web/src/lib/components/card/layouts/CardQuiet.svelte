@@ -132,8 +132,8 @@
       </dl>
       <div class="qcd-row"><button class="qcd-ln" type="button" data-section="editButton" aria-pressed={editing} onclick={() => m.edit.start()}>Edit card</button></div>
     </section>
-    <section class="qcd-sec"><h3>Description</h3>{#if card.spec?.description}<p data-section="description" style="white-space: pre-line">{String(card.spec.description)}</p>{:else}<p data-section="description">None.</p>{/if}</section>
-    <section class="qcd-sec"><h3>Acceptance criteria</h3>{#if m.acceptanceCriteria?.length}<ul data-section="criteria">{#each m.acceptanceCriteria as c, i (i)}<li>{c}</li>{/each}</ul>{:else}<p data-section="criteria">None.</p>{/if}</section>
+    {#if card.spec?.description}<section class="qcd-sec"><h3>Description</h3><p data-section="description" style="white-space: pre-line">{String(card.spec.description)}</p></section>{:else}<span hidden data-section="description"></span>{/if}
+    {#if m.acceptanceCriteria?.length}<section class="qcd-sec"><h3>Acceptance criteria</h3><ul data-section="criteria">{#each m.acceptanceCriteria as c, i (i)}<li>{c}</li>{/each}</ul></section>{:else}<span hidden data-section="criteria"></span>{/if}
     {#if m.plan}<section class="qcd-sec" data-section="plan"><h3>Plan</h3>{#if m.plan}<ol>{#each m.plan as st, i (i)}<li>{st.text}{st.done ? ' (done)' : ''}</li>{/each}</ol>{:else}<p>None yet.</p>{/if}</section>{:else}<span hidden data-section="plan"></span>{/if}
     <section class="qcd-sec" data-section="details">
       <h3>Brief details ({specRowCount(groups)})</h3>
@@ -189,7 +189,7 @@
       <ul>
         {#each m.otherRefs as r, i (r.id)}<li data-section={i === 0 ? 'references' : undefined}>{#if safeHref(r.url)}<a href={safeHref(r.url)!} target="_blank" rel="noreferrer">{r.title ?? refLabel(r)}</a>{:else}{r.title ?? refLabel(r)}{/if}{r.subtitle ? `, ${r.subtitle}` : ''}<br /><span class="qcd-src">{referenceSource(r)}</span></li>{/each}
         {#each m.libraryRefs as l (l.ref.id)}<li><LibraryArtifact itemId={l.itemId} version={l.version} title={l.ref.title || l.itemId} open={false} /></li>{/each}
-        {#if m.otherRefs.length === 0}<li data-section="references">No references.</li>{/if}
+        {#if m.otherRefs.length === 0}<li hidden data-section="references"></li>{/if}
         <li data-section="related">{relatedLine(m.related.phase, m.related.items.length)}</li>
       </ul>
     </section>

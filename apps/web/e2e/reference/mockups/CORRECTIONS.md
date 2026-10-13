@@ -309,3 +309,12 @@ The SP-Dlg-Appearance artboards were 1200px tall and `.art` clipped the 1237–1
 | SP-Card-* and SP-CardPage-* (all 8) | the card-actions Delete card button | the dark primary Button (`vk-button--primary` with a page restyle) in Daylight and the Paper and Quiet pages, `vk-button--danger` in the Paper and Quiet drawers, an inline-restyled `ar-btn2` in Studio | vibekit's quiet Button (`vk-button vk-button--quiet`), no inline style; Archive stays the secondary action; the existing confirmation is unchanged | Wave 1 audit #9 (2026-10-13): Delete is not the primary action |
 | SP-Card-* and SP-CardPage-* (all 8) | the empty Plan block ("Agent plan · none yet", "error-eric did not post a plan for this card.", Quiet's "Plan: None yet.") and the empty Decisions block ("Decisions: none yet.", Quiet's Decisions section) | drawn with nothing to show and nothing to do | removed: a section with nothing to show and no action is hidden; sections that offer an action (Project, Comments, Links) stay | Operator ruling (2026-10-13, O7): empty sections stay out of the way |
 | SP-Card-Daylight | `.dl-groups` and the brief's plan/project grid | two columns, so a lone "Other details" group sat in a narrow left column | one column: the brief uses the full drawer width | Operator issue O2 (2026-10-13): the Daylight brief uses the full drawer width |
+
+### Fix round 1 (review of Track X)
+
+| Artboard | Selector | Was | Now | Ruling |
+|---|---|---|---|---|
+| SP-Card-Paper, SP-CardPage-Paper | the facts line's "No due date" and "No labels" | printed | removed (nothing to show, nothing to do; Edit card sets both) | Operator ruling (2026-10-13, O7) |
+| SP-Card-Paper | the brief's criteria/plan grid | two columns (1.4fr / 1fr) with the plan column empty | one column: with Plan hidden the criteria take the full width | Same |
+| SP-Card-Paper | manifest `h` | 3500 | 3261: the reference's drawn height once the empty sections went (its scrim ended there; below it the reference drew ground) | Fix round 1: raise or lower the artboard to its content |
+| SP-Phone-Card-Daylight, -Paper, -Quiet, -Studio | the empty Plan ("error-eric did not post a plan for this card.") and empty Decisions ("No decisions on this card yet.") blocks | drawn | removed | Operator ruling (2026-10-13, O7) |

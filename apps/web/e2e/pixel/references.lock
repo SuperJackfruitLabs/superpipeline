@@ -1,6 +1,6 @@
 {
   "files": {
-    "CORRECTIONS.md": "30b3fd4acce3cdbc78f2a70e9f19cf04c3cbd524748af0b7eb93b56dcd5d452b",
+    "CORRECTIONS.md": "00854dd611ec8571fe1a9fbbb1956b68f4c3cca53b8dd15b59e4e73ba09d9dbf",
     "SP-Board-Daylight.html": "81a8b76aff2d691506d1093713275d3586823de766276299490a9472b0aae540",
     "SP-Board-Empty-Daylight.html": "6c4a78b81a3ae4db7660b2928c3841af97ac90882dcc179138b7d41e6e0241c1",
     "SP-Board-Empty-Paper.html": "207fd6a002c026010741469f90e53b51024481a40d11d57d0c37f5d97d20a425",
@@ -10,7 +10,7 @@
     "SP-Board-Quiet.html": "b52585b23105cd2c84c13dca573c83ebf503a12445d0c40d11e0b35d1243c877",
     "SP-Board-Studio.html": "c93bdb6d11069ada04d81e6410060fb8bdb091c1252b182f260ab1c22ddb2198",
     "SP-Card-Daylight.html": "653825ba9e707b4c6645e807d6c2d1340e073a06d6d21d3bd0b9272c6a13f914",
-    "SP-Card-Paper.html": "1903d0dfe5abb1391c21a942220d8c8af0d611b5c043ee5ca993d669e6713907",
+    "SP-Card-Paper.html": "d3e22220af732b2fe046ae545768d6b51b892a0c7e3c27ec2612f9107cc1522d",
     "SP-Card-Quiet.html": "0f1663a06bbe1609e4312f19552769e502dce7f358ba128ab9afccd59862a781",
     "SP-Card-States-Daylight.html": "b9f5d033a53b5b923abfcfb3be621f150b17ebc9facece25ef36f849405c87c1",
     "SP-Card-States-Paper.html": "6817a9952610490df3763a19ddd2d252d614f2b925ccd2ddcdcb0ea776d4aea5",
@@ -18,7 +18,7 @@
     "SP-Card-States-Studio.html": "0fcb084ef814c56aace70d2013b5555f4002ece8cddb5e7012ba3b23a3f636b6",
     "SP-Card-Studio.html": "4c36f65fac4bd28b0ece5c02ff6c931ee9ed71d555d701896b2368bab85f6885",
     "SP-CardPage-Daylight.html": "b9116bff7c616cba5053cd93752cfeffc6b8473b01f945e8e4b950f4db1d347d",
-    "SP-CardPage-Paper.html": "e04c73a5990bd70800f3665bffb95ac915dcfbf33752a4ccb155eceb77ddfd19",
+    "SP-CardPage-Paper.html": "99db37b13c726557fe9e30d50637ccb92bf64732976f9462925840ba48bea208",
     "SP-CardPage-Quiet.html": "e0c0a332effda61336f1571665d2a636a4bd1099be91bcd63ccd9cfe43cf1164",
     "SP-CardPage-Studio.html": "c50db1c95010e10cdfb91952f2439eb4f30d47b17cc96387e29d5df88e26c55c",
     "SP-Dlg-Appearance-Daylight.html": "9035d7ee0f83207723b8ab27bb69e66e729fbc9e48566f97338178f8b34d75cc",
@@ -57,10 +57,10 @@
     "SP-Phone-Board-Paper.html": "afc0fe31039aa4a3dd2ed8fd5890773202c8016a29779cfd3bf477d497944ceb",
     "SP-Phone-Board-Quiet.html": "55419b2888d60478518ffef15ea49a73311f183d6f9378045e1ebd5393259815",
     "SP-Phone-Board-Studio.html": "6d8fb08c02d81604540459085bcc405a56d7954c61ece43918ec150cdc92177f",
-    "SP-Phone-Card-Daylight.html": "5eca715328bf2d53dce88e18c4e2bd940ce23ddd8d2ef62d0b12c25a13f0fdd6",
-    "SP-Phone-Card-Paper.html": "f797ad719ac92d32c430fd7d7ca78fb3b8402c6d42ca0ba8426a0caa96ce1b5f",
-    "SP-Phone-Card-Quiet.html": "250b0c1837c52f4234ba8b1ec57133e56c6ccb49011ac395102674f8a51cc140",
-    "SP-Phone-Card-Studio.html": "fca97de30f0649c7b75182be18462b57d4622d8725e45fce8481b6b7b1b97df2",
+    "SP-Phone-Card-Daylight.html": "783aa35d91d032ab4f20de3be3e8110929779ff41e3ec6a496db839732defc32",
+    "SP-Phone-Card-Paper.html": "a871a280dcdc8f0b243a2b5eb99dd2555bf2cbc206c9b24ea22ea466dac8ac1f",
+    "SP-Phone-Card-Quiet.html": "114d6756ba12c8dc9dc4f7223b9649e254ddb0f64751e9e3123d92c229158dba",
+    "SP-Phone-Card-Studio.html": "c827c19d8da51670da852fd8f6c61367519277ab1a193feefd1640c46776ff5f",
     "SP-Projects-Daylight.html": "11f9541937d178b97511c0d6a3339f12cb766025335f3116bc0962771d593e23",
     "SP-Projects-Paper.html": "a44e921eb4b13ea85c60c4e0656a5e0988d25da2723a4e9e4ad0380f6e88e59c",
     "SP-Projects-Quiet.html": "2117e4bf52b9e4f701d792c915fd9e0140886825b22a9917722d3df6b369f05a",
@@ -83,7 +83,7 @@
     "SP-Workspace-Other-Studio.html": "98804f8a3e2693b3a265b2ee3cb80396265145b88b101a7d78f98164ef7b2fd6",
     "_vibekit-0.0.10/vibekit.css": "d16b8e30e4974b8f9e4c41ba723169d4835ae555323440f6831023403fddc95b",
     "_vibekit-0.0.4/button.css": "2e082042c6fde2999a47beff5986c7dfd4994f26facbc1e5c067b8c068474152",
-    "manifest.json": "1737b525a47dabb41b9e49c2039c4450f75c8686583bb8866249bb73c2d3250c"
+    "manifest.json": "40b886eff155257ede70cde3de0fd5143862a44e06e51a79d22c4bcbef793945"
   },
   "thresholds": {
     "PIXEL_THRESHOLD": 0.1,

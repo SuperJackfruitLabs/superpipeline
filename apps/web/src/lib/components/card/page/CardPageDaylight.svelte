@@ -201,7 +201,7 @@
             {#if rawOpen}<Button variant="quiet" style="font-size: var(--vk-text-sm);" onclick={() => m.copySpec()}>{#snippet icon()}<Icon name={m.copied === 'spec' ? 'check' : 'copy'} size={14} />{/snippet}Copy</Button>{/if}
           </div>
           {#if rawOpen}<RawJson value={card.spec} bare />{/if}
-        {:else}<p class="dp-p dp-small" data-section="details">No other details.</p>{/if}
+        {:else}<span hidden data-section="details"></span>{/if}
         {#if m.plan}<div data-section="plan" style="display: flex; flex-direction: column; gap: var(--vk-space-2);">
           <div class="dp-row" style="justify-content: space-between;"><b>Agent plan</b><span class="dp-small">{m.plan ? planProgress(planDone, m.plan.length) : 'none yet'}</span></div>
           {#if m.plan}<div class="dp-meter"><i style="width: {Math.round((100 * planDone) / m.plan.length)}%;"></i></div><ul class="dp-plan">{#each m.plan as st, i (i)}<li class:done={st.done}><Icon name={st.done ? 'check' : 'chevron-right'} size={14} /><span>{st.text}</span></li>{/each}</ul>
@@ -256,7 +256,7 @@
         <h2 id="h-log" class="dp-h">What happened <small>{whatHappenedSummary(m.counts.runs, m.counts.decisions)}</small></h2>
         <div data-section="activity" style="display: contents">
           {#if q?.known}<p class="dp-small" style="margin: 0px;">{provenanceLine({ queuedByName: m.queuedByName, byAgent: q.byAgent, covers: m.grantCovers }, delegated ? m.delegate.name : null)}</p>{/if}
-          {#if runs.length === 0}<p class="dp-small" style="margin: 0px;">No recorded activity yet — this card hasn't been worked.</p>{/if}
+          
           {#each runs as g, ri (g.runId)}
             {@const a = attemptOf(g.runId)}
             {@const who = name(g.agentId) || 'An agent'}

@@ -135,3 +135,11 @@ describe('phone names (R3, O12/O13)', () => {
     expect(document.body.textContent).toMatch(/error-eric\s*From a known agent\./);
   });
 });
+
+describe.each(Object.keys(PHONES) as (keyof typeof PHONES)[])('%s phone: empty sections (R2)', (vibe) => {
+  it('hides an absent plan and no decisions', () => {
+    render(PHONES[vibe], { props: props(vibe) });
+    expect(document.body.textContent).not.toMatch(/did not post a plan|No decisions on this card/);
+    for (const key of ['plan', 'decisions']) for (const el of document.querySelectorAll<HTMLElement>(`[data-section="${key}"]`)) expect(el.hidden, key).toBe(true);
+  });
+});

@@ -49,7 +49,8 @@ describe('CardPaper (4605)', () => {
     const facts = words(document.querySelector('[data-section="facts"]')!);
     expect(facts).toContain('Asked by super-chotu, an agent');
     expect(facts).toContain('Unclaimed');
-    expect(facts).toContain('Priority P3 No due date No labels');
+    expect(facts).toContain('Priority P3');
+    expect(facts, 'no due date and no labels are not printed (O7)').not.toMatch(/No due date|No labels/);
     expect(screen.getByRole('button', { name: 'Copy card id 4605' })).toBeTruthy();
     expect(document.querySelector('[data-section="status"] .sig'), 'signal colour only while a reply is needed').toBeTruthy();
     dispose();

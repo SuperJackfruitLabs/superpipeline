@@ -128,8 +128,8 @@
       {#if q?.known}<span>Asked by <b>{m.queuedByName}</b>{q.byAgent && m.queuedByName !== 'an agent' ? ', an agent' : ''}</span>{/if}
       {#if m.delegate.id}<span><b>{m.delegate.name}</b> working it</span>{:else}<span><b>Unclaimed</b></span>{/if}
       <span>Priority <b>{card.priority > 0 ? `P${card.priority}` : 'none'}</b></span>
-      {#if card.dueAt}<span>Due <b>{card.dueAt.slice(0, 10)}</b></span>{:else}<span>No due date</span>{/if}
-      {#if m.labels.length}<span>Labels <b>{m.labels.map((l) => l.name).join(', ')}</b></span>{:else}<span>No labels</span>{/if}
+      {#if card.dueAt}<span>Due <b>{card.dueAt.slice(0, 10)}</b></span>{/if}
+      {#if m.labels.length}<span>Labels <b>{m.labels.map((l) => l.name).join(', ')}</b></span>{/if}
       <span class="pcd-meta">card {m.shortId}<button class="pcd-copy" type="button" aria-label="Copy card id {m.shortId}" onclick={() => m.copyId()}><Icon name={m.copied === 'id' ? 'check' : 'copy'} size={14} /></button></span>
       {#if app.user && card.ownerUserId !== app.user.userId && !m.archived}
         <button class="pcd-linkbtn" type="button" aria-disabled={m.assigning ? 'true' : undefined} onclick={() => { if (!m.assigning) void m.assignToMe(); }}>Assign to me</button>
@@ -193,10 +193,10 @@
 
     {#snippet briefBody()}
       {#if card.spec?.description}<p class="pcd-p pcd-p--brief" data-section="description" style="white-space: pre-line">{String(card.spec.description)}</p>{:else}{@render hidden('description')}{/if}
-      <div class="pcd-two">
+      <div class="pcd-two" class:pcd-two--one={!m.plan}>
         <div>
-          <p class="pcd-sc">Things to prove</p>
-          {#if m.acceptanceCriteria?.length}<ul class="pcd-ul" data-section="criteria">{#each m.acceptanceCriteria as c, i (i)}<li>{c}</li>{/each}</ul>{:else}<p class="pcd-small pcd-small--flush" data-section="criteria">Nothing listed to prove.</p>{/if}
+          {#if m.acceptanceCriteria?.length}<p class="pcd-sc">Things to prove</p>{/if}
+          {#if m.acceptanceCriteria?.length}<ul class="pcd-ul" data-section="criteria">{#each m.acceptanceCriteria as c, i (i)}<li>{c}</li>{/each}</ul>{:else}<span hidden data-section="criteria"></span>{/if}
         </div>
         {#if m.plan}<div data-section="plan">
           <p class="pcd-sc">Plan</p>
@@ -292,7 +292,7 @@
             {#each m.otherRefs as r (r.id)}<li>{#if safeHref(r.url)}<a class="pcd-link" href={safeHref(r.url)!} target="_blank" rel="noreferrer">{r.title ?? refLabel(r)}</a>{:else}{r.title ?? refLabel(r)}{/if}{r.subtitle ? ` · ${r.subtitle}` : ''}<span class="pcd-small pcd-block">{referenceSource(r)}</span></li>{/each}
             {#each m.libraryRefs as l, i (l.ref.id)}<li><LibraryArtifact itemId={l.itemId} version={l.version} title={l.ref.title || l.itemId} open={i === 0} /></li>{/each}
           </ul>
-        {:else}<p class="pcd-small pcd-small--flush">No references attached.</p>{/if}
+        {/if}
         {#if refAdd}
           <div class="pcd-row"><Field id="pcd-ref" label="Attach a link or Superlibrary item" labelHidden type="url" inputmode="url" placeholder="Paste a link to attach" bind:value={m.refsForm.url} onkeydown={(e) => { if (e.key === 'Enter') void m.refsForm.add(); }} /><Button variant="secondary" onclick={() => m.refsForm.add()}>Add</Button></div>
         {:else}<button class="pcd-linkbtn pcd-small" type="button" style="align-self: flex-start;" onclick={() => (refAdd = true)}>Attach a link</button>{/if}
@@ -301,7 +301,7 @@
         <p class="pcd-small pcd-small--flush">{relatedLine(m.related.phase, m.related.items.length)}</p>
         {#if m.related.items.length}<ul class="pcd-ul">{#each m.related.items as r (r.itemId)}<li>{#if safeHref(r.url)}<a class="pcd-link" href={safeHref(r.url)!}>{r.title}</a>{:else}{r.title}{/if} <span class="pcd-small">· {r.snippet}</span></li>{/each}</ul>{/if}
       </div>
-      {#if m.counts.deliveryActive}<div data-section="delivery"><DeliveryPanel model={m} /></div>{:else}<p class="pcd-small pcd-small--flush" data-section="delivery">No approved delivery on this card.</p>{/if}
+      {#if m.counts.deliveryActive}<div data-section="delivery"><DeliveryPanel model={m} /></div>{:else}<span hidden data-section="delivery"></span>{/if}
     {/snippet}
     {@render enc('attached', 'Attached', paperAttachedSummary({ refs: m.counts.refs, related: m.related.items.length, delivery: m.counts.deliveryActive }), attachedBody)}
 
