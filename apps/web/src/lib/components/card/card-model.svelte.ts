@@ -233,6 +233,20 @@ export class CardModel {
   /** The board's per-card spend cap, when one is set. */
   readonly cardUsdCap = $derived<number | null>(app.board?.usage?.cardUsdCap ?? null);
   /** A person's name from the workspace members; '' for nobody. */
+  /**
+   * A comment author's name from the same roster the attempts use (O12): never an id or an email.
+   * An agent nobody can name is "An agent"; a person nobody can name is "Someone".
+   */
+  authorName(a: { kind: 'human' | 'agent'; id: string; name: string | null }): string {
+    const given = a.name?.trim();
+    if (given && !given.includes('@')) return given;
+    if (a.kind === 'agent') {
+      return app.agents.find((x) => x.id === a.id || (!!x.externalId && x.externalId === a.id))?.name?.trim() || 'An agent';
+    }
+    const member = app.members.find((x) => x.userId === a.id)?.name?.trim();
+    if (member) return member;
+    return app.agents.find((x) => !!x.externalId && x.externalId === a.id)?.name?.trim() || 'Someone';
+  }
   principalName(id: string | null | undefined): string { return displayPrincipal(id, app.members); }
   readonly ownerName = $derived(this.card ? this.principalName(this.card.ownerUserId) : '');
 

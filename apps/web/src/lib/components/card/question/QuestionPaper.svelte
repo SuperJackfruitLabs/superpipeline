@@ -4,7 +4,7 @@
   import '../paper-states.css';
   import { Button, Face, Field, type Vibe } from '@superjackfruit/vibekit';
   import type { Elicitation } from '$lib/api';
-  import { PAPER_CAPTIONS, firstName, paperWhen } from '../paper-words';
+  import { PAPER_CAPTIONS, firstName, paperSalutation, paperWhen } from '../paper-words';
   import type { CardAgent } from '../layouts/types';
   import type { QuestionAnswer } from './question-answer.svelte';
 
@@ -18,7 +18,7 @@
 
 <div class="elicitation" style="display: contents">
   {#if showQuestion}
-    <p class="pcs-dear">Dear {firstName(personName)},</p>
+    <p class="pcs-dear">{paperSalutation(personName)}</p>
     <p class="pcs-voice" style="white-space: pre-wrap">{elicitation.question}</p>
     <div class="pcs-sign">
       <Face id={name} label={name} mood="needs" size={32} />

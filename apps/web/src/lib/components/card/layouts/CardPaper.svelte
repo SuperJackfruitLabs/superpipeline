@@ -34,7 +34,7 @@
   import { attemptWord } from '../state-words';
   import { emptyNoteError, handoffLine, planNone, projectLine, relatedLine, RESUME_PLACEHOLDER, usd } from '../card-words';
   import {
-    firstName, paperAttemptLine, paperAttachedSummary, paperBack, paperBriefSummary, paperCorrespondenceSummary, paperDrawerProvenance,
+    firstName, paperSalutation, paperAttemptLine, paperAttachedSummary, paperBack, paperBriefSummary, paperCorrespondenceSummary, paperDrawerProvenance,
     paperHappenedSummary, paperLogRow, paperLogTime, paperReplySub, paperStateWord, paperWaitingSummary, paperWhen, reTitle,
     resumeOptionLabel, signatureLine, PAPER_KICKER_DRAWER,
   } from '../paper-words';
@@ -145,7 +145,7 @@
     {#if done}<CardStatePaper kind="done" model={m} />{/if}
     {#if words}
       <div class="pcd-letter">
-        <p class="pcd-dear">Dear {firstName(personName)},</p>
+        <p class="pcd-dear">{paperSalutation(personName)}</p>
         <p class="pcd-voice"><TokenText text={words} cls="pcd-id" /></p>
         <div class="pcd-sign">
           <Face id={agentName} label={agentName} mood={m.agent.mood} size={36} ring={needs ? 'mood' : undefined} />
@@ -296,7 +296,7 @@
     {#snippet lettersBody()}
       <div data-section="comments" style="display: contents">
         {#if m.comments.comments.length}
-          <ul class="pcd-ul">{#each m.comments.comments as c (c.id)}<li><b>{c.author.name ?? c.author.id}</b> <span style="white-space: pre-wrap; overflow-wrap: anywhere">{c.deletedAt ? 'Comment deleted' : c.body}</span></li>{/each}</ul>
+          <ul class="pcd-ul">{#each m.comments.comments as c (c.id)}<li><b>{m.authorName(c.author)}</b> <span style="white-space: pre-wrap; overflow-wrap: anywhere">{c.deletedAt ? 'Comment deleted' : c.body}</span></li>{/each}</ul>
         {/if}
         <Field id="pcd-comment" label="Write to whoever works this card. The agent reads it." control="textarea" maxlength={8192} rows={4} placeholder="⌘ or Ctrl + Enter posts it" bind:value={m.comments.draft} onkeydown={commentKey} />
         {#if m.comments.error}<p class="vk-field__error" role="alert">{m.comments.error}</p>{/if}

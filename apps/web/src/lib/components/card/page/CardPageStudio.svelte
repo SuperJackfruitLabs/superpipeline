@@ -159,7 +159,7 @@
         {#snippet talkR()}{commentsCount(m.comments.comments.length)} · <span class="kbd">C</span>{/snippet}
         <section class="ar-sec" aria-labelledby="cp-s3" data-section="comments">
           {@render hd(3, 'cp-s3', 'Talk', talkR)}
-          {#if m.comments.comments.length}{#each m.comments.comments as c (c.id)}<p class="cd-p"><b>{c.author.name ?? c.author.id}</b> <span style="white-space: pre-wrap">{c.deletedAt ? 'Comment deleted' : c.body}</span></p>{/each}{:else}<p class="cd-p">No comments yet. The agent that works this card reads them.</p>{/if}
+          {#if m.comments.comments.length}{#each m.comments.comments as c (c.id)}<p class="cd-p"><b>{m.authorName(c.author)}</b> <span style="white-space: pre-wrap">{c.deletedAt ? 'Comment deleted' : c.body}</span></p>{/each}{:else}<p class="cd-p">No comments yet. The agent that works this card reads them.</p>{/if}
           <div class="ar-field"><label for="cp-comment">Add a comment</label><textarea id="cp-comment" class="ar-ta" maxlength="8192" placeholder="⌘ or Ctrl + Enter posts it" bind:value={m.comments.draft} onkeydown={(e) => { if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) { e.preventDefault(); void m.comments.submit(); } }}></textarea></div>
           {#if m.comments.error}<p class="cd-p" role="alert">{m.comments.error}</p>{/if}
           <div><button class="ar-btn2" type="button" aria-disabled={m.comments.posting ? 'true' : undefined} onclick={() => { if (!m.comments.posting) void m.comments.submit(); }}>Comment</button><span class="vk-visually-hidden" role="status">{m.comments.posting ? 'Posting…' : ''}</span></div>

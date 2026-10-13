@@ -273,7 +273,7 @@
         <p class="cd-p"><span data-section="subtasks">Sub-tasks {card.openChildCount} open of {m.children.length}</span> · <span data-section="related">{linksSentence(card.openChildCount, m.children.length, m.related.items.length).split(' · ')[1]}</span></p>
       {:else if tab === 'talk'}
         <div data-section="comments" style="display: contents">
-          {#if m.comments.comments.length}{#each m.comments.comments as c (c.id)}<p class="cd-p"><b>{c.author.name ?? c.author.id}</b> <span style="white-space: pre-wrap">{c.deletedAt ? 'Comment deleted' : c.body}</span></p>{/each}{:else}<p class="cd-p">{commentsCount(0)}. The agent that works this card reads them.</p>{/if}
+          {#if m.comments.comments.length}{#each m.comments.comments as c (c.id)}<p class="cd-p"><b>{m.authorName(c.author)}</b> <span style="white-space: pre-wrap">{c.deletedAt ? 'Comment deleted' : c.body}</span></p>{/each}{:else}<p class="cd-p">{commentsCount(0)}. The agent that works this card reads them.</p>{/if}
           <div class="ar-field"><label for="{uid}-comment">Add a comment</label><textarea id="{uid}-comment" class="ar-ta" maxlength="8192" placeholder="⌘ or Ctrl + Enter posts it" bind:value={m.comments.draft} onkeydown={(e) => { if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) { e.preventDefault(); void m.comments.submit(); } }}></textarea></div>
           {#if m.comments.error}<p class="cd-p" role="alert">{m.comments.error}</p>{/if}
           <div><button class="ar-btn2" type="button" aria-disabled={m.comments.posting ? 'true' : undefined} onclick={() => { if (!m.comments.posting) void m.comments.submit(); }}>Comment</button><span class="vk-visually-hidden" role="status">{m.comments.posting ? 'Posting…' : ''}</span></div>

@@ -26,7 +26,7 @@
   import { attemptWord, stripAria, stripKind, waitingWord } from '../state-words';
   import { emptyNoteError, handoffLine, initials, planNone, projectLine, relatedLine, RESUME_PLACEHOLDER, usd } from '../card-words';
   import {
-    firstName, paperAttempt, paperByline, paperCostLine, paperDateline, paperDeck, paperKicker, paperLinked, paperLogRow, paperLogTime,
+    firstName, paperSalutation, paperAttempt, paperByline, paperCostLine, paperDateline, paperDeck, paperKicker, paperLinked, paperLogRow, paperLogTime,
     paperProvenance, paperReplySub, paperRole, reTitle, roman,
   } from '../paper-words';
   import AccountMenu from './AccountMenu.svelte';
@@ -118,7 +118,7 @@
           <QuestionPaper model={question.model} elicitation={question.elicitation} agent={question.agent} {vibe} {personName} />
           {@render hidden('resume')}
         {:else}
-          <p class="pg-dear">Dear {firstName(personName)},</p>
+          <p class="pg-dear">{paperSalutation(personName)}</p>
           {#if lead.sentence}<p class="pg-voice"><TokenText text={lead.sentence} cls="pg-id" /></p>{/if}
           <div class="pg-sign">
             <Face id={agentName} label={agentName} mood={m.agent.mood} size={40} />
@@ -140,7 +140,7 @@
         {/if}
         <section class="pg-enc" aria-labelledby="pg-corr" data-section="comments">
           <h3 id="pg-corr"><span class="no">Enclosure V</span>Correspondence</h3>
-          {#if m.comments.comments.length}<ul class="pg-ul">{#each m.comments.comments as c (c.id)}<li><b>{c.author.name ?? c.author.id}</b> <span style="white-space: pre-wrap">{c.deletedAt ? 'Comment deleted' : c.body}</span></li>{/each}</ul>
+          {#if m.comments.comments.length}<ul class="pg-ul">{#each m.comments.comments as c (c.id)}<li><b>{m.authorName(c.author)}</b> <span style="white-space: pre-wrap">{c.deletedAt ? 'Comment deleted' : c.body}</span></li>{/each}</ul>
           {:else}<p class="pg-small" style="margin: 0px;">No letters yet. The agent that works this card reads them.</p>{/if}
           <Field id="pg-comment" label="Write to whoever works this card" control="textarea" maxlength={8192} style="min-height: 88px;" placeholder="⌘ or Ctrl + Enter posts it" bind:value={m.comments.draft} onkeydown={commentKey} />
           {#if m.comments.error}<p class="vk-field__error" role="alert">{m.comments.error}</p>{/if}
