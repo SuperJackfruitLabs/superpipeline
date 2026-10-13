@@ -113,6 +113,7 @@ describe('sentences', () => {
     expect(daylightGreeting('noon', 'Rakesh', 4)).toBe('Good afternoon, Rakesh. 4 cards want you.');
     expect(daylightGreeting('noon', 'Rakesh', 1)).toBe('Good afternoon, Rakesh. 1 card wants you.');
     expect(daylightGreeting('noon', 'Rakesh', 0)).toBe('Good afternoon, Rakesh. Nothing needs you.');
+    expect(daylightGreeting('noon', '', 0)).toBe('Good afternoon. Nothing needs you.');
     expect(summarySentenceDaylight(counts, 0)).toBe('Three agents stopped and are waiting on you, and one card has nobody to pick it up. Nothing is running.');
     expect(summarySentenceDaylight({ s: 1, o: 0, other: 0 }, 2)).toBe('One agent stopped and is waiting on you. Two agents are working.');
   });

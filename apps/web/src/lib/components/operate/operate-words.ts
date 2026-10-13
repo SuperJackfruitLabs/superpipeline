@@ -119,7 +119,7 @@ export const greetingLabel = (phase: Phase): string => greeting(phase, 'daylight
 
 export function daylightGreeting(phase: Phase, firstName: string, n: number): string {
   const tail = n === 0 ? 'Nothing needs you.' : n === 1 ? '1 card wants you.' : `${n} cards want you.`;
-  return `${greetingLabel(phase)}, ${firstName}. ${tail}`;
+  return `${firstName ? `${greetingLabel(phase)}, ${firstName}` : greetingLabel(phase)}. ${tail}`;
 }
 
 export function summarySentenceDaylight(c: NeedCounts, r: number): string {

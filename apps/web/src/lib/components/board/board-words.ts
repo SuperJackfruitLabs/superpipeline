@@ -31,7 +31,7 @@ export function personInitials(name: string): string {
 export function greetingLine(phase: Phase, firstName: string, needs: number): string {
   const hello = greeting(phase, 'daylight').replace(/[.?]$/, '');
   const tail = needs === 0 ? 'Nothing needs you.' : `${needs} ${needs === 1 ? 'card wants' : 'cards want'} you.`;
-  return `${hello}, ${firstName}. ${tail}`;
+  return `${firstName ? `${hello}, ${firstName}` : hello}. ${tail}`;
 }
 
 /** What the agent says in the peek bubble, after its name. */

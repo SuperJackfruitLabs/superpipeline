@@ -9,10 +9,11 @@ import { app } from '$lib/stores/app.svelte';
 import { appearance } from '$lib/appearance.svelte';
 import { activeFilterCount } from '$lib/stores/card-filters';
 import { plural } from '$lib/words';
+import { greetingName } from '../dialogs/person';
 import { signOut } from './account';
 import { crewCount, crewLine, crewOf, crewTitle, type CrewMember } from './crew';
 import {
-  boardCounts, boardStatus, dateline, filterSummary, firstNameOf, initialsOf, operateCount, paperShowingLine, projectCountOf,
+  boardCounts, boardStatus, dateline, filterSummary, initialsOf, operateCount, paperShowingLine, projectCountOf,
   showingLine, statusLine, studioSubRight, userNameOf, type OperateCount, type ShellStatus, type StatusItem,
 } from './shell-words';
 import type { ShellView } from './types';
@@ -31,7 +32,7 @@ export const shellModel = {
   get connected(): boolean { return app.connected; },
   get userName(): string { return userNameOf(app.user); },
   get initials(): string { return initialsOf(userNameOf(app.user)); },
-  get firstName(): string { return firstNameOf(userNameOf(app.user)); },
+  get firstName(): string { return greetingName(app.user, app.members); },
   get crew(): CrewMember[] { return app.board ? crewOf(app.board, app.agents, needIds()) : []; },
   get crewCount(): string { return crewCount(this.crew); },
   get crewLine(): string { return crewLine(this.crew); },

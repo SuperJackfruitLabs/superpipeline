@@ -26,6 +26,9 @@ describe('Daylight words', () => {
     expect(greetingLine('noon', 'Rakesh', 1)).toBe('Good afternoon, Rakesh. 1 card wants you.');
     expect(greetingLine('noon', 'Rakesh', 0)).toBe('Good afternoon, Rakesh. Nothing needs you.');
   });
+  it('omits the name when none is known', () => {
+    expect(greetingLine('noon', '', 0)).toBe('Good afternoon. Nothing needs you.');
+  });
   it('initials are the first letters of the first two words', () => {
     expect(personInitials('Rakesh Gangwar')).toBe('RG');
     expect(personInitials('sam')).toBe('S');
