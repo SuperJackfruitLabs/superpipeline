@@ -51,10 +51,16 @@ jobs:
           retention-days: 14
 
   pixel:
-    needs: [test]
-    # Pinned to the Ubuntu the forge runner uses (catthehacker act-22.04): 24.04's system fonts and
-    # FreeType draw dialogs and cards 1-4% apart from the references, which 22.04 does not.
+    # No `needs: [test]`: the screens do not depend on the unit tests, and deploy already waits for
+    # all three, so waiting only added the unit tests' ~10 minutes to every verdict.
     runs-on: ubuntu-22.04
+    # Playwright's own image: Chromium and its system fonts are already in it (no per-run apt
+    # install), and forge and GitHub render in the *same* userland. GitHub's 24.04 and forge's
+    # act-22.04 had drawn dialogs and cards 1-4% apart. The tag must equal the locked
+    # @playwright/test version; the guard step below fails loudly if it does not.
+    container:
+      image: mcr.microsoft.com/playwright:v1.61.0-jammy
+      options: --ipc=host
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
@@ -63,7 +69,14 @@ jobs:
           node-version: 22
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - run: pnpm --filter @superpipeline/web exec playwright install --with-deps chromium
+      - name: the image and the lockfile name the same Playwright
+        run: |
+          have="$(pnpm --filter @superpipeline/web exec playwright --version | awk '{print $2}')"
+          want="${PIXEL_IMAGE_TAG#v}"; want="${want%%-*}"
+          echo "playwright $have, image $want"
+          test "$have" = "$want" || { echo "::error::bump the pixel job's image to v$have-jammy"; exit 1; }
+        env:
+          PIXEL_IMAGE_TAG: v1.61.0-jammy
       # References and app render in the same Chromium, with the same font files, in the same run:
       # no stored screenshots, so platform rasterisation cancels out (fixtures-and-harness.md §B.8).
       - run: mkdir -p apps/web/test-results/pixel-parts && pnpm --filter @superpipeline/web test:pixel
