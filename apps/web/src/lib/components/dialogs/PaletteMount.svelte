@@ -18,6 +18,7 @@
   import { switcherOrder } from './switcher-model';
   import { buildPaletteIndex, filterPalette, groupCount, paletteCount, soleOwnerOrder, type PaletteItem } from './palette-index';
   import './css/pal.css';
+  import './css/palclose.css';
 
   let query = $state('');
 
@@ -107,5 +108,6 @@
     <span><span class="kbd">esc</span> close</span>
     <span class="pal-grow"></span>
     <span><span class="kbd">⌘</span><span class="kbd">K</span> opens this anywhere</span>
+    <button class="sp-palclose" type="button" aria-label="Close" onclick={() => (app.cmdkOpen = false)}><Icon name="close" size={20} /></button>
   {/snippet}
 </CommandPalette>

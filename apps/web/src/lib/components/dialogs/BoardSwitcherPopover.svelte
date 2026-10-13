@@ -20,9 +20,12 @@
   import { boardCountText } from './switcher-model';
   import { relativeDay } from './relative-day';
   import './css/bs.css';
+  import './css/palclose.css';
 
   /** Where the reference puts the panel under the raised control, per vibe (dialog top − anchor top). */
   const DROP: Record<string, number> = { daylight: 56, paper: 57, studio: 68, quiet: 52 };
+  const SWITCHER_W = 520;
+  const MARGIN = 16;
 
   let query = $state('');
   let renaming = $state(false);
@@ -70,7 +73,9 @@
     const a = anchor;
     const s = document.documentElement.style;
     if (!a) { s.removeProperty('--sp-bs-x'); s.removeProperty('--sp-bs-y'); return; }
-    s.setProperty('--sp-bs-x', `${a.left}px`);
+    // O10, #26: hang under the trigger, but never past a screen edge (16px margins); the panel is as wide as fits.
+    const w = Math.min(SWITCHER_W, window.innerWidth - 2 * MARGIN);
+    s.setProperty('--sp-bs-x', `${Math.max(MARGIN, Math.min(a.left, window.innerWidth - w - MARGIN))}px`);
     s.setProperty('--sp-bs-y', `${a.top + (DROP[vibe] ?? 56)}px`);
   });
 
@@ -127,6 +132,7 @@
   {#snippet footer()}
     <span class="grow"><span class="kbd">↑</span><span class="kbd">↓</span> move <span class="kbd">↵</span> open</span>
     <Button variant="secondary" onclick={() => { close(); creating = true; }}>{#snippet icon()}<Icon name="plus" size={18} />{/snippet}New board</Button>
+    <button class="sp-palclose" type="button" aria-label="Close" onclick={close}><Icon name="close" size={20} /></button>
   {/snippet}
 </CommandPalette>
 
@@ -135,6 +141,9 @@
 <style>
   /* Placed under its trigger, as vibekit's switcher form asks the product to do (with class). */
   :global(.vk-dialog.bs) { inset: var(--sp-bs-y, 83px) auto auto var(--sp-bs-x, 128px); margin: 0; }
+  /* #26: no taller than the screen under it; the board list scrolls, the actions (Delete board…) and the foot stay in reach. */
+  :global(.vk-dialog.bs) { width: min(520px, calc(100vw - 32px)); max-height: calc(100dvh - var(--sp-bs-y, 83px) - 16px); overflow: hidden; }
+
   /* Above the switcher's scrim (vibekit layers overlays from z 40 and publishes its top layer). */
   .bs-layer { position: fixed; inset: 0; z-index: calc(42 + 2 * var(--vk-layer-top, 0)); pointer-events: none; }
   :global(.vk-dialog.bs .bs-this) { margin-right: 4px; }

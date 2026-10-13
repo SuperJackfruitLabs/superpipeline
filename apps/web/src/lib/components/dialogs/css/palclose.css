@@ -1,0 +1,19 @@
+/* Hand-written (#27): the palette and the board switcher draw only an "esc" hint, which a touch user cannot press.
+   On a phone (or any coarse pointer) each gets a 44px Close at the top right of its panel, beside the search field. */
+.vk-dialog .sp-palclose { display: none; }
+@media (max-width: 640px), (pointer: coarse) {
+  .vk-dialog .sp-palclose {
+    position: absolute; top: 14px; right: 10px; z-index: 1;
+    display: grid; place-items: center; width: 44px; height: 44px; padding: 0;
+    border: 0; border-radius: var(--vk-radius-sm); background: transparent; color: var(--vk-color-text); cursor: pointer;
+  }
+  .vk-dialog .sp-palclose:focus-visible { box-shadow: var(--vk-focus); outline: none; }
+  .vk-dialog:has(.sp-palclose) .vk-commandpalette__input { margin-right: 60px; }
+  .vk-dialog:has(.sp-palclose) .vk-commandpalette__input .vk-kbd { display: none; }
+}
+
+/* #26: a palette never outgrows its panel: the list shrinks and scrolls; the field, the actions row and the foot stay on screen. */
+.vk-dialog:has(.sp-palclose) { overflow: hidden; }
+.vk-dialog:has(.sp-palclose) .vk-commandpalette { flex: 1 1 auto; min-height: 0; }
+.vk-dialog:has(.sp-palclose) .vk-commandpalette__list { flex: 1 1 auto; min-height: 88px; }
+.vk-dialog:has(.sp-palclose) .vk-commandpalette__actions, .vk-dialog:has(.sp-palclose) .vk-commandpalette__footer { flex: none; }
