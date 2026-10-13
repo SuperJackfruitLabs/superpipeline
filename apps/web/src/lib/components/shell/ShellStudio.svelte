@@ -13,6 +13,7 @@
   } from '@superjackfruit/vibekit';
   import Icon from '$lib/components/parts/Icon.svelte';
   import '$lib/styles/shell/studio.css';
+  import '$lib/styles/shell/studio-dark.css';
   import { shellModel as m } from './shell-model.svelte';
   import { VIEWS, type ShellProps } from './types';
 
