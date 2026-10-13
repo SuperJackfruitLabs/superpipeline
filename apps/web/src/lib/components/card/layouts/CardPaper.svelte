@@ -6,6 +6,7 @@
    * letter, the reply, and five enclosures. The gate, the question and the archived, done and
    * loading blocks take the letter's place. Every section key is drawn once (`data-section`).
    */
+  import { tick } from 'svelte';
   import './card-paper.css';
   import '../paper-states.css';
   import { Button, Drawer, Face, Field } from '@superjackfruit/vibekit';
@@ -38,6 +39,7 @@
     paperHappenedSummary, paperLogRow, paperLogTime, paperReplySub, paperStateWord, paperWaitingSummary, paperWhen, reTitle,
     resumeOptionLabel, signatureLine, PAPER_KICKER_DRAWER,
   } from '../paper-words';
+  import { focusInPlace, openAtTop } from '../open-at-top';
   import type { CardLayoutProps } from './types';
 
   let { model: m, vibe, phase, personName, gate, question, pageHref, onClose }: CardLayoutProps = $props();
@@ -82,6 +84,14 @@
     e.preventDefault();
     onClose();
   }
+
+  // Change project (O9): the inline form takes focus where it is, never scrolling the card.
+  let projectWas = false;
+  $effect(() => {
+    const editing = m.project.editing;
+    if (editing && !projectWas) void tick().then(() => focusInPlace(document.querySelector('[data-project-form] select')));
+    projectWas = editing;
+  });
 </script>
 
 {#snippet hidden(key: string)}<span hidden data-section={key}></span>{/snippet}
@@ -103,7 +113,7 @@
 
 <Drawer open={true} head="stacked" title={reTitle(card.title, !!gate)} eyebrow={kicker} eyebrowTone={needs ? 'needs' : 'muted'} back={backLink} {tools} width={CARD_LAYOUTS.paper.width} onclose={onClose}>
 <!-- data-autofocus: the Drawer opens with focus at the sheet itself, not on its first control (the reference is drawn unfocused). -->
-<div class="pcd" tabindex="-1" data-autofocus>
+<div class="pcd" tabindex="-1" data-autofocus {@attach openAtTop}>
   {#if m.archived}<CardStatePaper kind="archived" model={m} />{/if}
 
   <div class="pcd-lines">
@@ -203,12 +213,14 @@
       <div class="pcd-foot pcd-foot--split">
         <span class="pcd-small" data-section="project">
           {#if m.project.editing}
+            <span class="pcd-projform" data-project-form>
             <Field id="pcd-project" label="Project" control="select" bind:value={m.project.projectId} onchange={() => void m.project.onProjectChange()}
               options={[{ value: '', label: 'No project' }, ...app.projects.map((p) => ({ value: p.id, label: p.name }))]} />
             <Field id="pcd-milestone" label="Milestone" control="select" bind:value={m.project.milestoneId} disabled={m.project.projectId === ''}
               options={[{ value: '', label: 'No milestone' }, ...m.project.milestones.map((ms) => ({ value: ms.id, label: ms.name }))]} />
             {#if m.project.error}<span class="vk-field__error" role="alert">{m.project.error}</span>{/if}
             <span class="pcd-row"><Button aria-disabled={m.project.saving ? 'true' : undefined} onclick={() => { if (!m.project.saving) void m.project.save(); }}>Save</Button><Button variant="quiet" onclick={() => m.project.cancel()}>Cancel</Button></span>
+            </span>
           {:else if m.projectName}
             Project: {projectLine(m.projectName, m.milestoneName)} · <button class="pcd-linkbtn" type="button" onclick={() => m.project.start()}>Change project</button>
           {:else}

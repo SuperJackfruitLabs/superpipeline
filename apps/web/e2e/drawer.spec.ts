@@ -9,6 +9,7 @@ import { test, expect } from '@playwright/test';
  * through the whole board.
  */
 import { PORTS } from '../scripts/ports';
+import { setAppearance } from './support/seed';
 const API = PORTS.apiUrl;
 const TENANT = { 'X-Tenant-Id': 'tnt_dev', 'Content-Type': 'application/json' };
 
@@ -117,5 +118,32 @@ for (const vibe of ['daylight', 'paper', 'studio', 'quiet'] as const) {
       await again.click();
     }
     await expect(title).toHaveValue('Typed but not saved');
+  });
+}
+
+/**
+ * The drawer opens at the top (audit #1/#28): the first focus used to land below the drawer's
+ * head and scroll it 130–265px, hiding the title and Close. Every vibe, on a card long enough to scroll.
+ */
+for (const vibe of ['daylight', 'paper', 'studio', 'quiet'] as const) {
+  test(`${vibe}: the drawer opens scrolled to the top, title and Close in view`, async ({ page, request }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await setAppearance(page, `${vibe}.light.strong.0`);
+    const board = await (await request.post(`${API}/v1/boards`, { headers: TENANT, data: { name: `Top ${vibe}`, stages: PIPELINE } })).json();
+    const long = Array.from({ length: 60 }, (_, i) => `Line ${i + 1} of a long brief, so the drawer has to scroll.`).join('\n');
+    await request.post(`${API}/v1/boards/${board.boardId}/cards`, { headers: TENANT, data: { title: 'A card to open', ownerUserId: 'usr_a', spec: { description: long, acceptanceCriteria: ['One', 'Two'] } } });
+    await page.goto(`/b/${board.boardId}`);
+    await cardTitle(page).click();
+    const dialog = page.getByRole('dialog');
+    await expect(dialog).toBeVisible();
+    await page.waitForTimeout(400);
+    const tops = await page.evaluate(() => {
+      const d = document.querySelector('[role="dialog"]')!;
+      return [d, ...d.querySelectorAll('*')].filter((e) => e.scrollHeight > e.clientHeight + 1 && /(auto|scroll)/.test(getComputedStyle(e).overflowY)).map((e) => e.scrollTop);
+    });
+    expect(tops.length, 'the drawer scrolls').toBeGreaterThan(0);
+    expect(tops.every((t) => t === 0), `every scroller at its top, got ${tops.join(', ')}`).toBe(true);
+    await expect(dialog.getByRole('button', { name: /^Close/ }).first()).toBeInViewport();
+    await expect(dialog.getByRole('heading', { name: /A card to open/ }).first()).toBeInViewport();
   });
 }

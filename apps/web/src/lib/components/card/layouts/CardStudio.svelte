@@ -6,6 +6,7 @@
    * what, 03 send it back, and 04 the card in full as five tabs. The gate and the question replace
    * 01 and 03. Every section key is drawn once (`data-section`); tabs are counted tab by tab.
    */
+  import { tick } from 'svelte';
   import '../page/card-page-studio.css';
   import '../studio/card-studio.css';
   import '../studio/card-states-studio.css';
@@ -37,6 +38,7 @@
     commentsCount, figAge, linksSentence, outcomeWord, quoteHeader, quoteWhen, runEnded, stageNo, studioClock, studioKicker, studioNoteHint,
     studioProvenance, tabCounts, whereWord,
   } from '../studio/studio-format';
+  import { focusInPlace, openAtTop } from '../open-at-top';
   import type { CardLayoutProps } from './types';
 
   let { model: m, vibe, phase, gate, question, pageHref, onClose }: CardLayoutProps = $props();
@@ -101,6 +103,14 @@
     e.preventDefault();
     onClose();
   }
+
+  // Change project (O9): the inline form takes focus where it is, never scrolling the card.
+  let projectWas = false;
+  $effect(() => {
+    const editing = m.project.editing;
+    if (editing && !projectWas) void tick().then(() => focusInPlace(document.querySelector('[data-project-form] select')));
+    projectWas = editing;
+  });
 </script>
 
 {#snippet hidden(key: string)}<span hidden data-section={key}></span>{/snippet}
@@ -123,7 +133,7 @@
 
 <Drawer open={true} head="stacked" title={card.title} eyebrow={kicker} eyebrowTone={needs ? 'needs' : 'muted'} back={backBar} {tools} {aside} width={CARD_LAYOUTS.studio.width} onclose={onClose}>
 <!-- svelte-ignore a11y_no_static_element_interactions: the drawer's keyboard shortcuts; every action also has a button -->
-<div class="ar cw" data-vibe="studio" onkeydown={onKey}>
+<div class="ar cw" data-vibe="studio" tabindex="-1" data-autofocus {@attach openAtTop} onkeydown={onKey}>
   {#if m.localError}<p class="ss-err" role="alert" data-section="error">{m.localError}</p>{:else}{@render hidden('error')}{/if}
   {#if m.archived}<CardStateStudio kind="archived" model={m} />{/if}
   {#if editing}<div data-section="editForm"><CardEditForm model={m} /></div>{:else}{@render hidden('editForm')}{/if}
@@ -225,8 +235,8 @@
         </div>
         <div class="cd-acts" data-section="project">
           {#if m.project.editing}
-            <select class="ar-sel" aria-label="Project" bind:value={m.project.projectId} onchange={() => void m.project.onProjectChange()}><option value="">No project</option>{#each m.projects as p (p.id)}<option value={p.id}>{p.name}</option>{/each}</select>
-            <button class="ar-lk" type="button" aria-disabled={m.project.saving ? 'true' : undefined} onclick={() => { if (!m.project.saving) void m.project.save(); }}>Save</button><span class="vk-visually-hidden" role="status">{m.project.saving ? 'Saving…' : ''}</span><button class="ar-lk" type="button" onclick={() => m.project.cancel()}>Cancel</button>
+            <span class="cd-acts" data-project-form><select class="ar-sel" aria-label="Project" bind:value={m.project.projectId} onchange={() => void m.project.onProjectChange()}><option value="">No project</option>{#each m.projects as p (p.id)}<option value={p.id}>{p.name}</option>{/each}</select>
+            <button class="ar-lk" type="button" aria-disabled={m.project.saving ? 'true' : undefined} onclick={() => { if (!m.project.saving) void m.project.save(); }}>Save</button><span class="vk-visually-hidden" role="status">{m.project.saving ? 'Saving…' : ''}</span><button class="ar-lk" type="button" onclick={() => m.project.cancel()}>Cancel</button></span>
           {:else}
             <span><span class="kick">Project</span> {m.projectName ? projectLine(m.projectName, m.milestoneName) : 'none'}</span><button class="ar-lk" type="button" onclick={() => m.project.start()}>{m.projectName ? 'Change project' : 'Assign to a project'}</button>
           {/if}

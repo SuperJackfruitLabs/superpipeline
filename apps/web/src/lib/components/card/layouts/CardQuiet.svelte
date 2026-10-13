@@ -6,6 +6,7 @@
    * signal-edged fieldset (the decision, the question, or the reply) and the sections in two columns.
    * Every section key is drawn once (`data-section`).
    */
+  import { tick } from 'svelte';
   import './card-quiet.css';
   import '../quiet-states.css';
   import { Button, Drawer, Face, Field } from '@superjackfruit/vibekit';
@@ -35,6 +36,7 @@
   import {
     quietAskedBy, quietAttempts, quietCost, quietDrawerMeta, quietHistoryHead, quietHistoryLine, quietResumeOption, quietRow, quietSubtasks, quietWho,
   } from '../quiet-words';
+  import { focusInPlace, openAtTop } from '../open-at-top';
   import type { CardLayoutProps } from './types';
 
   let { model: m, vibe, gate, question, pageHref, onClose }: CardLayoutProps = $props();
@@ -64,6 +66,14 @@
     e.preventDefault();
     onClose();
   }
+
+  // Change project (O9): the inline form takes focus where it is, never scrolling the card.
+  let projectWas = false;
+  $effect(() => {
+    const editing = m.project.editing;
+    if (editing && !projectWas) void tick().then(() => focusInPlace(document.querySelector('[data-project-form] select')));
+    projectWas = editing;
+  });
 </script>
 
 {#snippet hidden(key: string)}<span hidden data-section={key}></span>{/snippet}
@@ -71,7 +81,8 @@
 {#snippet tools()}<Button variant="tool" href={pageHref} target="_blank" rel="noopener" aria-label="Open in new window">Open in new window</Button>{/snippet}
 
 <Drawer open={true} head="stacked" title={card.title} description={meta} back={backLink} {tools} width={CARD_LAYOUTS.quiet.width} onclose={onClose}>
-<div class="qcd">
+<!-- data-autofocus: the Drawer opens with focus at the card itself, at the top (audit #1). -->
+<div class="qcd" tabindex="-1" data-autofocus {@attach openAtTop}>
   {#if m.archived}<CardStateQuiet kind="archived" model={m} />{/if}
   {#if m.localError}<p role="alert" data-section="error">{m.localError}</p>{:else}{@render hidden('error')}{/if}
   {#if editing}<div data-section="editForm"><CardEditForm model={m} /></div>{:else}{@render hidden('editForm')}{/if}
@@ -167,7 +178,7 @@
       <h3>Sub-tasks, Project, Cost, Delivery</h3>
       <dl class="qcd-dl">
         <div data-section="subtasks" style="display: contents"><dt>Sub-tasks</dt><dd>{m.children.length === 0 ? 'None.' : quietSubtasks(card.openChildCount, m.children.length)} {#if subAdd}<span class="qcd-row"><label class="qcd-ln" for="qcd-sub">New sub-task title</label><input id="qcd-sub" class="vk-field__input" type="text" bind:value={m.subtasks.title} onkeydown={(e) => { if (e.key === 'Enter') void m.subtasks.add(); }} /><Button variant="secondary" aria-disabled={m.subtasks.adding ? 'true' : undefined} onclick={() => { if (!m.subtasks.adding) void m.subtasks.add(); }}>Add</Button></span>{:else}<button class="qcd-ln" type="button" onclick={() => (subAdd = true)}>Add a sub-task</button>{/if}</dd></div>
-        <div data-section="project" style="display: contents"><dt>Project</dt><dd>{#if m.project.editing}<Field id="qcd-project" label="Project" control="select" bind:value={m.project.projectId} onchange={() => void m.project.onProjectChange()} options={[{ value: '', label: 'No project' }, ...m.projects.map((p) => ({ value: p.id, label: p.name }))]} /> <Button aria-disabled={m.project.saving ? 'true' : undefined} onclick={() => { if (!m.project.saving) void m.project.save(); }}>Save</Button> <button class="qcd-ln" type="button" onclick={() => m.project.cancel()}>Cancel</button>{:else}{m.projectName ? `${projectLine(m.projectName, m.milestoneName)}.` : 'None.'} <button class="qcd-ln" type="button" onclick={() => m.project.start()}>{m.projectName ? 'Change project' : 'Assign to a project'}</button>{/if}</dd></div>
+        <div data-section="project" style="display: contents"><dt>Project</dt><dd>{#if m.project.editing}<span class="qcd-projform" data-project-form><Field id="qcd-project" label="Project" control="select" bind:value={m.project.projectId} onchange={() => void m.project.onProjectChange()} options={[{ value: '', label: 'No project' }, ...m.projects.map((p) => ({ value: p.id, label: p.name }))]} /><span class="qcd-row"><Button aria-disabled={m.project.saving ? 'true' : undefined} onclick={() => { if (!m.project.saving) void m.project.save(); }}>Save</Button><button class="qcd-ln" type="button" onclick={() => m.project.cancel()}>Cancel</button></span></span>{:else}{m.projectName ? `${projectLine(m.projectName, m.milestoneName)}.` : 'None.'} <button class="qcd-ln" type="button" onclick={() => m.project.start()}>{m.projectName ? 'Change project' : 'Assign to a project'}</button>{/if}</dd></div>
         <div data-section="cost" style="display: contents"><dt>Cost</dt><dd>{quietCost(card.costUsd, m.estimate?.estimatedUsd ?? null)}</dd></div>
         <div data-section="attempts" style="display: contents"><dt>Attempts</dt><dd>{quietAttempts(m.attempts, name)}</dd></div>
         <div data-section="delivery" style="display: contents"><dt>Delivery</dt><dd>{#if m.counts.deliveryActive}<DeliveryPanel model={m} />{:else}None approved{/if}</dd></div>

@@ -97,3 +97,6 @@
 /* One raw-JSON toggle (O8): a button drawn as the summary it replaced. */
 .dd-rawbtn { all: unset; min-height: 44px; min-width: 44px; display: inline-flex; align-items: center; cursor: pointer; text-decoration: underline; text-underline-offset: 3px; font-size: var(--vk-text-sm); }
 .dd-rawbtn:focus-visible { outline: 2px solid var(--vk-focus); outline-offset: 2px; }
+
+/* Change project (O9): the inline form is spaced, Save sits clear of the select. */
+.dd-projform { display: flex; flex-direction: column; gap: var(--vk-space-3); }

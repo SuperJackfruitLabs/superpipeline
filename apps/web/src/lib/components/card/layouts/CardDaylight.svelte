@@ -6,6 +6,7 @@
    * sections — The brief (open), What happened, Links and references, Talk, Cost and delivery.
    * Every section key is drawn once (`data-section`); an empty one is a hidden marker.
    */
+  import { tick } from 'svelte';
   import './card-daylight.css';
   import '../daylight-states.css';
   import { Button, Drawer, Face, Field, IconButton, StageTrack, StateLabel } from '@superjackfruit/vibekit';
@@ -39,6 +40,7 @@
     subtasksLine, talkSummary, usd, whatHappenedSummary,
   } from '../card-words';
   import { askedHeading } from '../card-words';
+  import { focusInPlace, openAtTop } from '../open-at-top';
   import type { CardLayoutProps } from './types';
 
   let { model: m, vibe, gate, question, pageHref, onClose }: CardLayoutProps = $props();
@@ -98,6 +100,14 @@
   function commentKey(e: KeyboardEvent): void {
     if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) { e.preventDefault(); void m.comments.submit(); }
   }
+
+  // Change project (O9): the inline form takes focus where it is, never scrolling the card.
+  let projectWas = false;
+  $effect(() => {
+    const editing = m.project.editing;
+    if (editing && !projectWas) void tick().then(() => focusInPlace(document.querySelector('[data-project-form] select')));
+    projectWas = editing;
+  });
 </script>
 
 {#snippet hidden(key: string)}<span hidden data-section={key}></span>{/snippet}
@@ -123,7 +133,7 @@
 
 <Drawer open={true} head="stacked" title={card.title} eyebrow="{m.boardName} · {m.stageName}" eyebrowTone={lead.needsYou && !m.archived ? 'needs' : 'muted'} width={CARD_LAYOUTS.daylight.width} {tools} {aside} onclose={onClose}>
 <!-- data-autofocus: the Drawer opens with focus at the card itself, not on its first tool (the reference is drawn unfocused). -->
-<div class="dd-card" tabindex="-1" data-autofocus>
+<div class="dd-card" tabindex="-1" data-autofocus {@attach openAtTop}>
   <header class="dd-head">
     {#if editing}
       <div data-section="editForm"><CardEditForm model={m} /></div>
@@ -255,12 +265,14 @@
           <div data-section="project" style="display: flex; flex-direction: column; gap: var(--vk-space-2);">
             <b>Project</b>
             {#if m.project.editing}
+              <div class="dd-projform" data-project-form>
               <Field id="dd-project" label="Project" control="select" bind:value={m.project.projectId} onchange={() => void m.project.onProjectChange()}
                 options={[{ value: '', label: 'No project' }, ...app.projects.map((p) => ({ value: p.id, label: p.name }))]} />
               <Field id="dd-milestone" label="Milestone" control="select" bind:value={m.project.milestoneId} disabled={m.project.projectId === ''}
                 options={[{ value: '', label: 'No milestone' }, ...m.project.milestones.map((ms) => ({ value: ms.id, label: ms.name }))]} />
               {#if m.project.error}<p class="vk-field__error" role="alert">{m.project.error}</p>{/if}
               <div class="dd-row"><button class="vk-button vk-button--primary" type="button" disabled={m.project.saving} onclick={() => m.project.save()}>{m.project.saving ? 'Saving…' : 'Save'}</button><button class="vk-button vk-button--quiet" type="button" onclick={() => m.project.cancel()}>Cancel</button></div>
+              </div>
             {:else}
               <span style="font-size: var(--vk-text-sm); line-height: 1.45;">{m.projectName ? projectLine(m.projectName, m.milestoneName) : 'No project.'}</span>
               <button class="vk-button vk-button--secondary" type="button" style="align-self: flex-start;" onclick={() => m.project.start()}>{m.projectName ? 'Change project' : 'Assign to a project'}</button>

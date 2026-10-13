@@ -48,3 +48,6 @@
 .qcd-att[aria-expanded='true'] { text-decoration: underline; text-underline-offset: 3px; }
 .qcd-sec li, .qcd-sec li > ol li { min-width: 0; overflow-wrap: anywhere; }
 .qcd-details > summary { cursor: pointer; text-decoration: underline; text-underline-offset: 3px; }
+
+/* Change project (O9): the inline form is spaced, Save sits clear of the select. */
+.qcd-projform { display: flex; flex-direction: column; gap: var(--vk-space-3); }
