@@ -3,10 +3,11 @@ import { createPeek } from './peek-controller';
 
 let seen: (string | null)[];
 let wide = true;
+let drawer = false;
 let focusMoves: string[];
-const make = () => createPeek({ wide: () => wide, onChange: (id) => seen.push(id), focusTitle: (id) => { focusMoves.push(id); return true; } });
+const make = () => createPeek({ wide: () => wide, drawerOpen: () => drawer, onChange: (id) => seen.push(id), focusTitle: (id) => { focusMoves.push(id); return true; } });
 
-beforeEach(() => { vi.useFakeTimers(); seen = []; focusMoves = []; wide = true; });
+beforeEach(() => { vi.useFakeTimers(); seen = []; focusMoves = []; wide = true; drawer = false; });
 afterEach(() => vi.useRealTimers());
 
 describe('when the peek is open', () => {
@@ -54,10 +55,34 @@ describe('when the peek is open', () => {
     p.focusOut('a'); p.focusIn('a'); vi.advanceTimersByTime(300);
     expect(p.id).toBe('a');
   });
-  it('a pointer arriving after the drawer closed opens it; a stale return window does not block a later focus', () => {
+  it('does not open a peek on a pointer while a card drawer is open', () => {
+    const p = make();
+    drawer = true;
+    p.pointerEnter('b'); vi.advanceTimersByTime(500);
+    expect(p.id).toBeNull();
+    drawer = false;
+    p.pointerLeave('b'); p.pointerEnter('b'); vi.advanceTimersByTime(300);
+    expect(p.id).toBe('b');
+  });
+  it('after the drawer closes only the one focus return is ignored: a hover right after opens, with no timer', () => {
     const p = make();
     p.drawerClosed('a');
-    vi.advanceTimersByTime(500);
+    p.pointerEnter('b'); vi.advanceTimersByTime(300);
+    expect(p.id).toBe('b');
+    p.pointerLeave('b');
+    // no focus return ever came, however long ago: a pointer on the card itself is not swallowed
+    p.pointerEnter('a'); vi.advanceTimersByTime(300);
+    expect(p.id).toBe('a');
+  });
+  it('the focus return is ignored once, then the next real focus works; a key press clears the rule', () => {
+    const p = make();
+    p.drawerClosed('a');
+    p.focusIn('a'); vi.advanceTimersByTime(500);
+    expect(p.id).toBeNull();
+    p.focusOut('a'); p.focusIn('a'); vi.advanceTimersByTime(300);
+    expect(p.id).toBe('a');
+    p.focusOut('a');
+    p.drawerClosed('a'); p.keyPressed();
     p.focusIn('a'); vi.advanceTimersByTime(300);
     expect(p.id).toBe('a');
   });

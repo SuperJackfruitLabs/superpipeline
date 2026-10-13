@@ -1,5 +1,6 @@
 <!-- apps/web/src/lib/components/operate/BoardLogStudio.svelte -->
 <script lang="ts">
+  import { clockHMS } from '$lib/when';
   import LineIcon from '$lib/components/parts/LineIcon.svelte';
   import { app } from '$lib/stores/app.svelte';
   import { eventLabel, logMeta, rawLine, shortId, shortTitle } from './spend-format';
@@ -37,7 +38,7 @@
           {@const cardId = typeof e.payload.cardId === 'string' ? e.payload.cardId : null}
           {@const t = cardId ? title(cardId) : null}
           <tr>
-            <td class="m">{e.ts.slice(11, 19)}</td>
+            <td class="m">{clockHMS(e.ts)}</td>
             <td>{eventLabel(e, app.board?.stages ?? [])}</td>
             <td><span class="sp-card">{#if cardId}{#if t}<a class="ttl sp-lt" href="/b/{app.boardId}/c/{cardId}" title={t}>{shortTitle(t)}</a>{/if}<button class="sp-id" aria-label="Copy card id {shortId(cardId)}" type="button" onclick={() => void copyId(cardId)}>{copied === cardId ? 'Copied' : `#${shortId(cardId)}`}</button>{/if}</span></td>
           </tr>
@@ -49,7 +50,7 @@
       {#if list.length > collapsedRows}<button class="ar-lk" type="button" onclick={() => (all = !all)}>{all ? `Show the latest ${collapsedRows}` : `Show all ${list.length} events`}</button>{/if}
       <details>
         <summary class="ar-lk quiet"><span class="disc-ico"><LineIcon name="chev-down" size={16} /></span>Show raw event names</summary>
-        <ol class="sp-raw">{#each list as e (e.seq)}<li><span class="m">{e.ts.slice(11, 19)}</span><span class="raw">{rawLine(e)}</span></li>{/each}</ol>
+        <ol class="sp-raw">{#each list as e (e.seq)}<li><span class="m">{clockHMS(e.ts)}</span><span class="raw">{rawLine(e)}</span></li>{/each}</ol>
       </details>
     </div>
   {/if}

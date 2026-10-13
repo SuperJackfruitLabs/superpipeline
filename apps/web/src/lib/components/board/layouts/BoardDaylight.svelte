@@ -18,6 +18,7 @@
   let peekId = $state<string | null>(null);
   const peek = createPeek({
     wide: () => wide.current,
+    drawerOpen: () => !!app.openCardId,
     onChange: (id) => (peekId = id),
     focusTitle: (id) => {
       const title = [...document.querySelectorAll<HTMLElement>('[data-title-for]')].find((el) => el.dataset.titleFor === id);
@@ -43,7 +44,7 @@
   const peekLane = $derived(model.cards.find((s) => s.id === peekId)?.stageKey ?? null);
 </script>
 
-<svelte:window onkeydown={(e) => { if (e.key === 'Escape' && peekId && !e.defaultPrevented && !app.openCardId) peek.close(); }} />
+<svelte:window onkeydown={(e) => { if (e.key !== 'Escape') peek.keyPressed(); if (e.key === 'Escape' && peekId && !e.defaultPrevented && !app.openCardId) peek.close(); }} />
 
 <section class="dl-scope dl-board" aria-label="{model.boardName} stages" style="grid-template-columns: {cols}">
   {#each model.stages as stage (stage.key)}

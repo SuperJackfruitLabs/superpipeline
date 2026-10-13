@@ -97,3 +97,19 @@ test('the peek closes when the drawer opens and does not reopen by itself when i
   await page.waitForTimeout(700);
   await expect(peek(page)).toHaveCount(0);
 });
+
+test('after the drawer closes the peek stays shut, but a hover right after opens one', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto('/');
+  await compose(page, 'Closing card');
+  await compose(page, 'Next card');
+  await titleOf(page, 'Closing card').hover();
+  await titleOf(page, 'Closing card').click();
+  await expect(page.getByRole('dialog')).toBeVisible();
+  await page.mouse.move(2, 2);
+  await page.keyboard.press('Escape');
+  await expect(page.getByRole('dialog')).toHaveCount(0);
+  await expect(peek(page)).toHaveCount(0);
+  await titleOf(page, 'Closing card').hover();
+  await expect(peek(page).getByRole('heading', { name: 'Closing card' })).toBeVisible();
+});

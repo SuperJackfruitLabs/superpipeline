@@ -22,7 +22,7 @@
   const vibe = $derived(appearance.value.vibe);
   const Layout = $derived(BOARD_LOG_LAYOUTS[vibe]);
   // Only Studio's Spend reference draws a status line.
-  const status = $derived(vibe === 'studio' ? shellModel.pageStatus(['Board log', needsPart(shellModel.attentionCount)]) : null);
+  const status = $derived(vibe === 'studio' ? shellModel.pageStatus(['Board log', needsPart(shellModel.needsCount)]) : null);
 </script>
 
 <AppShell here="operate" section="spend" boardName={app.board?.name ?? 'Untitled board'} view={null} showing={null} {status} bleed={vibe === 'quiet'}>

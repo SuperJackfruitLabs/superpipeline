@@ -1,6 +1,6 @@
 {
   "files": {
-    "CORRECTIONS.md": "2abf072f6adde2cb77196bd4f440c78482feef31856e73d702581a05f4f61d9f",
+    "CORRECTIONS.md": "86e24f4e505a962e06d1b9c3c9569a3c0718678ad92317ce173c5dd9541a4c20",
     "SP-Board-Daylight.html": "1c95355ca93176190c1582c7c52b0b9acdcd67e97a29b6a298e411c998e2bcd4",
     "SP-Board-Empty-Daylight.html": "6c4a78b81a3ae4db7660b2928c3841af97ac90882dcc179138b7d41e6e0241c1",
     "SP-Board-Empty-Paper.html": "207fd6a002c026010741469f90e53b51024481a40d11d57d0c37f5d97d20a425",
@@ -69,10 +69,10 @@
     "SP-Settings-Paper.html": "855bf96a5faeff4742c8f0f61e3283e1c4f42e14481db4abfa052b776d9b1b32",
     "SP-Settings-Quiet.html": "25f7d7cdef07ddae129b8e37383c82f8ab8ea023be52c8daeade01bdeef8b813",
     "SP-Settings-Studio.html": "a5e2e8059ed805f3abf9adf001005d692323e4d99d74fbfd16082b5cf43d116a",
-    "SP-Spend-Daylight.html": "2f1a95efedde7b5d46141ae4fd0485a92ae8bf72a6339c3026a289717132bd34",
-    "SP-Spend-Paper.html": "6cb054d04a797f063e84c3044f321d07765ee899493ccbf31c51bccb12338d54",
-    "SP-Spend-Quiet.html": "0d8294816921c57b5c8f48e242b98cd01c59212790d0a4c9b11b3bcb19ab4ad6",
-    "SP-Spend-Studio.html": "cfd4b24e927e5f9c8bdffed382019c31f028252ff6beac773943dbc85838142c",
+    "SP-Spend-Daylight.html": "54047ed7e8d173fe20c1ff3225915eebef7c50606c8d03394a317e3dafd8e6bd",
+    "SP-Spend-Paper.html": "fcbdbec7d6324cc6716599848c6d5a56c9b15989960553e3e5e0344c5dd4c9c7",
+    "SP-Spend-Quiet.html": "e700feea9c4d5761a1dbe8615476057cbcca46b654d1119aa87195fef11c2afa",
+    "SP-Spend-Studio.html": "ffd03ed28f002de0e00e0b605a7b7b12c3681c827ce5e466cb16e6a5700e51d0",
     "SP-Workspace-Agents-Daylight.html": "68db88ec6df7b418ba63731b1d513e0a87fe5156c71c7d67e7aca84a055f33c4",
     "SP-Workspace-Agents-Paper.html": "2772d089b3b8b46e5eab28f6dd4f92d92682a68fb7d3510b99114ffd26c55a74",
     "SP-Workspace-Agents-Quiet.html": "d072cd7cbbfa6de58d7f49c5d9b92dbc1c45f83e79890749110b86cfc01e0413",
