@@ -18,6 +18,7 @@
   import HandoffView from '../HandoffView.svelte';
   import LibraryArtifact from '../LibraryArtifact.svelte';
   import RawJson from '../RawJson.svelte';
+  import ToolCallDetails from '../ToolCallDetails.svelte';
   import TokenText from '../TokenText.svelte';
   import SpecValueView from '../SpecValueView.svelte';
   import GateQuiet from '../gate/GateQuiet.svelte';
@@ -137,11 +138,11 @@
         <ul>
           {#each runs as g, ri (g.runId)}
             {@const a = m.attempts.find((x) => x.runId === g.runId)}
-            <li>{quietHistoryHead((m.attempts.findIndex((x) => x.runId === g.runId) + 1) || runs.length - ri, stageNameOf(g.stageKey), name(g.agentId) || 'an agent')}: {lcFirst(quietHistoryLine(a ? attemptWord(a) : (g.outcome ?? 'working'), a?.endedAt ?? null, g.counts.total, g.counts.error))}
-              {#if ri === 0}
-                <button class="qcd-ln" type="button" aria-pressed={m.showToolCalls} onclick={() => (m.showToolCalls = !m.showToolCalls)}>{m.showToolCalls ? 'Hide tool calls' : 'Show tool calls'}</button>
-                {#if m.showToolCalls}<ol>{#each visibleActivities(g.activities, isNarrative, m.showToolCalls, isControlRow).rows as ev (ev.seq)}<li>{quietRow(ev)}</li>{/each}</ol>{/if}
-              {/if}
+            {@const tools = m.toolsShown(g.runId)}
+            {@const expanded = m.isRunOpen(g.runId, false) || tools}
+            <li data-attempt={g.runId}><button class="qcd-att" type="button" data-attempt-head={g.runId} aria-expanded={expanded} aria-controls="qcd-run-{g.runId}" onclick={() => m.setRun(g.runId, !expanded)}>{quietHistoryHead((m.attempts.findIndex((x) => x.runId === g.runId) + 1) || runs.length - ri, stageNameOf(g.stageKey), name(g.agentId) || 'an agent')}</button>: {lcFirst(quietHistoryLine(a ? attemptWord(a) : (g.outcome ?? 'working'), a?.endedAt ?? null, g.counts.total, g.counts.error))}
+              {#if g.counts.action > 0 && (ri === 0 || expanded)}<button class="qcd-ln" type="button" data-attempt-tools={g.runId} aria-pressed={tools} onclick={() => m.toggleTools(g.runId)}>{tools ? 'Hide tool calls' : 'Show tool calls'}</button>{/if}
+              {#if expanded}<ol id="qcd-run-{g.runId}">{#each visibleActivities(g.activities, isNarrative, tools, isControlRow).rows as ev (ev.seq)}<li>{quietRow(ev)}<ToolCallDetails parameter={ev.parameter} result={ev.result} cls="qcd-details" /></li>{/each}</ol>{/if}
             </li>
           {/each}
         </ul>

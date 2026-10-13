@@ -80,3 +80,14 @@
 @container pcd (max-width: 620px) { .pcd-grid, .pcd-two, .pcd-groups { grid-template-columns: minmax(0, 1fr); } }
 @media (prefers-reduced-motion: reduce) { .pcd * { animation: none; } }
 .pcd-linkbtn.pcd-small { font-size: var(--vk-text-sm); }
+
+/* Every attempt opens (O11): the head is a button that reads as the attempt's line. */
+.pcd-att { display: flex; flex-direction: column; gap: var(--vk-space-3); }
+.pcd-atthead { all: unset; box-sizing: border-box; display: flex; align-items: baseline; gap: var(--vk-space-3); min-height: 44px; cursor: pointer; }
+.pcd-atthead .pcd-p { flex: 1; min-width: 0; }
+.pcd-atthead .o { font-size: var(--vk-text-sm); color: var(--vk-color-muted); text-decoration: underline; text-underline-offset: 3px; }
+.pcd-atthead:focus-visible { outline: 2px solid var(--vk-focus); outline-offset: 2px; }
+.pcd-attbody { display: flex; flex-direction: column; gap: var(--vk-space-3); min-width: 0; }
+.pcd-log li > span { min-width: 0; overflow-wrap: anywhere; }
+.pcd-details { font-size: var(--vk-text-sm); }
+.pcd-details > summary { min-height: 44px; display: inline-flex; align-items: center; text-decoration: underline; text-underline-offset: 3px; color: var(--vk-color-muted); }

@@ -28,3 +28,9 @@
 .ar.cw .ar-tab { min-width: 44px; justify-content: center; }
 .cw-crumb, .cw-id { font-family: var(--vk-font-body); }
 .ar.cw .cd-dt td .ar-lk { margin: -12px 0; }
+
+/* Every run opens (O15): the run number is the button, drawn as the number it was. */
+.ar .ar-run { all: unset; cursor: pointer; font: inherit; text-decoration: underline; text-underline-offset: 3px; min-height: 24px; }
+.ar .ar-run:focus-visible { outline: 2px solid var(--vk-focus); outline-offset: 2px; }
+.ar .cd-ev td { min-width: 0; overflow-wrap: anywhere; }
+.ar .cd-details > summary { cursor: pointer; text-decoration: underline; text-underline-offset: 3px; }

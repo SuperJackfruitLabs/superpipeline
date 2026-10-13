@@ -16,6 +16,7 @@
   import { isControlRow, isNarrative, visibleActivities } from '$lib/activity-groups';
   import Icon from '$lib/components/parts/Icon.svelte';
   import RawJson from '../RawJson.svelte';
+  import ToolCallDetails from '../ToolCallDetails.svelte';
   import LibraryArtifact from '../LibraryArtifact.svelte';
   import HandoffView from '../HandoffView.svelte';
   import CardEditForm from '../CardEditForm.svelte';
@@ -225,23 +226,27 @@
 
     {#snippet happenedBody()}
       <p class="pcd-small pcd-small--flush" data-section="handoff">{#if m.counts.handoff}<HandoffView handoff={m.handoff} testid="carried-handoff" />{:else if q?.known}{paperDrawerProvenance({ queuedByName: m.queuedByName, byAgent: q.byAgent, covers: m.grantCovers, handoff })}{:else}{handoff}{/if}</p>
-      <div data-section="attempts" style="display: contents">
+      <div data-section="activity" style="display: contents"><div data-section="attempts" style="display: contents">
         {#each [...m.attempts].map((a, i) => ({ a, n: i + 1 })).reverse() as { a, n }, i (a.runId)}
-          {@const line = paperAttemptLine({ n, agent: name(a.agentId) || 'An agent', events: m.activityGroups.find((g) => g.runId === a.runId)?.counts.total ?? 0, word: attemptWord(a), endedAt: a.endedAt ?? null, newest: i === 0 })}
-          <p class="pcd-p"><b>{line.head}</b>{line.rest}</p>
+          {@const g = m.activityGroups.find((x) => x.runId === a.runId)}
+          {@const line = paperAttemptLine({ n, agent: name(a.agentId) || 'An agent', events: g?.counts.total ?? 0, word: attemptWord(a), endedAt: a.endedAt ?? null, newest: i === 0 })}
+          {@const isOpen = m.isRunOpen(a.runId, i === 0)}
+          {@const tools = m.toolsShown(a.runId)}
+          <div class="pcd-att" data-attempt={a.runId}>
+            <button class="pcd-atthead" type="button" data-attempt-head={a.runId} aria-expanded={isOpen} aria-controls="pcd-run-{a.runId}" onclick={() => m.toggleRun(a.runId, i === 0)}><span class="pcd-p"><b>{line.head}</b>{line.rest}</span><span class="o" aria-hidden="true">{isOpen ? 'Close' : 'Open'}</span></button>
+            {#if isOpen && g}
+              {@const who = name(g.agentId) || 'An agent'}
+              {@const view = visibleActivities(g.activities, isNarrative, tools, isControlRow)}
+              <div id="pcd-run-{a.runId}" class="pcd-attbody">
+                <ol class="pcd-log">
+                  {#each view.rows as ev, ei (ev.seq)}<li><Face id={who} label={who} mood={ev.signal === 'stop' ? 'needs' : 'thinking'} size={24} /><span class:stop={ev.signal === 'stop' && needs && i === 0}>{paperLogRow(ev)}<span class="t">{paperLogTime(ev.ts, ei === view.rows.length - 1)}</span><ToolCallDetails parameter={ev.parameter} result={ev.result} cls="pcd-details" /></span></li>{/each}
+                </ol>
+                {#if tools || (g.counts.action > 0 && !view.shownBecauseNoNarrative)}<button class="vk-button vk-button--quiet" type="button" style="align-self: flex-start; font-size: var(--vk-text-sm);" data-attempt-tools={a.runId} aria-pressed={tools} onclick={() => m.toggleTools(a.runId)}>{tools ? 'Hide tool calls' : `Show tool calls · all ${g.counts.total} events`}</button>{/if}
+              </div>
+            {/if}
+          </div>
         {/each}
-      </div>
-      <div data-section="activity" style="display: contents">
-        {#if runs[0]}
-          {@const g = runs[0]}
-          {@const who = name(g.agentId) || 'An agent'}
-          {@const rows = visibleActivities(g.activities, isNarrative, m.showToolCalls, isControlRow).rows}
-          <ol class="pcd-log">
-            {#each rows as ev, ei (ev.seq)}<li><Face id={who} label={who} mood={ev.signal === 'stop' ? 'needs' : 'thinking'} size={24} /><span class:stop={ev.signal === 'stop' && needs}>{paperLogRow(ev)}<span class="t">{paperLogTime(ev.ts, ei === rows.length - 1)}</span></span></li>{/each}
-          </ol>
-          <button class="vk-button vk-button--quiet" type="button" style="align-self: flex-start; font-size: var(--vk-text-sm);" aria-pressed={m.showToolCalls} onclick={() => (m.showToolCalls = !m.showToolCalls)}>{m.showToolCalls ? 'Hide tool calls' : `Show tool calls · all ${g.counts.total} events`}</button>
-        {/if}
-      </div>
+      </div></div>
       <p class="pcd-small pcd-small--flush" data-section="decisions">{#if m.decidedGates.length}Decisions: {m.decidedGates.map((d) => `${d.decision ?? d.status} at ${m.stages.find((s) => s.key === d.stageKey)?.name ?? d.stageKey}${d.decidedBy ? ` by ${displayPrincipal(d.decidedBy, app.members)}` : ''}`).join('; ')}.{:else}Decisions: none yet.{/if}</p>
       <p class="pcd-small pcd-small--flush" data-section="cost">Cost {usd(card.costUsd)}, {m.estimate?.estimatedUsd ? `of an estimated ${usd(m.estimate.estimatedUsd)}` : 'no estimate yet'}.</p>
     {/snippet}

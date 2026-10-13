@@ -121,12 +121,12 @@ describe('CardDaylight (4605)', () => {
   it('what happened: newest run first and open, the stop row says why without repeating it', async () => {
     const { dispose } = await mount();
     const container = document.body;
-    const runs = [...container.querySelectorAll<HTMLDetailsElement>('details.dd-run')];
-    expect(runs.map((r) => words(r.querySelector('summary')!))).toEqual([
+    const runs = [...container.querySelectorAll<HTMLElement>('div.dd-run')];
+    expect(runs.map((r) => words(r.querySelector('button[data-attempt-head]')!))).toEqual([
       'Reproduce · error-eric stopped attempt 2 14 events · 0 errors',
       'Reproduce · error-eric sent back attempt 1 9 events · 0 errors',
     ]);
-    expect(runs.map((r) => r.open)).toEqual([true, false]);
+    expect(runs.map((r) => r.querySelector('button[data-attempt-head]')!.getAttribute('aria-expanded'))).toEqual(['true', 'false']);
     expect(runs[0]!.querySelector('.stop')!.textContent).toBe('Stopped Blocked. Waiting on you; the reason is shown at the top of this card.');
     expect(screen.getByText('From Reported: queued by super-chotu on 8 Oct with the brief above. No earlier stage output.')).toBeTruthy();
     expect(screen.getByText('Attempts: 1 · error-eric · $0.00 · sent back; 2 · error-eric · $0.00 · stopped')).toBeTruthy();

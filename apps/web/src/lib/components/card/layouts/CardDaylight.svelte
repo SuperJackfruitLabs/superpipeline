@@ -18,6 +18,7 @@
   import Icon from '$lib/components/parts/Icon.svelte';
   import HandoffView from '../HandoffView.svelte';
   import RawJson from '../RawJson.svelte';
+  import ToolCallDetails from '../ToolCallDetails.svelte';
   import LibraryArtifact from '../LibraryArtifact.svelte';
   import CardEditForm from '../CardEditForm.svelte';
   import DeliveryPanel from '../DeliveryPanel.svelte';
@@ -270,29 +271,35 @@
         <div data-section="activity" style="display: contents">
           <div class="dd-row" style="justify-content: space-between;">
             {#if q?.known}<span class="dd-small">{provenanceLine({ queuedByName: m.queuedByName, byAgent: q.byAgent, covers: m.grantCovers }, m.delegate.id ? m.delegate.name : null)}</span>{/if}
-            {#if runs.length}<button class="vk-button vk-button--quiet" type="button" style="font-size: var(--vk-text-sm);" aria-pressed={m.showToolCalls} onclick={() => (m.showToolCalls = !m.showToolCalls)}>{m.showToolCalls ? 'Hide tool calls' : 'Show tool calls'}</button>{/if}
           </div>
           {#if runs.length === 0}<p class="dd-small" style="margin: 0px;">No recorded activity yet — this card hasn't been worked.</p>{/if}
           {#each runs as g, ri (g.runId)}
             {@const a = attemptOf(g.runId)}
             {@const who = name(g.agentId) || 'An agent'}
             {@const latestNeeds = ri === 0 && lead.needsYou}
-            {@const view = visibleActivities(g.activities, isNarrative, m.showToolCalls, isControlRow)}
+            {@const tools = m.toolsShown(g.runId)}
+            {@const view = visibleActivities(g.activities, isNarrative, tools, isControlRow)}
             {@const entry = m.stageByRun.get(g.runId)}
-            <details class="dd-run" open={ri === 0}>
-              <summary><Face id={who} label={who} mood={latestNeeds ? 'needs' : 'resting'} size={24} /><b>{stageNameOf(g.stageKey)} · {who}</b><span class:dd-who={latestNeeds}>{a ? attemptWord(a) : (g.outcome ?? 'working')}</span><span>attempt {(m.attempts.findIndex((x) => x.runId === g.runId) + 1) || runs.length - ri}</span><span class="dd-small">{g.counts.total} events · {g.counts.error} errors</span></summary>
+            {@const isOpen = m.isRunOpen(g.runId, ri === 0)}
+            <div class="dd-run" data-attempt={g.runId}>
+              <button class="dd-runhead" type="button" data-attempt-head={g.runId} aria-expanded={isOpen} aria-controls="dd-run-{g.runId}" onclick={() => m.toggleRun(g.runId, ri === 0)}><Face id={who} label={who} mood={latestNeeds ? 'needs' : 'resting'} size={24} /><b>{stageNameOf(g.stageKey)} · {who}</b><span class:dd-who={latestNeeds}>{a ? attemptWord(a) : (g.outcome ?? 'working')}</span><span>attempt {(m.attempts.findIndex((x) => x.runId === g.runId) + 1) || runs.length - ri}</span><span class="dd-small">{g.counts.total} events · {g.counts.error} errors</span><span class="tw" aria-hidden="true"><Icon name="chevron-right" size={18} /></span></button>
+              {#if isOpen}
+              <div id="dd-run-{g.runId}">
               <ul class="dd-ev">
                 {#each view.rows as ev (ev.seq)}
                   <li>
                     <Face id={who} label={who} mood={ev.signal === 'stop' ? 'needs' : 'working'} size={24} />
-                    <span class:stop={ev.signal === 'stop'}><span class="k">{eventVerb(ev)}</span> {eventSentence(ev)}{#if ev.parameter !== null || ev.result !== null}<details class="dd-raw"><summary>Details</summary><RawJson value={{ parameter: ev.parameter, result: ev.result }} /></details>{/if}</span>
+                    <span class:stop={ev.signal === 'stop'}><span class="k">{eventVerb(ev)}</span> {eventSentence(ev)}<ToolCallDetails parameter={ev.parameter} result={ev.result} cls="dd-raw" /></span>
                     <span class="t">{clockHM(ev.ts)}</span>
                   </li>
                 {/each}
               </ul>
+              {#if tools || (g.counts.action > 0 && !view.shownBecauseNoNarrative)}<div style="padding: 0 var(--vk-space-4) var(--vk-space-3);"><button class="vk-button vk-button--quiet" type="button" style="font-size: var(--vk-text-sm);" data-attempt-tools={g.runId} aria-pressed={tools} onclick={() => m.toggleTools(g.runId)}>{tools ? 'Hide tool calls' : 'Show tool calls'}</button></div>{/if}
               {#if entry?.failureReason}<p class="dd-small" style="margin: 0 var(--vk-space-4) var(--vk-space-3);">{entry.failureReason}</p>
               {:else if entry && entry.handoff && typeof entry.handoff === 'object' && Object.keys(entry.handoff).length}<div style="padding: 0 var(--vk-space-4) var(--vk-space-3);"><HandoffView handoff={entry.handoff} testid="handed-on-{g.runId}" /></div>{/if}
-            </details>
+              </div>
+              {/if}
+            </div>
           {/each}
         </div>
         {#if m.decidedGates.length}

@@ -97,8 +97,8 @@ describe('CardPageDaylight (4605)', () => {
   });
   it('what happened: attempts newest first, the closed one ends at 12:11, tool calls counted', async () => {
     const { container, dispose } = await mount();
-    const runs = [...container.querySelectorAll<HTMLDetailsElement>('details.dp-run')];
-    expect(runs.map((r) => words(r.querySelector('summary')!))).toEqual([
+    const runs = [...container.querySelectorAll<HTMLElement>('div.dp-run')];
+    expect(runs.map((r) => words(r.querySelector('button[data-attempt-head]')!))).toEqual([
       'Attempt 2 · Reproduce stopped 14 events · 0 errors',
       'Attempt 1 · Reproduce sent back 9 events · 0 errors · 12:11',
     ]);

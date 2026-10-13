@@ -41,3 +41,10 @@
 /* A link the reference draws as an <a> (24px line) keeps a 44px hit box: the padding makes it, the equal negative margin takes it back out of the layout. */
 .qcd-ln { display: inline-block; padding: 12px 4px; margin: -12px -4px; border: 0; background: transparent; color: var(--vk-color-text); font: inherit; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; white-space: nowrap; }
 .qcd-back { color: var(--vk-color-text); text-decoration: underline; text-underline-offset: 3px; }
+
+/* Every attempt opens (O15): the attempt's sentence is the button; it reads as the sentence it was. */
+.qcd-att { all: unset; cursor: pointer; }
+.qcd-att:focus-visible { outline: 2px solid var(--vk-focus); outline-offset: 2px; }
+.qcd-att[aria-expanded='true'] { text-decoration: underline; text-underline-offset: 3px; }
+.qcd-sec li, .qcd-sec li > ol li { min-width: 0; overflow-wrap: anywhere; }
+.qcd-details > summary { cursor: pointer; text-decoration: underline; text-underline-offset: 3px; }

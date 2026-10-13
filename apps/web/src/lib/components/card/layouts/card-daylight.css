@@ -60,8 +60,11 @@
 .dd-meter { height: 8px; border-radius: var(--vk-radius-pill); background: var(--vk-color-line); overflow: hidden; }
 .dd-meter i { display: block; height: 100%; background: var(--vk-color-success); }
 .dd-run { background: var(--vk-color-raised); border-radius: var(--vk-radius-md); }
-.dd-run > summary { list-style: none; display: flex; align-items: center; gap: var(--vk-space-3); flex-wrap: wrap; min-height: 52px; padding: var(--vk-space-2) var(--vk-space-4); cursor: pointer; font-size: var(--vk-text-sm); }
-.dd-run > summary::-webkit-details-marker { display: none; }
+.dd-runhead { all: unset; box-sizing: border-box; width: 100%; display: flex; align-items: center; gap: var(--vk-space-3); flex-wrap: wrap; min-height: 52px; padding: var(--vk-space-2) var(--vk-space-4); cursor: pointer; font-size: var(--vk-text-sm); }
+.dd-runhead:focus-visible { outline: 2px solid var(--vk-focus); outline-offset: -2px; border-radius: var(--vk-radius-md); }
+.dd-runhead .tw { margin-left: auto; display: inline-flex; transition: transform 0.15s; }
+.dd-runhead[aria-expanded='true'] .tw { transform: rotate(90deg); }
+.dd-ev li > span { min-width: 0; }
 .dd-ev { list-style: none; margin: 0; padding: 0 var(--vk-space-4) var(--vk-space-4); display: flex; flex-direction: column; gap: var(--vk-space-3); }
 .dd-ev li { display: grid; grid-template-columns: 24px minmax(0, 1fr) auto; gap: var(--vk-space-3); font-size: var(--vk-text-sm); line-height: 1.45; }
 .dd-ev .t { color: var(--vk-color-muted); font: 400 11px/1.6 var(--vk-font-mono); }

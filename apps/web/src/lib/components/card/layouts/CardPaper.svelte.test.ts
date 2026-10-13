@@ -112,7 +112,7 @@ describe('CardPaper (4605)', () => {
   it('what happened: provenance, the attempts newest first, the stop row says why without repeating it', async () => {
     const { dispose } = await mount();
     expect(screen.getByText(/Asked by super-chotu \(an agent/)).toBeTruthy();
-    const attempts = [...document.querySelectorAll('[data-section="attempts"] > p')].map(words);
+    const attempts = [...document.querySelectorAll('[data-section="attempts"] button[data-attempt-head] .pcd-p')].map(words);
     expect(attempts).toEqual(['Attempt 2 · error-eric · 14 events · stopped at 19:41 Thu 8 Oct', 'Attempt 1 · error-eric · 9 events · sent back']);
     expect(words(document.querySelector('.pcd-log .stop')!)).toContain('Stopped. Blocked. Waiting on you; the reason is shown at the top of this card.');
     expect(screen.getByText('Cost $0.00, no estimate yet.')).toBeTruthy();

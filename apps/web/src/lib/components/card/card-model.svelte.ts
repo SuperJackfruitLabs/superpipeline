@@ -63,6 +63,10 @@ export class CardModel {
 
   // ---- local UI state ----
   showToolCalls = $state(false);
+  /** Which attempts the reader opened or closed (by run id); unset means the default (newest open). */
+  runOpen = $state<Record<string, boolean>>({});
+  /** Which attempts show their tool calls (by run id). Per attempt, so one run's toggle never moves another. */
+  runTools = $state<Record<string, boolean>>({});
   localError = $state<string | null>(null);
   gateError = $state<string | null>(null);
   gateConflict = $state<GateConflict | null>(null);
@@ -309,12 +313,34 @@ export class CardModel {
     });
   }
 
+  /** Whether an attempt's timeline is open; the newest opens by default. */
+  isRunOpen(runId: string, newest: boolean): boolean {
+    return this.runOpen[runId] ?? newest;
+  }
+  toggleRun(runId: string, newest: boolean): void {
+    this.runOpen = { ...this.runOpen, [runId]: !this.isRunOpen(runId, newest) };
+  }
+  /** Close an attempt (and stop showing its tool calls), or open it. */
+  setRun(runId: string, open: boolean): void {
+    this.runOpen = { ...this.runOpen, [runId]: open };
+    if (!open && this.toolsShown(runId)) this.runTools = { ...this.runTools, [runId]: false };
+  }
+  /** Whether an attempt shows its tool calls as well as what the agent said. */
+  toolsShown(runId: string): boolean {
+    return this.runTools[runId] ?? false;
+  }
+  toggleTools(runId: string): void {
+    this.runTools = { ...this.runTools, [runId]: !this.toolsShown(runId) };
+  }
+
   #reset(): void {
     this.detail = null;
     this.attempts = [];
     this.estimate = null;
     this.edges = { links: [], externalLinks: [] };
     this.showToolCalls = false;
+    this.runOpen = {};
+    this.runTools = {};
     this.localError = null;
     this.gateError = null;
     this.gateConflict = null;

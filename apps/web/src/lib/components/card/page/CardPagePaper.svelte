@@ -14,6 +14,7 @@
   import LinkAddForm from '../LinkAddForm.svelte';
   import HandoffView from '../HandoffView.svelte';
   import RawJson from '../RawJson.svelte';
+  import ToolCallDetails from '../ToolCallDetails.svelte';
   import TokenText from '../TokenText.svelte';
   import SpecValueView from '../SpecValueView.svelte';
   import GatePaper from '../gate/GatePaper.svelte';
@@ -211,13 +212,18 @@
               {@const a = attemptOf(g.runId)}
               {@const who = name(g.agentId) || 'An agent'}
               {@const word = a ? attemptWord(a) : (g.outcome ?? 'working')}
-              <p class="pg-p" style={ri > 0 ? 'border-top: 1px solid var(--vk-color-line); padding-top: var(--vk-space-3);' : undefined}><b>Attempt {attemptNo(g.runId) || runs.length - ri}</b> · {who} · {paperAttempt(g.counts.total, g.counts.error, word, ri > 0 && a?.endedAt ? clockHM(a.endedAt) : null)}</p>
-              {#if ri === 0}
-                {@const rows = visibleActivities(g.activities, isNarrative, m.showToolCalls, isControlRow).rows}
+              {@const isOpen = m.isRunOpen(g.runId, ri === 0)}
+              {@const tools = m.toolsShown(g.runId)}
+              <button class="pg-atthead" type="button" data-attempt-head={g.runId} aria-expanded={isOpen} aria-controls="pg-run-{g.runId}" style={ri > 0 ? 'border-top: 1px solid var(--vk-color-line); padding-top: var(--vk-space-3);' : undefined} onclick={() => m.toggleRun(g.runId, ri === 0)}><span class="pg-p"><b>Attempt {attemptNo(g.runId) || runs.length - ri}</b> · {who} · {paperAttempt(g.counts.total, g.counts.error, word, ri > 0 && a?.endedAt ? clockHM(a.endedAt) : null)}</span></button>
+              {#if isOpen}
+                {@const view = visibleActivities(g.activities, isNarrative, tools, isControlRow)}
+                {@const rows = view.rows}
+                <div id="pg-run-{g.runId}" class="pg-attbody">
                 <ol class="pg-log">
-                  {#each rows as ev, ei (ev.seq)}<li><Face id={who} label={who} mood={ev.signal === 'stop' ? 'needs' : 'thinking'} size={24} /><span class:stop={ev.signal === 'stop' && lead.needsYou}>{paperLogRow(ev)}<span class="t">{paperLogTime(ev.ts, ei === rows.length - 1)}</span></span></li>{/each}
+                  {#each rows as ev, ei (ev.seq)}<li><Face id={who} label={who} mood={ev.signal === 'stop' ? 'needs' : 'thinking'} size={24} /><span class:stop={ev.signal === 'stop' && lead.needsYou && ri === 0}>{paperLogRow(ev)}<span class="t">{paperLogTime(ev.ts, ei === rows.length - 1)}</span><ToolCallDetails parameter={ev.parameter} result={ev.result} cls="pg-details" /></span></li>{/each}
                 </ol>
-                <button class="vk-button vk-button--quiet" type="button" style="align-self: flex-start; font-size: var(--vk-text-sm);" aria-pressed={m.showToolCalls} onclick={() => (m.showToolCalls = !m.showToolCalls)}>{m.showToolCalls ? 'Hide tool calls' : `Show tool calls · all ${g.counts.total} events`}</button>
+                {#if tools || (g.counts.action > 0 && !view.shownBecauseNoNarrative)}<button class="vk-button vk-button--quiet" type="button" style="align-self: flex-start; font-size: var(--vk-text-sm);" data-attempt-tools={g.runId} aria-pressed={tools} onclick={() => m.toggleTools(g.runId)}>{tools ? 'Hide tool calls' : `Show tool calls · all ${g.counts.total} events`}</button>{/if}
+                </div>
               {/if}
             {/each}
           </div>

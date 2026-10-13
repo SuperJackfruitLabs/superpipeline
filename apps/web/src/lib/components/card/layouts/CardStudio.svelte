@@ -20,6 +20,7 @@
   import LinkAddForm from '../LinkAddForm.svelte';
   import HandoffView from '../HandoffView.svelte';
   import RawJson from '../RawJson.svelte';
+  import ToolCallDetails from '../ToolCallDetails.svelte';
   import SpecValueView from '../SpecValueView.svelte';
   import GateStudioFrame from '../gate/GateStudioFrame.svelte';
   import GateStudioBar from '../gate/GateStudioBar.svelte';
@@ -63,8 +64,6 @@
   const age = $derived(figAge(m.ageHours ?? 0));
   const clock = $derived(studioClock(nowIso, phase));
   const stopped = $derived(['stopped', 'failed', 'budget'].includes(lead.kind) && !m.archived);
-  const latest = $derived(runs[0]);
-  const latestRows = $derived(latest ? visibleActivities(latest.activities, isNarrative, m.showToolCalls, isControlRow).rows : []);
   const tabs = $derived(tabCounts({ rows: specRowCount(groups), runs: m.counts.runs, links: m.counts.links + m.counts.children + m.counts.refs, comments: m.comments.comments.length, costUsd: card.costUsd }));
   const stageClass = $derived(`c${Math.min(m.stageIndex + 1, 7)}`);
 
@@ -237,14 +236,18 @@
           {#if q?.known}<p class="cd-p"><span class="kick">Provenance</span> {studioProvenance(m.queuedByName, q.byAgent, m.grantCovers, !!m.delegate.id)}</p>{/if}
           <table class="cd-dt">
             <thead><tr><th scope="col" style="width: 40px;">Run</th><th scope="col">Agent</th><th scope="col" style="width: 74px;">Outcome</th><th scope="col" style="width: 36px;">Ev</th><th scope="col" style="width: 92px;">Ended</th></tr></thead>
-            <tbody>{#each runs as g, ri (g.runId)}{@const a = m.attempts.find((x) => x.runId === g.runId)}{@const who = name(g.agentId) || 'An agent'}<tr><td class="m">#{(m.attempts.findIndex((x) => x.runId === g.runId) + 1) || runs.length - ri}</td><td><span class="ag"><Face id={who} label={who} mood={ri === 0 && needs ? 'needs' : 'resting'} size={20} />{who}</span></td><td class:sigt={ri === 0 && needs}>{a ? outcomeWord(a) : 'Running'}</td><td class="m">{g.counts.total}</td><td class="m">{a?.endedAt ? runEnded(a.endedAt) : '—'}</td></tr>{/each}</tbody>
+            <tbody>{#each runs as g, ri (g.runId)}{@const a = m.attempts.find((x) => x.runId === g.runId)}{@const who = name(g.agentId) || 'An agent'}{@const no = (m.attempts.findIndex((x) => x.runId === g.runId) + 1) || runs.length - ri}{@const isOpen = m.isRunOpen(g.runId, ri === 0)}<tr><td class="m"><button class="ar-run" type="button" data-attempt-head={g.runId} aria-expanded={isOpen} aria-controls="{uid}-run-{g.runId}" aria-label="Run {no}, {isOpen ? 'hide' : 'show'} its log" onclick={() => m.toggleRun(g.runId, ri === 0)}>#{no}</button></td><td><span class="ag"><Face id={who} label={who} mood={ri === 0 && needs ? 'needs' : 'resting'} size={20} />{who}</span></td><td class:sigt={ri === 0 && needs}>{a ? outcomeWord(a) : 'Running'}</td><td class="m">{g.counts.total}</td><td class="m">{a?.endedAt ? runEnded(a.endedAt) : '—'}</td></tr>{/each}</tbody>
           </table>
-          {#if latest}
-            <div>
-              <div class="cd-acts" style="justify-content: space-between;"><h3 class="cd-h" style="margin: 0px;">Latest run <span class="mono">{m.stages.find((s) => s.key === latest.stageKey)?.name ?? latest.stageKey} · {latest.counts.error} errors</span></h3><button class="ar-lk" type="button" aria-pressed={m.showToolCalls} onclick={() => (m.showToolCalls = !m.showToolCalls)}>{m.showToolCalls ? 'Hide tool calls' : 'Show tool calls'}</button></div>
-              <table class="cd-dt"><tbody>{#each latestRows as ev, ei (ev.seq)}<tr><td class="m" style={ei === 0 ? 'width: 52px;' : undefined}>{clockHM(ev.ts)}</td><td><span class:sigt={ev.signal === 'stop'}>{eventVerb(ev)}.</span> {ev.signal === 'stop' ? STOP_SENTENCE : ev.body}</td></tr>{/each}</tbody></table>
-            </div>
-          {/if}
+          {#each runs as g, ri (g.runId)}
+            {#if m.isRunOpen(g.runId, ri === 0)}
+              {@const tools = m.toolsShown(g.runId)}
+              {@const view = visibleActivities(g.activities, isNarrative, tools, isControlRow)}
+              <div id="{uid}-run-{g.runId}">
+                <div class="cd-acts" style="justify-content: space-between;"><h3 class="cd-h" style="margin: 0px;">{ri === 0 ? 'Latest run' : `Run #${(m.attempts.findIndex((x) => x.runId === g.runId) + 1) || runs.length - ri}`} <span class="mono">{m.stages.find((s) => s.key === g.stageKey)?.name ?? g.stageKey} · {g.counts.error} errors</span></h3>{#if tools || (g.counts.action > 0 && !view.shownBecauseNoNarrative)}<button class="ar-lk" type="button" data-attempt-tools={g.runId} aria-pressed={tools} onclick={() => m.toggleTools(g.runId)}>{tools ? 'Hide tool calls' : 'Show tool calls'}</button>{/if}</div>
+                <table class="cd-dt cd-ev"><tbody>{#each view.rows as ev, ei (ev.seq)}<tr><td class="m" style={ei === 0 ? 'width: 52px;' : undefined}>{clockHM(ev.ts)}</td><td><span class:sigt={ev.signal === 'stop'}>{eventVerb(ev)}.</span> {ev.signal === 'stop' && ri === 0 ? STOP_SENTENCE : ev.body}<ToolCallDetails parameter={ev.parameter} result={ev.result} cls="cd-details" /></td></tr>{/each}</tbody></table>
+              </div>
+            {/if}
+          {/each}
         </div>
         {#if m.counts.handoff}<div data-section="handoff"><span class="kick">Handoff</span><HandoffView handoff={m.handoff} testid="carried-handoff" /></div>
         {:else}<p class="cd-p" data-section="handoff"><span class="kick">Handoff</span> {handoffLine({ handoff: null, stageIndex: m.stageIndex, stages: m.stages, queuedByName: m.queuedByName || 'someone', createdAt: card.createdAt })}</p>{/if}

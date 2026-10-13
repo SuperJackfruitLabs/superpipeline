@@ -14,6 +14,7 @@
   import LinkAddForm from '../LinkAddForm.svelte';
   import HandoffView from '../HandoffView.svelte';
   import RawJson from '../RawJson.svelte';
+  import ToolCallDetails from '../ToolCallDetails.svelte';
   import TokenText from '../TokenText.svelte';
   import SpecValueView from '../SpecValueView.svelte';
   import GateQuiet from '../gate/GateQuiet.svelte';
@@ -146,11 +147,17 @@
           <div data-section="activity" style="display: contents">
             {#each runs as g, ri (g.runId)}
               {@const a = m.attempts.find((x) => x.runId === g.runId)}
-              <h3>{quietHistoryHead((m.attempts.findIndex((x) => x.runId === g.runId) + 1) || runs.length - ri, stageNameOf(g.stageKey), name(g.agentId) || 'an agent')}</h3>
+              {@const no = (m.attempts.findIndex((x) => x.runId === g.runId) + 1) || runs.length - ri}
+              {@const isOpen = m.isRunOpen(g.runId, ri === 0)}
+              {@const tools = m.toolsShown(g.runId)}
+              <h3><button class="qp-att" type="button" data-attempt-head={g.runId} aria-expanded={isOpen} aria-controls="qp-run-{g.runId}" onclick={() => m.toggleRun(g.runId, ri === 0)}>{quietHistoryHead(no, stageNameOf(g.stageKey), name(g.agentId) || 'an agent')}</button></h3>
               <p>{quietHistoryLine(a ? attemptWord(a) : (g.outcome ?? 'working'), a?.endedAt ?? null, g.counts.total, g.counts.error)}</p>
-              {#if ri === 0}
-                <ol>{#each visibleActivities(g.activities, isNarrative, m.showToolCalls, isControlRow).rows as ev (ev.seq)}<li>{quietRow(ev)}</li>{/each}</ol>
-                <div class="qp-acts"><a href="#tools" role="button" aria-pressed={m.showToolCalls} onclick={act(() => (m.showToolCalls = !m.showToolCalls))}>{m.showToolCalls ? 'Hide tool calls' : `Show tool calls (all ${g.counts.total} events)`}</a></div>
+              {#if isOpen}
+                {@const view = visibleActivities(g.activities, isNarrative, tools, isControlRow)}
+                <div id="qp-run-{g.runId}" style="display: contents">
+                  <ol>{#each view.rows as ev (ev.seq)}<li>{quietRow(ev)}<ToolCallDetails parameter={ev.parameter} result={ev.result} cls="qp-details" /></li>{/each}</ol>
+                  {#if tools || (g.counts.action > 0 && !view.shownBecauseNoNarrative)}<div class="qp-acts"><button class="qp-lnk" type="button" data-attempt-tools={g.runId} aria-pressed={tools} onclick={() => m.toggleTools(g.runId)}>{tools ? 'Hide tool calls' : `Show tool calls (all ${g.counts.total} events)`}</button></div>{/if}
+                </div>
               {/if}
             {/each}
           </div>

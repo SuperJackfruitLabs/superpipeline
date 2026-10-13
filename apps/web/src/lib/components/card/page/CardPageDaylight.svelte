@@ -21,6 +21,7 @@
   import HandoffView from '../HandoffView.svelte';
   import LibraryArtifact from '../LibraryArtifact.svelte';
   import RawJson from '../RawJson.svelte';
+  import ToolCallDetails from '../ToolCallDetails.svelte';
   import TokenText from '../TokenText.svelte';
   import SpecValueView from '../SpecValueView.svelte';
   import GateDaylight from '../gate/GateDaylight.svelte';
@@ -257,17 +258,23 @@
             {@const a = attemptOf(g.runId)}
             {@const who = name(g.agentId) || 'An agent'}
             {@const latestNeeds = ri === 0 && lead.needsYou}
-            {@const view = visibleActivities(g.activities, isNarrative, m.showToolCalls, isControlRow)}
+            {@const tools = m.toolsShown(g.runId)}
+            {@const view = visibleActivities(g.activities, isNarrative, tools, isControlRow)}
             {@const hiddenCount = g.activities.length - visibleActivities(g.activities, isNarrative, false, isControlRow).rows.length}
-            <details class="dp-run" open={ri === 0}>
-              <summary><Face id={who} label={who} mood={latestNeeds ? 'needs' : 'resting'} size={24} /><b>Attempt {attemptNo(g.runId) || runs.length - ri} · {stageNameOf(g.stageKey)}</b><span class:dp-who={latestNeeds}>{a ? attemptWord(a) : (g.outcome ?? 'working')}</span><span class="dp-small">{g.counts.total} events · {g.counts.error} errors{ri > 0 && a?.endedAt ? ` · ${clockHM(a.endedAt)}` : ''}</span></summary>
+            {@const isOpen = m.isRunOpen(g.runId, ri === 0)}
+            <div class="dp-run">
+              <button class="dp-runhead" type="button" data-attempt-head={g.runId} aria-expanded={isOpen} aria-controls="dp-run-{g.runId}" onclick={() => m.toggleRun(g.runId, ri === 0)}><Face id={who} label={who} mood={latestNeeds ? 'needs' : 'resting'} size={24} /><b>Attempt {attemptNo(g.runId) || runs.length - ri} · {stageNameOf(g.stageKey)}</b><span class:dp-who={latestNeeds}>{a ? attemptWord(a) : (g.outcome ?? 'working')}</span><span class="dp-small">{g.counts.total} events · {g.counts.error} errors{ri > 0 && a?.endedAt ? ` · ${clockHM(a.endedAt)}` : ''}</span></button>
+              {#if isOpen}
+              <div id="dp-run-{g.runId}">
               <ol class="dp-tl" style="padding: var(--vk-space-2) var(--vk-space-4) 0;">
                 {#each view.rows as ev, ei (ev.seq)}
-                  <li><Face id={who} label={who} mood={ev.signal === 'stop' ? 'needs' : 'thinking'} size={24} /><span class:stop={ev.signal === 'stop'}><span class="k">{eventVerb(ev)}</span> {eventSentence(ev)}<br /><span class="t">{clockHM(ev.ts)}{ei === view.rows.length - 1 ? ` ${weekdayDayMonth(ev.ts)}` : ''}</span></span></li>
+                  <li><Face id={who} label={who} mood={ev.signal === 'stop' ? 'needs' : 'thinking'} size={24} /><span class:stop={ev.signal === 'stop'}><span class="k">{eventVerb(ev)}</span> {eventSentence(ev)}<br /><span class="t">{clockHM(ev.ts)}{ei === view.rows.length - 1 ? ` ${weekdayDayMonth(ev.ts)}` : ''}</span><ToolCallDetails parameter={ev.parameter} result={ev.result} cls="dp-raw" /></span></li>
                 {/each}
               </ol>
-              {#if hiddenCount > 0 || m.showToolCalls}<div style="padding: 0 var(--vk-space-4) var(--vk-space-3);"><Button variant="quiet" style="font-size: var(--vk-text-sm);" pressed={m.showToolCalls} onclick={() => (m.showToolCalls = !m.showToolCalls)}>{m.showToolCalls ? 'Hide tool calls' : `Show tool calls · ${hiddenCount} more events`}</Button></div>{/if}
-            </details>
+              {#if hiddenCount > 0 || tools}<div style="padding: 0 var(--vk-space-4) var(--vk-space-3);"><Button variant="quiet" style="font-size: var(--vk-text-sm);" data-attempt-tools={g.runId} pressed={tools} onclick={() => m.toggleTools(g.runId)}>{tools ? 'Hide tool calls' : `Show tool calls · ${hiddenCount} more events`}</Button></div>{/if}
+              </div>
+              {/if}
+            </div>
           {/each}
         </div>
         {#if m.counts.handoff}
