@@ -25,3 +25,22 @@ describe('applyDarkPatches on SP-Dlg-Appearance', () => {
     expect(group.parentElement!.querySelector('.ap-hint')!.textContent).toBe('Always dark: a lamp-lit room, not black.');
   });
 });
+
+describe('deriveDark: drop shadows stay dark (fix round 2)', () => {
+  it('a light-theme shadow cast in the text colour becomes vibekit\'s dark shadow (the ground at 80%), not a glow', () => {
+    const html = '<html><body><style>.s { box-shadow: 0 0 0 1px var(--vk-color-line), 0 30px 80px color-mix(in oklch, var(--vk-color-text) 30%, transparent); }</style><div data-vibe="paper" data-theme="light" class="s" style="box-shadow: 0 12px 32px color-mix(in oklch, var(--vk-color-text) 18%, transparent)"></div></body></html>';
+    const out = deriveDark(html);
+    expect(out).not.toMatch(/var\(--vk-color-text\) \d+%/);
+    expect(out).toContain('0 30px 80px color-mix(in oklch, var(--vk-color-bg) 80%, transparent)');
+    expect(out).toContain('0 12px 32px color-mix(in oklch, var(--vk-color-bg) 80%, transparent)');
+    expect(out, 'the 1px line ring is not a cast shadow and stays').toContain('0 0 0 1px var(--vk-color-line)');
+  });
+  it('leaves an inset ring drawn in the text colour alone (it is a border, not a shadow)', () => {
+    const html = '<html><body><style>.r { box-shadow: inset 0 0 0 2px var(--vk-color-text); }</style><div data-vibe="paper" data-theme="light"></div></body></html>';
+    expect(deriveDark(html)).toContain('inset 0 0 0 2px var(--vk-color-text)');
+  });
+  it('SP-Card-Paper: the sheet shadow no longer glows in the derived dark', () => {
+    const out = deriveDark(readFileSync(join(REF_DIR, 'SP-Card-Paper.html'), 'utf8'));
+    expect(out).not.toContain('color-mix(in oklch, var(--vk-color-text) 30%, transparent)');
+  });
+});

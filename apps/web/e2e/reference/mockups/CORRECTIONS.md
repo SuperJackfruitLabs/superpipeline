@@ -336,3 +336,9 @@ The SP-Dlg-Appearance artboards were 1200px tall and `.art` clipped the 1237–1
 |---|---|---|---|---|
 | SP-Spend-Daylight, SP-Spend-Paper, SP-Spend-Quiet, SP-Spend-Studio | every Board log row's time (68 per file, the plain and the raw lists) | the server's UTC `22:50:12` | the reader's clock, +5:30 in the harness's Asia/Kolkata (`04:20:12`) | Live audit #19: one time format, the user's own zone |
 | SP-Spend-* (all 4) | the log's meta line | "last 60 events, newest first · times in UTC" | "last 60 events, newest first" | Same |
+
+### Fix round 2 (CI linux-x64)
+
+| Artboard | Selector | Was | Now | Ruling |
+|---|---|---|---|---|
+| every derived-dark reference (no `.dark.html`) | `box-shadow` values cast in `color-mix(in oklch, var(--vk-color-text) N%, transparent)` | swapped to dark unchanged, so the light text colour made a sheet glow (SP-Card-Paper·dark: 1.046% on CI, 0.895% on macOS) | `deriveDark` (reference.ts) casts them as vibekit's own dark shadow, `color-mix(in oklch, var(--vk-color-bg) 80%, transparent)`; inset rings in the text colour are borders and stay. SP-Card-Paper·dark: 0.031% on macOS | Fix round 2: the derived dark follows vibekit's dark shadow tokens (--vk-shadow-dialog/-drawer/-pop/-sheet), as the app does |
