@@ -43,7 +43,7 @@
   }
 </script>
 
-<Dialog bind:open={app.filterOpen} title="Filter cards" onclose={close}>
+<Dialog bind:open={app.filterOpen} title="Filter cards" class="fd" onclose={close}>
   {#if active.length > 0}
     <div class="mb-3 flex flex-wrap items-center gap-1" role="group" aria-label="Filters on">
       {#each active as chip (chip.key)}
@@ -54,25 +54,31 @@
 
   {#if states.length > 0}
     <fieldset class="mb-3"><legend class="eyebrow mb-1.5">state</legend>
+      <div class="fd-choices">
       {#each states as s (s)}
         <Choice type="checkbox" name="fd-state" value={s} label={stateLabel(s)} bind:checked={() => f.states.includes(s), (on) => (app.filters.states = toggle(f.states, s, on))} />
       {/each}
+      </div>
     </fieldset>
   {/if}
 
   {#if owners.length > 0}
     <fieldset class="mb-3"><legend class="eyebrow mb-1.5">owner</legend>
+      <div class="fd-choices">
       {#each owners as o (o)}
         <Choice type="checkbox" name="fd-owner" value={o} label={ownerLabel(o, app.members, app.agents)} bind:checked={() => f.owners.includes(o), (on) => (app.filters.owners = toggle(f.owners, o, on))} />
       {/each}
+      </div>
     </fieldset>
   {/if}
 
   {#if labelCatalogue.length > 0}
     <fieldset class="mb-3"><legend class="eyebrow mb-1.5">labels</legend>
+      <div class="fd-choices">
       {#each labelCatalogue as l (l.id)}
         <Choice type="checkbox" name="fd-label" value={l.id} label={l.name} bind:checked={() => f.labels.includes(l.id), (on) => (app.filters.labels = toggle(f.labels, l.id, on))} />
       {/each}
+      </div>
     </fieldset>
   {/if}
 
@@ -80,19 +86,26 @@
     <!-- A SINGLE project at a time (unlike labels, which AND together): a card belongs to at most
          one project, so "match every selected project" would always show nothing. -->
     <fieldset class="mb-3"><legend class="eyebrow mb-1.5">project</legend>
+      <div class="fd-choices">
       {#each projectCatalogue as p (p.id)}
         <Choice type="checkbox" name="fd-project" value={p.id} label={p.name} bind:checked={() => f.projectId === p.id, (on) => (app.filters.projectId = on ? p.id : null)} />
       {/each}
+      </div>
     </fieldset>
   {/if}
 
-  <Field id="fd-priority" label="min priority" type="number" min="0" placeholder="—"
-    bind:value={() => (f.minPriority === null ? '' : String(f.minPriority)), (v) => (app.filters.minPriority = v === '' || v === undefined || v === null ? null : Number(v))} />
+  <!-- #7: "min priority" is a heading like the others (the eyebrow legend); the field keeps a full name. -->
+  <fieldset class="mb-3"><legend class="eyebrow mb-1.5">min priority</legend>
+    <Field id="fd-priority" label="Minimum priority" labelHidden type="number" min="0" placeholder="—"
+      bind:value={() => (f.minPriority === null ? '' : String(f.minPriority)), (v) => (app.filters.minPriority = v === '' || v === undefined || v === null ? null : Number(v))} />
+  </fieldset>
 
-  <fieldset class="mt-3">
+  <fieldset>
+    <div class="fd-choices">
     {#each FLAGS as [key, label] (key)}
       <Choice type="checkbox" name="fd-{key}" value={key} {label} bind:checked={() => f[key], (on) => (app.filters[key] = on)} />
     {/each}
+    </div>
   </fieldset>
 
   {#snippet lead()}
@@ -102,3 +115,8 @@
     <Button onclick={close}>Done</Button>
   {/snippet}
 </Dialog>
+
+<style>
+  /* #6: each box and its label read as one unit, with a clear gap before the next one. */
+  :global(.vk-dialog.fd .fd-choices) { display: flex; flex-wrap: wrap; gap: 0 24px; }
+</style>
