@@ -84,8 +84,8 @@ describe.each(LAYOUTS)('%s: every attempt', (_n, C, surface, vibe, newestOpen) =
     expect(toggle(ONE).textContent!.trim()).toMatch(/^Hide tool calls/);
     expect(toggle(ONE).getAttribute('aria-pressed')).toBe('true');
     expect(text(ONE)).toContain('Tool call 1');
-    if (newestOpen) expect(toggle(TWO).textContent!.trim(), 'the toggle is per attempt').toMatch(/^Show tool calls/);
-    else expect(document.querySelector(`button[data-attempt-tools="${TWO}"]`)?.textContent?.trim() ?? 'Show tool calls', 'the toggle is per attempt').toMatch(/^Show tool calls/);
+    expect(toggle(TWO), 'attempt two has its own toggle').toBeTruthy();
+    expect(toggle(TWO).textContent!.trim(), 'the toggle is per attempt').toMatch(/^Show tool calls/);
 
     const det = body(ONE)!.querySelector('details summary');
     expect(det?.textContent).toBe('Details');
