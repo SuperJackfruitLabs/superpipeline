@@ -12,6 +12,9 @@ export type Look = { vibe: Vibe; theme: 'light' | 'dark' };
 export type Html = { html: string };
 export const html = (s: string): Html => ({ html: s });
 
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+
 const ENTRY = fileURLToPath(new URL('./entry.ts', import.meta.url));
 let server: Promise<ViteDevServer> | null = null;
 
@@ -26,8 +29,14 @@ async function vite(): Promise<ViteDevServer> {
       appType: 'custom',
       server: { middlewareMode: true, hmr: false, ws: false },
       plugins: [svelte({ compilerOptions: { hmr: false } })],
-      ssr: { noExternal: ['@superjackfruit/vibekit'] },
+      // One svelte runtime: Node's own import of it, never pre-bundled or inlined by the module runner. Under
+      // load a second copy got evaluated beside the first, and vibekit's setContext then ran against a
+      // component stack it could not see (lifecycle_outside_component, about one run in four).
+      ssr: { noExternal: ['@superjackfruit/vibekit'], external: ['svelte'], optimizeDeps: { disabled: true } },
       optimizeDeps: { noDiscovery: true, include: [] },
+      // Its own pre-bundle cache: sharing node_modules/.vite with the dev server or another run makes one
+      // re-optimise under the other ("There is a new version of the pre-bundle", or a full page reload).
+      cacheDir: join(tmpdir(), `sp-resync-vite-${process.pid}`),
     });
   })();
   return server;
