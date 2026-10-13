@@ -4,6 +4,7 @@
  * Times on the page are the reader's own: a card's notices are stamped in UTC by the server and
  * shown on the reader's clock, in the app's short date form, like the board's "synced".
  */
+import { greetNamed } from '$lib/greet';
 import { greeting, type Phase, type Vibe } from '@superjackfruit/vibekit';
 import type { AgentSummary, Notification, Stage } from '$lib/api';
 import type { AttentionItem, AttentionKind } from '$lib/components/attention/attention';
@@ -119,11 +120,11 @@ export function needCounts(rows: NeedRow[]): NeedCounts {
 }
 
 // ---- Daylight ----
-export const greetingLabel = (phase: Phase): string => greeting(phase, 'daylight').replace(/\.$/, '');
+export const greetingLabel = (phase: Phase): string => greeting(phase, 'daylight').replace(/[.?!]$/, '');
 
 export function daylightGreeting(phase: Phase, firstName: string, n: number): string {
   const tail = n === 0 ? 'Nothing needs you.' : n === 1 ? '1 card wants you.' : `${n} cards want you.`;
-  return `${firstName ? `${greetingLabel(phase)}, ${firstName}` : greetingLabel(phase)}. ${tail}`;
+  return `${greetNamed(phase, firstName)} ${tail}`;
 }
 
 export function summarySentenceDaylight(c: NeedCounts, r: number): string {

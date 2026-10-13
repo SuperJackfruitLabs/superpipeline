@@ -3,7 +3,8 @@
  * The boards' own words, as pure functions of the model. Every string here is printed verbatim by a
  * reference artboard; the unit tests hold the exact strings.
  */
-import { greeting, type Mood, type Phase } from '@superjackfruit/vibekit';
+import { greetNamed } from '$lib/greet';
+import type { Mood, Phase } from '@superjackfruit/vibekit';
 import type { AttentionKind } from '$lib/components/attention/attention';
 import type { BoardSnapshot, Stage } from '$lib/api';
 import { ageStage } from '$lib/age';
@@ -30,9 +31,8 @@ export function personInitials(name: string): string {
 
 // ── Daylight ────────────────────────────────────────────────────────────────────────────────────
 export function greetingLine(phase: Phase, firstName: string, needs: number): string {
-  const hello = greeting(phase, 'daylight').replace(/[.?]$/, '');
   const tail = needs === 0 ? 'Nothing needs you.' : `${needs} ${needs === 1 ? 'card wants' : 'cards want'} you.`;
-  return `${firstName ? `${hello}, ${firstName}` : hello}. ${tail}`;
+  return `${greetNamed(phase, firstName)} ${tail}`;
 }
 
 /** What the agent says in the peek bubble, after its name. */

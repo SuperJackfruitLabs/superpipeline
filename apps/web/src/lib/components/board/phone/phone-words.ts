@@ -3,7 +3,8 @@
  * Words, orders and lines for the four phone boards (shell-and-board §3.4, §3.6, §4.5 phone rows).
  * Pure. Phones pass agent text through sentenceCase (C-06); desktop prints it verbatim.
  */
-import { greeting, type Mood, type Phase } from '@superjackfruit/vibekit';
+import { greetNamed } from '$lib/greet';
+import type { Mood, Phase } from '@superjackfruit/vibekit';
 import type { AttentionKind } from '$lib/components/attention/attention';
 import type { CardSummary, Urgency } from '$lib/components/board/card-summary';
 import { dueLong, dueShort } from '$lib/components/board/board-words';
@@ -55,8 +56,7 @@ export function needsCounts(rows: readonly Pick<OrderRow, 'urgency' | 'kind'>[])
 }
 
 export function phoneHello(phase: Phase, firstName: string): string {
-  const hello = greeting(phase, 'daylight').replace(/[.!]\s*$/, '');
-  return firstName ? `${hello}, ${firstName}.` : `${hello}.`;
+  return greetNamed(phase, firstName);
 }
 
 export function phoneHelloP(c: NeedsCounts): { strong: string; rest: string } {
