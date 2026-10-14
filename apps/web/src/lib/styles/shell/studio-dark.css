@@ -1,0 +1,22 @@
+/*
+ * Studio in dark: the ink rail and the phone tab bar.
+ *
+ * vibekit draws both as `background: var(--vk-color-text); color: var(--vk-color-bg)`: an ink slab,
+ * which in light is near-black. In dark `--vk-color-text` is the cream of the type, so the same rule
+ * drew a bright 64px slab down the left of a dark screen (and a bright bar at the foot of the phone).
+ * The rail keeps its inverted ink look by swapping the two tokens for its own subtree: the ground
+ * (darkest) token for the slab, the cream for what is drawn on it. This is unlayered, so it outranks
+ * vibekit's layers; it belongs upstream in vibekit's appnav.css and phonetabbar.css (vendored 0.0.10).
+ */
+[data-vibe='studio'][data-theme='dark'] :is(.vk-appnav--studio, .vk-phonetabbar--studio) {
+  --vk-color-text: var(--vk-color-ground);
+  --vk-color-bg: var(--vk-color-primary);
+}
+/* The ground is nearly the page's own colour: a hairline keeps the edge. */
+[data-vibe='studio'][data-theme='dark'] .vk-appnav--studio { border-right: 1px solid var(--vk-color-line); }
+[data-vibe='studio'][data-theme='dark'] .vk-phonetabbar--studio { border-top: 1px solid var(--vk-color-line); }
+/* The rail's hover tip is a card on the page, not part of the slab. */
+[data-vibe='studio'][data-theme='dark'] .vk-appnav--studio .vk-appnav__tip {
+  --vk-color-bg: var(--vk-color-surface);
+  --vk-color-text: var(--vk-color-primary);
+}

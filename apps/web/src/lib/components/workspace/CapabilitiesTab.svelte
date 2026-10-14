@@ -1,5 +1,6 @@
 <!-- apps/web/src/lib/components/workspace/CapabilitiesTab.svelte -->
 <script lang="ts">
+  import { autogrow } from '$lib/autogrow';
   import { Button, Face } from '@superjackfruit/vibekit';
   import LineIcon from '$lib/components/parts/LineIcon.svelte';
   import { CapabilitiesModel } from './capabilities-model.svelte';
@@ -42,7 +43,7 @@
           </div>
           <div style="min-width: 0px;">
             <label class="sr" for="cd-{c.key}">Description of {c.key}</label>
-            <input class="input" id="cd-{c.key}" placeholder="Add a description" value={c.description ?? ''} style="min-height: 44px;" onblur={(e) => void model.describe(c, e.currentTarget.value)} />
+            <textarea class="input grow" id="cd-{c.key}" rows="1" placeholder="Add a description" use:autogrow={c.description} value={c.description ?? ''} onblur={(e) => void model.describe(c, e.currentTarget.value)} onkeydown={(e) => { if (e.key === 'Enter') { e.preventDefault(); e.currentTarget.blur(); } }}></textarea>
           </div>
           <div class="caps">
             {#each c.implies ?? [] as to (to)}

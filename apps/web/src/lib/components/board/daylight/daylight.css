@@ -28,11 +28,12 @@
   .dl-tile.p2::before { background: var(--vk-color-primary); }
   .dl-tile.needs { box-shadow: inset 0 0 0 2px var(--vk-color-signal), 0 var(--vk-lift) 0 var(--vk-color-ground); }
   .dl-tile.focused { outline: 3px solid var(--vk-color-text); outline-offset: 3px; }
-  .dl-tile h3 { margin: 0; font-size: 15.5px; line-height: 1.35; font-weight: 700; padding-right: 64px; overflow-wrap: anywhere; }
+  .dl-tile h3 { margin: 0; font-size: 15.5px; line-height: 1.35; font-weight: 700; overflow-wrap: anywhere; }
   .dl-title { all: unset; cursor: pointer; }
   .dl-title::after { content: ""; position: absolute; inset: 0; border-radius: var(--vk-radius-sm); }
   .dl-title:focus-visible::after { outline: 3px solid var(--vk-color-text); outline-offset: 2px; }
-  .dl-move { position: absolute; z-index: 2; top: 6px; right: 6px; display: inline-flex; align-items: center; gap: 4px; min-height: 36px; padding: 0 8px; border: 0; border-radius: var(--vk-radius-sm); background: transparent; color: var(--vk-color-muted); font-size: 13px; font-weight: 600; cursor: pointer; }
+  /* Move sits on its own row above the title, so the title is as wide as the card (it used to hold 64px back for the whole height). */
+  .dl-move { position: relative; z-index: 2; order: -1; align-self: flex-end; margin: -6px -4px -9px 0; display: inline-flex; align-items: center; gap: 4px; min-height: 28px; padding: 0 8px; border: 0; border-radius: var(--vk-radius-sm); background: transparent; color: var(--vk-color-muted); font-size: 13px; font-weight: 600; cursor: pointer; }
   .dl-move:hover { background: var(--vk-color-raised); color: var(--vk-color-text); }
   .dl-chips { position: relative; z-index: 1; display: flex; flex-wrap: wrap; gap: 5px; }
   .dl-chip { display: inline-flex; align-items: center; gap: 4px; padding: 1px 9px; border-radius: var(--vk-radius-pill); background: var(--vk-color-raised); color: var(--vk-color-muted); font-size: 12.5px; font-weight: 600; }

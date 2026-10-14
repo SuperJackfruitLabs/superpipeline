@@ -1,5 +1,6 @@
 <!-- apps/web/src/lib/components/workspace/studio/LabelsStudio.svelte -->
 <script lang="ts">
+  import { autogrow } from '$lib/autogrow';
   import LineIcon from '$lib/components/parts/LineIcon.svelte';
   import { showsInferredBadge } from '../label-manager';
   import { LabelsModel } from '../labels-model.svelte';
@@ -26,8 +27,8 @@
       <tbody>
         {#each model.labels as l (l.id)}
           <tr>
-            <td><button class="wo-sw" aria-label="Colour of {l.name}" type="button" style="background: {l.colour};" onclick={() => picker.open((c) => void model.recolour(l, c))}></button></td>
-            <td><label class="sr" for="lb-{l.name}">Name</label><input class="ar-in" id="lb-{l.name}" value={l.name} onblur={(e) => void model.rename(l, e.currentTarget.value)} onkeydown={(e) => { if (e.key === 'Enter') e.currentTarget.blur(); }} /></td>
+            <td><button class="wo-sw" aria-label="Colour of {l.name}" type="button" style="background: {l.colour};" onclick={() => picker.open((c) => void model.recolour(l, c), l.name)}></button></td>
+            <td><label class="sr" for="lb-{l.name}">Name</label><textarea class="ar-in grow" id="lb-{l.name}" rows="1" use:autogrow={l.name} value={l.name} onblur={(e) => void model.rename(l, e.currentTarget.value)} onkeydown={(e) => { if (e.key === 'Enter') { e.preventDefault(); e.currentTarget.blur(); } }}></textarea></td>
             <td>{#if showsInferredBadge(l.origin)}<span class="wo-tag">inferred</span>{/if}</td>
             <td><button class="ar-ib wo-del" aria-label="Remove label {l.name}" type="button" disabled={model.removing === l.id} onclick={() => void model.remove(l)}><LineIcon name="trash" stroke={1.75} /></button></td>
           </tr>
@@ -36,7 +37,7 @@
     </table>
   {/if}
   <form class="wo-add" onsubmit={(e) => { e.preventDefault(); void model.add(); }}>
-    <button class="wo-sw" aria-label="Colour of the new label" type="button" style="background: {model.newColour ?? 'var(--vk-mood-needs)'}; margin-bottom: 8px;" onclick={() => picker.open((c) => (model.newColour = c))}></button>
+    <button class="wo-sw" aria-label="Colour of the new label" type="button" style="background: {model.newColour ?? 'var(--vk-mood-needs)'}; margin-bottom: 8px;" onclick={() => picker.open((c) => (model.newColour = c), 'the new label')}></button>
     <div class="ar-field"><label for="lb-new">New label</label><input class="ar-in" id="lb-new" placeholder="Name" bind:value={model.newName} /></div>
     <button class="ar-btn2" type="submit" disabled={model.creating}>Add</button>
     {#if model.error}<p class="ar-hint" role="alert">{model.error}</p>{/if}

@@ -1,5 +1,6 @@
 <!-- apps/web/src/lib/components/workspace/studio/CapabilitiesStudio.svelte -->
 <script lang="ts">
+  import { autogrow } from '$lib/autogrow';
   import { Face } from '@superjackfruit/vibekit';
   import LineIcon from '$lib/components/parts/LineIcon.svelte';
   import { CapabilitiesModel } from '../capabilities-model.svelte';
@@ -32,7 +33,7 @@
         {#each model.rows as c (c.id)}
           <tr>
             <td><p class="wo-cap">{c.key}</p><p class="wo-who"><span class="wo-stack">{#each holdersOf(c, model.agents) as a (a.id)}<Face id={a.name} label={a.name} mood="resting" size={20} src={a.iconUrl ?? undefined} />{/each}</span>{agentCountText(c.agentCount)}</p></td>
-            <td><label class="sr" for="cd-{c.key}">Description of {c.key}</label><input class="ar-in" id="cd-{c.key}" placeholder="Add a description" value={c.description ?? ''} onblur={(e) => void model.describe(c, e.currentTarget.value)} /></td>
+            <td><label class="sr" for="cd-{c.key}">Description of {c.key}</label><textarea class="ar-in grow" id="cd-{c.key}" rows="1" placeholder="Add a description" use:autogrow={c.description} value={c.description ?? ''} onblur={(e) => void model.describe(c, e.currentTarget.value)} onkeydown={(e) => { if (e.key === 'Enter') { e.preventDefault(); e.currentTarget.blur(); } }}></textarea></td>
             <td><div class="wo-caps">
               {#each c.implies ?? [] as to (to)}<span class="wo-tag">implies {to}<button class="wo-x h44" aria-label="Remove implies {to}" type="button" onclick={() => void model.unimply(c.key, to)}><LineIcon name="close" size={14} stroke={1.75} /></button></span>{/each}
               {#if c.boardCount === 0}<span class="wo-tag">no board asks</span>{/if}

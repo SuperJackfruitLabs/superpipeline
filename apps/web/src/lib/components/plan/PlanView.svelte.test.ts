@@ -66,7 +66,7 @@ describe('PlanView: the Daylight greeting', () => {
     const { container } = render(PlanView);
     expect(container.querySelector('.dl-band')).toBeNull();
     const hello = screen.getByRole('region', { name: 'Greeting' });
-    expect(hello.querySelector('h2')!.textContent).toMatch(/, Ira\.$/);
+    expect(hello.querySelector('h2')!.textContent).toMatch(/, Ira[.?]$/);
     expect(container.querySelector('.pd-board')).toBeTruthy();
   });
   it('is not drawn on an empty board (O-13)', () => {

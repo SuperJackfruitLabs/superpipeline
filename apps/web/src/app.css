@@ -7,6 +7,8 @@
 /* The page type scale, panel, chip and field the Plan, Workspace and Settings pages share (Daylight, Paper, Quiet); scoped to `.page`, under vibekit's layer for the same reason. */
 @import './lib/styles/screen.css' layer(base);
 @import './lib/styles/screen-deltas.css' layer(base);
+/* Page fixes that outrank both layers: unlayered. */
+@import './lib/styles/page-fixes.css';
 
 /*
  * Superpipeline on vibekit. The person's vibe and theme live on <html> (data-vibe, data-theme,

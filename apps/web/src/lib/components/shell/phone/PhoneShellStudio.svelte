@@ -6,6 +6,7 @@
    */
   import { Button, IconButton, Tabs } from '@superjackfruit/vibekit';
   import Icon from '$lib/components/parts/Icon.svelte';
+  import '$lib/styles/shell/studio-dark.css';
   import { shellModel as m } from '../shell-model.svelte';
   import type { ShellProps } from '../types';
   import { SEARCH_NAME } from './common';

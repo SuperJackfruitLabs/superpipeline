@@ -12,7 +12,7 @@
 </script>
 
 <div style="display: flex; flex-direction: column; gap: var(--vk-space-3);">
-  <a class="t-meta" href={back.href} style="display: inline-flex; align-items: center; gap: 4px; min-height: 32px; width: fit-content; color: var(--vk-color-muted);"><LineIcon name="chev-left" size={16} />{back.label}</a>
+  <a class="t-meta ws-back" href={back.href} style="display: inline-flex; align-items: center; gap: 4px; width: fit-content; color: var(--vk-color-muted);"><LineIcon name="chev-left" size={16} />{back.label}</a>
   <div style="display: flex; flex-wrap: wrap; align-items: flex-end; gap: var(--vk-space-4); justify-content: space-between;">
     <div style="display: flex; flex-direction: column; gap: 6px; min-width: 0px;">
       <p class="t-eyebrow">Workspace · shared by every board</p>
