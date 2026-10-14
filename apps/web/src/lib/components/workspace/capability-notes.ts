@@ -18,7 +18,7 @@ export function orphanNote(c: CapabilityRecord, holders: string[], boardId: stri
 
 export function unstaffedNote(c: CapabilityRecord): CapNote {
   const n = c.boardCount;
-  return { key: c.key, text: `is asked for by ${n} ${n === 1 ? 'board' : 'boards'} but no agent holds it, so cards there wait for ever.`, link: { label: 'Give it to an agent', href: '/workspace/agents' }, tail: '.' };
+  return { key: c.key, text: `is asked for by ${n} ${n === 1 ? 'board' : 'boards'} but no agent holds it, so cards there wait for ever.`, link: { label: 'Give it to an agent', href: '/crew/agents' }, tail: '.' };
 }
 
 export const capsHeading = (n: number) => `${n} ${n === 1 ? 'capability' : 'capabilities'}`;

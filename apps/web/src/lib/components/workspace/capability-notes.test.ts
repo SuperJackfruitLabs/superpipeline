@@ -16,7 +16,7 @@ describe('capability notes', () => {
     expect(orphanNote(C('x', 2, 0), ['a', 'b'], null).link.href).toBe('/');
   });
   it('names an unstaffed capability and links to the agents', () => {
-    expect(unstaffedNote(C('design', 0, 2))).toEqual({ key: 'design', text: 'is asked for by 2 boards but no agent holds it, so cards there wait for ever.', link: { label: 'Give it to an agent', href: '/workspace/agents' }, tail: '.' });
+    expect(unstaffedNote(C('design', 0, 2))).toEqual({ key: 'design', text: 'is asked for by 2 boards but no agent holds it, so cards there wait for ever.', link: { label: 'Give it to an agent', href: '/crew/agents' }, tail: '.' });
     expect(unstaffedNote(C('design', 0, 1)).text).toBe('is asked for by 1 board but no agent holds it, so cards there wait for ever.');
   });
   it('counts', () => {

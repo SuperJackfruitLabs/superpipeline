@@ -25,6 +25,8 @@
 :where(.wo-main) .wo-foot { padding-top: 10px; border-top: 1px solid var(--hair); font: 400 14.5px/1.45 var(--fs); color: var(--muted); }
 :where(.wo-main) .wo-note { display: flex; flex-direction: column; gap: 6px; padding: 2px 0 2px 18px; border-left: 4px solid var(--text); }
 :where(.wo-main) .wo-note p { font: 400 16px/1.45 var(--fs); }
+/* The widened target is measured from its own link: nothing above the crew pages sets `.ar`, so the base's position: relative never reached it, and the ::after grew to the page and covered the header's New capability. */
+:where(.wo-main) .wo-note .ar-lk { position: relative; }
 :where(.wo-main) .wo-note .ar-lk::after { content: ""; position: absolute; left: 0; right: 0; top: 50%; height: max(44px, 100%); transform: translateY(-50%); }
 :where(.wo-main) .wo-cap { font: 800 15px/1.3 var(--ff); }
 :where(.wo-main) .wo-who { display: flex; align-items: center; gap: 8px; margin-top: 4px; font: 500 12px var(--fm); color: var(--muted); }

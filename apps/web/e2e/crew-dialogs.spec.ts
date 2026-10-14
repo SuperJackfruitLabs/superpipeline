@@ -3,7 +3,7 @@
 // field, closes on Escape and Cancel with focus back on its button, and fits a phone in every vibe (44px Close,
 // stacked fields, inside the viewport).
 import { expect, test, type Locator, type Page } from '@playwright/test';
-import { API, TENANT, setAppearance } from './support/seed';
+import { API, TENANT, seedBoard, setAppearance } from './support/seed';
 
 const VIBES = ['daylight', 'paper', 'studio', 'quiet'] as const;
 const DIALOGS = [
@@ -23,9 +23,12 @@ async function within(page: Page, loc: Locator, what: string): Promise<void> {
 }
 
 async function openFrom(page: Page, tab: string, name: string): Promise<{ button: Locator; dialog: Locator }> {
-  await page.goto(`/workspace/${tab}`);
+  await page.goto(`/crew/${tab}`);
   const button = page.getByRole('button', { name, exact: true }).first();
   await expect(button).toBeVisible({ timeout: 60_000 });
+  // Nothing may sit over the header's button (a note's widened link target once covered it in Studio).
+  const covered = await button.evaluate((el) => { const r = el.getBoundingClientRect(); const hit = document.elementFromPoint(r.x + r.width / 2, r.y + r.height / 2); return hit && !el.contains(hit) ? hit.outerHTML.slice(0, 120) : null; });
+  expect(covered, `${name} is not covered`).toBeNull();
   await button.click();
   const dialog = page.getByRole('dialog', { name });
   await expect(dialog).toBeVisible();
@@ -34,6 +37,8 @@ async function openFrom(page: Page, tab: string, name: string): Promise<{ button
 
 // The near-name hint and the agent's chip both lean on `research`; it may already exist (a 409 is fine).
 test.beforeAll(async ({ request }) => {
+  // A stage asking for a capability no agent holds puts a note (with a link) on Capabilities in every vibe.
+  await seedBoard(request, `Crew note ${Date.now().toString(36)}`, [{ key: 'w', name: 'Work', order: 0, ownerKind: 'capability', owner: `unstaffed-${Date.now().toString(36)}` }]);
   await request.post(`${API}/v1/capabilities`, { headers: TENANT, data: { key: 'research' } });
 });
 
