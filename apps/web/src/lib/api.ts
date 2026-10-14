@@ -1036,8 +1036,10 @@ export async function createAgent(
   name: string,
   capabilities: string[],
   externalId?: string,
+  opts: { concurrency?: number } = {},
 ): Promise<AgentToken> {
-  const body = externalId ? { name, capabilities, externalId } : { name, capabilities };
+  const body: Record<string, unknown> = externalId ? { name, capabilities, externalId } : { name, capabilities };
+  if (opts.concurrency !== undefined) body.concurrency = opts.concurrency;
   const res = await fetch('/v1/agents', { method: 'POST', headers, body: JSON.stringify(body) });
   if (!res.ok) {
     // The Worker's message is the useful one — "already linked to a different
@@ -1258,8 +1260,9 @@ export async function getMembers(): Promise<Member[]> {
  * Add someone by email. No mail is sent: `users` is keyed on the address GitHub gives at sign-in,
  * so recording the membership first means the invitee signs in and finds the workspace waiting.
  */
-export function addMember(email: string, role: Role): Promise<Response> {
-  return fetch('/v1/members', { method: 'POST', headers, body: JSON.stringify({ email, role }) });
+export function addMember(email: string, role: Role, name?: string): Promise<Response> {
+  const body = name ? { email, role, name } : { email, role };
+  return fetch('/v1/members', { method: 'POST', headers, body: JSON.stringify(body) });
 }
 
 export function setMemberRole(userId: string, role: Role): Promise<Response> {

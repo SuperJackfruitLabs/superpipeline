@@ -3,17 +3,24 @@
   import LineIcon from '$lib/components/parts/LineIcon.svelte';
   import type { Role } from '$lib/api';
   import { PeopleModel } from '../people-model.svelte';
-  import { initials, INVITE_ORDER, lastOwner, peopleHeading, ROLE_LABEL, ROLE_ORDER, roleHelpTitle, roleHint } from '../workspace-words';
+  import { Button } from '@superjackfruit/vibekit';
+  import { initials, lastOwner, peopleHeading, ROLE_LABEL, ROLE_ORDER, roleHelpTitle } from '../workspace-words';
+  import NewPersonDialog from '../dialogs/NewPersonDialog.svelte';
   import type { WorkspaceTabProps } from '../types';
 
   let { review }: WorkspaceTabProps = $props();
   const model = new PeopleModel();
   // Loaded during init (ssr is off): the busy mark is held before the first paint.
   void model.refresh();
+  let creating = $state(false);
+  function openNew(): void { model.resetNew(); creating = true; }
 </script>
 
+{#snippet plusIcon()}<LineIcon name="plus" size={18} stroke={1.75} />{/snippet}
+
 <section class="ar-sec" aria-labelledby="pt-h">
-  <div class="hd"><span class="no">{review?.no ?? '01'}</span>{#if review}<span class="kick">{review.tag}</span>{/if}<h2 id="pt-h">{model.members === null ? 'People' : peopleHeading(model.members.length)}</h2></div>
+  <div class="hd"><span class="no">{review?.no ?? '01'}</span>{#if review}<span class="kick">{review.tag}</span>{/if}<h2 id="pt-h">{model.members === null ? 'People' : peopleHeading(model.members.length)}</h2><span class="r"><Button type="button" icon={plusIcon} onclick={openNew}>New person</Button></span></div>
+  {#if model.error && !creating}<p class="ar-hint" role="alert">{model.error}</p>{/if}
   {#if model.members === null}
     <p class="ar-hint" role="status">Loading people…</p>
   {:else}
@@ -32,11 +39,6 @@
       </tbody>
     </table>
   {/if}
-  <form class="wo-inv" onsubmit={(e) => { e.preventDefault(); void model.invite(); }}>
-    <div class="ar-field"><label for="inv-e">Invite by email</label><input class="ar-in" id="inv-e" type="email" placeholder="name@example.com" bind:value={model.email} /></div>
-    <div class="ar-field"><label for="inv-r">Role</label><select class="ar-sel" id="inv-r" bind:value={model.role}>{#each INVITE_ORDER as r (r)}<option value={r}>{ROLE_LABEL[r]}</option>{/each}</select></div>
-    <button class="ar-btn2" type="submit" disabled={model.busy}>Invite</button>
-    <p class="ar-hint">{roleHint(model.role)}</p>
-    {#if model.error}<p class="ar-hint" role="alert">{model.error}</p>{/if}
-  </form>
 </section>
+
+<NewPersonDialog bind:open={creating} {model} />

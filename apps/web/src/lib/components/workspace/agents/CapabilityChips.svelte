@@ -7,7 +7,7 @@
 
   let {
     selected = $bindable(), typed = $bindable(), registry, labelledBy, inputId, form, wrapInput,
-  }: { selected: string[]; typed: string; registry: CapabilityRecord[]; labelledBy: string; inputId: string; form: 'page' | 'studio'; wrapInput: boolean } = $props();
+  }: { selected: string[]; typed: string; registry: CapabilityRecord[]; labelledBy: string; inputId: string; form: 'page' | 'studio' | 'dialog'; wrapInput: boolean } = $props();
 
   const keys = $derived(chipKeys(registry, selected));
   function flip(k: string): void {
@@ -22,8 +22,12 @@
 </script>
 
 {#snippet input()}
-  <label class="sr" for={inputId}>New capability</label>
-  <input class={form === 'studio' ? 'ar-in' : 'input'} id={inputId} placeholder="Add a capability" style="width: 200px; min-height: 36px;" bind:value={typed} onkeydown={onKey} />
+  <label class={form === 'dialog' ? 'vk-visually-hidden' : 'sr'} for={inputId}>New capability</label>
+  {#if form === 'dialog'}
+    <input class="vk-field__input" id={inputId} placeholder="Add a capability" bind:value={typed} onkeydown={onKey} />
+  {:else}
+    <input class={form === 'studio' ? 'ar-in' : 'input'} id={inputId} placeholder="Add a capability" style="width: 200px; min-height: 36px;" bind:value={typed} onkeydown={onKey} />
+  {/if}
 {/snippet}
 
 <div class={form === 'studio' ? 'wa-caps' : 'caps'} role="group" aria-labelledby={labelledBy}>

@@ -48,8 +48,6 @@
 :where(.wo-main) .wo-ini { width: 36px; height: 36px; font-size: 13px; border-radius: 2px; }
 :where(.wo-main) .wo-person { display: flex; align-items: center; gap: 12px; }
 :where(.wo-main) .wo-person b { display: block; font-size: 15px; }
-:where(.wo-main) .wo-inv { display: grid; grid-template-columns: minmax(0, 1fr) 150px auto; gap: 10px 12px; align-items: end; }
-:where(.wo-main) .wo-inv .ar-hint { grid-column: 1 / -1; }
 :where(.wo-main) .wo-kv { grid-template-columns: minmax(150px, max-content) minmax(0, 1fr) auto; }
 :where(.wo-main) .wo-kv > dt span { display: block; font: 400 13px/1.4 var(--fs); color: var(--muted); font-weight: 400; }
 :where(.wo-main) .wo-kv > dd { display: flex; align-items: center; }

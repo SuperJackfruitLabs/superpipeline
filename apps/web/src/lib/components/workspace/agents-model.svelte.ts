@@ -30,7 +30,12 @@ export class AgentsModel {
   newName = $state('');
   newCaps = $state<string[]>([]);
   newCap = $state('');
+  /** Text, as the field holds it; a whole number of at least 1 is sent. */
+  newConcurrency = $state('1');
+  newIcon = $state('');
   minting = $state(false);
+  /** The New agent dialog's own error, so it shows in the dialog rather than under the list. */
+  createError = $state<string | null>(null);
 
   /** Agents whose token list is expanded past the first two. */
   allTokens = $state<string[]>([]);
@@ -122,19 +127,46 @@ export class AgentsModel {
     if ((await setAgentPrincipal(a.id, null)).ok) await this.refresh();
   }
 
-  async mint(): Promise<void> {
-    if (!this.canCreate) return;
+  /** A blank New agent form, for each opening of the dialog. */
+  resetNew(): void {
+    this.newName = '';
+    this.newCaps = [];
+    this.newCap = '';
+    this.newConcurrency = '1';
+    this.newIcon = '';
+    this.createError = null;
+  }
+
+  /** Creates the agent and issues its first token; true when it exists, so the dialog may close. */
+  async mint(): Promise<boolean> {
+    if (!this.canCreate) return false;
+    const concurrency = Number(this.newConcurrency);
+    if (!Number.isInteger(concurrency) || concurrency < 1) {
+      this.createError = 'Cards at once must be a whole number of at least 1.';
+      return false;
+    }
     this.minting = true;
-    this.error = null;
+    this.createError = null;
     try {
-      const t = await createAgent(this.newName.trim(), [...this.newCaps]);
+      const t = await createAgent(this.newName.trim(), [...this.newCaps], undefined, { concurrency });
       this.minted = { agentName: t.agent.name, token: t.token };
       this.copied = false;
-      this.newName = '';
-      this.newCaps = [];
+      // The create route takes no picture; a PATCH sets it. The agent exists either way, so a refused
+      // picture is said under the list, not by keeping the dialog open on an agent already made.
+      const icon = this.newIcon.trim();
+      if (icon !== '') {
+        const res = await updateAgent(t.agent.id, { iconUrl: icon });
+        if (!res.ok) {
+          const body = (await res.json().catch(() => null)) as { error?: string } | null;
+          this.error = `${t.agent.name} was created, but its picture was not saved: ${body?.error ?? res.status}`;
+        }
+      }
+      this.resetNew();
       await this.changed();
+      return true;
     } catch (e) {
-      this.error = message(e);
+      this.createError = message(e);
+      return false;
     } finally {
       this.minting = false;
     }

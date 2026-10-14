@@ -29,5 +29,5 @@
 @media (max-width: 639.98px) {
   :where(.scr-ws) .nrow { grid-template-columns: minmax(0, 1fr); }
   :where(.scr-ws) .nacts, :where(.scr-ws) .resume { grid-column: 1; }
-  :where(.scr-ws) .lrow.member, :where(.scr-ws) .invite, :where(.scr-ws) .kv { grid-template-columns: minmax(0, 1fr) !important; }
+  :where(.scr-ws) .lrow.member, :where(.scr-ws) .kv { grid-template-columns: minmax(0, 1fr) !important; }
 }
