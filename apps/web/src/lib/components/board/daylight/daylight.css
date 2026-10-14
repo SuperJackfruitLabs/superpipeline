@@ -10,12 +10,16 @@
   .dl-jump { margin-left: auto; font-size: 14px; font-weight: 600; }
   :scope.dl-board { position: relative; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1.15fr) minmax(0, 1fr) 60px 60px minmax(0, 1fr); gap: 14px; padding: 20px 4px 28px; align-items: start; }
   .dl-lane { position: relative; display: flex; flex-direction: column; gap: 10px; min-width: 0; padding: 8px; border-radius: var(--vk-radius-md); background: var(--vk-color-raised); }
-  .dl-lane:not(:last-child)::after, .dl-strip:not(:last-child)::after { content: ""; position: absolute; top: 22px; right: -12px; width: 10px; height: 10px; border-top: 2px solid var(--vk-color-faint); border-right: 2px solid var(--vk-color-faint); transform: rotate(45deg); }
+  .dl-slot:not(:last-child) > :is(.dl-lane, .dl-strip)::after { content: ""; position: absolute; top: 22px; right: -12px; width: 10px; height: 10px; border-top: 2px solid var(--vk-color-faint); border-right: 2px solid var(--vk-color-faint); transform: rotate(45deg); }
   .dl-lanehead { display: flex; flex-direction: column; gap: 2px; padding: 2px 4px 4px; }
   .dl-lanehead h2 { display: flex; align-items: baseline; gap: 8px; margin: 0; font-family: var(--vk-font-display); font-size: 17px; font-weight: 700; }
   .dl-count { font: 600 14px/1 var(--vk-font-mono); color: var(--vk-color-muted); }
   .dl-blocked { display: inline-flex; align-items: center; gap: 4px; font-size: 13px; font-weight: 600; color: var(--vk-color-muted); }
   .dl-owner { font-size: 13px; color: var(--vk-color-muted); overflow-wrap: anywhere; }
+  /* One slot per stage persists while its content swaps strip <-> lane, so the width can animate. */
+  .dl-slot { position: relative; min-width: 0; }
+  .dl-slot[data-resizing] { overflow: hidden; }
+  .dl-slot[data-resizing] > .dl-lane::after { display: none; }
   .dl-strip { position: relative; display: flex; flex-direction: column; align-items: center; gap: 10px; width: 60px; min-height: 260px; padding: 12px 0; border: 2px dashed var(--vk-color-line); border-radius: var(--vk-radius-md); background: transparent; color: var(--vk-color-muted); cursor: pointer; }
   .dl-strip:hover { background: var(--vk-color-raised); color: var(--vk-color-text); }
   .dl-strip .v { writing-mode: vertical-rl; font-family: var(--vk-font-display); font-weight: 700; font-size: 15px; color: var(--vk-color-text); }

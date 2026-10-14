@@ -31,7 +31,7 @@
       {#if stage.blocked > 0}<span class="dl-blocked" title="Blocked cards are skipped when agents claim work"><Icon name="blocked" size={14} strokeWidth={1.8} />{stage.blocked} blocked</span>{/if}
     </h2>
     <span class="dl-owner">{stage.ownerLong}</span>
-    {#if onCollapse}<IconButton class="dl-collapse" icon="chevron-down" label="Collapse stage" onclick={onCollapse} />{/if}
+    {#if onCollapse}<IconButton class="dl-collapse" icon="chevron-down" label="Collapse stage" expanded onclick={onCollapse} />{/if}
   </div>
   {#if cards.length === 0}<p class="dl-owner">No cards in this stage.</p>{/if}
   {#each cards as s (s.id)}
