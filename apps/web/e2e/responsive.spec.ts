@@ -56,12 +56,16 @@ for (const vp of WIDTHS) {
         await expect(page.getByText('Responsive E2E').first()).toBeVisible();
         expect(await pageScrollsSideways(page), `/b/:id${path}`).toBe(false);
       }
-      await page.goto('/workspace/agents');
-      await expect(page.getByRole('tab', { name: 'Agents' })).toBeVisible();
-      expect(await pageScrollsSideways(page), '/workspace/agents').toBe(false);
-      await page.goto('/workspace/needs-you');
-      await expect(page.getByRole('heading', { name: 'Waiting on you, across every board' })).toBeVisible();
-      expect(await pageScrollsSideways(page), '/workspace/needs-you').toBe(false);
+      await page.goto('/crew/agents');
+      await expect(page.getByRole('tab', { name: /^Agents/ })).toBeVisible();
+      expect(await pageScrollsSideways(page), '/crew/agents').toBe(false);
+      await page.goto('/settings');
+      await expect(page.getByRole('heading', { name: 'Connections' }).first()).toBeVisible();
+      expect(await pageScrollsSideways(page), '/settings').toBe(false);
+      // The Inbox on every board: the Show row and long board names stay inside the screen.
+      await page.goto('/inbox');
+      await expect(page.getByRole('heading', { name: 'Needs you', exact: true })).toBeVisible();
+      expect(await pageScrollsSideways(page), '/inbox').toBe(false);
     });
 
     test('sign-out and the theme are reachable', async ({ page }) => {
@@ -107,7 +111,7 @@ for (const vp of WIDTHS) {
     }
 
     if (vp.width === 1920) {
-      test('Operate uses most of a wide screen', async ({ page }) => {
+      test('the Inbox uses most of a wide screen', async ({ page }) => {
         await page.goto(`/b/${boardId}/operate`);
         await expect(page.getByRole('heading', { name: 'Needs you', exact: true })).toBeVisible();
         const span = await page.locator('main section').evaluateAll((els) => {

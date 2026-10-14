@@ -43,7 +43,7 @@ A2A at its core, with Linear's activity/signal model for transparency and human-
    ([05 §2](./05-integration-surfaces.md)). A token's `scopes` are enforced — see
    [01 → An agent token's scopes](./01-domain-model-and-glossary.md) — and a mint may ask for
    fewer than the default: `POST /v1/agents/:id/tokens {"scopes":["run"]}`, or **Issue a run-only
-   token** in Workspace → Agents. A `run`-only credential drives the card the agent already holds
+   token** in Crew → Agents. A `run`-only credential drives the card the agent already holds
    and cannot claim another, which is what makes it safe to hand to a *harness* — an agent
    spending its own credential from inside a session someone else dispatched. Narrowing is a
    human act: an agent cannot mint for itself at all, so it can neither narrow nor widen what it

@@ -154,9 +154,9 @@ for (const [name, size] of [['a phone', PHONE], ['a desktop', DESKTOP]] as const
       // The audit's severe finding in one assertion: on a phone, Agents was off-screen, and with
       // it capabilities, members, tokens and the fleet link.
       await page.goto(`/b/${boardId}`);
-      const workspace = page.getByRole('link', { name: /^workspace/i }).or(page.getByRole('button', { name: /^(workspace|agents)/i })).first();
-      await expect(workspace).toBeVisible();
-      await workspace.click();
+      const crew = page.getByRole('link', { name: /^crew/i }).or(page.getByRole('button', { name: /^(crew|agents)/i })).first();
+      await expect(crew).toBeVisible();
+      await crew.click();
       await expect(page.getByRole('heading', { name: /agents/i }).or(page.getByText(/capabilit/i)).first()).toBeVisible();
     });
 

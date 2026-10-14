@@ -1,4 +1,5 @@
 import type { APIRequestContext, Page } from '@playwright/test';
+import { expect } from '@playwright/test';
 
 import { PORTS } from '../../scripts/ports';
 export const API = PORTS.apiUrl;
@@ -43,7 +44,19 @@ export async function seedQuestionCard(request: APIRequestContext, boardId: stri
 
 export async function openBoard(page: Page, boardId: string): Promise<void> {
   await page.addInitScript((id) => window.localStorage.setItem('superpipeline.boardId', id), boardId);
-  await page.goto('/');
+  await page.goto(`/b/${boardId}`);
+}
+
+/**
+ * The app opens on the Inbox (nav v2). A spec that remembered a board (`superpipeline.boardId`)
+ * (or none: the first board) and wants its Plan follows Plan's link.
+ */
+export async function openRememberedBoard(page: Page): Promise<void> {
+  await page.goto('/inbox');
+  // Plan's link names the board the app opened: the remembered one, else the first.
+  const plan = page.getByRole('navigation', { name: 'Superpipeline' }).getByRole('link', { name: 'Plan', exact: true });
+  await expect(plan).toHaveAttribute('href', /^\/b\//, { timeout: 15_000 });
+  await page.goto((await plan.getAttribute('href'))!);
 }
 
 /** Sets the person's appearance before any page script runs. */

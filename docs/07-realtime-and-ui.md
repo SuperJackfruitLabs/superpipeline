@@ -163,3 +163,27 @@ Triggered by the status chips marked 🔔 above. Channels: in-app, email, and **
 primary surface for agent HITL — HumanLayer/Devin/Factory all lead with it). A gate notification
 carries the typed actions so a human can **Approve / Request changes / Reject directly from Slack**
 ([08](./08-reliability-and-durable-execution.md) defines the resolve flow).
+
+## Navigation (nav v2, 2026-10-14)
+
+Three places, in this order in the desktop rail or top nav and in the phone bar: **Inbox**, **Plan**,
+**Crew** (and **You**, the account menu, on a phone). Keys: `G I`, `G P`, `G C` (the old `G O` and
+`G W` still land on Inbox and Crew).
+
+- **Inbox** (`/inbox`) is the home: `/` opens it. It is what needs you, what is running, what it cost
+  and what happened, on **every board** by default. The **Show** row switches between All boards, the
+  boards that need you (first, most first) and the rest ("N more boards"). The choice is held in
+  memory only — never localStorage, sessionStorage or the address — so a refresh, a new tab or a new
+  session starts on All boards. Every ask carries its board as a chip next to the agent. The nav
+  badge on Inbox is the needs-you count across all boards, and its accessible name says so. Budget
+  caps and the Spend details link need one board chosen.
+- **Plan** is the board (`/b/:id`), its List and Projects. A board's **spend and log**
+  (`/b/:id/operate/telemetry`, `/b/:id/operate/log`) belong to the board: they open from the board
+  header (the board name's switcher, "Spend and log"), from the palette's "Spend detail", and from
+  the Inbox's Spend "Details" when that board is chosen.
+- **Crew** (`/crew/agents|people|capabilities`) is who and what may act: no Needs-you tab, no badge.
+- **Settings** (`/settings`), from the account menu: Labels, Connections, Appearance, Account.
+
+Old addresses keep working: `/b/:id/operate` opens the Inbox showing that board;
+`/workspace/needs-you` opens the Inbox; `/workspace/labels` and `/workspace/connections` open
+Settings; the other `/workspace/:tab` links open the Crew tab.

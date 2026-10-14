@@ -9,6 +9,7 @@
  * completely different to a person.
  */
 import { test, expect } from '@playwright/test';
+import { openRememberedBoard } from './support/seed';
 
 const BOARD_KEY = 'superpipeline.boardId';
 import { PORTS } from '../scripts/ports';
@@ -43,7 +44,7 @@ test.describe('on a phone', () => {
   });
 
   test('the rail is out of the way entirely', async ({ page }) => {
-    await page.goto('/');
+    await openRememberedBoard(page);
     await expect(page.getByText('Visible on a phone').first()).toBeVisible();
 
     // The rail is what ate the screen. Below 900px it is not rendered at all — the bottom bar is
@@ -55,7 +56,7 @@ test.describe('on a phone', () => {
   });
 
   test('the board is not pushed off the side by a rail', async ({ page }) => {
-    await page.goto('/');
+    await openRememberedBoard(page);
     await expect(page.getByText('Visible on a phone').first()).toBeVisible();
     const scrolls = await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth);
     expect(scrolls).toBe(false);
@@ -65,20 +66,20 @@ test.describe('on a phone', () => {
     // Replaces three tests of a hamburger drawer, removed in the 2026-09-03 restructure. The
     // drawer existed because a 208px rail could not fit beside a 390px board; the fix was not a
     // better drawer but a bottom bar, so the assertions move to it rather than being deleted.
-    await page.goto('/');
+    await openRememberedBoard(page);
     await expect(page.getByText(/^Backlog\b/).first()).toBeVisible();
 
     const nav = page.getByRole('navigation', { name: 'Superpipeline' });
-    for (const name of ['Plan', 'Operate', 'Workspace']) {
+    for (const name of [/^Inbox/, /^Plan$/, /^Crew$/]) {
       await expect(nav.getByRole('link', { name })).toBeVisible();
     }
 
-    await nav.getByRole('link', { name: 'Operate' }).click();
-    await expect(page).toHaveURL(/\/operate$/);
+    await nav.getByRole('link', { name: /^Inbox/ }).click();
+    await expect(page).toHaveURL(/\/inbox$/);
     await expect(page.getByRole('heading', { name: 'Needs you', exact: true })).toBeVisible();
 
-    await nav.getByRole('link', { name: 'Workspace' }).click();
-    await expect(page).toHaveURL(/\/workspace\/agents$/);
+    await nav.getByRole('link', { name: 'Crew' }).click();
+    await expect(page).toHaveURL(/\/crew\/agents$/);
 
     await nav.getByRole('link', { name: 'Plan' }).click();
     await expect(page.getByText(/^Backlog\b/).first()).toBeVisible();
@@ -87,9 +88,9 @@ test.describe('on a phone', () => {
   test('every navigation target clears the touch floor', async ({ page }) => {
     // The audit measured eight controls under 24x24. A bottom bar whose targets are hard to hit
     // is the same failure wearing a different layout.
-    await page.goto('/');
+    await openRememberedBoard(page);
     const nav = page.getByRole('navigation', { name: 'Superpipeline' });
-    for (const name of ['Plan', 'Operate', 'Workspace']) {
+    for (const name of [/^Inbox/, /^Plan$/, /^Crew$/]) {
       const box = await nav.getByRole('link', { name }).boundingBox();
       expect(box!.height).toBeGreaterThanOrEqual(44);
     }
@@ -98,7 +99,7 @@ test.describe('on a phone', () => {
   test('the board fits the screen rather than being pushed off it', async ({ page }) => {
     // The actual complaint. A 208px rail on a 390px screen leaves 182px of
     // board, so this asserts the first column is genuinely reachable.
-    await page.goto('/');
+    await openRememberedBoard(page);
     const column = page.getByText(/^Backlog\b/).first();
     await expect(column).toBeInViewport();
   });
@@ -106,7 +107,7 @@ test.describe('on a phone', () => {
 
 test.describe('on a desktop', () => {
   test('the rail is still simply there, and the bottom bar is not', async ({ page }) => {
-    await page.goto('/');
+    await openRememberedBoard(page);
     await expect(page.getByText('Backlog', { exact: true })).toBeVisible();
     // One navigation at a time: the rail above 900px, the bottom bar below it. Both at once was
     // the shape of the `max-[900px]:`/`min-[900px]:` bug the restructure was careful to avoid.

@@ -36,7 +36,7 @@ test('a human approves an agent-opened gate from the board', async ({ page, requ
 
   // 2. Load that board in the UI — the card sits at the review gate with resolve actions.
   await page.addInitScript((id) => window.localStorage.setItem('superpipeline.boardId', id), boardId);
-  await page.goto('/');
+  await page.goto(`/b/${boardId}`);
 
   const review = page.locator('[data-lane="review"]');
   await expect(review.locator('[data-card-id]', { hasText: 'Launch post' })).toBeVisible();
@@ -79,7 +79,7 @@ test.describe('on a phone', () => {
       data: { leaseEpoch: claim.leaseEpoch, handoff: { summary: 'drafted' } },
     });
     await page.addInitScript((id) => window.localStorage.setItem('superpipeline.boardId', id), boardId);
-    await page.goto('/');
+    await page.goto(`/b/${boardId}`);
     // The phone board's tile action is the needs word itself (the desktop board's is '⚑ Review').
     await page.getByRole('button', { name: /^(⚑ )?Review$/ }).first().click();
 

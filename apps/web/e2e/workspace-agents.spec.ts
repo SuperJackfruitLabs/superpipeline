@@ -7,7 +7,7 @@ test('issuing a token shows it once and counts it on the row', async ({ page, re
   const res = await request.post(`${API}/v1/agents`, { headers: TENANT, data: { name, capabilities: ['research'] } });
   expect(res.ok()).toBe(true);
 
-  await page.goto('/workspace/agents');
+  await page.goto('/crew/agents');
   const row = page.locator('li.arow, tr').filter({ hasText: name });
   await expect(row.getByText('1 token', { exact: true })).toBeVisible();
 

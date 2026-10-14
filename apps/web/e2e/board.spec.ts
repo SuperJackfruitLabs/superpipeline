@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { openRememberedBoard } from './support/seed';
 
 // Composing is a sheet now, opened by the header's one primary action. The old inline field plus
 // a 15x16px `+` popover put priority, due date and description behind a control below the WCAG
@@ -27,7 +28,7 @@ test.beforeEach(async ({ page, request }) => {
 });
 
 test('renders the pipeline columns and connects live', async ({ page }) => {
-  await page.goto('/');
+  await openRememberedBoard(page);
   for (const col of ['Backlog', 'Ready', 'In Progress', 'Review', 'Done']) {
     await expect(page.getByText(col, { exact: true })).toBeVisible();
   }
@@ -35,7 +36,7 @@ test('renders the pipeline columns and connects live', async ({ page }) => {
 });
 
 test('creates a card via the composer', async ({ page }) => {
-  await page.goto('/');
+  await openRememberedBoard(page);
   await page.getByRole('button', { name: 'New card' }).click();
   await page.getByLabel('Card title').fill('Write the launch post');
   await page.getByRole('button', { name: 'Dispatch' }).click();
@@ -43,7 +44,7 @@ test('creates a card via the composer', async ({ page }) => {
 });
 
 test('moves a card to another column via drag', async ({ page }) => {
-  await page.goto('/');
+  await openRememberedBoard(page);
   await page.getByRole('button', { name: 'New card' }).click();
   await page.getByLabel('Card title').fill('Draggable task');
   await page.getByRole('button', { name: 'Dispatch' }).click();
@@ -60,13 +61,13 @@ test('moves a card to another column via drag', async ({ page }) => {
 test('streams a new card to a second client in real time', async ({ browser }) => {
   const a = await browser.newPage();
   await a.addInitScript(([key, id]) => window.localStorage.setItem(key, id), [BOARD_KEY, boardId]);
-  await a.goto('/');
+  await openRememberedBoard(a);
   await expect(a.getByText('Backlog', { exact: true })).toBeVisible();
 
   // Second client opens the SAME board, then subscribes to its live feed.
   const b = await browser.newPage();
   await b.addInitScript(([key, id]) => window.localStorage.setItem(key, id), [BOARD_KEY, boardId]);
-  await b.goto('/');
+  await openRememberedBoard(b);
   await expect(b.getByText('Backlog', { exact: true })).toBeVisible();
 
   await a.getByRole('button', { name: 'New card' }).click();
