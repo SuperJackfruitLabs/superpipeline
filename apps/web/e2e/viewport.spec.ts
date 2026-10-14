@@ -82,7 +82,9 @@ for (const { name, height } of HEIGHTS) {
       test(`the board${route || ' (Plan)'} keeps the nav on screen`, async ({ page }) => {
         await page.goto(`/b/${boardId}${route}`);
         await expect(page.getByRole('navigation', { name: 'Superpipeline' })).toBeVisible();
-        await page.waitForLoadState('networkidle');
+        // Not 'networkidle': the app holds a live connection and polls, so the network is never idle
+        // on a slow runner. data-ready says the board and its catalogue are in and nothing is pending.
+        await expect(page.locator('html')).toHaveAttribute('data-ready', 'true');
         const f = await frame(page);
         expect(f.navBottom).toBeLessThanOrEqual(f.innerHeight + 0.5);
         expect(f.sideways).toBeLessThanOrEqual(0);
@@ -92,7 +94,8 @@ for (const { name, height } of HEIGHTS) {
     test('Crew keeps the nav on screen', async ({ page }) => {
       await page.goto('/crew');
       await expect(page.getByRole('navigation', { name: 'Superpipeline' })).toBeVisible();
-      await page.waitForLoadState('networkidle');
+      // Not 'networkidle' (the live connection keeps the network busy): wait for fonts and one frame.
+      await page.evaluate(() => document.fonts.ready.then(() => new Promise((r) => requestAnimationFrame(() => r(null)))));
       const f = await frame(page);
       expect(f.navBottom).toBeLessThanOrEqual(f.innerHeight + 0.5);
       expect(f.sideways).toBeLessThanOrEqual(0);
