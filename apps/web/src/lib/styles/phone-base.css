@@ -13,3 +13,12 @@
 .ph-root[data-shell="studio-phone"] .ph-you { width: 22px; height: 22px; border: 1.5px solid currentColor; font-family: var(--vk-font-display); }
 /* A row of Quiet's header buttons and its view links (SP-Phone-Board-Quiet .pq-row: 16px apart). */
 .ph-root .ph-row { display: flex; flex-wrap: wrap; align-items: center; gap: 0 16px; min-width: 0; }
+
+/*
+ * Studio on a phone (operator, iPhone): the Studio pages run to the frame's edges, so on a phone
+ * their text sat flush against the screen, and an annual-report table (fixed columns) laid the page
+ * out wider than the screen. On the phone shell every Studio page body keeps the 16px gutter, and a table scrolls
+ * inside itself rather than widening the page.
+ */
+[data-shell='studio-phone'] div:is(.wo-main, .wa-main, .op-main, .pj-main, .pjb-main) { padding-inline: 16px; }
+[data-shell='studio-phone'] :is(.wo-main, .wa-main, .op-main, .pj-main, .pjb-main) .ar-tbl { display: block; max-width: 100%; overflow-x: auto; }

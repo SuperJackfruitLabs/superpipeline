@@ -24,3 +24,14 @@
   border-radius: var(--vk-radius-pill, 999px); font-size: var(--vk-text-xs, 12px); color: var(--vk-color-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 .ib-show__scope { margin: 0; font-size: var(--vk-text-lg, 1.125rem); font-weight: 600; color: var(--vk-color-text); }
+/*
+ * Native controls in an ask never size the page (operator, iPhone): a <select> grows to its longest
+ * option ("Audit … · diagnostics, error-eric"), and a flex item's min-width is its content, so one
+ * long stage name pushed the card, and the whole page, past the screen. Cap them at their row.
+ */
+:where(.op-dy, .op-pp, .op-q, .op-main) :is(select, input, textarea) { max-width: 100%; min-width: 0; text-overflow: ellipsis; }
+:where(.op-dy, .op-pp, .op-q, .op-main) select { flex: 1 1 12rem; width: 100%; }
+:where(.op-dy, .op-pp, .op-q, .op-main) :is(label, .acts, .resume__row, .ask, .ask > div, .letter, .grp, .ev) { min-width: 0; max-width: 100%; }
+:where(.op-dy, .op-pp, .op-q, .op-main) :is(.acts, .resume__row) { flex-wrap: wrap; }
+/* A long board name on a chip ends in an ellipsis and keeps its full name in the title. */
+.ib-board { display: inline-block; flex: 0 1 auto; min-width: 0; }

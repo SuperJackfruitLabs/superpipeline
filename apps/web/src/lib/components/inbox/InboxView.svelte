@@ -54,5 +54,7 @@
 {#if app.openCardId && app.board}<CardDrawer />{/if}
 
 <style>
-  .ib-pad { padding-inline: var(--sp-inbox-gutter, 0); }
+  /* The phone shell draws no gutter of its own: the Show row keeps the page's 16px. */
+  .ib-pad { padding-inline: 0; }
+  @media (max-width: 899.98px) { .ib-pad { padding-inline: 16px; } }
 </style>
