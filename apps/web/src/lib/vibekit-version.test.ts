@@ -10,7 +10,7 @@ const dir = join(dirname(require.resolve('@superjackfruit/vibekit/accents.css'))
 const css = ['vibekit.css', 'tokens.css', 'accents.css', 'type.css', 'derived.css'].map((f) => { try { return readFileSync(join(dir, 'dist/styles', f), 'utf8'); } catch { return ''; } }).join('\n');
 
 describe('the component-library vibekit release is the library in use', () => {
-  it('is version 0.0.10 (the operator-ruled release number)', () => expect(JSON.parse(readFileSync(join(dir, 'package.json'), 'utf8')).version).toBe('0.0.10'));
+  it('is version 0.0.11 (the Menu page-lock hotfix)', () => expect(JSON.parse(readFileSync(join(dir, 'package.json'), 'utf8')).version).toBe('0.0.11'));
   it('exports the components and the accent API the screens use', () => {
     for (const n of ['VibeRoot', 'AppShell', 'AppNav', 'Masthead', 'StatusLine', 'PhoneTabBar', 'PhoneHeader', 'Button', 'IconButton', 'Tabs', 'Segmented',
       'QuickFilter', 'Field', 'Choice', 'CommandField', 'CommandPalette', 'Kbd', 'CopyId', 'Disclosure', 'Menu', 'DataTable', 'FactList', 'PageHead', 'Hero',
