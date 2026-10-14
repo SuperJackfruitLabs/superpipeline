@@ -46,7 +46,7 @@
 <div style:display={phoneCard ? 'none' : 'contents'}>
   <AppShell here="inbox" section="inbox" boardName={null} view={null} showing={null} {status} sky={vibe === 'daylight' ? sky : undefined} bleed={vibe === 'quiet' || vibe === 'studio'} ownHeading>
     <div id="content" tabindex="-1" class="min-w-0">
-      <div class="ib-pad"><InboxShow form={vibe === 'quiet' ? 'words' : 'chips'} /></div>
+      <div class="ib-pad ib-pad--{vibe}"><InboxShow form={vibe === 'quiet' ? 'words' : 'chips'} /></div>
       <Layout {model} {ui} {caps} />
     </div>
   </AppShell>
@@ -54,7 +54,13 @@
 {#if app.openCardId && app.board}<CardDrawer />{/if}
 
 <style>
-  /* The phone shell draws no gutter of its own: the Show row keeps the page's 16px. */
+  /*
+   * Studio and Quiet bleed (their layouts draw their own gutters), so the Show row, which sits above the
+   * layout, takes the same gutter as the layout below it: Studio's .op-main, Quiet's .q. The phone shell
+   * draws no gutter of its own: the Show row keeps the page's 16px.
+   */
   .ib-pad { padding-inline: 0; }
-  @media (max-width: 899.98px) { .ib-pad { padding-inline: 16px; } }
+  .ib-pad--studio { padding: 24px 40px 0; }
+  .ib-pad--quiet { padding: var(--vk-space-6) var(--vk-space-6) 0; }
+  @media (max-width: 899.98px) { .ib-pad, .ib-pad--studio, .ib-pad--quiet { padding: 0 16px; } }
 </style>

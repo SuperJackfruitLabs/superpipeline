@@ -1,0 +1,63 @@
+// apps/web/e2e/desktop-fit.spec.ts — the nav v2 pages at desktop widths, with realistic data (long board names on
+// the asks). Round 3: in Studio the Inbox's Show block sat flush against the rail (no gutter), and the board chip
+// beside an agent's name ran over the Age and Att. columns. Measures every vibe at 1440, 1280 and 1100.
+import { expect, test, type Page } from '@playwright/test';
+import { VIBES, openWorld } from './support/world';
+import { seedRealistic } from './support/realistic';
+
+const WIDTHS = [1440, 1280, 1100] as const;
+const GUTTER = 16;
+const PAGES = ['/inbox', '/crew/agents', '/crew/people', '/crew/capabilities', '/settings', '/plan/projects'];
+
+/** Text within 16px of the rail (or the window's edge), and table cells whose content runs into the next column. */
+async function measure(page: Page) {
+  return page.evaluate((g) => {
+    const main = document.querySelector('main') ?? document.body;
+    // The page's left edge: the rail's right edge where there is a rail, else the window's.
+    const rail = [...document.querySelectorAll('.vk-appshell__nav, nav')].map((n) => n.getBoundingClientRect()).filter((r) => r.left < 4 && r.height > innerHeight / 2 && r.width < 200);
+    const edge = rail.length ? Math.max(...rail.map((r) => r.right)) : 0;
+    const scroller = (el: Element, stop: Element) => {
+      for (let p = el.parentElement; p && p !== stop; p = p.parentElement) if (/(auto|scroll)/.test(getComputedStyle(p).overflowX)) return true;
+      return false;
+    };
+    const shown = (el: Element) => {
+      const r = el.getBoundingClientRect();
+      return r.width > 0 && r.height > 0 && getComputedStyle(el).visibility !== 'hidden' && !el.closest('.vk-visually-hidden, .sr, [aria-hidden="true"], [role="dialog"], details:not([open]) > :not(summary)');
+    };
+    const name = (el: Element) => `${el.tagName.toLowerCase()}.${String(el.className).split(' ')[0]} "${(el.textContent ?? '').trim().slice(0, 30)}"`;
+    const tight: string[] = [];
+    for (const el of main.querySelectorAll('h1, h2, h3, p, button, a, label, select, textarea, input')) {
+      if (!shown(el) || scroller(el, main)) continue;
+      const r = el.getBoundingClientRect();
+      if (r.left < edge + g - 0.5) tight.push(`${name(el)} ${Math.round(r.left - edge)}px from the edge`);
+    }
+    const collide: string[] = [];
+    for (const td of main.querySelectorAll('td, th')) {
+      const c = td.getBoundingClientRect();
+      if (c.width === 0) continue;
+      for (const el of td.querySelectorAll('*')) {
+        if (!shown(el)) continue;
+        const r = el.getBoundingClientRect();
+        if (r.right > c.right + 1 || r.left < c.left - 1) collide.push(`${name(el)} ${Math.round(r.left)}–${Math.round(r.right)} in cell ${Math.round(c.left)}–${Math.round(c.right)}`);
+      }
+    }
+    return { tight: tight.slice(0, 8), collide: collide.slice(0, 8) };
+  }, GUTTER);
+}
+
+test.beforeAll(async ({ request }) => seedRealistic(request));
+
+for (const vibe of VIBES) {
+  for (const width of WIDTHS) {
+    test(`${vibe} ${width}: the nav v2 pages keep a ${GUTTER}px gutter and no table cell runs into the next`, async ({ page }) => {
+      test.setTimeout(120_000);
+      for (const path of PAGES) {
+        await openWorld(page, path, { vibe, dark: vibe === 'studio', width, height: 900 });
+        if (path === '/inbox') await expect(page.locator('.ib-board', { hasText: 'Workspace Operations' }).first()).toBeVisible();
+        const m = await measure(page);
+        expect.soft(m.tight, `${path}: inside the ${GUTTER}px gutter`).toEqual([]);
+        expect.soft(m.collide, `${path}: runs into the next column`).toEqual([]);
+      }
+    });
+  }
+}
