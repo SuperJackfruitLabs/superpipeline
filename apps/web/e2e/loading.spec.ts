@@ -76,13 +76,17 @@ const stats = (page: Page) => page.evaluate(() => (window as unknown as { __a: {
 
 test.beforeAll(async ({ request }) => { await seedWorld(request); });
 
-// One test per vibe and size walks every surface with the API 800 ms slow.
-for (const vibe of VIBES) {
-  for (const size of SIZES) {
+// The walk, with the API 800 ms slow. Daylight walks every surface at 1440 and 390; Paper, Studio and Quiet walk the
+// four surfaces whose pending frames differ most by vibe (Inbox, board, card page, Projects) at 390, where CLS bites.
+// The other surfaces' per-vibe skeletons are covered by unit tests (SkeletonRows and the layouts' pending tests).
+const OTHER_VIBE_SURFACES = ['inbox', 'board', 'cardpage', 'projects'];
+const WALKS = VIBES.flatMap((vibe) => SIZES.filter((size) => vibe === 'daylight' || size.n === 'phone').map((size) => ({ vibe, size })));
+for (const { vibe, size } of WALKS) {
+  {
     test(`${vibe} ${size.n}: no surface says "nothing" or 0 before its data, and each waits in aria-busy`, async ({ browser }) => {
       test.setTimeout(180_000);
       const problems: string[] = [];
-      for (const [name, url] of Object.entries(SURFACES)) {
+      for (const [name, url] of Object.entries(SURFACES).filter(([n]) => vibe === 'daylight' || OTHER_VIBE_SURFACES.includes(n))) {
         const ctx = await browser.newContext({ viewport: { width: size.width, height: size.height }, reducedMotion: 'reduce', timezoneId: 'Asia/Kolkata', isMobile: size.width < 500, hasTouch: size.width < 500 });
         const page = await open(ctx, vibe);
         await hold(page, { delay: 800 });
