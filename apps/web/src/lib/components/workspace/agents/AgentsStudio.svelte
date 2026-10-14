@@ -1,5 +1,8 @@
 <!-- apps/web/src/lib/components/workspace/agents/AgentsStudio.svelte -->
 <script lang="ts">
+  import SkeletonRows from '$lib/components/parts/SkeletonRows.svelte';
+  import LoadFailed from '$lib/components/parts/LoadFailed.svelte';
+  import { crewNewInPage, onCrewNew } from '../crew-new';
   import './agents-studio.css';
   import { Button, Face } from '@superjackfruit/vibekit';
   import LineIcon from '$lib/components/parts/LineIcon.svelte';
@@ -18,6 +21,7 @@
   void model.refresh();
   let creating = $state(false);
   function openNew(): void { model.resetNew(); creating = true; }
+  $effect(() => onCrewNew('agents', openNew));
 </script>
 
 {#snippet copyIcon()}<LineIcon name="copy" size={18} stroke={1.75} />{/snippet}
@@ -39,7 +43,7 @@
   <div class="hd">
     <span class="no">01</span>
     <h2 id="agents-h">{model.agents === null ? 'Agents' : agentsHeading(model.agents.length)}</h2>
-    <span class="r">{#if model.agents}<span>{agentsPanelMeta(model.agents)}</span>{/if}<Button type="button" icon={plusIcon} onclick={openNew}>New agent</Button></span>
+    <span class="r">{#if model.agents}<span>{agentsPanelMeta(model.agents)}</span>{:else}<!-- The meta line's room, held while the agents load: on a phone the line wraps the head, and arriving late it would push the page. --><span class="sp-meta-pending" aria-hidden="true"></span>{/if}{#if crewNewInPage()}<Button type="button" icon={plusIcon} onclick={openNew}>New agent</Button>{/if}</span>
   </div>
   <ul class="ar-notes wa-notes">
     <li><span class="k"><LineIcon name="check" size={18} stroke={1.75} /></span><span><b>Linked to AgentPod</b> — this agent has an AgentPod identity, so it signs in as itself and its work shows under its own name.</span></li>
@@ -47,10 +51,9 @@
     <li><span class="k"><LineIcon name="dots" size={18} stroke={1.75} /></span><span><b>Actions</b> — edit, issue or revoke tokens, unlink, delete.</span></li>
   </ul>
   {#if model.agents === null && model.loadError}
-    <p class="ar-hint" role="alert">Could not load the agents: {model.loadError}</p>
-    <Button variant="secondary" onclick={() => void model.refresh()}>Try again</Button>
+    <LoadFailed message="Couldn't load the agents." onRetry={() => model.refresh()} />
   {:else if model.agents === null}
-    <p class="ar-hint" role="status" aria-busy="true">Loading agents…</p>
+    <SkeletonRows label="Loading agents…" rows={4} rowHeight={56} />
   {:else if model.agents.length === 0}
     <p class="ar-hint">No agents yet. Create one with New agent — you'll get a token to point an AI agent at this workspace.</p>
   {:else}

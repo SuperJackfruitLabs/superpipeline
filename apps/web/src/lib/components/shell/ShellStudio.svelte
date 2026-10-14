@@ -19,7 +19,7 @@
   import PlanSwitch from './PlanSwitch.svelte';
   import { VIEWS, type ShellProps } from './types';
 
-  let { here, section, boardName, view, plan, showing, studioSubRight, status, subTools, bleed = false, ownHeading = false, children }: ShellProps = $props();
+  let { here, section, boardName, view, plan, showing, studioSubRight, status, subTools, bleed = false, ownHeading = false, primary, children }: ShellProps = $props();
 
   const items = $derived<NavItem[]>([
     { id: 'inbox', label: 'Inbox', href: m.inboxHref, icon: inboxIcon, current: here === 'inbox', count: m.inboxBadge || undefined, countIsNeeds: true, kbd: 'G I' },
@@ -61,7 +61,7 @@
 {/snippet}
 
 {#snippet command()}<CommandField placeholder="Search or run a command" kbd="⌘K" onopen={m.openSearch} />{/snippet}
-{#snippet actions()}<Button icon={plusIcon} aria-keyshortcuts="N" onclick={m.compose}>New card <span aria-hidden="true"><Kbd keys={['N']} /></span></Button>{/snippet}
+{#snippet actions()}<Button icon={plusIcon} aria-keyshortcuts="N" onclick={primary?.onclick ?? m.compose}>{primary?.label ?? 'New card'} <span aria-hidden="true"><Kbd keys={['N']} /></span></Button>{/snippet}
 
 {#snippet viewTabs()}
   {#if plan}<PlanSwitch value={plan} />{/if}
@@ -82,7 +82,7 @@
     title={boardName ?? (ownHeading ? '' : 'Superpipeline')}
     switcher={boardName !== null ? { label: 'Change board', onopen: m.openBoardSwitcher } : undefined}
     {command}
-    live={{ state: m.connected ? 'live' : 'reconnecting', label: m.connected ? 'Live' : 'Reconnecting…', attrs: { 'data-live': m.connected ? 'on' : 'off' } }}
+    live={{ ...m.live, detail: undefined }}
     {actions}
     tabs={view || plan ? viewTabs : undefined}
   />

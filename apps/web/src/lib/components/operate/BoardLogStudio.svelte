@@ -19,7 +19,7 @@
   }
 </script>
 
-<section class="ar-sec" aria-labelledby="log-h">
+<section class="ar-sec" aria-labelledby="log-h" data-reveal>
   <div class="hd">
     <span class="no">{no}</span><h2 id="log-h">Board log</h2>
     <span class="r">{#if list.length > 0}{logMeta(list.length)}{' '}{/if}{#if fullLogHref}<a class="ar-btn2" href={fullLogHref}>Open the full board log <LineIcon name="arrow-right" size={14} stroke={1.75} /></a>{/if}</span>
@@ -47,7 +47,7 @@
     </table>
     <span class="sr" aria-live="polite">{copied ? 'Card id copied' : ''}</span>
     <div class="sp-more">
-      {#if list.length > collapsedRows}<button class="ar-lk" type="button" onclick={() => (all = !all)}>{all ? `Show the latest ${collapsedRows}` : `Show all ${list.length} events`}</button>{/if}
+      {#if list.length > collapsedRows}<button class="ar-lk" type="button" aria-expanded={all} onclick={() => (all = !all)}>{all ? `Show the latest ${collapsedRows}` : `Show all ${list.length} events`}</button>{/if}
       <details>
         <summary class="ar-lk quiet"><span class="disc-ico"><LineIcon name="chev-down" size={16} /></span>Show raw event names</summary>
         <ol class="sp-raw">{#each list as e (e.seq)}<li><span class="m">{clockHMS(e.ts)}</span><span class="raw">{rawLine(e)}</span></li>{/each}</ol>

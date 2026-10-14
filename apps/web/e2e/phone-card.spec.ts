@@ -23,6 +23,9 @@ for (const vibe of ['daylight', 'paper', 'studio', 'quiet']) {
     await page.getByRole('button', { name: /^Rotate the keys, in / }).first().click();
     const dialog = page.getByRole('dialog');
     await expect(dialog).toBeVisible();
+    // The card's sections appear when its log has arrived (data-ready waits for it): measuring before then
+    // counts controls that move or appear mid-loop, which a slow runner makes visible.
+    await expect(page.locator('html')).toHaveAttribute('data-ready', 'true');
     const covered = (el: Element): string | null => {
       const r = el.getBoundingClientRect();
       const top = document.elementFromPoint(r.x + r.width / 2, r.y + r.height / 2);

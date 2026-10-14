@@ -7,8 +7,10 @@
   import { viewport } from '$lib/viewport.svelte';
   import { fmtTarget, HEALTH_LABEL, milestoneDate, milestonesMeta, progressPct, rollupSegments, STATE_LABEL } from '../project-rollup';
   import type { ProjectsLayoutProps } from './types';
+  import SkeletonRows from '$lib/components/parts/SkeletonRows.svelte';
+  import LoadFailed from '$lib/components/parts/LoadFailed.svelte';
 
-  let { model }: ProjectsLayoutProps = $props();
+  let { model, vibe }: ProjectsLayoutProps = $props();
   /** A plain click opens the drawer over the list; a phone, or a modified click, follows the link to the page. */
   function openProject(e: MouseEvent, id: string): void {
     if (viewport.phone || e.metaKey || e.ctrlKey || e.shiftKey || e.button !== 0) return;
@@ -24,14 +26,16 @@
       <svelte:element this={viewport.phone ? 'h2' : 'h1'} class="t-h1">Projects</svelte:element>
       <p class="t-body" style="color: var(--vk-color-muted);">{model.summary} A project gathers cards from any board; each shows how many are done and what they cost.</p>
     </div>
-    {#snippet plusIcon()}<LineIcon name="plus" size={18} />{/snippet}
-    <Button icon={plusIcon} onclick={() => (model.dialogOpen = true)}>New project</Button>
+    <!-- The desktop masthead's primary action is New project (ProjectView); the phone header and Quiet's board-less masthead have none, so the page draws it. -->
+    {#if viewport.phone || vibe === 'quiet'}{#snippet plusIcon()}<LineIcon name="plus" size={18} />{/snippet}<Button icon={plusIcon} onclick={() => (model.dialogOpen = true)}>New project</Button>{/if}
   </div>
 
-  {#if model.loadError}
+  {#if model.failed}
+    <LoadFailed message={model.loadError ?? ''} onRetry={() => model.refresh()} />
+  {:else if model.loadError}
     <p class="t-meta" role="alert">{model.loadError}</p>
-  {:else if model.loading && model.projects.length === 0}
-    <div aria-busy="true"><p class="t-meta" role="status">Loading projects…</p><span class="vk-skeleton" aria-hidden="true" style="width: 80%;"></span><span class="vk-skeleton" aria-hidden="true" style="width: 60%;"></span></div>
+  {:else if model.pending}
+    <SkeletonRows label="Loading projects…" rows={3} rowHeight={150} />
   {:else if model.projects.length === 0}
     <p class="t-meta">No projects yet. Use “New project” above to add the first.</p>
   {/if}

@@ -6,3 +6,9 @@
 .op-greet .crew__who { display: flex; align-items: center; gap: var(--vk-space-2); font-weight: 600; font-size: var(--vk-text-sm); }
 /* Hand edit: the reference frame's body text (16px/1.45), which the greeting's line inherits there; the app's frame is vibekit AppShell (17px/1.5). */
 .op-greet { font-size: 16px; line-height: 1.45; }
+/* While the Inbox counts: two quiet lines under "Checking your boards…" and the faces' row height, held. */
+.op-greet__wait { display: block; margin-top: var(--vk-space-2); }
+.op-greet__wait .vk-skeleton { margin: 6px 0; background: color-mix(in oklch, var(--vk-color-surface) 45%, transparent); }
+.op-greet__crew-wait { min-height: 44px; min-width: 1px; }
+/* On a phone the faces and names wrap to two rows under the summary. */
+@media (max-width: 899.98px) { .op-greet__crew-wait { min-height: 96px; flex-basis: 100%; } }

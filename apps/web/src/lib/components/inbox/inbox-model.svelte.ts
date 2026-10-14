@@ -19,6 +19,7 @@ import { greetingName } from '../dialogs/person';
 import { activityGroups, mergeUsage, needRows, parseCap, runningRows, spendView } from '../operate/operate-data';
 import type { CapResult, NeedRow, OperateModel } from '../operate/layouts/types';
 import { boardsNeedingFirst, inboxScope, scopeLabel } from './inbox-scope.svelte';
+import { pending, type Pending } from '$lib/loading.svelte';
 
 /** Boards read at once (each is three requests). */
 const LOAD_AT_ONCE = 2;
@@ -33,6 +34,9 @@ export class InboxStore implements OperateModel {
   #usageError = $state<string | null>(null);
   /** Boards whose first read has finished, whether it worked or not. */
   #settled = $state<Record<string, true>>({});
+  /** Boards whose first read failed. */
+  #failed = $state<Record<string, true>>({});
+  #gate: Pending;
 
   /** The boards in scope, the ones that need you first. */
   readonly boardIds = $derived.by(() => {
@@ -42,23 +46,28 @@ export class InboxStore implements OperateModel {
   });
   readonly #boards = $derived(this.boardIds.map((id) => this.#snap(id)).filter((b): b is BoardSnapshot => b !== null));
 
-  readonly needs = $derived(this.#boards.flatMap((b) => needRows(b, app.agents, sortAttention(itemsFromBoard(b, app.agents, Date.now()), 'stage'), Date.now())));
-  readonly needsUrgent = $derived.by(() => {
-    const order = sortAttention(this.needs.map((r) => r.item), 'urgency').map((i) => i.id);
-    return [...this.needs].sort((a, b) => order.indexOf(a.item.id) - order.indexOf(b.item.id));
+  /** Every row, counted or not; the page reads `needs` etc., which stay empty until the counting is done (no rows trickling in). */
+  readonly #needsAll = $derived(this.#boards.flatMap((b) => needRows(b, app.agents, sortAttention(itemsFromBoard(b, app.agents, Date.now()), 'stage'), Date.now())));
+  get needs(): NeedRow[] { return this.loading ? [] : this.#needsAll; }
+  readonly #needsUrgentAll = $derived.by(() => {
+    const order = sortAttention(this.#needsAll.map((r) => r.item), 'urgency').map((i) => i.id);
+    return [...this.#needsAll].sort((a, b) => order.indexOf(a.item.id) - order.indexOf(b.item.id));
   });
-  readonly running = $derived(this.#boards.flatMap((b) => runningRows(b, app.agents)));
+  get needsUrgent(): NeedRow[] { return this.loading ? [] : this.#needsUrgentAll; }
+  readonly #runningAll = $derived(this.#boards.flatMap((b) => runningRows(b, app.agents)));
+  get running() { return this.loading ? [] : this.#runningAll; }
   readonly spend = $derived.by(() => {
     const usage = mergeUsage(this.boardIds.map((id) => this.#usage[id]).filter((u): u is UsageSummary => !!u));
     const one = this.scoped ? (this.#boards[0]?.usage ?? null) : null;
     return spendView(usage, one, app.agents);
   });
   readonly unread = $derived(this.boardIds.reduce((n, id) => n + this.#notesOf(id).filter((x) => !x.read).length, 0));
-  readonly groups = $derived(
+  readonly #groupsAll = $derived(
     this.#boards
-      .flatMap((b) => activityGroups(this.#notesOf(b.boardId ?? ''), this.showRead, this.needs.filter((r) => r.boardId === b.boardId), b, app.agents))
+      .flatMap((b) => activityGroups(this.#notesOf(b.boardId ?? ''), this.showRead, this.#needsAll.filter((r) => r.boardId === b.boardId), b, app.agents))
       .sort((a, b) => b.latest.createdAt.localeCompare(a.latest.createdAt)),
   );
+  get groups() { return this.loading ? [] : this.#groupsAll; }
   readonly cardCount = $derived(this.#boards.reduce((n, b) => n + b.cards.filter((c) => !c.archivedAt).length, 0));
   readonly stages = $derived(this.scoped ? [...(this.#boards[0]?.stages ?? [])].sort((a, b) => a.order - b.order) : []);
 
@@ -68,14 +77,45 @@ export class InboxStore implements OperateModel {
   #asked = new Set<string>();
 
   constructor() {
+    this.#gate = pending(() => this.pendingNow);
     $effect(() => {
       const key = this.#idsKey;
       void this.#load(key ? key.split(',').filter((id) => !this.#asked.has(id)) : []);
     });
   }
 
-  /** Nothing in scope has been read yet: the lists show skeletons, not “nothing is waiting”. */
-  get loading(): boolean { return this.boardIds.length > 0 && this.#boards.length === 0 && !this.boardIds.some((id) => this.#settled[id]); }
+  /**
+   * The Inbox has not counted yet. Pending until the board list and the attention list have answered
+   * and every board in scope that has something waiting has been read, so the counts appear once, not
+   * in steps (4, then 7) as boards arrive. Before the board list arrives there are no boards in scope,
+   * which is not the same as nothing needing you.
+   */
+  get pendingNow(): boolean {
+    if (this.failed) return false;
+    if (!app.boardsLoaded || !app.attentionSettled) return true;
+    if (this.boardIds.length === 0) return false;
+    const asking = new Set(app.attention.map((a) => a.boardId));
+    if (inboxScope.boardId) asking.add(inboxScope.boardId);
+    return this.boardIds.some((id) => asking.has(id) && !this.#settled[id]) || !this.boardIds.some((id) => this.#settled[id]);
+  }
+  /** The lists draw skeletons and the counts a dash ("–"), never "nothing is waiting" or 0. Held by the skeleton clock (150 ms in, 300 ms at least). */
+  get loading(): boolean { return this.#gate.busy; }
+  /** Still loading after 8 s. */
+  get slow(): boolean { return this.#gate.slow; }
+  /** The boards could not be read at all: the page says so, with Try again, instead of "nothing needs you". */
+  get failed(): boolean {
+    if (app.boardsFailed && !app.boardsLoaded) return true;
+    return this.boardIds.length > 0 && this.boardIds.every((id) => this.#failed[id]);
+  }
+  /** Try every failed read again. */
+  async retry(): Promise<void> {
+    const again = Object.keys(this.#failed);
+    this.#failed = {};
+    for (const id of again) { delete this.#settled[id]; this.#asked.delete(id); }
+    await app.retry();
+    if (!app.attentionLoaded) await app.loadAttention();
+    await this.#load(this.boardIds.filter((id) => !this.#asked.has(id)));
+  }
   get scoped(): boolean { return inboxScope.boardId !== null; }
   get boardCount(): number { return this.boardIds.length; }
   get boardId(): string { return inboxScope.boardId ?? ''; }
@@ -108,9 +148,10 @@ export class InboxStore implements OperateModel {
     // The open board is read too: opening a card on another board makes this one a board like the rest.
     const [snap, notes, usage] = await Promise.allSettled([getBoard(id), getNotifications(id), getUsage(id, '7d')]);
     if (snap.status === 'fulfilled') this.#snaps[id] = snap.value;
+    else this.#failed[id] = true;
     if (notes.status === 'fulfilled') this.#notes[id] = notes.value;
     if (usage.status === 'fulfilled') this.#usage[id] = usage.value;
-    else this.#usageError = usage.reason instanceof Error ? usage.reason.message : String(usage.reason);
+    else this.#usageError = 'try again in a moment';
     this.#settled[id] = true;
   }
   async #after(boardId: string): Promise<void> {

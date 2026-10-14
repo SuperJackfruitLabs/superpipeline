@@ -32,11 +32,12 @@
   const vibe = $derived(appearance.value.vibe);
 
   /** The week's spend, for the Studio figures; fetched once per board. */
-  let spend7d = $state<number | null>(null);
+  let spend7d = $state<number | null | undefined>(undefined);
   $effect(() => {
     const id = app.board?.boardId;
     if (!id) return;
     let live = true;
+    spend7d = undefined;
     void app.markBusy(getUsage(id, '7d').then((u) => { if (live) spend7d = u.totalCostUsd; }, () => { if (live) spend7d = null; }));
     return () => { live = false; };
   });

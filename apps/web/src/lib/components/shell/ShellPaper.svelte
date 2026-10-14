@@ -16,7 +16,7 @@
   import PlanSwitch from './PlanSwitch.svelte';
   import { VIEWS, type ShellProps } from './types';
 
-  let { here, section, boardName, view, plan, showing, paperShowing, status, subTools, ownHeading = false, children }: ShellProps = $props();
+  let { here, section, boardName, view, plan, showing, paperShowing, status, subTools, ownHeading = false, primary, children }: ShellProps = $props();
 
   // Words only: vibekit draws no icon in this vibe's nav (the field is required, and ignored).
   const items = $derived<NavItem[]>([
@@ -28,7 +28,7 @@
   const viewItems = VIEWS.map(([value, label]) => ({ value, label, href: `?view=${value}` }));
   const note = $derived(paperShowing ?? showing);
   // Paper draws the dateline on the nameplate row and Live at the end of the section bar (AppNav), not in the masthead.
-  const live = $derived({ state: m.connected ? 'live' as const : 'reconnecting' as const, label: m.connected ? 'Live' : 'Reconnecting…', detail: m.connected ? 'changes appear as they happen' : undefined, attrs: { 'data-live': m.connected ? 'on' : 'off' } });
+  const live = $derived(m.live);
   const statusItems = $derived((status?.items ?? []).map((i) => ({ text: i.text, tone: i.signal ? ('needs' as const) : ('plain' as const) })));
 </script>
 
@@ -50,7 +50,7 @@
     <Button variant="secondary" icon={filterIcon} aria-haspopup="dialog" onclick={m.openFilter}>Filter cards <span class="ps-cnt">· {m.filterSummary}</span></Button>
   {/if}
   <CommandField label="Search cards, agents and actions" placeholder="Search" kbd="⌘K" onopen={m.openSearch} />
-  <Button icon={penIcon} onclick={m.compose}>Write a new card</Button>
+  <Button icon={penIcon} onclick={primary?.onclick ?? m.compose}>{primary?.label ?? 'Write a new card'}</Button>
 {/snippet}
 
 {#snippet viewTabs()}

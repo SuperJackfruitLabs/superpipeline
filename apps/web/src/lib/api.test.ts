@@ -443,9 +443,9 @@ describe('listLabels', () => {
     expect(await listLabels()).toEqual([{ id: 'lbl_1', tenantId: 't1', name: 'urgent', colour: '#f00', origin: 'declared', createdAt: '2026-01-01' }]);
   });
 
-  it('answers an empty list rather than throwing when the read is refused', async () => {
-    vi.stubGlobal('fetch', vi.fn(async () => new Response('nope', { status: 401 })));
-    expect(await listLabels()).toEqual([]);
+  it('throws when the read is refused, so a failure is never drawn as "No labels yet"', async () => {
+    vi.stubGlobal('fetch', vi.fn(async () => new Response('nope', { status: 500 })));
+    await expect(listLabels()).rejects.toMatchObject({ status: 500 });
   });
 });
 
@@ -853,9 +853,29 @@ describe('listProjects', () => {
     expect(await listProjects()).toEqual([project]);
   });
 
-  it('answers an empty list rather than throwing when the read is refused', async () => {
-    vi.stubGlobal('fetch', vi.fn(async () => new Response('nope', { status: 401 })));
-    expect(await listProjects()).toEqual([]);
+  it('throws when the read is refused, so a failure is never drawn as "No projects yet"', async () => {
+    vi.stubGlobal('fetch', vi.fn(async () => new Response('nope', { status: 500 })));
+    await expect(listProjects()).rejects.toMatchObject({ status: 500, message: 'listProjects failed (500)' });
+  });
+});
+
+describe('request timeout', () => {
+  it('aborts a read that never answers, and never a write', async () => {
+    const seen: (AbortSignal | undefined | null)[] = [];
+    vi.stubGlobal('fetch', vi.fn(async (_u: string, init?: RequestInit) => { seen.push(init?.signal); return new Response(JSON.stringify({ projects: [] }), { status: 200 }); }));
+    await listProjects();
+    await deleteProject('prj_1');
+    expect(seen[0]).toBeInstanceOf(AbortSignal);
+    expect(seen[1]).toBeUndefined();
+  });
+});
+
+describe('getProject failures', () => {
+  it('answers null only when the project is not there (404), and throws on a server failure', async () => {
+    vi.stubGlobal('fetch', vi.fn(async () => new Response('', { status: 404 })));
+    expect(await getProject('prj_1')).toBeNull();
+    vi.stubGlobal('fetch', vi.fn(async () => new Response('', { status: 503 })));
+    await expect(getProject('prj_1')).rejects.toMatchObject({ status: 503 });
   });
 });
 

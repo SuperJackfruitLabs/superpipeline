@@ -74,7 +74,7 @@
     <h3>Session activity <span class="mono">{model.counts.runs} {model.counts.runs === 1 ? 'run' : 'runs'}</span></h3>
     {#if view.grantLine}<p class="note">{view.grantLine}</p>{/if}
     {#each runsStudio as r (r.key)}
-      <div class="pc-run">
+      <div class="pc-run" data-reveal>
         <button class="pc-runhead" type="button" data-attempt-head={r.key} aria-expanded={r.isOpen} aria-controls={r.isOpen ? `${id}-run-${r.key}` : undefined} onclick={() => (runOpen = { ...runOpen, [r.key]: !r.isOpen })}><span class="rt">{r.title}</span><span class="rm">{r.meta}</span></button>
         {#if r.isOpen}
           <div id="{id}-run-{r.key}">
@@ -122,7 +122,7 @@
 {:else if pane === 'talk'}
   <div data-section="comments" style="display: contents;">
     <h3>Comments</h3>
-    {#if model.comments.comments.length === 0}<p class="note">No comments yet.</p>{:else}<ul class="pc-refs">{#each model.comments.comments as cm (cm.id)}<li><b>{model.authorName(cm.author)}</b> <span>{cm.body}</span></li>{/each}</ul>{/if}
+    {#if !model.comments.loaded && model.comments.comments.length === 0}<p class="note">Loading comments…</p>{:else if model.comments.comments.length === 0}<p class="note">No comments yet.</p>{:else}<ul class="pc-refs">{#each model.comments.comments as cm (cm.id)}<li><b>{model.authorName(cm.author)}</b> <span>{cm.body}</span></li>{/each}</ul>{/if}
     <div class="ar-field"><label for="pcm-{id}">Comment</label><textarea id="pcm-{id}" class="ar-in" rows="2" placeholder="Write a comment" maxlength="8192" bind:value={model.comments.draft} onkeydown={(e) => { if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) { e.preventDefault(); void model.comments.submit(); } }}></textarea></div>
     <div class="pc-row" style="justify-content: space-between;"><span class="note">⌘ or Ctrl + Enter to post</span><Button variant="secondary" class="ar-btn2" type="button" aria-disabled={model.comments.posting ? 'true' : undefined} data-busy={model.comments.posting ? 'true' : undefined} onclick={() => { if (!model.comments.posting) void model.comments.submit(); }}>Comment</Button><span class="sr" role="status">{model.comments.posting ? 'Posting…' : ''}</span></div>
   </div>

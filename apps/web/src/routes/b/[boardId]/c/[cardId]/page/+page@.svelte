@@ -16,17 +16,15 @@
 
   const boardId = $derived(page.params.boardId!);
   const cardId = $derived(page.params.cardId!);
-  // This page's own board-load failure: app.error is global, and one left by an earlier move or
-  // delete must not read as "Board not available" while a good board is still loading.
-  let failed = $state(false);
+  // This page's own board-load failure (the store's, for this board): app.error is global, and one
+  // left by an earlier move or delete must not read as a failure while a good board is still loading.
   $effect(() => {
     if (app.authState === 'ready' && app.boardId !== boardId) {
-      const id = boardId;
-      failed = false;
       app.error = null;
-      void app.openBoard(id).then(() => { if (id === boardId && app.board?.boardId !== id && app.error) failed = true; });
+      void app.openBoard(boardId);
     }
   });
+  const failure = $derived(app.boardId === boardId ? app.boardFailure : null);
   const model = new CardModel(() => ({ boardId, cardId, surface: 'page' }));
   const vibe = $derived(appearance.value.vibe);
   const Page = $derived(CARD_PAGE_LAYOUTS[vibe]);
@@ -36,8 +34,8 @@
 
 <svelte:head><title>{model.card ? `${model.card.title} · ${model.boardName}` : 'Card · Superpipeline'}</title></svelte:head>
 
-{#if !ready && failed}
-  <CardPageMissing kind="error" boardName="" boardHref="/" />
+{#if !ready && failure}
+  <CardPageMissing kind={failure === 'missing' ? 'gone' : 'error'} boardName="" boardHref="/" onRetry={() => app.retry()} />
 {:else if !ready}
   <CardPageMissing kind="loading" boardName="" boardHref="/b/{boardId}" />
 {:else if !model.card}

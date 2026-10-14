@@ -11,19 +11,48 @@
    * uninitialised object and the API answers 404 — the same answer a board that never existed
    * gets. A board id in a URL is therefore not an existence oracle.
    */
+  import { untrack } from 'svelte';
   import { page } from '$app/state';
   import { replaceState } from '$app/navigation';
   import { app } from '$lib/stores/app.svelte';
   import CardDrawer from '$lib/components/CardDrawer.svelte';
   import { viewport } from '$lib/viewport.svelte';
-  import LogoMotion from '$lib/components/LogoMotion.svelte';
   import { appearance } from '$lib/appearance.svelte';
+  import AppShell from '$lib/components/shell/AppShell.svelte';
+  import BoardSkeleton from '$lib/components/board/BoardSkeleton.svelte';
+  import { pending } from '$lib/loading.svelte';
+  import { viewFromSearch } from '$lib/view-param';
 
   let { children } = $props();
 
   /** A phone card is a full-screen sheet in normal flow: the board behind it is hidden, so the page is the card alone. */
   const phoneCard = $derived(viewport.narrow && !!app.openCardId);
   const boardId = $derived(page.params.boardId!);
+
+  /** What the page will be, so the waiting shell is already the right one (Board, List, a board page). */
+  const route = $derived(page.route.id ?? '');
+  const waitView = $derived(viewFromSearch(page.url.searchParams) ?? app.view);
+  const wait = $derived.by(() => {
+    if (route.endsWith('/settings')) return { section: 'settings' as const, view: null, form: 'page' as const };
+    if (route.endsWith('/operate/log')) return { section: 'log' as const, view: null, form: 'page' as const };
+    if (route.endsWith('/operate/telemetry')) return { section: 'spend' as const, view: null, form: 'page' as const };
+    return { section: waitView, view: waitView, form: waitView === 'list' ? ('list' as const) : ('board' as const) };
+  });
+  /** The board's name from the board list, when it is in: the switcher shows it before the board arrives. */
+  const shown = $derived(!!app.board && (app.board.boardId ?? boardId) === boardId);
+  /**
+   * The waiting shell's board name: the one the board list knew when the wait began, held for the whole
+   * wait. A name (and the switcher and New card beside it) landing mid-wait moved the header on a phone;
+   * unknown, the shell draws no name until the board itself arrives in a fresh frame.
+   */
+  let waitName = $state<string | null | undefined>(untrack(() => app.boards.find((b) => b.id === page.params.boardId)?.name ?? null));
+  $effect.pre(() => {
+    if (shown) { waitName = undefined; return; }
+    if (waitName === undefined) waitName = untrack(() => app.boards.find((b) => b.id === boardId)?.name ?? null);
+  });
+  const knownName = $derived(waitName ?? null);
+  const failure = $derived(app.boardId === boardId ? app.boardFailure : null);
+  const gate = pending(() => !shown && !failure);
 
   $effect(() => {
     const id = boardId;
@@ -52,17 +81,14 @@
   });
 </script>
 
-{#if app.board}
+{#if shown}
   <div style:display={phoneCard ? 'none' : 'contents'}>{@render children()}</div>
   {#if app.openCardId}
     <CardDrawer />
   {/if}
 {:else}
-  <main class="min-h-viewport flex flex-col items-center justify-center gap-3 text-center" aria-busy={app.error ? undefined : 'true'}>
-    <h1 class="sr-only">Loading the board</h1>
-    <LogoMotion size={64} playIntro={appearance.value.vibe !== 'quiet'} />
-    <div class="mono text-muted-foreground flex items-center gap-2 text-xs">
-      <span class="live-dot"></span>{app.error ?? 'establishing link to the board…'}
-    </div>
-  </main>
+  <!-- The real shell with the board's shape in it: no logo screen, no raw error text (loading-audit L4, L5). -->
+  <AppShell here="plan" section={wait.section} boardName={knownName} view={wait.view} plan={wait.view ? 'boards' : undefined} showing={null} bleed={appearance.value.vibe === 'quiet'} ownHeading>
+    <BoardSkeleton form={wait.form} {failure} slow={gate.slow} onRetry={() => app.retry()} />
+  </AppShell>
 {/if}

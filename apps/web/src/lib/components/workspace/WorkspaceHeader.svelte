@@ -21,7 +21,7 @@
   </div>
   <div class="tabs" role="tablist" aria-label="Crew">
     {#each tabs as t (t.id)}
-      <a class="tab" role="tab" aria-selected={t.id === current} href="/crew/{t.id}">{t.label}{#if t.count !== null}<span class="count">{t.count}</span>{/if}</a>
+      <a class="tab" role="tab" aria-selected={t.id === current} href="/crew/{t.id}">{t.label}{#if t.count !== null}<span class="count">{t.count}</span>{:else}<span class="count sp-count-pending" aria-hidden="true">–</span>{/if}</a>
     {/each}
   </div>
 </div>

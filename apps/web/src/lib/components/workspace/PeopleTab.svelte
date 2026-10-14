@@ -1,5 +1,8 @@
 <!-- apps/web/src/lib/components/workspace/PeopleTab.svelte -->
 <script lang="ts">
+  import SkeletonRows from '$lib/components/parts/SkeletonRows.svelte';
+  import LoadFailed from '$lib/components/parts/LoadFailed.svelte';
+  import { crewNewInPage, onCrewNew } from './crew-new';
   import { Button } from '@superjackfruit/vibekit';
   import LineIcon from '$lib/components/parts/LineIcon.svelte';
   import type { Role } from '$lib/api';
@@ -15,6 +18,7 @@
   void model.refresh();
   let creating = $state(false);
   function openNew(): void { model.resetNew(); creating = true; }
+  $effect(() => onCrewNew('people', openNew));
 </script>
 
 {#snippet plusIcon()}<LineIcon name="plus" size={18} />{/snippet}
@@ -25,11 +29,13 @@
       {#if review}<PanelTag text={review.tag} />{/if}
       <h2 class="t-h2" id="pt-h">{model.members === null ? 'People' : peopleHeading(model.members.length)}</h2>
     </div>
-    <Button class="btn-sm" type="button" icon={plusIcon} style="margin-left: auto;" onclick={openNew}>New person</Button>
+    {#if crewNewInPage()}<Button class="btn-sm" type="button" icon={plusIcon} style="margin-left: auto;" onclick={openNew}>New person</Button>{/if}
   </div>
   {#if model.error && !creating}<p class="hint" role="alert" style="padding: var(--vk-space-3) var(--vk-space-5) 0; color: var(--vk-color-signal-text);">{model.error}</p>{/if}
-  {#if model.members === null}
-    <p class="panel-body t-meta" role="status">Loading people…</p>
+  {#if model.members === null && model.failed}
+    <LoadFailed message="Couldn't load people." onRetry={() => model.refresh()} />
+  {:else if model.members === null}
+    <SkeletonRows label="Loading people…" rows={3} rowHeight={64} />
   {:else}
     {#each model.members as m, i (m.userId)}
       {@const locked = lastOwner(m, model.members)}

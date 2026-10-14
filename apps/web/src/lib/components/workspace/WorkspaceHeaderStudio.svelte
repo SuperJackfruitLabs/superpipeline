@@ -16,7 +16,7 @@
 {#snippet tabRow()}
   <div class="{p}-tabs" role="tablist" aria-label="Crew">
     {#each tabs as t (t.id)}
-      <a class="ar-tab" role="tab" aria-selected={t.id === current} href="/crew/{t.id}">{t.label}{#if t.count !== null}<span class="mono">{t.count}</span>{/if}</a>
+      <a class="ar-tab" role="tab" aria-selected={t.id === current} href="/crew/{t.id}">{t.label}{#if t.count !== null}<span class="mono">{t.count}</span>{:else}<span class="mono sp-count-pending" aria-hidden="true">–</span>{/if}</a>
     {/each}
   </div>
 {/snippet}
@@ -25,7 +25,7 @@
   <div class="wa-head">
     <a class="ar-lk quiet" href={back.href}><LineIcon name="chev-left" size={16} stroke={1.75} />{back.label}</a>
     <div class="wa-hero">
-      <span class="big" aria-hidden="true">{workspaceCounts.value.agents ?? ''}</span>
+      <span class="big" aria-hidden="true">{workspaceCounts.value.agents ?? '—'}</span>
       <div class="txt">
         <span class="kick">Crew · shared by every board</span>
         <svelte:element this={heading}>Crew</svelte:element>

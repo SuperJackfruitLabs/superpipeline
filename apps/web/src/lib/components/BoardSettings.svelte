@@ -1,5 +1,6 @@
 <!-- apps/web/src/lib/components/BoardSettings.svelte -->
 <script lang="ts">
+  import SkeletonRows from '$lib/components/parts/SkeletonRows.svelte';
   import { autogrow } from '$lib/autogrow';
   import { Button } from '@superjackfruit/vibekit';
   import './settings/board-settings.css';
@@ -93,7 +94,7 @@
       <section class="panel" aria-labelledby="ap-h">
         <div class="sec-head"><div style="display: flex; flex-direction: column; gap: 2px;"><h2 class="t-h2" id="ap-h">Agent profiles</h2><p class="t-meta">Named run settings (model and so on) an agent can claim with.</p></div></div>
         <div class="panel-body" style="display: flex; flex-direction: column; gap: var(--vk-space-3);">
-          {#if model.profiles.length === 0}<p class="empty">No profiles yet.</p>{:else}
+          {#if model.profilesState === 'loading'}<SkeletonRows label="Loading agent profiles…" rows={2} />{:else if model.profilesState === 'failed'}<p class="empty">Couldn't load the agent profiles.</p>{:else if model.profiles.length === 0}<p class="empty">No profiles yet.</p>{:else}
             <ul style="list-style: none; margin: 0; padding: 0;">{#each model.profiles as p (p.key)}<li class="t-body"><span class="code">{p.key}</span>{p.model ? ` · ${p.model}` : ''}</li>{/each}</ul>
           {/if}
           <form class="row-form" onsubmit={(e) => { e.preventDefault(); void model.addProfile(); }}>

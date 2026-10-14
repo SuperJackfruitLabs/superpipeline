@@ -50,7 +50,7 @@
 
   const boardScoped = $derived(shell.boardName !== null);
   const title = $derived(shell.title ?? shell.boardName ?? SECTION_TITLE[shell.section] ?? 'Superpipeline');
-  const live = $derived({ state: m.connected ? 'live' as const : 'reconnecting' as const, label: m.connected ? 'Live' : 'Reconnecting…', attrs: { 'data-live': m.connected ? 'on' : 'off' } });
+  const live = $derived({ ...m.live, detail: undefined });
 
   const items = $derived<PhoneTabItem[]>([
     { id: 'inbox', label: 'Inbox', href: m.inboxHref, icon: inboxIcon, current: shell.here === 'inbox', count: m.inboxBadge || undefined, countIsNeeds: true },

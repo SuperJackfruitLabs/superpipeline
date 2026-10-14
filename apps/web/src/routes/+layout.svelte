@@ -11,6 +11,7 @@
   import { goto, onNavigate } from '$app/navigation';
   import { vkNavigate } from '@superjackfruit/vibekit/motion';
   import { isPageChange } from '$lib/motion/page-change';
+  import { installReveal } from '$lib/motion/reveal';
   import { page } from '$app/state';
   import { takeReturnTo } from '$lib/reconnect';
   import { app } from '$lib/stores/app.svelte';
@@ -27,16 +28,21 @@
   import ReconnectToast from '$lib/components/dialogs/ReconnectToast.svelte';
   import NewCardDialog from '$lib/components/dialogs/NewCardDialog.svelte';
   import MoveCardDialog from '$lib/components/dialogs/MoveCardDialog.svelte';
+  import { loadingStatus } from '$lib/loading.svelte';
+  import { SLOW_COPY } from '$lib/loading';
 
   let { children } = $props();
 
   onMount(() => {
     appearance.init();
+    // "Show all" and the other expand toggles grow into place (lib/motion/reveal.ts).
+    const uninstallReveal = installReveal();
     void app.init().then(() => {
       const back = takeReturnTo();
       if (back && app.authState === 'ready') void goto(back, { replaceState: true });
     });
     return () => {
+      uninstallReveal();
       app.dispose();
       appearance.dispose();
     };
@@ -79,7 +85,8 @@
   <MoveCardDialog />
 {/if}
 <!-- Every move, in every vibe, is said here: a moved tile or row changes column and unmounts. -->
-<p class="vk-visually-hidden" role="status" aria-live="polite">{app.moveSaid}</p>
+<!-- …and so is loading: the one polite status line. From 8 s it shows, quietly, that the server is slow. -->
+<p class={!app.moveSaid && loadingStatus.slow ? 'sp-load-status' : 'vk-visually-hidden'} role="status" aria-live="polite">{app.moveSaid || (loadingStatus.slow ? SLOW_COPY : loadingStatus.label)}</p>
 <ReconnectToast />
 <ReconnectDialog />
 </VibeRoot>

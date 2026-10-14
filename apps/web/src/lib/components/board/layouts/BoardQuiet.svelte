@@ -25,7 +25,7 @@
       </ul>
     {:else}
       {@const all = showAll[b.urgency] === true}
-      <section aria-labelledby="qt-{b.urgency}">
+      <section aria-labelledby="qt-{b.urgency}" data-reveal>
         <h2 id="qt-{b.urgency}">{b.label} ({b.total})</h2>
         {#if b.truncated && !all}<p class="qt-sub" style="margin-top: 4px;">The last 5, newest first.</p>{/if}
         <ul class="qt-list">

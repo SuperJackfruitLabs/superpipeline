@@ -93,7 +93,8 @@
     {:else}<div data-section="resume" hidden></div>{/if}
   {/if}
 
-  <section class="encl" aria-labelledby="encl-h">
+  <!-- Below the lead, the sections wait for the card's log (hidden, not moved): the lead's real height is only known then, and sections drawn under the loading shape would jump on a phone. -->
+  <section class="encl" aria-labelledby="encl-h" hidden={!model.detailLoaded}>
     <h3 id="encl-h">Enclosed</h3>
     <details class="en"><summary><b>The brief</b><span>{enc.brief}</span></summary><div class="in">
       <h4>What was asked</h4><p class="wrap" data-section="description">{c.spec?.description ?? 'No description.'}</p>
@@ -124,7 +125,7 @@
     <details class="en" open><summary><b>Correspondence</b><span>{enc.correspondence}</span></summary><div class="in"><div class="sec-k" data-section="comments"><PhoneComments {model} /></div></div></details>
   </section>
 
-  <footer class="foot" aria-label="Card actions" data-section="cardActions">
+  <footer class="foot" hidden={!model.detailLoaded} aria-label="Card actions" data-section="cardActions">
     <button class="ed" type="button" data-section="editButton" onclick={() => model.edit.start()}><PhoneIcon name="pen" />Edit card</button>
     <div class="cact">
       {#if model.archived}<Button variant="secondary" class="sbtn" type="button" onclick={() => model.restore()}>Archived — restore</Button>

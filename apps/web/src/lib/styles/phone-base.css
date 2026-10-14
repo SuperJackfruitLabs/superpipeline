@@ -22,3 +22,5 @@
  */
 [data-shell='studio-phone'] div:is(.wo-main, .wa-main, .op-main, .pj-main, .pjb-main) { padding-inline: 16px; }
 [data-shell='studio-phone'] :is(.wo-main, .wa-main, .op-main, .pj-main, .pjb-main) .ar-tbl { display: block; max-width: 100%; overflow-x: auto; }
+/* The List in Paper and Studio runs to the frame's edges too: on a phone its masthead, rows and Open buttons keep the 16px gutter. */
+[data-shell='studio-phone'] div.ls-main, [data-shell='paper-phone'] div.ls-pp { padding-inline: 16px; }

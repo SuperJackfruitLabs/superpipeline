@@ -52,3 +52,11 @@
   .op-tbl td:nth-child(n + 3) { grid-column: 2; }
 }
 .op-main .ar-hero h2.op-title { font: 800 44px/1.02 var(--ff); font-stretch: 82%; letter-spacing: -.02em; }
+/*
+ * The Agent cell holds the face, the name and the board chip. The chip is wider than the column, and a
+ * nowrap cell let it run over Age and Att. (Round 3, S2): the cell wraps, the chip takes its own line
+ * and ends in an ellipsis (the chip's title keeps the full board name).
+ */
+.op-main .ar-tbl .ag { display: flex; flex-wrap: wrap; row-gap: 4px; min-width: 0; max-width: 100%; white-space: normal; overflow-wrap: anywhere; }
+.op-main .ar-tbl .ag .ib-board { flex: 0 1 auto; max-width: 100%; }
+.op-main .ar-tbl .ix { white-space: nowrap; }

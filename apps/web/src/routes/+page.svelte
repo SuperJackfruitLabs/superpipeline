@@ -8,6 +8,8 @@
   import { goto } from '$app/navigation';
   import { app } from '$lib/stores/app.svelte';
   import Onboarding from '$lib/components/Onboarding.svelte';
+  import LoadFailed from '$lib/components/parts/LoadFailed.svelte';
+  import { UNREACHABLE_COPY } from '$lib/loading';
 
   $effect(() => {
     if (app.authState === 'ready' && app.boardId) void goto('/inbox', { replaceState: true });
@@ -16,6 +18,11 @@
 
 {#if app.needsBoard}
   <Onboarding />
+{:else if app.bootFailure}
+  <main class="flex flex-1 flex-col items-center justify-center gap-3 text-center">
+    <h1 class="sr-only">Superpipeline</h1>
+    <LoadFailed message={UNREACHABLE_COPY} onRetry={() => app.retry()} />
+  </main>
 {:else}
   <main class="flex flex-1 flex-col items-center justify-center gap-3 text-center">
     <h1 class="sr-only">Opening your inbox</h1>

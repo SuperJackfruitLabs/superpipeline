@@ -290,7 +290,7 @@
         </div>
       {:else}
         <div data-section="cost" style="display: contents">
-          <div class="ar-figs" style="grid-auto-flow: row; border-bottom: 0px;"><div><b class:z={card.costUsd === 0}>{usd(card.costUsd)}</b><span>{m.estimate?.estimatedUsd ? `of ${usd(m.estimate.estimatedUsd)}` : 'no estimate yet'}</span></div></div>
+          <div class="ar-figs" style="grid-auto-flow: row; border-bottom: 0px;"><div><b class:z={card.costUsd === 0}>{usd(card.costUsd)}</b><span>{!m.detailLoaded ? 'estimating…' : m.estimate?.estimatedUsd ? `of ${usd(m.estimate.estimatedUsd)}` : 'no estimate yet'}</span></div></div>
           <div class="cd-meter" aria-hidden="true">{#each [0, 1, 2, 3] as i (i)}<i class:off={m.costPct <= i * 25}></i>{/each}</div>
         </div>
         <table class="cd-dt" data-section="attempts"><thead><tr><th scope="col" style="width: 64px;">Attempt</th><th scope="col">Agent</th><th scope="col" style="width: 60px;">Spent</th><th scope="col">Outcome</th></tr></thead><tbody>{#each m.attempts as a, i (a.runId)}<tr><td class="m">{i + 1}</td><td>{name(a.agentId)}</td><td class="m">{usd(a.costUsd)}</td><td>{outcomeWord(a)}</td></tr>{/each}</tbody></table>

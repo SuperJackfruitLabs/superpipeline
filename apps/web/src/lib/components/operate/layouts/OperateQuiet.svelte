@@ -1,7 +1,7 @@
 <!-- apps/web/src/lib/components/operate/layouts/OperateQuiet.svelte -->
 <script lang="ts">
   import BoardChip from '$lib/components/inbox/BoardChip.svelte';
-  import { acrossBoards, askBoards, inboxCounts, inboxSubline, wantYou } from '$lib/components/inbox/inbox-words';
+  import { acrossBoards, askBoards, CHECKING, inboxCounts, inboxSubline, wantYou } from '$lib/components/inbox/inbox-words';
   import { greetNamed } from '$lib/greet';
   import { viewport } from '$lib/viewport.svelte';
   import { untrack } from 'svelte';
@@ -33,12 +33,12 @@
 {/snippet}
 
 <div class="op-q"><div class="q"><div class="q__col">
-  <svelte:element this={viewport.phone ? 'h2' : 'h1'} class="op-title">{greetNamed(model.phase, model.firstName)} {wantYou(model.needs.length)}</svelte:element>
-  <p class="q__lede">{inboxSubline(inboxCounts(model.needs), askBoards(model.needs), model.running.length)}</p>
-  <h2>Needs you ({model.needs.length})</h2>
-  {#if askBoards(model.needs) > 0}<p class="plain">{acrossBoards(askBoards(model.needs)).replace(/^./, (c) => c.toUpperCase())}. Most urgent first.</p>{/if}
+  <svelte:element this={viewport.phone ? 'h2' : 'h1'} class="op-title">{greetNamed(model.phase, model.firstName)}{model.loading ? '' : ` ${wantYou(model.needs.length)}`}</svelte:element>
+  <p class="q__lede">{model.loading ? CHECKING : inboxSubline(inboxCounts(model.needs), askBoards(model.needs), model.running.length)}</p>
+  <h2>Needs you{model.loading ? '' : ` (${model.needs.length})`}</h2>
+  {#if !model.loading && askBoards(model.needs) > 0}<p class="plain">{acrossBoards(askBoards(model.needs)).replace(/^./, (c) => c.toUpperCase())}. Most urgent first.</p>{/if}
   {#if model.loading}
-    <SkeletonRows label="Loading what needs you…" />
+    <SkeletonRows label="Checking your boards…" slow={model.slow} />
   {:else if model.needs.length === 0}
     <p class="plain">None.</p>
   {:else}
@@ -80,15 +80,17 @@
       {#if ui.refusals[id]}<p class="plain" role="alert">{QUIET_REFUSAL}{ui.refusals[id]}</p>{/if}
     </article>
   {/each}
-  <h2>Working now ({model.running.length}{model.scoped ? '' : ', all boards'})</h2>
-  {#if model.running.length === 0}
+  <h2>Working now ({model.loading ? '' : `${model.running.length}${model.scoped ? '' : ', '}`}{model.scoped ? '' : 'all boards'})</h2>
+  {#if model.loading}
+    <SkeletonRows label="Checking what is running…" rows={1} />
+  {:else if model.running.length === 0}
     <p class="plain">None. No agent is working anything right now.</p>
   {:else}
     <ul class="ev">{#each model.running as r (r.cardId)}<li>{@render face(r.agentName, r.iconUrl, 'working')}<a href={model.cardHref(r.cardId, r.boardId)} onclick={(e: MouseEvent) => go(e, r.cardId, r.boardId)}>{r.title}</a> in {r.stageName}{r.costUsd > 0 ? ` · ${usd(r.costUsd)}` : ''}</li>{/each}</ul>
   {/if}
-  <h2>Activity ({model.unread} unread{model.scoped ? '' : ', all boards'})</h2>
+  <h2>Activity ({model.loading ? '' : `${model.unread} `}unread{model.scoped ? '' : ', all boards'})</h2>
   <div class="toggle" role="group" aria-label="Which activity"><button class="textbtn" type="button" aria-pressed={model.showRead ? 'false' : 'true'} onclick={() => (model.showRead = false)}>Unread only</button><button class="textbtn" type="button" aria-pressed={model.showRead ? 'true' : 'false'} onclick={() => (model.showRead = true)}>Show all</button></div>
-  {#if model.groups.length === 0}<p class="plain">{model.showRead ? (model.scoped ? 'Nothing has happened on this board yet.' : 'Nothing has happened on any board yet.') : 'Nothing unread.'}</p>{/if}
+  {#if model.loading}<SkeletonRows label="Loading activity…" rows={1} />{:else if model.groups.length === 0}<p class="plain">{model.showRead ? (model.scoped ? 'Nothing has happened on this board yet.' : 'Nothing has happened on any board yet.') : 'Nothing unread.'}</p>{/if}
   {#each model.groups as g (g.cardId)}
     <div class="item" style="padding-left: 0px;" in:rise animate:flip use:flashOnChange={g.latest.seq}>
       <h3 style="display: flex; gap: 10px; align-items: center;">{@render face(g.agentName, g.iconUrl, g.need ? 'needs' : 'resting')}<a href={model.cardHref(g.cardId, g.boardId)} onclick={(e: MouseEvent) => go(e, g.cardId, g.boardId)}>{g.title}</a></h3>
@@ -102,7 +104,7 @@
   {/each}
   <h2>Spend in the last 7 days</h2>
   {#if model.usageError}<p class="plain">Couldn't load spend — {model.usageError}</p>{/if}
-  <p class="plain"><span class="money" use:bumpOnChange={model.spend.total}>{usd(model.spend.total)}</span>{quietSpend(model.spend.cap, model.spend.top)}</p>
+  {#if model.loading}<SkeletonRows label="Loading spend…" rows={1} />{:else}<p class="plain"><span class="money" use:bumpOnChange={model.spend.total}>{usd(model.spend.total)}</span>{quietSpend(model.spend.cap, model.spend.top)}</p>{/if}
   <div class="acts"><Button variant="secondary" class="btn-sm" type="button" onclick={() => (caps.editing ? caps.cancel(model.spend) : caps.start(model.spend))}>Set a budget cap</Button>{#if model.scoped}<a href="/b/{model.boardId}/operate/telemetry">Spend details</a>{/if}</div>
   {#if caps.editing}
     <fieldset class="form"><legend>Set a budget cap</legend>

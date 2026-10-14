@@ -28,6 +28,8 @@ export class SettingsModel {
   ghError = $state<string | null>(null);
   copied = $state<'url' | 'secret' | null>(null);
   profiles = $state<Profile[]>([]);
+  /** The profiles' read: pending until it answers (never "No profiles yet" before), failed is said as such. */
+  profilesState = $state<'loading' | 'ready' | 'failed'>('loading');
   pKey = $state('');
   pModel = $state('');
   profileBusy = $state(false);
@@ -44,7 +46,7 @@ export class SettingsModel {
     this.nameInput = b.name ?? '';
     this.issueTrigger = b.github.issueTrigger;
     this.draft = b.stages.map((s) => ({ ...s }));
-    void getProfiles(b.boardId!).then((p) => (this.profiles = p)).catch(() => (this.profiles = []));
+    void getProfiles(b.boardId!).then((p) => { this.profiles = p; this.profilesState = 'ready'; }).catch(() => { this.profilesState = 'failed'; });
   }
 
   /** Call from an $effect: ticks `now` every 30 s and returns the cleanup. */

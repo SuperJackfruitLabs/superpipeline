@@ -1,5 +1,8 @@
 <!-- apps/web/src/lib/components/workspace/studio/PeopleStudio.svelte -->
 <script lang="ts">
+  import SkeletonRows from '$lib/components/parts/SkeletonRows.svelte';
+  import LoadFailed from '$lib/components/parts/LoadFailed.svelte';
+  import { crewNewInPage, onCrewNew } from '../crew-new';
   import LineIcon from '$lib/components/parts/LineIcon.svelte';
   import type { Role } from '$lib/api';
   import { PeopleModel } from '../people-model.svelte';
@@ -14,15 +17,18 @@
   void model.refresh();
   let creating = $state(false);
   function openNew(): void { model.resetNew(); creating = true; }
+  $effect(() => onCrewNew('people', openNew));
 </script>
 
 {#snippet plusIcon()}<LineIcon name="plus" size={18} stroke={1.75} />{/snippet}
 
 <section class="ar-sec" aria-labelledby="pt-h">
-  <div class="hd"><span class="no">{review?.no ?? '01'}</span>{#if review}<span class="kick">{review.tag}</span>{/if}<h2 id="pt-h">{model.members === null ? 'People' : peopleHeading(model.members.length)}</h2><span class="r"><Button type="button" icon={plusIcon} onclick={openNew}>New person</Button></span></div>
+  <div class="hd"><span class="no">{review?.no ?? '01'}</span>{#if review}<span class="kick">{review.tag}</span>{/if}<h2 id="pt-h">{model.members === null ? 'People' : peopleHeading(model.members.length)}</h2><span class="r">{#if crewNewInPage()}<Button type="button" icon={plusIcon} onclick={openNew}>New person</Button>{/if}</span></div>
   {#if model.error && !creating}<p class="ar-hint" role="alert">{model.error}</p>{/if}
-  {#if model.members === null}
-    <p class="ar-hint" role="status">Loading people…</p>
+  {#if model.members === null && model.failed}
+    <LoadFailed message="Couldn't load people." onRetry={() => model.refresh()} />
+  {:else if model.members === null}
+    <SkeletonRows label="Loading people…" rows={3} rowHeight={48} />
   {:else}
     <table class="ar-tbl wo-tbl">
       <caption class="sr">People</caption>

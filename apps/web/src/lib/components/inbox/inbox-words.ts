@@ -50,3 +50,6 @@ export function inboxSubline(c: InboxCounts, boards: number, running: number): s
 export function acrossBoards(boards: number): string {
   return boards === 0 ? '' : boards === 1 ? 'on 1 board' : `across ${boards} boards`;
 }
+
+/** The Inbox summary while it is still counting: no number and no "nothing" words. */
+export const CHECKING = 'Checking your boards…';

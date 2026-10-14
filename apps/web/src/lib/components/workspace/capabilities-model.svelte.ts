@@ -9,6 +9,8 @@ export class CapabilitiesModel {
   capabilities = $state<CapabilityRecord[] | null>(null);
   agents = $state<AgentSummary[]>([]);
   error = $state<string | null>(null);
+  /** The list could not be read: the tab says so with Try again (never an empty list, never the raw error). */
+  failed = $state(false);
   newKey = $state('');
   newDescription = $state('');
   /** The New capability dialog's own error. */
@@ -26,7 +28,8 @@ export class CapabilitiesModel {
   async refresh(): Promise<void> {
     const load = Promise.all([getCapabilities(), getAgents().catch(() => [] as AgentSummary[])]);
     app.markBusy(load);
-    try { [this.capabilities, this.agents] = await load; } catch (e) { this.error = e instanceof Error ? e.message : String(e); this.capabilities ??= []; }
+    this.failed = false;
+    try { [this.capabilities, this.agents] = await load; } catch { this.failed = true; }
   }
 
   private async bodyError(res: Response, fallback: string): Promise<string> {

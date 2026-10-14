@@ -12,19 +12,23 @@ vi.mock('$lib/api', () => api);
 vi.mock('$lib/stores/app.svelte', () => ({ app: { markBusy: <T,>(p: Promise<T>) => p, boardId: null, board: null } }));
 
 import AgentsPage from './AgentsPage.svelte';
+import { viewport } from '$lib/viewport.svelte';
+import { requestCrewNew } from '../crew-new';
 
 const agent = (name: string) => ({ id: `agt_${name}`, name, capabilities: ['research'], externalId: 'prn_x', externalSource: 'agentpod', iconUrl: null, concurrency: 1, tokenIds: ['tok_a', 'tok_b'], role: null, claimedCount: 0, workingCount: 0 });
 
 const cap = (key: string) => ({ id: `cap_${key}`, key, name: key, description: null, tags: [], examples: [], origin: 'declared', externalId: null, externalSource: null, inputModes: [], outputModes: [], agentCount: 1, boardCount: 1 });
 
+// The tab's own New button shows where the masthead has none (a phone, Quiet); these tests drive it.
 beforeEach(() => {
+  viewport.phone = true;
   for (const f of Object.values(api)) f.mockReset();
   api.getCapabilities.mockResolvedValue([]);
   api.listAttention.mockResolvedValue({ cards: [], boardsUnanswered: 0 });
   api.listLabels.mockResolvedValue([]);
   api.getMembers.mockResolvedValue([]);
 });
-afterEach(cleanup);
+afterEach(() => { cleanup(); viewport.phone = false; });
 
 describe('AgentsPage', () => {
   it('says it is loading, then says what failed and offers to try again', async () => {
@@ -32,9 +36,11 @@ describe('AgentsPage', () => {
     api.getAgents.mockReturnValue(new Promise((_, reject) => { fail = reject; }));
     render(AgentsPage, { vibe: 'daylight' });
     expect(screen.getByRole('heading', { name: 'Agents' })).toBeTruthy();
-    expect(screen.getByText('Loading agents…')).toBeTruthy();
-    fail(new Error('agents 503'));
-    expect(await screen.findByText('Could not load the agents: agents 503')).toBeTruthy();
+    expect(document.querySelector('[aria-busy="true"][data-skeleton]')).not.toBeNull();
+    expect(document.body.textContent).not.toMatch(/No agents yet|0 agents/);
+    fail(new Error('getAgents failed (503)'));
+    expect(await screen.findByText("Couldn't load the agents.")).toBeTruthy();
+    expect(document.body.textContent).not.toMatch(/failed \(503\)/);
     expect(screen.getByRole('button', { name: 'Try again' })).toBeTruthy();
   });
   it('explains an empty workspace', async () => {

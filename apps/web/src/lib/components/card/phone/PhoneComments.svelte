@@ -6,7 +6,8 @@
   const id = $props.id();
 </script>
 
-{#if model.comments.comments.length === 0}<p class="muted">No comments yet.</p>
+{#if !model.comments.loaded && model.comments.comments.length === 0}<p class="muted">Loading comments…</p>
+{:else if model.comments.comments.length === 0}<p class="muted">No comments yet.</p>
 {:else}
   <ul class="refs">{#each model.comments.comments as c (c.id)}<li class="rf"><b>{c.author.name ?? 'Someone'}</b><span>{c.body}</span></li>{/each}</ul>
 {/if}

@@ -1,7 +1,7 @@
 <!-- apps/web/src/lib/components/operate/layouts/OperateStudio.svelte -->
 <script lang="ts">
   import BoardChip from '$lib/components/inbox/BoardChip.svelte';
-  import { acrossBoards, askBoards, inboxCounts, inboxSubline, wantYou } from '$lib/components/inbox/inbox-words';
+  import { acrossBoards, askBoards, CHECKING, inboxCounts, inboxSubline, wantYou } from '$lib/components/inbox/inbox-words';
   import { greetNamed } from '$lib/greet';
   import { viewport } from '$lib/viewport.svelte';
   import SkeletonRows from '$lib/components/parts/SkeletonRows.svelte';
@@ -92,29 +92,33 @@
   </div>
 
   <div class="ar-hero">
-    <span class="big" class:ink={model.needs.length === 0} aria-hidden="true">{model.needs.length}</span>
+    <span class="big" class:ink={model.loading || model.needs.length === 0} aria-hidden="true">{model.loading ? '—' : model.needs.length}</span>
     <div class="txt">
       <span class="kick">Inbox</span>
-      <svelte:element this={viewport.phone ? 'h2' : 'h1'} class="op-title">{greetNamed(model.phase, model.firstName)} {wantYou(model.needs.length)}</svelte:element>
-      <p>{inboxSubline(inboxCounts(model.needs), askBoards(model.needs), model.running.length)}</p>
+      <svelte:element this={viewport.phone ? 'h2' : 'h1'} class="op-title">{greetNamed(model.phase, model.firstName)}{model.loading ? '' : ` ${wantYou(model.needs.length)}`}</svelte:element>
+      <p>{model.loading ? CHECKING : inboxSubline(inboxCounts(model.needs), askBoards(model.needs), model.running.length)}</p>
     </div>
   </div>
 
   <section class="ar-sec" aria-labelledby="op-f">
     <div class="hd"><span class="no">01</span><h2 id="op-f">Operations in figures</h2><span class="r">last 7 days</span></div>
     <div class="ar-figs">
+      {#if model.loading}
+        {#each ['Needs you', 'Running', 'Spend · 7 days', capFig.label, 'Unread activity'] as label (label)}<div><b class="z">—</b><span>{label}</span></div>{/each}
+      {:else}
       <div class:sig={model.needs.length > 0}><b class:z={model.needs.length === 0}>{model.needs.length}</b><span>Needs you</span></div>
       <div><b class:z={model.running.length === 0}>{model.running.length}</b><span>Running</span></div>
       <div><b class:z={model.spend.total === 0} use:countUp={{ value: model.spend.total, format: usd }}></b><span>Spend · 7 days</span></div>
       <div><b class:z={capFig.zero}>{capFig.value}</b><span>{capFig.label}</span></div>
       <div><b class:z={model.unread === 0}>{model.unread}</b><span>Unread activity</span></div>
+      {/if}
     </div>
   </section>
 
   <section class="ar-sec" id="needs" aria-labelledby="op-n">
-    <div class="hd"><span class="no">02</span><h2 id="op-n">Needs you</h2><span class="r"><span class="sigt">{model.needs.length}</span>{#if !model.scoped}<span class="m"> · {acrossBoards(askBoards(model.needs))}</span>{/if}</span></div>
+    <div class="hd"><span class="no">02</span><h2 id="op-n">Needs you</h2><span class="r"><span class="sigt">{model.loading ? '–' : model.needs.length}</span>{#if !model.scoped && !model.loading}<span class="m"> · {acrossBoards(askBoards(model.needs))}</span>{/if}</span></div>
     {#if model.loading}
-      <SkeletonRows label="Loading what needs you…" />
+      <SkeletonRows label="Checking your boards…" rowHeight={64} slow={model.slow} />
     {:else if model.needs.length === 0}
       <p class="op-empty">Nothing on this board is waiting on you.</p>
     {:else}
@@ -131,7 +135,7 @@
               <td><span class="ag">{#if row.agentName}<Face id={row.agentName} label={row.agentName} mood="needs" size={20} src={row.iconUrl ?? undefined} />{row.agentName}{:else}<span class="m">Unclaimed</span>{/if}<BoardChip name={row.boardName} /></span></td>
               <td><span class="m">{studioAge(row)}</span></td>
               <td><span class="m">{#if noOwner}—{:else if attemptsSignalOperate(row.card.attemptCount)}<span class="sigt">{row.card.attemptCount}</span>{:else}{row.card.attemptCount}{/if}</span></td>
-              <td>
+              <td data-reveal>
                 {#if noOwner}
                   <p class="op-why" style="font-family: var(--ff); font-size: 14px;">{row.item.instruction}</p>
                 {:else}
@@ -172,8 +176,10 @@
 
   <div class="op-split">
     <section class="ar-sec" aria-labelledby="op-a">
-      <div class="hd"><span class="no">03</span><h2 id="op-a">Activity</h2><span class="r">{model.unread} unread{model.scoped ? '' : ' · all boards'} · by card <span class="op-seg" role="group" aria-label="Which activity"><button type="button" aria-pressed={model.showRead ? 'false' : 'true'} onclick={() => (model.showRead = false)}>Unread</button><button type="button" aria-pressed={model.showRead ? 'true' : 'false'} onclick={() => (model.showRead = true)}>All</button></span></span></div>
-      {#if model.groups.length === 0}
+      <div class="hd"><span class="no">03</span><h2 id="op-a">Activity</h2><span class="r">{model.loading ? '–' : model.unread} unread{model.scoped ? '' : ' · all boards'} · by card <span class="op-seg" role="group" aria-label="Which activity"><button type="button" aria-pressed={model.showRead ? 'false' : 'true'} onclick={() => (model.showRead = false)}>Unread</button><button type="button" aria-pressed={model.showRead ? 'true' : 'false'} onclick={() => (model.showRead = true)}>All</button></span></span></div>
+      {#if model.loading}
+        <SkeletonRows label="Loading activity…" rows={3} rowHeight={44} />
+      {:else if model.groups.length === 0}
         <p class="op-empty">{model.showRead ? (model.scoped ? 'Nothing has happened on this board yet.' : 'Nothing has happened on any board yet.') : 'Nothing unread.'}</p>
       {:else}
         <table class="ar-tbl">
@@ -191,26 +197,26 @@
     </section>
     <div class="op-stack">
       <section class="ar-sec" aria-labelledby="op-r">
-        <div class="hd"><span class="no">04</span><h2 id="op-r">Running</h2><span class="r">{model.running.length}{model.scoped ? '' : ' · all boards'}</span></div>
+        <div class="hd"><span class="no">04</span><h2 id="op-r">Running</h2><span class="r">{model.loading ? '–' : model.running.length}{model.scoped ? '' : ' · all boards'}</span></div>
         <table class="ar-tbl"><thead><tr><th scope="col">Agent</th><th scope="col">Card · stage</th><th scope="col" style="width: 64px;">Cost</th></tr></thead>
         <tbody>
           {#each model.running as r (r.cardId)}
             <tr><td><span class="ag">{@render face(r.agentName, r.iconUrl, 'working')}{r.agentName ?? '—'}</span></td><td><a class="ttl" href={model.cardHref(r.cardId, r.boardId)} onclick={(e: MouseEvent) => go(e, r.cardId, r.boardId)}>{r.title}</a><div class="op-sub">{r.stageName}</div></td><td><span class="m">{r.costUsd > 0 ? usd(r.costUsd) : '—'}</span></td></tr>
           {:else}
-            <tr><td colspan="3" class="serif muted" style="font-size: 16px;">No agent is working anything right now.</td></tr>
+            <tr><td colspan="3" class="serif muted" style="font-size: 16px;">{#if model.loading}<SkeletonRows label="Checking what is running…" rows={2} />{:else}No agent is working anything right now.{/if}</td></tr>
           {/each}
         </tbody></table>
       </section>
       <section class="ar-sec" aria-labelledby="op-s">
         <div class="hd"><span class="no">05</span><h2 id="op-s">Spend</h2><span class="r">{model.scoped ? '' : 'all boards · '}last 7 days{#if model.scoped} · <a class="ar-lk" href="/b/{model.boardId}/operate/telemetry" style="min-height: 0px;">Detail <LineIcon name="arrow-ar" size={14} stroke={1.75} /></a>{/if}</span></div>
         {#if model.usageError}<p class="ar-hint">Couldn't load spend — {model.usageError}</p>{/if}
-        <div class="ar-figs" style="grid-auto-flow: row; border-bottom: 0px;"><div><b class:z={model.spend.total === 0}>{usd(model.spend.total)}</b><span>{model.spend.cap === null ? 'No cap set' : `of ${usd(model.spend.cap)} cap`}</span></div></div>
+        <div class="ar-figs" style="grid-auto-flow: row; border-bottom: 0px;"><div><b class:z={model.loading || model.spend.total === 0}>{model.loading ? '—' : usd(model.spend.total)}</b><span>{model.loading ? 'Loading' : model.spend.cap === null ? 'No cap set' : `of ${usd(model.spend.cap)} cap`}</span></div></div>
         <div class="op-bar" aria-hidden="true">{#if model.spend.pct !== null}<i class="sp-fill" style="display: block; height: 100%; --p: {model.spend.pct / 100}; background: {model.spend.overBudget ? 'var(--sig)' : 'var(--text)'};"></i>{/if}</div>
         <table class="ar-tbl"><thead><tr><th scope="col">Top agents</th><th scope="col" style="width: 64px;">$</th></tr></thead><tbody>
           {#each model.spend.top as a (a.name)}
             <tr><td>{a.name}</td><td><span class="m">{usd(a.costUsd)}</span></td></tr>
           {:else}
-            <tr><td colspan="2" class="serif muted" style="font-size: 16px;">No agent spend in the window.</td></tr>
+            <tr><td colspan="2" class="serif muted" style="font-size: 16px;">{model.loading ? '—' : 'No agent spend in the window.'}</td></tr>
           {/each}
         </tbody></table>
         <form class="op-cap" aria-label="Set a budget cap" onsubmit={(e) => { e.preventDefault(); void caps.save(); }}>

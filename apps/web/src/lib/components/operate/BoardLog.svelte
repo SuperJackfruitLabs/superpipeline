@@ -20,7 +20,7 @@
   }
 </script>
 
-<section class="panel" aria-labelledby="log-h">
+<section class="panel" aria-labelledby="log-h" data-reveal>
   <div class="panel-head">
     <h2 class="t-h2" id="log-h">Board log</h2>
     {#if events !== null && list.length > 0}<span class="t-meta">{logMeta(list.length)}</span>{/if}
@@ -52,7 +52,7 @@
     <span class="sr" aria-live="polite">{copied ? 'Card id copied' : ''}</span>
     <div class="panel-body" style="border-top: 1px solid var(--vk-color-line); display: flex; flex-direction: column; gap: var(--vk-space-2);">
       {#if list.length > collapsedRows}
-        <Button variant="quiet" class="btn-sm"  type="button" style="align-self: flex-start;" onclick={() => (all = !all)}>{all ? `Show the latest ${collapsedRows}` : `Show all ${list.length} events`}</Button>
+        <Button variant="quiet" class="btn-sm"  type="button" style="align-self: flex-start;" aria-expanded={all} onclick={() => (all = !all)}>{all ? `Show the latest ${collapsedRows}` : `Show all ${list.length} events`}</Button>
       {/if}
       <details>
         <summary class="t-meta" style="min-height: 44px; display: flex; align-items: center; gap: 6px;"><span class="disc-ico"><LineIcon name="chev-down" size={16} /></span><span style="text-decoration: underline;">Show raw event names</span></summary>

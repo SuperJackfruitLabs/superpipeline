@@ -10,7 +10,7 @@ import { daysOverdue, dueLong, dueShort, isStopped, needsAction, type CardAction
 import type { CardSummary } from '../card-summary';
 
 export const pad2 = (n: number): string => String(n).padStart(2, '0');
-export const fmtUsd = (n: number | null): string => (n === null ? '—' : `$${n.toFixed(2)}`);
+export const fmtUsd = (n: number | null | undefined): string => (n === null || n === undefined ? '—' : `$${n.toFixed(2)}`);
 const cap = (s: string): string => s.charAt(0).toUpperCase() + s.slice(1);
 const terminalOf = (m: BoardModel): string => m.stages[m.stages.length - 1]?.name ?? 'Done';
 
@@ -181,7 +181,8 @@ export function studioNotes(m: BoardModel): Array<{ n: number; parts: NotePart[]
   ];
   for (const [cs, note] of groups) if (cs.length) out.push({ n: cs[0]!.fnNumber, parts: note(cs) });
   const spend: NotePart[] =
-    m.spend7d === null ? ['Spend this week could not be read.']
+    m.spend7d === undefined ? ['Spend this week is still being read.']
+    : m.spend7d === null ? ['Spend this week could not be read.']
     : m.spend7d === 0 ? ['No card has spent anything yet: every card’s cost reads ', { i: '—' }, '.']
     : [`The board spent ${fmtUsd(m.spend7d)} this week.`];
   out.push({ n: m.fn.spend, parts: spend });

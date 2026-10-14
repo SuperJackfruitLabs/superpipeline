@@ -38,6 +38,7 @@
     if (action === 'inbox') void goto(shellModel.inboxHref);
     else if (action === 'plan') void goto(shellModel.planHref);
     else if (action === 'crew') void goto(shellModel.crewHref);
+    else if (action === 'compose' && props.primary) props.primary.onclick();
     else if (action === 'compose' && app.boardId) app.requestCompose();
     else if (action === 'filter' && props.view) app.filterOpen = true;
     else return;

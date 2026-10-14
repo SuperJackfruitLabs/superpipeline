@@ -160,7 +160,7 @@
         {#snippet talkR()}{commentsCount(m.comments.comments.length)} · <span class="kbd">C</span>{/snippet}
         <section class="ar-sec" aria-labelledby="cp-s3" data-section="comments">
           {@render hd(3, 'cp-s3', 'Talk', talkR)}
-          {#if m.comments.comments.length}{#each m.comments.comments as c (c.id)}<p class="cd-p"><b>{m.authorName(c.author)}</b> <span style="white-space: break-spaces; overflow-wrap: anywhere">{c.deletedAt ? 'Comment deleted' : c.body}</span></p>{/each}{:else}<p class="cd-p">No comments yet. The agent that works this card reads them.</p>{/if}
+          {#if m.comments.comments.length}{#each m.comments.comments as c (c.id)}<p class="cd-p"><b>{m.authorName(c.author)}</b> <span style="white-space: break-spaces; overflow-wrap: anywhere">{c.deletedAt ? 'Comment deleted' : c.body}</span></p>{/each}{:else if !m.comments.loaded}<p class="cd-p">Loading comments…</p>{:else}<p class="cd-p">No comments yet. The agent that works this card reads them.</p>{/if}
           <div class="ar-field"><label for="cp-comment">Add a comment</label><textarea id="cp-comment" class="ar-ta" maxlength="8192" placeholder="⌘ or Ctrl + Enter posts it" bind:value={m.comments.draft} onkeydown={(e) => { if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) { e.preventDefault(); void m.comments.submit(); } }}></textarea></div>
           {#if m.comments.error}<p class="cd-p" role="alert">{m.comments.error}</p>{/if}
           <div><button class="ar-btn2" type="button" aria-disabled={m.comments.posting ? 'true' : undefined} onclick={() => { if (!m.comments.posting) void m.comments.submit(); }}>Comment</button><span class="vk-visually-hidden" role="status">{m.comments.posting ? 'Posting…' : ''}</span></div>
@@ -239,7 +239,7 @@
         <section class="ar-sec" aria-labelledby="cp-s7">
           {@render hd(7, 'cp-s7', 'Cost', costR)}
           <div data-section="cost" style="display: contents">
-            <div class="ar-figs" style="grid-auto-flow: row; border-bottom: 0px;"><div><b class:z={card.costUsd === 0}>{usd(card.costUsd)}</b><span>{m.estimate?.estimatedUsd ? `of ${usd(m.estimate.estimatedUsd)}` : 'no estimate yet'}</span></div></div>
+            <div class="ar-figs" style="grid-auto-flow: row; border-bottom: 0px;"><div><b class:z={card.costUsd === 0}>{usd(card.costUsd)}</b><span>{!m.detailLoaded ? 'estimating…' : m.estimate?.estimatedUsd ? `of ${usd(m.estimate.estimatedUsd)}` : 'no estimate yet'}</span></div></div>
             <div class="cd-meter" aria-hidden="true">{#each [0, 1, 2, 3] as i (i)}<i class:off={m.costPct <= i * 25}></i>{/each}</div>
           </div>
           <table class="cd-dt" data-section="attempts"><thead><tr><th scope="col" style="width: 64px;">Attempt</th><th scope="col">Agent</th><th scope="col" style="width: 60px;">Spent</th><th scope="col">Outcome</th></tr></thead><tbody>{#each m.attempts as a, i (a.runId)}<tr><td class="m">{i + 1}</td><td>{name(a.agentId)}</td><td class="m">{usd(a.costUsd)}</td><td>{outcomeWord(a)}</td></tr>{/each}</tbody></table>
@@ -256,7 +256,7 @@
     </div>
   </main>
   <footer class="ar-status">
-    <span><span class="ar-live" style="font-size: 11px;"><i aria-hidden="true"></i>{app.connected || app.syncedAt ? 'Live' : 'Reconnecting'}</span></span>
+    <span><span class="ar-live" style="font-size: 11px;"><i aria-hidden="true"></i>{app.connected || app.syncedAt ? 'Live' : app.connection === 'reconnecting' ? 'Reconnecting' : app.connection === 'offline' ? 'Offline' : 'Connecting'}</span></span>
     {#each statusItems({ shortId: m.shortId, i: m.stageIndex, n: m.stages.length, stageName: m.stageName, needsYou: lead.needsYou && !m.archived, ageHours: m.ageHours, syncedAt: app.syncedAt?.toISOString() ?? null }) as it (it.text)}<span class:sig={it.signal}>{it.text}</span>{/each}
     <span class="r"><span>E edit</span><span>{gate ? 'C request changes' : 'C comment'}</span><span>⌘↵ send</span><span>G B back to the board</span></span>
   </footer>

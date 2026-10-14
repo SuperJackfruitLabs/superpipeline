@@ -19,6 +19,8 @@
   import { CapsUi, OperateUi } from '../operate/operate-ui.svelte';
   import OperateDaylightSky from '../operate/layouts/OperateDaylightSky.svelte';
   import InboxShow from './InboxShow.svelte';
+  import LoadFailed from '$lib/components/parts/LoadFailed.svelte';
+  import { UNREACHABLE_COPY } from '$lib/loading';
 
   if (app.boards.length === 0) void app.loadBoards();
   const model = new InboxStore();
@@ -29,7 +31,7 @@
   const scope = $derived(model.scoped ? model.boardName : 'all boards');
   // Only Studio draws a status line on the Inbox (the other three references end with the page).
   const status = $derived(
-    vibe !== 'studio' ? null : shellModel.pageStatus([
+    vibe !== 'studio' ? null : model.loading || model.failed ? shellModel.pageStatus([scope]) : shellModel.pageStatus([
       scope,
       plural(model.cardCount, 'card', 'cards'),
       needsPart(model.needs.length),
@@ -46,15 +48,32 @@
 <div style:display={phoneCard ? 'none' : 'contents'}>
   <AppShell here="inbox" section="inbox" boardName={null} view={null} showing={null} {status} sky={vibe === 'daylight' ? sky : undefined} bleed={vibe === 'quiet' || vibe === 'studio'} ownHeading>
     <div id="content" tabindex="-1" class="min-w-0">
-      <div class="ib-pad"><InboxShow form={vibe === 'quiet' ? 'words' : 'chips'} /></div>
-      <Layout {model} {ui} {caps} />
+      <!-- Keyed on loading: the counted page arrives as a fresh frame instead of pushing the waiting one down (phone CLS). -->
+      {#key model.loading}
+      <div class="ib-pad ib-pad--{vibe}"><InboxShow form={vibe === 'quiet' ? 'words' : 'chips'} pending={model.loading} /></div>
+      {#if model.failed}
+        <section class="ib-failed" aria-labelledby="ib-failed-h">
+          <h1 id="ib-failed-h" class="vk-visually-hidden">Inbox</h1>
+          <LoadFailed message={UNREACHABLE_COPY} onRetry={() => model.retry()} />
+        </section>
+      {:else}
+        <Layout {model} {ui} {caps} />
+      {/if}
+      {/key}
     </div>
   </AppShell>
 </div>
 {#if app.openCardId && app.board}<CardDrawer />{/if}
 
 <style>
-  /* The phone shell draws no gutter of its own: the Show row keeps the page's 16px. */
+  /*
+   * Studio and Quiet bleed (their layouts draw their own gutters), so the Show row, which sits above the
+   * layout, takes the same gutter as the layout below it: Studio's .op-main, Quiet's .q. The phone shell
+   * draws no gutter of its own: the Show row keeps the page's 16px.
+   */
   .ib-pad { padding-inline: 0; }
-  @media (max-width: 899.98px) { .ib-pad { padding-inline: 16px; } }
+  .ib-failed { padding: var(--vk-space-6) var(--vk-space-4); }
+  .ib-pad--studio { padding: 24px 40px 0; }
+  .ib-pad--quiet { padding: var(--vk-space-6) var(--vk-space-6) 0; }
+  @media (max-width: 899.98px) { .ib-pad, .ib-pad--studio, .ib-pad--quiet { padding: 0 16px; } }
 </style>

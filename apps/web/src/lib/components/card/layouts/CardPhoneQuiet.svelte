@@ -73,7 +73,7 @@
     </fieldset>
   {:else}<div data-section="resume" hidden></div>{/if}
 
-  <section class="sx" aria-labelledby="s-det">
+  <section class="sx" hidden={!model.detailLoaded} aria-labelledby="s-det">
     <h3 id="s-det">Details</h3>
     <dl class="facts" data-section="facts">
       <div style="display: contents;" data-section="status"><dt>State</dt><dd>{quietState(lead.kind, lead.needsYou, model.archived)}</dd></div>
@@ -90,29 +90,29 @@
     <button class="lnk" type="button" data-section="editButton" onclick={() => model.edit.start()}><PhoneIcon name="pen" />Edit card</button>
     <details class="dsc" data-section="details" open={!model.counts.description || hasStructuredDetail(v.groups, model.acceptanceCriteria)}><summary>Show the {v.fieldsCount} fields of the brief</summary><div class="in"><PhoneDetails view={v} spec={c.spec} criteria={model.acceptanceCriteria} heading="Things to prove" boardId={model.boardId ?? ''} /></div></details>
   </section>
-  {#if c.spec?.description}<section class="sx" aria-labelledby="s-desc" data-section="description"><h3 id="s-desc">Description</h3><p class="wrap">{c.spec.description}</p></section>{:else}<span hidden data-section="description"></span>{/if}
-  <section class="sx" aria-labelledby="s-cri" data-section="criteria"><h3 id="s-cri">Acceptance criteria ({model.counts.criteria} things to prove)</h3>
+  {#if c.spec?.description}<section class="sx" hidden={!model.detailLoaded} aria-labelledby="s-desc" data-section="description"><h3 id="s-desc">Description</h3><p class="wrap">{c.spec.description}</p></section>{:else}<span hidden data-section="description"></span>{/if}
+  <section class="sx" hidden={!model.detailLoaded} aria-labelledby="s-cri" data-section="criteria"><h3 id="s-cri">Acceptance criteria ({model.counts.criteria} things to prove)</h3>
     <details class="dsc"><summary>Show the {model.counts.criteria} things to prove</summary><div class="in"><ol class="nl">{#each model.acceptanceCriteria ?? [] as a, i (i)}<li>{a}</li>{/each}</ol></div></details>
   </section>
-  {#if v.plan?.length}<section class="sx" aria-labelledby="s-plan" data-section="plan"><h3 id="s-plan">Plan</h3><PhonePlan view={v} speaker={v.speaker} /></section>{:else}<span hidden data-section="plan"></span>{/if}
-  <section class="sx" aria-labelledby="s-his" data-section="activity"><h3 id="s-his">History ({model.counts.runs} {model.counts.runs === 1 ? 'run' : 'runs'})</h3><PhoneRuns view={v} {model} /></section>
-  {#if v.decisions}<section class="sx" aria-labelledby="s-dec" data-section="decisions"><h3 id="s-dec">Decisions</h3><p class="muted">{v.decisions} decided.</p></section>{:else}<span hidden data-section="decisions"></span>{/if}
-  <section class="sx" aria-labelledby="s-com" data-section="comments"><h3 id="s-com">Comments</h3><PhoneComments {model} /></section>
-  <section class="sx" aria-labelledby="s-lnk" data-section="links"><h3 id="s-lnk">Links</h3><PhoneLinks view={v} {model} /></section>
-  <section class="sx" aria-labelledby="s-sub" data-section="subtasks"><h3 id="s-sub">Sub-tasks</h3><PhoneSubtasks view={v} {model} /></section>
-  <section class="sx" aria-labelledby="s-prj" data-section="project"><h3 id="s-prj">Project</h3>
+  {#if v.plan?.length}<section class="sx" hidden={!model.detailLoaded} aria-labelledby="s-plan" data-section="plan"><h3 id="s-plan">Plan</h3><PhonePlan view={v} speaker={v.speaker} /></section>{:else}<span hidden data-section="plan"></span>{/if}
+  <section class="sx" hidden={!model.detailLoaded} aria-labelledby="s-his" data-section="activity"><h3 id="s-his">History ({model.counts.runs} {model.counts.runs === 1 ? 'run' : 'runs'})</h3><PhoneRuns view={v} {model} /></section>
+  {#if v.decisions}<section class="sx" hidden={!model.detailLoaded} aria-labelledby="s-dec" data-section="decisions"><h3 id="s-dec">Decisions</h3><p class="muted">{v.decisions} decided.</p></section>{:else}<span hidden data-section="decisions"></span>{/if}
+  <section class="sx" hidden={!model.detailLoaded} aria-labelledby="s-com" data-section="comments"><h3 id="s-com">Comments</h3><PhoneComments {model} /></section>
+  <section class="sx" hidden={!model.detailLoaded} aria-labelledby="s-lnk" data-section="links"><h3 id="s-lnk">Links</h3><PhoneLinks view={v} {model} /></section>
+  <section class="sx" hidden={!model.detailLoaded} aria-labelledby="s-sub" data-section="subtasks"><h3 id="s-sub">Sub-tasks</h3><PhoneSubtasks view={v} {model} /></section>
+  <section class="sx" hidden={!model.detailLoaded} aria-labelledby="s-prj" data-section="project"><h3 id="s-prj">Project</h3>
     {#if v.project.line}<p>{v.project.line}</p><button class="lnk" type="button" onclick={() => model.project.start()}>Change project</button>
     {:else}<p class="muted">None.</p><button class="lnk" type="button" onclick={() => model.project.start()}>Assign to a project</button>{/if}
   </section>
-  <section class="sx" aria-labelledby="s-hand" data-section="handoff"><h3 id="s-hand">Handoff</h3>{#if model.counts.handoff}<HandoffView handoff={model.handoff} testid="carried-handoff" />{:else}<p>{v.handoff.text}</p>{/if}</section>
-  <section class="sx" aria-labelledby="s-cost" data-section="cost"><h3 id="s-cost">Cost</h3><p><strong class="mono">{v.cost.amount}</strong>{v.cost.rest}</p></section>
-  <section class="sx" aria-labelledby="s-att" data-section="attempts"><h3 id="s-att">Attempts ({model.counts.attempts})</h3><PhoneAttempts view={v} /></section>
-  <section class="sx" aria-labelledby="s-del" data-section="delivery"><h3 id="s-del">Delivery</h3><p class="muted">{model.counts.deliveryActive ? 'Delivery is active on this card; approve or change it on the card page.' : 'No approved delivery on this card.'}</p></section>
-  <section class="sx" aria-labelledby="s-ref" data-section="references"><h3 id="s-ref">References ({model.counts.refs})</h3>
+  <section class="sx" hidden={!model.detailLoaded} aria-labelledby="s-hand" data-section="handoff"><h3 id="s-hand">Handoff</h3>{#if model.counts.handoff}<HandoffView handoff={model.handoff} testid="carried-handoff" />{:else}<p>{v.handoff.text}</p>{/if}</section>
+  <section class="sx" hidden={!model.detailLoaded} aria-labelledby="s-cost" data-section="cost"><h3 id="s-cost">Cost</h3><p><strong class="mono">{v.cost.amount}</strong>{v.cost.rest}</p></section>
+  <section class="sx" hidden={!model.detailLoaded} aria-labelledby="s-att" data-section="attempts"><h3 id="s-att">Attempts ({model.counts.attempts})</h3><PhoneAttempts view={v} /></section>
+  <section class="sx" hidden={!model.detailLoaded} aria-labelledby="s-del" data-section="delivery"><h3 id="s-del">Delivery</h3><p class="muted">{model.counts.deliveryActive ? 'Delivery is active on this card; approve or change it on the card page.' : 'No approved delivery on this card.'}</p></section>
+  <section class="sx" hidden={!model.detailLoaded} aria-labelledby="s-ref" data-section="references"><h3 id="s-ref">References ({model.counts.refs})</h3>
     <details class="dsc"><summary>Show the {model.counts.refs} references</summary><div class="in"><PhoneRefs view={v} {model} /></div></details>
   </section>
-  <section class="sx" aria-labelledby="s-rel" data-section="related"><h3 id="s-rel">Related prior work</h3><p class="muted">{v.related ? `${v.related} related.` : 'No related prior work found in Superlibrary.'}</p></section>
-  <footer class="foot" aria-labelledby="s-act" data-section="cardActions">
+  <section class="sx" hidden={!model.detailLoaded} aria-labelledby="s-rel" data-section="related"><h3 id="s-rel">Related prior work</h3><p class="muted">{v.related ? `${v.related} related.` : 'No related prior work found in Superlibrary.'}</p></section>
+  <footer class="foot" hidden={!model.detailLoaded} aria-labelledby="s-act" data-section="cardActions">
     <h3 id="s-act">Card actions</h3>
     <div class="cact">
       {#if model.archived}<Button variant="secondary" class="sbtn" type="button" onclick={() => model.restore()}>Restore</Button>

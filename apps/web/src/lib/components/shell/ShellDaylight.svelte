@@ -17,7 +17,7 @@
   import PlanSwitch from './PlanSwitch.svelte';
   import { VIEWS, type ShellProps } from './types';
 
-  let { here, section, boardName, view, plan, showing, status, subTools, sky, ownHeading = false, children }: ShellProps = $props();
+  let { here, section, boardName, view, plan, showing, status, subTools, sky, ownHeading = false, primary, children }: ShellProps = $props();
 
   const items = $derived<NavItem[]>([
     { id: 'inbox', label: 'Inbox', href: m.inboxHref, icon: inboxIcon, current: here === 'inbox', count: m.inboxBadge || undefined, countIsNeeds: true, kbd: 'G I' },
@@ -68,7 +68,7 @@
 {/snippet}
 
 {#snippet actions()}
-  <Button icon={plusIcon} onclick={m.compose}>New card</Button>
+  <Button icon={plusIcon} onclick={primary?.onclick ?? m.compose}>{primary?.label ?? 'New card'}</Button>
 {/snippet}
 
 {#snippet viewTabs()}
@@ -90,7 +90,7 @@
     title={boardName ?? (ownHeading ? '' : 'Superpipeline')}
     switcher={boardName !== null ? { label: 'Switch board', onopen: m.openBoardSwitcher } : undefined}
     {command}
-    live={{ state: m.connected ? 'live' : 'reconnecting', label: m.connected ? 'Live' : 'Reconnecting…', detail: m.connected ? 'changes appear as they happen' : undefined, attrs: { 'data-live': m.connected ? 'on' : 'off' } }}
+    live={m.live}
     {actions}
     tabs={view || plan ? viewTabs : undefined}
   />

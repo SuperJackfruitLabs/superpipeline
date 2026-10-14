@@ -9,7 +9,8 @@ import type { AttentionItem } from '$lib/components/attention/attention';
 import { stageSummaries, summarize, type AgentRef, type CardSummary, type StageSummary, type SummaryContext, type Urgency } from './card-summary';
 
 export interface Me { id: string; name: string; initials: string }
-export interface BoardContext extends SummaryContext { me: Me | null; spend7d: number | null }
+/** spend7d: the week's spend; null when it could not be read; undefined while it is being read. */
+export interface BoardContext extends SummaryContext { me: Me | null; spend7d: number | null | undefined }
 
 /** One small square per card, in the Studio multiples and the share bar. */
 export type Unit = 'needs' | 'blocked' | 'queued' | 'working' | 'done' | 'off';
@@ -32,7 +33,7 @@ export interface BoardModel {
   done: CardSummary[];
   closed: CardSummary[];
   counts: { all: number; needs: number; working: number; queued: number; queuedBlocked: number; done: number; closed: number; overdue: number; overBudget: number; blocked: number };
-  spend7d: number | null;
+  spend7d: number | null | undefined;
   /** The clock the model was built at (ages, "five days overdue"). */
   nowMs: number;
   attention: AttentionItem[];

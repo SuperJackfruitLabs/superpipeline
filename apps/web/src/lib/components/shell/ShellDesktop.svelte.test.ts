@@ -133,8 +133,17 @@ describe.each(SHELLS)('the %s desktop shell', (vibe, Shell) => {
     expect(screen.queryByRole('navigation', { name: 'View' })).toBeNull();
     expect(screen.queryByRole('radiogroup', { name: 'View' })).toBeNull();
   });
+  it('says Connecting…, not Reconnecting…, before the feed ever opened', () => {
+    app.connected = false;
+    app.feedOpened = false;
+    const { container } = render(Shell, props());
+    const live = container.querySelector('[data-live]')!;
+    expect(live.textContent).toContain('Connecting…');
+    expect(live.textContent).not.toContain('Reconnecting');
+  });
   it('says Reconnecting… when the feed is down, on the one data-live element', () => {
     app.connected = false;
+    app.feedOpened = true; // a drop: the feed had opened
     const { container } = render(Shell, props());
     const live = container.querySelectorAll('[data-live]');
     expect(live).toHaveLength(1);

@@ -10,13 +10,17 @@ export class PeopleModel {
   role = $state<Role>('member');
   error = $state<string | null>(null);
   busy = $state(false);
+  /** The list could not be read: the tab says so with Try again (never an empty list, never the raw error). */
+  failed = $state(false);
+
 
   isMe = (m: Member) => m.userId === app.user?.userId;
 
   async refresh(): Promise<void> {
     const req = getMembers();
     app.markBusy(req);
-    try { this.members = await req; } catch (e) { this.error = e instanceof Error ? e.message : String(e); this.members ??= []; }
+    this.failed = false;
+    try { this.members = await req; } catch { this.failed = true; }
   }
 
   private async fail(res: Response, fallback: string): Promise<void> {

@@ -15,6 +15,9 @@
   import { fmtTarget, formatAsOf, HEALTH_LABEL, milestoneDate, STATE_LABEL } from '../project-rollup';
   import ProjectDialog from './ProjectDialog.svelte';
   import './project-body.css';
+  import SkeletonRows from '$lib/components/parts/SkeletonRows.svelte';
+  import LoadFailed from '$lib/components/parts/LoadFailed.svelte';
+  import { couldNotLoad } from '$lib/loading';
 
   let { model, compact = false, ondeleted, onchanged }: {
     model: ProjectPageModel;
@@ -90,7 +93,7 @@
           <p class="pjb-figs"><strong>{model.rollup.cardsDone}/{model.rollup.cardsTotal}</strong> cards done · <strong>{fmtUsd(model.rollup.costUsd)}</strong></p>
           <p class="pjb-meta">{formatAsOf(model.rollup)} · a snapshot</p>
         {:else}
-          <p class="pjb-meta" aria-busy="true">Loading roll-up…</p>
+          <SkeletonRows label="Loading the roll-up…" rows={2} />
         {/if}
         <Button variant="secondary" size="sm" busy={model.rollupBusy} onclick={() => void model.refreshRollup()}>Refresh</Button>
       </div>
@@ -100,8 +103,10 @@
     </section>
 
     <section class="pjb-sec" aria-labelledby="pjb-blockers">
-      <div class="pjb-sech"><svelte:element this={H} id="pjb-blockers">Blockers</svelte:element><span class="pjb-meta">{model.blockers.length === 0 ? 'none' : model.blockers.length}</span></div>
-      {#if model.blockers.length === 0}
+      <div class="pjb-sech"><svelte:element this={H} id="pjb-blockers">Blockers</svelte:element><span class="pjb-meta">{model.cardsPending ? '–' : model.blockers.length === 0 ? 'none' : model.blockers.length}</span></div>
+      {#if model.cardsPending}
+        <SkeletonRows label="Loading the blockers…" rows={1} />
+      {:else if model.blockers.length === 0}
         <p class="pjb-meta">Nothing is stopped: no card waits on a person or on another card.</p>
       {:else}
         <ul class="pjb-list">
@@ -158,14 +163,16 @@
 
     {#if compact}
       <section class="pjb-sec" aria-label="The rest of the project">
-        <p><strong>Cards</strong> <span class="pjb-meta">{model.cards.length} · {model.doneCount} done{#each model.groups as g (g.boardId)} · {g.boardName} {g.total}{/each}</span></p>
+        <p><strong>Cards</strong> <span class="pjb-meta">{#if model.cardsPending}–{:else}{model.cards.length} · {model.doneCount} done{/if}{#each model.groups as g (g.boardId)} · {g.boardName} {g.total}{/each}</span></p>
         {#if model.activity[0]}<p><strong>Activity</strong> <span class="pjb-meta">latest {whenLabel(model.activity[0].ts, now)} · {eventLabel(model.activity[0].event, model.activity[0].stages)}</span></p>{/if}
-        <p><strong>Agents and spend</strong> <span class="pjb-meta">{model.agents.map((a) => a.name).join(', ') || 'no agent yet'} · {fmtUsd(model.spend.reduce((n, s) => n + s.costUsd, 0))}</span></p>
+        <p><strong>Agents and spend</strong> <span class="pjb-meta">{model.cardsPending ? '–' : `${model.agents.map((a) => a.name).join(', ') || 'no agent yet'} · ${fmtUsd(model.spend.reduce((n, s) => n + s.costUsd, 0))}`}</span></p>
       </section>
     {:else}
       <section class="pjb-sec" aria-labelledby="pjb-cards">
-        <div class="pjb-sech"><h2 id="pjb-cards">Cards</h2><span class="pjb-meta">{model.cards.length} on {plural(model.groups.length, 'board', 'boards')} · {model.doneCount} done</span></div>
-        {#if model.cards.length === 0}
+        <div class="pjb-sech"><h2 id="pjb-cards">Cards</h2><span class="pjb-meta">{model.cardsPending ? '–' : `${model.cards.length} on ${plural(model.groups.length, 'board', 'boards')} · ${model.doneCount} done`}</span></div>
+        {#if model.cardsPending}
+          <SkeletonRows label="Loading the project's cards…" rows={3} rowHeight={44} />
+        {:else if model.cards.length === 0}
           <p class="pjb-meta">No cards yet. Choose this project on a card, or in the New card dialog.</p>
         {/if}
         {#each model.groups as g (g.boardId)}
@@ -192,7 +199,9 @@
 
       <section class="pjb-sec" aria-labelledby="pjb-act">
         <div class="pjb-sech"><h2 id="pjb-act">Activity</h2><span class="pjb-meta">your local time</span></div>
-        {#if model.activity.length === 0}
+        {#if model.activityPending}
+          <SkeletonRows label="Loading the activity…" rows={3} />
+        {:else if model.activity.length === 0}
           <p class="pjb-meta">Nothing has happened on this project’s cards yet.</p>
         {:else}
           <ul class="pjb-list">
@@ -209,12 +218,12 @@
     <aside class="pjb-aside" aria-label="Project facts">
       <section class="pjb-sec" aria-labelledby="pjb-agents">
         <div class="pjb-sech"><h2 id="pjb-agents">Agents on it</h2></div>
-        {#if model.agents.length === 0}<p class="pjb-meta">No agent has worked a card here yet.</p>{/if}
+        {#if model.cardsPending}<SkeletonRows label="Loading the agents…" rows={2} />{:else if model.agents.length === 0}<p class="pjb-meta">No agent has worked a card here yet.</p>{/if}
         <ul class="pjb-list">{#each model.agents as a (a.name)}<li>{a.name} <span class="pjb-meta">· {plural(a.cards, 'card', 'cards')}</span></li>{/each}</ul>
       </section>
       <section class="pjb-sec" aria-labelledby="pjb-spend">
         <div class="pjb-sech"><h2 id="pjb-spend">Spend by board</h2></div>
-        {#if model.spend.length === 0}<p class="pjb-meta">Nothing spent yet.</p>{/if}
+        {#if model.cardsPending}<SkeletonRows label="Loading the spend…" rows={2} />{:else if model.spend.length === 0}<p class="pjb-meta">Nothing spent yet.</p>{/if}
         <ul class="pjb-list">{#each model.spend as s (s.boardId)}<li>{s.boardName} <span class="pjb-meta">· {fmtUsd(s.costUsd)}</span></li>{/each}</ul>
       </section>
       <section class="pjb-sec" aria-labelledby="pjb-actions">
@@ -247,8 +256,10 @@
 </Dialog>
 {:else if model.notFound}
   <p class="pjb-meta" role="alert">This project no longer exists. It may have been deleted.</p>
+{:else if model.loadFailed}
+  <LoadFailed message={couldNotLoad('this project')} onRetry={() => model.load()} home />
 {:else if model.error}
   <p class="pjb-meta" role="alert">{model.error}</p>
 {:else}
-  <p class="pjb-meta" role="status">Loading the project…</p>
+  <SkeletonRows label="Loading the project…" rows={4} rowHeight={52} />
 {/if}

@@ -244,7 +244,7 @@
           {@const line = paperAttemptLine({ n, agent: name(a.agentId) || 'An agent', events: g?.counts.total ?? 0, word: attemptWord(a), endedAt: a.endedAt ?? null, newest: i === 0 })}
           {@const isOpen = m.isRunOpen(a.runId, i === 0)}
           {@const tools = m.toolsShown(a.runId)}
-          <div class="pcd-att" data-attempt={a.runId}>
+          <div class="pcd-att" data-attempt={a.runId} data-reveal>
             <button class="pcd-atthead" type="button" data-attempt-head={a.runId} aria-expanded={isOpen} aria-controls={isOpen && g ? `pcd-run-${a.runId}` : undefined} onclick={() => m.toggleRun(a.runId, i === 0)}><span class="pcd-p"><b>{line.head}</b>{line.rest}</span><span class="o" aria-hidden="true">{isOpen ? 'Close' : 'Open'}</span></button>
             {#if isOpen && g}
               {@const who = name(g.agentId) || 'An agent'}
@@ -260,7 +260,7 @@
         {/each}
       </div></div>
       {#if m.decidedGates.length}<p class="pcd-small pcd-small--flush" data-section="decisions">{#if m.decidedGates.length}Decisions: {m.decidedGates.map((d) => `${d.decision ?? d.status} at ${m.stages.find((s) => s.key === d.stageKey)?.name ?? d.stageKey}${d.decidedBy ? ` by ${displayPrincipal(d.decidedBy, app.members)}` : ''}`).join('; ')}.{:else}Decisions: none yet.{/if}</p>{:else}<span hidden data-section="decisions"></span>{/if}
-      <p class="pcd-small pcd-small--flush" data-section="cost">Cost {usd(card.costUsd)}, {m.estimate?.estimatedUsd ? `of an estimated ${usd(m.estimate.estimatedUsd)}` : 'no estimate yet'}.</p>
+      <p class="pcd-small pcd-small--flush" data-section="cost">Cost {usd(card.costUsd)}, {!m.detailLoaded ? 'estimating…' : m.estimate?.estimatedUsd ? `of an estimated ${usd(m.estimate.estimatedUsd)}` : 'no estimate yet'}.</p>
     {/snippet}
     {@render enc('happened', 'What happened', paperHappenedSummary({ runs: m.counts.runs, decisions: m.counts.decisions, costUsd: card.costUsd }), happenedBody)}
 
@@ -316,7 +316,7 @@
         <span class="vk-visually-hidden" role="status">{m.comments.posting ? 'Posting…' : ''}</span>
       </div>
     {/snippet}
-    {@render enc('letters', 'Correspondence', paperCorrespondenceSummary(m.comments.comments.length), lettersBody)}
+    {@render enc('letters', 'Correspondence', m.comments.loaded ? paperCorrespondenceSummary(m.comments.comments.length) : 'Loading…', lettersBody)}
   </div>
 
   <div class="pcd-foot" data-section="cardActions">

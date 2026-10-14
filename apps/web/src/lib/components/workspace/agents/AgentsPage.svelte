@@ -1,5 +1,8 @@
 <!-- apps/web/src/lib/components/workspace/agents/AgentsPage.svelte -->
 <script lang="ts">
+  import SkeletonRows from '$lib/components/parts/SkeletonRows.svelte';
+  import LoadFailed from '$lib/components/parts/LoadFailed.svelte';
+  import { crewNewInPage, onCrewNew } from '../crew-new';
   /** SP-Workspace-Agents-Daylight, -Paper and -Quiet: one DOM, three looks. */
   import './agents.css';
   import { Button } from '@superjackfruit/vibekit';
@@ -19,6 +22,7 @@
   void model.refresh();
   let creating = $state(false);
   function openNew(): void { model.resetNew(); creating = true; }
+  $effect(() => onCrewNew('agents', openNew));
 </script>
 
 {#snippet keyIcon()}<LineIcon name="key" size={22} />{/snippet}
@@ -45,7 +49,7 @@
       <h2 class="t-h2" id="agents-h">{agentsHeading(model.agents.length)}</h2>
       <span class="t-meta">{agentsPanelMeta(model.agents)}</span>
     {/if}
-    <Button class="btn-sm" type="button" icon={plusIcon} style="margin-left: auto;" onclick={openNew}>New agent</Button>
+    {#if crewNewInPage()}<Button class="btn-sm" type="button" icon={plusIcon} style="margin-left: auto;" onclick={openNew}>New agent</Button>{/if}
   </div>
   <div class="panel-body legend" style="border-bottom: 1px solid var(--vk-color-line);">
     <div><span class="linked"><LineIcon name="check" size={18} /></span><p class="t-meta"><strong style="color: var(--vk-color-text);">Linked to AgentPod</strong> — this agent has an AgentPod identity, so it signs in as itself and its work shows under its own name.</p></div>
@@ -53,9 +57,9 @@
     <div><span><LineIcon name="dots" size={18} /></span><p class="t-meta"><strong style="color: var(--vk-color-text);">Actions</strong> — edit, issue or revoke tokens, unlink, delete.</p></div>
   </div>
   {#if model.agents === null && model.loadError}
-    <div class="panel-body"><p class="t-meta" role="alert">Could not load the agents: {model.loadError}</p><Button variant="secondary" class="btn-sm" onclick={() => void model.refresh()}>Try again</Button></div>
+    <div class="panel-body"><LoadFailed message="Couldn't load the agents." onRetry={() => model.refresh()} /></div>
   {:else if model.agents === null}
-    <div class="panel-body" aria-busy="true"><span class="sr" role="status">Loading agents…</span>{#each [0, 1, 2] as k (k)}<div class="skel" style="height: 64px; margin-bottom: var(--vk-space-2);"></div>{/each}</div>
+    <div class="panel-body"><SkeletonRows label="Loading agents…" rows={4} rowHeight={72} /></div>
   {:else if model.agents.length === 0}
     <div class="panel-body"><p class="t-body">No agents yet. Create one with New agent — you'll get a token to point an AI agent at this workspace.</p></div>
   {:else}

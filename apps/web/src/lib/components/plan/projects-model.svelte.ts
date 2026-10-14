@@ -5,6 +5,7 @@ import {
 } from '$lib/api';
 import { groupProjects, projectsSummary, type ProjectGroup } from './project-rollup';
 import { projectWorkspace } from './project-workspace.svelte';
+import { couldNotLoad } from '$lib/loading';
 
 const message = (e: unknown) => (e instanceof Error ? e.message : String(e));
 
@@ -15,6 +16,10 @@ export class ProjectsModel {
   rollupErrors = $state<Record<string, string>>({});
   loading = $state(true);
   loadError = $state<string | null>(null);
+  /** The project list could not be read: the page says so with Try again, never "No projects yet". */
+  failed = $state(false);
+  /** Nothing to show yet: the list draws skeleton rows and the summary and counts wait. */
+  get pending(): boolean { return this.loading && this.projects.length === 0 && !this.failed; }
 
   /** Disclosure state lives here, so a layout re-mounted by a vibe change keeps what the person opened. */
   msOpen = $state<Record<string, boolean>>({});
@@ -33,7 +38,7 @@ export class ProjectsModel {
   groups: ProjectGroup[] = $derived(groupProjects(this.projects));
   /** Every project in the order the page draws them, so ids (`pj-0`…) count across groups. */
   ordered: Project[] = $derived(this.groups.flatMap((g) => g.projects));
-  summary = $derived(projectsSummary(this.projects));
+  summary = $derived(this.failed || (this.loading && this.projects.length === 0) ? '' : projectsSummary(this.projects));
   /** The boards a project's cards live on (read once per visit, across every board). */
   boardsOf(id: string): Array<{ id: string; name: string }> { return projectWorkspace.boardsOf(id); }
 
@@ -41,13 +46,15 @@ export class ProjectsModel {
   async refresh(): Promise<void> {
     this.loading = true;
     this.loadError = null;
+    this.failed = false;
     const listed = listProjects();
     app.markBusy(listed);
     try {
       this.projects = await listed;
       app.projects = this.projects;
-    } catch (e) {
-      this.loadError = message(e);
+    } catch {
+      this.loadError = couldNotLoad('projects');
+      this.failed = true;
       this.loading = false;
       return;
     }
@@ -60,7 +67,7 @@ export class ProjectsModel {
   }
 
   async loadDetail(id: string): Promise<void> {
-    const detail = await getProject(id);
+    const detail = await getProject(id).catch(() => null);
     if (detail) this.milestones = { ...this.milestones, [id]: detail.milestones };
   }
 
@@ -70,8 +77,8 @@ export class ProjectsModel {
       this.rollups = { ...this.rollups, [id]: r };
       const { [id]: _gone, ...rest } = this.rollupErrors;
       this.rollupErrors = rest;
-    } catch (e) {
-      this.rollupErrors = { ...this.rollupErrors, [id]: message(e) };
+    } catch {
+      this.rollupErrors = { ...this.rollupErrors, [id]: 'try again in a moment' };
     }
   }
 
