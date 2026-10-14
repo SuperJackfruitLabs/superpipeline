@@ -3,11 +3,12 @@ import { getAgents, getCapabilities, createCapability, updateCapability, deleteC
 import { similarKeys } from '@superpipeline/contract';
 import { app } from '$lib/stores/app.svelte';
 import { holdersOf, orphanNote, unstaffedNote, type CapNote } from './capability-notes';
-import { workspaceCounts } from './workspace-counts.svelte';
+import { crewLists, workspaceCounts } from './workspace-counts.svelte';
 
 export class CapabilitiesModel {
-  capabilities = $state<CapabilityRecord[] | null>(null);
-  agents = $state<AgentSummary[]>([]);
+  // Opens on the list this tab last read (crewLists), refreshed behind it.
+  capabilities = $state<CapabilityRecord[] | null>(crewLists.capabilities);
+  agents = $state<AgentSummary[]>(crewLists.agents ?? []);
   error = $state<string | null>(null);
   /** The list could not be read: the tab says so with Try again (never an empty list, never the raw error). */
   failed = $state(false);
@@ -26,7 +27,7 @@ export class CapabilitiesModel {
   ]);
 
   async refresh(): Promise<void> {
-    const load = Promise.all([getCapabilities(), getAgents().catch(() => [] as AgentSummary[])]);
+    const load = Promise.all([crewLists.readCapabilities(), crewLists.readAgents().catch(() => [] as AgentSummary[])]);
     app.markBusy(load);
     this.failed = false;
     try { [this.capabilities, this.agents] = await load; } catch { this.failed = true; }

@@ -1,5 +1,5 @@
 // apps/web/src/lib/components/workspace/workspace-counts.svelte.ts
-import { getAgents, getCapabilities, getMembers } from '$lib/api';
+import { getAgents, getCapabilities, getMembers, type AgentSummary, type CapabilityRecord, type Member } from '$lib/api';
 import { app } from '$lib/stores/app.svelte';
 
 /** Every tab component the workspace pages still draw (the dev review route draws the old set). */
@@ -27,10 +27,34 @@ export function crewTabs(c: WorkspaceCounts): WorkspaceTabItem[] {
   ];
 }
 
+/**
+ * The last Crew lists this tab read, shared by the tab pills and the tab bodies. The pills used to
+ * keep their counts across tab switches while each tab's model started again from nothing, so the
+ * header said "32 agents" over a skeleton for as long as the list request took (seconds on a busy
+ * workspace, and on every switch). A tab now opens on the list it last saw and refreshes behind it;
+ * the pills and the tab bodies always agree.
+ */
+class CrewLists {
+  agents = $state<AgentSummary[] | null>(null);
+  capabilities = $state<CapabilityRecord[] | null>(null);
+  members = $state<Member[] | null>(null);
+  // Every read goes to the server (no sharing of an in-flight read: one that started before a change
+  // would answer with the list from before it); the answer becomes the list a tab opens on next.
+  #read<T>(fetch: () => Promise<T>, keep: (v: T) => void): Promise<T> {
+    return fetch().then((v) => { keep(v); return v; });
+  }
+  readAgents(): Promise<AgentSummary[]> { return this.#read(getAgents, (v) => { this.agents = v; }); }
+  readCapabilities(): Promise<CapabilityRecord[]> { return this.#read(getCapabilities, (v) => { this.capabilities = v; }); }
+  readMembers(): Promise<Member[]> { return this.#read(getMembers, (v) => { this.members = v; }); }
+  /** Tests only: forget every list. */
+  clear(): void { this.agents = this.capabilities = this.members = null; }
+}
+export const crewLists = new CrewLists();
+
 class Counts {
   value = $state<WorkspaceCounts>({ agents: null, capabilities: null, people: null });
   async refresh(): Promise<void> {
-    const all = Promise.allSettled([getAgents(), getCapabilities(), getMembers()]);
+    const all = Promise.allSettled([crewLists.readAgents(), crewLists.readCapabilities(), crewLists.readMembers()]);
     app.markBusy(all);
     this.value = countsFrom((await all) as Settled);
   }

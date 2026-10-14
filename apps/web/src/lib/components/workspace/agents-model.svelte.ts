@@ -6,14 +6,15 @@ import {
   type AgentScope, type AgentSummary, type CapabilityRecord,
 } from '$lib/api';
 import { app } from '$lib/stores/app.svelte';
-import { workspaceCounts } from './workspace-counts.svelte';
+import { crewLists, workspaceCounts } from './workspace-counts.svelte';
 
 export interface MintedToken { agentName: string; token: string; scopes?: AgentScope[] }
 const message = (e: unknown) => (e instanceof Error ? e.message : String(e));
 
 export class AgentsModel {
-  agents = $state<AgentSummary[] | null>(null);
-  capabilities = $state<CapabilityRecord[]>([]);
+  // Opens on the list this tab last read (crewLists), refreshed behind it: never a skeleton under a known count.
+  agents = $state<AgentSummary[] | null>(crewLists.agents);
+  capabilities = $state<CapabilityRecord[]>(crewLists.capabilities ?? []);
   loadError = $state<string | null>(null);
   error = $state<string | null>(null);
   minted = $state<MintedToken | null>(null);
@@ -43,7 +44,7 @@ export class AgentsModel {
   canCreate = $derived(!this.minting && this.newName.trim() !== '' && this.newCaps.length > 0);
 
   async refresh(): Promise<void> {
-    const load = Promise.all([getAgents(), getCapabilities().catch(() => [] as CapabilityRecord[])]);
+    const load = Promise.all([crewLists.readAgents(), crewLists.readCapabilities().catch(() => [] as CapabilityRecord[])]);
     app.markBusy(load);
     try {
       [this.agents, this.capabilities] = await load;
