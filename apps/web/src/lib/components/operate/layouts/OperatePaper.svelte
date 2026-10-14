@@ -3,6 +3,8 @@
   import { viewport } from '$lib/viewport.svelte';
   import { untrack } from 'svelte';
   import SkeletonRows from '$lib/components/parts/SkeletonRows.svelte';
+  import { attention, bumpOnChange, flashOnChange, flip, rise } from '@superjackfruit/vibekit/motion';
+  import { arrivals } from '$lib/motion/arrivals';
   /** SP-Operate-Paper: "The desk" — letters waiting on you, the digest, and the ledger. */
   import { Button, Face } from '@superjackfruit/vibekit';
   import LineIcon from '$lib/components/parts/LineIcon.svelte';
@@ -21,6 +23,11 @@
   const go = (e: MouseEvent, id: string, boardId: string, log = false) => { e.preventDefault(); if (log) model.openLog(id, boardId); else model.open(id, boardId); };
   const events = (g: (typeof model.groups)[number]) => (ui.earlierOpen[g.cardId] ? [g.latest, ...g.earlier] : [g.latest]);
   const hasCap = $derived(model.spend.cap !== null || model.spend.cardCap !== null);
+
+  // Motion: an ask that arrives while the Inbox is open pulses gently three times (its row and the count already say it).
+  const arrived = arrivals();
+  let fresh = $state(new Set<string>());
+  $effect(() => { const ids = model.needs.map((r) => r.item.id); if (!model.loading) fresh = arrived(ids); });
 </script>
 
 {#snippet face(name: string | null, iconUrl: string | null, size: number, mood: 'needs' | 'working' | 'resting')}
@@ -53,7 +60,7 @@
         {@const id = row.item.cardId}
         {@const noOwner = row.item.kind === 'no-owner'}
         {@const meta = paperMeta(row)}
-        <article class="letter" aria-labelledby="l-{id}" data-attention-row={row.item.kind}>
+        <article class="letter" aria-labelledby="l-{id}" data-attention-row={row.item.kind} in:rise animate:flip use:attention={fresh.has(row.item.id)}>
           <p class="letter__meta"><span class="flag">{meta[0]}</span>{#each meta.slice(1) as m (m)}<span>{m}</span>{/each}</p>
           <h3 id="l-{id}"><a href={model.cardHref(id, row.boardId)} onclick={(e: MouseEvent) => go(e, id, row.boardId)}>{row.item.title}</a></h3>
           {#if noOwner}
@@ -93,7 +100,7 @@
       <div class="toggle" role="group" aria-label="Which activity"><button type="button" aria-pressed={model.showRead ? 'false' : 'true'} onclick={() => (model.showRead = false)}>Unread only</button><button type="button" aria-pressed={model.showRead ? 'true' : 'false'} onclick={() => (model.showRead = true)}>Show all</button></div>
       {#if model.groups.length === 0}<p class="prose">{model.showRead ? (model.scoped ? 'Nothing has happened on this board yet.' : 'Nothing has happened on any board yet.') : 'Nothing unread.'}</p>{/if}
       {#each model.groups as g (g.cardId)}
-        <div class="dig">
+        <div class="dig" in:rise animate:flip use:flashOnChange={g.latest.seq}>
           <h3>{@render face(g.agentName, g.iconUrl, 22, g.need ? 'needs' : 'resting')}<a href={model.cardHref(g.cardId, g.boardId)} onclick={(e: MouseEvent) => go(e, g.cardId, g.boardId)}>{g.title}</a></h3>
           {#each events(g) as n (n.seq)}
             <div class="dig__row"><p><span class="dig__t">{when(n)}</span>{staleLine(n, 'paper', g.need?.item.kind ?? null) ?? ` — ${noticeBody(n)} `}{#if g.need}<a href="#letters" class="lnk" style="min-height: 0px; display: inline;">The reason is in its letter.</a>{/if}</p>{#if !n.read}<button class="tick" type="button" aria-label="Mark read" onclick={() => model.markRead(n.seq, g.boardId)}><LineIcon name="tick" size={18} /></button>{/if}</div>
@@ -118,7 +125,7 @@
       <section class="box" aria-labelledby="k4">
         <div class="kick"><h2 id="k4">The ledger</h2><span class="kick__n">last 7 days</span></div>
         {#if model.usageError}<p class="small">Couldn't load spend — {model.usageError}</p>{/if}
-        <p class="figure">{usd(model.spend.total)}</p>
+        <p class="figure" use:bumpOnChange={model.spend.total}>{usd(model.spend.total)}</p>
         <p class="prose" style="font-style: italic;">{paperCap(model.spend.cap)}</p>
         <p class="small">{model.spend.top.length === 0 ? 'No agent has spent anything this week.' : `${model.spend.top[0]!.name} spent the most this week.`}</p>
         {#if caps.editing}

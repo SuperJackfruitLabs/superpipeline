@@ -40,7 +40,8 @@ import {
   listAttention,
   type StaleCard,
 } from '$lib/api';
-import { tick } from 'svelte';
+import { flushSync, tick } from 'svelte';
+import { optimistic } from '@superjackfruit/vibekit/motion';
 import { auth } from '$lib/auth-recovery.svelte';
 import { itemsFromBoard, type AttentionItem } from '$lib/components/attention/attention';
 import { noFilters, passesArchivedFilter, passesProjectFilter } from './card-filters';
@@ -598,14 +599,36 @@ class AppStore {
     }
   }
 
+  /**
+   * Moves a card at once (the lanes glide, vibekit's optimistic()), then asks the server. A refusal puts the card back
+   * where it was, nudges it, and says why in words; the refresh after either outcome is the source of truth.
+   */
   async moveCard(cardId: string, toStageKey: string): Promise<void> {
     if (!this.boardId) return;
-    const title = this.cardById(cardId)?.title ?? 'The card';
+    const boardId = this.boardId;
+    const card = this.cardById(cardId);
+    const title = card?.title ?? 'The card';
     const stage = this.board?.stages.find((s) => s.key === toStageKey)?.name ?? toStageKey;
-    const res = await moveCard(this.boardId, cardId, toStageKey);
-    if (!res.ok) {
-      const body = (await res.json().catch(() => null)) as { error?: { message?: string } } | null;
-      this.error = body?.error?.message ?? `Move failed (${res.status})`;
+    const from = card?.currentStageKey;
+    const set = (key: string | undefined) => { if (card && key !== undefined) { card.currentStageKey = key; flushSync(); } };
+    const dom = typeof document !== 'undefined';
+    let refusal: string | null = null;
+    const ok = await optimistic({
+      items: () => (dom ? [...document.querySelectorAll('[data-card-id]')] : []),
+      apply: () => set(toStageKey),
+      revert: () => set(from),
+      subject: () => (dom ? document.querySelector<HTMLElement>(`[data-card-id="${CSS.escape(cardId)}"]`) : null),
+      commit: async () => {
+        const res = await moveCard(boardId, cardId, toStageKey).catch((e: unknown) => { refusal = e instanceof Error ? e.message : String(e); throw e; });
+        if (!res.ok) {
+          const body = (await res.json().catch(() => null)) as { error?: { message?: string } } | null;
+          refusal = body?.error?.message ?? `Move failed (${res.status})`;
+          throw new Error(refusal);
+        }
+      },
+    });
+    if (!ok) {
+      this.error = refusal ?? 'Move failed';
       void this.announceMove(`${title} was not moved to ${stage}. ${this.error}`);
     } else {
       this.error = null;

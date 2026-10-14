@@ -6,6 +6,8 @@
   import { viewport } from '$lib/viewport.svelte';
   import { untrack } from 'svelte';
   import SkeletonRows from '$lib/components/parts/SkeletonRows.svelte';
+  import { attention, bumpOnChange, flashOnChange, flip, rise } from '@superjackfruit/vibekit/motion';
+  import { arrivals } from '$lib/motion/arrivals';
   /** SP-Operate-Quiet: one column, headings in reading order, most urgent first. */
   import { Button, Face } from '@superjackfruit/vibekit';
   import { moveTargets } from '../operate-data';
@@ -19,6 +21,11 @@
   const caps = untrack(() => capsProp) ?? new CapsUi(() => model);
   const go = (e: MouseEvent, id: string, boardId: string, log = false) => { e.preventDefault(); if (log) model.openLog(id, boardId); else model.open(id, boardId); };
   const events = (g: (typeof model.groups)[number]) => (ui.earlierOpen[g.cardId] ? [g.latest, ...g.earlier] : [g.latest]);
+
+  // Motion: an ask that arrives while the Inbox is open pulses gently three times (its row and the count already say it).
+  const arrived = arrivals();
+  let fresh = $state(new Set<string>());
+  $effect(() => { const ids = model.needs.map((r) => r.item.id); if (!model.loading) fresh = arrived(ids); });
 </script>
 
 {#snippet face(name: string | null, iconUrl: string | null, mood: 'needs' | 'working' | 'resting')}
@@ -40,7 +47,7 @@
   {#each model.needsUrgent as row, i (row.item.id)}
     {@const id = row.item.cardId}
     {@const noOwner = row.item.kind === 'no-owner'}
-    <article class="item item--needs" aria-labelledby="q{i + 1}" data-attention-row={row.item.kind}>
+    <article class="item item--needs" aria-labelledby="q{i + 1}" data-attention-row={row.item.kind} in:rise animate:flip use:attention={fresh.has(row.item.id)}>
       <h3 id="q{i + 1}"><a href={model.cardHref(id, row.boardId)} onclick={(e: MouseEvent) => go(e, id, row.boardId)}>{row.item.title}</a></h3>
       <p class="meta">{quietMeta(row)}{@render face(row.agentName, row.iconUrl, 'needs')}<span>{row.agentName ?? 'Unclaimed'}</span> · <BoardChip name={row.boardName} /></p>
       {#if noOwner}
@@ -83,7 +90,7 @@
   <div class="toggle" role="group" aria-label="Which activity"><button class="textbtn" type="button" aria-pressed={model.showRead ? 'false' : 'true'} onclick={() => (model.showRead = false)}>Unread only</button><button class="textbtn" type="button" aria-pressed={model.showRead ? 'true' : 'false'} onclick={() => (model.showRead = true)}>Show all</button></div>
   {#if model.groups.length === 0}<p class="plain">{model.showRead ? (model.scoped ? 'Nothing has happened on this board yet.' : 'Nothing has happened on any board yet.') : 'Nothing unread.'}</p>{/if}
   {#each model.groups as g (g.cardId)}
-    <div class="item" style="padding-left: 0px;">
+    <div class="item" style="padding-left: 0px;" in:rise animate:flip use:flashOnChange={g.latest.seq}>
       <h3 style="display: flex; gap: 10px; align-items: center;">{@render face(g.agentName, g.iconUrl, g.need ? 'needs' : 'resting')}<a href={model.cardHref(g.cardId, g.boardId)} onclick={(e: MouseEvent) => go(e, g.cardId, g.boardId)}>{g.title}</a></h3>
       <ul class="ev">{#each events(g) as n (n.seq)}<li><span>{quietLine(n, g.need?.item.kind ?? null, g.need !== null)}</span>{#if !n.read}<button class="textbtn" type="button" onclick={() => model.markRead(n.seq, g.boardId)}>Mark read</button>{/if}</li>{/each}</ul>
       <div class="acts" style="margin-top: var(--vk-space-2);">
@@ -95,7 +102,7 @@
   {/each}
   <h2>Spend in the last 7 days</h2>
   {#if model.usageError}<p class="plain">Couldn't load spend — {model.usageError}</p>{/if}
-  <p class="plain"><span class="money">{usd(model.spend.total)}</span>{quietSpend(model.spend.cap, model.spend.top)}</p>
+  <p class="plain"><span class="money" use:bumpOnChange={model.spend.total}>{usd(model.spend.total)}</span>{quietSpend(model.spend.cap, model.spend.top)}</p>
   <div class="acts"><Button variant="secondary" class="btn-sm" type="button" onclick={() => (caps.editing ? caps.cancel(model.spend) : caps.start(model.spend))}>Set a budget cap</Button>{#if model.scoped}<a href="/b/{model.boardId}/operate/telemetry">Spend details</a>{/if}</div>
   {#if caps.editing}
     <fieldset class="form"><legend>Set a budget cap</legend>

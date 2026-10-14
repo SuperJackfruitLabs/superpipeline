@@ -5,6 +5,8 @@
   import { greetNamed } from '$lib/greet';
   import { viewport } from '$lib/viewport.svelte';
   import SkeletonRows from '$lib/components/parts/SkeletonRows.svelte';
+  import { attention, countUp, rise } from '@superjackfruit/vibekit/motion';
+  import { arrivals } from '$lib/motion/arrivals';
   /** SP-Operate-Studio: the annual-report spread, with J/K/R/M/O/. on the Needs table. */
   import { tick, untrack } from 'svelte';
   import { Face } from '@superjackfruit/vibekit';
@@ -69,6 +71,11 @@
     }
     e.preventDefault();
   }
+
+  // Motion: an ask that arrives while the Inbox is open pulses gently three times (its row and the count already say it).
+  const arrived = arrivals();
+  let fresh = $state(new Set<string>());
+  $effect(() => { const ids = model.needs.map((r) => r.item.id); if (!model.loading) fresh = arrived(ids); });
 </script>
 
 <svelte:window {onkeydown} />
@@ -98,7 +105,7 @@
     <div class="ar-figs">
       <div class:sig={model.needs.length > 0}><b class:z={model.needs.length === 0}>{model.needs.length}</b><span>Needs you</span></div>
       <div><b class:z={model.running.length === 0}>{model.running.length}</b><span>Running</span></div>
-      <div><b class:z={model.spend.total === 0}>{usd(model.spend.total)}</b><span>Spend · 7 days</span></div>
+      <div><b class:z={model.spend.total === 0} use:countUp={{ value: model.spend.total, format: usd }}></b><span>Spend · 7 days</span></div>
       <div><b class:z={capFig.zero}>{capFig.value}</b><span>{capFig.label}</span></div>
       <div><b class:z={model.unread === 0}>{model.unread}</b><span>Unread activity</span></div>
     </div>
@@ -117,7 +124,7 @@
           {#each model.needs as row, i (row.item.id)}
             {@const id = row.item.cardId}
             {@const noOwner = row.item.kind === 'no-owner'}
-            <tr class:sel={selected === i} aria-current={selected === i ? 'true' : undefined} data-attention-row={row.item.kind}>
+            <tr class:sel={selected === i} aria-current={selected === i ? 'true' : undefined} data-attention-row={row.item.kind} in:rise use:attention={fresh.has(row.item.id)}>
               <td><span class="ix">{pad(i + 1)}</span></td>
               <td><span class="op-kind"><span class="u needs"></span>{noOwner ? 'No owner' : 'Stopped'}</span></td>
               <td><a class="ttl" href={model.cardHref(id, row.boardId)} onclick={(e: MouseEvent) => go(e, id, row.boardId)}>{row.item.title}</a><div class="op-sub"><span class="chip c{row.stageIndex}"></span>{studioSub(row)}</div></td>

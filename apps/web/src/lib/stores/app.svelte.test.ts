@@ -91,3 +91,31 @@ describe('app store: every move is said once, in one place', () => {
     stop();
   });
 });
+
+describe('app store: a move shows at once and rolls back when refused', () => {
+  it('moves the card before the server answers, then puts it back where it was on a refusal', async () => {
+    app.board = { ...SNAP, cards: DX_CARDS.map((c) => ({ ...c })) } as BoardSnapshot;
+    const card = DX_CARDS[0]!;
+    const to = DX_STAGES.find((x) => x.key !== card.currentStageKey)!;
+    let answer!: (r: Response) => void;
+    api.moveCard.mockImplementationOnce(() => new Promise<Response>((r) => (answer = r)));
+    api.getBoard.mockImplementationOnce(() => new Promise(() => {})); // the refresh never lands: what shows is the rollback
+    void app.moveCard(card.id, to.key);
+    await vi.advanceTimersByTimeAsync(0);
+    expect(app.cardById(card.id)!.currentStageKey).toBe(to.key);
+    answer(new Response(JSON.stringify({ error: { message: 'Fix is at its limit of 1 card.' } }), { status: 409 }));
+    await vi.advanceTimersByTimeAsync(0);
+    expect(app.cardById(card.id)!.currentStageKey).toBe(card.currentStageKey);
+    expect(app.error).toBe('Fix is at its limit of 1 card.');
+  });
+  it('keeps the move when the server takes it', async () => {
+    app.board = { ...SNAP, cards: DX_CARDS.map((c) => ({ ...c })) } as BoardSnapshot;
+    const card = DX_CARDS[0]!;
+    const to = DX_STAGES.find((x) => x.key !== card.currentStageKey)!;
+    api.getBoard.mockImplementationOnce(() => new Promise(() => {}));
+    void app.moveCard(card.id, to.key);
+    await vi.advanceTimersByTimeAsync(0);
+    expect(app.cardById(card.id)!.currentStageKey).toBe(to.key);
+    expect(app.error).toBeNull();
+  });
+});

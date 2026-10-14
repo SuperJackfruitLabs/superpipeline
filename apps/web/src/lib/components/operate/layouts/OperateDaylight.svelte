@@ -2,6 +2,8 @@
 <script lang="ts">
   import { untrack } from 'svelte';
   import SkeletonRows from '$lib/components/parts/SkeletonRows.svelte';
+  import { attention, bumpOnChange, countUp, flashOnChange, flip, rise } from '@superjackfruit/vibekit/motion';
+  import { arrivals } from '$lib/motion/arrivals';
   /** SP-Operate-Daylight: Needs you on the left; Running, Spend and Activity on the right. */
   import { Button, Face, Segmented } from '@superjackfruit/vibekit';
   import LineIcon from '$lib/components/parts/LineIcon.svelte';
@@ -25,6 +27,11 @@
   const events = (g: (typeof model.groups)[number]) => (ui.earlierOpen[g.cardId] ? [g.latest, ...g.earlier] : [g.latest]);
   const WHICH = [{ value: 'unread', label: 'Unread only' }, { value: 'all', label: 'Show all' }];
   const hasCap = $derived(model.spend.cap !== null || model.spend.cardCap !== null);
+
+  // Motion: an ask that arrives while the Inbox is open pulses gently three times (its row and the count already say it).
+  const arrived = arrivals();
+  let fresh = $state(new Set<string>());
+  $effect(() => { const ids = model.needs.map((r) => r.item.id); if (!model.loading) fresh = arrived(ids); });
 </script>
 
 {#snippet face(name: string | null, iconUrl: string | null, size: number, mood: 'needs' | 'working' | 'resting')}
@@ -60,12 +67,12 @@
 <div class="op-dy"><div class="grid">
   <div>
     <section class="panel" id="needs" aria-labelledby="h-needs">
-      <div class="ph"><h2 id="h-needs">Needs you</h2><span class="count" class:count--needs={model.needs.length > 0}>{model.needs.length}</span>{#if !model.scoped}<span class="ph__end">{acrossBoards(askBoards(model.needs))}</span>{/if}</div>
+      <div class="ph"><h2 id="h-needs">Needs you</h2><span class="count" class:count--needs={model.needs.length > 0} use:bumpOnChange={model.needs.length}>{model.needs.length}</span>{#if !model.scoped}<span class="ph__end">{acrossBoards(askBoards(model.needs))}</span>{/if}</div>
       {#if model.loading}<SkeletonRows label="Loading what needs you…" />{:else if model.needs.length === 0}<p class="empty">Nothing is waiting on you.</p>{/if}
       {#each model.needs as row (row.item.id)}
         {@const id = row.item.cardId}
         {@const noOwner = row.item.kind === 'no-owner'}
-        <article class="ask" aria-labelledby="t-{id}" data-attention-row={row.item.kind}>
+        <article class="ask" aria-labelledby="t-{id}" data-attention-row={row.item.kind} in:rise animate:flip use:attention={fresh.has(row.item.id)}>
           {@render face(row.agentName, row.iconUrl, 32, 'needs')}
           <div>
             <div class="ask__who"><b>{row.agentName ?? 'Unclaimed'}</b><BoardChip name={row.boardName} /><span>{daylightMeta(row)}</span><span class="badge badge--needs">{kindWord(row.item.kind)}</span></div>
@@ -113,7 +120,7 @@
     <section class="panel" aria-labelledby="h-spend">
       <div class="ph"><h2 id="h-spend">Spend</h2><span class="count" style="font-weight: 500; font-family: var(--vk-font-body); font-size: var(--vk-text-sm);">{model.scoped ? '' : 'all boards · '}last 7 days</span>{#if model.scoped}<a class="ph__end" href="/b/{model.boardId}/operate/telemetry">Details <LineIcon name="arrow" /></a>{/if}</div>
       {#if model.usageError}<p class="empty" style="font-size: var(--vk-text-sm);">Couldn't load spend — {model.usageError}</p>{/if}
-      <div class="spend"><span class="spend__n">{usd(model.spend.total)}</span><span class="spend__cap">{daylightCap(model.spend.cap)}</span></div>
+      <div class="spend"><span class="spend__n" use:countUp={{ value: model.spend.total, format: usd }}></span><span class="spend__cap">{daylightCap(model.spend.cap)}</span></div>
       <div class="bar" aria-hidden="true">{#if model.spend.pct !== null}<i style="display: block; height: 100%; border-radius: inherit; width: {model.spend.pct}%; background: {model.spend.overBudget ? 'var(--vk-color-signal)' : 'var(--vk-color-text)'};"></i>{/if}</div>
       {#if model.spend.top.length === 0}
         <p class="empty" style="font-size: var(--vk-text-sm);">No agent has spent anything in the last 7 days.</p>
@@ -139,7 +146,7 @@
       </div>
       {#if model.groups.length === 0}<p class="empty">{model.showRead ? (model.scoped ? 'Nothing has happened on this board yet.' : 'Nothing has happened on any board yet.') : 'Nothing unread.'}</p>{/if}
       {#each model.groups as g (g.cardId)}
-        <div class="grp">
+        <div class="grp" in:rise animate:flip use:flashOnChange={g.latest.seq}>
           <div class="grp__head">{@render face(g.agentName, g.iconUrl, 24, g.need ? 'needs' : 'resting')}<h3 class="grp__title"><a href={model.cardHref(g.cardId, g.boardId)} onclick={(e: MouseEvent) => go(e, g.cardId, g.boardId)}>{g.title}</a></h3></div>
           {#each events(g) as n (n.seq)}
             <div class="ev"><span class="ev__t">{when(n)}</span><span class="ev__body">{staleLine(n, 'daylight', g.need?.item.kind ?? null) ?? noticeBody(n)}{#if g.need}{' '}<a href="#needs">Why, in Needs you</a>{/if}</span>{#if !n.read}<button class="tick" type="button" aria-label="Mark read" onclick={() => model.markRead(n.seq, g.boardId)}><LineIcon name="tick" size={20} /></button>{/if}</div>
