@@ -1,0 +1,41 @@
+/*
+ * Long user text (e2e/long-text.spec.ts). body sets overflow-wrap: anywhere for everything; these are
+ * the places that also said white-space: nowrap or sized a track to its content, so a 120-character
+ * word still pushed past its container.
+ */
+
+/* The masthead's board-name button (vibekit) is one nowrap line: let a long name wrap inside the head. */
+.vk-masthead__title {
+  white-space: normal;
+  max-width: 100%;
+  min-width: 0;
+  text-align: start;
+}
+
+/* Title links in the Studio list and card rows: one rule set break-word (which does not lower
+   min-content), so an inline-flex title widened its table cell. */
+.ttl.ttl {
+  overflow-wrap: anywhere;
+  min-width: 0;
+  max-width: 100%;
+}
+
+/* Quiet's phone card "back to <board>" is a nowrap button: it wraps instead of running off the phone. */
+.pcard--quiet .back.back {
+  white-space: normal;
+  min-width: 0;
+  max-width: 100%;
+}
+
+/* Project names (Studio's projects table). */
+.pj-link {
+  overflow-wrap: anywhere;
+  min-width: 0;
+}
+
+/* An agent's token rows: a 1fr track is minmax(auto, 1fr), so a long agent name widened it. */
+.tokrow.tokrow { grid-template-columns: minmax(0, 1fr) auto auto; }
+.tokrow > * { min-width: 0; }
+
+/* Crew's "Back to <board>" link (Studio). */
+.wa-head > .ar-lk { max-width: 100%; white-space: normal; }
