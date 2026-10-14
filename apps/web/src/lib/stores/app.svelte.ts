@@ -477,8 +477,9 @@ class AppStore {
     this.boardId = id;
     this.needsBoard = false;
     this.bootFailure = null;
-    localStorage.setItem(BOARD_KEY, id);
     await this.refresh();
+    // Remembered only once it has been read: a board that is not there must not become the one boot reopens.
+    if (this.boardFailure !== 'missing') localStorage.setItem(BOARD_KEY, id);
     await this.loadBoards();
     // Best-effort and independent: a workspace where one read is refused should still resolve the
     // others rather than fall back to ids for everything.
