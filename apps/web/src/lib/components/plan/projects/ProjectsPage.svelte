@@ -9,45 +9,31 @@
   import type { ProjectsLayoutProps } from './types';
 
   let { model }: ProjectsLayoutProps = $props();
+  /** A plain click opens the drawer over the list; a phone, or a modified click, follows the link to the page. */
+  function openProject(e: MouseEvent, id: string): void {
+    if (viewport.phone || e.metaKey || e.ctrlKey || e.shiftKey || e.button !== 0) return;
+    e.preventDefault();
+    model.drawerId = id;
+  }
 </script>
 
 <PageMain scope="scr-projects">
   <div style="display: flex; flex-wrap: wrap; align-items: flex-end; gap: var(--vk-space-3);">
     <div style="display: flex; flex-direction: column; gap: 4px; flex: 1 1 300px;">
-      <p class="t-eyebrow">{model.boardName} · Plan</p>
+      <p class="t-eyebrow">Plan · the workspace</p>
       <svelte:element this={viewport.phone ? 'h2' : 'h1'} class="t-h1">Projects</svelte:element>
-      <p class="t-body" style="color: var(--vk-color-muted);">{model.summary} Each shows how many of its cards are done and what they cost.</p>
+      <p class="t-body" style="color: var(--vk-color-muted);">{model.summary} A project gathers cards from any board; each shows how many are done and what they cost.</p>
     </div>
+    {#snippet plusIcon()}<LineIcon name="plus" size={18} />{/snippet}
+    <Button icon={plusIcon} onclick={() => (model.dialogOpen = true)}>New project</Button>
   </div>
-
-  <details class="panel" bind:open={model.createOpen}>
-    <summary class="panel-head" style="border-bottom: 1px solid var(--vk-color-line);">
-      <span class="vk-button vk-button--primary btn-sm"><LineIcon name="plus" size={18} />Project</span>
-      <span class="t-meta">Name it and, if you like, give it a target date.</span>
-    </summary>
-    <form class="createform" aria-label="New project" onsubmit={(e) => { e.preventDefault(); void model.addProject(); }}>
-      <div class="field">
-        <label for="np-name">Project name</label>
-        <input class="input" id="np-name" placeholder="e.g. Clean-room journey fixes" bind:value={model.newName} />
-      </div>
-      <div class="field">
-        <label for="np-date">Target date (optional)</label>
-        <input class="input" id="np-date" type="date" bind:value={model.newTarget} />
-      </div>
-      <div style="display: flex; gap: var(--vk-space-2);">
-        <Button class="btn-sm" type="submit" disabled={model.creating || model.newName.trim() === ''}>{model.creating ? 'Creating…' : 'Create'}</Button>
-        <Button class="btn-sm" variant="quiet" onclick={() => model.clearCreate()}>Cancel</Button>
-      </div>
-      {#if model.createError}<p class="hint" role="alert" style="grid-column: 1 / -1; color: var(--vk-color-signal-text);">{model.createError}</p>{/if}
-    </form>
-  </details>
 
   {#if model.loadError}
     <p class="t-meta" role="alert">{model.loadError}</p>
   {:else if model.loading && model.projects.length === 0}
     <p class="t-meta" role="status">Loading projects…</p>
   {:else if model.projects.length === 0}
-    <p class="t-meta">No projects yet. Use “Project” above to add the first.</p>
+    <p class="t-meta">No projects yet. Use “New project” above to add the first.</p>
   {/if}
 
   {#each model.groups as g (g.id)}
@@ -61,7 +47,7 @@
           {@const err = model.rollupErrors[p.id]}
           <article class="panel pcard" aria-labelledby="pj-{i}">
             <div style="display: flex; gap: var(--vk-space-2); align-items: flex-start;">
-              <h3 class="ptitle" id="pj-{i}" style="flex: 1 1 0%;">{p.name}</h3>
+              <h3 class="ptitle" id="pj-{i}" style="flex: 1 1 0%;"><a class="plink" href="/plan/projects/{p.id}" onclick={(e) => openProject(e, p.id)}>{p.name}</a></h3>
             </div>
             <div style="display: flex; flex-wrap: wrap; gap: 6px 10px; align-items: center;">
               <span class={p.state === 'active' ? 'chip' : 'chip chip-line'}>{STATE_LABEL[p.state]}</span>
@@ -74,6 +60,9 @@
                 <span class="t-meta">{fmtTarget(null)}</span>
               {/if}
             </div>
+            {#if model.boardsOf(p.id).length > 0}
+              <p class="pboards"><span class="t-meta">Cards on</span>{#each model.boardsOf(p.id) as b (b.id)}<span class="chip chip-line">{b.name}</span>{/each}</p>
+            {/if}
             {#if err}
               <p class="t-meta">Rollup unavailable — {err}</p>
             {:else if rollup}

@@ -47,7 +47,7 @@ describe('AppShell', () => {
     await fireEvent.keyDown(window, { key: 'p' });
     expect(goto).toHaveBeenLastCalledWith('/b/brd_134a0ddb6d434478');
   });
-  it('N opens the composer; F opens the filter on the board but not on Projects', async () => {
+  it('N opens the composer; F opens the filter on a board but not on Plan · Projects', async () => {
     render(AppShell, props());
     const before = app.composeRequest;
     await fireEvent.keyDown(window, { key: 'n' });
@@ -58,7 +58,7 @@ describe('AppShell', () => {
     expect(app.filterOpen).toBe(true);
     app.filterOpen = false;
     cleanup();
-    render(AppShell, props({ view: 'projects', section: 'projects' }));
+    render(AppShell, props({ here: 'plan', section: 'projects', boardName: null, view: null, plan: 'projects', showing: null }));
     await fireEvent.keyDown(window, { key: 'f' });
     expect(app.filterOpen).toBe(false);
   });

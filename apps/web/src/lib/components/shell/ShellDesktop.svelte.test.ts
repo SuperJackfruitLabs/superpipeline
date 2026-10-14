@@ -106,8 +106,26 @@ describe.each(SHELLS)('the %s desktop shell', (vibe, Shell) => {
     expect(app.filterOpen).toBe(true);
     expect(container.querySelector('.vk-masthead__tabs .tools')).toBeTruthy();
     cleanup();
-    render(Shell, props({ view: 'projects', section: 'projects' }));
+    render(Shell, props({ here: 'plan', section: 'projects', boardName: null, view: null, plan: 'projects', showing: null }));
     expect(screen.queryByRole('button', { name: /^Filter cards/ })).toBeNull();
+  });
+  it('Plan has two sections, Boards and Projects; a board has two views, Board and List', () => {
+    render(Shell, props({ plan: 'boards' }));
+    const plan = () => screen.queryByRole('radiogroup', { name: 'Plan' }) ?? screen.getByRole('navigation', { name: 'Plan' });
+    const current = (name: string) => {
+      const el = within(plan()).getByRole(vibe === 'daylight' ? 'radio' : 'link', { name });
+      return vibe === 'daylight' ? el.getAttribute('aria-checked') === 'true' : el.getAttribute('aria-current') === 'page';
+    };
+    expect(current('Boards')).toBe(true);
+    expect(current('Projects')).toBe(false);
+    expect(within(plan()).queryByText('Board', { exact: true })).toBeNull();
+    const views = screen.queryByRole('radiogroup', { name: 'View' }) ?? screen.getByRole('navigation', { name: 'View' });
+    expect(within(views).queryByText(/^Projects/)).toBeNull();
+    cleanup();
+    render(Shell, props({ here: 'plan', section: 'projects', boardName: null, view: null, plan: 'projects', showing: null }));
+    expect(current('Projects')).toBe(true);
+    expect(screen.queryByRole('radiogroup', { name: 'View' }) ?? screen.queryByRole('navigation', { name: 'View' })).toBeNull();
+    expect(screen.queryByRole('button', { name: /Change board|Switch board/ })).toBeNull();
   });
   it('Crew has no board switcher and no view switch', () => {
     render(Shell, props(CREW));

@@ -11,6 +11,7 @@
   import { VIEWS, type ShellProps } from '../types';
   import { SEARCH_NAME } from './common';
   import PhoneFrame from './PhoneFrame.svelte';
+  import PlanSwitch from '../PlanSwitch.svelte';
 
   let props: ShellProps = $props();
   const viewItems = VIEWS.map(([value, label]) => ({ value, label, href: `?view=${value}` }));
@@ -24,8 +25,9 @@
 {#snippet links()}<Button variant="text" onclick={m.compose}>Write a new card</Button>{/snippet}
 
 {#snippet views()}
-  <Tabs label="View" items={viewItems} value={props.view ?? 'board'} onchange={(v) => m.setView(v)} />
-  {#if props.view !== 'projects'}<Button variant="secondary" icon={filterIcon} aria-haspopup="dialog" onclick={m.openFilter}>Filter</Button>{/if}
+  {#if props.plan}<PlanSwitch value={props.plan} />{/if}
+  {#if props.view}<Tabs label="View" items={viewItems} value={props.view} onchange={(v) => m.setView(v)} />{/if}
+  {#if props.view}<Button variant="secondary" icon={filterIcon} aria-haspopup="dialog" onclick={m.openFilter}>Filter</Button>{/if}
 {/snippet}
 
-<PhoneFrame shell={props} vibe="paper" eyebrow="Superpipeline" switcherLabel="Change board" eyebrowActions={search} {dateline} links={props.boardName !== null ? links : undefined} below={props.view ? views : undefined} glyphs={{ inbox: 'inbox', plan: 'board', crew: 'crew' }} />
+<PhoneFrame shell={props} vibe="paper" eyebrow="Superpipeline" switcherLabel="Change board" eyebrowActions={search} {dateline} links={props.boardName !== null ? links : undefined} below={props.view || props.plan ? views : undefined} glyphs={{ inbox: 'inbox', plan: 'board', crew: 'crew' }} />

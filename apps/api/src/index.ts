@@ -103,6 +103,7 @@ import {
   createMilestone,
   deleteMilestone,
   milestoneById,
+  updateMilestone,
   isProjectNameCollision,
   PROJECT_STATES,
   PROJECT_HEALTHS,
@@ -1162,11 +1163,17 @@ const worker = {
             description?: string;
             targetDate?: string;
             leadUserId?: string;
+            health?: string | null;
           };
           const name = typeof body.name === 'string' ? body.name.trim() : '';
           if (name === '') return Response.json({ error: 'name is required' }, { status: 400 });
           if (isInvalidDueAt(body.targetDate)) {
             return Response.json({ error: 'targetDate must be YYYY-MM-DD' }, { status: 400 });
+          }
+          // Declared in the New project dialog, so a project is never created health-less by a
+          // second request that could fail after the first succeeded.
+          if (body.health != null && !PROJECT_HEALTHS.includes(body.health as ProjectHealth)) {
+            return Response.json({ error: `unknown project health: "${body.health}"` }, { status: 400 });
           }
           try {
             const made = await createProject(env.DB, wsTenantId, {
@@ -1174,6 +1181,7 @@ const worker = {
               description: body.description ?? null,
               targetDate: body.targetDate ?? null,
               leadUserId: body.leadUserId ?? null,
+              health: (body.health ?? null) as ProjectHealth | null,
             });
             return Response.json({ project: made }, { status: 201 });
           } catch (err) {
@@ -1287,6 +1295,26 @@ const worker = {
         const refused = refuseByRole(u, 'manage');
         if (refused) return refused;
 
+        // PATCH: the project page edits a milestone in place (name, date). Scoped by tenant, so
+        // another workspace's milestone id reads as not found.
+        if (request.method === 'PATCH') {
+          const body = (await request.json()) as { name?: unknown; targetDate?: string | null };
+          if (body.name !== undefined && (typeof body.name !== 'string' || body.name.trim() === '')) {
+            return Response.json({ error: 'name is required' }, { status: 400 });
+          }
+          if (isInvalidDueAt(body.targetDate)) {
+            return Response.json({ error: 'targetDate must be YYYY-MM-DD' }, { status: 400 });
+          }
+          const id = milestoneMatch[1]!;
+          if (!(await milestoneById(env.DB, u.tenantId, id))) {
+            return Response.json({ error: 'milestone not found' }, { status: 404 });
+          }
+          const updated = await updateMilestone(env.DB, u.tenantId, id, {
+            ...(typeof body.name === 'string' ? { name: body.name.trim() } : {}),
+            ...(body.targetDate !== undefined ? { targetDate: body.targetDate } : {}),
+          });
+          return Response.json({ milestone: updated });
+        }
         if (request.method !== 'DELETE') return Response.json({ error: 'method not allowed' }, { status: 405 });
         if (!(await deleteMilestone(env.DB, u.tenantId, milestoneMatch[1]!))) {
           return Response.json({ error: 'milestone not found' }, { status: 404 });

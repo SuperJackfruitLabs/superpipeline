@@ -11,7 +11,6 @@ import { plural } from '$lib/words';
 export interface StatusItem { text: string; signal?: boolean }
 export interface ShellStatus { items: StatusItem[]; right: string[] }
 export const STATUS_RIGHT: readonly string[] = ['⌘K commands', 'N new card'];
-export const PROJECTS_NOTE = 'Projects group cards across boards. Filters don’t apply here.';
 export const PAPER_PHASE: Record<Phase, string> = {
   dawn: 'at first light', morning: 'in the morning light', noon: 'in full daylight', golden: 'in the golden hour', dusk: 'at dusk', night: 'after dark',
 };

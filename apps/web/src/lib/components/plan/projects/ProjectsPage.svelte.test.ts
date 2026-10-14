@@ -6,9 +6,10 @@ import { cleanup, fireEvent, render, screen } from '@testing-library/svelte';
 const api = vi.hoisted(() => ({
   listProjects: vi.fn(), getProject: vi.fn(), getProjectRollup: vi.fn(), createProject: vi.fn(),
   deleteProject: vi.fn(), createMilestone: vi.fn(), deleteMilestone: vi.fn(),
+  getBoards: vi.fn(), getBoard: vi.fn(), getBoardEvents: vi.fn(),
 }));
 vi.mock('$lib/api', () => api);
-vi.mock('$lib/stores/app.svelte', () => ({ app: { board: { name: 'Developer Experience' }, projects: [], markBusy: <T,>(p: Promise<T>) => p } }));
+vi.mock('$lib/stores/app.svelte', () => ({ app: { board: { name: 'Developer Experience' }, boards: [], projects: [], markBusy: <T,>(p: Promise<T>) => p } }));
 
 import ProjectsPage from './ProjectsPage.svelte';
 import { ProjectsModel } from '../projects-model.svelte';
@@ -19,6 +20,9 @@ beforeEach(() => {
   for (const f of Object.values(api)) f.mockReset();
   api.listProjects.mockResolvedValue([guild]);
   api.getProject.mockResolvedValue({ project: guild, milestones: [] });
+  api.getBoards.mockResolvedValue([{ id: 'brd_a' }, { id: 'brd_b' }, { id: 'brd_c' }]);
+  const snap = (boardId: string, name: string, projectId: string | null) => ({ boardId, name, stages: [], cards: [{ id: `card_${boardId}`, title: 't', projectId, archivedAt: null, currentStageKey: 'x' }] });
+  api.getBoard.mockImplementation(async (id: string) => (id === 'brd_a' ? snap(id, 'Developer Experience', guild.id) : id === 'brd_b' ? snap(id, 'Platform Operations', guild.id) : snap(id, 'Client Quality', null)));
 });
 afterEach(cleanup);
 
@@ -51,16 +55,20 @@ describe('ProjectsPage', () => {
     expect(screen.getByText(/· 1 overdue$/)).toBeTruthy();
     expect((document.querySelector('.bar > i') as HTMLElement).style.width).toBe('29%');
   });
-  it('enables Create only with a name, and Enter submits', async () => {
+  it('names the boards its cards live on, and New project opens the dialog', async () => {
     api.getProjectRollup.mockReturnValue(new Promise(() => {}));
-    api.createProject.mockResolvedValue(new Response('{}', { status: 201 }));
-    await mount();
-    const create = screen.getByRole('button', { name: 'Create' }) as HTMLButtonElement;
-    expect(create.disabled).toBe(true);
-    const name = screen.getByLabelText('Project name');
-    await fireEvent.input(name, { target: { value: 'Clean-room journey fixes' } });
-    expect(create.disabled).toBe(false);
-    await fireEvent.submit(name.closest('form')!);
-    expect(api.createProject).toHaveBeenCalledWith({ name: 'Clean-room journey fixes', targetDate: undefined });
+    const model = await mount();
+    const row = (await screen.findByText('Platform Operations')).closest('.pboards')!;
+    expect(row.textContent).toBe('Cards onDeveloper ExperiencePlatform Operations');
+    expect(screen.getByRole('link', { name: guild.name }).getAttribute('href')).toBe(`/plan/projects/${guild.id}`);
+    expect(screen.queryByRole('button', { name: 'Create' })).toBeNull();
+    await fireEvent.click(screen.getByRole('button', { name: 'New project' }));
+    expect(model.dialogOpen).toBe(true);
+  });
+  it('a plain click on a project opens it in the drawer', async () => {
+    api.getProjectRollup.mockReturnValue(new Promise(() => {}));
+    const model = await mount();
+    await fireEvent.click(screen.getByRole('link', { name: guild.name }));
+    expect(model.drawerId).toBe(guild.id);
   });
 });

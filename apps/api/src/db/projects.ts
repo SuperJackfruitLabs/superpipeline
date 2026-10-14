@@ -89,19 +89,22 @@ export async function createProject(
     targetDate?: string | null;
     state?: ProjectState;
     leadUserId?: string | null;
+    health?: ProjectHealth | null;
   },
 ): Promise<ProjectRecord> {
   const name = input.name.trim();
   if (name === '') throw new Error('a project needs a name');
   const state = input.state ?? 'active';
   if (!PROJECT_STATES.includes(state)) throw new Error(`unknown project state: "${state}"`);
+  const health = input.health ?? null;
+  if (health !== null && !PROJECT_HEALTHS.includes(health)) throw new Error(`unknown project health: "${health}"`);
   const id = newId('prj');
   await db
     .prepare(
-      `INSERT INTO projects (id, tenant_id, name, description, target_date, state, lead_user_id)
-       VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO projects (id, tenant_id, name, description, target_date, state, lead_user_id, health)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
     )
-    .bind(id, tenantId, name, input.description ?? null, input.targetDate ?? null, state, input.leadUserId ?? null)
+    .bind(id, tenantId, name, input.description ?? null, input.targetDate ?? null, state, input.leadUserId ?? null, health)
     .run();
   const row = await projectById(db, tenantId, id);
   if (!row) throw new Error('project vanished immediately after insert');

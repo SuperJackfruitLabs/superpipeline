@@ -1,0 +1,16 @@
+/* New project / Edit project (SP-Dlg-NewProject): vibekit's sectioned dialog, the product's own rhythm inside it. */
+.vk-dialog.pjd .pjd-content { display: flex; flex-direction: column; gap: 16px; font-size: var(--vk-text-md); line-height: 1.45; }
+.vk-dialog.pjd .pjd-lead { margin: 0; color: var(--vk-color-muted); }
+.vk-dialog.pjd .pjd-fieldset { border: 0; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.vk-dialog.pjd .pjd-ms { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); gap: 12px; }
+.vk-dialog.pjd .pjd-error { margin: 0; color: var(--vk-color-signal-text); }
+.vk-dialog.pjd .kbd { font: 11px var(--vk-font-mono); border: 1px solid var(--vk-color-line); border-radius: 4px; padding: 2px 6px; }
+.vk-dialog.pjd .pjd-hint { margin-right: auto; }
+/* Phone: one column, 44px controls, the actions stacked full width (like the New card dialog). */
+@media (max-width: 639.98px) {
+  .vk-dialog.pjd .pjd-ms { grid-template-columns: minmax(0, 1fr); }
+  .vk-dialog.pjd .pjd-hint { display: none; }
+  .vk-dialog.pjd .vk-overlay__actions { flex-direction: column-reverse; align-items: stretch; }
+  .vk-dialog.pjd .vk-button { min-height: 44px; width: 100%; }
+  .vk-dialog.pjd input, .vk-dialog.pjd select { min-height: 44px; }
+}

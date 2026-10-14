@@ -6,8 +6,11 @@ import type { ShellStatus } from './shell-words';
 /** The three places (nav v2): Inbox, the home; Plan; Crew. Settings sits in the account menu and highlights none. */
 export type ShellHere = 'inbox' | 'plan' | 'crew' | null;
 /** The Studio eyebrow word: "Superpipeline · board". */
-export type ShellSection = 'board' | 'list' | 'projects' | 'inbox' | 'card' | 'crew' | 'settings' | 'spend' | 'log';
-export type ShellView = 'board' | 'list' | 'projects';
+export type ShellSection = 'board' | 'list' | 'projects' | 'project' | 'inbox' | 'card' | 'crew' | 'settings' | 'spend' | 'log';
+/** A board's views (Projects is Plan's own section since nav v2, not a board view). */
+export type ShellView = 'board' | 'list';
+/** Plan's two sections: a board's Board/List, and the workspace's Projects. */
+export type PlanSection = 'boards' | 'projects';
 
 export interface ShellProps {
   here: ShellHere;
@@ -16,6 +19,10 @@ export interface ShellProps {
   boardName: string | null;
   /** Plan pages pass the active view; every other page passes null: no view switch, no Filter. */
   view: ShellView | null;
+  /** Plan pages pass their section (Boards or Projects): the Plan switch is drawn. Off Plan, absent. */
+  plan?: PlanSection;
+  /** The phone header's title when the page names itself (a project page); else the board or section. */
+  title?: string;
   /** The sub-bar note, verbatim ("Showing all 7 cards"). null hides it. */
   showing: string | null;
   /** Paper's masthead note ("Showing all 7 cards · 4 wait on you · 1 shipped"). */
@@ -39,4 +46,5 @@ export interface ShellProps {
 
 export interface MenuItem { kind: 'heading' | 'item' | 'checkbox'; label: string; sub?: string; icon?: IconName; checked?: boolean; onSelect?: () => void }
 
-export const VIEWS: ReadonlyArray<readonly [ShellView, string]> = [['board', 'Board'], ['list', 'List'], ['projects', 'Projects']];
+export const VIEWS: ReadonlyArray<readonly [ShellView, string]> = [['board', 'Board'], ['list', 'List']];
+export const PLAN_SECTIONS: ReadonlyArray<readonly [PlanSection, string]> = [['boards', 'Boards'], ['projects', 'Projects']];

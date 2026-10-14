@@ -1,15 +1,17 @@
 <script lang="ts">
   /**
-   * Plan: the board, the list or the projects, inside the vibe's shell. The view switch and the
-   * Filter button live in the shell now; `?view=` picks the view from a link.
+   * Plan · Boards: the board or the list, inside the vibe's shell. The view switch and the Filter
+   * button live in the shell; `?view=` picks the view from a link. Projects is Plan's other section
+   * (`/plan/projects`, nav v2): an old `?view=projects` link is sent there.
    */
   import { page } from '$app/state';
+  import { goto } from '$app/navigation';
   import { getUsage } from '$lib/api';
   import { app } from '$lib/stores/app.svelte';
   import { appearance } from '$lib/appearance.svelte';
   import { viewport } from '$lib/viewport.svelte';
   import { BOARD_EMPTY_FORMS, BOARD_LAYOUTS, LIST_LAYOUTS } from '$lib/layouts';
-  import { viewFromSearch } from '$lib/view-param';
+  import { isOldProjectsLink, viewFromSearch } from '$lib/view-param';
   import BoardEmpty from '$lib/components/board/BoardEmpty.svelte';
   import { buildBoardModel } from '$lib/components/board/board-model';
   import { stageSummaries, summarize } from '$lib/components/board/card-summary';
@@ -17,14 +19,12 @@
   import PdHello from '$lib/components/board/daylight/PdHello.svelte';
   import AppShell from '$lib/components/shell/AppShell.svelte';
   import { shellModel } from '$lib/components/shell/shell-model.svelte';
-  import { needsPart, PROJECTS_NOTE } from '$lib/components/shell/shell-words';
-  import { plural } from '$lib/words';
-  import ProjectView from './ProjectView.svelte';
   import { buildRows, filtersActive, groupRows, nextSort, quickCounts } from './list/list-model';
   import { ListUi } from './list/list-ui.svelte';
   import type { ListLayoutProps } from './list/types';
 
   $effect(() => {
+    if (isOldProjectsLink(page.url.searchParams)) { void goto('/plan/projects', { replaceState: true }); return; }
     const v = viewFromSearch(page.url.searchParams);
     if (v) app.setView(v);
   });
@@ -81,13 +81,10 @@
     };
   });
 
-  const projects = $derived(app.view === 'projects');
   const status = $derived(
     app.view !== 'board' && vibe !== 'studio'
-      ? null // only Studio's List and Projects references draw a status line
-      : projects
-        ? shellModel.pageStatus([plural(app.projects.length, 'project', 'projects'), `${plural(shellModel.liveCount, 'card', 'cards')} on this board`, needsPart(shellModel.needsCount)])
-        : shellModel.boardStatus,
+      ? null // only Studio's List reference draws a status line
+      : shellModel.boardStatus,
   );
 </script>
 
@@ -99,15 +96,16 @@
   section={app.view}
   boardName={app.board?.name ?? 'Untitled board'}
   view={app.view}
-  showing={projects ? PROJECTS_NOTE : shellModel.showing}
-  paperShowing={projects ? PROJECTS_NOTE : shellModel.paperShowing}
+  plan="boards"
+  showing={shellModel.showing}
+  paperShowing={shellModel.paperShowing}
   editionCount={shellModel.editionCount}
-  studioSubRight={projects ? null : shellModel.studioSubRight}
+  studioSubRight={shellModel.studioSubRight}
   {status}
   sky={greet ? dlSky : undefined}
   bleed={(app.view === 'board' && !(showEmpty && vibe === 'studio')) || vibe === 'quiet'}
   subTools={app.view === 'list' && List.toolbar ? listTools : undefined}
-  ownHeading={projects || (app.view === 'list' && vibe !== 'daylight')}
+  ownHeading={app.view === 'list' && vibe !== 'daylight'}
 >
   {#if model && app.view === 'board' && showEmpty}
     <BoardEmpty {model} intro={app.board?.intro} form={BOARD_EMPTY_FORMS[vibe]} {me} onCompose={() => app.requestCompose()} />
@@ -116,7 +114,5 @@
     <Board {model} {vibe} phase={appearance.phase} onCompose={() => app.requestCompose()} />
   {:else if app.view === 'list'}
     {#if listProps}<List.body {...listProps} />{/if}
-  {:else if app.view === 'projects'}
-    <ProjectView />
   {/if}
 </AppShell>

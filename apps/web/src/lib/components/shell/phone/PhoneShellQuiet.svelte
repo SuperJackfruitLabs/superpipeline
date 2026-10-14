@@ -9,6 +9,7 @@
   import { VIEWS, type ShellProps } from '../types';
   import { SEARCH_NAME } from './common';
   import PhoneFrame from './PhoneFrame.svelte';
+  import PlanSwitch from '../PlanSwitch.svelte';
 
   let props: ShellProps = $props();
   const viewItems = VIEWS.map(([value, label]) => ({ value, label, href: `?view=${value}` }));
@@ -18,8 +19,9 @@
   <div class="ph-row">
     <CommandField label={SEARCH_NAME} placeholder="Search" onopen={m.openSearch} />
     {#if props.boardName !== null}<Button variant="secondary" onclick={m.compose}>New card</Button>{/if}
-    {#if props.view && props.view !== 'projects'}<Button variant="text" aria-haspopup="dialog" onclick={m.openFilter}>Filter</Button>{/if}
+    {#if props.view}<Button variant="text" aria-haspopup="dialog" onclick={m.openFilter}>Filter</Button>{/if}
   </div>
+  {#if props.plan}<div class="ph-row"><PlanSwitch value={props.plan} /></div>{/if}
   {#if props.view}<div class="ph-row"><Tabs label="View" items={viewItems} value={props.view} onchange={(v) => m.setView(v)} /></div>{/if}
 {/snippet}
 

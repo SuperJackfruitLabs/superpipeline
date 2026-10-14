@@ -1,14 +1,35 @@
 <script lang="ts">
-  /** Projects — the view, not the catalogue. The vibe picks the layout; the model owns the data. */
+  /**
+   * Plan · Projects (nav v2): the workspace's projects, its own section of Plan with no board
+   * switcher. The vibe picks the list's layout; a project opens in a drawer over it (or its page,
+   * on a phone), and New project opens the dialog.
+   */
+  import { goto } from '$app/navigation';
   import { appearance } from '$lib/appearance.svelte';
   import { PROJECTS_LAYOUTS } from '$lib/layouts';
+  import AppShell from '$lib/components/shell/AppShell.svelte';
+  import { shellModel } from '$lib/components/shell/shell-model.svelte';
+  import { plural } from '$lib/words';
   import { ProjectsModel } from './projects-model.svelte';
+  import ProjectDialog from './projects/ProjectDialog.svelte';
+  import ProjectDrawer from './projects/ProjectDrawer.svelte';
 
   const model = new ProjectsModel();
   const vibe = $derived(appearance.value.vibe);
   const Layout = $derived(PROJECTS_LAYOUTS[vibe]);
   // Loaded during init (ssr is off): the busy mark is held before the first paint.
   void model.refresh();
+  // Only Studio's references draw a status line.
+  const status = $derived(vibe === 'studio' ? shellModel.pageStatus([plural(model.projects.length, 'project', 'projects'), 'across the workspace']) : null);
 </script>
 
-<Layout {model} {vibe} />
+<AppShell here="plan" section="projects" boardName={null} view={null} plan="projects" showing="Projects belong to the workspace, not to a board." {status} bleed={vibe === 'quiet'} ownHeading>
+  <Layout {model} {vibe} />
+</AppShell>
+
+{#key model.drawerId}
+  {#if model.drawerId}
+    <ProjectDrawer projectId={model.drawerId} onclose={() => (model.drawerId = null)} onchanged={() => void model.refresh()} />
+  {/if}
+{/key}
+<ProjectDialog bind:open={model.dialogOpen} onsaved={(id) => void goto(`/plan/projects/${id}`)} onclose={() => {}} />

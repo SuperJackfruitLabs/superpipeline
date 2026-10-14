@@ -49,7 +49,7 @@ import { feedIsStalled, STALL_CHECK_MS } from '../feed-liveness';
 const BOARD_KEY = 'superpipeline.boardId';
 const ATTENTION_COALESCE_MS = 1000;
 
-export type View = 'board' | 'list' | 'projects';
+export type View = 'board' | 'list';
 export type ListGroupBy = 'stage' | 'state' | 'owner' | 'priority';
 export interface CardFilters {
   states: string[];

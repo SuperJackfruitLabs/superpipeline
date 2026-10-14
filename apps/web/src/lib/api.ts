@@ -1453,6 +1453,7 @@ export function createProject(input: {
   description?: string;
   targetDate?: string;
   leadUserId?: string;
+  health?: ProjectHealth;
 }): Promise<Response> {
   return fetch('/v1/projects', { method: 'POST', headers, body: JSON.stringify(input) });
 }
@@ -1487,6 +1488,11 @@ export function createMilestone(
   input: { name: string; targetDate?: string; sortOrder?: number },
 ): Promise<Response> {
   return fetch(`/v1/projects/${projectId}/milestones`, { method: 'POST', headers, body: JSON.stringify(input) });
+}
+
+/** Rename or re-date one milestone (`PATCH /v1/milestones/:id`). Raw response, like `createMilestone`. */
+export function updateMilestone(milestoneId: string, patch: { name?: string; targetDate?: string | null }): Promise<Response> {
+  return fetch(`/v1/milestones/${milestoneId}`, { method: 'PATCH', headers, body: JSON.stringify(patch) });
 }
 
 /** Remove one milestone, without deleting its project. */
