@@ -11,6 +11,7 @@
    * uninitialised object and the API answers 404 — the same answer a board that never existed
    * gets. A board id in a URL is therefore not an existence oracle.
    */
+  import { untrack } from 'svelte';
   import { page } from '$app/state';
   import { replaceState } from '$app/navigation';
   import { app } from '$lib/stores/app.svelte';
@@ -38,9 +39,19 @@
     return { section: waitView, view: waitView, form: waitView === 'list' ? ('list' as const) : ('board' as const) };
   });
   /** The board's name from the board list, when it is in: the switcher shows it before the board arrives. */
-  const knownName = $derived(app.boards.find((b) => b.id === boardId)?.name ?? '');
-  const failure = $derived(app.boardId === boardId ? app.boardFailure : null);
   const shown = $derived(!!app.board && (app.board.boardId ?? boardId) === boardId);
+  /**
+   * The waiting shell's board name: the one the board list knew when the wait began, held for the whole
+   * wait. A name (and the switcher and New card beside it) landing mid-wait moved the header on a phone;
+   * unknown, the shell draws no name until the board itself arrives in a fresh frame.
+   */
+  let waitName = $state<string | null | undefined>(untrack(() => app.boards.find((b) => b.id === page.params.boardId)?.name ?? null));
+  $effect.pre(() => {
+    if (shown) { waitName = undefined; return; }
+    if (waitName === undefined) waitName = untrack(() => app.boards.find((b) => b.id === boardId)?.name ?? null);
+  });
+  const knownName = $derived(waitName ?? null);
+  const failure = $derived(app.boardId === boardId ? app.boardFailure : null);
   const gate = pending(() => !shown && !failure);
 
   $effect(() => {

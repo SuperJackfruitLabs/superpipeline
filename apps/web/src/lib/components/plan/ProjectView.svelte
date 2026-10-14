@@ -24,7 +24,8 @@
 </script>
 
 <AppShell here="plan" section="projects" boardName={null} view={null} plan="projects" showing="Projects belong to the workspace, not to a board." {status} bleed={vibe === 'quiet'} ownHeading>
-  <Layout {model} {vibe} />
+  <!-- Keyed on pending: the list arrives as a fresh frame rather than moving the waiting one (phone CLS). -->
+  {#key model.pending}<Layout {model} {vibe} />{/key}
 </AppShell>
 
 {#key model.drawerId}

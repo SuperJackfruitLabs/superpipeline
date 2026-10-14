@@ -119,7 +119,8 @@
       {#if v.queuer?.byAgent}<span class="chipx" title={v.grantTitle}><Face id={v.queuer.id} label={v.queuer.name} mood="resting" size={20} /> asked by {v.queuer.name}</span>{/if}
     </div>
 
-    <div>
+    <!-- Below the lead, the sections wait for the card's log (hidden, not moved): the lead's real height is only known then, and sections drawn under the loading shape would jump on a phone. -->
+    <div hidden={!model.detailLoaded}>
       <div class="pc-tabs" role="tablist" aria-label="Card sections">
         {#each TABS as t, i (t)}
           <button class="ar-tab" type="button" role="tab" id="t-{t}" aria-controls="p-pane" aria-selected={tab === t} tabindex={tab === t ? 0 : -1} onclick={() => (tab = t)} onkeydown={(e) => onTabKey(e, i)}>{TAB_NAME[t]}<b>{counts[t]}</b></button>
@@ -130,7 +131,7 @@
       </div>
     </div>
   </div>
-  <footer class="pc-foot" aria-label="Card actions" data-section="cardActions">
+  <footer class="pc-foot" hidden={!model.detailLoaded} aria-label="Card actions" data-section="cardActions">
     {#if model.archived}<Button variant="secondary" class="ar-btn2" type="button" onclick={() => model.restore()}>Archived — restore</Button>
     {:else}<Button variant="secondary" class="ar-btn2" type="button" aria-disabled={model.archiving ? 'true' : undefined} data-busy={model.archiving ? 'true' : undefined} onclick={() => { if (!model.archiving) void model.archive(); }}>{#snippet icon()}<PhoneIcon name="archive-studio" form="plain" size={15} />{/snippet}Archive card</Button><span class="sr" role="status">{model.archiving ? 'Archiving…' : ''}</span>{/if}
     <Button variant="danger" onclick={() => model.remove()}>Delete card</Button>

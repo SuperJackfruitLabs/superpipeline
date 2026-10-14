@@ -59,6 +59,8 @@ export interface OperateModel {
   readonly loading?: boolean;
   /** Still loading after 8 s ("Still loading — the server is slow."). */
   readonly slow?: boolean;
+  /** The reads failed: the page says so with Try again; the greeting says nothing about counts. */
+  readonly failed?: boolean;
   /** The chosen board's id, or '' on all boards. */
   readonly boardId: string;
   /** The chosen board's name, or 'All boards'. */

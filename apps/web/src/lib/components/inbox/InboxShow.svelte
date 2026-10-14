@@ -9,13 +9,14 @@
   import { inboxScope, scopeChips, scopeLabel, SHOW_NOTE } from './inbox-scope.svelte';
   import './inbox.css';
 
-  let { form = 'chips' }: { form?: 'chips' | 'words' } = $props();
+  /** pending: the Inbox is still counting; the row keeps its one waiting form until the counted page arrives. */
+  let { form = 'chips', pending = false }: { form?: 'chips' | 'words'; pending?: boolean } = $props();
   let moreOpen = $state(false);
-  const s = $derived(scopeChips(app.boards, app.attention, inboxScope.boardId));
+  const s = $derived(scopeChips(app.boards, pending ? [] : app.attention, inboxScope.boardId));
   const shown = $derived(moreOpen ? [...s.chips, ...s.more.map((b) => ({ id: b.id, label: b.name, count: 0 }))] : s.chips);
   const countWords = (n: number) => (n === 1 ? '1 needs you' : `${n} need you`);
   /** Counts wait for the attention read: a chip shows its board's name, never a 0 that is not known yet. */
-  const known = $derived(app.attentionLoaded);
+  const known = $derived(app.attentionLoaded && !pending);
 </script>
 
 <section class="ib-show ib-show--{form}" aria-labelledby="ib-show-h">

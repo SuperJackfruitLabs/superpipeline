@@ -839,3 +839,6 @@
 .sp-load-status { position: fixed; left: 50%; bottom: calc(var(--vk-space-4) + env(safe-area-inset-bottom, 0px)); translate: -50% 0; z-index: 40; max-width: calc(100vw - 32px); padding: var(--vk-space-2) var(--vk-space-3); border: 1px solid var(--vk-color-line); border-radius: var(--vk-radius-sm); background: var(--vk-color-surface); color: var(--vk-color-text); font-size: var(--vk-text-sm); }
 /* A section that failed to load: the sentence and Try again. */
 .sp-failed { display: flex; flex-wrap: wrap; align-items: center; gap: var(--vk-space-2); color: var(--vk-color-muted); }
+/* A tab count not known yet: a dash in the width of two digits, so the tab does not grow (or wrap) when the number lands. */
+.sp-count-pending { display: inline-block; min-width: 2ch; text-align: center; }
+.sp-meta-pending { display: inline-block; width: 15rem; max-width: 100%; height: 1em; }

@@ -120,7 +120,8 @@
       {:else}<div data-section="resume" hidden></div>{/if}
     {/if}
 
-    <div class="secs">
+    <!-- Below the lead, the sections wait for the card's log (hidden, not moved): the lead's real height is only known then, and sections drawn under the loading shape would jump on a phone. -->
+    <div class="secs" hidden={!model.detailLoaded}>
       {#if v.plan?.length}<details class="sec" data-section="plan"><summary>Plan <span class="c">{v.planSummary}</span></summary><div class="in"><PhonePlan view={v} speaker={v.speaker} /></div></details>{:else}<span hidden data-section="plan"></span>{/if}
       <details class="sec" data-section="details" open={!model.counts.description || hasStructuredDetail(v.groups, model.acceptanceCriteria)}><summary>Details <span class="c">{v.fieldsCount} fields</span></summary><div class="in"><PhoneDetails view={v} spec={c.spec} criteria={model.acceptanceCriteria} heading="Things to prove" boardId={model.boardId ?? ''} /></div></details>
       <details class="sec" data-section="project"><summary>Project <span class="c">{v.project.summary}</span></summary><div class="in">
@@ -145,7 +146,7 @@
     </div>
   </div>
 
-  <footer class="foot" aria-label="Card actions" data-section="cardActions">
+  <footer class="foot" hidden={!model.detailLoaded} aria-label="Card actions" data-section="cardActions">
     <div class="cact">
       {#if model.archived}
         <Button variant="secondary" class="sbtn" type="button" onclick={() => model.restore()}>Archived — restore</Button>

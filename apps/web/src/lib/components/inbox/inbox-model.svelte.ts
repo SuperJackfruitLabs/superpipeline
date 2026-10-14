@@ -46,23 +46,28 @@ export class InboxStore implements OperateModel {
   });
   readonly #boards = $derived(this.boardIds.map((id) => this.#snap(id)).filter((b): b is BoardSnapshot => b !== null));
 
-  readonly needs = $derived(this.#boards.flatMap((b) => needRows(b, app.agents, sortAttention(itemsFromBoard(b, app.agents, Date.now()), 'stage'), Date.now())));
-  readonly needsUrgent = $derived.by(() => {
-    const order = sortAttention(this.needs.map((r) => r.item), 'urgency').map((i) => i.id);
-    return [...this.needs].sort((a, b) => order.indexOf(a.item.id) - order.indexOf(b.item.id));
+  /** Every row, counted or not; the page reads `needs` etc., which stay empty until the counting is done (no rows trickling in). */
+  readonly #needsAll = $derived(this.#boards.flatMap((b) => needRows(b, app.agents, sortAttention(itemsFromBoard(b, app.agents, Date.now()), 'stage'), Date.now())));
+  get needs(): NeedRow[] { return this.loading ? [] : this.#needsAll; }
+  readonly #needsUrgentAll = $derived.by(() => {
+    const order = sortAttention(this.#needsAll.map((r) => r.item), 'urgency').map((i) => i.id);
+    return [...this.#needsAll].sort((a, b) => order.indexOf(a.item.id) - order.indexOf(b.item.id));
   });
-  readonly running = $derived(this.#boards.flatMap((b) => runningRows(b, app.agents)));
+  get needsUrgent(): NeedRow[] { return this.loading ? [] : this.#needsUrgentAll; }
+  readonly #runningAll = $derived(this.#boards.flatMap((b) => runningRows(b, app.agents)));
+  get running() { return this.loading ? [] : this.#runningAll; }
   readonly spend = $derived.by(() => {
     const usage = mergeUsage(this.boardIds.map((id) => this.#usage[id]).filter((u): u is UsageSummary => !!u));
     const one = this.scoped ? (this.#boards[0]?.usage ?? null) : null;
     return spendView(usage, one, app.agents);
   });
   readonly unread = $derived(this.boardIds.reduce((n, id) => n + this.#notesOf(id).filter((x) => !x.read).length, 0));
-  readonly groups = $derived(
+  readonly #groupsAll = $derived(
     this.#boards
-      .flatMap((b) => activityGroups(this.#notesOf(b.boardId ?? ''), this.showRead, this.needs.filter((r) => r.boardId === b.boardId), b, app.agents))
+      .flatMap((b) => activityGroups(this.#notesOf(b.boardId ?? ''), this.showRead, this.#needsAll.filter((r) => r.boardId === b.boardId), b, app.agents))
       .sort((a, b) => b.latest.createdAt.localeCompare(a.latest.createdAt)),
   );
+  get groups() { return this.loading ? [] : this.#groupsAll; }
   readonly cardCount = $derived(this.#boards.reduce((n, b) => n + b.cards.filter((c) => !c.archivedAt).length, 0));
   readonly stages = $derived(this.scoped ? [...(this.#boards[0]?.stages ?? [])].sort((a, b) => a.order - b.order) : []);
 

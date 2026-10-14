@@ -48,7 +48,9 @@
 <div style:display={phoneCard ? 'none' : 'contents'}>
   <AppShell here="inbox" section="inbox" boardName={null} view={null} showing={null} {status} sky={vibe === 'daylight' ? sky : undefined} bleed={vibe === 'quiet' || vibe === 'studio'} ownHeading>
     <div id="content" tabindex="-1" class="min-w-0">
-      <div class="ib-pad"><InboxShow form={vibe === 'quiet' ? 'words' : 'chips'} /></div>
+      <!-- Keyed on loading: the counted page arrives as a fresh frame instead of pushing the waiting one down (phone CLS). -->
+      {#key model.loading}
+      <div class="ib-pad"><InboxShow form={vibe === 'quiet' ? 'words' : 'chips'} pending={model.loading} /></div>
       {#if model.failed}
         <section class="ib-failed" aria-labelledby="ib-failed-h">
           <h1 id="ib-failed-h" class="vk-visually-hidden">Inbox</h1>
@@ -57,6 +59,7 @@
       {:else}
         <Layout {model} {ui} {caps} />
       {/if}
+      {/key}
     </div>
   </AppShell>
 </div>
