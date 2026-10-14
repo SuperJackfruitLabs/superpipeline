@@ -28,7 +28,7 @@
   const viewItems = VIEWS.map(([value, label]) => ({ value, label, href: `?view=${value}` }));
   const note = $derived(paperShowing ?? showing);
   // Paper draws the dateline on the nameplate row and Live at the end of the section bar (AppNav), not in the masthead.
-  const live = $derived({ state: m.connected ? 'live' as const : 'reconnecting' as const, label: m.connected ? 'Live' : 'Reconnecting…', detail: m.connected ? 'changes appear as they happen' : undefined, attrs: { 'data-live': m.connected ? 'on' : 'off' } });
+  const live = $derived(m.live);
   const statusItems = $derived((status?.items ?? []).map((i) => ({ text: i.text, tone: i.signal ? ('needs' as const) : ('plain' as const) })));
 </script>
 

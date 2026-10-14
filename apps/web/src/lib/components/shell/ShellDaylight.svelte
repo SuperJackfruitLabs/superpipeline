@@ -90,7 +90,7 @@
     title={boardName ?? (ownHeading ? '' : 'Superpipeline')}
     switcher={boardName !== null ? { label: 'Switch board', onopen: m.openBoardSwitcher } : undefined}
     {command}
-    live={{ state: m.connected ? 'live' : 'reconnecting', label: m.connected ? 'Live' : 'Reconnecting…', detail: m.connected ? 'changes appear as they happen' : undefined, attrs: { 'data-live': m.connected ? 'on' : 'off' } }}
+    live={m.live}
     {actions}
     tabs={view || plan ? viewTabs : undefined}
   />

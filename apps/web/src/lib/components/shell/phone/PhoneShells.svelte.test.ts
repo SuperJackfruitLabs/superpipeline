@@ -139,6 +139,7 @@ describe.each(SHELLS)('the %s phone shell', (vibe, Shell) => {
 
   it('says Reconnecting… when the feed is down', () => {
     app.connected = false;
+    app.feedOpened = true; // a drop: the feed had opened
     const { container } = render(Shell, props());
     const live = container.querySelector('[role="status"][data-live]')!;
     expect(live.getAttribute('data-live')).toBe('off');

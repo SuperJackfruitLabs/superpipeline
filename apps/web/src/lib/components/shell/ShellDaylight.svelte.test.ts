@@ -128,6 +128,7 @@ describe('ShellDaylight', () => {
   });
   it('says Reconnecting… when the feed is down, and marks the frame off', () => {
     app.connected = false;
+    app.feedOpened = true; // a drop: the feed had opened
     const { container } = render(ShellDaylight, props());
     const live = screen.getByRole('status');
     expect(live.textContent).toContain('Reconnecting…');

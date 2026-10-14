@@ -18,6 +18,7 @@ import {
   showingLine, statusLine, studioSubRight, userNameOf, type OperateCount, type ShellStatus, type StatusItem,
 } from './shell-words';
 import type { ShellView } from './types';
+import { liveView, type LiveView } from '$lib/loading';
 
 const liveCards = () => (app.board?.cards ?? []).filter((c) => !c.archivedAt);
 const needIds = () => new Set(app.needsYou().map((i) => i.cardId));
@@ -28,6 +29,8 @@ export const shellModel = {
   /** The Inbox badge (nav v2): every card waiting on you, across all boards, on every page. */
   get inboxBadge(): number { return app.attention.length; },
   get connected(): boolean { return app.connected; },
+  /** The live pill: Connecting… on first load (calm), Live, Reconnecting… only after a drop, Offline. */
+  get live(): LiveView { return liveView(app.connection, appearance.value.vibe === 'quiet'); },
   get userName(): string { return userNameOf(app.user); },
   get initials(): string { return initialsOf(userNameOf(app.user)); },
   get firstName(): string { return greetingName(app.user, app.members); },

@@ -256,7 +256,7 @@
     </div>
   </main>
   <footer class="ar-status">
-    <span><span class="ar-live" style="font-size: 11px;"><i aria-hidden="true"></i>{app.connected || app.syncedAt ? 'Live' : 'Reconnecting'}</span></span>
+    <span><span class="ar-live" style="font-size: 11px;"><i aria-hidden="true"></i>{app.connected || app.syncedAt ? 'Live' : app.connection === 'reconnecting' ? 'Reconnecting' : app.connection === 'offline' ? 'Offline' : 'Connecting'}</span></span>
     {#each statusItems({ shortId: m.shortId, i: m.stageIndex, n: m.stages.length, stageName: m.stageName, needsYou: lead.needsYou && !m.archived, ageHours: m.ageHours, syncedAt: app.syncedAt?.toISOString() ?? null }) as it (it.text)}<span class:sig={it.signal}>{it.text}</span>{/each}
     <span class="r"><span>E edit</span><span>{gate ? 'C request changes' : 'C comment'}</span><span>⌘↵ send</span><span>G B back to the board</span></span>
   </footer>

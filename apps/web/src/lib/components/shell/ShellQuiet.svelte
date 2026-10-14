@@ -58,7 +58,7 @@
       title={boardName}
       switcher={{ label: 'Change board', onopen: m.openBoardSwitcher }}
       {command}
-      live={{ state: m.connected ? 'live' : 'reconnecting', label: m.connected ? 'Live.' : 'Reconnecting…', detail: m.connected ? 'Changes appear as they happen.' : undefined, attrs: { 'data-live': m.connected ? 'on' : 'off' } }}
+      live={m.live}
       {actions}
       tabs={view || plan ? viewTabs : undefined}
     />
