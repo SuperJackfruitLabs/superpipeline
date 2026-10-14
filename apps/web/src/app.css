@@ -814,3 +814,28 @@
 :is(.ds-sk, .pcs-sk, .ss-sk, .skel, .pj-skel)::after { content: ''; position: absolute; inset: 0; translate: -100% 0; background: linear-gradient(90deg, transparent, color-mix(in oklch, var(--vk-color-surface) 70%, transparent), transparent); animation: vk-motion-shimmer calc(1400ms * var(--vk-motion-scale)) linear infinite; pointer-events: none; }
 :where([data-vibe='paper'], [data-vibe='quiet']) :is(.ds-sk, .pcs-sk, .ss-sk, .skel, .pj-skel)::after { display: none; }
 :where([data-vibe='paper']) :is(.ds-sk, .pcs-sk, .ss-sk, .skel, .pj-skel) { animation: vk-motion-breathe calc(1600ms * var(--vk-motion-scale)) ease-in-out infinite alternate; }
+
+/* Loading (loading-audit design rules). The shared skeleton (parts/SkeletonRows.svelte) holds its space from the first
+   frame and shows after 150 ms. Daylight: soft rounded bars, gentle 1.6 s shimmer. Paper: hairline-ruled blank lines like
+   an unprinted form, no shimmer. Studio: grey blocks on the grid and a mono LOADING label. Quiet: the word alone, no bars,
+   no motion. Reduced motion stops all of it (vibekit's --vk-motion-scale). */
+.sp-skeleton { display: block; min-width: 0; }
+.sp-skeleton:not(.sp-skeleton--on) > * { visibility: hidden; }
+.sp-skeleton .vk-skeleton::after { animation-duration: calc(1600ms * var(--vk-motion-scale)); }
+.sp-skeleton__row { display: flex; flex-direction: column; justify-content: center; gap: 6px; padding-block: var(--vk-space-2); }
+.sp-skeleton__row .vk-skeleton { margin: 0; }
+.sp-skeleton__meta { width: 40%; height: 9px; }
+.sp-skeleton__word { display: none; }
+.sp-skeleton__slow { display: block; margin-top: var(--vk-space-2); color: var(--vk-color-muted); font-size: var(--vk-text-sm); }
+:where([data-vibe='paper']) .sp-skeleton .vk-skeleton { height: 1.4em; margin: 0; border-radius: 0; background: none; border-bottom: 1px solid var(--vk-color-line); }
+:where([data-vibe='paper']) .sp-skeleton__meta { display: none; }
+:where([data-vibe='studio']) .sp-skeleton .vk-skeleton { border-radius: 0; background: var(--vk-color-raised, var(--vk-color-line)); }
+:where([data-vibe='studio']) .sp-skeleton__word--studio { display: block; font-family: var(--vk-font-mono); font-size: 11px; letter-spacing: 0.08em; color: var(--vk-color-muted); }
+:where([data-vibe='quiet']) .sp-skeleton .vk-skeleton, :where([data-vibe='quiet']) .sp-skeleton__row { display: none; }
+:where([data-vibe='quiet']) .sp-skeleton__word--quiet { display: block; color: var(--vk-color-muted); }
+/* A pending count or figure: a dash in a fixed width, never 0. */
+.sp-pending { display: inline-block; min-width: 1ch; color: var(--vk-color-muted); }
+/* The screen's one loading status line: hidden until the server has been slow for 8 s, then a quiet line at the foot. */
+.sp-load-status { position: fixed; left: 50%; bottom: calc(var(--vk-space-4) + env(safe-area-inset-bottom, 0px)); translate: -50% 0; z-index: 40; max-width: calc(100vw - 32px); padding: var(--vk-space-2) var(--vk-space-3); border: 1px solid var(--vk-color-line); border-radius: var(--vk-radius-sm); background: var(--vk-color-surface); color: var(--vk-color-text); font-size: var(--vk-text-sm); }
+/* A section that failed to load: the sentence and Try again. */
+.sp-failed { display: flex; flex-wrap: wrap; align-items: center; gap: var(--vk-space-2); color: var(--vk-color-muted); }

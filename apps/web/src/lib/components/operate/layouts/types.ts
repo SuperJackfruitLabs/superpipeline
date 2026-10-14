@@ -57,6 +57,8 @@ export type CapResult = { board: string | null; card: string | null; refused: st
 export interface OperateModel {
   /** Nothing in scope has been read yet (the lists draw skeletons). Absent on models that load before they render. */
   readonly loading?: boolean;
+  /** Still loading after 8 s ("Still loading — the server is slow."). */
+  readonly slow?: boolean;
   /** The chosen board's id, or '' on all boards. */
   readonly boardId: string;
   /** The chosen board's name, or 'All boards'. */

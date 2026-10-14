@@ -19,6 +19,8 @@
   import { CapsUi, OperateUi } from '../operate/operate-ui.svelte';
   import OperateDaylightSky from '../operate/layouts/OperateDaylightSky.svelte';
   import InboxShow from './InboxShow.svelte';
+  import LoadFailed from '$lib/components/parts/LoadFailed.svelte';
+  import { UNREACHABLE_COPY } from '$lib/loading';
 
   if (app.boards.length === 0) void app.loadBoards();
   const model = new InboxStore();
@@ -29,7 +31,7 @@
   const scope = $derived(model.scoped ? model.boardName : 'all boards');
   // Only Studio draws a status line on the Inbox (the other three references end with the page).
   const status = $derived(
-    vibe !== 'studio' ? null : shellModel.pageStatus([
+    vibe !== 'studio' ? null : model.loading || model.failed ? shellModel.pageStatus([scope]) : shellModel.pageStatus([
       scope,
       plural(model.cardCount, 'card', 'cards'),
       needsPart(model.needs.length),
@@ -47,7 +49,14 @@
   <AppShell here="inbox" section="inbox" boardName={null} view={null} showing={null} {status} sky={vibe === 'daylight' ? sky : undefined} bleed={vibe === 'quiet' || vibe === 'studio'} ownHeading>
     <div id="content" tabindex="-1" class="min-w-0">
       <div class="ib-pad"><InboxShow form={vibe === 'quiet' ? 'words' : 'chips'} /></div>
-      <Layout {model} {ui} {caps} />
+      {#if model.failed}
+        <section class="ib-failed" aria-labelledby="ib-failed-h">
+          <h1 id="ib-failed-h" class="vk-visually-hidden">Inbox</h1>
+          <LoadFailed message={UNREACHABLE_COPY} onRetry={() => model.retry()} />
+        </section>
+      {:else}
+        <Layout {model} {ui} {caps} />
+      {/if}
     </div>
   </AppShell>
 </div>
@@ -56,5 +65,6 @@
 <style>
   /* The phone shell draws no gutter of its own: the Show row keeps the page's 16px. */
   .ib-pad { padding-inline: 0; }
+  .ib-failed { padding: var(--vk-space-6) var(--vk-space-4); }
   @media (max-width: 899.98px) { .ib-pad { padding-inline: 16px; } }
 </style>

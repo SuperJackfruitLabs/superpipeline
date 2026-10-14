@@ -39,29 +39,66 @@ beforeEach(() => {
   app.boardId = DX_ID;
   app.board = DX_BOARD;
   app.notifications = DX_NOTIFICATIONS;
+  app.boardsLoaded = true;
+  app.boardsFailed = false;
+  app.attentionSettled = true;
 });
 afterEach(() => { stop?.(); stop = null; inboxScope.choose(null); app.board = null; app.boards = []; app.attention = []; vi.clearAllMocks(); });
 
 describe('the Inbox model', () => {
-  it('is loading until a board in scope has been read, and stops even when every read fails', async () => {
-    let release!: () => void;
-    const gate = new Promise<void>((r) => (release = r));
-    api.getBoard.mockImplementation(async () => { await gate; throw new Error('offline'); });
+  it('is pending before the board list arrives: no boards yet is not "nothing needs you" (L1)', async () => {
+    app.boardsLoaded = false;
+    app.boards = [];
     app.board = null;
     const m = make();
     await settle();
+    expect(m.boardIds).toEqual([]);
+    expect(m.pendingNow).toBe(true);
     expect(m.loading).toBe(true);
-    release();
-    await settle();
-    expect(m.loading).toBe(false);
-    expect(m.needs).toEqual([]);
+    expect(m.failed).toBe(false);
   });
-  it('is not loading while the open board already shows', async () => {
-    api.getBoard.mockImplementation(() => new Promise(() => {}));
+  it('is pending until the attention list has answered', async () => {
+    app.attentionSettled = false;
     const m = make();
     await settle();
-    expect(m.needs.length).toBeGreaterThan(0);
-    expect(m.loading).toBe(false);
+    expect(m.pendingNow).toBe(true);
+    app.attentionSettled = true;
+    await settle();
+    expect(m.pendingNow).toBe(false);
+  });
+  it('counts once: pending until every board with something waiting is read, even while the open board shows', async () => {
+    let release!: () => void;
+    const held = new Promise<void>((r) => (release = r));
+    api.getBoard.mockImplementation(async (id: string) => { if (id === OTHER) await held; return id === OTHER ? OTHER_BOARD : DX_BOARD; });
+    const m = make();
+    await settle();
+    expect(m.pendingNow).toBe(true);
+    release();
+    await settle();
+    expect(m.pendingNow).toBe(false);
+    expect(new Set(m.needs.map((r) => r.boardId))).toEqual(new Set([OTHER, DX_ID]));
+  });
+  it('fails, not empty, when every board read fails, and stops being pending', async () => {
+    api.getBoard.mockImplementation(async () => { throw new Error('getBoard failed (500)'); });
+    app.board = null;
+    const m = make();
+    await settle();
+    expect(m.failed).toBe(true);
+    expect(m.pendingNow).toBe(false);
+  });
+  it('fails when the board list could not be read at all', async () => {
+    app.boardsLoaded = false;
+    app.boardsFailed = true;
+    const m = make();
+    await settle();
+    expect(m.failed).toBe(true);
+    expect(m.pendingNow).toBe(false);
+  });
+  it('says a spend failure in words, never the raw error', async () => {
+    api.getUsage.mockImplementation(async () => { throw new Error('getUsage failed (500)'); });
+    const m = make();
+    await settle();
+    expect(m.usageError).not.toMatch(/failed \(|Error/);
   });
   it('reads every board by default, boards that need you first, and every row names its board', async () => {
     const m = make();

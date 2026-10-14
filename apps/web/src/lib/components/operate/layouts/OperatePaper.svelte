@@ -9,7 +9,7 @@
   import { Button, Face } from '@superjackfruit/vibekit';
   import LineIcon from '$lib/components/parts/LineIcon.svelte';
   import BoardChip from '$lib/components/inbox/BoardChip.svelte';
-  import { acrossBoards, askBoards, inboxCounts, inboxSubline, wantYou } from '$lib/components/inbox/inbox-words';
+  import { acrossBoards, askBoards, CHECKING, inboxCounts, inboxSubline, wantYou } from '$lib/components/inbox/inbox-words';
   import { greetNamed } from '$lib/greet';
   import { moveTargets } from '../operate-data';
   import { CapsUi, OperateUi } from '../operate-ui.svelte';
@@ -47,15 +47,15 @@
   <header class="mast">
     <div>
       <p class="mast__eyebrow">Superpipeline · Inbox · {model.boardName}</p>
-      <svelte:element this={viewport.phone ? 'h2' : 'h1'} class="op-title">{greetNamed(model.phase, model.firstName)} {wantYou(model.needs.length, true)}</svelte:element>
-      <p class="mast__line">{inboxSubline(inboxCounts(model.needs), askBoards(model.needs), model.running.length)}</p>
+      <svelte:element this={viewport.phone ? 'h2' : 'h1'} class="op-title">{greetNamed(model.phase, model.firstName)}{model.loading ? '' : ` ${wantYou(model.needs.length, true)}`}</svelte:element>
+      <p class="mast__line">{model.loading ? CHECKING : inboxSubline(inboxCounts(model.needs), askBoards(model.needs), model.running.length)}</p>
     </div>
-    <p class="mast__end">{paperMastEnd(model.boardName, model.cardCount)}</p>
+    <p class="mast__end">{model.loading ? model.boardName : paperMastEnd(model.boardName, model.cardCount)}</p>
   </header>
   <div class="cols">
     <section class="col" id="letters" aria-labelledby="k1">
-      <div class="kick"><h2 id="k1">Waiting on you</h2><span class="kick__n" class:kick__n--needs={model.needs.length > 0}>{letters(model.needs.length)}</span>{#if !model.scoped}<span class="lnk">{acrossBoards(askBoards(model.needs))}</span>{/if}</div>
-      {#if model.loading}<SkeletonRows label="Loading what needs you…" />{:else if model.needs.length === 0}<p class="prose">Nothing is waiting on you.</p>{/if}
+      <div class="kick"><h2 id="k1">Waiting on you</h2><span class="kick__n" class:kick__n--needs={!model.loading && model.needs.length > 0}>{model.loading ? '–' : letters(model.needs.length)}</span>{#if !model.scoped && !model.loading}<span class="lnk">{acrossBoards(askBoards(model.needs))}</span>{/if}</div>
+      {#if model.loading}<SkeletonRows label="Checking your boards…" rowHeight={150} slow={model.slow} />{:else if model.needs.length === 0}<p class="prose">Nothing is waiting on you.</p>{/if}
       {#each model.needs as row (row.item.id)}
         {@const id = row.item.cardId}
         {@const noOwner = row.item.kind === 'no-owner'}
@@ -96,9 +96,9 @@
       {/each}
     </section>
     <section class="col" aria-labelledby="k2">
-      <div class="kick"><h2 id="k2">Since you last looked</h2><span class="kick__n">{model.unread} unread{model.scoped ? '' : ' · all boards'}</span></div>
+      <div class="kick"><h2 id="k2">Since you last looked</h2><span class="kick__n">{model.loading ? '–' : model.unread} unread{model.scoped ? '' : ' · all boards'}</span></div>
       <div class="toggle" role="group" aria-label="Which activity"><button type="button" aria-pressed={model.showRead ? 'false' : 'true'} onclick={() => (model.showRead = false)}>Unread only</button><button type="button" aria-pressed={model.showRead ? 'true' : 'false'} onclick={() => (model.showRead = true)}>Show all</button></div>
-      {#if model.groups.length === 0}<p class="prose">{model.showRead ? (model.scoped ? 'Nothing has happened on this board yet.' : 'Nothing has happened on any board yet.') : 'Nothing unread.'}</p>{/if}
+      {#if model.loading}<SkeletonRows label="Loading activity…" rows={2} rowHeight={60} />{:else if model.groups.length === 0}<p class="prose">{model.showRead ? (model.scoped ? 'Nothing has happened on this board yet.' : 'Nothing has happened on any board yet.') : 'Nothing unread.'}</p>{/if}
       {#each model.groups as g (g.cardId)}
         <div class="dig" in:rise animate:flip use:flashOnChange={g.latest.seq}>
           <h3>{@render face(g.agentName, g.iconUrl, 22, g.need ? 'needs' : 'resting')}<a href={model.cardHref(g.cardId, g.boardId)} onclick={(e: MouseEvent) => go(e, g.cardId, g.boardId)}>{g.title}</a></h3>
@@ -115,8 +115,10 @@
     </section>
     <aside class="col" aria-label="At work and the ledger">
       <section aria-labelledby="k3">
-        <div class="kick"><h2 id="k3">At work</h2><span class="kick__n">{model.running.length}{model.scoped ? '' : ' · all boards'}</span></div>
-        {#if model.running.length === 0}
+        <div class="kick"><h2 id="k3">At work</h2><span class="kick__n">{model.loading ? '–' : model.running.length}{model.scoped ? '' : ' · all boards'}</span></div>
+        {#if model.loading}
+          <SkeletonRows label="Checking what is running…" rows={2} />
+        {:else if model.running.length === 0}
           <p class="prose">No agent is working anything right now.</p>
         {:else}
           {#each model.running as r (r.cardId)}<p class="prose">{r.agentName ?? 'An agent'} on <a class="lnk" style="min-height: 0px; display: inline;" href={model.cardHref(r.cardId, r.boardId)} onclick={(e: MouseEvent) => go(e, r.cardId, r.boardId)}>{r.title}</a>, in {r.stageName}{r.costUsd > 0 ? ` · ${usd(r.costUsd)}` : ''}.</p>{/each}
@@ -125,9 +127,14 @@
       <section class="box" aria-labelledby="k4">
         <div class="kick"><h2 id="k4">The ledger</h2><span class="kick__n">last 7 days</span></div>
         {#if model.usageError}<p class="small">Couldn't load spend — {model.usageError}</p>{/if}
+        {#if model.loading}
+        <p class="figure">—</p>
+        <SkeletonRows label="Loading spend…" rows={2} />
+        {:else}
         <p class="figure" use:bumpOnChange={model.spend.total}>{usd(model.spend.total)}</p>
         <p class="prose" style="font-style: italic;">{paperCap(model.spend.cap)}</p>
-        <p class="small">{model.spend.top.length === 0 ? 'No agent has spent anything this week.' : `${model.spend.top[0]!.name} spent the most this week.`}</p>
+        {/if}
+        <p class="small">{model.loading ? '' : model.spend.top.length === 0 ? 'No agent has spent anything this week.' : `${model.spend.top[0]!.name} spent the most this week.`}</p>
         {#if caps.editing}
           <div class="caps">
             <label>Board cap $<input class="select" inputmode="decimal" placeholder="none" bind:value={caps.board} /></label>
