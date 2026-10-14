@@ -17,7 +17,7 @@
     <a class="t-h3" href="/b/{item.boardId}/c/{item.cardId}" style={c?.long ? 'text-decoration: none; overflow-wrap: anywhere;' : 'text-decoration: none;'}>{item.title}</a>
     <p class="t-meta">{metaLine(item)}</p>
     {#if c}
-      <p class="t-body" style={c.long ? 'overflow-wrap: anywhere;' : undefined}>{full ? item.detail : c.shown}{#if c.long}{' '}<Button variant="quiet" type="button" aria-expanded={full} style="min-height: 32px; padding: 0px 4px; font-size: 0.875rem;" onclick={() => model.toggleFull(item.id)}>{full ? 'Show less' : 'Show all'}</Button>{/if}</p>
+      <p class="t-body" data-reveal style={c.long ? 'overflow-wrap: anywhere;' : undefined}>{full ? item.detail : c.shown}{#if c.long}{' '}<Button variant="quiet" type="button" aria-expanded={full} style="min-height: 32px; padding: 0px 4px; font-size: 0.875rem;" onclick={() => model.toggleFull(item.id)}>{full ? 'Show less' : 'Show all'}</Button>{/if}</p>
     {/if}
     <p class="t-meta">{item.instruction}</p>
   </div>

@@ -2,6 +2,7 @@
 <script lang="ts">
   import SkeletonRows from '$lib/components/parts/SkeletonRows.svelte';
   import LoadFailed from '$lib/components/parts/LoadFailed.svelte';
+  import { crewNewInPage, onCrewNew } from '../crew-new';
   import { autogrow } from '$lib/autogrow';
   import { Button, Face } from '@superjackfruit/vibekit';
   import NewCapabilityDialog from '../dialogs/NewCapabilityDialog.svelte';
@@ -17,12 +18,13 @@
   void model.refresh();
   let creating = $state(false);
   function openNew(): void { model.resetNew(); creating = true; }
+  $effect(() => onCrewNew('capabilities', openNew));
 </script>
 
 {#snippet plusIcon()}<LineIcon name="plus" size={18} stroke={1.75} />{/snippet}
 
 <section class="ar-sec" aria-labelledby="ct-h">
-  <div class="hd"><span class="no">{review?.no ?? '01'}</span>{#if review}<span class="kick">{review.tag}</span>{/if}<h2 id="ct-h">{model.capabilities === null ? 'Capabilities' : capsHeading(model.rows.length)}</h2><span class="r"><Button type="button" icon={plusIcon} onclick={openNew}>New capability</Button></span></div>
+  <div class="hd"><span class="no">{review?.no ?? '01'}</span>{#if review}<span class="kick">{review.tag}</span>{/if}<h2 id="ct-h">{model.capabilities === null ? 'Capabilities' : capsHeading(model.rows.length)}</h2><span class="r">{#if crewNewInPage()}<Button type="button" icon={plusIcon} onclick={openNew}>New capability</Button>{/if}</span></div>
   <p class="wo-lede">What agents can do. A board stage asks for one; an agent holding it claims the card.</p>
   {#if model.similar.length > 0}<p class="ar-hint" role="status">{similarText(model.similar)}</p>{/if}
   {#if model.error}<p class="ar-hint" role="alert">{model.error}</p>{/if}

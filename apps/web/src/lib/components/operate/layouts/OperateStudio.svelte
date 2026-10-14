@@ -135,7 +135,7 @@
               <td><span class="ag">{#if row.agentName}<Face id={row.agentName} label={row.agentName} mood="needs" size={20} src={row.iconUrl ?? undefined} />{row.agentName}{:else}<span class="m">Unclaimed</span>{/if}<BoardChip name={row.boardName} /></span></td>
               <td><span class="m">{studioAge(row)}</span></td>
               <td><span class="m">{#if noOwner}—{:else if attemptsSignalOperate(row.card.attemptCount)}<span class="sigt">{row.card.attemptCount}</span>{:else}{row.card.attemptCount}{/if}</span></td>
-              <td>
+              <td data-reveal>
                 {#if noOwner}
                   <p class="op-why" style="font-family: var(--ff); font-size: 14px;">{row.item.instruction}</p>
                 {:else}

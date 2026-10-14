@@ -74,7 +74,7 @@
     <h3>Session activity <span class="mono">{model.counts.runs} {model.counts.runs === 1 ? 'run' : 'runs'}</span></h3>
     {#if view.grantLine}<p class="note">{view.grantLine}</p>{/if}
     {#each runsStudio as r (r.key)}
-      <div class="pc-run">
+      <div class="pc-run" data-reveal>
         <button class="pc-runhead" type="button" data-attempt-head={r.key} aria-expanded={r.isOpen} aria-controls={r.isOpen ? `${id}-run-${r.key}` : undefined} onclick={() => (runOpen = { ...runOpen, [r.key]: !r.isOpen })}><span class="rt">{r.title}</span><span class="rm">{r.meta}</span></button>
         {#if r.isOpen}
           <div id="{id}-run-{r.key}">

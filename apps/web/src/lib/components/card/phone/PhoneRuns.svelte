@@ -24,7 +24,7 @@
     {@const isOpen = open[r.key] ?? r.open}
     {@const shown = tools[r.key] ?? false}
     {@const g = acts(r.key)}
-    <div class="run">
+    <div class="run" data-reveal>
       <button class="runhead" type="button" data-attempt-head={r.key} aria-expanded={isOpen} aria-controls={isOpen ? `${uid}-${r.key}` : undefined} onclick={() => (open = { ...open, [r.key]: !isOpen })}><span class="rt">{r.title}</span><span class="rm">{r.meta}</span></button>
       {#if isOpen}
         <div id="{uid}-{r.key}">

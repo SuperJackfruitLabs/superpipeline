@@ -14,7 +14,7 @@
   import PlanSwitch from './PlanSwitch.svelte';
   import { VIEWS, type ShellProps } from './types';
 
-  let { here, boardName, view, plan, showing, status, subTools, bleed = false, ownHeading = false, children }: ShellProps = $props();
+  let { here, boardName, view, plan, showing, status, subTools, bleed = false, ownHeading = false, primary, children }: ShellProps = $props();
 
   // Words only: vibekit draws no icon in this vibe's nav (the field is required, and ignored).
   const items = $derived<NavItem[]>([
@@ -39,7 +39,7 @@
 {/snippet}
 
 {#snippet command()}<CommandField label="Search cards, agents and actions" placeholder="Search" kbd="⌘K" onopen={m.openSearch} />{/snippet}
-{#snippet actions()}<Button variant="secondary" onclick={m.compose}>New card</Button>{/snippet}
+{#snippet actions()}<Button variant="secondary" onclick={primary?.onclick ?? m.compose}>{primary?.label ?? 'New card'}</Button>{/snippet}
 
 {#snippet viewTabs()}
   {#if plan}<PlanSwitch value={plan} />{/if}

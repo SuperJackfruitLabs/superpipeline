@@ -158,3 +158,23 @@ for (const vibe of VIBES) {
     await noSideScroll(page, 'new project dialog');
   });
 }
+
+// Round 3: the masthead's primary action names the page's main thing. Plan · Projects said "New card".
+for (const vibe of VIBES) {
+  test(`${vibe} desktop: the masthead says New project on Projects (it opens the dialog) and New card on the Inbox`, async ({ page, request }) => {
+    await openBoard(page, await seedBoard(request, `Masthead ${tag()}`));
+    await setAppearance(page, `${vibe}.light.${vibe === 'quiet' ? 'off' : 'strong'}.0`);
+    await page.setViewportSize({ width: 1280, height: 900 });
+    await page.goto('/plan/projects');
+    const opener = page.getByRole('button', { name: /^New project/ });
+    await expect(opener).toHaveCount(1);
+    await expect(page.getByRole('button', { name: /^(New card|Write a new card)/ })).toHaveCount(0);
+    await opener.click();
+    await expect(page.getByRole('dialog', { name: 'New project' })).toBeVisible();
+    await page.keyboard.press('Escape');
+    await page.goto('/inbox');
+    // Quiet's board-less pages have one row, the links, and no masthead action (its Projects page draws New project itself).
+    await expect(page.getByRole('button', { name: /^(New card|Write a new card)/ })).toHaveCount(vibe === 'quiet' ? 0 : 1);
+    await expect(page.getByRole('button', { name: /^New project/ })).toHaveCount(0);
+  });
+}
