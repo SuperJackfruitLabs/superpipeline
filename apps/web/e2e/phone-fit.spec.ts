@@ -41,9 +41,9 @@ async function measure(page: Page) {
   }, GUTTER);
 }
 
-const PAGES = ['/inbox', '/crew/agents', '/crew/people', '/crew/capabilities', '/settings', '/plan/projects'];
+const PAGES = ['/inbox', '/crew/agents', '/crew/people', '/crew/capabilities', '/settings', '/plan/projects', `${DX}?view=list`];
 /** The board, its List and a card carry the same move selects: they must not widen the page (their gutters are their own layouts'). */
-const WIDTH_ONLY = [`${DX}`, `${DX}?view=list`, `${DX}/c/card_05823a57e8224605`];
+const WIDTH_ONLY = [`${DX}`, `${DX}/c/card_05823a57e8224605`];
 
 for (const vibe of VIBES) {
   for (const dark of [false, true]) {
