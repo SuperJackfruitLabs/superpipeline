@@ -33,3 +33,23 @@ export function takeReturnTo(storage: Storage | undefined = globalThis.sessionSt
   }
   return v && !v.startsWith('//') && SAFE.test(v) ? v : null;
 }
+
+/**
+ * The return-to place, taken out of storage once at boot and held until the app is ready. The front
+ * door (routes/+page.svelte) redirects to the Inbox as soon as auth is ready; without this hold it
+ * raced the layout's goto(back) and won, so Reconnect landed on the Inbox (or a board) with the card closed.
+ */
+let held: string | null = null;
+export function holdReturnTo(storage?: Storage): string | null {
+  held = takeReturnTo(storage);
+  return held;
+}
+/** Whether a return-to place is waiting: the front door must not redirect over it. */
+export function returnToHeld(): boolean {
+  return held !== null;
+}
+export function releaseReturnTo(): string | null {
+  const v = held;
+  held = null;
+  return v;
+}

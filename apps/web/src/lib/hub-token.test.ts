@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { hubToken, forgetHubToken, withAuthority, beginHubAuthorization, hubStatus, libraryToken, forgetLibraryToken, libraryConfigured } from './hub-token';
+import { hubToken, forgetHubToken, withAuthority, beginHubAuthorization, hubStatus, libraryToken, forgetLibraryToken, libraryConfigured, libraryProblem, HUB_TOKEN_LOCK } from './hub-token';
 
 /**
  * Carrying authority from the browser (superpipeline#43, option A).
@@ -419,5 +419,35 @@ describe('libraryToken (spec §9 Embedding)', () => {
     expect(libraryConfigured()).toBe(false);
     forgetHubToken();
     expect(libraryConfigured()).toBe(true);
+  });
+});
+
+describe('/hub/token across tabs and the reason a library token is missing', () => {
+  const jwt = (expSec: number) => `h.${btoa(JSON.stringify({ exp: expSec })).replace(/=+$/, '')}.s`;
+  afterEach(() => { vi.unstubAllGlobals(); });
+
+  it('holds a Web Lock shared by every tab around each /hub/token request', async () => {
+    const held: string[] = [];
+    let inside = false;
+    vi.stubGlobal('navigator', { locks: { request: async (name: string, fn: () => Promise<unknown>) => { held.push(name); inside = true; try { return await fn(); } finally { inside = false; } } } });
+    vi.stubGlobal('fetch', vi.fn(async () => { expect(inside).toBe(true); return Response.json({ libraryToken: jwt(Math.floor(Date.now() / 1000) + 300) }); }));
+    await libraryToken();
+    await hubStatus();
+    expect(held).toEqual([HUB_TOKEN_LOCK, HUB_TOKEN_LOCK]);
+  });
+  it('still works where the Web Locks API is missing', async () => {
+    vi.stubGlobal('navigator', {});
+    vi.stubGlobal('fetch', vi.fn(async () => Response.json({ libraryToken: jwt(Math.floor(Date.now() / 1000) + 300) })));
+    expect(await libraryToken()).not.toBeNull();
+  });
+  it.each([
+    [{ token: null, libraryToken: null, signIn: 'org-plane', hubConfigured: true, reauthorize: '/auth/login' }, 200, 'reauthorize'],
+    [{ token: 'a', libraryToken: null, libraryDeclined: true, signIn: 'org-plane', hubConfigured: true }, 200, 'declined'],
+    [{ libraryToken: null, retryable: true }, 503, 'unavailable'],
+    [{ token: 'a', libraryToken: null }, 200, 'none'],
+  ] as const)('says why no library token came back (%o)', async (body, status, why) => {
+    vi.stubGlobal('fetch', vi.fn(async () => Response.json(body, { status })));
+    expect(await libraryToken()).toBeNull();
+    expect(libraryProblem()).toBe(why);
   });
 });

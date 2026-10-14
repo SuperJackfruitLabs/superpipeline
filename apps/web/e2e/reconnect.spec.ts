@@ -80,3 +80,14 @@ test('a half-typed resume note survives the expired session and the sign-in roun
   await expect(page.getByRole('textbox', { name: /note|what changed/i }).first()).toHaveValue('Half a thought');
   expect(await page.evaluate((id) => sessionStorage.getItem(`sp:draft:resume:${id}`), snap.cards[0]!.id)).toBe('Half a thought');
 });
+
+test('after Reconnect the sign-in lands on / and the app reopens the same card, not the Inbox', async ({ page, request }) => {
+  const path = await cardPage(page, request, 'Reopen me after sign-in');
+  // The sign-in round trip: reconnect() stored the place, /auth/callback answered with a redirect to /.
+  await page.evaluate((p) => sessionStorage.setItem('superpipeline.returnTo', p), path);
+  await page.goto('/');
+  await expect.poll(() => new URL(page.url()).pathname, { timeout: 15_000 }).toBe(path);
+  await page.waitForTimeout(1_000); // the front door's Inbox redirect must not arrive late and win
+  expect(new URL(page.url()).pathname).toBe(path);
+  await expect(page.getByText('Reopen me after sign-in').first()).toBeVisible();
+});

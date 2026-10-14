@@ -5,7 +5,7 @@
  * decides what this person may see. No cookies cross: `credentials: 'omit'`.
  */
 import { say, type Vibe } from '@superjackfruit/vibekit';
-import { forgetLibraryToken, libraryConfigured, libraryToken } from '$lib/hub-token';
+import { forgetLibraryToken, libraryConfigured, libraryProblem, libraryToken } from '$lib/hub-token';
 import type { EmbedGrant, MountOptions, Scope, ShareInfo } from '$lib/vendor/superlibrary-embed/superlibrary-embed.js';
 
 export const LIBRARY_URL = 'https://app.superlibrary.dev';
@@ -29,7 +29,10 @@ export class LibraryError extends Error {
 
 export async function libraryFetch(path: string, init: RequestInit = {}): Promise<Response> {
   const token = await libraryToken();
-  if (!token) throw new LibraryError(0, libraryConfigured() ? 'no_token' : 'not_configured');
+  if (!token) {
+    const why = libraryProblem();
+    throw new LibraryError(0, !libraryConfigured() ? 'not_configured' : why === 'reauthorize' ? 'reauthorize' : why === 'declined' ? 'declined' : why === 'unavailable' ? 'unavailable' : 'no_token');
+  }
   const headers = new Headers(init.headers);
   headers.set('Authorization', `Bearer ${token}`);
   if (init.body !== undefined) headers.set('content-type', 'application/json');
@@ -94,18 +97,28 @@ export function embedCallbacks(): Pick<MountOptions, 'getEmbedUrl' | 'getVersion
 
 const SENTENCES: Record<string, string> = {
   not_configured: 'Superlibrary is not set up here.',
+  reauthorize: 'Your Superpipeline sign-in needs refreshing. Reconnect.',
+  declined: 'The sign-in system does not issue Superlibrary access to Superpipeline yet, so previews cannot load here. Open the artifact in Superlibrary, and ask your workspace owner to allow Superlibrary for Superpipeline.',
   product_not_enabled: 'Superlibrary is not enabled for this workspace.',
   not_found: 'This artifact is not there, or you cannot see it.',
   revoked: 'This artifact was revoked.',
   expired: 'This artifact has expired.',
 };
 export function sentenceFor(e: unknown, vibe: Vibe = 'daylight'): string {
+  if (e instanceof LibraryError && e.code === 'reauthorize') return SENTENCES.reauthorize!;
   if (needsReconnect(e)) return say('error.previewReconnect', vibe);
   return (e instanceof LibraryError && SENTENCES[e.code]) || 'The preview could not be loaded. Try again in a moment.';
 }
 /** The preview is hidden only because this tab has no Superlibrary sign-in: one click fixes it. */
-export const needsReconnect = (e: unknown): boolean => e instanceof LibraryError && e.code === 'no_token';
-const REASONS: Record<string, string> = { no_token: 'this tab has no Superlibrary sign-in' };
+export const needsReconnect = (e: unknown): boolean => e instanceof LibraryError && (e.code === 'no_token' || e.code === 'reauthorize');
+const REASONS: Record<string, string> = {
+  no_token: 'no Superlibrary access token was issued',
+  reauthorize: 'the sign-in system asked this app to sign in again',
+  declined: 'the sign-in system does not issue Superlibrary access to this app',
+  unavailable: 'the sign-in service could not be reached',
+};
+/** Whether the failure carries a plain-words reason worth showing under its sentence. */
+export const hasReason = (e: unknown): boolean => e instanceof LibraryError && e.code in REASONS;
 /** The code behind the sentence, kept on screen so a person can report it. */
 export function reasonFor(e: unknown): string {
   if (!(e instanceof LibraryError)) return 'Reason: unknown';

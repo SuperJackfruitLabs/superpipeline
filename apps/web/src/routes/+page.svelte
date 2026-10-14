@@ -10,9 +10,11 @@
   import Onboarding from '$lib/components/Onboarding.svelte';
   import LoadFailed from '$lib/components/parts/LoadFailed.svelte';
   import { UNREACHABLE_COPY } from '$lib/loading';
+  import { returnToHeld } from '$lib/reconnect';
 
   $effect(() => {
-    if (app.authState === 'ready' && app.boardId) void goto('/inbox', { replaceState: true });
+    // After a Reconnect the layout sends the person back to where they were instead.
+    if (app.authState === 'ready' && app.boardId && !returnToHeld()) void goto('/inbox', { replaceState: true });
   });
 </script>
 

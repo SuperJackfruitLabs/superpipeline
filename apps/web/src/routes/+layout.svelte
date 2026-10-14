@@ -13,7 +13,7 @@
   import { isPageChange } from '$lib/motion/page-change';
   import { installReveal } from '$lib/motion/reveal';
   import { page } from '$app/state';
-  import { takeReturnTo } from '$lib/reconnect';
+  import { holdReturnTo, releaseReturnTo } from '$lib/reconnect';
   import { app } from '$lib/stores/app.svelte';
   import { VibeRoot } from '@superjackfruit/vibekit';
   import { appearance } from '$lib/appearance.svelte';
@@ -37,8 +37,10 @@
     appearance.init();
     // "Show all" and the other expand toggles grow into place (lib/motion/reveal.ts).
     const uninstallReveal = installReveal();
+    // Taken before init, so the front door's redirect to the Inbox cannot run over it.
+    holdReturnTo();
     void app.init().then(() => {
-      const back = takeReturnTo();
+      const back = releaseReturnTo();
       if (back && app.authState === 'ready') void goto(back, { replaceState: true });
     });
     return () => {
