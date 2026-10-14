@@ -220,10 +220,11 @@
     color: var(--text);
     font-family: var(--font-sans);
     /* User text never spills (operator: a 120-character word and a literal "{{y}}" ran past the
-       Needs-you column). Inherited everywhere, and unlike break-word it also lowers min-content, so a
-       flex or grid item holding a long word can shrink to its track instead of widening it. A line
-       that must stay one line says white-space: nowrap with an ellipsis. e2e/long-text.spec.ts. */
-    overflow-wrap: anywhere;
+       Needs-you column). break-word everywhere wraps a long word inside its box without changing any
+       min-content size (tables and scrolling rows keep their widths); lib/styles/long-text.css makes
+       titles and headings `anywhere`, so a flex or grid item holding one can shrink to its track.
+       e2e/long-text.spec.ts. */
+    overflow-wrap: break-word;
   }
   ::selection {
     background: color-mix(in oklch, var(--vk-color-primary) 28%, transparent);
