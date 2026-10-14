@@ -12,7 +12,7 @@ beforeEach(() => __resetJwksCacheForTests());
 
 const SECRET = 'plane-signin-secret';
 /** No hub resource by default; the hub-audience tests below set HUB_ISSUER themselves. */
-const envOn = (over: Record<string, unknown> = {}) => planeEnv({ APP_URL: APP_AUD, SESSION_SECRET: SECRET, HUB_ISSUER: undefined, ...over });
+const envOn = (over: Record<string, unknown> = {}) => planeEnv({ APP_URL: APP_AUD, SESSION_SECRET: SECRET, HUB_ISSUER: undefined, PLANE_LIBRARY_LINKED: undefined, ...over });
 const HUB_RESOURCE = 'https://hub.test';
 
 /** The plane's token endpoint and JWKS, recording every token request body. */
@@ -69,6 +69,13 @@ describe('plane sign-in — authorize asks for every audience the later refresh 
     const lib = 'https://library.test';
     expect((await login(envOn({ SUPERLIBRARY_AUDIENCE: lib }))).location.searchParams.getAll('resource')).toEqual([APP_AUD]);
     expect((await login(envOn({ SUPERLIBRARY_AUDIENCE: lib, PLANE_LIBRARY_LINKED: 'true' }))).location.searchParams.getAll('resource')).toEqual([APP_AUD, lib]);
+  });
+  it('the deployed worker config links Superlibrary: login names its audience, so a library refresh grant can be minted later', async () => {
+    // The raw wrangler vars (no override): the plane refuses a refresh grant for an audience login did not name
+    // (400 invalid_target), so with the flag off every Superlibrary preview in the card drawer says no_token.
+    const raw = planeEnv({ APP_URL: APP_AUD, SESSION_SECRET: SECRET, HUB_ISSUER: undefined });
+    const resources = (await login(raw)).location.searchParams.getAll('resource');
+    expect(resources).toContain('https://app.superlibrary.dev');
   });
 });
 
