@@ -27,4 +27,14 @@ describe('Reconnect', () => {
     sessionStorage.setItem(RETURN_KEY, '/workspace/agents');
     expect(takeReturnTo()).toBe('/workspace/agents');
   });
+
+  it.each(['/inbox', '/plan', '/plan/projects', '/plan/projects/prj_12ab', '/crew', '/crew/agents', '/crew/people', '/crew/capabilities', '/settings', '/settings?tab=labels', '/b/brd_1/operate/log', '/'])('gives back the nav v2 place %s', (place) => {
+    sessionStorage.setItem(RETURN_KEY, place);
+    expect(takeReturnTo()).toBe(place);
+  });
+
+  it.each(['/plan/projects/../x', '/crew/agents/extra/deep', '/inbox//evil.example', '//', '//?x'])('still ignores %s', (bad) => {
+    sessionStorage.setItem(RETURN_KEY, bad);
+    expect(takeReturnTo()).toBeNull();
+  });
 });

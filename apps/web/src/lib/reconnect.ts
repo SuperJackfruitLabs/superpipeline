@@ -7,7 +7,12 @@
  * is ignored rather than followed.
  */
 export const RETURN_KEY = 'superpipeline.returnTo';
-const SAFE = /^\/(b\/[A-Za-z0-9_-]+(\/(c\/[A-Za-z0-9_-]+|operate(\/telemetry)?|settings))?|workspace(\/[a-z-]+)?)\/?(\?[^#]*)?$/;
+// Every page a person can be on (nav v2): a board and its card/operate/settings pages, Inbox, Plan and a
+// project, Crew's tabs, Settings, and the old /workspace paths (they redirect). Ids are word characters only.
+const ID = '[A-Za-z0-9_-]+';
+const SAFE = new RegExp(
+  `^/(b/${ID}(/(c/${ID}|operate(/(telemetry|log))?|settings))?|inbox|plan(/projects(/${ID})?)?|crew(/[a-z-]+)?|settings|workspace(/[a-z-]+)?)?/?(\\?[^#]*)?$`,
+);
 
 export function reconnect(
   navigate: (url: string) => void = (url) => globalThis.location.assign(url),
@@ -26,5 +31,5 @@ export function takeReturnTo(storage: Storage | undefined = globalThis.sessionSt
   } catch {
     return null;
   }
-  return v && SAFE.test(v) ? v : null;
+  return v && !v.startsWith('//') && SAFE.test(v) ? v : null;
 }
