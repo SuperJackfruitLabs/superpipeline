@@ -2,12 +2,12 @@
 // the asks). Round 3: in Studio the Inbox's Show block sat flush against the rail (no gutter), and the board chip
 // beside an agent's name ran over the Age and Att. columns. Measures every vibe at 1440, 1280 and 1100.
 import { expect, test, type Page } from '@playwright/test';
-import { VIBES, openWorld } from './support/world';
+import { DX, VIBES, openWorld } from './support/world';
 import { seedRealistic } from './support/realistic';
 
 const WIDTHS = [1440, 1280, 1100] as const;
 const GUTTER = 16;
-const PAGES = ['/inbox', '/crew/agents', '/crew/people', '/crew/capabilities', '/settings', '/plan/projects'];
+const PAGES = ['/inbox', '/crew/agents', '/crew/people', '/crew/capabilities', '/settings', '/plan/projects', DX, `${DX}?view=list`];
 
 /** Text within 16px of the rail (or the window's edge), and table cells whose content runs into the next column. */
 async function measure(page: Page) {
