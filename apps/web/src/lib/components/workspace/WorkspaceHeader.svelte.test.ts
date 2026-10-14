@@ -6,10 +6,14 @@ import { workspaceCounts } from './workspace-counts.svelte';
 
 afterEach(cleanup);
 
-describe('the Workspace tabs', () => {
-  it('say the Needs you count is across every board', () => {
-    workspaceCounts.value = { needsYou: 5, agents: 4, capabilities: 2, labels: 3, people: 1 };
+describe('the Crew tabs', () => {
+  it('are Agents, People and Capabilities under /crew: Needs you lives in the Inbox, with no badge here', () => {
+    workspaceCounts.value = { agents: 4, capabilities: 2, people: 1 };
     render(WorkspaceHeader, { props: { current: 'agents', description: 'x' } });
-    expect(screen.getByRole('tab', { name: /Needs you, 5 need you across all boards/ })).toBeTruthy();
+    expect(screen.getByRole('heading', { name: 'Crew' })).toBeTruthy();
+    const tabs = screen.getAllByRole('tab');
+    expect(tabs.map((t) => t.textContent?.replace(/\d+/, '').trim())).toEqual(['Agents', 'People', 'Capabilities']);
+    expect(tabs.map((t) => t.getAttribute('href'))).toEqual(['/crew/agents', '/crew/people', '/crew/capabilities']);
+    expect(screen.queryByText(/need you/)).toBeNull();
   });
 });

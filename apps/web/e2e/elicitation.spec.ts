@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { openRememberedBoard } from './support/seed';
 
 // The UI talks to the API as tenant 'tnt_dev' (see src/lib/api.ts), so the E2E drives the agent
 // under the same tenant and answers its question from the board.
@@ -39,7 +40,7 @@ test('a human answers a blocked agent’s question from the board', async ({ pag
 
   // 2. The board shows the card is waiting on a human, and the drawer carries the question.
   await page.addInitScript((id) => window.localStorage.setItem('superpipeline.boardId', id), boardId);
-  await page.goto('/');
+  await openRememberedBoard(page);
 
   const tile = page.locator('[data-card-id]', { hasText: 'Add the OAuth flow' });
   await expect(tile).toBeVisible();

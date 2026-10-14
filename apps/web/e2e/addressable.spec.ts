@@ -7,6 +7,7 @@
  * than that it *resolved*. These go the other way — they follow the link.
  */
 import { test, expect } from '@playwright/test';
+import { openRememberedBoard } from './support/seed';
 
 const BOARD_KEY = 'superpipeline.boardId';
 import { PORTS } from '../scripts/ports';
@@ -112,7 +113,7 @@ test('opening a card puts its address in the bar, so the link is copyable', asyn
     [BOARD_KEY, boardId],
   );
 
-  await page.goto('/');
+  await openRememberedBoard(page);
   await expect(page.getByText('Backlog', { exact: true }).first()).toBeVisible();
   await page.getByText('Click me open').first().click();
 

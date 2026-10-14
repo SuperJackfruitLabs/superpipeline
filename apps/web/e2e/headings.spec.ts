@@ -15,16 +15,17 @@ for (const vibe of VIBES) {
       await page.setViewportSize({ width: size.width, height: size.height });
       await openBoard(page, boardId);
       await page.waitForURL(`**/b/${boardId}`);
-      // The board page: the one h1 is the board's name, never Quiet's hidden "Workspace" as well or instead.
+      // The board page: the one h1 is the board's name, never Quiet's hidden page heading as well or instead.
       // One page, one main landmark: the shell's. A board draws inside it, never its own.
       await expect(page.getByRole('main')).toHaveCount(1);
       await expect(page.locator('h1')).toHaveCount(1);
       await expect(page.locator('h1')).toContainText(`Headings ${vibe} ${size.name}`);
-      await expect(page.locator('h1')).not.toContainText('Workspace');
-      // Operate draws its own h1 (the masthead title is then a plain line): still exactly one.
+      await expect(page.locator('h1')).not.toContainText('Superpipeline');
+      // The Inbox draws its own h1 (the masthead title is then a plain line): still exactly one.
       await page.goto(`/b/${boardId}/operate`);
+      await page.waitForURL('**/inbox');
       await expect(page.getByRole('main')).toHaveCount(1);
-      await expect(page.locator('h1'), 'operate: one h1').toHaveCount(1);
+      await expect(page.locator('h1'), 'inbox: one h1').toHaveCount(1);
       // The List draws its own h1 in Paper, Studio and Quiet (the shell's title is then a plain line): still exactly one.
       await page.goto(`/b/${boardId}?view=list`);
       await expect(page.getByRole('main')).toHaveCount(1);
@@ -35,13 +36,13 @@ for (const vibe of VIBES) {
       await expect(page.locator('h1'), 'projects: one h1').toHaveCount(1);
       // Desktop: the page's own title. Phone: the phone header's (the page then uses h2).
       await expect(page.locator('h1')).toContainText(size.name === 'phone' ? `Headings ${vibe} ${size.name}` : 'Projects');
-      // The workspace frame draws its own h1 in every vibe (h2 on phones, where the header's is the one h1).
-      for (const tab of ['agents', 'needs-you', 'capabilities', 'labels', 'people', 'connections']) {
-        await page.goto(`/workspace/${tab}`);
-        await expect(page.getByRole('main'), `workspace ${tab}: one main`).toHaveCount(1);
-        await expect(page.locator('h1'), `workspace ${tab}: one h1`).toHaveCount(1);
-        // The masthead draws no "Workspace" title line of its own: the page owns the one heading.
-        await expect(page.locator('.vk-masthead__h1', { hasText: 'Workspace' }), `workspace ${tab}: no masthead title line`).toHaveCount(0);
+      // The Crew frame and Settings draw their own h1 in every vibe (h2 on phones, where the header's is the one h1).
+      for (const path of ['/crew/agents', '/crew/people', '/crew/capabilities', '/settings']) {
+        await page.goto(path);
+        await expect(page.getByRole('main'), `${path}: one main`).toHaveCount(1);
+        await expect(page.locator('h1'), `${path}: one h1`).toHaveCount(1);
+        // The masthead draws no title line of its own: the page owns the one heading.
+        await expect(page.locator('.vk-masthead__h1', { hasText: /Crew|Settings|Superpipeline/ }), `${path}: no masthead title line`).toHaveCount(0);
       }
       // Settings draws its own title: the h1 on desktop (the masthead's is then a plain line), h2 on phones.
       await page.goto(`/b/${boardId}/settings`);

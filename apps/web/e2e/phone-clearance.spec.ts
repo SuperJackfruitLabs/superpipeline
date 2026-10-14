@@ -47,9 +47,9 @@ for (const vibe of VIBES) {
     await openBoard(page, boardId);
     await page.waitForURL(`**/b/${boardId}`);
     const pages = [
-      `/b/${boardId}`, `/b/${boardId}?view=list`, `/b/${boardId}?view=projects`, `/b/${boardId}/operate`,
+      `/b/${boardId}`, `/b/${boardId}?view=list`, `/b/${boardId}?view=projects`, '/inbox',
       `/b/${boardId}/operate/log`, `/b/${boardId}/operate/telemetry`, `/b/${boardId}/settings`,
-      ...['agents', 'needs-you', 'capabilities', 'labels', 'people', 'connections'].map((t) => `/workspace/${t}`),
+      ...['agents', 'people', 'capabilities'].map((t) => `/crew/${t}`), '/settings',
     ];
     for (const url of pages) {
       if (page.url() !== new URL(url, page.url()).href) await page.goto(url);

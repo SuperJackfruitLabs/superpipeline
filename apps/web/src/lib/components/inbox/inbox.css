@@ -1,0 +1,26 @@
+/* apps/web/src/lib/components/inbox/inbox.css — the Inbox's Show row and board chips, in vibekit tokens. */
+.ib-show { display: flex; flex-direction: column; gap: var(--vk-space-2); margin: 0 0 var(--vk-space-4); min-width: 0; }
+.ib-show__row { display: flex; flex-wrap: wrap; align-items: center; gap: var(--vk-space-2); min-width: 0; }
+.ib-show__h { margin: 0; font: inherit; font-size: var(--vk-text-sm); font-weight: 600; color: var(--vk-color-muted); }
+.ib-show__note { margin: 0; font-size: var(--vk-text-sm); color: var(--vk-color-muted); }
+.ib-chip, .ib-more {
+  display: inline-flex; align-items: center; gap: 6px; min-height: 44px; min-width: 44px; max-width: 100%; padding: 0 12px;
+  border: 1px solid var(--vk-color-line); border-radius: var(--vk-radius-pill, 999px); background: var(--vk-color-raised);
+  color: var(--vk-color-text); font: inherit; font-size: var(--vk-text-sm); cursor: pointer;
+}
+.ib-chip__name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ib-chip[aria-pressed='true'] { background: var(--vk-color-text); border-color: var(--vk-color-text); color: var(--vk-color-bg); }
+.ib-chip__n { font-variant-numeric: tabular-nums; color: var(--vk-color-muted); }
+.ib-chip[aria-pressed='true'] .ib-chip__n { color: inherit; }
+.ib-chip__n--needs { color: var(--vk-color-signal-text); font-weight: 600; }
+.ib-more { border-style: dashed; background: transparent; color: var(--vk-color-muted); }
+.ib-chip:focus-visible, .ib-more:focus-visible { outline: 2px solid var(--vk-color-primary); outline-offset: 2px; }
+/* Quiet: a line of words, links not pills. */
+.ib-show--words .ib-chip, .ib-show--words .ib-more { min-height: 44px; padding: 0; border: 0; border-radius: 0; background: none; text-decoration: underline; color: var(--vk-color-text); }
+.ib-show--words .ib-chip[aria-pressed='true'] { background: none; color: var(--vk-color-text); font-weight: 700; text-decoration: none; }
+.ib-show__dot { color: var(--vk-color-muted); }
+.ib-board {
+  display: inline-flex; align-items: center; max-width: 100%; padding: 1px 8px; border: 1px solid var(--vk-color-line);
+  border-radius: var(--vk-radius-pill, 999px); font-size: var(--vk-text-xs, 12px); color: var(--vk-color-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.ib-show__scope { margin: 0; font-size: var(--vk-text-lg, 1.125rem); font-weight: 600; color: var(--vk-color-text); }

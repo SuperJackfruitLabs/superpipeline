@@ -15,12 +15,13 @@
 
   let { here, boardName, view, showing, status, subTools, bleed = false, ownHeading = false, children }: ShellProps = $props();
 
+  // Words only: vibekit draws no icon in this vibe's nav (the field is required, and ignored).
   const items = $derived<NavItem[]>([
+    { id: 'inbox', label: 'Inbox', href: m.inboxHref, icon: 'list', current: here === 'inbox', count: m.inboxBadge || undefined, countIsNeeds: true, kbd: 'G I' },
     { id: 'plan', label: 'Plan', href: m.planHref, icon: 'board', current: here === 'plan', kbd: 'G P' },
-    { id: 'operate', label: 'Operate', href: m.operateHref, icon: 'list', current: here === 'operate', count: m.operateBadge(boardName !== null) || undefined, countIsNeeds: true, kbd: 'G O' },
-    { id: 'workspace', label: 'Workspace', href: m.workspaceHref, icon: 'users', current: here === 'workspace', kbd: 'G W' },
+    { id: 'crew', label: 'Crew', href: m.crewHref, icon: 'users', current: here === 'crew', kbd: 'G C' },
   ]);
-  const accountItems = $derived<VkMenuItem[]>([{ heading: `Signed in as ${m.userName}` }, { label: 'Sign out', onselect: m.signOut }]);
+  const accountItems = $derived<VkMenuItem[]>([{ heading: `Signed in as ${m.userName}` }, { label: 'Settings', onselect: m.openSettings }, { label: 'Sign out', onselect: m.signOut }]);
   const viewItems = VIEWS.map(([value, label]) => ({ value, label, href: `?view=${value}` }));
   const statusItems = $derived((status?.items ?? []).map((i) => ({ text: i.text, tone: i.signal ? ('needs' as const) : ('plain' as const) })));
 </script>
@@ -47,7 +48,7 @@
 {/snippet}
 
 {#snippet masthead()}
-  <!-- Workspace has one row: the link row alone, no board row. -->
+  <!-- Pages without a board (Inbox, Crew, Settings) have one row: the link row alone. -->
   {#if boardName !== null}
     <Masthead
       heading={!ownHeading}
@@ -60,7 +61,7 @@
       tabs={view ? viewTabs : undefined}
     />
   {:else if !ownHeading}
-    <h1 class="vk-visually-hidden">Workspace</h1>
+    <h1 class="vk-visually-hidden">Superpipeline</h1>
   {/if}
 {/snippet}
 

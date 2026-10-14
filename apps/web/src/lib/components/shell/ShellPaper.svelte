@@ -17,12 +17,13 @@
 
   let { here, section, boardName, view, showing, paperShowing, status, subTools, ownHeading = false, children }: ShellProps = $props();
 
+  // Words only: vibekit draws no icon in this vibe's nav (the field is required, and ignored).
   const items = $derived<NavItem[]>([
+    { id: 'inbox', label: 'Inbox', href: m.inboxHref, icon: 'list', current: here === 'inbox', count: m.inboxBadge || undefined, countIsNeeds: true, kbd: 'G I' },
     { id: 'plan', label: 'Plan', href: m.planHref, icon: 'board', current: here === 'plan', kbd: 'G P' },
-    { id: 'operate', label: 'Operate', href: m.operateHref, icon: 'list', current: here === 'operate', count: m.operateBadge(boardName !== null) || undefined, countIsNeeds: true, kbd: 'G O' },
-    { id: 'workspace', label: 'Workspace', href: m.workspaceHref, icon: 'users', current: here === 'workspace', kbd: 'G W' },
+    { id: 'crew', label: 'Crew', href: m.crewHref, icon: 'users', current: here === 'crew', kbd: 'G C' },
   ]);
-  const accountItems = $derived<VkMenuItem[]>([{ heading: `Signed in as ${m.userName}` }, { label: 'Sign out', onselect: m.signOut }]);
+  const accountItems = $derived<VkMenuItem[]>([{ heading: `Signed in as ${m.userName}` }, { label: 'Settings', onselect: m.openSettings }, { label: 'Sign out', onselect: m.signOut }]);
   const viewItems = VIEWS.map(([value, label]) => ({ value, label, href: `?view=${value}` }));
   const note = $derived(paperShowing ?? showing);
   // Paper draws the dateline on the nameplate row and Live at the end of the section bar (AppNav), not in the masthead.
@@ -62,7 +63,7 @@
   <Masthead
     heading={!ownHeading}
     eyebrow="Superpipeline · {section}"
-    title={boardName ?? (ownHeading ? '' : 'Workspace')}
+    title={boardName ?? (ownHeading ? '' : 'Superpipeline')}
     switcher={boardName !== null ? { label: 'Change board', onopen: m.openBoardSwitcher } : undefined}
     {actions}
     tabs={view ? viewTabs : undefined}

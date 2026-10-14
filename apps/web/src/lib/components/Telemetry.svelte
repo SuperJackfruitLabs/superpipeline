@@ -37,8 +37,8 @@
 
 <PageMain scope="scr-spend">
   <div style="display: flex; flex-direction: column; gap: var(--vk-space-2);">
-    <a class="t-meta back-link" href="/b/{app.boardId}/operate"><LineIcon name="chev-left" size={16} />Back to Operate</a>
-    <p class="t-eyebrow">Operate · spend, in detail</p>
+    <a class="t-meta back-link" href="/b/{app.boardId}"><LineIcon name="chev-left" size={16} />Back to the board</a>
+    <p class="t-eyebrow">Plan · spend, in detail</p>
     <div style="display: flex; flex-wrap: wrap; align-items: flex-end; gap: var(--vk-space-4);">
       <div style="flex: 1 1 320px; display: flex; flex-direction: column; gap: 4px;">
         <svelte:element this={viewport.phone ? 'h2' : 'h1'} class="t-h1">Agent spend</svelte:element>

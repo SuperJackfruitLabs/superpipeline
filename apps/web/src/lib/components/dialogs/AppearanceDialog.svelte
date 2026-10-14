@@ -60,7 +60,7 @@
   width="1000px" frame="sectioned" close="Close appearance" class="ap" onclose={close}>
   <div class="ap-content">
   <AppearancePicker product="superpipeline" value={appearance.value} {onchange} phase={appearance.phase} {timeZone} {vibeNotes} intro={false} {vibeHint} {previews}
-    preview={{ nav: ['Plan', 'Operate', 'Workspace'], ...(counts ? { count: counts.needs } : {}), tabs: ['Board', 'List', 'Projects'], mark }} {readout} {rampCaption} />
+    preview={{ nav: ['Inbox', 'Plan', 'Crew'], ...(counts ? { count: counts.needs } : {}), tabs: ['Board', 'List', 'Projects'], mark }} {readout} {rampCaption} />
   </div>
   {#snippet lead()}<span class="ap-saved">Every change applies at once and is saved on this device.</span>{/snippet}
   {#snippet actions()}<Button onclick={close}>Done</Button>{/snippet}

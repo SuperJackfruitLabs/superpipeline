@@ -3,15 +3,16 @@ import type { Snippet } from 'svelte';
 import type { IconName } from '$lib/components/parts/icons';
 import type { ShellStatus } from './shell-words';
 
-export type ShellHere = 'plan' | 'operate' | 'workspace';
+/** The three places (nav v2): Inbox, the home; Plan; Crew. Settings sits in the account menu and highlights none. */
+export type ShellHere = 'inbox' | 'plan' | 'crew' | null;
 /** The Studio eyebrow word: "Superpipeline · board". */
-export type ShellSection = 'board' | 'list' | 'projects' | 'operate' | 'card' | 'workspace' | 'settings' | 'spend';
+export type ShellSection = 'board' | 'list' | 'projects' | 'inbox' | 'card' | 'crew' | 'settings' | 'spend' | 'log';
 export type ShellView = 'board' | 'list' | 'projects';
 
 export interface ShellProps {
   here: ShellHere;
   section: ShellSection;
-  /** Board-scoped pages pass the board name; workspace pages pass null (no switcher). */
+  /** Board-scoped pages pass the board name; the Inbox, Crew and Settings pass null (no switcher). */
   boardName: string | null;
   /** Plan pages pass the active view; every other page passes null: no view switch, no Filter. */
   view: ShellView | null;

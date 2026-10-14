@@ -10,7 +10,7 @@ describe('status line scope', () => {
     expect(src).toContain('needsPart(shellModel.needsCount)');
     expect(src).not.toContain('attentionCount');
   });
-  it('the workspace pages keep the all-boards count', () => {
-    expect(read('workspace/+layout.svelte')).toContain('needsPart(shellModel.attentionCount)');
+  it('the Crew pages keep the all-boards count', () => {
+    expect(read('crew/+layout.svelte')).toContain('needsPart(shellModel.attentionCount)');
   });
 });

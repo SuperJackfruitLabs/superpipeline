@@ -86,7 +86,7 @@
         {:else if action === 'log'}
           <button onclick={() => onOpen(item)} class="border-border hover:border-marigold rounded-[7px] border px-2.5 text-xs" style="min-height:var(--tap)">Open log</button>
         {:else if action === 'staff'}
-          <a href="/workspace/capabilities" class="border-border hover:border-marigold inline-flex items-center rounded-[7px] border px-2.5 text-xs" style="min-height:var(--tap)">Staff an agent</a>
+          <a href="/crew/capabilities" class="border-border hover:border-marigold inline-flex items-center rounded-[7px] border px-2.5 text-xs" style="min-height:var(--tap)">Staff an agent</a>
         {:else if action === 'move' && onMove}
           <button onclick={() => (moving = !moving)} aria-expanded={moving} class="bg-primary text-primary-foreground rounded-[7px] px-2.5 text-xs font-semibold" style="min-height:var(--tap)">Move</button>
         {:else if action === 'open'}

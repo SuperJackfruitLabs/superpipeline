@@ -19,7 +19,8 @@ export function needRows(board: BoardSnapshot, agents: AgentSummary[], items: At
     // A card in a stage nothing claims is unclaimed, whoever last touched it.
     const agentId = item.kind === 'no-owner' ? null : (card.delegateAgentId ?? card.lastAgentId ?? null);
     return [{
-      item, card, stage: stages[idx]!, stageIndex: idx + 1,
+      item, card, stage: stages[idx]!, stageIndex: idx + 1, stages,
+      boardId: board.boardId ?? item.boardId, boardName: board.name ?? item.boardName ?? '',
       agentName: agentId ? displayAgent(agentId, agents) : null,
       iconUrl: agentId ? (agents.find((a) => a.id === agentId)?.iconUrl ?? null) : null,
       actions: item.actions,
@@ -49,7 +50,7 @@ export function activityGroups(notifications: Notification[], showRead: boolean,
     const need = needs.find((r) => r.item.cardId === cardId) ?? null;
     const agentId = need ? (need.agentName ? (card?.delegateAgentId ?? card?.lastAgentId ?? null) : null) : (card?.delegateAgentId ?? card?.lastAgentId ?? null);
     return {
-      cardId, title: card?.title ?? cardId,
+      cardId, title: card?.title ?? cardId, boardId: board.boardId ?? '', boardName: board.name ?? '',
       agentName: agentId ? displayAgent(agentId, agents) : null,
       iconUrl: agentId ? (agents.find((a) => a.id === agentId)?.iconUrl ?? null) : null,
       latest: sorted[0]!, earlier: sorted.slice(1), need,
@@ -64,7 +65,7 @@ export function runningRows(board: BoardSnapshot, agents: AgentSummary[]): Runni
     .map((c) => {
       const agentId = c.delegateAgentId ?? null;
       return {
-        cardId: c.id, title: c.title,
+        cardId: c.id, title: c.title, boardId: board.boardId ?? '', boardName: board.name ?? '',
         stageName: board.stages.find((s) => s.key === c.currentStageKey)?.name ?? c.currentStageKey,
         agentName: agentId ? displayAgent(agentId, agents) : null,
         iconUrl: agentId ? (agents.find((a) => a.id === agentId)?.iconUrl ?? null) : null,
@@ -84,6 +85,20 @@ export function spendView(usage: UsageSummary | null, caps: BoardUsage | null, a
       .sort((a, b) => b.costUsd - a.costUsd)
       .slice(0, 5)
       .map((a) => ({ name: displayAgent(a.agentId, agents), costUsd: a.costUsd })),
+  };
+}
+
+/** Spend over several boards: totals added, each agent's spend added across them. null for none. */
+export function mergeUsage(list: readonly UsageSummary[]): UsageSummary | null {
+  if (list.length === 0) return null;
+  const byAgent = new Map<string, number>();
+  for (const u of list) for (const a of u.byAgent) byAgent.set(a.agentId, (byAgent.get(a.agentId) ?? 0) + a.costUsd);
+  const sum = (f: (u: UsageSummary) => number) => list.reduce((n, u) => n + f(u), 0);
+  return {
+    totalCostUsd: sum((u) => u.totalCostUsd), estimatedCostUsd: sum((u) => u.estimatedCostUsd),
+    totalInputTokens: sum((u) => u.totalInputTokens), totalOutputTokens: sum((u) => u.totalOutputTokens), unpricedRecords: sum((u) => u.unpricedRecords),
+    byModel: list.flatMap((u) => u.byModel), byCard: list.flatMap((u) => u.byCard), byDay: list[0]!.byDay.map((d, i) => ({ day: d.day, costUsd: list.reduce((n, u) => n + (u.byDay[i]?.costUsd ?? 0), 0) })),
+    byAgent: [...byAgent.entries()].map(([agentId, costUsd]) => ({ agentId, costUsd })).sort((a, b) => b.costUsd - a.costUsd),
   };
 }
 

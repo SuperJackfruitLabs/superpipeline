@@ -85,12 +85,12 @@ for (const vibe of VIBES) {
   }
 }
 
-// ---- Q3: workspace ------------------------------------------------------------------------------
+// ---- Q3: Settings and Crew ------------------------------------------------------------------------------
 for (const vibe of VIBES) {
   for (const size of SIZES) {
     test(`Q3 labels named and untruncated | ${vibe} | ${size.name}`, async ({ page, request }) => {
       await request.post(`${PORTS.apiUrl}/v1/labels`, { headers: { 'X-Tenant-Id': FIXTURE_TENANT, 'X-User-Id': FIXTURE_USER }, data: { name: LONG_LABEL, colour: '#3366cc' } });
-      await openWorld(page, '/workspace/labels', { vibe, dark: false, width: size.width, height: size.height });
+      await openWorld(page, '/settings#labels', { vibe, dark: false, width: size.width, height: size.height });
       await expect(page.locator('[id^="lb-"]').first()).toBeVisible();
       const r = await page.evaluate(() => {
         const colour = [...document.querySelectorAll('input[type="color"]')].map((i) => i.getAttribute('aria-label') ?? '');
@@ -109,7 +109,7 @@ for (const vibe of VIBES) {
     });
 
     test(`Q3 capability descriptions grow | ${vibe} | ${size.name}`, async ({ page }) => {
-      await openWorld(page, '/workspace/capabilities', { vibe, dark: false, width: size.width, height: size.height });
+      await openWorld(page, '/crew/capabilities', { vibe, dark: false, width: size.width, height: size.height });
       await expect(page.locator('[id^="cd-"]').first()).toBeVisible();
       const fields = await page.evaluate(() =>
         [...document.querySelectorAll<HTMLTextAreaElement | HTMLInputElement>('[id^="cd-"]')].map((e) => ({
@@ -128,11 +128,11 @@ for (const vibe of VIBES) {
 
 // ---- Q4: phone targets --------------------------------------------------------------------------
 const TARGET_PAGES: [string, string][] = [
-  ['labels', '/workspace/labels'],
-  ['capabilities', '/workspace/capabilities'],
-  ['agents', '/workspace/agents'],
-  ['settings', `${DX}/settings`],
-  ['operate', `${DX}/operate`],
+  ['settings', '/settings'],
+  ['capabilities', '/crew/capabilities'],
+  ['agents', '/crew/agents'],
+  ['board settings', `${DX}/settings`],
+  ['inbox', `${DX}/operate`],
 ];
 async function smallTargets(page: Page): Promise<string[]> {
   return page.evaluate(() => {
@@ -169,7 +169,7 @@ for (const vibe of VIBES) {
 // ---- Q5: polish -----------------------------------------------------------------------------------
 for (const vibe of VIBES) {
   for (const size of SIZES) {
-    for (const [name, route] of [['board', DX], ['operate', `${DX}/operate`]] as const) {
+    for (const [name, route] of [['board', DX], ['inbox', `${DX}/operate`]] as const) {
       test(`Q5 greeting has no "?," | ${vibe} | ${name} | ${size.name}`, async ({ page }) => {
         // 22:30 in the fixture's zone: the "Working late?" greeting.
         await openWorld(page, route, { vibe, dark: false, width: size.width, height: size.height, at: '2026-10-11T17:00:00Z' });

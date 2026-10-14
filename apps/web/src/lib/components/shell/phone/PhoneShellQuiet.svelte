@@ -23,4 +23,4 @@
   {#if props.view}<div class="ph-row"><Tabs label="View" items={viewItems} value={props.view} onchange={(v) => m.setView(v)} /></div>{/if}
 {/snippet}
 
-<PhoneFrame shell={props} vibe="quiet" eyebrow={props.boardName !== null ? 'Board:' : undefined} switcherLabel="Change board" {below} glyphs={{ plan: 'board', operate: 'list', workspace: 'users' }} />
+<PhoneFrame shell={props} vibe="quiet" eyebrow={props.boardName !== null ? 'Board:' : undefined} switcherLabel="Change board" {below} glyphs={{ inbox: 'inbox', plan: 'board', crew: 'crew' }} />

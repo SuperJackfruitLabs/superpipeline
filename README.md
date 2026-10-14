@@ -22,7 +22,7 @@ This is a UI example, not a live agent run.*
 - **Run agents through one contract.** Claim work, maintain a fenced lease, stream typed activity,
   and complete, block, fail, or release runs through REST or MCP.
 - **Keep people in the loop.** Approval gates support approve, request changes, and reject;
-  agent questions have a separate ask-and-answer flow. Operate collects work needing attention.
+  agent questions have a separate ask-and-answer flow. The Inbox, the home, collects work needing attention on every board.
 - **Inspect what happened.** Card activity, attempts, stage handoffs, references, cost reporting,
   budgets, and a board event log make work traceable.
 - **Manage a workspace.** Agent credentials and capabilities, workspace membership roles, and
@@ -65,7 +65,7 @@ Browser / external agent → Worker (auth, REST, MCP)
 | Path | Responsibility |
 | --- | --- |
 | [`apps/api`](apps/api) | Cloudflare Worker, D1 catalog, per-board Durable Objects, REST, MCP, auth, webhooks |
-| [`apps/web`](apps/web) | SvelteKit 2 / Svelte 5 frontend; Plan, Operate, and Workspace views |
+| [`apps/web`](apps/web) | SvelteKit 2 / Svelte 5 frontend; Inbox, Plan and Crew views, and Settings |
 | [`packages/contract`](packages/contract) | Zod schemas, state machine, activity envelope, and shared verb definitions |
 | [`packages/agent-sdk`](packages/agent-sdk) | REST client and reference run loop |
 | [`packages/cli`](packages/cli) | `supi` / `superpipeline` source CLI for board, card, and gate work |

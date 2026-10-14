@@ -4,7 +4,7 @@
    * What the four phone shells share. vibekit draws the frame: AppShell's `phone` slots (from the
    * product's 900px query), PhoneHeader (the board name is the page's one h1 and, on a board, the
    * switcher; Live, the dateline, search and links in the props each vibe's mockup puts them in)
-   * and PhoneTabBar (Plan, Operate with the board's needs-you count, Workspace, and You, a menu tab
+   * and PhoneTabBar (Inbox with the needs-you count across all boards, Plan, Crew, and You, a menu tab
    * that opens the account menu). Each vibe's shell hands in its pieces; vibekit picks the vibe's form.
    */
   import { AppShell as VkAppShell, PhoneHeader, PhoneTabBar, type Phase, type PhoneTabItem } from '@superjackfruit/vibekit';
@@ -16,6 +16,9 @@
   import { shellModel as m } from '../shell-model.svelte';
   import type { ShellProps } from '../types';
   import { youMenuItems } from '../you-menu';
+
+  /** A page without a board names itself in the phone header. */
+  const SECTION_TITLE: Partial<Record<ShellProps['section'], string>> = { inbox: 'Inbox', crew: 'Crew', settings: 'Settings' };
 
   let {
     shell, vibe, eyebrow, phase, switcherLabel, actions, eyebrowActions, dateline, links, below, belowOutside = false, glyphs, you,
@@ -40,28 +43,28 @@
     /** Studio draws `below` after the header's rule. */
     belowOutside?: boolean;
     /** Tab glyphs (Daylight and Studio draw icons; Paper and Quiet are words, and vibekit ignores these). */
-    glyphs: { plan: IconName; operate: IconName; workspace: IconName };
+    glyphs: { inbox: IconName; plan: IconName; crew: IconName };
     /** The "You" tab's glyph: the signed-in person's initials, as each reference draws them. */
     you?: Snippet;
   } = $props();
 
   const boardScoped = $derived(shell.boardName !== null);
-  const title = $derived(shell.boardName ?? 'Workspace');
+  const title = $derived(shell.boardName ?? SECTION_TITLE[shell.section] ?? 'Superpipeline');
   const live = $derived({ state: m.connected ? 'live' as const : 'reconnecting' as const, label: m.connected ? 'Live' : 'Reconnecting…', attrs: { 'data-live': m.connected ? 'on' : 'off' } });
 
   const items = $derived<PhoneTabItem[]>([
+    { id: 'inbox', label: 'Inbox', href: m.inboxHref, icon: inboxIcon, current: shell.here === 'inbox', count: m.inboxBadge || undefined, countIsNeeds: true },
     { id: 'plan', label: 'Plan', href: m.planHref, icon: planIcon, current: shell.here === 'plan' },
-    { id: 'operate', label: 'Operate', href: m.operateHref, icon: operateIcon, current: shell.here === 'operate', count: m.operateBadge(boardScoped) || undefined, countIsNeeds: true },
-    { id: 'workspace', label: 'Workspace', href: m.workspaceHref, icon: workspaceIcon, current: shell.here === 'workspace' },
+    { id: 'crew', label: 'Crew', href: m.crewHref, icon: crewIcon, current: shell.here === 'crew' },
     { id: 'you', label: 'You', href: '#you', icon: you ?? youIcon, menu: { label: 'You', name: m.userName, items: youMenuItems() } },
   ]);
   const anyBelow = $derived(Boolean(below || shell.subTools));
 </script>
 
-<!-- Daylight fills the current tab's glyph (the reference's [aria-current] .ico{fill}). -->
-{#snippet planIcon()}<Icon name={glyphs.plan} size={20} filled={vibe === 'daylight' && shell.here === 'plan'} />{/snippet}
-{#snippet operateIcon()}<Icon name={glyphs.operate} size={20} />{/snippet}
-{#snippet workspaceIcon()}<Icon name={glyphs.workspace} size={20} filled={vibe === 'daylight' && shell.here === 'workspace'} />{/snippet}
+<!-- Nav v2: the current tab is marked by the bar, never by filling a line icon. -->
+{#snippet inboxIcon()}<Icon name={glyphs.inbox} size={20} />{/snippet}
+{#snippet planIcon()}<Icon name={glyphs.plan} size={20} />{/snippet}
+{#snippet crewIcon()}<Icon name={glyphs.crew} size={20} />{/snippet}
 {#snippet youIcon()}<span class="ph-you" aria-hidden="true">{m.initials}</span>{/snippet}
 
 {#snippet under()}

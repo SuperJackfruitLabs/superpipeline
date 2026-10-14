@@ -57,7 +57,7 @@
     </div>
     <div class="mt-6 flex flex-wrap gap-2.5">
       <Button onclick={createFirstBoard} disabled={creating}>{creating ? 'Creating…' : 'Create my first board'}</Button>
-      <Button variant="outline" onclick={() => goto('/workspace/agents')}>Connect an agent</Button>
+      <Button variant="outline" onclick={() => goto('/crew/agents')}>Connect an agent</Button>
     </div>
   </div>
 

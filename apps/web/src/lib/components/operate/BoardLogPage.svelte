@@ -9,6 +9,6 @@
 </script>
 
 <PageMain scope="scr-spend">
-  <a class="t-meta back-link" href="/b/{boardId}/operate/telemetry"><LineIcon name="chev-left" size={16} />Back to Operate · spend</a>
+  <a class="t-meta back-link" href="/b/{boardId}/operate/telemetry"><LineIcon name="chev-left" size={16} />Back to spend</a>
   <BoardLog {events} {error} collapsedRows={Infinity} fullLogHref={null} />
 </PageMain>

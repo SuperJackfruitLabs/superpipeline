@@ -1,4 +1,5 @@
 import { test, expect, type Page } from '@playwright/test';
+import { openRememberedBoard } from './support/seed';
 
 // Daylight's peek (Board-Daylight §3.4): from 1440px, pointing at or focusing a tile opens a peek
 // beside it after 300 ms; Esc or "Close peek" shuts it and puts focus back on the title.
@@ -29,7 +30,7 @@ const peek = (page: Page) => page.getByRole('complementary', { name: 'Peek' });
 
 test('at 1440px pointing at a tile opens its peek, and the peek opens the card', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
-  await page.goto('/');
+  await openRememberedBoard(page);
   await compose(page, 'First peek card');
   await compose(page, 'Second peek card');
   await titleOf(page, 'Second peek card').hover();
@@ -43,7 +44,7 @@ test('at 1440px pointing at a tile opens its peek, and the peek opens the card',
 
 test('focus opens the peek; Esc closes it, keeps focus on the title and does not reopen', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
-  await page.goto('/');
+  await openRememberedBoard(page);
   await compose(page, 'Focus peek card');
   await titleOf(page, 'Focus peek card').focus();
   await expect(peek(page).getByRole('heading', { name: 'Focus peek card' })).toBeVisible();
@@ -56,7 +57,7 @@ test('focus opens the peek; Esc closes it, keeps focus on the title and does not
 
 test('Close peek closes it', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
-  await page.goto('/');
+  await openRememberedBoard(page);
   await compose(page, 'Closable peek card');
   await titleOf(page, 'Closable peek card').hover();
   await peek(page).getByRole('button', { name: 'Close peek' }).click();
@@ -65,7 +66,7 @@ test('Close peek closes it', async ({ page }) => {
 
 test('below 1440px there is no peek', async ({ page }) => {
   await page.setViewportSize({ width: 1280, height: 800 });
-  await page.goto('/');
+  await openRememberedBoard(page);
   await compose(page, 'Narrow card');
   await titleOf(page, 'Narrow card').hover();
   await page.waitForTimeout(500);
@@ -74,7 +75,7 @@ test('below 1440px there is no peek', async ({ page }) => {
 
 test('the peek goes when the pointer and focus have left the card', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
-  await page.goto('/');
+  await openRememberedBoard(page);
   await compose(page, 'Leaving peek card');
   await titleOf(page, 'Leaving peek card').hover();
   await expect(peek(page)).toHaveCount(1);
@@ -84,7 +85,7 @@ test('the peek goes when the pointer and focus have left the card', async ({ pag
 
 test('the peek closes when the drawer opens and does not reopen by itself when it closes', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
-  await page.goto('/');
+  await openRememberedBoard(page);
   await compose(page, 'Drawer peek card');
   await titleOf(page, 'Drawer peek card').hover();
   await expect(peek(page)).toHaveCount(1);
@@ -100,7 +101,7 @@ test('the peek closes when the drawer opens and does not reopen by itself when i
 
 test('after the drawer closes the peek stays shut, but a hover right after opens one', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
-  await page.goto('/');
+  await openRememberedBoard(page);
   await compose(page, 'Closing card');
   await compose(page, 'Next card');
   await titleOf(page, 'Closing card').hover();

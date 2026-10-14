@@ -5,19 +5,18 @@
   import { app } from '$lib/stores/app.svelte';
   import { viewport } from '$lib/viewport.svelte';
   import { backLink } from './workspace-copy';
-  import { scopedNeedWords } from '$lib/components/shell/nav-scope';
-  import { workspaceCounts, workspaceTabs, type WorkspaceTab } from './workspace-counts.svelte';
+  import { crewTabs, workspaceCounts, type WorkspaceTab } from './workspace-counts.svelte';
   let { current, description, form }: { current: WorkspaceTab; description: string; form: 'agents' | 'other' } = $props();
   const back = $derived(backLink(app.boardId, app.board?.name ?? null));
-  const tabs = $derived(workspaceTabs(workspaceCounts.value));
+  const tabs = $derived(crewTabs(workspaceCounts.value));
   const p = $derived(form === 'agents' ? 'wa' : 'wo');
   const heading = $derived(viewport.phone ? 'h2' : 'h1');
 </script>
 
 {#snippet tabRow()}
-  <div class="{p}-tabs" role="tablist" aria-label="Workspace">
+  <div class="{p}-tabs" role="tablist" aria-label="Crew">
     {#each tabs as t (t.id)}
-      <a class="ar-tab" role="tab" aria-selected={t.id === current} href="/workspace/{t.id}">{t.label}{#if t.count !== null}{#if t.signal}<span class="{p}-ct" aria-hidden="true">{t.count}</span><span class="sr">, {scopedNeedWords(t.count, false)}</span>{:else}<span class="mono">{t.count}</span>{/if}{/if}</a>
+      <a class="ar-tab" role="tab" aria-selected={t.id === current} href="/crew/{t.id}">{t.label}{#if t.count !== null}<span class="mono">{t.count}</span>{/if}</a>
     {/each}
   </div>
 {/snippet}
@@ -28,8 +27,8 @@
     <div class="wa-hero">
       <span class="big" aria-hidden="true">{workspaceCounts.value.agents ?? ''}</span>
       <div class="txt">
-        <span class="kick">Workspace · shared by every board</span>
-        <svelte:element this={heading}>Workspace</svelte:element>
+        <span class="kick">Crew · shared by every board</span>
+        <svelte:element this={heading}>Crew</svelte:element>
         <p>{description}</p>
       </div>
     </div>
@@ -38,8 +37,8 @@
 {:else}
   <div class="wo-head">
     <a class="ar-lk quiet back" href={back.href}><LineIcon name="chev-left" size={16} stroke={1.75} />{back.label}</a>
-    <span class="kick">Workspace · shared by every board</span>
-    <svelte:element this={heading}>Workspace</svelte:element>
+    <span class="kick">Crew · shared by every board</span>
+    <svelte:element this={heading}>Crew</svelte:element>
     <p class="lede">{description}</p>
     {@render tabRow()}
   </div>

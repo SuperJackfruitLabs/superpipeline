@@ -50,17 +50,17 @@ describe('showing notes', () => {
   });
 });
 
-describe('the Operate count', () => {
+describe('the Inbox count', () => {
   it('renders every vibe’s form of 4, and nothing at 0', () => {
     expect(operateCount(4)).toEqual({
-      n: '4', comma: ', 4 need you', paren: '(4)', needYou: ' need you', aria: 'Operate, 4 need you', tip: 'Operate · 4 need you', quiet: '(4 need you)',
+      n: '4', comma: ', 4 need you', paren: '(4)', needYou: ' need you', aria: 'Inbox, 4 need you', tip: 'Inbox · 4 need you', quiet: '(4 need you)',
     });
     expect(operateCount(0)).toBeNull();
   });
   it('one card reads "1 needs you" everywhere, as vibekit’s badges say it', () => {
     expect(countWords(1, true)).toBe('1 needs you');
     expect(needsPart(1)).toEqual({ text: '1 needs you', signal: true });
-    expect(operateCount(1)).toMatchObject({ comma: ', 1 needs you', needYou: ' needs you', aria: 'Operate, 1 needs you', tip: 'Operate · 1 needs you', quiet: '(1 needs you)' });
+    expect(operateCount(1)).toMatchObject({ comma: ', 1 needs you', needYou: ' needs you', aria: 'Inbox, 1 needs you', tip: 'Inbox · 1 needs you', quiet: '(1 needs you)' });
   });
 });
 

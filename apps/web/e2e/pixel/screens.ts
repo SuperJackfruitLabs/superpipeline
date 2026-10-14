@@ -84,7 +84,7 @@ async function openProjectsPanels(p: Page): Promise<void> {
   await p.locator('summary', { hasText: 'Milestones' }).first().click();
   await settle(p);
 }
-/** The workspace has no board in its URL; the reference's back link and need-you count are Developer Experience's. */
+/** Crew has no board in its URL; the reference's back link and need-you count are Developer Experience's. */
 async function onDx(p: Page): Promise<void> {
   await p.evaluate(() => localStorage.setItem('superpipeline.boardId', 'brd_134a0ddb6d434478'));
   await p.reload();
@@ -206,10 +206,11 @@ function forVibe(v: Vibe, V: string, h: (a: string) => number): Screen[] {
         await blur(p);
       } : undefined },
     { artboard: `SP-Phone-Card-${V}`, vibe: v, route: C4605, strength: off(v) },
+    // The old Operate address opens the Inbox showing Developer Experience, as the reference does.
     { artboard: `SP-Operate-${V}`, vibe: v, route: `${DX}/operate`, strength: off(v), masks: [LIVE], steps: operateSteps(v) },
     { artboard: `SP-List-${V}`, vibe: v, route: `${DX}?view=list`, strength: off(v), masks: [LIVE], steps: listSteps(v) },
     { artboard: `SP-Projects-${V}`, vibe: v, route: `${DX}?view=projects`, strength: shared(v), hold: ['**/v1/projects/*/rollup'], masks: [LIVE], steps: openProjectsPanels },
-    { artboard: `SP-Workspace-Agents-${V}`, vibe: v, route: '/workspace/agents', strength: shared(v), steps: agentsMenus, masks: [LIVE, TOKEN_MASK], writes: true },
+    { artboard: `SP-Workspace-Agents-${V}`, vibe: v, route: '/crew/agents', strength: shared(v), steps: agentsMenus, masks: [LIVE, TOKEN_MASK], writes: true },
     { artboard: `SP-Workspace-Other-${V}`, vibe: v, route: '/dev/workspace-review', strength: shared(v), masks: [LIVE], steps: onDx },
     { artboard: `SP-Settings-${V}`, vibe: v, route: `${DX}/settings`, strength: shared(v), clock: '2026-10-11T08:19:00.000Z', masks: [LIVE], writes: true, steps: ruleSavedTwoMinutesAgo },
     { artboard: `SP-Spend-${V}`, vibe: v, route: `${DX}/operate/telemetry`, strength: shared(v), masks: [LIVE] },
@@ -267,8 +268,9 @@ const DESKTOP_SHELL: Screen[] = [
     // Studio's rail is icons with tooltips: those parts are glyphs, checked for an svg, not text.
     parts: [
       { ...part('rail-mark', 'nav.ar-rail .ar-mark', 'nav.vk-appnav > .vk-appnav__mark'), graphic: true },
-      { ...part('rail-plan', 'nav.ar-rail a.ar-nav[aria-keyshortcuts="G P"]', 'nav.vk-appnav .vk-appnav__list > li:nth-child(1) > .vk-appnav__item'), graphic: true },
-      { ...part('rail-operate', 'nav.ar-rail a.ar-nav[aria-keyshortcuts="G O"]', 'nav.vk-appnav .vk-appnav__list > li:nth-child(2) > .vk-appnav__item'), graphic: true },
+      // Nav v2 reorders the rail (Inbox, Plan, Crew); the frozen reference still draws Plan, Operate, Workspace.
+      { ...part('rail-plan', 'nav.ar-rail a.ar-nav[aria-keyshortcuts="G P"]', 'nav.vk-appnav .vk-appnav__list > li:nth-child(2) > .vk-appnav__item'), graphic: true },
+      { ...part('rail-operate', 'nav.ar-rail a.ar-nav[aria-keyshortcuts="G O"]', 'nav.vk-appnav .vk-appnav__list > li:nth-child(1) > .vk-appnav__item'), graphic: true },
       { ...part('rail-workspace', 'nav.ar-rail a.ar-nav[aria-keyshortcuts="G W"]', 'nav.vk-appnav .vk-appnav__list > li:nth-child(3) > .vk-appnav__item'), graphic: true },
       { ...part('rail-theme', 'nav.ar-rail button.ar-nav[aria-label="Dark theme"]', 'nav.vk-appnav .vk-appnav__foot button[aria-label="Dark theme"]'), graphic: true },
       { ...part('rail-appearance', 'nav.ar-rail button.ar-nav[aria-label="Appearance"]', 'nav.vk-appnav .vk-appnav__foot button[aria-label="Appearance"]'), graphic: true },

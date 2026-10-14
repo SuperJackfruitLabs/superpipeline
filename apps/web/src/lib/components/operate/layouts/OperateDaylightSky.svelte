@@ -4,7 +4,9 @@
   /** Daylight's greeting, drawn inside the shell's sky (ShellProps.sky). */
   import { Face } from '@superjackfruit/vibekit';
   import { crewOf } from '../operate-data';
-  import { daylightGreeting, greetingLabel, needCounts, summarySentenceDaylight } from '../operate-words';
+  import { greetingLabel } from '../operate-words';
+  import { acrossBoards, askBoards, inboxCounts, inboxSubline, wantYou } from '$lib/components/inbox/inbox-words';
+  import { greetNamed } from '$lib/greet';
   import type { OperateLayoutProps } from './types';
   import './operate-daylight-sky.css';
 
@@ -15,8 +17,8 @@
 <section class="op-greet" aria-label={greetingLabel(model.phase)}>
   <div class="vk-sky__content">
     <div>
-      <svelte:element this={viewport.phone ? 'h2' : 'h1'} class="op-title">{daylightGreeting(model.phase, model.firstName, model.needs.length)}</svelte:element>
-      <p>{summarySentenceDaylight(needCounts(model.needs), model.running.length)}</p>
+      <svelte:element this={viewport.phone ? 'h2' : 'h1'} class="op-title">{greetNamed(model.phase, model.firstName)} {wantYou(model.needs.length)}</svelte:element>
+      <p>{inboxSubline(inboxCounts(model.needs), askBoards(model.needs), model.running.length)}</p>
     </div>
     {#if crew.length > 0}
       <div class="crew" aria-label="Waiting on you">

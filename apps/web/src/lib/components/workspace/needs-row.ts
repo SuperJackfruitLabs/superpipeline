@@ -51,7 +51,7 @@ export function actionLink(item: AttentionItem, a: AttentionAction): { label: st
     case 'review': return { label: 'Review', href: card, primary: true };
     case 'answer': return { label: 'Answer', href: card, primary: true };
     case 'log': return { label: 'Open log', href: `${card}?tab=attempts`, primary: false };
-    case 'staff': return { label: 'Staff an agent', href: '/workspace/capabilities', primary: false };
+    case 'staff': return { label: 'Staff an agent', href: '/crew/capabilities', primary: false };
     default: return null;
   }
 }

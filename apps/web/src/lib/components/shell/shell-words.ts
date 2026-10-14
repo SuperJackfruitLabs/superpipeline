@@ -58,14 +58,14 @@ export function studioSubRight(syncedAt: Date | null, phase: Phase, timeZone?: s
   return `The board at ${hhmm(syncedAt, timeZone)} · ${greeting(phase, 'studio').toLowerCase()} · ${dayMonth(syncedAt, timeZone)}`;
 }
 
-/** Each vibe's rendering of the Operate count; null when nothing needs you (no count, no colour). */
+/** Each vibe's rendering of the Inbox count; null when nothing needs you (no count, no colour). */
 export interface OperateCount { n: string; comma: string; paren: string; needYou: string; aria: string; tip: string; quiet: string }
 /** "1 needs you", "4 need you": vibekit's own words, so the status line and the nav badges agree. */
 export const needYou = (n: number): string => countWords(n, true);
 export function operateCount(n: number): OperateCount | null {
   if (n <= 0) return null;
   const w = needYou(n);
-  return { n: String(n), comma: `, ${w}`, paren: `(${n})`, needYou: w.slice(String(n).length), aria: `Operate, ${w}`, tip: `Operate · ${w}`, quiet: `(${w})` };
+  return { n: String(n), comma: `, ${w}`, paren: `(${n})`, needYou: w.slice(String(n).length), aria: `Inbox, ${w}`, tip: `Inbox · ${w}`, quiet: `(${w})` };
 }
 
 export function needsPart(n: number): StatusItem | null {

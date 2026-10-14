@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { openRememberedBoard } from './support/seed';
 
 // The command palette is mounted in the board-ready shell, so each test needs a board and must wait
 // for the shell to render before pressing ⌘K/Ctrl-K (matches board.spec / nav.spec setup).
@@ -27,14 +28,14 @@ test.beforeEach(async ({ page, request }) => {
 });
 
 test('cmd-k opens the palette and can jump to a card', async ({ page }) => {
-  await page.goto('/');
+  await openRememberedBoard(page);
   await expect(page.getByText('Backlog', { exact: true })).toBeVisible();
   await page.keyboard.press('Control+k');
   await expect(page.getByPlaceholder(/Jump to a card/i)).toBeVisible();
 });
 
 test('escape closes the palette', async ({ page }) => {
-  await page.goto('/');
+  await openRememberedBoard(page);
   await expect(page.getByText('Backlog', { exact: true })).toBeVisible();
   await page.keyboard.press('Control+k');
   await expect(page.getByPlaceholder(/Jump to a card/i)).toBeVisible();
@@ -43,21 +44,21 @@ test('escape closes the palette', async ({ page }) => {
 });
 
 test('palette filters results as user types', async ({ page }) => {
-  await page.goto('/');
+  await openRememberedBoard(page);
   await expect(page.getByText('Backlog', { exact: true })).toBeVisible();
   await page.keyboard.press('Control+k');
   const input = page.getByPlaceholder(/Jump to a card/i);
   await expect(input).toBeVisible();
-  await input.fill('Operate');
-  // Scoped to the palette's rows: "Operate" is also a rail destination, and vibekit marks the match.
-  await expect(page.getByRole('dialog').getByRole('option', { name: /^Operate/ })).toBeVisible();
+  await input.fill('Inbox');
+  // Scoped to the palette's rows: "Inbox" is also a rail destination, and vibekit marks the match.
+  await expect(page.getByRole('dialog').getByRole('option', { name: /^Inbox/ })).toBeVisible();
 });
 
 test('palette shows actions group with navigation items', async ({ page }) => {
-  await page.goto('/');
+  await openRememberedBoard(page);
   await expect(page.getByText('Backlog', { exact: true })).toBeVisible();
   await page.keyboard.press('Control+k');
   await expect(page.getByPlaceholder(/Jump to a card/i)).toBeVisible();
-  await expect(page.getByRole('dialog').getByText('Operate')).toBeVisible();
+  await expect(page.getByRole('dialog').getByText('Inbox', { exact: true })).toBeVisible();
   await expect(page.getByRole('dialog').getByText('Spend detail')).toBeVisible();
 });

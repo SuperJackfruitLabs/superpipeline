@@ -57,7 +57,7 @@ for (const { name, height } of HEIGHTS) {
   test.describe(`on ${name} (390×${height})`, () => {
     test.use({ viewport: { width: 390, height } });
 
-    test('the end of Operate scrolls clear of the bottom nav, and the nav is whole', async ({ page }) => {
+    test('the end of the Inbox scrolls clear of the bottom nav, and the nav is whole', async ({ page }) => {
       await page.goto(`/b/${boardId}/operate`);
       const activity = page.locator('section', { has: page.getByRole('heading', { name: 'Activity' }) });
       await expect(activity).toBeVisible();
@@ -89,8 +89,8 @@ for (const { name, height } of HEIGHTS) {
       });
     }
 
-    test('the workspace keeps the nav on screen', async ({ page }) => {
-      await page.goto('/workspace');
+    test('Crew keeps the nav on screen', async ({ page }) => {
+      await page.goto('/crew');
       await expect(page.getByRole('navigation', { name: 'Superpipeline' })).toBeVisible();
       await page.waitForLoadState('networkidle');
       const f = await frame(page);

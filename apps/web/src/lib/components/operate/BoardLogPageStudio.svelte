@@ -8,6 +8,6 @@
 </script>
 
 <div class="sp-main">
-  <div class="sp-line"><a class="ar-lk quiet" href="/b/{boardId}/operate/telemetry"><LineIcon name="chev-left" size={16} />Back to Operate · spend</a></div>
+  <div class="sp-line"><a class="ar-lk quiet" href="/b/{boardId}/operate/telemetry"><LineIcon name="chev-left" size={16} />Back to spend</a></div>
   <BoardLogStudio {events} {error} collapsedRows={Infinity} fullLogHref={null} no="01" />
 </div>

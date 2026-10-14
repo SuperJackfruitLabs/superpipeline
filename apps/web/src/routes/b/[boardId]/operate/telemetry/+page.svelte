@@ -14,6 +14,6 @@
   const status = $derived(vibe === 'studio' ? shellModel.pageStatus(['Spend', needsPart(shellModel.needsCount)]) : null);
 </script>
 
-<AppShell here="operate" section="spend" boardName={app.board?.name ?? 'Untitled board'} view={null} showing={null} {status} bleed={vibe === 'quiet'} ownHeading>
+<AppShell here="plan" section="spend" boardName={app.board?.name ?? 'Untitled board'} view={null} showing={null} {status} bleed={vibe === 'quiet'} ownHeading>
   <Layout {vibe} />
 </AppShell>

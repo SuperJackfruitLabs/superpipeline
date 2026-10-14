@@ -1,7 +1,7 @@
 // apps/web/src/lib/components/shell/you-menu.ts
 /**
  * The phone's account menu (G15), opened from the tab bar's "You" (vibekit's PhoneTabBar menu tab):
- * who is signed in, Appearance, the theme and Sign out. The rail and bar shells use AppNav's own
+ * who is signed in, Appearance, the theme, Settings and Sign out. The rail and bar shells use AppNav's own
  * `account.items`.
  */
 import type { MenuItem } from '@superjackfruit/vibekit';
@@ -12,6 +12,7 @@ export function youMenuItems(): MenuItem[] {
     { heading: m.userName },
     { label: 'Appearance…', onselect: m.openAppearance },
     { label: m.dark ? 'Light theme' : 'Dark theme', onselect: m.toggleTheme },
+    { label: 'Settings', onselect: m.openSettings },
     { separator: true },
     { label: 'Sign out', onselect: m.signOut },
   ];

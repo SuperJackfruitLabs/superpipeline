@@ -28,4 +28,4 @@
   {#if props.view !== 'projects'}<Button variant="secondary" icon={filterIcon} aria-haspopup="dialog" onclick={m.openFilter}>Filter</Button>{/if}
 {/snippet}
 
-<PhoneFrame shell={props} vibe="paper" eyebrow="Superpipeline" switcherLabel="Change board" eyebrowActions={search} {dateline} links={props.boardName !== null ? links : undefined} below={props.view ? views : undefined} glyphs={{ plan: 'board', operate: 'list', workspace: 'users' }} />
+<PhoneFrame shell={props} vibe="paper" eyebrow="Superpipeline" switcherLabel="Change board" eyebrowActions={search} {dateline} links={props.boardName !== null ? links : undefined} below={props.view ? views : undefined} glyphs={{ inbox: 'inbox', plan: 'board', crew: 'crew' }} />

@@ -13,7 +13,7 @@
   import { SHELL_LAYOUTS } from '$lib/layouts';
   import { app } from '$lib/stores/app.svelte';
   import FilterDialog from '$lib/components/plan/FilterDialog.svelte';
-  import { nameOperateCount } from './nav-scope';
+  import { nameInboxCount } from './nav-scope';
   import { createChordReader, isTypingTarget } from './shortcuts';
   import { shellModel } from './shell-model.svelte';
   import type { ShellProps } from './types';
@@ -25,11 +25,9 @@
 
   // vibekit draws the nav's count as "3 need you"; say whose cards it counts (nav-scope.ts).
   $effect(() => {
-    const boardScoped = props.boardName !== null && props.boardName !== undefined;
-    const n = shellModel.operateBadge(boardScoped);
+    const n = shellModel.inboxBadge;
     void Shell;
-    const href = shellModel.operateHref;
-    queueMicrotask(() => nameOperateCount(document, href, n, boardScoped));
+    queueMicrotask(() => nameInboxCount(document, shellModel.inboxHref, n));
   });
 
   const chords = createChordReader();
@@ -37,9 +35,9 @@
     if (e.defaultPrevented || isTypingTarget(e.target)) return;
     if (app.composeOpen || app.moveCardId || app.filterOpen || app.boardSwitcherOpen || app.cmdkOpen || app.openCardId || appearance.pickerOpen) return;
     const action = chords.read(e, Date.now());
-    if (action === 'plan') void goto(shellModel.planHref);
-    else if (action === 'operate') void goto(shellModel.operateHref);
-    else if (action === 'workspace') void goto(shellModel.workspaceHref);
+    if (action === 'inbox') void goto(shellModel.inboxHref);
+    else if (action === 'plan') void goto(shellModel.planHref);
+    else if (action === 'crew') void goto(shellModel.crewHref);
     else if (action === 'compose' && app.boardId) app.requestCompose();
     else if (action === 'filter' && props.view && props.view !== 'projects') app.filterOpen = true;
     else return;
