@@ -74,3 +74,18 @@ for (const vibe of VIBES) {
     await expect(main.getByText(/as of \d\d:\d\d/).first()).toBeVisible();
   });
 }
+
+// Paper's board switcher raises a copy of the board's name and "Change board" above the scrim. The copy's name sat
+// 8px right of the real one, so the two showed through each other as a doubled, smeared title (Round 3).
+for (const width of [1440, 1100]) {
+  test(`paper ${width}: the switcher's raised name lies exactly over the board's own name`, async ({ page }) => {
+    await openWorld(page, DX, { vibe: 'paper', dark: false, width, height: 900 });
+    await page.getByRole('button', { name: /Change board/ }).first().click();
+    const copy = page.locator('.bs-anchor .mh-title');
+    await expect(copy).toBeVisible();
+    const [a, b] = await Promise.all([copy.boundingBox(), page.locator('.vk-masthead__name').first().boundingBox()]);
+    expect(Math.abs(a!.x - b!.x), `copy x ${a!.x}, name x ${b!.x}`).toBeLessThanOrEqual(1);
+    expect(Math.abs(a!.y - b!.y), `copy y ${a!.y}, name y ${b!.y}`).toBeLessThanOrEqual(1);
+    expect(Math.abs(a!.width - b!.width), 'same metrics').toBeLessThanOrEqual(1);
+  });
+}

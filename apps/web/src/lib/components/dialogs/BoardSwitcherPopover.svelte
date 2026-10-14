@@ -65,8 +65,14 @@
       const t = copy?.querySelector<HTMLElement>('.bs-trigger');
       if (!t || !r || !anchor) return;
       const c = t.getBoundingClientRect();
+      // Paper raises the board's name too: lay the copy's name exactly over the real one. Lining up the trigger
+      // instead put the copy's name 8px right of the real (the copy's button carries 8px padding the real words
+      // do not), and the two names showed through each other as a doubled, smeared title.
+      const realName = real?.querySelector<HTMLElement>('.vk-masthead__name')?.getBoundingClientRect();
+      const copyName = copy?.querySelector<HTMLElement>('.mh-title')?.getBoundingClientRect();
+      const dx = realName && copyName ? realName.left - copyName.left : r.left - c.left;
       // Whole pixels, as the reference places it: a fractional top moves the copy's text off by a pixel.
-      anchor = { left: Math.round(anchor.left + (r.left - c.left)), top: Math.round(anchor.top + (r.top - c.top)) };
+      anchor = { left: Math.round(anchor.left + dx), top: Math.round(anchor.top + (r.top - c.top)) };
     });
   });
   $effect(() => {
