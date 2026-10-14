@@ -113,8 +113,10 @@ bounding box of the difference. `deploy` waits for `test`, `e2e` and `visual`. R
 references in the same Chromium and reports how far each screen has drifted from its mockup. The
 references are frozen at the approved design: ordinary product PRs do not touch references or the
 allow-list, and new features add no references. CI runs it as the `pixel` job (`continue-on-error`,
-not in `deploy.needs`) on pushes to main, nightly at 03:30 UTC, and on PRs that touch a design input,
-and ends with a drift summary. A change to the reference lock still needs a `Reference-Change:` trailer.
+not in `deploy.needs`) only nightly at 03:30 UTC and by manual dispatch (any branch, a PR's included),
+never on pushes or pull requests, and ends with a drift summary; the `visual` job is the PR gate. Under
+`CI` the test timeouts are longer (`ci-timeouts.mjs`: vitest 20s/30s hooks, Playwright 60s test, 15s
+expect), local defaults unchanged. A change to the reference lock still needs a `Reference-Change:` trailer.
 See the [pixel suite](../apps/web/e2e/pixel/README.md), which also says how to run base-vs-head locally.
 
 **Real-shaped data.** `apps/web/e2e/rich-card.spec.ts` drives the fixture world's rich card (several

@@ -1,5 +1,6 @@
 import { defineConfig } from 'vitest/config';
 import { sveltekit } from '@sveltejs/kit/vite';
+import { timeouts } from '../../ci-timeouts.mjs';
 
 // The fixture world and its tests read wall-clock times in the pixel suite's zone (Asia/Kolkata,
 // as playwright*.config.ts pins). Pin it here too so a UTC CI runner formats the same 19:41.
@@ -26,5 +27,7 @@ export default defineConfig({
     // The pixel fixture's own invariants are plain vitest files that live beside the data they check.
     include: ['src/**/*.{test,spec}.{js,ts}', 'e2e/pixel/**/*.test.ts', 'e2e/visual/**/*.test.ts', 'scripts/**/*.test.ts'],
     environment: 'node',
+    // Longer under CI (saturated shared runner); local values are vitest's defaults.
+    ...timeouts().vitest,
   },
 });

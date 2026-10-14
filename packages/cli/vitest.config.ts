@@ -1,2 +1,4 @@
 import { defineConfig } from 'vitest/config';
-export default defineConfig({ test: { environment: 'node' } });
+import { timeouts } from '../../ci-timeouts.mjs';
+// Longer under CI (saturated shared runner); local values are vitest's defaults.
+export default defineConfig({ test: { environment: 'node', ...timeouts().vitest } });

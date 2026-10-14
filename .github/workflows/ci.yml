@@ -4,13 +4,15 @@ on:
   push:
     branches: [main]
   pull_request:
-  # Nightly pixel conformance report (03:30 UTC). Only the `pixel` job runs on the schedule.
+  # The pixel conformance report runs only nightly (03:30 UTC) and by hand: on the schedule and on a manual
+  # dispatch (Actions > CI > Run workflow, on any branch, a PR's included) it is the only job that runs.
   schedule:
     - cron: '30 3 * * *'
+  workflow_dispatch:
 
 jobs:
   test:
-    if: github.event_name != 'schedule'
+    if: github.event_name != 'schedule' && github.event_name != 'workflow_dispatch'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -33,7 +35,7 @@ jobs:
         run: node apps/web/scripts/pixel/check-lock-change.mjs "${{ github.event.pull_request.base.sha || github.event.before }}"
 
   e2e:
-    if: github.event_name != 'schedule'
+    if: github.event_name != 'schedule' && github.event_name != 'workflow_dispatch'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -60,7 +62,7 @@ jobs:
   # nothing is compared with a mockup, so cross-machine rendering cannot fail it. A change fails the job
   # unless a commit in the range carries `Visual-Change: <why>`. See apps/web/e2e/pixel/README.md.
   visual:
-    if: github.event_name != 'schedule'
+    if: github.event_name != 'schedule' && github.event_name != 'workflow_dispatch'
     runs-on: ubuntu-22.04
     timeout-minutes: 15
     container:
@@ -98,10 +100,12 @@ jobs:
             apps/web/test-results/visual/diff
           retention-days: 14
 
-  # A conformance REPORT against the approved mockups, never a gate (continue-on-error, not in deploy.needs):
-  # pushes to main, nightly, and pull requests that touch a design input (scripts/pixel/design-inputs.mjs).
-  # The references are frozen at the approved design; the `visual` job is the regression gate.
+  # A conformance REPORT against the approved mockups, never a gate (continue-on-error, not in deploy.needs).
+  # Nightly and by manual dispatch only (operator decision 2026-10-14): its ~23 minutes of Chromium on every
+  # push starved test and e2e on the shared runner. The references are frozen at the approved design; the
+  # `visual` job is the regression gate on pull requests.
   pixel:
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-22.04
     continue-on-error: true
     # Playwright's own image: Chromium and its system fonts are already in it (no per-run apt
@@ -115,33 +119,24 @@ jobs:
         with:
           fetch-depth: 0
       - run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
-      # A step output, not workflow `paths:` (which would skip the required jobs too).
-      - name: does this run touch a design input
-        id: scope
-        run: node apps/web/scripts/pixel/design-inputs.mjs "${{ github.event_name }}" "${{ github.event.pull_request.base.sha }}"
       - uses: pnpm/action-setup@v4
-        if: steps.scope.outputs.run == 'true'
       - uses: actions/setup-node@v4
-        if: steps.scope.outputs.run == 'true'
         with:
           node-version: 22
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-        if: steps.scope.outputs.run == 'true'
       - name: the image and the lockfile name the same Playwright
-        if: steps.scope.outputs.run == 'true'
         run: bash apps/web/scripts/pixel/image-guard.sh v1.61.0-jammy
       # References and app render in the same Chromium, with the same font files, in the same run.
       - run: mkdir -p apps/web/test-results/pixel-parts && pnpm --filter @superpipeline/web test:pixel
-        if: steps.scope.outputs.run == 'true'
         env:
           PIXEL_PARTS: '1'
           PIXEL_PARTS_DIR: ${{ github.workspace }}/apps/web/test-results/pixel-parts
       - name: drift summary
-        if: always() && steps.scope.outputs.run == 'true'
+        if: always()
         run: node apps/web/scripts/pixel/drift-summary.mjs apps/web/test-results/pixel/results.json
       - uses: actions/upload-artifact@v4
-        if: always() && steps.scope.outputs.run == 'true' && github.server_url == 'https://github.com'
+        if: always() && github.server_url == 'https://github.com'
         with:
           name: pixel-report
           path: |

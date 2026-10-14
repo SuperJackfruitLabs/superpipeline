@@ -1,5 +1,6 @@
 // The CI workflow parses, every `needs` names a job that exists, every script a step runs exists, and the
-// gates are the ones the operator chose (2026-10-13): deploy waits on `visual`, never on the `pixel` report.
+// gates are the ones the operator chose (2026-10-13): deploy waits on `visual`, never on the `pixel` report,
+// and (2026-10-14) pixel runs only nightly or by hand, never on push or pull_request.
 import { existsSync, readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { join } from 'node:path';
@@ -33,13 +34,16 @@ describe('ci.yml', () => {
     expect(up?.uses).toBe('actions/upload-artifact@v4');
     expect(up?.if).toMatch(/github\.server_url == 'https:\/\/github\.com'/);
   });
-  it('pixel is a report: never blocks, scoped by a step output, nightly at 03:30 UTC', () => {
+  it('pixel is a report: never blocks, runs only nightly at 03:30 UTC or by hand (2026-10-14)', () => {
     const p = wf.jobs.pixel!;
     expect(p['continue-on-error']).toBe(true);
     expect(wf.on.schedule).toEqual([{ cron: '30 3 * * *' }]);
-    expect(p.steps.find((s) => s.id === 'scope')?.run).toMatch(/design-inputs\.mjs/);
-    const run = p.steps.find((s) => /test:pixel/.test(s.run ?? ''));
-    expect(run?.if).toMatch(/steps\.scope\.outputs\.run == 'true'/);
+    expect(wf.on).toHaveProperty('workflow_dispatch');
+    // Not on push or pull_request: on those events the job is skipped, so it cannot starve test/e2e/visual.
+    expect(p.if?.replace(/\s+/g, ' ')).toBe("github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'");
+    expect(p.steps.some((s) => /design-inputs\.mjs/.test(s.run ?? ''))).toBe(false);
+    expect(p.steps.some((s) => /test:pixel/.test(s.run ?? ''))).toBe(true);
+    expect(p.steps.some((s) => /drift-summary\.mjs/.test(s.run ?? ''))).toBe(true);
     expect(wf.on).not.toHaveProperty('pull_request.paths');
   });
   it('the image tag matches the guard argument in both container jobs', () => {
@@ -48,7 +52,10 @@ describe('ci.yml', () => {
       expect(wf.jobs[j]!.steps.some((s) => (s.run ?? '').includes(`image-guard.sh ${tag}`)), j).toBe(true);
     }
   });
-  it('the schedule runs only the pixel report', () => {
-    for (const j of ['test', 'e2e', 'visual']) expect(wf.jobs[j]!.if, j).toMatch(/github\.event_name != 'schedule'/);
+  it('the schedule and a manual dispatch run only the pixel report', () => {
+    for (const j of ['test', 'e2e', 'visual']) {
+      expect(wf.jobs[j]!.if, j).toMatch(/github\.event_name != 'schedule'/);
+      expect(wf.jobs[j]!.if, j).toMatch(/github\.event_name != 'workflow_dispatch'/);
+    }
   });
 });

@@ -2,10 +2,10 @@
 
 Compares the running app with the approved Design-canvas references, one test per artboard per theme.
 Since 2026-10-13 it is a **conformance report, not a gate** (operator decision): the CI `pixel` job is
-`continue-on-error` and `deploy` does not wait for it. It runs on pushes to main, nightly at 03:30 UTC,
-and on pull requests that touch a design input (`apps/web/vendor/**`, `e2e/reference/**`, `e2e/pixel/**`,
-`src/lib/components/shell/**`, `src/lib/styles/shell/**`, `src/app.html`; `scripts/pixel/design-inputs.mjs`),
-and ends its log with a one-paragraph drift summary.
+`continue-on-error` and `deploy` does not wait for it. Since 2026-10-14 it runs **only nightly at 03:30 UTC
+and by manual dispatch** (Actions > CI > Run workflow, on any branch, a PR's included; on a dispatch it is
+the only job that runs), never on pushes or pull requests: its Chromium starved `test` and `e2e` on the
+shared runner. It ends its log with a one-paragraph drift summary. The **`visual` job is the PR gate**.
 
 - The references are **frozen** at the approved design. Ordinary product PRs do not touch references,
   masks, thresholds or the allow-list, and a new feature adds no reference.

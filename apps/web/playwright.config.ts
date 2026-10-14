@@ -1,5 +1,9 @@
 import { defineConfig, devices } from '@playwright/test';
 import { PORTS } from './scripts/ports';
+import { timeouts } from '../../ci-timeouts.mjs';
+
+// Longer under CI, where the shared runner is saturated; local values are Playwright's defaults.
+const t = timeouts().playwright;
 
 // E2E boots the real app: the API Worker (wrangler dev, SP_API_PORT, default :8787) and the SvelteKit dev server
 // (SP_WEB_PORT, default :5173, which proxies /v1 + the WebSocket to the Worker). See docs/09-testing-strategy.md.
@@ -12,12 +16,16 @@ export default defineConfig({
   workers: 1,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 1 : 0,
+  timeout: t.test,
+  expect: { timeout: t.expect },
   reporter: process.env.CI ? [['list'], ['html', { open: 'never' }]] : 'list',
   use: {
     baseURL: PORTS.webUrl,
     // The fixture world's zone: clock words ("as of HH:MM", greetings) read the same on every machine.
     timezoneId: 'Asia/Kolkata',
     trace: 'on-first-retry',
+    actionTimeout: t.action,
+    navigationTimeout: t.navigation,
   },
   // Set PW_CHANNEL=chrome to drive a locally-installed Chrome instead of the downloaded browser.
   projects: [
@@ -32,13 +40,13 @@ export default defineConfig({
       command: 'pnpm --filter @superpipeline/web build && pnpm --filter @superpipeline/api dev:setup && pnpm --filter @superpipeline/api dev:pixel',
       url: `${PORTS.apiUrl}/health`,
       reuseExistingServer: !process.env.CI,
-      timeout: 180_000,
+      timeout: t.apiServer,
     },
     {
       command: 'pnpm --filter @superpipeline/web dev',
       url: PORTS.webUrl,
       reuseExistingServer: !process.env.CI,
-      timeout: 120_000,
+      timeout: t.webServer,
     },
   ],
 });

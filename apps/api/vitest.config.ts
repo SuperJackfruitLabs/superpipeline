@@ -1,5 +1,6 @@
 import { defineConfig } from 'vitest/config';
 import { cloudflareTest } from '@cloudflare/vitest-pool-workers';
+import { timeouts } from '../../ci-timeouts.mjs';
 
 // vitest-pool-workers (vitest 4 line) wires the Workers runtime via a Vite plugin that reads our
 // wrangler config for bindings (DB, BOARD_DO) and the Worker entry (docs/09-testing-strategy.md §3).
@@ -45,5 +46,7 @@ export default defineConfig({
   test: {
     include: ['test/**/*.test.ts'],
     setupFiles: ['./test/setup.ts'],
+    // Longer under CI (saturated shared runner); local values are vitest's defaults.
+    ...timeouts().vitest,
   },
 });
