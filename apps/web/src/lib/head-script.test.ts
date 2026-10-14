@@ -21,4 +21,16 @@ describe('app.html paints the right vibe on the first frame', () => {
   it('names the product on <html>, so HEAD_SCRIPT paints its accent on the first frame', () => {
     expect(html).toMatch(/<html lang="en" data-product="superpipeline">/);
   });
+  it('paints each vibe and theme’s own background on the first frame, matching vibekit’s tokens', () => {
+    const tokens = readFileSync(new URL('../../node_modules/@superjackfruit/vibekit/dist/styles/tokens.css', import.meta.url), 'utf8');
+    for (const vibe of ['daylight', 'paper', 'studio', 'quiet']) {
+      for (const theme of ['light', 'dark']) {
+        const block = new RegExp(`\\[data-vibe="${vibe}"\\]\\[data-theme="${theme}"\\] \\{[^}]*?--vk-color-bg: (#[0-9a-f]+);`).exec(tokens);
+        expect(block, `${vibe} ${theme} in tokens.css`).not.toBeNull();
+        const want = block![1];
+        const rule = vibe === 'daylight' && theme === 'light' ? /:where\(html\)\{background:(#[0-9a-f]+)/ : new RegExp(`:where\\(html\\[data-vibe=${vibe}\\]\\[data-theme=${theme}\\]\\)\\{background:(#[0-9a-f]+)`);
+        expect(rule.exec(html)?.[1], `${vibe} ${theme}`).toBe(want);
+      }
+    }
+  });
 });
