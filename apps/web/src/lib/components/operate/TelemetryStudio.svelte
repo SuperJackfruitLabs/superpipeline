@@ -44,8 +44,8 @@
 <!-- The shell owns the one main. -->
 <div class="sp-main">
   <div class="sp-line">
-    <a class="ar-lk quiet" href="/b/{app.boardId}/operate"><LineIcon name="chev-left" size={16} />Back to Operate</a>
-    <span class="kick">Operate · spend, in detail</span>
+    <a class="ar-lk quiet" href="/b/{app.boardId}"><LineIcon name="chev-left" size={16} />Back to the board</a>
+    <span class="kick">Plan · spend, in detail</span>
     <span class="sp-seg" role="group" aria-label="Time window">
       <button aria-pressed={model.window_ === '7d'} type="button" onclick={() => (model.window_ = '7d')}>Last 7 days</button>
       <button aria-pressed={model.window_ === '5h'} type="button" onclick={() => (model.window_ = '5h')}>Last 5 hours</button>

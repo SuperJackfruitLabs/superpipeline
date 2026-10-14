@@ -50,7 +50,7 @@ export class OperateUi {
   }
 
   async move(row: NeedRow, toKey?: string): Promise<void> {
-    const key = toKey ?? this.moveTo[row.item.cardId] ?? moveTargets(this.model().stages, row.item.stageKey)[0]?.key;
+    const key = toKey ?? this.moveTo[row.item.cardId] ?? moveTargets(row.stages, row.item.stageKey)[0]?.key;
     if (!key) return;
     const refused = await this.model().move(row, key);
     if (refused) this.refusals[row.item.cardId] = refused;

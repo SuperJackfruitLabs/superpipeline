@@ -1,17 +1,16 @@
 <script lang="ts">
   /**
-   * The front door. It is a redirect, not a screen.
+   * The front door. It is a redirect, not a screen: the app opens on the Inbox (nav v2).
    *
    * `app.init()` resolves which board to open — the remembered one, then the first one — and sets
-   * `needsBoard` when there is none. This route only turns that answer into an address, so that
-   * every other screen can assume a board id in the URL.
+   * `needsBoard` when there is none, so a workspace with no board still lands on onboarding.
    */
   import { goto } from '$app/navigation';
   import { app } from '$lib/stores/app.svelte';
   import Onboarding from '$lib/components/Onboarding.svelte';
 
   $effect(() => {
-    if (app.authState === 'ready' && app.boardId) void goto(`/b/${app.boardId}`, { replaceState: true });
+    if (app.authState === 'ready' && app.boardId) void goto('/inbox', { replaceState: true });
   });
 </script>
 
@@ -19,7 +18,7 @@
   <Onboarding />
 {:else}
   <main class="flex flex-1 flex-col items-center justify-center gap-3 text-center">
-    <h1 class="sr-only">Opening your board</h1>
-    <div class="mono text-muted-foreground flex items-center gap-2 text-xs"><span class="live-dot"></span>finding your board…</div>
+    <h1 class="sr-only">Opening your inbox</h1>
+    <div class="mono text-muted-foreground flex items-center gap-2 text-xs"><span class="live-dot"></span>finding your boards…</div>
   </main>
 {/if}

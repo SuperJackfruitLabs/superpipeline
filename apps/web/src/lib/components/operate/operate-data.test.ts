@@ -1,7 +1,7 @@
 // apps/web/src/lib/components/operate/operate-data.test.ts
 import { describe, expect, it } from 'vitest';
 import { itemsFromBoard, sortAttention } from '$lib/components/attention/attention';
-import { activityGroups, moveTargets, needRows, parseCap, runningRows, spendView, crewOf } from './operate-data';
+import { activityGroups, mergeUsage, moveTargets, needRows, parseCap, runningRows, spendView, crewOf } from './operate-data';
 import { C1DFC, C4605, C58F8, C63AC, DX_AGENTS, DX_BOARD, DX_NOTIFICATIONS, DX_NOW } from '$lib/test/dx-snapshot';
 
 const items = itemsFromBoard(DX_BOARD, DX_AGENTS, DX_NOW);
@@ -46,7 +46,7 @@ describe('runningRows and spendView', () => {
   it('nothing runs on the fixture board', () => expect(runningRows(DX_BOARD, DX_AGENTS)).toEqual([]));
   it('a working card is a running row', () => {
     const board = { ...DX_BOARD, cards: [{ ...C58F8, state: 'working', delegateAgentId: 'agt_fx_tester_tim', costUsd: 0.42 }] };
-    expect(runningRows(board, DX_AGENTS)).toEqual([{ cardId: C58F8.id, title: C58F8.title, stageName: 'Failing test', agentName: 'tester-tim', iconUrl: null, costUsd: 0.42 }]);
+    expect(runningRows(board, DX_AGENTS)).toEqual([{ cardId: C58F8.id, title: C58F8.title, boardId: DX_BOARD.boardId, boardName: DX_BOARD.name, stageName: 'Failing test', agentName: 'tester-tim', iconUrl: null, costUsd: 0.42 }]);
   });
   it('spend with no usage, no cap', () => {
     expect(spendView(null, DX_BOARD.usage, DX_AGENTS)).toEqual({ total: 0, cap: null, cardCap: null, overBudget: false, pct: null, top: [] });
@@ -66,5 +66,21 @@ describe('moveTargets and parseCap', () => {
     expect(parseCap(' 25.50 ')).toEqual({ ok: true, value: 25.5 });
     expect(parseCap('-1')).toEqual({ ok: false, error: 'Enter an amount in dollars, like 25 or 25.50.' });
     expect(parseCap('lots')).toEqual({ ok: false, error: 'Enter an amount in dollars, like 25 or 25.50.' });
+  });
+});
+
+describe('rows carry their board (the Inbox spans boards)', () => {
+  it('every Needs, Running and Activity row names its board', () => {
+    expect(new Set(rows.map((r) => [r.boardId, r.boardName].join('|')))).toEqual(new Set([`${DX_BOARD.boardId}|${DX_BOARD.name}`]));
+    expect(rows[0]!.stages.map((s) => s.key)).toEqual([...DX_BOARD.stages].sort((a, b) => a.order - b.order).map((s) => s.key));
+    for (const g of activityGroups(DX_NOTIFICATIONS, true, rows, DX_BOARD, DX_AGENTS)) expect(g.boardId).toBe(DX_BOARD.boardId);
+    for (const r of runningRows({ ...DX_BOARD, cards: DX_BOARD.cards.map((c) => ({ ...c, state: 'working' })) }, DX_AGENTS)) expect(r.boardName).toBe(DX_BOARD.name);
+  });
+  it('spend over several boards adds the totals and each agent across them', () => {
+    const u = (total: number, byAgent: Array<{ agentId: string; costUsd: number }>) => ({ totalCostUsd: total, estimatedCostUsd: 0, totalInputTokens: 0, totalOutputTokens: 0, unpricedRecords: 0, byModel: [], byAgent, byCard: [], byDay: [] });
+    const m = mergeUsage([u(1.5, [{ agentId: 'a', costUsd: 1 }, { agentId: 'b', costUsd: 0.5 }]), u(2, [{ agentId: 'a', costUsd: 2 }])]);
+    expect(m?.totalCostUsd).toBe(3.5);
+    expect(m?.byAgent).toEqual([{ agentId: 'a', costUsd: 3 }, { agentId: 'b', costUsd: 0.5 }]);
+    expect(mergeUsage([])).toBeNull();
   });
 });

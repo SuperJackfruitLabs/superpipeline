@@ -26,7 +26,7 @@ describe('OperateStudio keyboard', () => {
     const model = fakeModel();
     render(OperateStudio, { model });
     await fireEvent.keyDown(window, { key: 'o' });
-    expect(model.open).toHaveBeenCalledWith(C4605.id);
+    expect(model.open).toHaveBeenCalledWith(C4605.id, model.needs[0]!.boardId);
     await fireEvent.keyDown(window, { key: 'j' });
     await fireEvent.keyDown(window, { key: 'r' });
     expect(screen.getByRole('form', { name: 'Resume tester-tim' })).toBeTruthy();
@@ -39,7 +39,7 @@ describe('OperateStudio keyboard', () => {
     await fireEvent.keyDown(window, { key: '.', metaKey: true });
     expect(model.markRead).not.toHaveBeenCalled();
     await fireEvent.keyDown(window, { key: '.' });
-    expect(model.markRead).toHaveBeenCalledWith(model.groups.find((g) => g.cardId === C4605.id)!.latest.seq);
+    expect(model.markRead).toHaveBeenCalledWith(model.groups.find((g) => g.cardId === C4605.id)!.latest.seq, model.groups[0]!.boardId);
   });
 
   it('M on the unclaimed row opens the stage menu', async () => {

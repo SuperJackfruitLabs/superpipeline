@@ -11,6 +11,11 @@ export interface NeedRow {
   stage: Stage;
   /** 1-based position of the stage on the board: Studio's chip colour `c{n}`. */
   stageIndex: number;
+  /** The card's board's stages in order: where it can resume or move to (the Inbox spans boards). */
+  stages: Stage[];
+  /** The card's board: every ask shows it as a chip next to the agent. */
+  boardId: string;
+  boardName: string;
   /** The agent that last worked it (`delegateAgentId ?? lastAgentId`); null for an unclaimed card. */
   agentName: string | null;
   iconUrl: string | null;
@@ -22,6 +27,8 @@ export interface NeedRow {
 export interface ActivityGroup {
   cardId: string;
   title: string;
+  boardId: string;
+  boardName: string;
   agentName: string | null;
   iconUrl: string | null;
   latest: Notification;
@@ -30,7 +37,7 @@ export interface ActivityGroup {
   need: NeedRow | null;
 }
 
-export interface RunningRow { cardId: string; title: string; stageName: string; agentName: string | null; iconUrl: string | null; costUsd: number }
+export interface RunningRow { cardId: string; title: string; boardId: string; boardName: string; stageName: string; agentName: string | null; iconUrl: string | null; costUsd: number }
 
 export interface SpendView {
   /** Spend over the last 7 days, from `GET /v1/boards/:id/usage?window=7d` (OP-G8). */
@@ -48,8 +55,14 @@ export interface SpendView {
 export type CapResult = { board: string | null; card: string | null; refused: string | null } | null;
 
 export interface OperateModel {
+  /** The chosen board's id, or '' on all boards. */
   readonly boardId: string;
+  /** The chosen board's name, or 'All boards'. */
   readonly boardName: string;
+  /** One board chosen (caps and Spend details need one); false on all boards. */
+  readonly scoped: boolean;
+  /** How many boards the page reads. */
+  readonly boardCount: number;
   /** Non-archived cards on the board. */
   readonly cardCount: number;
   /** The board's stages in order. */
@@ -69,14 +82,14 @@ export interface OperateModel {
   readonly phase: Phase;
   readonly nowMs: number;
   readonly firstName: string;
-  cardHref(cardId: string): string;
+  cardHref(cardId: string, boardId?: string): string;
   /** Resolves to the refusal to show, or null when it worked. */
   resume(row: NeedRow, comment: string, toStageKey: string): Promise<string | null>;
   move(row: NeedRow, toStageKey: string): Promise<string | null>;
-  markRead(seq: number): Promise<void>;
+  markRead(seq: number, boardId?: string): Promise<void>;
   setCaps(board: string, card: string): Promise<CapResult>;
-  open(cardId: string): void;
-  openLog(cardId: string): void;
+  open(cardId: string, boardId?: string): void;
+  openLog(cardId: string, boardId?: string): void;
 }
 
 /**
