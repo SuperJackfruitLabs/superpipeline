@@ -55,6 +55,10 @@
     "HUB_ISSUER": "https://hub.agentpod.dev",
     // Superlibrary, embedded in the card drawer. Not a credential; it names an audience to ask for.
     "SUPERLIBRARY_AUDIENCE": "https://app.superlibrary.dev",
+    // /auth/login names the Superlibrary audience, so the plane can later mint it on a refresh grant (it refuses
+    // one for an audience not named at login). The plane already links Superlibrary to superpipeline-web
+    // (accounts #20-#22), so this is safe to be on; see plane-signin.ts. Everyone signs in once more.
+    "PLANE_LIBRARY_LINKED": "true",
     // This deployment's own origin — the `redirect_uri` we register with the hub AND the `aud`
     // we now demand of every hub token (`auth/hub-jwt.ts`, `planeAudience`).
     //
