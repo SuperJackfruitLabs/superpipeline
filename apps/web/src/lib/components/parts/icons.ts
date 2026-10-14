@@ -16,7 +16,6 @@ export const PRODUCT_ICONS = {
   coin: '<circle cx="12" cy="12" r="9"/><path d="M15 9.5c-.5-1-1.6-1.5-3-1.5-1.8 0-3 .9-3 2.1 0 2.9 6 1.4 6 4.3 0 1.2-1.2 2.1-3 2.1-1.4 0-2.6-.6-3-1.6M12 6v2M12 16v2"/>',
   swatch: '<circle cx="12" cy="12" r="9"/><circle cx="8.5" cy="10" r="1.3"/><circle cx="12" cy="7.5" r="1.3"/><circle cx="15.5" cy="10" r="1.3"/><path d="M12 21a3 3 0 010-6h2"/>',
   power: '<path d="M12 3v8M6.3 6.3a8 8 0 1011.4 0"/>',
-  mark: '<path d="M6 6h9a3 3 0 0 1 0 6H9a3 3 0 0 0 0 6h9"/><circle cx="6" cy="6" r="2"/><circle cx="18" cy="18" r="2"/>',
   plan: '<rect x="3" y="4" width="5" height="16" rx="1.5"/><rect x="10" y="4" width="5" height="11" rx="1.5"/><rect x="17" y="4" width="4" height="7" rx="1.5"/>',
   'plan-sq': '<rect x="3" y="4" width="5" height="16" rx="1"/><rect x="10" y="4" width="5" height="11" rx="1"/><rect x="17" y="4" width="4" height="7" rx="1"/>',
   'plan-phone': '<rect x="4" y="4" width="4" height="15" rx="1"/><rect x="10" y="4" width="4" height="11" rx="1"/><rect x="16" y="4" width="4" height="7" rx="1"/>',
@@ -51,8 +50,6 @@ export const PRODUCT_ICONS = {
   flag: '<path d="M5 21V4h11l-2 4 2 4H5"/>',
   seal: '<circle cx="12" cy="10" r="6"/><path d="M9 15l-2 6 5-2 5 2-2-6"/>',
   restore: '<path d="M4 12a8 8 0 1 0 2.4-5.7"/><path d="M4 4v4h4"/>',
-  /** The card page's home mark (SP-CardPage-Daylight `.dp-mark`): the pipeline line. */
-  'mark-line': '<path d="M3 7h6l6 10h6"/><circle cx="4" cy="7" r="1.6"/><circle cx="20" cy="17" r="1.6"/><path d="M15 7h6"/>',
   comment: '<path d="M4 5h16v11H9l-5 4z"/>',
 } as const;
 

@@ -42,8 +42,11 @@ describe('installable', () => {
     expect(html).toContain('<meta name="apple-mobile-web-app-title" content="Superpipeline" />');
     expect(html).toMatch(/<meta name="theme-color" content="#[0-9a-f]{6}" media="\(prefers-color-scheme: dark\)" \/>/);
     expect(html).toMatch(/<meta name="theme-color" content="#[0-9a-f]{6}" media="\(prefers-color-scheme: light\)" \/>/);
-    // The favicon stays.
-    expect(html).toMatch(/<link rel="icon" type="image\/svg\+xml"/);
+    // The translucent-v2 favicon set (static/brand/README.md): adaptive SVG first, then the ICO and PNGs.
+    expect(html).toContain('<link rel="icon" href="/favicon.ico" sizes="16x16 32x32 48x48" />');
+    expect(html).toContain('<link rel="icon" type="image/svg+xml" href="/brand/favicon.svg" />');
+    for (const px of [16, 32, 48]) expect(html).toContain(`<link rel="icon" type="image/png" sizes="${px}x${px}" href="/brand/favicon-${px}.png" />`);
+    expect(html).not.toMatch(/data:image\/svg/);
   });
 
   it('registers no service worker: nothing is cached offline', () => {
@@ -65,6 +68,7 @@ describe('installable', () => {
     const want = [
       ['192x192', 'any'],
       ['512x512', 'any'],
+      ['192x192', 'maskable'],
       ['512x512', 'maskable'],
     ];
     for (const [sizes, purpose] of want) {
@@ -81,6 +85,16 @@ describe('installable', () => {
       expect(existsSync(file), src).toBe(true);
       expect(png(file), src).toEqual({ width: w, height: h, alpha: false });
     }
+  });
+
+  it('the favicon files ship at the sizes the links declare', () => {
+    for (const px of [16, 32, 48]) expect(png(join(STATIC, 'brand', `favicon-${px}.png`))).toMatchObject({ width: px, height: px });
+    const svg = readFileSync(join(STATIC, 'brand', 'favicon.svg'), 'utf8');
+    expect(svg).toContain('viewBox="0 0 256 256"');
+    expect(svg).toContain('prefers-color-scheme:dark');
+    // An ICO header: reserved 0, type 1 (icon), three frames.
+    const ico = readFileSync(join(STATIC, 'favicon.ico'));
+    expect([ico.readUInt16LE(0), ico.readUInt16LE(2), ico.readUInt16LE(4)]).toEqual([0, 1, 3]);
   });
 
   it('Cloudflare is told the manifest media type', () => {

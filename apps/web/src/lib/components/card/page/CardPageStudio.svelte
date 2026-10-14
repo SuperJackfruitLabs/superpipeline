@@ -10,6 +10,7 @@
   import { clockHM } from '$lib/when';
   import { isControlRow, isNarrative, visibleActivities } from '$lib/activity-groups';
   import Icon from '$lib/components/parts/Icon.svelte';
+  import BrandMark from '$lib/components/BrandMark.svelte';
   import CardEditForm from '../CardEditForm.svelte';
   import DeliveryPanel from '../DeliveryPanel.svelte';
   import LinkAddForm from '../LinkAddForm.svelte';
@@ -77,7 +78,7 @@
 
 <div class="ar cp" data-vibe="studio">
   <header class="cp-top">
-    <a class="mk" href="/" aria-label="Superpipeline home"><Icon name="mark" size={22} /></a>
+    <a class="mk" href="/" aria-label="Superpipeline home"><BrandMark class="size-6" /></a>
     <nav class="cp-crumb" aria-label="Breadcrumb">
       <span>Superpipeline</span><span aria-hidden="true">/</span>
       <a href={boardHref}>{m.boardName} board</a><span aria-hidden="true">/</span>

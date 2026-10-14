@@ -10,6 +10,9 @@ const RAW_CLASS =
   /\b(?:bg|text|border|ring|fill|stroke|from|to|via|outline|shadow|divide|placeholder|accent|caret|decoration)-(?:black|white)\b|-(?:red|orange|amber|yellow|lime|green|emerald|teal|cyan|sky|blue|indigo|violet|purple|fuchsia|pink|rose|slate|gray|zinc|neutral|stone)-\d{2,3}\b/;
 const ALLOW: Record<string, RegExp> = {
   'lib/components/workspace/LabelManager.svelte': /colour|color/i,
+  // The product mark's own colours (static/brand/README.md): brand identity, not a UI token, and
+  // the same in every vibe. Only lines that say so are let through.
+  'app.css': /\/\* brand: translucent-v2 \*\//,
 };
 
 function files(dir: string): string[] {

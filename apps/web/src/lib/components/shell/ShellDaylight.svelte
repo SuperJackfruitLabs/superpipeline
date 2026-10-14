@@ -11,6 +11,7 @@
     type MenuItem as VkMenuItem, type NavItem,
   } from '@superjackfruit/vibekit';
   import Icon from '$lib/components/parts/Icon.svelte';
+  import BrandMark from '$lib/components/BrandMark.svelte';
   import '$lib/styles/shell/daylight.css';
   import { shellModel as m } from './shell-model.svelte';
   import PlanSwitch from './PlanSwitch.svelte';
@@ -37,7 +38,7 @@
   const statusItems = $derived((status?.items ?? []).map((i) => ({ text: i.text, tone: i.signal ? ('needs' as const) : ('plain' as const) })));
 </script>
 
-{#snippet markIcon()}<Icon name="mark" size={26} strokeWidth={1.8} />{/snippet}
+{#snippet markIcon()}<BrandMark class="size-7" />{/snippet}
 <!-- Nav v2: the current place is marked by the item, never by filling a line icon. -->
 {#snippet inboxIcon()}<Icon name="inbox" size={22} strokeWidth={1.8} />{/snippet}
 {#snippet planIcon()}<Icon name="plan" size={22} strokeWidth={1.8} />{/snippet}

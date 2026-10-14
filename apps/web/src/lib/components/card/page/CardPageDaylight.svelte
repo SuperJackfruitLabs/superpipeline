@@ -15,6 +15,7 @@
   import { clockHM, weekdayDayMonth, whenLabel } from '$lib/when';
   import { isControlRow, isNarrative, visibleActivities } from '$lib/activity-groups';
   import Icon from '$lib/components/parts/Icon.svelte';
+  import BrandMark from '$lib/components/BrandMark.svelte';
   import CardEditForm from '../CardEditForm.svelte';
   import DeliveryPanel from '../DeliveryPanel.svelte';
   import LinkAddForm from '../LinkAddForm.svelte';
@@ -78,7 +79,7 @@
     <div class="vk-sky__sun" style="top: 92px;"></div>
     <div class="vk-sky__content">
       <nav class="dp-bar" aria-label="Card window">
-        <a class="dp-mark" href="/" aria-label="Superpipeline home"><Icon name="mark-line" size={22} /></a>
+        <a class="dp-mark" href="/" aria-label="Superpipeline home"><BrandMark class="size-6" /></a>
         <a class="dp-pill" href={boardHref}><Icon name="back" size={18} /> {m.boardName} board</a>
         <span class="dp-idchip">card {m.shortId}<button class="dp-copy" type="button" aria-label="Copy card id {m.shortId}" onclick={() => m.copyId()}><Icon name={m.copied === 'id' ? 'check' : 'copy'} size={16} /></button></span>
         <span style="flex: 1 1 auto;"></span>
