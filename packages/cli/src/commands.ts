@@ -1303,7 +1303,7 @@ export const COMMANDS: CommandSpec[] = [
     summary: "mint an agent's token: claim-run or run-only, shown once",
     description:
       "Issues a fresh `spa_` token for an agent that already exists. It does not expire; it lasts until it is " +
-      "revoked in Workspace → Agents, and revoking is per token, so an agent with two keeps working on the other.\n\n" +
+      "revoked in Crew → Agents, and revoking is per token, so an agent with two keeps working on the other.\n\n" +
       "The secret is shown **once** — only its hash is kept. Without `--out` the token alone goes to stdout and " +
       "everything else to stderr, so `> file` captures exactly the secret; with `--out` it is written 0600 and " +
       "printed nowhere. With `--json`, the object's `token` field is the only place it appears, and it is absent " +
@@ -1388,7 +1388,7 @@ export const COMMANDS: CommandSpec[] = [
         value: "<text>",
         type: "string",
         required: true,
-        description: "what holding this capability means — the description the registry and Workspace → Capabilities show",
+        description: "what holding this capability means — the description the registry and Crew → Capabilities show",
       },
     ],
     summary: "say what a capability means, declaring it if it is new",
