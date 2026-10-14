@@ -36,7 +36,7 @@
 :where(.wa-main) .menu { position: relative; display: inline-block; text-align: left; }
 :where(.wa-main) .menu > summary { list-style: none; cursor: pointer; }
 :where(.wa-main) .menu > summary::-webkit-details-marker { display: none; }
-:where(.wa-main) .disc-ico { display: inline-grid; transition: transform var(--vk-motion-fast) var(--vk-motion-easing); }
+:where(.wa-main) .disc-ico { display: inline-grid; transition: transform var(--vk-d-fast) var(--vk-ease-enter); }
 :where(.wa-main) .menu[open] > summary .disc-ico { transform: rotate(180deg); }
 :where(.wa-main) .menu-pop { position: absolute; right: 0; top: calc(100% + 6px); z-index: 5; width: 430px; display: flex; flex-direction: column; padding: 8px; border: 1.5px solid var(--rule); border-radius: 2px; background: var(--paper); }
 :where(.wa-main) .mi { display: flex; align-items: center; gap: 12px; min-height: 44px; padding: 0 10px; border: 0; border-radius: 2px; background: transparent; color: var(--text); font: 600 14px var(--ff); text-align: left; white-space: nowrap; cursor: pointer; }

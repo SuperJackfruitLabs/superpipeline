@@ -20,7 +20,7 @@
         <div class="money-in"><span>$</span><input class="input t-num" id="cap-c{suffix}" placeholder="none" inputmode="decimal" bind:value={model.cardCap} /></div>
         {#if model.cardError}<p class="hint" role="alert" style="color: var(--vk-color-signal-text);">{model.cardError}</p>{/if}
       </div>
-      <Button variant="primary" class="btn-sm"  type="submit" aria-disabled={model.busy ? 'true' : undefined}>{model.busy ? 'Saving…' : 'Save caps'}</Button>
+      <Button variant="primary" class="btn-sm"  type="submit" aria-disabled={model.busy ? 'true' : undefined} data-busy={model.busy ? 'true' : undefined}>{model.busy ? 'Saving…' : 'Save caps'}</Button>
     </form>
   <span class="sr" role="status">{model.busy ? 'Saving the caps…' : ''}</span>
     {#if model.error}<p class="note" role="alert">{model.error}</p>{/if}

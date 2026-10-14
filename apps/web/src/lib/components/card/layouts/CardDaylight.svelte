@@ -258,7 +258,7 @@
           {#if m.plan}<div data-section="plan" style="display: flex; flex-direction: column; gap: var(--vk-space-2);">
             <div class="dd-row" style="justify-content: space-between;"><b>Agent plan</b><span class="dd-small">{m.plan ? planProgress(planDone, m.plan.length) : 'none yet'}</span></div>
             {#if m.plan}
-              <div class="dd-meter"><i style="width: {Math.round((100 * planDone) / m.plan.length)}%;"></i></div>
+              <div class="dd-meter"><i class="sp-fill" style="--p: {(Math.round((100 * planDone) / m.plan.length)) / 100};"></i></div>
               <ul class="dd-plan">{#each m.plan as step, i (i)}<li class:done={step.done}><Icon name={step.done ? 'check' : 'chevron-right'} size={14} /><span>{step.text}</span></li>{/each}</ul>
             {:else}<p class="dd-small" style="margin: 0px;">{planNone(m.agent.name)}</p>{/if}
           </div>{:else}<span hidden data-section="plan"></span>{/if}
@@ -376,7 +376,7 @@
       {#snippet costBody()}
         <div data-section="cost" style="display: contents">
           <div><span style="font: 700 2rem/1 var(--vk-font-display);">{usd(card.costUsd)}</span> <span class="dd-small">· {m.estimate?.estimatedUsd ? `of ${usd(m.estimate.estimatedUsd)} estimated` : 'no estimate yet'}</span></div>
-          <div class="dd-meter"><i style="width: {m.costPct}%;"></i></div>
+          <div class="dd-meter"><i class="sp-fill" style="--p: {(m.costPct) / 100};"></i></div>
         </div>
         {#if m.counts.deliveryActive}<div data-section="delivery"><DeliveryPanel model={m} /></div>{:else}<span hidden data-section="delivery"></span>{/if}
       {/snippet}

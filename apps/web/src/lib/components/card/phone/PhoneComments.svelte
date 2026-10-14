@@ -13,5 +13,5 @@
 <label class="lab" for="cm-{id}">Comment</label>
 <textarea id="cm-{id}" class="ta" rows="2" placeholder="Write a comment" maxlength="8192" bind:value={model.comments.draft}
   onkeydown={(e) => { if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) { e.preventDefault(); void model.comments.submit(); } }}></textarea>
-<div class="addrow"><span class="muted small">⌘ or Ctrl + Enter to post</span><Button variant="secondary" class="sbtn" type="button" aria-disabled={model.comments.posting ? 'true' : undefined} onclick={() => { if (!model.comments.posting) void model.comments.submit(); }}>Comment</Button><span class="sr" role="status">{model.comments.posting ? 'Posting…' : ''}</span></div>
+<div class="addrow"><span class="muted small">⌘ or Ctrl + Enter to post</span><Button variant="secondary" class="sbtn" type="button" aria-disabled={model.comments.posting ? 'true' : undefined} data-busy={model.comments.posting ? 'true' : undefined} onclick={() => { if (!model.comments.posting) void model.comments.submit(); }}>Comment</Button><span class="sr" role="status">{model.comments.posting ? 'Posting…' : ''}</span></div>
 {#if model.comments.error}<p class="hint" role="alert">{model.comments.error}</p>{/if}

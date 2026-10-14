@@ -31,7 +31,7 @@
   {#if model.loadError}
     <p class="t-meta" role="alert">{model.loadError}</p>
   {:else if model.loading && model.projects.length === 0}
-    <p class="t-meta" role="status">Loading projects…</p>
+    <div aria-busy="true"><p class="t-meta" role="status">Loading projects…</p><span class="vk-skeleton" aria-hidden="true" style="width: 80%;"></span><span class="vk-skeleton" aria-hidden="true" style="width: 60%;"></span></div>
   {:else if model.projects.length === 0}
     <p class="t-meta">No projects yet. Use “New project” above to add the first.</p>
   {/if}

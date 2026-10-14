@@ -180,7 +180,7 @@
             placeholder={RESUME_PLACEHOLDER} hint={m.resume.error ? undefined : m.resume.hint} error={m.resume.error || undefined} bind:value={m.resume.note} />
         </div>
         <div class="pcd-foot">
-          <Button type="submit" aria-disabled={m.resume.busy ? 'true' : undefined}>Send back to work</Button>
+          <Button type="submit" aria-disabled={m.resume.busy ? 'true' : undefined} data-busy={m.resume.busy ? 'true' : undefined}>Send back to work</Button>
           <span class="vk-visually-hidden" role="status">{m.resume.busy ? 'Sending…' : ''}</span>
           <span class="pcd-small">With no note: “{emptyNoteError(agentName)}”</span>
         </div>
@@ -219,7 +219,7 @@
             <Field id="pcd-milestone" label="Milestone" control="select" bind:value={m.project.milestoneId} disabled={m.project.projectId === ''}
               options={[{ value: '', label: 'No milestone' }, ...m.project.milestones.map((ms) => ({ value: ms.id, label: ms.name }))]} />
             {#if m.project.error}<span class="vk-field__error" role="alert">{m.project.error}</span>{/if}
-            <span class="pcd-row"><Button aria-disabled={m.project.saving ? 'true' : undefined} onclick={() => { if (!m.project.saving) void m.project.save(); }}>Save</Button><Button variant="quiet" onclick={() => m.project.cancel()}>Cancel</Button></span>
+            <span class="pcd-row"><Button aria-disabled={m.project.saving ? 'true' : undefined} data-busy={m.project.saving ? 'true' : undefined} onclick={() => { if (!m.project.saving) void m.project.save(); }}>Save</Button><Button variant="quiet" onclick={() => m.project.cancel()}>Cancel</Button></span>
             </span>
           {:else if m.projectName}
             Project: {projectLine(m.projectName, m.milestoneName)} · <button class="pcd-linkbtn" type="button" onclick={() => m.project.start()}>Change project</button>
@@ -279,7 +279,7 @@
       <div data-section="subtasks" style="display: contents">
         {#if m.children.length}<ul class="pcd-ul">{#each m.children as c (c.id)}<li><button class="pcd-linkbtn" type="button" onclick={() => app.openCard(c.id)}>{c.title}</button></li>{/each}</ul>{:else}<p class="pcd-small pcd-small--flush">No sub-tasks yet.</p>{/if}
         {#if subAdd}
-          <div class="pcd-row"><Field id="pcd-sub" label="New sub-task title" labelHidden placeholder="Add a sub-task" bind:value={m.subtasks.title} onkeydown={(e) => { if (e.key === 'Enter') void m.subtasks.add(); }} /><Button variant="secondary" aria-disabled={m.subtasks.adding ? 'true' : undefined} onclick={() => { if (!m.subtasks.adding) void m.subtasks.add(); }}>Add</Button><span class="vk-visually-hidden" role="status">{m.subtasks.adding ? 'Adding…' : ''}</span></div>
+          <div class="pcd-row"><Field id="pcd-sub" label="New sub-task title" labelHidden placeholder="Add a sub-task" bind:value={m.subtasks.title} onkeydown={(e) => { if (e.key === 'Enter') void m.subtasks.add(); }} /><Button variant="secondary" aria-disabled={m.subtasks.adding ? 'true' : undefined} data-busy={m.subtasks.adding ? 'true' : undefined} onclick={() => { if (!m.subtasks.adding) void m.subtasks.add(); }}>Add</Button><span class="vk-visually-hidden" role="status">{m.subtasks.adding ? 'Adding…' : ''}</span></div>
         {:else}<button class="pcd-linkbtn pcd-small" type="button" style="align-self: flex-start;" onclick={() => (subAdd = true)}>Add a sub-task</button>{/if}
       </div>
     {/snippet}
@@ -312,7 +312,7 @@
         {/if}
         <Field id="pcd-comment" label="Write to whoever works this card. The agent reads it." control="textarea" maxlength={8192} rows={4} placeholder="⌘ or Ctrl + Enter posts it" bind:value={m.comments.draft} onkeydown={commentKey} />
         {#if m.comments.error}<p class="vk-field__error" role="alert">{m.comments.error}</p>{/if}
-        <Button variant="secondary" style="align-self: flex-start;" aria-disabled={m.comments.posting ? 'true' : undefined} onclick={() => { if (!m.comments.posting) void m.comments.submit(); }}>Comment</Button>
+        <Button variant="secondary" style="align-self: flex-start;" aria-disabled={m.comments.posting ? 'true' : undefined} data-busy={m.comments.posting ? 'true' : undefined} onclick={() => { if (!m.comments.posting) void m.comments.submit(); }}>Comment</Button>
         <span class="vk-visually-hidden" role="status">{m.comments.posting ? 'Posting…' : ''}</span>
       </div>
     {/snippet}
@@ -321,7 +321,7 @@
 
   <div class="pcd-foot" data-section="cardActions">
     <Button variant="secondary" data-section="editButton" pressed={editing} onclick={() => m.edit.start()}>{#snippet icon()}<Icon name="edit" size={18} />{/snippet}Edit card</Button>
-    {#if !m.archived}<Button variant="secondary" aria-disabled={m.archiving ? 'true' : undefined} onclick={() => { if (!m.archiving) void m.archive(); }}>{#snippet icon()}<Icon name="archive" size={18} />{/snippet}Archive card</Button><span class="vk-visually-hidden" role="status">{m.archiving ? 'Archiving…' : ''}</span>{/if}
+    {#if !m.archived}<Button variant="secondary" aria-disabled={m.archiving ? 'true' : undefined} data-busy={m.archiving ? 'true' : undefined} onclick={() => { if (!m.archiving) void m.archive(); }}>{#snippet icon()}<Icon name="archive" size={18} />{/snippet}Archive card</Button><span class="vk-visually-hidden" role="status">{m.archiving ? 'Archiving…' : ''}</span>{/if}
     <Button variant="quiet" onclick={() => m.remove()}>Delete card</Button>
   </div>
 </div>

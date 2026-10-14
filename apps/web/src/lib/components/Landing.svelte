@@ -300,7 +300,7 @@
     font-size: 14px;
     font-weight: 500;
     text-decoration: none;
-    transition: filter 0.15s ease, border-color 0.15s ease;
+    transition: filter var(--vk-d-fast) var(--vk-ease-standard), border-color var(--vk-d-fast) var(--vk-ease-standard);
   }
   .btn-signin {
     background: var(--vk-color-primary);

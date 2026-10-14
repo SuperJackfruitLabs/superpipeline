@@ -37,7 +37,7 @@
         </div>
         <form class="panel-body row-form" onsubmit={(e) => { e.preventDefault(); void model.saveName(); }}>
           <div class="field" style="flex: 1 1 260px;"><label for="bd-name">Board name</label><input class="input" id="bd-name" bind:value={model.nameInput} /></div>
-          <Button variant="secondary" type="submit" disabled={!model.nameDirty} aria-disabled={model.nameBusy ? 'true' : undefined}>{model.nameBusy ? 'Renaming…' : 'Rename'}</Button>
+          <Button variant="secondary" type="submit" disabled={!model.nameDirty} aria-disabled={model.nameBusy ? 'true' : undefined} data-busy={model.nameBusy ? 'true' : undefined}>{model.nameBusy ? 'Renaming…' : 'Rename'}</Button>
           {#if model.nameError}<p class="note" role="alert" style="flex-basis: 100%;">{model.nameError}</p>{/if}
         </form>
       </section>
@@ -45,7 +45,7 @@
         <div class="sec-head">
           <div style="display: flex; flex-direction: column; gap: 2px;"><h2 class="t-h2" id="pl-h">Pipeline</h2><p class="t-meta">{pipelineMeta(model.draft.length)}</p></div>
           {#if model.unsaved === 0}<span class="saved state"><LineIcon name="check" size={16} />Saved</span>{:else}<span class="unsaved state">{saveState(model.unsaved)}</span>{/if}
-          <Button variant="primary" type="button" disabled={model.unsaved === 0} aria-disabled={model.savingStages ? 'true' : undefined} onclick={() => void model.saveStages()}>{model.savingStages ? 'Saving…' : 'Save pipeline'}</Button>
+          <Button variant="primary" type="button" disabled={model.unsaved === 0} aria-disabled={model.savingStages ? 'true' : undefined} data-busy={model.savingStages ? 'true' : undefined} onclick={() => void model.saveStages()}>{model.savingStages ? 'Saving…' : 'Save pipeline'}</Button>
         </div>
         <div>{#each model.draft as stage, i (stage.key)}<StageRow {stage} index={i} {model} />{/each}</div>
         {#if model.stagesError}<p class="note" role="alert" style="margin: 0 var(--vk-space-5);">{model.stagesError}</p>{/if}
@@ -87,7 +87,7 @@
           <label class="check"><input type="checkbox" bind:checked={model.issueTrigger} /><span>Open a card for each new GitHub issue</span></label>
           <p class="note"><LineIcon name="info" size={20} /><span>{grantNote(board.github.triggerGrantCount)}</span></p>
           {#if model.ghError}<p class="note" role="alert">{model.ghError}</p>{/if}
-          <div><Button variant="primary" type="button" aria-disabled={model.ghBusy ? 'true' : undefined} onclick={() => void model.saveGithub()}>{model.ghBusy ? 'Saving…' : 'Save GitHub settings'}</Button></div>
+          <div><Button variant="primary" type="button" aria-disabled={model.ghBusy ? 'true' : undefined} data-busy={model.ghBusy ? 'true' : undefined} onclick={() => void model.saveGithub()}>{model.ghBusy ? 'Saving…' : 'Save GitHub settings'}</Button></div>
         </div>
       </section>
       <section class="panel" aria-labelledby="ap-h">
@@ -99,7 +99,7 @@
           <form class="row-form" onsubmit={(e) => { e.preventDefault(); void model.addProfile(); }}>
             <div class="field" style="flex: 1 1 140px;"><label for="ap-k">Key</label><input class="input" id="ap-k" placeholder="e.g. opus-careful" bind:value={model.pKey} /></div>
             <div class="field" style="flex: 1 1 140px;"><label for="ap-m">Model</label><input class="input" id="ap-m" placeholder="Model name" bind:value={model.pModel} /></div>
-            <Button variant="secondary" type="submit" aria-disabled={model.profileBusy ? 'true' : undefined} icon={ic_plus_16}>Add</Button>
+            <Button variant="secondary" type="submit" aria-disabled={model.profileBusy ? 'true' : undefined} data-busy={model.profileBusy ? 'true' : undefined} icon={ic_plus_16}>Add</Button>
             {#if model.profileError}<p class="note" role="alert" style="flex-basis: 100%;">{model.profileError}</p>{/if}
           </form>
         </div>

@@ -5,6 +5,7 @@
   import { greetNamed } from '$lib/greet';
   import { viewport } from '$lib/viewport.svelte';
   import { untrack } from 'svelte';
+  import SkeletonRows from '$lib/components/parts/SkeletonRows.svelte';
   /** SP-Operate-Quiet: one column, headings in reading order, most urgent first. */
   import { Button, Face } from '@superjackfruit/vibekit';
   import { moveTargets } from '../operate-data';
@@ -29,7 +30,9 @@
   <p class="q__lede">{inboxSubline(inboxCounts(model.needs), askBoards(model.needs), model.running.length)}</p>
   <h2>Needs you ({model.needs.length})</h2>
   {#if askBoards(model.needs) > 0}<p class="plain">{acrossBoards(askBoards(model.needs)).replace(/^./, (c) => c.toUpperCase())}. Most urgent first.</p>{/if}
-  {#if model.needs.length === 0}
+  {#if model.loading}
+    <SkeletonRows label="Loading what needs you…" />
+  {:else if model.needs.length === 0}
     <p class="plain">None.</p>
   {:else}
     <p class="q__note">Most urgent first.</p>

@@ -41,7 +41,7 @@
 :where(.page) .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 :where(.page) details > summary { list-style: none; cursor: pointer; }
 :where(.page) details > summary::-webkit-details-marker { display: none; }
-:where(.page) .disc-ico { transition: transform var(--vk-motion-fast) var(--vk-motion-easing); display: inline-grid; }
+:where(.page) .disc-ico { transition: transform var(--vk-d-fast) var(--vk-ease-enter); display: inline-grid; }
 :where(.page) details[open] > summary .disc-ico { transform: rotate(180deg); }
 :where(.page) .note { display: flex; gap: var(--vk-space-3); align-items: flex-start; padding: var(--vk-space-3) var(--vk-space-4); border-radius: var(--vk-radius-sm); background: var(--vk-color-raised); font-size: 0.9375rem; }
 [data-vibe="paper"] :where(.page) .t-h1, [data-vibe="paper"] :where(.page) .t-h2 { font-weight: 500; }

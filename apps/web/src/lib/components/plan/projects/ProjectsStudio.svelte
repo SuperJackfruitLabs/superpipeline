@@ -29,7 +29,7 @@
   </div>
 
   {#if model.loadError}<p class="ar-hint" role="alert">{model.loadError}</p>
-  {:else if model.loading && model.projects.length === 0}<p class="ar-hint" role="status">Loading projects…</p>
+  {:else if model.loading && model.projects.length === 0}<div aria-busy="true"><p class="ar-hint" role="status">Loading projects…</p><span class="vk-skeleton" aria-hidden="true" style="width: 80%;"></span><span class="vk-skeleton" aria-hidden="true" style="width: 60%;"></span></div>
   {:else if model.projects.length === 0}<p class="ar-hint">No projects yet. Use “New project” above to add the first.</p>{/if}
 
   {#each model.groups as g, gi (g.id)}
@@ -58,7 +58,7 @@
               {:else if rollup}
                 {@const segs = rollupSegments(rollup)}
                 <p class="pj-fig"><span><strong>{rollup.cardsDone}/{rollup.cardsTotal}</strong> cards done</span><span class="pj-cost">{segs[1]!.text}</span></p>
-                <div class="pj-bar" role="img" aria-label="{progressPct(rollup)}% of cards done"><i style="width: {progressPct(rollup)}%;"></i></div>
+                <div class="pj-bar" role="img" aria-label="{progressPct(rollup)}% of cards done"><i class="sp-fill" style="--p: {progressPct(rollup) / 100};"></i></div>
                 <p class="ar-hint">{segs[2]!.text}</p>
               {:else}
                 <div class="pj-load" aria-busy="true"><div class="pj-skel"></div><p class="ar-hint">Loading rollup…</p></div>

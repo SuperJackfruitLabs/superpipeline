@@ -57,7 +57,7 @@
   .spec-details > summary::before {
     content: '▸';
     display: inline-block;
-    transition: transform 0.15s ease;
+    transition: transform var(--vk-d-fast) var(--vk-ease-standard);
   }
   .spec-details[open] > summary::before {
     transform: rotate(90deg);

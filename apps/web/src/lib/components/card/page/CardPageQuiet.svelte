@@ -109,7 +109,7 @@
               options={m.resume.targets.filter((t) => t.allowed).map((t) => ({ value: t.key, label: quietResumeOption(t.n, t.name, t.current) }))} />
             <Field id="qp-note" {@attach noteRef} label="What changed, or what should the agent do differently? It reads this." control="textarea" maxlength={8000}
               hint={m.resume.error ? undefined : 'You must write a note before sending. Up to 8000 characters.'} error={m.resume.error || undefined} bind:value={m.resume.note} />
-            <div class="qp-acts"><Button aria-disabled={m.resume.busy ? 'true' : undefined} onclick={() => { if (!m.resume.busy) void m.resume.submit(); }}>Send back to work</Button><span class="vk-visually-hidden" role="status">{m.resume.busy ? 'Sending…' : ''}</span></div>
+            <div class="qp-acts"><Button aria-disabled={m.resume.busy ? 'true' : undefined} data-busy={m.resume.busy ? 'true' : undefined} onclick={() => { if (!m.resume.busy) void m.resume.submit(); }}>Send back to work</Button><span class="vk-visually-hidden" role="status">{m.resume.busy ? 'Sending…' : ''}</span></div>
           </fieldset>
         {:else}
           {#if lead.sentence}<section class="qp-sec"><p class="qp-by">{agentName} wrote:</p><p class="qp-said">{lead.sentence}</p></section>{/if}
@@ -168,7 +168,7 @@
           {#if m.comments.comments.length}<ul>{#each m.comments.comments as c (c.id)}<li><b>{m.authorName(c.author)}:</b> <span style="white-space: break-spaces; overflow-wrap: anywhere">{c.deletedAt ? 'Comment deleted' : c.body}</span></li>{/each}</ul>{:else}<p>No comments yet. The agent that works this card reads them.</p>{/if}
           <Field id="qp-comment" label="Add a comment" control="textarea" maxlength={8192} style="min-height: 96px;" bind:value={m.comments.draft} />
           {#if m.comments.error}<p role="alert">{m.comments.error}</p>{/if}
-          <div class="qp-acts"><Button variant="secondary" aria-disabled={m.comments.posting ? 'true' : undefined} onclick={() => { if (!m.comments.posting) void m.comments.submit(); }}>Comment</Button><span class="vk-visually-hidden" role="status">{m.comments.posting ? 'Posting…' : ''}</span></div>
+          <div class="qp-acts"><Button variant="secondary" aria-disabled={m.comments.posting ? 'true' : undefined} data-busy={m.comments.posting ? 'true' : undefined} onclick={() => { if (!m.comments.posting) void m.comments.submit(); }}>Comment</Button><span class="vk-visually-hidden" role="status">{m.comments.posting ? 'Posting…' : ''}</span></div>
         </section>
         <section class="qp-sec" aria-labelledby="qp-cost">
           <h2 id="qp-cost">Sub-tasks, project, cost and delivery</h2>
@@ -185,7 +185,7 @@
           <h2 id="qp-act">Card actions</h2>
           <div class="qp-acts">
             <a href="#edit" role="button" onclick={act(() => m.edit.start())}>Edit card</a>
-            {#if !m.archived}<Button variant="secondary" aria-disabled={m.archiving ? 'true' : undefined} onclick={() => { if (!m.archiving) void m.archive(); }}>Archive card</Button><span class="vk-visually-hidden" role="status">{m.archiving ? 'Archiving…' : ''}</span>{/if}
+            {#if !m.archived}<Button variant="secondary" aria-disabled={m.archiving ? 'true' : undefined} data-busy={m.archiving ? 'true' : undefined} onclick={() => { if (!m.archiving) void m.archive(); }}>Archive card</Button><span class="vk-visually-hidden" role="status">{m.archiving ? 'Archiving…' : ''}</span>{/if}
             <Button variant="quiet" onclick={() => m.remove()}>Delete card</Button>
           </div>
         </section>

@@ -1,7 +1,7 @@
 /* Ported verbatim from e2e/reference/mockups/SP-Projects-Studio (prefixes pj-, disc-ico, match ^(details|\.ar \.u\.act), where .pj-main) by scripts/pixel/extract-css.mjs. */
 :where(.pj-main) details > summary { list-style: none; cursor: pointer; }
 :where(.pj-main) details > summary::-webkit-details-marker { display: none; }
-:where(.pj-main) .disc-ico { transition: transform var(--vk-motion-fast) var(--vk-motion-easing); display: inline-grid; }
+:where(.pj-main) .disc-ico { transition: transform var(--vk-d-fast) var(--vk-ease-enter); display: inline-grid; }
 :where(.pj-main) details[open] > summary .disc-ico { transform: rotate(180deg); }
 .pj-main { flex: 1; display: flex; flex-direction: column; gap: 36px; padding: 24px 0 40px; }
 :where(.pj-main) .pj-new { display: flex; flex-direction: column; padding-top: 12px; border-top: 1.5px solid var(--rule); }

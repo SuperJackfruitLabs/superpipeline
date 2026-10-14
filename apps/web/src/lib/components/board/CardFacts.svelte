@@ -37,7 +37,7 @@
   {#if s.costPct !== null && s.cardCap !== null}
     {#if tone === 'chips'}
       <!-- the meter sits inside the item: an <li> with a role of its own is not a list item to a screen reader -->
-      <li class="costbar min-w-16"><span role="meter" class="block h-full" aria-valuemin="0" aria-valuemax="100" aria-valuenow={s.costPct} aria-label="Cost against the card cap" title="{usd(s.cost)} of the {usd(s.cardCap)} card cap"><span class="costbar-fill {s.overBudget ? 'costbar-fill-over' : ''}" style="width:{s.overBudget ? 100 : s.costPct}%"></span></span></li>
+      <li class="costbar min-w-16"><span role="meter" class="block h-full" aria-valuemin="0" aria-valuemax="100" aria-valuenow={s.costPct} aria-label="Cost against the card cap" title="{usd(s.cost)} of the {usd(s.cardCap)} card cap"><span class="costbar-fill sp-fill {s.overBudget ? 'costbar-fill-over' : ''}" style="--p: {(s.overBudget ? 100 : s.costPct) / 100}"></span></span></li>
     {:else}
       <li title="{usd(s.cost)} of the {usd(s.cardCap)} card cap">{s.costPct}% of cap</li>
     {/if}

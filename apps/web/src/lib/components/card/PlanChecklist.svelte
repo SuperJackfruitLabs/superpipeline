@@ -30,7 +30,7 @@
     </div>
     <!-- rollup bar -->
     <div class="rollup mt-2 h-[5px] overflow-hidden rounded-full bg-inset">
-      <div class="h-full rounded-full transition-all duration-1000" style="width:{pct}%;background:var(--live)"></div>
+      <div class="h-full rounded-full transition-[width] duration-[var(--vk-d-slow)]" style="width:{pct}%;background:var(--live)"></div>
     </div>
     <div class="eyebrow mt-1.5">{done} / {steps.length} steps · {pct}%</div>
   </section>

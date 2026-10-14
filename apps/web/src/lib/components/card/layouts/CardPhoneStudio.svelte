@@ -107,7 +107,7 @@
             <input id="resume-note" class="ar-in" type="text" maxlength="8000" bind:value={model.resume.note} aria-invalid={model.resume.error ? 'true' : undefined} />
             {#if model.resume.error}<p class="note" role="alert">{model.resume.error}</p>{/if}
           </div>
-          <Button variant="primary" class="ar-btn" type="button" aria-disabled={model.resume.busy ? 'true' : undefined} onclick={() => { if (!model.resume.busy) void model.resume.submit(); }}>{#snippet icon()}<PhoneIcon name="send" form="plain" size={15} />{/snippet}Send back to work</Button><span class="sr" role="status">{model.resume.busy ? 'Sending…' : ''}</span>
+          <Button variant="primary" class="ar-btn" type="button" aria-disabled={model.resume.busy ? 'true' : undefined} data-busy={model.resume.busy ? 'true' : undefined} onclick={() => { if (!model.resume.busy) void model.resume.submit(); }}>{#snippet icon()}<PhoneIcon name="send" form="plain" size={15} />{/snippet}Send back to work</Button><span class="sr" role="status">{model.resume.busy ? 'Sending…' : ''}</span>
         </section>
       {:else}<div data-section="resume" hidden></div>{/if}
     {/if}
@@ -132,7 +132,7 @@
   </div>
   <footer class="pc-foot" aria-label="Card actions" data-section="cardActions">
     {#if model.archived}<Button variant="secondary" class="ar-btn2" type="button" onclick={() => model.restore()}>Archived — restore</Button>
-    {:else}<Button variant="secondary" class="ar-btn2" type="button" aria-disabled={model.archiving ? 'true' : undefined} onclick={() => { if (!model.archiving) void model.archive(); }}>{#snippet icon()}<PhoneIcon name="archive-studio" form="plain" size={15} />{/snippet}Archive card</Button><span class="sr" role="status">{model.archiving ? 'Archiving…' : ''}</span>{/if}
+    {:else}<Button variant="secondary" class="ar-btn2" type="button" aria-disabled={model.archiving ? 'true' : undefined} data-busy={model.archiving ? 'true' : undefined} onclick={() => { if (!model.archiving) void model.archive(); }}>{#snippet icon()}<PhoneIcon name="archive-studio" form="plain" size={15} />{/snippet}Archive card</Button><span class="sr" role="status">{model.archiving ? 'Archiving…' : ''}</span>{/if}
     <Button variant="danger" onclick={() => model.remove()}>Delete card</Button>
   </footer>
 </div>

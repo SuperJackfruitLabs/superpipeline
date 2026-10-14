@@ -35,7 +35,7 @@
 :where(.st-main) .st-rule { flex-basis: 100%; font: 400 15px/1.45 var(--fs); overflow-wrap: break-word; }
 :where(.st-main) .st-rule.none { color: var(--muted); font-style: italic; }
 :where(.st-main) .st-ct { font: 500 12.5px/1.5 var(--fm); color: var(--muted); text-align: right; white-space: nowrap; }
-:where(.st-main) .st-chev { display: inline-grid; transition: transform var(--vk-motion-fast) var(--vk-motion-easing); }
+:where(.st-main) .st-chev { display: inline-grid; transition: transform var(--vk-d-fast) var(--vk-ease-enter); }
 :where(.st-main) details[open] > summary .st-chev { transform: rotate(180deg); }
 :where(.st-main) .stage-body { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px 20px; padding: 16px 0 20px 72px; border-top: 1px solid var(--hair); }
 :where(.st-main) .stage-body .full { grid-column: 1 / -1; }

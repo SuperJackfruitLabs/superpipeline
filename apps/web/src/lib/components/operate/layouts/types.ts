@@ -55,6 +55,8 @@ export interface SpendView {
 export type CapResult = { board: string | null; card: string | null; refused: string | null } | null;
 
 export interface OperateModel {
+  /** Nothing in scope has been read yet (the lists draw skeletons). Absent on models that load before they render. */
+  readonly loading?: boolean;
   /** The chosen board's id, or '' on all boards. */
   readonly boardId: string;
   /** The chosen board's name, or 'All boards'. */

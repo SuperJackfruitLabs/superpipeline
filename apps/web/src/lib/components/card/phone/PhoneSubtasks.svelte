@@ -11,6 +11,6 @@
 <form class="addrow" onsubmit={(e) => { e.preventDefault(); if (!model.subtasks.adding) void model.subtasks.add(); }}>
   <label class="sr" for="st-{id}">New sub-task title</label>
   <input id="st-{id}" class="inp" type="text" placeholder="Add a sub-task" bind:value={model.subtasks.title} />
-  <Button variant="secondary" class="sbtn" type="submit" aria-disabled={model.subtasks.adding ? 'true' : undefined}>Add</Button><span class="sr" role="status">{model.subtasks.adding ? 'Adding…' : ''}</span>
+  <Button variant="secondary" class="sbtn" type="submit" aria-disabled={model.subtasks.adding ? 'true' : undefined} data-busy={model.subtasks.adding ? 'true' : undefined}>Add</Button><span class="sr" role="status">{model.subtasks.adding ? 'Adding…' : ''}</span>
 </form>
 {#if model.subtasks.error}<p class="hint" role="alert">{model.subtasks.error}</p>{/if}

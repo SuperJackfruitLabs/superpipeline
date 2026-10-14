@@ -114,7 +114,7 @@
             </div>
           {/if}
           {#if app.user && card.ownerUserId !== app.user.userId && !m.archived}
-            <Button variant="quiet" aria-disabled={m.assigning ? 'true' : undefined} onclick={() => { if (!m.assigning) void m.assignToMe(); }}>Assign to me</Button>
+            <Button variant="quiet" aria-disabled={m.assigning ? 'true' : undefined} data-busy={m.assigning ? 'true' : undefined} onclick={() => { if (!m.assigning) void m.assignToMe(); }}>Assign to me</Button>
             <span class="vk-visually-hidden" role="status">{m.assigning ? 'Assigning…' : ''}</span>
           {/if}
         </aside>
@@ -157,7 +157,7 @@
                 hint={m.resume.error ? undefined : m.resume.hint} error={m.resume.error || undefined} bind:value={m.resume.note} />
             </div>
             <div class="dp-actions">
-              <Button type="submit" aria-disabled={m.resume.busy ? 'true' : undefined}>{#snippet icon()}<Icon name="send" size={18} />{/snippet}Send back to work</Button>
+              <Button type="submit" aria-disabled={m.resume.busy ? 'true' : undefined} data-busy={m.resume.busy ? 'true' : undefined}>{#snippet icon()}<Icon name="send" size={18} />{/snippet}Send back to work</Button>
               <span class="vk-visually-hidden" role="status">{m.resume.busy ? 'Sending…' : ''}</span>
               <span class="dp-small">{emptyNoteCaption(agentName)}</span>
             </div>
@@ -171,7 +171,7 @@
         <p class="dp-small" style="margin: 0px;">The agent that works this card reads every comment.</p>
         <Field id="dp-comment" label="Add a comment" control="textarea" maxlength={8192} style="min-height: 88px;" placeholder="⌘ or Ctrl + Enter posts it" bind:value={m.comments.draft} onkeydown={commentKey} />
         {#if m.comments.error}<p class="vk-field__error" role="alert">{m.comments.error}</p>{/if}
-        <Button variant="secondary" style="align-self: flex-start;" aria-disabled={m.comments.posting ? 'true' : undefined} onclick={() => { if (!m.comments.posting) void m.comments.submit(); }}>{#snippet icon()}<Icon name="comment" size={18} />{/snippet}Comment</Button>
+        <Button variant="secondary" style="align-self: flex-start;" aria-disabled={m.comments.posting ? 'true' : undefined} data-busy={m.comments.posting ? 'true' : undefined} onclick={() => { if (!m.comments.posting) void m.comments.submit(); }}>{#snippet icon()}<Icon name="comment" size={18} />{/snippet}Comment</Button>
         <span class="vk-visually-hidden" role="status">{m.comments.posting ? 'Posting…' : ''}</span>
       </section>
     </section>
@@ -204,7 +204,7 @@
         {:else}<span hidden data-section="details"></span>{/if}
         {#if m.plan}<div data-section="plan" style="display: flex; flex-direction: column; gap: var(--vk-space-2);">
           <div class="dp-row" style="justify-content: space-between;"><b>Agent plan</b><span class="dp-small">{m.plan ? planProgress(planDone, m.plan.length) : 'none yet'}</span></div>
-          {#if m.plan}<div class="dp-meter"><i style="width: {Math.round((100 * planDone) / m.plan.length)}%;"></i></div><ul class="dp-plan">{#each m.plan as st, i (i)}<li class:done={st.done}><Icon name={st.done ? 'check' : 'chevron-right'} size={14} /><span>{st.text}</span></li>{/each}</ul>
+          {#if m.plan}<div class="dp-meter"><i class="sp-fill" style="--p: {(Math.round((100 * planDone) / m.plan.length)) / 100};"></i></div><ul class="dp-plan">{#each m.plan as st, i (i)}<li class:done={st.done}><Icon name={st.done ? 'check' : 'chevron-right'} size={14} /><span>{st.text}</span></li>{/each}</ul>
           {:else}<p class="dp-p dp-small">{planNone(m.agent.name)}</p>{/if}
         </div>{:else}<span hidden data-section="plan"></span>{/if}
         <div class="dp-row" style="justify-content: space-between;" data-section="project">
@@ -214,7 +214,7 @@
               <Field id="dp-milestone" label="Milestone" labelHidden control="select" bind:value={m.project.milestoneId} disabled={m.project.projectId === ''} options={[{ value: '', label: 'No milestone' }, ...m.project.milestones.map((ms) => ({ value: ms.id, label: ms.name }))]} />
               {#if m.project.error}<span class="vk-field__error" role="alert">{m.project.error}</span>{/if}
             </span>
-            <Button aria-disabled={m.project.saving ? 'true' : undefined} onclick={() => { if (!m.project.saving) void m.project.save(); }}>Save</Button>
+            <Button aria-disabled={m.project.saving ? 'true' : undefined} data-busy={m.project.saving ? 'true' : undefined} onclick={() => { if (!m.project.saving) void m.project.save(); }}>Save</Button>
             <span class="vk-visually-hidden" role="status">{m.project.saving ? 'Saving…' : ''}</span>
             <Button variant="quiet" onclick={() => m.project.cancel()}>Cancel</Button>
           {:else}
@@ -292,7 +292,7 @@
         <h2 class="dp-h">Cost and delivery</h2>
         <div data-section="cost" style="display: contents">
           <div><span class="dp-big">{usd(card.costUsd)}</span> <span class="dp-small">· {m.estimate?.estimatedUsd ? `of ${usd(m.estimate.estimatedUsd)} estimated` : 'no estimate yet'}</span></div>
-          <div class="dp-meter"><i style="width: {m.costPct}%;"></i></div>
+          <div class="dp-meter"><i class="sp-fill" style="--p: {(m.costPct) / 100};"></i></div>
         </div>
         <dl class="dp-dl">
           <div data-section="attempts" style="display: contents">{#each m.attempts as a, i (a.runId)}<dt>Attempt {i + 1}</dt><dd>{name(a.agentId) || 'an agent'} · {usd(a.costUsd)} · {attemptWord(a)}</dd>{/each}</div>
@@ -306,7 +306,7 @@
     <hr />
     <Button variant="secondary" onclick={() => m.edit.start()}>{#snippet icon()}<Icon name="edit" size={18} />{/snippet}Edit card</Button>
     {#if !m.archived}
-      <Button variant="secondary" aria-disabled={m.archiving ? 'true' : undefined} onclick={() => { if (!m.archiving) void m.archive(); }}>{#snippet icon()}<Icon name="archive" size={18} />{/snippet}Archive card</Button>
+      <Button variant="secondary" aria-disabled={m.archiving ? 'true' : undefined} data-busy={m.archiving ? 'true' : undefined} onclick={() => { if (!m.archiving) void m.archive(); }}>{#snippet icon()}<Icon name="archive" size={18} />{/snippet}Archive card</Button>
       <span class="vk-visually-hidden" role="status">{m.archiving ? 'Archiving…' : ''}</span>
     {/if}
     <Button variant="quiet" onclick={() => m.remove()}>{#snippet icon()}<Icon name="trash" size={18} />{/snippet}Delete card</Button>

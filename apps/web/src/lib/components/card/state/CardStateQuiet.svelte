@@ -15,7 +15,7 @@
   <div class="qcs-notice" role="status"><b>Archived {dayMonth(m.card.archivedAt)}</b><span>{archivedReason(m.card.archivedAt, m.decidedGates)} Nothing on this card waits for you.</span></div>
 {:else if kind === 'restore'}
   <div class="qcs-row">
-    <Button aria-disabled={m.archiving ? 'true' : undefined} onclick={() => { if (!m.archiving) void m.restore(); }}>Restore</Button>
+    <Button aria-disabled={m.archiving ? 'true' : undefined} data-busy={m.archiving ? 'true' : undefined} onclick={() => { if (!m.archiving) void m.restore(); }}>Restore</Button>
     <span class="vk-visually-hidden" role="status">{m.archiving ? 'Restoring…' : ''}</span>
     <span class="qcs-meta">{quietRestore(m.stageName)}</span>
   </div>

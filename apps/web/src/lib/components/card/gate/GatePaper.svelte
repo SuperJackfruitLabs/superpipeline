@@ -108,7 +108,7 @@
     <div style="display: contents" bind:this={fieldWrap}></div>
   {/if}
   <div class="pcs-row" class:pcs-row--alert={part === 'controls' && (conflict || error)}>
-    <Button type="submit" aria-disabled={model.busy ? 'true' : undefined} aria-busy={model.busy ? 'true' : undefined}>Send reply</Button>
+    <Button type="submit" aria-disabled={model.busy ? 'true' : undefined} data-busy={model.busy ? 'true' : undefined}>Send reply</Button>
     {#if conflict}
       <div class="pcs-alert" role="alert"><Icon name="alert" size={18} /><div><b>Not recorded.</b> {gateConflictSentence(conflict, displayPrincipal(conflict.decidedBy, app.members))} <button class="pcs-linkbtn" type="button" onclick={() => onRefresh()}>Refresh to see it</button></div></div>
     {:else if error}

@@ -106,7 +106,7 @@
     <form class="pc-add" onsubmit={(e) => { e.preventDefault(); if (!model.subtasks.adding) void model.subtasks.add(); }}>
       <label class="sr" for="pst-{id}">New sub-task title</label>
       <input id="pst-{id}" class="ar-in" type="text" placeholder="Add a sub-task" bind:value={model.subtasks.title} />
-      <Button variant="secondary" class="ar-btn2" type="submit" aria-disabled={model.subtasks.adding ? 'true' : undefined}>Add</Button><span class="sr" role="status">{model.subtasks.adding ? 'Adding…' : ''}</span>
+      <Button variant="secondary" class="ar-btn2" type="submit" aria-disabled={model.subtasks.adding ? 'true' : undefined} data-busy={model.subtasks.adding ? 'true' : undefined}>Add</Button><span class="sr" role="status">{model.subtasks.adding ? 'Adding…' : ''}</span>
     </form>
   </div>
   <div data-section="references" style="display: contents;">
@@ -124,7 +124,7 @@
     <h3>Comments</h3>
     {#if model.comments.comments.length === 0}<p class="note">No comments yet.</p>{:else}<ul class="pc-refs">{#each model.comments.comments as cm (cm.id)}<li><b>{model.authorName(cm.author)}</b> <span>{cm.body}</span></li>{/each}</ul>{/if}
     <div class="ar-field"><label for="pcm-{id}">Comment</label><textarea id="pcm-{id}" class="ar-in" rows="2" placeholder="Write a comment" maxlength="8192" bind:value={model.comments.draft} onkeydown={(e) => { if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) { e.preventDefault(); void model.comments.submit(); } }}></textarea></div>
-    <div class="pc-row" style="justify-content: space-between;"><span class="note">⌘ or Ctrl + Enter to post</span><Button variant="secondary" class="ar-btn2" type="button" aria-disabled={model.comments.posting ? 'true' : undefined} onclick={() => { if (!model.comments.posting) void model.comments.submit(); }}>Comment</Button><span class="sr" role="status">{model.comments.posting ? 'Posting…' : ''}</span></div>
+    <div class="pc-row" style="justify-content: space-between;"><span class="note">⌘ or Ctrl + Enter to post</span><Button variant="secondary" class="ar-btn2" type="button" aria-disabled={model.comments.posting ? 'true' : undefined} data-busy={model.comments.posting ? 'true' : undefined} onclick={() => { if (!model.comments.posting) void model.comments.submit(); }}>Comment</Button><span class="sr" role="status">{model.comments.posting ? 'Posting…' : ''}</span></div>
   </div>
 {:else}
   <h3>Cost</h3><p data-section="cost"><strong class="mono">{view.cost.amount}</strong>{view.cost.rest}</p>

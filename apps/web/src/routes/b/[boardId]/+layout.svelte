@@ -57,7 +57,7 @@
     <CardDrawer />
   {/if}
 {:else}
-  <main class="min-h-viewport flex flex-col items-center justify-center gap-3 text-center">
+  <main class="min-h-viewport flex flex-col items-center justify-center gap-3 text-center" aria-busy={app.error ? undefined : 'true'}>
     <h1 class="sr-only">Loading the board</h1>
     <BrandMark class="size-7" />
     <div class="mono text-muted-foreground flex items-center gap-2 text-xs">

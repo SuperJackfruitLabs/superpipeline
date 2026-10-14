@@ -1,6 +1,7 @@
 <!-- apps/web/src/lib/components/operate/layouts/OperateDaylight.svelte -->
 <script lang="ts">
   import { untrack } from 'svelte';
+  import SkeletonRows from '$lib/components/parts/SkeletonRows.svelte';
   /** SP-Operate-Daylight: Needs you on the left; Running, Spend and Activity on the right. */
   import { Button, Face, Segmented } from '@superjackfruit/vibekit';
   import LineIcon from '$lib/components/parts/LineIcon.svelte';
@@ -60,7 +61,7 @@
   <div>
     <section class="panel" id="needs" aria-labelledby="h-needs">
       <div class="ph"><h2 id="h-needs">Needs you</h2><span class="count" class:count--needs={model.needs.length > 0}>{model.needs.length}</span>{#if !model.scoped}<span class="ph__end">{acrossBoards(askBoards(model.needs))}</span>{/if}</div>
-      {#if model.needs.length === 0}<p class="empty">Nothing is waiting on you.</p>{/if}
+      {#if model.loading}<SkeletonRows label="Loading what needs you…" />{:else if model.needs.length === 0}<p class="empty">Nothing is waiting on you.</p>{/if}
       {#each model.needs as row (row.item.id)}
         {@const id = row.item.cardId}
         {@const noOwner = row.item.kind === 'no-owner'}

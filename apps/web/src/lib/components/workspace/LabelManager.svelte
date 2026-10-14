@@ -40,7 +40,7 @@
   <form class="panel-body" style="border-top: 1px solid var(--vk-color-line); display: flex; gap: var(--vk-space-2); align-items: flex-end;" onsubmit={(e) => { e.preventDefault(); void model.add(); }}>
     <button class="swatch" aria-label="Colour of the new label" type="button" style="background: {model.newColour ?? 'var(--vk-mood-needs)'}; margin-bottom: 6px;" onclick={() => picker.open((c) => (model.newColour = c), 'the new label')}></button>
     <div class="field" style="flex: 1 1 0%;"><label for="lb-new">New label</label><input class="input" id="lb-new" placeholder="Name" bind:value={model.newName} /></div>
-    <Button variant="secondary" class="btn-sm" type="submit" aria-disabled={model.creating ? 'true' : undefined}>Add</Button>
+    <Button variant="secondary" class="btn-sm" type="submit" aria-disabled={model.creating ? 'true' : undefined} data-busy={model.creating ? 'true' : undefined}>Add</Button>
     <span class="sr" role="status">{model.creating ? 'Adding the label…' : ''}</span>
   </form>
   {#if model.error}<p class="hint" role="alert" style="padding: 0 var(--vk-space-5) var(--vk-space-4); color: var(--vk-color-signal-text);">{model.error}</p>{/if}

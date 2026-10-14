@@ -52,7 +52,7 @@
 :where(.sp-main) .sp-more { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; }
 :where(.sp-main) details > summary { list-style: none; cursor: pointer; }
 :where(.sp-main) details > summary::-webkit-details-marker { display: none; }
-:where(.sp-main) .disc-ico { display: inline-grid; transition: transform var(--vk-motion-fast) var(--vk-motion-easing); }
+:where(.sp-main) .disc-ico { display: inline-grid; transition: transform var(--vk-d-fast) var(--vk-ease-enter); }
 :where(.sp-main) details[open] > summary .disc-ico { transform: rotate(180deg); }
 :where(.sp-main) .sp-more details { align-self: stretch; }
 :where(.sp-main) .sp-raw { margin-top: 6px; border-top: 1px solid var(--rule); }

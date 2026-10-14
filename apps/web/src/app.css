@@ -269,9 +269,9 @@
 
   .tile {
     transition:
-      transform 0.12s ease,
-      border-color 0.12s ease,
-      box-shadow 0.12s ease;
+      transform var(--vk-d-fast) var(--vk-ease-standard),
+      border-color var(--vk-d-fast) var(--vk-ease-standard),
+      box-shadow var(--vk-d-fast) var(--vk-ease-standard);
   }
   .tile:hover {
     transform: translateY(-1px);
@@ -471,7 +471,7 @@
     display: block;
     height: 100%;
     background: var(--live);
-    transition: width 1.2s ease;
+    transition: width var(--vk-d-slow) var(--vk-ease-standard);
   }
   .costbar-fill-over {
     background: var(--coral);
@@ -645,7 +645,7 @@
     display: block;
     height: 100%;
     background: linear-gradient(90deg, var(--marigold), var(--vk-color-primary));
-    transition: width 1.2s ease;
+    transition: width var(--vk-d-slow) var(--vk-ease-standard);
   }
   .tele-burn-over > i {
     background: var(--coral);
@@ -705,7 +705,7 @@
     height: 100%;
     background: var(--live);
     border-radius: 8px;
-    transition: width 1.2s ease;
+    transition: width var(--vk-d-slow) var(--vk-ease-standard);
   }
   .tele-num {
     font-family: var(--font-mono);
@@ -789,3 +789,18 @@
 @media (max-width: 599px) {
   .sticky-reply .elicitation { position: sticky; bottom: 0; }
 }
+
+/* Motion (vibekit 0.0.12). A busy Button keeps aria-disabled (focus stays put) and says so with data-busy:
+   vibekit's own sweep along the bottom edge, same size; Quiet has none. Reduced motion stops it (base.css). */
+.vk-button[data-busy='true'] { position: relative; overflow: hidden; }
+.vk-button[data-busy='true']::after { content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 2px; background: currentColor; opacity: 0; pointer-events: none; animation: vk-motion-busy calc(1200ms * var(--vk-motion-scale)) var(--vk-ease-standard) infinite; }
+:where([data-vibe='quiet']) .vk-button[data-busy='true']::after { display: none; }
+/* A progress or roll-up fill, vibekit's .vk-bar mechanism: the fill is full width and scaled by --p (0..1), so a change
+   slides on the compositor and never animates width. Only on fills with square ends (a scaled round end would squash). */
+.sp-fill { width: 100%; transform-origin: left; scale: var(--p, 0) 1; transition: scale var(--vk-d-slow) var(--vk-ease-standard); }
+/* The screens' own skeleton shapes (card loading states, project roll-ups) shimmer like vibekit's .vk-skeleton:
+   Daylight and Studio sweep, Paper breathes, Quiet stays still; reduced motion stops all of it. */
+:is(.ds-sk, .pcs-sk, .ss-sk, .skel, .pj-skel) { position: relative; overflow: hidden; }
+:is(.ds-sk, .pcs-sk, .ss-sk, .skel, .pj-skel)::after { content: ''; position: absolute; inset: 0; translate: -100% 0; background: linear-gradient(90deg, transparent, color-mix(in oklch, var(--vk-color-surface) 70%, transparent), transparent); animation: vk-motion-shimmer calc(1400ms * var(--vk-motion-scale)) linear infinite; pointer-events: none; }
+:where([data-vibe='paper'], [data-vibe='quiet']) :is(.ds-sk, .pcs-sk, .ss-sk, .skel, .pj-skel)::after { display: none; }
+:where([data-vibe='paper']) :is(.ds-sk, .pcs-sk, .ss-sk, .skel, .pj-skel) { animation: vk-motion-breathe calc(1600ms * var(--vk-motion-scale)) ease-in-out infinite alternate; }

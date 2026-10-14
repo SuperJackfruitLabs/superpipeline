@@ -2,6 +2,7 @@
 <script lang="ts">
   import { viewport } from '$lib/viewport.svelte';
   import { untrack } from 'svelte';
+  import SkeletonRows from '$lib/components/parts/SkeletonRows.svelte';
   /** SP-Operate-Paper: "The desk" — letters waiting on you, the digest, and the ledger. */
   import { Button, Face } from '@superjackfruit/vibekit';
   import LineIcon from '$lib/components/parts/LineIcon.svelte';
@@ -47,7 +48,7 @@
   <div class="cols">
     <section class="col" id="letters" aria-labelledby="k1">
       <div class="kick"><h2 id="k1">Waiting on you</h2><span class="kick__n" class:kick__n--needs={model.needs.length > 0}>{letters(model.needs.length)}</span>{#if !model.scoped}<span class="lnk">{acrossBoards(askBoards(model.needs))}</span>{/if}</div>
-      {#if model.needs.length === 0}<p class="prose">Nothing is waiting on you.</p>{/if}
+      {#if model.loading}<SkeletonRows label="Loading what needs you…" />{:else if model.needs.length === 0}<p class="prose">Nothing is waiting on you.</p>{/if}
       {#each model.needs as row (row.item.id)}
         {@const id = row.item.cardId}
         {@const noOwner = row.item.kind === 'no-owner'}

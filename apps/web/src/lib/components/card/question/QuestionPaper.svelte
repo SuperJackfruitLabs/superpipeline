@@ -36,12 +36,12 @@
       </fieldset>
       <Field {id} control="textarea" rows={4} label="Add a note for the agent (optional)" bind:value={model.text} />
       {#if model.error}<p class="vk-field__error" role="alert">{model.error}</p>{/if}
-      <div class="pcs-row"><Button type="submit" aria-disabled={model.answering ? 'true' : undefined} aria-busy={model.answering ? 'true' : undefined}>Send reply</Button></div>
+      <div class="pcs-row"><Button type="submit" aria-disabled={model.answering ? 'true' : undefined} data-busy={model.answering ? 'true' : undefined}>Send reply</Button></div>
     {:else}
       <Field {id} control="textarea" rows={4} label="Your answer goes straight back to {name}" hint={model.error ? undefined : PAPER_CAPTIONS.question} error={model.error ?? undefined} bind:value={model.text} />
       <!-- Field draws the error; this says it out loud when it appears. -->
       <span class="vk-visually-hidden" role="alert">{model.error ?? ''}</span>
-      <div class="pcs-row"><Button type="submit" aria-disabled={model.answering ? 'true' : undefined} aria-busy={model.answering ? 'true' : undefined}>Send answer</Button></div>
+      <div class="pcs-row"><Button type="submit" aria-disabled={model.answering ? 'true' : undefined} data-busy={model.answering ? 'true' : undefined}>Send answer</Button></div>
     {/if}
     <span class="vk-visually-hidden" role="status">{model.answering ? 'Sending…' : ''}</span>
   </form>

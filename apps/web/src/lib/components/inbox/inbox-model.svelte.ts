@@ -31,6 +31,8 @@ export class InboxStore implements OperateModel {
   #notes = $state<Record<string, Notification[]>>({});
   #usage = $state<Record<string, UsageSummary>>({});
   #usageError = $state<string | null>(null);
+  /** Boards whose first read has finished, whether it worked or not. */
+  #settled = $state<Record<string, true>>({});
 
   /** The boards in scope, the ones that need you first. */
   readonly boardIds = $derived.by(() => {
@@ -72,6 +74,8 @@ export class InboxStore implements OperateModel {
     });
   }
 
+  /** Nothing in scope has been read yet: the lists show skeletons, not “nothing is waiting”. */
+  get loading(): boolean { return this.boardIds.length > 0 && this.#boards.length === 0 && !this.boardIds.some((id) => this.#settled[id]); }
   get scoped(): boolean { return inboxScope.boardId !== null; }
   get boardCount(): number { return this.boardIds.length; }
   get boardId(): string { return inboxScope.boardId ?? ''; }
@@ -107,6 +111,7 @@ export class InboxStore implements OperateModel {
     if (notes.status === 'fulfilled') this.#notes[id] = notes.value;
     if (usage.status === 'fulfilled') this.#usage[id] = usage.value;
     else this.#usageError = usage.reason instanceof Error ? usage.reason.message : String(usage.reason);
+    this.#settled[id] = true;
   }
   async #after(boardId: string): Promise<void> {
     if (boardId === app.boardId) await app.refresh();

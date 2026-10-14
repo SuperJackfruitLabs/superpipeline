@@ -75,7 +75,7 @@
         error={model.needNote ? 'Request changes needs a note.' : undefined} />
     </div>
     <div class="qcs-row" class:qcs-row--alert={!!(conflict || error)}>
-      <Button type="submit" aria-disabled={model.busy ? 'true' : undefined} aria-busy={model.busy ? 'true' : undefined}>Submit decision</Button>
+      <Button type="submit" aria-disabled={model.busy ? 'true' : undefined} data-busy={model.busy ? 'true' : undefined}>Submit decision</Button>
       {#if conflict}
         <div class="qcs-alert" role="alert" style="flex: 1 1 220px;"><b>Not recorded.</b> {gateConflictSentence(conflict, conflictWho)} <button class="qcs-linkbtn" type="button" onclick={() => onRefresh()}>Refresh to see it</button>.</div>
       {:else if error}

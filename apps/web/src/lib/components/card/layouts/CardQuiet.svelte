@@ -109,7 +109,7 @@
         options={m.resume.targets.filter((t) => t.allowed).map((t) => ({ value: t.key, label: quietResumeOption(t.n, t.name, t.current) }))} />
       <Field id="qcd-note" {@attach noteRef} label="What changed, or what should the agent do differently? It reads this." control="textarea" maxlength={8000} rows={4}
         hint={m.resume.error ? undefined : 'You must write a note before sending. Up to 8000 characters.'} error={m.resume.error || undefined} bind:value={m.resume.note} />
-      <div class="qcd-row"><Button aria-disabled={m.resume.busy ? 'true' : undefined} onclick={() => { if (!m.resume.busy) void m.resume.submit(); }}>Send back to work</Button><span class="vk-visually-hidden" role="status">{m.resume.busy ? 'Sending…' : ''}</span></div>
+      <div class="qcd-row"><Button aria-disabled={m.resume.busy ? 'true' : undefined} data-busy={m.resume.busy ? 'true' : undefined} onclick={() => { if (!m.resume.busy) void m.resume.submit(); }}>Send back to work</Button><span class="vk-visually-hidden" role="status">{m.resume.busy ? 'Sending…' : ''}</span></div>
     </fieldset>
   {:else}
     {#if lead.sentence}<p class="qcd-by">{agentName} {done ? 'finished it and wrote' : 'wrote'}:</p><p class="qcd-said"><TokenText text={lead.sentence} cls="qcd-id" re={QUIET_TOKEN_RE} /></p>{/if}
@@ -165,7 +165,7 @@
       {#if m.comments.comments.length}<ul>{#each m.comments.comments as c (c.id)}<li><b>{m.authorName(c.author)}:</b> <span style="white-space: break-spaces; overflow-wrap: anywhere">{c.deletedAt ? 'Comment deleted' : c.body}</span></li>{/each}</ul>{:else}<p>No comments yet. The agent that works this card reads them.</p>{/if}
       <Field id="qcd-comment" label="Add a comment" control="textarea" maxlength={8192} rows={4} style="min-height: 80px;" bind:value={m.comments.draft} />
       {#if m.comments.error}<p role="alert">{m.comments.error}</p>{/if}
-      <div class="qcd-row"><Button variant="secondary" aria-disabled={m.comments.posting ? 'true' : undefined} onclick={() => { if (!m.comments.posting) void m.comments.submit(); }}>Comment</Button><span class="vk-visually-hidden" role="status">{m.comments.posting ? 'Posting…' : ''}</span></div>
+      <div class="qcd-row"><Button variant="secondary" aria-disabled={m.comments.posting ? 'true' : undefined} data-busy={m.comments.posting ? 'true' : undefined} onclick={() => { if (!m.comments.posting) void m.comments.submit(); }}>Comment</Button><span class="vk-visually-hidden" role="status">{m.comments.posting ? 'Posting…' : ''}</span></div>
     </section>
     <section class="qcd-sec" data-section="links">
       <h3>Links ({m.counts.links})</h3>
@@ -177,8 +177,8 @@
     <section class="qcd-sec">
       <h3>Sub-tasks, Project, Cost, Delivery</h3>
       <dl class="qcd-dl">
-        <div data-section="subtasks" style="display: contents"><dt>Sub-tasks</dt><dd>{m.children.length === 0 ? 'None.' : quietSubtasks(card.openChildCount, m.children.length)} {#if subAdd}<span class="qcd-row"><label class="qcd-ln" for="qcd-sub">New sub-task title</label><input id="qcd-sub" class="vk-field__input" type="text" bind:value={m.subtasks.title} onkeydown={(e) => { if (e.key === 'Enter') void m.subtasks.add(); }} /><Button variant="secondary" aria-disabled={m.subtasks.adding ? 'true' : undefined} onclick={() => { if (!m.subtasks.adding) void m.subtasks.add(); }}>Add</Button></span>{:else}<button class="qcd-ln" type="button" onclick={() => (subAdd = true)}>Add a sub-task</button>{/if}</dd></div>
-        <div data-section="project" style="display: contents"><dt>Project</dt><dd>{#if m.project.editing}<span class="qcd-projform" data-project-form><Field id="qcd-project" label="Project" control="select" bind:value={m.project.projectId} onchange={() => void m.project.onProjectChange()} options={[{ value: '', label: 'No project' }, ...m.projects.map((p) => ({ value: p.id, label: p.name }))]} /><span class="qcd-row"><Button aria-disabled={m.project.saving ? 'true' : undefined} onclick={() => { if (!m.project.saving) void m.project.save(); }}>Save</Button><button class="qcd-ln" type="button" onclick={() => m.project.cancel()}>Cancel</button></span></span>{:else}{m.projectName ? `${projectLine(m.projectName, m.milestoneName)}.` : 'None.'} <button class="qcd-ln" type="button" onclick={() => m.project.start()}>{m.projectName ? 'Change project' : 'Assign to a project'}</button>{/if}</dd></div>
+        <div data-section="subtasks" style="display: contents"><dt>Sub-tasks</dt><dd>{m.children.length === 0 ? 'None.' : quietSubtasks(card.openChildCount, m.children.length)} {#if subAdd}<span class="qcd-row"><label class="qcd-ln" for="qcd-sub">New sub-task title</label><input id="qcd-sub" class="vk-field__input" type="text" bind:value={m.subtasks.title} onkeydown={(e) => { if (e.key === 'Enter') void m.subtasks.add(); }} /><Button variant="secondary" aria-disabled={m.subtasks.adding ? 'true' : undefined} data-busy={m.subtasks.adding ? 'true' : undefined} onclick={() => { if (!m.subtasks.adding) void m.subtasks.add(); }}>Add</Button></span>{:else}<button class="qcd-ln" type="button" onclick={() => (subAdd = true)}>Add a sub-task</button>{/if}</dd></div>
+        <div data-section="project" style="display: contents"><dt>Project</dt><dd>{#if m.project.editing}<span class="qcd-projform" data-project-form><Field id="qcd-project" label="Project" control="select" bind:value={m.project.projectId} onchange={() => void m.project.onProjectChange()} options={[{ value: '', label: 'No project' }, ...m.projects.map((p) => ({ value: p.id, label: p.name }))]} /><span class="qcd-row"><Button aria-disabled={m.project.saving ? 'true' : undefined} data-busy={m.project.saving ? 'true' : undefined} onclick={() => { if (!m.project.saving) void m.project.save(); }}>Save</Button><button class="qcd-ln" type="button" onclick={() => m.project.cancel()}>Cancel</button></span></span>{:else}{m.projectName ? `${projectLine(m.projectName, m.milestoneName)}.` : 'None.'} <button class="qcd-ln" type="button" onclick={() => m.project.start()}>{m.projectName ? 'Change project' : 'Assign to a project'}</button>{/if}</dd></div>
         <div data-section="cost" style="display: contents"><dt>Cost</dt><dd>{quietCost(card.costUsd, m.estimate?.estimatedUsd ?? null)}</dd></div>
         <div data-section="attempts" style="display: contents"><dt>Attempts</dt><dd>{quietAttempts(m.attempts, name)}</dd></div>
         <div data-section="delivery" style="display: contents"><dt>Delivery</dt><dd>{#if m.counts.deliveryActive}<DeliveryPanel model={m} />{:else}None approved{/if}</dd></div>
@@ -196,7 +196,7 @@
     <section class="qcd-sec" data-section="cardActions">
       <h3>Card actions</h3>
       <div class="qcd-row">
-        {#if !m.archived}<Button variant="secondary" aria-disabled={m.archiving ? 'true' : undefined} onclick={() => { if (!m.archiving) void m.archive(); }}>Archive card</Button><span class="vk-visually-hidden" role="status">{m.archiving ? 'Archiving…' : ''}</span>{/if}
+        {#if !m.archived}<Button variant="secondary" aria-disabled={m.archiving ? 'true' : undefined} data-busy={m.archiving ? 'true' : undefined} onclick={() => { if (!m.archiving) void m.archive(); }}>Archive card</Button><span class="vk-visually-hidden" role="status">{m.archiving ? 'Archiving…' : ''}</span>{/if}
         <Button variant="quiet" onclick={() => m.remove()}>Delete card</Button>
       </div>
     </section>

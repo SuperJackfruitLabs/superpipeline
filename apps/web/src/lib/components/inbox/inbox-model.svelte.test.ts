@@ -43,6 +43,26 @@ beforeEach(() => {
 afterEach(() => { stop?.(); stop = null; inboxScope.choose(null); app.board = null; app.boards = []; app.attention = []; vi.clearAllMocks(); });
 
 describe('the Inbox model', () => {
+  it('is loading until a board in scope has been read, and stops even when every read fails', async () => {
+    let release!: () => void;
+    const gate = new Promise<void>((r) => (release = r));
+    api.getBoard.mockImplementation(async () => { await gate; throw new Error('offline'); });
+    app.board = null;
+    const m = make();
+    await settle();
+    expect(m.loading).toBe(true);
+    release();
+    await settle();
+    expect(m.loading).toBe(false);
+    expect(m.needs).toEqual([]);
+  });
+  it('is not loading while the open board already shows', async () => {
+    api.getBoard.mockImplementation(() => new Promise(() => {}));
+    const m = make();
+    await settle();
+    expect(m.needs.length).toBeGreaterThan(0);
+    expect(m.loading).toBe(false);
+  });
   it('reads every board by default, boards that need you first, and every row names its board', async () => {
     const m = make();
     await settle();

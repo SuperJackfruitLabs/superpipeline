@@ -69,7 +69,7 @@
         <textarea id="resume-note" class="ta" rows="3" maxlength="8000" aria-describedby="note-hint" bind:value={model.resume.note} aria-invalid={model.resume.error ? 'true' : undefined}></textarea>
         {#if model.resume.error}<p class="hint" role="alert">{model.resume.error}</p>{/if}
       </div>
-      <Button variant="primary" class="go" type="button" aria-disabled={model.resume.busy ? 'true' : undefined} onclick={() => { if (!model.resume.busy) void model.resume.submit(); }}>Send back to work</Button><span class="sr" role="status">{model.resume.busy ? 'Sending…' : ''}</span>
+      <Button variant="primary" class="go" type="button" aria-disabled={model.resume.busy ? 'true' : undefined} data-busy={model.resume.busy ? 'true' : undefined} onclick={() => { if (!model.resume.busy) void model.resume.submit(); }}>Send back to work</Button><span class="sr" role="status">{model.resume.busy ? 'Sending…' : ''}</span>
     </fieldset>
   {:else}<div data-section="resume" hidden></div>{/if}
 
@@ -116,7 +116,7 @@
     <h3 id="s-act">Card actions</h3>
     <div class="cact">
       {#if model.archived}<Button variant="secondary" class="sbtn" type="button" onclick={() => model.restore()}>Restore</Button>
-      {:else}<Button variant="secondary" class="sbtn" type="button" aria-disabled={model.archiving ? 'true' : undefined} onclick={() => { if (!model.archiving) void model.archive(); }}>{#snippet icon()}<PhoneIcon name="archive" />{/snippet}Archive card</Button><span class="sr" role="status">{model.archiving ? 'Archiving…' : ''}</span>{/if}
+      {:else}<Button variant="secondary" class="sbtn" type="button" aria-disabled={model.archiving ? 'true' : undefined} data-busy={model.archiving ? 'true' : undefined} onclick={() => { if (!model.archiving) void model.archive(); }}>{#snippet icon()}<PhoneIcon name="archive" />{/snippet}Archive card</Button><span class="sr" role="status">{model.archiving ? 'Archiving…' : ''}</span>{/if}
       <Button variant="danger" onclick={() => model.remove()}>Delete card</Button>
     </div>
   </footer>

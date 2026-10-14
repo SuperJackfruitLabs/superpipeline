@@ -4,6 +4,7 @@
   import { acrossBoards, askBoards, inboxCounts, inboxSubline, wantYou } from '$lib/components/inbox/inbox-words';
   import { greetNamed } from '$lib/greet';
   import { viewport } from '$lib/viewport.svelte';
+  import SkeletonRows from '$lib/components/parts/SkeletonRows.svelte';
   /** SP-Operate-Studio: the annual-report spread, with J/K/R/M/O/. on the Needs table. */
   import { tick, untrack } from 'svelte';
   import { Face } from '@superjackfruit/vibekit';
@@ -105,7 +106,9 @@
 
   <section class="ar-sec" id="needs" aria-labelledby="op-n">
     <div class="hd"><span class="no">02</span><h2 id="op-n">Needs you</h2><span class="r"><span class="sigt">{model.needs.length}</span>{#if !model.scoped}<span class="m"> · {acrossBoards(askBoards(model.needs))}</span>{/if}</span></div>
-    {#if model.needs.length === 0}
+    {#if model.loading}
+      <SkeletonRows label="Loading what needs you…" />
+    {:else if model.needs.length === 0}
       <p class="op-empty">Nothing on this board is waiting on you.</p>
     {:else}
       <table class="ar-tbl op-tbl">
@@ -195,7 +198,7 @@
         <div class="hd"><span class="no">05</span><h2 id="op-s">Spend</h2><span class="r">{model.scoped ? '' : 'all boards · '}last 7 days{#if model.scoped} · <a class="ar-lk" href="/b/{model.boardId}/operate/telemetry" style="min-height: 0px;">Detail <LineIcon name="arrow-ar" size={14} stroke={1.75} /></a>{/if}</span></div>
         {#if model.usageError}<p class="ar-hint">Couldn't load spend — {model.usageError}</p>{/if}
         <div class="ar-figs" style="grid-auto-flow: row; border-bottom: 0px;"><div><b class:z={model.spend.total === 0}>{usd(model.spend.total)}</b><span>{model.spend.cap === null ? 'No cap set' : `of ${usd(model.spend.cap)} cap`}</span></div></div>
-        <div class="op-bar" aria-hidden="true">{#if model.spend.pct !== null}<i style="display: block; height: 100%; width: {model.spend.pct}%; background: {model.spend.overBudget ? 'var(--sig)' : 'var(--text)'};"></i>{/if}</div>
+        <div class="op-bar" aria-hidden="true">{#if model.spend.pct !== null}<i class="sp-fill" style="display: block; height: 100%; --p: {model.spend.pct / 100}; background: {model.spend.overBudget ? 'var(--sig)' : 'var(--text)'};"></i>{/if}</div>
         <table class="ar-tbl"><thead><tr><th scope="col">Top agents</th><th scope="col" style="width: 64px;">$</th></tr></thead><tbody>
           {#each model.spend.top as a (a.name)}
             <tr><td>{a.name}</td><td><span class="m">{usd(a.costUsd)}</span></td></tr>

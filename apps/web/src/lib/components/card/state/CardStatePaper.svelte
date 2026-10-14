@@ -20,7 +20,7 @@
   <div class="pcs-banner" role="status"><Icon name="archive" size={22} /><div><b>Archived {dayMonth(card.archivedAt)}</b><p class="pcs-small">{archivedReason(card.archivedAt, m.decidedGates)}</p></div></div>
 {:else if kind === 'restore'}
   <div class="pcs-row">
-    <Button aria-disabled={m.archiving ? 'true' : undefined} onclick={() => { if (!m.archiving) void m.restore(); }}>{#snippet icon()}<Icon name="restore" size={18} />{/snippet}Restore</Button>
+    <Button aria-disabled={m.archiving ? 'true' : undefined} data-busy={m.archiving ? 'true' : undefined} onclick={() => { if (!m.archiving) void m.restore(); }}>{#snippet icon()}<Icon name="restore" size={18} />{/snippet}Restore</Button>
     <span class="vk-visually-hidden" role="status">{m.archiving ? 'Restoring…' : ''}</span>
     <span class="pcs-small">{paperRestoreNote(m.stageName)}</span>
   </div>

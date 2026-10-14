@@ -134,7 +134,7 @@
                 <Field id="pg-note" {@attach noteRef} label="What changed, or what should the agent do differently? It reads this." control="textarea" maxlength={8000} placeholder={RESUME_PLACEHOLDER}
                   hint={m.resume.error ? undefined : m.resume.hint} error={m.resume.error || undefined} bind:value={m.resume.note} />
               </div>
-              <div class="pg-foot"><Button type="submit" aria-disabled={m.resume.busy ? 'true' : undefined}>Send back to work</Button><span class="vk-visually-hidden" role="status">{m.resume.busy ? 'Sending…' : ''}</span><span class="pg-small">With no note: “{emptyNoteError(agentName)}”</span></div>
+              <div class="pg-foot"><Button type="submit" aria-disabled={m.resume.busy ? 'true' : undefined} data-busy={m.resume.busy ? 'true' : undefined}>Send back to work</Button><span class="vk-visually-hidden" role="status">{m.resume.busy ? 'Sending…' : ''}</span><span class="pg-small">With no note: “{emptyNoteError(agentName)}”</span></div>
             </form>
           {:else}{@render hidden('resume')}{/if}
         {/if}
@@ -144,7 +144,7 @@
           {:else}<p class="pg-small" style="margin: 0px;">No letters yet. The agent that works this card reads them.</p>{/if}
           <Field id="pg-comment" label="Write to whoever works this card" control="textarea" maxlength={8192} style="min-height: 88px;" placeholder="⌘ or Ctrl + Enter posts it" bind:value={m.comments.draft} onkeydown={commentKey} />
           {#if m.comments.error}<p class="vk-field__error" role="alert">{m.comments.error}</p>{/if}
-          <Button variant="secondary" style="align-self: flex-start;" aria-disabled={m.comments.posting ? 'true' : undefined} onclick={() => { if (!m.comments.posting) void m.comments.submit(); }}>Comment</Button><span class="vk-visually-hidden" role="status">{m.comments.posting ? 'Posting…' : ''}</span>
+          <Button variant="secondary" style="align-self: flex-start;" aria-disabled={m.comments.posting ? 'true' : undefined} data-busy={m.comments.posting ? 'true' : undefined} onclick={() => { if (!m.comments.posting) void m.comments.submit(); }}>Comment</Button><span class="vk-visually-hidden" role="status">{m.comments.posting ? 'Posting…' : ''}</span>
         </section>
       </article>
 
@@ -190,7 +190,7 @@
           <Button variant="secondary" style="align-self: flex-start;" onclick={() => m.links.openAdd()}>{#snippet icon()}<Icon name="link" size={16} />{/snippet}Add link</Button>
           <LinkAddForm model={m} />
           <div class="pg-adds">
-            <details class="pg-add" data-section="subtasks"><summary class="pg-lnk">Add a sub-task</summary><div class="addrow"><Field id="pg-sub" label="New sub-task title" labelHidden placeholder="Add a sub-task" bind:value={m.subtasks.title} onkeydown={(e) => { if (e.key === 'Enter') void m.subtasks.add(); }} /><Button variant="secondary" aria-disabled={m.subtasks.adding ? 'true' : undefined} onclick={() => { if (!m.subtasks.adding) void m.subtasks.add(); }}>Add</Button><span class="vk-visually-hidden" role="status">{m.subtasks.adding ? 'Adding…' : ''}</span></div></details>
+            <details class="pg-add" data-section="subtasks"><summary class="pg-lnk">Add a sub-task</summary><div class="addrow"><Field id="pg-sub" label="New sub-task title" labelHidden placeholder="Add a sub-task" bind:value={m.subtasks.title} onkeydown={(e) => { if (e.key === 'Enter') void m.subtasks.add(); }} /><Button variant="secondary" aria-disabled={m.subtasks.adding ? 'true' : undefined} data-busy={m.subtasks.adding ? 'true' : undefined} onclick={() => { if (!m.subtasks.adding) void m.subtasks.add(); }}>Add</Button><span class="vk-visually-hidden" role="status">{m.subtasks.adding ? 'Adding…' : ''}</span></div></details>
             <details class="pg-add"><summary class="pg-lnk">Attach a link</summary><div class="addrow"><Field id="pg-ref" label="Attach a link or Superlibrary item" labelHidden type="url" inputmode="url" placeholder="Paste a link to attach" bind:value={m.refsForm.url} onkeydown={(e) => { if (e.key === 'Enter') void m.refsForm.add(); }} /><button class="vk-button vk-button--secondary" type="button" onclick={() => m.refsForm.add()}>Add</button></div></details>
           </div>
         </section>
@@ -231,14 +231,14 @@
           <h3><span class="no">Accounts</span>Cost and delivery</h3>
           <span class="pg-fig" data-section="cost">{usd(card.costUsd)}</span>
           <span class="pg-small" data-section="attempts">{paperCostLine(m.estimate?.estimatedUsd ?? null, m.attempts)}</span>
-          <div class="pg-meter"><i style="width: {m.costPct}%;"></i></div>
+          <div class="pg-meter"><i class="sp-fill" style="--p: {(m.costPct) / 100};"></i></div>
           {#if m.counts.deliveryActive}<div data-section="delivery"><DeliveryPanel model={m} /></div>{:else}<span hidden data-section="delivery"></span>{/if}
         </section>
       </aside>
     </div>
 
     <footer class="pg-colophon" data-section="cardActions">
-      {#if !m.archived}<Button variant="secondary" aria-disabled={m.archiving ? 'true' : undefined} onclick={() => { if (!m.archiving) void m.archive(); }}>{#snippet icon()}<Icon name="archive" size={16} />{/snippet}Archive card</Button><span class="vk-visually-hidden" role="status">{m.archiving ? 'Archiving…' : ''}</span>{/if}
+      {#if !m.archived}<Button variant="secondary" aria-disabled={m.archiving ? 'true' : undefined} data-busy={m.archiving ? 'true' : undefined} onclick={() => { if (!m.archiving) void m.archive(); }}>{#snippet icon()}<Icon name="archive" size={16} />{/snippet}Archive card</Button><span class="vk-visually-hidden" role="status">{m.archiving ? 'Archiving…' : ''}</span>{/if}
       <Button variant="quiet" onclick={() => m.remove()}>Delete card</Button>
       <span style="flex: 1 1 auto;"></span>
       <span class="pg-small">Opened from {m.boardName} · <a href={boardHref}>Back to the board</a> · card {m.shortId}</span>

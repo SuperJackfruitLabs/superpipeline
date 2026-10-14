@@ -34,7 +34,7 @@
     {#each items as it (it.key)}
       <tr class={it.key === app.boardId ? 'here' : undefined}>
         <td class="ag">{#if it.href}<a class="ttl" href={it.href}>{it.label}</a>{:else}{it.label}{/if}</td>
-        <td><span class="sp-rb"><i style="width: {pctOf(it.cost, max)}%;"></i></span></td>
+        <td><span class="sp-rb"><i class="sp-fill" style="--p: {pctOf(it.cost, max) / 100};"></i></span></td>
         <td class="m r">{usd(it.cost)}</td>
       </tr>
     {/each}
@@ -59,7 +59,7 @@
       <p>{model.board?.name ?? ''} · what agents cost, by day, agent, board, model and card.</p>
       <div class="sp-budget">
         <span class="kick">Spend vs budget</span>
-        <span class="sp-rb lg" role="img" aria-label="{fill}% of budget used"><i style="width: {fill}%;{model.overBudget ? ' background: var(--vk-color-signal);' : ''}"></i></span>
+        <span class="sp-rb lg" role="img" aria-label="{fill}% of budget used"><i class="sp-fill" style="--p: {fill / 100};{model.overBudget ? ' background: var(--vk-color-signal);' : ''}"></i></span>
         <span class="ar-hint">{budget.text}{#if budget.setCap}<a class="ar-lk" href="#caps1" style="min-height: 0px;" onclick={setCap}>Set a cap</a>{/if}</span>
       </div>
     </div>

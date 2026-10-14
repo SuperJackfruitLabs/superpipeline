@@ -27,8 +27,8 @@
             <p class="t-meta">{s.rule} · {s.timezone} · {stages.find((x) => x.key === s.stageKey)?.name ?? 'first stage'} · next {formatFireTime(s.nextFireAt, s.timezone)} · last {formatFireTime(s.lastFiredAt, s.timezone)}{s.createdBy ? ` · set up by ${s.createdBy}` : ''}</p>
             {#if s.skipCount > 0}<p class="t-meta">Skipped {s.skipCount} {s.skipCount === 1 ? 'time' : 'times'} — the previous card was still open when it came due.</p>{/if}
           </div>
-          <Button variant="secondary" class="btn-sm"  type="button" aria-disabled={model.busy === s.id ? 'true' : undefined} onclick={() => void model.toggle(s)}>{s.enabled ? 'Pause' : 'Resume'}</Button>
-          <Button variant="danger" class="btn-sm"  type="button" aria-disabled={model.busy === s.id ? 'true' : undefined} onclick={() => void model.remove(s)}>Remove</Button>
+          <Button variant="secondary" class="btn-sm"  type="button" aria-disabled={model.busy === s.id ? 'true' : undefined} data-busy={model.busy === s.id ? 'true' : undefined} onclick={() => void model.toggle(s)}>{s.enabled ? 'Pause' : 'Resume'}</Button>
+          <Button variant="danger" class="btn-sm"  type="button" aria-disabled={model.busy === s.id ? 'true' : undefined} data-busy={model.busy === s.id ? 'true' : undefined} onclick={() => void model.remove(s)}>Remove</Button>
         </li>
       {/each}
     </ul>
@@ -54,6 +54,6 @@
       <p class="t-meta">every 30 minutes · every 2 hours · every 3 days · daily at 09:00 · weekly on mon at 09:00 · monthly on 1 at 09:00 (day 1–28). Schedules are checked every five minutes, so a card may open up to five minutes late.</p>
     </details>
     {#if model.formError}<p class="hint full" role="alert" style="color: var(--vk-color-signal-text);">{model.formError}</p>{/if}
-    <div class="full"><Button variant="secondary" class="btn-sm"  type="submit" aria-disabled={model.busy === 'add' ? 'true' : undefined} icon={ic_plus_16}>Add schedule</Button></div>
+    <div class="full"><Button variant="secondary" class="btn-sm"  type="submit" aria-disabled={model.busy === 'add' ? 'true' : undefined} data-busy={model.busy === 'add' ? 'true' : undefined} icon={ic_plus_16}>Add schedule</Button></div>
   </form>
 </div>

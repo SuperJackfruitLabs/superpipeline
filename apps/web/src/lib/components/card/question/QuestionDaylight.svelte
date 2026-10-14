@@ -29,7 +29,7 @@
     {#if elicitation.options.length > 0}
       <div class="ds-btns">
         {#each elicitation.options as opt, i (opt.name)}
-          <Button variant={i === 0 ? 'primary' : 'secondary'} aria-disabled={model.answering ? 'true' : undefined} onclick={() => send(opt.name)}>{opt.title}</Button>
+          <Button variant={i === 0 ? 'primary' : 'secondary'} aria-disabled={model.answering ? 'true' : undefined} data-busy={model.answering ? 'true' : undefined} onclick={() => send(opt.name)}>{opt.title}</Button>
         {/each}
       </div>
       <Field {id} control="textarea" rows={2} label="Add a note for the agent (optional)" bind:value={model.text} />
@@ -39,7 +39,7 @@
       <!-- Field draws the error; this says it out loud when it appears. -->
       <span class="vk-visually-hidden" role="alert">{model.error ?? ''}</span>
 
-      <div class="ds-btns"><Button type="submit" aria-disabled={model.answering ? 'true' : undefined} aria-busy={model.answering ? 'true' : undefined}>{#snippet icon()}<Icon name="send" size={18} />{/snippet}Send answer</Button></div>
+      <div class="ds-btns"><Button type="submit" aria-disabled={model.answering ? 'true' : undefined} data-busy={model.answering ? 'true' : undefined}>{#snippet icon()}<Icon name="send" size={18} />{/snippet}Send answer</Button></div>
     {/if}
   </form>
   <span class="vk-visually-hidden" role="status">{model.answering ? 'Sending…' : ''}</span>

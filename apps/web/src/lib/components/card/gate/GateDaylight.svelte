@@ -98,7 +98,7 @@
 <div class="ds-btns">
   {#each ordered as opt (opt.name)}
     {@const role = roleOf(opt.name)!}
-    <Button variant={VARIANT[role]} aria-disabled={model.busy ? 'true' : undefined} aria-busy={model.busy && pressed === opt.name ? 'true' : undefined} icon={role === 'approve' ? checkIcon : undefined} onclick={() => choose(opt.name)}>{opt.title}</Button>
+    <Button variant={VARIANT[role]} aria-disabled={model.busy ? 'true' : undefined} data-busy={model.busy && pressed === opt.name ? 'true' : undefined} icon={role === 'approve' ? checkIcon : undefined} onclick={() => choose(opt.name)}>{opt.title}</Button>
   {/each}
 </div>
 <span class="vk-visually-hidden" role="status">{model.busy ? 'Recording…' : ''}</span>

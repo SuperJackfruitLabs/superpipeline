@@ -17,5 +17,5 @@
   <label for="eu-{id}">Due</label><input id="eu-{id}" class="inp" type="date" bind:value={e.due} />
   <label for="el-{id}">Labels, comma-separated</label><input id="el-{id}" class="inp" bind:value={e.labels} placeholder="bug, frontend, urgent" disabled={e.labelsBlind} />
   {#if e.labelsBlind}<p class="muted small">Could not load this card's labels, so editing them is off; saving will not clear them. Reopen the card to retry.</p>{/if}
-  <div class="addrow"><Button variant="secondary" class="sbtn" type="submit" aria-disabled={e.saving ? 'true' : undefined}>Save</Button><span class="sr" role="status">{e.saving ? 'Saving…' : ''}</span><Button variant="secondary" class="sbtn" type="button" onclick={() => e.cancel()}>Cancel</Button></div>
+  <div class="addrow"><Button variant="secondary" class="sbtn" type="submit" aria-disabled={e.saving ? 'true' : undefined} data-busy={e.saving ? 'true' : undefined}>Save</Button><span class="sr" role="status">{e.saving ? 'Saving…' : ''}</span><Button variant="secondary" class="sbtn" type="button" onclick={() => e.cancel()}>Cancel</Button></div>
 </form>
