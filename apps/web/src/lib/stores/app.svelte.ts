@@ -71,15 +71,21 @@ export interface CardFilters {
 class AppStore {
   #busy = 0;
   /** Track a load that the pixel suite must wait for (dev galleries, workspace tabs). */
-  async markBusy<T>(p: Promise<T>): Promise<T> {
+  markBusy<T>(p: Promise<T>): Promise<T> {
     this.#busy++;
     this.noteLoaded();
-    try {
-      return await p;
-    } finally {
-      this.#busy--;
-      this.noteLoaded();
-    }
+    const tracked = (async () => {
+      try {
+        return await p;
+      } finally {
+        this.#busy--;
+        this.noteLoaded();
+      }
+    })();
+    // Most callers only mark a read busy and handle its failure on the read itself (a failed list shows
+    // Try again): this copy must not surface as an unhandled rejection. Callers that await it still see it.
+    tracked.catch(() => {});
+    return tracked;
   }
   /** Dev builds: `<html data-ready="true">` once the board and its catalogue are in and nothing is pending. */
   noteLoaded(): void {
