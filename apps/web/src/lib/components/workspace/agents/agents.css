@@ -31,7 +31,7 @@
   :where(.scr-ws-agents) .colhead { display: none; }
   :where(.scr-ws-agents) .arow { grid-template-columns: 32px minmax(0, 1fr) auto; }
   :where(.scr-ws-agents) .arow > .caps, :where(.scr-ws-agents) .arow > .linked, :where(.scr-ws-agents) .arow > .t-num { grid-column: 2 / -1; }
-  :where(.scr-ws-agents) .editgrid, :where(.scr-ws-agents) .legend, :where(.scr-ws-agents) .new-agent-form { grid-template-columns: minmax(0, 1fr) !important; }
+  :where(.scr-ws-agents) .editgrid, :where(.scr-ws-agents) .legend { grid-template-columns: minmax(0, 1fr) !important; }
   :where(.scr-ws-agents) .menu-pop { width: min(430px, calc(100vw - 32px)); }
   :where(.scr-ws-agents) .tokbox { flex-basis: 100%; }
 }

@@ -422,42 +422,5 @@ export async function deleteCapability(db: D1Database, tenantId: string, id: str
   return (res.meta?.changes ?? 0) > 0;
 }
 
-/**
- * Existing keys that look like this one — an operator about to create a near-duplicate.
- *
- * A **hint, never a refusal**, for the same reason the declare/reference rule was reversed in
- * #56: refusing dead-ends a legitimate first move, and it only ever catches the NEXT typo while
- * leaving every existing one in place. `code` and `cdoe` are both plausible; only a person knows
- * which was meant.
- *
- * Two cheap signals, no model and no embedding: an edit distance of at most two, or one key
- * containing the other. Deliberately not semantic — a similarity score on this path would make
- * "why did nothing match?" unanswerable, which is the failure this whole area exists to end.
- */
-export function similarKeys(candidate: string, existing: string[]): string[] {
-  const c = capabilityTag(candidate);
-  if (c === '') return [];
-  return existing
-    .filter((k) => k !== c)
-    .filter((k) => (k.includes(c) || c.includes(k) ? true : editDistance(c, k) <= 2))
-    .sort();
-}
-
-/** Levenshtein, iterative two-row. Keys are short, and this runs once per capability written. */
-function editDistance(a: string, b: string): number {
-  if (a === b) return 0;
-  if (Math.abs(a.length - b.length) > 2) return 3; // early out: cannot be within the threshold
-  let prev = Array.from({ length: b.length + 1 }, (_, i) => i);
-  for (let i = 1; i <= a.length; i++) {
-    const curr = [i];
-    for (let j = 1; j <= b.length; j++) {
-      curr[j] = Math.min(
-        prev[j]! + 1,
-        curr[j - 1]! + 1,
-        prev[j - 1]! + (a[i - 1] === b[j - 1] ? 0 : 1),
-      );
-    }
-    prev = curr;
-  }
-  return prev[b.length]!;
-}
+/** Moved to the contract so the web app's New capability dialog hints with the same rule. */
+export { similarKeys } from '@superpipeline/contract';

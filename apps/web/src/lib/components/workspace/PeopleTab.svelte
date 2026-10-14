@@ -4,7 +4,8 @@
   import LineIcon from '$lib/components/parts/LineIcon.svelte';
   import type { Role } from '$lib/api';
   import { PeopleModel } from './people-model.svelte';
-  import { initials, INVITE_ORDER, lastOwner, peopleHeading, ROLE_LABEL, ROLE_ORDER, roleHelpTitle, roleHint } from './workspace-words';
+  import { initials, lastOwner, peopleHeading, ROLE_LABEL, ROLE_ORDER, roleHelpTitle } from './workspace-words';
+  import NewPersonDialog from './dialogs/NewPersonDialog.svelte';
   import PanelTag from './PanelTag.svelte';
   import type { WorkspaceTabProps } from './types';
 
@@ -12,13 +13,21 @@
   const model = new PeopleModel();
   // Loaded during init (ssr is off): the busy mark is held before the first paint.
   void model.refresh();
+  let creating = $state(false);
+  function openNew(): void { model.resetNew(); creating = true; }
 </script>
 
+{#snippet plusIcon()}<LineIcon name="plus" size={18} />{/snippet}
+
 <section class="panel" aria-labelledby="pt-h">
-  <div class="panel-head" style="flex-direction: column; align-items: flex-start;">
-    {#if review}<PanelTag text={review.tag} />{/if}
-    <h2 class="t-h2" id="pt-h">{model.members === null ? 'People' : peopleHeading(model.members.length)}</h2>
+  <div class="panel-head" style="flex-wrap: wrap; align-items: flex-start;">
+    <div style="display: flex; flex-direction: column; align-items: flex-start; gap: inherit;">
+      {#if review}<PanelTag text={review.tag} />{/if}
+      <h2 class="t-h2" id="pt-h">{model.members === null ? 'People' : peopleHeading(model.members.length)}</h2>
+    </div>
+    <Button class="btn-sm" type="button" icon={plusIcon} style="margin-left: auto;" onclick={openNew}>New person</Button>
   </div>
+  {#if model.error && !creating}<p class="hint" role="alert" style="padding: var(--vk-space-3) var(--vk-space-5) 0; color: var(--vk-color-signal-text);">{model.error}</p>{/if}
   {#if model.members === null}
     <p class="panel-body t-meta" role="status">Loading people…</p>
   {:else}
@@ -37,12 +46,6 @@
       </div>
     {/each}
   {/if}
-  <form class="panel-body invite" style="border-top: 1px solid var(--vk-color-line); display: grid; grid-template-columns: minmax(0px, 1fr) 150px auto; gap: var(--vk-space-2); align-items: end;" onsubmit={(e) => { e.preventDefault(); void model.invite(); }}>
-    <div class="field"><label for="inv-e">Invite by email</label><input class="input" id="inv-e" type="email" placeholder="name@example.com" bind:value={model.email} /></div>
-    <div class="field"><label for="inv-r">Role</label><select class="input" id="inv-r" bind:value={model.role}>{#each INVITE_ORDER as r (r)}<option value={r}>{ROLE_LABEL[r]}</option>{/each}</select></div>
-    <Button variant="secondary" class="btn-sm" type="submit" aria-disabled={model.busy ? 'true' : undefined}>Invite</Button>
-    <p class="hint" style="grid-column: 1 / -1;">{roleHint(model.role)}</p>
-    <span class="sr" role="status">{model.busy ? 'Inviting…' : ''}</span>
-    {#if model.error}<p class="hint" role="alert" style="grid-column: 1 / -1; color: var(--vk-color-signal-text);">{model.error}</p>{/if}
-  </form>
 </section>
+
+<NewPersonDialog bind:open={creating} {model} />

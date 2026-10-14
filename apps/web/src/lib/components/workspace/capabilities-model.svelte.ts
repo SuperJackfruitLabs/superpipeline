@@ -1,5 +1,6 @@
 // apps/web/src/lib/components/workspace/capabilities-model.svelte.ts
 import { getAgents, getCapabilities, createCapability, updateCapability, deleteCapability, addImplication, removeImplication, type AgentSummary, type CapabilityRecord } from '$lib/api';
+import { similarKeys } from '@superpipeline/contract';
 import { app } from '$lib/stores/app.svelte';
 import { holdersOf, orphanNote, unstaffedNote, type CapNote } from './capability-notes';
 import { workspaceCounts } from './workspace-counts.svelte';
@@ -9,6 +10,9 @@ export class CapabilitiesModel {
   agents = $state<AgentSummary[]>([]);
   error = $state<string | null>(null);
   newKey = $state('');
+  newDescription = $state('');
+  /** The New capability dialog's own error. */
+  createError = $state<string | null>(null);
   similar = $state<string[]>([]);
   implyingFor = $state<string | null>(null);
   implyTo = $state('');
@@ -30,18 +34,28 @@ export class CapabilitiesModel {
     return body?.error ?? `${fallback} (${res.status})`;
   }
 
-  async add(): Promise<void> {
+  /** Existing keys close to the name being typed: the same rule the server's hint uses. */
+  typedSimilar: string[] = $derived(similarKeys(this.newKey, (this.capabilities ?? []).map((c) => c.key)));
+
+  /** A blank New capability form, for each opening of the dialog. */
+  resetNew(): void { this.newKey = ''; this.newDescription = ''; this.createError = null; }
+
+  /** Creates the capability; true when it exists, so the dialog may close. */
+  async add(): Promise<boolean> {
     const key = this.newKey.trim();
-    if (key === '') return;
-    this.error = null;
+    if (key === '') { this.createError = 'A name is required.'; return false; }
+    this.createError = null;
     this.similar = [];
-    const res = await createCapability({ key });
+    const description = this.newDescription.trim();
+    const res = await createCapability(description === '' ? { key } : { key, description });
     const body = (await res.clone().json().catch(() => null)) as { similar?: string[] } | null;
-    if (!res.ok) { this.error = await this.bodyError(res, 'Adding failed'); return; }
+    if (!res.ok) { this.createError = await this.bodyError(res, 'Adding failed'); return false; }
     this.similar = body?.similar ?? [];
     this.newKey = '';
+    this.newDescription = '';
     await this.refresh();
     await workspaceCounts.refresh();
+    return true;
   }
 
   startImply(key: string): void { this.implyingFor = key; this.implyTo = ''; }

@@ -32,8 +32,7 @@
 :where(.wa-main) .wa-pick[aria-pressed="false"][data-unused] { color: var(--vk-color-faint); border-color: var(--hair); }
 :where(.wa-main) .wa-act { text-align: right; }
 :where(.wa-main) .wa-edit { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px 24px; }
-:where(.wa-main) .wa-new { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 2fr); gap: 16px 24px; align-items: start; }
-:where(.wa-main) .wa-edit .ar-in[id$="newcap"], :where(.wa-main) .wa-new .ar-in#na-new { width: 200px; min-height: 36px; }
+:where(.wa-main) .wa-edit .ar-in[id$="newcap"] { width: 200px; min-height: 36px; }
 :where(.wa-main) .menu { position: relative; display: inline-block; text-align: left; }
 :where(.wa-main) .menu > summary { list-style: none; cursor: pointer; }
 :where(.wa-main) .menu > summary::-webkit-details-marker { display: none; }

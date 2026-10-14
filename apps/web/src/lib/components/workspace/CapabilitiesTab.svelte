@@ -7,22 +7,31 @@
   import { agentCountText, capsHeading, holdersOf, INFERRED_TITLE } from './capability-notes';
   import { similarText } from './workspace-words';
   import PanelTag from './PanelTag.svelte';
+  import NewCapabilityDialog from './dialogs/NewCapabilityDialog.svelte';
   import type { WorkspaceTabProps } from './types';
 
   let { review }: WorkspaceTabProps = $props();
   const model = new CapabilitiesModel();
   // Loaded during init (ssr is off): the busy mark is held before the first paint.
   void model.refresh();
+  let creating = $state(false);
+  function openNew(): void { model.resetNew(); creating = true; }
 </script>
 
 {#snippet plusIcon()}<LineIcon name="plus" size={14} />{/snippet}
+{#snippet newIcon()}<LineIcon name="plus" size={18} />{/snippet}
 
 <section class={review?.span2 ? 'panel span2' : 'panel'} aria-labelledby="ct-h">
-  <div class="panel-head" style="flex-direction: column; align-items: flex-start;">
-    {#if review}<PanelTag text={review.tag} />{/if}
-    <h2 class="t-h2" id="ct-h">{model.capabilities === null ? 'Capabilities' : capsHeading(model.rows.length)}</h2>
-    <p class="t-meta">What agents can do. A board stage asks for one; an agent holding it claims the card.</p>
+  <div class="panel-head" style="flex-wrap: wrap; align-items: flex-start;">
+    <div style="display: flex; flex-direction: column; align-items: flex-start; gap: inherit; flex: 1 1 260px; min-width: 0;">
+      {#if review}<PanelTag text={review.tag} />{/if}
+      <h2 class="t-h2" id="ct-h">{model.capabilities === null ? 'Capabilities' : capsHeading(model.rows.length)}</h2>
+      <p class="t-meta">What agents can do. A board stage asks for one; an agent holding it claims the card.</p>
+    </div>
+    <Button class="btn-sm" type="button" icon={newIcon} onclick={openNew}>New capability</Button>
   </div>
+  {#if model.similar.length > 0}<p class="hint" role="status" style="padding: var(--vk-space-3) var(--vk-space-5) 0;">{similarText(model.similar)}</p>{/if}
+  {#if model.error}<p class="hint" role="alert" style="padding: var(--vk-space-3) var(--vk-space-5) 0; color: var(--vk-color-signal-text);">{model.error}</p>{/if}
   {#if model.capabilities === null}
     <p class="panel-body t-meta" role="status">Loading capabilities…</p>
   {:else}
@@ -66,11 +75,6 @@
       {/each}
     </ul>
   {/if}
-  <form class="panel-body" style="border-top: 1px solid var(--vk-color-line); display: flex; flex-wrap: wrap; gap: var(--vk-space-2); align-items: flex-end;" onsubmit={(e) => { e.preventDefault(); void model.add(); }}>
-    <div class="field" style="flex: 1 1 220px;"><label for="cap-new">Add a capability</label><input class="input" id="cap-new" placeholder="e.g. diagnostics" bind:value={model.newKey} /></div>
-    <Button variant="secondary" class="btn-sm" type="submit">Add</Button>
-    <p class="hint" style="flex-basis: 100%;">If the name is close to one you have, a “similar to …” hint appears after you add it.</p>
-    {#if model.similar.length > 0}<p class="hint" role="status" style="flex-basis: 100%;">{similarText(model.similar)}</p>{/if}
-    {#if model.error}<p class="hint" role="alert" style="flex-basis: 100%; color: var(--vk-color-signal-text);">{model.error}</p>{/if}
-  </form>
 </section>
+
+<NewCapabilityDialog bind:open={creating} {model} />

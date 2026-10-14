@@ -9,12 +9,15 @@
   import type { WorkspaceTabProps } from '../types';
   import AgentMenu from './AgentMenu.svelte';
   import CapabilityChips from './CapabilityChips.svelte';
+  import NewAgentDialog from '../dialogs/NewAgentDialog.svelte';
 
   const _props: WorkspaceTabProps = $props();
   const model = new AgentsModel();
   const menus = new MenuState();
   // Loaded during init (ssr is off): the busy mark is held before the first paint.
   void model.refresh();
+  let creating = $state(false);
+  function openNew(): void { model.resetNew(); creating = true; }
 </script>
 
 {#snippet copyIcon()}<LineIcon name="copy" size={18} stroke={1.75} />{/snippet}
@@ -36,7 +39,7 @@
   <div class="hd">
     <span class="no">01</span>
     <h2 id="agents-h">{model.agents === null ? 'Agents' : agentsHeading(model.agents.length)}</h2>
-    <span class="r">{#if model.agents}<span>{agentsPanelMeta(model.agents)}</span>{/if}<Button href="#new-agent" icon={plusIcon}>New agent</Button></span>
+    <span class="r">{#if model.agents}<span>{agentsPanelMeta(model.agents)}</span>{/if}<Button type="button" icon={plusIcon} onclick={openNew}>New agent</Button></span>
   </div>
   <ul class="ar-notes wa-notes">
     <li><span class="k"><LineIcon name="check" size={18} stroke={1.75} /></span><span><b>Linked to AgentPod</b> — this agent has an AgentPod identity, so it signs in as itself and its work shows under its own name.</span></li>
@@ -49,7 +52,7 @@
   {:else if model.agents === null}
     <p class="ar-hint" role="status" aria-busy="true">Loading agents…</p>
   {:else if model.agents.length === 0}
-    <p class="ar-hint">No agents yet. Create one below — you'll get a token to point an AI agent at this workspace.</p>
+    <p class="ar-hint">No agents yet. Create one with New agent — you'll get a token to point an AI agent at this workspace.</p>
   {:else}
     <table class="ar-tbl wa-tbl">
       <caption class="sr">{agentsHeading(model.agents.length)} in this workspace</caption>
@@ -111,14 +114,4 @@
   {/if}
 </section>
 
-<section class="ar-sec" id="new-agent" aria-labelledby="new-h">
-  <div class="hd"><span class="no">02</span><h2 id="new-h">New agent</h2><span class="r">Creates the agent and issues its first token, shown once.</span></div>
-  <form class="wa-new" onsubmit={(e) => { e.preventDefault(); void model.mint(); }}>
-    <div class="ar-field"><label for="na-name">Name</label><input class="ar-in" id="na-name" placeholder="e.g. tester-tim" bind:value={model.newName} /></div>
-    <div class="ar-field">
-      <span class="lab" id="na-caps">Capabilities</span>
-      <CapabilityChips bind:selected={model.newCaps} bind:typed={model.newCap} registry={model.capabilities} labelledBy="na-caps" inputId="na-new" form="studio" wrapInput={false} />
-    </div>
-    <div style="grid-column: 1 / -1;"><Button type="submit" disabled={!model.canCreate}>{model.minting ? 'Creating…' : 'Create agent and issue token'}</Button></div>
-  </form>
-</section>
+<NewAgentDialog bind:open={creating} {model} />

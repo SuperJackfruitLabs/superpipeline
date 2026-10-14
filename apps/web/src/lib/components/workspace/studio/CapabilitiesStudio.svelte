@@ -1,7 +1,8 @@
 <!-- apps/web/src/lib/components/workspace/studio/CapabilitiesStudio.svelte -->
 <script lang="ts">
   import { autogrow } from '$lib/autogrow';
-  import { Face } from '@superjackfruit/vibekit';
+  import { Button, Face } from '@superjackfruit/vibekit';
+  import NewCapabilityDialog from '../dialogs/NewCapabilityDialog.svelte';
   import LineIcon from '$lib/components/parts/LineIcon.svelte';
   import { CapabilitiesModel } from '../capabilities-model.svelte';
   import { agentCountText, capsHeading, holdersOf, INFERRED_TITLE } from '../capability-notes';
@@ -12,11 +13,17 @@
   const model = new CapabilitiesModel();
   // Loaded during init (ssr is off): the busy mark is held before the first paint.
   void model.refresh();
+  let creating = $state(false);
+  function openNew(): void { model.resetNew(); creating = true; }
 </script>
 
+{#snippet plusIcon()}<LineIcon name="plus" size={18} stroke={1.75} />{/snippet}
+
 <section class="ar-sec" aria-labelledby="ct-h">
-  <div class="hd"><span class="no">{review?.no ?? '01'}</span>{#if review}<span class="kick">{review.tag}</span>{/if}<h2 id="ct-h">{model.capabilities === null ? 'Capabilities' : capsHeading(model.rows.length)}</h2></div>
+  <div class="hd"><span class="no">{review?.no ?? '01'}</span>{#if review}<span class="kick">{review.tag}</span>{/if}<h2 id="ct-h">{model.capabilities === null ? 'Capabilities' : capsHeading(model.rows.length)}</h2><span class="r"><Button type="button" icon={plusIcon} onclick={openNew}>New capability</Button></span></div>
   <p class="wo-lede">What agents can do. A board stage asks for one; an agent holding it claims the card.</p>
+  {#if model.similar.length > 0}<p class="ar-hint" role="status">{similarText(model.similar)}</p>{/if}
+  {#if model.error}<p class="ar-hint" role="alert">{model.error}</p>{/if}
   {#if model.capabilities === null}
     <p class="ar-hint" role="status">Loading capabilities…</p>
   {:else}
@@ -50,11 +57,6 @@
       </tbody>
     </table>
   {/if}
-  <form class="wo-add" onsubmit={(e) => { e.preventDefault(); void model.add(); }}>
-    <div class="ar-field"><label for="cap-new">Add a capability</label><input class="ar-in" id="cap-new" placeholder="e.g. diagnostics" bind:value={model.newKey} /></div>
-    <button class="ar-btn2" type="submit">Add</button>
-    <p class="ar-hint">If the name is close to one you have, a “similar to …” hint appears after you add it.</p>
-    {#if model.similar.length > 0}<p class="ar-hint" role="status">{similarText(model.similar)}</p>{/if}
-    {#if model.error}<p class="ar-hint" role="alert">{model.error}</p>{/if}
-  </form>
 </section>
+
+<NewCapabilityDialog bind:open={creating} {model} />

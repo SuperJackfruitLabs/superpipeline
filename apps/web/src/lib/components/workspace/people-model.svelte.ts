@@ -5,6 +5,7 @@ import { workspaceCounts } from './workspace-counts.svelte';
 
 export class PeopleModel {
   members = $state<Member[] | null>(null);
+  name = $state('');
   email = $state('');
   role = $state<Role>('member');
   error = $state<string | null>(null);
@@ -23,17 +24,24 @@ export class PeopleModel {
     this.error = body?.error ?? `${fallback} (${res.status})`;
   }
 
-  async invite(): Promise<void> {
+  /** A blank New person form, for each opening of the dialog. */
+  resetNew(): void { this.name = ''; this.email = ''; this.role = 'member'; this.error = null; }
+
+  /** Adds the person; true when they are in, so the dialog may close. */
+  async invite(): Promise<boolean> {
     const addr = this.email.trim();
-    if (addr === '' || this.busy) return;
+    if (this.busy) return false;
+    if (addr === '') { this.error = 'An email address is required.'; return false; }
     this.busy = true;
     this.error = null;
     try {
-      const res = await addMember(addr, this.role);
-      if (!res.ok) { await this.fail(res, 'Inviting failed'); return; }
+      const res = await addMember(addr, this.role, this.name.trim() || undefined);
+      if (!res.ok) { await this.fail(res, 'Adding them failed'); return false; }
+      this.name = '';
       this.email = '';
       await this.refresh();
       await workspaceCounts.refresh();
+      return true;
     } finally { this.busy = false; }
   }
 
