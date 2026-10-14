@@ -34,7 +34,8 @@ export const shellModel = {
   get userName(): string { return userNameOf(app.user); },
   get initials(): string { return initialsOf(userNameOf(app.user)); },
   get firstName(): string { return greetingName(app.user, app.members); },
-  get crew(): CrewMember[] { return app.board ? crewOf(app.board, app.agents, needIds()) : []; },
+  /** Waits for the agent list: before it, names would be ids and the count would pop ("–", never a wrong line). */
+  get crew(): CrewMember[] { return app.board && app.agentsLoaded ? crewOf(app.board, app.agents, needIds()) : []; },
   get crewCount(): string { return crewCount(this.crew); },
   get crewLine(): string { return crewLine(this.crew); },
   get crewScopeTitle(): string { return crewScopeTitle(this.crew); },

@@ -138,7 +138,13 @@ describe('ShellDaylight', () => {
   it('the crew sits in vibekit’s crew slot', () => {
     app.board = { boardId: 'brd_134a0ddb6d434478', name: 'Developer Experience', stages: DX_STAGES, cards: DX_CARDS, gates: [], elicitations: [], references: [] } as never;
     app.agents = DX_AGENTS;
+    app.agentsLoaded = false;
     try {
+      // Before the agent list is in, no crew line: it would name ids and pop.
+      const first = render(ShellDaylight, props());
+      expect(first.container.querySelector('.vk-appnav__crew')).toBeNull();
+      cleanup();
+      app.agentsLoaded = true;
       const { container } = render(ShellDaylight, props());
       expect(container.querySelector('.vk-appnav__crew')!.textContent).toContain('4 agents');
     } finally {
