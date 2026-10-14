@@ -1,6 +1,8 @@
 <!-- apps/web/src/lib/components/operate/layouts/OperateStudio.svelte -->
 <script lang="ts">
   import BoardChip from '$lib/components/inbox/BoardChip.svelte';
+  import { acrossBoards, askBoards, inboxCounts, inboxSubline, wantYou } from '$lib/components/inbox/inbox-words';
+  import { greetNamed } from '$lib/greet';
   import { viewport } from '$lib/viewport.svelte';
   /** SP-Operate-Studio: the annual-report spread, with J/K/R/M/O/. on the Needs table. */
   import { tick, untrack } from 'svelte';
@@ -85,8 +87,8 @@
     <span class="big" class:ink={model.needs.length === 0} aria-hidden="true">{model.needs.length}</span>
     <div class="txt">
       <span class="kick">Inbox</span>
-      <svelte:element this={viewport.phone ? 'h2' : 'h1'} class="op-title">{#if hero.sr}<span class="sr">{hero.sr}</span>{/if}{hero.text}</svelte:element>
-      <p>{summarySentenceStudio(needCounts(model.needs), model.running.length, model.spend.total)}</p>
+      <svelte:element this={viewport.phone ? 'h2' : 'h1'} class="op-title">{greetNamed(model.phase, model.firstName)} {wantYou(model.needs.length)}</svelte:element>
+      <p>{inboxSubline(inboxCounts(model.needs), askBoards(model.needs), model.running.length)}</p>
     </div>
   </div>
 
@@ -102,7 +104,7 @@
   </section>
 
   <section class="ar-sec" id="needs" aria-labelledby="op-n">
-    <div class="hd"><span class="no">02</span><h2 id="op-n">Needs you</h2><span class="r"><span class="sigt">{model.needs.length}</span>{#if !model.scoped}<span class="m"> · across {model.boardCount === 1 ? '1 board' : `${model.boardCount} boards`}</span>{/if}</span></div>
+    <div class="hd"><span class="no">02</span><h2 id="op-n">Needs you</h2><span class="r"><span class="sigt">{model.needs.length}</span>{#if !model.scoped}<span class="m"> · {acrossBoards(askBoards(model.needs))}</span>{/if}</span></div>
     {#if model.needs.length === 0}
       <p class="op-empty">Nothing on this board is waiting on you.</p>
     {:else}

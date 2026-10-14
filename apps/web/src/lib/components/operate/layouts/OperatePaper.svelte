@@ -6,6 +6,8 @@
   import { Button, Face } from '@superjackfruit/vibekit';
   import LineIcon from '$lib/components/parts/LineIcon.svelte';
   import BoardChip from '$lib/components/inbox/BoardChip.svelte';
+  import { acrossBoards, askBoards, inboxCounts, inboxSubline, wantYou } from '$lib/components/inbox/inbox-words';
+  import { greetNamed } from '$lib/greet';
   import { moveTargets } from '../operate-data';
   import { CapsUi, OperateUi } from '../operate-ui.svelte';
   import { cut140, letters, moveOptionLabel, paperCap, paperMastEnd, paperMastLine, paperMeta, resumeOptions, RESUME_LABEL, staleLine, noticeBody, stopHint, usd, when } from '../operate-words';
@@ -37,14 +39,14 @@
   <header class="mast">
     <div>
       <p class="mast__eyebrow">Superpipeline · Inbox · {model.boardName}</p>
-      <svelte:element this={viewport.phone ? 'h2' : 'h1'} class="op-title">The desk</svelte:element>
-      <p class="mast__line">{paperMastLine(model.nowMs, model.phase, model.needs.length, model.running.length)}</p>
+      <svelte:element this={viewport.phone ? 'h2' : 'h1'} class="op-title">{greetNamed(model.phase, model.firstName)} {wantYou(model.needs.length, true)}</svelte:element>
+      <p class="mast__line">{inboxSubline(inboxCounts(model.needs), askBoards(model.needs), model.running.length)}</p>
     </div>
     <p class="mast__end">{paperMastEnd(model.boardName, model.cardCount)}</p>
   </header>
   <div class="cols">
     <section class="col" id="letters" aria-labelledby="k1">
-      <div class="kick"><h2 id="k1">Waiting on you</h2><span class="kick__n" class:kick__n--needs={model.needs.length > 0}>{letters(model.needs.length)}</span>{#if !model.scoped}<span class="lnk">across {model.boardCount === 1 ? '1 board' : `${model.boardCount} boards`}</span>{/if}</div>
+      <div class="kick"><h2 id="k1">Waiting on you</h2><span class="kick__n" class:kick__n--needs={model.needs.length > 0}>{letters(model.needs.length)}</span>{#if !model.scoped}<span class="lnk">{acrossBoards(askBoards(model.needs))}</span>{/if}</div>
       {#if model.needs.length === 0}<p class="prose">Nothing is waiting on you.</p>{/if}
       {#each model.needs as row (row.item.id)}
         {@const id = row.item.cardId}

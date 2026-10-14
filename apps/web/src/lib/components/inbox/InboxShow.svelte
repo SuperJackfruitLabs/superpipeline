@@ -6,7 +6,7 @@
    * Activity) and is held in memory only (`inboxScope`). Quiet draws it as a line of words.
    */
   import { app } from '$lib/stores/app.svelte';
-  import { inboxScope, scopeChips, SHOW_NOTE } from './inbox-scope.svelte';
+  import { inboxScope, scopeChips, scopeLabel, SHOW_NOTE } from './inbox-scope.svelte';
   import './inbox.css';
 
   let { form = 'chips' }: { form?: 'chips' | 'words' } = $props();
@@ -17,6 +17,7 @@
 </script>
 
 <section class="ib-show ib-show--{form}" aria-labelledby="ib-show-h">
+  <p class="ib-show__scope">{scopeLabel(inboxScope.boardId, app.boards)}</p>
   <div class="ib-show__row" role="group" aria-labelledby="ib-show-h">
     <h2 class="ib-show__h" id="ib-show-h">Show{form === 'words' ? ':' : ''}</h2>
     {#each shown as c, i (c.id ?? 'all')}

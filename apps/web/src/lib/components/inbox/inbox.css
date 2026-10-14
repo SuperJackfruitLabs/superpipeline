@@ -23,3 +23,4 @@
   display: inline-flex; align-items: center; max-width: 100%; padding: 1px 8px; border: 1px solid var(--vk-color-line);
   border-radius: var(--vk-radius-pill, 999px); font-size: var(--vk-text-xs, 12px); color: var(--vk-color-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
+.ib-show__scope { margin: 0; font-size: var(--vk-text-lg, 1.125rem); font-weight: 600; color: var(--vk-color-text); }

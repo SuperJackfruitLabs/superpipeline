@@ -5,6 +5,7 @@
   import { Button, Face, Segmented } from '@superjackfruit/vibekit';
   import LineIcon from '$lib/components/parts/LineIcon.svelte';
   import BoardChip from '$lib/components/inbox/BoardChip.svelte';
+  import { acrossBoards, askBoards } from '$lib/components/inbox/inbox-words';
   import { moveTargets } from '../operate-data';
   import { CapsUi, OperateUi } from '../operate-ui.svelte';
   import { cut140, daylightCap, daylightMeta, kindWord, moveOptionLabel, resumeOptions, RESUME_LABEL, staleLine, noticeBody, stopHint, usd, when } from '../operate-words';
@@ -58,7 +59,7 @@
 <div class="op-dy"><div class="grid">
   <div>
     <section class="panel" id="needs" aria-labelledby="h-needs">
-      <div class="ph"><h2 id="h-needs">Needs you</h2><span class="count" class:count--needs={model.needs.length > 0}>{model.needs.length}</span>{#if !model.scoped}<span class="ph__end">across {model.boardCount === 1 ? '1 board' : `${model.boardCount} boards`}</span>{/if}</div>
+      <div class="ph"><h2 id="h-needs">Needs you</h2><span class="count" class:count--needs={model.needs.length > 0}>{model.needs.length}</span>{#if !model.scoped}<span class="ph__end">{acrossBoards(askBoards(model.needs))}</span>{/if}</div>
       {#if model.needs.length === 0}<p class="empty">Nothing is waiting on you.</p>{/if}
       {#each model.needs as row (row.item.id)}
         {@const id = row.item.cardId}

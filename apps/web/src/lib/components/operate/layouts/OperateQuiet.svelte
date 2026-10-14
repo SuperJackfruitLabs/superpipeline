@@ -1,6 +1,8 @@
 <!-- apps/web/src/lib/components/operate/layouts/OperateQuiet.svelte -->
 <script lang="ts">
   import BoardChip from '$lib/components/inbox/BoardChip.svelte';
+  import { acrossBoards, askBoards, inboxCounts, inboxSubline, wantYou } from '$lib/components/inbox/inbox-words';
+  import { greetNamed } from '$lib/greet';
   import { viewport } from '$lib/viewport.svelte';
   import { untrack } from 'svelte';
   /** SP-Operate-Quiet: one column, headings in reading order, most urgent first. */
@@ -23,9 +25,10 @@
 {/snippet}
 
 <div class="op-q"><div class="q"><div class="q__col">
-  <svelte:element this={viewport.phone ? 'h2' : 'h1'} class="op-title">Inbox</svelte:element>
-  <p class="q__lede">{quietLede(model.boardName, model.needs.length, model.running.length)}</p>
-  <h2>Needs your decision ({model.needs.length})</h2>
+  <svelte:element this={viewport.phone ? 'h2' : 'h1'} class="op-title">{greetNamed(model.phase, model.firstName)} {wantYou(model.needs.length)}</svelte:element>
+  <p class="q__lede">{inboxSubline(inboxCounts(model.needs), askBoards(model.needs), model.running.length)}</p>
+  <h2>Needs you ({model.needs.length})</h2>
+  {#if askBoards(model.needs) > 0}<p class="plain">{acrossBoards(askBoards(model.needs)).replace(/^./, (c) => c.toUpperCase())}. Most urgent first.</p>{/if}
   {#if model.needs.length === 0}
     <p class="plain">None.</p>
   {:else}
