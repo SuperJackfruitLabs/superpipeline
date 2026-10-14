@@ -79,7 +79,7 @@ describe('AttentionRow', () => {
 
   it('refused keeps Staff an agent as a link', () => {
     setup(item({ kind: 'refused', actions: ['staff'] }));
-    expect(screen.getByRole('link', { name: 'Staff an agent' }).getAttribute('href')).toBe('/workspace/capabilities');
+    expect(screen.getByRole('link', { name: 'Staff an agent' }).getAttribute('href')).toBe('/crew/capabilities');
   });
 
   it('an ownerless-stage row moves the card with a stage picker that leaves out where it is', async () => {

@@ -52,7 +52,7 @@ describe('workspace needs rows', () => {
   it('turns actions into links', () => {
     expect(actionLink(R1DFC, 'open')).toEqual({ label: 'Open', href: `/b/${DX}/c/card_e10fb4fe39a91dfc`, primary: false });
     expect(actionLink(R1DFC, 'log')).toEqual({ label: 'Open log', href: `/b/${DX}/c/card_e10fb4fe39a91dfc?tab=attempts`, primary: false });
-    expect(actionLink(R1DFC, 'staff')).toEqual({ label: 'Staff an agent', href: '/workspace/capabilities', primary: false });
+    expect(actionLink(R1DFC, 'staff')).toEqual({ label: 'Staff an agent', href: '/crew/capabilities', primary: false });
     expect(actionLink(R1DFC, 'review')).toEqual({ label: 'Review', href: `/b/${DX}/c/card_e10fb4fe39a91dfc`, primary: true });
     expect(actionLink(R1DFC, 'resume')).toBeNull();
   });

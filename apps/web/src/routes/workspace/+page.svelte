@@ -1,5 +1,5 @@
 <script lang="ts">
-  // Bare /workspace has no tab to show; agents is the one people come here for.
+  // The old Workspace address: it is Crew now (nav v2).
   import { goto } from '$app/navigation';
-  $effect(() => void goto('/workspace/agents', { replaceState: true }));
+  $effect(() => void goto('/crew/agents', { replaceState: true }));
 </script>
