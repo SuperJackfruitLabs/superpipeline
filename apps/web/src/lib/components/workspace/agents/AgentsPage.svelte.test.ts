@@ -32,9 +32,11 @@ describe('AgentsPage', () => {
     api.getAgents.mockReturnValue(new Promise((_, reject) => { fail = reject; }));
     render(AgentsPage, { vibe: 'daylight' });
     expect(screen.getByRole('heading', { name: 'Agents' })).toBeTruthy();
-    expect(screen.getByText('Loading agents…')).toBeTruthy();
-    fail(new Error('agents 503'));
-    expect(await screen.findByText('Could not load the agents: agents 503')).toBeTruthy();
+    expect(document.querySelector('[aria-busy="true"][data-skeleton]')).not.toBeNull();
+    expect(document.body.textContent).not.toMatch(/No agents yet|0 agents/);
+    fail(new Error('getAgents failed (503)'));
+    expect(await screen.findByText("Couldn't load the agents.")).toBeTruthy();
+    expect(document.body.textContent).not.toMatch(/failed \(503\)/);
     expect(screen.getByRole('button', { name: 'Try again' })).toBeTruthy();
   });
   it('explains an empty workspace', async () => {

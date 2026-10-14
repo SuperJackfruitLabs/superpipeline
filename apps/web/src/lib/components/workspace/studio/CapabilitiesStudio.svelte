@@ -1,5 +1,7 @@
 <!-- apps/web/src/lib/components/workspace/studio/CapabilitiesStudio.svelte -->
 <script lang="ts">
+  import SkeletonRows from '$lib/components/parts/SkeletonRows.svelte';
+  import LoadFailed from '$lib/components/parts/LoadFailed.svelte';
   import { autogrow } from '$lib/autogrow';
   import { Button, Face } from '@superjackfruit/vibekit';
   import NewCapabilityDialog from '../dialogs/NewCapabilityDialog.svelte';
@@ -24,8 +26,10 @@
   <p class="wo-lede">What agents can do. A board stage asks for one; an agent holding it claims the card.</p>
   {#if model.similar.length > 0}<p class="ar-hint" role="status">{similarText(model.similar)}</p>{/if}
   {#if model.error}<p class="ar-hint" role="alert">{model.error}</p>{/if}
-  {#if model.capabilities === null}
-    <p class="ar-hint" role="status">Loading capabilities…</p>
+  {#if model.capabilities === null && model.failed}
+    <LoadFailed message="Couldn't load capabilities." onRetry={() => model.refresh()} />
+  {:else if model.capabilities === null}
+    <SkeletonRows label="Loading capabilities…" rows={3} rowHeight={48} />
   {:else}
     {#if model.notes.length > 0 || review?.note}
       <div class="wo-note">

@@ -25,7 +25,7 @@
   <div class="wa-head">
     <a class="ar-lk quiet" href={back.href}><LineIcon name="chev-left" size={16} stroke={1.75} />{back.label}</a>
     <div class="wa-hero">
-      <span class="big" aria-hidden="true">{workspaceCounts.value.agents ?? ''}</span>
+      <span class="big" aria-hidden="true">{workspaceCounts.value.agents ?? '—'}</span>
       <div class="txt">
         <span class="kick">Crew · shared by every board</span>
         <svelte:element this={heading}>Crew</svelte:element>

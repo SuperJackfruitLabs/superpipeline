@@ -1,5 +1,7 @@
 <!-- apps/web/src/lib/components/workspace/agents/AgentsStudio.svelte -->
 <script lang="ts">
+  import SkeletonRows from '$lib/components/parts/SkeletonRows.svelte';
+  import LoadFailed from '$lib/components/parts/LoadFailed.svelte';
   import './agents-studio.css';
   import { Button, Face } from '@superjackfruit/vibekit';
   import LineIcon from '$lib/components/parts/LineIcon.svelte';
@@ -47,10 +49,9 @@
     <li><span class="k"><LineIcon name="dots" size={18} stroke={1.75} /></span><span><b>Actions</b> — edit, issue or revoke tokens, unlink, delete.</span></li>
   </ul>
   {#if model.agents === null && model.loadError}
-    <p class="ar-hint" role="alert">Could not load the agents: {model.loadError}</p>
-    <Button variant="secondary" onclick={() => void model.refresh()}>Try again</Button>
+    <LoadFailed message="Couldn't load the agents." onRetry={() => model.refresh()} />
   {:else if model.agents === null}
-    <p class="ar-hint" role="status" aria-busy="true">Loading agents…</p>
+    <SkeletonRows label="Loading agents…" rows={4} rowHeight={56} />
   {:else if model.agents.length === 0}
     <p class="ar-hint">No agents yet. Create one with New agent — you'll get a token to point an AI agent at this workspace.</p>
   {:else}

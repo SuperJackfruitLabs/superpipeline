@@ -10,6 +10,8 @@ const deps = { updateLabel, deleteLabel };
 export class LabelsModel {
   labels = $state<Label[] | null>(null);
   error = $state<string | null>(null);
+  /** The list could not be read: the tab says so with Try again (never an empty list, never the raw error). */
+  failed = $state(false);
   removing = $state<string | null>(null);
   newName = $state('');
   /** Null until a colour is picked: the swatch shows the needs mood, the request sends NEW_LABEL_COLOUR. */
@@ -19,7 +21,8 @@ export class LabelsModel {
   async refresh(): Promise<void> {
     const req = listLabels();
     app.markBusy(req);
-    try { this.labels = await req; } catch (e) { this.error = e instanceof Error ? e.message : String(e); this.labels ??= []; }
+    this.failed = false;
+    try { this.labels = await req; } catch { this.failed = true; }
   }
 
   private async fail(res: Response, what: string): Promise<void> {
