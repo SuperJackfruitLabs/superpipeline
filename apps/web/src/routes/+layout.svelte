@@ -23,7 +23,7 @@
   import Landing from '$lib/components/Landing.svelte';
   import { closeCardOnEscape } from '$lib/escape';
   import { auth } from '$lib/auth-recovery.svelte';
-  import LogoMotion from '$lib/components/LogoMotion.svelte';
+  import BootScreen from '$lib/components/parts/BootScreen.svelte';
   import ReconnectDialog from '$lib/components/dialogs/ReconnectDialog.svelte';
   import ReconnectToast from '$lib/components/dialogs/ReconnectToast.svelte';
   import NewCardDialog from '$lib/components/dialogs/NewCardDialog.svelte';
@@ -61,13 +61,7 @@
 
 <VibeRoot vibe={appearance.value.vibe} theme={appearance.theme}>
 {#if app.authState === 'loading'}
-  <main class="min-h-viewport safe-x flex flex-col items-center justify-center gap-3 text-center">
-    <h1 class="sr-only">Loading Superpipeline</h1>
-    <!-- The large mark: the pack's Channel animation, once per session; Quiet keeps it still. -->
-    <LogoMotion size={72} playIntro={appearance.value.vibe !== 'quiet'} />
-    <div class="wordmark text-lg">superpipeline</div>
-    <div class="mono text-muted-foreground flex items-center gap-2 text-xs"><span class="live-dot"></span>loading your boards…</div>
-  </main>
+  <BootScreen heading="Loading Superpipeline" label="Signing you in…" />
 {:else if app.authState === 'signed-out'}
   <Landing />
 {:else if page.data.shell === 'bare'}

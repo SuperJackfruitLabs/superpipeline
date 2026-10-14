@@ -11,6 +11,7 @@
   import LoadFailed from '$lib/components/parts/LoadFailed.svelte';
   import { UNREACHABLE_COPY } from '$lib/loading';
   import { returnToHeld } from '$lib/reconnect';
+  import BootScreen from '$lib/components/parts/BootScreen.svelte';
 
   $effect(() => {
     // After a Reconnect the layout sends the person back to where they were instead.
@@ -26,8 +27,5 @@
     <LoadFailed message={UNREACHABLE_COPY} onRetry={() => app.retry()} />
   </main>
 {:else}
-  <main class="flex flex-1 flex-col items-center justify-center gap-3 text-center">
-    <h1 class="sr-only">Opening your inbox</h1>
-    <div class="mono text-muted-foreground flex items-center gap-2 text-xs"><span class="live-dot"></span>finding your boards…</div>
-  </main>
+  <BootScreen heading="Opening your inbox" label="Finding your boards…" onRetry={() => app.retry()} />
 {/if}
