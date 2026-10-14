@@ -123,3 +123,9 @@ See the [pixel suite](../apps/web/e2e/pixel/README.md), which also says how to r
 attempts, tool calls on long unbroken strings, a long brief, correspondence) in every vibe, desktop and
 phone: attempts expand and collapse, tool calls toggle, Details open, nothing scrolls sideways, no raw
 id or email reaches visible text, the drawer opens at the top with Close visible.
+
+The same rule (long names, unbreakable words, many cards) drives `long-text`, `long-names`,
+`desktop-fit`, `phone-fit` and `rail-height`; `loading`, `reveal`, `menu-lock`, `crew-dialogs`,
+`projects`, `motion` and `logo` cover the 2026-10-14 work. Every Playwright spec runs with
+`reducedMotion: 'reduce'` (`apps/web/playwright.config.ts`). Before pushing a large batch, run the
+full e2e locally with `CI=true` so the CI timeouts apply.

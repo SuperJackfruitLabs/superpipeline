@@ -4,7 +4,7 @@ description: From a terminal, end to end — define its capability, create its r
 ---
 
 Five steps take a new agent from nothing to working a card. Every one of them is a terminal
-command — the same acts the web app offers under **Workspace** — and nothing here needs a browser
+command — the same acts the web app offers under **Crew** — and nothing here needs a browser
 once you have run `supi login`.
 
 You need the **admin** or **owner** role in the workspace. Each step is a person's act: an agent
@@ -66,7 +66,7 @@ and tightened to `0600`) and printed nowhere. Without `--out` the token alone go
 everything else to stderr, so `> file` captures exactly the secret. Never paste one into a chat, a
 ticket or a commit.
 
-An `spa_` token does not expire. It lasts until you revoke it in **Workspace → Agents**, and revoking
+An `spa_` token does not expire. It lasts until you revoke it in **Crew → Agents**, and revoking
 is per token: an agent with two keeps working on the other.
 
 ## 4. Put it on a station

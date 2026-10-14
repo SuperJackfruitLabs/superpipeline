@@ -25,7 +25,7 @@ signing in on a second device does not disturb the first.
 
 ## As an agent, with a superpipeline token
 
-Mint an `spa_` token for an agent in Workspace → Agents, or from a terminal with
+Mint an `spa_` token for an agent in Crew → Agents, or from a terminal with
 `supi agent mint-token <agentId> --kind claim-run|run-only` (see
 [Registering an agent](/use/register-an-agent/)). It is shown **once** — only its hash is stored, so
 a database read never yields a usable credential. Minting is a person's act, admin or above: an

@@ -177,14 +177,36 @@ Three places, in this order in the desktop rail or top nav and in the phone bar:
   session starts on All boards. Every ask carries its board as a chip next to the agent. The nav
   badge on Inbox is the needs-you count across all boards, and its accessible name says so. Budget
   caps and the Spend details link need one board chosen.
-- **Plan** is the board (`/b/:id`), its List and Projects. A board's **spend and log**
+- **Plan** has two siblings: **Boards** (the board at `/b/:id`, as lanes or List) and **Projects**
+  (`/plan/projects`, `/plan/projects/:id`). Bare `/plan` opens the current board, or Projects when
+  there is none. Projects are workspace-wide, not part of a board: the board's own Projects view is
+  gone and an old `?view=projects` link is sent to `/plan/projects`. **New project** / **Edit
+  project** take a name, goal, target date, declared health (On track / At risk / Off track) and a
+  first milestone; the project page sets the declared health beside a health computed from its cards
+  and milestones, and lists its blockers. A board's **spend and log**
   (`/b/:id/operate/telemetry`, `/b/:id/operate/log`) belong to the board and link back to it: they
   open from the palette's "Spend detail" (on that board) and from the Inbox's Spend "Details" when
   that board is chosen. (A link in the board switcher's "This board" row was tried and pushed Delete
   board off a 800px-high screen.)
 - **Crew** (`/crew/agents|people|capabilities`) is who and what may act: no Needs-you tab, no badge.
+  Each tab's masthead has its create button (New agent, New person, New capability).
 - **Settings** (`/settings`), from the account menu: Labels, Connections, Appearance, Account.
 
 Old addresses keep working: `/b/:id/operate` opens the Inbox showing that board;
 `/workspace/needs-you` opens the Inbox; `/workspace/labels` and `/workspace/connections` open
 Settings; the other `/workspace/:tab` links open the Crew tab.
+
+## Loading, failure and motion (2026-10-14)
+
+- **Never empty on failure.** A surface that is still loading shows skeletons, not "nothing here";
+  the Inbox says *Checking your boards…* until it has counted. After 8 s a loading surface adds
+  *Still loading — the server is slow.*; at 20 s a read is aborted (`REQUEST_TIMEOUT_MS`) and the
+  surface turns to Failed with **Try again** (`apps/web/src/lib/loading.ts`). A route that throws
+  lands on `+error.svelte`.
+- **Live pill.** *Connecting…* before the feed first opens, *Reconnecting…* only after a drop,
+  *Offline — showing what you had* when the browser is offline.
+- **Boot.** Before the app is ready a branded screen says *Signing you in…* then *Finding your
+  boards…*, with the logo animation; the first frame already has the theme's background.
+- **Motion** comes from vibekit (vendored 0.0.12, which also fixes a dismissed menu leaving the
+  page unclickable). Reduced motion means no motion. Every Playwright spec runs with
+  `reducedMotion: 'reduce'`.
