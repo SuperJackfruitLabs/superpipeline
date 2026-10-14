@@ -12,7 +12,8 @@ export default defineConfig({
   timeout: 90_000,
   reporter: [['list']],
   outputDir: '../../test-results/visual-artifacts',
-  use: { ...devices['Desktop Chrome'], baseURL: PORTS.webUrl, deviceScaleFactor: 1, timezoneId: 'Asia/Kolkata' },
+  // Reduced motion: the logo animation (LogoMotion.svelte) and every transition sit at rest for the camera.
+  use: { ...devices['Desktop Chrome'], baseURL: PORTS.webUrl, deviceScaleFactor: 1, timezoneId: 'Asia/Kolkata', reducedMotion: 'reduce' },
   webServer: [
     { command: 'pnpm --filter @superpipeline/web build && pnpm --filter @superpipeline/api dev:setup && pnpm --filter @superpipeline/api dev:pixel', url: `${PORTS.apiUrl}/health`, reuseExistingServer: false, timeout: 180_000 },
     { command: 'pnpm --filter @superpipeline/web dev', url: PORTS.webUrl, reuseExistingServer: false, timeout: 120_000 },

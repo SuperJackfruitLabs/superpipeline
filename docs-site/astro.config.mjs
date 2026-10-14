@@ -31,9 +31,9 @@ export default defineConfig({
           ],
         }),
       ],
-      // The mark and palette are the app's; see src/styles/theme.css for where each value
-      // comes from.
-      logo: { src: './src/assets/mark.svg', alt: '' },
+      // The mark is the translucent-v2 Channel (apps/web/static/brand/README.md): amber on light,
+      // white on dark. The palette is the app's; see src/styles/theme.css for where each value comes from.
+      logo: { light: './src/assets/mark.svg', dark: './src/assets/mark-white.svg', alt: '' },
       customCss: ['./src/styles/theme.css'],
       favicon: '/favicon.svg',
       head: [

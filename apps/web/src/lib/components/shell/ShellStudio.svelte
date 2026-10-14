@@ -12,6 +12,7 @@
     type MenuItem as VkMenuItem, type NavItem,
   } from '@superjackfruit/vibekit';
   import Icon from '$lib/components/parts/Icon.svelte';
+  import BrandMark from '$lib/components/BrandMark.svelte';
   import '$lib/styles/shell/studio.css';
   import '$lib/styles/shell/studio-dark.css';
   import { shellModel as m } from './shell-model.svelte';
@@ -38,7 +39,7 @@
   const statusKeys = $derived((status?.right ?? []).map((text) => ({ text })));
 </script>
 
-{#snippet markIcon()}<Icon name="mark" size={22} strokeWidth={2} />{/snippet}
+{#snippet markIcon()}<BrandMark class="size-6" />{/snippet}
 {#snippet inboxIcon()}<Icon name="inbox" size={20} strokeWidth={1.75} />{/snippet}
 {#snippet planIcon()}<Icon name="plan-sq" size={20} strokeWidth={1.75} />{/snippet}
 {#snippet crewIcon()}<Icon name="crew" size={20} strokeWidth={1.75} />{/snippet}

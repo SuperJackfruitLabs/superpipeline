@@ -1,35 +1,29 @@
 <script lang="ts">
   /**
-   * The superpipeline mark: a pipe that leaves a starting stage, winds through the
-   * pipeline, and meets a gate.
+   * The Superpipeline mark: the translucent-v2 "Channel" (static/brand/README.md).
    *
-   * It replaced a fletched arrow, which was the *bāṇ* in the product's old name and
-   * meant nothing once the name changed. Every copy of the mark — this component, the
-   * favicon in app.html, landing/public/favicon.svg and docs-site/src/assets/mark.svg —
-   * is the same three paths; change them together.
+   * This is the pack's compact one-colour form (mark-current.svg), inlined so it takes its
+   * colour from CSS: the brand amber on a light ground, white on a dark one (app.css `.brandmark`),
+   * which is what the pack's adaptive favicon does. Every place the app shows the mark is 48px or
+   * under, where the pack asks for the compact form rather than the full translucent artwork.
+   * The geometry is the pack's; do not redraw it.
    *
-   * Decorative wherever it sits beside the wordmark, so it is hidden from assistive
-   * technology unless a `label` says it stands alone.
+   * Decorative wherever it sits beside the name, so it is hidden from assistive technology
+   * unless a `label` says it stands alone.
    */
   let { class: className = '', label }: { class?: string; label?: string } = $props();
 </script>
 
 <svg
   class="brandmark {className}"
-  viewBox="0 0 32 32"
+  viewBox="0 0 256 256"
   role={label ? 'img' : undefined}
   aria-label={label}
   aria-hidden={label ? undefined : 'true'}
+  focusable="false"
 >
-  <rect width="32" height="32" rx="7" fill="var(--vk-product-superpipeline-bg)" />
-  <g
-    transform="translate(4 4)"
-    fill="none"
-    stroke="var(--vk-product-superpipeline-fg)"
-    stroke-width="2.4"
-    stroke-linecap="round"
-    stroke-linejoin="round"
-  >
-    <circle cx="6" cy="6" r="2.5" /><path d="M8.5 6H15a3 3 0 0 1 0 6H9a3 3 0 0 0 0 6h5.5" /><path d="M18 15v6" />
+  <g transform="translate(7.68 7.68) scale(.94)">
+    <path d="M24 105C24 91 32 81 45 75L171 18C187 11 200 17 200 31V65C200 75 197 81 188 85L161 101C154 105 151 110 150 118L147 134C146 142 143 146 136 150L38 199C28 204 24 199 24 189Z" fill="currentColor" />
+    <path d="M64 198L156 145C164 141 167 138 168 129L170 113C171 106 173 102 180 98L215 77C223 72 229 77 229 86V166C229 184 222 195 207 201L87 240C70 245 56 239 53 225C50 213 54 204 64 198Z" fill="currentColor" />
   </g>
 </svg>

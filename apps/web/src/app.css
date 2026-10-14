@@ -260,11 +260,21 @@
     background: linear-gradient(90deg, transparent, currentColor 85%);
   }
 
-  /* the brand mark (BrandMark.svelte): a pipe winding through stages to a gate */
+  /* the brand mark (BrandMark.svelte): the translucent-v2 Channel in its compact one-colour form.
+     Brand colours, not UI tokens: the pack's amber on light grounds, white on dark ones, as its
+     adaptive favicon does. The user-selectable accent never reaches it. */
   .brandmark {
     width: 22px;
     height: 22px;
-    color: var(--marigold);
+    flex: 0 0 auto;
+    color: #d89600; /* brand: translucent-v2 */
+  }
+  [data-theme='dark'] .brandmark {
+    color: #fff; /* brand: translucent-v2 */
+  }
+  /* Studio's rail tile keeps a light ground in the dark theme. */
+  [data-theme='dark'] .vk-appnav--studio .vk-appnav__mark .brandmark {
+    color: #d89600; /* brand: translucent-v2 */
   }
 
   .tile {
