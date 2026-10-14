@@ -23,7 +23,7 @@
   const status = $derived(vibe === 'studio' ? shellModel.pageStatus([plural(model.projects.length, 'project', 'projects'), 'across the workspace']) : null);
 </script>
 
-<AppShell here="plan" section="projects" boardName={null} view={null} plan="projects" showing="Projects belong to the workspace, not to a board." {status} bleed={vibe === 'quiet'} ownHeading>
+<AppShell here="plan" section="projects" boardName={null} view={null} plan="projects" showing="Projects belong to the workspace, not to a board." {status} bleed={vibe === 'quiet'} ownHeading primary={{ label: 'New project', onclick: () => (model.dialogOpen = true) }}>
   <Layout {model} {vibe} />
 </AppShell>
 

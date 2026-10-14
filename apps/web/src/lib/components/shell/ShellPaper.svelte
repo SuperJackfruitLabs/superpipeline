@@ -16,7 +16,7 @@
   import PlanSwitch from './PlanSwitch.svelte';
   import { VIEWS, type ShellProps } from './types';
 
-  let { here, section, boardName, view, plan, showing, paperShowing, status, subTools, ownHeading = false, children }: ShellProps = $props();
+  let { here, section, boardName, view, plan, showing, paperShowing, status, subTools, ownHeading = false, primary, children }: ShellProps = $props();
 
   // Words only: vibekit draws no icon in this vibe's nav (the field is required, and ignored).
   const items = $derived<NavItem[]>([
@@ -50,7 +50,7 @@
     <Button variant="secondary" icon={filterIcon} aria-haspopup="dialog" onclick={m.openFilter}>Filter cards <span class="ps-cnt">· {m.filterSummary}</span></Button>
   {/if}
   <CommandField label="Search cards, agents and actions" placeholder="Search" kbd="⌘K" onopen={m.openSearch} />
-  <Button icon={penIcon} onclick={m.compose}>Write a new card</Button>
+  <Button icon={penIcon} onclick={primary?.onclick ?? m.compose}>{primary?.label ?? 'Write a new card'}</Button>
 {/snippet}
 
 {#snippet viewTabs()}

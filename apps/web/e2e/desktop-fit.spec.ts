@@ -61,3 +61,16 @@ for (const vibe of VIBES) {
     });
   }
 }
+
+// Projects rows (SP-Plan-Projects-Daylight and the vibes' Projects references): the boards its cards are on,
+// the declared health, the target date and the roll-up's "as of HH:MM", in every vibe.
+for (const vibe of VIBES) {
+  test(`${vibe} 1280: a project row names its boards, health, target date and roll-up time`, async ({ page }) => {
+    await openWorld(page, '/plan/projects', { vibe, dark: false, width: 1280, height: 900 });
+    const main = page.locator('main');
+    await expect(main.getByText('Cards on', { exact: true }).first()).toBeVisible();
+    await expect(main.getByText('On track', { exact: true }).first()).toBeVisible();
+    await expect(main.getByText(/Target \d{1,2} \w{3} 20\d\d/).first()).toBeVisible();
+    await expect(main.getByText(/as of \d\d:\d\d/).first()).toBeVisible();
+  });
+}

@@ -12,6 +12,7 @@ vi.mock('$lib/api', () => api);
 vi.mock('$lib/stores/app.svelte', () => ({ app: { board: { name: 'Developer Experience' }, boards: [], projects: [], markBusy: <T,>(p: Promise<T>) => p } }));
 
 import ProjectsPage from './ProjectsPage.svelte';
+import { viewport } from '$lib/viewport.svelte';
 import { ProjectsModel } from '../projects-model.svelte';
 
 const guild = { id: 'prj_23b93f2d16d54b27', tenantId: 'tnt_vibes', name: 'Guild — Forge workspaces and checkpoint recovery', description: null, targetDate: null, state: 'active', health: null, leadUserId: null, createdAt: '2026-09-01T00:00:00Z', updatedAt: null };
@@ -55,15 +56,19 @@ describe('ProjectsPage', () => {
     expect(screen.getByText(/· 1 overdue$/)).toBeTruthy();
     expect((document.querySelector('.bar > i') as HTMLElement).style.width).toBe('29%');
   });
-  it('names the boards its cards live on, and New project opens the dialog', async () => {
+  it('names the boards its cards live on; on a phone the page draws New project (the desktop masthead owns it)', async () => {
     api.getProjectRollup.mockReturnValue(new Promise(() => {}));
     const model = await mount();
     const row = (await screen.findByText('Platform Operations')).closest('.pboards')!;
     expect(row.textContent).toBe('Cards onDeveloper ExperiencePlatform Operations');
     expect(screen.getByRole('link', { name: guild.name }).getAttribute('href')).toBe(`/plan/projects/${guild.id}`);
     expect(screen.queryByRole('button', { name: 'Create' })).toBeNull();
-    await fireEvent.click(screen.getByRole('button', { name: 'New project' }));
-    expect(model.dialogOpen).toBe(true);
+    expect(screen.queryByRole('button', { name: 'New project' })).toBeNull();
+    viewport.phone = true;
+    try {
+      await fireEvent.click(await screen.findByRole('button', { name: 'New project' }));
+      expect(model.dialogOpen).toBe(true);
+    } finally { viewport.phone = false; }
   });
   it('a plain click on a project opens it in the drawer', async () => {
     api.getProjectRollup.mockReturnValue(new Promise(() => {}));

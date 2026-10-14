@@ -41,6 +41,11 @@ export interface ShellProps {
   bleed?: boolean;
   /** The page draws its own h1 (Operate): the masthead title becomes a plain line, so the page still has exactly one h1. */
   ownHeading?: boolean;
+  /**
+   * The masthead's primary action where the page's main thing is not a card (Plan · Projects: New project).
+   * Absent: New card (Paper: Write a new card), which opens the composer.
+   */
+  primary?: { label: string; onclick: () => void };
   children: Snippet;
 }
 
