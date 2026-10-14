@@ -82,11 +82,13 @@ test('a stale card id opens the board rather than erroring', async ({ page, requ
   await expect(page.getByText('Still here').first()).toBeVisible();
 });
 
-test('a board id from nowhere falls back instead of breaking', async ({ page, request }) => {
+test('a board id from nowhere says so and offers the way home, and keeps the remembered board', async ({ page, request }) => {
   // A board id belonging to another tenant resolves to a different Durable
   // Object and answers 404 exactly as a nonexistent one does — the isolation
   // is inherited from `${tenantId}:${boardId}` naming, not added here. Either
-  // way the app must land somewhere usable.
+  // way the app must land somewhere usable: before it silently showed ANOTHER board under the
+  // wrong address; now it says the board is not there for you (never a raw error) and offers the
+  // Inbox, and the remembered board is not forgotten by a link that did not work.
   const remembered = await makeBoard(request, 'Fallback E2E');
   await makeCard(request, remembered, 'Fallback card');
   await page.addInitScript(
@@ -96,8 +98,13 @@ test('a board id from nowhere falls back instead of breaking', async ({ page, re
 
   await page.goto('/b/brd_0000000000000000/c/card_0000000000000000');
 
-  await expect(page.getByText('Backlog', { exact: true }).first()).toBeVisible();
-  await expect(page.getByText('Fallback card').first()).toBeVisible();
+  await expect(page.getByText("This board doesn't exist or isn't shared with you.")).toBeVisible();
+  await expect(page.getByText(/getBoard failed|Error:/)).toHaveCount(0);
+  expect(await page.evaluate((key) => window.localStorage.getItem(key), BOARD_KEY)).toBe(remembered);
+
+  await page.getByRole('link', { name: 'Go to your Inbox' }).click();
+  await expect(page).toHaveURL(/\/inbox$/);
+  await expect(page.getByText('Boards that need you come first.')).toBeVisible();
 });
 
 test('opening a card puts its address in the bar, so the link is copyable', async ({
