@@ -30,12 +30,12 @@ for (const vibe of VIBES) {
       await page.goto(`/b/${boardId}?view=list`);
       await expect(page.getByRole('main')).toHaveCount(1);
       await expect(page.locator('h1'), 'list: one h1').toHaveCount(1);
-      // Projects draws its own h1 in every vibe (the shell's title is then a plain line): still exactly one.
-      await page.goto(`/b/${boardId}?view=projects`);
+      // Plan · Projects (nav v2, the workspace's, not a board's) draws its own h1: still exactly one.
+      await page.goto('/plan/projects');
       await expect(page.getByRole('main')).toHaveCount(1);
       await expect(page.locator('h1'), 'projects: one h1').toHaveCount(1);
-      // Desktop: the page's own title. Phone: the phone header's (the page then uses h2).
-      await expect(page.locator('h1')).toContainText(size.name === 'phone' ? `Headings ${vibe} ${size.name}` : 'Projects');
+      // Desktop: the page's own title. Phone: the phone header's, which names the section (the page then uses h2).
+      await expect(page.locator('h1')).toContainText('Projects');
       // The Crew frame and Settings draw their own h1 in every vibe (h2 on phones, where the header's is the one h1).
       for (const path of ['/crew/agents', '/crew/people', '/crew/capabilities', '/settings']) {
         await page.goto(path);

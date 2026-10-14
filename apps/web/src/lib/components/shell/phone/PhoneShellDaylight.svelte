@@ -7,6 +7,7 @@
   import { VIEWS, type ShellProps, type ShellView } from '../types';
   import { SEARCH_NAME } from './common';
   import PhoneFrame from './PhoneFrame.svelte';
+  import PlanSwitch from '../PlanSwitch.svelte';
 
   let props: ShellProps = $props();
   const viewOptions = VIEWS.map(([value, label]) => ({ value, label }));
@@ -22,8 +23,9 @@
 {/snippet}
 
 {#snippet views()}
-  <Segmented label="View" options={viewOptions} form="pill" bind:value={() => props.view ?? 'board', (v) => m.setView(v as ShellView)} />
-  {#if props.view !== 'projects'}<Button variant="secondary" icon={funnelIcon} aria-haspopup="dialog" onclick={m.openFilter}>Filter</Button>{/if}
+  {#if props.plan}<PlanSwitch value={props.plan} form="segmented" pill />{/if}
+  {#if props.view}<Segmented label="View" options={viewOptions} form="pill" bind:value={() => props.view ?? 'board', (v) => m.setView(v as ShellView)} />{/if}
+  {#if props.view}<Button variant="secondary" icon={funnelIcon} aria-haspopup="dialog" onclick={m.openFilter}>Filter</Button>{/if}
 {/snippet}
 
-<PhoneFrame shell={props} vibe="daylight" phase={m.phonePhase} switcherLabel="Switch board" {actions} below={props.view ? views : undefined} glyphs={{ inbox: 'inbox', plan: 'plan-phone', crew: 'crew' }} />
+<PhoneFrame shell={props} vibe="daylight" phase={m.phonePhase} switcherLabel="Switch board" {actions} below={props.view || props.plan ? views : undefined} glyphs={{ inbox: 'inbox', plan: 'plan-phone', crew: 'crew' }} />

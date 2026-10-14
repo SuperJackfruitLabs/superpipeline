@@ -11,12 +11,12 @@
   import type { ShellProps } from '../types';
   import { SEARCH_NAME } from './common';
   import PhoneFrame from './PhoneFrame.svelte';
+  import PlanSwitch from '../PlanSwitch.svelte';
 
   let props: ShellProps = $props();
   const viewItems = $derived([
     { value: 'board' as const, label: 'Board', href: '?view=board' },
     { value: 'list' as const, label: 'List', href: '?view=list', count: m.listCount },
-    { value: 'projects' as const, label: 'Projects', href: '?view=projects', count: m.projectCount },
   ]);
 </script>
 
@@ -28,8 +28,9 @@
 {#snippet actions()}<Button icon={plusIcon} onclick={m.compose}>New card</Button>{/snippet}
 
 {#snippet views()}
-  <Tabs label="View" items={viewItems} value={props.view ?? 'board'} onchange={(v) => m.setView(v)} />
-  {#if props.view !== 'projects'}<Button variant="secondary" size="sm" icon={funnelIcon} aria-haspopup="dialog" onclick={m.openFilter}>Filter</Button>{/if}
+  {#if props.plan}<PlanSwitch value={props.plan} />{/if}
+  {#if props.view}<Tabs label="View" items={viewItems} value={props.view} onchange={(v) => m.setView(v)} />{/if}
+  {#if props.view}<Button variant="secondary" size="sm" icon={funnelIcon} aria-haspopup="dialog" onclick={m.openFilter}>Filter</Button>{/if}
 {/snippet}
 
-<PhoneFrame shell={props} vibe="studio" eyebrow="Superpipeline · {props.section}" switcherLabel="Switch board" eyebrowActions={search} actions={props.boardName !== null ? actions : undefined} below={props.view ? views : undefined} belowOutside glyphs={{ inbox: 'inbox', plan: 'plan-sq', crew: 'crew' }} />
+<PhoneFrame shell={props} vibe="studio" eyebrow="Superpipeline · {props.section}" switcherLabel="Switch board" eyebrowActions={search} actions={props.boardName !== null ? actions : undefined} below={props.view || props.plan ? views : undefined} belowOutside glyphs={{ inbox: 'inbox', plan: 'plan-sq', crew: 'crew' }} />

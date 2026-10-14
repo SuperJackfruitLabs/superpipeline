@@ -1,9 +1,10 @@
 import { app } from '$lib/stores/app.svelte';
 import {
-  listProjects, getProject, getProjectRollup, createProject, deleteProject, createMilestone, deleteMilestone,
+  listProjects, getProject, getProjectRollup, deleteProject, createMilestone, deleteMilestone,
   type Milestone, type Project, type ProjectRollup,
 } from '$lib/api';
 import { groupProjects, projectsSummary, type ProjectGroup } from './project-rollup';
+import { projectWorkspace } from './project-workspace.svelte';
 
 const message = (e: unknown) => (e instanceof Error ? e.message : String(e));
 
@@ -16,13 +17,11 @@ export class ProjectsModel {
   loadError = $state<string | null>(null);
 
   /** Disclosure state lives here, so a layout re-mounted by a vibe change keeps what the person opened. */
-  createOpen = $state(false);
   msOpen = $state<Record<string, boolean>>({});
-
-  newName = $state('');
-  newTarget = $state('');
-  creating = $state(false);
-  createError = $state<string | null>(null);
+  /** The New project dialog. */
+  dialogOpen = $state(false);
+  /** The project open in the drawer over the list, or null. */
+  drawerId = $state<string | null>(null);
   deleting = $state<string | null>(null);
 
   msName = $state<Record<string, string>>({});
@@ -35,7 +34,8 @@ export class ProjectsModel {
   /** Every project in the order the page draws them, so ids (`pj-0`…) count across groups. */
   ordered: Project[] = $derived(this.groups.flatMap((g) => g.projects));
   summary = $derived(projectsSummary(this.projects));
-  boardName = $derived(app.board?.name ?? '');
+  /** The boards a project's cards live on (read once per visit, across every board). */
+  boardsOf(id: string): Array<{ id: string; name: string }> { return projectWorkspace.boardsOf(id); }
 
   /** Projects and milestones gate the ready flag; rollups do not (the pixel harness holds them). */
   async refresh(): Promise<void> {
@@ -52,6 +52,7 @@ export class ProjectsModel {
       return;
     }
     for (const p of this.projects) void this.loadRollup(p.id);
+    void projectWorkspace.load(true);
     const details = Promise.all(this.projects.map((p) => this.loadDetail(p.id)));
     app.markBusy(details);
     await details;
@@ -71,31 +72,6 @@ export class ProjectsModel {
       this.rollupErrors = rest;
     } catch (e) {
       this.rollupErrors = { ...this.rollupErrors, [id]: message(e) };
-    }
-  }
-
-  clearCreate(): void {
-    this.newName = '';
-    this.newTarget = '';
-    this.createError = null;
-  }
-
-  async addProject(): Promise<void> {
-    const name = this.newName.trim();
-    if (name === '' || this.creating) return;
-    this.creating = true;
-    this.createError = null;
-    try {
-      const res = await createProject({ name, targetDate: this.newTarget.trim() || undefined });
-      if (!res.ok) {
-        const body = (await res.json().catch(() => null)) as { error?: string } | null;
-        this.createError = body?.error ?? `Couldn't create that project (${res.status})`;
-        return;
-      }
-      this.clearCreate();
-      await this.refresh();
-    } finally {
-      this.creating = false;
     }
   }
 

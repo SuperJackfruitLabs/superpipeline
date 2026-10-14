@@ -15,9 +15,10 @@
   import '$lib/styles/shell/studio.css';
   import '$lib/styles/shell/studio-dark.css';
   import { shellModel as m } from './shell-model.svelte';
+  import PlanSwitch from './PlanSwitch.svelte';
   import { VIEWS, type ShellProps } from './types';
 
-  let { here, section, boardName, view, showing, studioSubRight, status, subTools, bleed = false, ownHeading = false, children }: ShellProps = $props();
+  let { here, section, boardName, view, plan, showing, studioSubRight, status, subTools, bleed = false, ownHeading = false, children }: ShellProps = $props();
 
   const items = $derived<NavItem[]>([
     { id: 'inbox', label: 'Inbox', href: m.inboxHref, icon: inboxIcon, current: here === 'inbox', count: m.inboxBadge || undefined, countIsNeeds: true, kbd: 'G I' },
@@ -30,7 +31,7 @@
     { label: 'Appearance…', onselect: m.openAppearance },
     { label: 'Settings', onselect: m.openSettings },
   ]);
-  const counts: Partial<Record<string, number>> = $derived({ list: m.listCount, projects: m.projectCount });
+  const counts: Partial<Record<string, number>> = $derived({ list: m.listCount });
   const viewItems = $derived(VIEWS.map(([value, label]) => ({ value, label, href: `?view=${value}`, count: counts[value] })));
   const statusItems = $derived((status?.items ?? []).map((i) => ({ text: i.text, tone: i.signal ? ('needs' as const) : ('plain' as const) })));
   // The keys sit at the status line's end (SP-Board-Studio `.ar-status .r`).
@@ -62,8 +63,9 @@
 {#snippet actions()}<Button icon={plusIcon} aria-keyshortcuts="N" onclick={m.compose}>New card <span aria-hidden="true"><Kbd keys={['N']} /></span></Button>{/snippet}
 
 {#snippet viewTabs()}
+  {#if plan}<PlanSwitch value={plan} />{/if}
   {#if view}<Tabs label="View" items={viewItems} value={view} onchange={(v) => m.setView(v)} />{/if}
-  {#if view !== 'projects'}
+  {#if view}
     <Button variant="secondary" size="sm" icon={funnelIcon} aria-haspopup="dialog" aria-keyshortcuts="F" onclick={m.openFilter}>Filter cards <span class="st-cnt">{m.filterSummary}</span></Button>
   {/if}
   {@render subTools?.()}
@@ -81,7 +83,7 @@
     {command}
     live={{ state: m.connected ? 'live' : 'reconnecting', label: m.connected ? 'Live' : 'Reconnecting…', attrs: { 'data-live': m.connected ? 'on' : 'off' } }}
     {actions}
-    tabs={view ? viewTabs : undefined}
+    tabs={view || plan ? viewTabs : undefined}
   />
 {/snippet}
 

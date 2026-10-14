@@ -39,7 +39,7 @@
     else if (action === 'plan') void goto(shellModel.planHref);
     else if (action === 'crew') void goto(shellModel.crewHref);
     else if (action === 'compose' && app.boardId) app.requestCompose();
-    else if (action === 'filter' && props.view && props.view !== 'projects') app.filterOpen = true;
+    else if (action === 'filter' && props.view) app.filterOpen = true;
     else return;
     e.preventDefault();
   }

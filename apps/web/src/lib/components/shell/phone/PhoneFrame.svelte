@@ -18,7 +18,7 @@
   import { youMenuItems } from '../you-menu';
 
   /** A page without a board names itself in the phone header. */
-  const SECTION_TITLE: Partial<Record<ShellProps['section'], string>> = { inbox: 'Inbox', crew: 'Crew', settings: 'Settings' };
+  const SECTION_TITLE: Partial<Record<ShellProps['section'], string>> = { inbox: 'Inbox', crew: 'Crew', settings: 'Settings', projects: 'Projects', project: 'Project' };
 
   let {
     shell, vibe, eyebrow, phase, switcherLabel, actions, eyebrowActions, dateline, links, below, belowOutside = false, glyphs, you,
@@ -49,7 +49,7 @@
   } = $props();
 
   const boardScoped = $derived(shell.boardName !== null);
-  const title = $derived(shell.boardName ?? SECTION_TITLE[shell.section] ?? 'Superpipeline');
+  const title = $derived(shell.title ?? shell.boardName ?? SECTION_TITLE[shell.section] ?? 'Superpipeline');
   const live = $derived({ state: m.connected ? 'live' as const : 'reconnecting' as const, label: m.connected ? 'Live' : 'Reconnecting…', attrs: { 'data-live': m.connected ? 'on' : 'off' } });
 
   const items = $derived<PhoneTabItem[]>([

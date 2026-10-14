@@ -112,8 +112,10 @@ describe('ShellDaylight', () => {
     app.setView('board');
   });
   it('Projects has no Filter; pages off Plan have no tabs; Crew has no switcher', () => {
-    render(ShellDaylight, props({ view: 'projects', section: 'projects' }));
+    render(ShellDaylight, props({ here: 'plan', section: 'projects', boardName: null, view: null, plan: 'projects', showing: null }));
     expect(screen.queryByRole('button', { name: /^Filter cards/ })).toBeNull();
+    expect(screen.queryByRole('radiogroup', { name: 'View' })).toBeNull();
+    expect(screen.getByRole('radio', { name: 'Projects' }).getAttribute('aria-checked')).toBe('true');
     cleanup();
     render(ShellDaylight, props({ here: 'crew', section: 'crew', boardName: null, view: null, showing: null }));
     expect(screen.queryByRole('radiogroup', { name: 'View' })).toBeNull();

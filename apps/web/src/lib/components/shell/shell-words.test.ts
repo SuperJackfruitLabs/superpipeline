@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { countWords } from '@superjackfruit/vibekit';
 import {
   boardCounts, boardStatus, dateline, filterSummary, firstNameOf, initialsOf, needsPart, operateCount, paperShowingLine,
-  projectCountOf, PROJECTS_NOTE, showingLine, statusLine, studioSubRight, userNameOf,
+  projectCountOf, showingLine, statusLine, studioSubRight, userNameOf,
 } from './shell-words';
 import { DX_CARDS, DX_NEEDS } from './__fixtures__/dx';
 
@@ -38,7 +38,6 @@ describe('showing notes', () => {
     expect(showingLine(0, 0, false)).toBe('No cards on this board');
     expect(showingLine(20, 20, false)).toBe('Showing all 20 cards');
     expect(showingLine(3, 7, true)).toBe('Showing 3 of 7 cards');
-    expect(PROJECTS_NOTE).toBe('Projects group cards across boards. Filters don’t apply here.');
   });
   it('Paper adds who waits and what shipped, dropping zeros', () => {
     expect(paperShowingLine('Showing all 7 cards', 4, 1)).toBe('Showing all 7 cards · 4 wait on you · 1 shipped');

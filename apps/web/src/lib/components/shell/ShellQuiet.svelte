@@ -11,9 +11,10 @@
   } from '@superjackfruit/vibekit';
   import '$lib/styles/shell/quiet.css';
   import { shellModel as m } from './shell-model.svelte';
+  import PlanSwitch from './PlanSwitch.svelte';
   import { VIEWS, type ShellProps } from './types';
 
-  let { here, boardName, view, showing, status, subTools, bleed = false, ownHeading = false, children }: ShellProps = $props();
+  let { here, boardName, view, plan, showing, status, subTools, bleed = false, ownHeading = false, children }: ShellProps = $props();
 
   // Words only: vibekit draws no icon in this vibe's nav (the field is required, and ignored).
   const items = $derived<NavItem[]>([
@@ -41,8 +42,9 @@
 {#snippet actions()}<Button variant="secondary" onclick={m.compose}>New card</Button>{/snippet}
 
 {#snippet viewTabs()}
-  <Tabs label="View" items={viewItems} value={view ?? 'board'} onchange={(v) => m.setView(v)} />
-  {#if view !== 'projects'}<Button variant="text" aria-haspopup="dialog" onclick={m.openFilter}>Filter cards ({m.filterSummary})</Button>{/if}
+  {#if plan}<PlanSwitch value={plan} />{/if}
+  {#if view}<Tabs label="View" items={viewItems} value={view} onchange={(v) => m.setView(v)} />{/if}
+  {#if view}<Button variant="text" aria-haspopup="dialog" onclick={m.openFilter}>Filter cards ({m.filterSummary})</Button>{/if}
   {@render subTools?.()}
   {#if showing}<span class="qs-note">{showing}</span>{/if}
 {/snippet}
@@ -58,10 +60,12 @@
       {command}
       live={{ state: m.connected ? 'live' : 'reconnecting', label: m.connected ? 'Live.' : 'Reconnecting…', detail: m.connected ? 'Changes appear as they happen.' : undefined, attrs: { 'data-live': m.connected ? 'on' : 'off' } }}
       {actions}
-      tabs={view ? viewTabs : undefined}
+      tabs={view || plan ? viewTabs : undefined}
     />
-  {:else if !ownHeading}
-    <h1 class="vk-visually-hidden">Superpipeline</h1>
+  {:else}
+    {#if !ownHeading}<h1 class="vk-visually-hidden">Superpipeline</h1>{/if}
+    <!-- Plan · Projects has no board row: the Plan switch is a row of its own. -->
+    {#if plan}<div class="qs-planrow">{@render viewTabs()}</div>{/if}
   {/if}
 {/snippet}
 

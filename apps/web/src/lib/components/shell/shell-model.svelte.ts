@@ -14,7 +14,7 @@ import { greetingName } from '../dialogs/person';
 import { signOut } from './account';
 import { crewCount, crewLine, crewScopeTitle, crewOf, crewTitle, type CrewMember } from './crew';
 import {
-  boardCounts, boardStatus, dateline, filterSummary, initialsOf, operateCount, paperShowingLine, projectCountOf,
+  boardCounts, boardStatus, dateline, filterSummary, initialsOf, operateCount, paperShowingLine,
   showingLine, statusLine, studioSubRight, userNameOf, type OperateCount, type ShellStatus, type StatusItem,
 } from './shell-words';
 import type { ShellView } from './types';
@@ -50,7 +50,6 @@ export const shellModel = {
   get liveCount(): number { return liveCards().length; },
   /** Non-archived cards the filters let through (Studio "List 7"). */
   get listCount(): number { return app.filteredCards().filter((c) => !c.archivedAt).length; },
-  get projectCount(): number { return projectCountOf(liveCards()); },
   get filterSummary(): string { return filterSummary(activeFilterCount(app.filters)); },
   get showing(): string { return showingLine(this.listCount, this.liveCount, activeFilterCount(app.filters) > 0); },
   get paperShowing(): string { return paperShowingLine(this.showing, this.needsCount, liveCards().filter((c) => c.state === 'completed').length); },
@@ -61,6 +60,9 @@ export const shellModel = {
   homeHref: '/inbox',
   inboxHref: '/inbox',
   get planHref(): string { return app.boardId ? `/b/${app.boardId}` : '/'; },
+  /** Plan · Boards: the open board. */
+  get boardsHref(): string { return app.boardId ? `/b/${app.boardId}` : '/'; },
+  projectsHref: '/plan/projects',
   crewHref: '/crew/agents',
   settingsHref: '/settings',
   openSearch(): void { app.cmdkOpen = true; },

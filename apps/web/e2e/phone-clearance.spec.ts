@@ -47,7 +47,7 @@ for (const vibe of VIBES) {
     await openBoard(page, boardId);
     await page.waitForURL(`**/b/${boardId}`);
     const pages = [
-      `/b/${boardId}`, `/b/${boardId}?view=list`, `/b/${boardId}?view=projects`, '/inbox',
+      `/b/${boardId}`, `/b/${boardId}?view=list`, '/plan/projects', '/inbox',
       `/b/${boardId}/operate/log`, `/b/${boardId}/operate/telemetry`, `/b/${boardId}/settings`,
       ...['agents', 'people', 'capabilities'].map((t) => `/crew/${t}`), '/settings',
     ];

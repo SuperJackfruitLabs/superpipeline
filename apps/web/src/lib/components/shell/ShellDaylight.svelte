@@ -13,9 +13,10 @@
   import Icon from '$lib/components/parts/Icon.svelte';
   import '$lib/styles/shell/daylight.css';
   import { shellModel as m } from './shell-model.svelte';
+  import PlanSwitch from './PlanSwitch.svelte';
   import { VIEWS, type ShellProps } from './types';
 
-  let { here, section, boardName, view, showing, status, subTools, sky, ownHeading = false, children }: ShellProps = $props();
+  let { here, section, boardName, view, plan, showing, status, subTools, sky, ownHeading = false, children }: ShellProps = $props();
 
   const items = $derived<NavItem[]>([
     { id: 'inbox', label: 'Inbox', href: m.inboxHref, icon: inboxIcon, current: here === 'inbox', count: m.inboxBadge || undefined, countIsNeeds: true, kbd: 'G I' },
@@ -70,8 +71,9 @@
 {/snippet}
 
 {#snippet viewTabs()}
-  <Segmented label="View" options={viewOptions} bind:value={() => view ?? 'board', (v) => m.setView(v as typeof VIEWS[number][0])} />
-  {#if view !== 'projects'}
+  {#if plan}<PlanSwitch value={plan} form="segmented" />{/if}
+  {#if view}<Segmented label="View" options={viewOptions} bind:value={() => view ?? 'board', (v) => m.setView(v as typeof VIEWS[number][0])} />{/if}
+  {#if view}
     <Button variant="secondary" icon={filterIcon} aria-haspopup="dialog" onclick={m.openFilter} class="dy-filter">Filter cards <span class="dy-cnt"><span class="vk-visually-hidden">· </span>{m.filterSummary}</span></Button>
   {/if}
   {@render subTools?.()}
@@ -89,7 +91,7 @@
     {command}
     live={{ state: m.connected ? 'live' : 'reconnecting', label: m.connected ? 'Live' : 'Reconnecting…', detail: m.connected ? 'changes appear as they happen' : undefined, attrs: { 'data-live': m.connected ? 'on' : 'off' } }}
     {actions}
-    tabs={view ? viewTabs : undefined}
+    tabs={view || plan ? viewTabs : undefined}
   />
   {@render sky?.()}
   </Sky></div>
@@ -99,7 +101,7 @@
 
 <div class="dy-shell">
   <VkAppShell product="superpipeline" {nav} {masthead} status={status && statusItems.length > 0 ? statusLine : undefined}>
-    {#if !view && showing}<div class="dy-sub"><span class="dy-note">{showing}</span></div>{/if}
+    {#if !view && !plan && showing}<div class="dy-sub"><span class="dy-note">{showing}</span></div>{/if}
     {@render children()}
   </VkAppShell>
 </div>

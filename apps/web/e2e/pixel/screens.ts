@@ -80,7 +80,6 @@ const listSteps = (v: Vibe): Screen['steps'] => {
 };
 /** The reference opens the create panel and the first project's milestones (PR-G2); the app opens neither by itself. */
 async function openProjectsPanels(p: Page): Promise<void> {
-  await p.getByText('Name it and, if you like, give it a target date.').click();
   await p.locator('summary', { hasText: 'Milestones' }).first().click();
   await settle(p);
 }
@@ -209,7 +208,7 @@ function forVibe(v: Vibe, V: string, h: (a: string) => number): Screen[] {
     // The old Operate address opens the Inbox showing Developer Experience, as the reference does.
     { artboard: `SP-Operate-${V}`, vibe: v, route: `${DX}/operate`, strength: off(v), masks: [LIVE], steps: operateSteps(v) },
     { artboard: `SP-List-${V}`, vibe: v, route: `${DX}?view=list`, strength: off(v), masks: [LIVE], steps: listSteps(v) },
-    { artboard: `SP-Projects-${V}`, vibe: v, route: `${DX}?view=projects`, strength: shared(v), hold: ['**/v1/projects/*/rollup'], masks: [LIVE], steps: openProjectsPanels },
+    { artboard: `SP-Projects-${V}`, vibe: v, route: '/plan/projects', strength: shared(v), hold: ['**/v1/projects/*/rollup'], masks: [LIVE], steps: openProjectsPanels },
     { artboard: `SP-Workspace-Agents-${V}`, vibe: v, route: '/crew/agents', strength: shared(v), steps: agentsMenus, masks: [LIVE, TOKEN_MASK], writes: true },
     { artboard: `SP-Workspace-Other-${V}`, vibe: v, route: '/dev/workspace-review', strength: shared(v), masks: [LIVE], steps: onDx },
     { artboard: `SP-Settings-${V}`, vibe: v, route: `${DX}/settings`, strength: shared(v), clock: '2026-10-11T08:19:00.000Z', masks: [LIVE], writes: true, steps: ruleSavedTwoMinutesAgo },

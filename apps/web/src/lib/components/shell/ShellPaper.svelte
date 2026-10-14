@@ -13,9 +13,10 @@
   import Icon from '$lib/components/parts/Icon.svelte';
   import '$lib/styles/shell/paper.css';
   import { shellModel as m } from './shell-model.svelte';
+  import PlanSwitch from './PlanSwitch.svelte';
   import { VIEWS, type ShellProps } from './types';
 
-  let { here, section, boardName, view, showing, paperShowing, status, subTools, ownHeading = false, children }: ShellProps = $props();
+  let { here, section, boardName, view, plan, showing, paperShowing, status, subTools, ownHeading = false, children }: ShellProps = $props();
 
   // Words only: vibekit draws no icon in this vibe's nav (the field is required, and ignored).
   const items = $derived<NavItem[]>([
@@ -45,7 +46,7 @@
 
 <!-- The edition line (SP-Board-Paper): Filter on Plan pages, then Search and Write a new card. -->
 {#snippet actions()}
-  {#if view && view !== 'projects'}
+  {#if view}
     <Button variant="secondary" icon={filterIcon} aria-haspopup="dialog" onclick={m.openFilter}>Filter cards <span class="ps-cnt">· {m.filterSummary}</span></Button>
   {/if}
   <CommandField label="Search cards, agents and actions" placeholder="Search" kbd="⌘K" onopen={m.openSearch} />
@@ -53,6 +54,7 @@
 {/snippet}
 
 {#snippet viewTabs()}
+  {#if plan}<PlanSwitch value={plan} />{/if}
   {#if view}<Tabs label="View" items={viewItems} value={view} onchange={(v) => m.setView(v)} />{/if}
   {@render subTools?.()}
   {#if note}<span class="ps-note">{note}</span>{/if}
@@ -66,7 +68,7 @@
     title={boardName ?? (ownHeading ? '' : 'Superpipeline')}
     switcher={boardName !== null ? { label: 'Change board', onopen: m.openBoardSwitcher } : undefined}
     {actions}
-    tabs={view ? viewTabs : undefined}
+    tabs={view || plan ? viewTabs : undefined}
   />
 {/snippet}
 
