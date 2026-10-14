@@ -32,11 +32,14 @@ for (const vibe of VIBES) {
         [...document.querySelectorAll('.vk-appnav, .vk-phonetabbar, .vk-masthead, .vk-statusline, .vk-phoneheader')]
           .filter((e) => e.getBoundingClientRect().width > 0)
           .map((e) => {
-            const item = e.querySelector('.vk-appnav__item, .vk-phonetabbar__item');
+            // A resting item is drawn on the bar; the current one (aria-current) carries its own tile, so it is read on that.
+            const item = e.querySelector('.vk-appnav__item:not([aria-current]), .vk-phonetabbar__item:not([aria-current])');
+            const cur = e.querySelector('.vk-appnav__item[aria-current], .vk-phonetabbar__item[aria-current]');
             return {
               name: e.className.toString().split(' ')[0]!,
               bg: getComputedStyle(e).backgroundColor,
               itemColour: item ? getComputedStyle(item).color : null,
+              current: cur ? { fg: getComputedStyle(cur).color, bg: getComputedStyle(cur).backgroundColor } : null,
             };
           }),
       );
@@ -45,6 +48,9 @@ for (const vibe of VIBES) {
         if (/rgba\(.*, 0\)$/.test(c.bg)) continue; // transparent: the dark page shows through
         expect(lum(c.bg), `${c.name} background ${c.bg} in ${vibe} dark`).toBeLessThan(0.2);
         if (c.itemColour) expect(contrast(c.itemColour, c.bg), `${c.name} text ${c.itemColour} on ${c.bg}`).toBeGreaterThanOrEqual(4.5);
+        if (c.current && !/rgba\(.*, 0\)$/.test(c.current.bg)) {
+          expect(contrast(c.current.fg, c.current.bg), `${c.name} current item ${c.current.fg} on ${c.current.bg}`).toBeGreaterThanOrEqual(4.5);
+        }
       }
       if (vibe === 'studio') expect(chrome.some((c) => /appnav|phonetabbar/.test(c.name) && !/rgba/.test(c.bg))).toBe(true);
     });
