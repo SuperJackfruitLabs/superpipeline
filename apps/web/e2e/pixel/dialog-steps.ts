@@ -36,7 +36,8 @@ export async function fillNewCard(page: Page): Promise<void> {
   const d = page.getByRole('dialog', { name: 'What needs doing?' });
   await d.getByRole('textbox', { name: 'Describe it in a sentence' }).fill('Fix the highest-severity blocker found in the clean-room journey, with red-test evidence before any fix.');
   await d.getByRole('textbox', { name: 'Card title' }).fill('Fix the highest-severity blocker found in the clean-room journey');
-  await d.getByRole('textbox', { name: 'Brief for the agent' }).fill(BRIEF);
+  // The brief's heading names the agent only when an agent works the first stage (#11).
+  await d.getByRole('textbox', { name: /^(Brief for the agent|What this card asks)$/ }).fill(BRIEF);
   await d.getByLabel('Due (optional)').fill('2026-10-18');
   await d.getByRole('radio', { name: 'P1' }).click();
   for (const name of ['clean-room', 'evidence-required', 'superpipeline']) {
