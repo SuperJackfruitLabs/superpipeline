@@ -321,9 +321,16 @@ describe('principal ids on the evidence', () => {
     });
   });
 
-  it('a decider who is an unlinked hub sub is its own decided_by_hub_sub; a plain unlinked usr_ has none', async () => {
-    await withIssuer(ISSUER, jwksBody, async () => {
-      for (const [decider, expected] of [['rawHubSub000001', 'rawHubSub000001'], ['usr_nolinkatall', null]] as const) {
+  // One flow per test. These used to run both deciders in one loop: two full board + claim +
+  // complete + resolve flows in one 5 s budget, where every sibling test runs one. On the loaded
+  // Forge runner a single flow takes 1-3 s (run 531: 2.1 s / 2.6 s / 2.1 s for the neighbours), so
+  // the doubled test was the only one that crossed the limit — always this test, at 5.01-5.03 s.
+  for (const [label, decider, expected] of [
+    ['a decider who is an unlinked hub sub is its own decided_by_hub_sub', 'rawHubSub000001', 'rawHubSub000001'],
+    ['a plain unlinked usr_ decider has no decided_by_hub_sub', 'usr_nolinkatall', null],
+  ] as const) {
+    it(label, async () => {
+      await withIssuer(ISSUER, jwksBody, async () => {
         const { boardId, runId } = await aRun({ complete: true });
         const gateId = (await (await evidence(boardId, runId, await hubToken())).json<z.infer<typeof RunEvidence>>()).gates[0]!.id;
         const resolved = await SELF.fetch(`https://api.test/v1/boards/${boardId}/gates/${gateId}/resolve`, {
@@ -333,9 +340,9 @@ describe('principal ids on the evidence', () => {
         const body = await (await evidence(boardId, runId, await hubToken())).json<z.infer<typeof RunEvidence>>();
         expect(RunEvidence.safeParse(body).error).toBeUndefined();
         expect(body.gates[0]).toMatchObject({ decided_by: decider, decided_by_principal_id: null, decided_by_hub_sub: expected });
-      }
+      });
     });
-  });
+  }
 
   it('a pending gate has neither a decider principal nor a hub sub', async () => {
     await withIssuer(ISSUER, jwksBody, async () => {
