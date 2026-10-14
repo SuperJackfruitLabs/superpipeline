@@ -197,9 +197,10 @@ export function phoneLede(c: { stopped: number; noOwner: number; daysOverdue: nu
   const sentences = [one, two].filter((p) => p.length).map((p) => `${capFirst(p.join('; '))}.`);
   return sentences.length ? sentences.join(' ') : 'Nothing needs you.';
 }
-export function studioFigs(c: { spend: number; overBudget: number; overdue: number; stages: number; blocked: number }) {
+/** spend: null or undefined (not read, or not yet) draws a dash, never $0.00. */
+export function studioFigs(c: { spend: number | null | undefined; overBudget: number; overdue: number; stages: number; blocked: number }) {
   return [
-    { value: usd(c.spend), label: 'Spend · 7 days', z: c.spend === 0, sig: false },
+    { value: c.spend === null || c.spend === undefined ? '—' : usd(c.spend), label: 'Spend · 7 days', z: !c.spend, sig: false },
     { value: String(c.overBudget), label: 'Over budget', z: c.overBudget === 0, sig: c.overBudget > 0 },
     { value: String(c.overdue), label: 'Overdue', z: c.overdue === 0, sig: c.overdue > 0 },
     { value: String(c.stages), small: 'stages', label: `${c.blocked} blocked`, z: false, sig: false },

@@ -23,6 +23,8 @@ async function mount() {
   await vi.waitFor(() => expect(model.detailLoaded).toBe(true));
   const onClose = vi.fn();
   const r = render(CardPaper, { model, vibe: 'paper', phase: 'noon', personName: 'Ira Mehta', gate: model.gateBinding, question: model.questionBinding, pageHref: model.pageHref, onClose });
+  // Comments load once the layout attaches them: until then the section says it is loading, not \"none\".
+  await vi.waitFor(() => expect(model.comments.loaded).toBe(true));
   return { model, dispose, onClose, ...r };
 }
 

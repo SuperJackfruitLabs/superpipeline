@@ -260,7 +260,7 @@
         {/each}
       </div></div>
       {#if m.decidedGates.length}<p class="pcd-small pcd-small--flush" data-section="decisions">{#if m.decidedGates.length}Decisions: {m.decidedGates.map((d) => `${d.decision ?? d.status} at ${m.stages.find((s) => s.key === d.stageKey)?.name ?? d.stageKey}${d.decidedBy ? ` by ${displayPrincipal(d.decidedBy, app.members)}` : ''}`).join('; ')}.{:else}Decisions: none yet.{/if}</p>{:else}<span hidden data-section="decisions"></span>{/if}
-      <p class="pcd-small pcd-small--flush" data-section="cost">Cost {usd(card.costUsd)}, {m.estimate?.estimatedUsd ? `of an estimated ${usd(m.estimate.estimatedUsd)}` : 'no estimate yet'}.</p>
+      <p class="pcd-small pcd-small--flush" data-section="cost">Cost {usd(card.costUsd)}, {!m.detailLoaded ? 'estimating…' : m.estimate?.estimatedUsd ? `of an estimated ${usd(m.estimate.estimatedUsd)}` : 'no estimate yet'}.</p>
     {/snippet}
     {@render enc('happened', 'What happened', paperHappenedSummary({ runs: m.counts.runs, decisions: m.counts.decisions, costUsd: card.costUsd }), happenedBody)}
 
@@ -316,7 +316,7 @@
         <span class="vk-visually-hidden" role="status">{m.comments.posting ? 'Posting…' : ''}</span>
       </div>
     {/snippet}
-    {@render enc('letters', 'Correspondence', paperCorrespondenceSummary(m.comments.comments.length), lettersBody)}
+    {@render enc('letters', 'Correspondence', m.comments.loaded ? paperCorrespondenceSummary(m.comments.comments.length) : 'Loading…', lettersBody)}
   </div>
 
   <div class="pcd-foot" data-section="cardActions">

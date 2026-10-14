@@ -1,5 +1,7 @@
 <!-- apps/web/src/lib/components/operate/TelemetryStudio.svelte -->
 <script lang="ts">
+  import SkeletonRows from '$lib/components/parts/SkeletonRows.svelte';
+  import LoadFailed from '$lib/components/parts/LoadFailed.svelte';
   import './spend-studio.css';
   import { viewport } from '$lib/viewport.svelte';
   import LineIcon from '$lib/components/parts/LineIcon.svelte';
@@ -25,8 +27,8 @@
 
 {#snippet empty(title: string, body: string)}<p class="sp-empty"><span class="serif">{title}</span><span class="ar-hint">{body}</span></p>{/snippet}
 {#snippet pending()}
-  {#if model.usageError}<p class="sp-empty"><span class="serif">Couldn't load spend — {model.usageError}. <button class="ar-lk" type="button" onclick={() => app.boardId && void model.load(app.boardId, model.window_)}>Try again</button></span></p>
-  {:else}<p class="ar-hint" role="status">Loading spend…</p>{/if}
+  {#if model.usageError}<LoadFailed message="Couldn't load spend." onRetry={() => app.boardId && model.load(app.boardId, model.window_)} />
+  {:else}<SkeletonRows label="Loading spend…" rows={3} />{/if}
 {/snippet}
 {#snippet rows(items: Array<{ key: string; label: string; href?: string; cost: number }>)}
   {@const max = maxOf(items.map((i) => i.cost))}
@@ -60,7 +62,7 @@
       <div class="sp-budget">
         <span class="kick">Spend vs budget</span>
         <span class="sp-rb lg" role="img" aria-label="{fill}% of budget used"><i class="sp-fill" style="--p: {fill / 100};{model.overBudget ? ' background: var(--vk-color-signal);' : ''}"></i></span>
-        <span class="ar-hint">{budget.text}{#if budget.setCap}<a class="ar-lk" href="#caps1" style="min-height: 0px;" onclick={setCap}>Set a cap</a>{/if}</span>
+        <span class="ar-hint">{u ? budget.text : ''}{#if budget.setCap}<a class="ar-lk" href="#caps1" style="min-height: 0px;" onclick={setCap}>Set a cap</a>{/if}</span>
       </div>
     </div>
   </div>

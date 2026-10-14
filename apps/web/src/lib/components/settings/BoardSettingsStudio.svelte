@@ -1,5 +1,6 @@
 <!-- apps/web/src/lib/components/settings/BoardSettingsStudio.svelte -->
 <script lang="ts">
+  import SkeletonRows from '$lib/components/parts/SkeletonRows.svelte';
   import { autogrow } from '$lib/autogrow';
   import './board-settings-studio.css';
   import { viewport } from '$lib/viewport.svelte';
@@ -79,7 +80,7 @@
       <section class="ar-sec" aria-labelledby="ap-h">
         <div class="hd"><span class="no">05</span><h2 id="ap-h">Agent profiles</h2></div>
         <p class="st-sub">Named run settings (model and so on) an agent can claim with.</p>
-        {#if model.profiles.length === 0}<p class="st-empty">No profiles yet.</p>{:else}
+        {#if model.profilesState === 'loading'}<SkeletonRows label="Loading agent profiles…" rows={2} />{:else if model.profilesState === 'failed'}<p class="st-empty">Couldn't load the agent profiles.</p>{:else if model.profiles.length === 0}<p class="st-empty">No profiles yet.</p>{:else}
           <ul class="st-list">{#each model.profiles as p (p.key)}<li><span class="code">{p.key}</span>{p.model ? ` · ${p.model}` : ''}</li>{/each}</ul>
         {/if}
         <form class="st-row" onsubmit={(e) => { e.preventDefault(); void model.addProfile(); }}>

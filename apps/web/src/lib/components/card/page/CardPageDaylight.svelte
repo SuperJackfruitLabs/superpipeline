@@ -167,7 +167,7 @@
       {/if}
 
       <section class="dp-card" aria-labelledby="h-talk" data-section="comments">
-        <h2 id="h-talk" class="dp-h">Talk <small>{talkSummary(m.comments.comments.length)}</small></h2>
+        <h2 id="h-talk" class="dp-h">Talk <small>{m.comments.loaded ? talkSummary(m.comments.comments.length) : 'Loading…'}</small></h2>
         {#if m.comments.comments.length}<ul class="dp-ul">{#each m.comments.comments as c (c.id)}<li><b>{m.authorName(c.author)}</b> <span style="white-space: break-spaces; overflow-wrap: anywhere">{c.deletedAt ? 'Comment deleted' : c.body}</span></li>{/each}</ul>{/if}
         <p class="dp-small" style="margin: 0px;">The agent that works this card reads every comment.</p>
         <Field id="dp-comment" label="Add a comment" control="textarea" maxlength={8192} style="min-height: 88px;" placeholder="⌘ or Ctrl + Enter posts it" bind:value={m.comments.draft} onkeydown={commentKey} />
@@ -292,7 +292,7 @@
       <div class="dp-card">
         <h2 class="dp-h">Cost and delivery</h2>
         <div data-section="cost" style="display: contents">
-          <div><span class="dp-big">{usd(card.costUsd)}</span> <span class="dp-small">· {m.estimate?.estimatedUsd ? `of ${usd(m.estimate.estimatedUsd)} estimated` : 'no estimate yet'}</span></div>
+          <div><span class="dp-big">{usd(card.costUsd)}</span> <span class="dp-small">· {!m.detailLoaded ? 'estimating…' : m.estimate?.estimatedUsd ? `of ${usd(m.estimate.estimatedUsd)} estimated` : 'no estimate yet'}</span></div>
           <div class="dp-meter"><i class="sp-fill" style="--p: {(m.costPct) / 100};"></i></div>
         </div>
         <dl class="dp-dl">

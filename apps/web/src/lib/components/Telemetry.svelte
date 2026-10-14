@@ -13,6 +13,8 @@
   import { avgPerCard, barHeight, budgetLine, busiestLine, cardsWithSpend, chartLabel, compactCount, dayLabel, dayRange, pctOf, tokenPair, usd } from './operate/spend-format';
   import { TelemetryModel } from './operate/telemetry-model.svelte';
   import type { SpendLayoutProps } from './operate/spend-types';
+  import SkeletonRows from '$lib/components/parts/SkeletonRows.svelte';
+  import LoadFailed from '$lib/components/parts/LoadFailed.svelte';
 
   const _props: SpendLayoutProps = $props();
   const model = new TelemetryModel();
@@ -29,9 +31,9 @@
 {/snippet}
 {#snippet pending()}
   {#if model.usageError}
-    <div class="emptyp"><p class="t-body">Couldn't load spend — {model.usageError}. <Button variant="quiet"  type="button" onclick={() => app.boardId && void model.load(app.boardId, model.window_)}>Try again</Button></p></div>
+    <div class="emptyp"><LoadFailed message="Couldn't load spend." onRetry={() => app.boardId && model.load(app.boardId, model.window_)} /></div>
   {:else}
-    <div class="emptyp"><p class="t-meta" role="status">Loading spend…</p></div>
+    <div class="emptyp"><SkeletonRows label="Loading spend…" rows={3} /></div>
   {/if}
 {/snippet}
 
@@ -56,7 +58,7 @@
       <p class="t-eyebrow">Spend vs budget</p>
       <p class="big">{u ? usd(model.spend) : '—'}</p>
       <div class="bar" role="img" aria-label="{fill}% of budget used"><i style="width: {fill}%;{model.overBudget ? ' background: var(--vk-color-signal);' : ''}"></i></div>
-      <p class="t-meta">{budget.text}{#if budget.setCap}<a href="#caps1" onclick={setCap}>Set a cap</a>{/if}</p>
+      <p class="t-meta">{u ? budget.text : ''}{#if budget.setCap}<a href="#caps1" onclick={setCap}>Set a cap</a>{/if}</p>
     </div>
     <div class="panel tile">
       <p class="t-eyebrow">Average cost per card</p>

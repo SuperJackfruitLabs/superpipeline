@@ -364,6 +364,7 @@
         <div data-section="comments" style="display: contents">
           {#if m.comments.comments.length}
             <ul class="dd-ul">{#each m.comments.comments as c (c.id)}<li><b>{m.authorName(c.author)}</b> <span style="white-space: break-spaces; overflow-wrap: anywhere">{c.deletedAt ? 'Comment deleted' : c.body}</span></li>{/each}</ul>
+          {:else if !m.comments.loaded}<p class="dd-small" style="margin: 0px;">Loading comments…</p>
           {:else}<p class="dd-small" style="margin: 0px;">No comments yet. The agent that works this card reads them.</p>{/if}
           <Field id="dd-comment" label="Add a comment" control="textarea" maxlength={8192} placeholder="⌘ or Ctrl + Enter posts it" bind:value={m.comments.draft} onkeydown={commentKey} />
           {#if m.comments.error}<p class="vk-field__error" role="alert">{m.comments.error}</p>{/if}
@@ -371,11 +372,11 @@
           <span class="vk-visually-hidden" role="status">{m.comments.posting ? 'Posting…' : ''}</span>
         </div>
       {/snippet}
-      {@render sec('talk', 'Talk', talkSummary(m.comments.comments.length), talkBody)}
+      {@render sec('talk', 'Talk', m.comments.loaded ? talkSummary(m.comments.comments.length) : 'Loading…', talkBody)}
 
       {#snippet costBody()}
         <div data-section="cost" style="display: contents">
-          <div><span style="font: 700 2rem/1 var(--vk-font-display);">{usd(card.costUsd)}</span> <span class="dd-small">· {m.estimate?.estimatedUsd ? `of ${usd(m.estimate.estimatedUsd)} estimated` : 'no estimate yet'}</span></div>
+          <div><span style="font: 700 2rem/1 var(--vk-font-display);">{usd(card.costUsd)}</span> <span class="dd-small">· {!m.detailLoaded ? 'estimating…' : m.estimate?.estimatedUsd ? `of ${usd(m.estimate.estimatedUsd)} estimated` : 'no estimate yet'}</span></div>
           <div class="dd-meter"><i class="sp-fill" style="--p: {(m.costPct) / 100};"></i></div>
         </div>
         {#if m.counts.deliveryActive}<div data-section="delivery"><DeliveryPanel model={m} /></div>{:else}<span hidden data-section="delivery"></span>{/if}

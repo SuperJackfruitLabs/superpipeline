@@ -22,7 +22,7 @@
   const noOwner = $derived(model.needs.filter((s) => s.kind === 'no-owner'));
   const overdueDays = $derived(noOwner.length === 1 && noOwner[0]!.overdue && noOwner[0]!.dueAt ? daysOverdue(noOwner[0]!.dueAt, model.nowMs) : 0);
   const lede = $derived(phoneLede({ stopped: needsCounts(model.ordered).stopped, noOwner: noOwner.length, daysOverdue: overdueDays, queuedBlocked: c.queuedBlocked, done: c.done }));
-  const figs = $derived(studioFigs({ spend: model.spend7d ?? 0, overBudget: c.overBudget, overdue: c.overdue, stages: model.stages.length, blocked: c.blocked }));
+  const figs = $derived(studioFigs({ spend: model.spend7d, overBudget: c.overBudget, overdue: c.overdue, stages: model.stages.length, blocked: c.blocked }));
   const QF: Array<{ key: Q; label: string; count: number; sig?: boolean }> = $derived([
     { key: 'all', label: 'All', count: c.all }, { key: 'needs', label: 'Needs', count: c.needs, sig: true },
     { key: 'working', label: 'Working', count: c.working }, { key: 'queued', label: 'Idle', count: c.queued }, { key: 'done', label: 'Done', count: c.done },

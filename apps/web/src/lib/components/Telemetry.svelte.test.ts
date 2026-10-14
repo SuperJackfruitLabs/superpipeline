@@ -35,7 +35,8 @@ describe('Telemetry', () => {
     api.getUsage.mockRejectedValue(new Error('usage 500'));
     render(Telemetry, { vibe: 'daylight' });
     // Each panel that needs the figures says so (four of them).
-    expect((await screen.findAllByText(/Couldn't load spend — usage 500\./)).length).toBeGreaterThan(0);
+    expect((await screen.findAllByText("Couldn't load spend.")).length).toBeGreaterThan(0);
+    expect(document.body.textContent).not.toMatch(/usage 500|No (agent|model|card) cost data yet/);
     expect(screen.getAllByRole('button', { name: 'Try again' }).length).toBeGreaterThan(0);
   });
   it('sends "Set a cap" to the board cap field', async () => {
