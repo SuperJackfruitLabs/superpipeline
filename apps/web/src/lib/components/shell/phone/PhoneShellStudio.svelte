@@ -32,4 +32,4 @@
   {#if props.view !== 'projects'}<Button variant="secondary" size="sm" icon={funnelIcon} aria-haspopup="dialog" onclick={m.openFilter}>Filter</Button>{/if}
 {/snippet}
 
-<PhoneFrame shell={props} vibe="studio" eyebrow="Superpipeline · {props.section}" switcherLabel="Switch board" eyebrowActions={search} actions={props.boardName !== null ? actions : undefined} below={props.view ? views : undefined} belowOutside glyphs={{ plan: 'plan-sq', operate: 'operate', workspace: 'people' }} />
+<PhoneFrame shell={props} vibe="studio" eyebrow="Superpipeline · {props.section}" switcherLabel="Switch board" eyebrowActions={search} actions={props.boardName !== null ? actions : undefined} below={props.view ? views : undefined} belowOutside glyphs={{ inbox: 'inbox', plan: 'plan-sq', crew: 'crew' }} />

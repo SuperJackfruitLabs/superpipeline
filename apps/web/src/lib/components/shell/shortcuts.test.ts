@@ -6,14 +6,21 @@ import { CHORD_MS, createChordReader, isTypingTarget } from './shortcuts';
 const k = (key: string, mods: Partial<{ metaKey: boolean; ctrlKey: boolean; altKey: boolean }> = {}) => ({ key, metaKey: false, ctrlKey: false, altKey: false, ...mods });
 
 describe('shell shortcuts', () => {
-  it('G then P, O or W within a second goes to Plan, Operate or Workspace', () => {
+  it('G then I, P or C within a second goes to Inbox, Plan or Crew', () => {
     const r = createChordReader();
     expect(r.read(k('g'), 0)).toBeNull();
-    expect(r.read(k('o'), 400)).toBe('operate');
+    expect(r.read(k('i'), 400)).toBe('inbox');
     expect(r.read(k('g'), 1000)).toBeNull();
     expect(r.read(k('P'), 1000 + CHORD_MS)).toBe('plan');
     expect(r.read(k('g'), 5000)).toBeNull();
-    expect(r.read(k('w'), 5100)).toBe('workspace');
+    expect(r.read(k('c'), 5100)).toBe('crew');
+  });
+  it('the old G O and G W still land on Inbox and Crew', () => {
+    const r = createChordReader();
+    r.read(k('g'), 0);
+    expect(r.read(k('o'), 10)).toBe('inbox');
+    r.read(k('g'), 100);
+    expect(r.read(k('w'), 110)).toBe('crew');
   });
   it('a late second key is a key of its own', () => {
     const r = createChordReader();

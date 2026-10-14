@@ -6,13 +6,13 @@
    * phone stylesheet. `filled` fills the shapes (Daylight's current Plan and Workspace).
    */
   import { ICON_PATHS, Icon as VkIcon } from '@superjackfruit/vibekit';
-  import { PRODUCT_ICONS, VK_ALIASES, isVkIcon, type IconName } from './icons';
+  import { NAV_ICONS, PRODUCT_ICONS, VK_ALIASES, isVkIcon, type IconName } from './icons';
 
   let { name, size = 20, label, filled = false, bare = false, strokeWidth = 2 }: { name: IconName; size?: number; label?: string; filled?: boolean; bare?: boolean; strokeWidth?: number } = $props();
   const vk = $derived((VK_ALIASES as Record<string, string>)[name] ?? (isVkIcon(name) ? name : null));
   /** A vibekit name drawn bare or filled uses vibekit's own paths, so it never renders blank. */
   const body = $derived.by(() => {
-    const own = (PRODUCT_ICONS as Record<string, string>)[name];
+    const own = (PRODUCT_ICONS as Record<string, string>)[name] ?? (NAV_ICONS as Record<string, string>)[name];
     if (own) return own;
     const p = vk ? (ICON_PATHS as Record<string, { d: readonly string[]; circles?: readonly (readonly [number, number, number])[] }>)[vk] : undefined;
     if (!p) return '';

@@ -30,7 +30,7 @@ const props = (over: Record<string, unknown> = {}) => ({
   status: { items: [{ text: '7 cards' }, { text: '4 need you', signal: true }, { text: 'synced 13:51' }], right: ['⌘K commands', 'N new card'] },
   children, ...over,
 }) as never;
-const WORKSPACE = { here: 'workspace', section: 'workspace', boardName: null, view: null, showing: null, status: null };
+const CREW = { here: 'crew', section: 'crew', boardName: null, view: null, showing: null, status: null };
 /** Seven things wait on you across the workspace; four of them on this board. */
 const seven = ['a', 'b', 'c', 'd', 'e', 'f', 'g'].map((cardId) => ({ cardId }) as StaleCard);
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -64,12 +64,29 @@ describe.each(SHELLS)('the %s desktop shell', (vibe, Shell) => {
     const css = readFileSync(join(process.cwd(), `src/lib/styles/shell/${vibe}.css`), 'utf8');
     expect(css).not.toMatch(/\.vk-(appnav|masthead|appshell|statusline|commandfield|tabs|button|menu)/);
   });
-  it('the Operate badge counts this board’s needs on a board page and the workspace’s elsewhere', () => {
+  it('the nav reads Inbox, Plan, Crew, in that order', () => {
     render(Shell, props());
-    expect(screen.getByRole('link', { name: /^Operate\W+4 need you/ })).toBeTruthy();
+    const nav = screen.getByRole('navigation', { name: 'Superpipeline' });
+    const links = [...nav.querySelectorAll('.vk-appnav__list a')];
+    expect(links.map((a) => a.textContent!.match(/Inbox|Plan|Crew/)?.[0])).toEqual(['Inbox', 'Plan', 'Crew']);
+    expect(links.map((a) => a.getAttribute('href'))).toEqual(['/inbox', '/b/brd_134a0ddb6d434478', '/crew/agents']);
+    expect(nav.textContent).not.toMatch(/Operate|Workspace/);
+  });
+  it('the Inbox badge counts every board’s needs, on a board page and off it', () => {
+    render(Shell, props());
+    expect(screen.getByRole('link', { name: /^Inbox\W+7 need you/ })).toBeTruthy();
     cleanup();
-    render(Shell, props(WORKSPACE));
-    expect(screen.getByRole('link', { name: /^Operate\W+7 need you/ })).toBeTruthy();
+    render(Shell, props(CREW));
+    expect(screen.getByRole('link', { name: /^Inbox\W+7 need you/ })).toBeTruthy();
+  });
+  it('icons follow the vibe: Daylight and Studio draw them, unfilled when current; Paper and Quiet are words', () => {
+    render(Shell, props({ here: 'inbox', section: 'inbox', boardName: null, view: null, showing: null }));
+    const nav = screen.getByRole('navigation', { name: 'Superpipeline' });
+    const svgs = [...nav.querySelectorAll('.vk-appnav__list svg')];
+    if (vibe === 'daylight' || vibe === 'studio') {
+      expect(svgs).toHaveLength(3);
+      for (const svg of svgs) expect(svg.getAttribute('fill')).not.toBe('currentColor');
+    } else expect(svgs).toHaveLength(0);
   });
   it('the board name opens the switcher; search opens the palette', async () => {
     render(Shell, props());
@@ -92,8 +109,8 @@ describe.each(SHELLS)('the %s desktop shell', (vibe, Shell) => {
     render(Shell, props({ view: 'projects', section: 'projects' }));
     expect(screen.queryByRole('button', { name: /^Filter cards/ })).toBeNull();
   });
-  it('Workspace has no board switcher and no view switch', () => {
-    render(Shell, props(WORKSPACE));
+  it('Crew has no board switcher and no view switch', () => {
+    render(Shell, props(CREW));
     expect(screen.queryByRole('button', { name: /Change board|Switch board/ })).toBeNull();
     expect(screen.queryByRole('navigation', { name: 'View' })).toBeNull();
     expect(screen.queryByRole('radiogroup', { name: 'View' })).toBeNull();
@@ -152,8 +169,8 @@ describe('ShellPaper', () => {
   beforeEach(() => inVibe('paper'));
   it('prints the count in brackets, says it in words, and notes the edition', () => {
     render(ShellPaper, props());
-    const operate = screen.getByRole('link', { name: /^Operate/ });
-    expect(operate.textContent).toContain('(4)');
+    const inbox = screen.getByRole('link', { name: /^Inbox/ });
+    expect(inbox.textContent).toContain('(7)');
     expect(screen.getByText('Showing all 7 cards · 4 wait on you · 1 shipped')).toBeTruthy();
   });
   it('the dateline and Live sit in the navigation (the nameplate row and the section bar), not the masthead', () => {
@@ -168,14 +185,14 @@ describe('ShellPaper', () => {
     const acts = container.querySelector('.vk-masthead__actions')!;
     expect([...acts.querySelectorAll('button')].map((b) => b.textContent!.trim().match(/^[A-Z][a-z]+/)![0])).toEqual(['Filter', 'Search', 'Write']);
   });
-  it('one frame: Settings, Spend and Operate draw no sub-bar', () => {
+  it('one frame: Settings, Spend and the Inbox draw no sub-bar', () => {
     for (const section of ['settings', 'spend'] as const) {
       const page = render(ShellPaper, props({ section, view: null, showing: null, paperShowing: undefined }));
       expect(page.container.querySelector('.vk-masthead__tabs')).toBeNull();
       cleanup();
     }
-    const operate = render(ShellPaper, props({ here: 'operate', section: 'operate', view: null, showing: null, paperShowing: undefined }));
-    expect(operate.container.querySelector('.vk-masthead__tabs')).toBeNull();
+    const inbox = render(ShellPaper, props({ here: 'inbox', section: 'inbox', view: null, showing: null, paperShowing: undefined }));
+    expect(inbox.container.querySelector('.vk-masthead__tabs')).toBeNull();
   });
 });
 
@@ -196,7 +213,7 @@ describe('ShellStudio', () => {
     expect(end.textContent).not.toContain('7 cards');
   });
   it('off Plan there is no sub-bar; with no status, no status line', () => {
-    const { container } = render(ShellStudio, props(WORKSPACE));
+    const { container } = render(ShellStudio, props(CREW));
     expect(container.querySelector('.vk-masthead__tabs')).toBeNull();
     expect(container.querySelector('.vk-statusline')).toBeNull();
   });
@@ -217,18 +234,18 @@ describe('ShellQuiet', () => {
   it('skips to the content and says the count in words', () => {
     render(ShellQuiet, props());
     expect(screen.getByRole('link', { name: 'Skip to content' }).getAttribute('href')).toBe('#main');
-    expect(screen.getByRole('link', { name: /^Operate/ }).textContent).toMatch(/4 need you/);
+    expect(screen.getByRole('link', { name: /^Inbox/ }).textContent).toMatch(/7 need you/);
   });
-  it('a board page has one h1, the board name, and not the hidden Workspace heading', () => {
+  it('a board page has one h1, the board name, and not the hidden page heading', () => {
     render(ShellQuiet, props());
     const h1s = screen.getAllByRole('heading', { level: 1 });
     expect(h1s).toHaveLength(1);
     expect(h1s[0]!.textContent).toContain('Developer Experience');
-    expect(screen.queryByRole('heading', { name: 'Workspace' })).toBeNull();
+    expect(screen.queryByRole('heading', { name: 'Superpipeline' })).toBeNull();
   });
-  it('Workspace has one row: no board row, and the page is still named', () => {
-    const { container } = render(ShellQuiet, props(WORKSPACE));
+  it('Crew has one row: no board row, and the page is still named', () => {
+    const { container } = render(ShellQuiet, props(CREW));
     expect(container.querySelector('.vk-masthead')).toBeNull();
-    expect(screen.getByRole('heading', { level: 1, name: 'Workspace' })).toBeTruthy();
+    expect(screen.getByRole('heading', { level: 1, name: 'Superpipeline' })).toBeTruthy();
   });
 });

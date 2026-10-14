@@ -14,11 +14,11 @@
   const Frame = $derived(WORKSPACE_LAYOUTS[vibe]);
   const Review = $derived(WORKSPACE_REVIEW_LAYOUTS[vibe]);
   // Only Studio's workspace references draw a status line (as on the workspace pages).
-  const status = $derived(vibe === 'studio' ? shellModel.pageStatus(['Workspace', needsPart(shellModel.attentionCount)]) : null);
+  const status = $derived(vibe === 'studio' ? shellModel.pageStatus(['Crew', needsPart(shellModel.attentionCount)]) : null);
   // Loaded during init (ssr is off): the busy mark is held before the first paint.
   void workspaceCounts.refresh();
 </script>
 
-<AppShell here="workspace" section="workspace" boardName={null} view={null} showing={null} {status} bleed={vibe === 'quiet'} ownHeading>
+<AppShell here="crew" section="crew" boardName={null} view={null} showing={null} {status} bleed={vibe === 'quiet'} ownHeading>
   <Frame tab="review" {vibe}><Review {initial} /></Frame>
 </AppShell>

@@ -40,7 +40,7 @@ beforeEach(() => {
   app.boardId = 'brd_134a0ddb6d434478';
   app.board = { boardId: 'brd_134a0ddb6d434478', name: 'Developer Experience', stages: DX_STAGES, cards: DX_CARDS, gates: [], elicitations: [], references: [] } as never;
   app.agents = DX_AGENTS;
-  // Seven wait on you across the workspace; four of them on this board.
+  // Seven wait on you across all boards; four of them on this board.
   app.attention = ['a', 'b', 'c', 'd', 'e', 'f', 'g'].map((cardId) => ({ cardId }) as StaleCard);
   app.connected = true;
   app.cmdkOpen = false;
@@ -68,14 +68,15 @@ describe.each(SHELLS)('the %s phone shell', (vibe, Shell) => {
     expect(h1s[0]!.closest('.vk-phoneheader')).toBeTruthy();
   });
 
-  it('has Plan, Operate (this board’s count), Workspace and You', () => {
+  it('has Inbox (the all-boards count), Plan, Crew and You, in that order', () => {
     render(Shell, props());
     const nav = screen.getByRole('navigation', { name: 'Superpipeline' });
     expect(within(nav).getByRole('link', { name: 'Plan' }).getAttribute('aria-current')).toBe('page');
-    const operate = within(nav).getByRole('link', { name: /^Operate/ });
-    expect(operate.getAttribute('href')).toBe('/b/brd_134a0ddb6d434478/operate');
-    expect(operate.textContent).toContain('4 need you');
-    expect(within(nav).getByRole('link', { name: 'Workspace' }).getAttribute('href')).toBe('/workspace/agents');
+    const inbox = within(nav).getByRole('link', { name: /^Inbox/ });
+    expect(inbox.getAttribute('href')).toBe('/inbox');
+    expect(inbox.textContent).toContain('7 need you');
+    expect(within(nav).getByRole('link', { name: 'Crew' }).getAttribute('href')).toBe('/crew/agents');
+    expect([...nav.querySelectorAll('a')].map((a) => a.getAttribute('href'))).toEqual(['/inbox', '/b/brd_134a0ddb6d434478', '/crew/agents']);
     expect(you().getAttribute('aria-haspopup')).toBe('menu');
     expect(you().getAttribute('aria-label')).toBe('You, Ada Lovelace');
   });
@@ -130,7 +131,7 @@ describe.each(SHELLS)('the %s phone shell', (vibe, Shell) => {
     render(Shell, props());
     expect(screen.getByRole('button', { name: 'Filter' })).toBeTruthy();
     cleanup();
-    render(Shell, props({ here: 'operate', section: 'operate', view: null, showing: null }));
+    render(Shell, props({ here: 'inbox', section: 'inbox', boardName: null, view: null, showing: null }));
     expect(screen.queryByRole('button', { name: 'Filter' })).toBeNull();
     expect(screen.queryByRole('group', { name: 'View' })).toBeNull();
     expect(screen.queryByRole('navigation', { name: 'View' })).toBeNull();
@@ -148,14 +149,14 @@ describe.each(SHELLS)('the %s phone shell', (vibe, Shell) => {
     app.attention = [];
     app.board = null;
     render(Shell, props());
-    expect(screen.getByRole('link', { name: /^Operate/ }).textContent!.trim()).toBe('Operate');
+    expect(screen.getByRole('link', { name: /^Inbox/ }).textContent!.trim()).toBe('Inbox');
   });
 
-  it('a workspace page has no switcher and its h1 is Workspace', () => {
-    render(Shell, props({ here: 'workspace', section: 'workspace', boardName: null, view: null, showing: null }));
+  it('a Crew page has no switcher and its h1 is Crew', () => {
+    render(Shell, props({ here: 'crew', section: 'crew', boardName: null, view: null, showing: null }));
     expect(screen.queryByRole('button', { name: /Switch board|Change board/ })).toBeNull();
-    expect(screen.getAllByRole('heading', { level: 1 }).map((h) => h.textContent)).toEqual(['Workspace']);
-    expect(screen.getByRole('link', { name: /^Operate/ }).textContent).toContain('7 need you');
+    expect(screen.getAllByRole('heading', { level: 1 }).map((h) => h.textContent)).toEqual(['Crew']);
+    expect(screen.getByRole('link', { name: /^Inbox/ }).textContent).toContain('7 need you');
   });
 });
 

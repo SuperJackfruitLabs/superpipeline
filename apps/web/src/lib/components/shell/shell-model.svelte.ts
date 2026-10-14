@@ -5,6 +5,7 @@
  * (`ShellProps`).
  */
 import type { Phase } from '@superjackfruit/vibekit';
+import { goto } from '$app/navigation';
 import { app } from '$lib/stores/app.svelte';
 import { appearance } from '$lib/appearance.svelte';
 import { activeFilterCount } from '$lib/stores/card-filters';
@@ -24,11 +25,8 @@ const needIds = () => new Set(app.needsYou().map((i) => i.cardId));
 export const shellModel = {
   get attentionCount(): number { return app.attention.length; },
   get operateCount(): OperateCount | null { return operateCount(app.attention.length); },
-  /**
-   * The rail's Operate badge (ruling): on a board-scoped page it counts that board's cards waiting
-   * on you; on a workspace page, everything waiting on you across the workspace.
-   */
-  operateBadge(boardScoped: boolean): number { return boardScoped ? app.needsYou().length : app.attention.length; },
+  /** The Inbox badge (nav v2): every card waiting on you, across all boards, on every page. */
+  get inboxBadge(): number { return app.attention.length; },
   get connected(): boolean { return app.connected; },
   get userName(): string { return userNameOf(app.user); },
   get initials(): string { return initialsOf(userNameOf(app.user)); },
@@ -60,16 +58,18 @@ export const shellModel = {
   get studioSubRight(): string | null { return studioSubRight(app.syncedAt, appearance.phase); },
   get boardStatus(): ShellStatus { return boardStatus(boardCounts(app.board?.cards ?? [], needIds()), app.syncedAt); },
   pageStatus(lead: ReadonlyArray<string | StatusItem | null>, right?: readonly string[]): ShellStatus { return statusLine(lead, app.syncedAt, { right }); },
-  get homeHref(): string { return app.boardId ? `/b/${app.boardId}` : '/'; },
+  homeHref: '/inbox',
+  inboxHref: '/inbox',
   get planHref(): string { return app.boardId ? `/b/${app.boardId}` : '/'; },
-  get operateHref(): string { return app.boardId ? `/b/${app.boardId}/operate` : '/'; },
-  workspaceHref: '/workspace/agents',
+  crewHref: '/crew/agents',
+  settingsHref: '/settings',
   openSearch(): void { app.cmdkOpen = true; },
   compose(): void { app.requestCompose(); },
   setView(v: ShellView): void { app.setView(v); },
   openFilter(): void { app.filterOpen = true; },
   openBoardSwitcher(): void { app.boardSwitcherOpen = true; },
   openAppearance(): void { appearance.pickerOpen = true; },
+  openSettings(): void { void goto('/settings'); },
   toggleTheme(): void { appearance.toggleTheme(); },
   signOut(): void { void signOut(); },
 };

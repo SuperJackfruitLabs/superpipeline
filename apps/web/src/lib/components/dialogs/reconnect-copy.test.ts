@@ -16,10 +16,12 @@ describe('reconnect copy', () => {
     expect(returnBox({ card: { title: 'Diagnose Melissa and Anna Supermessage silence — trace actual failing hop', stageName: 'Reproduce' }, boardName: 'Developer Experience', pathname: '/b/brd_134a0ddb6d434478/c/card_05823a57e8224605' }))
       .toEqual({ title: 'Diagnose Melissa and Anna Supermessage silence — trace actual failing hop', sub: 'Developer Experience · Reproduce' });
     expect(returnBox({ card: null, boardName: 'Developer Experience', pathname: '/b/brd_1' })).toEqual({ title: 'Developer Experience', sub: 'Board' });
-    expect(returnBox({ card: null, boardName: 'Developer Experience', pathname: '/b/brd_1/operate' })).toEqual({ title: 'Developer Experience', sub: 'Operate' });
+    expect(returnBox({ card: null, boardName: 'Developer Experience', pathname: '/b/brd_1/operate/log' })).toEqual({ title: 'Developer Experience', sub: 'Board log' });
     expect(returnBox({ card: null, boardName: 'Developer Experience', pathname: '/b/brd_1/operate/telemetry' })).toEqual({ title: 'Developer Experience', sub: 'Spend detail' });
     expect(returnBox({ card: null, boardName: 'Developer Experience', pathname: '/b/brd_1/settings' })).toEqual({ title: 'Developer Experience', sub: 'Board settings' });
-    expect(returnBox({ card: null, boardName: null, pathname: '/workspace/needs-you' })).toEqual({ title: 'Workspace', sub: 'Needs you' });
+    expect(returnBox({ card: null, boardName: null, pathname: '/inbox' })).toEqual({ title: 'Inbox', sub: 'All boards' });
+    expect(returnBox({ card: null, boardName: null, pathname: '/crew/people' })).toEqual({ title: 'Crew', sub: 'People' });
+    expect(returnBox({ card: null, boardName: null, pathname: '/settings' })).toEqual({ title: 'Settings', sub: 'Labels · Connections' });
   });
   it('explains what happened, and why, in a line', () => {
     expect(whatHappened('accounts.superjackfruit.com')).toBe('Your sign-in with accounts.superjackfruit.com ended, so it could not be renewed in the background. Your place is saved: after you sign in, you come back here.');

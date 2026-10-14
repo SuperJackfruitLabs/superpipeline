@@ -57,20 +57,19 @@ describe('ShellDaylight', () => {
     expect(css).not.toMatch(/\.dy-(rail|dest|top|acct)\b/);
   });
   it('names the three destinations and marks the current one', () => {
-    render(ShellDaylight, props({ here: 'operate', section: 'operate', view: null, showing: null }));
+    render(ShellDaylight, props({ here: 'inbox', section: 'inbox', boardName: null, view: null, showing: null }));
     const nav = screen.getByRole('navigation', { name: 'Superpipeline' });
-    expect(nav.querySelector('a[aria-current="page"]')!.textContent).toContain('Operate');
-    expect(screen.getByRole('link', { name: 'Superpipeline home' }).getAttribute('href')).toBe('/b/brd_134a0ddb6d434478');
-    expect(screen.getByRole('link', { name: /^Workspace/ }).getAttribute('href')).toBe('/workspace/agents');
+    expect(nav.querySelector('a[aria-current="page"]')!.textContent).toContain('Inbox');
+    expect(screen.getByRole('link', { name: 'Superpipeline home' }).getAttribute('href')).toBe('/inbox');
+    expect(screen.getByRole('link', { name: /^Crew/ }).getAttribute('href')).toBe('/crew/agents');
   });
-  it('shows the workspace count only when something needs you, and says it', () => {
-    // Off a board the badge counts the workspace (the board-scoped count is ShellDesktop's test).
-    render(ShellDaylight, props({ here: 'workspace', section: 'workspace', boardName: null, view: null, showing: null }));
-    expect(screen.getByRole('link', { name: /^Operate\W+4 need you/ })).toBeTruthy();
+  it('shows the all-boards count on Inbox only when something needs you, and says it', () => {
+    render(ShellDaylight, props({ here: 'crew', section: 'crew', boardName: null, view: null, showing: null }));
+    expect(screen.getByRole('link', { name: /^Inbox\W+4 need you/ })).toBeTruthy();
     cleanup();
     app.attention = [];
-    render(ShellDaylight, props({ here: 'workspace', section: 'workspace', boardName: null, view: null, showing: null }));
-    expect(screen.getByRole('link', { name: /^Operate$/ })).toBeTruthy();
+    render(ShellDaylight, props({ here: 'crew', section: 'crew', boardName: null, view: null, showing: null }));
+    expect(screen.getByRole('link', { name: /^Inbox$/ })).toBeTruthy();
   });
   it('the account button opens the menu: Dark theme is a checkbox, then Sign out', async () => {
     render(ShellDaylight, props());
@@ -84,6 +83,7 @@ describe('ShellDaylight', () => {
     await tick();
     expect(screen.getByRole('menuitemcheckbox', { name: 'Dark theme' }).getAttribute('aria-checked')).toBe('true');
     if (!screen.queryByRole('menuitem', { name: 'Sign out' })) await openAccount();
+    expect(screen.getByRole('menuitem', { name: 'Settings' })).toBeTruthy();
     await fireEvent.click(screen.getByRole('menuitem', { name: 'Sign out' }));
     expect(logout).toHaveBeenCalledTimes(1);
   });
@@ -111,11 +111,11 @@ describe('ShellDaylight', () => {
     expect(app.filterOpen).toBe(true);
     app.setView('board');
   });
-  it('Projects has no Filter; pages off Plan have no tabs; workspace has no switcher', () => {
+  it('Projects has no Filter; pages off Plan have no tabs; Crew has no switcher', () => {
     render(ShellDaylight, props({ view: 'projects', section: 'projects' }));
     expect(screen.queryByRole('button', { name: /^Filter cards/ })).toBeNull();
     cleanup();
-    render(ShellDaylight, props({ here: 'workspace', section: 'workspace', boardName: null, view: null, showing: null }));
+    render(ShellDaylight, props({ here: 'crew', section: 'crew', boardName: null, view: null, showing: null }));
     expect(screen.queryByRole('radiogroup', { name: 'View' })).toBeNull();
     expect(screen.queryByRole('button', { name: /Switch board/ })).toBeNull();
   });

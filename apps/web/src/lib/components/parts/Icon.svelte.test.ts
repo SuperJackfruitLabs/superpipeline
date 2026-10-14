@@ -6,7 +6,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 import { cleanup, render } from '@testing-library/svelte';
 import { ICON_NAMES, ICON_PATHS } from '@superjackfruit/vibekit';
 import Icon from './Icon.svelte';
-import { PRODUCT_ICONS, VK_ALIASES, type IconName } from './icons';
+import { NAV_ICONS, PRODUCT_ICONS, VK_ALIASES, type IconName } from './icons';
 
 afterEach(cleanup);
 
@@ -30,6 +30,17 @@ describe('Icon', () => {
   it('logs every product glyph as a CORRECTIONS.md deviation', () => {
     const rows = CORRECTIONS.split('\n').filter((l) => l.includes('no vibekit icon'));
     for (const k of Object.keys(PRODUCT_ICONS)) expect(rows.some((r) => r.includes(`\`${k}\``)), k).toBe(true);
+  });
+  it('draws the nav v2 glyphs (Inbox tray, Crew faces) in the 24 frame at stroke 1.8, never filled', () => {
+    for (const name of Object.keys(NAV_ICONS) as IconName[]) {
+      const { container } = render(Icon, { name, size: 22, strokeWidth: 1.8 });
+      const svg = container.querySelector('svg')!;
+      expect(svg.getAttribute('viewBox'), name).toBe('0 0 24 24');
+      expect(svg.getAttribute('fill'), name).toBe('none');
+      expect(svg.getAttribute('stroke-width'), name).toBe('1.8');
+      expect(svg.children.length, name).toBeGreaterThan(0);
+      cleanup();
+    }
   });
   it('draws every product glyph, hidden from assistive tech', () => {
     for (const name of Object.keys(PRODUCT_ICONS) as IconName[]) {

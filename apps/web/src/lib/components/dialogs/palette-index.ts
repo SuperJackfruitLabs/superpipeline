@@ -47,18 +47,21 @@ export function buildPaletteIndex(ctx: PaletteCtx): PaletteItem[] {
     items.push({ id: `board:${x.id}`, group: 'Boards', label: x.name, sub, needs: false, meta: '', icon: 'board', verb: 'Go to board', act: { kind: 'goto', href: `/b/${x.id}` } });
   }
   for (const a of ctx.agents) {
-    items.push({ id: `agent:${a.id}`, group: 'Agents', label: a.name, sub: a.capabilities.length ? a.capabilities.join(', ') : 'no capabilities', needs: false, meta: '', icon: { agentId: a.id, name: a.name }, verb: 'Show agent', act: { kind: 'goto', href: '/workspace/agents' } });
+    items.push({ id: `agent:${a.id}`, group: 'Agents', label: a.name, sub: a.capabilities.length ? a.capabilities.join(', ') : 'no capabilities', needs: false, meta: '', icon: { agentId: a.id, name: a.name }, verb: 'Show agent', act: { kind: 'goto', href: '/crew/agents' } });
   }
   const action = (id: string, label: string, sub: string, icon: IconName, verb: string, act: PaletteAct): PaletteItem => ({ id, group: 'Actions', label, sub, needs: false, meta: '', icon, verb, act });
   if (b) {
     items.push(
       action('act:dispatch', 'Dispatch a card', `new card on ${b.name}`, 'plus', 'Open composer', { kind: 'compose' }),
-      action('act:operate', 'Operate', 'what needs you, what is running, what it cost', 'operate', 'Go', { kind: 'goto', href: `/b/${b.id}/operate` }),
       action('act:spend', 'Spend detail', 'by model, by card, and the board log', 'coin', 'Go', { kind: 'goto', href: `/b/${b.id}/operate/telemetry` }),
       action('act:settings', 'Board settings', `stages, gates and schedules for ${b.name}`, 'settings', 'Go', { kind: 'goto', href: `/b/${b.id}/settings` }),
     );
   }
-  items.push(action('act:workspace', 'Workspace', 'agents, capabilities, labels and people', 'people', 'Go', { kind: 'goto', href: '/workspace' }));
+  items.push(
+    action('act:inbox', 'Inbox', 'what needs you, what is running, what it cost, on every board', 'inbox', 'Go', { kind: 'goto', href: '/inbox' }),
+    action('act:crew', 'Crew', 'agents, people and capabilities', 'crew', 'Go', { kind: 'goto', href: '/crew' }),
+    action('act:workspace-settings', 'Settings', 'labels, connections, appearance and account', 'settings', 'Go', { kind: 'goto', href: '/settings' }),
+  );
   items.push(
     { id: 'acct:appearance', group: 'Account', label: 'Appearance…', sub: 'vibe, light or dark, time of day', needs: false, meta: '', icon: 'swatch', verb: 'Open', act: { kind: 'appearance' } },
     { id: 'acct:theme', group: 'Account', label: otherThemeLabel(ctx.theme), sub: 'theme', needs: false, meta: '', icon: ctx.theme === 'dark' ? 'sun' : 'moon', verb: 'Switch', act: { kind: 'theme' } },

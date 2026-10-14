@@ -20,14 +20,15 @@
   let { here, section, boardName, view, showing, studioSubRight, status, subTools, bleed = false, ownHeading = false, children }: ShellProps = $props();
 
   const items = $derived<NavItem[]>([
+    { id: 'inbox', label: 'Inbox', href: m.inboxHref, icon: inboxIcon, current: here === 'inbox', count: m.inboxBadge || undefined, countIsNeeds: true, kbd: 'G I' },
     { id: 'plan', label: 'Plan', href: m.planHref, icon: planIcon, current: here === 'plan', kbd: 'G P' },
-    { id: 'operate', label: 'Operate', href: m.operateHref, icon: operateIcon, current: here === 'operate', count: m.operateBadge(boardName !== null) || undefined, countIsNeeds: true, kbd: 'G O' },
-    { id: 'workspace', label: 'Workspace', href: m.workspaceHref, icon: workspaceIcon, current: here === 'workspace', kbd: 'G W' },
+    { id: 'crew', label: 'Crew', href: m.crewHref, icon: crewIcon, current: here === 'crew', kbd: 'G C' },
   ]);
   const accountItems = $derived<VkMenuItem[]>([
     { heading: m.userName },
     { label: 'Dark theme', checked: m.dark, oncheckedchange: () => m.toggleTheme() },
     { label: 'Appearance…', onselect: m.openAppearance },
+    { label: 'Settings', onselect: m.openSettings },
   ]);
   const counts: Partial<Record<string, number>> = $derived({ list: m.listCount, projects: m.projectCount });
   const viewItems = $derived(VIEWS.map(([value, label]) => ({ value, label, href: `?view=${value}`, count: counts[value] })));
@@ -37,9 +38,9 @@
 </script>
 
 {#snippet markIcon()}<Icon name="mark" size={22} strokeWidth={2} />{/snippet}
+{#snippet inboxIcon()}<Icon name="inbox" size={20} strokeWidth={1.75} />{/snippet}
 {#snippet planIcon()}<Icon name="plan-sq" size={20} strokeWidth={1.75} />{/snippet}
-{#snippet operateIcon()}<Icon name="operate" size={20} strokeWidth={1.75} />{/snippet}
-{#snippet workspaceIcon()}<Icon name="people" size={20} strokeWidth={1.75} />{/snippet}
+{#snippet crewIcon()}<Icon name="crew" size={20} strokeWidth={1.75} />{/snippet}
 {#snippet moonIcon()}<Icon name="moon" size={18} strokeWidth={1.75} />{/snippet}
 {#snippet sunIcon()}<Icon name="sun" size={20} strokeWidth={1.75} />{/snippet}
 {#snippet funnelIcon()}<Icon name="funnel" size={14} strokeWidth={1.75} />{/snippet}
@@ -71,11 +72,11 @@
 {/snippet}
 
 {#snippet masthead()}
-  <!-- Off Plan there is no sub-bar; Workspace has no board switcher. -->
+  <!-- Off Plan there is no sub-bar; the Inbox, Crew and Settings have no board switcher. -->
   <Masthead
     heading={!ownHeading}
     eyebrow="Superpipeline · {section}"
-    title={boardName ?? (ownHeading ? '' : 'Workspace')}
+    title={boardName ?? (ownHeading ? '' : 'Superpipeline')}
     switcher={boardName !== null ? { label: 'Change board', onopen: m.openBoardSwitcher } : undefined}
     {command}
     live={{ state: m.connected ? 'live' : 'reconnecting', label: m.connected ? 'Live' : 'Reconnecting…', attrs: { 'data-live': m.connected ? 'on' : 'off' } }}

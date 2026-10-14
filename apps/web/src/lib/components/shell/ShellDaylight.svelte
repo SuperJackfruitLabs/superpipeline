@@ -18,15 +18,16 @@
   let { here, section, boardName, view, showing, status, subTools, sky, ownHeading = false, children }: ShellProps = $props();
 
   const items = $derived<NavItem[]>([
+    { id: 'inbox', label: 'Inbox', href: m.inboxHref, icon: inboxIcon, current: here === 'inbox', count: m.inboxBadge || undefined, countIsNeeds: true, kbd: 'G I' },
     { id: 'plan', label: 'Plan', href: m.planHref, icon: planIcon, current: here === 'plan', kbd: 'G P' },
-    { id: 'operate', label: 'Operate', href: m.operateHref, icon: operateIcon, current: here === 'operate', count: m.operateBadge(boardName !== null) || undefined, countIsNeeds: true, kbd: 'G O' },
-    { id: 'workspace', label: 'Workspace', href: m.workspaceHref, icon: workspaceIcon, current: here === 'workspace', kbd: 'G W' },
+    { id: 'crew', label: 'Crew', href: m.crewHref, icon: crewIcon, current: here === 'crew', kbd: 'G C' },
   ]);
 
   const accountItems = $derived<VkMenuItem[]>([
     { heading: m.userName },
     { label: 'Dark theme', checked: m.dark, oncheckedchange: () => m.toggleTheme() },
     { label: 'Appearance…', onselect: m.openAppearance },
+    { label: 'Settings', onselect: m.openSettings },
     { separator: true },
     { label: 'Sign out', onselect: m.signOut },
   ]);
@@ -36,9 +37,10 @@
 </script>
 
 {#snippet markIcon()}<Icon name="mark" size={26} strokeWidth={1.8} />{/snippet}
-{#snippet planIcon()}<Icon name="plan" size={22} strokeWidth={1.8} filled={here === 'plan'} />{/snippet}
-{#snippet operateIcon()}<Icon name={here === 'operate' ? 'operate-filled' : 'operate'} size={22} strokeWidth={1.8} />{/snippet}
-{#snippet workspaceIcon()}<Icon name="workspace" size={22} strokeWidth={1.8} filled={here === 'workspace'} />{/snippet}
+<!-- Nav v2: the current place is marked by the item, never by filling a line icon. -->
+{#snippet inboxIcon()}<Icon name="inbox" size={22} strokeWidth={1.8} />{/snippet}
+{#snippet planIcon()}<Icon name="plan" size={22} strokeWidth={1.8} />{/snippet}
+{#snippet crewIcon()}<Icon name="crew" size={22} strokeWidth={1.8} />{/snippet}
 {#snippet sunIcon()}<Icon name={m.dark ? 'moon' : 'sun'} size={20} strokeWidth={1.8} />{/snippet}
 {#snippet filterIcon()}<Icon name="filter" size={18} strokeWidth={1.8} />{/snippet}
 {#snippet plusIcon()}<Icon name="plus" size={18} />{/snippet}
@@ -82,7 +84,7 @@
   <Masthead
     heading={!ownHeading}
     eyebrow="Superpipeline · {section}"
-    title={boardName ?? (ownHeading ? '' : 'Workspace')}
+    title={boardName ?? (ownHeading ? '' : 'Superpipeline')}
     switcher={boardName !== null ? { label: 'Switch board', onopen: m.openBoardSwitcher } : undefined}
     {command}
     live={{ state: m.connected ? 'live' : 'reconnecting', label: m.connected ? 'Live' : 'Reconnecting…', detail: m.connected ? 'changes appear as they happen' : undefined, attrs: { 'data-live': m.connected ? 'on' : 'off' } }}

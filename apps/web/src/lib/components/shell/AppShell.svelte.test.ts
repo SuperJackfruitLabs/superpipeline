@@ -35,14 +35,17 @@ describe('AppShell', () => {
     const { container } = render(AppShell, props());
     expect(container.querySelector('.vk-appshell')).toBeTruthy();
   });
-  it('G then O goes to Operate; G then W to Workspace', async () => {
+  it('G then I goes to the Inbox; G then C to Crew; G then P to the board', async () => {
     render(AppShell, props());
     await fireEvent.keyDown(window, { key: 'g' });
-    await fireEvent.keyDown(window, { key: 'o' });
-    expect(goto).toHaveBeenLastCalledWith('/b/brd_134a0ddb6d434478/operate');
+    await fireEvent.keyDown(window, { key: 'i' });
+    expect(goto).toHaveBeenLastCalledWith('/inbox');
     await fireEvent.keyDown(window, { key: 'g' });
-    await fireEvent.keyDown(window, { key: 'w' });
-    expect(goto).toHaveBeenLastCalledWith('/workspace/agents');
+    await fireEvent.keyDown(window, { key: 'c' });
+    expect(goto).toHaveBeenLastCalledWith('/crew/agents');
+    await fireEvent.keyDown(window, { key: 'g' });
+    await fireEvent.keyDown(window, { key: 'p' });
+    expect(goto).toHaveBeenLastCalledWith('/b/brd_134a0ddb6d434478');
   });
   it('N opens the composer; F opens the filter on the board but not on Projects', async () => {
     render(AppShell, props());

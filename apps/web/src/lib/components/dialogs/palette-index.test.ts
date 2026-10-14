@@ -42,7 +42,7 @@ describe('palette index', () => {
     expect(r.groups[2]!.items.map((i) => [i.label, i.sub])).toEqual([
       ['error-eric', 'diagnostics'], ['tester-tim', 'testing'], ['devops-dave', 'release'], ['vulnerability-victor', 'security-review'],
     ]);
-    expect(r.groups[3]!.items.map((i) => [i.label, i.sub, i.verb])).toEqual([['Workspace', 'agents, capabilities, labels and people', 'Go']]);
+    expect(r.groups[3]!.items.map((i) => [i.label, i.sub, i.verb])).toEqual([['Crew', 'agents, people and capabilities', 'Go']]);
     expect(r.flat[0]!.verb).toBe('Open card');
   });
   it('writes card and board subs as the reference does', () => {
@@ -63,7 +63,7 @@ describe('palette index', () => {
   });
   it('without a board it says so and drops the board-bound actions', () => {
     const items = buildPaletteIndex({ ...ctx, board: null, cards: [], currentBoardId: null });
-    expect(items.filter((i) => i.group === 'Actions').map((i) => i.label)).toEqual(['Workspace']);
+    expect(items.filter((i) => i.group === 'Actions').map((i) => i.label)).toEqual(['Inbox', 'Crew', 'Settings']);
     expect(paletteCount(items.length, '', null)).toBe('Everything in your workspace: boards, agents and actions');
     expect(paletteCount(items.length, '  ', 'Developer Experience')).toBe('Everything on Developer Experience, plus boards, agents and actions');
     expect(paletteCount(1, 'x', null)).toBe('1 match for “x”');

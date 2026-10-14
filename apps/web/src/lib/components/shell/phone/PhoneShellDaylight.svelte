@@ -26,4 +26,4 @@
   {#if props.view !== 'projects'}<Button variant="secondary" icon={funnelIcon} aria-haspopup="dialog" onclick={m.openFilter}>Filter</Button>{/if}
 {/snippet}
 
-<PhoneFrame shell={props} vibe="daylight" phase={m.phonePhase} switcherLabel="Switch board" {actions} below={props.view ? views : undefined} glyphs={{ plan: 'plan-phone', operate: 'operate', workspace: 'workspace' }} />
+<PhoneFrame shell={props} vibe="daylight" phase={m.phonePhase} switcherLabel="Switch board" {actions} below={props.view ? views : undefined} glyphs={{ inbox: 'inbox', plan: 'plan-phone', crew: 'crew' }} />

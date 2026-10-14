@@ -9,14 +9,16 @@ export const RC_LEAD: Readonly<Record<Vibe, string>> = {
 };
 export const rcLead = (vibe: Vibe, onCard: boolean): string => (onCard ? RC_LEAD[vibe] : RC_LEAD[vibe].replace('this card', 'this page'));
 
-const TABS: Record<string, string> = { 'needs-you': 'Needs you', agents: 'Agents', capabilities: 'Capabilities', labels: 'Labels', people: 'People', connections: 'Connections' };
+const TABS: Record<string, string> = { agents: 'Agents', capabilities: 'Capabilities', people: 'People' };
 
-/** "You will come back to": the open card, else the board and the view, else the Workspace tab. */
+/** "You will come back to": the open card, else the board and the view, else the Inbox, the Crew tab or Settings. */
 export function returnBox(x: { card: { title: string; stageName: string } | null; boardName: string | null; pathname: string }): { title: string; sub: string } {
   if (x.card) return { title: x.card.title, sub: `${x.boardName ?? ''} · ${x.card.stageName}` };
-  const ws = /^\/workspace(?:\/([a-z-]+))?/.exec(x.pathname);
-  if (ws) return { title: 'Workspace', sub: TABS[ws[1] ?? 'needs-you'] ?? 'Workspace' };
-  const view = /\/operate\/telemetry\/?$/.test(x.pathname) ? 'Spend detail' : /\/operate\/?$/.test(x.pathname) ? 'Operate' : /\/settings\/?$/.test(x.pathname) ? 'Board settings' : 'Board';
+  if (/^\/inbox\/?$/.test(x.pathname)) return { title: 'Inbox', sub: 'All boards' };
+  if (/^\/settings\/?$/.test(x.pathname)) return { title: 'Settings', sub: 'Labels · Connections' };
+  const crew = /^\/crew(?:\/([a-z-]+))?/.exec(x.pathname);
+  if (crew) return { title: 'Crew', sub: TABS[crew[1] ?? 'agents'] ?? 'Agents' };
+  const view = /\/operate\/telemetry\/?$/.test(x.pathname) ? 'Spend detail' : /\/operate\/log\/?$/.test(x.pathname) ? 'Board log' : /\/settings\/?$/.test(x.pathname) ? 'Board settings' : 'Board';
   return { title: x.boardName ?? 'Superpipeline', sub: view };
 }
 
