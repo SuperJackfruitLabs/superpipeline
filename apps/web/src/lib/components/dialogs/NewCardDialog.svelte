@@ -45,11 +45,19 @@
   const forPerson = $derived(stage?.ownerKind === 'human');
 
   let seen = untrack(() => app.composeRequest);
+  // A New card pressed while the board is still arriving opens once it has (it used to be dropped
+  // silently: the button was there, the click did nothing).
+  let waiting = $state<string | null>(null);
   $effect(() => {
     const n = app.composeRequest;
     if (n === seen) return;
     seen = n;
-    untrack(() => openWith(app.composeSentence));
+    untrack(() => { if (app.board && app.boardId) openWith(app.composeSentence); else waiting = app.composeSentence; });
+  });
+  $effect(() => {
+    if (waiting === null || !app.board || !app.boardId) return;
+    const s = waiting;
+    untrack(() => { waiting = null; openWith(s); });
   });
   $effect(() => {
     app.composeOpen = open;
