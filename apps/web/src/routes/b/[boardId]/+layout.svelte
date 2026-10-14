@@ -16,7 +16,8 @@
   import { app } from '$lib/stores/app.svelte';
   import CardDrawer from '$lib/components/CardDrawer.svelte';
   import { viewport } from '$lib/viewport.svelte';
-  import BrandMark from '$lib/components/BrandMark.svelte';
+  import LogoMotion from '$lib/components/LogoMotion.svelte';
+  import { appearance } from '$lib/appearance.svelte';
 
   let { children } = $props();
 
@@ -59,7 +60,7 @@
 {:else}
   <main class="min-h-viewport flex flex-col items-center justify-center gap-3 text-center">
     <h1 class="sr-only">Loading the board</h1>
-    <BrandMark class="size-7" />
+    <LogoMotion size={64} playIntro={appearance.value.vibe !== 'quiet'} />
     <div class="mono text-muted-foreground flex items-center gap-2 text-xs">
       <span class="live-dot"></span>{app.error ?? 'establishing link to the board…'}
     </div>

@@ -65,3 +65,10 @@ test('every favicon the page links is served with its type', async ({ page, requ
     if (type) expect(res.headers()['content-type'], href).toContain(type);
   }
 });
+
+test('the logo animation bundle is served as a script', async ({ request }) => {
+  const res = await request.get('/brand/logo-motion.js');
+  expect(res.status()).toBe(200);
+  expect(res.headers()['content-type']).toMatch(/javascript/);
+  expect(await res.text()).toContain('window.SJLLogoMotion');
+});

@@ -8,3 +8,8 @@ root of `static/`, where browsers look for them unasked.
 The in-app mark (`src/lib/components/BrandMark.svelte`) inlines the pack's `mark-current.svg`
 geometry so CSS can colour it: the flat amber on light grounds, white on dark, as the pack's
 adaptive favicon does. Do not redraw or recolour these files; take a new pack version instead.
+
+`logo-motion.js` is the pack's approved logo animation (`motion/logo-motion.js`, translucent-v2,
+2026-10-14), copied byte for byte: it is generated, never edited by hand. It carries all six
+products' masters; the app only ever asks it for `superpipeline` (Channel). `LogoMotion.svelte`
+loads it and plays it once on the first loading screen of a session.
