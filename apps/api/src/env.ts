@@ -27,6 +27,13 @@ export interface Env {
   /** Superlibrary's audience (spec §9 Embedding). Set: the card drawer may ask for a token for it. Unset: no library. */
   SUPERLIBRARY_AUDIENCE?: string;
   /**
+   * 'true' once the organization plane links Superlibrary's audience to this deployment's web client.
+   * Then /auth/login authorizes it too, so the drawer's library grant can succeed. Unset: it is not
+   * asked for at authorize (an unlinked resource would fail the whole sign-in) and the library grant
+   * is declined (invalid_target), which the drawer says plainly.
+   */
+  PLANE_LIBRARY_LINKED?: string;
+  /**
    * The Organization plane (accounts `2026-10-06-issuer-contract.md` §1). **`ORG_PLANE_ISSUER` is the
    * switch**: unset means this deployment verifies the hub's tokens exactly as before. Set means it
    * verifies the plane's tokens and refuses the hub's — there is no dual-accept. Set with any of

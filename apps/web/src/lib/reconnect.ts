@@ -11,12 +11,27 @@ export const RETURN_KEY = 'superpipeline.returnTo';
 // project, Crew's tabs, Settings, and the old /workspace paths (they redirect). Ids are word characters only.
 const ID = '[A-Za-z0-9_-]+';
 const SAFE = new RegExp(
-  `^/(b/${ID}(/(c/${ID}|operate(/(telemetry|log))?|settings))?|inbox|plan(/projects(/${ID})?)?|crew(/[a-z-]+)?|settings|workspace(/[a-z-]+)?)?/?(\\?[^#]*)?$`,
+  `^/(b/${ID}(/(c/${ID}(/page)?|operate(/(telemetry|log))?|settings))?|inbox|plan(/projects(/${ID})?)?|crew(/[a-z-]+)?|settings|workspace(/[a-z-]+)?)?/?(\\?[^#]*)?$`,
 );
+
+/**
+ * Where you are, including a card open in the board's drawer. Opening a card from the board only sets
+ * the app's open card and leaves the address at /b/<board>, so the place saved before sign-in was the
+ * board and the card came back closed. A card open over a board is saved as that card's address.
+ */
+export function placeOf(path: string, openCardId: string | null | undefined): string {
+  const m = /^\/b\/([A-Za-z0-9_-]+)\/?(\?[^#]*)?$/.exec(path);
+  return m && openCardId && /^[A-Za-z0-9_-]+$/.test(openCardId) ? `/b/${m[1]}/c/${openCardId}${m[2] ?? ''}` : path;
+}
+let openCard: () => string | null | undefined = () => null;
+/** The layout tells Reconnect which card is open (the store is not imported here). */
+export function registerOpenCard(fn: () => string | null | undefined): void {
+  openCard = fn;
+}
 
 export function reconnect(
   navigate: (url: string) => void = (url) => globalThis.location.assign(url),
-  here: string = globalThis.location ? location.pathname + location.search : '/',
+  here: string = placeOf(globalThis.location ? location.pathname + location.search : '/', openCard()),
 ): void {
   try { sessionStorage.setItem(RETURN_KEY, here); } catch { /* no storage: you land on your board instead */ }
   navigate('/auth/login');

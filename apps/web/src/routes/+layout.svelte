@@ -13,7 +13,7 @@
   import { isPageChange } from '$lib/motion/page-change';
   import { installReveal } from '$lib/motion/reveal';
   import { page } from '$app/state';
-  import { holdReturnTo, releaseReturnTo } from '$lib/reconnect';
+  import { holdReturnTo, registerOpenCard, releaseReturnTo } from '$lib/reconnect';
   import { app } from '$lib/stores/app.svelte';
   import { VibeRoot } from '@superjackfruit/vibekit';
   import { appearance } from '$lib/appearance.svelte';
@@ -39,6 +39,7 @@
     const uninstallReveal = installReveal();
     // Taken before init, so the front door's redirect to the Inbox cannot run over it.
     holdReturnTo();
+    registerOpenCard(() => app.openCardId);
     void app.init().then(() => {
       const back = releaseReturnTo();
       if (back && app.authState === 'ready') void goto(back, { replaceState: true });

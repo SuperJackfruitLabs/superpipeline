@@ -53,6 +53,25 @@ async function callback(fake: ReturnType<typeof plane>, e = envOn()) {
   return (await handlePlaneSignInRoute(req, e, '/auth/callback', fake.impl))!;
 }
 
+describe('plane sign-in — authorize asks for every audience the later refresh grants narrow to', () => {
+  // The plane (better-auth oauth-provider) refuses a refresh grant whose `resource` was not in the
+  // original authorization (400 invalid_target). Authorizing for the app alone made every hub and
+  // library grant fail silently: hubToken and libraryToken were always null.
+  it('names the app and the hub', async () => {
+    const { location } = await login(envOn({ HUB_ISSUER: HUB_RESOURCE }));
+    expect(location.searchParams.getAll('resource')).toEqual([APP_AUD, HUB_RESOURCE]);
+  });
+  it('names the app alone when there is no hub', async () => {
+    const { location } = await login(envOn());
+    expect(location.searchParams.getAll('resource')).toEqual([APP_AUD]);
+  });
+  it('names Superlibrary only once the plane links it to this client (an unlinked resource would fail the whole sign-in)', async () => {
+    const lib = 'https://library.test';
+    expect((await login(envOn({ SUPERLIBRARY_AUDIENCE: lib }))).location.searchParams.getAll('resource')).toEqual([APP_AUD]);
+    expect((await login(envOn({ SUPERLIBRARY_AUDIENCE: lib, PLANE_LIBRARY_LINKED: 'true' }))).location.searchParams.getAll('resource')).toEqual([APP_AUD, lib]);
+  });
+});
+
 describe('plane sign-in — off means GitHub, unchanged', () => {
   it('returns null for every path when ORG_PLANE_ISSUER is unset', async () => {
     for (const p of ['/auth/login', '/auth/callback', '/hub/token', '/hub/connect']) {

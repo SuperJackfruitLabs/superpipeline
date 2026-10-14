@@ -113,6 +113,16 @@ async function hubAudienceToken(
   return tokenRequest(cfg, { grant_type: 'refresh_token', refresh_token: refresh }, fetchImpl, resource);
 }
 
+/** The audiences /auth/login authorizes: the app, the hub when there is one, Superlibrary once linked. */
+function authorizeResources(app: string, env: Env): string[] {
+  const out = [app];
+  const hub = hubResource(env);
+  if (hub && hub !== app) out.push(hub);
+  const lib = libraryResource(env);
+  if (lib && env.PLANE_LIBRARY_LINKED === 'true' && !out.includes(lib)) out.push(lib);
+  return out;
+}
+
 const ttlOf = (t: TokenResponse) => Math.max(1, Math.min(typeof t.expires_in === 'number' ? t.expires_in : 300, 3600));
 
 export async function handlePlaneSignInRoute(
@@ -139,8 +149,13 @@ export async function handlePlaneSignInRoute(
     const authorize = new URL(`${cfg.url}/api/auth/oauth2/authorize`);
     for (const [k, v] of Object.entries({
       response_type: 'code', client_id: PLANE_CLIENT_ID, redirect_uri: redirectUri, scope: SCOPE, state,
-      code_challenge: await challengeFor(verifier), code_challenge_method: 'S256', resource: cfg.audience,
+      code_challenge: await challengeFor(verifier), code_challenge_method: 'S256',
     })) authorize.searchParams.set(k, v);
+    // Every audience a later refresh grant narrows to must be in the authorization itself: the plane
+    // refuses a refresh `resource` the original grant did not name (invalid_target), and the refresh
+    // token keeps the full list however the grants narrow. Superlibrary only once the plane links it
+    // to this client (PLANE_LIBRARY_LINKED), since an unlinked resource fails the whole authorize.
+    for (const r of authorizeResources(cfg.audience, env)) authorize.searchParams.append('resource', r);
     return new Response(null, { status: 302, headers: { Location: authorize.toString(), 'Set-Cookie': pkceCookie(`${state}.${verifier}`, 600) } });
   }
 
