@@ -727,3 +727,66 @@ describe('POST /v1/boards/:id/cards — body whitelisting (Task 19 follow-up)', 
     expect((card as Record<string, unknown>).someOtherUnexpectedKey).toBeUndefined();
   });
 });
+
+/** Nav v2 (N2): the New project dialog declares health up front; the project page edits a milestone in place. */
+describe('POST /v1/projects declares health', () => {
+  it('stores the declared health it was given', async () => {
+    const t = 'tnt_prj_rest_health';
+    await insertTenant(t, 'prj-rest-health');
+    const res = await createProject(t, { name: 'declared', health: 'at-risk', description: 'What is true when done.' });
+    expect(res.status).toBe(201);
+    const { project } = await res.json<{ project: { health: string | null; description: string | null } }>();
+    expect(project.health).toBe('at-risk');
+    expect(project.description).toBe('What is true when done.');
+  });
+
+  it('refuses a health it does not know', async () => {
+    const t = 'tnt_prj_rest_health_bad';
+    await insertTenant(t, 'prj-rest-health-bad');
+    const res = await createProject(t, { name: 'bad health', health: 'sideways' });
+    expect(res.status).toBe(400);
+  });
+});
+
+describe('PATCH /v1/milestones/:id', () => {
+  async function milestone(t: string) {
+    const { project } = await (await createProject(t, { name: `ms edit ${t}` })).json<{ project: { id: string } }>();
+    const res = await SELF.fetch(`https://api.test/v1/projects/${project.id}/milestones`, {
+      method: 'POST', headers: dev(t), body: JSON.stringify({ name: 'before', targetDate: '2026-11-01' }),
+    });
+    return (await res.json<{ milestone: { id: string } }>()).milestone.id;
+  }
+
+  it('renames and re-dates a milestone', async () => {
+    const t = 'tnt_prj_rest_ms_patch';
+    await insertTenant(t, 'prj-rest-ms-patch');
+    const id = await milestone(t);
+    const res = await SELF.fetch(`https://api.test/v1/milestones/${id}`, {
+      method: 'PATCH', headers: dev(t), body: JSON.stringify({ name: 'after', targetDate: null }),
+    });
+    expect(res.status).toBe(200);
+    const { milestone: m } = await res.json<{ milestone: { name: string; targetDate: string | null } }>();
+    expect(m).toMatchObject({ name: 'after', targetDate: null });
+  });
+
+  it('refuses an empty name and a malformed date', async () => {
+    const t = 'tnt_prj_rest_ms_patch_bad';
+    await insertTenant(t, 'prj-rest-ms-patch-bad');
+    const id = await milestone(t);
+    const empty = await SELF.fetch(`https://api.test/v1/milestones/${id}`, { method: 'PATCH', headers: dev(t), body: JSON.stringify({ name: ' ' }) });
+    expect(empty.status).toBe(400);
+    const date = await SELF.fetch(`https://api.test/v1/milestones/${id}`, { method: 'PATCH', headers: dev(t), body: JSON.stringify({ targetDate: 'soon' }) });
+    expect(date.status).toBe(400);
+  });
+
+  it('answers 404 for another workspace’s milestone', async () => {
+    const t = 'tnt_prj_rest_ms_patch_own';
+    await insertTenant(t, 'prj-rest-ms-patch-own');
+    await insertTenant('tnt_prj_rest_ms_patch_other', 'prj-rest-ms-patch-other');
+    const id = await milestone(t);
+    const res = await SELF.fetch(`https://api.test/v1/milestones/${id}`, {
+      method: 'PATCH', headers: dev('tnt_prj_rest_ms_patch_other'), body: JSON.stringify({ name: 'stolen' }),
+    });
+    expect(res.status).toBe(404);
+  });
+});
