@@ -27,6 +27,8 @@
   import ReconnectToast from '$lib/components/dialogs/ReconnectToast.svelte';
   import NewCardDialog from '$lib/components/dialogs/NewCardDialog.svelte';
   import MoveCardDialog from '$lib/components/dialogs/MoveCardDialog.svelte';
+  import { loadingStatus } from '$lib/loading.svelte';
+  import { SLOW_COPY } from '$lib/loading';
 
   let { children } = $props();
 
@@ -79,7 +81,8 @@
   <MoveCardDialog />
 {/if}
 <!-- Every move, in every vibe, is said here: a moved tile or row changes column and unmounts. -->
-<p class="vk-visually-hidden" role="status" aria-live="polite">{app.moveSaid}</p>
+<!-- …and so is loading: the one polite status line. From 8 s it shows, quietly, that the server is slow. -->
+<p class={!app.moveSaid && loadingStatus.slow ? 'sp-load-status' : 'vk-visually-hidden'} role="status" aria-live="polite">{app.moveSaid || (loadingStatus.slow ? SLOW_COPY : loadingStatus.label)}</p>
 <ReconnectToast />
 <ReconnectDialog />
 </VibeRoot>

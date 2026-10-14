@@ -46,6 +46,7 @@ import { auth } from '$lib/auth-recovery.svelte';
 import { itemsFromBoard, type AttentionItem } from '$lib/components/attention/attention';
 import { noFilters, passesArchivedFilter, passesProjectFilter } from './card-filters';
 import { feedIsStalled, STALL_CHECK_MS } from '../feed-liveness';
+import { connectionOf, failKind, type Connection, type FailKind } from '../loading';
 
 const BOARD_KEY = 'superpipeline.boardId';
 const ATTENTION_COALESCE_MS = 1000;
@@ -96,9 +97,30 @@ class AppStore {
 
   // boards
   boards = $state<BoardSummary[]>([]);
+  /**
+   * The board list has been read (successfully) at least once. Until then the workspace is
+   * pending, not empty: "All boards 0", "Nothing needs you" and onboarding all wait for this.
+   */
+  boardsLoaded = $state(false);
+  /** The last read of the board list failed (and none ever worked): say so, never "no boards". */
+  boardsFailed = $state(false);
   boardId = $state<string | null>(null);
   board = $state<BoardSnapshot | null>(null);
+  /**
+   * The open board's first read failed: `missing` (404/403: not there for you) or `failed` (5xx,
+   * network, timeout). Cleared when a read works. The board route draws it instead of the board.
+   */
+  boardFailure = $state<FailKind | null>(null);
+  /** Boot could not work out a board to open because the reads failed (not because there are none). */
+  bootFailure = $state<FailKind | null>(null);
   connected = $state(false);
+  /** The live feed has opened once on this board: only after that is a closed feed "Reconnecting…". */
+  feedOpened = $state(false);
+  online = $state(typeof navigator === 'undefined' ? true : navigator.onLine !== false);
+  /** The live feed for the shells' pill: Connecting… / Live / Reconnecting… / Offline. */
+  get connection(): Connection {
+    return connectionOf({ open: this.connected, everOpened: this.feedOpened, online: this.online });
+  }
 
   /**
    * The one request the command palette still makes of a component it does not own.
@@ -184,6 +206,12 @@ class AppStore {
    * Operate count. Workspace-wide on purpose: the count says "someone needs you", wherever.
    */
   attention = $state<StaleCard[]>([]);
+  /** The attention list has been read successfully once: before that every count of it is pending ("–"), never 0. */
+  attentionLoaded = $state(false);
+  /** The attention read has answered once, worked or not: the Inbox stops waiting on it. */
+  attentionSettled = $state(false);
+  /** The agent list has been read once (worked or not): the rail's crew line and Crew counts wait for it. */
+  agentsLoaded = $state(false);
   /** The Filter cards dialog (`plan/FilterDialog.svelte`); every shell's Filter button opens it. */
   filterOpen = $state(false);
   /** The board switcher; the board name in every shell opens it. */
@@ -295,6 +323,7 @@ class AppStore {
   }
 
   #watchingVisibility = false;
+  #watchingOnline = false;
 
   /**
    * A 401 anywhere means the session this tab holds has lapsed. It is renewed quietly first, and
@@ -303,6 +332,11 @@ class AppStore {
    */
   watchAuth(): void {
     setUnauthorizedHandler(() => auth.noteUnauthorized());
+    if (!this.#watchingOnline && typeof window !== 'undefined') {
+      this.#watchingOnline = true;
+      window.addEventListener('online', () => { this.online = true; if (this.boardId && !this.connected) void this.retry(); });
+      window.addEventListener('offline', () => { this.online = false; });
+    }
     auth.configure({ restore: () => this.#restore(), onExpired: () => this.#closeSocket() });
     if (!this.#watchingVisibility && typeof document !== 'undefined') {
       this.#watchingVisibility = true;
@@ -325,6 +359,7 @@ class AppStore {
 
   async #init(preferred?: { boardId?: string | null; cardId?: string | null }): Promise<void> {
     this.watchAuth();
+    this.bootFailure = null;
     try {
       this.user = await getMe();
       // A session cookie that lapsed while the tab was closed: one quiet renewal before Landing.
@@ -334,16 +369,20 @@ class AppStore {
         return;
       }
       this.authState = 'ready';
+      // The board list is read at once, beside the board: the Inbox waits on it, and a server that
+      // fails it says so after one timeout, not after every read in turn.
+      const listed = this.loadBoards();
 
       let id: string | null = null;
       if (preferred?.boardId) {
         try {
           await getBoard(preferred.boardId);
           id = preferred.boardId;
-        } catch {
+        } catch (e) {
           // Deleted, or another tenant's — the API answers 404 to both, by
           // construction, so this cannot tell them apart and must not try.
-          id = null;
+          // A server failure is not "deleted": the board opens and says it could not load.
+          id = failKind(e) === 'failed' ? preferred.boardId : null;
         }
       }
 
@@ -352,18 +391,24 @@ class AppStore {
         if (id) {
           try {
             await getBoard(id);
-          } catch {
-            id = null;
-            localStorage.removeItem(BOARD_KEY);
+          } catch (e) {
+            // Forget the remembered board only when the server says it is gone (404/403). A failed
+            // read (5xx, network, timeout) keeps it: losing it would turn an outage into onboarding.
+            if (failKind(e) === 'missing') {
+              id = null;
+              localStorage.removeItem(BOARD_KEY);
+            }
           }
         }
       }
       if (!id) {
-        await this.loadBoards();
+        await listed;
         id = this.boards[0]?.id ?? null;
       }
       if (!id) {
-        this.needsBoard = true;
+        // No board because the list could not be read is a failure, not an empty workspace.
+        if (this.boardsFailed) this.bootFailure = 'failed';
+        else this.needsBoard = true;
         return;
       }
       await this.openBoard(id);
@@ -384,8 +429,11 @@ class AppStore {
   async loadBoards(): Promise<void> {
     try {
       this.boards = await getBoards();
+      this.boardsLoaded = true;
+      this.boardsFailed = false;
     } catch {
-      /* the switcher list is best-effort */
+      // The switcher keeps the last list; a list never read says it failed rather than "no boards".
+      if (!this.boardsLoaded) this.boardsFailed = true;
     }
   }
 
@@ -394,8 +442,11 @@ class AppStore {
     this.#attentionLoadedAt = Date.now();
     try {
       this.attention = (await listAttention()).cards;
+      this.attentionLoaded = true;
     } catch {
       /* best-effort: a count that is a little stale beats one that vanishes */
+    } finally {
+      this.attentionSettled = true;
     }
   }
 
@@ -418,8 +469,14 @@ class AppStore {
   }
 
   async #openBoard(id: string): Promise<void> {
+    if (this.boardId !== id) {
+      this.boardFailure = null;
+      this.feedOpened = false;
+      this.connected = false;
+    }
     this.boardId = id;
     this.needsBoard = false;
+    this.bootFailure = null;
     localStorage.setItem(BOARD_KEY, id);
     await this.refresh();
     await this.loadBoards();
@@ -432,6 +489,7 @@ class AppStore {
       listProjects(),
     ]);
     this.agents = agents.status === 'fulfilled' ? agents.value : [];
+    this.agentsLoaded = true;
     this.members = members.status === 'fulfilled' ? members.value : [];
     this.labels = labels.status === 'fulfilled' ? labels.value : [];
     this.projects = projects.status === 'fulfilled' ? projects.value : [];
@@ -459,6 +517,7 @@ class AppStore {
     sock.addEventListener('open', () => {
       if (generation !== this.#socketGeneration) return;
       this.connected = true;
+      this.feedOpened = true;
       this.#reconnectAttempt = 0;
       // Null, not now(): there is nothing to measure until the first event, and starting the clock
       // here would make a slow first message look like a stall.
@@ -543,11 +602,18 @@ class AppStore {
 
   async #refresh(): Promise<void> {
     if (!this.boardId) return;
+    const id = this.boardId;
     try {
-      this.board = await getBoard(this.boardId);
+      const board = await getBoard(id);
+      if (id !== this.boardId) return;
+      this.board = board;
+      this.boardFailure = null;
       this.syncedAt = new Date();
-      this.notifications = await getNotifications(this.boardId);
+      this.notifications = await getNotifications(id);
     } catch (e) {
+      // A board never read draws its failure (missing or failed) in place of the board; one that was
+      // read keeps what it had, and the error says the refresh failed.
+      if (id === this.boardId && (!this.board || this.board.boardId !== id)) this.boardFailure = failKind(e);
       // While recovery owns a lapsed session, the toast or the dialog says so; the error bar stays quiet.
       if (auth.state === 'ok') this.error = String(e);
     }
@@ -707,7 +773,14 @@ class AppStore {
    */
   async retry(): Promise<void> {
     this.error = null;
+    if (!this.boardId) {
+      // Boot never found a board because the reads failed: start boot again.
+      this.boardsFailed = false;
+      await this.init();
+      return;
+    }
     await this.refresh();
+    if (!this.boardsLoaded) await this.loadBoards();
     if (this.boardId && !this.connected) this.#connect(this.boardId);
   }
 

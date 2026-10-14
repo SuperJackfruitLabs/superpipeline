@@ -5,6 +5,8 @@ import type { AgentScope } from '@superpipeline/contract';
  * local dev workspace (when the server runs with DEV_AUTH on).
  */
 import { hubAudienceToken, withAuthority } from './hub-token';
+import { ApiError, REQUEST_TIMEOUT_MS } from './loading';
+export { ApiError } from './loading';
 
 /** Dev builds only: the pixel suite points the client at its fixture tenant and person. */
 const devRead = (k: string): string | null => {
@@ -41,6 +43,17 @@ export function noteAuth(res: Response): Response {
   if (res.status === 401) onUnauthorized?.();
   return res;
 }
+/**
+ * Every request in this module goes through here (it shadows the global `fetch`). A read (GET) that
+ * has not answered in REQUEST_TIMEOUT_MS is aborted, so a server that never answers ends in Failed
+ * with Try again instead of loading forever. Writes are never aborted: one may still land.
+ */
+function fetch(input: string, init: RequestInit = {}): Promise<Response> {
+  const read = !init.method || init.method === 'GET';
+  const timeout = read && !init.signal && typeof AbortSignal !== 'undefined' && 'timeout' in AbortSignal ? AbortSignal.timeout(REQUEST_TIMEOUT_MS) : undefined;
+  return globalThis.fetch(input, timeout ? { ...init, signal: timeout } : init);
+}
+
 const headers: Record<string, string> = {
   'X-Tenant-Id': TENANT,
   'Content-Type': 'application/json',
@@ -321,7 +334,7 @@ export interface BoardEvent {
  */
 export async function getBoardEvents(boardId: string, limit = 100): Promise<BoardEvent[]> {
   const res = await fetch(`/v1/boards/${boardId}/events?limit=${limit}`, { headers });
-  if (!res.ok) throw new Error(`getBoardEvents failed (${res.status})`);
+  if (!res.ok) throw new ApiError('getBoardEvents', res.status);
   return ((await res.json()) as { events: BoardEvent[] }).events;
 }
 
@@ -596,14 +609,14 @@ export function deleteSchedule(boardId: string, scheduleId: string): Promise<Res
 
 export async function createBoard(name: string, stages: Stage[]): Promise<string> {
   const res = await fetch('/v1/boards', { method: 'POST', headers, body: JSON.stringify({ name, stages }) });
-  if (!res.ok) throw new Error(`createBoard failed (${res.status})`);
+  if (!res.ok) throw new ApiError('createBoard', res.status);
   const data = (await res.json()) as { boardId: string };
   return data.boardId;
 }
 
 export async function getBoard(boardId: string): Promise<BoardSnapshot> {
   const res = noteAuth(await fetch(`/v1/boards/${boardId}`, { headers }));
-  if (!res.ok) throw new Error(`getBoard failed (${res.status})`);
+  if (!res.ok) throw new ApiError('getBoard', res.status);
   return (await res.json()) as BoardSnapshot;
 }
 
@@ -633,7 +646,7 @@ export async function createCard(
       ...(detail?.projectId !== undefined ? { projectId: detail.projectId } : {}),
     }),
   });
-  if (!res.ok) throw new Error(`createCard failed (${res.status})`);
+  if (!res.ok) throw new ApiError('createCard', res.status);
 }
 
 /**
@@ -853,7 +866,7 @@ export interface CardComment {
 /** A card's comment thread, oldest first. */
 export async function getComments(boardId: string, cardId: string): Promise<CardComment[]> {
   const res = noteAuth(await fetch(`/v1/boards/${boardId}/cards/${cardId}/comments`, { headers }));
-  if (!res.ok) throw new Error(`getComments failed (${res.status})`);
+  if (!res.ok) throw new ApiError('getComments', res.status);
   return ((await res.json()) as { comments: CardComment[] }).comments;
 }
 
@@ -893,21 +906,21 @@ export async function moveCard(boardId: string, cardId: string, toStageKey: stri
 /** The attempts (runs) for a card, for the comparison view (docs/07 §5). */
 export async function getAttempts(boardId: string, cardId: string): Promise<Attempt[]> {
   const res = await fetch(`/v1/boards/${boardId}/cards/${cardId}/attempts`, { headers });
-  if (!res.ok) throw new Error(`getAttempts failed (${res.status})`);
+  if (!res.ok) throw new ApiError('getAttempts', res.status);
   return ((await res.json()) as { attempts: Attempt[] }).attempts;
 }
 
 /** A card's session-replay timeline + carried handoff (docs/07 §4). */
 export async function getCardActivities(boardId: string, cardId: string): Promise<CardActivities> {
   const res = noteAuth(await fetch(`/v1/boards/${boardId}/cards/${cardId}/activities`, { headers }));
-  if (!res.ok) throw new Error(`getCardActivities failed (${res.status})`);
+  if (!res.ok) throw new ApiError('getCardActivities', res.status);
   return (await res.json()) as CardActivities;
 }
 
 /** In-app notification feed (docs/07 §7). */
 export async function getNotifications(boardId: string): Promise<Notification[]> {
   const res = await fetch(`/v1/boards/${boardId}/notifications`, { headers });
-  if (!res.ok) throw new Error(`getNotifications failed (${res.status})`);
+  if (!res.ok) throw new ApiError('getNotifications', res.status);
   return ((await res.json()) as { notifications: Notification[] }).notifications;
 }
 
@@ -935,7 +948,7 @@ export async function resumeCard(boardId: string, cardId: string, comment: strin
  */
 export async function listAttention(): Promise<{ cards: StaleCard[]; boardsUnanswered: number }> {
   const res = noteAuth(await fetch('/v1/stale?attention=1', { headers }));
-  if (!res.ok) throw new Error(`listAttention failed (${res.status})`);
+  if (!res.ok) throw new ApiError('listAttention', res.status);
   return (await res.json()) as { cards: StaleCard[]; boardsUnanswered: number };
 }
 
@@ -1020,7 +1033,7 @@ export async function logout(): Promise<void> {
 /** The boards in the signed-in user's workspace. */
 export async function getBoards(): Promise<BoardSummary[]> {
   const res = await fetch('/v1/boards', { headers });
-  if (!res.ok) throw new Error(`getBoards failed (${res.status})`);
+  if (!res.ok) throw new ApiError('getBoards', res.status);
   return ((await res.json()) as { boards: BoardSummary[] }).boards;
 }
 
@@ -1120,6 +1133,7 @@ export function setBudget(boardId: string, caps: { boardUsdCap?: number | null; 
 /** Pre-run cost estimate for a card's current stage, from history (docs/07 §6). */
 export async function getEstimate(boardId: string, cardId: string): Promise<Estimate | null> {
   const res = await fetch(`/v1/boards/${boardId}/cards/${cardId}/estimate`, { headers });
+  if (res.status >= 500) throw new ApiError('getEstimate', res.status);
   if (!res.ok) return null;
   return (await res.json()) as Estimate;
 }
@@ -1134,14 +1148,14 @@ export async function getEstimate(boardId: string, cardId: string): Promise<Esti
  */
 export async function getUsage(boardId: string, window: '5h' | '7d' = '7d'): Promise<UsageSummary> {
   const res = await fetch(`/v1/boards/${boardId}/usage?window=${window}`, { headers });
-  if (!res.ok) throw new Error(`getUsage failed (${res.status})`);
+  if (!res.ok) throw new ApiError('getUsage', res.status);
   return (await res.json()) as UsageSummary;
 }
 
 /** The agents registered in the signed-in user's workspace. */
 export async function getAgents(): Promise<AgentSummary[]> {
   const res = await fetch('/v1/agents', { headers });
-  if (!res.ok) throw new Error(`getAgents failed (${res.status})`);
+  if (!res.ok) throw new ApiError('getAgents', res.status);
   return ((await res.json()) as { agents: AgentSummary[] }).agents;
 }
 
@@ -1163,7 +1177,7 @@ export function setGithubConfig(boardId: string, cfg: { secret?: string; issueTr
 /** Agent profiles configured on a board (docs/05 §7). */
 export async function getProfiles(boardId: string): Promise<Profile[]> {
   const res = await fetch(`/v1/boards/${boardId}/profiles`, { headers });
-  if (!res.ok) throw new Error(`getProfiles failed (${res.status})`);
+  if (!res.ok) throw new ApiError('getProfiles', res.status);
   return ((await res.json()) as { profiles: Profile[] }).profiles;
 }
 
@@ -1252,7 +1266,7 @@ export interface Member {
 /** Everyone in the workspace, oldest membership first — the founding owner at the top. */
 export async function getMembers(): Promise<Member[]> {
   const res = await fetch('/v1/members', { headers });
-  if (!res.ok) return [];
+  if (!res.ok) throw new ApiError('getMembers', res.status);
   return ((await res.json()) as { members: Member[] }).members;
 }
 
@@ -1332,7 +1346,7 @@ export function removeImplication(from: string, to: string): Promise<Response> {
 
 export async function getCapabilities(): Promise<CapabilityRecord[]> {
   const res = await fetch('/v1/capabilities', { headers });
-  if (!res.ok) return [];
+  if (!res.ok) throw new ApiError('getCapabilities', res.status);
   return ((await res.json()) as { capabilities: CapabilityRecord[] }).capabilities;
 }
 
@@ -1354,7 +1368,7 @@ export function deleteCapability(id: string): Promise<Response> {
 /** The tenant's label catalogue (migration 0010). Tenant-scoped, not board-scoped — see `/v1/labels`. */
 export async function listLabels(): Promise<Label[]> {
   const res = await fetch('/v1/labels', { headers });
-  if (!res.ok) return [];
+  if (!res.ok) throw new ApiError('listLabels', res.status);
   return ((await res.json()) as { labels: Label[] }).labels;
 }
 
@@ -1426,10 +1440,10 @@ export interface ProjectRollup {
   boardsUnanswered: number;
 }
 
-/** The workspace's projects. Answers an empty list rather than throwing when the read is refused. */
+/** The workspace's projects. A refused read throws: a failure is never "no projects yet". */
 export async function listProjects(): Promise<Project[]> {
   const res = await fetch('/v1/projects', { headers });
-  if (!res.ok) return [];
+  if (!res.ok) throw new ApiError('listProjects', res.status);
   return ((await res.json()) as { projects: Project[] }).projects;
 }
 
@@ -1440,7 +1454,9 @@ export async function listProjects(): Promise<Project[]> {
  */
 export async function getProject(id: string): Promise<{ project: Project; milestones: Milestone[] } | null> {
   const res = await fetch(`/v1/projects/${id}`, { headers });
-  if (!res.ok) return null;
+  // Null only when the project is not there for this person; a server failure throws (it is not "gone").
+  if (res.status === 404 || res.status === 403) return null;
+  if (!res.ok) throw new ApiError('getProject', res.status);
   return (await res.json()) as { project: Project; milestones: Milestone[] };
 }
 
@@ -1510,7 +1526,7 @@ export function deleteMilestone(milestoneId: string): Promise<Response> {
  */
 export async function getProjectRollup(projectId: string): Promise<ProjectRollup> {
   const res = await fetch(`/v1/projects/${projectId}/rollup`, { headers });
-  if (!res.ok) throw new Error(`getProjectRollup failed (${res.status})`);
+  if (!res.ok) throw new ApiError('getProjectRollup', res.status);
   return ((await res.json()) as { rollup: ProjectRollup }).rollup;
 }
 
