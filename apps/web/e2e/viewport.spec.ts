@@ -84,7 +84,10 @@ for (const { name, height } of HEIGHTS) {
         await expect(page.getByRole('navigation', { name: 'Superpipeline' })).toBeVisible();
         // Not 'networkidle': the app holds a live connection and polls, so the network is never idle
         // on a slow runner. data-ready says the board and its catalogue are in and nothing is pending.
-        await expect(page.locator('html')).toHaveAttribute('data-ready', 'true');
+        // The telemetry page keeps something pending by design, so data-ready never reads true there:
+        // wait for fonts and one frame instead.
+        if (route === '/operate/telemetry') await page.evaluate(() => document.fonts.ready.then(() => new Promise((r) => requestAnimationFrame(() => r(null)))));
+        else await expect(page.locator('html')).toHaveAttribute('data-ready', 'true');
         const f = await frame(page);
         expect(f.navBottom).toBeLessThanOrEqual(f.innerHeight + 0.5);
         expect(f.sideways).toBeLessThanOrEqual(0);
