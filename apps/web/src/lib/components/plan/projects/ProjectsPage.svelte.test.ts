@@ -33,6 +33,30 @@ async function mount(): Promise<ProjectsModel> {
   return model;
 }
 
+describe('ProjectsPage loading and failure', () => {
+  it('says nothing about "no projects" while the list is still being read', async () => {
+    api.listProjects.mockReturnValue(new Promise(() => {}));
+    const model = new ProjectsModel();
+    void model.refresh();
+    render(ProjectsPage, { model, vibe: 'daylight' });
+    expect(model.pending).toBe(true);
+    expect(document.body.textContent).not.toMatch(/No projects yet/);
+    expect(document.querySelector('[aria-busy="true"][data-skeleton]')).not.toBeNull();
+  });
+  it('a failed read says it could not load, with Try again, never "No projects yet"', async () => {
+    api.listProjects.mockRejectedValue(new Error('listProjects failed (500)'));
+    const model = new ProjectsModel();
+    await model.refresh();
+    render(ProjectsPage, { model, vibe: 'daylight' });
+    expect(screen.getByText("Couldn't load projects.")).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Try again' })).toBeTruthy();
+    expect(document.body.textContent).not.toMatch(/No projects yet|failed \(500\)/);
+    api.listProjects.mockResolvedValue([guild]);
+    await fireEvent.click(screen.getByRole('button', { name: 'Try again' }));
+    expect(await screen.findByText(guild.name)).toBeTruthy();
+  });
+});
+
 describe('ProjectsPage', () => {
   it('shows a busy skeleton while a rollup is outstanding', async () => {
     api.getProjectRollup.mockReturnValue(new Promise(() => {}));
@@ -43,7 +67,7 @@ describe('ProjectsPage', () => {
   it('says the rollup is unavailable, in muted text, when it fails', async () => {
     api.getProjectRollup.mockRejectedValue(new Error('rollup 500'));
     await mount();
-    const line = await screen.findByText('Rollup unavailable — rollup 500');
+    const line = await screen.findByText('Rollup unavailable — try again in a moment');
     expect(line.className).toBe('t-meta');
     expect(document.querySelector('.bar')).toBeNull();
   });

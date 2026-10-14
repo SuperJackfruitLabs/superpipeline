@@ -6,6 +6,8 @@
   import { viewport } from '$lib/viewport.svelte';
   import { fmtTarget, HEALTH_LABEL, milestoneDate, milestonesMeta, progressPct, rollupSegments, STATE_LABEL, STUDIO_UNIT } from '../project-rollup';
   import type { ProjectsLayoutProps } from './types';
+  import SkeletonRows from '$lib/components/parts/SkeletonRows.svelte';
+  import LoadFailed from '$lib/components/parts/LoadFailed.svelte';
 
   let { model }: ProjectsLayoutProps = $props();
   const pad = (n: number) => String(n).padStart(2, '0');
@@ -19,7 +21,7 @@
 
 <div class="pj-main">
   <div class="ar-hero">
-    <span class="big ink" aria-hidden="true">{model.projects.length}</span>
+    <span class="big ink" aria-hidden="true">{model.pending || model.failed ? '—' : model.projects.length}</span>
     <div class="txt">
       <p class="kick">Plan · the workspace</p>
       <svelte:element this={viewport.phone ? 'h2' : 'h1'}>Projects</svelte:element>
@@ -28,8 +30,9 @@
     </div>
   </div>
 
-  {#if model.loadError}<p class="ar-hint" role="alert">{model.loadError}</p>
-  {:else if model.loading && model.projects.length === 0}<div aria-busy="true"><p class="ar-hint" role="status">Loading projects…</p><span class="vk-skeleton" aria-hidden="true" style="width: 80%;"></span><span class="vk-skeleton" aria-hidden="true" style="width: 60%;"></span></div>
+  {#if model.failed}<LoadFailed message={model.loadError ?? ''} onRetry={() => model.refresh()} />
+  {:else if model.loadError}<p class="ar-hint" role="alert">{model.loadError}</p>
+  {:else if model.pending}<SkeletonRows label="Loading projects…" rows={4} rowHeight={72} />
   {:else if model.projects.length === 0}<p class="ar-hint">No projects yet. Use “New project” above to add the first.</p>{/if}
 
   {#each model.groups as g, gi (g.id)}

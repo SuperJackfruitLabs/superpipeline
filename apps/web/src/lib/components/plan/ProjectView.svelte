@@ -20,7 +20,7 @@
   // Loaded during init (ssr is off): the busy mark is held before the first paint.
   void model.refresh();
   // Only Studio's references draw a status line.
-  const status = $derived(vibe === 'studio' ? shellModel.pageStatus([plural(model.projects.length, 'project', 'projects'), 'across the workspace']) : null);
+  const status = $derived(vibe === 'studio' ? shellModel.pageStatus([model.pending ? 'Projects' : plural(model.projects.length, 'project', 'projects'), 'across the workspace']) : null);
 </script>
 
 <AppShell here="plan" section="projects" boardName={null} view={null} plan="projects" showing="Projects belong to the workspace, not to a board." {status} bleed={vibe === 'quiet'} ownHeading>

@@ -29,6 +29,8 @@ export class ProjectPageModel {
   rollupBusy = $state(false);
   loading = $state(true);
   notFound = $state(false);
+  /** The project could not be read (5xx, network, timeout): the page says so with Try again, never "no longer exists". */
+  loadFailed = $state(false);
   error = $state<string | null>(null);
   busy = $state(false);
 
@@ -37,6 +39,10 @@ export class ProjectPageModel {
   }
 
   readonly today = todayIso();
+  /** The cards across boards are still being read: counts wait ("–"), "No cards yet" waits. */
+  get cardsPending(): boolean { return !projectWorkspace.loaded; }
+  /** The Activity is still being read. */
+  get activityPending(): boolean { return !projectWorkspace.eventsFor[this.id]; }
   get cards() { return projectWorkspace.cardsOf(this.id); }
   get boards() { return projectWorkspace.boardsOf(this.id); }
   get health() { return this.project ? computedHealth(this.project, this.milestones, this.cards, this.today) : null; }
@@ -65,8 +71,9 @@ export class ProjectPageModel {
       if (!got) { this.notFound = true; return; }
       this.project = got.project;
       this.milestones = got.milestones;
-    } catch (e) {
-      this.error = message(e);
+      this.loadFailed = false;
+    } catch {
+      if (!this.project) this.loadFailed = true;
     }
   }
 
@@ -75,8 +82,8 @@ export class ProjectPageModel {
     try {
       this.rollup = await getProjectRollup(this.id);
       this.rollupError = null;
-    } catch (e) {
-      this.rollupError = message(e);
+    } catch {
+      this.rollupError = 'try Refresh in a moment';
     } finally {
       this.rollupBusy = false;
     }

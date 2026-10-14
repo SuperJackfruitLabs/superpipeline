@@ -20,6 +20,10 @@ class ProjectWorkspace {
   snaps = $state<Record<string, BoardSnapshot>>({});
   events = $state<Record<string, BoardEvent[]>>({});
   loading = $state(false);
+  /** Every board has been read once: before that a project's cards are pending, not "0". */
+  loaded = $state(false);
+  /** Projects whose boards' event logs have been read: their Activity is known (empty or not). */
+  eventsFor = $state<Record<string, true>>({});
   #loaded: Promise<void> | null = null;
 
   /** Read every board once (again with `force`); the open board is read too, it may be stale. */
@@ -42,6 +46,7 @@ class ProjectWorkspace {
       };
       await Promise.all(Array.from({ length: Math.min(LOAD_AT_ONCE, queue.length) }, worker));
       this.snaps = next;
+      this.loaded = true;
     } finally {
       this.loading = false;
     }
@@ -67,6 +72,7 @@ class ProjectWorkspace {
     const ids = this.boardsOf(projectId).map((b) => b.id);
     const read = await Promise.all(ids.map(async (id) => [id, await getBoardEvents(id, 100).catch(() => [])] as const));
     this.events = { ...this.events, ...Object.fromEntries(read) };
+    this.eventsFor = { ...this.eventsFor, [projectId]: true };
   }
 
   /** The project's cards' recent events across boards, newest first. */

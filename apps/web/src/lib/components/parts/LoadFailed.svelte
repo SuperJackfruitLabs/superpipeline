@@ -17,6 +17,6 @@
 
 <div class="sp-failed" data-failed>
   <p>{message}</p>
-  {#if onRetry}<Button variant="secondary" class="btn-sm" type="button" {busy} busyLabel="Trying again…" onclick={retry}>{TRY_AGAIN}</Button>{/if}
+  {#if onRetry}<Button variant="secondary" class="btn-sm" type="button" {busy} onclick={retry}>{TRY_AGAIN}</Button>{/if}
   {#if home}<Button variant="quiet" class="btn-sm" href="/inbox">Go to your Inbox</Button>{/if}
 </div>
