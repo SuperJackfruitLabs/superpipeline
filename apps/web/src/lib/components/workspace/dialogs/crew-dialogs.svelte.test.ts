@@ -13,13 +13,17 @@ vi.mock('$lib/api', () => api);
 vi.mock('$lib/stores/app.svelte', () => ({ app: { markBusy: <T,>(p: Promise<T>) => p, boardId: null, board: null, user: { userId: 'usr_ira' } } }));
 
 import PeopleTab from '../PeopleTab.svelte';
+import { viewport } from '$lib/viewport.svelte';
+import { requestCrewNew } from '../crew-new';
 import CapabilitiesTab from '../CapabilitiesTab.svelte';
 
 const ira = { userId: 'usr_ira', name: 'Ira Mehta', email: 'ira@vibes-fixture.invalid', role: 'owner' };
 const cap = (key: string) => ({ id: `cap_${key}`, key, name: key, description: null, tags: [], examples: [], origin: 'declared', externalId: null, externalSource: null, inputModes: [], outputModes: [], agentCount: 1, boardCount: 1 });
 const json = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status, headers: { 'content-type': 'application/json' } });
 
+// The tab's own New button shows where the masthead has none (a phone, Quiet); these tests drive it.
 beforeEach(() => {
+  viewport.phone = true;
   for (const f of Object.values(api)) f.mockReset();
   api.getMembers.mockResolvedValue([ira]);
   api.getAgents.mockResolvedValue([]);
@@ -27,7 +31,7 @@ beforeEach(() => {
   api.listAttention.mockResolvedValue({ cards: [], boardsUnanswered: 0 });
   api.listLabels.mockResolvedValue([]);
 });
-afterEach(cleanup);
+afterEach(() => { cleanup(); viewport.phone = false; });
 
 describe('New person', () => {
   it('has no inline invite form; the dialog adds a person with a name, email and role, then closes', async () => {
@@ -71,5 +75,15 @@ describe('New capability', () => {
     await waitFor(() => expect(screen.queryByRole('dialog', { name: 'New capability' })).toBeNull());
     expect(api.createCapability).toHaveBeenCalledWith({ key: 'cdoe', description: 'Writes code.' });
     expect(screen.getByText(/^Similar to code\./)).toBeTruthy();
+  });
+});
+
+describe('the Crew masthead opens the tab’s New dialog', () => {
+  it('on a desktop the tab draws no New button of its own, and the masthead’s request opens its dialog', async () => {
+    viewport.phone = false;
+    render(PeopleTab, { props: {} });
+    expect(screen.queryByRole('button', { name: 'New person' })).toBeNull();
+    requestCrewNew('people');
+    expect(await screen.findByRole('dialog', { name: 'New person' })).toBeTruthy();
   });
 });

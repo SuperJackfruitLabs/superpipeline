@@ -12,19 +12,23 @@ vi.mock('$lib/api', () => api);
 vi.mock('$lib/stores/app.svelte', () => ({ app: { markBusy: <T,>(p: Promise<T>) => p, boardId: null, board: null } }));
 
 import AgentsPage from './AgentsPage.svelte';
+import { viewport } from '$lib/viewport.svelte';
+import { requestCrewNew } from '../crew-new';
 
 const agent = (name: string) => ({ id: `agt_${name}`, name, capabilities: ['research'], externalId: 'prn_x', externalSource: 'agentpod', iconUrl: null, concurrency: 1, tokenIds: ['tok_a', 'tok_b'], role: null, claimedCount: 0, workingCount: 0 });
 
 const cap = (key: string) => ({ id: `cap_${key}`, key, name: key, description: null, tags: [], examples: [], origin: 'declared', externalId: null, externalSource: null, inputModes: [], outputModes: [], agentCount: 1, boardCount: 1 });
 
+// The tab's own New button shows where the masthead has none (a phone, Quiet); these tests drive it.
 beforeEach(() => {
+  viewport.phone = true;
   for (const f of Object.values(api)) f.mockReset();
   api.getCapabilities.mockResolvedValue([]);
   api.listAttention.mockResolvedValue({ cards: [], boardsUnanswered: 0 });
   api.listLabels.mockResolvedValue([]);
   api.getMembers.mockResolvedValue([]);
 });
-afterEach(cleanup);
+afterEach(() => { cleanup(); viewport.phone = false; });
 
 describe('AgentsPage', () => {
   it('says it is loading, then says what failed and offers to try again', async () => {

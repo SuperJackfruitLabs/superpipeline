@@ -1,5 +1,6 @@
 <!-- apps/web/src/lib/components/workspace/agents/AgentsPage.svelte -->
 <script lang="ts">
+  import { crewNewInPage, onCrewNew } from '../crew-new';
   /** SP-Workspace-Agents-Daylight, -Paper and -Quiet: one DOM, three looks. */
   import './agents.css';
   import { Button } from '@superjackfruit/vibekit';
@@ -19,6 +20,7 @@
   void model.refresh();
   let creating = $state(false);
   function openNew(): void { model.resetNew(); creating = true; }
+  $effect(() => onCrewNew('agents', openNew));
 </script>
 
 {#snippet keyIcon()}<LineIcon name="key" size={22} />{/snippet}
@@ -45,7 +47,7 @@
       <h2 class="t-h2" id="agents-h">{agentsHeading(model.agents.length)}</h2>
       <span class="t-meta">{agentsPanelMeta(model.agents)}</span>
     {/if}
-    <Button class="btn-sm" type="button" icon={plusIcon} style="margin-left: auto;" onclick={openNew}>New agent</Button>
+    {#if crewNewInPage()}<Button class="btn-sm" type="button" icon={plusIcon} style="margin-left: auto;" onclick={openNew}>New agent</Button>{/if}
   </div>
   <div class="panel-body legend" style="border-bottom: 1px solid var(--vk-color-line);">
     <div><span class="linked"><LineIcon name="check" size={18} /></span><p class="t-meta"><strong style="color: var(--vk-color-text);">Linked to AgentPod</strong> — this agent has an AgentPod identity, so it signs in as itself and its work shows under its own name.</p></div>

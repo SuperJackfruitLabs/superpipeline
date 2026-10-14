@@ -1,5 +1,6 @@
 <!-- apps/web/src/lib/components/workspace/agents/AgentsStudio.svelte -->
 <script lang="ts">
+  import { crewNewInPage, onCrewNew } from '../crew-new';
   import './agents-studio.css';
   import { Button, Face } from '@superjackfruit/vibekit';
   import LineIcon from '$lib/components/parts/LineIcon.svelte';
@@ -18,6 +19,7 @@
   void model.refresh();
   let creating = $state(false);
   function openNew(): void { model.resetNew(); creating = true; }
+  $effect(() => onCrewNew('agents', openNew));
 </script>
 
 {#snippet copyIcon()}<LineIcon name="copy" size={18} stroke={1.75} />{/snippet}
@@ -39,7 +41,7 @@
   <div class="hd">
     <span class="no">01</span>
     <h2 id="agents-h">{model.agents === null ? 'Agents' : agentsHeading(model.agents.length)}</h2>
-    <span class="r">{#if model.agents}<span>{agentsPanelMeta(model.agents)}</span>{/if}<Button type="button" icon={plusIcon} onclick={openNew}>New agent</Button></span>
+    <span class="r">{#if model.agents}<span>{agentsPanelMeta(model.agents)}</span>{/if}{#if crewNewInPage()}<Button type="button" icon={plusIcon} onclick={openNew}>New agent</Button>{/if}</span>
   </div>
   <ul class="ar-notes wa-notes">
     <li><span class="k"><LineIcon name="check" size={18} stroke={1.75} /></span><span><b>Linked to AgentPod</b> — this agent has an AgentPod identity, so it signs in as itself and its work shows under its own name.</span></li>

@@ -131,3 +131,24 @@ test.describe('phone fit', () => {
     }
   }
 });
+
+// Round 3 ruling: on a desktop the masthead's primary action is the tab's New (not New card), and it opens the
+// tab's dialog. The tab keeps its own button only where the masthead has none (Quiet), so there is exactly one.
+for (const vibe of VIBES) {
+  test(`${vibe} desktop: the Crew masthead says New agent / New person / New capability per tab and opens its dialog`, async ({ page, request }) => {
+    await seedBoard(request, `Crew masthead ${Date.now().toString(36)}`);
+    await setAppearance(page, `${vibe}.light.${vibe === 'quiet' ? 'off' : 'strong'}.0`);
+    await page.setViewportSize({ width: 1280, height: 900 });
+    for (const d of DIALOGS) {
+      await page.goto(`/crew/${d.tab}`);
+      const button = page.getByRole('button', { name: d.open, exact: true });
+      await expect(button).toHaveCount(1, { timeout: 60_000 });
+      await expect(page.getByRole('button', { name: /^(New card|Write a new card)/ })).toHaveCount(0);
+      await button.click();
+      const dialog = page.getByRole('dialog', { name: d.open });
+      await expect(dialog).toBeVisible();
+      await page.keyboard.press('Escape');
+      await expect(dialog).toHaveCount(0);
+    }
+  });
+}
