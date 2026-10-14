@@ -178,9 +178,10 @@ Three places, in this order in the desktop rail or top nav and in the phone bar:
   badge on Inbox is the needs-you count across all boards, and its accessible name says so. Budget
   caps and the Spend details link need one board chosen.
 - **Plan** is the board (`/b/:id`), its List and Projects. A board's **spend and log**
-  (`/b/:id/operate/telemetry`, `/b/:id/operate/log`) belong to the board: they open from the board
-  header (the board name's switcher, "Spend and log"), from the palette's "Spend detail", and from
-  the Inbox's Spend "Details" when that board is chosen.
+  (`/b/:id/operate/telemetry`, `/b/:id/operate/log`) belong to the board and link back to it: they
+  open from the palette's "Spend detail" (on that board) and from the Inbox's Spend "Details" when
+  that board is chosen. (A link in the board switcher's "This board" row was tried and pushed Delete
+  board off a 800px-high screen.)
 - **Crew** (`/crew/agents|people|capabilities`) is who and what may act: no Needs-you tab, no badge.
 - **Settings** (`/settings`), from the account menu: Labels, Connections, Appearance, Account.
 

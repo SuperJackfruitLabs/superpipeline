@@ -64,11 +64,9 @@ test('the Inbox shows what needs you on a board, and says so plainly when nothin
   await expect(page.getByText('Nothing is waiting on you.')).toBeVisible();
 });
 
-test('the board log is reachable from the spend detail view, and the spend from the board header', async ({ page }) => {
-  await page.goto(`/b/${boardId}`);
-  await expect(page.getByText('Backlog', { exact: true })).toBeVisible();
-  await page.getByRole('button', { name: /^Nav E2E board/ }).first().click();
-  await page.getByRole('link', { name: 'Spend and log' }).click();
+test('the board log is reachable from the spend detail view', async ({ page }) => {
+  await page.goto(`/b/${boardId}/operate`);
+  await page.getByRole('link', { name: 'detail' }).click();
   await expect(page).toHaveURL(/\/operate\/telemetry$/);
   await expect(page.getByRole('heading', { name: 'Board log' })).toBeVisible();
   // …and the whole log is one link further.

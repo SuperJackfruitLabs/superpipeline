@@ -20,6 +20,9 @@ import { activityGroups, mergeUsage, needRows, parseCap, runningRows, spendView 
 import type { CapResult, NeedRow, OperateModel } from '../operate/layouts/types';
 import { boardsNeedingFirst, inboxScope, scopeLabel } from './inbox-scope.svelte';
 
+/** Boards read at once (each is three requests). */
+const LOAD_AT_ONCE = 2;
+
 export const CHOOSE_A_BOARD_FOR_CAPS = 'Choose one board under Show to set its caps.';
 
 export class InboxStore implements OperateModel {
@@ -57,13 +60,15 @@ export class InboxStore implements OperateModel {
   readonly cardCount = $derived(this.#boards.reduce((n, b) => n + b.cards.filter((c) => !c.archivedAt).length, 0));
   readonly stages = $derived(this.scoped ? [...(this.#boards[0]?.stages ?? [])].sort((a, b) => a.order - b.order) : []);
 
-  /** A string, so a fresh attention list that names the same boards does not read them all again. */
-  readonly #idsKey = $derived(this.boardIds.join(','));
+  /** A sorted string: an attention list that only reorders the same boards reads nothing again. */
+  readonly #idsKey = $derived([...this.boardIds].sort().join(','));
+  /** Boards read (or being read) this visit; after an action only that board is read again. */
+  #asked = new Set<string>();
 
   constructor() {
     $effect(() => {
       const key = this.#idsKey;
-      void this.#load(key ? key.split(',') : []);
+      void this.#load(key ? key.split(',').filter((id) => !this.#asked.has(id)) : []);
     });
   }
 
@@ -84,9 +89,15 @@ export class InboxStore implements OperateModel {
     return id === app.boardId && app.board ? app.notifications : (this.#notes[id] ?? []);
   }
 
-  /** Read every board in scope (the open one's snapshot is the store's, kept live by its socket). */
+  /**
+   * Read every board in scope not read yet, a few at a time: a browser holds six connections to a
+   * host, and a workspace with many boards must not queue the person's own Resume behind them.
+   */
   #load(ids: readonly string[]): Promise<void> {
-    return app.markBusy(Promise.all(ids.map((id) => this.#loadBoard(id))).then(() => undefined));
+    for (const id of ids) this.#asked.add(id);
+    const queue = [...ids];
+    const worker = async () => { for (let id = queue.shift(); id; id = queue.shift()) await this.#loadBoard(id); };
+    return app.markBusy(Promise.all(Array.from({ length: Math.min(LOAD_AT_ONCE, queue.length) }, worker)).then(() => undefined));
   }
   async #loadBoard(id: string): Promise<void> {
     this.#usageError = null;

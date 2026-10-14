@@ -126,8 +126,6 @@
     {:else}
       <button class="link" type="button" onclick={() => { renaming = true; draftName = app.board?.name ?? ''; }}><Icon name="pen" size={16} /> Rename</button>
       <a class="link" href="/b/{app.boardId}/settings" onclick={close}><Icon name="settings" size={16} />&nbsp;Board settings</a>
-      <!-- Nav v2: the board's spend and its log live with the board (Plan), reached from its header. -->
-      <a class="link" href="/b/{app.boardId}/operate/telemetry" onclick={close}><Icon name="coin" size={16} />&nbsp;Spend and log</a>
       <button class="bs-del" type="button" onclick={() => void onDelete()}><Icon name="trash" size={16} /> Delete board…</button>
     {/if}
   {/snippet}
