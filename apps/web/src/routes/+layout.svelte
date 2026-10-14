@@ -11,6 +11,7 @@
   import { goto, onNavigate } from '$app/navigation';
   import { vkNavigate } from '@superjackfruit/vibekit/motion';
   import { isPageChange } from '$lib/motion/page-change';
+  import { installReveal } from '$lib/motion/reveal';
   import { page } from '$app/state';
   import { takeReturnTo } from '$lib/reconnect';
   import { app } from '$lib/stores/app.svelte';
@@ -32,11 +33,14 @@
 
   onMount(() => {
     appearance.init();
+    // "Show all" and the other expand toggles grow into place (lib/motion/reveal.ts).
+    const uninstallReveal = installReveal();
     void app.init().then(() => {
       const back = takeReturnTo();
       if (back && app.authState === 'ready') void goto(back, { replaceState: true });
     });
     return () => {
+      uninstallReveal();
       app.dispose();
       appearance.dispose();
     };

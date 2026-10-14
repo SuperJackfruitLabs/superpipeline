@@ -80,7 +80,7 @@
             {#if noOwner}
               <div class="bubble bubble--system"><p>{row.item.instruction}</p></div>
             {:else if row.item.detail}
-              <div class="bubble"><p>{ui.expanded[id] ? row.item.detail : cut140(row.item.detail)}</p>{#if row.item.detail.length > 140}<button class="bubble__more" type="button" aria-expanded={ui.expanded[id] ? 'true' : 'false'} onclick={() => ui.toggle(id)}>{ui.expanded[id] ? 'Show less' : 'Show all'}</button>{/if}</div>
+              <div class="bubble" data-reveal><p>{ui.expanded[id] ? row.item.detail : cut140(row.item.detail)}</p>{#if row.item.detail.length > 140}<button class="bubble__more" type="button" aria-expanded={ui.expanded[id] ? 'true' : 'false'} onclick={() => ui.toggle(id)}>{ui.expanded[id] ? 'Show less' : 'Show all'}</button>{/if}</div>
             {/if}
             {#if !noOwner}<p class="hint">{stopHint(row.item)}</p>{/if}
             {#if ui.resuming === id}

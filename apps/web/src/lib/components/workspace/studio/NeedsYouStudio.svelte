@@ -44,7 +44,7 @@
             <td><a class="ttl" href="/b/{item.boardId}/c/{item.cardId}">{item.title}</a><p class="wo-sub">{metaLine(item)}</p></td>
             <td>
               {#if c}
-                <div class="ar-q"><blockquote>{full ? item.detail : c.shown}</blockquote>{#if c.long}<button class="ar-lk" aria-expanded={full} type="button" onclick={() => model.toggleFull(item.id)}>{full ? 'Show less' : 'Show all'}</button>{/if}</div>
+                <div class="ar-q" data-reveal><blockquote>{full ? item.detail : c.shown}</blockquote>{#if c.long}<button class="ar-lk" aria-expanded={full} type="button" onclick={() => model.toggleFull(item.id)}>{full ? 'Show less' : 'Show all'}</button>{/if}</div>
                 <p class="wo-ins">{item.instruction}</p>
               {:else}
                 <p class="wo-plain">{item.instruction}</p>
