@@ -8,7 +8,9 @@
    */
   import '../app.css';
   import { onMount } from 'svelte';
-  import { goto } from '$app/navigation';
+  import { goto, onNavigate } from '$app/navigation';
+  import { vkNavigate } from '@superjackfruit/vibekit/motion';
+  import { isPageChange } from '$lib/motion/page-change';
   import { page } from '$app/state';
   import { takeReturnTo } from '$lib/reconnect';
   import { app } from '$lib/stores/app.svelte';
@@ -39,6 +41,9 @@
       appearance.dispose();
     };
   });
+
+  // A change of screen cross-fades where View Transitions exist (a fade elsewhere); nothing under reduced motion.
+  onNavigate((n) => (isPageChange(n.from, n.to) ? vkNavigate(n) : undefined));
 </script>
 
 <svelte:window
