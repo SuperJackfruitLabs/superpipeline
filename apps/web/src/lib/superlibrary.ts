@@ -4,6 +4,7 @@
  * signed-in person's own Superlibrary-audience token (hub-token.ts `libraryToken`), so Superlibrary
  * decides what this person may see. No cookies cross: `credentials: 'omit'`.
  */
+import { reconnectedThisTab } from './reconnect';
 import { say, type Vibe } from '@superjackfruit/vibekit';
 import { forgetLibraryToken, libraryConfigured, libraryProblem, libraryToken } from '$lib/hub-token';
 import type { EmbedGrant, MountOptions, Scope, ShareInfo } from '$lib/vendor/superlibrary-embed/superlibrary-embed.js';
@@ -98,6 +99,7 @@ export function embedCallbacks(): Pick<MountOptions, 'getEmbedUrl' | 'getVersion
 const SENTENCES: Record<string, string> = {
   not_configured: 'Superlibrary is not set up here.',
   reauthorize: 'Your Superpipeline sign-in needs refreshing. Reconnect.',
+  declined_first: 'Your sign-in was made before Superlibrary previews were switched on. Sign in again to enable them. Reconnect.',
   declined: 'The sign-in system does not issue Superlibrary access to Superpipeline yet, so previews cannot load here. Open the artifact in Superlibrary, and ask your workspace owner to allow Superlibrary for Superpipeline.',
   product_not_enabled: 'Superlibrary is not enabled for this workspace.',
   not_found: 'This artifact is not there, or you cannot see it.',
@@ -106,11 +108,13 @@ const SENTENCES: Record<string, string> = {
 };
 export function sentenceFor(e: unknown, vibe: Vibe = 'daylight'): string {
   if (e instanceof LibraryError && e.code === 'reauthorize') return SENTENCES.reauthorize!;
+  if (e instanceof LibraryError && e.code === 'declined' && !reconnectedThisTab()) return SENTENCES.declined_first!;
   if (needsReconnect(e)) return say('error.previewReconnect', vibe);
   return (e instanceof LibraryError && SENTENCES[e.code]) || 'The preview could not be loaded. Try again in a moment.';
 }
 /** The preview is hidden only because this tab has no Superlibrary sign-in: one click fixes it. */
-export const needsReconnect = (e: unknown): boolean => e instanceof LibraryError && (e.code === 'no_token' || e.code === 'reauthorize');
+export const needsReconnect = (e: unknown): boolean =>
+  e instanceof LibraryError && (e.code === 'no_token' || e.code === 'reauthorize' || (e.code === 'declined' && !reconnectedThisTab()));
 const REASONS: Record<string, string> = {
   no_token: 'no Superlibrary access token was issued',
   reauthorize: 'the sign-in system asked this app to sign in again',
