@@ -23,6 +23,8 @@ export default defineConfig({
     baseURL: PORTS.webUrl,
     // The fixture world's zone: clock words ("as of HH:MM", greetings) read the same on every machine.
     timezoneId: 'Asia/Kolkata',
+    // Tests never wait on an animation: reduced motion stops vibekit's motion suite (e2e/motion.spec.ts turns it back on).
+    contextOptions: { reducedMotion: 'reduce' },
     trace: 'on-first-retry',
     actionTimeout: t.action,
     navigationTimeout: t.navigation,
