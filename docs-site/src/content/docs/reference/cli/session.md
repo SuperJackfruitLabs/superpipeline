@@ -154,6 +154,41 @@ Local: sends no credential to superpipeline.
 supi version
 ```
 
+## `supi skill`
+
+The agent skill for this binary, compiled into it: it always matches this version's verbs and needs no network. With no argument it prints `SKILL.md` to stdout, with the version line filled in. `supi skill install` writes it to `<dir>/superpipeline-boards/SKILL.md` — staged and renamed, so a reader never sees half a file — replacing only that file, and prints the path. Running it again is harmless. The installer does this for you when `SKILL_DIR` is set.
+
+```sh
+supi skill [install [--dir <dir>]]
+```
+
+| argument | meaning |
+|---|---|
+| `<install>` | write the skill into a skills directory instead of printing it (optional) |
+
+| flag | type | default | meaning |
+|---|---|---|---|
+| `--dir <dir>` | file path, or `-` for stdin | `~/.claude/skills` | with `install`: the skills directory; the file is written to `<dir>/superpipeline-boards/SKILL.md` |
+
+**Who may run it**
+
+Local: sends no credential to superpipeline.
+
+**Prints** the skill text; with `install`, `Installed the skill: <path>`, or with `--json` `{ path, version }`.
+
+**Exit status** `0` on success. `1` when:
+
+- the directory cannot be written
+- an argument other than `install`
+
+**Example**
+
+```sh
+supi skill
+supi skill install
+supi skill install --dir ~/.claude/skills --json
+```
+
 ## `supi update`
 
 Resolves the latest release tag on GitHub, downloads the asset for this platform (`supi-<platform>-<arch>`; macOS and Linux only), verifies it against the release's `SHA256SUMS`, and renames it over the running binary — staged in the binary's own directory so the swap is atomic. A download that cannot be verified is refused rather than installed. A `dev` build is always offered the update. No credential is involved.

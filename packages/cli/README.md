@@ -186778,3 +186778,7 @@ A person's credential and an agent's are never interchangeable (see above). **40
 credential was not accepted; **403** means the server refused that operation with the caller's
 authority.
 
+
+## Agent skill
+
+`supi skill` prints the agent skill compiled into this binary; `supi skill install [--dir <dir>]` writes it to `<dir>/superpipeline-boards/SKILL.md` (default `~/.claude/skills`). The installer does this when `SKILL_DIR` is set. Source: `skills/superpipeline-boards/SKILL.md`; after editing it run `pnpm -F @superpipeline/cli skill:embed`.

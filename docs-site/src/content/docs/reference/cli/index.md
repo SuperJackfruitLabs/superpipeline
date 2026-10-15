@@ -28,6 +28,7 @@ The verb comes first. Flags may be written `--name value` or `--name=value`, any
 | [`supi whoami`](/reference/cli/session/#supi-whoami) | who the stored token says you are |
 | [`supi help`](/reference/cli/session/#supi-help) | this summary, or one command in full (also `supi <verb> --help`) |
 | [`supi version`](/reference/cli/session/#supi-version) | print this binary's version |
+| [`supi skill`](/reference/cli/session/#supi-skill) | print the agent skill, or install it into a skills directory |
 | [`supi update`](/reference/cli/session/#supi-update) | replace this binary with the newest release |
 
 ### Boards and pipelines
@@ -160,7 +161,7 @@ Credentials live under the platform config directory — `$XDG_CONFIG_HOME` (or 
 | `APPDATA` | `supi` | Windows: the config directory credentials live under |
 | `BIN_DIR` | the installer | where the installer puts `supi` and `superpipeline` (default `~/.local/bin`) |
 | `VERSION` | the installer | a release tag for the installer to pin, instead of the latest |
-| `SKILL_DIR` | the installer | where the installer also places the agent skill; unset, no skill is installed |
+| `SKILL_DIR` | the installer | where the installer also places the agent skill (by running `supi skill install --dir`); unset, no skill is installed |
 
 ## Who may run what
 

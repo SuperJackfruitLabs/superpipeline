@@ -30,6 +30,7 @@ import { deviceLogin, discoverPlane, exchangeDevice } from "./plane-login.ts";
 import { renderBoards, renderBoard, renderComments, renderGates, renderLog, renderProjects, renderProject, renderStale } from "./render.ts";
 import { flag, flags, isPlainObject, mergeSpec, positionals } from "./args.ts";
 import { VERSION, runUpdate } from "./update.ts";
+import { defaultSkillDir, installSkill, renderSkill } from "./skill.ts";
 import { findCommands, renderCommandHelp, renderUsage } from "./commands.ts";
 
 /**
@@ -308,6 +309,25 @@ async function main(argv: string[]): Promise<void> {
     case "version":
       process.stdout.write(`supi ${VERSION} ${process.platform}/${process.arch}\n`);
       return;
+
+    case "skill": {
+      // The skill text is compiled into this binary, so it is always the one matching these verbs
+      // and needs no network.
+      if (pos[0] === undefined) {
+        process.stdout.write(renderSkill(VERSION));
+        return;
+      }
+      if (pos[0] !== "install" || pos.length > 1) fail(`unknown skill command: ${pos.join(" ")}`, "  supi help skill");
+      const dir = flag(rest, "--dir") ?? defaultSkillDir();
+      let written: string;
+      try {
+        written = installSkill(dir, VERSION);
+      } catch (e) {
+        fail(`could not write the skill into ${dir}: ${e instanceof Error ? e.message : String(e)}`);
+      }
+      process.stdout.write(wantsJson(rest) ? JSON.stringify({ path: written, version: VERSION }) + "\n" : `Installed the skill: ${written}\n`);
+      return;
+    }
 
     case "update": {
       // The network work lives in update.ts; this only decides what to print. A failure throws
