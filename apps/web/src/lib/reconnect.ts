@@ -7,6 +7,11 @@
  * is ignored rather than followed.
  */
 export const RETURN_KEY = 'superpipeline.returnTo';
+/** Set by reconnect(): this tab has already signed in again once (a later refusal is final, not another Reconnect). */
+export const RECONNECTED_KEY = 'superpipeline.reconnected';
+export function reconnectedThisTab(storage: Storage | undefined = globalThis.sessionStorage): boolean {
+  try { return storage?.getItem(RECONNECTED_KEY) === '1'; } catch { return false; }
+}
 // Every page a person can be on (nav v2): a board and its card/operate/settings pages, Inbox, Plan and a
 // project, Crew's tabs, Settings, and the old /workspace paths (they redirect). Ids are word characters only.
 const ID = '[A-Za-z0-9_-]+';
@@ -33,6 +38,7 @@ export function reconnect(
   navigate: (url: string) => void = (url) => globalThis.location.assign(url),
   here: string = placeOf(globalThis.location ? location.pathname + location.search : '/', openCard()),
 ): void {
+  try { sessionStorage.setItem(RECONNECTED_KEY, '1'); } catch { /* no storage: the refusal stays offered */ }
   try { sessionStorage.setItem(RETURN_KEY, here); } catch { /* no storage: you land on your board instead */ }
   navigate('/auth/login');
 }

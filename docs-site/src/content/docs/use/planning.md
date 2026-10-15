@@ -50,6 +50,12 @@ supi milestone add prj_… "Beta" --target 2026-10-31
 supi project show prj_…
 ```
 
+In the web app, projects live in **Plan → Projects** (`/plan/projects`), beside Boards, not inside a
+board. **New project** takes a name and, optionally, a goal, a target date, a declared health (On
+track, At risk, Off track) and a first milestone; add more milestones on the project's page. That
+page shows the health you declared beside one computed from its cards and milestones, and lists what
+blocks it.
+
 A card may belong to one project and one of that project's milestones. A milestone belongs to
 exactly one project — setting a milestone from a different project is refused.
 

@@ -49,7 +49,7 @@ to create?* A typo registers as `inferred` and sits there looking exactly like a
 
 ### The two diagnostics
 
-**Workspace → Capabilities** counts, per capability, how many agents hold it and how many boards
+**Crew → Capabilities** counts, per capability, how many agents hold it and how many boards
 ask for it. Two states are worth acting on:
 
 | state | what it means |

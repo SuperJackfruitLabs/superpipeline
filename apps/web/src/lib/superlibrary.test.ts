@@ -9,6 +9,8 @@ afterEach(() => { vi.unstubAllGlobals(); vi.mocked(libraryToken).mockResolvedVal
 
 describe('Superlibrary references (spec §11: the drawer previews linked artifacts)', () => {
   it('says the true reason a token is missing: a sign-in to refresh (Reconnect) apart from a plane that will not issue one (no Reconnect)', async () => {
+    const store = new Map<string, string>();
+    vi.stubGlobal('sessionStorage', { getItem: (k: string) => store.get(k) ?? null, setItem: (k: string, v: string) => void store.set(k, v), removeItem: (k: string) => void store.delete(k) });
     vi.mocked(libraryToken).mockResolvedValue(null);
     vi.mocked(libraryProblem).mockReturnValue('reauthorize');
     const stale = await libraryFetch('/api/v1/me').catch((e: unknown) => e);
@@ -18,9 +20,15 @@ describe('Superlibrary references (spec §11: the drawer previews linked artifac
     vi.mocked(libraryProblem).mockReturnValue('declined');
     const declined = await libraryFetch('/api/v1/me').catch((e: unknown) => e);
     expect(declined).toMatchObject({ code: 'declined' });
+    // A sign-in made before previews were switched on is refused by the plane too: ONE Reconnect fixes it, so it is offered once.
+    expect(needsReconnect(declined)).toBe(true);
+    expect(sentenceFor(declined)).toBe('Your sign-in was made before Superlibrary previews were switched on. Sign in again to enable them. Reconnect.');
+    // After this tab has reconnected once, a refusal is final: say so and offer no loop.
+    sessionStorage.setItem('superpipeline.reconnected', '1');
     expect(needsReconnect(declined)).toBe(false);
     expect(hasReason(declined)).toBe(true);
     expect(sentenceFor(declined)).toContain('does not issue Superlibrary access to Superpipeline');
+    sessionStorage.removeItem('superpipeline.reconnected');
     expect(reasonFor(declined)).toBe('Reason: declined (the sign-in system does not issue Superlibrary access to this app)');
     vi.mocked(libraryProblem).mockReturnValue(null);
   });

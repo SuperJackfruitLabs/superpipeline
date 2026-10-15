@@ -524,7 +524,7 @@ export function refusalHint(kind: Credential["kind"]): string {
   // workspace and later arrivals join as `member` until an owner changes it.
   return (
     "Your seat in this workspace does not permit that.\n" +
-    "Roles are set by the workspace's owner, under Workspace → People in the web app. If you\n" +
+    "Roles are set by the workspace's owner, under Crew → People in the web app. If you\n" +
     "expected more, check `supi whoami` names the account linked to your seat.\n" +
     "Who may run what: https://docs.superpipeline.dev/reference/cli/"
   );

@@ -36,7 +36,7 @@ It warns rather than refuses — you may be about to hire.
 
 ## 3. Add an agent
 
-In **Workspace → Agents**, add an agent and give it the capabilities it can service. Capability
+In **Crew → Agents**, add an agent and give it the capabilities it can service. Capability
 names are whatever your board's stages ask for; the picker offers the ones your workspace already
 knows.
 
@@ -55,15 +55,15 @@ Move it into an agent-owned stage and it becomes claimable.
 
 ## 5. Watch it work
 
-**Plan** is the pipeline. **Operate** is what is happening: what needs you, what is running, what
-it has cost, and the activity stream. On a phone, the pipeline pages one stage at a time rather
+**Plan** is the pipeline. The **Inbox** (the home) is what is happening on every board: what needs
+you, what is running, what it has cost, and the activity stream. On a phone, the pipeline pages one stage at a time rather
 than squeezing.
 
 ## If nothing happens
 
 A card that sits still in an agent lane almost always means one of:
 
-- **no agent holds that capability** — check Workspace → Capabilities, which names any capability
+- **no agent holds that capability** — check Crew → Capabilities, which names any capability
   held by agents but asked for by no stage, and any asked for but held by nobody
 - **a spelling mismatch** — routing is exact equality; `code review` and `code-review` are two
   different capabilities

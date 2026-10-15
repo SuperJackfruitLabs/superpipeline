@@ -107,6 +107,29 @@ no bearer of either kind), never back to the hub.
 the hub's resource, which the web client requests as a second token so the assignee picker can
 keep calling the hub's `/api/fleet/dispatchable`.
 
+### Superlibrary previews (`SUPERLIBRARY_AUDIENCE`, `PLANE_LIBRARY_LINKED`)
+
+The card drawer embeds Superlibrary previews with a third token, for Superlibrary's audience.
+
+| Var | Production value | Meaning |
+|---|---|---|
+| `SUPERLIBRARY_AUDIENCE` | `https://app.superlibrary.dev` | the audience to ask for; unset = no library |
+| `PLANE_LIBRARY_LINKED` | `"true"` | `/auth/login` also names that audience |
+
+The plane refuses a refresh grant for an audience the sign-in did not name (`400 invalid_target`).
+So `/auth/login` authorizes the app, the hub and — only when `PLANE_LIBRARY_LINKED` is `"true"` —
+Superlibrary (`authorizeResources` in `apps/api/src/auth/plane-signin.ts`). It stays off until the
+plane links the resource to `superpipeline-web`, because an unlinked resource fails the whole sign-in.
+`GET /hub/token?library=1` answers `libraryToken`, `libraryDeclined: true` (the plane said no on
+purpose; no Reconnect is offered) or `reauthorize: "/auth/login"` (a sign-in is needed). The web app
+serialises `/hub/token` calls across tabs with `navigator.locks`. A session made before the flag was
+switched on is offered **Reconnect** once, which signs in again and returns to the same page.
+
+When previews fail, check in order:
+1. the org's entitlements on the plane include Superlibrary (Superlibrary checks the token's `ent`);
+2. client `superpipeline-web` may request the app, hub and Superlibrary resources;
+3. the person has signed in since `PLANE_LIBRARY_LINKED` went on (Reconnect does this).
+
 1. **Preconditions.**
    - The plane serves resources `https://app.superpipeline.dev` and `https://app.superpipeline.dev/mcp`.
    - Client `superpipeline-web` is registered with redirect `https://app.superpipeline.dev/auth/callback`,
