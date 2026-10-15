@@ -10,6 +10,7 @@
   "scripts": {
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
+    "skill:embed": "UPDATE_SKILL=1 vitest run src/skill-embed.test.ts",
     "reference": "UPDATE_REFERENCE=1 vitest run src/reference.test.ts"
   },
   "dependencies": {

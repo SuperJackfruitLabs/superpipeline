@@ -107,3 +107,65 @@ describe("the superpipeline-boards skill", () => {
     }
   });
 });
+
+// ── the binary carries the skill ───────────────────────────────────────────────────────────────
+import { COMMANDS, commandName, type CommandSpec } from "./commands.ts";
+import { existsSync, mkdtempSync, readdirSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { installSkill, renderSkill } from "./skill.ts";
+import { spawnSync } from "node:child_process";
+
+/** The full command names (`supi link add`) the skill text never mentions. */
+export function unmentioned(text: string, commands: CommandSpec[]): string[] {
+  return commands.map(commandName).filter((name) => !text.includes(name));
+}
+
+describe("drift guard: every command is in the skill", () => {
+  it("mentions every command in the registry", () => {
+    expect(unmentioned(skill, COMMANDS)).toEqual([]);
+  });
+
+  it("fails when a command is added without a mention (revert-proof)", () => {
+    const added: CommandSpec = { ...COMMANDS[0]!, path: ["zz-brand-new-verb"] };
+    expect(unmentioned(skill, [...COMMANDS, added])).toEqual(["supi zz-brand-new-verb"]);
+  });
+});
+
+describe("the printed skill", () => {
+  it("fills the version in and leaves no placeholder", () => {
+    const out = renderSkill("1.2.3");
+    expect(out).toContain("Written for supi 1.2.3");
+    expect(out).not.toContain("{{VERSION}}");
+  });
+});
+
+describe("supi skill install", () => {
+  it("writes the printed text, idempotently, leaving no staging file", () => {
+    const dir = mkdtempSync(join(tmpdir(), "supi-skill-"));
+    try {
+      const path = installSkill(dir, "1.2.3");
+      expect(path).toBe(join(dir, "superpipeline-boards", "SKILL.md"));
+      expect(readFileSync(path, "utf8")).toBe(renderSkill("1.2.3"));
+      expect(installSkill(dir, "1.2.3")).toBe(path);
+      expect(readFileSync(path, "utf8")).toBe(renderSkill("1.2.3"));
+      expect(readdirSync(join(dir, "superpipeline-boards"))).toEqual(["SKILL.md"]);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  it("is what the CLI does end to end, with --json", () => {
+    const dir = mkdtempSync(join(tmpdir(), "supi-skill-cli-"));
+    try {
+      const run = (...a: string[]) => spawnSync("bun", [join(import.meta.dirname, "index.ts"), ...a], { encoding: "utf8" });
+      const printed = run("skill");
+      const r = run("skill", "install", "--dir", dir, "--json");
+      expect(r.status).toBe(0);
+      const { path } = JSON.parse(r.stdout);
+      expect(existsSync(path)).toBe(true);
+      expect(readFileSync(path, "utf8")).toBe(printed.stdout);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+});

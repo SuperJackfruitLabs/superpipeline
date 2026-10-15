@@ -332,6 +332,33 @@ export const COMMANDS: CommandSpec[] = [
     examples: ["supi version"],
   },
   {
+    path: ["skill"],
+    group: "session",
+    args: [{ name: "install", description: "write the skill into a skills directory instead of printing it", optional: true }],
+    flags: [
+      {
+        name: "--dir",
+        value: "<dir>",
+        type: "path",
+        default: "`~/.claude/skills`",
+        description: "with `install`: the skills directory; the file is written to `<dir>/superpipeline-boards/SKILL.md`",
+      },
+    ],
+    synopsis: "supi skill [install [--dir <dir>]]",
+    summary: "print the agent skill, or install it into a skills directory",
+    description:
+      "The agent skill for this binary, compiled into it: it always matches this version's verbs and needs no " +
+      "network. With no argument it prints `SKILL.md` to stdout, with the version line filled in. `supi skill " +
+      "install` writes it to `<dir>/superpipeline-boards/SKILL.md` — staged and renamed, so a reader never sees half " +
+      "a file — replacing only that file, and prints the path. Running it again is harmless. The installer does this " +
+      "for you when `SKILL_DIR` is set.",
+    routes: [],
+    access: { role: null, agent: null },
+    output: "the skill text; with `install`, `Installed the skill: <path>`, or with `--json` `{ path, version }`",
+    fails: ["the directory cannot be written", "an argument other than `install`"],
+    examples: ["supi skill", "supi skill install", "supi skill install --dir ~/.claude/skills --json"],
+  },
+  {
     path: ["update"],
     group: "session",
     args: [],
@@ -1494,7 +1521,7 @@ export const ENV_VARS: EnvSpec[] = [
   { name: "APPDATA", description: "Windows: the config directory credentials live under" },
   { name: "BIN_DIR", description: "where the installer puts `supi` and `superpipeline` (default `~/.local/bin`)", installer: true },
   { name: "VERSION", description: "a release tag for the installer to pin, instead of the latest", installer: true },
-  { name: "SKILL_DIR", description: "where the installer also places the agent skill; unset, no skill is installed", installer: true },
+  { name: "SKILL_DIR", description: "where the installer also places the agent skill (by running `supi skill install --dir`); unset, no skill is installed", installer: true },
 ];
 
 export const ROLE_TEXT: Record<Role, string> = {

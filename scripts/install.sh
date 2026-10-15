@@ -92,17 +92,24 @@ printf 'Installed %s\n' "$("${BIN_DIR}/supi" version)"
 # skill that teaches verbs is only true of the version it shipped beside, and one placed by hand
 # drifts the moment a verb is renamed, silently, because its reader cannot notice.
 if [ -n "${SKILL_DIR:-}" ]; then
-  skill_dest="${SKILL_DIR}/superpipeline-boards"
-  mkdir -p "$skill_dest"
-  if curl -fsSL "${base}/SKILL.md" -o "${tmp}/SKILL.md"; then
-    # Same staged rename as the binary, for the same reason: a reader must never see half a file.
-    cp "${tmp}/SKILL.md" "${skill_dest}/.SKILL.md.incoming.$$"
-    mv -f "${skill_dest}/.SKILL.md.incoming.$$" "${skill_dest}/SKILL.md"
-    printf 'Installed the superpipeline-boards skill into %s\n' "$skill_dest"
+  # The binary carries its own skill, so the one installed is always the version matching it and
+  # nothing is fetched. A release older than that has no `skill` verb; VERSION pinned to one falls
+  # back to the SKILL.md asset, as installers always did.
+  if "${BIN_DIR}/supi" skill install --dir "$SKILL_DIR" >"${tmp}/skill.out" 2>/dev/null; then
+    cat "${tmp}/skill.out"
   else
-    # Not fatal. The binary is installed and works; the skill is documentation for an agent, and a
-    # release predating it simply has none to fetch.
-    printf 'No SKILL.md in %s — skill not installed (the CLI is fine)\n' "$tag" >&2
+    skill_dest="${SKILL_DIR}/superpipeline-boards"
+    mkdir -p "$skill_dest"
+    if curl -fsSL "${base}/SKILL.md" -o "${tmp}/SKILL.md"; then
+      # Same staged rename as the binary, for the same reason: a reader must never see half a file.
+      cp "${tmp}/SKILL.md" "${skill_dest}/.SKILL.md.incoming.$$"
+      mv -f "${skill_dest}/.SKILL.md.incoming.$$" "${skill_dest}/SKILL.md"
+      printf 'Installed the superpipeline-boards skill into %s\n' "$skill_dest"
+    else
+      # Not fatal. The binary is installed and works; the skill is documentation for an agent, and a
+      # release predating it simply has none to fetch.
+      printf 'No SKILL.md in %s — skill not installed (the CLI is fine)\n' "$tag" >&2
+    fi
   fi
 fi
 
