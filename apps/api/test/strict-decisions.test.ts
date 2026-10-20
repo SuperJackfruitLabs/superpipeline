@@ -1,3 +1,5 @@
+import corpus from './fixtures/strict-decision-v1.json';
+import { StrictDecision } from '../src/board/strict-decision';
 import { env, runInDurableObject } from 'cloudflare:test';
 import { describe, it, expect, vi } from 'vitest';
 import { BoardDO, type AgentActivityInput } from '../src/board/board-do';
@@ -69,3 +71,5 @@ describe('strict decision identity and durable response', () => {
   }));
 
 });
+
+for (const example of corpus) it(`strict wire corpus: ${example.name}`, () => { expect(StrictDecision.safeParse(example.value).success).toBe(example.valid); });
