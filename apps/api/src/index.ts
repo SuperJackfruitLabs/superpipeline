@@ -158,6 +158,7 @@ function statusForCode(code: BoardErrorCode): number {
       return 400;
     case 'BUDGET_EXCEEDED':
       return 402; // Payment Required — the board/card budget cap was reached
+    case 'INVALID_STRICT_DECISION':
     case 'INVALID_ANSWER':
       return 400;
     case 'CARD_NOT_FOUND':
@@ -177,6 +178,8 @@ function statusForCode(code: BoardErrorCode): number {
     case 'APPROVAL_DELIVERY_STARTED':
     // The question was already settled (answered, or retired with its run) — a conflict with the
     // state the caller believed in, not a bad request. Retrying it will never succeed.
+    case 'DECISION_EXPIRED':
+    case 'DECISION_CONFLICT':
     case 'ELICITATION_NOT_PENDING':
     case 'CARD_NOT_WAITING':
     // The stage still holds cards. A conflict with the state the caller believed in, not a
@@ -3447,6 +3450,7 @@ const worker = {
         const p = (await request.json()) as {
           leaseEpoch: number;
           type?: AgentActivityType;
+          strictDecision?: import('./board/strict-decision').StrictDecision;
           ephemeral?: boolean;
           body?: string;
           action?: string;
@@ -3481,6 +3485,7 @@ const worker = {
               await stub.postActivity({
                 ...lease,
                 type: p.type ?? 'thought',
+                strictDecision: p.strictDecision,
                 ephemeral: p.ephemeral,
                 body: p.body,
                 action: p.action,

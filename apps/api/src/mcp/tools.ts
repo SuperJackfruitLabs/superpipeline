@@ -1,3 +1,4 @@
+import { StrictDecision } from '../board/strict-decision';
 /**
  * Superpipeline MCP tools (docs/05 §2). Each tool maps 1:1 onto a contract verb and calls the *same*
  * Board Durable Object method the REST surface calls (apps/api/src/index.ts) — so MCP and REST are
@@ -325,6 +326,7 @@ export function registerSuperpipelineTools(server: McpServer, deps: ToolDeps): v
         runId: z.string(),
         leaseEpoch: z.number().int().min(0),
         type: z.enum(['thought', 'action', 'response', 'elicitation', 'error']),
+        strictDecision: StrictDecision.optional(),
         ephemeral: z.boolean().optional(),
         body: z.string().optional(),
         action: z.string().optional(),
@@ -342,13 +344,14 @@ export function registerSuperpipelineTools(server: McpServer, deps: ToolDeps): v
       },
       annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false },
     },
-    async ({ boardId, runId, leaseEpoch, type, ephemeral, body, action, parameter, result, signal, usage }) =>
+    async ({ boardId, runId, leaseEpoch, type, ephemeral, body, action, parameter, result, signal, usage, strictDecision }) =>
       fromResult(
         await deps.boardStub(boardId).postActivity({
           runId,
           leaseEpoch,
           agentId: auth.agentId,
           type: type as AgentActivityType,
+          strictDecision,
           ephemeral,
           body,
           action,

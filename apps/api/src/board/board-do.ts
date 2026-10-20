@@ -1,3 +1,4 @@
+import { StrictDecision, canonicalDecisionRequest } from './strict-decision';
 import { DurableObject } from 'cloudflare:workers';
 import { canTransition, nextState, type GateDecision, type TaskEventType, type TaskState } from '@superpipeline/contract';
 import type { Env } from '../env';
@@ -917,6 +918,7 @@ export interface GateOption {
  * `agentId` is who asked — and therefore who may not answer.
  */
 export interface ElicitationView {
+  strictDecision?: StrictDecision;
   id: string;
   cardId: string;
   runId: string;
@@ -1301,6 +1303,9 @@ export type BoardErrorCode =
   | 'ELICITATION_NOT_FOUND'
   | 'ELICITATION_NOT_PENDING'
   | 'INVALID_ANSWER'
+  | 'INVALID_STRICT_DECISION'
+  | 'DECISION_CONFLICT'
+  | 'DECISION_EXPIRED'
   | 'CARD_NOT_WAITING'
   | 'SEPARATION_OF_DUTIES'
   | 'INVALID_URL'
@@ -1449,7 +1454,7 @@ export interface BoardStub {
   setProfile(input: ProfileInput): Promise<Result<{ key: string }>>;
   getProfiles(): Promise<ProfileView[]>;
   heartbeat(input: RunVerbInput): Promise<Result<{ acknowledged: true }>>;
-  postActivity(input: AgentActivityInput): Promise<Result<{ accepted: true; cardState: TaskState }>>;
+  postActivity(input: AgentActivityInput): Promise<Result<{ accepted: true; cardState: TaskState; elicitationId?: string; strictDecision?: StrictDecision }>>;
   complete(input: CompleteVerbInput): Promise<Result<CardView>>;
   block(input: RunVerbInput & { reason: string; summary?: string }): Promise<Result<CardView>>;
   fail(input: RunVerbInput & { reason: string }): Promise<Result<CardView>>;
@@ -1604,6 +1609,7 @@ export interface BoardStub {
 }
 
 export interface AgentActivityInput extends RunVerbInput {
+  strictDecision?: StrictDecision;
   type: AgentActivityType;
   ephemeral?: boolean;
   body?: string;
@@ -2201,6 +2207,11 @@ export class BoardDO extends DurableObject<Env> {
       )`,
     );
     this.sql.exec(`CREATE INDEX IF NOT EXISTS idx_approval_delivery_events_gate ON approval_delivery_events(gate_id)`);
+    this.sql.exec(`CREATE TABLE IF NOT EXISTS strict_decision_requests (
+      request_id TEXT PRIMARY KEY, agent_id TEXT NOT NULL, run_id TEXT NOT NULL,
+      lease_epoch INTEGER NOT NULL, elicitation_id TEXT NOT NULL UNIQUE,
+      payload_json TEXT NOT NULL, response_json TEXT NOT NULL, binding_json TEXT NOT NULL
+    )`);
     // An agent's open question to a human (docs/04 §4). Persisting it is what makes an answer
     // possible: the activity stream is append-only history, and history cannot be replied to.
     this.sql.exec(
@@ -2361,7 +2372,7 @@ export class BoardDO extends DurableObject<Env> {
   > {
     if (this.env.FIXTURE_IMPORT !== 'true') return { ok: false, code: 'FIXTURE_IMPORT_DISABLED' };
     const TABLES = ['meta', 'cards', 'runs', 'activities', 'events', 'usage_records', 'notifications', 'gates', 'approval_subjects',
-      'approval_delivery_events', 'elicitations', 'card_references', 'card_links', 'card_comments', 'schedules', 'profiles',
+      'approval_delivery_events', 'strict_decision_requests', 'elicitations', 'card_references', 'card_links', 'card_comments', 'schedules', 'profiles',
       'push_configs', 'push_deliveries', 'run_reports', 'webhook_deliveries'] as const;
     const columns = (t: string) => new Set((this.sql.exec(`PRAGMA table_info(${t})`).toArray() as Array<{ name: string }>).map((r) => r.name));
     const insert = (table: string, rows: Array<Record<string, unknown>>) => {
@@ -5608,7 +5619,8 @@ export class BoardDO extends DurableObject<Env> {
     return { ok: true, value: { acknowledged: true } };
   }
 
-  async postActivity(input: AgentActivityInput): Promise<Result<{ accepted: true; cardState: TaskState }>> {
+  async postActivity(input: AgentActivityInput): Promise<Result<{ accepted: true; cardState: TaskState; elicitationId?: string; strictDecision?: StrictDecision }>> {
+    if (input.strictDecision !== undefined) return this.postStrictDecision(input);
     const auth = this.authorizeRun(input);
     if (!auth.ok) return auth;
     const run = auth.run;
@@ -5676,6 +5688,47 @@ export class BoardDO extends DurableObject<Env> {
     this.emit('activity', { runId: input.runId, cardId, activityType: input.type });
     await this.scheduleReclaim();
     return { ok: true, value: { accepted: true, cardState } };
+  }
+
+  private async postStrictDecision(input: AgentActivityInput): Promise<Result<{ accepted: true; cardState: TaskState; elicitationId?: string; strictDecision?: StrictDecision }>> {
+    const parsed = StrictDecision.safeParse(input.strictDecision);
+    if (!parsed.success || !input.agentId || input.type !== 'elicitation' || input.signal !== 'select' ||
+      typeof input.body !== 'string' || input.body.trim() === '' || new TextEncoder().encode(input.body).length > COMMENT_MAX_BYTES ||
+      input.ephemeral || input.usage || input.action || input.result !== undefined) {
+      return { ok: false, code: 'INVALID_STRICT_DECISION', message: 'strict decisions require an authenticated persistent select elicitation' };
+    }
+    const binding = parsed.data;
+    const options = parseElicitationOptions(input.parameter);
+    if (options.length !== 2 || options[0]?.name !== 'approve' || options[1]?.name !== 'deny' ||
+      canonicalDecisionRequest(input.parameter) !== canonicalDecisionRequest({ options })) {
+      return { ok: false, code: 'INVALID_STRICT_DECISION', message: 'strict decisions require exact canonical approve/deny options' };
+    }
+    const payload = canonicalDecisionRequest(input);
+    const saved = this.sql.exec(`SELECT * FROM strict_decision_requests WHERE request_id = ?`, binding.request_id).toArray()[0];
+    if (saved) {
+      if (saved.agent_id !== input.agentId) return { ok: false, code: 'NOT_RUN_OWNER', message: 'decision request belongs to another principal' };
+      if (saved.payload_json !== payload) return { ok: false, code: 'DECISION_CONFLICT', message: 'decision request payload changed' };
+      return { ok: true, value: JSON.parse(saved.response_json as string) };
+    }
+    const auth = this.authorizeRun(input);
+    if (!auth.ok) return auth;
+    if (Number(auth.run.last_heartbeat_ms) + HEARTBEAT_TIMEOUT_MS <= this.nowMs()) return { ok: false, code: 'STALE_LEASE', message: 'run heartbeat lease expired' };
+    if (binding.expires_at <= this.nowMs()) return { ok: false, code: 'DECISION_EXPIRED', message: 'decision deadline expired' };
+    const cardId = auth.run.card_id as string;
+    const now = this.now();
+    const value = this.ctx.storage.transactionSync(() => {
+      this.sql.exec(`INSERT INTO activities (run_id, card_id, type, ephemeral, body, action, detail_json, ts) VALUES (?, ?, 'elicitation', 0, ?, NULL, ?, ?)`, input.runId, cardId, input.body!, JSON.stringify({ parameter: input.parameter, signal: input.signal, strictDecision: binding }), now);
+      this.sql.exec(`UPDATE cards SET state = 'input-required', updated_at = ? WHERE id = ?`, now, cardId);
+      const elicitationId = this.openElicitation(input, auth.run, cardId, now);
+      const response = { accepted: true as const, cardState: 'input-required' as const, elicitationId, strictDecision: binding };
+      this.sql.exec(`INSERT INTO strict_decision_requests VALUES (?, ?, ?, ?, ?, ?, ?, ?)`, binding.request_id, input.agentId!, input.runId, input.leaseEpoch, elicitationId, payload, JSON.stringify(response), JSON.stringify(binding));
+      this.sql.exec(`UPDATE runs SET last_heartbeat_ms = ? WHERE id = ?`, this.nowMs(), input.runId);
+      this.reportRun(input.runId);
+      this.emit('activity', { runId: input.runId, cardId, activityType: input.type });
+      return response;
+    });
+    await this.scheduleReclaim();
+    return { ok: true, value };
   }
 
   /**
@@ -6317,6 +6370,13 @@ export class BoardDO extends DurableObject<Env> {
     const card = this.getCard(elicitation.cardId);
     if (!card) return { ok: false, code: 'CARD_NOT_FOUND', message: `card not found: ${elicitation.cardId}` };
 
+    if (elicitation.strictDecision) {
+      const saved = this.sql.exec(`SELECT lease_epoch FROM strict_decision_requests WHERE elicitation_id = ?`, elicitation.id).one();
+      const auth = this.authorizeRun({ runId: elicitation.runId, leaseEpoch: Number(saved.lease_epoch), agentId: elicitation.agentId });
+      if (!auth.ok || Number(auth.run.last_heartbeat_ms) + HEARTBEAT_TIMEOUT_MS <= this.nowMs() || card.currentStageKey !== elicitation.stageKey) return { ok: false, code: 'STALE_LEASE', message: 'decision no longer belongs to the active run' };
+      if (elicitation.strictDecision.expires_at <= this.nowMs()) return { ok: false, code: 'DECISION_EXPIRED', message: 'decision deadline expired' };
+      if (input.option !== 'approve' && input.option !== 'deny') return { ok: false, code: 'INVALID_ANSWER', message: 'choose an exact offered option' };
+    }
     const text = input.text?.trim() ?? '';
     const option = input.option?.trim() ?? '';
     if (option !== '' && !elicitation.options.some((o) => o.name === option)) {
@@ -7098,7 +7158,7 @@ export class BoardDO extends DurableObject<Env> {
    * pending one on the same card — the agent is blocked on its latest ask, and a superseded question
    * is no longer answerable rather than lingering as a prompt nobody can act on.
    */
-  private openElicitation(input: AgentActivityInput, run: Row, cardId: string, now: string): void {
+  private openElicitation(input: AgentActivityInput, run: Row, cardId: string, now: string): string {
     this.cancelElicitationsForCard(cardId);
     const id = newId('elc');
     const question = input.body ?? '';
@@ -7120,6 +7180,7 @@ export class BoardDO extends DurableObject<Env> {
     this.emit('elicitation.opened', { elicitationId: id, cardId, runId: input.runId, signal: input.signal ?? null });
     this.notify('input', cardId, question === '' ? 'An agent is waiting on you' : question);
     this.notifyElicitationPending(id);
+    return id;
   }
 
   /**
@@ -7147,7 +7208,9 @@ export class BoardDO extends DurableObject<Env> {
 
   private rowToElicitation(row: Row): ElicitationView {
     const answeredBy = (row.answered_by as string | null) ?? null;
+    const strict = this.sql.exec(`SELECT binding_json FROM strict_decision_requests WHERE elicitation_id = ?`, row.id).toArray()[0];
     return {
+      ...(strict ? { strictDecision: JSON.parse(strict.binding_json as string) } : {}),
       id: row.id as string,
       cardId: row.card_id as string,
       runId: row.run_id as string,
