@@ -229,6 +229,35 @@ const stages = [
       }
       .wip { font-family: var(--mono); font-size: 10px; color: var(--muted); }
 
+      /* ── hero moment: a card travels Intake → Sign-off once, the gate pulses ──
+         Toggled by .demo.playing (script at the end of the hero). The resting state
+         is the plain board above; the moment only adds overlays that fade back out. */
+      .stage { position: relative; }
+      .stage::before {
+        content: ''; position: absolute; inset: 0 0 0 -2px; pointer-events: none;
+        border-left: 2px solid var(--marigold);
+        background: color-mix(in srgb, var(--marigold) 12%, transparent);
+        opacity: 0;
+      }
+      .demo.playing .stage[data-visit]::before {
+        animation: stage-visit 520ms ease-out both;
+        animation-delay: calc(var(--i) * 350ms);
+      }
+      .demo.playing .stage.gated::before {
+        animation-duration: 900ms;
+      }
+      .demo.playing .gate {
+        display: inline-block;
+        animation: gate-pulse 480ms ease-out both;
+        animation-delay: 1400ms;
+      }
+      @keyframes stage-visit {
+        0% { opacity: 0; } 35% { opacity: 1; } 100% { opacity: 0; }
+      }
+      @keyframes gate-pulse {
+        0% { transform: scale(1); } 40% { transform: scale(1.35); } 100% { transform: scale(1); }
+      }
+
       section.band { border-top: 1px solid var(--line); }
       section.band { padding: 88px 0; text-align: left; }
       h2 {
@@ -301,7 +330,7 @@ const stages = [
           </div>
         </div>
 
-        <figure class="demo" style="margin:0">
+        <figure class="demo" id="demo" style="margin:0">
           <div class="pipeline" role="img"
             aria-label="Example: the Software delivery board template. Intake, Plan, Build, Security review, Sign-off, Shipped. Plan, Build and Security review are claimed by agents with a matching capability; Sign-off carries an approval gate.">
             <div class="pipe-head">
@@ -309,8 +338,9 @@ const stages = [
               <span class="eyebrow">shipped template</span>
             </div>
             <ol class="stages">
-              {stages.map((s) => (
-                <li class:list={['stage', s.gate && 'gated']}>
+              {stages.map((s, i) => (
+                <li class:list={['stage', s.gate && 'gated']}
+                    data-visit={i <= 4 ? '' : undefined} style={`--i:${i}`}>
                   <span class="stage-name">{s.name}</span>
                   <span class:list={['owner', s.kind === 'capability' ? 'cap' : 'human']}>{s.owner}</span>
                   {s.gate && <span class="gate">gate</span>}
@@ -321,6 +351,23 @@ const stages = [
           </div>
           <figcaption class="demo-caption">Example: the Software delivery template. Capability stages are claimed by agents; Sign-off waits for a person.</figcaption>
         </figure>
+        <script is:inline>
+          (() => {
+            const d = document.getElementById('demo');
+            if (!d || matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+            const play = () => {
+              setTimeout(() => {
+                d.classList.add('playing');
+                setTimeout(() => d.classList.remove('playing'), 2600);
+              }, 600);
+            };
+            if (!('IntersectionObserver' in window)) return play();
+            const io = new IntersectionObserver((es) => {
+              if (es.some((e) => e.isIntersecting)) { io.disconnect(); play(); }
+            });
+            io.observe(d);
+          })();
+        </script>
       </div>
     </section>
 
