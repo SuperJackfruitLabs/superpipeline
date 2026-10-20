@@ -6,9 +6,12 @@
   "scripts": {
     "dev": "astro dev --port 4326",
     "build": "astro build",
-    "preview": "astro preview"
+    "preview": "astro preview",
+    "check": "node scripts/check-frame.mjs"
   },
   "dependencies": {
-    "astro": "^7.3.2"
+    "astro": "^7.3.2",
+    "@superjackfruit/frontdoor": "file:vendor/superjackfruit-frontdoor-0.0.2.tgz",
+    "@superjackfruit/vibekit": "file:vendor/superjackfruit-vibekit-0.0.14.tgz"
   }
 }
