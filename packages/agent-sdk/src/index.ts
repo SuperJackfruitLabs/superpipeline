@@ -107,6 +107,8 @@ export interface RunContext {
     outcome: string | null;
     startedAt: string;
     endedAt: string | null;
+    handoff: unknown;
+    completion: unknown;
   };
   card: { id: string; title: string; spec: unknown; currentStageKey: string; state: string };
   stage: { key: string; name: string } | null;

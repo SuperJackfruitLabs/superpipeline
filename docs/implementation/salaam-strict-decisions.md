@@ -41,3 +41,16 @@ Conformance uses the actual SQLite-backed Durable Object test runtime and
 synthetic authenticated REST fixtures. It proves response-loss replay, changed
 payload conflict, reverse-order decisions, expiry, lease/release fences and legacy
 regressions. This is not live product acceptance or a deployed fleet proof.
+
+
+## Original-run completion recovery
+
+Run context adds `run.handoff` and `run.completion` from that run's stored evidence;
+legacy top-level `handoff` remains the card's current handoff. Completing with
+explicit `outcome: pass` records `status: ended`, `outcome: completed` and
+`completion: {met: true, outcome: pass}` on success. A retry after completion returns
+`STALE_LEASE`; recovery must read the original run, check its IDs/lease/stage and
+verdict, and compare its original handoff against the durable report intent. Later
+runs can replace the card handoff but never this run evidence. `completed` alone is
+insufficient (a changes-needed routing can use it); a missing/null verdict or
+missing new evidence field cannot establish strict completion success.

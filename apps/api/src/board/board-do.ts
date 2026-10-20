@@ -743,6 +743,9 @@ export interface RunContext {
     outcome: string | null;
     startedAt: string;
     endedAt: string | null;
+    /** Original run evidence, independent of later card handoffs. */
+    handoff: JsonValue | null;
+    completion: JsonValue | null;
   };
   card: CardView;
   /** The card's *current* stage — null if the board's stage list no longer contains it. */
@@ -5111,6 +5114,8 @@ export class BoardDO extends DurableObject<Env> {
           outcome: (row.outcome as string | null) ?? null,
           startedAt: row.started_at as string,
           endedAt: (row.ended_at as string | null) ?? null,
+          handoff: this.parseHandoff((row.handoff_json as string | null) ?? null),
+          completion: row.completion ? JSON.parse(row.completion as string) as JsonValue : null,
         },
         card,
         stage: this.stages().find((s) => s.key === card.currentStageKey) ?? null,
