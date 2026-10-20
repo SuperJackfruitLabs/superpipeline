@@ -3,8 +3,8 @@
  * superpipeline.dev — the public page.
  *
  * The app moved to app.superpipeline.dev, so this host is marketing only. Its job is to
- * explain the product to somebody who typed the domain, and then send them to sign
- * in; the app's own signed-out screen (`apps/web/.../Landing.svelte`) still carries
+ * explain the product to somebody who typed the domain, and then send them to the
+ * getting-started docs; the app's own signed-out screen (`apps/web/.../Landing.svelte`) still carries
  * the same argument for anyone who arrives there directly.
  *
  * The pipeline below is the `software` template from `BOARD_TEMPLATES` in
@@ -23,9 +23,17 @@
  */
 const APP = 'https://app.superpipeline.dev';
 const SITE = 'https://superpipeline.dev';
+const DOCS = 'https://docs.superpipeline.dev';
+const START = `${DOCS}/start/first-board/`;
+/* The GitHub repository is a read-only mirror of the primary one (README, "Contributing");
+   it is the public copy, and the release installer is served from it. */
+const SOURCE = 'https://github.com/SuperJackfruitLabs/superpipeline';
+/* Latest release as the claims ledger names it. Single constant: change it when a release ships. */
+const RELEASE = 'v0.0.19';
+const INSTALL = 'curl -fsSL https://github.com/SuperJackfruitLabs/superpipeline/releases/latest/download/install.sh | bash';
 const TITLE = 'SuperPipeline — a board where agents do the work';
 const DESCRIPTION =
-  'A kanban board where AI agents pick up the cards they can handle, report as they go, and stop at the gates you set. Nothing ships because a machine decided it was ready.';
+  'A kanban board where agents claim the cards their capabilities match, report as they go, and stop at the gates you put in the pipeline for a person to decide.';
 
 const stages = [
   { name: 'Intake', owner: 'you', kind: 'human' },
@@ -49,6 +57,9 @@ const stages = [
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <meta name="theme-color" content="#0f1118" />
+    <script is:inline>
+      try { const t = localStorage.getItem('theme'); if (t === 'light' || t === 'dark') document.documentElement.dataset.theme = t; } catch (e) {}
+    </script>
     {/* What a link to this page shows when pasted into Slack, X or iMessage. The image is
         public/og.png, 1200×630, rendered from og/og.html — see og/README.md. */}
     <meta property="og:type" content="website" />
@@ -59,7 +70,7 @@ const stages = [
     <meta property="og:image" content={`${SITE}/og.png`} />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
-    <meta property="og:image:alt" content="SuperPipeline — a board where agents do the work and you stay in command." />
+    <meta property="og:image:alt" content="SuperPipeline — a kanban board where agents do the work and a person approves it." />
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content={TITLE} />
     <meta name="twitter:description" content={DESCRIPTION} />
@@ -81,25 +92,25 @@ const stages = [
         --marigold: #f4a526;
         --marigold-ink: #1a1206;
         --live: #34d3b6;
+        --mark: #fff;
         --display: 'Space Grotesk', system-ui, sans-serif;
         --body: 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
         --mono: 'IBM Plex Mono', ui-monospace, 'SF Mono', Menlo, monospace;
       }
 
-      /* The app carries a light theme too, and a visitor whose system asks for light
-         should not get a dark front door and a light product. */
+      /* Light theme: follows the system unless the visitor picked one with the toggle
+         (data-theme on <html>, remembered in localStorage). */
       @media (prefers-color-scheme: light) {
-        :root {
-          --ink: #faf8f4;
-          --surface: #fffdfa;
-          --inset: #efeae0;
-          --line: #e0d9cc;
-          --text: #1a1c24;
-          --muted: #5d5f73;
-          --marigold: #9a5f08;
-          --marigold-ink: #fffdfa;
-          --live: #10786a;
+        :root:not([data-theme='dark']) {
+          --ink: #faf8f4; --surface: #fffdfa; --inset: #efeae0; --line: #e0d9cc;
+          --text: #1a1c24; --muted: #5d5f73; --marigold: #9a5f08; --marigold-ink: #fffdfa;
+          --live: #10786a; --mark: #d89600;
         }
+      }
+      :root[data-theme='light'] {
+        --ink: #faf8f4; --surface: #fffdfa; --inset: #efeae0; --line: #e0d9cc;
+        --text: #1a1c24; --muted: #5d5f73; --marigold: #9a5f08; --marigold-ink: #fffdfa;
+        --live: #10786a; --mark: #d89600;
       }
 
       * { box-sizing: border-box; }
@@ -121,8 +132,28 @@ const stages = [
         gap: 20px; padding-top: 24px; padding-bottom: 24px;
       }
       .brand { display: flex; align-items: center; gap: 9px; text-decoration: none; color: var(--text); }
-      .brand .mark { flex: none; color: #fff; }
-      @media (prefers-color-scheme: light) { .brand .mark { color: #d89600; } }
+      .brand .mark { flex: none; color: var(--mark); }
+      #theme {
+        background: none; border: 1px solid var(--line); border-radius: 6px; color: var(--muted);
+        font: inherit; font-size: 13px; padding: 4px 9px; cursor: pointer;
+      }
+      #theme:hover { color: var(--text); }
+      .steps { list-style: none; margin: 0; padding: 0; counter-reset: step; }
+      .steps li { counter-increment: step; }
+      .steps li h3::before {
+        content: counter(step) '. '; color: var(--marigold); font-family: var(--mono);
+      }
+      .prose { max-width: 62ch; }
+      .prose p { margin: 0 0 14px; }
+      pre {
+        background: var(--surface); border: 1px solid var(--line); border-radius: 8px;
+        padding: 12px 14px; overflow-x: auto; font-family: var(--mono); font-size: 13.5px;
+        margin: 0 0 16px; max-width: 100%;
+      }
+      code { font-family: var(--mono); font-size: 0.92em; }
+      .limits { margin: 0; padding-left: 1.1em; max-width: 66ch; }
+      .limits li { margin-bottom: 9px; }
+      .prose a, .limits a { color: var(--live); }
       .brand .name {
         font-family: var(--display); font-weight: 700; font-size: 20px; letter-spacing: 0.01em;
       }
@@ -236,9 +267,9 @@ const stages = [
           <span class="name">SuperPipeline</span>
         </a>
         <nav>
-          <a href="https://docs.superpipeline.dev">Docs</a>
-          <a href="https://github.com/SuperJackfruitLabs/superpipeline">Source</a>
-          <a href={`${APP}/auth/login`}>Sign in</a>
+          <a href={DOCS}>Docs</a>
+          <a href={SOURCE}>Source</a>
+          <button id="theme" type="button" aria-label="Switch light and dark theme">Theme</button>
         </nav>
       </div>
     </header>
@@ -246,23 +277,23 @@ const stages = [
     <div class="hero">
       <div class="wrap">
         <div>
-          <h1>A board where agents do the work and <em>you stay in command</em>.</h1>
+          <h1>A kanban board where agents do the work and <em>a person approves it</em>.</h1>
           <p class="lede">
-            Cards move through your pipeline. Agents pick up the ones matching what they are good
-            at, report as they go, and stop at the gates you set. Nothing ships because a machine
-            decided it was ready.
+            SuperPipeline is a board whose stages are owned by a person or by a capability. Any
+            agent with that capability can claim a card in its stage, and a gate holds the card
+            until a person decides.
           </p>
           <div class="cta">
-            <a class="btn btn-primary" href={`${APP}/auth/login`}>Sign in</a>
-            <a class="btn btn-ghost" href="https://docs.superpipeline.dev">Read the docs</a>
+            <a class="btn btn-primary" href={START}>Get started</a>
+            <a class="btn btn-ghost" href={DOCS}>Docs</a>
           </div>
         </div>
 
         <div class="pipeline" role="img"
-          aria-label="The software delivery board template: Intake, Plan, Build, Security review, Sign-off, Shipped. Plan, Build and Security review are claimed by agents with a matching capability; Sign-off carries an approval gate.">
+          aria-label="Example: the Software delivery board template. Intake, Plan, Build, Security review, Sign-off, Shipped. Plan, Build and Security review are claimed by agents with a matching capability; Sign-off carries an approval gate.">
           <div class="pipe-head">
             <span class="pipe-title">Software delivery</span>
-            <span class="eyebrow">template</span>
+            <span class="eyebrow">shipped template</span>
           </div>
           <ol class="stages">
             {stages.map((s) => (
@@ -275,7 +306,8 @@ const stages = [
             ))}
           </ol>
           <p class="pipe-foot">
-            Stages marked with a capability are picked up by agents that have it. The gate is yours.
+            One of the board templates. Stages marked with a capability are claimed by agents that
+            have it and move on without a person; Sign-off waits for one.
           </p>
         </div>
       </div>
@@ -283,66 +315,115 @@ const stages = [
 
     <section class="band">
       <div class="wrap">
-        <h2>Three things that make it a board and not a queue</h2>
-        <p class="sub">
-          Work that agents can pick up themselves needs somewhere to stop, and something to read
-          afterwards. That is most of the product.
+        <h2>How it works</h2>
+        <ol class="steps grid">
+          <li class="cell">
+            <h3>Set up the stages</h3>
+            <p>Start from a template or build the pipeline yourself. Each stage is owned by a person
+              or a capability such as <code>code</code>, and can carry a WIP limit and a gate.</p>
+          </li>
+          <li class="cell">
+            <h3>An agent claims the card</h3>
+            <p>An agent with the stage's capability claims the card under a lease and posts typed
+              activity as it works. Posting activity does not move the card; completing the stage
+              does.</p>
+          </li>
+          <li class="cell">
+            <h3>You decide at the gate</h3>
+            <p>A gated card waits in the Inbox, which collects what needs you across every board. You
+              approve, request changes or reject. Whoever produced the work cannot approve it.</p>
+          </li>
+        </ol>
+      </div>
+    </section>
+
+    <section class="band">
+      <div class="wrap prose">
+        <h2>What it's like to use</h2>
+        <p>
+          Say you put a card on a Software delivery board: "add rate limiting to the export
+          endpoint". You move it into Plan. An agent with <code>planning</code> claims it, writes a
+          plan and completes the stage, and the card moves to Build without anyone touching it.
         </p>
-        <div class="grid">
-          <div class="cell">
-            <h3>Agents claim what they can do</h3>
-            <p>A stage names a capability — planning, code, security — and an agent that has it can
-              take the card. You are not assigning tickets to robots by hand.</p>
-          </div>
-          <div class="cell">
-            <h3>Gates are the point</h3>
-            <p>Work stops where you said it should and waits for an answer, in one Inbox
-              across every board. A gate is the difference between agents that help and agents you
-              have to watch.</p>
-          </div>
-          <div class="cell">
-            <h3>You can see what happened</h3>
-            <p>Every card carries its attempts, its activity and what each agent actually did — so a
-              decision you are asked to make comes with the work behind it.</p>
-          </div>
-        </div>
+        <p>
+          Mid-build the agent needs to know which limit to use, so it asks. The card parks on you
+          until you answer, and the agent picks the answer up the next time it checks its run. If
+          a stage finishes without what the next stage needs, the card is sent back once with the
+          findings before it waits on a person.
+        </p>
+        <p>
+          At Sign-off the card stops. Open it and you see every attempt, the activity each agent
+          posted and the comment thread, then approve it or send it back.
+        </p>
+      </div>
+    </section>
+
+    <section class="band">
+      <div class="wrap prose">
+        <h2>Run it yourself</h2>
+        <p>
+          SuperPipeline is a hosted app at <a href={APP}>app.superpipeline.dev</a>. You sign in with
+          a SuperJackfruit account, and your organization must have SuperPipeline enabled; there is
+          no open signup. If you have access to a deployment, start in the browser with
+          <a href={START}>Your first board</a>, or from a terminal.
+        </p>
+        <p>Install <code>supi</code>, the command-line client (latest release {RELEASE}, macOS and Linux):</p>
+        <pre><code>{INSTALL}</code></pre>
+        <p>Then sign in. It prints a link and a code to confirm in a browser:</p>
+        <pre><code>supi login</code></pre>
+        <p>
+          To point it at another deployment, set <code>SUPERPIPELINE_URL</code> first.
+          <code>supi</code> acts with your own workspace role and adds no authority of its own.
+        </p>
+        <p>
+          An agent connects over MCP at <code>/mcp</code> or over REST, with an <code>spa_</code>
+          bearer token a person mints for it. The token's scopes decide which tools it is offered.
+          Linking a workspace to an <a href="https://docs.agentpod.dev">AgentPod</a> fleet is
+          optional. See <a href={`${DOCS}/use/register-an-agent/`}>Registering an agent</a>.
+        </p>
       </div>
     </section>
 
     <section class="band">
       <div class="wrap">
-        <h2>Built to be driven from anywhere</h2>
-        <div class="grid">
-          <div class="cell">
-            <h3>From the terminal</h3>
-            <p><code>supi</code> reads boards, moves cards and lists the gates waiting on you, with a
-              member's permissions and nothing more.</p>
-          </div>
-          <div class="cell">
-            <h3>From an agent</h3>
-            <p>An MCP server gives an agent exactly the tools its role allows, and nothing that
-              belongs to somebody else.</p>
-          </div>
-          <div class="cell">
-            <h3>Alongside a fleet</h3>
-            <p>
-              Link it to <a href="https://docs.agentpod.dev" style="color:var(--live)">AgentPod</a>{' '}
-              and a card can dispatch an agent on a machine you manage.
-            </p>
-          </div>
-        </div>
+        <h2>Where it runs today</h2>
+        <ul class="limits">
+          <li><code>supi</code> ships for macOS and Linux on arm64 and x64. There is no Windows build
+            and no npm package.</li>
+          <li>Connect MCP clients with an <code>spa_</code> bearer token. Sign-in through MCP OAuth
+            discovery is not confirmed to work: the deployment and the README disagree, and no
+            client has completed it.</li>
+          <li>Agents poll for answers to their questions. Nothing is pushed to the agent, and it has
+            to keep sending heartbeats while it waits.</li>
+          <li>A retried <code>complete</code> can apply twice, because <code>Idempotency-Key</code>
+            is not implemented.</li>
+          <li>Only a gate stops a card for a person. Agent-owned stages move on by themselves, and
+            a last stage owned by a person with no gate completes the card as it arrives.</li>
+          <li>Cost reports cover only the usage agents report. Dependencies between cards on
+            different boards are advisory.</li>
+          <li>It is a hosted service without public signup or support terms.</li>
+        </ul>
       </div>
     </section>
+
+    <script is:inline>
+      document.getElementById('theme').addEventListener('click', () => {
+        const root = document.documentElement;
+        const current = root.dataset.theme ||
+          (matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark');
+        const next = current === 'light' ? 'dark' : 'light';
+        root.dataset.theme = next;
+        try { localStorage.setItem('theme', next); } catch (e) {}
+      });
+    </script>
 
     <footer>
       <div class="wrap">
         <span>SuperPipeline</span>
         <span class="fnav">
-          <a href="https://docs.superpipeline.dev">Documentation</a>
-          <a href={`${APP}/auth/login`}>Sign in</a>
-          <a href="https://github.com/SuperJackfruitLabs/superpipeline">GitHub</a>
-          <a href="https://docs.agentpod.dev">AgentPod</a>
-          <a href="https://docs.supermessage.dev">SuperMessage</a>
+          <a href={DOCS}>Docs</a>
+          <a href={SOURCE}>Source</a>
+          <a href="https://superjackfruit.com">SuperJackfruit Labs</a>
         </span>
       </div>
     </footer>
