@@ -107,6 +107,8 @@ export interface RunContext {
     outcome: string | null;
     startedAt: string;
     endedAt: string | null;
+    handoff: unknown;
+    completion: unknown;
   };
   card: { id: string; title: string; spec: unknown; currentStageKey: string; state: string };
   stage: { key: string; name: string } | null;
@@ -148,7 +150,15 @@ export interface ElicitationOption {
  * rather than re-claiming. `cancelled` means the question outlived its run or its card and will
  * never be answered — stop waiting.
  */
+export interface StrictDecision {
+  version: 1;
+  request_id: string;
+  decision_digest: string;
+  expires_at: number;
+}
+
 export interface Elicitation {
+  strictDecision?: StrictDecision;
   id: string;
   cardId: string;
   runId: string;
@@ -163,6 +173,7 @@ export interface Elicitation {
 }
 
 export interface AgentActivity {
+  strictDecision?: StrictDecision;
   type: 'thought' | 'action' | 'response' | 'elicitation' | 'error';
   body?: string;
   action?: string;

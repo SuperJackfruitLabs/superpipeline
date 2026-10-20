@@ -356,3 +356,25 @@ describe('who may read the questions still waiting', () => {
     expect(elicitations).toHaveLength(1);
   });
 });
+
+
+it('round trips strict correlation through authenticated REST and deduplicates a lost response', async () => {
+  const tenantId = 'tnt_strict_wire';
+  const boardId = await createBoard(tenantId);
+  await addCard(tenantId, boardId, 'Exact work');
+  const agent = await connectAgent(tenantId, ['research'], 'Strict researcher');
+  const claimResponse = await SELF.fetch(`${base}/v1/boards/${boardId}/claims`, { method: 'POST', headers: agentAuth(agent.token), body: '{}' });
+  const claim = await claimResponse.json() as { runId: string; leaseEpoch: number };
+  const strictDecision = { version: 1, request_id: crypto.randomUUID(), decision_digest: 'c'.repeat(64), expires_at: Date.now() + 60000 };
+  const input = { leaseEpoch: claim.leaseEpoch, type: 'elicitation', signal: 'select', body: 'Exact edit?', parameter: { options: [{ name: 'approve', title: 'Approve' }, { name: 'deny', title: 'Deny' }] }, strictDecision };
+  const post = (body: unknown) => SELF.fetch(`${base}/v1/boards/${boardId}/runs/${claim.runId}/activities`, { method: 'POST', headers: agentAuth(agent.token), body: JSON.stringify(body) });
+  const first = await post(input);
+  expect(first.status).toBe(200);
+  const receipt = await first.json() as { activity: { elicitationId: string; strictDecision: unknown } };
+  expect(receipt.activity.strictDecision).toEqual(strictDecision);
+  expect(await (await post(input)).json()).toEqual(receipt);
+  expect((await post({ ...input, body: 'Changed edit?' })).status).toBe(409);
+  const read = await pollRun(boardId, claim.runId, agent.token);
+  expect(read.elicitations).toHaveLength(1);
+  expect(read.elicitations[0]).toMatchObject({ id: receipt.activity.elicitationId, strictDecision });
+});

@@ -252,3 +252,24 @@ describe('agent read surface — GET /v1/boards/:id/runs/:runId', () => {
     expect(created.status).toBe(403);
   });
 });
+
+
+it('recovers an original complete response after later runs replace the card handoff', async () => {
+  const tenantId = 'tnt_original_receipt';
+  const boardId = await createBoard(tenantId);
+  const cardId = await addCard(tenantId, boardId, 'Two immutable receipts');
+  const firstAgent = await connectAgent(tenantId, ['research'], 'First');
+  const secondAgent = await connectAgent(tenantId, ['build'], 'Second');
+  const first = await claim(boardId, firstAgent.token);
+  const handoff = { summary: 'first result', verifiedDigest: 'a'.repeat(64) };
+  const complete = () => SELF.fetch(`${base}/v1/boards/${boardId}/runs/${first.runId}/complete`, { method: 'POST', headers: auth(firstAgent.token), body: JSON.stringify({ leaseEpoch: first.leaseEpoch, outcome: 'pass', handoff }) });
+  expect((await complete()).status).toBe(200); // Simulate losing this successful response.
+  const second = await claim(boardId, secondAgent.token);
+  expect((await SELF.fetch(`${base}/v1/boards/${boardId}/runs/${second.runId}/complete`, { method: 'POST', headers: auth(secondAgent.token), body: JSON.stringify({ leaseEpoch: second.leaseEpoch, outcome: 'pass', handoff: { summary: 'later result' } }) })).status).toBe(200);
+  const retry = await complete();
+  expect(retry.status).toBe(409);
+  expect(await retry.json()).toMatchObject({ error: { code: 'STALE_LEASE' } });
+  const recovered = await (await readRun(boardId, first.runId, firstAgent.token)).json();
+  expect(recovered).toMatchObject({ run: { runId: first.runId, cardId, stageKey: 'research', leaseEpoch: first.leaseEpoch, status: 'ended', outcome: 'completed', handoff, completion: { met: true, outcome: 'pass' } }, handoff: { summary: 'later result' } });
+  expect((await readRun(boardId, first.runId, secondAgent.token)).status).toBe(403);
+});

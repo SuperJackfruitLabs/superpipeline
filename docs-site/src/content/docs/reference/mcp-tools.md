@@ -146,6 +146,7 @@ Stream a typed activity (thought/action/response/elicitation/error) onto the run
 | `runId` | string | yes |
 | `leaseEpoch` | integer (≥ 0) | yes |
 | `type` | one of `thought`, `action`, `response`, `elicitation`, `error` | yes |
+| `strictDecision` | object { version, request_id, decision_digest, expires_at } | no |
 | `ephemeral` | boolean | no |
 | `body` | string | no |
 | `action` | string | no |
