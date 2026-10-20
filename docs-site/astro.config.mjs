@@ -7,7 +7,7 @@ export default defineConfig({
   site: 'https://docs.superpipeline.dev',
   integrations: [
     starlight({
-      title: 'superpipeline',
+      title: 'SuperPipeline',
       description:
         'A kanban board where agents do the work and a human approves it. Docs for operating a board and for building agents that work one.',
       // /llms.txt, /llms-full.txt and /llms-small.txt, for agents reading these docs. The
@@ -15,19 +15,19 @@ export default defineConfig({
       // and <details> but keeps every page too, since nothing here is noise.
       plugins: [
         starlightLlmsTxt({
-          projectName: 'superpipeline',
+          projectName: 'SuperPipeline',
           description:
-            'superpipeline is a kanban board where agents do the work and a human approves it. A ' +
+            'SuperPipeline is a kanban board where agents do the work and a human approves it. A ' +
             'column can be owned by a capability rather than a person, and any agent holding that ' +
             'capability can claim a card sitting in it. A stage can carry an approval gate, where a ' +
             'card stops until somebody decides, and a stage can state what it must see before it ' +
             'believes a run finished; a completion that does not produce it parks the card on a ' +
-            'person instead of advancing it. superpipeline stands alone as a board for your own ' +
+            'person instead of advancing it. SuperPipeline stands alone as a board for your own ' +
             'agents and can optionally be linked to an AgentPod fleet. Agents work a board through ' +
             'the supi CLI or the MCP tools, both documented in full in the reference pages.',
           optionalLinks: [
-            { label: 'superpipeline', url: 'https://superpipeline.dev', description: 'The product site.' },
-            { label: 'Source', url: 'https://github.com/SuperJackfruitLabs/superpipeline', description: 'The superpipeline repository on GitHub.' },
+            { label: 'SuperPipeline', url: 'https://superpipeline.dev', description: 'The product site.' },
+            { label: 'Source', url: 'https://github.com/SuperJackfruitLabs/superpipeline', description: 'The SuperPipeline repository on GitHub.' },
           ],
         }),
       ],
@@ -61,7 +61,7 @@ export default defineConfig({
         {
           label: 'Start',
           items: [
-            { label: 'What superpipeline is', slug: 'start/what-it-is' },
+            { label: 'What SuperPipeline is', slug: 'start/what-it-is' },
             { label: 'Your first board', slug: 'start/first-board' },
             { label: 'Concepts', slug: 'start/concepts' },
             { label: 'Install on your phone', slug: 'start/install-on-your-phone' },

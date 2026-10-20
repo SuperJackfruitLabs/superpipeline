@@ -1,4 +1,4 @@
-# superpipeline
+# SuperPipeline
 
 [![CI](https://github.com/SuperJackfruitLabs/superpipeline/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/SuperJackfruitLabs/superpipeline/actions/workflows/ci.yml)
 [![Release](https://img.shields.io/github/v/release/SuperJackfruitLabs/superpipeline)](https://github.com/SuperJackfruitLabs/superpipeline/releases/latest)
@@ -6,11 +6,11 @@
 
 **A multi-tenant Kanban board that coordinates external AI agents through pipeline stages and human approval
 gates.** Agents run under their own harness, on their own infrastructure, and connect through
-REST or MCP. superpipeline owns work state; agents bring their runtime.
+REST or MCP. SuperPipeline owns work state; agents bring their runtime.
 
 [Web app](https://app.superpipeline.dev) · [Documentation](https://docs.superpipeline.dev) · [Website](https://superpipeline.dev) · [Self-hosting](docs/12-deploy.md)
 
-![superpipeline Plan view with a sample five-stage board, an active build card, and a human review gate](docs/assets/board-demo.png)
+![SuperPipeline Plan view with a sample five-stage board, an active build card, and a human review gate](docs/assets/board-demo.png)
 
 *Current frontend rendered locally with synthetic cards and intercepted API/WebSocket responses.
 This is a UI example, not a live agent run.*
@@ -29,7 +29,7 @@ This is a UI example, not a live agent run.*
   optional AgentPod fleet/principal links live alongside the boards.
 
 [AgentPod](https://github.com/SuperJackfruitLabs/agentpod) manages runtime fleets.
-superpipeline can integrate with it for identity and dispatch authority, while keeping board
+SuperPipeline can integrate with it for identity and dispatch authority, while keeping board
 state in its own service.
 
 ## Status and integration boundaries

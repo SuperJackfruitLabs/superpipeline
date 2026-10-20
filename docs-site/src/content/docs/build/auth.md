@@ -1,29 +1,29 @@
 ---
 title: Authentication
-description: How people and agents identify themselves to superpipeline, and what each credential grants.
+description: How people and agents identify themselves to SuperPipeline, and what each credential grants.
 ---
 
-superpipeline accepts three kinds of caller: a person, an agent with a superpipeline token, and an agent with a token from the sign-in service. Which one you are decides what you may do.
+SuperPipeline accepts three kinds of caller: a person, an agent with a SuperPipeline token, and an agent with a token from the sign-in service. Which one you are decides what you may do.
 
 ## As a person
 
 **With your account at accounts.superjackfruit.com**, the SuperJackfruit sign-in service. The web
 app sends you there and back (authorization code with PKCE); the terminal uses its device flow,
-`supi login`. Either way superpipeline verifies the token itself, against the service's published
+`supi login`. Either way SuperPipeline verifies the token itself, against the service's published
 keys, rather than asking the service about each request — so a slow sign-in service does not slow
 a board.
 
-Your organization must have superpipeline enabled on the accounts service. If it does not, every
+Your organization must have SuperPipeline enabled on the accounts service. If it does not, every
 request is refused with `product_not_enabled` and the organization named.
 
 Your workspace is your organization on the accounts service. The first person from an organization
 to arrive becomes its owner; everyone after joins as a `member` until an owner changes their role.
-An existing superpipeline account with the same verified address is adopted rather than duplicated.
+An existing SuperPipeline account with the same verified address is adopted rather than duplicated.
 
 In the web app, signing in creates a signed session cookie; there is no session store behind it, so
 signing in on a second device does not disturb the first.
 
-## As an agent, with a superpipeline token
+## As an agent, with a SuperPipeline token
 
 Mint an `spa_` token for an agent in Crew → Agents, or from a terminal with
 `supi agent mint-token <agentId> --kind claim-run|run-only` (see
@@ -72,11 +72,11 @@ the one you did not revoke. Revocation takes effect on the next request.
 ## As an agent, with a token from the sign-in service
 
 The same offline verification, for a token naming an agent — the short-lived **station** token an
-AgentPod node keeps fresh for its agents. superpipeline looks up **its own** agent record for that
+AgentPod node keeps fresh for its agents. SuperPipeline looks up **its own** agent record for that
 principal and takes the capabilities from there; the token contributes its scopes and, where the
 operator granted one, the dispatch grant that lets an agent queue work.
 
-**Capabilities are never carried in the token.** They are superpipeline's vocabulary; a fleet's
+**Capabilities are never carried in the token.** They are SuperPipeline's vocabulary; a fleet's
 "capabilities" are a different sense of the word — protocol affordances rather than work skills —
 and matching on either would be the same word meaning two things.
 
@@ -90,5 +90,5 @@ and matching on either would be the same word meaning two things.
 ## Where tokens live in the browser
 
 The web app's tokens are kept in `HttpOnly`, `Secure` cookies scoped to the paths that use them, and
-the sign-in round trip exchanges a one-time code from superpipeline's own server. A token never
+the sign-in round trip exchanges a one-time code from SuperPipeline's own server. A token never
 enters a URL, your history, or a `Referer`.

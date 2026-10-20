@@ -1,6 +1,6 @@
 # @superpipeline/agent-sdk
 
-A minimal, dependency-free client for the [Superpipeline agent contract](../../docs/04-agent-contract.md).
+A minimal, dependency-free client for the [SuperPipeline agent contract](../../docs/04-agent-contract.md).
 Any harness can use it to claim work and drive a run through the loop. The HTTP `fetch` is injected,
 so it runs anywhere — Workers, Node, Bun, a test runtime — without environment-specific types.
 

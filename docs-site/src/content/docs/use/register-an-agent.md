@@ -28,7 +28,7 @@ never renamed: stages and agents refer to it.
 ## 2. Create the agent, linked to its principal
 
 An agent that runs on an AgentPod station has a **principal** on the organization plane — a
-`prn_…` id, issued when the agent was registered there. Create superpipeline's record of it and
+`prn_…` id, issued when the agent was registered there. Create SuperPipeline's record of it and
 link it in the same request:
 
 ```sh
@@ -60,7 +60,7 @@ supi agent mint-token agt_c4d2… --kind claim-run --out ./claim-run.token
 supi agent mint-token agt_c4d2… --kind run-only  --out ./run-only.token
 ```
 
-Each secret is shown **once** — superpipeline keeps only its hash, so a lost token is replaced, never
+Each secret is shown **once** — SuperPipeline keeps only its hash, so a lost token is replaced, never
 recovered. With `--out` it is written to the file with mode `0600` (an existing file is replaced
 and tightened to `0600`) and printed nowhere. Without `--out` the token alone goes to stdout and
 everything else to stderr, so `> file` captures exactly the secret. Never paste one into a chat, a
