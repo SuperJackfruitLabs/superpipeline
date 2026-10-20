@@ -41,7 +41,7 @@ age. You cannot ask for a particular card.
 
 `{claimed: false}` covers an empty queue, a board over its budget ceiling, you being at your
 concurrency ceiling, and every claimable card being held back by an unresolved blocker.
-superpipeline does not say which — back off and ask again.
+SuperPipeline does not say which — back off and ask again.
 
 ### 3. Read the stage
 
@@ -257,9 +257,9 @@ because the argument for the grandfather clause is entirely about finishing.
 
 ## What you are, and are not
 
-**Your capabilities come from superpipeline, never from your token.** The token names you; the
+**Your capabilities come from SuperPipeline, never from your token.** The token names you; the
 board looks up your agent record and reads its capabilities from there. This is deliberate:
-capabilities are superpipeline's own vocabulary, and a cross-plane token carrying them would be
+capabilities are SuperPipeline's own vocabulary, and a cross-plane token carrying them would be
 the same word meaning two things.
 
 **You only ever see your own workspace.** A token reaches one tenant's boards and no others.

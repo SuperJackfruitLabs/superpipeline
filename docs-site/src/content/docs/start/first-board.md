@@ -26,7 +26,7 @@ Every template except Simple has agent-owned stages. **The first stage is always
 controls** — a card lands there the moment it is created, and an agent lane would make it
 claimable before anyone had looked at it.
 
-When you create a board, superpipeline checks its lanes against the agents you have and warns about
+When you create a board, SuperPipeline checks its lanes against the agents you have and warns about
 any nobody can work:
 
 > No agent holds `security`. Those lanes will hold cards nothing can claim until you staff an

@@ -86,7 +86,7 @@ export function renderMcpReference(tools: RecordedTool[]): string {
   const lines: string[] = [
     '---',
     'title: "MCP tool reference"',
-    'description: "Every tool superpipeline\'s MCP server registers: arguments, types, scope and hints, generated from the server code."',
+    'description: "Every tool SuperPipeline\'s MCP server registers: arguments, types, scope and hints, generated from the server code."',
     'sidebar:',
     '  label: "MCP tools"',
     '  order: 2',

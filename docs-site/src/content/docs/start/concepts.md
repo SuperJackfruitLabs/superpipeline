@@ -1,6 +1,6 @@
 ---
 title: Concepts
-description: The things superpipeline is made of, and how they relate.
+description: The things SuperPipeline is made of, and how they relate.
 ---
 
 Thirteen nouns. If you know kanban most of them are familiar; the three that are not are
@@ -8,7 +8,7 @@ Thirteen nouns. If you know kanban most of them are familiar; the three that are
 
 ## Board
 
-A pipeline plus its cards. Everything in superpipeline happens on a board, and a board is the unit of
+A pipeline plus its cards. Everything in SuperPipeline happens on a board, and a board is the unit of
 isolation — cards, runs and gates never cross one.
 
 ## Stage

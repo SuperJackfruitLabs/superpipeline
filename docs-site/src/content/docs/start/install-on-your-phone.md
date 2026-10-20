@@ -1,9 +1,9 @@
 ---
 title: Install on your phone
-description: Put superpipeline on your home screen so it opens like an app.
+description: Put SuperPipeline on your home screen so it opens like an app.
 ---
 
-superpipeline can be added to a phone's home screen. It opens full screen, without the browser's
+SuperPipeline can be added to a phone's home screen. It opens full screen, without the browser's
 address bar and toolbars, from its own icon. It is the same web app: nothing is cached for offline
 use, and every screen loads live from app.superpipeline.dev.
 

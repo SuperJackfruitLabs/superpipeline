@@ -8,7 +8,7 @@ sidebar:
 
 <!-- Generated from packages/cli/src/commands.ts by `pnpm -F @superpipeline/cli reference`. Do not edit by hand: CI fails when this file differs from what the generator writes. -->
 
-`supi` is superpipeline from a terminal; `superpipeline` is the same program under its full name. These pages are generated from the table the CLI's own `supi help` is printed from, so the two cannot disagree. For a guided tour rather than a reference, see [From the terminal](/use/cli/).
+`supi` is SuperPipeline from a terminal; `superpipeline` is the same program under its full name. These pages are generated from the table the CLI's own `supi help` is printed from, so the two cannot disagree. For a guided tour rather than a reference, see [From the terminal](/use/cli/).
 
 ```sh
 supi <verb> [<sub-verb>] [<arguments>] [--flags] [--json]
@@ -156,7 +156,7 @@ Credentials live under the platform config directory — `$XDG_CONFIG_HOME` (or 
 | `SUPERPIPELINE_AGENT_TOKEN` | `supi` | an agent credential: an `spa_…` token, or an agent JWT. A person's token here is refused by its kind |
 | `SUPERPIPELINE_TOKEN` | `supi` | a person's token, used as supplied: never renewed, never replaced. An `spa_` token here is refused — it belongs in `SUPERPIPELINE_AGENT_TOKEN` |
 | `AGENTPOD_TOKEN` | `supi` | a person's AgentPod hub token, used as supplied. Only a server still verifying hub tokens accepts it; app.superpipeline.dev refuses it, so do not export it into a shell that runs `supi` — it outranks `supi login` and every command would answer 401 |
-| `SUPERPIPELINE_URL` | `supi` | the superpipeline server to talk to. Default `https://app.superpipeline.dev`. It changes where commands go and which audience a token is requested for, never where a device credential is sent |
+| `SUPERPIPELINE_URL` | `supi` | the SuperPipeline server to talk to. Default `https://app.superpipeline.dev`. It changes where commands go and which audience a token is requested for, never where a device credential is sent |
 | `XDG_CONFIG_HOME` | `supi` | Linux: the config directory credentials live under (default `~/.config`) |
 | `APPDATA` | `supi` | Windows: the config directory credentials live under |
 | `BIN_DIR` | the installer | where the installer puts `supi` and `superpipeline` (default `~/.local/bin`) |
