@@ -56,7 +56,7 @@ supi logout
 
 **Who may run it**
 
-Local: sends no credential to superpipeline.
+Local: sends no credential to SuperPipeline.
 
 **Prints** `Signed out on this machine.`.
 
@@ -72,7 +72,7 @@ supi logout
 
 ## `supi whoami`
 
-Resolves the credential exactly as every other command would and prints what it says about itself: the principal, its kind (`human` or `agent`), the server, where the credential came from, and when it expires. It reads the token's claims without verifying them and makes no call to superpipeline, so a `whoami` that looks right does not prove the server will accept the token — `supi boards` does. Resolving may exchange a stored device credential for a fresh token, which is a call to the sign-in service.
+Resolves the credential exactly as every other command would and prints what it says about itself: the principal, its kind (`human` or `agent`), the server, where the credential came from, and when it expires. It reads the token's claims without verifying them and makes no call to SuperPipeline, so a `whoami` that looks right does not prove the server will accept the token — `supi boards` does. Resolving may exchange a stored device credential for a fresh token, which is a call to the sign-in service.
 
 An `spa_` agent token is opaque and carries no principal; `whoami` says so rather than failing.
 
@@ -84,7 +84,7 @@ supi whoami
 
 - **An agent token:** any; no scope is checked.
 
-Needs a credential, but sends it only to the sign-in service, never to superpipeline.
+Needs a credential, but sends it only to the sign-in service, never to SuperPipeline.
 
 **Prints** `principal`, `kind`, `superpipeline`, `token from`, `expires`; with `--json`, an object with the same fields.
 
@@ -114,7 +114,7 @@ supi help [<verb> [<sub-verb>]]
 
 **Who may run it**
 
-Local: sends no credential to superpipeline.
+Local: sends no credential to SuperPipeline.
 
 **Prints** help text.
 
@@ -140,7 +140,7 @@ supi version
 
 **Who may run it**
 
-Local: sends no credential to superpipeline.
+Local: sends no credential to SuperPipeline.
 
 **Prints** `supi <version> <platform>/<arch>`.
 
@@ -172,7 +172,7 @@ supi skill [install [--dir <dir>]]
 
 **Who may run it**
 
-Local: sends no credential to superpipeline.
+Local: sends no credential to SuperPipeline.
 
 **Prints** the skill text; with `install`, `Installed the skill: <path>`, or with `--json` `{ path, version }`.
 

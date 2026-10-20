@@ -218,7 +218,7 @@ export function registerSuperpipelineTools(server: McpServer, deps: ToolDeps): v
         'Attach a first-class external reference (GitHub PR/issue, repo, doc, or any url) to a card. ' +
         'Idempotent on (card, url); a bare GitHub url is auto-recognized into provider/sourceType/externalId. ' +
         'Attribution is automatic: a reference you attach while working a card is recorded against YOUR run, ' +
-        'so the card can show what each stage produced. There is no url for a local file — superpipeline ' +
+        'so the card can show what each stage produced. There is no url for a local file — SuperPipeline ' +
         'stores no content, so publish the document first and reference where it landed.',
       inputSchema: {
         boardId: z.string(),

@@ -1,6 +1,6 @@
 ---
 title: "MCP tool reference"
-description: "Every tool superpipeline's MCP server registers: arguments, types, scope and hints, generated from the server code."
+description: "Every tool SuperPipeline's MCP server registers: arguments, types, scope and hints, generated from the server code."
 sidebar:
   label: "MCP tools"
   order: 2
@@ -71,7 +71,7 @@ Read the run you hold — its lease epoch, its card, its stage and the prior sta
 
 ## superpipeline_add_reference
 
-Attach a first-class external reference (GitHub PR/issue, repo, doc, or any url) to a card. Idempotent on (card, url); a bare GitHub url is auto-recognized into provider/sourceType/externalId. Attribution is automatic: a reference you attach while working a card is recorded against YOUR run, so the card can show what each stage produced. There is no url for a local file — superpipeline stores no content, so publish the document first and reference where it landed.
+Attach a first-class external reference (GitHub PR/issue, repo, doc, or any url) to a card. Idempotent on (card, url); a bare GitHub url is auto-recognized into provider/sourceType/externalId. Attribution is automatic: a reference you attach while working a card is recorded against YOUR run, so the card can show what each stage produced. There is no url for a local file — SuperPipeline stores no content, so publish the document first and reference where it landed.
 
 **Scope** `run`. **Hints** writes, idempotent.
 

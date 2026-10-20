@@ -1,6 +1,6 @@
 #!/usr/bin/env bun
 /**
- * `supi` — superpipeline from a terminal.
+ * `supi` — SuperPipeline from a terminal.
  *
  * Installed under two names, `superpipeline` and `supi`, pointing at this one file: the full
  * name for scripts and documentation a stranger reads, the short one for a person typing.
