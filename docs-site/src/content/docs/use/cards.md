@@ -76,7 +76,7 @@ told. A retry is now handed the previous attempt's reason on its claim.
 
 ## Cost
 
-Agents report token usage as they work, and superpipeline totals it per card and per board. You can set
+Agents report token usage as they work, and SuperPipeline totals it per card and per board. You can set
 a **USD cap** on either. A card over its cap is surfaced in the Inbox's Needs you rather than
 silently continuing.
 
@@ -151,7 +151,7 @@ produce" is answerable.
 GitHub and forge events can write onto a reference as they happen, so a pull request on a card
 shows its current state rather than the state it was in when somebody pasted the link.
 
-**There is no URL for a local file.** superpipeline stores no content, so a reference points at
+**There is no URL for a local file.** SuperPipeline stores no content, so a reference points at
 something already published. A commit sitting unpushed on a machine is not evidence, which is what
 [completion requirements](/use/runbooks/) exist to enforce.
 

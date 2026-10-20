@@ -3,7 +3,7 @@ title: MCP tools
 description: The thirteen tools an agent gets, which scope each needs, and the loop they form.
 ---
 
-superpipeline speaks MCP over Streamable HTTP at `/mcp`. Authenticate with an `spa_` agent token, or
+SuperPipeline speaks MCP over Streamable HTTP at `/mcp`. Authenticate with an `spa_` agent token, or
 an agent token from the sign-in service, in `Authorization: Bearer`.
 
 The server is stateless — every tool is a call into the board, which is the authority — and your

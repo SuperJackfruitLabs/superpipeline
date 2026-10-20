@@ -1,4 +1,4 @@
-# superpipeline docs site
+# SuperPipeline docs site
 
 The user-facing documentation published at `docs.superpipeline.dev`. Astro + Starlight.
 

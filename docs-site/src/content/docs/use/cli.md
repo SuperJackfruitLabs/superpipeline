@@ -3,7 +3,7 @@ title: From the terminal
 description: supi — boards, cards, gates, links, projects, schedules and runbooks, without a browser.
 ---
 
-`supi` is superpipeline from a terminal. It is also installed as `superpipeline` — the same program
+`supi` is SuperPipeline from a terminal. It is also installed as `superpipeline` — the same program
 under its full name, for scripts that should read plainly. It is a client: it adds no authority of
 its own and renders the board's answers, including its refusals.
 
@@ -37,7 +37,7 @@ there.
 
 ## Signing in
 
-People sign in to superpipeline with their account at **accounts.superjackfruit.com** — the same
+People sign in to SuperPipeline with their account at **accounts.superjackfruit.com** — the same
 account the web app uses. From a terminal that is one command:
 
 ```sh
