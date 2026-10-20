@@ -161,28 +161,38 @@ const stages = [
       nav a { color: var(--muted); text-decoration: none; }
       nav a:hover { color: var(--text); }
 
-      .hero .wrap {
-        display: grid; grid-template-columns: 1fr 1fr; gap: 52px; align-items: center;
-        padding-top: 52px; padding-bottom: 78px;
+      /* container: max-width 1080, 24px side gutter; grid adds the vertical padding */
+      .hero .hero-grid {
+        max-width: 1080px; margin: 0 auto;
+        display: grid; grid-template-columns: minmax(0, 1fr) 500px; gap: 56px;
+        align-items: center; min-height: calc(100svh - 108px); padding: 56px 24px 72px;
       }
       h1 {
         font-family: var(--display); font-weight: 700;
-        font-size: clamp(2.2rem, 4.6vw, 3.4rem); line-height: 1.06;
-        letter-spacing: -0.03em; margin: 0 0 18px; text-wrap: balance;
+        font-size: clamp(40px, 4.6vw, 60px); line-height: 1.04;
+        letter-spacing: -0.02em; margin: 0; max-width: 12ch;
       }
       h1 em { font-style: normal; color: var(--marigold); }
-      .lede { color: var(--muted); font-size: 1.08rem; margin: 0 0 28px; max-width: 33em; }
+      .lede {
+        font-family: var(--body); color: var(--muted); font-size: 18px; line-height: 1.55;
+        max-width: 34em; margin: 20px 0 28px;
+      }
 
-      .cta { display: flex; gap: 11px; flex-wrap: wrap; }
+      .cta { display: flex; gap: 12px; flex-wrap: wrap; }
       .btn {
-        display: inline-flex; align-items: center; gap: 9px; border-radius: 7px;
-        padding: 11px 18px; font-size: 15px; font-weight: 600; text-decoration: none;
+        display: inline-flex; align-items: center; height: 46px; padding: 0 20px;
+        border-radius: 10px; font: 600 15px var(--body); text-decoration: none;
         border: 1px solid transparent;
       }
       .btn-primary { background: var(--marigold); color: var(--marigold-ink); }
       .btn-primary:hover { filter: brightness(1.08); }
-      .btn-ghost { border-color: var(--line); color: var(--text); }
+      .btn-ghost { background: transparent; border-color: var(--line); color: var(--text); }
       .btn-ghost:hover { border-color: var(--marigold); }
+
+      .demo { width: 500px; max-width: 100%; }
+      .demo-caption {
+        margin: 10px 0 0; font: 12px var(--mono); color: var(--muted);
+      }
 
       /* ── the pipeline: this page's signature ────────────────────── */
       .pipeline {
@@ -216,10 +226,6 @@ const stages = [
         text-transform: uppercase; color: var(--marigold);
       }
       .wip { font-family: var(--mono); font-size: 10px; color: var(--muted); }
-      .pipe-foot {
-        border-top: 1px solid var(--line); margin: 0; padding: 11px 15px;
-        font-size: 12.5px; color: var(--muted);
-      }
 
       section.band { border-top: 1px solid var(--line); }
       section.band .wrap { padding-top: 62px; padding-bottom: 62px; }
@@ -245,8 +251,11 @@ const stages = [
       footer a:hover { color: var(--text); }
       .fnav { display: flex; gap: 18px; flex-wrap: wrap; }
 
+      @media (max-width: 899px) {
+        .hero .hero-grid { grid-template-columns: 1fr; gap: 40px; min-height: auto; padding: 40px 24px 56px; }
+        .demo { width: 100%; }
+      }
       @media (max-width: 880px) {
-        .hero .wrap { grid-template-columns: 1fr; gap: 38px; padding-bottom: 54px; }
         .grid { grid-template-columns: 1fr; gap: 26px; }
       }
       @media (prefers-reduced-motion: reduce) {
@@ -274,10 +283,10 @@ const stages = [
       </div>
     </header>
 
-    <div class="hero">
-      <div class="wrap">
+    <section class="hero">
+      <div class="wrap hero-grid">
         <div>
-          <h1>A kanban board where agents do the work and <em>a person approves it</em>.</h1>
+          <h1>Agents do the work. <em>A person approves it.</em></h1>
           <p class="lede">
             SuperPipeline is a board whose stages are owned by a person or by a capability. Any
             agent with that capability can claim a card in its stage, and a gate holds the card
@@ -289,29 +298,28 @@ const stages = [
           </div>
         </div>
 
-        <div class="pipeline" role="img"
-          aria-label="Example: the Software delivery board template. Intake, Plan, Build, Security review, Sign-off, Shipped. Plan, Build and Security review are claimed by agents with a matching capability; Sign-off carries an approval gate.">
-          <div class="pipe-head">
-            <span class="pipe-title">Software delivery</span>
-            <span class="eyebrow">shipped template</span>
+        <figure class="demo" style="margin:0">
+          <div class="pipeline" role="img"
+            aria-label="Example: the Software delivery board template. Intake, Plan, Build, Security review, Sign-off, Shipped. Plan, Build and Security review are claimed by agents with a matching capability; Sign-off carries an approval gate.">
+            <div class="pipe-head">
+              <span class="pipe-title">Software delivery</span>
+              <span class="eyebrow">shipped template</span>
+            </div>
+            <ol class="stages">
+              {stages.map((s) => (
+                <li class:list={['stage', s.gate && 'gated']}>
+                  <span class="stage-name">{s.name}</span>
+                  <span class:list={['owner', s.kind === 'capability' ? 'cap' : 'human']}>{s.owner}</span>
+                  {s.gate && <span class="gate">gate</span>}
+                  {s.wip && <span class="wip">wip {s.wip}</span>}
+                </li>
+              ))}
+            </ol>
           </div>
-          <ol class="stages">
-            {stages.map((s) => (
-              <li class:list={['stage', s.gate && 'gated']}>
-                <span class="stage-name">{s.name}</span>
-                <span class:list={['owner', s.kind === 'capability' ? 'cap' : 'human']}>{s.owner}</span>
-                {s.gate && <span class="gate">gate</span>}
-                {s.wip && <span class="wip">wip {s.wip}</span>}
-              </li>
-            ))}
-          </ol>
-          <p class="pipe-foot">
-            One of the board templates. Stages marked with a capability are claimed by agents that
-            have it and move on without a person; Sign-off waits for one.
-          </p>
-        </div>
+          <figcaption class="demo-caption">Example: the Software delivery template. Capability stages are claimed by agents; Sign-off waits for a person.</figcaption>
+        </figure>
       </div>
-    </div>
+    </section>
 
     <section class="band">
       <div class="wrap">
