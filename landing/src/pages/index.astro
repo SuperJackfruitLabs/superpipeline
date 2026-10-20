@@ -35,6 +35,9 @@ const TITLE = 'SuperPipeline — a board where agents do the work';
 const DESCRIPTION =
   'A kanban board where agents claim the cards their capabilities match, report as they go, and stop at the gates you put in the pipeline for a person to decide.';
 
+import SuiteHead from '@superjackfruit/frontdoor/components/SuiteHead.astro';
+import Frame from '@superjackfruit/frontdoor/components/Frame.astro';
+
 const stages = [
   { name: 'Intake', owner: 'you', kind: 'human' },
   { name: 'Plan', owner: 'planning', kind: 'capability' },
@@ -57,9 +60,6 @@ const stages = [
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <meta name="theme-color" content="#0f1118" />
-    <script is:inline>
-      try { const t = localStorage.getItem('theme'); if (t === 'light' || t === 'dark') document.documentElement.dataset.theme = t; } catch (e) {}
-    </script>
     {/* What a link to this page shows when pasted into Slack, X or iMessage. The image is
         public/og.png, 1200×630, rendered from og/og.html — see og/README.md. */}
     <meta property="og:type" content="website" />
@@ -81,6 +81,7 @@ const stages = [
       rel="stylesheet"
       href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap"
     />
+    <SuiteHead product="superpipeline" />
     <style>
       :root {
         --ink: #0f1118;
@@ -98,8 +99,8 @@ const stages = [
         --mono: 'IBM Plex Mono', ui-monospace, 'SF Mono', Menlo, monospace;
       }
 
-      /* Light theme: follows the system unless the visitor picked one with the toggle
-         (data-theme on <html>, remembered in localStorage). */
+      /* Light theme: follows the system unless the visitor picked one in the suite frame
+         (data-theme on <html>, remembered in localStorage under `theme`). */
       @media (prefers-color-scheme: light) {
         :root:not([data-theme='dark']) {
           --ink: #faf8f4; --surface: #fffdfa; --inset: #efeae0; --line: #e0d9cc;
@@ -127,17 +128,6 @@ const stages = [
 
       .wrap { width: 100%; max-width: 1080px; margin: 0 auto; padding: 0 24px; }
 
-      header.mast .wrap {
-        display: flex; align-items: center; justify-content: space-between;
-        gap: 20px; padding-top: 24px; padding-bottom: 24px;
-      }
-      .brand { display: flex; align-items: center; gap: 9px; text-decoration: none; color: var(--text); }
-      .brand .mark { flex: none; color: var(--mark); }
-      #theme {
-        background: none; border: 1px solid var(--line); border-radius: 6px; color: var(--muted);
-        font: inherit; font-size: 13px; padding: 4px 9px; cursor: pointer;
-      }
-      #theme:hover { color: var(--text); }
       .steps { list-style: none; margin: 0; padding: 0; counter-reset: step; }
       .steps li { counter-increment: step; }
       .steps li::before {
@@ -156,12 +146,6 @@ const stages = [
       .limits { margin: 0; padding-left: 1.1em; max-width: 680px; }
       .limits li { margin-bottom: 9px; }
       .prose a, .limits a { color: var(--live); }
-      .brand .name {
-        font-family: var(--display); font-weight: 700; font-size: 20px; letter-spacing: 0.01em;
-      }
-      nav { display: flex; gap: 20px; align-items: center; font-size: 15px; }
-      nav a { color: var(--muted); text-decoration: none; }
-      nav a:hover { color: var(--text); }
 
       /* container: max-width 1080, 24px side gutter; grid adds the vertical padding */
       .hero .hero-grid {
@@ -273,14 +257,6 @@ const stages = [
       }
       .cell p { margin: 0; color: var(--muted); font-size: 15.5px; }
 
-      footer { border-top: 1px solid var(--line); }
-      footer .wrap {
-        display: flex; justify-content: space-between; gap: 18px; flex-wrap: wrap;
-        padding-top: 30px; padding-bottom: 44px; font-size: 14px; color: var(--muted);
-      }
-      footer a { color: var(--muted); text-decoration: none; }
-      footer a:hover { color: var(--text); }
-      .fnav { display: flex; gap: 18px; flex-wrap: wrap; }
 
       @media (max-width: 899px) {
         .hero .hero-grid { grid-template-columns: 1fr; gap: 40px; min-height: auto; padding: 40px 24px 56px; }
@@ -297,24 +273,7 @@ const stages = [
   </head>
 
   <body>
-    <header class="mast">
-      <div class="wrap">
-        <a class="brand" href="/">
-          {/* The mark: translucent-v2 Channel, compact one-colour form (apps/web/static/brand/README.md).
-               White on the dark page, brand amber on the light one, as the pack's favicon does. */}
-          <svg class="mark" width="24" height="24" viewBox="0 0 256 256" aria-hidden="true">
-            <g transform="translate(7.68 7.68) scale(.94)"><path d="M24 105C24 91 32 81 45 75L171 18C187 11 200 17 200 31V65C200 75 197 81 188 85L161 101C154 105 151 110 150 118L147 134C146 142 143 146 136 150L38 199C28 204 24 199 24 189Z" fill="currentColor" /><path d="M64 198L156 145C164 141 167 138 168 129L170 113C171 106 173 102 180 98L215 77C223 72 229 77 229 86V166C229 184 222 195 207 201L87 240C70 245 56 239 53 225C50 213 54 204 64 198Z" fill="currentColor" /></g>
-          </svg>
-          <span class="name">SuperPipeline</span>
-        </a>
-        <nav>
-          <a href={DOCS}>Docs</a>
-          <a href={SOURCE}>Source</a>
-          <button id="theme" type="button" aria-label="Switch light and dark theme">Theme</button>
-        </nav>
-      </div>
-    </header>
-
+    <Frame product="superpipeline" cta={{ label: 'Get started', href: START }} links={[{ label: 'Docs', href: DOCS }, { label: 'Source', href: SOURCE }]}>
     <section class="hero">
       <div class="wrap hero-grid">
         <div>
@@ -463,27 +422,6 @@ const stages = [
         </ul>
       </div>
     </section>
-
-    <script is:inline>
-      document.getElementById('theme').addEventListener('click', () => {
-        const root = document.documentElement;
-        const current = root.dataset.theme ||
-          (matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark');
-        const next = current === 'light' ? 'dark' : 'light';
-        root.dataset.theme = next;
-        try { localStorage.setItem('theme', next); } catch (e) {}
-      });
-    </script>
-
-    <footer>
-      <div class="wrap">
-        <span>SuperPipeline</span>
-        <span class="fnav">
-          <a href={DOCS}>Docs</a>
-          <a href={SOURCE}>Source</a>
-          <a href="https://superjackfruit.com">SuperJackfruit Labs</a>
-        </span>
-      </div>
-    </footer>
+    </Frame>
   </body>
 </html>
