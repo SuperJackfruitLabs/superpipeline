@@ -288,12 +288,12 @@ export const COMMANDS: CommandSpec[] = [
     description:
       "Resolves the credential exactly as every other command would and prints what it says about itself: the " +
       "principal, its kind (`human` or `agent`), the server, where the credential came from, and when it expires. " +
-      "It reads the token's claims without verifying them and makes no call to superpipeline, so a `whoami` that " +
+      "It reads the token's claims without verifying them and makes no call to SuperPipeline, so a `whoami` that " +
       "looks right does not prove the server will accept the token — `supi boards` does. Resolving may exchange a " +
       "stored device credential for a fresh token, which is a call to the sign-in service.\n\n" +
       "An `spa_` agent token is opaque and carries no principal; `whoami` says so rather than failing.",
     routes: [],
-    access: { role: null, agent: "any", note: "Needs a credential, but sends it only to the sign-in service, never to superpipeline." },
+    access: { role: null, agent: "any", note: "Needs a credential, but sends it only to the sign-in service, never to SuperPipeline." },
     output: "`principal`, `kind`, `superpipeline`, `token from`, `expires`; with `--json`, an object with the same fields",
     fails: ["no credential is found, or the one found has expired", "a human credential that is not a readable token"],
     examples: ["supi whoami", "supi whoami --json"],
@@ -1511,7 +1511,7 @@ export const ENV_VARS: EnvSpec[] = [
   {
     name: "SUPERPIPELINE_URL",
     description:
-      "the superpipeline server to talk to. Default `https://app.superpipeline.dev`. It changes where commands go " +
+      "the SuperPipeline server to talk to. Default `https://app.superpipeline.dev`. It changes where commands go " +
       "and which audience a token is requested for, never where a device credential is sent",
   },
   {
@@ -1595,7 +1595,7 @@ const plain = (s: string) => s.replace(/`/g, "");
 
 /** The summary `supi help` prints. */
 export function renderUsage(): string {
-  const lines: string[] = ["supi — superpipeline from a terminal (`superpipeline` is the same command)", ""];
+  const lines: string[] = ["supi — SuperPipeline from a terminal (`superpipeline` is the same command)", ""];
   for (const g of GROUPS) {
     lines.push(`${g.title}:`);
     for (const c of COMMANDS.filter((x) => x.group === g.id)) {
@@ -1629,7 +1629,7 @@ export function renderUsage(): string {
 }
 
 function accessLines(a: Access): string[] {
-  if (a.role === null && a.agent === null) return [a.note ?? "Local: sends no credential to superpipeline."];
+  if (a.role === null && a.agent === null) return [a.note ?? "Local: sends no credential to SuperPipeline."];
   const out: string[] = [];
   if (a.role) out.push(`a person: ${ROLE_TEXT[a.role]} in the workspace`);
   if (a.agent === "any") out.push("an agent token: any, no scope needed");

@@ -64,7 +64,7 @@ function flagTable(flags: FlagSpec[]): string[] {
 
 function accessText(a: Access): string[] {
   if (a.role === null && a.agent === null) {
-    return [a.note ? `Local. ${a.note}` : "Local: sends no credential to superpipeline."];
+    return [a.note ? `Local. ${a.note}` : "Local: sends no credential to SuperPipeline."];
   }
   const out: string[] = [];
   if (a.role) out.push(`- **A person:** ${ROLE_TEXT[a.role]} in the workspace.`);
@@ -130,7 +130,7 @@ function renderIndex(): string {
     "",
     GENERATED,
     "",
-    "`supi` is superpipeline from a terminal; `superpipeline` is the same program under its full name. " +
+    "`supi` is SuperPipeline from a terminal; `superpipeline` is the same program under its full name. " +
       "These pages are generated from the table the CLI's own `supi help` is printed from, so the two cannot " +
       "disagree. For a guided tour rather than a reference, see [From the terminal](/use/cli/).",
     "",

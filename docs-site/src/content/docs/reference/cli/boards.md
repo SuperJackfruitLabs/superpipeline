@@ -83,7 +83,7 @@ supi templates
 
 **Who may run it**
 
-Local: sends no credential to superpipeline.
+Local: sends no credential to SuperPipeline.
 
 **Prints** JSON: `[{ id, name, description, stages }]`.
 
