@@ -66,17 +66,17 @@ from the terminal — see [Recurring cards](/use/recurring/).
 lanes page one at a time and a stepper carries the order and counts — the pipeline is *paged*
 rather than squeezed.
 
-**Operate** is what is happening now, per board:
+The **Inbox** (the home, `/`) is what is happening now, across every board by default:
 
 | section | what it holds |
 |---|---|
-| Needs you | pending gates, waiting questions, over-budget cards, failed runs — everything parked on a person, each saying why |
+| Needs you | pending gates, waiting questions, over-budget cards, failed runs — everything parked on a person, each saying why and naming its board |
 | Running | what agents hold right now |
 | Spend | what it has cost, beside the caps that bound it |
 | Activity | the chronological record |
 
-Operate is per board deliberately — the board is the unit of isolation, and a workspace-wide
-Operate would need to fan out across boards that share nothing.
+The **Show** row narrows the Inbox to one board. Budget caps and the spend details need one board
+chosen, because the board is the unit of isolation and its caps belong to it.
 
 ## Live updates
 

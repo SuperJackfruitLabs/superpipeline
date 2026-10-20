@@ -10,6 +10,7 @@
   import LoadFailed from '$lib/components/parts/LoadFailed.svelte';
   import { MISSING_BOARD_COPY, SKELETON_DELAY_MS, UNREACHABLE_COPY, type FailKind } from '$lib/loading';
   import { loadingStatus } from '$lib/loading.svelte';
+  import { viewport } from '$lib/viewport.svelte';
 
   let { form, failure, slow = false, onRetry }: { form: 'board' | 'list' | 'page'; failure: FailKind | null; slow?: boolean; onRetry: () => unknown } = $props();
   const COLUMNS = [3, 2, 3, 2];
@@ -23,7 +24,8 @@
 </script>
 
 <div class="sp-board-wait" data-board-skeleton>
-  <h1 class="vk-visually-hidden">{failure === 'missing' ? 'Board not found' : failure ? 'The board could not load' : 'Loading the board'}</h1>
+  <!-- One h1 per page: the phone header always draws one, so on a phone this is an h2. -->
+  <svelte:element this={viewport.narrow ? 'h2' : 'h1'} class="vk-visually-hidden">{failure === 'missing' ? 'Board not found' : failure ? 'The board could not load' : 'Loading the board'}</svelte:element>
   {#if failure === 'missing'}
     <LoadFailed message={MISSING_BOARD_COPY} home />
   {:else if failure}

@@ -33,6 +33,17 @@ beforeEach(() => {
 afterEach(cleanup);
 
 describe('NewCardDialog', () => {
+  it('a New card pressed while the board is still arriving opens once it arrives, never dropped', async () => {
+    const board = app.board;
+    app.board = null as never;
+    render(NewCardDialog);
+    app.requestCompose('');
+    await tick(); await tick();
+    expect(screen.queryByRole('dialog', { name: 'What needs doing?' })).toBeNull();
+    app.board = board;
+    await tick(); await tick();
+    expect(screen.getByRole('dialog', { name: 'What needs doing?' })).toBeTruthy();
+  });
   it('is vibekit’s dialog, Escape closes it and focus goes back to the opener', async () => {
     const opener = document.createElement('button'); opener.textContent = 'New card'; document.body.append(opener); opener.focus();
     await openComposer();

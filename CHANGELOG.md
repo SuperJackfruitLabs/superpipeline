@@ -15,6 +15,18 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ### Changed
 
 - Superpipeline moves onto vibekit: pick Daylight, Paper, Studio or Quiet in Appearance; light, dark or follow the sun. The card opens with what its agent needs. Superlibrary previews hidden for want of a sign-in offer Reconnect.
+- Navigation v2: Inbox (the home, `/`), Plan (Boards and Projects) and Crew, with Settings (Labels, Connections, Appearance, Account) under the account menu; the phone bar is Inbox, Plan, Crew, You; keys `G I`, `G P`, `G C`. Operate and Workspace are gone as tabs: Needs you, Running, Spend and Activity live in the Inbox across every board, with a Show row to narrow to one board (held in memory only). `/b/:id/operate` and `/workspace/*` still open the right place.
+- Plan → Projects: workspace-wide projects with a page, New/Edit project (name, goal, target date, declared health, first milestone), declared beside computed health, and blockers. The board's own Projects view is removed (`?view=projects` redirects). `POST /v1/projects` accepts `health`; `PATCH /v1/milestones/:id` renames and re-dates.
+- Crew tabs each have a create button: New agent, New person, New capability.
+- Loading never looks empty: skeletons, "Checking your boards…", a Connecting…/Live/Reconnecting…/Offline pill, "Still loading — the server is slow." at 8 s, Failed with Try again at 20 s (reads time out at 20 s), an error page and a branded boot screen.
+- Motion from vibekit 0.0.12 (none under reduced motion); a new logo, favicons and app icons.
+- Superlibrary previews: `/auth/login` names the Superlibrary audience when `PLANE_LIBRARY_LINKED=true` (production), `/hub/token` calls are serialised across tabs, previews say the true reason, and Reconnect returns to the same page. Sessions from before the flag need one sign-in.
+- CI: the `visual` job (base vs head screenshots, `Visual-Change:` trailer) is the PR gate; the `pixel` conformance report runs nightly and on demand; longer timeouts under CI only.
+
+### Fixed
+
+- A dismissed menu no longer leaves the page unclickable (vibekit 0.0.11).
+- The left rail fills the window height in Daylight and Studio.
 
 ## [0.0.1] — 2026-06-21
 

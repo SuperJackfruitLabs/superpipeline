@@ -80,8 +80,8 @@ forward).
 
 ## Needs you
 
-**Operate → Needs you** lists every card on the board waiting on you, one row each, driven by the
-card's own reason. Each row says what happened — in the agent's own words where there are some — and
+The **Inbox**'s Needs you section lists every card waiting on you, one row each, driven by the
+card's own reason, each with its board named beside it. Each row says what happened — in the agent's own words where there are some — and
 what to do, and carries the action:
 
 | row | shows | action |
@@ -97,9 +97,11 @@ what to do, and carries the action:
 A long reason is cut short with **Show all**. Everything a row shows from a card is rendered as
 text.
 
-**Workspace → Needs you** (`/workspace/needs-you`) is the same list across every board in the
-workspace, from `GET /v1/stale?attention=1`: every card waiting on a person, at any age, plus
-ownerless-stage cards past their board's threshold.
+It covers every board in the workspace by default, from `GET /v1/stale?attention=1`: every card
+waiting on a person, at any age, plus ownerless-stage cards past their board's threshold. The
+**Show** row narrows it to one board (boards that need you first, with their counts); the choice is
+kept in memory only, so a refresh or a new tab starts on All boards again. The old
+`/workspace/needs-you` and `/b/:id/operate` addresses open the Inbox.
 
 ## Stale cards and the daily digest
 

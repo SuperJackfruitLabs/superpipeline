@@ -1,0 +1,56 @@
+/*
+ * Long user text (e2e/long-text.spec.ts). body sets overflow-wrap: break-word, which wraps inside a
+ * box but leaves min-content alone. Titles and headings use `anywhere`, which also lowers min-content,
+ * so the flex or grid item holding a 120-character word shrinks to its track instead of widening it.
+ * Not globally: a table's columns and a scrolling row's items would then crush their words.
+ */
+:where(h1, h2, h3, h4, h5, h6, [data-title-for]) { overflow-wrap: anywhere; }
+/* Links to a board, card or project carry its user-given name ("Back to <board>", a card row). */
+:where(a[href^="/b/"], a[href^="/plan/projects/"]) { overflow-wrap: anywhere; }
+/* Lines that name the board or card above a page: the masthead (vibekit's and the Paper/Quiet
+   page masts), the drawer's eyebrow and back link, Operate's lead line, the card page's top bar and
+   "Opened from" line, the phone card's back button. */
+:where(.vk-masthead__head, .vk-overlay__eyebrow, .vk-overlay__back, .op-line, .cp-top, .mast, .dp-from, .qp-row),
+:where(.vk-masthead__head, .vk-overlay__eyebrow, .vk-overlay__back, .op-line, .cp-top, .mast, .dp-from, .qp-row) * { overflow-wrap: anywhere; }
+
+/* The masthead's board-name button (vibekit) is one nowrap line: let a long name wrap inside the head. */
+.vk-masthead__title {
+  white-space: normal;
+  max-width: 100%;
+  min-width: 0;
+  text-align: start;
+}
+
+/* Title links in the Studio list and card rows: one rule set break-word (which does not lower
+   min-content), so an inline-flex title widened its table cell. */
+.ttl.ttl {
+  overflow-wrap: anywhere;
+  min-width: 0;
+  max-width: 100%;
+}
+
+/* The phone card's "back to <board>" buttons were nowrap: they wrap instead of running off the phone. */
+button.back.back {
+  overflow-wrap: anywhere;
+  white-space: normal;
+  min-width: 0;
+  max-width: 100%;
+}
+
+/* Project names (Studio's projects table). */
+.pj-link {
+  overflow-wrap: anywhere;
+  min-width: 0;
+}
+
+/* An agent's token rows: a 1fr track is minmax(auto, 1fr), so a long agent name widened it. */
+.tokrow.tokrow { grid-template-columns: minmax(0, 1fr) auto auto; }
+.tokrow > * { min-width: 0; }
+
+/* Crew's "Back to <board>" link (Studio). */
+.wa-head > .ar-lk { max-width: 100%; white-space: normal; }
+
+
+/* A visually hidden table caption kept the table caption box (its width ignored), so a long board name
+   in it widened the page on a phone. As a block it is the 1px box every .sr is. */
+caption:is(.sr, .sr-only, .vk-visually-hidden) { display: block; }

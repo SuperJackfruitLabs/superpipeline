@@ -94,6 +94,8 @@ function remember(token: string | null | undefined): string | null {
  */
 const HUB_TOKEN_TIMEOUT_MS = 30_000;
 let hubTokenTail: Promise<unknown> | null = null;
+/** The Web Lock every tab of this origin takes around a `/hub/token` request. */
+export const HUB_TOKEN_LOCK = 'superpipeline.hub-token';
 function hubTokenFetch(url: string): Promise<Response> {
   const start = async () => {
     const ctl = new AbortController();
@@ -104,7 +106,15 @@ function hubTokenFetch(url: string): Promise<Response> {
       clearTimeout(timer);
     }
   };
-  const run = hubTokenTail ? hubTokenTail.then(start) : start();
+  // Across tabs too: every tab of this app shares one refresh cookie, and the plane treats a refresh
+  // token presented twice as a replay (after its reuse window it revokes the whole family, which is a
+  // forced sign-in). The Web Locks API serialises tabs; where it is missing, the tail below still
+  // serialises this tab.
+  const locked = () => {
+    const locks = typeof navigator !== 'undefined' ? (navigator as Navigator & { locks?: LockManager }).locks : undefined;
+    return locks?.request ? (locks.request(HUB_TOKEN_LOCK, start) as Promise<Response>) : start();
+  };
+  const run = hubTokenTail ? hubTokenTail.then(locked) : locked();
   const mine = run.then(() => undefined, () => undefined);
   hubTokenTail = mine;
   void mine.then(() => { if (hubTokenTail === mine) hubTokenTail = null; });
@@ -288,19 +298,33 @@ export function libraryConfigured(): boolean {
   return !libraryAbsent;
 }
 
+/**
+ * Why the last `libraryToken()` came back null, so the drawer can say the true reason:
+ * `reauthorize` — this app's sign-in needs refreshing (the plane refused the refresh token; Reconnect fixes it);
+ * `declined` — the sign-in system will not issue a Superlibrary token to this app at all (Reconnect cannot fix it);
+ * `unavailable` — the request failed in transit (try again); `none` — nothing minted, no reason given.
+ */
+export type LibraryWhy = 'reauthorize' | 'declined' | 'unavailable' | 'none';
+let libraryWhy: LibraryWhy | null = null;
+export function libraryProblem(): LibraryWhy | null {
+  return libraryWhy;
+}
+
 export async function libraryToken(): Promise<string | null> {
   if (cachedLibrary && cachedLibrary.expiresAtMs - REFRESH_MARGIN_MS > Date.now()) return cachedLibrary.token;
   if (libraryInFlight) return libraryInFlight;
   libraryInFlight = (async () => {
     try {
       const res = await hubTokenFetch('/hub/token?library=1');
-      const body = (await res.json().catch(() => null)) as { libraryToken?: string | null; libraryConfigured?: boolean } | null;
+      const body = (await res.json().catch(() => null)) as { libraryToken?: string | null; libraryConfigured?: boolean; libraryDeclined?: boolean; reauthorize?: string } | null;
       if (res.ok && body?.libraryConfigured === false) libraryAbsent = true;
+      libraryWhy = !res.ok ? 'unavailable' : body?.reauthorize ? 'reauthorize' : body?.libraryDeclined ? 'declined' : body?.libraryToken ? null : 'none';
       const t = res.ok ? (body?.libraryToken ?? null) : null;
       const exp = t ? expiryOf(t) : 0;
       cachedLibrary = t && exp > 0 ? { token: t, expiresAtMs: exp } : null;
       return cachedLibrary?.token ?? null;
     } catch {
+      libraryWhy = 'unavailable';
       return null;
     } finally {
       libraryInFlight = null;
@@ -320,6 +344,7 @@ export function forgetHubToken(): void {
   cachedHubAud = null;
   cachedLibrary = null;
   libraryAbsent = false;
+  libraryWhy = null;
   lastSignIn = null;
 }
 

@@ -1,13 +1,37 @@
 // apps/web/src/lib/superlibrary.test.ts
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-vi.mock('$lib/hub-token', () => ({ libraryToken: vi.fn(async () => 'lib-token'), forgetLibraryToken: vi.fn(), libraryConfigured: vi.fn(() => true) }));
-import { forgetLibraryToken, libraryConfigured, libraryToken } from '$lib/hub-token';
-import { LibraryError, embedCallbacks, libraryFetch, libraryRef, needsReconnect, reasonFor, sentenceFor } from './superlibrary';
+vi.mock('$lib/hub-token', () => ({ libraryToken: vi.fn(async () => 'lib-token'), forgetLibraryToken: vi.fn(), libraryConfigured: vi.fn(() => true), libraryProblem: vi.fn(() => null) }));
+import { forgetLibraryToken, libraryConfigured, libraryProblem, libraryToken } from '$lib/hub-token';
+import { LibraryError, hasReason, embedCallbacks, libraryFetch, libraryRef, needsReconnect, reasonFor, sentenceFor } from './superlibrary';
 
 afterEach(() => { vi.unstubAllGlobals(); vi.mocked(libraryToken).mockResolvedValue('lib-token'); });
 
 describe('Superlibrary references (spec §11: the drawer previews linked artifacts)', () => {
+  it('says the true reason a token is missing: a sign-in to refresh (Reconnect) apart from a plane that will not issue one (no Reconnect)', async () => {
+    const store = new Map<string, string>();
+    vi.stubGlobal('sessionStorage', { getItem: (k: string) => store.get(k) ?? null, setItem: (k: string, v: string) => void store.set(k, v), removeItem: (k: string) => void store.delete(k) });
+    vi.mocked(libraryToken).mockResolvedValue(null);
+    vi.mocked(libraryProblem).mockReturnValue('reauthorize');
+    const stale = await libraryFetch('/api/v1/me').catch((e: unknown) => e);
+    expect(stale).toMatchObject({ code: 'reauthorize' });
+    expect(sentenceFor(stale)).toBe('Your Superpipeline sign-in needs refreshing. Reconnect.');
+    expect(needsReconnect(stale)).toBe(true);
+    vi.mocked(libraryProblem).mockReturnValue('declined');
+    const declined = await libraryFetch('/api/v1/me').catch((e: unknown) => e);
+    expect(declined).toMatchObject({ code: 'declined' });
+    // A sign-in made before previews were switched on is refused by the plane too: ONE Reconnect fixes it, so it is offered once.
+    expect(needsReconnect(declined)).toBe(true);
+    expect(sentenceFor(declined)).toBe('Your sign-in was made before Superlibrary previews were switched on. Sign in again to enable them. Reconnect.');
+    // After this tab has reconnected once, a refusal is final: say so and offer no loop.
+    sessionStorage.setItem('superpipeline.reconnected', '1');
+    expect(needsReconnect(declined)).toBe(false);
+    expect(hasReason(declined)).toBe(true);
+    expect(sentenceFor(declined)).toContain('does not issue Superlibrary access to Superpipeline');
+    sessionStorage.removeItem('superpipeline.reconnected');
+    expect(reasonFor(declined)).toBe('Reason: declined (the sign-in system does not issue Superlibrary access to this app)');
+    vi.mocked(libraryProblem).mockReturnValue(null);
+  });
   it('libraryRef reads an item link on the library, with its version', () => {
     expect(libraryRef('https://app.superlibrary.dev/a/itm_0123456789abcdef')).toEqual({ itemId: 'itm_0123456789abcdef' });
     expect(libraryRef('https://app.superlibrary.dev/a/itm_0123456789abcdef/v/3')).toEqual({ itemId: 'itm_0123456789abcdef', version: 3 });
@@ -35,7 +59,7 @@ describe('Superlibrary references (spec §11: the drawer previews linked artifac
     expect(sentenceFor(new LibraryError(0, 'no_token'), 'quiet')).toBe('Preview hidden: your sign-in could not be confirmed. Reconnect to view it.');
     expect(needsReconnect(new LibraryError(0, 'no_token'))).toBe(true);
     expect(needsReconnect(new LibraryError(404, 'not_found'))).toBe(false);
-    expect(reasonFor(new LibraryError(0, 'no_token'))).toBe('Reason: no_token (this tab has no Superlibrary sign-in)');
+    expect(reasonFor(new LibraryError(0, 'no_token'))).toBe('Reason: no_token (no Superlibrary access token was issued)');
     expect(sentenceFor(new LibraryError(403, 'product_not_enabled'))).toBe('Superlibrary is not enabled for this workspace.');
     expect(sentenceFor(new LibraryError(404, 'not_found'))).toBe('This artifact is not there, or you cannot see it.');
   });

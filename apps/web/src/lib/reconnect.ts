@@ -7,12 +7,38 @@
  * is ignored rather than followed.
  */
 export const RETURN_KEY = 'superpipeline.returnTo';
-const SAFE = /^\/(b\/[A-Za-z0-9_-]+(\/(c\/[A-Za-z0-9_-]+|operate(\/telemetry)?|settings))?|workspace(\/[a-z-]+)?)\/?(\?[^#]*)?$/;
+/** Set by reconnect(): this tab has already signed in again once (a later refusal is final, not another Reconnect). */
+export const RECONNECTED_KEY = 'superpipeline.reconnected';
+export function reconnectedThisTab(storage: Storage | undefined = globalThis.sessionStorage): boolean {
+  try { return storage?.getItem(RECONNECTED_KEY) === '1'; } catch { return false; }
+}
+// Every page a person can be on (nav v2): a board and its card/operate/settings pages, Inbox, Plan and a
+// project, Crew's tabs, Settings, and the old /workspace paths (they redirect). Ids are word characters only.
+const ID = '[A-Za-z0-9_-]+';
+const SAFE = new RegExp(
+  `^/(b/${ID}(/(c/${ID}(/page)?|operate(/(telemetry|log))?|settings))?|inbox|plan(/projects(/${ID})?)?|crew(/[a-z-]+)?|settings|workspace(/[a-z-]+)?)?/?(\\?[^#]*)?$`,
+);
+
+/**
+ * Where you are, including a card open in the board's drawer. Opening a card from the board only sets
+ * the app's open card and leaves the address at /b/<board>, so the place saved before sign-in was the
+ * board and the card came back closed. A card open over a board is saved as that card's address.
+ */
+export function placeOf(path: string, openCardId: string | null | undefined): string {
+  const m = /^\/b\/([A-Za-z0-9_-]+)\/?(\?[^#]*)?$/.exec(path);
+  return m && openCardId && /^[A-Za-z0-9_-]+$/.test(openCardId) ? `/b/${m[1]}/c/${openCardId}${m[2] ?? ''}` : path;
+}
+let openCard: () => string | null | undefined = () => null;
+/** The layout tells Reconnect which card is open (the store is not imported here). */
+export function registerOpenCard(fn: () => string | null | undefined): void {
+  openCard = fn;
+}
 
 export function reconnect(
   navigate: (url: string) => void = (url) => globalThis.location.assign(url),
-  here: string = globalThis.location ? location.pathname + location.search : '/',
+  here: string = placeOf(globalThis.location ? location.pathname + location.search : '/', openCard()),
 ): void {
+  try { sessionStorage.setItem(RECONNECTED_KEY, '1'); } catch { /* no storage: the refusal stays offered */ }
   try { sessionStorage.setItem(RETURN_KEY, here); } catch { /* no storage: you land on your board instead */ }
   navigate('/auth/login');
 }
@@ -26,5 +52,25 @@ export function takeReturnTo(storage: Storage | undefined = globalThis.sessionSt
   } catch {
     return null;
   }
-  return v && SAFE.test(v) ? v : null;
+  return v && !v.startsWith('//') && SAFE.test(v) ? v : null;
+}
+
+/**
+ * The return-to place, taken out of storage once at boot and held until the app is ready. The front
+ * door (routes/+page.svelte) redirects to the Inbox as soon as auth is ready; without this hold it
+ * raced the layout's goto(back) and won, so Reconnect landed on the Inbox (or a board) with the card closed.
+ */
+let held: string | null = null;
+export function holdReturnTo(storage?: Storage): string | null {
+  held = takeReturnTo(storage);
+  return held;
+}
+/** Whether a return-to place is waiting: the front door must not redirect over it. */
+export function returnToHeld(): boolean {
+  return held !== null;
+}
+export function releaseReturnTo(): string | null {
+  const v = held;
+  held = null;
+  return v;
 }

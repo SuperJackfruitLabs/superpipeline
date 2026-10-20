@@ -1,6 +1,6 @@
 // apps/web/e2e/reconnect.spec.ts
 import { expect, test } from '@playwright/test';
-import { API, TENANT, seedBoard } from './support/seed';
+import { API, TENANT, openBoard, seedBoard } from './support/seed';
 
 async function cardPage(page: import('@playwright/test').Page, request: import('@playwright/test').APIRequestContext, title: string) {
   const boardId = await seedBoard(request, `Reconnect ${Date.now().toString(36)}`);
@@ -79,4 +79,31 @@ test('a half-typed resume note survives the expired session and the sign-in roun
   await expect(page.locator('html')).toHaveAttribute('data-ready', 'true');
   await expect(page.getByRole('textbox', { name: /note|what changed/i }).first()).toHaveValue('Half a thought');
   expect(await page.evaluate((id) => sessionStorage.getItem(`sp:draft:resume:${id}`), snap.cards[0]!.id)).toBe('Half a thought');
+});
+
+test('after Reconnect the sign-in lands on / and the app reopens the same card, not the Inbox', async ({ page, request }) => {
+  // The card's own page (/page): the operator's live round trip dropped this address at the allowlist.
+  const path = `${await cardPage(page, request, 'Reopen me after sign-in')}/page`;
+  // The sign-in round trip: reconnect() stored the place, /auth/callback answered with a redirect to /.
+  await page.evaluate((p) => sessionStorage.setItem('superpipeline.returnTo', p), path);
+  await page.goto('/');
+  await expect.poll(() => new URL(page.url()).pathname, { timeout: 15_000 }).toBe(path);
+  await page.waitForTimeout(1_000); // the front door's Inbox redirect must not arrive late and win
+  expect(new URL(page.url()).pathname).toBe(path);
+  await expect(page.getByText('Reopen me after sign-in').first()).toBeVisible();
+});
+
+test('Reconnect from a card opened in the board drawer comes back to that card', async ({ page, request }) => {
+  const boardId = await seedBoard(request, `Drawer ${Date.now().toString(36)}`);
+  await request.post(`${API}/v1/boards/${boardId}/cards`, { headers: TENANT, data: { title: 'Drawer card to keep' } });
+  await openBoard(page, boardId);
+  await page.getByText('Drawer card to keep').first().click();
+  await expect(page.getByRole('dialog').getByText('Drawer card to keep').first()).toBeVisible();
+  await page.route('**/hub/session', (r) => r.fulfill({ status: 200, json: { ok: false, reason: 'login_required', issuer: 'accounts.superjackfruit.com', reauthorize: '/auth/login' } }));
+  await page.route('**/v1/**', (r) => r.fulfill({ status: 401, json: { error: 'unauthorized' } }));
+  await page.evaluate(() => (window as unknown as { __spDev: { refresh(): Promise<void> } }).__spDev.refresh());
+  await page.getByRole('alertdialog').getByRole('link', { name: 'Sign in again' }).click();
+  await page.waitForURL('**/auth/login');
+  const saved = await page.evaluate(() => sessionStorage.getItem('superpipeline.returnTo'));
+  expect(saved).toMatch(new RegExp(`^/b/${boardId}/c/[A-Za-z0-9_-]+$`));
 });

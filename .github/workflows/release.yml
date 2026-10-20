@@ -100,6 +100,11 @@ jobs:
             *) echo "::error::binary reports '${got}', expected version ${TAG}"; exit 1 ;;
           esac
 
+      # The skill asset is printed by the binary it documents, so it cannot differ from what
+      # `supi skill` prints. Older installers still fetch it by name.
+      - name: Generate the skill asset from the binary
+        run: ./dist/supi-linux-x64 skill > dist/SKILL.md
+
       - name: Checksums
         working-directory: dist
         run: sha256sum supi-* > SHA256SUMS && cat SHA256SUMS
@@ -116,6 +121,6 @@ jobs:
             gh release create "$TAG" --title "$TAG" --generate-notes
           fi
           # The skill ships with the binaries it documents. `install.sh` fetches it by tag, so a
-          # station always gets the skill that matches its supi rather than whatever is on main.
-          gh release upload "$TAG" dist/supi-* dist/SHA256SUMS scripts/install.sh \
-            packages/cli/skills/superpipeline-boards/SKILL.md --clobber
+          # station always gets the skill that matches its supi rather than whatever is on main. Current
+          # installers run `supi skill install` instead; this asset is for older ones.
+          gh release upload "$TAG" dist/supi-* dist/SHA256SUMS scripts/install.sh dist/SKILL.md --clobber

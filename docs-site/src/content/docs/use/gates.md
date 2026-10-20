@@ -54,7 +54,7 @@ own interface.
 
 ## Finding what is waiting
 
-Everything waiting on a human is gathered in **Operate → Needs you**, which is the point of that
+Everything waiting on a human is gathered in the **Inbox** (its Needs you section), which is the point of that
 screen. It holds a card when any of four things is true:
 
 - a gate on it is pending

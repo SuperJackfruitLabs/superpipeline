@@ -77,7 +77,7 @@ told. A retry is now handed the previous attempt's reason on its claim.
 ## Cost
 
 Agents report token usage as they work, and superpipeline totals it per card and per board. You can set
-a **USD cap** on either. A card over its cap is surfaced in Operate → Needs you rather than
+a **USD cap** on either. A card over its cap is surfaced in the Inbox's Needs you rather than
 silently continuing.
 
 Where there is no cap, the card shows what it has spent and nothing is drawn as a proportion of a
@@ -165,4 +165,4 @@ its author may delete it. The agent that claims a card is handed the newest comm
 ## History
 
 Every meaningful change is an event: created, moved, claimed, activity posted, gate resolved,
-reference added. The card drawer shows its own; **Operate → Activity** shows the board's.
+reference added. The card drawer shows its own; the **Inbox** with that board chosen shows the board's Activity.

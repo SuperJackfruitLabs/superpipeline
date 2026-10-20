@@ -2,7 +2,7 @@
 <script lang="ts">
   import { untrack } from 'svelte';
   import { mountArtifact, type Mounted } from '$lib/vendor/superlibrary-embed/superlibrary-embed.js';
-  import { LIBRARY_URL, embedCallbacks, needsReconnect, reasonFor, sentenceFor } from '$lib/superlibrary';
+  import { LIBRARY_URL, embedCallbacks, hasReason, needsReconnect, reasonFor, sentenceFor } from '$lib/superlibrary';
   import { reconnect } from '$lib/reconnect';
   import { appearance } from '$lib/appearance.svelte';
 
@@ -10,12 +10,16 @@
   let open = $state(untrack(() => startOpen));
   let host = $state<HTMLElement | null>(null);
   let failure = $state<unknown>(null);
+  let attempt = $state(0);
+  // A Reconnect done in another tab (or this one, coming back) is picked up without a click.
+  function retryIfReconnect(): void { if (failure && needsReconnect(failure)) attempt++; }
   const href = $derived(`${LIBRARY_URL}/a/${itemId}${version ? `/v/${version}` : ''}`);
   const frameId = `lib-${Math.random().toString(36).slice(2, 10)}`;
 
   // The embed renders every kind in a sandboxed frame on Superlibrary's content origin (spec §9).
   $effect(() => {
     const el = host;
+    void attempt;
     if (!open || !el) {
       failure = null;
       return;
@@ -30,6 +34,8 @@
   });
 </script>
 
+<svelte:window onfocus={retryIfReconnect} onpageshow={retryIfReconnect} />
+
 <div class="border-border rounded-[7px] border p-2">
   <div class="flex flex-wrap items-center gap-2">
     <button type="button" class="border-border hover:border-marigold/50 min-h-[44px] rounded-[5px] border px-2 text-xs" aria-expanded={open} aria-controls={open ? frameId : undefined} onclick={() => (open = !open)}>
@@ -41,8 +47,8 @@
   {#if failure}
     <div role="alert" class="mt-2 text-xs">
       <p class="text-signal-text">{sentenceFor(failure, appearance.value.vibe)}</p>
+      {#if hasReason(failure)}<p class="text-muted-foreground mt-1 mono">{reasonFor(failure)}</p>{/if}
       {#if needsReconnect(failure)}
-        <p class="text-muted-foreground mt-1 mono">{reasonFor(failure)}</p>
         <button type="button" class="vk-button vk-button--secondary mt-2" onclick={() => reconnect()}>Reconnect</button>
       {/if}
     </div>

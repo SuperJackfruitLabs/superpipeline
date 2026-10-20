@@ -1,6 +1,6 @@
 <!-- apps/web/src/lib/components/card/RelatedWork.svelte -->
 <script lang="ts">
-  import { isAbsent, libraryRef, needsReconnect, outcomeWord, reasonFor, relatedForCard, sentenceFor, type RelatedLite } from '$lib/superlibrary';
+  import { hasReason, isAbsent, libraryRef, needsReconnect, outcomeWord, reasonFor, relatedForCard, sentenceFor, type RelatedLite } from '$lib/superlibrary';
 
   import { reconnect } from '$lib/reconnect';
   import { appearance } from '$lib/appearance.svelte';
@@ -10,6 +10,8 @@
   let phase = $state<'loading' | 'ok' | 'unavailable' | 'absent'>('loading');
   let why = $state<unknown>(null);
   let attempt = $state(0);
+  // A Reconnect done in another tab (or this one, coming back) is picked up without a click.
+  function retryIfReconnect(): void { if (phase === 'unavailable' && needsReconnect(why)) attempt++; }
 
   $effect(() => {
     const id = cardId;
@@ -23,6 +25,8 @@
   });
 </script>
 
+<svelte:window onfocus={retryIfReconnect} onpageshow={retryIfReconnect} />
+
 <!-- Text from other people's and agents' work: rendered as text, never as markup. -->
 {#if phase !== 'absent'}
 <section class="sec" aria-labelledby="related-work-h">
@@ -31,8 +35,8 @@
     <p class="text-muted-foreground text-xs" role="status">Looking in Superlibrary…</p>
   {:else if phase === 'unavailable'}
     <p class="text-muted-foreground text-xs">Related prior work is not available. {sentenceFor(why, appearance.value.vibe)}</p>
+    {#if hasReason(why)}<p class="text-muted-foreground mono text-xs">{reasonFor(why)}</p>{/if}
     {#if needsReconnect(why)}
-      <p class="text-muted-foreground mono text-xs">{reasonFor(why)}</p>
       <button type="button" class="vk-button vk-button--secondary min-h-[44px]" onclick={() => reconnect()}>Reconnect</button>
     {/if}
     <button type="button" class="border-border min-h-[44px] rounded-[5px] border px-2 text-xs" onclick={() => attempt++}>Try again</button>

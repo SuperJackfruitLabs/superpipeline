@@ -113,6 +113,16 @@ async function hubAudienceToken(
   return tokenRequest(cfg, { grant_type: 'refresh_token', refresh_token: refresh }, fetchImpl, resource);
 }
 
+/** The audiences /auth/login authorizes: the app, the hub when there is one, Superlibrary once linked. */
+function authorizeResources(app: string, env: Env): string[] {
+  const out = [app];
+  const hub = hubResource(env);
+  if (hub && hub !== app) out.push(hub);
+  const lib = libraryResource(env);
+  if (lib && env.PLANE_LIBRARY_LINKED === 'true' && !out.includes(lib)) out.push(lib);
+  return out;
+}
+
 const ttlOf = (t: TokenResponse) => Math.max(1, Math.min(typeof t.expires_in === 'number' ? t.expires_in : 300, 3600));
 
 export async function handlePlaneSignInRoute(
@@ -139,8 +149,13 @@ export async function handlePlaneSignInRoute(
     const authorize = new URL(`${cfg.url}/api/auth/oauth2/authorize`);
     for (const [k, v] of Object.entries({
       response_type: 'code', client_id: PLANE_CLIENT_ID, redirect_uri: redirectUri, scope: SCOPE, state,
-      code_challenge: await challengeFor(verifier), code_challenge_method: 'S256', resource: cfg.audience,
+      code_challenge: await challengeFor(verifier), code_challenge_method: 'S256',
     })) authorize.searchParams.set(k, v);
+    // Every audience a later refresh grant narrows to must be in the authorization itself: the plane
+    // refuses a refresh `resource` the original grant did not name (invalid_target), and the refresh
+    // token keeps the full list however the grants narrow. Superlibrary only once the plane links it
+    // to this client (PLANE_LIBRARY_LINKED), since an unlinked resource fails the whole authorize.
+    for (const r of authorizeResources(cfg.audience, env)) authorize.searchParams.append('resource', r);
     return new Response(null, { status: 302, headers: { Location: authorize.toString(), 'Set-Cookie': pkceCookie(`${state}.${verifier}`, 600) } });
   }
 
@@ -206,8 +221,11 @@ export async function handlePlaneSignInRoute(
     const wantLibrary = new URL(request.url).searchParams.get('library') === '1';
     const libResource = wantLibrary ? libraryResource(env) : null;
     let libTok: string | null = wantLibrary ? readCookie(request, LIBRARY_AUD_COOKIE) : null;
+    // The plane said no to the library audience on purpose (e.g. `invalid_target`: this client may not
+    // ask for it). Said apart from an expired sign-in, which Reconnect fixes and this does not.
+    let libDeclined = false;
     const answer = (token: string | null, hubToken: string | null, headers?: Headers) =>
-      Response.json({ token, hubToken, ...(wantLibrary ? { libraryToken: libTok } : {}), ...(wantLibrary && libraryResource(env) === null ? { libraryConfigured: false } : {}), hubConfigured: true, signIn: 'org-plane' }, headers ? { headers } : undefined);
+      Response.json({ token, hubToken, ...(wantLibrary ? { libraryToken: libTok } : {}), ...(libDeclined ? { libraryDeclined: true } : {}), ...(wantLibrary && libraryResource(env) === null ? { libraryConfigured: false } : {}), hubConfigured: true, signIn: 'org-plane' }, headers ? { headers } : undefined);
     let app = readCookie(request, TOKEN_COOKIE);
     let hubTok = readCookie(request, HUB_AUD_COOKIE);
     let refresh = readCookie(request, REFRESH_COOKIE);
@@ -250,7 +268,9 @@ export async function handlePlaneSignInRoute(
     // Third, after the hub's, with the newest refresh token. Best-effort, like the hub's: a plane that
     // will not mint it (a workspace without Superlibrary) leaves the drawer saying so, nothing else.
     if (needLibrary && refresh) {
-      const lib = await tokenRequest(cfg, { grant_type: 'refresh_token', refresh_token: refresh }, fetchImpl, libResource!);
+      const g = await tokenGrant(cfg, { grant_type: 'refresh_token', refresh_token: refresh }, fetchImpl, libResource!);
+      const lib = g.ok ? g.tokens : null;
+      if (!g.ok && g.refused) libDeclined = true;
       if (lib) {
         libTok = lib.access_token!;
         headers.append('Set-Cookie', libraryAudCookie(libTok, ttlOf(lib)));

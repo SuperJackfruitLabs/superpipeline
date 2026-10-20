@@ -215,9 +215,15 @@ The installer can place an agent skill alongside the binary:
 curl -fsSL https://github.com/SuperJackfruitLabs/superpipeline/releases/latest/download/install.sh | SKILL_DIR=~/.claude/skills bash
 ```
 
+`supi` carries its own skill, so it always matches the binary's verbs and works offline. Print it
+with `supi skill`, or place it yourself with `supi skill install [--dir <dir>]` (default
+`~/.claude/skills`; it writes `<dir>/superpipeline-boards/SKILL.md` and is safe to repeat). With
+`SKILL_DIR` set, the installer runs exactly that; pinned to an older release (`VERSION`) with no
+`skill` verb, it fetches that release's `SKILL.md` asset instead.
+
 Omitted by default, because most callers are people and a person needs no skill. The skill
-describes the surface an agent credential actually has — reading boards, planning, and queueing —
-rather than the operator's.
+describes the surface an agent credential actually has, and which verbs change shared state, so an
+agent asks first.
 
 ## Workspace authority
 

@@ -12,7 +12,7 @@ beforeEach(() => __resetJwksCacheForTests());
 
 const SECRET = 'plane-signin-secret';
 /** No hub resource by default; the hub-audience tests below set HUB_ISSUER themselves. */
-const envOn = (over: Record<string, unknown> = {}) => planeEnv({ APP_URL: APP_AUD, SESSION_SECRET: SECRET, HUB_ISSUER: undefined, ...over });
+const envOn = (over: Record<string, unknown> = {}) => planeEnv({ APP_URL: APP_AUD, SESSION_SECRET: SECRET, HUB_ISSUER: undefined, PLANE_LIBRARY_LINKED: undefined, ...over });
 const HUB_RESOURCE = 'https://hub.test';
 
 /** The plane's token endpoint and JWKS, recording every token request body. */
@@ -52,6 +52,32 @@ async function callback(fake: ReturnType<typeof plane>, e = envOn()) {
   const req = new Request(`https://api.test/auth/callback?code=c0de&state=${state}`, { headers: { Cookie: `superpipeline_plane_pkce=${pkce}` } });
   return (await handlePlaneSignInRoute(req, e, '/auth/callback', fake.impl))!;
 }
+
+describe('plane sign-in — authorize asks for every audience the later refresh grants narrow to', () => {
+  // The plane (better-auth oauth-provider) refuses a refresh grant whose `resource` was not in the
+  // original authorization (400 invalid_target). Authorizing for the app alone made every hub and
+  // library grant fail silently: hubToken and libraryToken were always null.
+  it('names the app and the hub', async () => {
+    const { location } = await login(envOn({ HUB_ISSUER: HUB_RESOURCE }));
+    expect(location.searchParams.getAll('resource')).toEqual([APP_AUD, HUB_RESOURCE]);
+  });
+  it('names the app alone when there is no hub', async () => {
+    const { location } = await login(envOn());
+    expect(location.searchParams.getAll('resource')).toEqual([APP_AUD]);
+  });
+  it('names Superlibrary only once the plane links it to this client (an unlinked resource would fail the whole sign-in)', async () => {
+    const lib = 'https://library.test';
+    expect((await login(envOn({ SUPERLIBRARY_AUDIENCE: lib }))).location.searchParams.getAll('resource')).toEqual([APP_AUD]);
+    expect((await login(envOn({ SUPERLIBRARY_AUDIENCE: lib, PLANE_LIBRARY_LINKED: 'true' }))).location.searchParams.getAll('resource')).toEqual([APP_AUD, lib]);
+  });
+  it('the deployed worker config links Superlibrary: login names its audience, so a library refresh grant can be minted later', async () => {
+    // The raw wrangler vars (no override): the plane refuses a refresh grant for an audience login did not name
+    // (400 invalid_target), so with the flag off every Superlibrary preview in the card drawer says no_token.
+    const raw = planeEnv({ APP_URL: APP_AUD, SESSION_SECRET: SECRET, HUB_ISSUER: undefined });
+    const resources = (await login(raw)).location.searchParams.getAll('resource');
+    expect(resources).toContain('https://app.superlibrary.dev');
+  });
+});
 
 describe('plane sign-in — off means GitHub, unchanged', () => {
   it('returns null for every path when ORG_PLANE_ISSUER is unset', async () => {
@@ -319,7 +345,7 @@ describe('plane sign-in — a second, hub-audience token for the assignee picker
 describe('plane sign-in — a third, Superlibrary-audience token for the card drawer, on request', () => {
   const LIB = 'https://app.superlibrary.dev';
   const HUB_RES = 'https://hub.agentpod.test';
-  function byResource3(opts: { libraryRefuses?: boolean } = {}) {
+  function byResource3(opts: { libraryRefuses?: boolean; libraryDown?: boolean } = {}) {
     const tokenRequests: URLSearchParams[] = [];
     let n = 0;
     const tokens = { app: '', hub: '', lib: '' };
@@ -331,6 +357,7 @@ describe('plane sign-in — a third, Superlibrary-audience token for the card dr
         tokenRequests.push(form);
         const resource = form.get('resource');
         if (resource === LIB && opts.libraryRefuses) return Response.json({ error: 'invalid_target' }, { status: 400 });
+        if (resource === LIB && opts.libraryDown) return new Response('bad gateway', { status: 502 });
         n += 1;
         const access = resource === LIB ? tokens.lib : resource === HUB_RES ? tokens.hub : tokens.app;
         return Response.json({ access_token: access, refresh_token: `r${n + 1}`, expires_in: 300 });
@@ -376,8 +403,15 @@ describe('plane sign-in — a third, Superlibrary-audience token for the card dr
     const fake = byResource3({ libraryRefuses: true });
     const req = new Request('https://api.test/hub/token?library=1', { headers: { Cookie: 'superpipeline_hub_token=app1; superpipeline_plane_hub_token=hub1; superpipeline_plane_refresh=r1' } });
     const res = (await handlePlaneSignInRoute(req, env3(), '/hub/token', fake.impl))!;
-    expect(await res.json()).toEqual({ token: 'app1', hubToken: 'hub1', libraryToken: null, hubConfigured: true, signIn: 'org-plane' });
+    // Declined on purpose (the plane does not let this client ask for Superlibrary), said apart from an expired sign-in.
+    expect(await res.json()).toEqual({ token: 'app1', hubToken: 'hub1', libraryToken: null, libraryDeclined: true, hubConfigured: true, signIn: 'org-plane' });
     expect(cookies(res).get('superpipeline_plane_refresh')).toBe('r1');
+  });
+  it('a library grant that failed in transit is not called declined', async () => {
+    const fake = byResource3({ libraryDown: true });
+    const req = new Request('https://api.test/hub/token?library=1', { headers: { Cookie: 'superpipeline_hub_token=app1; superpipeline_plane_hub_token=hub1; superpipeline_plane_refresh=r1' } });
+    const res = (await handlePlaneSignInRoute(req, env3(), '/hub/token', fake.impl))!;
+    expect(await res.json()).toEqual({ token: 'app1', hubToken: 'hub1', libraryToken: null, hubConfigured: true, signIn: 'org-plane' });
   });
   it('a refused library grant after a successful hub grant keeps the hub grant\'s new refresh token', async () => {
     const fake = byResource3({ libraryRefuses: true });

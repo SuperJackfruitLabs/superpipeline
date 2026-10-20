@@ -13,7 +13,7 @@
   import { isPageChange } from '$lib/motion/page-change';
   import { installReveal } from '$lib/motion/reveal';
   import { page } from '$app/state';
-  import { takeReturnTo } from '$lib/reconnect';
+  import { holdReturnTo, registerOpenCard, releaseReturnTo } from '$lib/reconnect';
   import { app } from '$lib/stores/app.svelte';
   import { VibeRoot } from '@superjackfruit/vibekit';
   import { appearance } from '$lib/appearance.svelte';
@@ -23,7 +23,7 @@
   import Landing from '$lib/components/Landing.svelte';
   import { closeCardOnEscape } from '$lib/escape';
   import { auth } from '$lib/auth-recovery.svelte';
-  import LogoMotion from '$lib/components/LogoMotion.svelte';
+  import BootScreen from '$lib/components/parts/BootScreen.svelte';
   import ReconnectDialog from '$lib/components/dialogs/ReconnectDialog.svelte';
   import ReconnectToast from '$lib/components/dialogs/ReconnectToast.svelte';
   import NewCardDialog from '$lib/components/dialogs/NewCardDialog.svelte';
@@ -37,8 +37,11 @@
     appearance.init();
     // "Show all" and the other expand toggles grow into place (lib/motion/reveal.ts).
     const uninstallReveal = installReveal();
+    // Taken before init, so the front door's redirect to the Inbox cannot run over it.
+    holdReturnTo();
+    registerOpenCard(() => app.openCardId);
     void app.init().then(() => {
-      const back = takeReturnTo();
+      const back = releaseReturnTo();
       if (back && app.authState === 'ready') void goto(back, { replaceState: true });
     });
     return () => {
@@ -58,13 +61,7 @@
 
 <VibeRoot vibe={appearance.value.vibe} theme={appearance.theme}>
 {#if app.authState === 'loading'}
-  <main class="min-h-viewport safe-x flex flex-col items-center justify-center gap-3 text-center">
-    <h1 class="sr-only">Loading Superpipeline</h1>
-    <!-- The large mark: the pack's Channel animation, once per session; Quiet keeps it still. -->
-    <LogoMotion size={72} playIntro={appearance.value.vibe !== 'quiet'} />
-    <div class="wordmark text-lg">superpipeline</div>
-    <div class="mono text-muted-foreground flex items-center gap-2 text-xs"><span class="live-dot"></span>loading your boards…</div>
-  </main>
+  <BootScreen heading="Loading Superpipeline" label="Signing you in…" />
 {:else if app.authState === 'signed-out'}
   <Landing />
 {:else if page.data.shell === 'bare'}

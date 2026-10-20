@@ -1,10 +1,11 @@
 // apps/web/src/lib/components/workspace/people-model.svelte.ts
-import { getMembers, addMember, setMemberRole, removeMember, type Member, type Role } from '$lib/api';
+import { addMember, setMemberRole, removeMember, type Member, type Role } from '$lib/api';
 import { app } from '$lib/stores/app.svelte';
-import { workspaceCounts } from './workspace-counts.svelte';
+import { crewLists, workspaceCounts } from './workspace-counts.svelte';
 
 export class PeopleModel {
-  members = $state<Member[] | null>(null);
+  // Opens on the list this tab last read (crewLists), refreshed behind it.
+  members = $state<Member[] | null>(crewLists.members);
   name = $state('');
   email = $state('');
   role = $state<Role>('member');
@@ -17,7 +18,7 @@ export class PeopleModel {
   isMe = (m: Member) => m.userId === app.user?.userId;
 
   async refresh(): Promise<void> {
-    const req = getMembers();
+    const req = crewLists.readMembers();
     app.markBusy(req);
     this.failed = false;
     try { this.members = await req; } catch { this.failed = true; }
