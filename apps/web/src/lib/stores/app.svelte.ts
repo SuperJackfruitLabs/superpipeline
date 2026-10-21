@@ -7,6 +7,7 @@
  * inside the components that own it. Ported from the original monolithic `+page.svelte`.
  */
 import type { ListSort } from '$lib/components/plan/list/types';
+import { allowsLocalFixtures } from '$lib/local-fixtures';
 import {
   getMe,
   getBoard,
@@ -87,9 +88,9 @@ class AppStore {
     tracked.catch(() => {});
     return tracked;
   }
-  /** Dev builds: `<html data-ready="true">` once the board and its catalogue are in and nothing is pending. */
+  /** Observable read-only readiness once the board/catalogue are in and nothing is pending. */
   noteLoaded(): void {
-    if (!import.meta.env.DEV || typeof document === 'undefined') return;
+    if (typeof document === 'undefined') return;
     const settled = this.authState !== 'ready' || this.needsBoard || this.board !== null;
     // An open card is read once its log is in, not when the board is: the drawer mounts after the board.
     const cardIn = !this.openCardId || this.cardDetailFor === this.openCardId;
@@ -798,7 +799,7 @@ class AppStore {
 
 export const app = new AppStore();
 
-// Dev builds only: the pixel suite re-reads the board on demand instead of waiting for a poll.
-if (import.meta.env.DEV && typeof window !== 'undefined') {
+// Local rehearsals re-read on demand; deployed origins never expose the fixture control.
+if (typeof window !== 'undefined' && allowsLocalFixtures(import.meta.env.DEV, window.location.hostname)) {
   (window as unknown as { __spDev: { refresh: () => Promise<void> } }).__spDev = { refresh: () => app.refresh() };
 }

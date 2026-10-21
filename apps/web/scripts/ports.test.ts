@@ -9,6 +9,11 @@ describe('resolvePorts', () => {
     expect(resolvePorts({ SP_API_PORT: '8797' })).toMatchObject({ api: 8797, web: 5173 });
     expect(resolvePorts({ SP_WEB_PORT: '5183' })).toMatchObject({ api: 8787, web: 5183, webUrl: 'http://localhost:5183' });
   });
+  it('serves built browser tests from the same Worker origin, independently of the Vite port', () => {
+    expect(resolvePorts({ SP_E2E_SERVER: 'built', SP_API_PORT: '8797', SP_WEB_PORT: '5183' })).toEqual({ api: 8797, web: 8797, apiUrl: 'http://localhost:8797', webUrl: 'http://localhost:8797' });
+    expect(resolvePorts({ SP_E2E_SERVER: 'built' })).toMatchObject({ api: 8787, web: 8787 });
+    expect(() => resolvePorts({ SP_E2E_SERVER: 'built', SP_API_PORT: '70000' })).toThrow(/SP_API_PORT/);
+  });
   it('treats an empty value as unset', () => {
     expect(resolvePorts({ SP_API_PORT: '', SP_WEB_PORT: ' ' })).toMatchObject({ api: 8787, web: 5173 });
   });

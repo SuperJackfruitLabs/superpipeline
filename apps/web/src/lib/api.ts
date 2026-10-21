@@ -6,11 +6,12 @@ import type { AgentScope } from '@superpipeline/contract';
  */
 import { hubAudienceToken, withAuthority } from './hub-token';
 import { ApiError, REQUEST_TIMEOUT_MS } from './loading';
+import { allowsLocalFixtures } from './local-fixtures';
 export { ApiError } from './loading';
 
-/** Dev builds only: the pixel suite points the client at its fixture tenant and person. */
+/** Dev or literal loopback only: production-bundle rehearsals can select a local fixture person. */
 const devRead = (k: string): string | null => {
-  if (!import.meta.env.DEV) return null;
+  if (!allowsLocalFixtures(import.meta.env.DEV, globalThis.location?.hostname ?? '')) return null;
   try {
     return globalThis.localStorage?.getItem(k) ?? null;
   } catch {

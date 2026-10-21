@@ -9,12 +9,13 @@
     "preview": "vite preview",
     "typecheck": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
     "test": "vitest run",
-    "e2e": "playwright test",
+    "e2e": "node scripts/e2e-run.mjs",
     "test:pixel": "playwright test -c e2e/pixel/playwright.pixel.config.ts",
     "test:refs": "playwright test -c e2e/pixel/playwright.refs.config.ts",
     "test:pixel:report": "open test-results/pixel/index.html",
     "visual:local": "bash scripts/visual/base-vs-head.sh HEAD~1",
-    "visual:self": "VISUAL_SELF=1 bash scripts/visual/base-vs-head.sh"
+    "visual:self": "VISUAL_SELF=1 bash scripts/visual/base-vs-head.sh",
+    "e2e:dev": "SP_E2E_SERVER=dev playwright test"
   },
   "dependencies": {
     "@atlaskit/pragmatic-drag-and-drop": "^2.0.1",

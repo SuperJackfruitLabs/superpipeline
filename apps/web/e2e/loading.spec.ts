@@ -7,6 +7,7 @@
  * Reduced motion is on (playwright.config.ts): nothing here waits on an animation.
  */
 import { test, expect, type Page, type BrowserContext } from '@playwright/test';
+import { waitForAppReady, waitForLayout } from './support/readiness';
 import { seedWorld, FIXTURE_TENANT, FIXTURE_USER } from './pixel/fixture/seed';
 
 const DX = '/b/brd_134a0ddb6d434478';
@@ -92,7 +93,8 @@ for (const { vibe, size } of WALKS) {
         await hold(page, { delay: 800 });
         await page.goto(url, { waitUntil: 'commit' });
         await expect.poll(async () => (await stats(page)).real, { timeout: 20_000, message: `${name}: real content` }).not.toBeNull();
-        await page.waitForTimeout(300);
+        await waitForAppReady(page);
+        await waitForLayout(page);
         const a = await stats(page);
         const early = Object.entries(a.empties).filter(([, t]) => t < a.real!).map(([w]) => w);
         if (early.length) problems.push(`${name}: "${early.join('", "')}" before the data`);

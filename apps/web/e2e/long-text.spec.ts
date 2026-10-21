@@ -6,7 +6,9 @@
  * one that clips it (an ellipsis or a scroller), and the page never scrolls sideways.
  */
 import { expect, test, type Page } from '@playwright/test';
-import { API, TENANT, openBoard, seedBoard, seedGatedCard, seedQuestionCard, setAppearance } from './support/seed';
+import { API, TENANT, REVIEW_PIPELINE, openBoard, seedBoard, seedGatedCard, seedQuestionCard, setAppearance } from './support/seed';
+
+import { waitForAppReady, waitForLayout } from './support/readiness';
 
 const LONG = 'Supercalifragilistic' + 'x'.repeat(100); // 120 characters, no break opportunity
 const MARKERS = [LONG.slice(0, 24), '{{y}}', '<script>'];
@@ -48,7 +50,7 @@ async function spills(page: Page): Promise<string[]> {
 let boardId = '';
 let cardId = '';
 test.beforeAll(async ({ request }) => {
-  boardId = await seedBoard(request, `Long ${LONG}`);
+  boardId = await seedBoard(request, `Long ${LONG}`, REVIEW_PIPELINE);
   await seedGatedCard(request, boardId, `Long title: ${LONG} and then a normal sentence that keeps going`);
   await seedQuestionCard(request, boardId, '{{y}}');
   await request.post(`${API}/v1/boards/${boardId}/cards`, { headers: TENANT, data: { title: `<script>alert(1)</script> ${'plain words that run on for a long while '.repeat(4)}` } });
@@ -69,23 +71,30 @@ for (const vibe of ['daylight', 'paper', 'studio', 'quiet']) {
       const problems: string[] = [];
       for (const path of where) {
         await page.goto(path);
-        await expect(page.locator('html')).toHaveAttribute('data-ready', 'true');
-        await expect(page.getByText(MARKERS[0]!).first()).toBeAttached({ timeout: 10_000 }).catch(() => {});
-        await page.waitForTimeout(300);
+        if (path.endsWith('/operate')) await page.waitForURL('**/inbox');
+        await waitForAppReady(page);
+        // Each surface must contain its seeded title: missing content is a failure,
+        // not a swallowed ten-second wait followed by a vacuous geometry check.
+        const title = path === '/plan/projects' ? `Project ${LONG}`
+          : path === '/crew/agents' ? `Agent ${LONG}` : `Long title: ${LONG}`;
+        await expect(page.getByText(title, { exact: false }).filter({ visible: true }).first()).toBeVisible();
+        await waitForLayout(page);
         for (const p of await spills(page)) problems.push(`${path}: ${p}`);
       }
       // The command palette lists the long card title.
       await page.goto(`/b/${boardId}`);
-      await expect(page.locator('html')).toHaveAttribute('data-ready', 'true');
+      await waitForAppReady(page);
       await page.keyboard.press('ControlOrMeta+k');
       await page.keyboard.type('Supercali');
-      await page.waitForTimeout(500);
+      // Phone search is a full-screen surface; both forms expose the same result option.
+      await expect(page.getByRole('option', { name: `Long title: ${LONG}`, exact: false }).filter({ visible: true }).first()).toBeVisible();
+      await waitForLayout(page);
       for (const p of await spills(page)) problems.push(`palette: ${p}`);
       await page.keyboard.press('Escape');
       // The literal text is drawn as text: never templated away, never run as markup.
       await page.goto(`/b/${boardId}?view=list`);
-      await expect(page.getByText('{{y}}', { exact: true }).first()).toBeVisible();
-      await expect(page.getByText(/<script>alert\(1\)<\/script>/).first()).toBeVisible();
+      await expect(page.getByText('{{y}}', { exact: true }).filter({ visible: true }).first()).toBeVisible();
+      await expect(page.getByText(/<script>alert\(1\)<\/script>/).filter({ visible: true }).first()).toBeVisible();
       expect(problems).toEqual([]);
     });
   }

@@ -10,7 +10,11 @@
   "scripts": {
     "test": "pnpm -r test",
     "typecheck": "pnpm -r typecheck",
-    "build": "pnpm -r build"
+    "build": "pnpm -r build",
+    "ci:build-app": "node scripts/app-artifact.mjs build",
+    "ci:verify-app": "node scripts/app-artifact.mjs verify",
+    "ci:deploy-app": "node scripts/app-artifact.mjs deploy",
+    "ci:test": "node --test scripts/*.test.mjs"
   },
   "devDependencies": {
     "typescript": "^6.0.3",
