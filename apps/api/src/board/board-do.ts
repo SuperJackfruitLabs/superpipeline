@@ -5480,7 +5480,7 @@ export class BoardDO extends DurableObject<Env> {
   }
 
   async attachEvidenceReference(input: EvidenceReferenceInput): Promise<Result<ReferenceView>> {
-    const auth = this.authorizeRun(input);
+    const auth = this.authorizeEvidenceAnnotation(input);
     if (!auth.ok) return auth;
     const row = auth.run;
     if (row.card_id !== input.cardId || row.stage_key !== input.stageKey) return { ok: false, code: 'NOT_RUN_OWNER', message: 'original card and stage must match' };
@@ -7635,8 +7635,26 @@ export class BoardDO extends DurableObject<Env> {
   }
 
   /**
-   * The gate every run verb passes: the run must **belong to the calling agent** and hold a **live
-   * lease**. Both checks live here so a new verb cannot forget one.
+   * An export locator annotates original evidence; it never resumes work. Successful terminal
+   * runs retain their original owner and epoch even after the card moves on. Reclaimed and
+   * other unsuccessful runs remain fenced. Unlike the dev work gate, identity is mandatory.
+   */
+  private authorizeEvidenceAnnotation(input: EvidenceReferenceInput): RunAuth {
+    const row = this.getRunRow(input.runId);
+    if (!input.agentId || (row && row.agent_id !== input.agentId)) {
+      return { ok: false, code: 'NOT_RUN_OWNER', message: 'original authenticated run owner required' };
+    }
+    const permitted = row && (row.status === 'working' ||
+      (row.status === 'ended' && row.ended_at != null && (row.outcome === 'completed' || row.outcome === 'submitted')));
+    if (!permitted || Number(row.lease_epoch) !== input.leaseEpoch) {
+      return { ok: false, code: 'STALE_LEASE', message: 'original run epoch and permitted evidence state required' };
+    }
+    return { ok: true, run: row };
+  }
+
+  /**
+   * The work-mutation gate: the run must **belong to the calling agent** and hold a **live
+   * lease**. Historical export annotations use their separate original-owner gate above.
    *
    * Identity is checked first: an agent that does not own the run learns nothing about its lease,
    * and — more importantly — a `NOT_RUN_OWNER` is never confused with the `STALE_LEASE` that tells

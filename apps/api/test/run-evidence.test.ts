@@ -400,14 +400,14 @@ describe('explicit run evidence v1', () => {
     });
   });
 
-  it('attaches only unverified export locators under the original agent and active epoch', async () => {
+  it('attaches only unverified export locators under the original agent and original epoch', async () => {
     await withIssuer(ISSUER, jwksBody, async () => {
       const { boardId, runId } = await aRun();
       const stub = env.BOARD_DO.get(env.BOARD_DO.idFromName(`${TENANT}:${boardId}`));
       const cardId = await runInDurableObject(stub, async (_b, state) => state.storage.sql.exec(`SELECT card_id FROM runs WHERE id = ?`, runId).one().card_id as string);
       const url = `https://api.test/v1/boards/${boardId}/runs/${runId}/evidence-reference`;
       const payload = { leaseEpoch: 1, cardId, stageKey: 'research', export_id: '00000000-0000-4000-8000-000000000001', manifest_sha256: '0'.repeat(64) };
-      const attach = (body: unknown, headers = agent()) => SELF.fetch(url, { method: 'POST', headers, body: JSON.stringify(body) });
+      const attach = (body: unknown, headers: Record<string, string> = agent()) => SELF.fetch(url, { method: 'POST', headers, body: JSON.stringify(body) });
       expect((await attach({ ...payload, leaseEpoch: 2 })).status).toBeGreaterThanOrEqual(400);
       expect((await attach(payload, { ...agent(), 'X-Agent-Id': 'agt_other' })).status).toBeGreaterThanOrEqual(400);
       expect((await attach({ ...payload, cardId: 'card_other' })).status).toBeGreaterThanOrEqual(400);
@@ -422,7 +422,77 @@ describe('explicit run evidence v1', () => {
       const v1 = await (await SELF.fetch(`https://api.test/v1/boards/${boardId}/runs/${runId}/evidence-v1`, { headers: { Authorization: `Bearer ${await hubToken()}` } })).json<import('../src/board/board-do').RunEvidenceV1>();
       expect(v1.provenance.references[0]!.execution_export).toEqual({ schema_version: 'agentpod-execution-export/v1', export_id: payload.export_id, manifest_sha256: payload.manifest_sha256, verification: 'unverified' });
       await SELF.fetch(`https://api.test/v1/boards/${boardId}/runs/${runId}/complete`, { method: 'POST', headers: agent(), body: JSON.stringify({ leaseEpoch: 1 }) });
-      expect((await attach(payload)).status).toBeGreaterThanOrEqual(400);
+      expect(await (await attach(payload)).json()).toEqual(receipt);
+      const late = await attach({ ...payload, export_id: '00000000-0000-4000-8000-000000000002' });
+      expect(late.status).toBe(200);
+      expect((await attach(payload, dev())).status).toBe(403);
+      expect((await attach(payload, agent(OTHER_TENANT))).status).toBeGreaterThanOrEqual(400);
+      expect((await attach({ ...payload, leaseEpoch: 2 })).status).toBe(409);
+      expect((await attach(payload, { ...agent(), 'X-Agent-Id': 'agt_replacement' })).status).toBe(403);
+      expect((await attach({ ...payload, stageKey: 'review' })).status).toBe(403);
+      // Historical annotation does not renew work authority or mutate the completed run.
+      expect((await SELF.fetch(`https://api.test/v1/boards/${boardId}/runs/${runId}/heartbeat`, { method: 'POST', headers: agent(), body: JSON.stringify({ leaseEpoch: 1 }) })).status).toBe(409);
+      const row = await runInDurableObject(stub, async (_b, state) => state.storage.sql.exec(`SELECT status, outcome, lease_epoch FROM runs WHERE id = ?`, runId).one());
+      expect(row).toMatchObject({ status: 'ended', outcome: 'completed', lease_epoch: 1 });
+    });
+  });
+
+  it('authenticates original historical annotations through Organization plane HTTP tokens', async () => {
+    const { withOrgPlane, planeToken, ORG, OTHER_ORG, AGENT } = await import('./helpers/org-plane');
+    const { ensureOrgTenant } = await import('../src/auth/org-tenancy');
+    const { createAgent, setAgentExternalMapping } = await import('../src/db/catalog');
+    const tenant = await ensureOrgTenant(env.DB, ORG);
+    const runner = await createAgent(env.DB, tenant, { name: 'historical runner', capabilities: ['research'] });
+    await setAgentExternalMapping(env.DB, tenant, runner.id, { externalSource: 'org-plane', externalId: AGENT });
+    const replacement = await createAgent(env.DB, tenant, { name: 'replacement', capabilities: ['research'] });
+    const replacementPrincipal = 'prn_000000000000000000a5';
+    await setAgentExternalMapping(env.DB, tenant, replacement.id, { externalSource: 'org-plane', externalId: replacementPrincipal });
+    const { boardId, runId } = await aRun({ tenant, complete: true });
+    const stub = env.BOARD_DO.get(env.BOARD_DO.idFromName(`${tenant}:${boardId}`));
+    const cardId = await runInDurableObject(stub, async (_b, state) => {
+      state.storage.sql.exec(`UPDATE runs SET agent_id = ? WHERE id = ?`, runner.id, runId);
+      return state.storage.sql.exec(`SELECT card_id FROM runs WHERE id = ?`, runId).one().card_id;
+    });
+    await withIssuer(ISSUER, jwksBody, async () => withOrgPlane(async () => {
+      const payload = { leaseEpoch: 1, cardId, stageKey: 'research', export_id: '00000000-0000-4000-8000-000000000003', manifest_sha256: '0'.repeat(64) };
+      const post = async (claims: Record<string, unknown>, body = payload) => SELF.fetch(`https://api.test/v1/boards/${boardId}/runs/${runId}/evidence-reference`, { method: 'POST', headers: { Authorization: `Bearer ${await planeToken({ sub: AGENT, principalKind: 'agent', scope: 'run', ...claims })}`, 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+      const res = await post({});
+      expect(res.status).toBe(200);
+      const receipt = await res.json();
+      expect(await (await post({})).json()).toEqual(receipt);
+      expect((await post({ sub: replacementPrincipal })).status).toBe(403);
+      expect((await post({ org: OTHER_ORG })).status).toBeGreaterThanOrEqual(400);
+      expect((await post({}, { ...payload, leaseEpoch: 2 })).status).toBe(409);
+      expect((await post({}, { ...payload, stageKey: 'review' })).status).toBe(403);
+      expect((await post({ principalKind: 'human' })).status).toBeGreaterThanOrEqual(400);
+    }));
+  });
+
+  it('accepts submitted history only with a recorded terminal timestamp', async () => {
+    await withIssuer(ISSUER, jwksBody, async () => {
+      const { boardId, runId } = await aRun();
+      const stub = env.BOARD_DO.get(env.BOARD_DO.idFromName(`${TENANT}:${boardId}`));
+      const cardId = await runInDurableObject(stub, async (_b, state) => {
+        state.storage.sql.exec(`UPDATE runs SET status = 'ended', outcome = 'submitted' WHERE id = ?`, runId);
+        return state.storage.sql.exec(`SELECT card_id FROM runs WHERE id = ?`, runId).one().card_id;
+      });
+      const attach = () => SELF.fetch(`https://api.test/v1/boards/${boardId}/runs/${runId}/evidence-reference`, { method: 'POST', headers: agent(), body: JSON.stringify({ leaseEpoch: 1, cardId, stageKey: 'research', export_id: '00000000-0000-4000-8000-000000000001', manifest_sha256: '0'.repeat(64) }) });
+      expect((await attach()).status).toBe(409);
+      await runInDurableObject(stub, async (_b, state) => { state.storage.sql.exec(`UPDATE runs SET ended_at = ? WHERE id = ?`, '2026-10-01T00:00:00.000Z', runId); });
+      expect((await attach()).status).toBe(200);
+    });
+  });
+
+  it.each(['reclaimed', 'crashed', 'released', 'blocked'])('does not annotate fenced %s runs', async (outcome) => {
+    await withIssuer(ISSUER, jwksBody, async () => {
+    const { boardId, runId } = await aRun();
+    const stub = env.BOARD_DO.get(env.BOARD_DO.idFromName(`${TENANT}:${boardId}`));
+    const cardId = await runInDurableObject(stub, async (_b, state) => {
+      state.storage.sql.exec(`UPDATE runs SET status = 'ended', outcome = ? WHERE id = ?`, outcome, runId);
+      return state.storage.sql.exec(`SELECT card_id FROM runs WHERE id = ?`, runId).one().card_id;
+    });
+    const res = await SELF.fetch(`https://api.test/v1/boards/${boardId}/runs/${runId}/evidence-reference`, { method: 'POST', headers: agent(), body: JSON.stringify({ leaseEpoch: 1, cardId, stageKey: 'research', export_id: '00000000-0000-4000-8000-000000000001', manifest_sha256: '0'.repeat(64) }) });
+    expect(res.status).toBe(409);
     });
   });
 
