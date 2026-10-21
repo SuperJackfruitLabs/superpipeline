@@ -134,3 +134,23 @@ describe('MCP server — Streamable HTTP transport', () => {
     expect(JSON.parse(result.content[0].text)).toEqual({ claimed: false });
   });
 });
+
+
+describe('MCP request resource bounds', () => {
+  it('rejects oversized requests before tool validation', async () => {
+    const r = await SELF.fetch(`${base}/mcp`, {
+      method: 'POST', headers: POST_HEADERS(),
+      body: JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'tools/call', params: { name: 'superpipeline_list_work', arguments: { extra: 'x'.repeat(1024 * 1024) } } }),
+    });
+    expect(r.status).toBe(413);
+  });
+  it('bounds all argument elements before schema parsing', async () => {
+    const r = await SELF.fetch(`${base}/mcp`, {
+      method: 'POST', headers: POST_HEADERS(),
+      body: JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'tools/call', params: { name: 'superpipeline_list_work', arguments: { extra: Array(10_001).fill(0) } } }),
+    });
+    const body = await rpc(r);
+    expect(body.result.isError).toBe(true);
+    expect(body.result.content[0].text).toContain('maximum of 10000 elements');
+  });
+});

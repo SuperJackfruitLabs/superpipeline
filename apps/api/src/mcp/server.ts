@@ -37,7 +37,7 @@ The loop:
 A STALE_LEASE error means you lost the lease (it timed out or was reassigned) — stop working that run and claim fresh work.`;
 
 export async function handleMcpRequest(request: Request, env: Env, auth: McpAuth): Promise<Response> {
-  const server = new McpServer(SERVER_INFO, { instructions: INSTRUCTIONS });
+  const server = new McpServer(SERVER_INFO, { instructions: INSTRUCTIONS, maxToolInputElements: 10_000 });
   registerSuperpipelineTools(server, {
     auth,
     boardStub: (boardId) => boardStub(env, auth.tenantId, boardId),
@@ -48,6 +48,7 @@ export async function handleMcpRequest(request: Request, env: Env, auth: McpAuth
   const transport = new WebStandardStreamableHTTPServerTransport({
     sessionIdGenerator: undefined, // stateless
     enableJsonResponse: true,
+    maxRequestBodySize: 1024 * 1024,
   });
 
   // This route sits outside the Worker's outer try/catch (it precedes board routing), so it owns its
