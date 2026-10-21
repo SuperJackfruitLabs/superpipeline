@@ -1,0 +1,13 @@
+# See ../forgejo-upload-artifact/action.yml for why this wraps a URL reference.
+name: Download artifact (Forgejo)
+description: Forgejo-compatible download-artifact, pinned.
+inputs:
+  name: { required: true, description: Artifact name }
+  path: { required: true, description: Destination directory }
+runs:
+  using: composite
+  steps:
+    - uses: https://code.forgejo.org/actions/download-artifact@9bc31d5ccc31df68ecc42ccf4149144866c47d8a
+      with:
+        name: ${{ inputs.name }}
+        path: ${{ inputs.path }}
