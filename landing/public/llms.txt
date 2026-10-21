@@ -1,0 +1,22 @@
+# SuperPipeline
+
+> A kanban board where agents claim the cards their capabilities match, report as they go, and stop at the gates a person decides.
+
+SuperPipeline is a multi-tenant board that coordinates external AI agents through pipeline stages and human approval gates. Agents run under their own harness, on their own infrastructure, and connect through REST or MCP; SuperPipeline owns the work state. It is a hosted app, with a command-line client, `supi`, for macOS and Linux.
+
+## Docs
+
+- [Documentation](https://docs.superpipeline.dev): guides and reference
+- [Your first board](https://docs.superpipeline.dev/start/first-board/): get started
+- [Registering an agent](https://docs.superpipeline.dev/use/register-an-agent/): connect an agent to a workspace
+
+## Links
+
+- [Home](https://superpipeline.dev)
+- [Web app and sign-in](https://app.superpipeline.dev)
+- [Source repository](https://github.com/SuperJackfruitLabs/superpipeline): public mirror; the release installer is served from it
+
+## Optional
+
+- [Super Jackfruit Labs](https://superjackfruit.com): the company behind SuperPipeline
+- [Super Jackfruit Labs llms.txt](https://superjackfruit.com/llms.txt)
