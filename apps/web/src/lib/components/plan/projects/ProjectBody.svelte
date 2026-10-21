@@ -74,7 +74,11 @@
   const openCards = $derived(model.cards.filter((c) => c.card.state !== 'completed').length);
 </script>
 
-{#if p}
+<!-- The first project read can finish before its cross-board cards and roll-up.
+     Reveal that layout together; replacing small blocker placeholders later
+     pushes the visible milestones/cards off a phone screen. Refreshes retain
+     the loaded page (reload/refreshRollup do not restart model.loading). -->
+{#if p && !model.loading}
 <div class="pjb" class:pjb--compact={compact}>
   <div class="pjb-main">
     <section class="pjb-head" aria-label="About this project">
