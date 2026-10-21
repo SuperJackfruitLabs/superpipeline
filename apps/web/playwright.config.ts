@@ -1,4 +1,5 @@
 import { defineConfig, devices } from '@playwright/test';
+import { dirname, join } from 'node:path';
 import { PORTS } from './scripts/ports';
 import { timeouts } from '../../ci-timeouts.mjs';
 import { extendedSpecs, smokeSpec } from './scripts/e2e-suites';
@@ -18,6 +19,8 @@ export default defineConfig({
   metadata: { project: process.env.SP_E2E_PROJECT ?? 'local', shard: process.env.SP_E2E_SHARD ?? '1/1' },
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 1 : 0,
+  // Keep traces/screenshots with each shard's JSON, including parallel local rehearsals.
+  outputDir: process.env.SP_E2E_REPORT ? join(dirname(process.env.SP_E2E_REPORT), 'attachments') : 'test-results',
   globalTimeout: process.env.CI ? 25 * 60_000 : undefined,
   timeout: t.test,
   expect: { timeout: t.expect },

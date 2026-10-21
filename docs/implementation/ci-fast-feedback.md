@@ -31,6 +31,9 @@ local-storage values. Read-only DOM readiness works in both compiled and dev
 builds, so tests do not silently fall back to a different frontend.
 
 Readiness rejects explicit boot/read failure rather than swallowing a timeout.
+Slow-server loading walks wait for visible pending surfaces to clear; unrelated
+background reads do not stand in for visible route readiness. Each route is a
+named step, and every temporary browser context closes even on failure.
 Long-text checks require the visible seeded content on every route and await
 fonts/paint rather than fixed sleeps. The full twelve appearance/viewport cases
 and their literal-text/security assertions remain. Intentional delayed-loading
@@ -45,6 +48,9 @@ exact project/shard identities from the plan before succeeding. Visual checks
 retain their outcome and log even when the change cannot move a pixel and no
 screenshots are captured. A skipped capture does not become a missing-artifact
 failure, and an actual comparison failure remains a failing job.
+Traces, screenshots and error contexts live beside each shard's JSON report so
+uploads retain their attachments and parallel local runs cannot clear each
+other's output directory.
 The Playwright image version is checked against the lockfile in every browser job.
 
 Production app, docs and landing deployments remain GitHub-only main-push jobs.
