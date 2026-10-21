@@ -437,3 +437,11 @@ surface (this slice is per-board); enforcing `permissionPolicy`/`autonomyLevel` 
 **manager** routing *behavior* (the field round-trips today; a manager agent orchestrating sub-agents
 is a follow-up). Additional harness adapters (Codex NDJSON, OpenCode SSE, ACP bridge) follow the
 Claude `normalizeEvents` pattern (docs/07 §1) once their wire formats are pinned.
+
+
+## MCP request limits
+
+HTTP MCP requests are limited to 1 MiB. Tool arguments may contain at most
+10,000 array elements and object keys in total, including unknown fields. An
+oversized body returns HTTP 413; excessive argument structure returns a tool
+error before the tool runs. Send references or smaller batches for larger work.
