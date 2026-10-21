@@ -7,6 +7,7 @@
  * Reduced motion is on (playwright.config.ts): nothing here waits on an animation.
  */
 import { test, expect, type Page, type BrowserContext } from '@playwright/test';
+import { waitForSurfaceReady, waitForLayout } from './support/readiness';
 import { seedWorld, FIXTURE_TENANT, FIXTURE_USER } from './pixel/fixture/seed';
 
 const DX = '/b/brd_134a0ddb6d434478';
@@ -87,19 +88,23 @@ for (const { vibe, size } of WALKS) {
       test.setTimeout(180_000);
       const problems: string[] = [];
       for (const [name, url] of Object.entries(SURFACES).filter(([n]) => vibe === 'daylight' || OTHER_VIBE_SURFACES.includes(n))) {
-        const ctx = await browser.newContext({ viewport: { width: size.width, height: size.height }, reducedMotion: 'reduce', timezoneId: 'Asia/Kolkata', isMobile: size.width < 500, hasTouch: size.width < 500 });
-        const page = await open(ctx, vibe);
-        await hold(page, { delay: 800 });
-        await page.goto(url, { waitUntil: 'commit' });
-        await expect.poll(async () => (await stats(page)).real, { timeout: 20_000, message: `${name}: real content` }).not.toBeNull();
-        await page.waitForTimeout(300);
-        const a = await stats(page);
-        const early = Object.entries(a.empties).filter(([, t]) => t < a.real!).map(([w]) => w);
-        if (early.length) problems.push(`${name}: "${early.join('", "')}" before the data`);
-        if (a.busy === null) problems.push(`${name}: never aria-busy while waiting`);
-        if (Object.keys(a.empties).some((w) => w === 'Error:')) problems.push(`${name}: raw "Error:" text`);
-        if (size.n === 'phone' && a.cls > 0.1) problems.push(`${name}: phone CLS ${a.cls.toFixed(3)} > 0.1`);
-        await ctx.close();
+        await test.step(`${name}: ${url}`, async () => {
+          const ctx = await browser.newContext({ viewport: { width: size.width, height: size.height }, reducedMotion: 'reduce', timezoneId: 'Asia/Kolkata', isMobile: size.width < 500, hasTouch: size.width < 500 });
+          try {
+            const page = await open(ctx, vibe);
+            await hold(page, { delay: 800 });
+            await page.goto(url, { waitUntil: 'commit' });
+            await expect.poll(async () => (await stats(page)).real, { timeout: 20_000, message: `${name}: real content` }).not.toBeNull();
+            await waitForSurfaceReady(page);
+            await waitForLayout(page);
+            const a = await stats(page);
+            const early = Object.entries(a.empties).filter(([, t]) => t < a.real!).map(([w]) => w);
+            if (early.length) problems.push(`${name}: "${early.join('", "')}" before the data`);
+            if (a.busy === null) problems.push(`${name}: never aria-busy while waiting`);
+            if (Object.keys(a.empties).some((w) => w === 'Error:')) problems.push(`${name}: raw "Error:" text`);
+            if (size.n === 'phone' && a.cls > 0.1) problems.push(`${name}: phone CLS ${a.cls.toFixed(3)} > 0.1`);
+          } finally { await ctx.close(); }
+        });
       }
       expect(problems).toEqual([]);
     });

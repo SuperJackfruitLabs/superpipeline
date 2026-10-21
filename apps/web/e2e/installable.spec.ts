@@ -6,11 +6,10 @@ import { test, expect } from '@playwright/test';
  * A phone fetches the manifest and icons before anyone has signed in to the installed app, and
  * an iOS home-screen app does not share Safari's cookies. If they sat behind the session check
  * the install would get the sign-in page instead, and the icon would be a screenshot. Checked on
- * both servers: the Vite dev server the suite drives, and the Worker (`wrangler dev`, serving the
- * built `apps/web/build`), which is what production is.
+ * both origins in development mode; compiled rehearsals serve UI and API from the same Worker.
  */
 import { PORTS } from '../scripts/ports';
-const ORIGINS = [PORTS.webUrl, PORTS.apiUrl];
+const ORIGINS = [...new Set([PORTS.webUrl, PORTS.apiUrl])];
 const FILES: [string, RegExp][] = [
   ['/manifest.webmanifest', /^application\/manifest\+json/],
   ['/brand/icon-192.png', /^image\/png/],
@@ -34,7 +33,7 @@ for (const origin of ORIGINS) {
         const res = await anon.get(`${origin}${path}`, { maxRedirects: 0 });
         expect(res.status(), path).toBe(200);
         // Vite's dev server sends .ico with no type at all; the Worker (production) names it.
-        if (path.endsWith('.ico') && origin === PORTS.webUrl) continue;
+        if (path.endsWith('.ico') && process.env.SP_E2E_SERVER !== 'built' && origin === PORTS.webUrl) continue;
         expect(res.headers()['content-type'], path).toMatch(type);
       }
       const manifest = await (await anon.get(`${origin}/manifest.webmanifest`)).json();

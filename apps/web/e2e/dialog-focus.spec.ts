@@ -1,6 +1,7 @@
 // apps/web/e2e/dialog-focus.spec.ts — every dialog gives focus back to what opened it, and a dialog
 // panel sits centred inside the viewport.
 import { expect, test, type Page } from '@playwright/test';
+import { waitForAppReady, waitForSurfaceReady, waitForLayout } from './support/readiness';
 import { API, TENANT, openBoard, seedBoard, setAppearance } from './support/seed';
 
 async function boardWithCard(request: import('@playwright/test').APIRequestContext, title: string) {
@@ -69,6 +70,10 @@ test('the palette shortcut gives focus back to where it was pressed', async ({ p
   const { boardId } = await boardWithCard(request, 'Focus palette');
   await setAppearance(page, 'daylight.light.strong.0');
   await openBoard(page, boardId);
+  // The shell's button exists before bootstrap replaces its dialog mounts.
+  await waitForAppReady(page);
+  await waitForSurfaceReady(page);
+  await waitForLayout(page);
   const newCard = page.getByRole('button', { name: /^New card/ }).first();
   await newCard.focus();
   await page.keyboard.press('Control+k');

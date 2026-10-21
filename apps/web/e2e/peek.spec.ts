@@ -23,6 +23,10 @@ async function compose(page: Page, title: string) {
   await page.getByRole('button', { name: 'New card' }).click();
   await page.getByLabel('Card title').fill(title);
   await page.getByRole('button', { name: 'Dispatch' }).click();
+  // A tile can appear while the composer is still exiting. Its modal Escape
+  // handler owns the key until teardown, even after data-state becomes closed.
+  await expect(page.getByRole('dialog')).toHaveCount(0);
+  await expect.poll(() => page.evaluate(() => getComputedStyle(document.body).pointerEvents)).not.toBe('none');
   await expect(page.locator('[data-card-id]', { hasText: title })).toBeVisible();
 }
 const titleOf = (page: Page, t: string) => page.getByRole('button', { name: new RegExp(`^${t}, in `) });

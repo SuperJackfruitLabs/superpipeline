@@ -8,8 +8,8 @@ import { describe, expect, it } from 'vitest';
 import { parse } from 'yaml';
 
 const root = fileURLToPath(new URL('../../../', import.meta.url));
-type Step = { run?: string; uses?: string; if?: string; id?: string };
-type Job = { needs?: string | string[]; if?: string; steps: Step[]; 'continue-on-error'?: boolean; container?: { image: string; options?: string } };
+type Step = { run?: string; uses?: string; if?: string; id?: string; env?: Record<string, string>; with?: Record<string, unknown> };
+type Job = { needs?: string | string[]; if?: string; steps: Step[]; 'continue-on-error'?: boolean; container?: { image: string; options?: string }; strategy?: { 'max-parallel'?: number; 'fail-fast'?: boolean; matrix?: string } };
 const wf = parse(readFileSync(join(root, '.github/workflows/ci.yml'), 'utf8')) as { on: Record<string, unknown>; jobs: Record<string, Job> };
 const needs = (j: Job) => (j.needs === undefined ? [] : Array.isArray(j.needs) ? j.needs : [j.needs]);
 
@@ -22,7 +22,7 @@ describe('ci.yml', () => {
       for (const s of job.steps) for (const m of (s.run ?? '').matchAll(/(apps\/web\/scripts\/[\w/.-]+\.(?:mjs|sh))/g)) expect(existsSync(join(root, m[1]!)), m[1]).toBe(true);
   });
   it('deploy waits on test, e2e and visual, not on pixel', () => {
-    expect(needs(wf.jobs.deploy!).sort()).toEqual(['e2e', 'test', 'visual']);
+    expect(needs(wf.jobs.deploy!).sort()).toEqual(['e2e', 'plan', 'test', 'visual']);
   });
   it('visual is blocking and runs base versus head in the Playwright image', () => {
     const v = wf.jobs.visual!;
@@ -47,15 +47,75 @@ describe('ci.yml', () => {
     expect(wf.on).not.toHaveProperty('pull_request.paths');
   });
   it('the image tag matches the guard argument in both container jobs', () => {
-    for (const j of ['visual', 'pixel']) {
+    for (const j of ['visual', 'pixel', 'browser', 'smoke']) {
       const tag = wf.jobs[j]!.container!.image.split(':')[1];
       expect(wf.jobs[j]!.steps.some((s) => (s.run ?? '').includes(`image-guard.sh ${tag}`)), j).toBe(true);
     }
   });
-  it('the schedule and a manual dispatch run only the pixel report', () => {
-    for (const j of ['test', 'e2e', 'visual']) {
-      expect(wf.jobs[j]!.if, j).toMatch(/github\.event_name != 'schedule'/);
-      expect(wf.jobs[j]!.if, j).toMatch(/github\.event_name != 'workflow_dispatch'/);
+  it('manual and nightly events reach the full-plan selector and browser jobs', () => {
+    const select = wf.jobs.plan!.steps.find((s) => s.id === 'select');
+    expect(select?.env?.CI_EVENT).toBe('${{ github.event_name }}');
+    expect(wf.jobs.browser!.if).toBe("needs.plan.outputs.app == 'true'");
+    expect(wf.jobs.browser!.strategy?.matrix).toBe('${{ fromJSON(needs.plan.outputs.matrix) }}');
+    expect(wf.jobs.visual!.if).toMatch(/github\.event_name != 'schedule'/);
+  });
+  it('required job names always aggregate actual dependencies and run the fail-closed gate', () => {
+    for (const name of ['test', 'e2e']) {
+      const job = wf.jobs[name]!;
+      expect(job.if).toBe('always()');
+      expect(job['continue-on-error']).toBeFalsy();
+      const gate = job.steps.find((s) => s.run === `node scripts/ci-plan.mjs gate ${name}`);
+      expect(gate?.env?.CI_NEEDS).toBe('${{ toJSON(needs) }}');
+    }
+    expect(needs(wf.jobs.test!).sort()).toEqual(['docs', 'landing', 'plan', 'unit']);
+    expect(needs(wf.jobs.e2e!).sort()).toEqual(['browser', 'build', 'plan', 'smoke']);
+  });
+  it('bounded shards retain reports and validate exact expected identities', () => {
+    const browser = wf.jobs.browser!;
+    expect(browser.strategy?.['max-parallel']).toBe(2);
+    expect(browser.strategy?.['fail-fast']).toBe(false);
+    const run = browser.steps.find((s) => s.run?.includes('--shard='));
+    expect(run?.run).toContain('--workers=1');
+    expect(run?.env?.SP_E2E_PROJECT).toBe('${{ matrix.project }}');
+    expect(run?.env?.SP_E2E_SHARD).toBe('${{ matrix.shard }}/${{ matrix.total }}');
+    const merge = wf.jobs.e2e!.steps.find((s) => s.run?.includes('--merge'));
+    expect(merge?.env?.SP_E2E_MATRIX).toBe('${{ needs.plan.outputs.matrix }}');
+    expect(merge?.env?.EXPECTED).toContain("needs.plan.outputs.extended == 'true'");
+  });
+  it('smoke, shards and deploy verify the same artifact without rebuilding', () => {
+    expect(wf.jobs.build!.steps.some((s) => s.run === 'pnpm ci:build-app')).toBe(true);
+    for (const name of ['smoke', 'browser', 'deploy']) {
+      const job = wf.jobs[name]!;
+      expect(job.steps.some((s) => s.uses?.includes('download-artifact') && s.with?.name === 'app-${{ github.sha }}'), name).toBe(true);
+      expect(job.steps.some((s) => s.run?.includes('pnpm ci:verify-app')), name).toBe(true);
+      expect(job.steps.some((s) => s.run?.includes('ci:build-app')), name).toBe(false);
+    }
+    expect(wf.jobs.deploy!.steps.some((s) => s.run === 'pnpm ci:deploy-app')).toBe(true);
+    expect(wf.jobs.unit!.steps.some((s) => s.run === 'pnpm ci:test')).toBe(true);
+  });
+  it('Forge retains artifacts using pinned compatible actions; visual no-capture retains an outcome', () => {
+    for (const name of ['build', 'browser', 'smoke', 'visual', 'pixel']) {
+      const upload = wf.jobs[name]!.steps.find((s) => s.uses?.startsWith('https://code.forgejo.org/actions/upload-artifact@'));
+      expect(upload?.uses).toMatch(/@[a-f0-9]{40}$/);
+      expect(upload?.if).toContain("github.server_url != 'https://github.com'");
+      expect(upload?.with?.['if-no-files-found']).toBe('error');
+    }
+    expect(wf.jobs.visual!.steps.some((s) => s.if === 'always()' && s.run?.includes('outcome.json'))).toBe(true);
+    expect(wf.jobs.visual!.steps.find((s) => s.id === 'compare')?.run).toContain('pipefail');
+  });
+  it('hidden report directories are explicit on GitHub without unsupported Forge inputs', () => {
+    for (const name of ['smoke', 'browser']) {
+      const steps = wf.jobs[name]!.steps;
+      const github = steps.find((s) => s.uses === 'actions/upload-artifact@v4');
+      const forge = steps.find((s) => s.uses?.startsWith('https://code.forgejo.org/actions/upload-artifact@'));
+      expect(github?.with?.path).toBe('.ci/reports');
+      expect(github?.with?.['include-hidden-files']).toBe(true);
+      expect(forge?.with).not.toHaveProperty('include-hidden-files');
+    }
+    for (const name of ['deploy-docs', 'deploy-landing']) {
+      const deploy = wf.jobs[name]!.steps.find((s) => s.run?.includes('pages deploy'));
+      expect(deploy?.run).toContain('npx --yes wrangler@4.103.0 pages deploy');
     }
   });
+
 });

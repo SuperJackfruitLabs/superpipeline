@@ -2,6 +2,7 @@
 // motion on, loading skeletons clear and every enter settles: nothing keeps moving the layout, and nothing is left
 // covering the controls or blocking the page. Tests never wait on an animation except here, on purpose.
 import { expect, test, type Page } from '@playwright/test';
+import { waitForAppReady, waitForSurfaceReady, waitForLayout } from './support/readiness';
 import { DX, VIBES, openWorld, seed } from './support/world';
 
 const SCREENS = ['/inbox', DX, '/plan/projects', `${DX}/operate`] as const;
@@ -11,10 +12,15 @@ test.beforeAll(async ({ request }) => seed(request));
 
 /** Running animations that end (infinite ones, such as a live pulse, are not motion that settles). */
 const finiteRunning = (page: Page) =>
-  page.evaluate(() => document.getAnimations().filter((a) => a.playState === 'running' && a.effect?.getComputedTiming().endTime !== Infinity).length);
+  page.evaluate(() => document.getAnimations().filter((a) => (a.pending || a.playState === 'running') && a.effect?.getComputedTiming().endTime !== Infinity).length);
 
 async function settle(page: Page): Promise<void> {
-  await page.evaluate(() => document.fonts.ready);
+  // Read completion precedes the loading gate's minimum display time and
+  // Svelte's next-frame enter animations. Observe the final surface first.
+  await waitForSurfaceReady(page);
+  await waitForLayout(page);
+  await expect.poll(() => finiteRunning(page), { timeout: 10_000 }).toBe(0);
+  await waitForLayout(page);
   await expect.poll(() => finiteRunning(page), { timeout: 10_000 }).toBe(0);
 }
 
@@ -45,8 +51,7 @@ test.describe('reduced motion: nothing animates', () => {
     test(`${vibe}: no animation runs on the main screens`, async ({ page }) => {
       for (const route of SCREENS) {
         await openWorld(page, route, { vibe, dark: false, ...SIZE });
-        await page.evaluate(() => document.fonts.ready);
-        await page.waitForTimeout(300);
+        await waitForLayout(page);
         const running = await page.evaluate(() => document.getAnimations().map((a) => (a as CSSAnimation).animationName ?? a.constructor.name));
         expect(running, `${vibe} ${route}`).toEqual([]);
       }
@@ -61,7 +66,7 @@ test.describe('motion on: it settles', () => {
         await openWorld(page, route, { vibe, dark: false, ...SIZE });
         await page.emulateMedia({ reducedMotion: 'no-preference' });
         await page.reload();
-        await page.waitForFunction(() => document.documentElement.dataset.ready === 'true', undefined, { timeout: 20_000 });
+        await waitForAppReady(page);
         await expect(page.locator('[data-skeleton], [aria-busy="true"] .vk-skeleton')).toHaveCount(0, { timeout: 15_000 });
         await settle(page);
         const rects = () => page.evaluate(() => [...document.querySelectorAll('main h1, main h2, main h3')].slice(0, 12).map((h) => { const r = h.getBoundingClientRect(); return [Math.round(r.left), Math.round(r.top)]; }));

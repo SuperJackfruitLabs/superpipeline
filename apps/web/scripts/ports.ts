@@ -12,7 +12,11 @@ function port(raw: string | undefined, fallback: number, name: string): number {
 
 export function resolvePorts(env: Record<string, string | undefined> = process.env): { api: number; web: number; apiUrl: string; webUrl: string } {
   const api = port(env.SP_API_PORT, DEFAULT_API_PORT, 'SP_API_PORT');
-  const web = port(env.SP_WEB_PORT, DEFAULT_WEB_PORT, 'SP_WEB_PORT');
+  // The compiled test app is served by the real Worker, same-origin. Vite remains
+  // available explicitly for development and the base/head visual comparison.
+  const web = env.SP_E2E_SERVER === 'built'
+    ? api
+    : port(env.SP_WEB_PORT, DEFAULT_WEB_PORT, 'SP_WEB_PORT');
   return { api, web, apiUrl: `http://localhost:${api}`, webUrl: `http://localhost:${web}` };
 }
 

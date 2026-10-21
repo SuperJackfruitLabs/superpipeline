@@ -41,3 +41,6 @@ playwright/.cache/
 # Release artifacts built by .github/workflows/release.yml.
 /dist/
 .superpowers/
+
+# Immutable CI build packages and per-run browser reports
+.ci/

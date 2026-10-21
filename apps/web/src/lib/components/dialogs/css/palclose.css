@@ -17,3 +17,7 @@
 .vk-dialog:has(.sp-palclose) .vk-commandpalette { flex: 1 1 auto; min-height: 0; }
 .vk-dialog:has(.sp-palclose) .vk-commandpalette__list { flex: 1 1 auto; min-height: 88px; }
 .vk-dialog:has(.sp-palclose) .vk-commandpalette__actions, .vk-dialog:has(.sp-palclose) .vk-commandpalette__footer { flex: none; }
+
+/* A result's secondary board hint must stay inside its text column on phones,
+   including unbroken user names. Keep wrapping, without painting over metadata. */
+.vk-dialog:has(.sp-palclose) .vk-commandpalette__hint { min-width: 0; overflow: hidden; }

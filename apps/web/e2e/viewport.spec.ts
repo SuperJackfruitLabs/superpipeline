@@ -1,4 +1,5 @@
 import { test, expect, type Page } from '@playwright/test';
+import { waitForAppReady, waitForSurfaceReady, waitForLayout } from './support/readiness';
 
 /**
  * The bottom of every screen is reachable on a phone, and the bottom nav is on the screen.
@@ -59,18 +60,24 @@ for (const { name, height } of HEIGHTS) {
 
     test('the end of the Inbox scrolls clear of the bottom nav, and the nav is whole', async ({ page }) => {
       await page.goto(`/b/${boardId}/operate`);
+      await page.waitForURL(/\/inbox(?:\?|$)/);
+      await waitForAppReady(page);
+      await waitForSurfaceReady(page);
+      await waitForLayout(page);
       const activity = page.locator('section', { has: page.getByRole('heading', { name: 'Activity' }) });
       await expect(activity).toBeVisible();
 
       // Scroll the page's own scroller as far as it goes — what a thumb does — then look.
       await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
 
+      await waitForLayout(page);
       const f = await frame(page);
       expect(f.navTop, 'the bottom nav starts off the screen').toBeGreaterThanOrEqual(0);
       expect(f.navBottom, 'the bottom nav runs off the bottom of the screen').toBeLessThanOrEqual(f.innerHeight + 0.5);
 
-      const end = (await activity.boundingBox())!;
-      expect(end.y + end.height, 'the end of Activity is under the bottom nav').toBeLessThanOrEqual(f.navTop + 0.5);
+      const end = await activity.boundingBox();
+      expect(end, 'the settled Activity section remains mounted after scrolling').not.toBeNull();
+      expect(end!.y + end!.height, 'the end of Activity is under the bottom nav').toBeLessThanOrEqual(f.navTop + 0.5);
       expect(f.sideways, 'the page scrolls sideways').toBeLessThanOrEqual(0);
 
       // The account menu — sign-out — is a tap away.
