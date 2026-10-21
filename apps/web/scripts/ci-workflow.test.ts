@@ -95,11 +95,17 @@ describe('ci.yml', () => {
   });
   it('Forge retains artifacts using pinned compatible actions; visual no-capture retains an outcome', () => {
     for (const name of ['build', 'browser', 'smoke', 'visual', 'pixel']) {
-      const upload = wf.jobs[name]!.steps.find((s) => s.uses?.startsWith('https://code.forgejo.org/actions/upload-artifact@'));
-      expect(upload?.uses).toMatch(/@[a-f0-9]{40}$/);
+      const upload = wf.jobs[name]!.steps.find((s) => s.uses === './.github/actions/forgejo-upload-artifact');
       expect(upload?.if).toContain("github.server_url != 'https://github.com'");
       expect(upload?.with?.['if-no-files-found']).toBe('error');
     }
+    for (const dir of ['forgejo-upload-artifact', 'forgejo-download-artifact']) {
+      const action = readFileSync(join(root, `.github/actions/${dir}/action.yml`), 'utf8');
+      expect(action, dir).toMatch(/uses: https:\/\/code\.forgejo\.org\/actions\/[a-z-]+-artifact@[a-f0-9]{40}\n/);
+    }
+    // GitHub resolves every remote action at job setup, skipped steps included, and cannot
+    // resolve a URL; only a local action is loaded when its step runs.
+    expect(readFileSync(join(root, '.github/workflows/ci.yml'), 'utf8')).not.toContain('uses: https://');
     expect(wf.jobs.visual!.steps.some((s) => s.if === 'always()' && s.run?.includes('outcome.json'))).toBe(true);
     expect(wf.jobs.visual!.steps.find((s) => s.id === 'compare')?.run).toContain('pipefail');
   });
@@ -107,7 +113,7 @@ describe('ci.yml', () => {
     for (const name of ['smoke', 'browser']) {
       const steps = wf.jobs[name]!.steps;
       const github = steps.find((s) => s.uses === 'actions/upload-artifact@v4');
-      const forge = steps.find((s) => s.uses?.startsWith('https://code.forgejo.org/actions/upload-artifact@'));
+      const forge = steps.find((s) => s.uses === './.github/actions/forgejo-upload-artifact');
       expect(github?.with?.path).toBe('.ci/reports');
       expect(github?.with?.['include-hidden-files']).toBe(true);
       expect(forge?.with).not.toHaveProperty('include-hidden-files');

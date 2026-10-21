@@ -1,0 +1,20 @@
+# Forgejo's artifact store needs Forgejo's fork of upload-artifact, referenced by URL.
+# GitHub resolves every remote `uses:` when it sets up a job, even on steps whose `if:`
+# skips them, and cannot resolve a URL, so the reference lives in this local action:
+# GitHub only loads a local action when its step actually runs.
+name: Upload artifact (Forgejo)
+description: Forgejo-compatible upload-artifact, pinned.
+inputs:
+  name: { required: true, description: Artifact name }
+  path: { required: true, description: Files to upload }
+  if-no-files-found: { required: false, default: warn, description: warn, error or ignore }
+  retention-days: { required: false, default: '', description: Days to keep the artifact }
+runs:
+  using: composite
+  steps:
+    - uses: https://code.forgejo.org/actions/upload-artifact@ff15f0306b3f739f7b6fd43fb5d26cd321bd4de5
+      with:
+        name: ${{ inputs.name }}
+        path: ${{ inputs.path }}
+        if-no-files-found: ${{ inputs.if-no-files-found }}
+        retention-days: ${{ inputs.retention-days }}
