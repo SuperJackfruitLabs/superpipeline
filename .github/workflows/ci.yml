@@ -206,6 +206,7 @@ jobs:
         with:
           name: smoke-report
           path: .ci/reports
+          include-hidden-files: true
           if-no-files-found: error
           retention-days: 14
       - uses: https://code.forgejo.org/actions/upload-artifact@ff15f0306b3f739f7b6fd43fb5d26cd321bd4de5
@@ -265,6 +266,7 @@ jobs:
         with:
           name: browser-${{ matrix.project }}-${{ matrix.shard }}
           path: .ci/reports
+          include-hidden-files: true
           if-no-files-found: error
           retention-days: 14
       - uses: https://code.forgejo.org/actions/upload-artifact@ff15f0306b3f739f7b6fd43fb5d26cd321bd4de5
@@ -532,7 +534,7 @@ jobs:
         run: |
           mkdir -p "$RUNNER_TEMP/wrangler-cwd"
           cd "$RUNNER_TEMP/wrangler-cwd"
-          npx --yes wrangler@4 pages deploy "$GITHUB_WORKSPACE/docs-site/dist" --project-name=superpipeline-docs --branch=main
+          npx --yes wrangler@4.103.0 pages deploy "$GITHUB_WORKSPACE/docs-site/dist" --project-name=superpipeline-docs --branch=main
 
 
   deploy-landing:
@@ -567,4 +569,4 @@ jobs:
         run: |
           mkdir -p "$RUNNER_TEMP/wrangler-cwd"
           cd "$RUNNER_TEMP/wrangler-cwd"
-          npx --yes wrangler@4 pages deploy "$GITHUB_WORKSPACE/landing/dist" --project-name=superpipeline-site --branch=main
+          npx --yes wrangler@4.103.0 pages deploy "$GITHUB_WORKSPACE/landing/dist" --project-name=superpipeline-site --branch=main

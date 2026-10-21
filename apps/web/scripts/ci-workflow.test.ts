@@ -103,4 +103,19 @@ describe('ci.yml', () => {
     expect(wf.jobs.visual!.steps.some((s) => s.if === 'always()' && s.run?.includes('outcome.json'))).toBe(true);
     expect(wf.jobs.visual!.steps.find((s) => s.id === 'compare')?.run).toContain('pipefail');
   });
+  it('hidden report directories are explicit on GitHub without unsupported Forge inputs', () => {
+    for (const name of ['smoke', 'browser']) {
+      const steps = wf.jobs[name]!.steps;
+      const github = steps.find((s) => s.uses === 'actions/upload-artifact@v4');
+      const forge = steps.find((s) => s.uses?.startsWith('https://code.forgejo.org/actions/upload-artifact@'));
+      expect(github?.with?.path).toBe('.ci/reports');
+      expect(github?.with?.['include-hidden-files']).toBe(true);
+      expect(forge?.with).not.toHaveProperty('include-hidden-files');
+    }
+    for (const name of ['deploy-docs', 'deploy-landing']) {
+      const deploy = wf.jobs[name]!.steps.find((s) => s.run?.includes('pages deploy'));
+      expect(deploy?.run).toContain('npx --yes wrangler@4.103.0 pages deploy');
+    }
+  });
+
 });
