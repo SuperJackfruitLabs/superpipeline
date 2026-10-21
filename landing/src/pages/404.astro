@@ -1,0 +1,43 @@
+---
+/**
+ * superpipeline.dev — not found.
+ *
+ * Cloudflare Pages serves this file, with a 404 status, for any path that has no file. Without
+ * it Pages falls back to single-page-app behaviour and answers every unknown path with the home
+ * page and a 200, which is what crawlers (and /robots.txt before it existed) were getting.
+ */
+const SITE = 'https://superpipeline.dev';
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Page not found — SuperPipeline</title>
+    <meta name="robots" content="noindex" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" href="/favicon.ico" sizes="16x16 32x32 48x48" />
+    <meta name="theme-color" content="#0f1118" />
+    <link rel="alternate" type="text/plain" title="llms.txt" href="/llms.txt" />
+    <style>
+      :root { color-scheme: dark; }
+      body {
+        margin: 0; min-height: 100vh; display: grid; place-items: center; padding: 0 16px;
+        background: #0f1118; color: #eceaf2;
+        font: 16px/1.6 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      }
+      main { max-width: 32rem; }
+      h1 { font: 600 2rem/1.2 'Space Grotesk', system-ui, sans-serif; margin: 0 0 0.75rem; }
+      p { color: #8b91a8; margin: 0 0 1.25rem; }
+      a { color: #f4a526; }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>That page isn't here.</h1>
+      <p>The address may be mistyped, or the page has moved.</p>
+      <p><a href={`${SITE}/`}>Back to superpipeline.dev</a> · <a href="https://docs.superpipeline.dev">Docs</a></p>
+    </main>
+  </body>
+</html>
