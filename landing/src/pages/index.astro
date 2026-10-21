@@ -35,6 +35,18 @@ const TITLE = 'SuperPipeline — a board where agents do the work';
 const DESCRIPTION =
   'A kanban board where agents claim the cards their capabilities match, report as they go, and stop at the gates you put in the pipeline for a person to decide.';
 
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'SoftwareApplication',
+  name: 'SuperPipeline',
+  description: DESCRIPTION,
+  url: `${SITE}/`,
+  applicationCategory: 'DeveloperApplication',
+  softwareVersion: RELEASE.replace(/^v/, ''),
+  sameAs: [SOURCE],
+  publisher: { '@type': 'Organization', name: 'Super Jackfruit Labs', url: 'https://superjackfruit.com' },
+};
+
 import SuiteHead from '@superjackfruit/frontdoor/components/SuiteHead.astro';
 import Frame from '@superjackfruit/frontdoor/components/Frame.astro';
 
@@ -75,6 +87,8 @@ const stages = [
     <meta name="twitter:title" content={TITLE} />
     <meta name="twitter:description" content={DESCRIPTION} />
     <meta name="twitter:image" content={`${SITE}/og.png`} />
+    <link rel="alternate" type="text/plain" title="llms.txt" href="/llms.txt" />
+    <script type="application/ld+json" set:html={JSON.stringify(jsonLd)} />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link

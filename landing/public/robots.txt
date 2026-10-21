@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://superpipeline.dev/sitemap-index.xml
