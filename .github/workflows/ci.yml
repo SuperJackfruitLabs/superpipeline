@@ -1,18 +1,39 @@
 name: CI
-
 on:
   push:
     branches: [main]
   pull_request:
-  # The pixel conformance report runs only nightly (03:30 UTC) and by hand: on the schedule and on a manual
-  # dispatch (Actions > CI > Run workflow, on any branch, a PR's included) it is the only job that runs.
   schedule:
     - cron: '30 3 * * *'
   workflow_dispatch:
 
 jobs:
-  test:
-    if: github.event_name != 'schedule' && github.event_name != 'workflow_dispatch'
+  plan:
+    runs-on: ubuntu-latest
+    outputs:
+      app: ${{ steps.select.outputs.app }}
+      docs: ${{ steps.select.outputs.docs }}
+      landing: ${{ steps.select.outputs.landing }}
+      full: ${{ steps.select.outputs.full }}
+      extended: ${{ steps.select.outputs.extended }}
+      matrix: ${{ steps.select.outputs.matrix }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: node --test scripts/ci-plan.test.mjs
+      - id: select
+        run: node scripts/ci-plan.mjs
+        env:
+          CI_BASE: ${{ github.event.pull_request.base.sha || github.event.before }}
+          CI_EVENT: ${{ github.event_name }}
+
+  unit:
+    needs: plan
+    if: needs.plan.outputs.app == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -23,46 +44,320 @@ jobs:
         with:
           node-version: 22
           cache: pnpm
-      # `supi` runs under bun — `packages/cli/src/index.ts` is executed directly via a
-      # `#!/usr/bin/env bun` shebang, not built first. Its installer refuses to install
-      # without bun on PATH, so without this step four of its tests fail on the refusal
-      # rather than on anything they are testing.
-      - uses: oven-sh/setup-bun@v2
       - run: pnpm install --frozen-lockfile
+      - uses: oven-sh/setup-bun@v2
       - run: pnpm typecheck
       - run: pnpm test
-      - name: references change only on purpose
-        run: node apps/web/scripts/pixel/check-lock-change.mjs "${{ github.event.pull_request.base.sha || github.event.before }}"
+      - run: pnpm ci:test
+      - run: node apps/web/scripts/pixel/check-lock-change.mjs "$CI_BASE"
+        env:
+          CI_BASE: ${{ github.event.pull_request.base.sha || github.event.before }}
 
-  e2e:
-    if: github.event_name != 'schedule' && github.event_name != 'workflow_dispatch'
+
+  docs:
+    needs: plan
+    if: needs.plan.outputs.docs == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - run: pnpm --filter @superpipeline/web exec playwright install --with-deps chromium
-      # Boots wrangler dev (:8787) + the SvelteKit dev server (:5173) via Playwright's webServer.
-      - run: pnpm --filter @superpipeline/web e2e
-      # The report upload uses artifact v4, which forge's runner does not support (GHESNotSupportedError);
-      # on forge the step is skipped, like the deploy jobs below.
+      - run: npm ci && npm run build
+        working-directory: docs-site
+      - run: pnpm --filter @superpipeline/docs-check test
+      - run: tar -czf docs.tgz -C docs-site/dist .
+      - uses: actions/upload-artifact@v4
+        if: success() && github.server_url == 'https://github.com'
+        with:
+          name: docs-${{ github.sha }}
+          path: docs.tgz
+          if-no-files-found: error
+          retention-days: 14
+      - uses: https://code.forgejo.org/actions/upload-artifact@ff15f0306b3f739f7b6fd43fb5d26cd321bd4de5
+        if: success() && github.server_url != 'https://github.com'
+        with:
+          name: docs-${{ github.sha }}
+          path: docs.tgz
+          if-no-files-found: error
+          retention-days: 14
+
+
+  landing:
+    needs: plan
+    if: needs.plan.outputs.landing == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm ci && npm run build
+        working-directory: landing
+      - run: tar -czf landing.tgz -C landing/dist .
+      - uses: actions/upload-artifact@v4
+        if: success() && github.server_url == 'https://github.com'
+        with:
+          name: landing-${{ github.sha }}
+          path: landing.tgz
+          if-no-files-found: error
+          retention-days: 14
+      - uses: https://code.forgejo.org/actions/upload-artifact@ff15f0306b3f739f7b6fd43fb5d26cd321bd4de5
+        if: success() && github.server_url != 'https://github.com'
+        with:
+          name: landing-${{ github.sha }}
+          path: landing.tgz
+          if-no-files-found: error
+          retention-days: 14
+
+
+  test:
+    needs: [plan, unit, docs, landing]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: node scripts/ci-plan.mjs gate test
+        env:
+          CI_NEEDS: ${{ toJSON(needs) }}
+
+  build:
+    needs: plan
+    if: needs.plan.outputs.app == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm ci:build-app
+      - run: pnpm ci:verify-app
+      - run: tar -czf app.tgz -C .ci app
+      - uses: actions/upload-artifact@v4
+        if: success() && github.server_url == 'https://github.com'
+        with:
+          name: app-${{ github.sha }}
+          path: app.tgz
+          if-no-files-found: error
+          retention-days: 14
+      - uses: https://code.forgejo.org/actions/upload-artifact@ff15f0306b3f739f7b6fd43fb5d26cd321bd4de5
+        if: success() && github.server_url != 'https://github.com'
+        with:
+          name: app-${{ github.sha }}
+          path: app.tgz
+          if-no-files-found: error
+          retention-days: 14
+
+
+  smoke:
+    needs: [plan, build]
+    if: needs.plan.outputs.app == 'true'
+    runs-on: ubuntu-22.04
+    timeout-minutes: 45
+    container:
+      image: mcr.microsoft.com/playwright:v1.61.0-jammy
+      options: --ipc=host
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
+      - run: bash apps/web/scripts/pixel/image-guard.sh v1.61.0-jammy
+      - uses: actions/download-artifact@v4
+        if: success() && github.server_url == 'https://github.com'
+        with:
+          name: app-${{ github.sha }}
+          path: .ci-download
+      - uses: https://code.forgejo.org/actions/download-artifact@9bc31d5ccc31df68ecc42ccf4149144866c47d8a
+        if: success() && github.server_url != 'https://github.com'
+        with:
+          name: app-${{ github.sha }}
+          path: .ci-download
+      - run: mkdir -p .ci && tar -xzf .ci-download/app.tgz -C .ci && pnpm ci:verify-app
+      - run: pnpm --filter @superpipeline/web e2e -- --project=smoke --workers=1
+        env:
+          SP_E2E_PREBUILT: '1'
+          SP_E2E_PROJECT: smoke
+          SP_E2E_SHARD: '1/1'
+          SP_E2E_REPORT: ${{ github.workspace }}/.ci/reports/result.json
+      - run: node scripts/e2e-report.mjs --input .ci/reports/result.json --output .ci/reports/summary.json
+        if: always()
       - uses: actions/upload-artifact@v4
         if: always() && github.server_url == 'https://github.com'
         with:
-          name: playwright-report
-          path: apps/web/playwright-report
+          name: smoke-report
+          path: .ci/reports
+          if-no-files-found: error
+          retention-days: 14
+      - uses: https://code.forgejo.org/actions/upload-artifact@ff15f0306b3f739f7b6fd43fb5d26cd321bd4de5
+        if: always() && github.server_url != 'https://github.com'
+        with:
+          name: smoke-report
+          path: .ci/reports
+          if-no-files-found: error
           retention-days: 14
 
-  # The regression gate for how the app looks: ~20 key screens of the app itself at the PR's base and at its
-  # head, rendered one after the other in this one container, compared pixel for pixel. Nothing is stored and
-  # nothing is compared with a mockup, so cross-machine rendering cannot fail it. A change fails the job
-  # unless a commit in the range carries `Visual-Change: <why>`. See apps/web/e2e/pixel/README.md.
+
+  browser:
+    needs: [plan, build]
+    if: needs.plan.outputs.app == 'true'
+    runs-on: ubuntu-22.04
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      max-parallel: 2
+      matrix: ${{ fromJSON(needs.plan.outputs.matrix) }}
+    container:
+      image: mcr.microsoft.com/playwright:v1.61.0-jammy
+      options: --ipc=host
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
+      - run: bash apps/web/scripts/pixel/image-guard.sh v1.61.0-jammy
+      - uses: actions/download-artifact@v4
+        if: success() && github.server_url == 'https://github.com'
+        with:
+          name: app-${{ github.sha }}
+          path: .ci-download
+      - uses: https://code.forgejo.org/actions/download-artifact@9bc31d5ccc31df68ecc42ccf4149144866c47d8a
+        if: success() && github.server_url != 'https://github.com'
+        with:
+          name: app-${{ github.sha }}
+          path: .ci-download
+      - run: mkdir -p .ci && tar -xzf .ci-download/app.tgz -C .ci && pnpm ci:verify-app
+      - run: pnpm --filter @superpipeline/web e2e -- --project=${{ matrix.project }} --shard=${{ matrix.shard }}/${{ matrix.total }} --workers=1
+        env:
+          SP_E2E_PREBUILT: '1'
+          SP_E2E_PROJECT: ${{ matrix.project }}
+          SP_E2E_SHARD: ${{ matrix.shard }}/${{ matrix.total }}
+          SP_E2E_REPORT: ${{ github.workspace }}/.ci/reports/result.json
+      - run: node scripts/e2e-report.mjs --input .ci/reports/result.json --output .ci/reports/summary.json
+        if: always()
+      - uses: actions/upload-artifact@v4
+        if: always() && github.server_url == 'https://github.com'
+        with:
+          name: browser-${{ matrix.project }}-${{ matrix.shard }}
+          path: .ci/reports
+          if-no-files-found: error
+          retention-days: 14
+      - uses: https://code.forgejo.org/actions/upload-artifact@ff15f0306b3f739f7b6fd43fb5d26cd321bd4de5
+        if: always() && github.server_url != 'https://github.com'
+        with:
+          name: browser-${{ matrix.project }}-${{ matrix.shard }}
+          path: .ci/reports
+          if-no-files-found: error
+          retention-days: 14
+
+
+  e2e:
+    needs: [plan, build, smoke, browser]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: node scripts/ci-plan.mjs gate e2e
+        env:
+          CI_NEEDS: ${{ toJSON(needs) }}
+
+      - uses: actions/download-artifact@v4
+        if: needs.plan.outputs.app == 'true' && github.server_url == 'https://github.com'
+        with:
+          name: browser-critical-1
+          path: .ci/shards/critical-1
+      - uses: https://code.forgejo.org/actions/download-artifact@9bc31d5ccc31df68ecc42ccf4149144866c47d8a
+        if: needs.plan.outputs.app == 'true' && github.server_url != 'https://github.com'
+        with:
+          name: browser-critical-1
+          path: .ci/shards/critical-1
+      - uses: actions/download-artifact@v4
+        if: needs.plan.outputs.app == 'true' && github.server_url == 'https://github.com'
+        with:
+          name: browser-critical-2
+          path: .ci/shards/critical-2
+      - uses: https://code.forgejo.org/actions/download-artifact@9bc31d5ccc31df68ecc42ccf4149144866c47d8a
+        if: needs.plan.outputs.app == 'true' && github.server_url != 'https://github.com'
+        with:
+          name: browser-critical-2
+          path: .ci/shards/critical-2
+      - uses: actions/download-artifact@v4
+        if: needs.plan.outputs.extended == 'true' && github.server_url == 'https://github.com'
+        with:
+          name: browser-extended-1
+          path: .ci/shards/extended-1
+      - uses: https://code.forgejo.org/actions/download-artifact@9bc31d5ccc31df68ecc42ccf4149144866c47d8a
+        if: needs.plan.outputs.extended == 'true' && github.server_url != 'https://github.com'
+        with:
+          name: browser-extended-1
+          path: .ci/shards/extended-1
+      - uses: actions/download-artifact@v4
+        if: needs.plan.outputs.extended == 'true' && github.server_url == 'https://github.com'
+        with:
+          name: browser-extended-2
+          path: .ci/shards/extended-2
+      - uses: https://code.forgejo.org/actions/download-artifact@9bc31d5ccc31df68ecc42ccf4149144866c47d8a
+        if: needs.plan.outputs.extended == 'true' && github.server_url != 'https://github.com'
+        with:
+          name: browser-extended-2
+          path: .ci/shards/extended-2
+      - uses: actions/download-artifact@v4
+        if: needs.plan.outputs.extended == 'true' && github.server_url == 'https://github.com'
+        with:
+          name: browser-extended-3
+          path: .ci/shards/extended-3
+      - uses: https://code.forgejo.org/actions/download-artifact@9bc31d5ccc31df68ecc42ccf4149144866c47d8a
+        if: needs.plan.outputs.extended == 'true' && github.server_url != 'https://github.com'
+        with:
+          name: browser-extended-3
+          path: .ci/shards/extended-3
+      - uses: actions/download-artifact@v4
+        if: needs.plan.outputs.extended == 'true' && github.server_url == 'https://github.com'
+        with:
+          name: browser-extended-4
+          path: .ci/shards/extended-4
+      - uses: https://code.forgejo.org/actions/download-artifact@9bc31d5ccc31df68ecc42ccf4149144866c47d8a
+        if: needs.plan.outputs.extended == 'true' && github.server_url != 'https://github.com'
+        with:
+          name: browser-extended-4
+          path: .ci/shards/extended-4
+      - run: node scripts/e2e-report.mjs --merge .ci/shards --expected "$EXPECTED" --output .ci/summary.json
+        if: needs.plan.outputs.app == 'true'
+        env:
+          EXPECTED: ${{ needs.plan.outputs.extended == 'true' && '6' || '2' }}
+          SP_E2E_MATRIX: ${{ needs.plan.outputs.matrix }}
+
   visual:
-    if: github.event_name != 'schedule' && github.event_name != 'workflow_dispatch'
+    needs: plan
+    if: needs.plan.outputs.app == 'true' && github.event_name != 'schedule' && github.event_name != 'workflow_dispatch'
     runs-on: ubuntu-22.04
     timeout-minutes: 15
     container:
@@ -84,26 +379,43 @@ jobs:
         run: bash apps/web/scripts/pixel/image-guard.sh v1.61.0-jammy
       # Both trees under the runner's temp dir, on the workspace's mount, so pnpm hardlinks from its store.
       - name: base versus head
-        run: bash apps/web/scripts/visual/base-vs-head.sh "${{ github.event.pull_request.base.sha || github.event.before }}"
+        id: compare
+        shell: bash
+        run: |
+          set -o pipefail
+          mkdir -p .ci
+          bash apps/web/scripts/visual/base-vs-head.sh "$CI_BASE" 2>&1 | tee .ci/visual.log
         env:
+          CI_BASE: ${{ github.event.pull_request.base.sha || github.event.before }}
           CI: 'true'
           VISUAL_TMP: ${{ runner.temp }}
       # artifact v4 is GitHub only (forge: GHESNotSupportedError); on forge the job log carries each changed
       # screen's name, ratio and bounding box instead.
+      - name: retain comparison outcome, including intentional no-capture result
+        if: always()
+        env:
+          VISUAL_OUTCOME: ${{ steps.compare.outcome }}
+          SOURCE_COMMIT: ${{ github.sha }}
+        run: |
+          mkdir -p apps/web/test-results/visual
+          if test -f .ci/visual.log; then cp .ci/visual.log apps/web/test-results/visual/check.log; fi
+          node -e 'require("node:fs").writeFileSync("apps/web/test-results/visual/outcome.json", JSON.stringify({source: process.env.SOURCE_COMMIT, outcome: process.env.VISUAL_OUTCOME}))'
       - uses: actions/upload-artifact@v4
-        if: failure() && github.server_url == 'https://github.com'
+        if: always() && github.server_url == 'https://github.com'
         with:
-          name: visual-diff
-          path: |
-            apps/web/test-results/visual/base
-            apps/web/test-results/visual/head
-            apps/web/test-results/visual/diff
+          name: visual-report
+          path: apps/web/test-results/visual
+          if-no-files-found: error
+          retention-days: 14
+      - uses: https://code.forgejo.org/actions/upload-artifact@ff15f0306b3f739f7b6fd43fb5d26cd321bd4de5
+        if: always() && github.server_url != 'https://github.com'
+        with:
+          name: visual-report
+          path: apps/web/test-results/visual
+          if-no-files-found: error
           retention-days: 14
 
-  # A conformance REPORT against the approved mockups, never a gate (continue-on-error, not in deploy.needs).
-  # Nightly and by manual dispatch only (operator decision 2026-10-14): its ~23 minutes of Chromium on every
-  # push starved test and e2e on the shared runner. The references are frozen at the approved design; the
-  # `visual` job is the regression gate on pull requests.
+
   pixel:
     if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-22.04
@@ -139,22 +451,21 @@ jobs:
         if: always() && github.server_url == 'https://github.com'
         with:
           name: pixel-report
-          path: |
-            apps/web/test-results/pixel
-            apps/web/test-results/pixel-parts
+          path: apps/web/test-results/pixel*
+          if-no-files-found: error
+          retention-days: 14
+      - uses: https://code.forgejo.org/actions/upload-artifact@ff15f0306b3f739f7b6fd43fb5d26cd321bd4de5
+        if: always() && github.server_url != 'https://github.com'
+        with:
+          name: pixel-report
+          path: apps/web/test-results/pixel*
+          if-no-files-found: error
           retention-days: 14
 
-  # Every deploy job below is gated on `github.server_url == 'https://github.com'`. This workflow
-  # also runs on forge (Forgejo Actions reads .github/workflows when .forgejo/workflows is absent),
-  # where `github.server_url` is forge's own URL. Once forge is primary, a push to forge's main
-  # reaches GitHub's main through the push mirror, and THAT push is what deploys. forge holds no
-  # CLOUDFLARE_API_TOKEN and never should: on forge these jobs are skipped, not failed.
-  #
-  # Continuous deploy: after tests pass on a push to main, migrate the remote D1 + ship to Cloudflare.
-  # Needs a CLOUDFLARE_API_TOKEN repo secret (Workers Scripts: Edit · D1: Edit, scoped to your account).
+
   deploy:
-    needs: [test, e2e, visual]
-    if: github.server_url == 'https://github.com' && github.ref == 'refs/heads/main' && github.event_name == 'push'
+    needs: [plan, test, e2e, visual]
+    if: github.server_url == 'https://github.com' && github.ref == 'refs/heads/main' && github.event_name == 'push' && needs.plan.outputs.app == 'true'
     runs-on: ubuntu-latest
     concurrency:
       group: deploy-production
@@ -166,32 +477,32 @@ jobs:
       CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      # Apply any new catalog migrations to the remote D1 (idempotent), then build the web + deploy
-      # the Worker with real auth (DEV_AUTH off).
-      - run: pnpm --filter @superpipeline/api db:migrate
-      - run: pnpm --filter @superpipeline/api run deploy
+      - uses: actions/download-artifact@v4
+        if: success() && github.server_url == 'https://github.com'
+        with:
+          name: app-${{ github.sha }}
+          path: .ci-download
+      - uses: https://code.forgejo.org/actions/download-artifact@9bc31d5ccc31df68ecc42ccf4149144866c47d8a
+        if: success() && github.server_url != 'https://github.com'
+        with:
+          name: app-${{ github.sha }}
+          path: .ci-download
+      - run: mkdir -p .ci && tar -xzf .ci-download/app.tgz -C .ci
+      - run: pnpm ci:verify-app
+      - run: pnpm ci:deploy-app
 
-  # The published documentation site, to Cloudflare Pages at docs.superpipeline.dev.
-  #
-  # Separate from `deploy` on purpose. The docs site shares no dependency tree with the
-  # Worker — it is npm, at the repo root, outside the pnpm workspace, for reasons set out
-  # in docs-site/README.md — and a docs typo should not be able to hold up a Worker deploy
-  # or vice versa.
-  #
-  # Gated on `test` only, not on `e2e`: the docs site is a static build with no runtime to
-  # exercise, and its claims are checked by packages/docs-check inside `test`.
-  #
-  # Needs the same CLOUDFLARE_API_TOKEN secret, with Pages: Edit added to its scope, and a
-  # Pages project named `superpipeline-docs`. See docs-site/README.md for the one-time setup.
+
   deploy-docs:
-    needs: [test]
-    if: github.server_url == 'https://github.com' && github.ref == 'refs/heads/main' && github.event_name == 'push'
+    needs: [plan, test, docs]
+    if: github.server_url == 'https://github.com' && github.ref == 'refs/heads/main' && github.event_name == 'push' && needs.plan.outputs.docs == 'true'
     runs-on: ubuntu-latest
     concurrency:
       group: deploy-docs
@@ -204,55 +515,29 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      # npm, not pnpm, and scoped to docs-site: this project is deliberately not a
-      # workspace member.
-      - run: npm ci
-        working-directory: docs-site
-      - run: npm run build
-        working-directory: docs-site
-      # wrangler invoked directly rather than through cloudflare/wrangler-action.
-      # The action picks a package manager by looking at the REPO ROOT, finds
-      # pnpm-lock.yaml, and shells out to pnpm to install wrangler — which this job
-      # does not have, because docs-site is deliberately npm. That failed with
-      # "Unable to locate executable file: pnpm", before it ever reached Cloudflare.
-      #
-      # npx from docs-site uses the npm already set up above. wrangler is pinned to
-      # the major apps/api uses, so the two cannot drift into different CLIs.
-      # Run from a scratch directory, NOT from docs-site and NOT from the repo root.
-      # Both were tried against the live account and both are wrong:
-      #
-      #   - in docs-site, wrangler's project detection SCAFFOLDS the project — it
-      #     added an @astrojs/cloudflare adapter and a wrangler devDependency, wrote
-      #     wrangler.jsonc, and rewrote astro.config.mjs and tsconfig.json. The Astro
-      #     build then failed on the Cloudflare vite plugin it had just installed.
-      #   - at the repo root it refuses outright: "application detection logic has
-      #     been run in the root of a workspace".
-      #
-      # From a neutral cwd with an absolute path it is clean, and leaves the checkout
-      # untouched. Verified by deploying both sites this way.
-      - name: Deploy
+      - uses: actions/download-artifact@v4
+        if: success() && github.server_url == 'https://github.com'
+        with:
+          name: docs-${{ github.sha }}
+          path: .ci-download
+      - uses: https://code.forgejo.org/actions/download-artifact@9bc31d5ccc31df68ecc42ccf4149144866c47d8a
+        if: success() && github.server_url != 'https://github.com'
+        with:
+          name: docs-${{ github.sha }}
+          path: .ci-download
+      - run: mkdir -p docs-site/dist && tar -xzf .ci-download/docs.tgz -C docs-site/dist
+      - name: Deploy verified site build
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
         run: |
           mkdir -p "$RUNNER_TEMP/wrangler-cwd"
           cd "$RUNNER_TEMP/wrangler-cwd"
-          npx --yes wrangler@4 pages deploy "$GITHUB_WORKSPACE/docs-site/dist" \
-            --project-name=superpipeline-docs --branch=main
+          npx --yes wrangler@4 pages deploy "$GITHUB_WORKSPACE/docs-site/dist" --project-name=superpipeline-docs --branch=main
 
-  # The public page, to Cloudflare Pages at superpipeline.dev.
-  #
-  # Until this job existed the page was deployed by hand, and it went stale the same
-  # day: the CLI was renamed to `supi` on main while superpipeline.dev went on telling
-  # visitors about `kbn`. A page nothing redeploys drifts silently, because nothing
-  # fails.
-  #
-  # Shaped exactly like deploy-docs, for the same reasons: landing/ is npm and outside
-  # the pnpm workspace (see the comment at the top of landing/src/pages/index.astro), and
-  # wrangler must run from a neutral cwd. Same secret; the Pages project is
-  # `superpipeline-site`.
+
   deploy-landing:
-    needs: [test]
-    if: github.server_url == 'https://github.com' && github.ref == 'refs/heads/main' && github.event_name == 'push'
+    needs: [plan, test, landing]
+    if: github.server_url == 'https://github.com' && github.ref == 'refs/heads/main' && github.event_name == 'push' && needs.plan.outputs.landing == 'true'
     runs-on: ubuntu-latest
     concurrency:
       group: deploy-landing
@@ -265,15 +550,21 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - run: npm ci
-        working-directory: landing
-      - run: npm run build
-        working-directory: landing
-      - name: Deploy
+      - uses: actions/download-artifact@v4
+        if: success() && github.server_url == 'https://github.com'
+        with:
+          name: landing-${{ github.sha }}
+          path: .ci-download
+      - uses: https://code.forgejo.org/actions/download-artifact@9bc31d5ccc31df68ecc42ccf4149144866c47d8a
+        if: success() && github.server_url != 'https://github.com'
+        with:
+          name: landing-${{ github.sha }}
+          path: .ci-download
+      - run: mkdir -p landing/dist && tar -xzf .ci-download/landing.tgz -C landing/dist
+      - name: Deploy verified site build
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
         run: |
           mkdir -p "$RUNNER_TEMP/wrangler-cwd"
           cd "$RUNNER_TEMP/wrangler-cwd"
-          npx --yes wrangler@4 pages deploy "$GITHUB_WORKSPACE/landing/dist" \
-            --project-name=superpipeline-site --branch=main
+          npx --yes wrangler@4 pages deploy "$GITHUB_WORKSPACE/landing/dist" --project-name=superpipeline-site --branch=main
