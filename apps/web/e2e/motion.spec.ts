@@ -2,7 +2,7 @@
 // motion on, loading skeletons clear and every enter settles: nothing keeps moving the layout, and nothing is left
 // covering the controls or blocking the page. Tests never wait on an animation except here, on purpose.
 import { expect, test, type Page } from '@playwright/test';
-import { waitForAppReady, waitForLayout } from './support/readiness';
+import { waitForAppReady, waitForSurfaceReady, waitForLayout } from './support/readiness';
 import { DX, VIBES, openWorld, seed } from './support/world';
 
 const SCREENS = ['/inbox', DX, '/plan/projects', `${DX}/operate`] as const;
@@ -12,10 +12,15 @@ test.beforeAll(async ({ request }) => seed(request));
 
 /** Running animations that end (infinite ones, such as a live pulse, are not motion that settles). */
 const finiteRunning = (page: Page) =>
-  page.evaluate(() => document.getAnimations().filter((a) => a.playState === 'running' && a.effect?.getComputedTiming().endTime !== Infinity).length);
+  page.evaluate(() => document.getAnimations().filter((a) => (a.pending || a.playState === 'running') && a.effect?.getComputedTiming().endTime !== Infinity).length);
 
 async function settle(page: Page): Promise<void> {
-  await page.evaluate(() => document.fonts.ready);
+  // Read completion precedes the loading gate's minimum display time and
+  // Svelte's next-frame enter animations. Observe the final surface first.
+  await waitForSurfaceReady(page);
+  await waitForLayout(page);
+  await expect.poll(() => finiteRunning(page), { timeout: 10_000 }).toBe(0);
+  await waitForLayout(page);
   await expect.poll(() => finiteRunning(page), { timeout: 10_000 }).toBe(0);
 }
 
