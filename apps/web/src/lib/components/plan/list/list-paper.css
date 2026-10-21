@@ -6,7 +6,7 @@
 .noface { flex: none; display: inline-block; border-radius: 50%; border: 2px dashed var(--vk-color-faint); }
 .wrap-any { overflow-wrap: anywhere; }
 /* Hand edit: the sides are the shell's 56px gutter, which the app's Paper AppShell draws itself (one shell frame per vibe). */
-.pp { padding: var(--vk-space-6) 0 var(--vk-space-7); }
+.pp { padding: var(--vk-space-6) 0 var(--vk-space-7); overflow-wrap: anywhere; }
 /* Hand edit: the Paper board's own `.pp` (board/paper/paper.css: flex, a 28px gap, 1.45 leading) is global and reached this page too; the list's page is a plain block with the frame's leading, as in its reference. */
 :scope > .pp { display: block; gap: 0; line-height: inherit; }
 .mast { display: flex; align-items: flex-end; gap: var(--vk-space-5); flex-wrap: wrap; border-bottom: 3px double var(--vk-color-text); padding-bottom: var(--vk-space-4); }
