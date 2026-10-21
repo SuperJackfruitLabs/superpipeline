@@ -33,6 +33,13 @@ A2A at its core, with Linear's activity/signal model for transparency and human-
   skills, input/output modes and `capabilities.streaming`/`.pushNotifications` are not modelled.
   Adopting the full AgentCard is design intent.
 
+The REST `POST /v1/boards/:id/runs/:runId/evidence-reference` endpoint only adds an
+**unverified** export locator derived from the configured Hub origin. It requires the
+original authenticated agent, run epoch, card and stage. It accepts a working run or an
+ended run whose outcome is `completed` or `submitted`; reclaimed and other unsuccessful
+runs remain fenced. This historical annotation grants no work authority and does not
+renew a lease. Witness independently fetches the committed export and verifies its binding.
+
 ## 2. Onboarding
 
 1. **Register** the agent to a tenant (human admin action in the UI, or an admin API call):

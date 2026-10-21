@@ -11,7 +11,7 @@ import { outcomeInputError, returnStageError, routeOutcome, type StageOutcome } 
 import { verifyGithubSignature, verifyForgeSignature } from '../references/github-signature';
 import { mapGithubEvent } from '../references/github-events';
 import { mapForgeEvent } from '../references/forge-events';
-import { estimateCostUsd } from '../metering/pricing';
+import { estimateCostUsd, isModelPriced } from '../metering/pricing';
 import { parseWindowMs } from '../metering/window';
 import { PUSH_TIMEOUT_MS, signAndSend, type PushSender } from '../push/deliver';
 import { isPublicHttpUrl } from '../push/ssrf';
@@ -855,6 +855,43 @@ export interface RunEvidence {
   as_of: string;
 }
 
+/** Explicit opt-in extension. Legacy C4 is deliberately nested without new fields. */
+export interface RunEvidenceV1 {
+  schema_version: 'superpipeline-run-evidence/v1';
+  pipeline: RunEvidence;
+  provenance: {
+    lease_epoch: number;
+    queued_by: string | null;
+    completion: { met: boolean; unchecked_count: number } | null;
+    handoff_recorded: boolean;
+    references_truncated: boolean;
+    references: Array<Pick<ReferenceView, 'id' | 'cardId' | 'runId' | 'url' | 'provider' | 'sourceType' | 'externalId' | 'createdAt'> & { execution_export: { schema_version: 'agentpod-execution-export/v1'; export_id: string; manifest_sha256: string; verification: 'unverified' } | null }>;
+  };
+  usage: {
+    status: 'known' | 'estimated' | 'unknown' | 'unreported' | 'partial';
+    recorded_cost_usd: number | null;
+    estimated_cost_usd: number | null;
+    cost_provenance: 'agent-reported-not-provider-bill' | 'unknown';
+  };
+  /** Discovery metadata only. A consumer must authenticate to AgentPod and validate its binding. */
+  executor_evidence: { external_source: 'superpipeline'; external_run_id: string; agentpod_path: string };
+}
+
+export interface EvidenceReferenceInput {
+  runId: string; agentId: string; leaseEpoch: number; cardId: string; stageKey: string;
+  exportId: string; manifestSha256: string; url: string;
+}
+
+/** These are locators asserted by the original run, never verification receipts. */
+function executionExportHint(metadata: JsonValue | null): { schema_version: 'agentpod-execution-export/v1'; export_id: string; manifest_sha256: string; verification: 'unverified' } | null {
+  const hint = record(record(metadata)?.execution_export);
+  if (!hint || Object.keys(hint).sort().join(',') !== 'export_id,manifest_sha256,schema_version'
+    || hint.schema_version !== 'agentpod-execution-export/v1'
+    || typeof hint.export_id !== 'string' || !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(hint.export_id)
+    || typeof hint.manifest_sha256 !== 'string' || !/^[a-f0-9]{64}$/.test(hint.manifest_sha256)) return null;
+  return { schema_version: 'agentpod-execution-export/v1', export_id: hint.export_id, manifest_sha256: hint.manifest_sha256, verification: 'unverified' };
+}
+
 const EVIDENCE_DECISION: Record<string, RunEvidenceGate['decision']> = {
   approve: 'approved',
   approve_manual: 'approved',
@@ -1516,6 +1553,8 @@ export interface BoardStub {
 
   /** A run as evidence for superwitness (contract C4). `NOT_INITIALIZED` means no such board here. */
   getRunEvidence(runId: string): Promise<Result<RunEvidence>>;
+  getRunEvidenceV1(runId: string): Promise<Result<RunEvidenceV1>>;
+  attachEvidenceReference(input: EvidenceReferenceInput): Promise<Result<ReferenceView>>;
   countReadyForCapabilities(agentId: string, capabilities: string[]): Promise<number>;
   /** One gate, including how it was decided. See `getGate`. */
   getGate(gateId: string): Promise<Result<GateView>>;
@@ -5440,6 +5479,60 @@ export class BoardDO extends DurableObject<Env> {
     };
   }
 
+  async attachEvidenceReference(input: EvidenceReferenceInput): Promise<Result<ReferenceView>> {
+    const auth = this.authorizeEvidenceAnnotation(input);
+    if (!auth.ok) return auth;
+    const row = auth.run;
+    if (row.card_id !== input.cardId || row.stage_key !== input.stageKey) return { ok: false, code: 'NOT_RUN_OWNER', message: 'original card and stage must match' };
+    const hint = executionExportHint({ execution_export: { schema_version: 'agentpod-execution-export/v1', export_id: input.exportId, manifest_sha256: input.manifestSha256 } });
+    if (!hint) return { ok: false, code: 'INVALID_URL', message: 'invalid export locator' };
+    const existing = this.sql.exec(`SELECT run_id, metadata_json FROM card_references WHERE card_id = ? AND url = ?`, input.cardId, input.url).toArray()[0];
+    if (existing && (existing.run_id !== input.runId || executionExportHint(existing.metadata_json ? JSON.parse(existing.metadata_json as string) as JsonValue : null)?.manifest_sha256 !== input.manifestSha256)) return { ok: false, code: 'NOT_RUN_OWNER', message: 'export locator already belongs to different evidence' };
+    return this.addReference({ cardId: input.cardId, runId: input.runId, url: input.url,
+      provider: 'url', sourceType: 'execution-export', externalId: input.exportId, addedBy: 'agent',
+      metadata: { execution_export: { schema_version: hint.schema_version, export_id: hint.export_id, manifest_sha256: hint.manifest_sha256 } },
+    });
+  }
+
+  async getRunEvidenceV1(runId: string): Promise<Result<RunEvidenceV1>> {
+    const legacy = await this.getRunEvidence(runId);
+    if (!legacy.ok) return legacy;
+    const row = this.getRunRow(runId)!;
+    const records = this.sql.exec(`SELECT model, cost_usd, estimated FROM usage_records WHERE run_id = ?`, runId).toArray();
+    const reported = records.filter(r => Number(r.estimated) === 0);
+    // An unpriced estimate was persisted as zero by the old metering path. It is unknown here.
+    const estimates = records.filter(r => Number(r.estimated) !== 0 && isModelPriced(r.model as string | undefined));
+    const unknown = records.length - reported.length - estimates.length;
+    const status = records.length === 0 ? 'unreported'
+      : unknown === records.length ? 'unknown'
+      : unknown > 0 || (reported.length > 0 && estimates.length > 0) ? 'partial'
+      : estimates.length > 0 ? 'estimated' : 'known';
+    const refs = this.sql.exec(`SELECT * FROM card_references WHERE card_id = ? AND run_id = ? ORDER BY created_at, id LIMIT 257`, row.card_id, runId).toArray();
+    const completion = row.completion ? JSON.parse(row.completion as string) as { met?: unknown; unchecked?: unknown } : null;
+    return { ok: true, value: {
+      schema_version: 'superpipeline-run-evidence/v1',
+      pipeline: legacy.value,
+      provenance: {
+        lease_epoch: Number(row.lease_epoch),
+        queued_by: (row.queued_by as string | null) ?? null,
+        completion: completion && typeof completion.met === 'boolean' ? { met: completion.met, unchecked_count: Array.isArray(completion.unchecked) ? completion.unchecked.length : 0 } : null,
+        handoff_recorded: row.handoff_json !== null && row.handoff_json !== undefined,
+        references_truncated: refs.length > 256,
+        references: refs.slice(0, 256).map(r => { const ref = this.rowToReference(r); return { id: ref.id, cardId: ref.cardId, runId: ref.runId, url: ref.url, provider: ref.provider, sourceType: ref.sourceType, externalId: ref.externalId, execution_export: executionExportHint(ref.metadata), createdAt: ref.createdAt }; }),
+      },
+      usage: {
+        status,
+        recorded_cost_usd: reported.length ? reported.reduce((sum, r) => sum + Number(r.cost_usd), 0) : null,
+        estimated_cost_usd: estimates.length ? estimates.reduce((sum, r) => sum + Number(r.cost_usd), 0) : null,
+        cost_provenance: reported.length ? 'agent-reported-not-provider-bill' : 'unknown',
+      },
+      executor_evidence: {
+        external_source: 'superpipeline', external_run_id: runId,
+        agentpod_path: `/api/evidence/runs/superpipeline/${encodeURIComponent(runId)}/execution?schema_version=salaam-execution-evidence%2Fv1`,
+      },
+    } };
+  }
+
   /** The attempts (runs) for a card, newest-stage-first, with each run's cost and model (docs/07 §5). */
   async getAttempts(cardId: string): Promise<AttemptView[]> {
     return this.sql
@@ -7542,8 +7635,26 @@ export class BoardDO extends DurableObject<Env> {
   }
 
   /**
-   * The gate every run verb passes: the run must **belong to the calling agent** and hold a **live
-   * lease**. Both checks live here so a new verb cannot forget one.
+   * An export locator annotates original evidence; it never resumes work. Successful terminal
+   * runs retain their original owner and epoch even after the card moves on. Reclaimed and
+   * other unsuccessful runs remain fenced. Unlike the dev work gate, identity is mandatory.
+   */
+  private authorizeEvidenceAnnotation(input: EvidenceReferenceInput): RunAuth {
+    const row = this.getRunRow(input.runId);
+    if (!input.agentId || (row && row.agent_id !== input.agentId)) {
+      return { ok: false, code: 'NOT_RUN_OWNER', message: 'original authenticated run owner required' };
+    }
+    const permitted = row && (row.status === 'working' ||
+      (row.status === 'ended' && row.ended_at != null && (row.outcome === 'completed' || row.outcome === 'submitted')));
+    if (!permitted || Number(row.lease_epoch) !== input.leaseEpoch) {
+      return { ok: false, code: 'STALE_LEASE', message: 'original run epoch and permitted evidence state required' };
+    }
+    return { ok: true, run: row };
+  }
+
+  /**
+   * The work-mutation gate: the run must **belong to the calling agent** and hold a **live
+   * lease**. Historical export annotations use their separate original-owner gate above.
    *
    * Identity is checked first: an agent that does not own the run learns nothing about its lease,
    * and — more importantly — a `NOT_RUN_OWNER` is never confused with the `STALE_LEASE` that tells

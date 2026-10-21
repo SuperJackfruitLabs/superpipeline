@@ -1,5 +1,5 @@
 import { env, runInDurableObject } from 'cloudflare:test';
-import { describe, it, expect, afterEach } from 'vitest';
+import { describe, it, expect, afterEach, vi } from 'vitest';
 import { BoardDO, type BoardInit } from '../src/board/board-do';
 import { reportingEnabled, reporterConfig } from '../src/superwitness/config';
 import { runRow, withReporting, trackBoard, quietBoards } from './helpers/superwitness';
@@ -84,18 +84,24 @@ describe('superwitness outbox — the claim site', () => {
       await runInDurableObject(stubFor('swo-mono'), async (board: BoardDO, state) => {
         const runId = await claimOne(board, 'brd_swo_mono');
         const first = runRow(state, runId).updated_at as string;
-        const internals = board as unknown as { reportRun(id: string): void };
-        // Date.now() does not advance inside synchronous code, so these two share a millisecond.
-        internals.reportRun(runId);
-        const second = runRow(state, runId).updated_at as string;
-        internals.reportRun(runId);
-        const third = runRow(state, runId).updated_at as string;
-        expect(Date.parse(second)).toBeGreaterThan(Date.parse(first));
-        expect(Date.parse(third) - Date.parse(second)).toBe(1);
-        const rows = await board.getRunReportOutbox();
-        expect(rows).toHaveLength(1);
-        expect(rows[0]!.gen).toBe(3);
-        expect(rows[0]!.reportedAt).toBe(third);
+        const internals = board as unknown as { reportRun(id: string): void; nowMs(): number };
+        // SQLite work may advance the runtime clock even within this synchronous callback.
+        // Freeze the board's clock explicitly to exercise previous + 1, not elapsed wall time.
+        const clock = vi.spyOn(internals, 'nowMs').mockReturnValue(Date.parse(first));
+        try {
+          internals.reportRun(runId);
+          const second = runRow(state, runId).updated_at as string;
+          internals.reportRun(runId);
+          const third = runRow(state, runId).updated_at as string;
+          expect(Date.parse(second) - Date.parse(first)).toBe(1);
+          expect(Date.parse(third) - Date.parse(second)).toBe(1);
+          const rows = await board.getRunReportOutbox();
+          expect(rows).toHaveLength(1);
+          expect(rows[0]!.gen).toBe(3);
+          expect(rows[0]!.reportedAt).toBe(third);
+        } finally {
+          clock.mockRestore();
+        }
       });
     });
   });

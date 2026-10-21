@@ -1,3 +1,4 @@
+import { z } from 'zod';
 /**
  * Superpipeline API — the edge Worker (docs/02-architecture.md). It authenticates, resolves the tenant,
  * and routes board requests to the per-(tenant, board) Board Durable Object, serving the SvelteKit
@@ -403,7 +404,7 @@ function unexpected(err: unknown): Response {
  * service may read nothing else. The tenant comes from the token's mapped fleet, so a board in
  * another tenant is simply not found.
  */
-async function runEvidence(request: Request, env: Env, boardId: string, runId: string): Promise<Response> {
+async function runEvidence(request: Request, env: Env, boardId: string, runId: string, versioned = false): Promise<Response> {
   const service = await resolveHubService(request, env);
   if (!service) {
     return Response.json(
@@ -418,7 +419,9 @@ async function runEvidence(request: Request, env: Env, boardId: string, runId: s
     );
   }
   try {
-    const result = await boardStub(env, service.tenantId, boardId).getRunEvidence(runId);
+    const stub = boardStub(env, service.tenantId, boardId);
+    const extension = versioned ? await stub.getRunEvidenceV1(runId) : null;
+    const result = extension ? (extension.ok ? { ok: true as const, value: extension.value.pipeline } : extension) : await stub.getRunEvidence(runId);
     if (result.ok) {
       const ev = result.value;
       const ids = await principalIdsFor(env.DB, service.tenantId, [
@@ -427,7 +430,7 @@ async function runEvidence(request: Request, env: Env, boardId: string, runId: s
       ]);
       const subs = await hubSubjectsFor(env.DB, ev.gates.map((g) => g.decided_by));
       const prn = (local: string | null) => (local ? ids.get(local) ?? null : null);
-      return Response.json({
+      const pipeline = {
         ...ev,
         run: { ...ev.run, agent_principal_id: prn(ev.run.agent_id) },
         gates: ev.gates.map((g) => {
@@ -440,7 +443,8 @@ async function runEvidence(request: Request, env: Env, boardId: string, runId: s
             decided_by_hub_sub: decidedBy === null && g.decided_by ? subs.get(g.decided_by) ?? null : null,
           };
         }),
-      });
+      };
+      return Response.json(extension?.ok ? { ...extension.value, pipeline } : pipeline);
     }
     if (result.code === 'NOT_INITIALIZED') return Response.json({ error: { code: 'BOARD_NOT_FOUND' } }, { status: 404 });
     if (result.code === 'RUN_NOT_FOUND') return Response.json({ error: { code: 'RUN_NOT_FOUND' } }, { status: 404 });
@@ -1820,8 +1824,8 @@ const worker = {
     const rest = match[2] ?? '';
 
     // Before the agent/human split below, which classifies every `runs/*` path as an agent route.
-    const evidenceMatch = boardId && request.method === 'GET' ? rest.match(/^runs\/([^/]+)\/evidence$/) : null;
-    if (evidenceMatch) return runEvidence(request, env, boardId!, evidenceMatch[1]!);
+    const evidenceMatch = boardId && request.method === 'GET' ? rest.match(/^runs\/([^/]+)\/(evidence|evidence-v1)$/) : null;
+    if (evidenceMatch) return runEvidence(request, env, boardId!, evidenceMatch[1]!, evidenceMatch[2] === 'evidence-v1');
 
     // A service token (Superlibrary) reading cards or registering a push config; any other bearer falls through.
     const asService = await serviceRoute(request, env, path);
@@ -3401,6 +3405,21 @@ const worker = {
         const result = await stub.getRunContext({ runId: runReadMatch[1]!, agentId: agent!.agentId });
         if (!result.ok) return Response.json({ error: result }, { status: statusForCode(result.code) });
         return Response.json(result.value);
+      }
+
+      const evidenceRefMatch = rest.match(/^runs\/([^/]+)\/evidence-reference$/);
+      if (evidenceRefMatch && request.method === 'POST') {
+        const raw: unknown = await request.json().catch(() => null);
+        const parsed = z.object({ leaseEpoch: z.number().int().positive(), cardId: z.string().min(1).max(256), stageKey: z.string().min(1).max(256), export_id: z.uuid(), manifest_sha256: z.string().regex(/^[a-f0-9]{64}$/) }).strict().safeParse(raw);
+        if (!parsed.success) return Response.json({ error: { code: 'INVALID_INPUT' } }, { status: 400 });
+        let hub: URL;
+        try { hub = new URL(env.HUB_ISSUER ?? ''); } catch { return Response.json({ error: { code: 'EVIDENCE_LINK_UNAVAILABLE' } }, { status: 503 }); }
+        if (hub.protocol !== 'https:' || hub.username || hub.password || hub.pathname !== '/') return Response.json({ error: { code: 'EVIDENCE_LINK_UNAVAILABLE' } }, { status: 503 });
+        const p = parsed.data;
+        const result = await stub.attachEvidenceReference({ runId: evidenceRefMatch[1]!, agentId: agent!.agentId!, leaseEpoch: p.leaseEpoch, cardId: p.cardId, stageKey: p.stageKey, exportId: p.export_id, manifestSha256: p.manifest_sha256,
+          url: `${hub.origin}/api/evidence/exports/${p.export_id}?schema_version=agentpod-execution-export%2Fv1` });
+        if (!result.ok) return Response.json({ error: result }, { status: statusForCode(result.code) });
+        return Response.json({ reference_id: result.value.id, verification: 'unverified' });
       }
 
       // The publisher's final authenticated lease fence. Authoritative stored bytes are returned

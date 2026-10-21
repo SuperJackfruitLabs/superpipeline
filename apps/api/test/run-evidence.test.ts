@@ -5,6 +5,8 @@ import { SELF, env, runInDurableObject } from 'cloudflare:test';
 import { describe, it, expect, beforeAll, beforeEach } from 'vitest';
 import { SignJWT, exportJWK, generateKeyPair } from 'jose';
 import { z } from 'zod';
+import { RunEvidenceProvenanceV1, RunUsageEvidenceV1 } from '../../../packages/contract/src/run-evidence';
+import evidenceV1Fixture from './fixtures/run-evidence-v1.json';
 import { __resetJwksCacheForTests } from '../src/auth/hub-jwt';
 import type { BoardDO } from '../src/board/board-do';
 import fixtureRaw from './fixtures/run-evidence.json?raw';
@@ -359,6 +361,168 @@ describe('principal ids on the evidence', () => {
       const body = await (await evidence(boardId, runId, await hubToken())).json<z.infer<typeof RunEvidence>>();
       expect(body.run.agent_id).toBe('agt_researcher');
       expect(body.run.agent_principal_id).toBeNull();
+    });
+  });
+});
+
+describe('explicit run evidence v1', () => {
+  it('accepts the metadata fixture and rejects raw private payload fields', () => {
+    expect(RunEvidenceProvenanceV1.safeParse(evidenceV1Fixture.provenance).success).toBe(true);
+    expect(RunUsageEvidenceV1.safeParse(evidenceV1Fixture.usage).success).toBe(true);
+    expect(RunEvidenceProvenanceV1.safeParse({ ...evidenceV1Fixture.provenance, handoff: { private: 'body' } }).success).toBe(false);
+    expect(RunEvidenceProvenanceV1.safeParse({ ...evidenceV1Fixture.provenance, references: [{ ...evidenceV1Fixture.provenance.references[0], metadata: { private: 'body' } }] }).success).toBe(false);
+  });
+  it('keeps C4 strict, original provenance, and excludes card-wide references', async () => {
+    await withIssuer(ISSUER, jwksBody, async () => {
+      const { boardId, runId } = await aRun({ complete: true });
+      const stub = env.BOARD_DO.get(env.BOARD_DO.idFromName(`${TENANT}:${boardId}`));
+      await runInDurableObject(stub, async (_b, state) => {
+        const cardId = state.storage.sql.exec(`SELECT card_id FROM runs WHERE id = ?`, runId).one().card_id;
+        for (const [id, owner] of [['ref_own', runId], ['ref_legacy', null], ['ref_other', 'run_other']]) {
+          state.storage.sql.exec(`INSERT INTO card_references (id, card_id, run_id, url, provider, source_type, created_at) VALUES (?, ?, ?, ?, 'superlibrary', 'artifact', ?)`, id, cardId, owner, `https://library.test/${id}`, '2026-10-01T00:00:00.000Z');
+        }
+      });
+      const res = await SELF.fetch(`https://api.test/v1/boards/${boardId}/runs/${runId}/evidence-v1`, { headers: { Authorization: `Bearer ${await hubToken()}` } });
+      expect(res.status).toBe(200);
+      const body = await res.json<import('../src/board/board-do').RunEvidenceV1>();
+      expect(body.schema_version).toBe('superpipeline-run-evidence/v1');
+      expect(RunEvidence.safeParse(body.pipeline).success).toBe(true);
+      expect(body.provenance).toMatchObject({ lease_epoch: 1, handoff_recorded: true });
+      expect(body.provenance.references.map(r => r.id)).toEqual(['ref_own']);
+      expect(body.provenance.references[0]).not.toHaveProperty('metadata');
+      expect(body.provenance).not.toHaveProperty('handoff');
+      expect(body.provenance.references_truncated).toBe(false);
+      expect(body.pipeline.run.stage_key).toBe('research');
+      expect(body.pipeline.card.stage_key).toBe('review');
+      expect(body.usage).toMatchObject({ status: 'unreported', recorded_cost_usd: null, estimated_cost_usd: null });
+      expect(body.executor_evidence.external_run_id).toBe(runId);
+      expect((await evidence(boardId, runId, await hubToken())).status).toBe(200);
+    });
+  });
+
+  it('attaches only unverified export locators under the original agent and original epoch', async () => {
+    await withIssuer(ISSUER, jwksBody, async () => {
+      const { boardId, runId } = await aRun();
+      const stub = env.BOARD_DO.get(env.BOARD_DO.idFromName(`${TENANT}:${boardId}`));
+      const cardId = await runInDurableObject(stub, async (_b, state) => state.storage.sql.exec(`SELECT card_id FROM runs WHERE id = ?`, runId).one().card_id as string);
+      const url = `https://api.test/v1/boards/${boardId}/runs/${runId}/evidence-reference`;
+      const payload = { leaseEpoch: 1, cardId, stageKey: 'research', export_id: '00000000-0000-4000-8000-000000000001', manifest_sha256: '0'.repeat(64) };
+      const attach = (body: unknown, headers: Record<string, string> = agent()) => SELF.fetch(url, { method: 'POST', headers, body: JSON.stringify(body) });
+      expect((await attach({ ...payload, leaseEpoch: 2 })).status).toBeGreaterThanOrEqual(400);
+      expect((await attach(payload, { ...agent(), 'X-Agent-Id': 'agt_other' })).status).toBeGreaterThanOrEqual(400);
+      expect((await attach({ ...payload, cardId: 'card_other' })).status).toBeGreaterThanOrEqual(400);
+      expect((await attach({ ...payload, stageKey: 'publish' })).status).toBeGreaterThanOrEqual(400);
+      expect((await attach({ ...payload, url: 'https://attacker.test' })).status).toBe(400);
+      const res = await attach(payload);
+      expect(res.status).toBe(200);
+      const receipt = await res.json<{ reference_id: string; verification: string }>();
+      expect(receipt.verification).toBe('unverified');
+      expect(await (await attach(payload)).json()).toEqual(receipt);
+      expect((await attach({ ...payload, manifest_sha256: '1'.repeat(64) })).status).toBeGreaterThanOrEqual(400);
+      const v1 = await (await SELF.fetch(`https://api.test/v1/boards/${boardId}/runs/${runId}/evidence-v1`, { headers: { Authorization: `Bearer ${await hubToken()}` } })).json<import('../src/board/board-do').RunEvidenceV1>();
+      expect(v1.provenance.references[0]!.execution_export).toEqual({ schema_version: 'agentpod-execution-export/v1', export_id: payload.export_id, manifest_sha256: payload.manifest_sha256, verification: 'unverified' });
+      await SELF.fetch(`https://api.test/v1/boards/${boardId}/runs/${runId}/complete`, { method: 'POST', headers: agent(), body: JSON.stringify({ leaseEpoch: 1 }) });
+      expect(await (await attach(payload)).json()).toEqual(receipt);
+      const late = await attach({ ...payload, export_id: '00000000-0000-4000-8000-000000000002' });
+      expect(late.status).toBe(200);
+      expect((await attach(payload, dev())).status).toBe(403);
+      expect((await attach(payload, agent(OTHER_TENANT))).status).toBeGreaterThanOrEqual(400);
+      expect((await attach({ ...payload, leaseEpoch: 2 })).status).toBe(409);
+      expect((await attach(payload, { ...agent(), 'X-Agent-Id': 'agt_replacement' })).status).toBe(403);
+      expect((await attach({ ...payload, stageKey: 'review' })).status).toBe(403);
+      // Historical annotation does not renew work authority or mutate the completed run.
+      expect((await SELF.fetch(`https://api.test/v1/boards/${boardId}/runs/${runId}/heartbeat`, { method: 'POST', headers: agent(), body: JSON.stringify({ leaseEpoch: 1 }) })).status).toBe(409);
+      const row = await runInDurableObject(stub, async (_b, state) => state.storage.sql.exec(`SELECT status, outcome, lease_epoch FROM runs WHERE id = ?`, runId).one());
+      expect(row).toMatchObject({ status: 'ended', outcome: 'completed', lease_epoch: 1 });
+    });
+  });
+
+  it('authenticates original historical annotations through Organization plane HTTP tokens', async () => {
+    const { withOrgPlane, planeToken, ORG, OTHER_ORG, AGENT } = await import('./helpers/org-plane');
+    const { ensureOrgTenant } = await import('../src/auth/org-tenancy');
+    const { createAgent, setAgentExternalMapping } = await import('../src/db/catalog');
+    const tenant = await ensureOrgTenant(env.DB, ORG);
+    const runner = await createAgent(env.DB, tenant, { name: 'historical runner', capabilities: ['research'] });
+    await setAgentExternalMapping(env.DB, tenant, runner.id, { externalSource: 'org-plane', externalId: AGENT });
+    const replacement = await createAgent(env.DB, tenant, { name: 'replacement', capabilities: ['research'] });
+    const replacementPrincipal = 'prn_000000000000000000a5';
+    await setAgentExternalMapping(env.DB, tenant, replacement.id, { externalSource: 'org-plane', externalId: replacementPrincipal });
+    const { boardId, runId } = await aRun({ tenant, complete: true });
+    const stub = env.BOARD_DO.get(env.BOARD_DO.idFromName(`${tenant}:${boardId}`));
+    const cardId = await runInDurableObject(stub, async (_b, state) => {
+      state.storage.sql.exec(`UPDATE runs SET agent_id = ? WHERE id = ?`, runner.id, runId);
+      return state.storage.sql.exec(`SELECT card_id FROM runs WHERE id = ?`, runId).one().card_id;
+    });
+    await withIssuer(ISSUER, jwksBody, async () => withOrgPlane(async () => {
+      const payload = { leaseEpoch: 1, cardId, stageKey: 'research', export_id: '00000000-0000-4000-8000-000000000003', manifest_sha256: '0'.repeat(64) };
+      const post = async (claims: Record<string, unknown>, body = payload) => SELF.fetch(`https://api.test/v1/boards/${boardId}/runs/${runId}/evidence-reference`, { method: 'POST', headers: { Authorization: `Bearer ${await planeToken({ sub: AGENT, principalKind: 'agent', scope: 'run', ...claims })}`, 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+      const res = await post({});
+      expect(res.status).toBe(200);
+      const receipt = await res.json();
+      expect(await (await post({})).json()).toEqual(receipt);
+      expect((await post({ sub: replacementPrincipal })).status).toBe(403);
+      expect((await post({ org: OTHER_ORG })).status).toBeGreaterThanOrEqual(400);
+      expect((await post({}, { ...payload, leaseEpoch: 2 })).status).toBe(409);
+      expect((await post({}, { ...payload, stageKey: 'review' })).status).toBe(403);
+      expect((await post({ principalKind: 'human' })).status).toBeGreaterThanOrEqual(400);
+    }));
+  });
+
+  it('accepts submitted history only with a recorded terminal timestamp', async () => {
+    await withIssuer(ISSUER, jwksBody, async () => {
+      const { boardId, runId } = await aRun();
+      const stub = env.BOARD_DO.get(env.BOARD_DO.idFromName(`${TENANT}:${boardId}`));
+      const cardId = await runInDurableObject(stub, async (_b, state) => {
+        state.storage.sql.exec(`UPDATE runs SET status = 'ended', outcome = 'submitted' WHERE id = ?`, runId);
+        return state.storage.sql.exec(`SELECT card_id FROM runs WHERE id = ?`, runId).one().card_id;
+      });
+      const attach = () => SELF.fetch(`https://api.test/v1/boards/${boardId}/runs/${runId}/evidence-reference`, { method: 'POST', headers: agent(), body: JSON.stringify({ leaseEpoch: 1, cardId, stageKey: 'research', export_id: '00000000-0000-4000-8000-000000000001', manifest_sha256: '0'.repeat(64) }) });
+      expect((await attach()).status).toBe(409);
+      await runInDurableObject(stub, async (_b, state) => { state.storage.sql.exec(`UPDATE runs SET ended_at = ? WHERE id = ?`, '2026-10-01T00:00:00.000Z', runId); });
+      expect((await attach()).status).toBe(200);
+    });
+  });
+
+  it.each(['reclaimed', 'crashed', 'released', 'blocked'])('does not annotate fenced %s runs', async (outcome) => {
+    await withIssuer(ISSUER, jwksBody, async () => {
+    const { boardId, runId } = await aRun();
+    const stub = env.BOARD_DO.get(env.BOARD_DO.idFromName(`${TENANT}:${boardId}`));
+    const cardId = await runInDurableObject(stub, async (_b, state) => {
+      state.storage.sql.exec(`UPDATE runs SET status = 'ended', outcome = ? WHERE id = ?`, outcome, runId);
+      return state.storage.sql.exec(`SELECT card_id FROM runs WHERE id = ?`, runId).one().card_id;
+    });
+    const res = await SELF.fetch(`https://api.test/v1/boards/${boardId}/runs/${runId}/evidence-reference`, { method: 'POST', headers: agent(), body: JSON.stringify({ leaseEpoch: 1, cardId, stageKey: 'research', export_id: '00000000-0000-4000-8000-000000000001', manifest_sha256: '0'.repeat(64) }) });
+    expect(res.status).toBe(409);
+    });
+  });
+
+  it.each([
+    { rows: [[0, 0, 'unknown']], status: 'known', recorded: 0, estimate: null },
+    { rows: [[1, 0, 'unknown']], status: 'unknown', recorded: null, estimate: null },
+    { rows: [[1, 0.1, 'gpt-5']], status: 'estimated', recorded: null, estimate: 0.1 },
+    { rows: [[0, 0.2, 'unknown'], [1, 0, 'unknown']], status: 'partial', recorded: 0.2, estimate: null },
+  ])('preserves recorded cost provenance: $status', async ({ rows, status, recorded, estimate }) => {
+    await withIssuer(ISSUER, jwksBody, async () => {
+      const { boardId, runId } = await aRun();
+      const stub = env.BOARD_DO.get(env.BOARD_DO.idFromName(`${TENANT}:${boardId}`));
+      await runInDurableObject(stub, async (_b, state) => {
+        const row = state.storage.sql.exec(`SELECT card_id, agent_id FROM runs WHERE id = ?`, runId).one();
+        for (const [estimated, cost, model] of rows) state.storage.sql.exec(`INSERT INTO usage_records (run_id, card_id, agent_id, model, input_tokens, output_tokens, cost_usd, estimated, ts) VALUES (?, ?, ?, ?, 0, 0, ?, ?, ?)`, runId, row.card_id, row.agent_id, model, cost, estimated, '2026-10-01T00:00:00.000Z');
+      });
+      const res = await SELF.fetch(`https://api.test/v1/boards/${boardId}/runs/${runId}/evidence-v1`, { headers: { Authorization: `Bearer ${await hubToken()}` } });
+      const body = await res.json<import('../src/board/board-do').RunEvidenceV1>();
+      expect(body.usage).toMatchObject({ status, recorded_cost_usd: recorded, estimated_cost_usd: estimate });
+    });
+  });
+
+  it('requires the same scoped service principal and tenant mapping as C4', async () => {
+    await withIssuer(ISSUER, jwksBody, async () => {
+      const { boardId, runId } = await aRun();
+      const url = `https://api.test/v1/boards/${boardId}/runs/${runId}/evidence-v1`;
+      expect((await SELF.fetch(url)).status).toBe(401);
+      expect((await SELF.fetch(url, { headers: { Authorization: `Bearer ${await hubToken({ principalKind: 'agent' })}` } })).status).toBe(401);
+      expect((await SELF.fetch(url, { headers: { Authorization: `Bearer ${await hubToken({ scope: undefined })}` } })).status).toBe(403);
+      expect((await SELF.fetch(url, { headers: { Authorization: `Bearer ${await hubToken({ tenant: 'fleet_unmapped' })}` } })).status).toBe(401);
     });
   });
 });
