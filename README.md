@@ -129,8 +129,9 @@ contract, Worker, web, CLI, and documentation checks. Playwright starts its own 
 builds the frontend, and prepares local D1. Run it with the usual dev servers stopped for an
 isolated setup. `dev`, `dev:setup`, and `e2e` are package scripts, not root scripts.
 
-[CI](.github/workflows/ci.yml) runs type checks, tests, and browser E2E. Deployment is a separate
-workflow step after checks on `main`; passing local tests alone does not establish a deployment.
+[CI](.github/workflows/ci.yml) runs type checks, tests, and browser E2E. `main` deploys to staging
+(staging-app.superpipeline.dev); a `v*` tag deploys production ([release](.github/workflows/release.yml)).
+Passing local tests alone does not establish a deployment.
 
 ## License
 

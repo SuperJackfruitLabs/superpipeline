@@ -1,9 +1,9 @@
 name: Release supi
 
-# What a tag means HERE is narrower than in agentpod, and worth stating so nobody looks for the
-# app in a release: `apps/api` and `apps/web` deploy continuously from `main` (see ci.yml's deploy
-# job), so the running service is never what a tag describes. A tag publishes the CLI binaries and
-# fixes a changelog point. Nothing in production waits on it.
+# A `v*` tag does two independent things: `release` publishes the supi CLI binaries, and
+# `deploy-production` ships the app (apps/api + apps/web) to app.superpipeline.dev. Main deploys to
+# staging only (ci.yml). Neither job needs the other, so a failed CLI build never blocks the app and
+# vice versa. The app deploy refuses a tag whose commit is not on main.
 on:
   push:
     tags:
@@ -124,3 +124,103 @@ jobs:
           # station always gets the skill that matches its supi rather than whatever is on main. Current
           # installers run `supi skill install` instead; this asset is for older ones.
           gh release upload "$TAG" dist/supi-* dist/SHA256SUMS scripts/install.sh dist/SKILL.md --clobber
+
+  deploy-production:
+    name: Deploy the app to production
+    if: github.server_url == 'https://github.com'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      actions: read
+    concurrency:
+      group: deploy-production
+      cancel-in-progress: false
+    environment:
+      name: production
+      url: https://app.superpipeline.dev
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.tag || github.ref }}
+          fetch-depth: 0
+
+      # Production only ships commits that went through main.
+      - name: Refuse a tag that is not on main
+        id: commit
+        run: |
+          set -euo pipefail
+          git fetch -q origin main
+          sha="$(git rev-parse HEAD)"
+          if ! git merge-base --is-ancestor "$sha" origin/main; then
+            echo "::error::$sha is not on main; not deploying production"
+            exit 1
+          fi
+          echo "sha=$sha" >> "$GITHUB_OUTPUT"
+
+      # The gate the operator chose (2026-10-13): production waits on test, e2e and visual, never on
+      # pixel. The tag does not re-run them; it requires main's own CI run for this commit to have
+      # passed them, and deploys the artifact that run built and verified.
+      - name: Require main's CI to have passed test, e2e and visual
+        id: ci
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SHA: ${{ steps.commit.outputs.sha }}
+          REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          fail() { echo "::error::main's CI for $SHA has not passed test/e2e/visual ($1)"; exit 1; }
+          for run in $(gh api "repos/$REPO/actions/workflows/ci.yml/runs?event=push&branch=main&head_sha=$SHA&per_page=20" \
+              --jq '.workflow_runs[] | select(.head_sha == env.SHA) | .id'); do
+            ok="$(gh api "repos/$REPO/actions/runs/$run/jobs?filter=latest&per_page=100" \
+              --jq '[.jobs[] | select((.name == "test" or .name == "e2e" or .name == "visual") and .conclusion == "success") | .name] | unique | length')"
+            if [ "$ok" = 3 ]; then
+              echo "CI run $run passed test, e2e and visual"
+              echo "run_id=$run" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+          done
+          fail "no push run of ci.yml on main for this commit has all three jobs green"
+
+      - name: Download the artifact main's CI built
+        id: download
+        continue-on-error: true
+        uses: actions/download-artifact@v4
+        with:
+          name: app-${{ steps.commit.outputs.sha }}
+          path: .ci-download
+          run-id: ${{ steps.ci.outputs.run_id }}
+          github-token: ${{ github.token }}
+
+      - name: Refuse to rebuild a missing artifact
+        if: steps.download.outcome != 'success'
+        env:
+          SHA: ${{ steps.commit.outputs.sha }}
+          RUN: ${{ steps.ci.outputs.run_id }}
+        run: |
+          echo "::error::artifact app-$SHA from CI run $RUN is missing (artifacts expire after 14 days). Re-run main's CI for $SHA, then re-run this deploy."
+          exit 1
+
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: mkdir -p .ci && tar -xzf .ci-download/app.tgz -C .ci
+      - run: pnpm ci:verify-app
+      # scripts/app-artifact.mjs deploy applies the remote D1 migrations, then `wrangler deploy`.
+      - run: pnpm ci:deploy-app
+
+      - name: Smoke production
+        env:
+          ACCOUNTS: https://accounts.superjackfruit.com
+        run: |
+          set -eu
+          for _ in 1 2 3 4 5 6; do
+            sh deploy/staging/smoke.sh https://app.superpipeline.dev && exit 0
+            sleep 10
+          done
+          exit 1

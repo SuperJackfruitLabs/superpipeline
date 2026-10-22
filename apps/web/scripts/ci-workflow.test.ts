@@ -1,5 +1,6 @@
 // The CI workflow parses, every `needs` names a job that exists, every script a step runs exists, and the
-// gates are the ones the operator chose (2026-10-13): deploy waits on `visual`, never on the `pixel` report,
+// gates are the ones the operator chose (2026-10-13): production deploy waits on `visual`, never on the `pixel` report,
+// (since 2026-10-22 production deploys from release.yml on a v* tag, gated on main's CI run for that commit)
 // and (2026-10-14) pixel runs only nightly or by hand, never on push or pull_request.
 import { existsSync, readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
@@ -11,6 +12,7 @@ const root = fileURLToPath(new URL('../../../', import.meta.url));
 type Step = { run?: string; uses?: string; if?: string; id?: string; env?: Record<string, string>; with?: Record<string, unknown> };
 type Job = { needs?: string | string[]; if?: string; steps: Step[]; 'continue-on-error'?: boolean; container?: { image: string; options?: string }; strategy?: { 'max-parallel'?: number; 'fail-fast'?: boolean; matrix?: string } };
 const wf = parse(readFileSync(join(root, '.github/workflows/ci.yml'), 'utf8')) as { on: Record<string, unknown>; jobs: Record<string, Job> };
+const rel = parse(readFileSync(join(root, '.github/workflows/release.yml'), 'utf8')) as { jobs: Record<string, Job & { permissions?: Record<string, string> }> };
 const needs = (j: Job) => (j.needs === undefined ? [] : Array.isArray(j.needs) ? j.needs : [j.needs]);
 
 describe('ci.yml', () => {
@@ -21,8 +23,22 @@ describe('ci.yml', () => {
     for (const job of Object.values(wf.jobs))
       for (const s of job.steps) for (const m of (s.run ?? '').matchAll(/(apps\/web\/scripts\/[\w/.-]+\.(?:mjs|sh))/g)) expect(existsSync(join(root, m[1]!)), m[1]).toBe(true);
   });
-  it('deploy waits on test, e2e and visual, not on pixel', () => {
-    expect(needs(wf.jobs.deploy!).sort()).toEqual(['e2e', 'plan', 'test', 'visual']);
+  it('main has no production deploy; a v* tag deploys it from release.yml', () => {
+    expect(wf.jobs.deploy).toBeUndefined();
+    for (const job of Object.values(wf.jobs)) expect(JSON.stringify(job)).not.toContain('ci:deploy-app');
+    expect(rel.jobs['deploy-production']).toBeDefined();
+  });
+  it('production deploy requires main CI test, e2e and visual to have passed, not pixel', () => {
+    const d = rel.jobs['deploy-production']!;
+    expect(needs(d)).toEqual([]); // independent of the CLI release
+    expect(d.permissions?.actions).toBe('read');
+    const onMain = d.steps.find((s) => s.run?.includes('merge-base --is-ancestor'));
+    expect(onMain?.run).toContain('origin/main');
+    const gate = d.steps.find((s) => s.id === 'ci')!;
+    for (const j of ['"test"', '"e2e"', '"visual"']) expect(gate.run).toContain(j);
+    expect(gate.run).not.toContain('pixel');
+    expect(gate.run).toContain('workflows/ci.yml/runs?event=push&branch=main&head_sha=');
+    expect(gate.run).toContain("has not passed test/e2e/visual");
   });
   it('visual is blocking and runs base versus head in the Playwright image', () => {
     const v = wf.jobs.visual!;
@@ -84,13 +100,22 @@ describe('ci.yml', () => {
   });
   it('smoke, shards and deploy verify the same artifact without rebuilding', () => {
     expect(wf.jobs.build!.steps.some((s) => s.run === 'pnpm ci:build-app')).toBe(true);
-    for (const name of ['smoke', 'browser', 'deploy']) {
-      const job = wf.jobs[name]!;
-      expect(job.steps.some((s) => s.uses?.includes('download-artifact') && s.with?.name === 'app-${{ github.sha }}'), name).toBe(true);
+    const prod = rel.jobs['deploy-production']!;
+    for (const [name, job, artifact] of [
+      ['smoke', wf.jobs.smoke!, 'app-${{ github.sha }}'],
+      ['browser', wf.jobs.browser!, 'app-${{ github.sha }}'],
+      ['deploy-production', prod, 'app-${{ steps.commit.outputs.sha }}'],
+    ] as const) {
+      expect(job.steps.some((s) => s.uses?.includes('download-artifact') && s.with?.name === artifact), name).toBe(true);
       expect(job.steps.some((s) => s.run?.includes('pnpm ci:verify-app')), name).toBe(true);
       expect(job.steps.some((s) => s.run?.includes('ci:build-app')), name).toBe(false);
     }
-    expect(wf.jobs.deploy!.steps.some((s) => s.run === 'pnpm ci:deploy-app')).toBe(true);
+    const dl = prod.steps.find((s) => s.id === 'download')!;
+    expect(dl.with?.['run-id']).toBe('${{ steps.ci.outputs.run_id }}');
+    expect(dl.with?.['github-token']).toBe('${{ github.token }}');
+    expect(prod.steps.find((s) => s.if === "steps.download.outcome != 'success'")?.run).toContain('exit 1');
+    expect(prod.steps.some((s) => s.run === 'pnpm ci:deploy-app')).toBe(true);
+    expect(prod.steps.some((s) => s.run?.includes('smoke.sh https://app.superpipeline.dev'))).toBe(true);
     expect(wf.jobs.unit!.steps.some((s) => s.run === 'pnpm ci:test')).toBe(true);
   });
   it('Forge retains artifacts using pinned compatible actions; visual no-capture retains an outcome', () => {

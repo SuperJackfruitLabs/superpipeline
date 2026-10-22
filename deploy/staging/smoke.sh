@@ -1,7 +1,9 @@
 #!/bin/sh
-# Smoke a SuperPipeline staging copy: `sh deploy/staging/smoke.sh <base-url>`.
+# Smoke a SuperPipeline copy: `sh deploy/staging/smoke.sh <base-url>`. Defaults to staging;
+# production passes ACCOUNTS=https://accounts.superjackfruit.com (release.yml).
 set -eu
 base=${1:-https://staging-app.superpipeline.dev}
+accounts=${ACCOUNTS:-https://staging-accounts.superjackfruit.com}
 fail() { echo "smoke: $*" >&2; exit 1; }
 curl -fsS "$base/health" | grep '"ok":true' >/dev/null || fail "/health"
 code=$(curl -s -o /dev/null -w '%{http_code}' "$base/v1/boards")
@@ -9,8 +11,8 @@ code=$(curl -s -o /dev/null -w '%{http_code}' "$base/v1/boards")
 curl -fsS "$base/" | grep -i '<html' >/dev/null || fail "/ serves no web app"
 loc=$(curl -s -o /dev/null -w '%{redirect_url}' "$base/auth/login")
 case "$loc" in
-  https://staging-accounts.superjackfruit.com/*client_id=superpipeline-web*) ;;
-  *) fail "/auth/login redirects to '$loc', not staging-accounts" ;;
+  "$accounts"/*client_id=superpipeline-web*) ;;
+  *) fail "/auth/login redirects to '$loc', not $accounts" ;;
 esac
 case "$base" in
   http://127.0.0.1:*) # The cron door is the Worker's, not the SPA's (only reachable on the box).
