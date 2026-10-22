@@ -21,6 +21,7 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - Loading never looks empty: skeletons, "Checking your boards…", a Connecting…/Live/Reconnecting…/Offline pill, "Still loading — the server is slow." at 8 s, Failed with Try again at 20 s (reads time out at 20 s), an error page and a branded boot screen.
 - Motion from vibekit 0.0.12 (none under reduced motion); a new logo, favicons and app icons.
 - Superlibrary previews: `/auth/login` names the Superlibrary audience when `PLANE_LIBRARY_LINKED=true` (production), `/hub/token` calls are serialised across tabs, previews say the true reason, and Reconnect returns to the same page. Sessions from before the flag need one sign-in.
+- Deploy: `main` deploys to staging (staging-app.superpipeline.dev); a `v*` tag on a main commit deploys production (app.superpipeline.dev) from `release.yml`, with remote D1 migrations and a production smoke. The CLI release and the app deploy are independent jobs.
 - CI: the `visual` job (base vs head screenshots, `Visual-Change:` trailer) is the PR gate; the `pixel` conformance report runs nightly and on demand; longer timeouts under CI only.
 
 ### Fixed

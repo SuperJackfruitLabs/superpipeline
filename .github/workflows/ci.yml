@@ -465,43 +465,8 @@ jobs:
           retention-days: 14
 
 
-  deploy:
-    needs: [plan, test, e2e, visual]
-    if: github.server_url == 'https://github.com' && github.ref == 'refs/heads/main' && github.event_name == 'push' && needs.plan.outputs.app == 'true'
-    runs-on: ubuntu-latest
-    concurrency:
-      group: deploy-production
-      cancel-in-progress: false
-    environment:
-      name: production
-      url: https://app.superpipeline.dev
-    env:
-      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-      - uses: pnpm/action-setup@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: pnpm
-      - run: pnpm install --frozen-lockfile
-      - uses: actions/download-artifact@v4
-        if: success() && github.server_url == 'https://github.com'
-        with:
-          name: app-${{ github.sha }}
-          path: .ci-download
-      - uses: ./.github/actions/forgejo-download-artifact
-        if: success() && github.server_url != 'https://github.com'
-        with:
-          name: app-${{ github.sha }}
-          path: .ci-download
-      - run: mkdir -p .ci && tar -xzf .ci-download/app.tgz -C .ci
-      - run: pnpm ci:verify-app
-      - run: pnpm ci:deploy-app
-
-
+  # Production (app.superpipeline.dev) no longer deploys from main: a `v*` tag on a main commit
+  # deploys it, from release.yml's `deploy-production` job. Main lands on staging only.
   # Every push to main lands on the staging plane (workbench) too, through the forced-command key
   # (estate provision/301-staging-deploy.sh), which runs that commit's deploy/staging/deploy.sh.
   deploy-staging:

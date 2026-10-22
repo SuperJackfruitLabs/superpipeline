@@ -4,20 +4,30 @@ Superpipeline deploys as **one Worker** that serves both the API (`/v1`, `/auth`
 the web SPA (static assets, same-origin). Same-origin means the session cookie and the app's relative
 `fetch`es just work — no CORS, no cross-site cookies.
 
-## Continuous deploy (the normal path)
+## Release deploy (the normal path)
 
-Merging to `main` auto-deploys. The `deploy` job in `.github/workflows/ci.yml` runs after the `test`
-and `e2e` jobs pass on a push to `main`: it migrates the remote D1 and runs `wrangler deploy
---var DEV_AUTH:false` (belt-and-braces — dev auth is off by default, see below). It needs one repo
-secret:
+`main` deploys to staging (staging-app.superpipeline.dev); a `v*` tag deploys production
+(app.superpipeline.dev).
+
+- **Staging.** Every push to `main` runs the `deploy-staging` job in `.github/workflows/ci.yml` after
+  `test` passes; it lands that commit on the staging plane.
+- **Production.** Pushing a `v*` tag (versions stay on 0.0.x) runs the `deploy-production` job in
+  `.github/workflows/release.yml`. It refuses a tag whose commit is not on `main`, builds and verifies
+  the app artifact (`pnpm ci:build-app`, `ci:verify-app`), migrates the remote D1 and runs `wrangler
+  deploy` with `DEV_AUTH:false` (`pnpm ci:deploy-app`), then smokes `https://app.superpipeline.dev`
+  (`deploy/staging/smoke.sh` with `ACCOUNTS=https://accounts.superjackfruit.com`). The same tag
+  publishes the supi CLI in an independent `release` job; either can fail without blocking the other.
+  It needs one repo secret:
 
 - **`CLOUDFLARE_API_TOKEN`** — a Cloudflare API token with **Workers Scripts: Edit** and **D1: Edit**,
   scoped to your account (a single-account token lets wrangler infer the account). Add it under
   *Settings → Secrets and variables → Actions*.
 
-So the day-to-day flow is: open a PR → tests run → merge → it builds, migrates, and ships to
-app.superpipeline.dev automatically — `superpipeline.dev` is a separate static site, see
-`14-splitting-app-and-marketing-hosts.md`. The manual steps below are only for first-time setup or one-off deploys.
+So the day-to-day flow is: open a PR → tests run → merge → it ships to staging; tag `v0.0.N` on main
+→ it ships to production. Tags are pushed to forge and reach GitHub through the push mirror.
+`docs.superpipeline.dev` and `superpipeline.dev` (a separate static site, see
+`14-splitting-app-and-marketing-hosts.md`) still deploy on every push to `main`. The manual steps below
+are only for first-time setup or one-off deploys.
 
 ## Prerequisites (you)
 
