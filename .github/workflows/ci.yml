@@ -502,6 +502,26 @@ jobs:
       - run: pnpm ci:deploy-app
 
 
+  # Every push to main lands on the staging plane (workbench) too, through the forced-command key
+  # (estate provision/301-staging-deploy.sh), which runs that commit's deploy/staging/deploy.sh.
+  deploy-staging:
+    needs: [plan, test]
+    if: github.server_url == 'https://github.com' && github.ref == 'refs/heads/main' && github.event_name == 'push' && needs.plan.outputs.app == 'true'
+    runs-on: ubuntu-latest
+    concurrency: { group: deploy-staging, cancel-in-progress: false }
+    environment: { name: staging, url: https://staging-app.superpipeline.dev }
+    steps:
+      - name: Deploy
+        env:
+          KEY: ${{ secrets.STAGING_SSH_KEY }}
+          KNOWN_HOSTS: ${{ secrets.STAGING_KNOWN_HOSTS }}
+          HOST: ${{ vars.STAGING_HOST }}
+        run: |
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$KEY" > ~/.ssh/id_ed25519 && chmod 600 ~/.ssh/id_ed25519
+          printf '%s\n' "$KNOWN_HOSTS" > ~/.ssh/known_hosts
+          ssh root@"$HOST" superpipeline "$GITHUB_SHA"
+
   deploy-docs:
     needs: [plan, test, docs]
     if: github.server_url == 'https://github.com' && github.ref == 'refs/heads/main' && github.event_name == 'push' && needs.plan.outputs.docs == 'true'
