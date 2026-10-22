@@ -12,9 +12,11 @@ the web SPA (static assets, same-origin). Same-origin means the session cookie a
 - **Staging.** Every push to `main` runs the `deploy-staging` job in `.github/workflows/ci.yml` after
   `test` passes; it lands that commit on the staging plane.
 - **Production.** Pushing a `v*` tag (versions stay on 0.0.x) runs the `deploy-production` job in
-  `.github/workflows/release.yml`. It refuses a tag whose commit is not on `main`, builds and verifies
-  the app artifact (`pnpm ci:build-app`, `ci:verify-app`), migrates the remote D1 and runs `wrangler
-  deploy` with `DEV_AUTH:false` (`pnpm ci:deploy-app`), then smokes `https://app.superpipeline.dev`
+  `.github/workflows/release.yml`. It refuses a tag whose commit is not on `main`, requires main's own CI
+  run for that commit to have passed `test`, `e2e` and `visual` (never `pixel`), downloads the app
+  artifact that run built (`app-<sha>`; it is never rebuilt — if it has expired after 14 days, re-run
+  main's CI for the commit), verifies it, migrates the remote D1 and runs `wrangler deploy` with
+  `DEV_AUTH:false` (`pnpm ci:deploy-app`), then smokes `https://app.superpipeline.dev`
   (`deploy/staging/smoke.sh` with `ACCOUNTS=https://accounts.superjackfruit.com`). The same tag
   publishes the supi CLI in an independent `release` job; either can fail without blocking the other.
   It needs one repo secret:
