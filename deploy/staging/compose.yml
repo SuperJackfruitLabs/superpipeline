@@ -1,0 +1,52 @@
+# SuperPipeline on the staging plane (workbench), checked out at /opt/suite-staging/superpipeline.
+# The Worker runs under workerd through `wrangler dev --env staging` (apps/api/wrangler.jsonc), with
+# D1 and the Board Durable Objects persisted in the `state` volume. It signs in against
+# staging-accounts and reaches only other staging copies; no production secret is reused. The
+# shared edge (cloudflared on the external `suite-staging` network) routes
+# staging-app.superpipeline.dev here. deploy.sh installs and builds the web app before `up`.
+name: staging-superpipeline
+
+x-node: &node
+  image: node:22.20.0-bookworm
+  working_dir: /app/apps/api
+  environment:
+    CI: "true"
+    WRANGLER_SEND_METRICS: "false"
+  volumes:
+    - ../..:/app
+    - state:/state
+    - ../../../env/superpipeline/worker.env:/run/secrets/worker.env:ro
+
+services:
+  superpipeline:
+    <<: *node
+    restart: unless-stopped
+    # --test-scheduled exposes /__scheduled; workerd never fires crons on its own, so `cron` calls it.
+    command:
+      - sh
+      - -c
+      - exec node_modules/.bin/wrangler dev --env staging --ip 0.0.0.0 --port 8787 --persist-to /state
+        --env-file /run/secrets/worker.env --test-scheduled --show-interactive-dev-session=false
+    ports:
+      - "127.0.0.1:8787:8787"
+    networks: [default, suite-staging]
+
+  # Applies D1 migrations to the persisted state. Run by deploy.sh before `up` (profile: tools).
+  migrate:
+    <<: *node
+    profiles: [tools]
+    command: ["node_modules/.bin/wrangler", "d1", "migrations", "apply", "DB", "--local", "--env", "staging", "--persist-to", "/state"]
+
+  # The */5 trigger in wrangler.jsonc, fired the only way workerd can be: by asking for it.
+  cron:
+    image: curlimages/curl:8.16.0
+    restart: unless-stopped
+    entrypoint: ["sh", "-c", "while sleep 300; do curl -fsS -o /dev/null 'http://superpipeline:8787/__scheduled?cron=*/5+*+*+*+*' && echo \"$$(date -u +%FT%TZ) scheduled\"; done"]
+    depends_on: [superpipeline]
+
+networks:
+  suite-staging:
+    external: true
+
+volumes:
+  state:
