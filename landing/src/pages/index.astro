@@ -22,9 +22,11 @@
  * the same value for the same reason.
  *
  * Sections that explain a mechanism carry a small three.js scene (src/scripts/scenes): under "How
- * it works", the same template as a sorting line, pinned beside the steps it plays one by one. One canvas serves every scene and loads only
- * near the first; each has a still per sun phase in public/scenes for reduced motion, no WebGL
- * and while it loads. Their labels are the HTML around them.
+ * it works", the same template as a sorting line, pinned beside the steps it plays one by one;
+ * beside "What it's like to use", the agent's question parking the card on you. One canvas serves
+ * every scene and loads only near the first; each has a still per beat and sun phase in
+ * public/scenes for reduced motion, no WebGL and while it loads. Their labels are the HTML around
+ * them.
  */
 const APP = 'https://app.superpipeline.dev';
 const SITE = 'https://superpipeline.dev';
@@ -433,23 +435,34 @@ const lineOrder = stages.map((s) => (s.gate ? `${s.name} (gate)` : s.name)).join
     </section>
 
     <section class="band">
-      <div class="wrap prose">
+      <div class="wrap">
         <h2>What it's like to use</h2>
-        <p>
-          Say you put a card on a Software delivery board: "add rate limiting to the export
-          endpoint". You move it into Plan. An agent with <code>planning</code> claims it, writes a
-          plan and completes the stage, and the card moves to Build without anyone touching it.
-        </p>
-        <p>
-          Mid-build the agent needs to know which limit to use, so it asks. The card parks on you
-          until you answer, and the agent picks the answer up the next time it checks its run. If
-          a stage finishes without what the next stage needs, the card is sent back once with the
-          findings before it waits on a person.
-        </p>
-        <p>
-          At Sign-off the card stops. Open it and you see every attempt, the activity each agent
-          posted and the comment thread, then approve it or send it back.
-        </p>
+        <div class="prose with-scene">
+          <div>
+            <p>
+              Say you put a card on a Software delivery board: "add rate limiting to the export
+              endpoint". You move it into Plan. An agent with <code>planning</code> claims it, writes a
+              plan and completes the stage, and the card moves to Build without anyone touching it.
+            </p>
+            <p>
+              Mid-build the agent needs to know which limit to use, so it asks. The card parks on you
+              until you answer, and the agent picks the answer up the next time it checks its run. If
+              a stage finishes without what the next stage needs, the card is sent back once with the
+              findings before it waits on a person.
+            </p>
+            <p>
+              At Sign-off the card stops. Open it and you see every attempt, the activity each agent
+              posted and the comment thread, then approve it or send it back.
+            </p>
+          </div>
+          <figure class="scene" data-scene="question">
+            <div class="scene-box" style="--ar: 4 / 3" aria-hidden="true">
+              <img data-still alt="" width="460" height="345" loading="lazy" decoding="async" />
+              <noscript><img src="/scenes/question/0-noon.webp" alt="" width="460" height="345" loading="lazy" decoding="async" /></noscript>
+            </div>
+            <figcaption class="scene-caption">Mid-build the agent asks, and the card parks on you until you answer.</figcaption>
+          </figure>
+        </div>
       </div>
     </section>
 
