@@ -1,11 +1,12 @@
 // The section scenes' loader. It puts each scene's still for the visitor's sun phase in place at
 // once, and fetches three and the scenes only when the first one nears the viewport, after the
 // page's own load, so the hero's first paint is untouched. One canvas serves every scene: it moves
-// into the scene at the viewport's centre, plays it once, and leaves the still behind elsewhere.
+// into the scene at the viewport's centre. Scenes are scrubbed by native scroll, not played: this
+// file turns scroll position into progress through a beat, and scrolling back reverses it.
 //
 // A section with steps has a pinned panel (desktop) and a scene above each step (phone; CSS shows
 // one or the other). The step crossing the viewport's centre picks the panel's beat and the others
-// dim; native scroll only. Reduced motion (the system setting or vibekit's data-motion="reduce"),
+// dim. Reduced motion (the system setting or vibekit's data-motion="reduce"),
 // a missing WebGL and a lost context keep the same layout with stills. Every label is HTML.
 import { onMotionChange, reducedMotion, scenePhase } from './common.js';
 
@@ -33,31 +34,42 @@ if (figs.length) {
       return !!gl;
     } catch { return false; }
   }
+  const clamp = (v) => Math.min(1, Math.max(0, v));
   function update() {
     ticking = false;
     const mid = innerHeight / 2;
-    // The step nearest the centre line focuses; its beat goes to the panel.
+    // A pinned panel follows its steps: the last step whose top has passed the centre line is in
+    // focus, and how far the line is through it (over its first 75%) is the beat's progress.
     for (const { f, steps } of panels) {
       if (!shown(f)) { steps.forEach((s) => s.classList.remove('focus')); continue; }
-      let best = steps[0], d = Infinity;
-      for (const s of steps) {
-        const r = s.getBoundingClientRect(), dd = r.top <= mid && r.bottom >= mid ? 0 : Math.min(Math.abs(r.top - mid), Math.abs(r.bottom - mid));
-        if (dd < d) { d = dd; best = s; }
-      }
-      steps.forEach((s) => s.classList.toggle('focus', s === best));
-      f.dataset.beat = best.dataset.beat;
+      let i = 0, p = 0;
+      steps.forEach((s, j) => {
+        const r = s.getBoundingClientRect();
+        if (r.top <= mid || j === 0) { i = j; p = clamp((mid - r.top) / (r.height * 0.75)); }
+      });
+      steps.forEach((s, j) => s.classList.toggle('focus', j === i));
+      f.dataset.beat = steps[i].dataset.beat;
       setStill(f);
+      stage?.seek(f, beat(f), p);
     }
     if (!stage) return;
-    // The scene across the centre line plays; failing that, one at least 60% in view.
+    // Any other scene runs its beat while it crosses the centre line, which is while it holds the
+    // canvas: from its top reaching the line to 85% of it past.
     let pick = null;
     for (const f of figs) {
       if (!shown(f)) continue;
       const r = f.getBoundingClientRect();
-      if (r.top <= mid && r.bottom >= mid) { pick = f; break; }
-      if (!pick && r.height && (Math.min(r.bottom, innerHeight) - Math.max(r.top, 0)) / r.height >= 0.6) pick = f;
+      if (!panels.some((q) => q.f === f)) stage.seek(f, beat(f), clamp((mid - r.top) / (r.height * 0.85)));
+      // The canvas goes to the scene across the centre line, failing that one at least 60% in view.
+      if (!pick && r.top <= mid && r.bottom >= mid) pick = f;
     }
-    if (pick) stage.show(pick, beat(pick));
+    if (!pick) {
+      for (const f of figs) {
+        const r = f.getBoundingClientRect();
+        if (shown(f) && r.height && (Math.min(r.bottom, innerHeight) - Math.max(r.top, 0)) / r.height >= 0.6) { pick = f; break; }
+      }
+    }
+    if (pick) stage.show(pick);
   }
   const onScroll = () => { if (!ticking) { ticking = true; requestAnimationFrame(update); } };
   function stop() {

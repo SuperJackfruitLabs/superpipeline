@@ -1,6 +1,6 @@
 // "How it works": the Software delivery template as a sorting line. Six stages along a belt, each
 // with its owner behind it: a person at Intake, Sign-off and Shipped, an agent at Plan, Build and
-// Security review. It plays in three beats, one per step of the section:
+// Security review. Scroll runs it in three beats, one per step of the section:
 //   0. Set up the stages: the gate's bar comes down across the belt between Sign-off and Shipped.
 //   1. An agent claims the card: the card rides from Intake through the agent stages, pausing at
 //      each; completing a stage is what moves it on.

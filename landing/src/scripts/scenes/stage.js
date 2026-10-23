@@ -1,12 +1,12 @@
 // The one renderer every section scene on the page shares. Loaded by loader.js only when the first
-// scene nears the viewport. Its single canvas moves into the scene in view; the scene it leaves
-// shows its still again, which is the same settled frame. A scene may have beats, one per step of
+// scene nears the viewport. Its single canvas moves into the scene at the viewport's centre; the
+// scene it leaves keeps a 2D snapshot of its last frame. A scene may have beats, one per step of
 // its section: the pinned panel shows the beat of the step in focus.
 //
-// Calm by construction: no post-processing, no auto-orbit, no animation loop of its own. A beat
-// plays once, the first time it is shown, and drawing stops when it settles. Only that beat's one
-// moving part moves, and the camera turns at most 3° across the whole scene. After that a frame is
-// drawn only on resize.
+// Calm by construction: no post-processing, no auto-orbit, no timers. Native scroll drives each
+// scene's timeline (loader.js reports progress through a beat, 0 to 1, and scrolling back reverses
+// it); the scene follows with a light damped ease and draws only while it is catching up. Only one
+// part moves in a beat, and the camera turns at most 3° across the whole scene.
 import {
   Color, DirectionalLight, HemisphereLight, PCFShadowMap, PerspectiveCamera, PointLight, Scene, Vector3, WebGLRenderer,
 } from 'three';
@@ -23,7 +23,7 @@ const PHASE = {
   dusk: { el: 5, az: 70, sun: '#ff9478', i: 1.1, sky: '#9a8ec0', ground: '#4a3e50', hemi: 1.0, lamp: 0.5 },
   night: { el: 48, az: -30, sun: '#8ea2d8', i: 0.7, sky: '#56608c', ground: '#262230', hemi: 1.45, lamp: 1 },
 };
-const HOLD = 0.45; // seconds the first frame rests while the canvas fades in, before the play
+const FOLLOW = 10; // how fast a scene catches up with scroll, per second (exponential)
 const DRIFT = (3 * Math.PI) / 180;
 const ease = (t) => t * t * (3 - 2 * t);
 
@@ -94,9 +94,10 @@ export function createStage({ phase, onLost }) {
   const canvas = renderer.domElement;
   const small = matchMedia('(pointer: coarse)').matches || innerWidth < 640;
   const built = new Map(); // scene name → its composed scene, so each builds once
-  const played = new Set(); // "name:beat" once that beat has played, wherever it was shown
-  let cur = null, raf = 0, t0 = 0, hold = HOLD;
-  for (const f of document.querySelectorAll('figure[data-scene]')) f.classList.add('pending');
+  const state = new Map(); // figure → { t, target }: where its timeline is and where scroll wants it
+  let cur = null, raf = 0, last = 0;
+  const figures = () => document.querySelectorAll('figure[data-scene]');
+  figures().forEach((f) => f.classList.add('pending'));
 
   function entry(name) {
     if (!built.has(name)) built.set(name, SCENES[name] ? { def: SCENES[name], c: compose(SCENES[name], phase, small) } : null);
@@ -108,11 +109,10 @@ export function createStage({ phase, onLost }) {
     if (!w || !h) return;
     renderer.setSize(w, h, false);
     cur.e.c.fit(w, h);
-    if (!raf) draw(cur.t);
+    draw();
   }
-  function draw(t) {
-    const { def, c } = cur.e;
-    cur.t = t;
+  function draw() {
+    const { def, c } = cur.e, t = state.get(cur.fig).t;
     c.parts.pose(t);
     c.place(t / def.duration);
     renderer.render(c.scene, c.camera);
@@ -120,52 +120,74 @@ export function createStage({ phase, onLost }) {
   function frame(now) {
     raf = 0;
     if (!cur) return;
-    if (!t0) t0 = now;
-    const [a, b] = cur.span;
-    const t = Math.min(b, a + Math.max(0, (now - t0) / 1000 - hold));
-    draw(t);
+    const st = state.get(cur.fig), dt = Math.min(0.05, last ? (now - last) / 1000 : 0.016);
+    last = now;
+    const diff = st.target - st.t;
+    st.t = Math.abs(diff) < 1e-3 ? st.target : st.t + diff * (1 - Math.exp(-dt * FOLLOW));
+    draw();
     cur.fig.classList.add('live');
-    if (t < b) raf = requestAnimationFrame(frame); else played.add(cur.key);
+    if (st.t !== st.target) raf = requestAnimationFrame(frame); else last = 0;
   }
-  // Ends the beat on screen: one left mid-play is settled from then on, like its still.
-  function settle() {
+  const kick = () => { if (!raf) raf = requestAnimationFrame(frame); };
+  // The figure the canvas leaves keeps its last frame as a 2D snapshot, drawn in the same task as a
+  // fresh render, so the WebGL canvas needs no preserveDrawingBuffer.
+  function leave() {
     if (!cur) return;
     cancelAnimationFrame(raf);
     raf = 0;
-    played.add(cur.key);
+    last = 0;
+    draw();
+    const box = boxOf(cur.fig);
+    let rest = box.querySelector('canvas.scene-rest');
+    if (!rest) {
+      rest = document.createElement('canvas');
+      rest.className = 'scene-rest';
+      rest.setAttribute('aria-hidden', 'true');
+      box.appendChild(rest);
+    }
+    rest.width = canvas.width;
+    rest.height = canvas.height;
+    rest.getContext('2d')?.drawImage(canvas, 0, 0);
+    cur.fig.classList.add('rested');
+    cur.fig.classList.remove('live');
+    cur = null;
   }
 
   const ro = new ResizeObserver(size);
   canvas.addEventListener('webglcontextlost', () => onLost?.());
 
   return {
-    /** Shows a figure's scene at one of its beats, playing the beat if it has not played yet. */
-    show(fig, beat = 0) {
-      const name = fig.dataset.scene, key = `${name}:${beat}`;
-      if (cur?.fig === fig && cur.key === key) return;
-      const e = entry(name), span = e && beatsOf(e.def)[beat];
+    /** Scroll's position for a figure: progress p (0 to 1) through one of its scene's beats. */
+    seek(fig, beat, p) {
+      const e = entry(fig.dataset.scene), span = e && beatsOf(e.def)[beat];
       if (!span) return;
-      settle();
-      const moved = cur?.fig !== fig;
-      if (moved) {
-        cur?.fig.classList.remove('live', 'pending');
-        ro.disconnect();
-        boxOf(fig).appendChild(canvas);
-        ro.observe(boxOf(fig));
-      }
-      cur = { fig, e, key, span, t: span[played.has(key) ? 1 : 0] };
+      const target = span[0] + (span[1] - span[0]) * Math.min(1, Math.max(0, p));
+      const st = state.get(fig);
+      if (!st) { state.set(fig, { t: target, target }); return; }
+      st.target = target;
+      if (cur?.fig === fig && st.t !== target) kick();
+    },
+    /** Hands the canvas to a figure; it picks up where that figure's timeline stands. */
+    show(fig) {
+      if (cur?.fig === fig || !state.has(fig)) return;
+      const e = entry(fig.dataset.scene);
+      if (!e) return;
+      leave();
+      ro.disconnect();
+      cur = { fig, e };
+      boxOf(fig).appendChild(canvas);
+      ro.observe(boxOf(fig));
       size();
-      if (played.has(key)) { draw(span[1]); fig.classList.add('live'); return; }
-      // A canvas that just arrived rests on its first frame while it fades in; a new beat in the
-      // same panel starts almost at once.
-      hold = moved ? HOLD : 0.15;
-      t0 = 0;
-      raf = requestAnimationFrame(frame);
+      fig.classList.add('live');
+      kick();
     },
     dispose() {
-      settle();
+      cancelAnimationFrame(raf);
       ro.disconnect();
-      for (const f of document.querySelectorAll('figure[data-scene]')) f.classList.remove('live', 'pending');
+      for (const f of figures()) {
+        f.classList.remove('live', 'pending', 'rested');
+        f.querySelector('canvas.scene-rest')?.remove();
+      }
       for (const e of built.values()) e?.c.dispose();
       renderer.dispose();
       canvas.remove();
