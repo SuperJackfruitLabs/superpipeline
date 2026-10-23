@@ -469,9 +469,12 @@ jobs:
   # deploys it, from release.yml's `deploy-production` job. Main lands on staging only.
   # Every push to main lands on the staging plane (workbench) too, through the forced-command key
   # (estate provision/301-staging-deploy.sh), which runs that commit's deploy/staging/deploy.sh.
+  # Each deploy states the results it needs. `test` runs with always() after jobs the plan may
+  # skip, and without a status function here GitHub skips a job whenever anything upstream of it
+  # was skipped: a landing-only merge then never deployed the landing.
   deploy-staging:
     needs: [plan, test]
-    if: github.server_url == 'https://github.com' && github.ref == 'refs/heads/main' && github.event_name == 'push' && needs.plan.outputs.app == 'true'
+    if: ${{ !cancelled() && needs.test.result == 'success' && github.server_url == 'https://github.com' && github.ref == 'refs/heads/main' && github.event_name == 'push' && needs.plan.outputs.app == 'true' }}
     runs-on: ubuntu-latest
     concurrency: { group: deploy-staging, cancel-in-progress: false }
     environment: { name: staging, url: https://staging-app.superpipeline.dev }
@@ -489,7 +492,7 @@ jobs:
 
   deploy-docs:
     needs: [plan, test, docs]
-    if: github.server_url == 'https://github.com' && github.ref == 'refs/heads/main' && github.event_name == 'push' && needs.plan.outputs.docs == 'true'
+    if: ${{ !cancelled() && needs.test.result == 'success' && needs.docs.result == 'success' && github.server_url == 'https://github.com' && github.ref == 'refs/heads/main' && github.event_name == 'push' && needs.plan.outputs.docs == 'true' }}
     runs-on: ubuntu-latest
     concurrency:
       group: deploy-docs
@@ -524,7 +527,7 @@ jobs:
 
   deploy-landing:
     needs: [plan, test, landing]
-    if: github.server_url == 'https://github.com' && github.ref == 'refs/heads/main' && github.event_name == 'push' && needs.plan.outputs.landing == 'true'
+    if: ${{ !cancelled() && needs.test.result == 'success' && needs.landing.result == 'success' && github.server_url == 'https://github.com' && github.ref == 'refs/heads/main' && github.event_name == 'push' && needs.plan.outputs.landing == 'true' }}
     runs-on: ubuntu-latest
     concurrency:
       group: deploy-landing
