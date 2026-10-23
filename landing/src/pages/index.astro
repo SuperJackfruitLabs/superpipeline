@@ -290,10 +290,11 @@ const lineOrder = stages.map((s) => (s.gate ? `${s.name} (gate)` : s.name)).join
       figure.scene.pending img, figure.scene.live img { opacity: 0; }
       figure.scene.live :global(canvas) { opacity: 1; }
       /* How it works: the line pinned beside its steps; the step at the viewport's centre picks the
-         panel's beat (loader.js). On a phone each step carries its own scene above its text. */
+         panel's beat (loader.js). On a phone each step carries its own scene above its text.
+         The panel comes after the steps in the markup, so the copy reads first. */
       .steps-layout { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: 56px; margin-top: 8px; }
-      .panel { position: sticky; top: max(24px, calc(50svh - 200px)); align-self: start; }
-      .step-list { display: flex; flex-direction: column; }
+      .panel { grid-column: 1; grid-row: 1; position: sticky; top: max(24px, calc(50svh - 200px)); align-self: start; }
+      .step-list { grid-column: 2; grid-row: 1; display: flex; flex-direction: column; }
       .step-list li { min-height: 62svh; display: flex; flex-direction: column; justify-content: center; }
       .step-list li:first-child { min-height: 46svh; justify-content: flex-start; padding-top: 40px; }
       .step-scene { display: none; }
@@ -312,6 +313,7 @@ const lineOrder = stages.map((s) => (s.gate ? `${s.name} (gate)` : s.name)).join
         .grid { grid-template-columns: 1fr; gap: 32px; }
         .prose.with-scene { grid-template-columns: 1fr; gap: 28px; }
         .steps-layout { grid-template-columns: 1fr; gap: 0; }
+        .step-list { grid-column: 1; }
         .panel { display: none; }
         .step-list { gap: 48px; }
         .step-list li, .step-list li:first-child { min-height: 0; padding-top: 0; justify-content: flex-start; }
@@ -386,13 +388,6 @@ const lineOrder = stages.map((s) => (s.gate ? `${s.name} (gate)` : s.name)).join
       <div class="wrap">
         <h2>How it works</h2>
         <div class="steps-layout">
-          <figure class="scene panel" id="line-panel" data-scene="line" data-beat="0">
-            <div class="scene-box" style="--ar: 3 / 2" aria-hidden="true">
-              <img data-still alt="" width="560" height="373" loading="lazy" decoding="async" />
-              <noscript><img src="/scenes/line/0-noon.webp" alt="" width="560" height="373" loading="lazy" decoding="async" /></noscript>
-            </div>
-            <figcaption class="scene-caption">{lineOrder}</figcaption>
-          </figure>
           <ol class="steps step-list">
             <li class="cell" data-steps-for="line-panel" data-beat="0">
               <figure class="scene step-scene" data-scene="line" data-beat="0">
@@ -430,6 +425,13 @@ const lineOrder = stages.map((s) => (s.gate ? `${s.name} (gate)` : s.name)).join
                 approve, request changes or reject. Whoever produced the work cannot approve it.</p>
             </li>
           </ol>
+          <figure class="scene panel" id="line-panel" data-scene="line" data-beat="0">
+            <div class="scene-box" style="--ar: 3 / 2" aria-hidden="true">
+              <img data-still alt="" width="560" height="373" loading="lazy" decoding="async" />
+              <noscript><img src="/scenes/line/0-noon.webp" alt="" width="560" height="373" loading="lazy" decoding="async" /></noscript>
+            </div>
+            <figcaption class="scene-caption">{lineOrder}</figcaption>
+          </figure>
         </div>
       </div>
     </section>
