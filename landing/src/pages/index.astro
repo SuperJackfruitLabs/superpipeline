@@ -20,6 +20,13 @@
  * against the app's #c2740c) because on this page it carries headline text and a filled
  * button. The app's value is 3.4:1 on the light ground; this one is 4.9:1. docs-site uses
  * the same value for the same reason.
+ *
+ * Sections that explain a mechanism carry a small three.js scene (src/scripts/scenes): under "How
+ * it works", the same template as a sorting line, pinned beside the steps, which scroll through it one beat each;
+ * beside "What it's like to use", the agent's question parking the card on you. One canvas serves
+ * every scene and loads only near the first; each has a still per beat and sun phase in
+ * public/scenes for reduced motion, no WebGL and while it loads. Their labels are the HTML around
+ * them.
  */
 const APP = 'https://app.superpipeline.dev';
 const SITE = 'https://superpipeline.dev';
@@ -58,6 +65,8 @@ const stages = [
   { name: 'Sign-off', owner: 'you', kind: 'human', gate: true },
   { name: 'Shipped', owner: 'you', kind: 'human' },
 ];
+/* The line scene's caption: the same stages in order, the gate marked. */
+const lineOrder = stages.map((s) => (s.gate ? `${s.name} (gate)` : s.name)).join(' → ');
 ---
 
 <!doctype html>
@@ -271,6 +280,29 @@ const stages = [
       }
       .cell p { margin: 0; color: var(--muted); font-size: 15.5px; }
 
+      /* ── section scenes: one lazy three.js canvas shared by every figure (src/scripts/scenes) ── */
+      figure.scene { margin: 0; }
+      .scene-box { position: relative; width: 100%; aspect-ratio: var(--ar); }
+      /* The canvas is made by script, so it carries no scoped-style attribute: hence :global. */
+      .scene-box img, .scene-box :global(canvas) { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+      .scene-box :global(canvas) { opacity: 0; transition: opacity .45s ease; }
+      .scene-box img { transition: opacity .45s ease; }
+      figure.scene.pending img, figure.scene.live img, figure.scene.rested img { opacity: 0; }
+      figure.scene.live :global(canvas), .scene-box :global(canvas.scene-rest) { opacity: 1; }
+      /* How it works: the line pinned beside its steps; the step at the viewport's centre picks the
+         panel's beat (loader.js). On a phone each step carries its own scene above its text.
+         The panel comes after the steps in the markup, so the copy reads first. */
+      .steps-layout { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: 56px; margin-top: 8px; }
+      .panel { grid-column: 1; grid-row: 1; position: sticky; top: max(24px, calc(50svh - 200px)); align-self: start; }
+      .step-list { grid-column: 2; grid-row: 1; display: flex; flex-direction: column; }
+      .step-list li { min-height: 62svh; display: flex; flex-direction: column; justify-content: center; }
+      .step-list li:first-child { min-height: 46svh; justify-content: flex-start; padding-top: 40px; }
+      .step-scene { display: none; }
+      :global(html.scene-steps) .step-list li { opacity: .5; transition: opacity .35s ease; }
+      :global(html.scene-steps) .step-list li.focus { opacity: 1; }
+      .prose.with-scene { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 0.78fr); gap: 48px; align-items: center; }
+      .scene-caption { margin: 8px 0 0; font: 12px var(--mono); color: var(--muted); }
+
 
       @media (max-width: 899px) {
         .hero .hero-grid { grid-template-columns: 1fr; gap: 40px; min-height: auto; padding: 40px 24px 56px; }
@@ -279,6 +311,14 @@ const stages = [
       @media (max-width: 899px) {
         section.band { padding: 64px 0; }
         .grid { grid-template-columns: 1fr; gap: 32px; }
+        .prose.with-scene { grid-template-columns: 1fr; gap: 28px; }
+        .steps-layout { grid-template-columns: 1fr; gap: 0; }
+        .step-list { grid-column: 1; }
+        .panel { display: none; }
+        .step-list { gap: 48px; }
+        .step-list li, .step-list li:first-child { min-height: 0; padding-top: 0; justify-content: flex-start; }
+        :global(html.scene-steps) .step-list li { opacity: 1; }
+        .step-scene { display: block; order: -1; margin-bottom: 16px; }
       }
       @media (prefers-reduced-motion: reduce) {
         * { transition: none !important; animation: none !important; }
@@ -347,45 +387,84 @@ const stages = [
     <section class="band">
       <div class="wrap">
         <h2>How it works</h2>
-        <ol class="steps grid">
-          <li class="cell">
-            <h3>Set up the stages</h3>
-            <p>Start from a template or build the pipeline yourself. Each stage is owned by a person
-              or a capability such as <code>code</code>, and can carry a WIP limit and a gate.</p>
-          </li>
-          <li class="cell">
-            <h3>An agent claims the card</h3>
-            <p>An agent with the stage's capability claims the card under a lease and posts typed
-              activity as it works. Posting activity does not move the card; completing the stage
-              does.</p>
-          </li>
-          <li class="cell">
-            <h3>You decide at the gate</h3>
-            <p>A gated card waits in the Inbox, which collects what needs you across every board. You
-              approve, request changes or reject. Whoever produced the work cannot approve it.</p>
-          </li>
-        </ol>
+        <div class="steps-layout">
+          <ol class="steps step-list">
+            <li class="cell" data-steps-for="line-panel" data-beat="0">
+              <figure class="scene step-scene" data-scene="line" data-beat="0">
+                <div class="scene-box" style="--ar: 3 / 2" aria-hidden="true">
+                  <img data-still alt="" width="560" height="373" loading="lazy" decoding="async" />
+                  <noscript><img src="/scenes/line/0-noon.webp" alt="" width="560" height="373" loading="lazy" decoding="async" /></noscript>
+                </div>
+                <figcaption class="scene-caption">{lineOrder}</figcaption>
+              </figure>
+              <h3>Set up the stages</h3>
+              <p>Start from a template or build the pipeline yourself. Each stage is owned by a person
+                or a capability such as <code>code</code>, and can carry a WIP limit and a gate.</p>
+            </li>
+            <li class="cell" data-steps-for="line-panel" data-beat="1">
+              <figure class="scene step-scene" data-scene="line" data-beat="1">
+                <div class="scene-box" style="--ar: 3 / 2" aria-hidden="true">
+                  <img data-still alt="" width="560" height="373" loading="lazy" decoding="async" />
+                  <noscript><img src="/scenes/line/1-noon.webp" alt="" width="560" height="373" loading="lazy" decoding="async" /></noscript>
+                </div>
+              </figure>
+              <h3>An agent claims the card</h3>
+              <p>An agent with the stage's capability claims the card under a lease and posts typed
+                activity as it works. Posting activity does not move the card; completing the stage
+                does.</p>
+            </li>
+            <li class="cell" data-steps-for="line-panel" data-beat="2">
+              <figure class="scene step-scene" data-scene="line" data-beat="2">
+                <div class="scene-box" style="--ar: 3 / 2" aria-hidden="true">
+                  <img data-still alt="" width="560" height="373" loading="lazy" decoding="async" />
+                  <noscript><img src="/scenes/line/2-noon.webp" alt="" width="560" height="373" loading="lazy" decoding="async" /></noscript>
+                </div>
+              </figure>
+              <h3>You decide at the gate</h3>
+              <p>A gated card waits in the Inbox, which collects what needs you across every board. You
+                approve, request changes or reject. Whoever produced the work cannot approve it.</p>
+            </li>
+          </ol>
+          <figure class="scene panel" id="line-panel" data-scene="line" data-beat="0">
+            <div class="scene-box" style="--ar: 3 / 2" aria-hidden="true">
+              <img data-still alt="" width="560" height="373" loading="lazy" decoding="async" />
+              <noscript><img src="/scenes/line/0-noon.webp" alt="" width="560" height="373" loading="lazy" decoding="async" /></noscript>
+            </div>
+            <figcaption class="scene-caption">{lineOrder}</figcaption>
+          </figure>
+        </div>
       </div>
     </section>
 
     <section class="band">
-      <div class="wrap prose">
+      <div class="wrap">
         <h2>What it's like to use</h2>
-        <p>
-          Say you put a card on a Software delivery board: "add rate limiting to the export
-          endpoint". You move it into Plan. An agent with <code>planning</code> claims it, writes a
-          plan and completes the stage, and the card moves to Build without anyone touching it.
-        </p>
-        <p>
-          Mid-build the agent needs to know which limit to use, so it asks. The card parks on you
-          until you answer, and the agent picks the answer up the next time it checks its run. If
-          a stage finishes without what the next stage needs, the card is sent back once with the
-          findings before it waits on a person.
-        </p>
-        <p>
-          At Sign-off the card stops. Open it and you see every attempt, the activity each agent
-          posted and the comment thread, then approve it or send it back.
-        </p>
+        <div class="prose with-scene">
+          <div>
+            <p>
+              Say you put a card on a Software delivery board: "add rate limiting to the export
+              endpoint". You move it into Plan. An agent with <code>planning</code> claims it, writes a
+              plan and completes the stage, and the card moves to Build without anyone touching it.
+            </p>
+            <p>
+              Mid-build the agent needs to know which limit to use, so it asks. The card parks on you
+              until you answer, and the agent picks the answer up the next time it checks its run. If
+              a stage finishes without what the next stage needs, the card is sent back once with the
+              findings before it waits on a person.
+            </p>
+            <p>
+              At Sign-off the card stops. Open it and you see every attempt, the activity each agent
+              posted and the comment thread, then approve it or send it back.
+            </p>
+          </div>
+          <figure class="scene" data-scene="question">
+            <div class="scene-box" style="--ar: 4 / 3" aria-hidden="true">
+              <img data-still alt="" width="460" height="345" loading="lazy" decoding="async" />
+              <noscript><img src="/scenes/question/0-noon.webp" alt="" width="460" height="345" loading="lazy" decoding="async" /></noscript>
+            </div>
+            <figcaption class="scene-caption">Mid-build the agent asks, and the card parks on you until you answer.</figcaption>
+          </figure>
+        </div>
       </div>
     </section>
 
@@ -436,6 +515,9 @@ const stages = [
         </ul>
       </div>
     </section>
+    <script>
+      import '../scripts/scenes/loader.js';
+    </script>
     </Frame>
   </body>
 </html>
