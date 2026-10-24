@@ -91,7 +91,11 @@ test.describe('on a phone', () => {
     await openRememberedBoard(page);
     const nav = page.getByRole('navigation', { name: 'Superpipeline' });
     for (const name of [/^Inbox/, /^Plan$/, /^Crew$/]) {
-      const box = await nav.getByRole('link', { name }).boundingBox();
+      // boundingBox() does not wait for the link to show and gives null while it is hidden, so
+      // wait as the test above does; a link that never shows still fails here.
+      const link = nav.getByRole('link', { name });
+      await expect(link).toBeVisible();
+      const box = await link.boundingBox();
       expect(box!.height).toBeGreaterThanOrEqual(44);
     }
   });
