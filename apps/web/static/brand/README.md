@@ -13,3 +13,8 @@ adaptive favicon does. Do not redraw or recolour these files; take a new pack ve
 2026-10-14), copied byte for byte: it is generated, never edited by hand. It carries all six
 products' masters; the app only ever asks it for `superpipeline` (Channel). `LogoMotion.svelte`
 loads it and plays it once on the first loading screen of a session.
+
+The home-screen icons (`icon-*.png`, `icon-maskable-*.png` and the root `apple-touch-icon.png`)
+come from the same pack's `web-dark/` folder instead, on the dark plate `#151B2B`: a web app's
+home-screen icon cannot follow the phone's light/dark setting, so every product app ships the
+dark one.

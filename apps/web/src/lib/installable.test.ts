@@ -39,7 +39,7 @@ describe('installable', () => {
     expect(html).toContain('<link rel="apple-touch-icon" href="/apple-touch-icon.png" />');
     expect(html).toContain('<meta name="apple-mobile-web-app-capable" content="yes" />');
     expect(html).toContain('<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />');
-    expect(html).toContain('<meta name="apple-mobile-web-app-title" content="Superpipeline" />');
+    expect(html).toContain('<meta name="apple-mobile-web-app-title" content="SuperPipeline" />');
     expect(html).toMatch(/<meta name="theme-color" content="#[0-9a-f]{6}" media="\(prefers-color-scheme: dark\)" \/>/);
     expect(html).toMatch(/<meta name="theme-color" content="#[0-9a-f]{6}" media="\(prefers-color-scheme: light\)" \/>/);
     // The translucent-v2 favicon set (static/brand/README.md): adaptive SVG first, then the ICO and PNGs.
@@ -57,7 +57,7 @@ describe('installable', () => {
 
   it('the manifest parses and names what an install needs', () => {
     const m = JSON.parse(readFileSync(join(STATIC, 'manifest.webmanifest'), 'utf8')) as Manifest;
-    expect(m.name).toBe('Superpipeline');
+    expect(m.name).toBe('SuperPipeline');
     expect(m.short_name).toBeTruthy();
     expect(m.start_url).toBe('/');
     expect(m.scope).toBe('/');

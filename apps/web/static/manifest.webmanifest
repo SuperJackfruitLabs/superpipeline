@@ -1,6 +1,6 @@
 {
-  "name": "Superpipeline",
-  "short_name": "Superpipeline",
+  "name": "SuperPipeline",
+  "short_name": "SuperPipeline",
   "description": "Boards where people and agents move work through a pipeline.",
   "id": "/",
   "start_url": "/",
