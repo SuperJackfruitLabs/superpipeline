@@ -5817,7 +5817,9 @@ export class BoardDO extends DurableObject<Env> {
     if (detail && !detail.success) {
       return { ok: false, code: 'INVALID_STRICT_DECISION', message: 'strict decision approval detail is malformed' };
     }
-    if (options.length !== 2 || options[0]?.name !== 'approve' || options[1]?.name !== 'deny' ||
+    // approve, deny; or approve, approve-run ("Approve for this run"), deny. Nothing else.
+    const names = options.map((o) => o.name).join(',');
+    if ((names !== 'approve,deny' && names !== 'approve,approve-run,deny') ||
       canonicalDecisionRequest(input.parameter) !== canonicalDecisionRequest(detail ? { options, detail: detail.data } : { options })) {
       return { ok: false, code: 'INVALID_STRICT_DECISION', message: 'strict decisions require exact canonical approve/deny options' };
     }
@@ -6493,7 +6495,8 @@ export class BoardDO extends DurableObject<Env> {
       const auth = this.authorizeRun({ runId: elicitation.runId, leaseEpoch: Number(saved.lease_epoch), agentId: elicitation.agentId });
       if (!auth.ok || Number(auth.run.last_heartbeat_ms) + HEARTBEAT_TIMEOUT_MS <= this.nowMs() || card.currentStageKey !== elicitation.stageKey) return { ok: false, code: 'STALE_LEASE', message: 'decision no longer belongs to the active run' };
       if (elicitation.strictDecision.expires_at <= this.nowMs()) return { ok: false, code: 'DECISION_EXPIRED', message: 'decision deadline expired' };
-      if (input.option !== 'approve' && input.option !== 'deny') return { ok: false, code: 'INVALID_ANSWER', message: 'choose an exact offered option' };
+      // One of the options this decision offered (approve-run only where it was offered).
+      if (!elicitation.options.some((o) => o.name === input.option)) return { ok: false, code: 'INVALID_ANSWER', message: 'choose an exact offered option' };
     }
     const text = input.text?.trim() ?? '';
     const option = input.option?.trim() ?? '';

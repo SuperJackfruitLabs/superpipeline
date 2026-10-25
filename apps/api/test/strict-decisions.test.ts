@@ -104,6 +104,20 @@ describe('strict decision identity and durable response', () => {
     expect(context.ok && context.value.elicitations[0]?.detail).toBeUndefined();
   }));
 
+  // Approval scopes: "Approve for this run" between approve and deny; nothing else, no other order.
+  it('accepts approve, approve-run, deny, and answers approve-run', () => testBoard('strict-run-grant', async board => {
+    const input = await setup(board);
+    const options = [{ name: 'approve', title: 'Approve once' }, { name: 'approve-run', title: 'Approve for this run' }, { name: 'deny', title: 'Deny' }];
+    for (const bad of [
+      [options[1], options[0], options[2]],
+      [options[0], { name: 'approve-always', title: 'Always' }, options[2]],
+      [options[0], options[1]],
+    ]) expect(await board.postActivity({ ...input, parameter: { options: bad } })).toMatchObject({ ok: false, code: 'INVALID_STRICT_DECISION' });
+    const posted = await board.postActivity({ ...input, parameter: { options } });
+    if (!posted.ok) throw new Error('post failed');
+    const answered = await board.answerElicitation({ elicitationId: posted.value.elicitationId!, answeredBy: 'usr_h', option: 'approve-run' }); expect(answered).toMatchObject({ ok: true });
+  }));
+
 });
 
 for (const example of corpus) it(`strict wire corpus: ${example.name}`, () => { expect(StrictDecision.safeParse(example.value).success).toBe(example.valid); });
