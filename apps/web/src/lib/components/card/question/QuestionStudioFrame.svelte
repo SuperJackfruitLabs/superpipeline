@@ -1,5 +1,6 @@
 <!-- apps/web/src/lib/components/card/question/QuestionStudioFrame.svelte -->
 <script lang="ts">
+  import ApprovalDetail from './ApprovalDetail.svelte';
   /** Studio's question readout (01 "Question" / cell B): who is waiting and what they ask. */
   import '../studio/card-studio.css';
   import { Face } from '@superjackfruit/vibekit';
@@ -13,6 +14,6 @@
 </script>
 
 <div class="elicitation" style="display: contents">
-  <div class="ar-q"><h3><Face id={name} label={name} mood="needs" size={24} ring="mood" />{quoteHeader(name, 'question')}{#if elicitation.createdAt}<span class="mono">{quoteWhen(elicitation.createdAt, new Date())}</span>{/if}</h3>{#if showQuestion}<blockquote style="white-space: pre-wrap; overflow-wrap: anywhere">{elicitation.question}</blockquote>{/if}</div>
+  <div class="ar-q"><h3><Face id={name} label={name} mood="needs" size={24} ring="mood" />{quoteHeader(name, 'question')}{#if elicitation.createdAt}<span class="mono">{quoteWhen(elicitation.createdAt, new Date())}</span>{/if}</h3>{#if showQuestion}{#if elicitation.detail}<ApprovalDetail detail={elicitation.detail} />{:else}<blockquote style="white-space: pre-wrap; overflow-wrap: anywhere">{elicitation.question}</blockquote>{/if}{/if}</div>
   {#if elicitation.signal === 'auth'}<p class="ar-hint">Needs you to sign in.</p>{/if}
 </div>

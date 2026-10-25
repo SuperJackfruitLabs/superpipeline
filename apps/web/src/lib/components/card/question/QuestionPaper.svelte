@@ -1,5 +1,6 @@
 <!-- apps/web/src/lib/components/card/question/QuestionPaper.svelte -->
 <script lang="ts">
+  import ApprovalDetail from './ApprovalDetail.svelte';
   /** An agent's question in Paper (SP-Card-States-Paper B): the letter asks once, then the reply. */
   import '../paper-states.css';
   import { Button, Face, Field, type Vibe } from '@superjackfruit/vibekit';
@@ -19,7 +20,7 @@
 <div class="elicitation" style="display: contents">
   {#if showQuestion}
     <p class="pcs-dear">{paperSalutation(personName)}</p>
-    <p class="pcs-voice" style="white-space: pre-wrap; overflow-wrap: anywhere">{elicitation.question}</p>
+    {#if elicitation.detail}<ApprovalDetail detail={elicitation.detail} />{:else}<p class="pcs-voice" style="white-space: pre-wrap; overflow-wrap: anywhere">{elicitation.question}</p>{/if}
     <div class="pcs-sign">
       <Face id={name} label={name} mood="needs" size={32} />
       <div><span class="n">{name}</span><p class="pcs-small">{elicitation.createdAt ? paperWhen(elicitation.createdAt, new Date().toISOString()) : ''}{elicitation.signal === 'auth' ? `${elicitation.createdAt ? ' · ' : ''}needs you to sign in` : ''}</p></div>

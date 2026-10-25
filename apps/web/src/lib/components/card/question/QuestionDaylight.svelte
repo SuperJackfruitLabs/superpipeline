@@ -1,5 +1,6 @@
 <!-- apps/web/src/lib/components/card/question/QuestionDaylight.svelte -->
 <script lang="ts">
+  import ApprovalDetail from './ApprovalDetail.svelte';
   /** An agent's question in Daylight (SP-Card-States-Daylight B): asked once, then the answer box. */
   import '../daylight-states.css';
   import { Button, Face, Field, type Vibe } from '@superjackfruit/vibekit';
@@ -21,7 +22,7 @@
     <Face id={name} label={name} mood="needs" size={36} ring="mood" />
     <div class="ds-bubble ds-bubble--sig">
       <span class="ds-who">{name} · {elicitation.signal === 'auth' ? 'needs you to sign in' : 'has a question'}</span>
-      <p class="ds-say" style="white-space: pre-wrap; overflow-wrap: anywhere">{elicitation.question}</p>
+      {#if elicitation.detail}<ApprovalDetail detail={elicitation.detail} />{:else}<p class="ds-say" style="white-space: pre-wrap; overflow-wrap: anywhere">{elicitation.question}</p>{/if}
       {#if elicitation.createdAt}<span class="ds-time">{whenLabel(elicitation.createdAt, new Date())}</span>{/if}
     </div>
   </div>

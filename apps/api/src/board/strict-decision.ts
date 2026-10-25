@@ -17,3 +17,22 @@ export function canonicalDecisionRequest(value: unknown): string {
   }
   return JSON.stringify(normalized(value));
 }
+
+/**
+ * What a person approving a strict decision is shown (readable approvals): the operation in plain
+ * words, each file with its size and a short preview, the agent's one-line reason, and the
+ * operation digest. Carried as structured fields by the producer; never parsed from the question.
+ */
+export const ApprovalDetail = z.object({
+  version: z.literal(1),
+  summary: z.string().min(1).max(200),
+  reason: z.string().min(1).max(300).nullable(),
+  files: z.array(z.object({
+    path: z.string().min(1).max(512),
+    change: z.enum(['create', 'edit', 'delete']),
+    bytes: z.number().int().nonnegative().max(Number.MAX_SAFE_INTEGER).nullable(),
+    preview: z.string().max(1200).nullable(),
+  }).strict()).max(16),
+  digest: z.string().regex(/^[a-f0-9]{64}$/),
+}).strict();
+export type ApprovalDetail = z.infer<typeof ApprovalDetail>;
