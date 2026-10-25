@@ -3481,6 +3481,12 @@ const worker = {
           findings?: string;
           question?: string;
           url?: string;
+          title?: string;
+          provider?: string;
+          sourceType?: string;
+          subtitle?: string;
+          externalId?: string;
+          metadata?: Record<string, unknown>;
           options?: JsonValue;
           output?: JsonValue;
           reason?: string;
@@ -3534,6 +3540,36 @@ const worker = {
             return respond(await stub.fail({ ...lease, reason: p.reason ?? '' }), 'card');
           case 'release':
             return respond(await stub.release(lease), 'card');
+          case 'references': {
+            // The run holder links what it produced from its own card; the card route stays human.
+            if (p.provider !== undefined && !isKnownProvider(String(p.provider))) {
+              return Response.json(
+                { error: `unknown reference provider: ${String(p.provider)}. Known: ${providerKeys().join(', ')}` },
+                { status: 400 },
+              );
+            }
+            const refTenant = await tenantById(env.DB, tenantId);
+            return respond(
+              await stub.addRunReference({
+                ...lease,
+                reference: resolveReferenceInput(
+                  {
+                    cardId: '',
+                    url: String(p.url ?? ''),
+                    provider: p.provider,
+                    sourceType: p.sourceType,
+                    title: p.title,
+                    subtitle: p.subtitle,
+                    externalId: p.externalId,
+                    metadata: p.metadata,
+                    addedBy: 'agent',
+                  } as Parameters<typeof resolveReferenceInput>[0],
+                  refTenant?.forgeHost ?? null,
+                ),
+              }),
+              'reference',
+            );
+          }
           case 'submit':
             return respond(await stub.submitForReview({ ...lease, output: p.output }), 'card');
           default:
