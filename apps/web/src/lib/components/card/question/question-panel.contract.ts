@@ -55,6 +55,38 @@ export function questionPanelContract(
   };
   describe('question panel contract', () => {
     afterEach(() => cleanup());
+
+    // Readable approvals: a strict decision's structured detail says what is being approved.
+    const detail = {
+      version: 1 as const,
+      summary: 'Create runs/run_x/answer.md in the workspace',
+      reason: 'Write the quoted sentence the card asks for.',
+      files: [{ path: 'runs/run_x/answer.md', change: 'create' as const, bytes: 249, preview: '# RFC 9110: 502 Bad Gateway' }],
+      digest: 'f'.repeat(64),
+    };
+    it('shows an approval in plain words: summary, each file with size and preview, the reason', () => {
+      const { container } = mountQuestion(C, ask({ question: 'Approve this exact operation? workspace ' + 'f'.repeat(64), detail } as never));
+      const panel = container.querySelector('.elicitation')!;
+      expect(panel.textContent).toContain('Create runs/run_x/answer.md in the workspace');
+      expect(panel.textContent).toContain('runs/run_x/answer.md');
+      expect(panel.textContent).toContain('249 bytes');
+      expect(panel.textContent).toContain('# RFC 9110: 502 Bad Gateway');
+      expect(panel.textContent).toContain('Write the quoted sentence the card asks for.');
+    });
+    it('keeps the digest behind a details toggle, not in the headline', () => {
+      const { container } = mountQuestion(C, ask({ question: 'Approve this exact operation? workspace ' + 'f'.repeat(64), detail } as never));
+      const toggle = container.querySelector('details.approval-digest');
+      expect(toggle).toBeTruthy();
+      expect(toggle!.hasAttribute('open')).toBe(false);
+      expect(toggle!.textContent).toContain('f'.repeat(64));
+      // With a detail, the raw digest question is not the headline.
+      const headline = container.querySelector('.approval-summary')!;
+      expect(headline.textContent).not.toContain('f'.repeat(64));
+    });
+    it('without a detail, shows the question as before and no approval block', () => {
+      const { container } = mountQuestion(C, ask());
+      expect(container.querySelector('.approval-detail')).toBeNull();
+    });
     const ok = () => answerElicitation.mockReset().mockResolvedValue({ ok: true, json: async () => ({}) });
 
     it('is the .elicitation panel: heading, who is waiting, the question', () => {

@@ -70,6 +70,40 @@ describe('strict decision identity and durable response', () => {
     } finally { clock.mockRestore(); }
   }));
 
+  // A person approving an operation sees what it is: the producer's structured detail rides with
+  // the strict decision, is checked here, and comes back on the question, never parsed from text.
+  it('carries a structured approval detail onto the question, and refuses a malformed one', () => testBoard('strict-detail', async board => {
+    const input = await setup(board);
+    const detail = {
+      version: 1,
+      summary: 'Create runs/run_x/answer.md in the workspace',
+      reason: 'Write the quoted sentence the card asks for.',
+      files: [{ path: 'runs/run_x/answer.md', change: 'create', bytes: 249, preview: '# RFC 9110: 502 Bad Gateway' }],
+      digest: 'f'.repeat(64),
+    };
+    const withDetail = { ...input, parameter: { ...input.parameter, detail } };
+    for (const bad of [
+      { ...detail, version: 2 },
+      { ...detail, digest: 'not-a-digest' },
+      { ...detail, files: [{ ...detail.files[0], change: 'rename' }] },
+      { ...detail, extra: true },
+      { ...detail, summary: '' },
+    ]) expect(await board.postActivity({ ...input, parameter: { ...input.parameter, detail: bad } })).toMatchObject({ ok: false, code: 'INVALID_STRICT_DECISION' });
+    expect(await board.postActivity({ ...input, parameter: { ...input.parameter, note: 'x' } })).toMatchObject({ ok: false, code: 'INVALID_STRICT_DECISION' });
+    const posted = await board.postActivity(withDetail);
+    expect(posted.ok).toBe(true);
+    // The detail is part of the bound payload: a replay with a different detail is a conflict.
+    expect(await board.postActivity({ ...withDetail, parameter: { ...withDetail.parameter, detail: { ...detail, summary: 'Something else' } } })).toMatchObject({ ok: false, code: 'DECISION_CONFLICT' });
+    const context = await board.getRunContext(input);
+    expect(context.ok && context.value.elicitations[0]).toMatchObject({ detail });
+  }));
+  it('a strict question without detail has none', () => testBoard('strict-no-detail', async board => {
+    const input = await setup(board);
+    expect((await board.postActivity(input)).ok).toBe(true);
+    const context = await board.getRunContext(input);
+    expect(context.ok && context.value.elicitations[0]?.detail).toBeUndefined();
+  }));
+
 });
 
 for (const example of corpus) it(`strict wire corpus: ${example.name}`, () => { expect(StrictDecision.safeParse(example.value).success).toBe(example.valid); });

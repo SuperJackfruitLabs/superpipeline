@@ -1,4 +1,4 @@
-import { StrictDecision, canonicalDecisionRequest } from './strict-decision';
+import { ApprovalDetail, StrictDecision, canonicalDecisionRequest } from './strict-decision';
 import { DurableObject } from 'cloudflare:workers';
 import { canTransition, nextState, type GateDecision, type TaskEventType, type TaskState } from '@superpipeline/contract';
 import type { Env } from '../env';
@@ -959,6 +959,8 @@ export interface GateOption {
  */
 export interface ElicitationView {
   strictDecision?: StrictDecision;
+  /** What the approval is, for the person answering a strict decision. */
+  detail?: ApprovalDetail;
   id: string;
   cardId: string;
   runId: string;
@@ -5809,8 +5811,14 @@ export class BoardDO extends DurableObject<Env> {
     }
     const binding = parsed.data;
     const options = parseElicitationOptions(input.parameter);
+    // An optional structured approval detail rides with the options; nothing else does.
+    const offered = input.parameter && typeof input.parameter === 'object' && !Array.isArray(input.parameter) ? (input.parameter as Record<string, unknown>) : {};
+    const detail = 'detail' in offered ? ApprovalDetail.safeParse(offered.detail) : null;
+    if (detail && !detail.success) {
+      return { ok: false, code: 'INVALID_STRICT_DECISION', message: 'strict decision approval detail is malformed' };
+    }
     if (options.length !== 2 || options[0]?.name !== 'approve' || options[1]?.name !== 'deny' ||
-      canonicalDecisionRequest(input.parameter) !== canonicalDecisionRequest({ options })) {
+      canonicalDecisionRequest(input.parameter) !== canonicalDecisionRequest(detail ? { options, detail: detail.data } : { options })) {
       return { ok: false, code: 'INVALID_STRICT_DECISION', message: 'strict decisions require exact canonical approve/deny options' };
     }
     const payload = canonicalDecisionRequest(input);
@@ -7318,9 +7326,14 @@ export class BoardDO extends DurableObject<Env> {
 
   private rowToElicitation(row: Row): ElicitationView {
     const answeredBy = (row.answered_by as string | null) ?? null;
-    const strict = this.sql.exec(`SELECT binding_json FROM strict_decision_requests WHERE elicitation_id = ?`, row.id).toArray()[0];
+    const strict = this.sql.exec(`SELECT binding_json, payload_json FROM strict_decision_requests WHERE elicitation_id = ?`, row.id).toArray()[0];
+    // The approval detail was checked when the decision was bound; it is read from that payload.
+    const detail = strict
+      ? (JSON.parse(strict.payload_json as string) as { parameter?: { detail?: ApprovalDetail } }).parameter?.detail
+      : undefined;
     return {
       ...(strict ? { strictDecision: JSON.parse(strict.binding_json as string) } : {}),
+      ...(detail ? { detail } : {}),
       id: row.id as string,
       cardId: row.card_id as string,
       runId: row.run_id as string,

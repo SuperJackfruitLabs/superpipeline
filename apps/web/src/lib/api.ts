@@ -457,6 +457,16 @@ export interface Elicitation {
   status: 'pending' | 'answered' | 'cancelled';
   answer: { option: string | null; text: string | null; answeredBy: string; answeredAt: string } | null;
   createdAt: string;
+  /** A strict decision's structured detail: what is being approved (readable approvals). */
+  detail?: ApprovalDetail;
+}
+
+export interface ApprovalDetail {
+  version: 1;
+  summary: string;
+  reason: string | null;
+  files: { path: string; change: 'create' | 'edit' | 'delete'; bytes: number | null; preview: string | null }[];
+  digest: string;
 }
 
 export interface Reference {

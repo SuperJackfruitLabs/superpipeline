@@ -1,5 +1,6 @@
 <!-- apps/web/src/lib/components/card/question/QuestionQuiet.svelte -->
 <script lang="ts">
+  import ApprovalDetail from './ApprovalDetail.svelte';
   /** An agent's question in Quiet (SP-Card-States-Quiet B): one signal-edged fieldset, asked once, then the answer. */
   import '../quiet-states.css';
   import { Button, Face, Field, type Vibe } from '@superjackfruit/vibekit';
@@ -21,7 +22,7 @@
     <legend>{elicitation.signal === 'auth' ? 'Your sign-in is needed' : 'Your answer is needed'}</legend>
     {#if showQuestion}
       <p class="qcs-by"><span class="qcs-face"><Face id={name} label={name} mood="needs" size={20} /></span>{name} asked:</p>
-      <p style="white-space: pre-wrap; overflow-wrap: anywhere">{elicitation.question}</p>
+      {#if elicitation.detail}<ApprovalDetail detail={elicitation.detail} />{:else}<p style="white-space: pre-wrap; overflow-wrap: anywhere">{elicitation.question}</p>{/if}
     {/if}
     {#if elicitation.options.length > 0}
       {#each elicitation.options as opt (opt.name)}
