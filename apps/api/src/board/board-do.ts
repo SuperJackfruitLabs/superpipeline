@@ -1501,6 +1501,7 @@ export interface BoardStub {
   release(input: RunVerbInput & { reason?: string }): Promise<Result<CardView>>;
   submitForReview(input: RunVerbInput & { output?: JsonValue }): Promise<Result<CardView>>;
   addReference(input: ReferenceInput): Promise<Result<ReferenceView>>;
+  addRunReference(input: RunVerbInput & { reference: ReferenceInput }): Promise<Result<ReferenceView>>;
   /** Dependencies and sub-task containment (spec §3.4) — one table, told apart by `kind`. */
   addLink(input: LinkInput): Promise<Result<LinkView>>;
   removeLink(fromCardId: string, toCardId: string, kind: LinkKind): Promise<Result<{ ok: true }>>;
@@ -3447,6 +3448,17 @@ export class BoardDO extends DurableObject<Env> {
    * so rejecting other schemes (`javascript:`, `data:`, …) at the write boundary forecloses stored
    * XSS and is the first slice of the §6 SSRF allowlist.
    */
+  /**
+   * The run holder links something it produced (a SuperLibrary item) from its own card. The lease
+   * and the claiming agent authorize it; the card is always the run's own, whatever the caller
+   * named, and the reference is always the agent's.
+   */
+  async addRunReference(input: RunVerbInput & { reference: ReferenceInput }): Promise<Result<ReferenceView>> {
+    const auth = this.authorizeRun(input);
+    if (!auth.ok) return auth;
+    return this.addReference({ ...input.reference, cardId: auth.run.card_id as string, addedBy: 'agent' });
+  }
+
   async addReference(input: ReferenceInput): Promise<Result<ReferenceView>> {
     if (!this.getMeta('boardId')) {
       return { ok: false, code: 'NOT_INITIALIZED', message: 'board is not initialized' };
