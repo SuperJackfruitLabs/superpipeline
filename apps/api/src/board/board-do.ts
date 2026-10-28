@@ -944,6 +944,9 @@ export interface GateOption {
   interactive?: boolean;
   /** One line saying what choosing this option does; printed under the option by some vibes. */
   description?: string;
+  /** Who may choose it: a workspace owner or admin only (strict "Always allow", 2026-10-28). The
+   * board hides it from everyone else and refuses their answer. */
+  requires?: 'workspace-admin';
 }
 
 /**
@@ -1324,6 +1327,7 @@ export type AgentActivityType = 'thought' | 'action' | 'response' | 'elicitation
  */
 export type BoardErrorCode =
   | 'NOT_INITIALIZED'
+  | 'WORKSPACE_ADMIN_REQUIRED'
   | 'UNKNOWN_STAGE'
   | 'WIP_LIMIT'
   | 'CARD_NOT_FOUND'
@@ -1647,6 +1651,7 @@ export interface BoardStub {
   answerElicitation(input: {
     elicitationId: string;
     answeredBy: string;
+    answererRole?: 'owner' | 'admin' | 'member' | 'viewer' | null;
     option?: string;
     text?: string;
   }): Promise<Result<{ card: CardView; elicitation: ElicitationView }>>;
@@ -5817,9 +5822,10 @@ export class BoardDO extends DurableObject<Env> {
     if (detail && !detail.success) {
       return { ok: false, code: 'INVALID_STRICT_DECISION', message: 'strict decision approval detail is malformed' };
     }
-    // approve, deny; or approve, approve-run ("Approve for this run"), deny. Nothing else.
+    // approve, [approve-run], [always], deny. Nothing else; "always" is marked for workspace admins.
     const names = options.map((o) => o.name).join(',');
-    if ((names !== 'approve,deny' && names !== 'approve,approve-run,deny') ||
+    if (!['approve,deny', 'approve,approve-run,deny', 'approve,always,deny', 'approve,approve-run,always,deny'].includes(names) ||
+        options.some((o) => (o.name === 'always') !== (o.requires === 'workspace-admin')) ||
       canonicalDecisionRequest(input.parameter) !== canonicalDecisionRequest(detail ? { options, detail: detail.data } : { options })) {
       return { ok: false, code: 'INVALID_STRICT_DECISION', message: 'strict decisions require exact canonical approve/deny options' };
     }
@@ -6469,6 +6475,8 @@ export class BoardDO extends DurableObject<Env> {
   async answerElicitation(input: {
     elicitationId: string;
     answeredBy: string;
+    /** The answerer's workspace role, from the server's own session read; never the client's. */
+    answererRole?: 'owner' | 'admin' | 'member' | 'viewer' | null;
     option?: string;
     text?: string;
   }): Promise<Result<{ card: CardView; elicitation: ElicitationView }>> {
@@ -6500,6 +6508,9 @@ export class BoardDO extends DurableObject<Env> {
     }
     const text = input.text?.trim() ?? '';
     const option = input.option?.trim() ?? '';
+    const chosenOption = elicitation.options.find((o) => o.name === option);
+    if (chosenOption?.requires === 'workspace-admin' && input.answererRole !== 'owner' && input.answererRole !== 'admin')
+      return { ok: false, code: 'WORKSPACE_ADMIN_REQUIRED', message: 'Only a workspace owner or admin can choose Always allow.' };
     if (option !== '' && !elicitation.options.some((o) => o.name === option)) {
       return { ok: false, code: 'INVALID_ANSWER', message: `"${option}" is not one of the offered options` };
     }

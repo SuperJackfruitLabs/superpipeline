@@ -64,6 +64,8 @@ const headers: Record<string, string> = {
 export interface User {
   userId: string;
   tenantId: string;
+  /** This person's role in the workspace, as the server read it (memberships.role). */
+  role?: Role | null;
   name?: string;
   login?: string;
   avatarUrl?: string;
@@ -383,6 +385,8 @@ export interface GateOption {
   interactive?: boolean;
   /** One line saying what choosing this option does. */
   description?: string;
+  /** Only a workspace owner or admin may choose it (strict "Always allow"); hidden from others. */
+  requires?: 'workspace-admin';
 }
 
 /** Who decided a gate first, through which surface and when (the 409 body's fields). */

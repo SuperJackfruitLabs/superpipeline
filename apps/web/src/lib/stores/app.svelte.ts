@@ -7,6 +7,7 @@
  * inside the components that own it. Ported from the original monolithic `+page.svelte`.
  */
 import type { ListSort } from '$lib/components/plan/list/types';
+import { forViewer } from '$lib/components/card/question/viewer-options';
 import { allowsLocalFixtures } from '$lib/local-fixtures';
 import {
   getMe,
@@ -614,7 +615,8 @@ class AppStore {
     try {
       const board = await getBoard(id);
       if (id !== this.boardId) return;
-      this.board = board;
+      // Options a viewer may not choose (strict "Always allow" for non-admins) are not shown.
+      this.board = forViewer(board, this.user?.role);
       this.boardFailure = null;
       this.syncedAt = new Date();
       this.notifications = await getNotifications(id);

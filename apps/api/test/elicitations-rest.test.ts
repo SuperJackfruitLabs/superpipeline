@@ -378,3 +378,31 @@ it('round trips strict correlation through authenticated REST and deduplicates a
   expect(read.elicitations).toHaveLength(1);
   expect(read.elicitations[0]).toMatchObject({ id: receipt.activity.elicitationId, strictDecision });
 });
+
+// Operator ruling 2026-10-28: an option marked for workspace admins ("Always allow") is chosen only
+// by a workspace owner or admin; the route passes the role from its own session read.
+describe("an admin-only option over REST", () => {
+  it("refuses a member and accepts an admin", async () => {
+    const tenantId = "tnt_elc_admin";
+    for (const [id, user, role] of [["mem_ea0", "usr_dev", "owner"], ["mem_ea1", "usr_member", "member"], ["mem_ea2", "usr_admin", "admin"]])
+      await env.DB.prepare("INSERT INTO memberships (id, tenant_id, user_id, role) VALUES (?, ?, ?, ?)").bind(id, tenantId, user, role).run();
+    const boardId = await createBoard(tenantId);
+    await addCard(tenantId, boardId, "Write a file");
+    const agent = await connectAgent(tenantId, ["research"], "Writer");
+    const claimRes = await SELF.fetch(`${base}/v1/boards/${boardId}/claims`, { method: "POST", headers: agentAuth(agent.token), body: "{}" });
+    const claim = (await claimRes.json()) as { runId: string; leaseEpoch: number };
+    await SELF.fetch(`${base}/v1/boards/${boardId}/runs/${claim.runId}/activities`, {
+      method: "POST",
+      headers: agentAuth(agent.token),
+      body: JSON.stringify({
+        leaseEpoch: claim.leaseEpoch, type: "elicitation", body: "Write it?", signal: "select",
+        parameter: { options: [{ name: "approve", title: "Approve once" }, { name: "always", title: "Always allow", requires: "workspace-admin" }] },
+      }),
+    });
+    const id = (await pollRun(boardId, claim.runId, agent.token)).elicitations[0]!.id;
+    const refused = await answer(boardId, id, human(tenantId, "usr_member"), { option: "always" });
+    expect(refused.status).toBeGreaterThanOrEqual(400);
+    expect(JSON.stringify(await refused.json())).toContain("WORKSPACE_ADMIN_REQUIRED");
+    expect((await answer(boardId, id, human(tenantId, "usr_admin"), { option: "always" })).status).toBe(200);
+  });
+});

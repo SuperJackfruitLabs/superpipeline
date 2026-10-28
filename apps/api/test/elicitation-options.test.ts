@@ -55,3 +55,15 @@ describe('parseElicitationOptions', () => {
     expect(parseElicitationOptions('just a string')).toEqual([]);
   });
 });
+
+// A workspace-admin requirement survives parsing; any other value is dropped, never widened.
+import { parseElicitationOptions as parseForAlways } from '../src/board/elicitation';
+import { describe as d2, it as i2, expect as e2 } from 'vitest';
+d2('option requirement', () => {
+  i2('keeps requires: workspace-admin and drops anything else', () => {
+    e2(parseForAlways({ options: [{ name: 'always', title: 'Always', requires: 'workspace-admin' }] })).toEqual([
+      { name: 'always', title: 'Always', requires: 'workspace-admin' },
+    ]);
+    e2(parseForAlways({ options: [{ name: 'x', title: 'X', requires: 'anyone' }] })).toEqual([{ name: 'x', title: 'X' }]);
+  });
+});
