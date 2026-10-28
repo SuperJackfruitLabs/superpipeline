@@ -187,6 +187,7 @@ function statusForCode(code: BoardErrorCode): number {
     // malformed request: the same payload succeeds once the stage is emptied.
     case 'STAGE_NOT_EMPTY':
       return 409;
+    case 'WORKSPACE_ADMIN_REQUIRED':
     case 'SEPARATION_OF_DUTIES':
     // The caller authenticated, but this run is another agent's: a permanent refusal of an
     // understood request, and deliberately NOT the 409 that means "your lease lapsed, re-claim".
@@ -3681,6 +3682,8 @@ const worker = {
         const result = await stub.answerElicitation({
           elicitationId: answerMatch[1]!,
           answeredBy: user?.userId ?? 'usr_dev',
+          // The role from the server's own session read: the only thing that may choose "Always allow".
+          answererRole: user?.role ?? null,
           option: ap.option,
           text: ap.text,
         });

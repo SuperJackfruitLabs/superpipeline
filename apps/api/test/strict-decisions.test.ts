@@ -121,3 +121,40 @@ describe('strict decision identity and durable response', () => {
 });
 
 for (const example of corpus) it(`strict wire corpus: ${example.name}`, () => { expect(StrictDecision.safeParse(example.value).success).toBe(example.valid); });
+
+// Operator ruling 2026-10-28: "Always allow" on a strict approval, workspace owners and admins only.
+describe('always allow on a strict decision', () => {
+  const always = { name: 'always', title: 'Always allow Salaam to write in its workspace', requires: 'workspace-admin' };
+  const withAlways = (input: AgentActivityInput) => ({
+    ...input,
+    parameter: { options: [{ name: 'approve', title: 'Approve once' }, always, { name: 'deny', title: 'Deny' }] },
+  });
+  it('keeps the option and its requirement, in its place, and refuses it out of place or unmarked', () => testBoard('strict-always-shape', async board => {
+    const input = await setup(board);
+    const ok = await board.postActivity(withAlways(input));
+    expect(ok.ok).toBe(true);
+    const ctx = await board.getRunContext(input);
+    expect(ctx.ok && ctx.value.elicitations[0]!.options).toEqual([
+      { name: 'approve', title: 'Approve once' },
+      always,
+      { name: 'deny', title: 'Deny' },
+    ]);
+  }));
+  it('rejects always allow out of place or without its requirement', () => testBoard('strict-always-bad', async board => {
+    const input = await setup(board);
+    for (const options of [
+      [always, { name: 'approve', title: 'Approve once' }, { name: 'deny', title: 'Deny' }],
+      [{ name: 'approve', title: 'Approve once' }, { name: 'always', title: always.title }, { name: 'deny', title: 'Deny' }],
+    ])
+      expect(await board.postActivity({ ...input, strictDecision: { ...input.strictDecision, request_id: crypto.randomUUID() }, parameter: { options } })).toMatchObject({ ok: false, code: 'INVALID_STRICT_DECISION' });
+  }));
+  it('only a workspace owner or admin may choose it; anyone may still choose the rest', () => testBoard('strict-always-role', async board => {
+    const input = await setup(board);
+    const posted = await board.postActivity(withAlways(input));
+    if (!posted.ok) throw new Error('post failed');
+    const id = posted.value.elicitationId!;
+    for (const answererRole of ['member', 'viewer', null] as const)
+      expect(await board.answerElicitation({ elicitationId: id, answeredBy: 'usr_h', answererRole, option: 'always' })).toMatchObject({ ok: false, code: 'WORKSPACE_ADMIN_REQUIRED' });
+    expect(await board.answerElicitation({ elicitationId: id, answeredBy: 'usr_h', answererRole: 'admin', option: 'always' })).toMatchObject({ ok: true });
+  }));
+});
