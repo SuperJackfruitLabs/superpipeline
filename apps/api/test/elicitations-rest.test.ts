@@ -437,3 +437,22 @@ describe("the run read names the answerer by principal", () => {
     });
   });
 });
+
+// Board reads (operator ruling 2026-10-28): an agent reads the runs of the card it holds through
+// its run, never another card's. The hub serves the read; no person's credential is involved.
+describe("an agent reads its own card's runs through its run", () => {
+  it("returns this card's attempts, and refuses a run the agent does not hold", async () => {
+    const tenantId = "tnt_att";
+    const boardId = await createBoard(tenantId);
+    await addCard(tenantId, boardId, "One");
+    const agent = await connectAgent(tenantId, ["research"], "Researcher");
+    const claim = await claimAndAsk(boardId, agent.token);
+    const res = await SELF.fetch(`${base}/v1/boards/${boardId}/runs/${claim.runId}/attempts`, { headers: agentAuth(agent.token) });
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as { attempts: Array<{ runId: string }> };
+    expect(body.attempts.map((a) => a.runId)).toContain(claim.runId);
+    const other = await connectAgent(tenantId, ["research"], "Someone else");
+    const refused = await SELF.fetch(`${base}/v1/boards/${boardId}/runs/${claim.runId}/attempts`, { headers: agentAuth(other.token) });
+    expect(refused.status).toBeGreaterThanOrEqual(400);
+  });
+});

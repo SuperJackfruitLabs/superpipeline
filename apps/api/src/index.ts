@@ -3417,6 +3417,15 @@ const worker = {
         });
       }
 
+      // GET /v1/boards/:id/runs/:runId/attempts — the runs of the card this run holds, for the agent
+      // that holds the run (operator ruling 2026-10-28, board reads). Read-only; never another card.
+      const runAttemptsMatch = rest.match(/^runs\/([^/]+)\/attempts$/);
+      if (runAttemptsMatch && request.method === 'GET') {
+        const held = await stub.getRunContext({ runId: runAttemptsMatch[1]!, agentId: agent!.agentId });
+        if (!held.ok) return Response.json({ error: held }, { status: statusForCode(held.code) });
+        return Response.json({ attempts: await stub.getAttempts(held.value.run.cardId) });
+      }
+
       const evidenceRefMatch = rest.match(/^runs\/([^/]+)\/evidence-reference$/);
       if (evidenceRefMatch && request.method === 'POST') {
         const raw: unknown = await request.json().catch(() => null);
