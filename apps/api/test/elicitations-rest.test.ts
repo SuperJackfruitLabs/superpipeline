@@ -406,3 +406,34 @@ describe("an admin-only option over REST", () => {
     expect((await answer(boardId, id, human(tenantId, "usr_admin"), { option: "always" })).status).toBe(200);
   });
 });
+
+// The hub sets "Always allow" for the person who answered, and the org plane only knows principals:
+// the run read names the answerer by principal too (users.external_id), never by guess.
+describe("the run read names the answerer by principal", () => {
+  it("maps a linked user to its principal and leaves an unlinked one null", async () => {
+    const tenantId = "tnt_elc_prn";
+    const boardId = await createBoard(tenantId);
+    await addCard(tenantId, boardId, "One");
+    await addCard(tenantId, boardId, "Two");
+    const agent = await connectAgent(tenantId, ["research"], "Researcher");
+    const prn = "prn_" + "ab12".repeat(5);
+    await env.DB.prepare(`INSERT INTO users (id, email, external_source, external_id) VALUES (?, ?, 'org-plane', ?)`)
+      .bind("usr_linked", "linked@example.test", prn).run();
+    const first = await claimAndAsk(boardId, agent.token);
+    const q1 = (await pollRun(boardId, first.runId, agent.token)).elicitations[0]!;
+    expect((await answer(boardId, q1.id, human(tenantId, "usr_linked"), { option: "run_them" })).status).toBe(200);
+    expect((await pollRun(boardId, first.runId, agent.token)).elicitations[0]!.answer).toMatchObject({
+      answeredBy: "usr_linked",
+      answeredByPrincipal: prn,
+    });
+
+    const other = await connectAgent(tenantId, ["research"], "Second researcher");
+    const second = await claimAndAsk(boardId, other.token);
+    const q2 = (await pollRun(boardId, second.runId, other.token)).elicitations[0]!;
+    expect((await answer(boardId, q2.id, human(tenantId, "usr_unlinked"), { option: "run_them" })).status).toBe(200);
+    expect((await pollRun(boardId, second.runId, other.token)).elicitations[0]!.answer).toMatchObject({
+      answeredBy: "usr_unlinked",
+      answeredByPrincipal: null,
+    });
+  });
+});

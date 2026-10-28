@@ -3405,7 +3405,16 @@ const worker = {
       if (runReadMatch && request.method === 'GET') {
         const result = await stub.getRunContext({ runId: runReadMatch[1]!, agentId: agent!.agentId });
         if (!result.ok) return Response.json({ error: result }, { status: statusForCode(result.code) });
-        return Response.json(result.value);
+        // The answerer by principal too (users.external_id), for a reader that acts as that person in
+        // the suite: the hub sets "Always allow" for them and reads their role from the org plane.
+        // A user with no principal reads null, never a guess.
+        const answerers = await principalIdsFor(env.DB, tenantId, result.value.elicitations.map((e) => e.answer?.answeredBy ?? null));
+        return Response.json({
+          ...result.value,
+          elicitations: result.value.elicitations.map((e) =>
+            e.answer ? { ...e, answer: { ...e.answer, answeredByPrincipal: answerers.get(e.answer.answeredBy) ?? null } } : e,
+          ),
+        });
       }
 
       const evidenceRefMatch = rest.match(/^runs\/([^/]+)\/evidence-reference$/);
