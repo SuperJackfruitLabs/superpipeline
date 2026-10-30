@@ -10,6 +10,24 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 > Everything current is `superpipeline`, and an agent token now starts `spa_`
 > rather than `kbn_`, with no fallback.
 
+## [0.0.23] — 2026-10-30
+
+Strict agent work: approvals a person can read and scope, and an agent that can read its own card.
+
+### Added
+
+- Strict decisions are readable: an approval says in plain words what it allows.
+- A strict decision may offer "Approve for this run".
+- "Always allow" on a strict approval, for workspace owners and admins only. It is the same
+  per-agent rule as the console switch.
+- An agent reads its own card's earlier runs through its run (board reads).
+- The run holder links references from its own card.
+
+### Fixed
+
+- The run read names the answerer by principal id as well as by board user id, so the hub can
+  record an "Always allow" rule.
+
 ## [0.0.19] — Unreleased
 
 ### Changed
