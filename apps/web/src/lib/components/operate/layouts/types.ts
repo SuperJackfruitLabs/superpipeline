@@ -1,7 +1,6 @@
 // apps/web/src/lib/components/operate/layouts/types.ts
 import type { Phase } from '@superjackfruit/vibekit';
 import type { AgentSummary, Card, Notification, Stage } from '$lib/api';
-import type { CapsUi, OperateUi } from '../operate-ui.svelte';
 import type { AttentionAction, AttentionItem } from '$lib/components/attention/attention';
 
 /** One card waiting on a person, with what every vibe needs to draw it. */
@@ -97,10 +96,3 @@ export interface OperateModel {
   open(cardId: string, boardId?: string): void;
   openLog(cardId: string, boardId?: string): void;
 }
-
-/**
- * `ui` and `caps` are what the reader is in the middle of (an open resume form, an expanded quote).
- * OperateView owns them so a layout that is mounted again (the shell swapping frames) keeps them;
- * a layout rendered on its own makes its own.
- */
-export interface OperateLayoutProps { model: OperateModel; ui?: OperateUi; caps?: CapsUi }

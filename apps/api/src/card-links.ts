@@ -100,7 +100,7 @@ export async function cardLinksBody(env: Env, tenantId: string, stub: BoardStub,
         externalLinks: externalLinks.map((l, i) => ({
           ...l,
           enforced: false as const,
-          otherBoardName: boardNames.get(otherEnds[i]!.boardId) ?? null,
+          otherBoardName: boardNames.get(otherEnds[i].boardId) ?? null,
           otherCardTitle: otherTitles[i] ?? null,
         })),
       };

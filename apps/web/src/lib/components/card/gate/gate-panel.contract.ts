@@ -4,11 +4,11 @@
  * how a gate looks, these are the things a person must still be able to read and do. A panel's own
  * test file imports this before the component, so the api mock below is in place first.
  */
-import type { Component } from 'svelte';
 import { tick } from 'svelte';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, fireEvent, render, screen } from '@testing-library/svelte';
 import { expectBusy, type BusyForm } from '../busy-contract';
+import type { AnyComponent } from '../testing/any-component';
 
 /** The class a button panel gives its primary action: the Button variant or vibekit's own. */
 export const PRIMARY = /\bbg-primary\b|\bvk-button--primary\b/;
@@ -19,6 +19,7 @@ vi.mock('$lib/api', async (orig) => ({
 }));
 
 export const subject = { id: 'sub_1', digest: 'sha256:3f9ac21e77aa', schema: 's', revision: 4, canonical: { post: 'Hello' } };
+// oxlint-disable-next-line typescript/no-explicit-any -- one fixture for several panels whose props differ; each test's render checks it
 export const gatePanelProps = (over: Record<string, unknown> = {}): any => ({
   boardId: 'brd_1',
   gate: { id: 'gat_1', cardId: 'c', status: 'pending', options: [], approvalSubject: subject, stageKey: 'review', producedBy: 'agt_r' },
@@ -40,7 +41,7 @@ export const OLD_GATE_WORDS: GateWords = {
   digest: 'sha256:3f9ac21e77aa', canonical: /"post": "Hello"/, region: /canonical JSON/i, noteId: 'gate-note-gat_1', errorBeforeControls: true,
 };
 
-export function gatePanelContract(C: Component<any>, o: { decision: 'button' | 'radio'; submit?: string; words?: GateWords; busy?: BusyForm }): void {
+export function gatePanelContract(C: AnyComponent, o: { decision: 'button' | 'radio'; submit?: string; words?: GateWords; busy?: BusyForm }): void {
   const w = o.words ?? OLD_GATE_WORDS;
   const busy = o.busy ?? { kind: 'disabled' };
   const choose = async (name: string) => {

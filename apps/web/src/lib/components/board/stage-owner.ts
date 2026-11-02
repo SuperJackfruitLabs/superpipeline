@@ -95,7 +95,7 @@ export function stageOwner(stage: Stage, agents: AgentSummary[]): StageOwnerLabe
 
 /** One declarer by name, several as a count ("2 agents"). */
 function holders(names: string[]): string {
-  return names.length === 1 ? names[0]! : plural(names.length, 'agent', 'agents');
+  return names.length === 1 ? names[0] : plural(names.length, 'agent', 'agents');
 }
 
 /** Who works a stage, as the desktop boards print it: "testing · tester-tim", "code · 2 agents", "a person · approval". */

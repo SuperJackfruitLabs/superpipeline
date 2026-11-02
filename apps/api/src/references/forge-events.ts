@@ -17,21 +17,16 @@
  * care which forge its pull request is on, and a second set of names would make every consumer
  * ask.
  */
-import type { GithubEventResult } from './github-events';
-
-interface Repo {
-  full_name?: string;
-  default_branch?: string;
-}
+import type { GithubEventResult, WebhookPayload } from './github-events';
 
 export function mapForgeEvent(event: string, payload: unknown): GithubEventResult | null {
-  const p = payload as Record<string, any>;
-  const repo = (p.repository ?? {}) as Repo;
+  const p = payload as WebhookPayload;
+  const repo = p.repository ?? {};
   const fullName = repo.full_name?.toLowerCase();
   if (!fullName) return null;
 
   if (event === 'pull_request') {
-    const pr = p.pull_request as Record<string, any> | undefined;
+    const pr = p.pull_request;
     if (!pr || typeof pr.number !== 'number') return null;
     const base = { externalId: `${fullName}#${pr.number}`, sourceType: 'pull_request' as const };
     const meta = (extra: Record<string, unknown>): Record<string, unknown> => ({
@@ -68,7 +63,7 @@ export function mapForgeEvent(event: string, payload: unknown): GithubEventResul
   }
 
   if (event === 'issues') {
-    const issue = p.issue as Record<string, any> | undefined;
+    const issue = p.issue;
     if (!issue || typeof issue.number !== 'number') return null;
     const base = { externalId: `${fullName}#${issue.number}`, sourceType: 'issue' as const };
     const metadata = { state: issue.state, url: issue.html_url };

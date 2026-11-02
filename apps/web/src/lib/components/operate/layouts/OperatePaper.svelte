@@ -14,7 +14,8 @@
   import { moveTargets } from '../operate-data';
   import { CapsUi, OperateUi } from '../operate-ui.svelte';
   import { cut140, letters, moveOptionLabel, paperCap, paperMastEnd, paperMastLine, paperMeta, resumeOptions, RESUME_LABEL, staleLine, noticeBody, stopHint, usd, when } from '../operate-words';
-  import type { NeedRow, OperateLayoutProps } from './types';
+  import type { NeedRow } from './types';
+  import type { OperateLayoutProps } from './props';
   import './operate-paper.css';
 
   let { model, ui: uiProp, caps: capsProp }: OperateLayoutProps = $props();

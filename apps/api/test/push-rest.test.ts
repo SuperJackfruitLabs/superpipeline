@@ -1,5 +1,6 @@
 import { SELF } from 'cloudflare:test';
 import { describe, it, expect } from 'vitest';
+import type { PushDeliveryView } from '../src/board/model';
 
 const T = { 'X-Tenant-Id': 'tnt_push', 'Content-Type': 'application/json' };
 const base = 'https://api.test';
@@ -28,7 +29,7 @@ describe('REST — push configs (docs/05 §4)', () => {
 
     await SELF.fetch(`${base}/v1/boards/${bid}/cards`, { method: 'POST', headers: T, body: JSON.stringify({ title: 'C', ownerUserId: 'usr_a' }) });
 
-    const deliveries = ((await (await SELF.fetch(`${base}/v1/boards/${bid}/push/deliveries`, { headers: T })).json()) as { deliveries: any[] }).deliveries;
+    const deliveries = ((await (await SELF.fetch(`${base}/v1/boards/${bid}/push/deliveries`, { headers: T })).json()) as { deliveries: PushDeliveryView[] }).deliveries;
     expect(deliveries).toHaveLength(1);
     expect(JSON.parse(deliveries[0].body)).toMatchObject({ event: 'work.available', stageKey: 'build' });
   });
@@ -99,7 +100,7 @@ describe('REST — push-configs: the X-Agent-Id header, not a body `agentId`, de
     // agt_evil, so NO delivery would be queued here.
     await SELF.fetch(`${base}/v1/boards/${bid}/cards`, { method: 'POST', headers: T, body: JSON.stringify({ title: 'C', ownerUserId: 'usr_a' }) });
 
-    const deliveries = ((await (await SELF.fetch(`${base}/v1/boards/${bid}/push/deliveries`, { headers: T })).json()) as { deliveries: any[] }).deliveries;
+    const deliveries = ((await (await SELF.fetch(`${base}/v1/boards/${bid}/push/deliveries`, { headers: T })).json()) as { deliveries: PushDeliveryView[] }).deliveries;
     expect(deliveries).toHaveLength(1);
   });
 });

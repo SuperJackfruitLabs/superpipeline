@@ -61,7 +61,7 @@ export async function handleDevFixture(request: Request, env: Env, path: string)
   await db.batch([...del, ...ins]);
   // Boards that were in the tenant before but are not in this world: empty their DOs too.
   const empty = { meta: {}, cards: [], runs: [], activities: [], events: [], notifications: [], gates: [], approvalSubjects: [], elicitations: [], references: [], links: [], comments: [] };
-  for (const id of boardIds.filter((id) => !w.dos[id])) await boardStub(env, t, id).importFixture(empty);
+  for (const id of boardIds.filter((boardId) => !w.dos[boardId])) await boardStub(env, t, id).importFixture(empty);
   let cards = 0;
   for (const b of w.boards) {
     const fb = w.dos[b.id] ?? empty;

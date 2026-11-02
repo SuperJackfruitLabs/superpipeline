@@ -1,5 +1,5 @@
 // apps/web/src/lib/components/workspace/capabilities-model.svelte.ts
-import { getAgents, getCapabilities, createCapability, updateCapability, deleteCapability, addImplication, removeImplication, type AgentSummary, type CapabilityRecord } from '$lib/api';
+import { createCapability, updateCapability, deleteCapability, addImplication, removeImplication, type AgentSummary, type CapabilityRecord } from '$lib/api';
 import { similarKeys } from '@superpipeline/contract';
 import { app } from '$lib/stores/app.svelte';
 import { holdersOf, orphanNote, unstaffedNote, type CapNote } from './capability-notes';

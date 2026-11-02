@@ -6,7 +6,7 @@
  * live WebSocket. Modal-local transient state (budget inputs, agent-mint form, card-edit form) stays
  * inside the components that own it. Ported from the original monolithic `+page.svelte`.
  */
-import type { ListSort } from '$lib/components/plan/list/types';
+import type { ListGroupBy, ListSort } from '$lib/components/plan/list/list-keys';
 import { forViewer } from '$lib/components/card/question/viewer-options';
 import { allowsLocalFixtures } from '$lib/local-fixtures';
 import {
@@ -54,7 +54,7 @@ const BOARD_KEY = 'superpipeline.boardId';
 const ATTENTION_COALESCE_MS = 1000;
 
 export type View = 'board' | 'list';
-export type ListGroupBy = 'stage' | 'state' | 'owner' | 'priority';
+export type { ListGroupBy } from '$lib/components/plan/list/list-keys';
 export interface CardFilters {
   states: string[];
   owners: string[];
@@ -737,7 +737,7 @@ class AppStore {
   /** Returns the new board's id so the caller can navigate to it — every screen is a route now. */
   async createFirstBoard(): Promise<string | null> {
     try {
-      const id = await createBoard('My first board', BOARD_TEMPLATES[0]!.stages);
+      const id = await createBoard('My first board', BOARD_TEMPLATES[0].stages);
       await this.openBoard(id);
       return id;
     } catch (e) {

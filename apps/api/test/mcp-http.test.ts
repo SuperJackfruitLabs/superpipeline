@@ -19,9 +19,23 @@ const POST_HEADERS = (extra: Record<string, string> = {}) => ({
   ...extra,
 });
 
-async function rpc(res: Response): Promise<{ id: number; result?: any; error?: any }> {
+/** The parts of a JSON-RPC answer these tests read; unchecked, as each test asserts what it reads. */
+interface RpcAnswer {
+  id: number;
+  result: {
+    serverInfo: { name: string };
+    capabilities: { tools?: unknown };
+    instructions: string;
+    tools: unknown;
+    isError?: boolean;
+    content: Array<{ text: string }>;
+  };
+  error?: unknown;
+}
+
+async function rpc(res: Response): Promise<RpcAnswer> {
   const body = (await res.json()) as unknown;
-  return (Array.isArray(body) ? body[0] : body) as { id: number; result?: any; error?: any };
+  return (Array.isArray(body) ? body[0] : body) as RpcAnswer;
 }
 
 describe('MCP server — OAuth Resource Server', () => {

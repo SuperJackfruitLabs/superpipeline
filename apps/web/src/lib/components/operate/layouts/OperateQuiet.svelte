@@ -13,7 +13,7 @@
   import { moveTargets } from '../operate-data';
   import { CapsUi, OperateUi } from '../operate-ui.svelte';
   import { moveOptionLabel, QUIET_REFUSAL, quietLede, quietLine, quietMeta, quietSpend, resumeOptions, RESUME_LABEL, stopHint, usd } from '../operate-words';
-  import type { OperateLayoutProps } from './types';
+  import type { OperateLayoutProps } from './props';
   import './operate-quiet.css';
 
   let { model, ui: uiProp, caps: capsProp }: OperateLayoutProps = $props();

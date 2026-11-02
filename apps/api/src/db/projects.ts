@@ -12,6 +12,7 @@
  */
 import { newId } from '../ids';
 import { listAllBoards } from './catalog';
+import { logError } from '../log';
 
 export type ProjectState = 'planned' | 'active' | 'paused' | 'completed' | 'canceled';
 export type ProjectHealth = 'on-track' | 'at-risk' | 'off-track';
@@ -303,15 +304,16 @@ export interface ProjectRollup {
   boardsUnanswered: number;
 }
 
+/** As D1 hands it back: the counts are whatever the columns hold, and `rollupFromRow` parses them. */
 interface ProjectRollupRow {
   project_id: string;
-  cards_total: number;
-  cards_done: number;
-  cards_overdue: number;
-  cost_usd: number;
+  cards_total: unknown;
+  cards_done: unknown;
+  cards_overdue: unknown;
+  cost_usd: unknown;
   computed_at: string;
-  partial: number;
-  boards_unanswered: number;
+  partial: unknown;
+  boards_unanswered: unknown;
 }
 
 function rollupFromRow(row: ProjectRollupRow): ProjectRollup {
@@ -402,7 +404,7 @@ export async function computeRollup(
       // anywhere."
       if (!result.ok) {
         boardsUnanswered += 1;
-        console.error(
+        logError(
           `computeRollup: board ${board.id} did not answer for project ${projectId} (${result.code}): ${result.message}`,
         );
         continue;
@@ -413,7 +415,7 @@ export async function computeRollup(
       costUsd += result.value.costUsd;
     } catch (err) {
       boardsUnanswered += 1;
-      console.error(`computeRollup: board ${board.id} threw for project ${projectId}`, err);
+      logError(`computeRollup: board ${board.id} threw for project ${projectId}`, err);
     }
   }
 

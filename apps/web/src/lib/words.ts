@@ -7,7 +7,7 @@ export const NUM_WORDS = ['no', 'one', 'two', 'three', 'four', 'five', 'six', 's
 
 /** 'no', 'one' … 'ten'; digits past ten. `cap` upper-cases the first letter. */
 export function numWord(n: number, cap = false): string {
-  const w = Number.isInteger(n) && n >= 0 && n <= 10 ? NUM_WORDS[n]! : String(n);
+  const w = Number.isInteger(n) && n >= 0 && n <= 10 ? NUM_WORDS[n] : String(n);
   return cap ? w.charAt(0).toUpperCase() + w.slice(1) : w;
 }
 
@@ -53,6 +53,6 @@ export function lcFirst(s: string): string {
 /** "a", "a and b", "a, b and c". */
 export function joinAnd(names: readonly string[]): string {
   if (names.length === 0) return '';
-  if (names.length === 1) return names[0]!;
+  if (names.length === 1) return names[0];
   return `${names.slice(0, -1).join(', ')} and ${names[names.length - 1]}`;
 }

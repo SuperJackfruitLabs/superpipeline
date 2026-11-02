@@ -16,7 +16,7 @@ import { PAPER_LIGHT as PAPER_PHASE } from '$lib/components/card/paper-words';
 import { ageWords as ageWordsOf } from '$lib/age';
 import { displayPrincipal } from '$lib/names';
 import { clockHM, dayMonth } from '$lib/when';
-import { plural, sentenceCase } from '$lib/words';
+import { plural } from '$lib/words';
 
 /** An agent the workspace does not list reads "an agent", never its id. */
 const displayAgent = (id: string | null | undefined, agents: AgentSummary[]): string => (id ? agents.find((a) => a.id === id)?.name?.trim() || 'an agent' : '');
@@ -183,7 +183,7 @@ export function phoneCardView(m: PhoneCardInput, ctx: PhoneCardCtx) {
   const groups = specGroups(c.spec ?? null, { criteriaHeading: 'Things to prove' }).map((g) => ({ label: g.label, rows: g.rows.map((r) => ({ key: r.key, label: r.label, value: (c.spec as Record<string, unknown>)[r.key] })) }));
   const i = m.stageIndex;
   const prev = i > 0 ? m.stages[i - 1].name : null;
-  const handoffSummary = m.handoff && typeof m.handoff.summary === 'string' ? m.handoff.summary : m.handoff ? String(Object.values(m.handoff).find((v) => typeof v === 'string') ?? '') : null;
+  const handoffSummary = m.handoff && typeof m.handoff.summary === 'string' ? m.handoff.summary : m.handoff ? (Object.values(m.handoff).find((v) => typeof v === 'string') ?? '') : null;
   const needsCap = ctx.cardCap && ctx.cardCap > 0 ? `card cap ${usd(ctx.cardCap)}` : 'no card cap set';
   const est = m.estimate?.estimatedUsd ?? null;
   return {
@@ -285,9 +285,9 @@ export function codeTokens(text: string): Array<{ text: string; code: boolean }>
   const out: Array<{ text: string; code: boolean }> = [];
   let at = 0;
   for (const m of text.matchAll(TOKEN)) {
-    if (m.index! > at) out.push({ text: text.slice(at, m.index), code: false });
+    if (m.index > at) out.push({ text: text.slice(at, m.index), code: false });
     out.push({ text: m[0], code: true });
-    at = m.index! + m[0].length;
+    at = m.index + m[0].length;
   }
   if (at < text.length) out.push({ text: text.slice(at), code: false });
   return out;

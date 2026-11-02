@@ -10,6 +10,31 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 > Everything current is `superpipeline`, and an agent token now starts `spa_`
 > rather than `kbn_`, with no fallback.
 
+## [Unreleased]
+
+The code is restructured for maintainability. Nothing a user, an agent or an operator sees changes:
+the same HTTP routes and answers, the same Board Durable Object storage and SQL, the same `supi`
+commands, help and output, the same requests from the web app, and the same deployed bundle
+(`BoardDO` and the default export).
+
+### Changed
+
+- The Board Durable Object is a thin shell over one module per domain (`apps/api/src/board/`); the
+  Worker entry is a router over one module per resource (`apps/api/src/routes/`); `supi` is one
+  module per command group; the web app's API client is one module per resource behind
+  `$lib/api`. No file is over 1,000 lines and no package has an import cycle.
+- Each move was pinned first by a characterization test written against the old code (the board's
+  statements and answers, every Worker route, every `supi` command, every web API call), which
+  the restructured code passes unchanged.
+- Lint: no `any`, no floating promises, no unexplained empty block and no stray `console` in
+  shipped source; the Worker logs through one module, with the same lines and severities as
+  before. See `docs/contributor/code-structure.md` and `docs/contributor/modularity-plan.md`.
+
+### Fixed
+
+- `packages/cli/README.md` held its "What it can do" section thousands of times over (186,784
+  lines); it is back to one copy.
+
 ## [0.0.23] — 2026-10-30
 
 Strict agent work: approvals a person can read and scope, and an agent that can read its own card.

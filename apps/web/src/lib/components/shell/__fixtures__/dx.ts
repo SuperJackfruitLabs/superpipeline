@@ -13,7 +13,7 @@ export const card = (o: Partial<Card> & { id: string }): Card =>
     labels: [], dueAt: null, archivedAt: null, parentCardId: null, openChildCount: 0, costUsdRollup: 0, blockedBy: [],
     projectId: null, milestoneId: null, lastAgentId: null, queuedGrantOwner: null,
     stageSince: '2026-10-08T00:00:00.000Z', createdAt: '2026-10-08T00:00:00.000Z', ...o,
-  }) as Card;
+  });
 
 export const DX_STAGES: Stage[] = [
   { key: 'reported', name: 'Reported', order: 0, ownerKind: 'human' },

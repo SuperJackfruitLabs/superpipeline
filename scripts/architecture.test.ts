@@ -15,7 +15,7 @@ const SIZE_LIMIT = 1000;
  * Lower these; never raise them. */
 const LARGEST_CYCLE: Record<string, number> = {
   'apps/api/src': 0,
-  'apps/web/src': 4,
+  'apps/web/src': 0,
   'packages/cli/src': 0,
   'packages/contract/src': 0,
   'packages/agent-sdk/src': 0,
@@ -30,6 +30,8 @@ const API_FOLDER_CYCLE = 0;
  * points down, to a strictly lower layer; nodes in one layer do not import each other. A new
  * folder or root file must be placed here. */
 const API_LAYERS: readonly (readonly string[])[] = [
+  // The Worker's log sink: imports nothing.
+  ['log.ts'],
   // Foundations: no imports of the Worker's own code, or only each other's.
   ['env.ts', 'ids.ts', 'json.ts', 'flat-error.ts', 'crypto', 'metering', 'telemetry'],
   // Pure helpers over the foundations: outbound delivery, reference parsing.
@@ -45,6 +47,8 @@ const API_LAYERS: readonly (readonly string[])[] = [
   // Surfaces over the board: MCP, dev fixtures, cross-board links.
   ['mcp', 'dev', 'card-links.ts'],
   ['service-routes.ts'],
+  // The HTTP routes: the router, its tables and one module per resource.
+  ['routes'],
   // The Worker entry: composes everything.
   ['index.ts'],
 ];
@@ -54,12 +58,6 @@ const KNOWN_BACK_EDGES: readonly string[] = [];
 
 /** Files over SIZE_LIMIT and the most lines each may have. Lower these; never raise them. */
 const OVERSIZE: Record<string, number> = {
-  'apps/api/src/board/board-do.ts': 8697,
-  'apps/api/src/index.ts': 3790,
-  'packages/cli/src/commands.ts': 1679,
-  'apps/web/src/lib/api.ts': 1645,
-  'packages/cli/src/index.ts': 1229,
-  'apps/web/src/lib/api.test.ts': 1036,
 };
 
 /** Where the size limit applies: shipped source and its tests. */

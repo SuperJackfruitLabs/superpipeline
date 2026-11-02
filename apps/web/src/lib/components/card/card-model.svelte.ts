@@ -34,7 +34,7 @@ import { QuestionAnswer } from './question/question-answer.svelte';
 import { CommentsModel } from './comments-model.svelte';
 import { ResumeModel } from './resume-model.svelte';
 import { DeliveryControls, EditForm, LinkEditor, ProjectPicker, ReferenceComposer, SubtaskComposer } from './card-forms.svelte';
-import type { CardAgent, CardCounts, GateBinding, QuestionBinding } from './layouts/types';
+import type { CardAgent, CardCounts, GateBinding, QuestionBinding } from './bindings';
 
 export type CardSurface = 'drawer' | 'page' | 'gallery';
 export interface CardSource { board: BoardSnapshot; agents: AgentSummary[] }
@@ -136,7 +136,7 @@ export class CardModel {
   readonly milestoneName = $derived(
     this.card?.milestoneId ? (this.projectDetail?.milestones.find((m) => m.id === this.card!.milestoneId)?.name ?? this.card.milestoneId) : null,
   );
-  readonly acceptanceCriteria = $derived(Array.isArray(this.card?.spec?.acceptanceCriteria) ? (this.card!.spec!.acceptanceCriteria as string[]) : null);
+  readonly acceptanceCriteria = $derived(Array.isArray(this.card?.spec?.acceptanceCriteria) ? (this.card.spec.acceptanceCriteria as string[]) : null);
   readonly plan = $derived(normalisePlan(this.card?.spec?.plan));
   readonly handoff = $derived(this.detail?.handoff ?? null);
   readonly overdue = $derived(this.card ? overdue(this.card.dueAt, this.card.state, new Date().toISOString().slice(0, 10)) : false);

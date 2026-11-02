@@ -2,7 +2,7 @@
 /** The calendar day of `d` in `timeZone`, as a UTC midnight timestamp. */
 function dayIn(d: Date, timeZone: string): number {
   const [y, m, day] = new Intl.DateTimeFormat('en-CA', { timeZone, year: 'numeric', month: '2-digit', day: '2-digit' }).format(d).split('-').map(Number);
-  return Date.UTC(y!, m! - 1, day!);
+  return Date.UTC(y, m - 1, day);
 }
 
 /** "Today", "Yesterday", "3 days ago", "Last week", "2 weeks ago", "Last month", "3 months ago": calendar days in `timeZone`. */

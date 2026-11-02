@@ -7,8 +7,8 @@ export const peopleHeading = (n: number) => `${n} ${n === 1 ? 'person' : 'people
 export function initials(name: string): string {
   const w = name.trim().split(/\s+/).filter(Boolean);
   if (w.length === 0) return '';
-  if (w.length === 1) return w[0]!.slice(0, 2).toUpperCase();
-  return `${w[0]![0]}${w[w.length - 1]![0]}`.toUpperCase();
+  if (w.length === 1) return w[0].slice(0, 2).toUpperCase();
+  return `${w[0][0]}${w[w.length - 1][0]}`.toUpperCase();
 }
 
 export const lastOwner = (m: Member, members: Member[]) => m.role === 'owner' && members.filter((o) => o.role === 'owner').length === 1;

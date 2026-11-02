@@ -53,13 +53,13 @@ export function heroSentence(m: BoardModel): Clause[] {
   const qb = m.queued.filter((s) => s.held);
   const more = m.needs.length > 0 ? ' more' : '';
   const tail: Clause[] = [];
-  if (qb.length) tail.push({ text: `${numWord(qb.length, true)}${more} ${qb.length === 1 ? 'is' : 'are'} queued behind a blocker`, fn: qb[0]!.fnNumber });
-  if (m.done.length) tail.push({ text: `${numWord(m.done.length)} ${m.done.length === 1 ? 'has' : 'have'} shipped`, fn: m.done[0]!.fnNumber });
+  if (qb.length) tail.push({ text: `${numWord(qb.length, true)}${more} ${qb.length === 1 ? 'is' : 'are'} queued behind a blocker`, fn: qb[0].fnNumber });
+  if (m.done.length) tail.push({ text: `${numWord(m.done.length)} ${m.done.length === 1 ? 'has' : 'have'} shipped`, fn: m.done[0].fnNumber });
   const lead = out.length ? ' ' : '';
   if (tail.length === 2) {
-    out.push({ text: `${lead}${cap(tail[0]!.text)},`, fn: tail[0]!.fn }, { text: ` and ${tail[1]!.text}.`, fn: tail[1]!.fn });
+    out.push({ text: `${lead}${cap(tail[0].text)},`, fn: tail[0].fn }, { text: ` and ${tail[1].text}.`, fn: tail[1].fn });
   } else if (tail.length === 1) {
-    out.push({ text: `${lead}${cap(tail[0]!.text)}.`, fn: tail[0]!.fn });
+    out.push({ text: `${lead}${cap(tail[0].text)}.`, fn: tail[0].fn });
   }
   return out;
 }
@@ -80,10 +80,10 @@ export function studioFigures(m: BoardModel): Figure[] {
 export interface Multiple { stage: BoardStage; href: string; band: string; zero: boolean; units: Unit[]; gate: string | null; note: { text: string; fn: number | null }; aria: string }
 export function multiplesNote(st: BoardStage, cards: CardSummary[]): { text: string; fn: number | null } {
   if (cards.length === 0) return { text: 'Empty', fn: null };
-  if (cards.every((s) => s.urgency === 'done')) return { text: 'Done', fn: cards[0]!.fnNumber };
+  if (cards.every((s) => s.urgency === 'done')) return { text: 'Done', fn: cards[0].fnNumber };
   const needs = cards.filter((s) => s.urgency === 'needs');
   if (cards.length === 1 && needs.length === 1) {
-    const s = needs[0]!;
+    const s = needs[0];
     if (s.kind === 'no-owner') return { text: s.overdue && s.dueAt ? `Overdue since ${dueShort(s.dueAt)}` : 'Waiting on you', fn: s.fnNumber };
     if (isStopped(s.kind)) return { text: s.attemptCount > 1 ? `Stopped after ${s.attemptCount} tries` : 'Stopped on its first try', fn: s.fnNumber };
     return { text: 'Waiting on you', fn: s.fnNumber };
@@ -96,7 +96,7 @@ export function multiplesNote(st: BoardStage, cards: CardSummary[]): { text: str
     [count((s) => s.urgency === 'queued' && !s.held), 'queued'],
     [count((s) => s.urgency === 'done'), 'done'],
   ] as const;
-  return { text: parts.filter(([n]) => n > 0).map(([n, w]) => `${n} ${w}`).join(', '), fn: (needs[0] ?? cards[0]!).fnNumber };
+  return { text: parts.filter(([n]) => n > 0).map(([n, w]) => `${n} ${w}`).join(', '), fn: (needs[0] ?? cards[0]).fnNumber };
 }
 const UNIT_WORD: Record<Unit, string> = { needs: 'waiting on you', blocked: 'blocked', queued: 'queued', working: 'working', done: 'done', off: 'closed' };
 function multiplesWho(st: BoardStage): string {
@@ -108,7 +108,7 @@ function multiplesWho(st: BoardStage): string {
 /** Reproduces the reference's seven labels (X-5): one state is named bare, several are counted. */
 export function multiplesAria(st: BoardStage): string {
   const kinds = [...new Set(st.units)];
-  const state = kinds.length === 0 ? '' : kinds.length === 1 ? `, ${UNIT_WORD[kinds[0]!]}` : kinds.map((k) => `, ${st.units.filter((u) => u === k).length} ${UNIT_WORD[k]}`).join('');
+  const state = kinds.length === 0 ? '' : kinds.length === 1 ? `, ${UNIT_WORD[kinds[0]]}` : kinds.map((k) => `, ${st.units.filter((u) => u === k).length} ${UNIT_WORD[k]}`).join('');
   return `Stage ${st.index}, ${st.name}: ${plural(st.count, 'card', 'cards')}${state}. ${multiplesWho(st)}`;
 }
 export function multiples(m: BoardModel): Multiple[] {
@@ -163,7 +163,7 @@ function needsNote(s: CardSummary): NotePart[] {
 }
 function groupNote(cs: CardSummary[], one: (ix: string, stage: string) => string, many: (ixs: string, stage: string) => string): NotePart[] {
   const stages = joinAnd([...new Set(cs.map((s) => s.stageName))]);
-  return [cs.length === 1 ? one(pad2(cs[0]!.ix), stages) : many(joinAnd(cs.map((s) => pad2(s.ix))), stages)];
+  return [cs.length === 1 ? one(pad2(cs[0].ix), stages) : many(joinAnd(cs.map((s) => pad2(s.ix))), stages)];
 }
 export function studioNotes(m: BoardModel): Array<{ n: number; parts: NotePart[] }> {
   const out = m.needs.map((s) => ({ n: s.fnNumber, parts: needsNote(s) }));
@@ -179,7 +179,7 @@ export function studioNotes(m: BoardModel): Array<{ n: number; parts: NotePart[]
     [m.done, (cs) => [`${terminalOf(m)}, nothing to do: `, { i: titles(cs) }]],
     [m.closed, (cs) => ['Closed, nothing to do: ', { i: titles(cs) }]],
   ];
-  for (const [cs, note] of groups) if (cs.length) out.push({ n: cs[0]!.fnNumber, parts: note(cs) });
+  for (const [cs, note] of groups) if (cs.length) out.push({ n: cs[0].fnNumber, parts: note(cs) });
   const spend: NotePart[] =
     m.spend7d === undefined ? ['Spend this week is still being read.']
     : m.spend7d === null ? ['Spend this week could not be read.']

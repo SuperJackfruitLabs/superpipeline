@@ -1,0 +1,5671 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`the Worker HTTP surface, pinned before the split > answers every route the same way 1`] = `
+[
+  {
+    "body": {
+      "ok": true,
+      "phase": "P8",
+      "service": "superpipeline-api",
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "GET /health",
+    "status": 200,
+    "step": "health",
+  },
+  {
+    "body": "spa /health",
+    "headers": {
+      "content-type": "text/plain;charset=UTF-8",
+      "x-from": "assets",
+    },
+    "request": "POST /health",
+    "status": 200,
+    "step": "health, wrong method, falls through to the app",
+  },
+  {
+    "body": "method not allowed",
+    "headers": {
+      "content-type": "text/plain;charset=UTF-8",
+    },
+    "request": "GET /v1/dev/fixture",
+    "status": 405,
+    "step": "dev fixture, wrong method",
+  },
+  {
+    "body": "spa /v1/dev/other",
+    "headers": {
+      "content-type": "text/plain;charset=UTF-8",
+      "x-from": "assets",
+    },
+    "request": "GET /v1/dev/other",
+    "status": 200,
+    "step": "dev, unknown path falls through",
+  },
+  {
+    "body": "spa /",
+    "headers": {
+      "content-type": "text/plain;charset=UTF-8",
+      "x-from": "assets",
+    },
+    "request": "GET /",
+    "status": 200,
+    "step": "the app root",
+  },
+  {
+    "body": "spa /boards/brd#1",
+    "headers": {
+      "content-type": "text/plain;charset=UTF-8",
+      "x-from": "assets",
+    },
+    "request": "GET /boards/brd#1",
+    "status": 200,
+    "step": "an app page",
+  },
+  {
+    "body": "spa /v1/nothing",
+    "headers": {
+      "content-type": "text/plain;charset=UTF-8",
+      "x-from": "assets",
+    },
+    "request": "GET /v1/nothing",
+    "status": 200,
+    "step": "an unknown API path falls through",
+  },
+  {
+    "body": "spa /v1/boardsx",
+    "headers": {
+      "content-type": "text/plain;charset=UTF-8",
+      "x-from": "assets",
+    },
+    "request": "GET /v1/boardsx",
+    "status": 200,
+    "step": "a prefix that is not /v1/boards",
+  },
+  {
+    "body": {
+      "user": null,
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "GET /auth/me",
+    "status": 200,
+    "step": "auth me, signed out",
+  },
+  {
+    "body": {
+      "user": {
+        "role": "owner",
+        "tenantId": "tnt_http",
+        "userId": "usr_dev",
+      },
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "GET /auth/me",
+    "status": 200,
+    "step": "auth me, dev",
+  },
+  {
+    "body": "Sign-in is not configured on this server.",
+    "headers": {
+      "content-type": "text/plain;charset=UTF-8",
+    },
+    "request": "GET /auth/login",
+    "status": 503,
+    "step": "auth login",
+  },
+  {
+    "body": "",
+    "headers": {
+      "location": "/",
+      "set-cookie": "superpipeline_session=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0; Secure",
+    },
+    "request": "POST /auth/logout",
+    "status": 204,
+    "step": "auth logout",
+  },
+  {
+    "body": "spa /auth/nothing",
+    "headers": {
+      "content-type": "text/plain;charset=UTF-8",
+      "x-from": "assets",
+    },
+    "request": "GET /auth/nothing",
+    "status": 200,
+    "step": "auth unknown falls through",
+  },
+  {
+    "body": {
+      "ok": true,
+    },
+    "headers": {
+      "cache-control": "no-store",
+      "content-type": "application/json",
+    },
+    "request": "POST /hub/session",
+    "status": 200,
+    "step": "hub session renewal",
+  },
+  {
+    "body": {
+      "error": "method not allowed",
+    },
+    "headers": {
+      "allow": "POST",
+      "content-type": "application/json",
+    },
+    "request": "GET /hub/session",
+    "status": 405,
+    "step": "hub session, wrong method",
+  },
+  {
+    "body": {
+      "error": "method not allowed",
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "GET /hub/connect",
+    "status": 405,
+    "step": "hub connect",
+  },
+  {
+    "body": {
+      "hubConfigured": true,
+      "signIn": "github",
+      "token": null,
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "GET /hub/token",
+    "status": 200,
+    "step": "hub token, signed out",
+  },
+  {
+    "body": "spa /hub/nothing",
+    "headers": {
+      "content-type": "text/plain;charset=UTF-8",
+      "x-from": "assets",
+    },
+    "request": "GET /hub/nothing",
+    "status": 200,
+    "step": "hub unknown falls through",
+  },
+  {
+    "body": {
+      "authorization_servers": [
+        "https://api.test",
+      ],
+      "bearer_methods_supported": [
+        "header",
+      ],
+      "resource": "https://api.test/mcp",
+      "resource_name": "superpipeline board worker",
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "GET /.well-known/oauth-protected-resource",
+    "status": 200,
+    "step": "protected resource metadata",
+  },
+  {
+    "body": "spa /.well-known/oauth-protected-resource/mcp",
+    "headers": {
+      "content-type": "text/plain;charset=UTF-8",
+      "x-from": "assets",
+    },
+    "request": "GET /.well-known/oauth-protected-resource/mcp",
+    "status": 200,
+    "step": "protected resource metadata for /mcp",
+  },
+  {
+    "body": "spa /.well-known/oauth-protected-resource/other",
+    "headers": {
+      "content-type": "text/plain;charset=UTF-8",
+      "x-from": "assets",
+    },
+    "request": "GET /.well-known/oauth-protected-resource/other",
+    "status": 200,
+    "step": "protected resource metadata, other suffix",
+  },
+  {
+    "body": "spa /.well-known/oauth-protected-resource",
+    "headers": {
+      "content-type": "text/plain;charset=UTF-8",
+      "x-from": "assets",
+    },
+    "request": "POST /.well-known/oauth-protected-resource",
+    "status": 200,
+    "step": "protected resource metadata, wrong method",
+  },
+  {
+    "body": {
+      "error": "unauthorized",
+      "error_description": "A bearer token is required.",
+    },
+    "headers": {
+      "content-type": "application/json",
+      "www-authenticate": "Bearer resource_metadata="https://api.test/.well-known/oauth-protected-resource"",
+    },
+    "request": "POST /mcp",
+    "status": 401,
+    "step": "mcp, signed out",
+  },
+  {
+    "body": {
+      "error": "unauthorized",
+      "error_description": "A bearer token is required.",
+    },
+    "headers": {
+      "content-type": "application/json",
+      "www-authenticate": "Bearer resource_metadata="https://api.test/.well-known/oauth-protected-resource"",
+    },
+    "request": "POST /mcp",
+    "status": 401,
+    "step": "mcp, a bearer nobody issued",
+  },
+  {
+    "body": {
+      "error": "unauthorized",
+      "error_description": "A bearer token is required.",
+    },
+    "headers": {
+      "content-type": "application/json",
+      "www-authenticate": "Bearer resource_metadata="https://api.test/.well-known/oauth-protected-resource"",
+    },
+    "request": "GET /mcp",
+    "status": 401,
+    "step": "mcp, GET signed out",
+  },
+  {
+    "body": "spa /mcp/",
+    "headers": {
+      "content-type": "text/plain;charset=UTF-8",
+      "x-from": "assets",
+    },
+    "request": "POST /mcp/",
+    "status": 200,
+    "step": "mcp/ is not /mcp",
+  },
+  {
+    "body": {
+      "error": "sign in to continue",
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "GET /v1/tenant/forge",
+    "status": 401,
+    "step": "forge host, signed out",
+  },
+  {
+    "body": {
+      "forgeHost": null,
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "GET /v1/tenant/forge",
+    "status": 200,
+    "step": "forge host",
+  },
+  {
+    "body": {
+      "error": "forgeHost is required (a host like \`forge.example.com\`, or null to clear)",
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "PUT /v1/tenant/forge",
+    "status": 400,
+    "step": "forge host, missing",
+  },
+  {
+    "body": {
+      "forgeHost": "https://forge.example.com/x",
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "PUT /v1/tenant/forge",
+    "status": 200,
+    "step": "forge host, a URL",
+  },
+  {
+    "body": {
+      "forgeHost": "forge.example.com",
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "PUT /v1/tenant/forge",
+    "status": 200,
+    "step": "forge host, set",
+  },
+  {
+    "body": {
+      "error": "method not allowed",
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "POST /v1/tenant/forge",
+    "status": 405,
+    "step": "forge host, wrong method",
+  },
+  {
+    "body": {
+      "error": "sign in to continue",
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "GET /v1/tenant",
+    "status": 401,
+    "step": "tenant, signed out",
+  },
+  {
+    "body": {
+      "tenant": {
+        "externalId": null,
+        "externalSource": null,
+        "forgeHost": "forge.example.com",
+        "id": "tnt_http",
+        "name": "http",
+        "slug": "http",
+      },
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "GET /v1/tenant",
+    "status": 200,
+    "step": "tenant",
+  },
+  {
+    "body": {
+      "error": "externalId is required (a fleet_… string, or null to unlink)",
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "PATCH /v1/tenant",
+    "status": 400,
+    "step": "tenant link, missing",
+  },
+  {
+    "body": {
+      "error": "externalId must look like fleet_ followed by 20 lowercase hex characters",
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "PATCH /v1/tenant",
+    "status": 400,
+    "step": "tenant link, malformed",
+  },
+  {
+    "body": {
+      "ok": true,
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "PATCH /v1/tenant",
+    "status": 200,
+    "step": "tenant link",
+  },
+  {
+    "body": {
+      "ok": true,
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "PATCH /v1/tenant",
+    "status": 200,
+    "step": "tenant unlink",
+  },
+  {
+    "body": {
+      "error": {
+        "message": "Expected property name or '}' in JSON at position 1 (line 1 column 2)",
+      },
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "PATCH /v1/tenant",
+    "status": 500,
+    "step": "tenant link, not JSON",
+  },
+  {
+    "body": {
+      "error": "method not allowed",
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "DELETE /v1/tenant",
+    "status": 405,
+    "step": "tenant, wrong method",
+  },
+  {
+    "body": "spa /v1/tenant/",
+    "headers": {
+      "content-type": "text/plain;charset=UTF-8",
+      "x-from": "assets",
+    },
+    "request": "GET /v1/tenant/",
+    "status": 200,
+    "step": "tenant/ is not /v1/tenant",
+  },
+  {
+    "body": {
+      "error": "sign in to continue",
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "GET /v1/members",
+    "status": 401,
+    "step": "members, signed out",
+  },
+  {
+    "body": {
+      "members": [],
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "GET /v1/members",
+    "status": 200,
+    "step": "members, empty workspace",
+  },
+  {
+    "body": {
+      "error": "a valid email address is required",
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "POST /v1/members",
+    "status": 400,
+    "step": "member, bad email",
+  },
+  {
+    "body": {
+      "error": "role must be one of owner, admin, member, viewer",
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "POST /v1/members",
+    "status": 400,
+    "step": "member, bad role",
+  },
+  {
+    "body": {
+      "member": {
+        "createdAt": "<time>",
+        "email": "o@example.com",
+        "name": "Olive",
+        "role": "owner",
+        "userId": "usr#2",
+      },
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "POST /v1/members",
+    "status": 201,
+    "step": "member, an owner",
+  },
+  {
+    "body": {
+      "error": "you are not a member of this workspace",
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "GET /v1/members",
+    "status": 403,
+    "step": "members, dev header naming nobody once members exist",
+  },
+  {
+    "body": {
+      "member": {
+        "createdAt": "<time>",
+        "email": "v@example.com",
+        "name": null,
+        "role": "viewer",
+        "userId": "usr#3",
+      },
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "POST /v1/members",
+    "status": 201,
+    "step": "member, a viewer",
+  },
+  {
+    "body": {
+      "members": [
+        {
+          "createdAt": "<time>",
+          "email": "o@example.com",
+          "name": "Olive",
+          "role": "owner",
+          "userId": "usr#2",
+        },
+        {
+          "createdAt": "<time>",
+          "email": "v@example.com",
+          "name": null,
+          "role": "viewer",
+          "userId": "usr#3",
+        },
+      ],
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "GET /v1/members",
+    "status": 200,
+    "step": "members, as the viewer",
+  },
+  {
+    "body": {
+      "error": "a viewer may not do that in this workspace",
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "POST /v1/members",
+    "status": 403,
+    "step": "member, viewer may not add",
+  },
+  {
+    "body": {
+      "ok": true,
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "PATCH /v1/members/usr#3",
+    "status": 200,
+    "step": "member, role change",
+  },
+  {
+    "body": {
+      "error": "role must be one of owner, admin, member, viewer",
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "PATCH /v1/members/usr#3",
+    "status": 400,
+    "step": "member, role change, bad role",
+  },
+  {
+    "body": {
+      "error": "this is the workspace's only owner — appoint another before changing this",
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "PATCH /v1/members/usr#2",
+    "status": 409,
+    "step": "member, the last owner steps down",
+  },
+  {
+    "body": {
+      "error": "not a member of this workspace",
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "PATCH /v1/members/usr_nobody",
+    "status": 404,
+    "step": "member, not a member",
+  },
+  {
+    "body": {
+      "error": "this is the workspace's only owner — appoint another before removing this one",
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "DELETE /v1/members/usr#2",
+    "status": 409,
+    "step": "member, removing the last owner",
+  },
+  {
+    "body": {
+      "error": "method not allowed",
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "PUT /v1/members",
+    "status": 405,
+    "step": "member, wrong method",
+  },
+  {
+    "body": {
+      "error": {
+        "message": "Unexpected token 'x', "x" is not valid JSON",
+      },
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "POST /v1/members",
+    "status": 500,
+    "step": "member, not JSON",
+  },
+  {
+    "body": "spa /v1/members/a/b",
+    "headers": {
+      "content-type": "text/plain;charset=UTF-8",
+      "x-from": "assets",
+    },
+    "request": "GET /v1/members/a/b",
+    "status": 200,
+    "step": "members/a/b is not a member route",
+  },
+  {
+    "body": {
+      "error": "sign in to continue",
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "GET /v1/capabilities/implications",
+    "status": 401,
+    "step": "implications, signed out",
+  },
+  {
+    "body": {
+      "implications": [],
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "GET /v1/capabilities/implications",
+    "status": 200,
+    "step": "implications",
+  },
+  {
+    "body": {
+      "error": "a capability already implies itself; an edge to itself says nothing",
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "POST /v1/capabilities/implications",
+    "status": 400,
+    "step": "implication, to itself",
+  },
+  {
+    "body": {
+      "error": "both from and to are required, and must contain a letter or a digit",
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "POST /v1/capabilities/implications",
+    "status": 400,
+    "step": "implication, missing",
+  },
+  {
+    "body": {
+      "implications": [
+        {
+          "from": "code-review",
+          "to": "code",
+        },
+      ],
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "POST /v1/capabilities/implications",
+    "status": 201,
+    "step": "implication",
+  },
+  {
+    "body": "",
+    "headers": {},
+    "request": "DELETE /v1/capabilities/implications?from=code-review&to=code",
+    "status": 204,
+    "step": "implication, remove",
+  },
+  {
+    "body": {
+      "error": "no such implication",
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "DELETE /v1/capabilities/implications?from=code-review&to=code",
+    "status": 404,
+    "step": "implication, remove again",
+  },
+  {
+    "body": {
+      "error": "method not allowed",
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "PUT /v1/capabilities/implications",
+    "status": 405,
+    "step": "implications, wrong method",
+  },
+  {
+    "body": {
+      "error": "sign in to continue",
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "GET /v1/capabilities",
+    "status": 401,
+    "step": "capabilities, signed out",
+  },
+  {
+    "body": {
+      "capabilities": [
+        {
+          "agentCount": 0,
+          "boardCount": 0,
+          "createdBy": "usr_dev",
+          "description": null,
+          "examples": [],
+          "externalId": null,
+          "externalSource": null,
+          "id": "cap#4",
+          "inputModes": [],
+          "key": "code",
+          "name": "code",
+          "origin": "inferred",
+          "outputModes": [],
+          "tags": [],
+          "tenantId": "tnt_http",
+        },
+        {
+          "agentCount": 0,
+          "boardCount": 0,
+          "createdBy": "usr_dev",
+          "description": null,
+          "examples": [],
+          "externalId": null,
+          "externalSource": null,
+          "id": "cap#5",
+          "inputModes": [],
+          "key": "code-review",
+          "name": "code-review",
+          "origin": "inferred",
+          "outputModes": [],
+          "tags": [],
+          "tenantId": "tnt_http",
+        },
+      ],
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "GET /v1/capabilities",
+    "status": 200,
+    "step": "capabilities",
+  },
+  {
+    "body": {
+      "error": "key is required, and must contain a letter or a digit",
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "POST /v1/capabilities",
+    "status": 400,
+    "step": "capability, no key",
+  },
+  {
+    "body": {
+      "capability": {
+        "createdBy": "usr_dev",
+        "description": null,
+        "examples": [],
+        "externalId": null,
+        "externalSource": null,
+        "id": "cap#6",
+        "inputModes": [],
+        "key": "research",
+        "name": "Research",
+        "origin": "declared",
+        "outputModes": [],
+        "tags": [],
+        "tenantId": "tnt_http",
+      },
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "POST /v1/capabilities",
+    "status": 201,
+    "step": "capability",
+  },
+  {
+    "body": {
+      "capability": {
+        "createdBy": "usr_dev",
+        "description": null,
+        "examples": [],
+        "externalId": null,
+        "externalSource": null,
+        "id": "cap#7",
+        "inputModes": [],
+        "key": "researc",
+        "name": "researc",
+        "origin": "declared",
+        "outputModes": [],
+        "tags": [],
+        "tenantId": "tnt_http",
+      },
+      "similar": [
+        "research",
+      ],
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "POST /v1/capabilities",
+    "status": 201,
+    "step": "capability, near another",
+  },
+  {
+    "body": {
+      "error": "research already exists in this workspace",
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "POST /v1/capabilities",
+    "status": 409,
+    "step": "capability, again",
+  },
+  {
+    "body": {
+      "error": "a capability key cannot be renamed — stages and agents refer to it. Create another and restaff.",
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "PATCH /v1/capabilities/cap#6",
+    "status": 400,
+    "step": "capability, rename refused",
+  },
+  {
+    "body": {
+      "capability": {
+        "createdBy": "usr_dev",
+        "description": "Finds sources",
+        "examples": [],
+        "externalId": null,
+        "externalSource": null,
+        "id": "cap#6",
+        "inputModes": [],
+        "key": "research",
+        "name": "Research",
+        "origin": "declared",
+        "outputModes": [],
+        "tags": [],
+        "tenantId": "tnt_http",
+      },
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "PATCH /v1/capabilities/cap#6",
+    "status": 200,
+    "step": "capability, edit",
+  },
+  {
+    "body": {
+      "error": "capability not found, or nothing to change",
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "PATCH /v1/capabilities/cap_nothing",
+    "status": 404,
+    "step": "capability, edit missing",
+  },
+  {
+    "body": {
+      "error": "capability not found",
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "DELETE /v1/capabilities/cap_nothing",
+    "status": 404,
+    "step": "capability, delete missing",
+  },
+  {
+    "body": {
+      "error": "method not allowed",
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "PUT /v1/capabilities",
+    "status": 405,
+    "step": "capabilities, wrong method",
+  },
+  {
+    "body": {
+      "error": "sign in to continue",
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "GET /v1/labels",
+    "status": 401,
+    "step": "labels, signed out",
+  },
+  {
+    "body": {
+      "labels": [],
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "GET /v1/labels",
+    "status": 200,
+    "step": "labels",
+  },
+  {
+    "body": {
+      "error": "name is required",
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "POST /v1/labels",
+    "status": 400,
+    "step": "label, no name",
+  },
+  {
+    "body": {
+      "error": "colour is required",
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "POST /v1/labels",
+    "status": 400,
+    "step": "label, no colour",
+  },
+  {
+    "body": {
+      "label": {
+        "colour": "red",
+        "createdAt": "<time>",
+        "id": "lbl#8",
+        "name": "Bug",
+        "origin": "declared",
+        "tenantId": "tnt_http",
+      },
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "POST /v1/labels",
+    "status": 201,
+    "step": "label",
+  },
+  {
+    "body": {
+      "error": "a label named "Bug" already exists in this workspace",
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "POST /v1/labels",
+    "status": 409,
+    "step": "label, again",
+  },
+  {
+    "body": {
+      "label": {
+        "colour": "green",
+        "createdAt": "<time>",
+        "id": "lbl#8",
+        "name": "Bug",
+        "origin": "declared",
+        "tenantId": "tnt_http",
+      },
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "PATCH /v1/labels/lbl#8",
+    "status": 200,
+    "step": "label, edit",
+  },
+  {
+    "body": {
+      "error": "name is required",
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "PATCH /v1/labels/lbl#8",
+    "status": 400,
+    "step": "label, edit blank",
+  },
+  {
+    "body": {
+      "error": "label not found",
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "PATCH /v1/labels/lbl_nothing",
+    "status": 404,
+    "step": "label, edit missing",
+  },
+  {
+    "body": {
+      "error": "method not allowed",
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "PUT /v1/labels",
+    "status": 405,
+    "step": "labels, wrong method",
+  },
+  {
+    "body": {
+      "error": "sign in to continue",
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "GET /v1/agents",
+    "status": 401,
+    "step": "agents, signed out",
+  },
+  {
+    "body": {
+      "agents": [],
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "GET /v1/agents",
+    "status": 200,
+    "step": "agents",
+  },
+  {
+    "body": {
+      "error": "sign in to continue",
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "POST /v1/agents",
+    "status": 401,
+    "step": "agent, signed out",
+  },
+  {
+    "body": {
+      "agent": {
+        "capabilities": [
+          "research",
+        ],
+        "concurrency": 1,
+        "externalId": null,
+        "externalSource": null,
+        "iconUrl": null,
+        "id": "agt#9",
+        "name": "Researcher",
+        "tenantId": "tnt_http",
+        "tokenIds": [],
+      },
+      "token": "<token>",
+      "tokenId": "tok#10",
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "POST /v1/agents",
+    "status": 201,
+    "step": "agent",
+  },
+  {
+    "body": {
+      "card": {
+        "description": null,
+        "name": "Researcher",
+        "skills": [
+          {
+            "description": "Finds sources",
+            "examples": [],
+            "id": "research",
+            "inputModes": [],
+            "name": "Research",
+            "outputModes": [],
+            "tags": [],
+          },
+        ],
+        "unregistered": [],
+        "version": "0.1.0",
+      },
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "GET /v1/agents/agt#9/card",
+    "status": 200,
+    "step": "agent card",
+  },
+  {
+    "body": {
+      "error": "no such agent",
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "GET /v1/agents/agt_nothing/card",
+    "status": 404,
+    "step": "agent card, missing",
+  },
+  {
+    "body": {
+      "error": "method not allowed",
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "POST /v1/agents/agt#9/card",
+    "status": 405,
+    "step": "agent card, wrong method",
+  },
+  {
+    "body": {
+      "error": "sign in to continue",
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "GET /v1/agents/agt#9/card",
+    "status": 401,
+    "step": "agent card, signed out",
+  },
+  {
+    "body": {
+      "ok": true,
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "PATCH /v1/agents/agt#9",
+    "status": 200,
+    "step": "agent, edit",
+  },
+  {
+    "body": {
+      "scopes": [
+        "claim",
+        "run",
+      ],
+      "token": "<token>",
+      "tokenId": "tok#11",
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "POST /v1/agents/agt#9/tokens",
+    "status": 201,
+    "step": "agent token, mint",
+  },
+  {
+    "body": {
+      "scopes": [
+        "read",
+        "plan",
+        "compose",
+        "queue",
+      ],
+      "token": "<token>",
+      "tokenId": "tok#12",
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "POST /v1/agents/agt#9/tokens",
+    "status": 201,
+    "step": "agent token, a coordinator",
+  },
+  {
+    "body": {
+      "error": "scopes must be a non-empty subset of claim, run",
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "POST /v1/agents/agt#9/tokens",
+    "status": 400,
+    "step": "agent token, bad scopes",
+  },
+  {
+    "body": {
+      "agents": [
+        {
+          "boardCeilingPerDay": 3,
+          "capabilities": [
+            "research",
+          ],
+          "concurrency": 1,
+          "externalId": null,
+          "externalSource": null,
+          "iconUrl": null,
+          "id": "agt#9",
+          "mayQueueTo": null,
+          "name": "Researcher 2",
+          "ownerUserId": null,
+          "queueCeilingPerHour": 20,
+          "role": null,
+          "tenantId": "tnt_http",
+          "tokenIds": [
+            "tok#10",
+            "tok#11",
+            "tok#12",
+          ],
+        },
+      ],
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "GET /v1/agents",
+    "status": 200,
+    "step": "agents, as a coordinator",
+  },
+  {
+    "body": {
+      "error": "method not allowed",
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "GET /v1/agents/agt#9/tokens",
+    "status": 405,
+    "step": "agent tokens, list",
+  },
+  {
+    "body": "",
+    "headers": {},
+    "request": "DELETE /v1/agents/agt#9/tokens/tok#11",
+    "status": 204,
+    "step": "agent token, revoke",
+  },
+  {
+    "body": {
+      "error": "this token is not permitted to read",
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "GET /v1/agents",
+    "status": 403,
+    "step": "agent, as its own bearer",
+  },
+  {
+    "body": {
+      "error": "method not allowed",
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "PUT /v1/agents",
+    "status": 405,
+    "step": "agents, wrong method",
+  },
+  {
+    "body": {
+      "error": {
+        "message": "Expected property name or '}' in JSON at position 1 (line 1 column 2)",
+      },
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "POST /v1/agents",
+    "status": 500,
+    "step": "agent, not JSON",
+  },
+  {
+    "body": "spa /v1/agents/a/b",
+    "headers": {
+      "content-type": "text/plain;charset=UTF-8",
+      "x-from": "assets",
+    },
+    "request": "GET /v1/agents/a/b",
+    "status": 200,
+    "step": "agents/a/b is not an agent route",
+  },
+  {
+    "body": {
+      "error": "this token is not permitted to read",
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "GET /v1/capabilities",
+    "status": 403,
+    "step": "capabilities, as an agent",
+  },
+  {
+    "body": {
+      "error": "this is not something an agent may do in this workspace",
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "POST /v1/capabilities",
+    "status": 403,
+    "step": "capability, an agent may not define one",
+  },
+  {
+    "body": {
+      "error": "this token is not permitted to read",
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "GET /v1/labels",
+    "status": 403,
+    "step": "labels, as an agent",
+  },
+  {
+    "body": {
+      "capabilities": [
+        {
+          "agentCount": 0,
+          "boardCount": 0,
+          "createdBy": "usr_dev",
+          "description": null,
+          "examples": [],
+          "externalId": null,
+          "externalSource": null,
+          "id": "cap#4",
+          "inputModes": [],
+          "key": "code",
+          "name": "code",
+          "origin": "inferred",
+          "outputModes": [],
+          "tags": [],
+          "tenantId": "tnt_http",
+        },
+        {
+          "agentCount": 0,
+          "boardCount": 0,
+          "createdBy": "usr_dev",
+          "description": null,
+          "examples": [],
+          "externalId": null,
+          "externalSource": null,
+          "id": "cap#5",
+          "inputModes": [],
+          "key": "code-review",
+          "name": "code-review",
+          "origin": "inferred",
+          "outputModes": [],
+          "tags": [],
+          "tenantId": "tnt_http",
+        },
+        {
+          "agentCount": 0,
+          "boardCount": 0,
+          "createdBy": "usr_dev",
+          "description": null,
+          "examples": [],
+          "externalId": null,
+          "externalSource": null,
+          "id": "cap#7",
+          "inputModes": [],
+          "key": "researc",
+          "name": "researc",
+          "origin": "declared",
+          "outputModes": [],
+          "tags": [],
+          "tenantId": "tnt_http",
+        },
+        {
+          "agentCount": 1,
+          "boardCount": 0,
+          "createdBy": "usr_dev",
+          "description": "Finds sources",
+          "examples": [],
+          "externalId": null,
+          "externalSource": null,
+          "id": "cap#6",
+          "inputModes": [],
+          "key": "research",
+          "name": "Research",
+          "origin": "declared",
+          "outputModes": [],
+          "tags": [],
+          "tenantId": "tnt_http",
+        },
+      ],
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "GET /v1/capabilities",
+    "status": 200,
+    "step": "capabilities, as a coordinator",
+  },
+  {
+    "body": {
+      "labels": [
+        {
+          "colour": "green",
+          "createdAt": "<time>",
+          "id": "lbl#8",
+          "name": "Bug",
+          "origin": "declared",
+          "tenantId": "tnt_http",
+        },
+      ],
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "GET /v1/labels",
+    "status": 200,
+    "step": "labels, as a coordinator",
+  },
+  {
+    "body": {
+      "boardsUnanswered": 0,
+      "cards": [],
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "GET /v1/stale",
+    "status": 200,
+    "step": "stale, as a coordinator",
+  },
+  {
+    "body": {
+      "error": "sign in to continue",
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "GET /v1/projects",
+    "status": 401,
+    "step": "projects, signed out",
+  },
+  {
+    "body": {
+      "projects": [],
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "GET /v1/projects",
+    "status": 200,
+    "step": "projects",
+  },
+  {
+    "body": {
+      "error": "name is required",
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "POST /v1/projects",
+    "status": 400,
+    "step": "project, no name",
+  },
+  {
+    "body": {
+      "error": "targetDate must be YYYY-MM-DD",
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "POST /v1/projects",
+    "status": 400,
+    "step": "project, bad date",
+  },
+  {
+    "body": {
+      "error": "unknown project health: "meh"",
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "POST /v1/projects",
+    "status": 400,
+    "step": "project, bad health",
+  },
+  {
+    "body": {
+      "project": {
+        "createdAt": "<time>",
+        "description": null,
+        "health": null,
+        "id": "prj#13",
+        "leadUserId": null,
+        "name": "Launch",
+        "state": "active",
+        "targetDate": "<date>",
+        "tenantId": "tnt_http",
+        "updatedAt": null,
+      },
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "POST /v1/projects",
+    "status": 201,
+    "step": "project",
+  },
+  {
+    "body": {
+      "error": "a project named "Launch" already exists in this workspace",
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "POST /v1/projects",
+    "status": 409,
+    "step": "project, again",
+  },
+  {
+    "body": {
+      "milestones": [],
+      "project": {
+        "createdAt": "<time>",
+        "description": null,
+        "health": null,
+        "id": "prj#13",
+        "leadUserId": null,
+        "name": "Launch",
+        "state": "active",
+        "targetDate": "<date>",
+        "tenantId": "tnt_http",
+        "updatedAt": null,
+      },
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "GET /v1/projects/prj#13",
+    "status": 200,
+    "step": "project",
+  },
+  {
+    "body": {
+      "error": "project not found",
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "GET /v1/projects/prj_nothing",
+    "status": 404,
+    "step": "project, missing",
+  },
+  {
+    "body": {
+      "rollup": {
+        "boardsUnanswered": 0,
+        "cardsDone": 0,
+        "cardsOverdue": 0,
+        "cardsTotal": 0,
+        "computedAt": "<time>",
+        "costUsd": 0,
+        "partial": false,
+        "projectId": "prj#13",
+      },
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "GET /v1/projects/prj#13/rollup",
+    "status": 200,
+    "step": "project rollup",
+  },
+  {
+    "body": {
+      "error": "project not found",
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "GET /v1/projects/prj_nothing/rollup",
+    "status": 404,
+    "step": "project rollup, missing",
+  },
+  {
+    "body": {
+      "project": {
+        "createdAt": "<time>",
+        "description": null,
+        "health": "on-track",
+        "id": "prj#13",
+        "leadUserId": null,
+        "name": "Launch",
+        "state": "active",
+        "targetDate": "<date>",
+        "tenantId": "tnt_http",
+        "updatedAt": "<time>",
+      },
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "PATCH /v1/projects/prj#13",
+    "status": 200,
+    "step": "project, edit",
+  },
+  {
+    "body": {
+      "error": "unknown project state: "x"",
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "PATCH /v1/projects/prj#13",
+    "status": 400,
+    "step": "project, bad state",
+  },
+  {
+    "body": {
+      "error": "this token is not permitted to plan",
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "PATCH /v1/projects/prj#13",
+    "status": 403,
+    "step": "project, as an agent",
+  },
+  {
+    "body": {
+      "project": {
+        "createdAt": "<time>",
+        "description": "by a coordinator",
+        "health": "on-track",
+        "id": "prj#13",
+        "leadUserId": null,
+        "name": "Launch",
+        "state": "active",
+        "targetDate": "<date>",
+        "tenantId": "tnt_http",
+        "updatedAt": "<time>",
+      },
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "PATCH /v1/projects/prj#13",
+    "status": 200,
+    "step": "project, as a coordinator",
+  },
+  {
+    "body": {
+      "projects": [
+        {
+          "createdAt": "<time>",
+          "description": "by a coordinator",
+          "health": "on-track",
+          "id": "prj#13",
+          "leadUserId": null,
+          "name": "Launch",
+          "state": "active",
+          "targetDate": "<date>",
+          "tenantId": "tnt_http",
+          "updatedAt": "<time>",
+        },
+      ],
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "GET /v1/projects",
+    "status": 200,
+    "step": "projects, as a coordinator",
+  },
+  {
+    "body": {
+      "error": "this is not something an agent may do in this workspace",
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "DELETE /v1/projects/prj#13",
+    "status": 403,
+    "step": "project, an agent may not delete",
+  },
+  {
+    "body": {
+      "milestone": {
+        "createdAt": "<time>",
+        "id": "mls#14",
+        "name": "Beta",
+        "projectId": "prj#13",
+        "sortOrder": 1,
+        "targetDate": null,
+        "tenantId": "tnt_http",
+      },
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "POST /v1/projects/prj#13/milestones",
+    "status": 201,
+    "step": "milestone",
+  },
+  {
+    "body": {
+      "error": "sortOrder must be a number",
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "POST /v1/projects/prj#13/milestones",
+    "status": 400,
+    "step": "milestone, bad order",
+  },
+  {
+    "body": {
+      "error": "method not allowed",
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "GET /v1/projects/prj#13/milestones",
+    "status": 405,
+    "step": "milestones, wrong method",
+  },
+  {
+    "body": {
+      "milestone": {
+        "createdAt": "<time>",
+        "id": "mls#14",
+        "name": "Beta 2",
+        "projectId": "prj#13",
+        "sortOrder": 1,
+        "targetDate": null,
+        "tenantId": "tnt_http",
+      },
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "PATCH /v1/milestones/mls#14",
+    "status": 200,
+    "step": "milestone, edit",
+  },
+  {
+    "body": {
+      "error": "milestone not found",
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "PATCH /v1/milestones/mst_nothing",
+    "status": 404,
+    "step": "milestone, edit missing",
+  },
+  {
+    "body": {
+      "error": "method not allowed",
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "GET /v1/milestones/mls#14",
+    "status": 405,
+    "step": "milestone, wrong method",
+  },
+  {
+    "body": {
+      "error": "sign in to continue",
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "DELETE /v1/milestones/mls#14",
+    "status": 401,
+    "step": "milestone, signed out",
+  },
+  {
+    "body": "",
+    "headers": {},
+    "request": "DELETE /v1/milestones/mls#14",
+    "status": 204,
+    "step": "milestone, delete",
+  },
+  {
+    "body": {
+      "error": "milestone not found",
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "DELETE /v1/milestones/mls#14",
+    "status": 404,
+    "step": "milestone, delete again",
+  },
+  {
+    "body": "spa /v1/milestones",
+    "headers": {
+      "content-type": "text/plain;charset=UTF-8",
+      "x-from": "assets",
+    },
+    "request": "GET /v1/milestones",
+    "status": 200,
+    "step": "milestones, the collection is not a route",
+  },
+  {
+    "body": {
+      "error": "method not allowed",
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "PUT /v1/projects",
+    "status": 405,
+    "step": "projects, wrong method",
+  },
+  {
+    "body": {
+      "error": "sign in to continue",
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "GET /v1/stale",
+    "status": 401,
+    "step": "stale, signed out",
+  },
+  {
+    "body": {
+      "boardsUnanswered": 0,
+      "cards": [],
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "GET /v1/stale",
+    "status": 200,
+    "step": "stale",
+  },
+  {
+    "body": {
+      "error": {
+        "code": "INVALID_STALE_SETTINGS",
+        "message": "\`hours\` must be a number, 0 or more",
+      },
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "GET /v1/stale?hours=x",
+    "status": 400,
+    "step": "stale, bad hours",
+  },
+  {
+    "body": {
+      "error": "method not allowed",
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "POST /v1/stale",
+    "status": 405,
+    "step": "stale, wrong method",
+  },
+  {
+    "body": {
+      "error": "method not allowed",
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "GET /v1/admin/superwitness/backfill",
+    "status": 405,
+    "step": "backfill, wrong method",
+  },
+  {
+    "body": {
+      "error": "sign in to continue",
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "POST /v1/admin/superwitness/backfill",
+    "status": 401,
+    "step": "backfill, signed out",
+  },
+  {
+    "body": {
+      "error": "this is not something an agent may do in this workspace",
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "POST /v1/admin/superwitness/backfill",
+    "status": 403,
+    "step": "backfill, as an agent",
+  },
+  {
+    "body": {
+      "error": "board_id is required",
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "POST /v1/admin/superwitness/backfill",
+    "status": 400,
+    "step": "backfill, no board",
+  },
+  {
+    "body": {
+      "error": "board_id is required",
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "POST /v1/admin/superwitness/backfill",
+    "status": 400,
+    "step": "backfill, not JSON",
+  },
+  {
+    "body": {
+      "error": "board not found",
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "POST /v1/admin/superwitness/backfill",
+    "status": 404,
+    "step": "backfill, unknown board",
+  },
+  {
+    "body": {
+      "error": "sign in to continue",
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "GET /v1/boards",
+    "status": 401,
+    "step": "boards, signed out",
+  },
+  {
+    "body": {
+      "boards": [],
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "GET /v1/boards",
+    "status": 200,
+    "step": "boards",
+  },
+  {
+    "body": {
+      "error": {
+        "message": "Expected a JSON object.",
+      },
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "POST /v1/boards",
+    "status": 400,
+    "step": "board, not an object",
+  },
+  {
+    "body": {
+      "error": {
+        "message": "\`name\` is required and must be a non-empty string.",
+      },
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "POST /v1/boards",
+    "status": 400,
+    "step": "board, no name",
+  },
+  {
+    "body": {
+      "error": {
+        "message": "\`stages\` is required and must be a non-empty array. There is no \`template\` field — a client picks the stages and sends them.",
+      },
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "POST /v1/boards",
+    "status": 400,
+    "step": "board, a template",
+  },
+  {
+    "body": {
+      "error": {
+        "message": "Every stage needs a string \`key\`.",
+      },
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "POST /v1/boards",
+    "status": 400,
+    "step": "board, a stage without a key",
+  },
+  {
+    "body": {
+      "error": {
+        "code": "INVALID_STAGES",
+        "message": "stage "a" summary must be a string of at most 200 characters",
+      },
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "POST /v1/boards",
+    "status": 400,
+    "step": "board, a long summary",
+  },
+  {
+    "body": {
+      "error": {
+        "code": "INVALID_INTRO",
+        "message": "intro must be an object with a lede and a composeHint",
+      },
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "POST /v1/boards",
+    "status": 400,
+    "step": "board, a bad intro",
+  },
+  {
+    "body": {
+      "board": {
+        "boardId": "brd#15",
+        "cards": [],
+        "elicitations": [],
+        "gates": [],
+        "github": {
+          "issueTrigger": false,
+          "triggerGrantCount": null,
+          "webhookConfigured": false,
+          "webhookUrl": "https://app.superpipeline.dev/v1/boards/brd#15/webhooks/github?tenant=tnt_http",
+        },
+        "name": "Pinned",
+        "references": [],
+        "stages": [
+          {
+            "key": "inbox",
+            "name": "Inbox",
+            "order": 0,
+            "ownerKind": "human",
+          },
+          {
+            "key": "research",
+            "name": "Research",
+            "order": 1,
+            "owner": "research",
+            "ownerKind": "capability",
+          },
+          {
+            "gate": "approval",
+            "key": "review",
+            "name": "Review",
+            "order": 2,
+            "ownerKind": "human",
+          },
+          {
+            "key": "done",
+            "name": "Done",
+            "order": 3,
+          },
+        ],
+        "stale": {
+          "afterHours": 24,
+          "enabled": true,
+        },
+        "tenantId": "tnt_http",
+        "usage": {
+          "budgetUsd": null,
+          "cardUsdCap": null,
+          "estimatedCostUsd": 0,
+          "overBudget": false,
+          "totalCostUsd": 0,
+        },
+      },
+      "boardId": "brd#15",
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "POST /v1/boards",
+    "status": 201,
+    "step": "board",
+  },
+  {
+    "body": {
+      "error": "this token is not permitted to compose",
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "POST /v1/boards",
+    "status": 403,
+    "step": "board, an agent without an owner composes",
+  },
+  {
+    "body": {
+      "error": "this token is not permitted to read",
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "GET /v1/boards",
+    "status": 403,
+    "step": "boards, as an agent",
+  },
+  {
+    "body": {
+      "boards": [
+        {
+          "cardCount": 0,
+          "id": "brd#15",
+          "lastActivityAt": "<time>",
+          "name": "Pinned",
+          "needsYouCount": 0,
+        },
+      ],
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "GET /v1/boards",
+    "status": 200,
+    "step": "boards, as a coordinator",
+  },
+  {
+    "body": {
+      "error": {
+        "code": "AGENT_HAS_NO_OWNER",
+        "message": "this agent has no owner, so there is nobody to be answerable for the board",
+      },
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "POST /v1/boards",
+    "status": 403,
+    "step": "board, a coordinator with no owner composes",
+  },
+  {
+    "body": {
+      "error": "method not allowed",
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "PUT /v1/boards",
+    "status": 405,
+    "step": "boards, wrong method",
+  },
+  {
+    "body": {
+      "boards": [
+        {
+          "cardCount": 0,
+          "id": "brd#15",
+          "lastActivityAt": "<time>",
+          "name": "Pinned",
+          "needsYouCount": 0,
+        },
+      ],
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "GET /v1/boards/",
+    "status": 200,
+    "step": "boards/, a trailing slash",
+  },
+  {
+    "body": {
+      "error": "sign in to continue",
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "GET /v1/boards/brd#15",
+    "status": 401,
+    "step": "board, signed out",
+  },
+  {
+    "body": {
+      "boardId": "brd#15",
+      "cards": [],
+      "elicitations": [],
+      "gates": [],
+      "github": {
+        "issueTrigger": false,
+        "triggerGrantCount": null,
+        "webhookConfigured": false,
+        "webhookUrl": "https://app.superpipeline.dev/v1/boards/brd#15/webhooks/github?tenant=tnt_http",
+      },
+      "name": "Pinned",
+      "references": [],
+      "stages": [
+        {
+          "key": "inbox",
+          "name": "Inbox",
+          "order": 0,
+          "ownerKind": "human",
+        },
+        {
+          "key": "research",
+          "name": "Research",
+          "order": 1,
+          "owner": "research",
+          "ownerKind": "capability",
+        },
+        {
+          "gate": "approval",
+          "key": "review",
+          "name": "Review",
+          "order": 2,
+          "ownerKind": "human",
+        },
+        {
+          "key": "done",
+          "name": "Done",
+          "order": 3,
+        },
+      ],
+      "stale": {
+        "afterHours": 24,
+        "enabled": true,
+      },
+      "tenantId": "tnt_http",
+      "usage": {
+        "budgetUsd": null,
+        "cardUsdCap": null,
+        "estimatedCostUsd": 0,
+        "overBudget": false,
+        "totalCostUsd": 0,
+      },
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "GET /v1/boards/brd#15",
+    "status": 200,
+    "step": "board",
+  },
+  {
+    "body": {
+      "error": "board not found",
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "GET /v1/boards/brd#1",
+    "status": 404,
+    "step": "board, missing",
+  },
+  {
+    "body": {
+      "boardId": "brd#15",
+      "cards": [],
+      "elicitations": [],
+      "gates": [],
+      "github": {
+        "issueTrigger": false,
+        "triggerGrantCount": null,
+        "webhookConfigured": false,
+        "webhookUrl": "https://app.superpipeline.dev/v1/boards/brd#15/webhooks/github?tenant=tnt_http",
+      },
+      "name": "Pinned, renamed",
+      "references": [],
+      "stages": [
+        {
+          "key": "inbox",
+          "name": "Inbox",
+          "order": 0,
+          "ownerKind": "human",
+        },
+        {
+          "key": "research",
+          "name": "Research",
+          "order": 1,
+          "owner": "research",
+          "ownerKind": "capability",
+        },
+        {
+          "gate": "approval",
+          "key": "review",
+          "name": "Review",
+          "order": 2,
+          "ownerKind": "human",
+        },
+        {
+          "key": "done",
+          "name": "Done",
+          "order": 3,
+        },
+      ],
+      "stale": {
+        "afterHours": 24,
+        "enabled": true,
+      },
+      "tenantId": "tnt_http",
+      "usage": {
+        "budgetUsd": null,
+        "cardUsdCap": null,
+        "estimatedCostUsd": 0,
+        "overBudget": false,
+        "totalCostUsd": 0,
+      },
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "PATCH /v1/boards/brd#15",
+    "status": 200,
+    "step": "board, rename",
+  },
+  {
+    "body": {
+      "error": {
+        "message": "Expected property name or '}' in JSON at position 1 (line 1 column 2)",
+      },
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "PATCH /v1/boards/brd#15",
+    "status": 500,
+    "step": "board, rename not JSON",
+  },
+  {
+    "body": {
+      "error": "this token is not permitted to read",
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "GET /v1/boards/brd#15",
+    "status": 403,
+    "step": "board, as an agent",
+  },
+  {
+    "body": {
+      "boardId": "brd#15",
+      "cards": [],
+      "elicitations": [],
+      "gates": [],
+      "github": {
+        "issueTrigger": false,
+        "triggerGrantCount": null,
+        "webhookConfigured": false,
+        "webhookUrl": "https://app.superpipeline.dev/v1/boards/brd#15/webhooks/github?tenant=tnt_http",
+      },
+      "name": "Pinned, renamed",
+      "references": [],
+      "stages": [
+        {
+          "key": "inbox",
+          "name": "Inbox",
+          "order": 0,
+          "ownerKind": "human",
+        },
+        {
+          "key": "research",
+          "name": "Research",
+          "order": 1,
+          "owner": "research",
+          "ownerKind": "capability",
+        },
+        {
+          "gate": "approval",
+          "key": "review",
+          "name": "Review",
+          "order": 2,
+          "ownerKind": "human",
+        },
+        {
+          "key": "done",
+          "name": "Done",
+          "order": 3,
+        },
+      ],
+      "stale": {
+        "afterHours": 24,
+        "enabled": true,
+      },
+      "tenantId": "tnt_http",
+      "usage": {
+        "budgetUsd": null,
+        "cardUsdCap": null,
+        "estimatedCostUsd": 0,
+        "overBudget": false,
+        "totalCostUsd": 0,
+      },
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "GET /v1/boards/brd#15",
+    "status": 200,
+    "step": "board, as a coordinator",
+  },
+  {
+    "body": {
+      "error": "sign in to continue",
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "DELETE /v1/boards/brd#15",
+    "status": 401,
+    "step": "board, a coordinator may not delete",
+  },
+  {
+    "body": {
+      "error": "sign in to continue",
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "PATCH /v1/boards/brd#15",
+    "status": 401,
+    "step": "board, a coordinator may not rename",
+  },
+  {
+    "body": {
+      "boardId": "brd#15",
+      "cards": [],
+      "elicitations": [],
+      "gates": [],
+      "github": {
+        "issueTrigger": false,
+        "triggerGrantCount": null,
+        "webhookConfigured": false,
+        "webhookUrl": "https://app.superpipeline.dev/v1/boards/brd#15/webhooks/github?tenant=tnt_http",
+      },
+      "name": "Pinned, renamed",
+      "references": [],
+      "stages": [
+        {
+          "key": "inbox",
+          "name": "Inbox",
+          "order": 0,
+          "ownerKind": "human",
+        },
+        {
+          "key": "research",
+          "name": "Research",
+          "order": 1,
+          "owner": "research",
+          "ownerKind": "capability",
+        },
+        {
+          "gate": "approval",
+          "key": "review",
+          "name": "Review",
+          "order": 2,
+          "ownerKind": "human",
+        },
+        {
+          "key": "done",
+          "name": "Done",
+          "order": 3,
+        },
+      ],
+      "stale": {
+        "afterHours": 24,
+        "enabled": true,
+      },
+      "tenantId": "tnt_http",
+      "usage": {
+        "budgetUsd": null,
+        "cardUsdCap": null,
+        "estimatedCostUsd": 0,
+        "overBudget": false,
+        "totalCostUsd": 0,
+      },
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "GET /v1/boards/brd#15",
+    "status": 200,
+    "step": "board, a dev agent",
+  },
+  {
+    "body": {
+      "error": {
+        "code": "UNAUTHORIZED",
+        "message": "a service token for a mapped workspace is required",
+      },
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "GET /v1/boards/brd#15",
+    "status": 401,
+    "step": "board, a service token nobody issued",
+  },
+  {
+    "body": "expected a websocket upgrade",
+    "headers": {
+      "content-type": "text/plain;charset=UTF-8",
+    },
+    "request": "GET /v1/boards/brd#15/ws",
+    "status": 426,
+    "step": "board ws without upgrade",
+  },
+  {
+    "body": {
+      "stage": {
+        "key": "research",
+        "name": "Research",
+        "order": 1,
+        "owner": "research",
+        "ownerKind": "capability",
+        "summary": "Find sources",
+        "wipLimit": 3,
+      },
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "PATCH /v1/boards/brd#15/stages/research",
+    "status": 200,
+    "step": "stage, edit",
+  },
+  {
+    "body": {
+      "error": "\`key\` is not patchable — use PUT /stages, where its effect on the other stages is visible",
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "PATCH /v1/boards/brd#15/stages/research",
+    "status": 400,
+    "step": "stage, key refused",
+  },
+  {
+    "body": {
+      "error": "a stage patch must be a JSON object",
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "PATCH /v1/boards/brd#15/stages/research",
+    "status": 400,
+    "step": "stage, not an object",
+  },
+  {
+    "body": {
+      "error": {
+        "code": "UNKNOWN_STAGE",
+        "message": "unknown stage: nowhere",
+        "ok": false,
+      },
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "PATCH /v1/boards/brd#15/stages/nowhere",
+    "status": 404,
+    "step": "stage, unknown",
+  },
+  {
+    "body": {
+      "error": "this token is not permitted to compose",
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "PATCH /v1/boards/brd#15/stages/research",
+    "status": 403,
+    "step": "stage, as an agent",
+  },
+  {
+    "body": {
+      "stage": {
+        "instructions": "Cite two.",
+        "key": "research",
+        "name": "Research",
+        "order": 1,
+        "owner": "research",
+        "ownerKind": "capability",
+        "summary": "Find sources",
+        "wipLimit": 3,
+      },
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "PATCH /v1/boards/brd#15/stages/research",
+    "status": 200,
+    "step": "stage, a coordinator edits instructions",
+  },
+  {
+    "body": {
+      "error": {
+        "code": "FIELD_NOT_COMPOSABLE",
+        "message": "an agent may only set a stage's instructions; refused: owner",
+      },
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "PATCH /v1/boards/brd#15/stages/research",
+    "status": 403,
+    "step": "stage, a coordinator may not reroute",
+  },
+  {
+    "body": {
+      "boardId": "brd#15",
+      "cards": [],
+      "elicitations": [],
+      "gates": [],
+      "github": {
+        "issueTrigger": false,
+        "triggerGrantCount": null,
+        "webhookConfigured": false,
+        "webhookUrl": "https://app.superpipeline.dev/v1/boards/brd#15/webhooks/github?tenant=tnt_http",
+      },
+      "name": "Pinned, renamed",
+      "references": [],
+      "stages": [
+        {
+          "key": "inbox",
+          "name": "Inbox",
+          "order": 0,
+          "ownerKind": "human",
+        },
+        {
+          "key": "research",
+          "name": "Research",
+          "order": 1,
+          "owner": "research",
+          "ownerKind": "capability",
+        },
+        {
+          "gate": "approval",
+          "key": "review",
+          "name": "Review",
+          "order": 2,
+          "ownerKind": "human",
+        },
+        {
+          "key": "done",
+          "name": "Done",
+          "order": 3,
+        },
+      ],
+      "stale": {
+        "afterHours": 24,
+        "enabled": true,
+      },
+      "tenantId": "tnt_http",
+      "usage": {
+        "budgetUsd": null,
+        "cardUsdCap": null,
+        "estimatedCostUsd": 0,
+        "overBudget": false,
+        "totalCostUsd": 0,
+      },
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "PUT /v1/boards/brd#15/stages",
+    "status": 200,
+    "step": "stages, replace",
+  },
+  {
+    "body": {
+      "error": {
+        "code": "INVALID_STAGES",
+        "message": "a board needs at least one stage",
+        "ok": false,
+      },
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "PUT /v1/boards/brd#15/stages",
+    "status": 400,
+    "step": "stages, refused",
+  },
+  {
+    "body": {
+      "error": "method not allowed",
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "GET /v1/boards/brd#15/stages",
+    "status": 405,
+    "step": "stages, wrong method",
+  },
+  {
+    "body": {
+      "error": {
+        "code": "INVALID_DUE_AT",
+        "message": "dueAt must be null or a date in YYYY-MM-DD form",
+      },
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "POST /v1/boards/brd#15/cards",
+    "status": 400,
+    "step": "card, bad due date",
+  },
+  {
+    "body": {
+      "card": {
+        "archivedAt": null,
+        "attemptCount": 0,
+        "blockedBy": [],
+        "contextId": "ctx#17",
+        "costUsd": 0,
+        "costUsdRollup": 0,
+        "createdAt": "<time>",
+        "currentRunId": null,
+        "currentStageKey": "inbox",
+        "delegateAgentId": null,
+        "dueAt": "<date>",
+        "id": "card#16",
+        "labels": [],
+        "lastAgentId": null,
+        "milestoneId": null,
+        "openChildCount": 0,
+        "overBudget": false,
+        "ownerUserId": "usr_dev",
+        "parentCardId": null,
+        "priority": 2,
+        "projectId": null,
+        "queuedBy": "usr_dev",
+        "queuedByAgentId": null,
+        "queuedGrant": null,
+        "queuedGrantOwner": "usr_dev",
+        "spec": {
+          "goal": "pin",
+        },
+        "stageSince": "<time>",
+        "state": "submitted",
+        "stateSince": "<time>",
+        "title": "Card A",
+        "updatedAt": "<time>",
+      },
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "POST /v1/boards/brd#15/cards",
+    "status": 201,
+    "step": "card",
+  },
+  {
+    "body": {
+      "error": {
+        "code": "BOARD_NOT_PERMITTED",
+        "message": "this agent is not permitted to queue work onto this board",
+      },
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "POST /v1/boards/brd#15/cards",
+    "status": 403,
+    "step": "card, by a coordinator",
+  },
+  {
+    "body": {
+      "error": "this token is not permitted to queue",
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "POST /v1/boards/brd#15/cards",
+    "status": 403,
+    "step": "card, by an agent",
+  },
+  {
+    "body": {
+      "error": {
+        "code": "UNKNOWN_LABEL",
+        "message": "no such label in this workspace: lbl_nothing",
+      },
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "POST /v1/boards/brd#15/cards",
+    "status": 400,
+    "step": "card, unknown label",
+  },
+  {
+    "body": {
+      "error": {
+        "message": "Expected property name or '}' in JSON at position 1 (line 1 column 2)",
+      },
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "POST /v1/boards/brd#15/cards",
+    "status": 500,
+    "step": "card, not JSON",
+  },
+  {
+    "body": {
+      "error": "method not allowed",
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "GET /v1/boards/brd#15/cards",
+    "status": 405,
+    "step": "cards, wrong method",
+  },
+  {
+    "body": {
+      "card": {
+        "archivedAt": null,
+        "attemptCount": 0,
+        "blockedBy": [],
+        "contextId": "ctx#17",
+        "costUsd": 0,
+        "costUsdRollup": 0,
+        "createdAt": "<time>",
+        "currentRunId": null,
+        "currentStageKey": "inbox",
+        "delegateAgentId": null,
+        "dueAt": "<date>",
+        "id": "card#16",
+        "labels": [],
+        "lastAgentId": null,
+        "milestoneId": null,
+        "openChildCount": 0,
+        "overBudget": false,
+        "ownerUserId": "usr_dev",
+        "parentCardId": null,
+        "priority": 2,
+        "projectId": null,
+        "queuedBy": "usr_dev",
+        "queuedByAgentId": null,
+        "queuedGrant": null,
+        "queuedGrantOwner": "usr_dev",
+        "spec": {
+          "goal": "pin",
+        },
+        "stageSince": "<time>",
+        "state": "submitted",
+        "stateSince": "<time>",
+        "title": "Card A",
+        "updatedAt": "<time>",
+      },
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "GET /v1/boards/brd#15/cards/card#16",
+    "status": 200,
+    "step": "card",
+  },
+  {
+    "body": {
+      "error": {
+        "code": "CARD_NOT_FOUND",
+        "message": "card not found: card#18",
+        "ok": false,
+      },
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "GET /v1/boards/brd#15/cards/card#18",
+    "status": 404,
+    "step": "card, missing",
+  },
+  {
+    "body": {
+      "card": {
+        "archivedAt": null,
+        "attemptCount": 0,
+        "blockedBy": [],
+        "contextId": "ctx#17",
+        "costUsd": 0,
+        "costUsdRollup": 0,
+        "createdAt": "<time>",
+        "currentRunId": null,
+        "currentStageKey": "inbox",
+        "delegateAgentId": null,
+        "dueAt": "<date>",
+        "id": "card#16",
+        "labels": [],
+        "lastAgentId": null,
+        "milestoneId": null,
+        "openChildCount": 0,
+        "overBudget": false,
+        "ownerUserId": "usr_dev",
+        "parentCardId": null,
+        "priority": 3,
+        "projectId": null,
+        "queuedBy": "usr_dev",
+        "queuedByAgentId": null,
+        "queuedGrant": null,
+        "queuedGrantOwner": "usr_dev",
+        "spec": {
+          "goal": "pin",
+        },
+        "stageSince": "<time>",
+        "state": "submitted",
+        "stateSince": "<time>",
+        "title": "Card A, renamed",
+        "updatedAt": "<time>",
+      },
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "PATCH /v1/boards/brd#15/cards/card#16",
+    "status": 200,
+    "step": "card, edit",
+  },
+  {
+    "body": {
+      "error": {
+        "code": "INVALID_DUE_AT",
+        "message": "dueAt must be null or a date in YYYY-MM-DD form",
+      },
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "PATCH /v1/boards/brd#15/cards/card#16",
+    "status": 400,
+    "step": "card, edit bad due",
+  },
+  {
+    "body": {
+      "error": {
+        "code": "CARD_CHANGED",
+        "message": "card card#16 changed since it was read (updatedAt is now <time>)",
+        "ok": false,
+      },
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "PATCH /v1/boards/brd#15/cards/card#16",
+    "status": 409,
+    "step": "card, stale precondition",
+  },
+  {
+    "body": {
+      "error": "method not allowed",
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "PUT /v1/boards/brd#15/cards/card#16",
+    "status": 405,
+    "step": "card, wrong method",
+  },
+  {
+    "body": {
+      "card": {
+        "archivedAt": null,
+        "attemptCount": 0,
+        "blockedBy": [],
+        "contextId": "ctx#17",
+        "costUsd": 0,
+        "costUsdRollup": 0,
+        "createdAt": "<time>",
+        "currentRunId": null,
+        "currentStageKey": "inbox",
+        "delegateAgentId": null,
+        "dueAt": "<date>",
+        "id": "card#16",
+        "labels": [],
+        "lastAgentId": null,
+        "milestoneId": null,
+        "openChildCount": 0,
+        "overBudget": false,
+        "ownerUserId": "usr_dev",
+        "parentCardId": null,
+        "priority": 3,
+        "projectId": null,
+        "queuedBy": "usr_dev",
+        "queuedByAgentId": null,
+        "queuedGrant": null,
+        "queuedGrantOwner": "usr_dev",
+        "spec": {
+          "goal": "pin",
+        },
+        "stageSince": "<time>",
+        "state": "submitted",
+        "stateSince": "<time>",
+        "title": "Card A, renamed",
+        "updatedAt": "<time>",
+      },
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "POST /v1/boards/brd#15/cards/card#16/move",
+    "status": 200,
+    "step": "card, move",
+  },
+  {
+    "body": {
+      "error": {
+        "code": "UNKNOWN_STAGE",
+        "message": "unknown stage: nowhere",
+        "ok": false,
+      },
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "POST /v1/boards/brd#15/cards/card#16/move",
+    "status": 400,
+    "step": "card, move unknown",
+  },
+  {
+    "body": {
+      "error": "method not allowed",
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "GET /v1/boards/brd#15/cards/card#16/move",
+    "status": 405,
+    "step": "card, move wrong method",
+  },
+  {
+    "body": {
+      "error": {
+        "code": "CARD_NOT_WAITING",
+        "message": "a card in "submitted" is not waiting on anybody",
+        "ok": false,
+      },
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "POST /v1/boards/brd#15/cards/card#16/resume",
+    "status": 409,
+    "step": "card, resume not waiting",
+  },
+  {
+    "body": {
+      "error": {
+        "code": "INVALID_COMMENT",
+        "message": "send { "comment": "<what changed>", "toStageKey"?: "<stage>" }",
+      },
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "POST /v1/boards/brd#15/cards/card#16/resume",
+    "status": 400,
+    "step": "card, resume bad body",
+  },
+  {
+    "body": {
+      "error": "an agent token cannot POST this route",
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "POST /v1/boards/brd#15/cards/card#16/resume",
+    "status": 403,
+    "step": "card, resume as an agent",
+  },
+  {
+    "body": {
+      "error": "method not allowed",
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "GET /v1/boards/brd#15/cards/card#16/resume",
+    "status": 405,
+    "step": "card, resume wrong method",
+  },
+  {
+    "body": {
+      "comments": [],
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "GET /v1/boards/brd#15/cards/card#16/comments",
+    "status": 200,
+    "step": "comments",
+  },
+  {
+    "body": {
+      "error": {
+        "code": "INVALID_COMMENT",
+        "message": "send { "body": "<text>" }",
+      },
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "POST /v1/boards/brd#15/cards/card#16/comments",
+    "status": 400,
+    "step": "comment, bad",
+  },
+  {
+    "body": {
+      "comment": {
+        "author": {
+          "id": "usr_dev",
+          "kind": "human",
+          "name": null,
+        },
+        "body": "Looks right.",
+        "cardId": "card#16",
+        "createdAt": "<time>",
+        "deletedAt": null,
+        "id": "cmt#19",
+      },
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "POST /v1/boards/brd#15/cards/card#16/comments",
+    "status": 201,
+    "step": "comment",
+  },
+  {
+    "body": {
+      "error": {
+        "code": "NO_RUN_ON_CARD",
+        "message": "an agent may comment only on a card its live run holds",
+        "ok": false,
+      },
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "POST /v1/boards/brd#15/cards/card#16/comments",
+    "status": 403,
+    "step": "comment, by an agent with no run",
+  },
+  {
+    "body": {
+      "error": "method not allowed",
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "PUT /v1/boards/brd#15/cards/card#16/comments",
+    "status": 405,
+    "step": "comments, wrong method",
+  },
+  {
+    "body": {
+      "error": "method not allowed — a comment is never edited",
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "PATCH /v1/boards/brd#15/cards/card#16/comments/cmt#19",
+    "status": 405,
+    "step": "comment, edit refused",
+  },
+  {
+    "body": {
+      "comment": {
+        "author": {
+          "id": "usr_dev",
+          "kind": "human",
+          "name": null,
+        },
+        "body": "",
+        "cardId": "card#16",
+        "createdAt": "<time>",
+        "deletedAt": "<time>",
+        "id": "cmt#19",
+      },
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "DELETE /v1/boards/brd#15/cards/card#16/comments/cmt#19",
+    "status": 200,
+    "step": "comment, delete",
+  },
+  {
+    "body": {
+      "error": {
+        "code": "COMMENT_NOT_FOUND",
+        "message": "comment not found: cmt_nothing",
+        "ok": false,
+      },
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "DELETE /v1/boards/brd#15/cards/card#16/comments/cmt_nothing",
+    "status": 404,
+    "step": "comment, delete missing",
+  },
+  {
+    "body": {
+      "card": {
+        "archivedAt": null,
+        "attemptCount": 0,
+        "blockedBy": [],
+        "contextId": "ctx#21",
+        "costUsd": 0,
+        "costUsdRollup": 0,
+        "createdAt": "<time>",
+        "currentRunId": null,
+        "currentStageKey": "inbox",
+        "delegateAgentId": null,
+        "dueAt": null,
+        "id": "card#20",
+        "labels": [],
+        "lastAgentId": null,
+        "milestoneId": null,
+        "openChildCount": 0,
+        "overBudget": false,
+        "ownerUserId": "usr_dev",
+        "parentCardId": null,
+        "priority": 0,
+        "projectId": null,
+        "queuedBy": "usr_dev",
+        "queuedByAgentId": null,
+        "queuedGrant": null,
+        "queuedGrantOwner": "usr_dev",
+        "spec": {},
+        "stageSince": "<time>",
+        "state": "submitted",
+        "stateSince": "<time>",
+        "title": "Card B",
+        "updatedAt": "<time>",
+      },
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "POST /v1/boards/brd#15/cards",
+    "status": 201,
+    "step": "card B",
+  },
+  {
+    "body": {
+      "error": {
+        "code": "INVALID_LINK_KIND",
+        "message": "kind must be 'blocks', 'relates', 'parent' or 'supersedes', got "x"",
+      },
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "POST /v1/boards/brd#15/links",
+    "status": 400,
+    "step": "link, bad kind",
+  },
+  {
+    "body": {
+      "link": {
+        "createdAt": "<time>",
+        "createdBy": "usr_dev",
+        "enforced": true,
+        "fromCardId": "card#16",
+        "kind": "blocks",
+        "toCardId": "card#20",
+      },
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "POST /v1/boards/brd#15/links",
+    "status": 201,
+    "step": "link",
+  },
+  {
+    "body": {
+      "error": {
+        "code": "FOREIGN_BOARD",
+        "message": "Both boards must exist and belong to this tenant.",
+        "ok": false,
+      },
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "POST /v1/boards/brd#15/links",
+    "status": 404,
+    "step": "link, cross-board to nowhere",
+  },
+  {
+    "body": {
+      "externalLinks": [],
+      "links": [
+        {
+          "createdAt": "<time>",
+          "createdBy": "usr_dev",
+          "enforced": true,
+          "fromCardId": "card#16",
+          "kind": "blocks",
+          "toCardId": "card#20",
+        },
+      ],
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "GET /v1/boards/brd#15/cards/card#16/links",
+    "status": 200,
+    "step": "card links",
+  },
+  {
+    "body": {
+      "enforced": true,
+      "ok": true,
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "DELETE /v1/boards/brd#15/links",
+    "status": 200,
+    "step": "link, remove",
+  },
+  {
+    "body": {
+      "error": "method not allowed",
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "GET /v1/boards/brd#15/links",
+    "status": 405,
+    "step": "links, wrong method",
+  },
+  {
+    "body": {
+      "children": [
+        {
+          "archivedAt": null,
+          "attemptCount": 0,
+          "blockedBy": [],
+          "contextId": "ctx#23",
+          "costUsd": 0,
+          "costUsdRollup": 0,
+          "createdAt": "<time>",
+          "currentRunId": null,
+          "currentStageKey": "inbox",
+          "delegateAgentId": null,
+          "dueAt": null,
+          "id": "card#22",
+          "labels": [],
+          "lastAgentId": null,
+          "milestoneId": null,
+          "openChildCount": 0,
+          "overBudget": false,
+          "ownerUserId": "usr_dev",
+          "parentCardId": "card#16",
+          "priority": 3,
+          "projectId": null,
+          "queuedBy": "usr_dev",
+          "queuedByAgentId": null,
+          "queuedGrant": null,
+          "queuedGrantOwner": "usr_dev",
+          "spec": {},
+          "stageSince": "<time>",
+          "state": "submitted",
+          "stateSince": "<time>",
+          "title": "First",
+          "updatedAt": "<time>",
+        },
+        {
+          "archivedAt": null,
+          "attemptCount": 0,
+          "blockedBy": [],
+          "contextId": "ctx#25",
+          "costUsd": 0,
+          "costUsdRollup": 0,
+          "createdAt": "<time>",
+          "currentRunId": null,
+          "currentStageKey": "inbox",
+          "delegateAgentId": null,
+          "dueAt": null,
+          "id": "card#24",
+          "labels": [],
+          "lastAgentId": null,
+          "milestoneId": null,
+          "openChildCount": 0,
+          "overBudget": false,
+          "ownerUserId": "usr_dev",
+          "parentCardId": "card#16",
+          "priority": 3,
+          "projectId": null,
+          "queuedBy": "usr_dev",
+          "queuedByAgentId": null,
+          "queuedGrant": null,
+          "queuedGrantOwner": "usr_dev",
+          "spec": {},
+          "stageSince": "<time>",
+          "state": "submitted",
+          "stateSince": "<time>",
+          "title": "Second",
+          "updatedAt": "<time>",
+        },
+      ],
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "POST /v1/boards/brd#15/cards/card#16/split",
+    "status": 201,
+    "step": "card, split",
+  },
+  {
+    "body": {
+      "error": {
+        "code": "NOTHING_TO_SPLIT",
+        "message": "every line was blank — nothing to split into",
+        "ok": false,
+      },
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "POST /v1/boards/brd#15/cards/card#16/split",
+    "status": 400,
+    "step": "card, split nothing",
+  },
+  {
+    "body": {
+      "reference": {
+        "addedBy": "agent",
+        "cardId": "card#16",
+        "createdAt": "<time>",
+        "externalId": null,
+        "id": "ref#26",
+        "lastSyncedAt": null,
+        "metadata": null,
+        "provider": "url",
+        "runId": null,
+        "sourceType": "url",
+        "subtitle": null,
+        "syncState": "synced",
+        "title": "Doc",
+        "updatedAt": null,
+        "url": "https://example.com/doc",
+      },
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "PUT /v1/boards/brd#15/cards/card#16/references",
+    "status": 200,
+    "step": "references, set",
+  },
+  {
+    "body": {
+      "error": "unknown reference provider: nope. Known: superlibrary, github, gitlab, forge, docs, url",
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "PUT /v1/boards/brd#15/cards/card#16/references",
+    "status": 400,
+    "step": "references, bad provider",
+  },
+  {
+    "body": {
+      "attempts": [],
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "GET /v1/boards/brd#15/cards/card#16/attempts",
+    "status": 200,
+    "step": "attempts",
+  },
+  {
+    "body": {
+      "activities": [],
+      "gates": [],
+      "handoff": null,
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "GET /v1/boards/brd#15/cards/card#16/activities",
+    "status": 200,
+    "step": "activities",
+  },
+  {
+    "body": {
+      "estimatedUsd": null,
+      "sampleSize": 0,
+      "stageKey": "inbox",
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "GET /v1/boards/brd#15/cards/card#16/estimate",
+    "status": 200,
+    "step": "estimate",
+  },
+  {
+    "body": {
+      "error": "this token is not permitted to read",
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "GET /v1/boards/brd#15/cards/card#16",
+    "status": 403,
+    "step": "card, as an agent",
+  },
+  {
+    "body": {
+      "card": {
+        "archivedAt": null,
+        "attemptCount": 0,
+        "blockedBy": [],
+        "contextId": "ctx#17",
+        "costUsd": 0,
+        "costUsdRollup": 0,
+        "createdAt": "<time>",
+        "currentRunId": null,
+        "currentStageKey": "inbox",
+        "delegateAgentId": null,
+        "dueAt": "<date>",
+        "id": "card#16",
+        "labels": [],
+        "lastAgentId": null,
+        "milestoneId": null,
+        "openChildCount": 2,
+        "overBudget": false,
+        "ownerUserId": "usr_dev",
+        "parentCardId": null,
+        "priority": 3,
+        "projectId": null,
+        "queuedBy": "usr_dev",
+        "queuedByAgentId": null,
+        "queuedGrant": null,
+        "queuedGrantOwner": "usr_dev",
+        "spec": {
+          "goal": "pin",
+        },
+        "stageSince": "<time>",
+        "state": "submitted",
+        "stateSince": "<time>",
+        "title": "Card A, renamed",
+        "updatedAt": "<time>",
+      },
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "GET /v1/boards/brd#15/cards/card#16",
+    "status": 200,
+    "step": "card, as a coordinator",
+  },
+  {
+    "body": {
+      "card": {
+        "archivedAt": null,
+        "attemptCount": 0,
+        "blockedBy": [],
+        "contextId": "ctx#17",
+        "costUsd": 0,
+        "costUsdRollup": 0,
+        "createdAt": "<time>",
+        "currentRunId": null,
+        "currentStageKey": "inbox",
+        "delegateAgentId": null,
+        "dueAt": "<date>",
+        "id": "card#16",
+        "labels": [],
+        "lastAgentId": null,
+        "milestoneId": null,
+        "openChildCount": 2,
+        "overBudget": false,
+        "ownerUserId": "usr_dev",
+        "parentCardId": null,
+        "priority": 1,
+        "projectId": null,
+        "queuedBy": "usr_dev",
+        "queuedByAgentId": null,
+        "queuedGrant": null,
+        "queuedGrantOwner": "usr_dev",
+        "spec": {
+          "goal": "pin",
+        },
+        "stageSince": "<time>",
+        "state": "submitted",
+        "stateSince": "<time>",
+        "title": "Card A, renamed",
+        "updatedAt": "<time>",
+      },
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "PATCH /v1/boards/brd#15/cards/card#16",
+    "status": 200,
+    "step": "card, a coordinator edits",
+  },
+  {
+    "body": {
+      "error": {
+        "code": "BOARD_NOT_PERMITTED",
+        "message": "this agent is not permitted to queue work onto this board",
+      },
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "POST /v1/boards/brd#15/cards/card#16/move",
+    "status": 403,
+    "step": "card, a coordinator moves",
+  },
+  {
+    "body": {
+      "error": "sign in to continue",
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "DELETE /v1/boards/brd#15/cards/card#16",
+    "status": 401,
+    "step": "card, a coordinator may not delete",
+  },
+  {
+    "body": {
+      "comments": [
+        {
+          "author": {
+            "id": "usr_dev",
+            "kind": "human",
+            "name": null,
+          },
+          "body": "",
+          "cardId": "card#16",
+          "createdAt": "<time>",
+          "deletedAt": "<time>",
+          "id": "cmt#19",
+        },
+      ],
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "GET /v1/boards/brd#15/cards/card#16/comments",
+    "status": 200,
+    "step": "comments, as a coordinator",
+  },
+  {
+    "body": {
+      "attempts": [],
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "GET /v1/boards/brd#15/cards/card#16/attempts",
+    "status": 200,
+    "step": "attempts, as a coordinator",
+  },
+  {
+    "body": {
+      "link": {
+        "createdAt": "<time>",
+        "createdBy": null,
+        "enforced": false,
+        "fromCardId": "card#16",
+        "kind": "relates",
+        "toCardId": "card#20",
+      },
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "POST /v1/boards/brd#15/links",
+    "status": 201,
+    "step": "link, as a coordinator",
+  },
+  {
+    "body": {
+      "error": "sign in to continue",
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "GET /v1/boards/brd#15/events",
+    "status": 401,
+    "step": "events, a coordinator bearer is a person route",
+  },
+  {
+    "body": {
+      "events": [
+        {
+          "payload": {
+            "reference": {
+              "addedBy": "agent",
+              "cardId": "card#16",
+              "createdAt": "<time>",
+              "externalId": null,
+              "id": "ref#26",
+              "lastSyncedAt": null,
+              "metadata": null,
+              "provider": "url",
+              "runId": null,
+              "sourceType": "url",
+              "subtitle": null,
+              "syncState": "synced",
+              "title": "Doc",
+              "updatedAt": null,
+              "url": "https://example.com/doc",
+            },
+          },
+          "seq": 17,
+          "ts": "<time>",
+          "type": "reference.added",
+        },
+        {
+          "payload": {
+            "card": {
+              "archivedAt": null,
+              "attemptCount": 0,
+              "blockedBy": [],
+              "contextId": "ctx#17",
+              "costUsd": 0,
+              "costUsdRollup": 0,
+              "createdAt": "<time>",
+              "currentRunId": null,
+              "currentStageKey": "inbox",
+              "delegateAgentId": null,
+              "dueAt": "<date>",
+              "id": "card#16",
+              "labels": [],
+              "lastAgentId": null,
+              "milestoneId": null,
+              "openChildCount": 2,
+              "overBudget": false,
+              "ownerUserId": "usr_dev",
+              "parentCardId": null,
+              "priority": 1,
+              "projectId": null,
+              "queuedBy": "usr_dev",
+              "queuedByAgentId": null,
+              "queuedGrant": null,
+              "queuedGrantOwner": "usr_dev",
+              "spec": {
+                "goal": "pin",
+              },
+              "stageSince": "<time>",
+              "state": "submitted",
+              "stateSince": "<time>",
+              "title": "Card A, renamed",
+              "updatedAt": "<time>",
+            },
+          },
+          "seq": 18,
+          "ts": "<time>",
+          "type": "card.updated",
+        },
+        {
+          "payload": {
+            "link": {
+              "createdAt": "<time>",
+              "createdBy": null,
+              "fromCardId": "card#16",
+              "kind": "relates",
+              "toCardId": "card#20",
+            },
+          },
+          "seq": 19,
+          "ts": "<time>",
+          "type": "link.added",
+        },
+      ],
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "GET /v1/boards/brd#15/events?limit=3",
+    "status": 200,
+    "step": "events",
+  },
+  {
+    "body": {
+      "byAgent": [],
+      "byCard": [],
+      "byDay": [
+        {
+          "costUsd": 0,
+          "day": "<date>",
+        },
+        {
+          "costUsd": 0,
+          "day": "<date>",
+        },
+        {
+          "costUsd": 0,
+          "day": "<date>",
+        },
+        {
+          "costUsd": 0,
+          "day": "<date>",
+        },
+        {
+          "costUsd": 0,
+          "day": "<date>",
+        },
+        {
+          "costUsd": 0,
+          "day": "<date>",
+        },
+        {
+          "costUsd": 0,
+          "day": "<date>",
+        },
+      ],
+      "byModel": [],
+      "estimatedCostUsd": 0,
+      "totalCostUsd": 0,
+      "totalInputTokens": 0,
+      "totalOutputTokens": 0,
+      "unpricedRecords": 0,
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "GET /v1/boards/brd#15/usage?window=7d",
+    "status": 200,
+    "step": "usage",
+  },
+  {
+    "body": {
+      "notifications": [],
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "GET /v1/boards/brd#15/notifications",
+    "status": 200,
+    "step": "notifications",
+  },
+  {
+    "body": {
+      "ok": true,
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "POST /v1/boards/brd#15/notifications/1/read",
+    "status": 200,
+    "step": "notification, read",
+  },
+  {
+    "body": {
+      "error": "method not allowed",
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "POST /v1/boards/brd#15/notifications/x/read",
+    "status": 405,
+    "step": "notification, not a number",
+  },
+  {
+    "body": {
+      "profiles": [],
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "GET /v1/boards/brd#15/profiles",
+    "status": 200,
+    "step": "profiles",
+  },
+  {
+    "body": {
+      "key": "fast",
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "POST /v1/boards/brd#15/profiles",
+    "status": 201,
+    "step": "profile",
+  },
+  {
+    "body": {
+      "key": "",
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "POST /v1/boards/brd#15/profiles",
+    "status": 201,
+    "step": "profile, refused",
+  },
+  {
+    "body": {
+      "schedules": [],
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "GET /v1/boards/brd#15/schedules",
+    "status": 200,
+    "step": "schedules",
+  },
+  {
+    "body": {
+      "error": {
+        "code": "INVALID_TIMEZONE",
+        "message": "\`timezone\` is required and must be a string.",
+      },
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "POST /v1/boards/brd#15/schedules",
+    "status": 400,
+    "step": "schedule, refused",
+  },
+  {
+    "body": {
+      "schedule": {
+        "createdBy": "usr_dev",
+        "enabled": true,
+        "id": "sch#27",
+        "labels": [],
+        "lastCardId": null,
+        "lastFiredAt": null,
+        "nextFireAt": "<time>",
+        "overlap": "skip",
+        "priority": 0,
+        "rule": "daily at 09:00",
+        "skipCount": 0,
+        "spec": {},
+        "stageKey": null,
+        "timezone": "UTC",
+        "title": "Digest",
+      },
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "POST /v1/boards/brd#15/schedules",
+    "status": 201,
+    "step": "schedule",
+  },
+  {
+    "body": {
+      "schedule": {
+        "createdBy": "usr_dev",
+        "enabled": true,
+        "id": "sch#27",
+        "labels": [],
+        "lastCardId": null,
+        "lastFiredAt": null,
+        "nextFireAt": "<time>",
+        "overlap": "skip",
+        "priority": 0,
+        "rule": "daily at 09:00",
+        "skipCount": 0,
+        "spec": {},
+        "stageKey": null,
+        "timezone": "UTC",
+        "title": "Digest 2",
+      },
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "PATCH /v1/boards/brd#15/schedules/sch#27",
+    "status": 200,
+    "step": "schedule, edit",
+  },
+  {
+    "body": "",
+    "headers": {},
+    "request": "DELETE /v1/boards/brd#15/schedules/sch#27",
+    "status": 204,
+    "step": "schedule, delete",
+  },
+  {
+    "body": {
+      "error": {
+        "code": "SCHEDULE_NOT_FOUND",
+        "message": "schedule not found: sch_nothing",
+        "ok": false,
+      },
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "DELETE /v1/boards/brd#15/schedules/sch_nothing",
+    "status": 404,
+    "step": "schedule, delete missing",
+  },
+  {
+    "body": {
+      "error": "method not allowed",
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "PUT /v1/boards/brd#15/schedules",
+    "status": 405,
+    "step": "schedules, wrong method",
+  },
+  {
+    "body": {
+      "failed": 0,
+      "sent": 0,
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "POST /v1/boards/brd#15/push/dispatch",
+    "status": 200,
+    "step": "push dispatch, nothing queued",
+  },
+  {
+    "body": {
+      "deliveries": [],
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "GET /v1/boards/brd#15/push/deliveries",
+    "status": 200,
+    "step": "push deliveries",
+  },
+  {
+    "body": {
+      "stale": {
+        "afterHours": 4,
+        "enabled": true,
+      },
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "PUT /v1/boards/brd#15/stale",
+    "status": 200,
+    "step": "stale settings",
+  },
+  {
+    "body": {
+      "error": {
+        "code": "INVALID_STALE_SETTINGS",
+        "message": "\`afterHours\` must be a number of hours, 0 or more",
+        "ok": false,
+      },
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "PUT /v1/boards/brd#15/stale",
+    "status": 400,
+    "step": "stale settings, bad",
+  },
+  {
+    "body": {
+      "ok": true,
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "PUT /v1/boards/brd#15/budget",
+    "status": 200,
+    "step": "budget",
+  },
+  {
+    "body": {
+      "error": "sign in to continue",
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "PUT /v1/boards/brd#15/budget",
+    "status": 401,
+    "step": "budget, an agent bearer on a person route",
+  },
+  {
+    "body": {
+      "ok": true,
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "PUT /v1/boards/brd#15/github",
+    "status": 200,
+    "step": "github",
+  },
+  {
+    "body": {
+      "error": "secret is required",
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "PUT /v1/boards/brd#15/forge",
+    "status": 400,
+    "step": "forge, no secret",
+  },
+  {
+    "body": {
+      "configured": true,
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "PUT /v1/boards/brd#15/forge",
+    "status": 200,
+    "step": "forge",
+  },
+  {
+    "body": {
+      "card": {
+        "archivedAt": null,
+        "attemptCount": 0,
+        "blockedBy": [],
+        "contextId": "ctx#29",
+        "costUsd": 0,
+        "costUsdRollup": 0,
+        "createdAt": "<time>",
+        "currentRunId": null,
+        "currentStageKey": "inbox",
+        "delegateAgentId": null,
+        "dueAt": null,
+        "id": "card#28",
+        "labels": [],
+        "lastAgentId": null,
+        "milestoneId": null,
+        "openChildCount": 0,
+        "overBudget": false,
+        "ownerUserId": "usr_dev",
+        "parentCardId": null,
+        "priority": 0,
+        "projectId": null,
+        "queuedBy": "usr_dev",
+        "queuedByAgentId": null,
+        "queuedGrant": null,
+        "queuedGrantOwner": null,
+        "spec": {},
+        "stageSince": "<time>",
+        "state": "submitted",
+        "stateSince": "<time>",
+        "title": "From a trigger",
+        "updatedAt": "<time>",
+      },
+      "reference": {
+        "addedBy": "agent",
+        "cardId": "card#28",
+        "createdAt": "<time>",
+        "externalId": "7",
+        "id": "ref#30",
+        "lastSyncedAt": null,
+        "metadata": null,
+        "provider": "github",
+        "runId": null,
+        "sourceType": "issue",
+        "subtitle": null,
+        "syncState": "synced",
+        "title": null,
+        "updatedAt": null,
+        "url": "https://github.com/o/r/issues/7",
+      },
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "POST /v1/boards/brd#15/triggers",
+    "status": 201,
+    "step": "trigger",
+  },
+  {
+    "body": {
+      "error": "tenant required",
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "POST /v1/boards/brd#15/webhooks/forge",
+    "status": 400,
+    "step": "webhook forge, no tenant",
+  },
+  {
+    "body": {
+      "error": {
+        "code": "INVALID_SIGNATURE",
+        "message": "invalid X-Forgejo-Signature",
+        "ok": false,
+      },
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "POST /v1/boards/brd#15/webhooks/forge?tenant=tnt_http",
+    "status": 401,
+    "step": "webhook forge, unsigned",
+  },
+  {
+    "body": {
+      "error": {
+        "code": "INVALID_SIGNATURE",
+        "message": "invalid X-Hub-Signature-256",
+        "ok": false,
+      },
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "POST /v1/boards/brd#15/webhooks/github?tenant=tnt_http",
+    "status": 401,
+    "step": "webhook github, bad signature",
+  },
+  {
+    "body": {
+      "error": "method not allowed",
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "GET /v1/boards/brd#15/webhooks/github?tenant=tnt_http",
+    "status": 405,
+    "step": "webhook github, wrong method",
+  },
+  {
+    "body": {
+      "card": {
+        "archivedAt": null,
+        "attemptCount": 0,
+        "blockedBy": [],
+        "contextId": "ctx#32",
+        "costUsd": 0,
+        "costUsdRollup": 0,
+        "createdAt": "<time>",
+        "currentRunId": null,
+        "currentStageKey": "research",
+        "delegateAgentId": null,
+        "dueAt": null,
+        "id": "card#31",
+        "labels": [],
+        "lastAgentId": null,
+        "milestoneId": null,
+        "openChildCount": 0,
+        "overBudget": false,
+        "ownerUserId": "usr_dev",
+        "parentCardId": null,
+        "priority": 0,
+        "projectId": null,
+        "queuedBy": "usr_dev",
+        "queuedByAgentId": null,
+        "queuedGrant": null,
+        "queuedGrantOwner": "usr_dev",
+        "spec": {},
+        "stageSince": "<time>",
+        "state": "submitted",
+        "stateSince": "<time>",
+        "title": "Research this",
+        "updatedAt": "<time>",
+      },
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "POST /v1/boards/brd#15/cards",
+    "status": 201,
+    "step": "card to research",
+  },
+  {
+    "body": {
+      "error": "a valid agent token is required",
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "POST /v1/boards/brd#15/claims",
+    "status": 401,
+    "step": "claim, signed out",
+  },
+  {
+    "body": {
+      "error": "a valid agent token is required",
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "POST /v1/boards/brd#15/claims",
+    "status": 401,
+    "step": "claim, a person",
+  },
+  {
+    "body": {
+      "error": "claim body must be a JSON object",
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "POST /v1/boards/brd#15/claims",
+    "status": 400,
+    "step": "claim, not an object",
+  },
+  {
+    "body": {
+      "error": "maxConcurrency must be a positive finite integer",
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "POST /v1/boards/brd#15/claims",
+    "status": 400,
+    "step": "claim, bad concurrency",
+  },
+  {
+    "body": {
+      "card": {
+        "archivedAt": null,
+        "attemptCount": 1,
+        "blockedBy": [],
+        "contextId": "ctx#32",
+        "costUsd": 0,
+        "costUsdRollup": 0,
+        "createdAt": "<time>",
+        "currentRunId": "run#33",
+        "currentStageKey": "research",
+        "delegateAgentId": "agt#9",
+        "dueAt": null,
+        "id": "card#31",
+        "labels": [],
+        "lastAgentId": "agt#9",
+        "milestoneId": null,
+        "openChildCount": 0,
+        "overBudget": false,
+        "ownerUserId": "usr_dev",
+        "parentCardId": null,
+        "priority": 0,
+        "projectId": null,
+        "queuedBy": "usr_dev",
+        "queuedByAgentId": null,
+        "queuedGrant": null,
+        "queuedGrantOwner": "usr_dev",
+        "spec": {},
+        "stageSince": "<time>",
+        "state": "working",
+        "stateSince": "<time>",
+        "title": "Research this",
+        "updatedAt": "<time>",
+      },
+      "claimed": true,
+      "handoff": null,
+      "lastFailure": null,
+      "leaseEpoch": 1,
+      "runId": "run#33",
+      "stage": {
+        "key": "research",
+        "name": "Research",
+        "order": 1,
+        "owner": "research",
+        "ownerKind": "capability",
+      },
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "POST /v1/boards/brd#15/claims",
+    "status": 200,
+    "step": "claim",
+  },
+  {
+    "body": {
+      "claimed": false,
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "POST /v1/boards/brd#15/claims",
+    "status": 200,
+    "step": "claim, nothing left",
+  },
+  {
+    "body": {
+      "error": "method not allowed",
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "GET /v1/boards/brd#15/claims",
+    "status": 405,
+    "step": "claims, wrong method",
+  },
+  {
+    "body": {
+      "card": {
+        "archivedAt": null,
+        "attemptCount": 1,
+        "blockedBy": [],
+        "contextId": "ctx#32",
+        "costUsd": 0,
+        "costUsdRollup": 0,
+        "createdAt": "<time>",
+        "currentRunId": "run#33",
+        "currentStageKey": "research",
+        "delegateAgentId": "agt#9",
+        "dueAt": null,
+        "id": "card#31",
+        "labels": [],
+        "lastAgentId": "agt#9",
+        "milestoneId": null,
+        "openChildCount": 0,
+        "overBudget": false,
+        "ownerUserId": "usr_dev",
+        "parentCardId": null,
+        "priority": 0,
+        "projectId": null,
+        "queuedBy": "usr_dev",
+        "queuedByAgentId": null,
+        "queuedGrant": null,
+        "queuedGrantOwner": "usr_dev",
+        "spec": {},
+        "stageSince": "<time>",
+        "state": "working",
+        "stateSince": "<time>",
+        "title": "Research this",
+        "updatedAt": "<time>",
+      },
+      "comments": [],
+      "commentsOmitted": 0,
+      "elicitations": [],
+      "handoff": null,
+      "references": [],
+      "run": {
+        "cardId": "card#31",
+        "completion": null,
+        "endedAt": null,
+        "handoff": null,
+        "leaseEpoch": 1,
+        "outcome": null,
+        "runId": "run#33",
+        "stageKey": "research",
+        "startedAt": "<time>",
+        "status": "working",
+      },
+      "stage": {
+        "key": "research",
+        "name": "Research",
+        "order": 1,
+        "owner": "research",
+        "ownerKind": "capability",
+      },
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "GET /v1/boards/brd#15/runs/run#33",
+    "status": 200,
+    "step": "run",
+  },
+  {
+    "body": {
+      "error": {
+        "code": "RUN_NOT_FOUND",
+        "message": "run not found: run#34",
+        "ok": false,
+      },
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "GET /v1/boards/brd#15/runs/run#34",
+    "status": 404,
+    "step": "run, missing",
+  },
+  {
+    "body": {
+      "attempts": [
+        {
+          "agentId": "agt#9",
+          "cardId": "card#31",
+          "completion": null,
+          "costUsd": 0,
+          "endedAt": null,
+          "failureReason": null,
+          "handoff": null,
+          "model": null,
+          "outcome": null,
+          "profileKey": null,
+          "runId": "run#33",
+          "stageKey": "research",
+          "startedAt": "<time>",
+          "status": "working",
+        },
+      ],
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "GET /v1/boards/brd#15/runs/run#33/attempts",
+    "status": 200,
+    "step": "run attempts",
+  },
+  {
+    "body": {
+      "card": {
+        "archivedAt": null,
+        "attemptCount": 1,
+        "blockedBy": [],
+        "contextId": "ctx#32",
+        "costUsd": 0,
+        "costUsdRollup": 0,
+        "createdAt": "<time>",
+        "currentRunId": "run#33",
+        "currentStageKey": "research",
+        "delegateAgentId": "agt#9",
+        "dueAt": null,
+        "id": "card#31",
+        "labels": [],
+        "lastAgentId": "agt#9",
+        "milestoneId": null,
+        "openChildCount": 0,
+        "overBudget": false,
+        "ownerUserId": "usr_dev",
+        "parentCardId": null,
+        "priority": 0,
+        "projectId": null,
+        "queuedBy": "usr_dev",
+        "queuedByAgentId": null,
+        "queuedGrant": null,
+        "queuedGrantOwner": "usr_dev",
+        "spec": {},
+        "stageSince": "<time>",
+        "state": "working",
+        "stateSince": "<time>",
+        "title": "Research this",
+        "updatedAt": "<time>",
+      },
+      "comments": [],
+      "commentsOmitted": 0,
+      "elicitations": [],
+      "handoff": null,
+      "references": [],
+      "run": {
+        "cardId": "card#31",
+        "completion": null,
+        "endedAt": null,
+        "handoff": null,
+        "leaseEpoch": 1,
+        "outcome": null,
+        "runId": "run#33",
+        "stageKey": "research",
+        "startedAt": "<time>",
+        "status": "working",
+      },
+      "stage": {
+        "key": "research",
+        "name": "Research",
+        "order": 1,
+        "owner": "research",
+        "ownerKind": "capability",
+      },
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "GET /v1/boards/brd#15/runs/run#33",
+    "status": 200,
+    "step": "run, a person",
+  },
+  {
+    "body": {
+      "error": {
+        "code": "UNAUTHORIZED",
+        "message": "a hub-issued service token for a mapped fleet is required",
+      },
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "GET /v1/boards/brd#15/runs/run#33/evidence",
+    "status": 401,
+    "step": "run evidence, no service",
+  },
+  {
+    "body": {
+      "error": {
+        "code": "UNAUTHORIZED",
+        "message": "a hub-issued service token for a mapped fleet is required",
+      },
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "GET /v1/boards/brd#15/runs/run#33/evidence-v1",
+    "status": 401,
+    "step": "run evidence v1, no service",
+  },
+  {
+    "body": {
+      "error": {
+        "code": "INVALID_INPUT",
+      },
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "POST /v1/boards/brd#15/runs/run#33/evidence-reference",
+    "status": 400,
+    "step": "evidence reference, bad",
+  },
+  {
+    "body": {
+      "reference_id": "ref#35",
+      "verification": "unverified",
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "POST /v1/boards/brd#15/runs/run#33/evidence-reference",
+    "status": 200,
+    "step": "evidence reference",
+  },
+  {
+    "body": {
+      "error": {
+        "code": "INVALID_APPROVAL_SUBJECT",
+        "message": "leaseEpoch and exact schema, subject id, digest, and account are required",
+      },
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "POST /v1/boards/brd#15/runs/run#33/approval-subject/verify",
+    "status": 400,
+    "step": "approval subject verify, bad",
+  },
+  {
+    "body": {
+      "error": {
+        "code": "APPROVAL_SUBJECT_NOT_VERIFIED",
+        "message": "the run is not bound to an active approval subject",
+        "ok": false,
+      },
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "POST /v1/boards/brd#15/runs/run#33/approval-subject/verify",
+    "status": 409,
+    "step": "approval subject verify, nothing to verify",
+  },
+  {
+    "body": {
+      "run": {
+        "acknowledged": true,
+      },
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "POST /v1/boards/brd#15/runs/run#33/heartbeat",
+    "status": 200,
+    "step": "heartbeat",
+  },
+  {
+    "body": {
+      "error": {
+        "code": "STALE_LEASE",
+        "message": "no active lease for this run",
+        "ok": false,
+      },
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "POST /v1/boards/brd#15/runs/run#33/heartbeat",
+    "status": 409,
+    "step": "heartbeat, stale lease",
+  },
+  {
+    "body": {
+      "activity": {
+        "accepted": true,
+        "cardState": "working",
+      },
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "POST /v1/boards/brd#15/runs/run#33/activities",
+    "status": 200,
+    "step": "activity",
+  },
+  {
+    "body": {
+      "activity": {
+        "accepted": true,
+        "cardState": "input-required",
+      },
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "POST /v1/boards/brd#15/runs/run#33/activities",
+    "status": 200,
+    "step": "question",
+  },
+  {
+    "body": {
+      "elicitations": [
+        {
+          "agentId": "agt#9",
+          "boardId": "brd#15",
+          "boardName": "Pinned, renamed",
+          "cardId": "card#31",
+          "cardTitle": "Research this",
+          "elicitationId": "elc#36",
+          "event": "elicitation.pending",
+          "options": [
+            {
+              "id": "a",
+              "label": "A",
+            },
+            {
+              "id": "b",
+              "label": "B",
+            },
+          ],
+          "question": "Which source?",
+          "runId": "run#33",
+          "stageKey": "research",
+          "ts": "<time>",
+        },
+      ],
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "GET /v1/boards/brd#15/elicitations/pending",
+    "status": 200,
+    "step": "questions pending, an agent",
+  },
+  {
+    "body": {
+      "elicitations": [
+        {
+          "agentId": "agt#9",
+          "boardId": "brd#15",
+          "boardName": "Pinned, renamed",
+          "cardId": "card#31",
+          "cardTitle": "Research this",
+          "elicitationId": "elc#36",
+          "event": "elicitation.pending",
+          "options": [
+            {
+              "id": "a",
+              "label": "A",
+            },
+            {
+              "id": "b",
+              "label": "B",
+            },
+          ],
+          "question": "Which source?",
+          "runId": "run#33",
+          "stageKey": "research",
+          "ts": "<time>",
+        },
+      ],
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "GET /v1/boards/brd#15/elicitations/pending",
+    "status": 200,
+    "step": "questions pending, a person",
+  },
+  {
+    "body": {
+      "error": {
+        "code": "ELICITATION_NOT_FOUND",
+        "message": "elicitation not found: eli_nothing",
+        "ok": false,
+      },
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "POST /v1/boards/brd#15/elicitations/eli_nothing/answer",
+    "status": 404,
+    "step": "answer, missing",
+  },
+  {
+    "body": {
+      "card": {
+        "archivedAt": null,
+        "attemptCount": 1,
+        "blockedBy": [],
+        "contextId": "ctx#32",
+        "costUsd": 0,
+        "costUsdRollup": 0,
+        "createdAt": "<time>",
+        "currentRunId": "run#33",
+        "currentStageKey": "research",
+        "delegateAgentId": "agt#9",
+        "dueAt": null,
+        "id": "card#31",
+        "labels": [],
+        "lastAgentId": "agt#9",
+        "milestoneId": null,
+        "openChildCount": 0,
+        "overBudget": false,
+        "ownerUserId": "usr_dev",
+        "parentCardId": null,
+        "priority": 0,
+        "projectId": null,
+        "queuedBy": "usr_dev",
+        "queuedByAgentId": null,
+        "queuedGrant": null,
+        "queuedGrantOwner": "usr_dev",
+        "spec": {},
+        "stageSince": "<time>",
+        "state": "working",
+        "stateSince": "<time>",
+        "title": "Research this",
+        "updatedAt": "<time>",
+      },
+      "elicitation": {
+        "agentId": "agt#9",
+        "answer": {
+          "answeredAt": "<time>",
+          "answeredBy": "usr_dev",
+          "option": "a",
+          "text": null,
+        },
+        "cardId": "card#31",
+        "createdAt": "<time>",
+        "id": "elc#36",
+        "options": [
+          {
+            "name": "a",
+            "title": "A",
+          },
+          {
+            "name": "b",
+            "title": "B",
+          },
+        ],
+        "question": "Which source?",
+        "runId": "run#33",
+        "signal": "select",
+        "stageKey": "research",
+        "status": "answered",
+      },
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "POST /v1/boards/brd#15/elicitations/elc#36/answer",
+    "status": 200,
+    "step": "answer",
+  },
+  {
+    "body": {
+      "error": "method not allowed",
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "GET /v1/boards/brd#15/elicitations/x/answer",
+    "status": 405,
+    "step": "answer, wrong method",
+  },
+  {
+    "body": {
+      "error": "unknown reference provider: nope. Known: superlibrary, github, gitlab, forge, docs, url",
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "POST /v1/boards/brd#15/runs/run#33/references",
+    "status": 400,
+    "step": "run reference, bad provider",
+  },
+  {
+    "body": {
+      "reference": {
+        "addedBy": "agent",
+        "cardId": "card#31",
+        "createdAt": "<time>",
+        "externalId": "o/r#1",
+        "id": "ref#37",
+        "lastSyncedAt": null,
+        "metadata": null,
+        "provider": "github",
+        "runId": null,
+        "sourceType": "pull_request",
+        "subtitle": null,
+        "syncState": "synced",
+        "title": "PR 1",
+        "updatedAt": null,
+        "url": "https://github.com/o/r/pull/1",
+      },
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "POST /v1/boards/brd#15/runs/run#33/references",
+    "status": 200,
+    "step": "run reference",
+  },
+  {
+    "body": {
+      "error": "unknown run action: dance",
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "POST /v1/boards/brd#15/runs/run#33/dance",
+    "status": 404,
+    "step": "run, unknown action",
+  },
+  {
+    "body": {
+      "error": {
+        "message": "Expected property name or '}' in JSON at position 1 (line 1 column 2)",
+      },
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "POST /v1/boards/brd#15/runs/run#33/heartbeat",
+    "status": 500,
+    "step": "run, not JSON",
+  },
+  {
+    "body": {
+      "error": "method not allowed",
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "GET /v1/boards/brd#15/runs/run#33/heartbeat",
+    "status": 405,
+    "step": "run action, wrong method",
+  },
+  {
+    "body": {
+      "card": {
+        "archivedAt": null,
+        "attemptCount": 1,
+        "blockedBy": [],
+        "contextId": "ctx#32",
+        "costUsd": 0,
+        "costUsdRollup": 0,
+        "createdAt": "<time>",
+        "currentRunId": null,
+        "currentStageKey": "review",
+        "delegateAgentId": null,
+        "dueAt": null,
+        "id": "card#31",
+        "labels": [],
+        "lastAgentId": "agt#9",
+        "milestoneId": null,
+        "openChildCount": 0,
+        "overBudget": false,
+        "ownerUserId": "usr_dev",
+        "parentCardId": null,
+        "priority": 0,
+        "projectId": null,
+        "queuedBy": "usr_dev",
+        "queuedByAgentId": null,
+        "queuedGrant": null,
+        "queuedGrantOwner": "usr_dev",
+        "spec": {},
+        "stageSince": "<time>",
+        "state": "input-required",
+        "stateSince": "<time>",
+        "title": "Research this",
+        "updatedAt": "<time>",
+      },
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "POST /v1/boards/brd#15/runs/run#33/complete",
+    "status": 200,
+    "step": "complete into review",
+  },
+  {
+    "body": {
+      "gates": [
+        {
+          "boardId": "brd#15",
+          "boardName": "Pinned, renamed",
+          "cardId": "card#31",
+          "cardTitle": "Research this",
+          "event": "gate.pending",
+          "gateId": "gate#38",
+          "handoffSummary": "Two sources.",
+          "options": [
+            {
+              "id": "approve",
+              "label": "Approve",
+            },
+            {
+              "id": "request_changes",
+              "label": "Request changes",
+            },
+            {
+              "id": "reject",
+              "label": "Reject",
+            },
+          ],
+          "producedBy": "agt#9",
+          "returnStageKey": "research",
+          "stageKey": "review",
+          "ts": "<time>",
+        },
+      ],
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "GET /v1/boards/brd#15/gates/pending",
+    "status": 200,
+    "step": "gates pending, a person",
+  },
+  {
+    "body": {
+      "gates": [
+        {
+          "boardId": "brd#15",
+          "boardName": "Pinned, renamed",
+          "cardId": "card#31",
+          "cardTitle": "Research this",
+          "event": "gate.pending",
+          "gateId": "gate#38",
+          "handoffSummary": "Two sources.",
+          "options": [
+            {
+              "id": "approve",
+              "label": "Approve",
+            },
+            {
+              "id": "request_changes",
+              "label": "Request changes",
+            },
+            {
+              "id": "reject",
+              "label": "Reject",
+            },
+          ],
+          "producedBy": "agt#9",
+          "returnStageKey": "research",
+          "stageKey": "review",
+          "ts": "<time>",
+        },
+      ],
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "GET /v1/boards/brd#15/gates/pending",
+    "status": 200,
+    "step": "gates pending, an agent",
+  },
+  {
+    "body": {
+      "gate": {
+        "cardId": "card#31",
+        "comment": null,
+        "createdAt": "<time>",
+        "decidedBy": null,
+        "decision": null,
+        "id": "gate#38",
+        "options": [
+          {
+            "name": "approve",
+            "title": "Approve",
+          },
+          {
+            "interactive": true,
+            "name": "request_changes",
+            "title": "Request changes",
+          },
+          {
+            "name": "reject",
+            "title": "Reject",
+          },
+        ],
+        "producedBy": "agt#9",
+        "resolvedAt": null,
+        "stageKey": "review",
+        "status": "pending",
+        "summary": "Two sources.",
+      },
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "GET /v1/boards/brd#15/gates/gate#38",
+    "status": 200,
+    "step": "gate",
+  },
+  {
+    "body": {
+      "error": {
+        "code": "GATE_NOT_FOUND",
+        "message": "gate not found: gate_nothing",
+        "ok": false,
+      },
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "GET /v1/boards/brd#15/gates/gate_nothing",
+    "status": 404,
+    "step": "gate, missing",
+  },
+  {
+    "body": {
+      "error": "sign in to continue",
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "GET /v1/boards/brd#15/gates/gate#38",
+    "status": 401,
+    "step": "gate, signed out",
+  },
+  {
+    "body": {
+      "error": {
+        "code": "INVALID_APPROVAL_DELIVERY",
+        "message": "mode must be manual or automatic",
+      },
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "POST /v1/boards/brd#15/gates/gate#38/delivery",
+    "status": 400,
+    "step": "gate delivery, bad mode",
+  },
+  {
+    "body": {
+      "error": {
+        "code": "APPROVAL_DELIVERY_NOT_AVAILABLE",
+        "message": "this gate has no changeable delivery approval",
+        "ok": false,
+      },
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "POST /v1/boards/brd#15/gates/gate#38/delivery",
+    "status": 409,
+    "step": "gate delivery",
+  },
+  {
+    "body": {
+      "error": "sign in to continue",
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "POST /v1/boards/brd#15/gates/gate#38/resolve",
+    "status": 401,
+    "step": "gate resolve, an agent",
+  },
+  {
+    "body": {
+      "card": {
+        "archivedAt": null,
+        "attemptCount": 1,
+        "blockedBy": [],
+        "contextId": "ctx#32",
+        "costUsd": 0,
+        "costUsdRollup": 0,
+        "createdAt": "<time>",
+        "currentRunId": null,
+        "currentStageKey": "done",
+        "delegateAgentId": null,
+        "dueAt": null,
+        "id": "card#31",
+        "labels": [],
+        "lastAgentId": "agt#9",
+        "milestoneId": null,
+        "openChildCount": 0,
+        "overBudget": false,
+        "ownerUserId": "usr_dev",
+        "parentCardId": null,
+        "priority": 0,
+        "projectId": null,
+        "queuedBy": "usr_dev",
+        "queuedByAgentId": null,
+        "queuedGrant": null,
+        "queuedGrantOwner": "usr_dev",
+        "spec": {},
+        "stageSince": "<time>",
+        "state": "completed",
+        "stateSince": "<time>",
+        "title": "Research this",
+        "updatedAt": "<time>",
+      },
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "POST /v1/boards/brd#15/gates/gate#38/resolve",
+    "status": 200,
+    "step": "gate resolve",
+  },
+  {
+    "body": {
+      "error": {
+        "code": "GATE_NOT_PENDING",
+        "decidedAt": "<time>",
+        "decidedBy": "usr_dev",
+        "message": "gate is already resolved",
+        "ok": false,
+        "reason": "decided",
+        "via": "web",
+      },
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "POST /v1/boards/brd#15/gates/gate#38/resolve",
+    "status": 409,
+    "step": "gate resolve, again",
+  },
+  {
+    "body": {
+      "error": "method not allowed",
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "GET /v1/boards/brd#15/gates/gate#38/resolve",
+    "status": 405,
+    "step": "gate resolve, wrong method",
+  },
+  {
+    "body": {
+      "error": "method not allowed",
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "GET /v1/boards/brd#15/nothing",
+    "status": 405,
+    "step": "board, unknown subpath",
+  },
+  {
+    "body": {
+      "error": "method not allowed",
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "POST /v1/boards/brd#15/a/b/c",
+    "status": 405,
+    "step": "board, unknown deep subpath",
+  },
+  {
+    "body": {
+      "board": {
+        "boardId": "brd#39",
+        "cards": [],
+        "elicitations": [],
+        "gates": [],
+        "github": {
+          "issueTrigger": false,
+          "triggerGrantCount": null,
+          "webhookConfigured": false,
+          "webhookUrl": "https://app.superpipeline.dev/v1/boards/brd#39/webhooks/github?tenant=tnt_http_roles",
+        },
+        "name": "Roles",
+        "references": [],
+        "stages": [
+          {
+            "key": "inbox",
+            "name": "Inbox",
+            "order": 0,
+            "ownerKind": "human",
+          },
+          {
+            "key": "research",
+            "name": "Research",
+            "order": 1,
+            "owner": "research",
+            "ownerKind": "capability",
+          },
+          {
+            "gate": "approval",
+            "key": "review",
+            "name": "Review",
+            "order": 2,
+            "ownerKind": "human",
+          },
+          {
+            "key": "done",
+            "name": "Done",
+            "order": 3,
+          },
+        ],
+        "stale": {
+          "afterHours": 24,
+          "enabled": true,
+        },
+        "tenantId": "tnt_http_roles",
+        "usage": {
+          "budgetUsd": null,
+          "cardUsdCap": null,
+          "estimatedCostUsd": 0,
+          "overBudget": false,
+          "totalCostUsd": 0,
+        },
+      },
+      "boardId": "brd#39",
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "POST /v1/boards",
+    "status": 201,
+    "step": "board in the roles workspace",
+  },
+  {
+    "body": {
+      "boardId": "brd#39",
+      "cards": [],
+      "elicitations": [],
+      "gates": [],
+      "github": {
+        "issueTrigger": false,
+        "triggerGrantCount": null,
+        "webhookConfigured": false,
+        "webhookUrl": "https://app.superpipeline.dev/v1/boards/brd#39/webhooks/github?tenant=tnt_http_roles",
+      },
+      "name": "Roles",
+      "references": [],
+      "stages": [
+        {
+          "key": "inbox",
+          "name": "Inbox",
+          "order": 0,
+          "ownerKind": "human",
+        },
+        {
+          "key": "research",
+          "name": "Research",
+          "order": 1,
+          "owner": "research",
+          "ownerKind": "capability",
+        },
+        {
+          "gate": "approval",
+          "key": "review",
+          "name": "Review",
+          "order": 2,
+          "ownerKind": "human",
+        },
+        {
+          "key": "done",
+          "name": "Done",
+          "order": 3,
+        },
+      ],
+      "stale": {
+        "afterHours": 24,
+        "enabled": true,
+      },
+      "tenantId": "tnt_http_roles",
+      "usage": {
+        "budgetUsd": null,
+        "cardUsdCap": null,
+        "estimatedCostUsd": 0,
+        "overBudget": false,
+        "totalCostUsd": 0,
+      },
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "GET /v1/boards/brd#39",
+    "status": 200,
+    "step": "board, as the viewer",
+  },
+  {
+    "body": {
+      "error": "a viewer may not do that in this workspace",
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "POST /v1/boards/brd#39/cards",
+    "status": 403,
+    "step": "board, the viewer may not create a card",
+  },
+  {
+    "body": {
+      "error": "a viewer may not do that in this workspace",
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "PATCH /v1/boards/brd#39",
+    "status": 403,
+    "step": "board, the viewer may not rename",
+  },
+  {
+    "body": {
+      "error": "a viewer may not do that in this workspace",
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "PUT /v1/boards/brd#39/budget",
+    "status": 403,
+    "step": "board, a member may not change the budget",
+  },
+  {
+    "body": {
+      "error": "you are not a member of this workspace",
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "GET /v1/boards/brd#39",
+    "status": 403,
+    "step": "board, a dev header naming nobody",
+  },
+  {
+    "body": {
+      "error": "board not found",
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "GET /v1/boards/brd#39",
+    "status": 404,
+    "step": "board, another workspace",
+  },
+  {
+    "body": {
+      "error": "X-Agent-Id required",
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "POST /v1/boards/brd#39/push-configs",
+    "status": 400,
+    "step": "push config, no agent",
+  },
+  {
+    "body": {
+      "error": "X-Agent-Id may not name a service",
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "POST /v1/boards/brd#39/push-configs",
+    "status": 400,
+    "step": "push config, a service name",
+  },
+  {
+    "body": {
+      "configId": "push#40",
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "POST /v1/boards/brd#39/push-configs",
+    "status": 201,
+    "step": "push config",
+  },
+  {
+    "body": {
+      "error": {
+        "code": "INVALID_BODY",
+        "message": "\`events\` must be an array of event names",
+      },
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "POST /v1/boards/brd#39/push-configs",
+    "status": 400,
+    "step": "push config, bad events",
+  },
+  {
+    "body": {
+      "error": {
+        "code": "NOT_INITIALIZED",
+        "message": "board is not initialized",
+        "ok": false,
+      },
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "POST /v1/boards/brd#39/push-configs",
+    "status": 404,
+    "step": "push config, by its agent",
+  },
+  {
+    "body": "",
+    "headers": {},
+    "request": "DELETE /v1/boards/brd#39",
+    "status": 204,
+    "step": "board, delete",
+  },
+  {
+    "body": "",
+    "headers": {},
+    "request": "DELETE /v1/boards/brd#15",
+    "status": 204,
+    "step": "board, delete the first",
+  },
+  {
+    "body": {
+      "error": "board not found",
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "GET /v1/boards/brd#15",
+    "status": 404,
+    "step": "board, after delete",
+  },
+  {
+    "body": "",
+    "headers": {},
+    "request": "DELETE /v1/projects/prj#13",
+    "status": 204,
+    "step": "projects, delete",
+  },
+  {
+    "body": "",
+    "headers": {},
+    "request": "DELETE /v1/agents/agt#9",
+    "status": 204,
+    "step": "agent, delete",
+  },
+  {
+    "body": "",
+    "headers": {},
+    "request": "DELETE /v1/capabilities/cap#6",
+    "status": 204,
+    "step": "capability, delete",
+  },
+  {
+    "body": "",
+    "headers": {},
+    "request": "DELETE /v1/labels/lbl#8",
+    "status": 204,
+    "step": "label, delete",
+  },
+  {
+    "body": "Not Found",
+    "headers": {
+      "content-type": "text/plain;charset=UTF-8",
+    },
+    "request": "GET /somewhere",
+    "status": 404,
+    "step": "no assets binding",
+  },
+]
+`;

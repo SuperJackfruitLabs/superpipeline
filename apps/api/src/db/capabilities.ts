@@ -97,7 +97,7 @@ function toRecord(r: Row): CapabilityRecord {
     description: r.description,
     tags: JSON.parse(r.tagsJson) as string[],
     examples: JSON.parse(r.examplesJson) as string[],
-    origin: (r.origin === 'inferred' ? 'inferred' : 'declared') as CapabilityOrigin,
+    origin: (r.origin === 'inferred' ? 'inferred' : 'declared'),
     createdBy: r.createdBy,
     externalId: r.externalId,
     externalSource: r.externalSource,
@@ -143,7 +143,7 @@ export async function listCapabilities(db: D1Database, tenantId: string): Promis
        FROM capabilities c WHERE c.tenant_id = ? ORDER BY c.key ASC`,
     )
     .bind(tenantId)
-    .all<Row & { agentCount: number; boardCount: number }>();
+    .all<Row & { agentCount: unknown; boardCount: unknown }>();
   // Edges are attached here rather than fetched per row: one small indexed read for the whole
   // list, and the panel needs them to show DECLARED beside EFFECTIVE. A view that counts holders
   // one way and displays them the other is a diagnostic that lies.

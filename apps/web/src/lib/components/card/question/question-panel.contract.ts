@@ -3,13 +3,13 @@
  * The parity net for every vibe's question panel (spec §5.3, §7 D14-D15). A panel's own test file
  * imports this before the component, so the api mock below is in place first.
  */
-import type { Component } from 'svelte';
 import { tick } from 'svelte';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, fireEvent, render, screen } from '@testing-library/svelte';
 import type { Elicitation } from '$lib/api';
 import { QuestionAnswer } from './question-answer.svelte';
 import { expectBusy, type BusyForm } from '../busy-contract';
+import type { AnyComponent } from '../testing/any-component';
 
 export const PRIMARY = /\bbg-primary\b|\bvk-button--primary\b/;
 export const answerElicitation = vi.fn();
@@ -32,7 +32,7 @@ export const ask = (over: Partial<Elicitation> = {}): Elicitation =>
     ...over,
   }) as Elicitation;
 
-export function mountQuestion(C: Component<any>, e: Elicitation) {
+export function mountQuestion(C: AnyComponent, e: Elicitation) {
   const model = new QuestionAnswer(() => ({ boardId: 'brd_1', elicitation: e, after: async () => {} }));
   const r = render(C, { model, elicitation: e, agent: questionAgent, vibe: 'daylight' });
   return { model, ...r };
@@ -42,7 +42,7 @@ export interface QuestionWords { heading: string; waiting: string; auth: string 
 export const OLD_QUESTION_WORDS: QuestionWords = { heading: 'awaiting your answer', waiting: 'Sample agent is waiting', auth: 'awaiting your sign-in' };
 
 export function questionPanelContract(
-  C: Component<any>,
+  C: AnyComponent,
   o: { decision: 'button' | 'radio'; submit?: string; noteLabel?: string; answerLabel?: string | RegExp; words?: QuestionWords; busy?: BusyForm },
 ): void {
   const w = o.words ?? OLD_QUESTION_WORDS;

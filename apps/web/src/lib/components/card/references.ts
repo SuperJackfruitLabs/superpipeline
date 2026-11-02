@@ -29,7 +29,7 @@ export function referenceSource(ref: Pick<Reference, 'url'>): string {
   }
   const blob = u.hostname === 'github.com' ? /^\/[^/]+\/([^/]+)\/blob\/[^/]+\/(.+)$/.exec(u.pathname) : null;
   if (!blob) return u.hostname;
-  const file = blob[2]!.split('/').at(-1)!;
+  const file = blob[2].split('/').at(-1)!;
   const lines = /^#L(\d+)(?:-L(\d+))?$/.exec(u.hash);
   const where = !lines ? '' : lines[2] ? ` lines ${lines[1]}–${lines[2]}` : ` line ${lines[1]}`;
   return `github · ${blob[1]} · ${file}${where}`;

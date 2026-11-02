@@ -45,7 +45,7 @@ export function humaniseKey(key: string): string {
   const words = key
     .replace(/([a-z0-9])([A-Z])/g, '$1 $2')
     .replace(/([A-Z]+)([A-Z][a-z])/g, '$1 $2')
-    .split(/[\s_\-]+/)
+    .split(/[\s_-]+/)
     .filter(Boolean)
     .map((w, i) => {
       if (w.length > 1 && w === w.toUpperCase() && /[A-Z]/.test(w)) return w; // an acronym stays one
@@ -104,7 +104,7 @@ export function isEmptyValue(v: unknown): boolean {
   if (v === null || v === undefined) return true;
   if (typeof v === 'string') return v.trim() === '';
   if (Array.isArray(v)) return v.length === 0;
-  if (typeof v === 'object') return Object.keys(v as object).length === 0;
+  if (typeof v === 'object') return Object.keys(v).length === 0;
   return false;
 }
 
@@ -219,7 +219,7 @@ export function inlineParts(s: string): InlinePart[] {
   for (const m of s.matchAll(/`([^`\n]+)`/g)) {
     const start = m.index ?? 0;
     if (start > last) parts.push(...splitLinks(s.slice(last, start)));
-    parts.push({ text: m[1]!, code: true });
+    parts.push({ text: m[1], code: true });
     last = start + m[0].length;
   }
   if (last < s.length) parts.push(...splitLinks(s.slice(last)));

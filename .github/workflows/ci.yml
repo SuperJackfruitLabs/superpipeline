@@ -45,7 +45,10 @@ jobs:
           node-version: 22
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+      # An exact version downloads directly; 'latest' asks GitHub's API, which rate-limits the runner.
       - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.4.4
       - run: pnpm typecheck
       - run: pnpm test
       - run: pnpm ci:test

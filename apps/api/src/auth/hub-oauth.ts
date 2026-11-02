@@ -46,6 +46,7 @@ import {
   type UserRecord,
 } from '../db/catalog';
 import { signSession, sessionSetCookie, SESSION_TTL_MS, readSessionToken, verifySession } from './session';
+import { logError } from '../log';
 
 /**
  * The flow's own secrets, for the sixty seconds between the navigation and the callback.
@@ -550,7 +551,7 @@ export async function handleHubRoute(
       //
       // No claims, no token, no address in the message: this lands in a log an operator reads,
       // and the useful part is that the identity step threw, not who it threw about.
-      console.error('hub sign-in: the identity step threw; handing the token on without a session', err);
+      logError('hub sign-in: the identity step threw; handing the token on without a session', err);
     }
 
     // Same-origin redirect home, like the GitHub callback: it works on whatever domain this

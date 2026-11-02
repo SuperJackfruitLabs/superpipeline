@@ -16,7 +16,7 @@ import type { CardSummary, StageSummary } from './card-summary';
 export const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'] as const;
 const parts = (d: string) => d.slice(0, 10).split('-').map(Number) as [number, number, number];
 /** '2026-10-06' → '6 Oct'. A due date is a calendar day, never shifted by a time zone. */
-export const dueShort = (d: string): string => `${parts(d)[2]} ${MONTHS[parts(d)[1] - 1]!.slice(0, 3)}`;
+export const dueShort = (d: string): string => `${parts(d)[2]} ${MONTHS[parts(d)[1] - 1].slice(0, 3)}`;
 /** '2026-10-06' → '6 October'. */
 export const dueLong = (d: string): string => `${parts(d)[2]} ${MONTHS[parts(d)[1] - 1]}`;
 /** Whole days from the due day to today (the same UTC "today" `overdue()` uses). */
@@ -24,10 +24,8 @@ export function daysOverdue(due: string, nowMs: number): number {
   const today = Date.parse(new Date(nowMs).toISOString().slice(0, 10));
   return Math.max(0, Math.round((today - Date.parse(due.slice(0, 10))) / 86_400_000));
 }
-/** "Rakesh Gangwar" → "RG". */
-export function personInitials(name: string): string {
-  return name.split(/\s+/).filter(Boolean).slice(0, 2).map((w) => w[0]!.toUpperCase()).join('');
-}
+/** Lives in `$lib/names` (card summaries use it, and this file reads theirs); re-exported here. */
+export { personInitials } from '$lib/names';
 
 // ── Daylight ────────────────────────────────────────────────────────────────────────────────────
 export function greetingLine(phase: Phase, firstName: string, needs: number): string {
@@ -219,15 +217,15 @@ export function quietMood(s: CardSummary): Mood | null {
 }
 const QUIET_HEAD: Record<QuietUrgency, string> = { needs: 'Needs your decision.', working: 'In progress.', queued: 'Waiting to start.', done: 'Done.', closed: 'Closed.' };
 export function quietFacts(s: CardSummary): string {
-  const parts: string[] = [QUIET_HEAD[s.urgency]];
-  if (s.priority > 0) parts.push(`Priority ${s.priority}.`);
-  if (s.labelsAll > 0) parts.push(`Labels: ${s.labels.map((l) => l.name).join(', ')}${s.moreLabels > 0 ? ` and ${s.moreLabels} more` : ''}.`);
-  if (s.blocked) parts.push('Blocked by another card.');
-  if (s.firstRef) parts.push(`Reference: ${s.firstRef.title ?? s.firstRef.url}.`);
-  if (s.queuedBy) parts.push(`Asked by ${s.queuedBy.name}.`);
-  if (s.dueAt) parts.push(`Due ${dueLong(s.dueAt)}${s.overdue ? ', overdue' : ''}.`);
-  parts.push(`${plural(s.attemptCount, 'attempt', 'attempts')}.`);
-  return parts.join(' ');
+  const facts: string[] = [QUIET_HEAD[s.urgency]];
+  if (s.priority > 0) facts.push(`Priority ${s.priority}.`);
+  if (s.labelsAll > 0) facts.push(`Labels: ${s.labels.map((l) => l.name).join(', ')}${s.moreLabels > 0 ? ` and ${s.moreLabels} more` : ''}.`);
+  if (s.blocked) facts.push('Blocked by another card.');
+  if (s.firstRef) facts.push(`Reference: ${s.firstRef.title ?? s.firstRef.url}.`);
+  if (s.queuedBy) facts.push(`Asked by ${s.queuedBy.name}.`);
+  if (s.dueAt) facts.push(`Due ${dueLong(s.dueAt)}${s.overdue ? ', overdue' : ''}.`);
+  facts.push(`${plural(s.attemptCount, 'attempt', 'attempts')}.`);
+  return facts.join(' ');
 }
 /** The decision a needs item offers; an unowned stage needs only "Move to another stage", which every item has. */
 export const quietAction = (s: CardSummary): CardAction | null => (s.urgency === 'needs' && s.kind !== 'no-owner' ? needsAction(s.kind) : null);
@@ -261,7 +259,7 @@ export function emptyWho(st: StageSummary, me: { name: string; initials: string 
   if (st.owner.kind === 'agent') return { kind: 'face', face: st.owner.label, name: st.owner.label };
   const d = st.declaredBy;
   if (d.length === 0) return { kind: 'none', name: 'nobody yet' };
-  return { kind: 'face', face: d[0]!, name: d.length === 1 ? d[0]! : plural(d.length, 'agent', 'agents') };
+  return { kind: 'face', face: d[0], name: d.length === 1 ? d[0] : plural(d.length, 'agent', 'agents') };
 }
 export function emptyTags(st: StageSummary, def: Stage): Array<{ text: string; g: boolean }> {
   const out: Array<{ text: string; g: boolean }> = [];

@@ -1,5 +1,6 @@
 import { SELF } from 'cloudflare:test';
 import { describe, it, expect } from 'vitest';
+import type { CapabilityRecord } from '../src/db/capabilities';
 
 /**
  * The capability registry (migration 0006).
@@ -18,7 +19,7 @@ const T = (tenant: string) => ({ 'X-Tenant-Id': tenant, 'X-User-Id': 'usr_cap', 
 
 async function caps(tenant: string) {
   const res = await SELF.fetch('https://api.test/v1/capabilities', { headers: T(tenant) });
-  return (await res.json<{ capabilities: Array<Record<string, any>> }>()).capabilities;
+  return (await res.json<{ capabilities: CapabilityRecord[] }>()).capabilities;
 }
 
 describe('a capability is a record, not a string on two objects', () => {
@@ -88,7 +89,7 @@ describe('a capability is a record, not a string on two objects', () => {
       }),
     });
     expect(res.status).toBe(201);
-    const { capability } = await res.json<{ capability: Record<string, any> }>();
+    const { capability } = await res.json<{ capability: CapabilityRecord }>();
     expect(capability.key).toBe('threat-modelling'); // one spelling, same as a stage owner
     expect(capability.origin).toBe('declared');
     expect(capability.tags).toEqual(['security']);

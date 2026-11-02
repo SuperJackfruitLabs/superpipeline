@@ -1,5 +1,6 @@
 import { SELF } from 'cloudflare:test';
 import { describe, it, expect } from 'vitest';
+import type { CapabilityRecord } from '../src/db/capabilities';
 
 /**
  * The registry must count a stage that names a capability **any way a stage can name one**.
@@ -14,7 +15,7 @@ const T = (tenant: string) => ({ 'X-Tenant-Id': tenant, 'X-User-Id': 'usr_req', 
 
 async function caps(tenant: string) {
   const res = await SELF.fetch('https://api.test/v1/capabilities', { headers: T(tenant) });
-  return (await res.json<{ capabilities: Array<Record<string, any>> }>()).capabilities;
+  return (await res.json<{ capabilities: CapabilityRecord[] }>()).capabilities;
 }
 
 async function makeBoard(tenant: string, stages: unknown[]): Promise<Response> {

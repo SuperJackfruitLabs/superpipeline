@@ -2,7 +2,7 @@
 import { tick } from 'svelte';
 import { capabilityTag } from '@superpipeline/contract';
 import {
-  getAgents, getCapabilities, createAgent, updateAgent, deleteAgent, issueAgentToken, revokeAgentToken, setAgentPrincipal,
+  createAgent, updateAgent, deleteAgent, issueAgentToken, revokeAgentToken, setAgentPrincipal,
   type AgentScope, type AgentSummary, type CapabilityRecord,
 } from '$lib/api';
 import { app } from '$lib/stores/app.svelte';

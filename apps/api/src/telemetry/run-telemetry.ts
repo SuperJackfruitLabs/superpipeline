@@ -6,6 +6,7 @@
  * carrying `run.id` and the incoming `traceparent`. Neither ever carries a body.
  */
 import * as workers from 'cloudflare:workers';
+import { logError, logInfo } from '../log';
 
 type AttrValue = string | number | boolean | undefined;
 export interface SpanLike {
@@ -45,8 +46,8 @@ export function runRouteFacts(path: string): RunRouteFacts | null {
   const action = m[3] ?? null;
   return {
     route: action === null ? '/v1/boards/:id/runs/:runId' : '/v1/boards/:id/runs/:runId/:action',
-    runId: safeId(m[2]!),
-    boardId: safeId(m[1]!),
+    runId: safeId(m[2]),
+    boardId: safeId(m[1]),
     action: action !== null && ACTION.test(action) ? action : null,
   };
 }
@@ -105,8 +106,8 @@ export async function withRunTelemetry(
           ...(tp && TRACEPARENT.test(tp) ? { traceparent: tp } : {}),
         };
         // Workers derives the exported severity from the console method.
-        if (status >= 500) console.error(entry);
-        else console.log(entry);
+        if (status >= 500) logError(entry);
+        else logInfo(entry);
       } catch {
         /* a logging failure must never fail the request */
       }
@@ -117,7 +118,7 @@ export async function withRunTelemetry(
   let started: Promise<Response> | undefined;
   try {
     return await tracing.enterSpan('run_route', (span) => (started = run(span)));
-  } catch (err) {
+  } catch {
     // If enterSpan itself failed before calling us, serve the request untraced. Either way the handler runs exactly once.
     // If enterSpan fails AFTER the handler finished (e.g. ending the span), the handler's result stands.
     if (started) return await started;

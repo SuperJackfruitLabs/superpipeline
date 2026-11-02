@@ -52,7 +52,7 @@ describe('CardMoveMenu', () => {
     r.component.step(-1);
     expect(moveCard).toHaveBeenLastCalledWith('crd_1', 'a');
     moveCard.mockClear();
-    r.rerender({ card: { ...(card as object), currentStageKey: 'c' } as never, stages });
+    void r.rerender({ card: { ...(card as object), currentStageKey: 'c' } as never, stages });
     r.component.step(1);
     expect(moveCard).not.toHaveBeenCalled();
   });

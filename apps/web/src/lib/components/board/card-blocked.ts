@@ -27,7 +27,7 @@ export interface EnforcedBlocker {
 export function enforcedBadge(blockedBy: EnforcedBlocker[]): BlockedBadge | null {
   if (blockedBy.length === 0) return null;
   const [first, ...rest] = blockedBy;
-  const who = rest.length > 0 ? `${first!.title} and ${rest.length} other${rest.length === 1 ? '' : 's'}` : first!.title;
+  const who = rest.length > 0 ? `${first.title} and ${rest.length} other${rest.length === 1 ? '' : 's'}` : first.title;
   return {
     glyph: '⛔',
     label: 'Blocked',

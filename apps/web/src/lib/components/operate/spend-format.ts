@@ -35,7 +35,7 @@ export function zeroFill(byDay: Array<{ day: string; costUsd: number }>, days: s
 const utc = (day: string) => new Date(`${day}T00:00:00Z`);
 export const dayLabel = (day: string) => `${utc(day).toLocaleDateString('en-GB', { weekday: 'short', timeZone: 'UTC' })} ${utc(day).getUTCDate()}`;
 export function dayRange(days: string[]): string {
-  const [a, b] = [utc(days[0]!), utc(days[days.length - 1]!)];
+  const [a, b] = [utc(days[0]), utc(days[days.length - 1])];
   const wd = (d: Date) => d.toLocaleDateString('en-GB', { weekday: 'long', timeZone: 'UTC' });
   const mo = (d: Date) => d.toLocaleDateString('en-GB', { month: 'long', timeZone: 'UTC' });
   const first = `${wd(a)} ${a.getUTCDate()}${mo(a) === mo(b) ? '' : ` ${mo(a)}`}`;
@@ -44,12 +44,12 @@ export function dayRange(days: string[]): string {
 /** Index of the busiest day (ties: the latest), or -1 when nothing was spent. */
 export function busiestIndex(days: Array<{ costUsd: number }>): number {
   let best = -1;
-  days.forEach((d, i) => { if (d.costUsd > 0 && (best === -1 || d.costUsd >= days[best]!.costUsd)) best = i; });
+  days.forEach((d, i) => { if (d.costUsd > 0 && (best === -1 || d.costUsd >= days[best].costUsd)) best = i; });
   return best;
 }
 export function busiestLine(days: Array<{ day: string; costUsd: number }>): string {
   const i = busiestIndex(days);
-  return i === -1 ? 'No spend recorded in these 7 days.' : `Busiest: ${dayLabel(days[i]!.day)} · ${usd(days[i]!.costUsd)}`;
+  return i === -1 ? 'No spend recorded in these 7 days.' : `Busiest: ${dayLabel(days[i].day)} · ${usd(days[i].costUsd)}`;
 }
 export const chartLabel = (days: Array<{ day: string; costUsd: number }>) => `Spend per day, ${days.map((d) => `${dayLabel(d.day)} ${usd(d.costUsd)}`).join(', ')}`;
 
@@ -67,11 +67,11 @@ const KIND: Record<string, string> = {
 const FIXED: Record<string, string> = { 'cards.stale_digest': 'Stale-card digest sent', 'link.added': 'Link added', 'card.updated': 'Card updated', 'card.created': 'Card created' };
 
 export function eventLabel(e: BoardEvent, stages: Stage[]): string {
-  const p = e.payload as Record<string, unknown>;
-  if (FIXED[e.type]) return FIXED[e.type]!;
+  const p = e.payload;
+  if (FIXED[e.type]) return FIXED[e.type];
   if (e.type === 'notification') {
     const body = typeof p.body === 'string' ? p.body.trim() : '';
-    if (body) return `Notification: ${lcFirst(body.split(':')[0]!.trim())}`;
+    if (body) return `Notification: ${lcFirst(body.split(':')[0].trim())}`;
     const kind = String(p.kind ?? '');
     return `Notification: ${KIND[kind] ?? kind}`;
   }
@@ -84,7 +84,7 @@ export function eventLabel(e: BoardEvent, stages: Stage[]): string {
 }
 
 export function eventSummary(e: BoardEvent): string {
-  const p = e.payload as Record<string, unknown>;
+  const p = e.payload;
   return ['cardId', 'agentId', 'to', 'from', 'name', 'reason', 'decision'].filter((k) => typeof p[k] === 'string').map((k) => `${k}=${p[k] as string}`).join(' · ');
 }
 export const rawLine = (e: BoardEvent) => { const s = eventSummary(e); return `${e.type}${s ? ` ${s}` : ''}`; };

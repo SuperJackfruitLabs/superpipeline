@@ -13,7 +13,7 @@ export async function verifyGithubSignature(secret: string, rawBody: string, hea
   const match = header.match(/^sha256=([0-9a-f]{64})$/i);
   if (!match) return false;
   const expected = await hmacSha256Hex(secret, rawBody);
-  return timingSafeEqualHex(match[1]!.toLowerCase(), expected);
+  return timingSafeEqualHex(match[1].toLowerCase(), expected);
 }
 
 /**

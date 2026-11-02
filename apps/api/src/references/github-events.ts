@@ -14,19 +14,45 @@ export interface GithubEventResult {
   metadata: Record<string, unknown>;
 }
 
-interface Repo {
+/**
+ * The fields of a webhook delivery (GitHub's or a forge's) the mappers read. Unchecked: the body is
+ * parsed JSON, so each field is only what the sender says it is, and the mappers test what they
+ * branch on.
+ */
+export interface WebhookRepo {
   full_name?: string;
   default_branch?: string;
 }
+export interface WebhookPullRequest {
+  number?: number;
+  state?: string;
+  draft?: boolean;
+  merged?: boolean;
+  html_url?: string;
+  base?: { ref?: string };
+  head?: { ref?: string };
+}
+export interface WebhookIssue {
+  number?: number;
+  state?: string;
+  title?: string;
+  html_url?: string;
+}
+export interface WebhookPayload {
+  action?: string;
+  repository?: WebhookRepo;
+  pull_request?: WebhookPullRequest;
+  issue?: WebhookIssue;
+}
 
 export function mapGithubEvent(event: string, payload: unknown): GithubEventResult | null {
-  const p = payload as Record<string, any>;
-  const repo = (p.repository ?? {}) as Repo;
+  const p = payload as WebhookPayload;
+  const repo = p.repository ?? {};
   const fullName = repo.full_name?.toLowerCase();
   if (!fullName) return null;
 
   if (event === 'pull_request') {
-    const pr = p.pull_request as Record<string, any> | undefined;
+    const pr = p.pull_request;
     if (!pr || typeof pr.number !== 'number') return null;
     const externalId = `${fullName}#${pr.number}`;
     const base = { externalId, sourceType: 'pull_request' as const };
@@ -59,7 +85,7 @@ export function mapGithubEvent(event: string, payload: unknown): GithubEventResu
   }
 
   if (event === 'issues') {
-    const issue = p.issue as Record<string, any> | undefined;
+    const issue = p.issue;
     if (!issue || typeof issue.number !== 'number') return null;
     const externalId = `${fullName}#${issue.number}`;
     const base = { externalId, sourceType: 'issue' as const };

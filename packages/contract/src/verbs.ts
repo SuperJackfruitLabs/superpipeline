@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { BoardId, CardId, RunId, TaskId, AgentId, ElicitationId } from './ids';
+import { BoardId, CardId, RunId, AgentId, ElicitationId } from './ids';
 import { ActivityType, Signal, ReferenceProvider, ReferenceSourceType } from './primitives';
 import { Card, Task, Reference } from './entities';
 import { StageOutcome } from './outcome';

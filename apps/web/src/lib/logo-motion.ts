@@ -40,7 +40,7 @@ export function loadLogoMotion(): Promise<LogoMotionLib> {
 
 /** The person asked for less motion: the OS setting, or the app's own `data-motion="reduce"`. */
 export function motionReduced(el: Element): boolean {
-  return Boolean(globalThis.matchMedia?.('(prefers-reduced-motion: reduce)').matches) || el.closest('[data-motion="reduce"]') !== null;
+  return globalThis.matchMedia?.('(prefers-reduced-motion: reduce)').matches || el.closest('[data-motion="reduce"]') !== null;
 }
 
 /** The first-load animation plays once per page session, never again on a later loading screen. */

@@ -147,14 +147,14 @@ function editDistance(a: string, b: string): number {
     const curr = [i];
     for (let j = 1; j <= b.length; j++) {
       curr[j] = Math.min(
-        prev[j]! + 1,
-        curr[j - 1]! + 1,
-        prev[j - 1]! + (a[i - 1] === b[j - 1] ? 0 : 1),
+        prev[j] + 1,
+        curr[j - 1] + 1,
+        prev[j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1),
       );
     }
     prev = curr;
   }
-  return prev[b.length]!;
+  return prev[b.length];
 }
 
 /**

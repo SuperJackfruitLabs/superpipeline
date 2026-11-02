@@ -11,7 +11,7 @@ const s = (n: number) => (n === 1 ? '' : 's');
 
 export function initials(name: string): string {
   const words = name.trim().split(/\s+/).filter(Boolean);
-  return words.length === 0 ? '' : words.length === 1 ? words[0]!.charAt(0).toUpperCase() : `${words[0]!.charAt(0)}${words.at(-1)!.charAt(0)}`.toUpperCase();
+  return words.length === 0 ? '' : words.length === 1 ? words[0].charAt(0).toUpperCase() : `${words[0].charAt(0)}${words.at(-1)!.charAt(0)}`.toUpperCase();
 }
 
 export function unclaimedChip(i: { delegateName: string | null; lastAgentName: string | null; attemptCount: number }): string {

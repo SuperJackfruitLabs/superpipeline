@@ -68,8 +68,8 @@ export function planRepoint(snapshot: CatalogSnapshot, mapping: RepointMapping, 
     byFrom.set(t.external_id, [...(byFrom.get(t.external_id) ?? []), t]);
   }
   for (const [from, rows] of byFrom) {
-    const to = tenantMap[from]!;
-    let chosen = rows[0]!;
+    const to = tenantMap[from];
+    let chosen = rows[0];
     if (rows.length > 1) {
       const org = direction === 'forward' ? to : from;
       const pick = mapping.chosenTenants?.[org];

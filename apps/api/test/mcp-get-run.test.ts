@@ -27,7 +27,17 @@ const headers = () => ({
   Accept: 'application/json, text/event-stream',
 });
 
-async function call(name: string, args: Record<string, unknown>): Promise<any> {
+/** The fields of a tool's JSON answer these tests read. */
+interface ToolAnswer {
+  claimed?: boolean;
+  runId?: string;
+  leaseEpoch?: number;
+  run?: unknown;
+  card?: unknown;
+  error?: unknown;
+}
+
+async function call(name: string, args: Record<string, unknown>): Promise<ToolAnswer> {
   await SELF.fetch(`${base}/mcp`, {
     method: 'POST',
     headers: headers(),

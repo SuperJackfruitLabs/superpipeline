@@ -41,7 +41,7 @@ export function parseRule(text: string): { ok: true; rule: Rule } | { ok: false;
   const interval = s.match(/^every (\d+) (minutes?|hours?|days?)$/);
   if (interval) {
     const every = Number(interval[1]);
-    const unit = (interval[2]!.endsWith('s') ? interval[2]! : `${interval[2]!}s`) as
+    const unit = (interval[2].endsWith('s') ? interval[2] : `${interval[2]}s`) as
       | 'minutes' | 'hours' | 'days';
     if (every <= 0) return { ok: false, error: 'an interval must be at least 1' };
     const asMinutes = unit === 'minutes' ? every : unit === 'hours' ? every * 60 : every * 1440;
@@ -56,16 +56,16 @@ export function parseRule(text: string): { ok: true; rule: Rule } | { ok: false;
 
   const daily = s.match(/^daily at (\d{1,2}):(\d{2})$/);
   if (daily) {
-    const t = clock(daily[1]!, daily[2]!);
+    const t = clock(daily[1], daily[2]);
     if (!t) return { ok: false, error: 'that is not a time of day' };
     return { ok: true, rule: { kind: 'daily', ...t } };
   }
 
   const weekly = s.match(/^weekly on ([a-z]{3}) at (\d{1,2}):(\d{2})$/);
   if (weekly) {
-    const dow = DOW[weekly[1]!];
+    const dow = DOW[weekly[1]];
     if (dow === undefined) return { ok: false, error: `"${weekly[1]}" is not a day — use mon, tue, wed, thu, fri, sat or sun` };
-    const t = clock(weekly[2]!, weekly[3]!);
+    const t = clock(weekly[2], weekly[3]);
     if (!t) return { ok: false, error: 'that is not a time of day' };
     return { ok: true, rule: { kind: 'weekly', dow, ...t } };
   }
@@ -79,7 +79,7 @@ export function parseRule(text: string): { ok: true; rule: Rule } | { ok: false;
     if (day < 1 || day > 28) {
       return { ok: false, error: 'a monthly day must be between 1 and 28, so it exists in every month' };
     }
-    const t = clock(monthly[2]!, monthly[3]!);
+    const t = clock(monthly[2], monthly[3]);
     if (!t) return { ok: false, error: 'that is not a time of day' };
     return { ok: true, rule: { kind: 'monthly', day, ...t } };
   }

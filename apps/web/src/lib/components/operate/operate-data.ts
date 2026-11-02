@@ -19,7 +19,7 @@ export function needRows(board: BoardSnapshot, agents: AgentSummary[], items: At
     // A card in a stage nothing claims is unclaimed, whoever last touched it.
     const agentId = item.kind === 'no-owner' ? null : (card.delegateAgentId ?? card.lastAgentId ?? null);
     return [{
-      item, card, stage: stages[idx]!, stageIndex: idx + 1, stages,
+      item, card, stage: stages[idx], stageIndex: idx + 1, stages,
       boardId: board.boardId ?? item.boardId, boardName: board.name ?? item.boardName ?? '',
       agentName: agentId ? displayAgent(agentId, agents) : null,
       iconUrl: agentId ? (agents.find((a) => a.id === agentId)?.iconUrl ?? null) : null,
@@ -53,7 +53,7 @@ export function activityGroups(notifications: Notification[], showRead: boolean,
       cardId, title: card?.title ?? cardId, boardId: board.boardId ?? '', boardName: board.name ?? '',
       agentName: agentId ? displayAgent(agentId, agents) : null,
       iconUrl: agentId ? (agents.find((a) => a.id === agentId)?.iconUrl ?? null) : null,
-      latest: sorted[0]!, earlier: sorted.slice(1), need,
+      latest: sorted[0], earlier: sorted.slice(1), need,
     };
   });
   return groups.sort((a, b) => b.latest.createdAt.localeCompare(a.latest.createdAt));
@@ -97,7 +97,7 @@ export function mergeUsage(list: readonly UsageSummary[]): UsageSummary | null {
   return {
     totalCostUsd: sum((u) => u.totalCostUsd), estimatedCostUsd: sum((u) => u.estimatedCostUsd),
     totalInputTokens: sum((u) => u.totalInputTokens), totalOutputTokens: sum((u) => u.totalOutputTokens), unpricedRecords: sum((u) => u.unpricedRecords),
-    byModel: list.flatMap((u) => u.byModel), byCard: list.flatMap((u) => u.byCard), byDay: list[0]!.byDay.map((d, i) => ({ day: d.day, costUsd: list.reduce((n, u) => n + (u.byDay[i]?.costUsd ?? 0), 0) })),
+    byModel: list.flatMap((u) => u.byModel), byCard: list.flatMap((u) => u.byCard), byDay: list[0].byDay.map((d, i) => ({ day: d.day, costUsd: list.reduce((n, u) => n + (u.byDay[i]?.costUsd ?? 0), 0) })),
     byAgent: [...byAgent.entries()].map(([agentId, costUsd]) => ({ agentId, costUsd })).sort((a, b) => b.costUsd - a.costUsd),
   };
 }

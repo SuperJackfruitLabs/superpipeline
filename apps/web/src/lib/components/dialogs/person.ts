@@ -24,5 +24,5 @@ export function greetingName(user: User | null, members: Member[]): string {
 export const firstName = (name: string): string => name.trim().split(/\s+/)[0] ?? '';
 export function initials(name: string): string {
   const w = name.trim().split(/\s+/).filter(Boolean);
-  return ((w[0]?.[0] ?? '') + (w.length > 1 ? w[w.length - 1]![0] : '')).toUpperCase();
+  return ((w[0]?.[0] ?? '') + (w.length > 1 ? w[w.length - 1][0] : '')).toUpperCase();
 }

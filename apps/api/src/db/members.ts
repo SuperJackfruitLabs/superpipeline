@@ -91,7 +91,7 @@ export async function ownerCount(db: D1Database, tenantId: string): Promise<numb
   const row = await db
     .prepare(`SELECT COUNT(*) AS n FROM memberships WHERE tenant_id = ? AND role = 'owner'`)
     .bind(tenantId)
-    .first<{ n: number }>();
+    .first<{ n: unknown }>();
   return Number(row?.n ?? 0);
 }
 

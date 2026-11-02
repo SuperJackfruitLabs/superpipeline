@@ -12,7 +12,8 @@
   import { moveTargets } from '../operate-data';
   import { CapsUi, OperateUi } from '../operate-ui.svelte';
   import { cut140, daylightCap, daylightMeta, kindWord, moveOptionLabel, resumeOptions, RESUME_LABEL, staleLine, noticeBody, stopHint, usd, when } from '../operate-words';
-  import type { NeedRow, OperateLayoutProps } from './types';
+  import type { NeedRow } from './types';
+  import type { OperateLayoutProps } from './props';
   import './operate-daylight.css';
 
   let { model, ui: uiProp, caps: capsProp }: OperateLayoutProps = $props();

@@ -13,7 +13,6 @@ import {
 } from './project-detail';
 import { projectWorkspace } from './project-workspace.svelte';
 
-const message = (e: unknown) => (e instanceof Error ? e.message : String(e));
 async function refusal(res: Response, fallback: string): Promise<string | null> {
   if (res.ok) return null;
   const body = (await res.json().catch(() => null)) as { error?: string } | null;

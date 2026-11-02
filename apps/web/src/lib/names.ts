@@ -99,3 +99,8 @@ export function displayAuthor(a: { kind: 'human' | 'agent'; id: string; name: st
   if (member) return member;
   return agents.find((x) => !!x.externalId && x.externalId === a.id)?.name?.trim() || 'Someone';
 }
+
+/** "Rakesh Gangwar" → "RG". */
+export function personInitials(name: string): string {
+  return name.split(/\s+/).filter(Boolean).slice(0, 2).map((w) => w[0].toUpperCase()).join('');
+}

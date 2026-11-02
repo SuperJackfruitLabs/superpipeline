@@ -3,13 +3,13 @@
 process.env.TZ = 'Asia/Kolkata';
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import { render, screen, within, cleanup, fireEvent } from '@testing-library/svelte';
-import type { Component } from 'svelte';
 import CardPhoneDaylight from './CardPhoneDaylight.svelte';
 import CardPhonePaper from './CardPhonePaper.svelte';
 import CardPhoneQuiet from './CardPhoneQuiet.svelte';
 import CardPhoneStudio from './CardPhoneStudio.svelte';
 import { CARD_SECTION_KEYS } from './types';
 import { model4605, MEMBERS, AGENTS } from '../phone/phone-card.fixture';
+import type { AnyComponent } from '../testing/any-component';
 
 vi.mock('$lib/stores/app.svelte', async () => {
   const f = await import('../phone/phone-card.fixture');
@@ -20,7 +20,7 @@ vi.useFakeTimers({ toFake: ['Date'] });
 vi.setSystemTime(new Date('2026-10-11T08:21:00Z'));
 afterEach(() => cleanup());
 
-const PHONES = { daylight: CardPhoneDaylight, paper: CardPhonePaper, quiet: CardPhoneQuiet, studio: CardPhoneStudio } as const satisfies Record<string, Component<any>>;
+const PHONES = { daylight: CardPhoneDaylight, paper: CardPhonePaper, quiet: CardPhoneQuiet, studio: CardPhoneStudio } as const satisfies Record<string, AnyComponent>;
 const props = (vibe: keyof typeof PHONES, over: Record<string, unknown> = {}) => ({
   model: model4605(), vibe, phase: 'noon' as const, personName: 'Ira Mehta', gate: null, question: null,
   pageHref: '/b/brd_134a0ddb6d434478/c/card_05823a57e8224605/page', onClose: vi.fn(), ...over,

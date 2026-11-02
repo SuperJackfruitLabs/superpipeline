@@ -5,8 +5,6 @@
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, fireEvent, render } from '@testing-library/svelte';
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-import type { Component } from 'svelte';
 import CardDaylight from './layouts/CardDaylight.svelte';
 import CardPaper from './layouts/CardPaper.svelte';
 import CardQuiet from './layouts/CardQuiet.svelte';
@@ -18,6 +16,7 @@ import CardPageStudio from './page/CardPageStudio.svelte';
 import { mountModel } from './testing/mount-model.svelte';
 import { fakeApi, fakeApp } from './testing/fakes';
 import { BOARD_DX, CARD_4605 } from './testing/card-4605';
+import type { AnyComponent } from './testing/any-component';
 
 vi.mock('$lib/stores/app.svelte', async () => ({ app: (await import('./testing/fakes')).fakeApp }));
 vi.mock('$lib/api', async (orig) => ({ ...(await orig<typeof import('$lib/api')>()), ...(await import('./testing/fakes')).fakeApi }));
@@ -30,7 +29,7 @@ beforeEach(() => {
 });
 afterEach(() => { cleanup(); vi.useRealTimers(); });
 
-const LAYOUTS: Array<[string, Component<any>, 'drawer' | 'page', string, boolean]> = [
+const LAYOUTS: Array<[string, AnyComponent, 'drawer' | 'page', string, boolean]> = [
   ['Daylight drawer', CardDaylight, 'drawer', 'daylight', true],
   ['Paper drawer', CardPaper, 'drawer', 'paper', true],
   ['Quiet drawer', CardQuiet, 'drawer', 'quiet', false],
@@ -41,7 +40,7 @@ const LAYOUTS: Array<[string, Component<any>, 'drawer' | 'page', string, boolean
   ['Studio page', CardPageStudio, 'page', 'studio', true],
 ];
 
-async function mount(C: Component<any>, surface: 'drawer' | 'page', vibe: string) {
+async function mount(C: AnyComponent, surface: 'drawer' | 'page', vibe: string) {
   const { model, dispose } = mountModel({ surface });
   await vi.waitFor(() => expect(model.detailLoaded).toBe(true));
   const r = render(C, { model, vibe, phase: 'noon', personName: 'Ira Mehta', gate: model.gateBinding, question: model.questionBinding, pageHref: model.pageHref, boardHref: model.boardHref, onClose: vi.fn() } as never);

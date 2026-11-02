@@ -9,7 +9,8 @@
  *   3. the committed pages under `docs-site/` are not what `reference.ts` renders today.
  *
  * Read from the source rather than by running the CLI, for the reason `verbs.test.ts` gives:
- * `index.ts` ends in `await main(...)`, so importing it would run it.
+ * `index.ts` ends in `await main(...)`, so importing it would run it. The switch is in `index.ts`;
+ * each arm hands the command to a `run…` function in `commands/`, whose body is read as the arm's.
  *
  * To regenerate the pages after changing a command: `pnpm -F @superpipeline/cli reference`.
  */
@@ -24,10 +25,22 @@ const SRC = import.meta.dirname;
 const REPO = join(SRC, "..", "..", "..");
 const CONTENT = join(REPO, "docs-site", "src", "content", "docs");
 const source = readFileSync(join(SRC, "index.ts"), "utf8");
+const handlers = readdirSync(join(SRC, "commands"))
+  .filter((f) => f.endsWith(".ts") && !f.endsWith(".test.ts"))
+  .map((f) => readFileSync(join(SRC, "commands", f), "utf8"))
+  .join("\n");
+
+/** The text of `export async function <name>(…)` in `commands/`, to its closing brace at column 0. */
+function handler(name: string): string {
+  const start = handlers.indexOf(`export async function ${name}(`);
+  expect(start, `${name} was not found under commands/`).toBeGreaterThanOrEqual(0);
+  const end = handlers.indexOf("\n}\n", start);
+  return handlers.slice(start, end);
+}
 
 /**
  * Each `case` arm of main's switch: the verbs it answers (fall-through cases share one body), and
- * the sub-verbs and flags its body reads.
+ * the sub-verbs and flags its body, and the command it hands to, read.
  */
 function arms(): Array<{ verbs: string[]; subs: Set<string>; flags: Set<string> }> {
   const start = source.indexOf("  switch (cmd) {");
@@ -40,7 +53,8 @@ function arms(): Array<{ verbs: string[]; subs: Set<string>; flags: Set<string> 
   const runs = [...body.matchAll(labelRun)];
   runs.forEach((m, i) => {
     const verbs = [...m[1]!.matchAll(/case "([^"]+)":/g)].map((x) => x[1]!);
-    const text = body.slice(m.index! + m[0].length, i + 1 < runs.length ? runs[i + 1]!.index : body.length);
+    const arm = body.slice(m.index! + m[0].length, i + 1 < runs.length ? runs[i + 1]!.index : body.length);
+    const text = [arm, ...[...arm.matchAll(/\b(run[A-Z]\w*)\(/g)].map((x) => handler(x[1] ?? ""))].join("\n");
     const subs = new Set([...text.matchAll(/\bsub [!=]== "([a-z-]+)"/g)].map((x) => x[1]!));
     const flags = new Set(
       [...text.matchAll(/(?:\bflags?\(rest, |rest\.includes\()"(--[a-z-]+)"/g)].map((x) => x[1]!),

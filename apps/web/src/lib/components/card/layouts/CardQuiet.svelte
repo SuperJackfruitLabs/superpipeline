@@ -70,9 +70,9 @@
   // Change project (O9): the inline form takes focus where it is, never scrolling the card.
   let projectWas = false;
   $effect(() => {
-    const editing = m.project.editing;
-    if (editing && !projectWas) void tick().then(() => focusInPlace(document.querySelector('[data-project-form] select')));
-    projectWas = editing;
+    const projectEditing = m.project.editing;
+    if (projectEditing && !projectWas) void tick().then(() => focusInPlace(document.querySelector('[data-project-form] select')));
+    projectWas = projectEditing;
   });
 </script>
 

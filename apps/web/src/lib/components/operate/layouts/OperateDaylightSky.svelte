@@ -7,7 +7,7 @@
   import { greetingLabel } from '../operate-words';
   import { askBoards, CHECKING, inboxCounts, inboxSubline, wantYou } from '$lib/components/inbox/inbox-words';
   import { greetNamed } from '$lib/greet';
-  import type { OperateLayoutProps } from './types';
+  import type { OperateLayoutProps } from './props';
   import './operate-daylight-sky.css';
 
   let { model }: OperateLayoutProps = $props();

@@ -9,13 +9,12 @@ import type { AgentSummary, BoardSnapshot, Card, Member, Reference } from '$lib/
 import { itemsFromBoard, type AttentionItem, type AttentionKind } from '$lib/components/attention/attention';
 import { cardLead, moodFor, type CardLead } from '$lib/components/card/card-lead';
 import { ageLong, ageShort, agoWords } from '$lib/age';
-import { displayAgent, shortId } from '$lib/names';
+import { displayAgent, personInitials, shortId } from '$lib/names';
 import { blockedCountInStage, isHeld } from './board-counts';
 import { enforcedBadge, type BlockedBadge } from './card-blocked';
 import { childCountsByParent, childCounter, type ChildCounter } from './card-children';
 import { overdue } from './card-due';
 import { cardProvenance } from './card-provenance';
-import { personInitials } from './board-words';
 import { ownerLong, ownerShort, stageOwner, type StageOwnerLabel } from './stage-owner';
 
 export type Urgency = 'needs' | 'working' | 'queued' | 'done' | 'closed';
