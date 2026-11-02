@@ -1,6 +1,6 @@
 import type { Env } from '../env';
 import { boardStub } from '../board/stub';
-import type { FixtureWorld } from './fixture-types';
+import type { FixtureWorld } from '../board/fixture-types';
 
 /** Null unless this is the dev fixture route AND both flags are on — then the caller 404s as usual. */
 export async function handleDevFixture(request: Request, env: Env, path: string): Promise<Response | null> {

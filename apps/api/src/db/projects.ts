@@ -11,8 +11,6 @@
  * Follows `db/labels.ts`'s shape: hand-written SQL, `tenant_id = ?` first in every WHERE clause.
  */
 import { newId } from '../ids';
-import type { Env } from '../env';
-import { boardStub } from '../board/stub';
 import { listAllBoards } from './catalog';
 
 export type ProjectState = 'planned' | 'active' | 'paused' | 'completed' | 'canceled';
@@ -339,6 +337,20 @@ export async function cachedRollup(db: D1Database, tenantId: string, projectId: 
 }
 
 /**
+ * One board's answer to "how much of this project is here?": the shape of the Board DO's
+ * `projectSummary`, declared here so this module does not import the board layer.
+ */
+export type BoardProjectSummary =
+  | { ok: true; value: { total: number; done: number; overdue: number; costUsd: number } }
+  | { ok: false; code: string; message: string };
+
+/**
+ * How `computeRollup` asks one board for its summary. The caller supplies it: the Worker hands in
+ * `projectSummaries(env)` (`board/stub.ts`), which calls the board's Durable Object.
+ */
+export type ProjectSummaryReader = (tenantId: string, boardId: string, projectId: string) => Promise<BoardProjectSummary>;
+
+/**
  * The one fan-out in this design.
  *
  * Everything else in superpipeline keeps the spine the rest of this module's comments describe:
@@ -364,7 +376,7 @@ export async function cachedRollup(db: D1Database, tenantId: string, projectId: 
  */
 export async function computeRollup(
   db: D1Database,
-  env: Env,
+  summaryOf: ProjectSummaryReader,
   tenantId: string,
   projectId: string,
 ): Promise<ProjectRollup> {
@@ -378,7 +390,7 @@ export async function computeRollup(
 
   for (const board of boards) {
     try {
-      const result = await boardStub(env, tenantId, board.id).projectSummary(projectId);
+      const result = await summaryOf(tenantId, board.id, projectId);
       // `{ ok: false }` (a board whose DO was never initialized) and a genuinely thrown error
       // (anything else — a transient failure, a bug) are the same fact from this fan-out's point
       // of view: one board did not answer. Both land here as "unanswered", never as a thrown

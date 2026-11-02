@@ -10,7 +10,7 @@
   import './card-paper.css';
   import '../paper-states.css';
   import { Button, Drawer, Face, Field } from '@superjackfruit/vibekit';
-  import { CARD_LAYOUTS } from '$lib/layouts';
+  import { CARD_DRAWER_WIDTH } from './widths';
   import { app } from '$lib/stores/app.svelte';
   import { displayAgent, displayPrincipal } from '$lib/names';
   import { dayMonthLong } from '$lib/when';
@@ -111,7 +111,7 @@
   </details>
 {/snippet}
 
-<Drawer open={true} head="stacked" title={reTitle(card.title, !!gate)} eyebrow={kicker} eyebrowTone={needs ? 'needs' : 'muted'} back={backLink} {tools} width={CARD_LAYOUTS.paper.width} onclose={onClose}>
+<Drawer open={true} head="stacked" title={reTitle(card.title, !!gate)} eyebrow={kicker} eyebrowTone={needs ? 'needs' : 'muted'} back={backLink} {tools} width={CARD_DRAWER_WIDTH.paper} onclose={onClose}>
 <!-- data-autofocus: the Drawer opens with focus at the sheet itself, not on its first control (the reference is drawn unfocused). -->
 <div class="pcd" tabindex="-1" data-autofocus {@attach openAtTop}>
   {#if m.archived}<CardStatePaper kind="archived" model={m} />{/if}

@@ -17,7 +17,7 @@ export class ScheduleModel {
 
   async load(): Promise<void> {
     const req = getSchedules(this.boardId);
-    app.markBusy(req);
+    void app.markBusy(req);
     this.schedules = await req.catch(() => []);
   }
 

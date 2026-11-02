@@ -4,7 +4,7 @@ import { describe, it, expect } from 'vitest';
 import wranglerJsonc from '../wrangler.jsonc?raw';
 import worker from '../src/index';
 import type { BoardDO } from '../src/board/board-do';
-import type { FixtureWorld } from '../src/dev/fixture-types';
+import type { FixtureWorld } from '../src/board/fixture-types';
 
 const T = 'tnt_fx_test';
 const U = 'usr_fx_test';

@@ -19,7 +19,7 @@ export class PeopleModel {
 
   async refresh(): Promise<void> {
     const req = crewLists.readMembers();
-    app.markBusy(req);
+    void app.markBusy(req);
     this.failed = false;
     try { this.members = await req; } catch { this.failed = true; }
   }

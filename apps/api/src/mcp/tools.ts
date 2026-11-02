@@ -14,25 +14,10 @@ import { z } from 'zod';
 import type { BoardStub, Result, JsonValue, AgentActivityType } from '../board/board-do';
 import { resolveReferenceInput } from '../references/resolve';
 import { scopePermits, type AgentScope } from '../auth/scopes';
+import type { McpAuth } from '../auth/principal';
 import { StageOutcome } from '@superpipeline/contract';
 
-/** The principal resolved from the bearer token (the OAuth Resource Server side, docs/05 §2). */
-export interface McpAuth {
-  tenantId: string;
-  agentId: string;
-  capabilities: string[];
-  /**
-   * The token's scope set, or `null` for a credential that did not come from `agent_tokens`.
-   * `null` means unscoped rather than unpermitted — see `scopePermits`.
-   */
-  scopes?: string[] | null;
-  /**
-   * The agent's mapped suite principal id (`agents.external_id`), already known from the same
-   * catalog row the `spa_` token resolved against. Absent when this auth path never looked it up
-   * (the dev bearer) — see `AgentPrincipal.externalId` in `auth/resolve.ts`, which this mirrors.
-   */
-  externalId?: string | null;
-}
+export type { McpAuth } from '../auth/principal';
 
 /**
  * Which scope each tool needs — the MCP mirror of `requiredScope` for REST paths.

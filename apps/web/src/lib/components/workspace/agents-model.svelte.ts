@@ -45,7 +45,7 @@ export class AgentsModel {
 
   async refresh(): Promise<void> {
     const load = Promise.all([crewLists.readAgents(), crewLists.readCapabilities().catch(() => [] as CapabilityRecord[])]);
-    app.markBusy(load);
+    void app.markBusy(load);
     try {
       [this.agents, this.capabilities] = await load;
       this.loadError = null;

@@ -26,7 +26,7 @@
  */
 import type { McpAuth } from './tools';
 import type { Env } from '../env';
-import { hashToken } from '../auth/agent-token';
+import { hashToken } from '../crypto/agent-token';
 import { findAgentByTokenHash } from '../db/catalog';
 import { effectiveCapabilities } from '../db/implications';
 import { orgPlaneMode } from '../auth/org-plane';

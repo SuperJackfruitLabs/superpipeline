@@ -118,11 +118,17 @@ in `packages/contract` aligned with their API and frontend consumers.
 
 ```bash
 pnpm typecheck
+pnpm lint
 pnpm test
 pnpm build
 pnpm --filter @superpipeline/web exec playwright install --with-deps chromium
 pnpm --filter @superpipeline/web e2e
 ```
+
+`pnpm lint` and the architecture test in `pnpm test` are ratchets: lint counts per rule, import
+cycles and oversized files may fall but never rise, and an improvement must be locked in (`pnpm lint
+--update`, or the constant the failing test names). See
+[code structure guardrails](docs/contributor/code-structure.md).
 
 Root commands recurse through workspace packages that define each script; tests include the
 contract, Worker, web, CLI, and documentation checks. Playwright starts its own local servers,

@@ -248,7 +248,7 @@ function fetchFresh(opts: JwsOptions): Promise<CachedSet | null> {
   })();
 
   inflight.set(opts.jwksUrl, promise);
-  promise.finally(() => {
+  void promise.finally(() => {
     // Only the fetch that's still current clears the slot — otherwise a fetch
     // that finishes after a newer one has already started could delete the
     // newer one's in-flight entry out from under it.

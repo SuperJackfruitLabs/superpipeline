@@ -9,7 +9,8 @@
  * else's server as the tenant's forge.
  */
 import { recognizeReference } from './reference-url';
-import type { ReferenceInput, JsonValue } from '../board/board-do';
+import type { ReferenceInput } from './input';
+import type { JsonValue } from '../json';
 
 export interface ReferenceArgs {
   cardId: string;

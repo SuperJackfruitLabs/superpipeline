@@ -84,8 +84,9 @@ documented statement will fail CI if it stops being true.
 | **A hub token must name THIS plane in `aud`, not merely the issuer — a token minted for another client, or another product on the same issuer, is refused** | `apps/api/test/hub-jwt-audience.test.ts` |
 | **`POST /v1/boards` answers a malformed body with 400 and a message naming the field the caller got wrong, never a 500 from inside the board** | `apps/api/test/board-create-validation.test.ts` |
 
-CI (`.github/workflows/ci.yml`) runs `pnpm typecheck` + `pnpm test`, and the Playwright e2e, on
-every PR. Both must pass before merge.
+CI (`.github/workflows/ci.yml`) runs `pnpm typecheck` + `pnpm lint` + `pnpm test`, and the
+Playwright e2e, on every PR. All must pass before merge. Lint and the architecture test are
+ratchets; see [code structure guardrails](./contributor/code-structure.md).
 
 ## The one-paragraph design
 

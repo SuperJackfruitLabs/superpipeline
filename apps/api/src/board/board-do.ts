@@ -6,6 +6,9 @@ import { newId } from '../ids';
 import { grantPermitsAgent, isControlPairEnforced } from '../auth/grant-match';
 import { capabilityTag, normalizeRequirement, stageCapabilitiesMet } from '@superpipeline/contract';
 import { parseElicitationOptions } from './elicitation';
+import type { GateOption } from './gate-option';
+import type { JsonValue } from '../json';
+import type { ReferenceInput } from '../references/input';
 import { evaluateCompletion, needsYou, type CompletionRequirement } from '@superpipeline/contract';
 import { outcomeInputError, returnStageError, routeOutcome, type StageOutcome } from '@superpipeline/contract';
 import { verifyGithubSignature, verifyForgeSignature } from '../references/github-signature';
@@ -34,8 +37,7 @@ import { SUBSCRIBABLE_EVENTS, cardIdsOf, isRecordEvent, type RecordPushBody } fr
 
 class FixtureColumnError extends Error {}
 
-/** JSON-serializable value — used for everything that crosses the Durable Object RPC boundary. */
-export type JsonValue = string | number | boolean | null | JsonValue[] | { [key: string]: JsonValue };
+export type { JsonValue } from '../json';
 
 /**
  * Strip the pre-migration keys `spec.due` and `spec.labels` from a spec, once the once-per-board
@@ -933,21 +935,7 @@ export interface BoardEvent {
   ts: string;
 }
 
-/**
- * A choice presented to a human — at an approval gate, or on an agent's elicitation (HumanLayer-style
- * options, docs/08 §6). A gate is an elicitation with a `select` signal, so both use one shape.
- */
-export interface GateOption {
-  name: string;
-  title: string;
-  promptFill?: string;
-  interactive?: boolean;
-  /** One line saying what choosing this option does; printed under the option by some vibes. */
-  description?: string;
-  /** Who may choose it: a workspace owner or admin only (strict "Always allow", 2026-10-28). The
-   * board hides it from everyone else and refuses their answer. */
-  requires?: 'workspace-admin';
-}
+export type { GateOption } from './gate-option';
 
 /**
  * An agent's open question to a human (docs/04 §4), persisted so it can be answered.
@@ -1177,21 +1165,7 @@ export interface ReferenceView {
   updatedAt: string | null;
 }
 
-export interface ReferenceInput {
-  cardId: string;
-  url: string;
-  /** The run attaching it, when an agent is. Omitted by a human path, and NULL is the honest value. */
-  runId?: string | null;
-  provider: string;
-  sourceType: string;
-  title?: string;
-  subtitle?: string;
-  externalId?: string;
-  metadata?: JsonValue;
-  addedBy?: 'agent' | 'user';
-  syncState?: 'synced' | 'stale' | 'error';
-  lastSyncedAt?: string;
-}
+export type { ReferenceInput } from '../references/input';
 
 /** A stored edge (spec §3.4) — `LinkRow` plus the provenance columns the DO adds. */
 export interface LinkView {
@@ -1414,7 +1388,7 @@ export interface BoardStub {
   /** Cards each agent holds on this board right now, and of those how many it works now. */
   agentLoad(): Promise<Record<string, { claimed: number; working: number }>>;
   /** Dev only (FIXTURE_IMPORT): replace this board's rows with a fixture. src/dev/fixture.ts. */
-  importFixture(board: import('../dev/fixture-types').FixtureBoard): Promise<
+  importFixture(board: import('./fixture-types').FixtureBoard): Promise<
     { ok: true; cards: number } | { ok: false; code: 'FIXTURE_IMPORT_DISABLED' | 'UNKNOWN_COLUMN'; detail?: string }
   >;
   drainRunReports(): Promise<RunReportDrainResult>;
@@ -2417,7 +2391,7 @@ export class BoardDO extends DurableObject<Env> {
    * gated here as well as at the route. Writes rows exactly as given — historical timestamps
    * included — emits nothing and schedules no alarm, so the stale sweep never runs on a fixture.
    */
-  async importFixture(board: import('../dev/fixture-types').FixtureBoard): Promise<
+  async importFixture(board: import('./fixture-types').FixtureBoard): Promise<
     { ok: true; cards: number } | { ok: false; code: 'FIXTURE_IMPORT_DISABLED' | 'UNKNOWN_COLUMN'; detail?: string }
   > {
     if (this.env.FIXTURE_IMPORT !== 'true') return { ok: false, code: 'FIXTURE_IMPORT_DISABLED' };

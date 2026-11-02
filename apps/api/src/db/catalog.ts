@@ -1,6 +1,6 @@
 import { tenantScopedSelect, type ScopedQuery } from './tenant-scope';
 import { newId } from '../ids';
-import { generateAgentToken, hashToken } from '../auth/agent-token';
+import { generateAgentToken, hashToken } from '../crypto/agent-token';
 
 /** The catalog is the cross-board system of record (docs/02): users, workspaces, agents, tokens. */
 export interface UserRecord {

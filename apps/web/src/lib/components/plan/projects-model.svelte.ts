@@ -48,7 +48,7 @@ export class ProjectsModel {
     this.loadError = null;
     this.failed = false;
     const listed = listProjects();
-    app.markBusy(listed);
+    void app.markBusy(listed);
     try {
       this.projects = await listed;
       app.projects = this.projects;
@@ -61,7 +61,7 @@ export class ProjectsModel {
     for (const p of this.projects) void this.loadRollup(p.id);
     void projectWorkspace.load(true);
     const details = Promise.all(this.projects.map((p) => this.loadDetail(p.id)));
-    app.markBusy(details);
+    void app.markBusy(details);
     await details;
     this.loading = false;
   }

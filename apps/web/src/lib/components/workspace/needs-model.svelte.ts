@@ -31,7 +31,7 @@ export class NeedsModel {
   async load(): Promise<void> {
     this.refreshing = true;
     const req = listAttention();
-    app.markBusy(req);
+    void app.markBusy(req);
     try {
       const res = await req;
       this.cards = res.cards;

@@ -35,7 +35,7 @@ if (import.meta.url === pathToFileURL(process.argv[1] ?? '').href) {
       return p.outputs[key] === 'true';
     };
     gate(needs, process.argv[3] === 'test'
-      ? { unit: selected('app'), docs: selected('docs'), landing: selected('landing') }
+      ? { unit: selected('app'), lint: selected('app'), docs: selected('docs'), landing: selected('landing') }
       : { build: selected('app'), smoke: selected('app'), browser: selected('app') });
   } else {
     let paths;

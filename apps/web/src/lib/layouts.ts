@@ -35,6 +35,7 @@ import CardStatesQuiet from '$lib/components/card/states/CardStatesQuiet.svelte'
 import CardStatesStudio from '$lib/components/card/states/CardStatesStudio.svelte';
 import CardStatesPaper from '$lib/components/card/states/CardStatesPaper.svelte';
 import type { CardLayoutProps, CardPageProps, CardStatesProps } from '$lib/components/card/layouts/types';
+import { CARD_DRAWER_WIDTH } from '$lib/components/card/layouts/widths';
 import ShellDaylight from '$lib/components/shell/ShellDaylight.svelte';
 import ShellPaper from '$lib/components/shell/ShellPaper.svelte';
 import ShellStudio from '$lib/components/shell/ShellStudio.svelte';
@@ -112,10 +113,10 @@ export interface CardLayout {
 }
 /** Widths stay what each vibe drew before the sweep until its own card task replaces the entry. */
 export const CARD_LAYOUTS: Readonly<Record<Vibe, CardLayout>> = {
-  daylight: { drawer: CardDaylight, phone: CardPhoneDaylight, width: 'min(680px, 100%)', align: 'end', placement: 'overlay', framed: true },
-  paper: { drawer: CardPaper, phone: CardPhonePaper, width: 'min(780px, calc(100% - 32px))', align: 'center', placement: 'overlay', framed: true },
-  studio: { drawer: CardStudio, phone: CardPhoneStudio, width: 'min(940px, 100%)', align: 'end', placement: 'overlay', framed: true },
-  quiet: { drawer: CardQuiet, phone: CardPhoneQuiet, width: 'min(1120px, 100%)', align: 'end', placement: 'overlay', framed: true },
+  daylight: { drawer: CardDaylight, phone: CardPhoneDaylight, width: CARD_DRAWER_WIDTH.daylight, align: 'end', placement: 'overlay', framed: true },
+  paper: { drawer: CardPaper, phone: CardPhonePaper, width: CARD_DRAWER_WIDTH.paper, align: 'center', placement: 'overlay', framed: true },
+  studio: { drawer: CardStudio, phone: CardPhoneStudio, width: CARD_DRAWER_WIDTH.studio, align: 'end', placement: 'overlay', framed: true },
+  quiet: { drawer: CardQuiet, phone: CardPhoneQuiet, width: CARD_DRAWER_WIDTH.quiet, align: 'end', placement: 'overlay', framed: true },
 };
 
 /** The card on its own page, per vibe. Tasks 22–24 replace Paper, Studio and Quiet. */
