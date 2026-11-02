@@ -137,7 +137,7 @@ exports[`supi commands against a fake API, pinned > supi 001 version 1`] = `
   "exit": 0,
   "requests": [],
   "stderr": "",
-  "stdout": "supi <version> darwin/arm64
+  "stdout": "supi <version> <platform>
 ",
 }
 `;

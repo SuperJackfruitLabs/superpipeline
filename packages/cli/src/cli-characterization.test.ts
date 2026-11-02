@@ -177,7 +177,10 @@ function normalise(raw: string): string {
     .split(`supi ${VERSION} `)
     .join("supi <version> ")
     .split(`supi ${VERSION} is`)
-    .join("supi <version> is");
+    .join("supi <version> is")
+    // `supi version` prints the host platform; CI runs on linux/x64, laptops on darwin/arm64.
+    .split(`${process.platform}/${process.arch}`)
+    .join("<platform>");
 }
 
 async function run(s: Scenario) {
