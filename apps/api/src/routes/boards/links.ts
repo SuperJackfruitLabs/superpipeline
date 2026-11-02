@@ -146,6 +146,6 @@ export async function linksEdit({ request, env, tenantId, boardId, user, stub }:
 // enforced is that a cross-DO read is stale the instant it returns, and that stays true of
 // this one too; it exists solely to label one drawer, once, on request.
 export async function cardLinks({ env, tenantId, stub }: BoardRequest, cardLinksMatch: RegExpMatchArray): Promise<Response> {
-  const cardId = cardLinksMatch[1]!;
+  const cardId = cardLinksMatch[1];
   return Response.json(await cardLinksBody(env, tenantId, stub, cardId));
 }

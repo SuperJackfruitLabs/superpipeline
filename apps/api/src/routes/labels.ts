@@ -25,7 +25,7 @@ export async function labels({ request, env }: WorkerRequest, labelsMatch: RegEx
       agentScope: request.method === 'GET' ? 'read' : null,
     });
     if (caller instanceof Response) return caller;
-    const { tenantId: wsTenantId, user: u } = caller;
+    const { tenantId: wsTenantId } = caller;
     const labelId = labelsMatch[1];
 
     if (request.method === 'GET' && !labelId) {

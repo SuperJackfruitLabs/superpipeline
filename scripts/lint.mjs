@@ -64,12 +64,26 @@ const isSource = (file) =>
 
 // Rules shipped source must stay clean of, whatever the baseline allows elsewhere.
 const SRC_CLEAN = new Set([
+  'eslint(no-console)',
+  'eslint(no-empty)',
+  'eslint(no-new)',
+  'eslint(no-unmodified-loop-condition)',
   'eslint(no-unsafe-optional-chaining)',
+  'eslint(no-unused-vars)',
   'eslint(no-useless-concat)',
+  'eslint(no-useless-escape)',
   'import(no-named-as-default)',
+  'typescript(consistent-type-imports)',
+  'typescript(no-explicit-any)',
   'typescript(no-floating-promises)',
+  'typescript(no-misused-promises)',
+  'typescript(no-redundant-type-constituents)',
+  'typescript(no-unnecessary-template-expression)',
+  'typescript(no-unnecessary-type-assertion)',
+  'typescript(no-unnecessary-type-conversion)',
   'typescript(require-array-sort-compare)',
   'unicorn(no-new-array)',
+  'unicorn(no-useless-fallback-in-spread)',
   'unicorn(no-useless-spread)',
   'unicorn(prefer-string-starts-ends-with)',
 ]);

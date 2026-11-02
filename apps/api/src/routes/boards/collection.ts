@@ -16,7 +16,7 @@ export async function boardCollection({ request, env, tenantId, user, agent }: B
     const counts = await Promise.allSettled(rows.map((b) => boardStub(env, tenantId, b.id).summaryCounts()));
     return Response.json({
       boards: rows.map((b, i) => {
-        const c = counts[i]!;
+        const c = counts[i];
         return {
           id: b.id,
           name: b.name,

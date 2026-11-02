@@ -432,7 +432,7 @@ export function inspect(token: string): Claims | null {
   const parts = token.split(".");
   if (parts.length !== 3) return null;
   try {
-    const payload = JSON.parse(Buffer.from(parts[1]!, "base64url").toString("utf8")) as {
+    const payload = JSON.parse(Buffer.from(parts[1], "base64url").toString("utf8")) as {
       sub?: string;
       principalKind?: string;
       exp?: number;

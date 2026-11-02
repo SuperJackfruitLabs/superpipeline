@@ -1,4 +1,4 @@
-import { tenantScopedSelect, type ScopedQuery } from './tenant-scope';
+import { tenantScopedSelect } from './tenant-scope';
 import { newId } from '../ids';
 import { generateAgentToken, hashToken } from '../crypto/agent-token';
 
@@ -599,8 +599,9 @@ export interface AgentQueueingPolicy {
 function queueingPolicyOf(row: {
   ownerUserId: string | null;
   mayQueueTo: string | null;
-  ceiling: number | null;
-  boardCeiling?: number | null;
+  // Read as what the column holds, not as the number it should be: `Number` below is the parse.
+  ceiling: unknown;
+  boardCeiling?: unknown;
 }): AgentQueueingPolicy {
   return {
     ownerUserId: row.ownerUserId ?? null,
@@ -647,7 +648,7 @@ export async function countAgentQueuesSince(db: D1Database, agentId: string, sin
   const row = await db
     .prepare(`SELECT COUNT(*) AS n FROM agent_card_queues WHERE agent_id = ? AND created_at >= datetime(?)`)
     .bind(agentId, sinceIso)
-    .first<{ n: number }>();
+    .first<{ n: unknown }>();
   return Number(row?.n ?? 0);
 }
 
@@ -709,7 +710,7 @@ export async function findAgentByTokenHash(
        WHERE at.token_hash = ? AND at.revoked_at IS NULL`,
     )
     .bind(hash)
-    .first<{ tenantId: string; agentId: string; scopes: string; caps: string; externalId: string | null; concurrency: number; ownerUserId: string | null; mayQueueTo: string | null; ceiling: number | null; boardCeiling: number | null }>();
+    .first<{ tenantId: string; agentId: string; scopes: string; caps: string; externalId: string | null; concurrency: unknown; ownerUserId: string | null; mayQueueTo: string | null; ceiling: unknown; boardCeiling: unknown }>();
   if (!row) return null;
   return {
     tenantId: row.tenantId,
@@ -735,7 +736,7 @@ export async function listAgents(db: D1Database, tenantId: string): Promise<Agen
        FROM agents a WHERE tenant_id = ? ORDER BY created_at ASC`,
     )
     .bind(tenantId)
-    .all<{ id: string; tenantId: string; name: string; caps: string; iconUrl: string | null; concurrency: number; externalId: string | null; externalSource: string | null; ownerUserId: string | null; mayQueueTo: string | null; ceiling: number | null; role: string | null; tokenIdsJson: string }>();
+    .all<{ id: string; tenantId: string; name: string; caps: string; iconUrl: string | null; concurrency: unknown; externalId: string | null; externalSource: string | null; ownerUserId: string | null; mayQueueTo: string | null; ceiling: unknown; role: string | null; tokenIdsJson: string }>();
   return results.map((r) => ({
     id: r.id,
     tenantId: r.tenantId,
@@ -773,7 +774,7 @@ export async function countBoardsComposedToday(db: D1Database, agentId: string):
       `SELECT COUNT(*) AS n FROM boards WHERE created_by_agent_id = ? AND created_at >= datetime(date('now'))`,
     )
     .bind(agentId)
-    .first<{ n: number }>();
+    .first<{ n: unknown }>();
   return Number(row?.n ?? 0);
 }
 

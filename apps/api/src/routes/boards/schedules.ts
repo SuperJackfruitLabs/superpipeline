@@ -113,7 +113,7 @@ export async function schedules({ request, user, stub }: BoardRequest, schedules
       // ICU canonicalises "Asia/Kolkata" to "Asia/Calcutta", so the operator's own spelling is
       // what is kept.
       timezone: body.timezone,
-      overlap: (body.overlap as 'skip' | 'allow' | undefined) ?? 'skip',
+      overlap: body.overlap ?? 'skip',
       createdBy: user!.userId,
       // Same reasoning as `POST /v1/boards/:id/triggers`' `queuedGrant`: creating a schedule
       // IS the act of authorising unattended dispatch, and this is the only moment there is a
@@ -121,11 +121,11 @@ export async function schedules({ request, user, stub }: BoardRequest, schedules
       // falls back to the board's GitHub-webhook grant — which most boards never set — and
       // parks unclaimable under enforcement (whole-branch review, Important 1).
       queuedGrant: user?.mayDispatch ?? null,
-      ...(body.stageKey !== undefined ? { stageKey: body.stageKey as string | null } : {}),
-      ...(body.priority !== undefined ? { priority: body.priority as number } : {}),
+      ...(body.stageKey !== undefined ? { stageKey: body.stageKey } : {}),
+      ...(body.priority !== undefined ? { priority: body.priority } : {}),
       ...(body.labels !== undefined ? { labels: body.labels as string[] } : {}),
       ...(body.spec !== undefined ? { spec: body.spec } : {}),
-      ...(body.enabled !== undefined ? { enabled: body.enabled as boolean } : {}),
+      ...(body.enabled !== undefined ? { enabled: body.enabled } : {}),
     });
     if (!result.ok) return Response.json({ error: result }, { status: statusForCode(result.code) });
     return Response.json({ schedule: result.value }, { status: 201 });
@@ -203,15 +203,15 @@ export async function schedules({ request, user, stub }: BoardRequest, schedules
     }
 
     const result = await stub.updateSchedule(scheduleId, {
-      ...(body.title !== undefined ? { title: body.title as string } : {}),
-      ...(body.rule !== undefined ? { rule: body.rule as string } : {}),
-      ...(body.timezone !== undefined ? { timezone: body.timezone as string } : {}),
-      ...(body.overlap !== undefined ? { overlap: body.overlap as 'skip' | 'allow' } : {}),
-      ...(body.stageKey !== undefined ? { stageKey: body.stageKey as string | null } : {}),
-      ...(body.priority !== undefined ? { priority: body.priority as number } : {}),
+      ...(body.title !== undefined ? { title: body.title } : {}),
+      ...(body.rule !== undefined ? { rule: body.rule } : {}),
+      ...(body.timezone !== undefined ? { timezone: body.timezone } : {}),
+      ...(body.overlap !== undefined ? { overlap: body.overlap } : {}),
+      ...(body.stageKey !== undefined ? { stageKey: body.stageKey } : {}),
+      ...(body.priority !== undefined ? { priority: body.priority } : {}),
       ...(body.labels !== undefined ? { labels: body.labels as string[] } : {}),
       ...(body.spec !== undefined ? { spec: body.spec } : {}),
-      ...(body.enabled !== undefined ? { enabled: body.enabled as boolean } : {}),
+      ...(body.enabled !== undefined ? { enabled: body.enabled } : {}),
     });
     if (!result.ok) return Response.json({ error: result }, { status: statusForCode(result.code) });
     return Response.json({ schedule: result.value });

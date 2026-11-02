@@ -6,5 +6,5 @@
  */
 export function flatError(r: { ok: false; code: string; message: string; detail?: Record<string, unknown> }): Record<string, unknown> {
   const { detail, ...rest } = r;
-  return { ...(detail ?? {}), ...rest };
+  return { ...detail, ...rest };
 }

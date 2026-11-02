@@ -249,8 +249,8 @@ export function openElicitation(deps: ElicitationsDeps, input: AgentActivityInpu
     id,
     cardId,
     input.runId,
-    run.stage_key as string,
-    run.agent_id as string,
+    run.stage_key,
+    run.agent_id,
     question,
     input.signal ?? null,
     JSON.stringify(parseElicitationOptions(input.parameter)),
@@ -347,7 +347,7 @@ export function elicitationsForRun(deps: ElicitationsDeps, runId: string): Elici
 function pendingElicitationRows(deps: ElicitationsDeps): Row[] {
   return deps.sql
     .exec(`SELECT * FROM elicitations WHERE status = 'pending' AND card_id NOT IN (SELECT id FROM cards WHERE archived_at IS NOT NULL) ORDER BY created_at ASC, rowid ASC`)
-    .toArray() as Row[];
+    .toArray();
 }
 
 /** Every question currently waiting on a human, board-wide — the human's view. */

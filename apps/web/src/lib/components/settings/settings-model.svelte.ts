@@ -102,7 +102,7 @@ export class SettingsModel {
     const to = index + by;
     if (to < 0 || to >= this.draft.length) return;
     const next = [...this.draft];
-    [next[index], next[to]] = [next[to]!, next[index]!];
+    [next[index], next[to]] = [next[to], next[index]];
     this.draft = next.map((s, i) => ({ ...s, order: i }));
   }
 

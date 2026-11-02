@@ -1,6 +1,6 @@
 import type { JsonValue } from '../json';
 import { mapForgeEvent } from '../references/forge-events';
-import { mapGithubEvent } from '../references/github-events';
+import { mapGithubEvent, type WebhookPayload } from '../references/github-events';
 import { verifyForgeSignature, verifyGithubSignature } from '../references/github-signature';
 import type { BoardContext } from './context';
 import type { CardView, Result } from './model';
@@ -103,7 +103,7 @@ export async function handleForgeWebhook(deps: TriggersDeps, input: {
       JSON.stringify(merged),
       now,
       now,
-      row.id as string,
+      row.id,
     );
     deps.emit('reference.updated', { reference: deps.mustGetReference(row.id as string) });
   }
@@ -214,10 +214,10 @@ export async function handleGithubWebhook(deps: TriggersDeps, input: {
   }
 
   // Inbound trigger (docs/05 §6): an opened issue auto-creates a card when enabled for this board.
-  const p = payload as Record<string, any>;
+  const p = payload as WebhookPayload;
   if (input.event === 'issues' && p.action === 'opened' && deps.getMeta('githubIssueTrigger') === '1') {
-    const issue = p.issue as Record<string, any> | undefined;
-    const fullName = (p.repository as Record<string, any> | undefined)?.full_name as string | undefined;
+    const issue = p.issue;
+    const fullName = p.repository?.full_name;
     if (issue && typeof issue.number === 'number' && fullName) {
       const externalId = `${fullName.toLowerCase()}#${issue.number}`;
       // Idempotency: don't create a second card if one already references this issue (a redelivery
@@ -257,7 +257,7 @@ export async function handleGithubWebhook(deps: TriggersDeps, input: {
       JSON.stringify(merged),
       now,
       now,
-      row.id as string,
+      row.id,
     );
     deps.emit('reference.updated', { reference: deps.mustGetReference(row.id as string) });
   }

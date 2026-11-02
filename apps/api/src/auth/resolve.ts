@@ -28,7 +28,7 @@ function devAuth(env: Env): boolean {
 
 function bearer(request: Request): string | null {
   const m = (request.headers.get('Authorization') ?? '').match(/^Bearer\s+(.+)$/i);
-  return m ? m[1]!.trim() : null;
+  return m ? m[1].trim() : null;
 }
 
 /** Resolve the human behind a request (session cookie, or dev headers). */

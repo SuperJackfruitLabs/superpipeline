@@ -4,6 +4,7 @@ import { cardIdsOf, isRecordEvent, type RecordPushBody } from '../push/events';
 import type { BoardContext } from './context';
 import type { CardNeedsHuman, CardView, Row, StageDef } from './model';
 import { RESOLVED_SQL } from './rules';
+import { logError } from '../log';
 
 /**
  * The board's shared reads and writes: its meta keys, its stages, card rows and the cards they
@@ -259,7 +260,7 @@ function queueRecordPush(deps: CardStoreDeps, type: string, seq: number, payload
     );
   }
   // The one alarm drains pending deliveries (scheduleReclaim computes drainAt from them).
-  void deps.scheduleReclaim().catch((err) => console.error('record push: alarm not armed', String(err)));
+  void deps.scheduleReclaim().catch((err) => logError('record push: alarm not armed', String(err)));
 }
 
 export function getCardHandoffJson(deps: CardStoreDeps, cardId: string): string | null {

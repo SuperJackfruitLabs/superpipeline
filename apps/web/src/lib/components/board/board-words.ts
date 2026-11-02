@@ -16,7 +16,7 @@ import type { CardSummary, StageSummary } from './card-summary';
 export const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'] as const;
 const parts = (d: string) => d.slice(0, 10).split('-').map(Number) as [number, number, number];
 /** '2026-10-06' → '6 Oct'. A due date is a calendar day, never shifted by a time zone. */
-export const dueShort = (d: string): string => `${parts(d)[2]} ${MONTHS[parts(d)[1] - 1]!.slice(0, 3)}`;
+export const dueShort = (d: string): string => `${parts(d)[2]} ${MONTHS[parts(d)[1] - 1].slice(0, 3)}`;
 /** '2026-10-06' → '6 October'. */
 export const dueLong = (d: string): string => `${parts(d)[2]} ${MONTHS[parts(d)[1] - 1]}`;
 /** Whole days from the due day to today (the same UTC "today" `overdue()` uses). */
@@ -259,7 +259,7 @@ export function emptyWho(st: StageSummary, me: { name: string; initials: string 
   if (st.owner.kind === 'agent') return { kind: 'face', face: st.owner.label, name: st.owner.label };
   const d = st.declaredBy;
   if (d.length === 0) return { kind: 'none', name: 'nobody yet' };
-  return { kind: 'face', face: d[0]!, name: d.length === 1 ? d[0]! : plural(d.length, 'agent', 'agents') };
+  return { kind: 'face', face: d[0], name: d.length === 1 ? d[0] : plural(d.length, 'agent', 'agents') };
 }
 export function emptyTags(st: StageSummary, def: Stage): Array<{ text: string; g: boolean }> {
   const out: Array<{ text: string; g: boolean }> = [];

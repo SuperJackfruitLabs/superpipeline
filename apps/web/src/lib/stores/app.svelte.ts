@@ -737,7 +737,7 @@ class AppStore {
   /** Returns the new board's id so the caller can navigate to it — every screen is a route now. */
   async createFirstBoard(): Promise<string | null> {
     try {
-      const id = await createBoard('My first board', BOARD_TEMPLATES[0]!.stages);
+      const id = await createBoard('My first board', BOARD_TEMPLATES[0].stages);
       await this.openBoard(id);
       return id;
     } catch (e) {

@@ -102,5 +102,5 @@ export function displayAuthor(a: { kind: 'human' | 'agent'; id: string; name: st
 
 /** "Rakesh Gangwar" → "RG". */
 export function personInitials(name: string): string {
-  return name.split(/\s+/).filter(Boolean).slice(0, 2).map((w) => w[0]!.toUpperCase()).join('');
+  return name.split(/\s+/).filter(Boolean).slice(0, 2).map((w) => w[0].toUpperCase()).join('');
 }

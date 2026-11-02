@@ -32,6 +32,7 @@ import { touchOnSuccess } from './routes/activity';
 import { dispatch } from './routes/router';
 import { webApp } from './routes/system';
 import { ROUTES } from './routes/table';
+import { logError } from './log';
 
 export { BoardDO };
 
@@ -68,7 +69,7 @@ const worker = {
             // A failing sweep on one board must not stop the rest of the loop — but swallowing it
             // silently meant a board failing every five-minute tick, forever, left no trace
             // anywhere. Logged, not rethrown: the loop still continues to the next board.
-            console.error(`sweepBoard failed for board ${board.id}`, err);
+            logError(`sweepBoard failed for board ${board.id}`, err);
           }
           // The superwitness outbox's backstop (superwitness app spec §3.5): the board alarm is the
           // drain; this catches a board whose alarm was lost. Due rows only — backoff still holds.
@@ -88,7 +89,7 @@ const worker = {
           try {
             await computeRollup(env.DB, projectSummaries(env), project.tenantId, project.id);
           } catch (err) {
-            console.error(`computeRollup failed for project ${project.id}`, err);
+            logError(`computeRollup failed for project ${project.id}`, err);
           }
         }
       })(),
@@ -105,7 +106,7 @@ export default {
         // The board's own answer is already given; failing to note the activity must not undo it,
         // and the D1 write runs after the response (waitUntil) so it never delays it.
         const write = touchBoard(env.DB, touch.tenantId, touch.boardId, new Date().toISOString()).catch((err) =>
-          console.error('touchBoard failed', String(err)),
+          logError('touchBoard failed', String(err)),
         );
         if (ctx) ctx.waitUntil(write);
         else await write;

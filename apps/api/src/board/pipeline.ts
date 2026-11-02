@@ -238,7 +238,7 @@ export async function updateStage(deps: PipelineDeps, stageKey: string, patch: S
     return { ok: false, code: 'UNKNOWN_STAGE', message: `unknown stage: ${stageKey}` };
   }
 
-  const next: StageDef = { ...stages[index]! };
+  const next: StageDef = { ...stages[index] };
   if (patch.name !== undefined) {
     if (typeof patch.name !== 'string' || patch.name.trim() === '') {
       return { ok: false, code: 'INVALID_STAGES', message: `stage "${stageKey}" needs a name` };

@@ -136,7 +136,7 @@ export class CardModel {
   readonly milestoneName = $derived(
     this.card?.milestoneId ? (this.projectDetail?.milestones.find((m) => m.id === this.card!.milestoneId)?.name ?? this.card.milestoneId) : null,
   );
-  readonly acceptanceCriteria = $derived(Array.isArray(this.card?.spec?.acceptanceCriteria) ? (this.card!.spec!.acceptanceCriteria as string[]) : null);
+  readonly acceptanceCriteria = $derived(Array.isArray(this.card?.spec?.acceptanceCriteria) ? (this.card.spec.acceptanceCriteria as string[]) : null);
   readonly plan = $derived(normalisePlan(this.card?.spec?.plan));
   readonly handoff = $derived(this.detail?.handoff ?? null);
   readonly overdue = $derived(this.card ? overdue(this.card.dueAt, this.card.state, new Date().toISOString().slice(0, 10)) : false);

@@ -73,8 +73,8 @@ export function boardIntroError(i: unknown): string | null {
   if (typeof i !== 'object' || i === null || Array.isArray(i)) return 'intro must be an object with a lede and a composeHint';
   const r = i as Record<string, unknown>;
   for (const k of ['lede', 'composeHint'] as const) {
-    if (typeof r[k] !== 'string' || (r[k] as string).trim() === '') return `intro.${k} must be a non-empty string`;
-    if ((r[k] as string).length > BOARD_INTRO_MAX) return `intro.${k} is over ${BOARD_INTRO_MAX} characters`;
+    if (typeof r[k] !== 'string' || r[k].trim() === '') return `intro.${k} must be a non-empty string`;
+    if (r[k].length > BOARD_INTRO_MAX) return `intro.${k} is over ${BOARD_INTRO_MAX} characters`;
   }
   return null;
 }

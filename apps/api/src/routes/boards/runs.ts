@@ -2,6 +2,7 @@
 import { isKnownProvider, providerKeys, type StageOutcome } from '@superpipeline/contract';
 import { z } from 'zod';
 import type { AgentActivityType, Result, JsonValue } from '../../board/board-do';
+import type { StrictDecision } from '../../board/strict-decision';
 import { tenantById, principalIdsFor } from '../../db/catalog';
 import { effectiveCapabilities } from '../../db/implications';
 import { resolveReferenceInput } from '../../references/resolve';
@@ -54,7 +55,7 @@ export async function claim({ request, env, agent, stub }: BoardRequest): Promis
 // this run holds, its stage, the upstream handoff and the card's references. Scoped to the
 // agent that claimed the run — a shared board is not readable through an agent token.
 export async function runRead({ env, tenantId, agent, stub }: BoardRequest, runReadMatch: RegExpMatchArray): Promise<Response> {
-  const result = await stub.getRunContext({ runId: runReadMatch[1]!, agentId: agent!.agentId });
+  const result = await stub.getRunContext({ runId: runReadMatch[1], agentId: agent!.agentId });
   if (!result.ok) return Response.json({ error: result }, { status: statusForCode(result.code) });
   // The answerer by principal too (users.external_id), for a reader that acts as that person in
   // the suite: the hub sets "Always allow" for them and reads their role from the org plane.
@@ -71,7 +72,7 @@ export async function runRead({ env, tenantId, agent, stub }: BoardRequest, runR
 // GET /v1/boards/:id/runs/:runId/attempts — the runs of the card this run holds, for the agent
 // that holds the run (operator ruling 2026-10-28, board reads). Read-only; never another card.
 export async function runAttempts({ agent, stub }: BoardRequest, runAttemptsMatch: RegExpMatchArray): Promise<Response> {
-  const held = await stub.getRunContext({ runId: runAttemptsMatch[1]!, agentId: agent!.agentId });
+  const held = await stub.getRunContext({ runId: runAttemptsMatch[1], agentId: agent!.agentId });
   if (!held.ok) return Response.json({ error: held }, { status: statusForCode(held.code) });
   return Response.json({ attempts: await stub.getAttempts(held.value.run.cardId) });
 }
@@ -84,7 +85,7 @@ export async function evidenceReference({ request, env, agent, stub }: BoardRequ
   try { hub = new URL(env.HUB_ISSUER ?? ''); } catch { return Response.json({ error: { code: 'EVIDENCE_LINK_UNAVAILABLE' } }, { status: 503 }); }
   if (hub.protocol !== 'https:' || hub.username || hub.password || hub.pathname !== '/') return Response.json({ error: { code: 'EVIDENCE_LINK_UNAVAILABLE' } }, { status: 503 });
   const p = parsed.data;
-  const result = await stub.attachEvidenceReference({ runId: evidenceRefMatch[1]!, agentId: agent!.agentId!, leaseEpoch: p.leaseEpoch, cardId: p.cardId, stageKey: p.stageKey, exportId: p.export_id, manifestSha256: p.manifest_sha256,
+  const result = await stub.attachEvidenceReference({ runId: evidenceRefMatch[1], agentId: agent!.agentId!, leaseEpoch: p.leaseEpoch, cardId: p.cardId, stageKey: p.stageKey, exportId: p.export_id, manifestSha256: p.manifest_sha256,
     url: `${hub.origin}/api/evidence/exports/${p.export_id}?schema_version=agentpod-execution-export%2Fv1` });
   if (!result.ok) return Response.json({ error: result }, { status: statusForCode(result.code) });
   return Response.json({ reference_id: result.value.id, verification: 'unverified' });
@@ -116,7 +117,7 @@ export async function approvalSubjectVerify({ request, agent, stub }: BoardReque
     );
   }
   const result = await stub.verifyApprovalSubject({
-    runId: approvalVerifyMatch[1]!,
+    runId: approvalVerifyMatch[1],
     leaseEpoch: p.leaseEpoch!,
     agentId: agent!.agentId,
     expectedSchema: p.expectedSchema,
@@ -136,12 +137,12 @@ const respond = (r: Result<unknown>, key: string): Response =>
 
 // POST /v1/boards/:id/runs/:runId/:action — agent run verbs (docs/04 §3)
 export async function runVerb({ request, env, tenantId, agent, stub }: BoardRequest, runMatch: RegExpMatchArray): Promise<Response> {
-  const runId = runMatch[1]!;
-  const action = runMatch[2]!;
+  const runId = runMatch[1];
+  const action = runMatch[2];
   const p = (await request.json()) as {
     leaseEpoch: number;
     type?: AgentActivityType;
-    strictDecision?: import('../../board/strict-decision').StrictDecision;
+    strictDecision?: StrictDecision;
     ephemeral?: boolean;
     body?: string;
     action?: string;
@@ -210,8 +211,10 @@ export async function runVerb({ request, env, tenantId, agent, stub }: BoardRequ
       return respond(await stub.release(lease), 'card');
     case 'references': {
       // The run holder links what it produced from its own card; the card route stays human.
+      // oxlint-disable-next-line typescript/no-unnecessary-type-conversion -- the body is cast, not parsed: String() is the parse
       if (p.provider !== undefined && !isKnownProvider(String(p.provider))) {
         return Response.json(
+          // oxlint-disable-next-line typescript/no-unnecessary-type-conversion -- the body is cast, not parsed: String() is the parse
           { error: `unknown reference provider: ${String(p.provider)}. Known: ${providerKeys().join(', ')}` },
           { status: 400 },
         );
@@ -223,6 +226,7 @@ export async function runVerb({ request, env, tenantId, agent, stub }: BoardRequ
           reference: resolveReferenceInput(
             {
               cardId: '',
+              // oxlint-disable-next-line typescript/no-unnecessary-type-conversion -- the body is cast, not parsed: String() is the parse
               url: String(p.url ?? ''),
               provider: p.provider,
               sourceType: p.sourceType,
@@ -231,7 +235,7 @@ export async function runVerb({ request, env, tenantId, agent, stub }: BoardRequ
               externalId: p.externalId,
               metadata: p.metadata,
               addedBy: 'agent',
-            } as Parameters<typeof resolveReferenceInput>[0],
+            },
             refTenant?.forgeHost ?? null,
           ),
         }),

@@ -74,9 +74,9 @@ export async function resolveGate(deps: GatesDeps, input: {
         message: 'gate is already resolved',
         detail: {
           reason: 'decided',
-          decidedBy: (gate.decided_by as string | null) ?? '',
-          decidedAt: (gate.resolved_at as string | null) ?? '',
-          via: ((gate.decided_via as string | null) ?? 'api') as 'matrix' | 'web' | 'api',
+          decidedBy: gate.decided_by ?? '',
+          decidedAt: gate.resolved_at ?? '',
+          via: gate.decided_via ?? 'api',
         },
       };
     }
@@ -421,7 +421,7 @@ function rowToGate(deps: GatesDeps, r: Row): GateView {
   const delivery =
     decision === 'approve_manual' || decision === 'approve_automatic'
       ? {
-          mode: (decision === 'approve_manual' ? 'manual' : 'automatic') as 'manual' | 'automatic',
+          mode: decision === 'approve_manual' ? ('manual' as const) : ('automatic' as const),
           liveUrl: (r.live_post_url as string | null) ?? null,
           readBackStatus: ((r.live_post_readback_status as 'not_checked' | 'matched' | 'mismatch' | null) ?? 'not_checked'),
           recordedBy: (r.live_post_url_recorded_by as string | null) ?? null,
@@ -465,7 +465,7 @@ export async function getGate(deps: GatesDeps, gateId: string): Promise<Result<G
 
 /** The gate row, or null. */
 function getGateRow(deps: GatesDeps, gateId: string): Row | null {
-  return (deps.sql.exec(`SELECT * FROM gates WHERE id = ?`, gateId).toArray()[0] as Row) ?? null;
+  return (deps.sql.exec(`SELECT * FROM gates WHERE id = ?`, gateId).toArray()[0]) ?? null;
 }
 
 /**

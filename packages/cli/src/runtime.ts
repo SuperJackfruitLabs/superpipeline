@@ -90,7 +90,7 @@ export async function api(path: string, init: RequestInit = {}, opts: { conflict
     headers: {
       Authorization: `Bearer ${c.token}`,
       "Content-Type": "application/json",
-      ...(init.headers ?? {}),
+      ...init.headers,
     },
   });
   const body = await res.text();

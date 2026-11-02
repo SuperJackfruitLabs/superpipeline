@@ -103,7 +103,7 @@ function renderCommand(c: CommandSpec): string[] {
 }
 
 function renderGroupPage(groupIndex: number): string {
-  const g = GROUPS[groupIndex]!;
+  const g = GROUPS[groupIndex];
   const cmds = COMMANDS.filter((c) => c.group === g.id);
   const lines: string[] = [
     frontmatter(g.title, g.description, g.label, groupIndex + 2),

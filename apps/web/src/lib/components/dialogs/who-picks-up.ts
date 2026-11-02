@@ -32,7 +32,7 @@ export function ownerShort(stage: Stage, agents: AgentSummary[]): string {
   if (o.kind === 'human') return stage.gate === 'approval' ? 'approval gate' : 'a person';
   if (o.kind === 'agent') return o.label;
   const n = o.declaredBy.length;
-  return n === 0 ? 'no agent yet' : n === 1 ? o.declaredBy[0]! : `${n} agents`;
+  return n === 0 ? 'no agent yet' : n === 1 ? o.declaredBy[0] : `${n} agents`;
 }
 
 /** The Move row's owner line: "diagnostics · error-eric", "code · 2 agents", "a person · approval". */

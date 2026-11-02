@@ -5,7 +5,7 @@ import type { Phase } from '@superjackfruit/vibekit';
 import { gateConflictSentence } from '../card-words';
 import { ageLabel } from '$lib/age';
 import { clockHM, dayMonth, weekdayDayMonth } from '$lib/when';
-import { STRIP_WORD, type StripKind } from '../state-words';
+import { STRIP_WORD } from '../state-words';
 
 export const stageNo = (i: number): string => String(i + 1).padStart(2, '0');
 /** Floors (F §A.2): 48 hours and over in days, else hours. */

@@ -89,9 +89,9 @@ export async function cardCreate({ request, env, tenantId, boardId, user, agent,
     spec: body.spec,
     priority: body.priority,
     dueAt: body.dueAt,
-    ...(body.stageKey !== undefined ? { stageKey: body.stageKey as string } : {}),
+    ...(body.stageKey !== undefined ? { stageKey: body.stageKey } : {}),
     ...(body.labelIds !== undefined ? { labels: body.labelIds as string[] } : {}),
-    ...(body.projectId !== undefined ? { projectId: body.projectId as string | null } : {}),
+    ...(body.projectId !== undefined ? { projectId: body.projectId } : {}),
     ownerUserId: queueing ? queueing.ownerUserId : body.ownerUserId ?? user!.userId,
     queuedGrant: queueing ? queueing.queuedGrant : user?.mayDispatch ?? null,
     queuedGrantOwner: queueing ? queueing.ownerUserId : user?.userId ?? null,
@@ -139,7 +139,7 @@ export async function cardMove({ request, env, boardId, user, agent, stub }: Boa
     );
   }
   const result = await stub.moveCard(
-    moveMatch[1]!,
+    moveMatch[1],
     body.toStageKey,
     mover ? mover.queuedBy : user!.userId,
     mover ? mover.queuedGrant : user?.mayDispatch ?? null,
@@ -163,7 +163,7 @@ export async function cardResume({ request, user, stub }: BoardRequest, resumeMa
     return Response.json({ error: { code: 'UNKNOWN_STAGE', message: '`toStageKey` must be a stage key' } }, { status: 400 });
   }
   const result = await stub.resumeCard({
-    cardId: resumeMatch[1]!,
+    cardId: resumeMatch[1],
     comment: body.comment,
     ...(body.toStageKey !== undefined ? { toStageKey: body.toStageKey } : {}),
     actor: { id: user.userId, name: user.name ?? user.login ?? null },
@@ -186,7 +186,7 @@ export async function cardResume({ request, user, stub }: BoardRequest, resumeMa
  * Bodied as `{ card }`, which is what PATCH already answers with, so one client parses both.
  */
 export async function cardRead({ stub }: BoardRequest, cardMatch: RegExpMatchArray): Promise<Response> {
-  const result = await stub.getCardView(cardMatch[1]!);
+  const result = await stub.getCardView(cardMatch[1]);
   if (!result.ok) return Response.json({ error: result }, { status: statusForCode(result.code) });
   return Response.json({ card: result.value });
 }
@@ -266,7 +266,7 @@ export async function cardEdit({ request, env, tenantId, user, stub }: BoardRequ
         { status: 400 },
       );
     }
-    const unknown = await unknownLabelIds(env.DB, tenantId, body.labels as string[]);
+    const unknown = await unknownLabelIds(env.DB, tenantId, body.labels);
     if (unknown.length > 0) {
       return Response.json(
         { error: { code: 'UNKNOWN_LABEL', message: `no such label in this workspace: ${unknown.join(', ')}` } },
@@ -291,7 +291,7 @@ export async function cardEdit({ request, env, tenantId, user, stub }: BoardRequ
     let effectiveMilestoneId = body.milestoneId;
     let effectiveProjectId = body.projectId;
     if (effectiveMilestoneId === undefined || effectiveProjectId === undefined) {
-      const current = await stub.getCardView(cardMatch[1]!);
+      const current = await stub.getCardView(cardMatch[1]);
       if (!current.ok) return Response.json({ error: current }, { status: statusForCode(current.code) });
       if (effectiveMilestoneId === undefined) effectiveMilestoneId = current.value.milestoneId;
       if (effectiveProjectId === undefined) effectiveProjectId = current.value.projectId;
@@ -316,7 +316,7 @@ export async function cardEdit({ request, env, tenantId, user, stub }: BoardRequ
   // forward what it received — `labelNames` is deliberately excluded here, since it was
   // already resolved into `body.labels` above and `updateCard`'s patch type has no field for
   // it at all.
-  const result = await stub.updateCard(cardMatch[1]!, {
+  const result = await stub.updateCard(cardMatch[1], {
     title: body.title,
     spec: body.spec,
     priority: body.priority,
@@ -333,13 +333,13 @@ export async function cardEdit({ request, env, tenantId, user, stub }: BoardRequ
 }
 
 export async function cardDelete({ env, tenantId, stub }: BoardRequest, cardMatch: RegExpMatchArray): Promise<Response> {
-  const result = await stub.deleteCard(cardMatch[1]!);
+  const result = await stub.deleteCard(cardMatch[1]);
   if (!result.ok) return Response.json({ error: result }, { status: statusForCode(result.code) });
   // `deleteCard` cleans the DO's own same-board `card_links` in both directions, for a
   // reason that applies identically to Task 16's cross-board advisory store: a lingering
   // edge would point at a card that no longer exists. The DO cannot reach D1, so this is
   // that same cleanup's other half, run here once the DO has confirmed the card existed.
-  await deleteExternalLinksForCard(env.DB, tenantId, cardMatch[1]!);
+  await deleteExternalLinksForCard(env.DB, tenantId, cardMatch[1]);
   return new Response(null, { status: 204 });
 }
 
@@ -357,7 +357,7 @@ export async function cardSplit({ request, user, stub }: BoardRequest, splitMatc
   if (!Array.isArray(body.titles) || body.titles.some((t) => typeof t !== 'string')) {
     return Response.json({ error: { message: '`titles` is required and must be an array of strings.' } }, { status: 400 });
   }
-  const result = await stub.splitCard(splitMatch[1]!, body.titles as string[], user?.userId ?? 'usr_dev');
+  const result = await stub.splitCard(splitMatch[1], body.titles as string[], user?.userId ?? 'usr_dev');
   if (!result.ok) return Response.json({ error: result }, { status: statusForCode(result.code) });
   return Response.json({ children: result.value.children }, { status: 201 });
 }
@@ -381,8 +381,10 @@ export async function cardReference({ request, env, tenantId, stub }: BoardReque
   //
   // A WRITE rule only: rows written before this exists are read back untouched, and a read
   // that threw on them would turn a tightening into an outage.
+  // oxlint-disable-next-line typescript/no-unnecessary-type-conversion -- the body is cast, not parsed: String() is the parse
   if (body.provider !== undefined && !isKnownProvider(String(body.provider))) {
     return Response.json(
+      // oxlint-disable-next-line typescript/no-unnecessary-type-conversion -- the body is cast, not parsed: String() is the parse
       { error: `unknown reference provider: ${String(body.provider)}. Known: ${providerKeys().join(', ')}` },
       { status: 400 },
     );
@@ -402,7 +404,7 @@ export async function cardReference({ request, env, tenantId, stub }: BoardReque
   const result = await stub.addReference(
     resolveReferenceInput(
       {
-        cardId: refMatch[1]!,
+        cardId: refMatch[1],
         url: body.url,
         provider: body.provider,
         sourceType: body.sourceType,
@@ -421,17 +423,17 @@ export async function cardReference({ request, env, tenantId, stub }: BoardReque
 
 // GET /v1/boards/:id/cards/:cardId/attempts — attempts comparison (docs/07 §5)
 export async function cardAttempts({ stub }: BoardRequest, attemptsMatch: RegExpMatchArray): Promise<Response> {
-  return Response.json({ attempts: await stub.getAttempts(attemptsMatch[1]!) });
+  return Response.json({ attempts: await stub.getAttempts(attemptsMatch[1]) });
 }
 
 // GET /v1/boards/:id/cards/:cardId/activities — session-replay timeline + handoff (docs/07 §4)
 export async function cardActivities({ stub }: BoardRequest, cardActMatch: RegExpMatchArray): Promise<Response> {
-  return Response.json(await stub.getCardActivities(cardActMatch[1]!));
+  return Response.json(await stub.getCardActivities(cardActMatch[1]));
 }
 
 // GET /v1/boards/:id/cards/:cardId/estimate — pre-run cost estimate (docs/07 §6)
 export async function cardEstimate({ stub }: BoardRequest, estimateMatch: RegExpMatchArray): Promise<Response> {
-  const result = await stub.estimateCardCost(estimateMatch[1]!);
+  const result = await stub.estimateCardCost(estimateMatch[1]);
   if (!result.ok) return Response.json({ error: result }, { status: statusForCode(result.code) });
   return Response.json(result.value);
 }

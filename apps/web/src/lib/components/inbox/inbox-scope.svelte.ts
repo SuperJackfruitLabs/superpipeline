@@ -28,7 +28,7 @@ export function scopeChips(boards: readonly ScopeBoard[], asks: ReadonlyArray<{ 
   if (pick) chips.push({ id: pick.id, label: pick.name, count: 0 });
   const shown = new Set(chips.map((c) => c.id));
   const more = boards.filter((b) => !shown.has(b.id));
-  return { chips, more, moreLabel: `${plural(more.length, 'more board', 'more boards')}` };
+  return { chips, more, moreLabel: plural(more.length, 'more board', 'more boards') };
 }
 
 export function scopeLabel(chosen: string | null, boards: readonly ScopeBoard[]): string {

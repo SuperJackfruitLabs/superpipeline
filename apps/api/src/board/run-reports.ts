@@ -127,7 +127,7 @@ function enqueueRunReport(deps: RunReportsDeps, run: Row, reportedAt: string): v
        attempts = 0,
        next_attempt_at = excluded.next_attempt_at,
        last_error = NULL`,
-    run.id as string,
+    run.id,
     JSON.stringify(runReportDraft(deps, run, reportedAt)),
     reportedAt,
     deps.nowMs(),
@@ -145,7 +145,7 @@ function runReportDraft(deps: RunReportsDeps, run: Row, reportedAt: string): Run
     pendingElicitation,
     gate: gateJudgingRun(deps, run),
   });
-  const card = deps.sql.exec(`SELECT title FROM cards WHERE id = ?`, run.card_id as string).toArray()[0];
+  const card = deps.sql.exec(`SELECT title FROM cards WHERE id = ?`, run.card_id).toArray()[0];
   return {
     boardId: deps.getMeta('boardId') ?? '',
     boardName: deps.getMeta('name'),
@@ -167,7 +167,7 @@ function runReportDraft(deps: RunReportsDeps, run: Row, reportedAt: string): Run
  */
 function gateJudgingRun(deps: RunReportsDeps, run: Row): { status: string; decision: string | null } | null {
   const linked = deps.sql
-    .exec(`SELECT status, decision FROM gates WHERE run_id = ? ORDER BY created_at DESC, rowid DESC LIMIT 1`, run.id as string)
+    .exec(`SELECT status, decision FROM gates WHERE run_id = ? ORDER BY created_at DESC, rowid DESC LIMIT 1`, run.id)
     .toArray()[0];
   if (linked) return { status: linked.status as string, decision: (linked.decision as string | null) ?? null };
   if ((run.outcome as string | null) !== 'submitted' || !run.ended_at) return null;
@@ -176,9 +176,9 @@ function gateJudgingRun(deps: RunReportsDeps, run: Row): { status: string; decis
       `SELECT status, decision FROM gates
         WHERE run_id IS NULL AND card_id = ? AND stage_key = ? AND created_at >= ?
         ORDER BY created_at ASC, rowid ASC LIMIT 1`,
-      run.card_id as string,
-      run.stage_key as string,
-      run.ended_at as string,
+      run.card_id,
+      run.stage_key,
+      run.ended_at,
     )
     .toArray()[0];
   return legacy ? { status: legacy.status as string, decision: (legacy.decision as string | null) ?? null } : null;
@@ -191,9 +191,9 @@ export function runJudgedByGate(deps: RunReportsDeps, gate: Row): string | null 
     .exec(
       `SELECT id FROM runs WHERE card_id = ? AND stage_key = ? AND outcome = 'submitted' AND ended_at <= ?
         ORDER BY ended_at DESC LIMIT 1`,
-      gate.card_id as string,
-      gate.stage_key as string,
-      gate.created_at as string,
+      gate.card_id,
+      gate.stage_key,
+      gate.created_at,
     )
     .toArray()[0];
   return row ? (row.id as string) : null;
@@ -274,7 +274,7 @@ async function drainRunReportsOnce(deps: RunReportsDeps, fetcher: ReporterFetch,
         break;
       }
       // Refused: the one named item, or the whole batch (R11). The rest stay due and go next loop.
-      const refused = outcome.index !== null ? [batch[outcome.index]!] : batch;
+      const refused = outcome.index !== null ? [batch[outcome.index]] : batch;
       for (const d of refused) parkRunReport(deps, d, boardId, `${outcome.status} ${outcome.code}`, outcome.status, outcome.code);
       result.parked += refused.length;
     } catch (err) {

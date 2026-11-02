@@ -11,7 +11,7 @@ import { StrictDecision } from '../board/strict-decision';
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 import { z } from 'zod';
-import type { BoardStub, Result, JsonValue, AgentActivityType } from '../board/board-do';
+import type { BoardStub, Result, JsonValue } from '../board/board-do';
 import { resolveReferenceInput } from '../references/resolve';
 import { scopePermits, type AgentScope } from '../auth/scopes';
 import type { McpAuth } from '../auth/principal';
@@ -335,7 +335,7 @@ export function registerSuperpipelineTools(server: McpServer, deps: ToolDeps): v
           runId,
           leaseEpoch,
           agentId: auth.agentId,
-          type: type as AgentActivityType,
+          type: type,
           strictDecision,
           ephemeral,
           body,

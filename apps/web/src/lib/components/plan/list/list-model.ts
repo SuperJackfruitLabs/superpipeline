@@ -128,7 +128,7 @@ export const GROUPS: Array<{ id: ListGroupBy; label: string }> = [
 export const STUDIO_SORT_CYCLE: ListSortKey[] = ['priority', 'title', 'state', 'agent', 'attempts', 'age', 'due', 'cost'];
 export const GROUP_CYCLE: ListGroupBy[] = ['stage', 'state', 'owner', 'priority'];
 export function nextInCycle<T>(cycle: readonly T[], cur: T): T {
-  return cycle[(cycle.indexOf(cur) + 1) % cycle.length]!;
+  return cycle[(cycle.indexOf(cur) + 1) % cycle.length];
 }
 
 // ---- grouping ----

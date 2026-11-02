@@ -4,6 +4,7 @@ import type { PushSender } from '../push/deliver';
 import type { ReferenceInput } from '../references/input';
 import type { LinkKind } from './links';
 import type { AgentActivityInput, BoardEvent, BoardInit, CardView, ClaimResult, CompleteVerbInput, EstimateView, LinkInput, LinkView, NotificationView, ProfileInput, ProfileView, PushConfigInput, PushDeliveryView, Result, RunReportDrainResult, RunReportOutboxRow, RunVerbInput, ScheduleView, StageDef, StagePatch, StaleCardView, StaleSettings, UsageSummary } from './model';
+import type { FixtureBoard } from './fixture-types';
 import type { StrictDecision } from './strict-decision';
 import type { ActivityView, ApprovalSubjectVerification, AttemptView, BoardSnapshot, CommentView, ElicitationPendingBody, ElicitationView, EvidenceReferenceInput, GatePendingBody, GateView, ReferenceView, RunContext, RunEvidence, RunEvidenceV1 } from './views';
 
@@ -18,7 +19,7 @@ export interface BoardStub {
   /** Cards each agent holds on this board right now, and of those how many it works now. */
   agentLoad(): Promise<Record<string, { claimed: number; working: number }>>;
   /** Dev only (FIXTURE_IMPORT): replace this board's rows with a fixture. src/dev/fixture.ts. */
-  importFixture(board: import('./fixture-types').FixtureBoard): Promise<
+  importFixture(board: FixtureBoard): Promise<
     { ok: true; cards: number } | { ok: false; code: 'FIXTURE_IMPORT_DISABLED' | 'UNKNOWN_COLUMN'; detail?: string }
   >;
   drainRunReports(): Promise<RunReportDrainResult>;

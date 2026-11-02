@@ -66,7 +66,7 @@ export async function stageEdit({ request, agent, stub }: BoardRequest, stageMat
   // Built from named fields rather than forwarding `body` whole: the cast above names the
   // same type `updateStage` accepts, but it is still only a compile-time assertion — it does
   // not stop a caller's JSON from carrying a key the type never declared.
-  const result = await stub.updateStage(stageMatch[1]!, {
+  const result = await stub.updateStage(stageMatch[1], {
     name: body.name,
     owner: body.owner,
     ownerKind: body.ownerKind,

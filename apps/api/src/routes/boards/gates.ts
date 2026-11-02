@@ -18,7 +18,7 @@ export async function gatesPending({ stub }: BoardRequest): Promise<Response> {
 
 // GET /v1/boards/:id/gates/:gateId — one gate, including how it was decided.
 export async function gateRead({ stub }: BoardRequest, oneGate: RegExpMatchArray): Promise<Response> {
-  const result = await stub.getGate(oneGate[1]!);
+  const result = await stub.getGate(oneGate[1]);
   if (!result.ok) return Response.json({ error: result }, { status: statusForCode(result.code) });
   return Response.json({ gate: result.value });
 }
@@ -32,13 +32,13 @@ export async function gateResolve({ request, env, tenantId, user, agent, stub }:
     approvalSubjectDigest?: string;
   };
   const localDeciderId = user?.userId ?? 'usr_dev';
-  const gateView = await stub.getGate(gateMatch[1]!);
+  const gateView = await stub.getGate(gateMatch[1]);
   const principalIds =
     gateView.ok && gateView.value.approvalSubject
       ? await principalIdsFor(env.DB, tenantId, [localDeciderId])
       : new Map<string, string>();
   const result = await stub.resolveGate({
-    gateId: gateMatch[1]!,
+    gateId: gateMatch[1],
     decision: gp.decision,
     decidedBy: principalIds.get(localDeciderId) ?? localDeciderId,
     comment: gp.comment,
@@ -69,9 +69,9 @@ export async function gateDelivery({ request, env, tenantId, user, stub }: Board
   const localActorId = user?.userId ?? 'usr_dev';
   const principalIds = await principalIdsFor(env.DB, tenantId, [localActorId]);
   const result = await stub.updateApprovalDelivery({
-    gateId: deliveryMatch[1]!,
+    gateId: deliveryMatch[1],
     actor: principalIds.get(localActorId) ?? localActorId,
-    ...(body.mode !== undefined ? { mode: body.mode as 'manual' | 'automatic' } : {}),
+    ...(body.mode !== undefined ? { mode: body.mode } : {}),
     ...(body.liveUrl !== undefined ? { liveUrl: body.liveUrl } : {}),
   });
   if (!result.ok) return Response.json({ error: result }, { status: statusForCode(result.code) });
@@ -104,7 +104,7 @@ export async function elicitationsPending({ stub }: BoardRequest): Promise<Respo
 export async function elicitationAnswer({ request, user, stub }: BoardRequest, answerMatch: RegExpMatchArray): Promise<Response> {
   const ap = (await request.json()) as { option?: string; text?: string };
   const result = await stub.answerElicitation({
-    elicitationId: answerMatch[1]!,
+    elicitationId: answerMatch[1],
     answeredBy: user?.userId ?? 'usr_dev',
     // The role from the server's own session read: the only thing that may choose "Always allow".
     answererRole: user?.role ?? null,

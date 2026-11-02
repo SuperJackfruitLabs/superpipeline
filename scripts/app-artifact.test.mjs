@@ -15,13 +15,13 @@ function fixture(fn) {
     sealArtifact(dir, sha); fn(dir);
   } finally { rmSync(dir, { recursive: true, force: true }); }
 }
-test('artifact promotion binds source, Worker and assets and refuses modifications', () => fixture((dir) => {
+void test('artifact promotion binds source, Worker and assets and refuses modifications', () => fixture((dir) => {
   assert.equal(verifyArtifact(dir, sha).source_commit, sha);
   assert.throws(() => verifyArtifact(dir, 'b'.repeat(40)), /revision/);
   writeFileSync(join(dir, 'worker/index.js'), 'different source');
   assert.throws(() => verifyArtifact(dir, sha), /content changed/);
 }));
-test('artifact promotion refuses extra files, symlinks and development auth', () => fixture((dir) => {
+void test('artifact promotion refuses extra files, symlinks and development auth', () => fixture((dir) => {
   writeFileSync(join(dir, 'extra.txt'), 'unreviewed');
   assert.throws(() => verifyArtifact(dir, sha), /inventory/);
   rmSync(join(dir, 'extra.txt'));

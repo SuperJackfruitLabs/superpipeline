@@ -143,7 +143,7 @@ export async function getRunEvidence(deps: RunHistoryDeps, runId: string): Promi
          FROM usage_records WHERE run_id = ?`,
       runId,
     )
-    .toArray()[0]!;
+    .toArray()[0];
   const usage: RunEvidence['usage'] =
     Number(u.n) > 0
       ? { status: 'reported', input_tokens: Number(u.i), output_tokens: Number(u.o), cost_usd: Number(u.c) }

@@ -268,7 +268,7 @@ export async function handlePlaneSignInRoute(
     // Third, after the hub's, with the newest refresh token. Best-effort, like the hub's: a plane that
     // will not mint it (a workspace without Superlibrary) leaves the drawer saying so, nothing else.
     if (needLibrary && refresh) {
-      const g = await tokenGrant(cfg, { grant_type: 'refresh_token', refresh_token: refresh }, fetchImpl, libResource!);
+      const g = await tokenGrant(cfg, { grant_type: 'refresh_token', refresh_token: refresh }, fetchImpl, libResource);
       const lib = g.ok ? g.tokens : null;
       if (!g.ok && g.refused) libDeclined = true;
       if (lib) {

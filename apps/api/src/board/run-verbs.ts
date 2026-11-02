@@ -64,7 +64,7 @@ export async function postActivity(deps: RunVerbsDeps, input: AgentActivityInput
     // Validate at the DO so every wire (REST + MCP) shares the guarantee — a negative/NaN cost
     // would otherwise poison the SUMs the budget gate relies on.
     const { inputTokens, outputTokens, costUsd } = input.usage;
-    const bad = [inputTokens, outputTokens, costUsd].some((n) => n !== undefined && (!Number.isFinite(n) || (n as number) < 0));
+    const bad = [inputTokens, outputTokens, costUsd].some((n) => n !== undefined && (!Number.isFinite(n) || n < 0));
     if (bad) return { ok: false, code: 'INVALID_USAGE', message: 'usage tokens/cost must be finite and non-negative' };
     // Budget enforcement (docs/07 §6): once a cap is hit, reject further billable activities so an
     // in-flight run can't blow past the ceiling — overrun is bounded to the single crossing activity.
@@ -102,7 +102,7 @@ export async function postActivity(deps: RunVerbsDeps, input: AgentActivityInput
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       input.runId,
       cardId,
-      run.agent_id as string,
+      run.agent_id,
       u.model ?? null,
       u.inputTokens ?? 0,
       u.outputTokens ?? 0,
@@ -437,7 +437,7 @@ async function waitOnPerson(deps: RunVerbsDeps, input: CompleteVerbInput, run: R
     agentId: input.agentId,
     type: 'elicitation',
     body: question,
-    parameter: input.options !== undefined ? ({ options: input.options } as JsonValue) : null,
+    parameter: input.options !== undefined ? ({ options: input.options }) : null,
   };
   // On the replay as the question it is, like a live run's.
   deps.sql.exec(

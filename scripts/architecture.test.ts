@@ -30,6 +30,8 @@ const API_FOLDER_CYCLE = 0;
  * points down, to a strictly lower layer; nodes in one layer do not import each other. A new
  * folder or root file must be placed here. */
 const API_LAYERS: readonly (readonly string[])[] = [
+  // The Worker's log sink: imports nothing.
+  ['log.ts'],
   // Foundations: no imports of the Worker's own code, or only each other's.
   ['env.ts', 'ids.ts', 'json.ts', 'flat-error.ts', 'crypto', 'metering', 'telemetry'],
   // Pure helpers over the foundations: outbound delivery, reference parsing.

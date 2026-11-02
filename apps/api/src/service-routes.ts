@@ -18,7 +18,7 @@ function looksLikeService(request: Request): boolean {
   const m = (request.headers.get('Authorization') ?? '').match(/^Bearer\s+([^.\s]+)\.([^.\s]+)\.[^.\s]+$/);
   if (!m) return false;
   try {
-    const b64 = m[2]!.replace(/-/g, '+').replace(/_/g, '/');
+    const b64 = m[2].replace(/-/g, '+').replace(/_/g, '/');
     return JSON.parse(atob(b64 + '='.repeat((4 - (b64.length % 4)) % 4))).principalKind === 'service';
   } catch {
     return false;
@@ -58,7 +58,7 @@ export async function serviceRoute(request: Request, env: Env, path: string): Pr
   }
 
   if (!svc.scopes.includes(PUSH_WRITE)) return refuse(403, 'FORBIDDEN', 'this principal does not hold push:write');
-  const boardId = push![1]!;
+  const boardId = push![1];
   if (!(await boardNamesById(env.DB, svc.tenantId, [boardId])).has(boardId)) return notFound('board');
   const body = (await request.json().catch(() => null)) as { url?: unknown; token?: unknown; events?: unknown } | null;
   if (

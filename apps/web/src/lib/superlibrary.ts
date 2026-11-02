@@ -21,7 +21,7 @@ export function libraryRef(url: string): { itemId: string; version?: number } | 
   if (u.origin !== LIBRARY_URL) return null;
   const m = ITEM_PATH.exec(u.pathname);
   if (!m) return null;
-  return m[2] ? { itemId: m[1]!, version: Number(m[2]) } : { itemId: m[1]! };
+  return m[2] ? { itemId: m[1], version: Number(m[2]) } : { itemId: m[1] };
 }
 
 export class LibraryError extends Error {
@@ -107,8 +107,8 @@ const SENTENCES: Record<string, string> = {
   expired: 'This artifact has expired.',
 };
 export function sentenceFor(e: unknown, vibe: Vibe = 'daylight'): string {
-  if (e instanceof LibraryError && e.code === 'reauthorize') return SENTENCES.reauthorize!;
-  if (e instanceof LibraryError && e.code === 'declined' && !reconnectedThisTab()) return SENTENCES.declined_first!;
+  if (e instanceof LibraryError && e.code === 'reauthorize') return SENTENCES.reauthorize;
+  if (e instanceof LibraryError && e.code === 'declined' && !reconnectedThisTab()) return SENTENCES.declined_first;
   if (needsReconnect(e)) return say('error.previewReconnect', vibe);
   return (e instanceof LibraryError && SENTENCES[e.code]) || 'The preview could not be loaded. Try again in a moment.';
 }

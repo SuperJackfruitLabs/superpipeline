@@ -68,6 +68,7 @@ export async function createSchedule(deps: SchedulesDeps, input: {
   if (!parsed.ok) return { ok: false, code: 'INVALID_RULE', message: parsed.error };
 
   try {
+    // oxlint-disable-next-line no-new -- constructed only to throw on a zone the runtime does not know
     new Intl.DateTimeFormat('en-GB', { timeZone: input.timezone });
   } catch {
     return { ok: false, code: 'INVALID_TIMEZONE', message: `"${input.timezone}" is not a time zone this runtime knows` };
@@ -146,6 +147,7 @@ export async function updateSchedule(deps: SchedulesDeps, id: string, patch: {
     if (!reparsed.ok) return { ok: false, code: 'INVALID_RULE', message: reparsed.error };
     if (patch.timezone !== undefined) {
       try {
+        // oxlint-disable-next-line no-new -- constructed only to throw on a zone the runtime does not know
         new Intl.DateTimeFormat('en-GB', { timeZone: timezone });
       } catch {
         return { ok: false, code: 'INVALID_TIMEZONE', message: `"${timezone}" is not a time zone this runtime knows` };

@@ -26,7 +26,7 @@ export async function boards({ request, env, url, path }: WorkerRequest, match: 
 
   // Before the agent/human split below, which classifies every `runs/*` path as an agent route.
   const evidenceMatch = boardId && request.method === 'GET' ? rest.match(/^runs\/([^/]+)\/(evidence|evidence-v1)$/) : null;
-  if (evidenceMatch) return runEvidence(request, env, boardId!, evidenceMatch[1]!, evidenceMatch[2] === 'evidence-v1');
+  if (evidenceMatch) return runEvidence(request, env, boardId, evidenceMatch[1], evidenceMatch[2] === 'evidence-v1');
 
   // A service token (Superlibrary) reading cards or registering a push config; any other bearer falls through.
   const asService = await serviceRoute(request, env, path);

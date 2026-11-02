@@ -40,7 +40,7 @@ const PROTECTED_RESOURCE_PATH = '/.well-known/oauth-protected-resource';
  */
 export async function resolveMcpAuth(request: Request, env: Env): Promise<McpAuth | null> {
   const match = (request.headers.get('Authorization') ?? '').match(/^Bearer\s+(.+)$/i);
-  const token = match ? match[1]!.trim() : null;
+  const token = match ? match[1].trim() : null;
   if (token && token.startsWith('spa_')) {
     const found = await findAgentByTokenHash(env.DB, await hashToken(token));
     if (!found) return null;
@@ -81,7 +81,7 @@ export function resolveBearer(request: Request): McpAuth | null {
   if (!match) return null;
   // Exactly "<tenant>:<agent>" or "<tenant>:<agent>:<caps>" — reject anything else so a malformed
   // token fails loudly rather than silently dropping the capabilities segment.
-  const parts = match[1]!.trim().split(':');
+  const parts = match[1].trim().split(':');
   if (parts.length < 2 || parts.length > 3) return null;
   const [tenantId, agentId, capsRaw] = parts;
   if (!tenantId || !agentId) return null;

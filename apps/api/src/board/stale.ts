@@ -132,7 +132,7 @@ export async function sweepBoard(deps: StaleDeps, nowIso: string): Promise<{ ove
 
     for (const row of rows) {
       deps.notify('overdue', row.id as string, `"${row.title as string}" was due ${row.due_at as string}`);
-      deps.sql.exec(`UPDATE cards SET overdue_notified_at = ? WHERE id = ?`, nowIso, row.id as string);
+      deps.sql.exec(`UPDATE cards SET overdue_notified_at = ? WHERE id = ?`, nowIso, row.id);
       overdueNotified += 1;
     }
   } catch (err) {

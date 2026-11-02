@@ -8,10 +8,11 @@ import { findAgentByExternal, findTenantByExternal } from '../db/catalog';
 import { entitles, orgPlaneMode, verifyOrgPlaneToken, ORG_PLANE_SOURCE, type OrgPlaneClaims, type OrgPlaneConfig } from './org-plane';
 import { ensureOrgTenant, provisionOrgHuman } from './org-tenancy';
 import { effectiveCapabilities } from '../db/implications';
+import { logWarn } from '../log';
 
 export function bearerOf(request: Request): string | null {
   const m = (request.headers.get('Authorization') ?? '').match(/^Bearer\s+(.+)$/i);
-  return m ? m[1]!.trim() : null;
+  return m ? m[1].trim() : null;
 }
 
 /** One verify per (request, audience): the entitlement gate and the resolver share it. */
@@ -58,7 +59,7 @@ export async function resolvePlaneUser(request: Request, env: Env, cfg: OrgPlane
   const human = await provisionOrgHuman(env.DB, tenantId, claims);
   if (!human) {
     // Logged without claims: the useful fact is that a verified person could not be placed.
-    console.warn('org-plane: a verified human could not be provisioned (unverified address, or an address held by a still-hub-mapped account)');
+    logWarn('org-plane: a verified human could not be provisioned (unverified address, or an address held by a still-hub-mapped account)');
     return null;
   }
   // A token minted on a person's behalf (`act`) is the bridge speaking for them; the app's own is the web.

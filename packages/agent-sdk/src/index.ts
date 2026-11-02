@@ -313,7 +313,7 @@ export class SuperpipelineAgent {
    * `needs-person` with `question` (and `url`) parks it on a person. Omitted, the card advances.
    */
   complete(work: ClaimedWork, handoff?: unknown, outcome?: CompleteOutcome): Promise<HttpResponse> {
-    return this.run(work, 'complete', { handoff, ...(outcome ?? {}) });
+    return this.run(work, 'complete', { handoff, ...outcome });
   }
   block(work: ClaimedWork, reason: string): Promise<HttpResponse> {
     return this.run(work, 'block', { reason });
@@ -374,7 +374,7 @@ export class SuperpipelineAgent {
   }
 }
 
-export type WorkHandler = (work: ClaimedWork, agent: SuperpipelineAgent) => Promise<unknown | void>;
+export type WorkHandler = (work: ClaimedWork, agent: SuperpipelineAgent) => Promise<unknown>;
 
 /**
  * Reference driver: claim one card, acknowledge, run the work via `handler`, and complete it.

@@ -1,6 +1,7 @@
 import type { TaskState } from '@superpipeline/contract';
 import { resolveLabelNames } from '../db/labels';
 import type { BoardContext } from './context';
+import type { FixtureBoard } from './fixture-types';
 
 /**
  * Board upkeep that is not a user verb: fixture import, the once-per-board backfills, and the
@@ -33,7 +34,7 @@ class FixtureColumnError extends Error {}
  * gated here as well as at the route. Writes rows exactly as given — historical timestamps
  * included — emits nothing and schedules no alarm, so the stale sweep never runs on a fixture.
  */
-export async function importFixture(deps: MaintenanceDeps, board: import('./fixture-types').FixtureBoard): Promise<
+export async function importFixture(deps: MaintenanceDeps, board: FixtureBoard): Promise<
   { ok: true; cards: number } | { ok: false; code: 'FIXTURE_IMPORT_DISABLED' | 'UNKNOWN_COLUMN'; detail?: string }
 > {
   if (deps.env.FIXTURE_IMPORT !== 'true') return { ok: false, code: 'FIXTURE_IMPORT_DISABLED' };
@@ -101,7 +102,7 @@ export async function backfillDueDates(deps: MaintenanceDeps): Promise<{ migrate
       due.trim(),
       JSON.stringify(spec),
       deps.now(),
-      row.id as string,
+      row.id,
     );
     migrated += 1;
   }
@@ -140,7 +141,7 @@ export async function backfillLabelNames(deps: MaintenanceDeps): Promise<{ migra
     if (names.length === 0) {
       // Nothing resolvable — an array of blanks or non-strings — but the stale key is cleared
       // regardless, same as a legacy `due` that fails its own shape check is still removed.
-      deps.sql.exec(`UPDATE cards SET spec_json = ?, updated_at = ? WHERE id = ?`, JSON.stringify(spec), deps.now(), row.id as string);
+      deps.sql.exec(`UPDATE cards SET spec_json = ?, updated_at = ? WHERE id = ?`, JSON.stringify(spec), deps.now(), row.id);
       continue;
     }
     const resolvedIds = await resolveLabelNames(deps.env.DB, tenantId, names, null);
@@ -151,7 +152,7 @@ export async function backfillLabelNames(deps: MaintenanceDeps): Promise<{ migra
       JSON.stringify(merged),
       JSON.stringify(spec),
       deps.now(),
-      row.id as string,
+      row.id,
     );
     migrated += 1;
   }
@@ -162,7 +163,7 @@ export async function backfillLabelNames(deps: MaintenanceDeps): Promise<{ migra
 export async function testResetDueToSpec(deps: MaintenanceDeps, cardId: string): Promise<void> {
   const row = deps.sql.exec(`SELECT spec_json, due_at FROM cards WHERE id = ?`, cardId).one();
   const spec = JSON.parse(row.spec_json as string) as Record<string, unknown>;
-  if (row.due_at) spec.due = row.due_at as string;
+  if (row.due_at) spec.due = row.due_at;
   deps.sql.exec(`UPDATE cards SET due_at = NULL, spec_json = ? WHERE id = ?`, JSON.stringify(spec), cardId);
 }
 

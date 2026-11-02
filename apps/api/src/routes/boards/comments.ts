@@ -9,7 +9,7 @@ import type { BoardRequest } from './request';
 // this card (`NO_RUN_ON_CARD` otherwise) — the scope gate above already required `run` for
 // the POST and `read` for the GET. There is no PATCH: nobody edits a comment.
 export async function commentsList({ stub }: BoardRequest, commentsMatch: RegExpMatchArray): Promise<Response> {
-  const result = await stub.listComments(commentsMatch[1]!);
+  const result = await stub.listComments(commentsMatch[1]);
   if (!result.ok) return Response.json({ error: result }, { status: statusForCode(result.code) });
   return Response.json({ comments: result.value });
 }
@@ -29,7 +29,7 @@ export async function commentAdd({ request, env, tenantId, user, agent, stub }: 
   } else {
     author = { kind: 'human', id: user?.userId ?? 'usr_dev', name: user?.name ?? user?.login ?? null };
   }
-  const result = await stub.addComment({ cardId: commentsMatch[1]!, author, body: body.body });
+  const result = await stub.addComment({ cardId: commentsMatch[1], author, body: body.body });
   if (!result.ok) return Response.json({ error: result }, { status: statusForCode(result.code) });
   return Response.json({ comment: result.value }, { status: 201 });
 }
@@ -37,7 +37,7 @@ export async function commentAdd({ request, env, tenantId, user, agent, stub }: 
 // DELETE /v1/boards/:id/cards/:cardId/comments/:commentId — its author tombstones it.
 export async function commentDelete({ user, stub }: BoardRequest, oneComment: RegExpMatchArray): Promise<Response> {
   if (!user) return Response.json({ error: 'only a person deletes a comment' }, { status: 403 });
-  const result = await stub.deleteComment({ cardId: oneComment[1]!, commentId: oneComment[2]!, userId: user.userId });
+  const result = await stub.deleteComment({ cardId: oneComment[1], commentId: oneComment[2], userId: user.userId });
   if (!result.ok) return Response.json({ error: result }, { status: statusForCode(result.code) });
   return Response.json({ comment: result.value });
 }

@@ -317,7 +317,7 @@ export async function agentRegistry({ request, env }: WorkerRequest, agentsMatch
               );
             }
           }
-          patch.ownerUserId = body.ownerUserId as string | null;
+          patch.ownerUserId = body.ownerUserId;
         }
         if ('mayQueueTo' in body) {
           if (body.mayQueueTo !== null) {

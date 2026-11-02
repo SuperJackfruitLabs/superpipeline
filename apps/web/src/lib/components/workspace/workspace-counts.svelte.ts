@@ -56,7 +56,7 @@ class Counts {
   async refresh(): Promise<void> {
     const all = Promise.allSettled([crewLists.readAgents(), crewLists.readCapabilities(), crewLists.readMembers()]);
     void app.markBusy(all);
-    this.value = countsFrom((await all) as Settled);
+    this.value = countsFrom((await all));
   }
 }
 export const workspaceCounts = new Counts();

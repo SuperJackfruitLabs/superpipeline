@@ -6,6 +6,7 @@ import { reportingEnabled } from '../superwitness/config';
 import { resolveWorkspaceCaller } from './callers';
 import { statusForCode, unexpected } from './errors';
 import type { WorkerRequest } from './router';
+import { logError } from '../log';
 
 /**
  * POST /v1/admin/superwitness/backfill — enqueue a superwitness report for every run on one
@@ -70,7 +71,7 @@ export async function staleAcrossBoards({ request, env, url }: WorkerRequest): P
         cards.push(...(await boardStub(env, caller.tenantId, board.id).staleCards({ nowIso, attention, ...(afterHours !== undefined ? { afterHours } : {}) })));
       } catch (err) {
         boardsUnanswered += 1;
-        console.error(`GET /v1/stale: board ${board.id} did not answer`, err);
+        logError(`GET /v1/stale: board ${board.id} did not answer`, err);
       }
     }
     cards.sort((a, b) => a.since.localeCompare(b.since));

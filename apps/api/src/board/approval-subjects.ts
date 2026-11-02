@@ -34,7 +34,7 @@ function canonicalJson(value: JsonValue): string {
   if (Array.isArray(value)) return `[${value.map(canonicalJson).join(',')}]`;
   return `{${Object.keys(value)
     .sort()
-    .map((key) => `${JSON.stringify(key)}:${canonicalJson(value[key]!)}`)
+    .map((key) => `${JSON.stringify(key)}:${canonicalJson(value[key])}`)
     .join(',')}}`;
 }
 
@@ -103,7 +103,7 @@ function socialPublishPayloadError(value: unknown): string | null {
     (timing.notBefore !== null && !nonEmptyString(timing.notBefore)) ||
     !nonEmptyString(timing.expiresAt) ||
     Number.isNaN(Date.parse(timing.expiresAt)) ||
-    (timing.notBefore !== null && Number.isNaN(Date.parse(timing.notBefore as string))) ||
+    (timing.notBefore !== null && Number.isNaN(Date.parse(timing.notBefore))) ||
     (timing.mode === 'scheduled' && timing.notBefore === null)
   ) {
     return 'publicationPayload.timing is invalid';

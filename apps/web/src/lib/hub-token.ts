@@ -112,7 +112,7 @@ function hubTokenFetch(url: string): Promise<Response> {
   // serialises this tab.
   const locked = () => {
     const locks = typeof navigator !== 'undefined' ? (navigator as Navigator & { locks?: LockManager }).locks : undefined;
-    return locks?.request ? (locks.request(HUB_TOKEN_LOCK, start) as Promise<Response>) : start();
+    return locks?.request ? (locks.request(HUB_TOKEN_LOCK, start)) : start();
   };
   const run = hubTokenTail ? hubTokenTail.then(locked) : locked();
   const mine = run.then(() => undefined, () => undefined);

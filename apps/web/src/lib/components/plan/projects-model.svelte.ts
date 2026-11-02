@@ -7,8 +7,6 @@ import { groupProjects, projectsSummary, type ProjectGroup } from './project-rol
 import { projectWorkspace } from './project-workspace.svelte';
 import { couldNotLoad } from '$lib/loading';
 
-const message = (e: unknown) => (e instanceof Error ? e.message : String(e));
-
 export class ProjectsModel {
   projects = $state<Project[]>([]);
   milestones = $state<Record<string, Milestone[]>>({});

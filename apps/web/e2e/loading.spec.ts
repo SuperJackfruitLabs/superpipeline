@@ -69,7 +69,7 @@ async function hold(page: Page, mode: Mode): Promise<void> {
     await r.continue().catch(() => {});
   });
   await page.routeWebSocket(/\/v1\/boards\/.*\/ws/, async (ws) => {
-    if (typeof mode === 'object') { await new Promise((f) => setTimeout(f, mode.delay)); ws.connectToServer(); } else ws.close({ code: 1011, reason: 'held' });
+    if (typeof mode === 'object') { await new Promise((f) => setTimeout(f, mode.delay)); ws.connectToServer(); } else void ws.close({ code: 1011, reason: 'held' });
   });
 }
 

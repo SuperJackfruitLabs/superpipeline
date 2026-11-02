@@ -29,7 +29,7 @@ export async function projects({ request, env }: WorkerRequest, projectsMatch: R
         request.method === 'GET' ? 'read' : request.method === 'DELETE' ? null : 'plan',
     });
     if (caller instanceof Response) return caller;
-    const { tenantId: wsTenantId, user: u } = caller;
+    const { tenantId: wsTenantId } = caller;
     const projectId = projectsMatch[1];
     const subSeg = projectsMatch[2];
 
@@ -48,7 +48,7 @@ export async function projects({ request, env }: WorkerRequest, projectsMatch: R
       const cached = await cachedRollup(env.DB, wsTenantId, projectId);
       const STALE_MS = 60_000;
       const fresh = cached && Date.now() - new Date(cached.computedAt).getTime() < STALE_MS;
-      const rollup = fresh ? cached! : await computeRollup(env.DB, projectSummaries(env), wsTenantId, projectId);
+      const rollup = fresh ? cached : await computeRollup(env.DB, projectSummaries(env), wsTenantId, projectId);
       return Response.json({ rollup });
     }
 
@@ -214,7 +214,7 @@ export async function milestone({ request, env }: WorkerRequest, milestoneMatch:
       if (isInvalidDueAt(body.targetDate)) {
         return Response.json({ error: 'targetDate must be YYYY-MM-DD' }, { status: 400 });
       }
-      const id = milestoneMatch[1]!;
+      const id = milestoneMatch[1];
       if (!(await milestoneById(env.DB, u.tenantId, id))) {
         return Response.json({ error: 'milestone not found' }, { status: 404 });
       }
@@ -225,7 +225,7 @@ export async function milestone({ request, env }: WorkerRequest, milestoneMatch:
       return Response.json({ milestone: updated });
     }
     if (request.method !== 'DELETE') return Response.json({ error: 'method not allowed' }, { status: 405 });
-    if (!(await deleteMilestone(env.DB, u.tenantId, milestoneMatch[1]!))) {
+    if (!(await deleteMilestone(env.DB, u.tenantId, milestoneMatch[1]))) {
       return Response.json({ error: 'milestone not found' }, { status: 404 });
     }
     return new Response(null, { status: 204 });

@@ -126,7 +126,7 @@ export async function claim(deps: ClaimsDeps, input: {
       // because there is no run — this stops a dispatch rather than ending one.
       deps.parkForHuman(row.id as string, { reason: 'not-authorised', detail: why }, false);
       deps.notify('control-pair', row.id as string, `Not dispatched: ${why}`);
-      deps.emit('card.blocked', { cardId: row.id as string, reason: why });
+      deps.emit('card.blocked', { cardId: row.id, reason: why });
       return { claimed: false };
     }
   }
@@ -260,7 +260,6 @@ function lastFailureAt(deps: ClaimsDeps, cardId: string, stageKey: string, exclu
 export async function heartbeat(deps: ClaimsDeps, input: RunVerbInput): Promise<Result<{ acknowledged: true }>> {
   const auth = authorizeRun(deps, input);
   if (!auth.ok) return auth;
-  const run = auth.run;
   deps.sql.exec(`UPDATE runs SET last_heartbeat_ms = ? WHERE id = ?`, deps.nowMs(), input.runId);
   await deps.scheduleReclaim();
   return { ok: true, value: { acknowledged: true } };

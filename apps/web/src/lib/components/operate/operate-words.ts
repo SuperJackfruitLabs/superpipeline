@@ -69,7 +69,7 @@ export function staleLine(n: Notification, vibe: Vibe, needKind: AttentionKind |
   const m = STALE.exec(n.body);
   if (!m) return null;
   const h = Number(m[1]);
-  const stage = m[2]!;
+  const stage = m[2];
   const unclaimed = needKind === 'no-owner';
   switch (vibe) {
     case 'daylight':
@@ -97,7 +97,7 @@ export const kindCell = (n: Notification): string => n.kind.charAt(0).toUpperCas
 export function stageOwnerText(stage: Stage, agents: AgentSummary[], form: 'full' | 'agents'): string {
   const o = stageOwner(stage, agents);
   if (o.kind !== 'capability') return o.label;
-  const who = o.declaredBy.length === 1 ? o.declaredBy[0]! : `${o.declaredBy.length} agents`;
+  const who = o.declaredBy.length === 1 ? o.declaredBy[0] : `${o.declaredBy.length} agents`;
   return form === 'full' ? `${o.label}, ${who}` : who;
 }
 
@@ -228,6 +228,6 @@ export function quietMeta(row: NeedRow): string {
 /** Everything after the money figure in "$0.00. No budget cap is set. No agent has spent anything." */
 export function quietSpend(cap: number | null, top: Array<{ name: string; costUsd: number }>): string {
   const capText = cap === null ? ' No budget cap is set.' : ` The budget cap is ${usd(cap)}.`;
-  const spent = top.length === 0 ? ' No agent has spent anything.' : ` ${top[0]!.name} spent the most.`;
+  const spent = top.length === 0 ? ' No agent has spent anything.' : ` ${top[0].name} spent the most.`;
   return `.${capText}${spent}`;
 }

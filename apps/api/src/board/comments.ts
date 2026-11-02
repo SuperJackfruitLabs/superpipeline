@@ -150,10 +150,10 @@ export function commentsForRunContext(deps: CommentsDeps, cardId: string): { com
   let bytes = 0;
   const enc = new TextEncoder();
   for (let i = live.length - 1; i >= 0 && kept.length < RUN_CONTEXT_COMMENTS; i--) {
-    const size = enc.encode(live[i]!.body).length;
+    const size = enc.encode(live[i].body).length;
     if (bytes + size > RUN_CONTEXT_COMMENT_BYTES) break;
     bytes += size;
-    kept.unshift(live[i]!);
+    kept.unshift(live[i]);
   }
   return { comments: kept, commentsOmitted: live.length - kept.length };
 }
