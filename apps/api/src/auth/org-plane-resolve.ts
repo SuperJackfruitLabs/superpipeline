@@ -3,11 +3,10 @@
  * `resolveHubService`, with the same refusals, keyed by `org` instead of `tenant`.
  */
 import type { Env } from '../env';
-import type { UserPrincipal, AgentPrincipal, ServicePrincipal } from './resolve';
+import type { UserPrincipal, AgentPrincipal, ServicePrincipal, McpAuth } from './principal';
 import { findAgentByExternal, findTenantByExternal } from '../db/catalog';
 import { entitles, orgPlaneMode, verifyOrgPlaneToken, ORG_PLANE_SOURCE, type OrgPlaneClaims, type OrgPlaneConfig } from './org-plane';
 import { ensureOrgTenant, provisionOrgHuman } from './org-tenancy';
-import type { McpAuth } from '../mcp/tools';
 import { effectiveCapabilities } from '../db/implications';
 
 export function bearerOf(request: Request): string | null {
