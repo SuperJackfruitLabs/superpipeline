@@ -1,7 +1,7 @@
 {
   "eslint(no-console)": 14,
   "eslint(no-new)": 4,
-  "eslint(no-shadow)": 39,
+  "eslint(no-shadow)": 37,
   "eslint(no-underscore-dangle)": 39,
   "eslint(no-unmodified-loop-condition)": 1,
   "eslint(no-unsafe-optional-chaining)": 9,

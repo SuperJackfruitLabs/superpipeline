@@ -45,6 +45,8 @@ const API_LAYERS: readonly (readonly string[])[] = [
   // Surfaces over the board: MCP, dev fixtures, cross-board links.
   ['mcp', 'dev', 'card-links.ts'],
   ['service-routes.ts'],
+  // The HTTP routes: the router, its tables and one module per resource.
+  ['routes'],
   // The Worker entry: composes everything.
   ['index.ts'],
 ];
@@ -54,7 +56,6 @@ const KNOWN_BACK_EDGES: readonly string[] = [];
 
 /** Files over SIZE_LIMIT and the most lines each may have. Lower these; never raise them. */
 const OVERSIZE: Record<string, number> = {
-  'apps/api/src/index.ts': 3790,
   'packages/cli/src/commands.ts': 1679,
   'apps/web/src/lib/api.ts': 1645,
   'packages/cli/src/index.ts': 1229,
