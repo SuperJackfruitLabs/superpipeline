@@ -8,7 +8,7 @@ describes the guardrails; this page keeps the plan, the starting measurements an
 | Phase | What | State |
 |---|---|---|
 | 2 | Split the Board Durable Object | done |
-| 3 | Split the Worker entry (`apps/api/src/index.ts`) | to do |
+| 3 | Split the Worker entry (`apps/api/src/index.ts`) | done |
 | 4 | CLI: one module per command group | to do |
 | 5 | Web: the API client by resource; the remaining web cycles | to do |
 | 6 | Lint to targets | to do |
@@ -86,7 +86,7 @@ methods (compared by name before and after).
 | `wiring.ts` / `context.ts` | 148 / 177 | the board context and how it is built |
 | `model.ts` / `views.ts` / `rpc.ts` | 559 / 436 / 263 | shared types; `BoardStub` |
 | `rules.ts` | 90 | shared limits and `handoffSummary` |
-| `schema.ts` / `schema-part-2.ts` | 405 / 295 | the SQLite schema, in order |
+| `schema.ts` / `schema-part-2.ts` | 405 / 295 | the SQLite schema, in order (regrouped in Phase 3) |
 | `card-store.ts` | 272 | meta, stages, card rows, the event log, notifications |
 | `cards.ts` | 463 | create, edit, split, delete |
 | `maintenance.ts` | 248 | fixture import, backfills, test-only setters |
@@ -123,6 +123,62 @@ snapshot (`test/__snapshots__/board-characterization.test.ts.snap`), written aga
 
 Moving a statement, changing a binding, or changing an answer fails it; this was checked by adding
 one extra `SELECT` to `notify` on the old code.
+
+### Phase 3: result
+
+`index.ts` went from 3,790 lines to 117: the Worker's default export (`fetch`, still wrapped for
+run telemetry and the board's last-activity touch, and `scheduled`) and the `BoardDO` re-export.
+`fetch` dispatches through an ordered route table; `wrangler deploy --dry-run` still shows only
+`BoardDO` and `default`. No new file is over 500 lines.
+
+| File (`apps/api/src/routes/`) | Lines | What |
+|---|---|---|
+| `router.ts` | 55 | `route`, `dispatch` (first route that answers wins; `NEXT` declines), `describeRoutes` |
+| `table.ts` | 50 | the top-level table, in the old if-chain's order |
+| `system.ts` / `auth.ts` / `mcp.ts` | 30 / 36 / 16 | health, the dev fixture, the plane entitlement check, the web app; sign-in; MCP |
+| `tenant.ts` / `members.ts` | 141 / 88 | the workspace's forge host and fleet link; its members |
+| `capabilities.ts` / `labels.ts` | 216 / 99 | the capability registry and implications; labels |
+| `admin.ts` / `projects.ts` | 81 / 235 | the superwitness backfill and stale cards; projects and milestones |
+| `agents.ts` | 492 | agents, their tokens and AgentCard |
+| `errors.ts` / `callers.ts` / `fields.ts` / `activity.ts` | 158 / 89 / 14 / 5 | shared: code to status, role and caller checks, `due_at`, the activity touch |
+| `boards/entry.ts` | 240 | `/v1/boards[/…]`: evidence and service reads, the caller, then the board table in one `try` |
+| `boards/table.ts` / `request.ts` | 73 / 22 | the board routes in order; the `BoardRequest` they take |
+| `boards/collection.ts` / `board.ts` | 136 / 218 | list and compose boards; one board's snapshot, stages, settings and reads |
+| `boards/cards.ts` / `comments.ts` / `links.ts` | 437 / 48 / 151 | cards; comment threads; card links |
+| `boards/schedules.ts` / `integrations.ts` | 227 / 147 | recurring cards; push, GitHub, Forgejo, triggers, webhooks |
+| `boards/runs.ts` / `gates.ts` / `evidence.ts` | 246 / 116 / 62 | claims and run verbs; gates and questions; a run's evidence |
+| `boards/stage-capabilities.ts` | 28 | a stage naming a capability registers it |
+
+Each route block moved unchanged except for its indentation: the request fields it reads and its
+pattern's match arrive as parameters, under the names the block already used. They were moved by
+a script that cut the blocks out of the old file, then reviewed. Three handlers are named
+`tenantSettings`, `memberRoster` and `agentRegistry`, so their bodies' locals (`tenant`, `members`,
+`agents`) do not shadow them.
+
+Two Phase 2 follow-ups landed with it. The board's schema, split in two only for size, is now four
+groups run in the same order: the work tables (`schema.ts`), the columns, triggers and indexes added
+to cards and runs since (`schema-columns.ts`), notifications and what waits on a person
+(`schema-decisions.ts`), and what a card is related to (`schema-relations.ts`). And the board record
+gained a second entry for the approval-subject publish path, strict decisions and the fixture import.
+
+### Phase 3: how the Worker is pinned
+
+`apps/api/test/worker-routes-characterization.test.ts` drives every route the Worker matches
+through `SELF.fetch`, in one scripted session of some 330 requests: each family's happy path, its
+wrong methods, its refusals (no credential, the wrong role, a dev header naming nobody, an agent
+token on a person's route, a coordinator token's scopes), malformed bodies (the 500 a bad JSON body
+has always produced), and the paths where patterns overlap. It records each response's status,
+every header but `date`, and its body, with ids, times, tokens and digests made stable
+placeholders. The static assets binding is replaced by a recorder, so a request that falls through
+to the web app shows as such, and once removed, for the bare 404. The record is a committed
+snapshot, written against the old `index.ts`.
+
+The order the old code tried its routes is written down beside it (`test/helpers/worker-routes.ts`),
+and `test/worker-route-order.test.ts` compares both route tables with it, as method, pattern and
+handler.
+
+Both were checked able to fail: moving the `gates/pending` match after `gates/:id` in the old code
+fails the snapshot, and the same swap in the new board table fails both tests.
 
 ### How each phase is checked
 
