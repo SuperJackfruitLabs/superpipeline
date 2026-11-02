@@ -11,7 +11,7 @@
   import '../studio/card-studio.css';
   import '../studio/card-states-studio.css';
   import { Button, Drawer, Face, StageTrack } from '@superjackfruit/vibekit';
-  import { CARD_LAYOUTS } from '$lib/layouts';
+  import { CARD_DRAWER_WIDTH } from './widths';
   import { displayAgent } from '$lib/names';
   import { clockHM } from '$lib/when';
   import { isControlRow, isNarrative, visibleActivities } from '$lib/activity-groups';
@@ -131,7 +131,7 @@
   <Button variant="tool" aria-label="Edit card" aria-keyshortcuts="E" data-section="editButton" pressed={editing} onclick={() => m.edit.start()}>{#snippet icon()}<Icon name="edit" size={15} strokeWidth={1.75} />{/snippet}Edit <span class="kbd" aria-hidden="true">E</span></Button>
 {/snippet}
 
-<Drawer open={true} head="stacked" title={card.title} eyebrow={kicker} eyebrowTone={needs ? 'needs' : 'muted'} back={backBar} {tools} {aside} width={CARD_LAYOUTS.studio.width} onclose={onClose}>
+<Drawer open={true} head="stacked" title={card.title} eyebrow={kicker} eyebrowTone={needs ? 'needs' : 'muted'} back={backBar} {tools} {aside} width={CARD_DRAWER_WIDTH.studio} onclose={onClose}>
 <!-- svelte-ignore a11y_no_static_element_interactions: the drawer's keyboard shortcuts; every action also has a button -->
 <div class="ar cw" data-vibe="studio" tabindex="-1" data-autofocus {@attach openAtTop} onkeydown={onKey}>
   {#if m.localError}<p class="ss-err" role="alert" data-section="error">{m.localError}</p>{:else}{@render hidden('error')}{/if}

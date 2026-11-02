@@ -10,7 +10,7 @@
   import './card-quiet.css';
   import '../quiet-states.css';
   import { Button, Drawer, Face, Field } from '@superjackfruit/vibekit';
-  import { CARD_LAYOUTS } from '$lib/layouts';
+  import { CARD_DRAWER_WIDTH } from './widths';
   import { displayAgent } from '$lib/names';
   import { isControlRow, isNarrative, visibleActivities } from '$lib/activity-groups';
   import CardEditForm from '../CardEditForm.svelte';
@@ -80,7 +80,7 @@
 {#snippet backLink()}<a class="qcd-back" href="/b/{m.boardId}" onclick={back}>← {m.boardName} board</a>{/snippet}
 {#snippet tools()}<Button variant="tool" href={pageHref} target="_blank" rel="noopener" aria-label="Open in new window">Open in new window</Button>{/snippet}
 
-<Drawer open={true} head="stacked" title={card.title} description={meta} back={backLink} {tools} width={CARD_LAYOUTS.quiet.width} onclose={onClose}>
+<Drawer open={true} head="stacked" title={card.title} description={meta} back={backLink} {tools} width={CARD_DRAWER_WIDTH.quiet} onclose={onClose}>
 <!-- data-autofocus: the Drawer opens with focus at the card itself, at the top (audit #1). -->
 <div class="qcd" tabindex="-1" data-autofocus {@attach openAtTop}>
   {#if m.archived}<CardStateQuiet kind="archived" model={m} />{/if}

@@ -10,7 +10,7 @@
   import './card-daylight.css';
   import '../daylight-states.css';
   import { Button, Drawer, Face, Field, IconButton, StageTrack, StateLabel } from '@superjackfruit/vibekit';
-  import { CARD_LAYOUTS } from '$lib/layouts';
+  import { CARD_DRAWER_WIDTH } from './widths';
   import CardMoveMenu from '$lib/components/board/CardMoveMenu.svelte';
   import { app } from '$lib/stores/app.svelte';
   import { displayAgent, displayPrincipal } from '$lib/names';
@@ -131,7 +131,7 @@
   {#if editing}{@render hidden('editButton')}{:else}<IconButton label="Edit card" data-section="editButton" onclick={() => m.edit.start()}>{#snippet icon()}<Icon name="edit" size={20} />{/snippet}</IconButton>{/if}
 {/snippet}
 
-<Drawer open={true} head="stacked" title={card.title} eyebrow="{m.boardName} · {m.stageName}" eyebrowTone={lead.needsYou && !m.archived ? 'needs' : 'muted'} width={CARD_LAYOUTS.daylight.width} {tools} {aside} onclose={onClose}>
+<Drawer open={true} head="stacked" title={card.title} eyebrow="{m.boardName} · {m.stageName}" eyebrowTone={lead.needsYou && !m.archived ? 'needs' : 'muted'} width={CARD_DRAWER_WIDTH.daylight} {tools} {aside} onclose={onClose}>
 <!-- data-autofocus: the Drawer opens with focus at the card itself, not on its first tool (the reference is drawn unfocused). -->
 <div class="dd-card" tabindex="-1" data-autofocus {@attach openAtTop}>
   <header class="dd-head">
