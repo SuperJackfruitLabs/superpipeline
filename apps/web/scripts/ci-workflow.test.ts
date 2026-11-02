@@ -83,7 +83,7 @@ describe('ci.yml', () => {
       const gate = job.steps.find((s) => s.run === `node scripts/ci-plan.mjs gate ${name}`);
       expect(gate?.env?.CI_NEEDS).toBe('${{ toJSON(needs) }}');
     }
-    expect(needs(wf.jobs.test!).sort()).toEqual(['docs', 'landing', 'plan', 'unit']);
+    expect(needs(wf.jobs.test!).sort()).toEqual(['docs', 'landing', 'lint', 'plan', 'unit']);
     expect(needs(wf.jobs.e2e!).sort()).toEqual(['browser', 'build', 'plan', 'smoke']);
   });
   it('bounded shards retain reports and validate exact expected identities', () => {
@@ -117,6 +117,9 @@ describe('ci.yml', () => {
     expect(prod.steps.some((s) => s.run === 'pnpm ci:deploy-app')).toBe(true);
     expect(prod.steps.some((s) => s.run?.includes('smoke.sh https://app.superpipeline.dev'))).toBe(true);
     expect(wf.jobs.unit!.steps.some((s) => s.run === 'pnpm ci:test')).toBe(true);
+    // The lint ratchet blocks merge through the `test` gate whenever app code is in the change.
+    expect(wf.jobs.lint?.if).toBe("needs.plan.outputs.app == 'true'");
+    expect(wf.jobs.lint?.steps.some((s) => s.run === 'pnpm lint')).toBe(true);
   });
   it('Forge retains artifacts using pinned compatible actions; visual no-capture retains an outcome', () => {
     for (const name of ['build', 'browser', 'smoke', 'visual', 'pixel']) {

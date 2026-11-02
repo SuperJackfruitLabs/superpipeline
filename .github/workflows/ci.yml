@@ -54,6 +54,23 @@ jobs:
           CI_BASE: ${{ github.event.pull_request.base.sha || github.event.before }}
 
 
+  # Type-aware oxlint held by a per-rule ratchet (scripts/lint.mjs, scripts/lint-baseline.json):
+  # a count may fall, never rise. See docs/contributor/code-structure.md.
+  lint:
+    needs: plan
+    if: needs.plan.outputs.app == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm lint
+
+
   docs:
     needs: plan
     if: needs.plan.outputs.docs == 'true'
@@ -117,7 +134,7 @@ jobs:
 
 
   test:
-    needs: [plan, unit, docs, landing]
+    needs: [plan, unit, lint, docs, landing]
     if: always()
     runs-on: ubuntu-latest
     steps:
