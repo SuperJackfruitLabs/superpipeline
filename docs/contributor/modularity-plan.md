@@ -1,9 +1,9 @@
 # Modularity and code-quality plan
 
-Status: in progress, in one PR on `refactor/modularity`. Phases 0 and 1 are merged on `main`
-(the lint ratchet, the architecture ratchets in `scripts/architecture.test.ts`, and the layered,
-acyclic `apps/api/src`); this page covers Phases 2–7. [code-structure.md](code-structure.md)
-describes the guardrails; this page keeps the plan, the starting measurements and the progress.
+Status: done, in one PR on `refactor/modularity`. Phases 0 and 1 are merged on `main` (the lint
+ratchet, the architecture ratchets in `scripts/architecture.test.ts`, and the layered, acyclic
+`apps/api/src`); this page covers Phases 2–7. [code-structure.md](code-structure.md) describes the
+structure and the guardrails; this page keeps the plan, the starting measurements and the outcome.
 
 | Phase | What | State |
 |---|---|---|
@@ -11,8 +11,50 @@ describes the guardrails; this page keeps the plan, the starting measurements an
 | 3 | Split the Worker entry (`apps/api/src/index.ts`) | done |
 | 4 | CLI: one module per command group | done |
 | 5 | Web: the API client by resource; the remaining web cycles | done |
-| 6 | Lint to targets | to do |
-| 7 | Docs, CHANGELOG | to do |
+| 6 | Lint to targets | done |
+| 7 | Docs, CHANGELOG | done |
+
+## Outcome
+
+Measured at the end of Phase 7, against `main` at 6435bcb.
+
+| Measure | Before | After |
+|---|---|---|
+| `apps/api/src/board/board-do.ts` | 8,697 lines | 528 (a shell over 20 modules in `board/`; the largest, `gates.ts`, 581) |
+| `apps/api/src/index.ts` | 3,790 lines | 118 (a router over `routes/`; the largest route module, `agents.ts`, 492) |
+| CLI largest file | `commands.ts` 1,679 (`index.ts` 1,229) | `credential.ts` 531 (`commands.ts` 359, `index.ts` 196) |
+| Web largest file | `lib/api.ts` 1,645 | `lib/stores/app.svelte.ts` 807 (`api.ts` 25, over `lib/api/`; the largest, `cards.ts`, 355) |
+| Files over 1,000 lines (`OVERSIZE`) | 6 | 0; the largest file in the repo is `apps/api/src/db/catalog.ts`, 932 |
+| Largest import cycle | api 0, web 4, cli 0, contract 0, agent-sdk 0 | 0 everywhere |
+| Lint findings held by the baseline | 5,988 across 48 rules | 5,474 across 42 rules |
+| `any` | 48 (13 in shipped source) | 0 (one `AnyComponent` alias for tests, and one test fixture, each disabled with a reason) |
+| Floating / misused promises | 14 / 0 (none in shipped source) | 0 / 0 |
+| `console` in shipped source | 14 | 0 (the Worker logs through `log.ts`) |
+| Unnecessary assertions | 1,147 (192 in source) | 955 (0 in source) |
+| Unnecessary conversions | 61 (23 in source) | 38 (0 in source) |
+| Unused code / `import()` types / shadowing in source | 14 / 3 / 9 | 0 / 0 / 0 |
+| `!` assertions / unchecked `as` (held) | 1,637 / 1,658 (286 / 708 in source) | 1,503 / 1,616 (152 / 666 in source) |
+| In-place `sort` / `reverse` | 140 / 16 | 132 / 14 |
+| Rules shipped source must stay clean of (`SRC_CLEAN`) | 8 | 23 |
+| Tests | api 1,709, web 2,725, cli 232, contract 138, docs-check 16, architecture 12 | api 1,714, web 2,820, cli 532, contract 138, docs-check 16, architecture 12 |
+
+The tests added are the characterization records: the board's (2 entries), the Worker's HTTP
+surface and route order (3), the CLI's (300 cases) and the web API client's (95 cases).
+
+**How behaviour was held.** Each phase committed its characterization test against the old code
+first and showed it could fail (an extra `SELECT` in `notify`; a swapped route match; an extra body
+key on `move`; `credentials` on one DELETE). The restructuring commit then passed it unchanged; no
+snapshot was regenerated. Code was moved by scripts over the AST or the source rather than
+retyped, then reviewed. Every push ran typecheck, lint, the full suite with exact counts under
+Node 22, the architecture test, the build and `wrangler deploy --dry-run` (the bundle exports only
+`BoardDO` and `default`); the last push also ran the suite in a bare environment (`env -i`, with only Node 22, `bun` and
+the system tools on `PATH`), at the same counts. Phase 6's lint
+changes are type-only or identity: a fix that would change what runs was left, with its reason.
+
+**Regressions found.** None reached a commit: no characterization snapshot failed after a move.
+The near misses were caught before committing: in Phase 6 the linter called one assertion
+unnecessary (`mode` on a delivered gate) that the compiler needs for the gate view's union, and
+the type checker refused the removal; it is now written as `as const` literals.
 
 The same approach as Salaam's modularity work (its `docs/contributor/modularity-plan.md`):
 characterization tests committed against the old code before each split, narrow dependency
@@ -251,6 +293,35 @@ can be aborted), including the hub-token exchange a write makes first, what each
 threw, and whether the lost-session handler fired. It also pins the module's export surface by name
 and kind, `noteAuth`, `parseGateConflict` and `openBoardSocket`. The record is a committed
 snapshot written against the old file; adding `credentials` to one DELETE failed that case.
+
+### Phase 6: result
+
+Shipped source is clean of every mechanical rule, and `no-explicit-any`, `no-floating-promises`
+and `no-misused-promises` are clean everywhere, so they left the baseline.
+
+- **`any`.** The webhook mappers (GitHub and forge), the issue trigger and the Claude Code
+  stream-json adapter read named wire types; each is the same cast of parsed JSON it was, and the
+  fields they branch on are still tested where they are used. The API tests read answers as the
+  board's view types or a small named answer type; the web tests mount components of differing
+  props through one `AnyComponent` alias.
+- **`console`.** `apps/api/src/log.ts` is the Worker's one console use, its own bottom layer; every
+  other call site goes through it with the same arguments.
+- **Assertions and conversions.** Unnecessary `as` and `!` were removed by oxlint's own fix (type
+  only). The D1 columns the code converts are typed as what D1 returns (`unknown`), so `Number()`
+  reads as the parse it is. The conversions that parse a cast request body or a bound input stay,
+  each with a disable comment saying why.
+- **Promises.** The `node:test` registrations in `scripts/` and two un-awaited calls in tests are
+  marked `void`; they were not awaited before.
+- **Also.** Unused imports and variables, `import()` type annotations, shadowed names, useless
+  spread fallbacks and an escape; `Intl.DateTimeFormat` built only to validate a zone says so.
+  `toSorted`/`toReversed` replace in-place sorts only in the Worker and only on fresh arrays.
+- **Left, deliberately.** The held `!` and unchecked `as` counts (each would need a check that
+  changes what runs on bad data); `navigator.onLine !== false` (an absent value must read as
+  online); `no-base-to-string` and `restrict-template-expressions` at parse boundaries; sorts in the
+  web app and `packages/contract`, which ship to browsers older than ES2023; findings in tests
+  beyond types.
+
+`SRC_CLEAN` went from 8 rules to 23.
 
 ### How each phase is checked
 

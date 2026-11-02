@@ -1,8 +1,21 @@
 # Code structure guardrails
 
-🔍 Description. Two checks hold the shape and quality of the code: numbers that may only fall.
-Neither asks you to fix old code; both stop new code from making it worse, and both fail when an
-improvement has not been locked in, so a stale number cannot hide a later regression.
+🔍 Description. How the code is laid out, the rules that keep it that way, and the checks that hold
+them. Two checks hold the shape and quality of the code: numbers that may only fall. Neither asks
+you to fix old code; both stop new code from making it worse, and both fail when an improvement
+has not been locked in, so a stale number cannot hide a later regression. The layout below is the
+outcome of the modularity work ([modularity-plan.md](modularity-plan.md)).
+
+## Where things are
+
+| Where | What |
+|---|---|
+| `apps/api/src` | the Worker, in layers (below): foundations, the D1 catalog, identity, the Board Durable Object (`board/`), its surfaces, the HTTP routes (`routes/`), the entry (`index.ts`) |
+| `apps/web/src` | the SvelteKit app; `lib/api.ts` is the one door to the API, over one module per resource in `lib/api/` |
+| `packages/cli/src` | `supi`: `index.ts` (the switch), `commands.ts` (the command table and help), `commands/<group>.ts` (one module per command group) |
+| `packages/contract/src` | the wire types and vocabulary the Worker, the web app, the CLI and agents share |
+| `packages/agent-sdk/src` | the agent client and the harness adapters |
+| `scripts/` | the lint ratchet, the architecture test, CI helpers |
 
 ## Lint: `pnpm lint`
 
@@ -15,7 +28,9 @@ code, generated files, `docs-site` and `landing` are ignored.
 Rules: the `correctness` and `suspicious` categories; floating and misused promises and awaiting a
 non-promise; `switch` exhaustiveness (a `default` counts for unions); type-only imports; no `any`;
 no `!` non-null assertions; no empty block, including an empty `catch`; no `console` outside the
-CLIs, scripts and tests (the Worker's existing log lines are counted in the baseline). No rule
+CLIs, scripts and tests. The Worker logs through `apps/api/src/log.ts` (`logInfo`, `logWarn`,
+`logError`), the one place in shipped source that calls `console`: Workers Logs read the console
+and take each entry's severity from the method. No rule
 is switched off; Salaam's two exceptions (`no-control-regex`, `no-unmodified-loop-condition`) are
 on here, the second with one held finding (an e2e route handler that polls a flag a closure
 clears).
@@ -27,12 +42,24 @@ Existing findings are counted per rule in `scripts/lint-baseline.json`:
   refuses to raise a count.
 - Shipped source (`apps/*/src`, `packages/*/src`, without tests and test helpers) must stay clean
   of the rules in `SRC_CLEAN` in `scripts/lint.mjs`, whatever the baseline allows in tests and
-  scripts. That includes `no-floating-promises`: in the Worker and the Durable Object, a promise
-  left running is either awaited, handed to `ctx.waitUntil`, or marked `void` with its rejection
-  handled.
+  scripts. Among them: no `any` (name the wire or row type; `unknown` and a check where untrusted
+  data is parsed), no empty block (handle it or say why in it), type-only imports, no unused
+  code, no unnecessary assertion or conversion, no shadowing, no `console`, and no floating or
+  misused promises: in the Worker and the Durable Object, a promise left running is either
+  awaited, handed to `ctx.waitUntil`, or marked `void` with its rejection handled.
+- `no-explicit-any`, `no-floating-promises` and `no-misused-promises` are clean everywhere, tests
+  included. The one `any` a test may use is `AnyComponent`
+  (`apps/web/src/lib/components/card/testing/any-component.ts`), for mounting components whose
+  props differ from one fixture.
+- A disable comment names its rule and says why on the same line
+  (`// oxlint-disable-next-line no-new -- constructed only to throw on a zone…`). They are for a
+  finding that is the point of the code, such as a conversion that parses a cast request body,
+  never for one that is merely inconvenient.
 
-The large counts (`!` assertions, unchecked `as` casts, unnecessary assertions) are held, not
-cleared: rewriting them wholesale risks changing behaviour. Lower them in code you touch.
+The large counts (`!` assertions, unchecked `as` casts) are held, not cleared: rewriting them
+wholesale risks changing behaviour. Lower them in code you touch. `toSorted`/`toReversed` are used
+only in the Worker, and only on a fresh array; the web app and `packages/contract` keep `sort` and
+`reverse`, because they ship to browsers older than ES2023.
 
 CI runs it as the `lint` job, which the `test` gate requires whenever app code changed.
 
@@ -58,16 +85,17 @@ a strictly lower layer; nodes in one layer do not import each other.
 
 | Layer | Nodes |
 |---|---|
-| 0 foundations | `env.ts`, `ids.ts`, `json.ts`, `flat-error.ts`, `crypto/`, `metering/`, `telemetry/` |
-| 1 pure helpers | `push/`, `references/` |
-| 2 catalog | `db/` |
-| 3 identity | `auth/` |
-| 4 run reports | `superwitness/` |
-| 5 board | `board/` (the Durable Object, its modules and its stub) |
-| 6 surfaces | `mcp/`, `dev/`, `card-links.ts` |
-| 7 | `service-routes.ts` |
-| 8 routes | `routes/` (the router, its tables and one module per resource) |
-| 9 entry | `index.ts` |
+| 0 log | `log.ts` (the Worker's log sink; imports nothing) |
+| 1 foundations | `env.ts`, `ids.ts`, `json.ts`, `flat-error.ts`, `crypto/`, `metering/`, `telemetry/` |
+| 2 pure helpers | `push/`, `references/` |
+| 3 catalog | `db/` |
+| 4 identity | `auth/` |
+| 5 run reports | `superwitness/` |
+| 6 board | `board/` (the Durable Object, its modules and its stub) |
+| 7 surfaces | `mcp/`, `dev/`, `card-links.ts` |
+| 8 | `service-routes.ts` |
+| 9 routes | `routes/` (the router, its tables and one module per resource) |
+| 10 entry | `index.ts` |
 
 A new folder or root file fails the test until it is placed in `API_LAYERS`. An import that points
 up fails it too. `KNOWN_BACK_EDGES` exists to hold one while it is being removed; it may only
@@ -132,3 +160,59 @@ earlier route is the one that answers, so order is behaviour.
   list in `test/helpers/worker-routes.ts`; update that list with the table.
   `test/worker-routes-characterization.test.ts` pins every route's status, headers and body; it
   changes only when behaviour is meant to.
+
+### The CLI
+
+`packages/cli/src/index.ts` is `main`: `--help`, one `switch` over the command words, and the
+usage. Each arm hands its command to a `run…` function in `commands/<group>.ts` (`session`,
+`boards`, `cards`, `comments`, `gates`, `links`, `labels`, `projects`, `schedules`, `workspace`),
+and that module also holds the group's help entries. `commands.ts` assembles `COMMANDS` group by
+group, with the global flags, the environment and the help renderers; `spec.ts` has the table's
+types and the entries several groups share; `runtime.ts` what every command shares (`fail`, the
+credential, `api`, `out` and `--json`, reading a file argument).
+
+- A new command: its `run…` function and help entries in its group's module, its `case` in
+  `index.ts`. `src/reference.test.ts` follows each arm into its function and checks the flags it
+  reads against the help; `src/cli-characterization.test.ts` pins every command's help, the
+  requests it sends and what it prints.
+
+### The web API client
+
+`apps/web/src/lib/api.ts` re-exports one module per resource under `lib/api/` (`boards`, `cards`,
+`gates`, `links`, `comments`, `notifications`, `agents`, `capabilities`, `members`, `projects`,
+`schedules`, `labels`, `usage`, `session`, `workspace`); components import `$lib/api`, never a
+module under it. Every request goes through the one `fetch` in `api/client.ts` (the dev headers,
+the lost-session handler, the read timeout). Types live with the functions that answer them, and a
+module imports another's types only downward.
+
+- A new call: add it to its resource's module and the name to `api.ts`'s re-exports.
+  `lib/api-characterization.test.ts` pins every call's request and answer and the export surface.
+
+## Practices
+
+- **Characterize before restructuring.** Before moving behaviour, commit a test against the old
+  code that records what it does (statements, requests, responses, output), and show it can fail
+  by breaking the old code on purpose. The move then passes it unchanged. A snapshot is never
+  regenerated to make a restructuring pass; when behaviour is meant to change, the snapshot changes
+  in that commit, and says why.
+- **Snapshots are environment-proof.** A recorded snapshot must pass under Node 22, the version CI
+  uses, and in a bare environment (`env -i PATH=… HOME=… CI=true pnpm test`, with Node 22 and `bun`
+  on that `PATH`; the CLI's install tests need bun): ids, clocks, home
+  and config directories and anything read from the environment are fixed or replaced with
+  placeholders.
+- **Narrow dependencies.** A module takes a typed `Deps` (or a narrow host interface) naming what
+  it uses; there is no registry or service locator. Shared types and helpers move down to a leaf
+  rather than an import pointing up or sideways.
+- **Tests move with their code.** When a module splits, its test splits the same way, changing
+  only imports and types.
+
+## Adding things
+
+| To add | Do | Checked by |
+|---|---|---|
+| a board verb | write it in its `board/` module, add it to the shell, to `BoardContext` only if another module calls it | `board-characterization.test.ts`, the type checker (`Deps`) |
+| a route | its handler in the resource's `routes/` module, its line in the table where its pattern needs | `worker-route-order.test.ts`, `worker-routes-characterization.test.ts` |
+| a folder or root file in `apps/api/src` | place it in `API_LAYERS` | `architecture.test.ts` |
+| a CLI command | its group's module and a `case` in `index.ts` | `reference.test.ts`, `cli-characterization.test.ts` |
+| a web API call | its resource's module and `api.ts` | `api-characterization.test.ts` |
+| a file nearing 600 lines | split it by what its parts do | `OVERSIZE` fails at 1,000 |
