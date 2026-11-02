@@ -38,7 +38,7 @@ for (const screen of [...SCREENS, ...SHELL_CHECKS] as Screen[]) {
         if (/pixel origin:|fonts not loaded:/.test(msg)) throw e;
         const f = renderFailure(row, key, msg);
         record(f.row);
-        throw new Error(f.message);
+        throw new Error(f.message, { cause: e });
       }
       const results: Result[] = ref.shots.map((r, i) => compare(r, app.shots[i]!, screen.parts?.length ? [...(ref.partMasks[i] ?? []), ...(app.partMasks[i] ?? [])] : [...ref.masks, ...app.masks]));
       // Per-part ratios, for the shell reports (the row records only the worst part).

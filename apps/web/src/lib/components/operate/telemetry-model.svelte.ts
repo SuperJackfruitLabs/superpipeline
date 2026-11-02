@@ -30,7 +30,7 @@ export class TelemetryModel {
     const usage = getUsage(boardId, win);
     const totals = Promise.allSettled(app.boards.map((b) => getUsage(b.id, win).then((u) => ({ id: b.id, name: b.name, costUsd: u.totalCostUsd }))));
     const events = getBoardEvents(boardId, 60);
-    app.markBusy(Promise.allSettled([usage, totals, events]));
+    void app.markBusy(Promise.allSettled([usage, totals, events]));
     try { this.usage = await usage; } catch (e) { this.usage = null; this.usageError = message(e); } finally { this.loading = false; }
     this.boardTotals = (await totals).flatMap((r) => (r.status === 'fulfilled' ? [r.value] : [])).sort((a, b) => b.costUsd - a.costUsd);
     // The API answers oldest first; the log reads newest first.

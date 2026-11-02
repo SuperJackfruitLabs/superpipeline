@@ -36,7 +36,7 @@ export class ConnectionsModel {
       const status = await hubStatus().catch(() => ({ configured: false }));
       this.principals = status.configured ? await getHubPrincipals().catch(() => null) : null;
     })();
-    app.markBusy(load);
+    void app.markBusy(load);
     await load;
     this.loading = false;
   }

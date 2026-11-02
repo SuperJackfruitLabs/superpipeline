@@ -20,7 +20,7 @@ export class LabelsModel {
 
   async refresh(): Promise<void> {
     const req = listLabels();
-    app.markBusy(req);
+    void app.markBusy(req);
     this.failed = false;
     try { this.labels = await req; } catch { this.failed = true; }
   }

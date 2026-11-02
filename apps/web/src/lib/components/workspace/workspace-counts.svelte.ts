@@ -55,7 +55,7 @@ class Counts {
   value = $state<WorkspaceCounts>({ agents: null, capabilities: null, people: null });
   async refresh(): Promise<void> {
     const all = Promise.allSettled([crewLists.readAgents(), crewLists.readCapabilities(), crewLists.readMembers()]);
-    app.markBusy(all);
+    void app.markBusy(all);
     this.value = countsFrom((await all) as Settled);
   }
 }

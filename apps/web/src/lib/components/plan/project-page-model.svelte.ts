@@ -59,7 +59,7 @@ export class ProjectPageModel {
   async load(): Promise<void> {
     this.loading = true;
     const read = Promise.all([this.#readProject(), projectWorkspace.load(), this.refreshRollup()]);
-    app.markBusy(read);
+    void app.markBusy(read);
     await read;
     this.loading = false;
     if (this.project) void projectWorkspace.loadEvents(this.id);
