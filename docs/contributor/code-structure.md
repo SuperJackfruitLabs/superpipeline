@@ -45,7 +45,7 @@ CI runs it as the `lint` job, which the `test` gate requires whenever app code c
 | `LARGEST_CYCLE` | largest file-level import cycle per package | api 0, web 4, cli 0, contract 0, agent-sdk 0 |
 | `API_FOLDER_CYCLE` | largest cycle between `apps/api/src`'s top-level folders | 0 |
 | `API_LAYERS` + `KNOWN_BACK_EDGES` | `apps/api/src`'s layer order; imports point down | no back-edges |
-| `OVERSIZE` | files over 1,000 lines, each at its current size | CLI `commands.ts` 1,679, web `lib/api.ts` 1,645, CLI `index.ts` 1,229, web `lib/api.test.ts` 1,036 |
+| `OVERSIZE` | files over 1,000 lines, each at its current size | web `lib/api.ts` 1,645, web `lib/api.test.ts` 1,036 |
 
 A new file over 1,000 lines, a larger cycle, or a listed file that grows fails the test. When a
 number falls, the test fails too, naming the constant to lower: lower it in the same change.

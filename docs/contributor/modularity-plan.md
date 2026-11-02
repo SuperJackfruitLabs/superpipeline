@@ -9,7 +9,7 @@ describes the guardrails; this page keeps the plan, the starting measurements an
 |---|---|---|
 | 2 | Split the Board Durable Object | done |
 | 3 | Split the Worker entry (`apps/api/src/index.ts`) | done |
-| 4 | CLI: one module per command group | to do |
+| 4 | CLI: one module per command group | done |
 | 5 | Web: the API client by resource; the remaining web cycles | to do |
 | 6 | Lint to targets | to do |
 | 7 | Docs, CHANGELOG | to do |
@@ -179,6 +179,40 @@ handler.
 
 Both were checked able to fail: moving the `gates/pending` match after `gates/:id` in the old code
 fails the snapshot, and the same swap in the new board table fails both tests.
+
+### Phase 4: result
+
+`packages/cli/src/index.ts` went from 1,229 lines to 196 and `commands.ts` from 1,679 to 359. The
+switch stays in `index.ts`, with the same `case` labels in the same order; each arm hands its
+command to a `run…` function in the group's module, which also holds that group's help entries.
+The published bin (`src/index.ts`), the package's exports and the release build are unchanged.
+
+| File (`packages/cli/src/`) | Lines | What |
+|---|---|---|
+| `index.ts` | 196 | `main`: `--help`, the switch, the usage; ends in `await main(...)` as before |
+| `commands.ts` | 359 | the groups, `COMMANDS` assembled group by group in the old order, the global flags, the environment, and the help renderers |
+| `spec.ts` | 125 | the table's types and the argument and flag entries several groups share |
+| `runtime.ts` | 174 | what every command shares: `fail`, the credential, `api`, `out` (and `--json`), reading a file argument |
+| `commands/session.ts` / `boards.ts` / `cards.ts` | 238 / 398 / 441 | sign-in, help, version, skill, update; boards and stages; cards |
+| `commands/comments.ts` / `gates.ts` / `links.ts` / `labels.ts` | 83 / 102 / 124 / 80 | one group each |
+| `commands/projects.ts` / `schedules.ts` / `workspace.ts` | 203 / 179 / 468 | projects and milestones; recurring cards; forge, agents, tokens, capabilities |
+
+Each arm's body moved unchanged except its indentation, a final `return;` dropped, and `wantJson`
+read as the `json` it always equalled; a script cut them out of the old switch, then they were
+reviewed. `reference.test.ts`, which reads the flags and sub-verbs each arm reads from the source,
+now follows each arm into the `run…` function it calls (checked able to fail: renaming one flag
+a handler reads fails it).
+
+### Phase 4: how the CLI is pinned
+
+`packages/cli/src/cli-characterization.test.ts` runs `supi` in-process, as the other CLI tests do,
+against a fake API: the help for every command (`supi help <words>` and `supi <words> --help`),
+and 183 runs with representative arguments, each recording the requests sent (method, URL,
+headers, body), stdout, stderr and the exit status. Refusals (401, 403 for a person and an agent,
+409, 500, a non-JSON answer), expired and missing credentials, bad arguments and unknown commands
+are runs like any other. HOME and the config directory point at a scratch directory and the clock
+is fixed. The record is a committed snapshot, written against the old code; one extra body key on
+`move` and one changed space in the usage failed 7 of its 300 cases.
 
 ### How each phase is checked
 
