@@ -39,7 +39,7 @@ import {
 import { isEnforcedKind, type LinkKind } from './board/links';
 import type { Env } from './env';
 import { newId } from './ids';
-import { boardStub } from './board/stub';
+import { boardStub, projectSummaries } from './board/stub';
 import { cardLinksBody } from './card-links';
 import { serviceRoute } from './service-routes';
 import { logReporter } from './superwitness/log';
@@ -1146,7 +1146,7 @@ const worker = {
           const cached = await cachedRollup(env.DB, wsTenantId, projectId);
           const STALE_MS = 60_000;
           const fresh = cached && Date.now() - new Date(cached.computedAt).getTime() < STALE_MS;
-          const rollup = fresh ? cached! : await computeRollup(env.DB, env, wsTenantId, projectId);
+          const rollup = fresh ? cached! : await computeRollup(env.DB, projectSummaries(env), wsTenantId, projectId);
           return Response.json({ rollup });
         }
 
@@ -3759,7 +3759,7 @@ const worker = {
         // the row), logged rather than swallowed for the same reason the sweep above is.
         for (const project of await listAllProjects(env.DB)) {
           try {
-            await computeRollup(env.DB, env, project.tenantId, project.id);
+            await computeRollup(env.DB, projectSummaries(env), project.tenantId, project.id);
           } catch (err) {
             console.error(`computeRollup failed for project ${project.id}`, err);
           }

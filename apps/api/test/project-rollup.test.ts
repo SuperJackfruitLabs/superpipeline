@@ -2,6 +2,7 @@ import { env, runInDurableObject } from 'cloudflare:test';
 import { describe, it, expect, beforeAll, vi } from 'vitest';
 import { BoardDO, type BoardInit } from '../src/board/board-do';
 import { createProject, computeRollup } from '../src/db/projects';
+import { projectSummaries } from '../src/board/stub';
 
 const STAGES: BoardInit['stages'] = [
   { key: 'draft', name: 'Draft', order: 0, ownerKind: 'capability', owner: 'writing' },
@@ -62,7 +63,7 @@ describe('project rollup', () => {
     const p = await createProject(env.DB, 'tnt_r', { name: 'across' });
     await seedBoard('rollA', p.id, ['One', 'Two']);
     await seedBoard('rollB', p.id, ['Three']);
-    const r = await computeRollup(env.DB, env, 'tnt_r', p.id);
+    const r = await computeRollup(env.DB, projectSummaries(env), 'tnt_r', p.id);
     expect(r.cardsTotal).toBe(3);
     expect(r.partial).toBe(false);
   });
@@ -121,7 +122,7 @@ describe('project rollup', () => {
       expect(completed.value.state).toBe('completed');
     });
 
-    const r = await computeRollup(env.DB, env, 'tnt_r', p.id);
+    const r = await computeRollup(env.DB, projectSummaries(env), 'tnt_r', p.id);
     expect(r.cardsTotal).toBe(2);
     // The rejected card is terminal but NOT resolved. Counting it as done would report a project
     // complete while part of its work was declined — the same trap as Task 12's
@@ -133,7 +134,7 @@ describe('project rollup', () => {
     const p = await createProject(env.DB, 'tnt_r', { name: 'stamped' });
     await seedBoard('rollD', p.id, ['One']);
     const before = Date.now();
-    const r = await computeRollup(env.DB, env, 'tnt_r', p.id);
+    const r = await computeRollup(env.DB, projectSummaries(env), 'tnt_r', p.id);
     expect(new Date(r.computedAt).getTime()).toBeGreaterThanOrEqual(before - 1000);
 
     const cached = await env.DB.prepare(
@@ -192,7 +193,7 @@ describe('project rollup', () => {
       await board.postActivity({ runId: claim.runId, leaseEpoch: claim.leaseEpoch, type: 'action', usage: { costUsd: 50 } });
     });
 
-    const r = await computeRollup(env.DB, env, 'tnt_r', p.id);
+    const r = await computeRollup(env.DB, projectSummaries(env), 'tnt_r', p.id);
     // Only the one card on tnt_r's own board. If the tenant filter in `computeRollup` were
     // missing, this would read 3 cards and $51 instead.
     expect(r.cardsTotal).toBe(1);
@@ -215,7 +216,7 @@ describe('project rollup', () => {
       .bind(GHOST_TENANT)
       .run();
 
-    const r = await computeRollup(env.DB, env, GHOST_TENANT, p.id);
+    const r = await computeRollup(env.DB, projectSummaries(env), GHOST_TENANT, p.id);
     // It must NOT throw, and must NOT report a confident total.
     expect(r.partial).toBe(true);
     expect(r.boardsUnanswered).toBe(1);
@@ -236,7 +237,7 @@ describe('project rollup', () => {
         .bind(GHOST_TENANT)
         .run();
 
-      await computeRollup(env.DB, env, GHOST_TENANT, p.id);
+      await computeRollup(env.DB, projectSummaries(env), GHOST_TENANT, p.id);
 
       // Not `toHaveBeenCalledTimes(1)` — `GHOST_TENANT`'s catalog also carries `brd_ghost` from
       // the test above (same tenant, and D1 storage here is isolated per FILE, not per test), so
