@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { generateAgentToken, hashToken } from '../src/auth/agent-token';
+import { generateAgentToken, hashToken } from '../src/crypto/agent-token';
 
 describe('agent tokens', () => {
   it('generates a prefixed, high-entropy, unique token', () => {

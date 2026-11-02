@@ -14,7 +14,7 @@ import {
   deleteBoard,
   deleteAgent,
 } from '../src/db/catalog';
-import { hashToken } from '../src/auth/agent-token';
+import { hashToken } from '../src/crypto/agent-token';
 
 beforeAll(setupCatalog);
 

@@ -7,7 +7,7 @@
  */
 import type { Env } from '../env';
 import { readSessionToken, verifySession } from './session';
-import { hashToken } from './agent-token';
+import { hashToken } from '../crypto/agent-token';
 import {
   findAgentByExternal,
   findAgentByTokenHash,

@@ -146,7 +146,7 @@ describe('a revoked agent can be given a new token', () => {
 describe('token scopes are compared to the action attempted', () => {
   /** Mint a token by hand with an arbitrary scope set — the route only ever mints the default. */
   async function tokenWithScopes(tenant: string, agentId: string, scopes: string[]): Promise<string> {
-    const { generateAgentToken, hashToken } = await import('../src/auth/agent-token');
+    const { generateAgentToken, hashToken } = await import('../src/crypto/agent-token');
     const token = generateAgentToken();
     await env.DB.prepare(`INSERT INTO agent_tokens (id, tenant_id, agent_id, token_hash, scopes_json) VALUES (?, ?, ?, ?, ?)`)
       .bind(`tok_${Math.random().toString(16).slice(2, 12)}`, tenant, agentId, await hashToken(token), JSON.stringify(scopes))

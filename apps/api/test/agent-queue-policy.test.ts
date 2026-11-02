@@ -8,7 +8,7 @@ import {
   recordAgentQueue,
   updateAgent,
 } from '../src/db/catalog';
-import { hashToken } from '../src/auth/agent-token';
+import { hashToken } from '../src/crypto/agent-token';
 
 const TENANT = 'tnt_qpol';
 
