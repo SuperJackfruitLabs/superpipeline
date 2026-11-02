@@ -56,8 +56,6 @@ const KNOWN_BACK_EDGES: readonly string[] = [];
 
 /** Files over SIZE_LIMIT and the most lines each may have. Lower these; never raise them. */
 const OVERSIZE: Record<string, number> = {
-  'apps/web/src/lib/api.ts': 1645,
-  'apps/web/src/lib/api.test.ts': 1036,
 };
 
 /** Where the size limit applies: shipped source and its tests. */
