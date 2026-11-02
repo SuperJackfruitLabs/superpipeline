@@ -10,7 +10,8 @@
  * string is both. Names must be unique within one question — resolution is by name, so a duplicate
  * would be ambiguous — and the first spelling of a name wins.
  */
-import type { GateOption, JsonValue } from './board-do';
+import type { GateOption } from './gate-option';
+import type { JsonValue } from '../json';
 
 function asOption(raw: JsonValue): GateOption | null {
   if (typeof raw === 'string') {
