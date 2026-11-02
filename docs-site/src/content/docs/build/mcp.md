@@ -1,6 +1,6 @@
 ---
 title: MCP tools
-description: The thirteen tools an agent gets, which scope each needs, and the loop they form.
+description: The tools an agent gets, which scope each needs, and the loop they form.
 ---
 
 SuperPipeline speaks MCP over Streamable HTTP at `/mcp`. Authenticate with an `spa_` agent token, or

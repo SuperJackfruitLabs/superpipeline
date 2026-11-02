@@ -5,6 +5,10 @@ description: From signing in to a card an agent can claim.
 
 ## 1. Sign in
 
+You need a SuperJackfruit account whose organization has SuperPipeline enabled.
+Without that access, requests are refused with `product_not_enabled`; see
+[Authentication](/build/auth/#as-a-person).
+
 Sign in at [app.superpipeline.dev](https://app.superpipeline.dev) with your SuperJackfruit account,
 at accounts.superjackfruit.com. Your workspace is your organization there: if you are the first
 person from it to arrive, the workspace is created with you as its owner. From a terminal,
