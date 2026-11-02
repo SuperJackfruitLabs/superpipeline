@@ -119,7 +119,7 @@ export async function init(deps: PipelineDeps, board: BoardInit): Promise<BoardS
     // a board whose lane no agent can ever claim from.
     const stages = [...board.stages]
       .map(normalizeStageRouting)
-      .sort((a, b) => a.order - b.order);
+      .toSorted((a, b) => a.order - b.order);
     deps.setMeta('boardId', board.id);
     deps.setMeta('tenantId', board.tenantId);
     deps.setMeta('name', board.name);
@@ -212,7 +212,7 @@ export async function setStages(deps: PipelineDeps, stages: StageDef[]): Promise
   // `test/claim-honours-requires.test.ts` pins the real answer at the claim boundary.
   const ordered = [...stages]
     .map(normalizeStageRouting)
-    .sort((a, b) => a.order - b.order);
+    .toSorted((a, b) => a.order - b.order);
   deps.setMeta('stages', JSON.stringify(ordered));
   deps.emit('board.stages_changed', { stages: ordered });
   return { ok: true, value: { stages: ordered } };
@@ -348,7 +348,7 @@ export async function getEvents(deps: PipelineDeps, limit = 100): Promise<BoardE
   return deps.sql
     .exec(`SELECT seq, type, payload_json, ts FROM events ORDER BY seq DESC LIMIT ?`, limit)
     .toArray()
-    .reverse()
+    .toReversed()
     .map((r) => ({
       seq: Number(r.seq),
       type: r.type as string,

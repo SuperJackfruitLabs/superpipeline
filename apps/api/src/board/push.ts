@@ -106,7 +106,7 @@ export async function getPushDeliveries(deps: PushDeps, opts?: { status?: string
   return deps.sql
     .exec(`SELECT * FROM push_deliveries${where} ORDER BY id DESC LIMIT 200`, ...p)
     .toArray()
-    .reverse()
+    .toReversed()
     .map((r) => ({
       id: Number(r.id),
       configId: r.config_id as string,

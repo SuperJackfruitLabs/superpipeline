@@ -321,7 +321,7 @@ export async function scheduleReclaim(deps: ClaimsDeps): Promise<void> {
     : null;
   const reportAt = reportDue === null || reportDue === undefined ? null : Math.max(Number(reportDue), deps.nowMs());
 
-  const next = [reclaimAt, drainAt, reportAt].filter((t): t is number => t !== null).sort((a, b) => a - b)[0];
+  const next = [reclaimAt, drainAt, reportAt].filter((t): t is number => t !== null).toSorted((a, b) => a - b)[0];
   if (next === undefined) {
     await deps.ctx.storage.deleteAlarm();
     return;

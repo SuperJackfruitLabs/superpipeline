@@ -62,7 +62,7 @@ export function renderBoard(value: unknown): string {
     // mention it leaves an operator no way to discover their agents are being told anything.
     const marks = [s.gate === "approval" ? "gate" : "", s.instructions ? "rule" : ""].filter(Boolean);
     lines.push(`${s.name}  [${worker}]${marks.length ? `  ${marks.join(" ")}` : ""}`);
-    for (const c of cards.filter((c) => c.currentStageKey === s.key)) {
+    for (const c of cards.filter((card) => card.currentStageKey === s.key)) {
       lines.push(`${PAD}${c.title}  ${c.id}  ${c.state ?? ""}${waiting.has(c.id) ? "  ← waiting on you" : ""}`);
     }
   }

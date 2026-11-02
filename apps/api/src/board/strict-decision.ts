@@ -12,7 +12,7 @@ export type StrictDecision = z.infer<typeof StrictDecision>;
 export function canonicalDecisionRequest(value: unknown): string {
   function normalized(v: unknown): unknown {
     if (Array.isArray(v)) return v.map(normalized);
-    if (v && typeof v === 'object') return Object.fromEntries(Object.entries(v).filter(([, x]) => x !== undefined).sort(([a], [b]) => a.localeCompare(b)).map(([k, x]) => [k, normalized(x)]));
+    if (v && typeof v === 'object') return Object.fromEntries(Object.entries(v).filter(([, x]) => x !== undefined).toSorted(([a], [b]) => a.localeCompare(b)).map(([k, x]) => [k, normalized(x)]));
     return v;
   }
   return JSON.stringify(normalized(value));

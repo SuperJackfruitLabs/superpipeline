@@ -67,6 +67,7 @@ const SRC_CLEAN = new Set([
   'eslint(no-console)',
   'eslint(no-empty)',
   'eslint(no-new)',
+  'eslint(no-shadow)',
   'eslint(no-unmodified-loop-condition)',
   'eslint(no-unsafe-optional-chaining)',
   'eslint(no-unused-vars)',

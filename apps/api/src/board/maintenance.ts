@@ -58,8 +58,8 @@ export async function importFixture(deps: MaintenanceDeps, board: FixtureBoard):
       insert('cards', board.cards);
       insert('runs', board.runs);
       insert('activities', board.activities);
-      insert('events', [...board.events].sort((a, b) => a.ts.localeCompare(b.ts)).map((e) => ({ type: e.type, payload_json: JSON.stringify(e.payload), ts: e.ts })));
-      insert('notifications', [...board.notifications].sort((a, b) => a.created_at.localeCompare(b.created_at)));
+      insert('events', [...board.events].toSorted((a, b) => a.ts.localeCompare(b.ts)).map((e) => ({ type: e.type, payload_json: JSON.stringify(e.payload), ts: e.ts })));
+      insert('notifications', [...board.notifications].toSorted((a, b) => a.created_at.localeCompare(b.created_at)));
       insert('gates', board.gates);
       insert('approval_subjects', board.approvalSubjects.map(({ canonical_bytes_b64, ...rest }) => ({
         ...rest, canonical_bytes: Uint8Array.from(atob(canonical_bytes_b64), (c) => c.charCodeAt(0)),

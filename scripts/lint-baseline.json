@@ -1,6 +1,6 @@
 {
   "eslint(no-new)": 2,
-  "eslint(no-shadow)": 37,
+  "eslint(no-shadow)": 28,
   "eslint(no-underscore-dangle)": 39,
   "eslint(no-unmodified-loop-condition)": 1,
   "eslint(no-unsafe-optional-chaining)": 9,
@@ -26,8 +26,8 @@
   "typescript(restrict-template-expressions)": 5,
   "typescript(unbound-method)": 13,
   "unicorn(consistent-function-scoping)": 112,
-  "unicorn(no-array-reverse)": 16,
-  "unicorn(no-array-sort)": 140,
+  "unicorn(no-array-reverse)": 14,
+  "unicorn(no-array-sort)": 132,
   "unicorn(no-new-array)": 3,
   "unicorn(no-useless-spread)": 1,
   "unicorn(prefer-add-event-listener)": 4,

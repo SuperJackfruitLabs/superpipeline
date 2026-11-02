@@ -217,15 +217,15 @@ export function quietMood(s: CardSummary): Mood | null {
 }
 const QUIET_HEAD: Record<QuietUrgency, string> = { needs: 'Needs your decision.', working: 'In progress.', queued: 'Waiting to start.', done: 'Done.', closed: 'Closed.' };
 export function quietFacts(s: CardSummary): string {
-  const parts: string[] = [QUIET_HEAD[s.urgency]];
-  if (s.priority > 0) parts.push(`Priority ${s.priority}.`);
-  if (s.labelsAll > 0) parts.push(`Labels: ${s.labels.map((l) => l.name).join(', ')}${s.moreLabels > 0 ? ` and ${s.moreLabels} more` : ''}.`);
-  if (s.blocked) parts.push('Blocked by another card.');
-  if (s.firstRef) parts.push(`Reference: ${s.firstRef.title ?? s.firstRef.url}.`);
-  if (s.queuedBy) parts.push(`Asked by ${s.queuedBy.name}.`);
-  if (s.dueAt) parts.push(`Due ${dueLong(s.dueAt)}${s.overdue ? ', overdue' : ''}.`);
-  parts.push(`${plural(s.attemptCount, 'attempt', 'attempts')}.`);
-  return parts.join(' ');
+  const facts: string[] = [QUIET_HEAD[s.urgency]];
+  if (s.priority > 0) facts.push(`Priority ${s.priority}.`);
+  if (s.labelsAll > 0) facts.push(`Labels: ${s.labels.map((l) => l.name).join(', ')}${s.moreLabels > 0 ? ` and ${s.moreLabels} more` : ''}.`);
+  if (s.blocked) facts.push('Blocked by another card.');
+  if (s.firstRef) facts.push(`Reference: ${s.firstRef.title ?? s.firstRef.url}.`);
+  if (s.queuedBy) facts.push(`Asked by ${s.queuedBy.name}.`);
+  if (s.dueAt) facts.push(`Due ${dueLong(s.dueAt)}${s.overdue ? ', overdue' : ''}.`);
+  facts.push(`${plural(s.attemptCount, 'attempt', 'attempts')}.`);
+  return facts.join(' ');
 }
 /** The decision a needs item offers; an unowned stage needs only "Move to another stage", which every item has. */
 export const quietAction = (s: CardSummary): CardAction | null => (s.urgency === 'needs' && s.kind !== 'no-owner' ? needsAction(s.kind) : null);

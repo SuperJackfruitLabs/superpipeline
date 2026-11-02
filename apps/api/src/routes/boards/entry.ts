@@ -148,12 +148,12 @@ export async function boards({ request, env, url, path }: WorkerRequest, match: 
    * is not a value this flow can prove is set.
    */
   const resolveHumanOrRefuse = async (): Promise<UserPrincipal | Response> => {
-    let user = await resolveUser(request, env);
+    let human = await resolveUser(request, env);
     // A hub-issued token is accepted on the human routes too, because the
     // routes that QUEUE work are where authority has to arrive: the grant is
     // recorded with the card and outlives the token that carried it.
-    if (!user) user = await resolveHubUser(request, env);
-    if (!user) return Response.json({ error: 'sign in to continue' }, { status: 401 });
+    if (!human) human = await resolveHubUser(request, env);
+    if (!human) return Response.json({ error: 'sign in to continue' }, { status: 401 });
     // A viewer reads the board; working it — creating, moving, editing and deleting cards,
     // resolving gates, answering an agent's question — is `member`, and reworking the board
     // itself is `admin`. GET is almost the whole read surface, so the method is the right
@@ -171,7 +171,7 @@ export async function boards({ request, env, url, path }: WorkerRequest, match: 
         : rest === '' || rest === 'stages' || rest === 'github' || rest === 'budget' || rest === 'stale' || rest === 'profiles' || rest.startsWith('schedules')
           ? 'manage'
           : 'work';
-    return refuseByRole(user, needed) ?? user;
+    return refuseByRole(human, needed) ?? human;
   };
 
   if (isWebhook) {

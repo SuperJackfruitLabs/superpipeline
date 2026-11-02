@@ -482,8 +482,8 @@ export async function agentRegistry({ request, env }: WorkerRequest, agentsMatch
         );
       }
 
-      const { id: tokenId, token } = await createAgentToken(env.DB, u.tenantId, created.id, AGENT_TOKEN_SCOPES);
-      return Response.json({ agent: created, token, tokenId }, { status: 201 });
+      const { id: newTokenId, token } = await createAgentToken(env.DB, u.tenantId, created.id, AGENT_TOKEN_SCOPES);
+      return Response.json({ agent: created, token, tokenId: newTokenId }, { status: 201 });
     }
     return Response.json({ error: 'method not allowed' }, { status: 405 });
   } catch (err) {

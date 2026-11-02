@@ -33,7 +33,7 @@ function canonicalJson(value: JsonValue): string {
   }
   if (Array.isArray(value)) return `[${value.map(canonicalJson).join(',')}]`;
   return `{${Object.keys(value)
-    .sort()
+    .toSorted()
     .map((key) => `${JSON.stringify(key)}:${canonicalJson(value[key])}`)
     .join(',')}}`;
 }

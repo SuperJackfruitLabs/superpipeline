@@ -32,7 +32,7 @@ export type RunHistoryDeps = Pick<
 /** These are locators asserted by the original run, never verification receipts. */
 function executionExportHint(metadata: JsonValue | null): { schema_version: 'agentpod-execution-export/v1'; export_id: string; manifest_sha256: string; verification: 'unverified' } | null {
   const hint = record(record(metadata)?.execution_export);
-  if (!hint || Object.keys(hint).sort().join(',') !== 'export_id,manifest_sha256,schema_version'
+  if (!hint || Object.keys(hint).toSorted().join(',') !== 'export_id,manifest_sha256,schema_version'
     || hint.schema_version !== 'agentpod-execution-export/v1'
     || typeof hint.export_id !== 'string' || !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(hint.export_id)
     || typeof hint.manifest_sha256 !== 'string' || !/^[a-f0-9]{64}$/.test(hint.manifest_sha256)) return null;
