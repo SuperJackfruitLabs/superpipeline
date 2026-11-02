@@ -1414,7 +1414,7 @@ export interface BoardStub {
   /** Cards each agent holds on this board right now, and of those how many it works now. */
   agentLoad(): Promise<Record<string, { claimed: number; working: number }>>;
   /** Dev only (FIXTURE_IMPORT): replace this board's rows with a fixture. src/dev/fixture.ts. */
-  importFixture(board: import('../dev/fixture-types').FixtureBoard): Promise<
+  importFixture(board: import('./fixture-types').FixtureBoard): Promise<
     { ok: true; cards: number } | { ok: false; code: 'FIXTURE_IMPORT_DISABLED' | 'UNKNOWN_COLUMN'; detail?: string }
   >;
   drainRunReports(): Promise<RunReportDrainResult>;
@@ -2417,7 +2417,7 @@ export class BoardDO extends DurableObject<Env> {
    * gated here as well as at the route. Writes rows exactly as given — historical timestamps
    * included — emits nothing and schedules no alarm, so the stale sweep never runs on a fixture.
    */
-  async importFixture(board: import('../dev/fixture-types').FixtureBoard): Promise<
+  async importFixture(board: import('./fixture-types').FixtureBoard): Promise<
     { ok: true; cards: number } | { ok: false; code: 'FIXTURE_IMPORT_DISABLED' | 'UNKNOWN_COLUMN'; detail?: string }
   > {
     if (this.env.FIXTURE_IMPORT !== 'true') return { ok: false, code: 'FIXTURE_IMPORT_DISABLED' };
