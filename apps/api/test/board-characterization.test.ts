@@ -78,12 +78,17 @@ function normalizer(): (value: unknown) => unknown {
     if (v instanceof ArrayBuffer) return `<bytes:${v.byteLength}>`;
     if (ArrayBuffer.isView(v)) return `<bytes:${v.byteLength}>`;
     if (Array.isArray(v)) return v.map(walk);
-    if (v && typeof v === 'object') return Object.fromEntries(Object.entries(v).map(([k, x]) => [k, walk(x)]));
+    if (v && typeof v === 'object') {
+      // An approval subject's bytes carry the card id, so they are compared as the text they encode.
+      return Object.fromEntries(
+        Object.entries(v).map(([k, x]) => [k, k === 'canonicalBytesBase64' && typeof x === 'string' ? `<base64 of ${text(atob(x))}>` : walk(x)]),
+      );
+    }
     return v;
   };
   return walk;
 }
-const normalize = normalizer();
+let normalize = normalizer();
 
 function format(query: string, bindings: unknown[]): Statement {
   const sql = query.replace(/\s+/g, ' ').trim();
@@ -153,6 +158,11 @@ async function record<T>(step: string, run: () => Promise<T>): Promise<T> {
 function must<T>(r: { ok: true; value: T } | { ok: false; code: string; message: string }): T {
   if (!r.ok) throw new Error(`${r.code}: ${r.message}`);
   return r.value;
+}
+
+/** A text column read back from storage. */
+function asString(v: SqlStorageValue | undefined): string {
+  return typeof v === 'string' ? v : '';
 }
 
 function recordedSender(calls: unknown[]): PushSender {
@@ -412,6 +422,88 @@ describe('the Board Durable Object, pinned before the split', () => {
 
     await runInDurableObject(stub, async (board: BoardDO) => {
       await record('destroy', () => board.destroy());
+    });
+
+    expect(steps).toMatchSnapshot();
+  });
+
+  /**
+   * Added in Phase 3 (against the code as Phase 2 left it, with no behaviour change between): the
+   * approval-subject publish path, strict decisions and the fixture import, which the first record
+   * reaches only in passing. Its own record, so the first one stays as written before the split.
+   */
+  it('runs the same statements for the publish path, strict decisions and the fixture import', async () => {
+    steps.length = 0;
+    normalize = normalizer();
+    const DECIDER = 'usr_decider';
+    const ACCOUNT = { platform: 'x', userId: 'acct_1', username: 'example' };
+    const stages = [
+      { key: 'draft', name: 'Draft', order: 0, ownerKind: 'capability', owner: 'writing' },
+      { key: 'approve', name: 'Approve', order: 1, ownerKind: 'human', gate: 'approval', approvalSubjectSchema: 'social-publish/v1', approvalDeciderPrincipalIds: [DECIDER] },
+      { key: 'publish', name: 'Publish', order: 2, ownerKind: 'capability', owner: 'x-publish' },
+      { key: 'recorded', name: 'Recorded', order: 3, ownerKind: 'human' },
+    ] as BoardInit['stages'];
+    const publicationPayload = {
+      channel: 'x',
+      account: ACCOUNT,
+      items: [{ index: 0, text: 'Pinned text.', media: [], replyToPostId: null, quotePostId: null }],
+      timing: { mode: 'immediate', notBefore: null, expiresAt: '2032-01-01T00:00:00Z' },
+      evidenceRefs: ['https://example.invalid/evidence/1'],
+      policy: { allowThread: true, duplicatePolicyId: 'dup', floodPolicyId: 'flood' },
+    };
+
+    // ----- the approval subject, from the producing run to the publisher's verification -----
+    await runInDurableObject(stubFor('char-publish'), async (board: BoardDO, state) => {
+      await record('init', () => board.init({ id: 'brd_publish', tenantId: 'tnt_a', name: 'Publish', stages }));
+      const card = must(await record('createCard', () => board.createCard({ title: 'Post', ownerUserId: 'usr_a', projectId: 'prj_a' })));
+      const writer = await record('claim draft', () => board.claim({ agentId: 'agt_w', capabilities: ['writing'] }));
+      if (!writer.claimed) throw new Error('expected a claim');
+      await record('complete into the bound gate', () => board.complete({ runId: writer.runId, leaseEpoch: writer.leaseEpoch, agentId: 'agt_w', handoff: { publicationPayload } }));
+      const subject = state.storage.sql.exec(`SELECT id, digest FROM approval_subjects WHERE card_id = ?`, card.id).one();
+      const gateId = asString(state.storage.sql.exec(`SELECT id FROM gates WHERE card_id = ?`, card.id).one().id);
+      const bound = { approvalSubjectId: asString(subject.id), approvalSubjectDigest: asString(subject.digest) };
+      await record('getGate bound', () => board.getGate(gateId));
+      await record('resolveGate by someone not allowed', () => board.resolveGate({ gateId, decision: 'approve_manual', decidedBy: 'usr_other', ...bound }));
+      await record('resolveGate with the wrong digest', () => board.resolveGate({ gateId, decision: 'approve_manual', decidedBy: DECIDER, ...bound, approvalSubjectDigest: `sha256:${'0'.repeat(64)}` }));
+      await record('resolveGate approve_manual', () => board.resolveGate({ gateId, decision: 'approve_manual', decidedBy: DECIDER, ...bound }));
+      await record('updateApprovalDelivery to automatic', () => board.updateApprovalDelivery({ gateId, actor: DECIDER, mode: 'automatic' }));
+      const publisher = await record('claim publish', () => board.claim({ agentId: 'agt_p', capabilities: ['x-publish'] }));
+      if (!publisher.claimed) throw new Error('expected a publisher claim');
+      const expected = { runId: publisher.runId, leaseEpoch: publisher.leaseEpoch, agentId: 'agt_p', expectedSchema: 'social-publish/v1', expectedSubjectId: bound.approvalSubjectId, expectedDigest: bound.approvalSubjectDigest, expectedAccount: ACCOUNT };
+      await record('verifyApprovalSubject', () => board.verifyApprovalSubject(expected));
+      await record('verifyApprovalSubject wrong account', () => board.verifyApprovalSubject({ ...expected, expectedAccount: { ...ACCOUNT, userId: 'acct_2' } }));
+      await record('verifyApprovalSubject wrong digest', () => board.verifyApprovalSubject({ ...expected, expectedDigest: `sha256:${'1'.repeat(64)}` }));
+      await record('updateApprovalDelivery after the claim', () => board.updateApprovalDelivery({ gateId, actor: DECIDER, mode: 'manual' }));
+      await record('updateApprovalDelivery live url when automatic', () => board.updateApprovalDelivery({ gateId, actor: DECIDER, liveUrl: 'https://x.example.invalid/status/1' }));
+      await record('getRunEvidenceV1 publisher', () => board.getRunEvidenceV1(publisher.runId));
+    });
+
+    // ----- strict decisions -----
+    await runInDurableObject(stubFor('char-strict'), async (board: BoardDO) => {
+      await record('init strict', () => board.init({ id: 'brd_strict', tenantId: 'tnt_a', name: 'Strict', stages: [{ key: 'build', name: 'Build', order: 0, ownerKind: 'capability', owner: 'build' }] }));
+      await record('createCard strict', () => board.createCard({ title: 'Edit', ownerUserId: 'usr_a', stageKey: 'build' }));
+      const c = await record('claim strict', () => board.claim({ agentId: 'agt_s', capabilities: ['build'] }));
+      if (!c.claimed) throw new Error('expected a claim');
+      const strictDecision = { version: 1 as const, request_id: '00000000-0000-4000-8000-000000000001', decision_digest: 'a'.repeat(64), expires_at: Date.now() + 600_000 };
+      const ask = { runId: c.runId, leaseEpoch: c.leaseEpoch, agentId: 'agt_s', type: 'elicitation' as const, signal: 'select', body: 'Apply the exact edit?', parameter: { options: [{ name: 'approve', title: 'Approve' }, { name: 'deny', title: 'Deny' }] }, strictDecision };
+      await record('postActivity strict', () => board.postActivity(ask));
+      await record('postActivity strict replayed', () => board.postActivity(ask));
+      await record('postActivity strict changed payload', () => board.postActivity({ ...ask, strictDecision: { ...strictDecision, decision_digest: 'b'.repeat(64) } }));
+      await record('postActivity strict expired', () => board.postActivity({ ...ask, strictDecision: { ...strictDecision, request_id: '00000000-0000-4000-8000-000000000002', expires_at: 1 } }));
+      const pending = await record('pendingElicitationDeliveries strict', () => board.pendingElicitationDeliveries());
+      const elicitationId = pending[0]?.elicitationId ?? '';
+      await record('answerElicitation strict', () => board.answerElicitation({ elicitationId, answeredBy: 'usr_a', answererRole: 'owner', option: 'approve' }));
+      await record('getRunContext strict', () => board.getRunContext({ runId: c.runId, agentId: 'agt_s' }));
+    });
+
+    // ----- the fixture import -----
+    await runInDurableObject(stubFor('char-fixture'), async (board: BoardDO) => {
+      const empty = { runs: [], activities: [], events: [], notifications: [], gates: [], approvalSubjects: [], elicitations: [], references: [], links: [], comments: [] };
+      const meta = { boardId: 'brd_fixture', tenantId: 'tnt_a', name: 'Fixture', stages: JSON.stringify(STAGES) };
+      const row = { id: 'card_00000000000000aa', title: 'Imported', owner_user_id: 'usr_a', current_stage_key: 'inbox', context_id: 'ctx_00000000000000aa', created_at: '2031-01-01T00:00:00.000Z' };
+      await record('importFixture', () => board.importFixture({ ...empty, meta, cards: [row] }));
+      await record('importFixture unknown column', () => board.importFixture({ ...empty, meta, cards: [{ ...row, nope: 1 }] }));
+      await record('getState after import', () => board.getState());
     });
 
     expect(steps).toMatchSnapshot();
