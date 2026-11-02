@@ -7,7 +7,7 @@ describes the guardrails; this page keeps the plan, the starting measurements an
 
 | Phase | What | State |
 |---|---|---|
-| 2 | Split the Board Durable Object | in progress |
+| 2 | Split the Board Durable Object | done |
 | 3 | Split the Worker entry (`apps/api/src/index.ts`) | to do |
 | 4 | CLI: one module per command group | to do |
 | 5 | Web: the API client by resource; the remaining web cycles | to do |
@@ -73,6 +73,40 @@ Measured on `main` at 6435bcb, before Phase 2.
 | 5 | **Web.** Pin the requests `lib/api.ts` makes. Split it by resource behind the same exports, and split `api.test.ts` with it. Break the remaining cycles: one of 4 files in `operate/`, three of 3. | `LARGEST_CYCLE` for `apps/web/src` is 0; no web file over 1,000 |
 | 6 | **Lint to targets.** No `any` in shipped source; no `catch` without a reason; no floating promises anywhere; the clearly behaviour-preserving cleanups (type-only imports, unused code, unnecessary assertions) where the change is mechanical. | `no-explicit-any` and `no-floating-promises` leave the baseline; empty catches explained; baseline lowered |
 | 7 | **Close.** Update `code-structure.md` with the module map and rules, the README's development section, and the CHANGELOG. | Docs match the code |
+
+### Phase 2: result
+
+`board-do.ts` went from 8,697 lines to a 528-line shell; `board/` has 36 files, none over 600
+lines. The bundle still exports only `BoardDO` and `default`, and the class has the same 88 public
+methods (compared by name before and after).
+
+| File | Lines | What |
+|---|---|---|
+| `board-do.ts` | 528 | the class: RPC methods, `fetch`, WebSocket handlers, `alarm`; re-exports |
+| `wiring.ts` / `context.ts` | 148 / 177 | the board context and how it is built |
+| `model.ts` / `views.ts` / `rpc.ts` | 559 / 436 / 263 | shared types; `BoardStub` |
+| `rules.ts` | 90 | shared limits and `handoffSummary` |
+| `schema.ts` / `schema-part-2.ts` | 405 / 295 | the SQLite schema, in order |
+| `card-store.ts` | 272 | meta, stages, card rows, the event log, notifications |
+| `cards.ts` | 463 | create, edit, split, delete |
+| `maintenance.ts` | 248 | fixture import, backfills, test-only setters |
+| `moves.ts` | 571 | moving, advancing, resolving and parking cards |
+| `pipeline.ts` | 422 | init, stages, name, profiles, events, snapshot |
+| `holds.ts` | 317 | blockers, children, links |
+| `claims.ts` | 448 | claim, lease, heartbeat, reclaim, run ownership |
+| `run-verbs.ts` | 561 | activities, complete, submit, block, fail, release |
+| `gates.ts` | 581 | approval gates and their push body |
+| `approval-subjects.ts` | 331 | digest-bound approval subjects |
+| `elicitations.ts` | 445 | questions and answers |
+| `comments.ts` / `references.ts` | 159 / 148 | comment threads; external references |
+| `run-history.ts` | 311 | run context, evidence, attempts, activities |
+| `triggers.ts` | 314 | GitHub and Forgejo webhooks |
+| `metering.ts` / `push.ts` | 225 / 161 | usage and budgets; notifications and push delivery |
+| `run-reports.ts` | 352 | superwitness run reports |
+| `schedules.ts` / `stale.ts` | 381 / 341 | recurring cards; the sweep |
+
+The method bodies moved unchanged except `this.` becoming `deps.` (or a direct call within a
+module); they were moved by a script over the TypeScript AST rather than by hand, then reviewed.
 
 ### Phase 2: how the Board Durable Object is pinned
 

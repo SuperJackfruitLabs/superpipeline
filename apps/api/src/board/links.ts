@@ -24,7 +24,7 @@ const ORDERING: ReadonlySet<LinkKind> = new Set<LinkKind>(['blocks', 'parent']);
  * must stay blocked — otherwise the edge does nothing in the only situation anyone added it for.
  * There is a test asserting the two disagree, on purpose.
  *
- * This is the JS twin of `BoardDO.RESOLVED_SQL` (`board-do.ts`) — the SQL literal `('completed',
+ * This is the JS twin of `RESOLVED_SQL` (`rules.ts`) — the SQL literal `('completed',
  * 'canceled')` interpolated into every card_links WHERE clause that asks this question. The SQL
  * copy is the live rule: every check in the DO today (`blockedWhere`, `openChildCount`,
  * `unresolvedBlockerCount`) is a WHERE clause, not a JS predicate, so this function is currently

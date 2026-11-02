@@ -45,7 +45,7 @@ CI runs it as the `lint` job, which the `test` gate requires whenever app code c
 | `LARGEST_CYCLE` | largest file-level import cycle per package | api 0, web 4, cli 0, contract 0, agent-sdk 0 |
 | `API_FOLDER_CYCLE` | largest cycle between `apps/api/src`'s top-level folders | 0 |
 | `API_LAYERS` + `KNOWN_BACK_EDGES` | `apps/api/src`'s layer order; imports point down | no back-edges |
-| `OVERSIZE` | files over 1,000 lines, each at its current size | `board/board-do.ts` 8,697, `index.ts` 3,790, CLI `commands.ts` 1,679, web `lib/api.ts` 1,645, CLI `index.ts` 1,229, web `lib/api.test.ts` 1,036 |
+| `OVERSIZE` | files over 1,000 lines, each at its current size | `index.ts` 3,790, CLI `commands.ts` 1,679, web `lib/api.ts` 1,645, CLI `index.ts` 1,229, web `lib/api.test.ts` 1,036 |
 
 A new file over 1,000 lines, a larger cycle, or a listed file that grows fails the test. When a
 number falls, the test fails too, naming the constant to lower: lower it in the same change.
@@ -63,7 +63,7 @@ a strictly lower layer; nodes in one layer do not import each other.
 | 2 catalog | `db/` |
 | 3 identity | `auth/` |
 | 4 run reports | `superwitness/` |
-| 5 board | `board/` (the Durable Object and its stub) |
+| 5 board | `board/` (the Durable Object, its modules and its stub) |
 | 6 surfaces | `mcp/`, `dev/`, `card-links.ts` |
 | 7 | `service-routes.ts` |
 | 8 entry | `index.ts` |
@@ -82,3 +82,22 @@ When a lower layer needs something from a higher one:
   `projectSummaries(env)` from `board/stub.ts`. No registry or service locator.
 
 The web app's largest cycle (4) is `operate/`'s UI, data, words and layout types.
+
+### The Board Durable Object
+
+`board/board-do.ts` is a shell: the `BoardDO` class with its RPC methods, `fetch`, the WebSocket
+handlers and `alarm`, each handing its arguments to the module that owns the behaviour (`cards`,
+`moves`, `claims`, `run-verbs`, `gates`, `elicitations`, `schedules`, …). It re-exports every type
+and helper it used to define, so importers keep importing from it.
+
+- A module's functions take `deps`, typed as that module's `Deps`: a `Pick` of `BoardContext`
+  (`board/context.ts`) naming exactly the storage, environment, clock and other operations it
+  uses. Modules never import each other; a call into another module goes through `deps`.
+- The constructor builds the one context (`board/wiring.ts`). A call to one of the DO's public
+  verbs, or to `notify`, `now`, `nowMs`, `reportRun` or `scheduleReclaim`, goes back through the
+  instance, as `this.x()` did, so a test that replaces one on the instance still intercepts it.
+- Shared shapes live in `model.ts`, `views.ts` and `rpc.ts`; limits more than one module shares in
+  `rules.ts`; the SQLite schema in `schema.ts` and `schema-part-2.ts`, in its original order.
+- A new verb: write it in its module, add it to the shell, and add it to `BoardContext` only if
+  another module calls it. `test/board-characterization.test.ts` pins the statements each verb
+  runs and its answers; it changes only when behaviour is meant to.
