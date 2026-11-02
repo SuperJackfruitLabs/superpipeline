@@ -1,11 +1,10 @@
 // apps/web/src/lib/components/plan/list/types.ts
 import type { Mood } from '@superjackfruit/vibekit';
-import type { ListGroupBy } from '$lib/stores/app.svelte';
+import type { ListGroupBy, ListSort, ListSortKey, QuickFilter } from './list-keys';
 import type { CardSummary } from '$lib/components/board/card-summary';
 import type { ListUi } from './list-ui.svelte';
 
-export type ListSortKey = 'priority' | 'title' | 'state' | 'agent' | 'due' | 'cost' | 'attempts' | 'age';
-export interface ListSort { key: ListSortKey; ascending: boolean }
+export type { ListSortKey, ListSort, QuickFilter } from './list-keys';
 export type ListTone = 'needs' | 'working' | 'queued' | 'done' | 'closed';
 
 export interface ListState {
@@ -54,8 +53,6 @@ export interface ListGroup {
   owner: string | null;
   rows: ListRow[];
 }
-
-export type QuickFilter = 'all' | 'needs' | 'working' | 'idle' | 'done';
 
 export interface ListLayoutProps {
   /** Transient state the page owns (a layout falls back to its own when absent, as in tests). */

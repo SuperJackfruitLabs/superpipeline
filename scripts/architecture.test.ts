@@ -15,7 +15,7 @@ const SIZE_LIMIT = 1000;
  * Lower these; never raise them. */
 const LARGEST_CYCLE: Record<string, number> = {
   'apps/api/src': 0,
-  'apps/web/src': 4,
+  'apps/web/src': 0,
   'packages/cli/src': 0,
   'packages/contract/src': 0,
   'packages/agent-sdk/src': 0,

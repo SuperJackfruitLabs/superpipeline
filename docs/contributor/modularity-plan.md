@@ -10,7 +10,7 @@ describes the guardrails; this page keeps the plan, the starting measurements an
 | 2 | Split the Board Durable Object | done |
 | 3 | Split the Worker entry (`apps/api/src/index.ts`) | done |
 | 4 | CLI: one module per command group | done |
-| 5 | Web: the API client by resource; the remaining web cycles | to do |
+| 5 | Web: the API client by resource; the remaining web cycles | done |
 | 6 | Lint to targets | to do |
 | 7 | Docs, CHANGELOG | to do |
 
@@ -213,6 +213,44 @@ headers, body), stdout, stderr and the exit status. Refusals (401, 403 for a per
 are runs like any other. HOME and the config directory point at a scratch directory and the clock
 is fixed. The record is a committed snapshot, written against the old code; one extra body key on
 `move` and one changed space in the usage failed 7 of its 300 cases.
+
+### Phase 5: result
+
+`apps/web/src/lib/api.ts` went from 1,645 lines to a 25-line door that re-exports exactly the names
+it always exported (`$lib/api` is unchanged for every component). The client is one module per
+resource under `lib/api/`, all through the one `fetch` in `api/client.ts`; the largest is
+`cards.ts` at 355 lines. Its test (1,036 lines) is split the same way, one file per resource with
+its `describe` blocks unchanged.
+
+| File (`apps/web/src/lib/api/`) | Lines | What |
+|---|---|---|
+| `client.ts` | 60 | the dev workspace and person, the lost-session handler, the one `fetch` (with its read timeout), the headers |
+| `boards.ts` / `cards.ts` | 243 / 355 | boards, stages, the snapshot, profiles, the live feed; cards and what ran on them |
+| `gates.ts` / `links.ts` / `comments.ts` / `notifications.ts` | 145 / 87 / 35 / 23 | gates and questions; card links; comments; notifications |
+| `agents.ts` / `capabilities.ts` / `members.ts` | 199 / 81 / 43 | agents and tokens; the capability registry; members |
+| `projects.ts` / `schedules.ts` / `labels.ts` / `usage.ts` | 150 / 80 / 40 / 58 | projects and milestones; recurring cards; labels; usage and budgets |
+| `session.ts` / `workspace.ts` | 43 / 52 | who is signed in; the workspace's forge and fleet link |
+
+Types moved with the functions that answer them; a module imports another's types only downward
+(`boards` reads `cards`, `gates` and `usage`; `cards` reads `gates`; `session` reads `members`).
+
+The web app's import cycles went from four (4, 3, 3 and 3 files) to none, by moving shared types
+and one helper down: `personInitials` to `$lib/names` (re-exported from `board-words`); the List's
+grouping, sort and quick-filter keys to a leaf `plan/list/list-keys.ts` (re-exported by the store
+and the List's types); the card forms take a narrow `CardFormHost` instead of importing
+`CardModel`, and the model's bindings moved to a leaf `card/bindings.ts` (re-exported by the
+layout types); and `OperateLayoutProps` moved to `operate/layouts/props.ts`, its importers updated.
+`LARGEST_CYCLE` for `apps/web/src` is 0 and `OVERSIZE` is empty.
+
+### Phase 5: how the API client is pinned
+
+`apps/web/src/lib/api-characterization.test.ts` calls every exported function that makes a
+request (92 calls with representative arguments) against a fake `fetch` answering 200, 401, 404,
+500 and offline, recording every request (URL, method, headers, body, credentials mode, whether it
+can be aborted), including the hub-token exchange a write makes first, what each call returned or
+threw, and whether the lost-session handler fired. It also pins the module's export surface by name
+and kind, `noteAuth`, `parseGateConflict` and `openBoardSocket`. The record is a committed
+snapshot written against the old file; adding `credentials` to one DELETE failed that case.
 
 ### How each phase is checked
 

@@ -49,7 +49,7 @@ import OperateDaylight from '$lib/components/operate/layouts/OperateDaylight.sve
 import OperatePaper from '$lib/components/operate/layouts/OperatePaper.svelte';
 import OperateStudio from '$lib/components/operate/layouts/OperateStudio.svelte';
 import OperateQuiet from '$lib/components/operate/layouts/OperateQuiet.svelte';
-import type { OperateLayoutProps } from '$lib/components/operate/layouts/types';
+import type { OperateLayoutProps } from '$lib/components/operate/layouts/props';
 import ListDaylight from '$lib/components/plan/list/ListDaylight.svelte';
 import ListDaylightToolbar from '$lib/components/plan/list/ListDaylightToolbar.svelte';
 import ListPaper from '$lib/components/plan/list/ListPaper.svelte';

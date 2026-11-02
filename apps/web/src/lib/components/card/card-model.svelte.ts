@@ -34,7 +34,7 @@ import { QuestionAnswer } from './question/question-answer.svelte';
 import { CommentsModel } from './comments-model.svelte';
 import { ResumeModel } from './resume-model.svelte';
 import { DeliveryControls, EditForm, LinkEditor, ProjectPicker, ReferenceComposer, SubtaskComposer } from './card-forms.svelte';
-import type { CardAgent, CardCounts, GateBinding, QuestionBinding } from './layouts/types';
+import type { CardAgent, CardCounts, GateBinding, QuestionBinding } from './bindings';
 
 export type CardSurface = 'drawer' | 'page' | 'gallery';
 export interface CardSource { board: BoardSnapshot; agents: AgentSummary[] }

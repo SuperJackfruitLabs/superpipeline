@@ -3,13 +3,28 @@
  * The card's small forms, moved verbatim from CardDrawer.svelte: edit, project, links, sub-tasks,
  * references, delivery. Each holds its own state and calls back into the model it belongs to.
  */
-import { addLink, addReference, getBoard, getProject, removeLink, splitCard, updateApprovalDelivery, updateCard, type LinkKind, type Milestone } from '$lib/api';
+import { addLink, addReference, getBoard, getProject, removeLink, splitCard, updateApprovalDelivery, updateCard, type BoardSnapshot, type Card, type Gate, type LinkKind, type Milestone, type Project } from '$lib/api';
 import { app } from '$lib/stores/app.svelte';
 import { resolveCardLabelsForEdit } from '$lib/components/card-labels';
 import { edgeKey, type RemoveArgs } from '$lib/components/link-groups';
 import { crossBoardNotice, linkRefusalSentence, submitAddBlocker, type LinkKindChoice } from '$lib/components/add-blocker';
 import { assignmentPatch, milestonesForProject } from '$lib/components/milestone-picker';
-import type { CardModel } from './card-model.svelte';
+
+/**
+ * What the forms read and write on the model they belong to: the part of `CardModel` they use,
+ * named here so this file does not import the model that constructs it.
+ */
+export interface CardFormHost {
+  readonly boardId: string | null;
+  readonly cardId: string | null;
+  readonly board: BoardSnapshot | null;
+  readonly card: Card | undefined;
+  readonly deliveryGate: Gate | undefined;
+  readonly projectDetail: { project: Project; milestones: Milestone[] } | null;
+  localError: string | null;
+  gateError: string | null;
+  refresh(): Promise<void>;
+}
 
 type Refusal = { error?: { code?: string; message?: string } } | null;
 const refusalBody = async (res: Response): Promise<Refusal> => (await res.json().catch(() => null)) as Refusal;
@@ -25,8 +40,8 @@ export class EditForm {
   ac = $state('');
   due = $state('');
   saving = $state(false);
-  #m: CardModel;
-  constructor(m: CardModel) {
+  #m: CardFormHost;
+  constructor(m: CardFormHost) {
     this.#m = m;
   }
   reset(): void {
@@ -80,8 +95,8 @@ export class ProjectPicker {
   milestones = $state<Milestone[]>([]);
   saving = $state(false);
   error = $state<string | null>(null);
-  #m: CardModel;
-  constructor(m: CardModel) {
+  #m: CardFormHost;
+  constructor(m: CardFormHost) {
     this.#m = m;
   }
   reset(): void {
@@ -148,9 +163,9 @@ export class LinkEditor {
   error = $state<string | null>(null);
   listError = $state<string | null>(null);
   removing = $state(new Set<string>());
-  #m: CardModel;
+  #m: CardFormHost;
   readonly crossBoardNotice = $derived.by(() => (this.#m.boardId ? crossBoardNotice(this.boardId, this.#m.boardId) : null));
-  constructor(m: CardModel) {
+  constructor(m: CardFormHost) {
     this.#m = m;
   }
   reset(): void {
@@ -236,8 +251,8 @@ export class SubtaskComposer {
   title = $state('');
   adding = $state(false);
   error = $state<string | null>(null);
-  #m: CardModel;
-  constructor(m: CardModel) {
+  #m: CardFormHost;
+  constructor(m: CardFormHost) {
     this.#m = m;
   }
   reset(): void {
@@ -265,8 +280,8 @@ export class SubtaskComposer {
 
 export class ReferenceComposer {
   url = $state('');
-  #m: CardModel;
-  constructor(m: CardModel) {
+  #m: CardFormHost;
+  constructor(m: CardFormHost) {
     this.#m = m;
   }
   reset(): void {
@@ -289,8 +304,8 @@ export class DeliveryControls {
   liveUrl = $state('');
   saving = $state(false);
   copied = $state<number | null>(null);
-  #m: CardModel;
-  constructor(m: CardModel) {
+  #m: CardFormHost;
+  constructor(m: CardFormHost) {
     this.#m = m;
   }
   reset(): void {

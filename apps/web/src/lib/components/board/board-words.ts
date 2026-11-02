@@ -24,10 +24,8 @@ export function daysOverdue(due: string, nowMs: number): number {
   const today = Date.parse(new Date(nowMs).toISOString().slice(0, 10));
   return Math.max(0, Math.round((today - Date.parse(due.slice(0, 10))) / 86_400_000));
 }
-/** "Rakesh Gangwar" → "RG". */
-export function personInitials(name: string): string {
-  return name.split(/\s+/).filter(Boolean).slice(0, 2).map((w) => w[0]!.toUpperCase()).join('');
-}
+/** Lives in `$lib/names` (card summaries use it, and this file reads theirs); re-exported here. */
+export { personInitials } from '$lib/names';
 
 // ── Daylight ────────────────────────────────────────────────────────────────────────────────────
 export function greetingLine(phase: Phase, firstName: string, needs: number): string {
