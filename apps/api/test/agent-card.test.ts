@@ -22,9 +22,17 @@ async function makeAgent(tenant: string, name: string, capabilities: string[]): 
   return (await res.json<{ agent: { id: string } }>()).agent.id;
 }
 
+/** The parts of an A2A agent card these tests read. */
+interface AgentCardAnswer {
+  name: string;
+  version: string;
+  skills: Array<{ id: string }>;
+  unregistered: string[];
+}
+
 async function card(tenant: string, agentId: string) {
   const res = await SELF.fetch(`https://api.test/v1/agents/${agentId}/card`, { headers: T(tenant) });
-  return { status: res.status, body: await res.json<{ card: any }>() };
+  return { status: res.status, body: await res.json<{ card: AgentCardAnswer }>() };
 }
 
 describe('GET /v1/agents/:id/card', () => {

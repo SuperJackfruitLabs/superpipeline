@@ -8,11 +8,12 @@
  */
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, render } from '@testing-library/svelte';
-import { flushSync, type Component } from 'svelte';
+import { flushSync } from 'svelte';
 import { VIBES, type Vibe } from '@superjackfruit/vibekit';
 import { CARD_LAYOUTS, CARD_PAGE_LAYOUTS } from '$lib/layouts';
 import { CARD_SECTION_KEYS } from './types';
 import { mountModel } from '../testing/mount-model.svelte';
+import type { AnyComponent } from '../testing/any-component';
 
 vi.mock('$lib/stores/app.svelte', async () => ({ app: (await import('../testing/fakes')).fakeApp }));
 vi.mock('$lib/api', async (orig) => ({ ...(await orig<typeof import('$lib/api')>()), ...(await import('../testing/fakes')).fakeApi }));
@@ -21,7 +22,7 @@ vi.mock('$app/navigation', () => ({ goto: vi.fn() }));
 globalThis.ResizeObserver ??= class { observe() {} unobserve() {} disconnect() {} } as never;
 afterEach(() => cleanup());
 
-type Surface = { name: string; vibe: Vibe; component: Component<any> };
+type Surface = { name: string; vibe: Vibe; component: AnyComponent };
 const all: Surface[] = VIBES.flatMap((v) => [
   { name: `${v} drawer`, vibe: v, component: CARD_LAYOUTS[v].drawer },
   { name: `${v} phone`, vibe: v, component: CARD_LAYOUTS[v].phone },

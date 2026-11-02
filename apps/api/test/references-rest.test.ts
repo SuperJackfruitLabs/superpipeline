@@ -1,5 +1,6 @@
 import { SELF } from 'cloudflare:test';
 import { describe, it, expect } from 'vitest';
+import type { ReferenceView } from '../src/board/views';
 
 const T = { 'X-Tenant-Id': 'tnt_rest', 'Content-Type': 'application/json' };
 const base = 'https://api.test';
@@ -30,11 +31,11 @@ describe('REST — PUT /v1/boards/:id/cards/:cardId/references', () => {
 
     const r1 = await put({ url: 'https://github.com/org/repo/pull/42' });
     expect(r1.status).toBe(200);
-    const ref1 = ((await r1.json()) as { reference: any }).reference;
+    const ref1 = ((await r1.json()) as { reference: ReferenceView }).reference;
     expect(ref1).toMatchObject({ provider: 'github', sourceType: 'pull_request', externalId: 'org/repo#42', addedBy: 'agent' });
 
     const r2 = await put({ url: 'https://github.com/org/repo/pull/42', title: 'updated' });
-    const ref2 = ((await r2.json()) as { reference: any }).reference;
+    const ref2 = ((await r2.json()) as { reference: ReferenceView }).reference;
     expect(ref2.id).toBe(ref1.id); // idempotent — same reference
 
     const snap = (await (await SELF.fetch(`${base}/v1/boards/${boardId}`, { headers: T })).json()) as {
@@ -51,7 +52,7 @@ describe('REST — PUT /v1/boards/:id/cards/:cardId/references', () => {
       headers: T,
       body: JSON.stringify({ url: 'https://docs.example.com/spec', provider: 'docs', sourceType: 'doc', addedBy: 'user' }),
     });
-    const ref = ((await res.json()) as { reference: any }).reference;
+    const ref = ((await res.json()) as { reference: ReferenceView }).reference;
     expect(ref).toMatchObject({ provider: 'docs', sourceType: 'doc', addedBy: 'user' });
   });
 

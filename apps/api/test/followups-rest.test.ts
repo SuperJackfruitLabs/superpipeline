@@ -1,5 +1,7 @@
 import { SELF } from 'cloudflare:test';
 import { describe, it, expect } from 'vitest';
+import type { NotificationView } from '../src/board/model';
+import type { AttemptView } from '../src/board/views';
 
 const T = { 'X-Tenant-Id': 'tnt_fu', 'Content-Type': 'application/json' };
 const base = 'https://api.test';
@@ -32,7 +34,7 @@ describe('REST — attempts, estimate, notifications (docs/07 §5-7)', () => {
     await SELF.fetch(`${base}/v1/boards/${bid}/runs/${claim.runId}/fail`, { method: 'POST', headers: T, body: JSON.stringify({ leaseEpoch: claim.leaseEpoch, reason: 'boom' }) });
 
     // Attempts
-    const attempts = ((await (await SELF.fetch(`${base}/v1/boards/${bid}/cards/${cardId}/attempts`, { headers: T })).json()) as { attempts: any[] }).attempts;
+    const attempts = ((await (await SELF.fetch(`${base}/v1/boards/${bid}/cards/${cardId}/attempts`, { headers: T })).json()) as { attempts: AttemptView[] }).attempts;
     expect(attempts).toHaveLength(1);
     expect(attempts[0]).toMatchObject({ agentId: 'agt_b', model: 'claude-opus-4-8' });
     expect(attempts[0].costUsd).toBeCloseTo(0.6, 6);
@@ -49,18 +51,18 @@ describe('REST — attempts, estimate, notifications (docs/07 §5-7)', () => {
     // caller, which one member per workspace made invisible and a second member makes a
     // disclosure.
     const asOwner = { ...T, 'X-User-Id': 'usr_owner' };
-    const feed = ((await (await SELF.fetch(`${base}/v1/boards/${bid}/notifications?unread=true`, { headers: asOwner })).json()) as { notifications: any[] }).notifications;
+    const feed = ((await (await SELF.fetch(`${base}/v1/boards/${bid}/notifications?unread=true`, { headers: asOwner })).json()) as { notifications: NotificationView[] }).notifications;
     expect(feed.some((n) => n.kind === 'failed')).toBe(true);
 
     // And someone else's feed does not carry it.
     const stranger = ((await (
       await SELF.fetch(`${base}/v1/boards/${bid}/notifications?unread=true`, { headers: { ...T, 'X-User-Id': 'usr_other' } })
-    ).json()) as { notifications: any[] }).notifications;
+    ).json()) as { notifications: NotificationView[] }).notifications;
     expect(stranger.some((n) => n.kind === 'failed')).toBe(false);
     const seq = feed[0].seq;
     const read = await SELF.fetch(`${base}/v1/boards/${bid}/notifications/${seq}/read`, { method: 'POST', headers: asOwner });
     expect(read.status).toBe(200);
-    const after = ((await (await SELF.fetch(`${base}/v1/boards/${bid}/notifications?unread=true`, { headers: T })).json()) as { notifications: any[] }).notifications;
+    const after = ((await (await SELF.fetch(`${base}/v1/boards/${bid}/notifications?unread=true`, { headers: T })).json()) as { notifications: NotificationView[] }).notifications;
     expect(after.find((n) => n.seq === seq)).toBeUndefined();
   });
 
