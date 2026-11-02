@@ -42,13 +42,43 @@ CI runs it as the `lint` job, which the `test` gate requires whenever app code c
 
 | Ratchet | Where | Now |
 |---|---|---|
-| `LARGEST_CYCLE` | largest file-level import cycle per package | api 2, web 5, cli 0, contract 0, agent-sdk 0 |
-| `API_FOLDER_CYCLE` | largest cycle between `apps/api/src`'s top-level folders | 7 (auth, board, db, dev, mcp, references, superwitness) |
-| `OVERSIZE` | files over 1,000 lines, each at its current size | `board/board-do.ts` 8,723, `index.ts` 3,790, CLI `commands.ts` 1,679, web `lib/api.ts` 1,645, CLI `index.ts` 1,229, web `lib/api.test.ts` 1,036 |
+| `LARGEST_CYCLE` | largest file-level import cycle per package | api 0, web 4, cli 0, contract 0, agent-sdk 0 |
+| `API_FOLDER_CYCLE` | largest cycle between `apps/api/src`'s top-level folders | 0 |
+| `API_LAYERS` + `KNOWN_BACK_EDGES` | `apps/api/src`'s layer order; imports point down | no back-edges |
+| `OVERSIZE` | files over 1,000 lines, each at its current size | `board/board-do.ts` 8,697, `index.ts` 3,790, CLI `commands.ts` 1,679, web `lib/api.ts` 1,645, CLI `index.ts` 1,229, web `lib/api.test.ts` 1,036 |
 
 A new file over 1,000 lines, a larger cycle, or a listed file that grows fails the test. When a
 number falls, the test fails too, naming the constant to lower: lower it in the same change.
 Never raise one; split the file or break the cycle instead.
 
-The folder cycle exists because `db` reads board state through `board/stub` and `auth` calls into
-`mcp/tools`; breaking those edges is how it shrinks.
+### Layers in the Worker
+
+`apps/api/src`'s top-level folders and root files sit in layers, lowest first. An import points to
+a strictly lower layer; nodes in one layer do not import each other.
+
+| Layer | Nodes |
+|---|---|
+| 0 foundations | `env.ts`, `ids.ts`, `json.ts`, `flat-error.ts`, `crypto/`, `metering/`, `telemetry/` |
+| 1 pure helpers | `push/`, `references/` |
+| 2 catalog | `db/` |
+| 3 identity | `auth/` |
+| 4 run reports | `superwitness/` |
+| 5 board | `board/` (the Durable Object and its stub) |
+| 6 surfaces | `mcp/`, `dev/`, `card-links.ts` |
+| 7 | `service-routes.ts` |
+| 8 entry | `index.ts` |
+
+A new folder or root file fails the test until it is placed in `API_LAYERS`. An import that points
+up fails it too. `KNOWN_BACK_EDGES` exists to hold one while it is being removed; it may only
+shrink, and it is empty.
+
+When a lower layer needs something from a higher one:
+
+- a type, constant or pure helper moves down to the layer that needs it, or to a foundation file
+  (`JsonValue` is in `json.ts`, the principal types in `auth/principal.ts`, agent tokens in
+  `crypto/agent-token.ts`), and the old home re-exports it if many files import it there;
+- a call goes through a narrow type the lower layer declares and the caller supplies:
+  `computeRollup` (`db/projects.ts`) takes a `ProjectSummaryReader`, and `index.ts` passes
+  `projectSummaries(env)` from `board/stub.ts`. No registry or service locator.
+
+The web app's largest cycle (4) is `operate/`'s UI, data, words and layout types.

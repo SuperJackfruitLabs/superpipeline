@@ -14,8 +14,8 @@ const SIZE_LIMIT = 1000;
 /** Source roots whose import graph is checked, with the largest cycle each may have (in files).
  * Lower these; never raise them. */
 const LARGEST_CYCLE: Record<string, number> = {
-  'apps/api/src': 2,
-  'apps/web/src': 5,
+  'apps/api/src': 0,
+  'apps/web/src': 4,
   'packages/cli/src': 0,
   'packages/contract/src': 0,
   'packages/agent-sdk/src': 0,
@@ -24,11 +24,37 @@ const LARGEST_CYCLE: Record<string, number> = {
 /** Top-level folders of apps/api/src in the largest folder-level cycle. A file at the root
  * (index.ts, env.ts, ...) is a node of its own, so the entry point that imports every folder does
  * not join them into one cycle. Lower it; never raise it. */
-const API_FOLDER_CYCLE = 7;
+const API_FOLDER_CYCLE = 0;
+
+/** The layers of apps/api/src, lowest first: its top-level folders and root files. An import
+ * points down, to a strictly lower layer; nodes in one layer do not import each other. A new
+ * folder or root file must be placed here. */
+const API_LAYERS: readonly (readonly string[])[] = [
+  // Foundations: no imports of the Worker's own code, or only each other's.
+  ['env.ts', 'ids.ts', 'json.ts', 'flat-error.ts', 'crypto', 'metering', 'telemetry'],
+  // Pure helpers over the foundations: outbound delivery, reference parsing.
+  ['push', 'references'],
+  // The D1 catalog.
+  ['db'],
+  // Who is calling: sessions, tokens, the org plane.
+  ['auth'],
+  // The run-report client the board calls.
+  ['superwitness'],
+  // The Board Durable Object and its stub.
+  ['board'],
+  // Surfaces over the board: MCP, dev fixtures, cross-board links.
+  ['mcp', 'dev', 'card-links.ts'],
+  ['service-routes.ts'],
+  // The Worker entry: composes everything.
+  ['index.ts'],
+];
+
+/** Imports that point up, as `from -> to`. May only shrink; keep it empty. */
+const KNOWN_BACK_EDGES: readonly string[] = [];
 
 /** Files over SIZE_LIMIT and the most lines each may have. Lower these; never raise them. */
 const OVERSIZE: Record<string, number> = {
-  'apps/api/src/board/board-do.ts': 8723,
+  'apps/api/src/board/board-do.ts': 8697,
   'apps/api/src/index.ts': 3790,
   'packages/cli/src/commands.ts': 1679,
   'apps/web/src/lib/api.ts': 1645,
@@ -150,6 +176,27 @@ test('the folder-level cycle in apps/api/src does not grow', () => {
   const cycle = largest(cycles(folderGraph(importGraph(join(REPO, 'apps/api/src')))));
   expect(cycle.length, `the folder cycle grew: ${cycle.join(', ')}`).toBeLessThanOrEqual(API_FOLDER_CYCLE);
   expect(cycle.length, 'the folder cycle shrank; lower API_FOLDER_CYCLE to lock it in').toBe(API_FOLDER_CYCLE);
+});
+
+describe('apps/api/src is layered', () => {
+  const graph = folderGraph(importGraph(join(REPO, 'apps/api/src')));
+  const layer = new Map(API_LAYERS.flatMap((nodes, i) => nodes.map((n) => [n, i] as const)));
+
+  test('every folder and root file has a layer, and every layer names one that exists', () => {
+    expect([...graph.keys()].filter((n) => !layer.has(n)), 'place these in API_LAYERS').toEqual([]);
+    expect([...layer.keys()].filter((n) => !graph.has(n)), 'these are gone; remove them from API_LAYERS').toEqual([]);
+  });
+
+  test('imports point down', () => {
+    const up = [...graph].flatMap(([from, targets]) =>
+      targets.filter((to) => (layer.get(to) ?? 0) >= (layer.get(from) ?? 0)).map((to) => `${from} -> ${to}`),
+    );
+    expect(up.filter((e) => !KNOWN_BACK_EDGES.includes(e)), 'these imports point up or sideways').toEqual([]);
+    expect(
+      KNOWN_BACK_EDGES.filter((e) => !up.includes(e)),
+      'these back-edges are gone; remove them from KNOWN_BACK_EDGES',
+    ).toEqual([]);
+  });
 });
 
 test('no file grows past the size limit', () => {
