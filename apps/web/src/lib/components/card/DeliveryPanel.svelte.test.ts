@@ -47,4 +47,20 @@ describe('DeliveryPanel manual reminder', () => {
 
     expect(screen.getByRole('alert').textContent).toContain('does not match the approved frozen digest');
   });
+
+  it('labels an automatic publisher report as not independently verified', () => {
+    render(DeliveryPanel as AnyComponent, {
+      model: {
+        card: { state: 'working' },
+        deliveryGate: {
+          id: 'gate_1', decision: 'approve_automatic', approvalSubject: { id: 'aps_1' },
+          delivery: { mode: 'automatic', liveUrl: 'https://x.com/fixture/status/2', remindAt: null, readBackStatus: 'service_reported' },
+        },
+        gateError: null, manualItems: [],
+        delivery: { liveUrl: '', remindAt: '', saving: false, copied: null, change: vi.fn<() => void>(), copy: vi.fn<() => void>() },
+      },
+    });
+    expect(screen.getByText(/reported by publisher service/).textContent).toContain('not independently verified');
+    expect(screen.queryByText(/read-back matched/)).toBeNull();
+  });
 });

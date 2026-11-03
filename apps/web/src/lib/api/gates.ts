@@ -60,7 +60,7 @@ export interface Gate {
     mode: 'manual' | 'automatic';
     liveUrl: string | null;
     remindAt: string | null;
-    readBackStatus: 'not_checked' | 'matched' | 'mismatch';
+    readBackStatus: 'not_checked' | 'matched' | 'mismatch' | 'service_reported';
     recordedBy: string | null;
     recordedAt: string | null;
   };

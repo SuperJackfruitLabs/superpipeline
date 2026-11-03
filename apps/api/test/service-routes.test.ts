@@ -228,6 +228,7 @@ describe('a publisher service confirming automatic-delivery authority', () => {
         subjectId: gate.approvalSubject.id,
         digest: requestDigest,
         gateId: gate.id,
+        expiresAt: '2030-01-02T03:04:05Z',
       });
       const mismatch = await post(
         `/v1/boards/${boardId}/approval-subjects/${gate.approvalSubject.id}/verify`,
@@ -258,8 +259,26 @@ describe('a publisher service confirming automatic-delivery authority', () => {
       expect(after.value.delivery).toMatchObject({
         mode: 'automatic',
         liveUrl: 'https://x.com/fixture_account/status/123',
-        readBackStatus: 'matched',
+        readBackStatus: 'service_reported',
       });
+      // Repeating the same report is idempotent; a conflicting URL cannot
+      // replace the first delivery or add another audit event.
+      expect((await post(deliveryPath, await hubToken({ scope: 'approvals:write' }), {
+        expectedDigest: requestDigest,
+        liveUrl: 'https://x.com/fixture_account/status/123',
+      })).status).toBe(200);
+      const conflict = await post(deliveryPath, await hubToken({ scope: 'approvals:write' }), {
+        expectedDigest: requestDigest,
+        liveUrl: 'https://x.com/fixture_account/status/456',
+      });
+      expect(conflict.status).toBe(403);
+      const events = await runInDurableObject(
+        env.BOARD_DO.get(env.BOARD_DO.idFromName(`${TENANT}:${boardId}`)),
+        async (_board, storageState) => storageState.storage.sql.exec(
+          `SELECT COUNT(*) AS n FROM approval_delivery_events WHERE gate_id = ? AND event = 'live_url_recorded'`, gate.id,
+        ).one(),
+      );
+      expect(events).toEqual({ n: 1 });
     });
   });
 });

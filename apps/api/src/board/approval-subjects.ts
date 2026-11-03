@@ -214,6 +214,7 @@ export function confirmApprovalSubject(deps: ApprovalSubjectsDeps, input: {
   subjectId: string;
   digest: string;
   gateId: string;
+  expiresAt: string;
 }> {
   const subjectRow = deps.sql.exec(`SELECT * FROM approval_subjects WHERE id = ?`, input.subjectId).toArray()[0];
   const gate = deps.sql
@@ -223,6 +224,7 @@ export function confirmApprovalSubject(deps: ApprovalSubjectsDeps, input: {
   const canonical = record(subject?.canonical);
   const timing = canonical?.timing;
   const expiresAt = record(timing)?.expiresAt;
+  const confirmedExpiresAt = nonEmptyString(expiresAt) ? expiresAt : '';
   const outboundRequest = record(canonical?.outboundRequest);
   const requestDigest = outboundRequest?.digest;
   if (!subjectRow || !subject || !gate || !nonEmptyString(gate.id) || !nonEmptyString(requestDigest)) {
@@ -244,6 +246,7 @@ export function confirmApprovalSubject(deps: ApprovalSubjectsDeps, input: {
       subjectId: subject.id,
       digest: requestDigest,
       gateId: gate.id,
+      expiresAt: confirmedExpiresAt,
     },
   };
 }

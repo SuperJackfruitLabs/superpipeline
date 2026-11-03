@@ -57,7 +57,7 @@
           {#if m.deliveryGate.delivery?.liveUrl}
             <p class="mono text-[11px]">
               Recorded: <a class="underline" href={m.deliveryGate.delivery.liveUrl} target="_blank" rel="noreferrer">{m.deliveryGate.delivery.liveUrl}</a>
-              · read-back {m.deliveryGate.delivery.readBackStatus === 'not_checked' ? 'not available' : m.deliveryGate.delivery.readBackStatus}
+              · {m.deliveryGate.delivery.readBackStatus === 'service_reported' ? 'reported by publisher service (not independently verified)' : `read-back ${m.deliveryGate.delivery.readBackStatus === 'not_checked' ? 'not available' : m.deliveryGate.delivery.readBackStatus}`}
             </p>
             {#if m.deliveryGate.delivery.readBackStatus === 'mismatch'}
               <p role="alert" class="border-coral/40 text-coral mono rounded-[7px] border px-3 py-2 text-xs">Mismatch: the live post digest does not match the approved frozen digest.</p>
@@ -82,9 +82,15 @@
         </div>
       {:else if card?.state !== 'working'}
         <p class="text-muted-foreground mb-2 text-xs">Automatic delivery has not started. You can still take over manually without approving a new digest.</p>
+        {#if m.deliveryGate.delivery?.liveUrl}
+          <p class="mono mb-2 text-[11px]">Recorded: <a class="underline" href={m.deliveryGate.delivery.liveUrl} target="_blank" rel="noreferrer">{m.deliveryGate.delivery.liveUrl}</a> · reported by publisher service (not independently verified)</p>
+        {/if}
         <Button size="sm" variant="outline" disabled={m.delivery.saving} onclick={() => void m.delivery.change({ mode: 'manual' })}>Switch to manual delivery</Button>
       {:else}
         <p class="text-muted-foreground text-xs">Automatic delivery has started; switching is fenced.</p>
+        {#if m.deliveryGate.delivery?.liveUrl}
+          <p class="mono mt-2 text-[11px]">Recorded: <a class="underline" href={m.deliveryGate.delivery.liveUrl} target="_blank" rel="noreferrer">{m.deliveryGate.delivery.liveUrl}</a> · reported by publisher service (not independently verified)</p>
+        {/if}
       {/if}
     </div>
   </section>
