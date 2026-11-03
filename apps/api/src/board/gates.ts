@@ -134,8 +134,13 @@ export async function resolveGate(deps: GatesDeps, input: {
     ) {
       return { ok: false, code: 'APPROVAL_SUBJECT_MISMATCH', message: 'the approval subject is no longer active' };
     }
-    const options = JSON.parse((gate.options_json as string | null) ?? '[]') as GateOption[];
-    if (!options.some((option) => option.name === input.decision)) {
+    const options: unknown = JSON.parse((gate.options_json as string | null) ?? '[]');
+    if (
+      !Array.isArray(options) ||
+      !options.some(
+        (option) => option !== null && typeof option === 'object' && 'name' in option && option.name === input.decision,
+      )
+    ) {
       return {
         ok: false,
         code: 'GATE_DECISION_NOT_ALLOWED',
@@ -294,7 +299,10 @@ export async function updateApprovalDelivery(deps: GatesDeps, input: {
     if (parsed.protocol !== 'https:') {
       return { ok: false, code: 'INVALID_LIVE_URL', message: 'live URL must be an absolute https URL' };
     }
-    const readBack = await readBackStatus(parsed, subject.schema as string, subject.digest as string);
+    if (typeof subject.schema !== 'string' || typeof subject.digest !== 'string') {
+      return { ok: false, code: 'APPROVAL_SUBJECT_MISMATCH', message: 'the approved subject cannot be read back' };
+    }
+    const readBack = await readBackStatus(parsed, subject.schema, subject.digest);
     deps.ctx.storage.transactionSync(() => {
       deps.sql.exec(
         `UPDATE gates SET live_post_url = ?, live_post_url_recorded_by = ?, live_post_url_recorded_at = ?,
@@ -492,7 +500,7 @@ function rowToGate(deps: GatesDeps, r: Row): GateView {
       ? {
           mode: decision === 'approve_manual' ? ('manual' as const) : ('automatic' as const),
           liveUrl: (r.live_post_url as string | null) ?? null,
-          remindAt: (r.live_post_remind_at as string | null) ?? null,
+          remindAt: typeof r.live_post_remind_at === 'string' ? r.live_post_remind_at : null,
           readBackStatus: ((r.live_post_readback_status as 'not_checked' | 'matched' | 'mismatch' | null) ?? 'not_checked'),
           recordedBy: (r.live_post_url_recorded_by as string | null) ?? null,
           recordedAt: (r.live_post_url_recorded_at as string | null) ?? null,

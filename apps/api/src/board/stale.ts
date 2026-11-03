@@ -155,8 +155,10 @@ export async function sweepBoard(deps: StaleDeps, nowIso: string): Promise<{ ove
       .toArray();
     for (const reminder of reminders) {
       const detail = 'record the live post URL or switch to automatic without a fresh approval';
-      deps.notify('approval-delivery-reminder', reminder.card_id as string, `Manual delivery is waiting: ${detail}.`);
-      deps.setNeedsHuman(reminder.card_id as string, { reason: 'review', detail });
+      if (typeof reminder.card_id !== 'string') throw new Error('manual delivery reminder has no card id');
+      const cardId = reminder.card_id;
+      deps.notify('approval-delivery-reminder', cardId, `Manual delivery is waiting: ${detail}.`);
+      deps.setNeedsHuman(cardId, { reason: 'review', detail });
       deps.sql.exec(`UPDATE gates SET live_post_reminder_notified_at = ? WHERE id = ?`, nowIso, reminder.id);
       deps.sql.exec(
         `INSERT INTO approval_delivery_events
@@ -165,7 +167,7 @@ export async function sweepBoard(deps: StaleDeps, nowIso: string): Promise<{ ove
         newId('ade'),
         reminder.id,
         reminder.approval_subject_id,
-        (reminder.decided_by as string | null) ?? 'system',
+        typeof reminder.decided_by === 'string' ? reminder.decided_by : 'system',
         nowIso,
       );
     }

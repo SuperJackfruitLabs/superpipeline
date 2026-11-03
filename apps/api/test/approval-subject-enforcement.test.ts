@@ -1,6 +1,6 @@
 import { env, runInDurableObject, SELF } from 'cloudflare:test';
 import { describe, expect, it } from 'vitest';
-import { Stage } from '@superpipeline/contract';
+import { Stage, type GateDecision } from '@superpipeline/contract';
 import { BoardDO, type BoardInit, type Result } from '../src/board/board-do';
 
 /**
@@ -131,10 +131,10 @@ async function openBoundGate(
   return { cardId: made.value.id, producerRunId: claim.runId, subject, gate };
 }
 
-function boundDecision(gate: GateRow, subject: SubjectRow, decidedBy = DECIDER) {
+function boundDecision(gate: GateRow, subject: SubjectRow, decidedBy = DECIDER, decision: GateDecision = 'approve_automatic') {
   return {
     gateId: gate.id,
-    decision: 'approve_automatic' as const,
+    decision,
     decidedBy,
     approvalSubjectId: subject.id,
     approvalSubjectDigest: subject.digest,
@@ -144,6 +144,8 @@ function boundDecision(gate: GateRow, subject: SubjectRow, decidedBy = DECIDER) 
 function auth(tenantId: string, extra: Record<string, string> = {}): Record<string, string> {
   return { 'X-Tenant-Id': tenantId, 'Content-Type': 'application/json', ...extra };
 }
+
+const boardStub = (name: string): DurableObjectStub<BoardDO> => env.BOARD_DO.get(env.BOARD_DO.idFromName(name)) as unknown as DurableObjectStub<BoardDO>;
 
 describe('approval-subject stage contract', () => {
   it('round-trips opt-in fields through the real stage route and the shared Stage schema', async () => {
@@ -317,19 +319,19 @@ describe('bound gate resolution', () => {
   });
 
   it('accepts only the allow-listed human echoing the exact rendered id and digest', async () => {
-    const stub = env.BOARD_DO.get(env.BOARD_DO.idFromName('approval-exact-decision')) as unknown as DurableObjectStub<BoardDO>;
+    const stub = boardStub('approval-exact-decision');
     await runInDurableObject(stub, async (board: BoardDO, state) => {
       const opened = await openBoundGate(board, state, 'exact');
-      const result = await board.resolveGate({ ...boundDecision(opened.gate, opened.subject), decision: 'approve_automatic' } as never);
+      const result = await board.resolveGate(boundDecision(opened.gate, opened.subject));
       expect(result).toMatchObject({ ok: true, value: { currentStageKey: 'publish' } });
     });
   });
 
   it('refuses plain approve because a bound gate accepts only its own options', async () => {
-    const stub = env.BOARD_DO.get(env.BOARD_DO.idFromName('approval-own-options')) as unknown as DurableObjectStub<BoardDO>;
+    const stub = boardStub('approval-own-options');
     await runInDurableObject(stub, async (board: BoardDO, state) => {
       const opened = await openBoundGate(board, state, 'own-options');
-      const result = await board.resolveGate({ ...boundDecision(opened.gate, opened.subject), decision: 'approve' } as never);
+      const result = await board.resolveGate(boundDecision(opened.gate, opened.subject, DECIDER, 'approve'));
       expect(result).toMatchObject({ ok: false, code: 'GATE_DECISION_NOT_ALLOWED' });
       expect(state.storage.sql.exec('SELECT status, decision FROM gates WHERE id = ?', opened.gate.id).one()).toEqual({ status: 'pending', decision: null });
     });
@@ -438,13 +440,11 @@ describe('bound gate resolution', () => {
       });
     }
   });
-  it.each([
-    ['approve_automatic', 'manual'], ['approve_manual', 'automatic'],
-  ] as const)('refuses a %s delivery switch after the publisher run completed', async (storedDecision, nextMode) => {
-    const stub = env.BOARD_DO.get(env.BOARD_DO.idFromName(`approval-delivered-${storedDecision}`)) as unknown as DurableObjectStub<BoardDO>;
+  it.each([['approve_automatic', 'manual'], ['approve_manual', 'automatic']] as const)('refuses a %s delivery switch after the publisher run completed', async (storedDecision, nextMode) => {
+    const stub = boardStub(`approval-delivered-${storedDecision}`);
     await runInDurableObject(stub, async (board: BoardDO, state) => {
       const opened = await openBoundGate(board, state, `delivered-${storedDecision}`);
-      await board.resolveGate({ ...boundDecision(opened.gate, opened.subject), decision: 'approve_automatic' } as never);
+      await board.resolveGate(boundDecision(opened.gate, opened.subject));
       const claim = await board.claim({ agentId: PUBLISHER, capabilities: ['x-publish'] });
       if (!claim.claimed) throw new Error('publisher fixture was not claimable');
       const completed = await board.complete({ runId: claim.runId, leaseEpoch: claim.leaseEpoch, handoff: { summary: 'published' } });
@@ -516,16 +516,16 @@ describe('bound gate resolution', () => {
   it.each([
     ['matched', (digest: string) => digest], ['mismatch', () => `sha256:${'f'.repeat(64)}`],
   ] as const)('reads a public live URL back without posting credentials and marks %s', async (expectedStatus, liveDigest) => {
-    const stub = env.BOARD_DO.get(env.BOARD_DO.idFromName(`approval-readback-${expectedStatus}`)) as unknown as DurableObjectStub<BoardDO>;
+    const stub = boardStub(`approval-readback-${expectedStatus}`);
     await runInDurableObject(stub, async (board: BoardDO, state) => {
       const opened = await openBoundGate(board, state, `readback-${expectedStatus}`);
-      await board.resolveGate({ ...boundDecision(opened.gate, opened.subject), decision: 'approve_manual' } as never);
+      await board.resolveGate(boundDecision(opened.gate, opened.subject, DECIDER, 'approve_manual'));
       const realFetch = globalThis.fetch;
       let requestHeaders = new Headers();
       globalThis.fetch = (async (_input: RequestInfo | URL, init?: RequestInit) => {
         requestHeaders = new Headers(init?.headers);
         return new Response('{}', { status: 200, headers: { 'content-type': 'application/json', 'x-superpipeline-approved-digest': liveDigest(opened.subject.digest) } });
-      }) as typeof fetch;
+      });
       try {
         const recorded = await board.updateApprovalDelivery({ gateId: opened.gate.id, actor: DECIDER, liveUrl: `https://x.com/fixture/status/${expectedStatus}` });
         expect(recorded).toMatchObject({ ok: true, value: { delivery: { readBackStatus: expectedStatus } } });
@@ -536,12 +536,12 @@ describe('bound gate resolution', () => {
   });
 
   it('reminds at the chosen time when manual delivery still has no live URL', async () => {
-    const stub = env.BOARD_DO.get(env.BOARD_DO.idFromName('approval-manual-reminder')) as unknown as DurableObjectStub<BoardDO>;
+    const stub = boardStub('approval-manual-reminder');
     await runInDurableObject(stub, async (board: BoardDO, state) => {
       const opened = await openBoundGate(board, state, 'manual-reminder');
-      await board.resolveGate({ ...boundDecision(opened.gate, opened.subject), decision: 'approve_manual' } as never);
+      await board.resolveGate(boundDecision(opened.gate, opened.subject, DECIDER, 'approve_manual'));
       const remindAt = '2029-01-02T03:04:05.000Z';
-      expect(await board.updateApprovalDelivery({ gateId: opened.gate.id, actor: DECIDER, remindAt } as never)).toMatchObject({
+      expect(await board.updateApprovalDelivery({ gateId: opened.gate.id, actor: DECIDER, remindAt })).toMatchObject({
         ok: true, value: { delivery: { mode: 'manual', liveUrl: null, remindAt } },
       });
       await board.sweepBoard('2029-01-02T03:04:04.999Z');

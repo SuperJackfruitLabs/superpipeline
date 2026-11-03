@@ -27,8 +27,9 @@ function validationError(value: unknown): string | null {
         typeof media.sha256 !== 'string' ||
         !/^[0-9a-f]{64}$/.test(media.sha256) ||
         !nonEmptyString(media.mime) ||
+        typeof media.size !== 'number' ||
         !Number.isInteger(media.size) ||
-        (media.size as number) < 0 ||
+        media.size < 0 ||
         typeof media.altText !== 'string' ||
         !nonEmptyString(media.rightsRef)
       ) {
