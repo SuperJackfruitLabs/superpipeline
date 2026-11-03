@@ -18,6 +18,20 @@ const PIPELINE: BoardInit['stages'] = [
   { key: 'review', name: 'Review', order: 1, ownerKind: 'human', gate: 'approval' },
   { key: 'publish', name: 'Publish', order: 2, ownerKind: 'capability', owner: 'publish' },
 ];
+const APPROVAL_DECIDER = 'usr_fixture_decider';
+const APPROVAL_PIPELINE: BoardInit['stages'] = [
+  { key: 'draft', name: 'Draft', order: 0, ownerKind: 'capability', owner: 'writing' },
+  {
+    key: 'approve',
+    name: 'Approve exact payload',
+    order: 1,
+    ownerKind: 'human',
+    gate: 'approval',
+    approvalSubjectSchema: 'social-publish/v1',
+    approvalDeciderPrincipalIds: [APPROVAL_DECIDER],
+  },
+  { key: 'publish', name: 'Publish', order: 2, ownerKind: 'capability', owner: 'x-publish' },
+];
 const ISSUER = 'https://issuer-svc.test';
 const PLANE = 'https://api.test';
 const FLEET = 'fleet_0000000000000000sv01';
@@ -139,6 +153,68 @@ describe('a service reading cards (hub issuer)', () => {
         url: 'https://library.example.com/events', token: 'd', events: ['card.updated'],
       });
       expect(pushed.status).toBe(404);
+    });
+  });
+});
+
+describe('a publisher service confirming automatic-delivery authority', () => {
+  /**
+   * Regression target: removing the service-only approval confirmation route (or making it depend
+   * on an agent-held run credential) must stop stk before it can treat a shell caller's assertion
+   * as authority. The read-scoped service token is the trust boundary; the request digest is only
+   * a comparison value, never proof of approval.
+   */
+  it('lets only an approvals:read service confirm the stored automatic decision and exact digest', async () => {
+    await legacy(async () => {
+      const boardId = newId('brd');
+      const board = boardStub(env, TENANT, boardId);
+      await board.init({ id: boardId, tenantId: TENANT, name: 'Automatic publishing fixture', stages: APPROVAL_PIPELINE });
+      await recordBoard(env.DB, TENANT, { id: boardId, name: 'Automatic publishing fixture', stagesJson: JSON.stringify(APPROVAL_PIPELINE) });
+      const card = await board.createCard({ title: 'Publish exact fixture', ownerUserId: 'usr_fixture_owner', projectId: 'prj_fixture' });
+      if (!card.ok) throw new Error(card.message);
+      const claim = await board.claim({ agentId: 'agt_fixture_writer', capabilities: ['writing'] });
+      if (!claim.claimed) throw new Error('expected the fixture draft to be claimable');
+      const completed = await board.complete({
+        runId: claim.runId,
+        leaseEpoch: claim.leaseEpoch,
+        handoff: {
+          publicationPayload: {
+            channel: 'x',
+            account: { platform: 'x', userId: 'acct_fixture_1', username: 'fixture_account' },
+            items: [{ index: 0, text: 'Exact approved fixture text.', media: [], replyToPostId: null, quotePostId: null }],
+            timing: { mode: 'immediate', notBefore: null, expiresAt: '2030-01-02T03:04:05Z' },
+            evidenceRefs: ['https://example.invalid/evidence/fixture-1'],
+            policy: { allowThread: false, duplicatePolicyId: 'fixture-duplicate-policy', floodPolicyId: 'fixture-flood-policy' },
+          },
+        },
+      });
+      if (!completed.ok) throw new Error(completed.message);
+      const state = await board.getState();
+      const gate = state.gates[0];
+      if (!gate?.approvalSubject) throw new Error('expected a bound approval gate');
+      const approved = await board.resolveGate({
+        gateId: gate.id,
+        decision: 'approve_automatic',
+        decidedBy: APPROVAL_DECIDER,
+        approvalSubjectId: gate.approvalSubject.id,
+        approvalSubjectDigest: gate.approvalSubject.digest,
+      });
+      if (!approved.ok) throw new Error(approved.message);
+
+      const response = await post(
+        `/v1/boards/${boardId}/approval-subjects/${gate.approvalSubject.id}/verify`,
+        await hubToken({ scope: 'approvals:read' }),
+        { expectedDigest: gate.approvalSubject.digest },
+      );
+      const body = await response.text();
+      expect(response.status, body).toBe(200);
+      expect(JSON.parse(body)).toEqual({
+        approved: true,
+        deliveryMode: 'automatic',
+        subjectId: gate.approvalSubject.id,
+        digest: gate.approvalSubject.digest,
+        gateId: gate.id,
+      });
     });
   });
 });
