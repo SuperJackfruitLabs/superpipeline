@@ -35,7 +35,7 @@ const API_LAYERS: readonly (readonly string[])[] = [
   // Foundations: no imports of the Worker's own code, or only each other's.
   ['env.ts', 'ids.ts', 'json.ts', 'flat-error.ts', 'crypto', 'metering', 'telemetry'],
   // Pure helpers over the foundations: outbound delivery, reference parsing.
-  ['push', 'references'],
+  ['push', 'references', 'approval-subject-kinds'],
   // The D1 catalog.
   ['db'],
   // Who is calling: sessions, tokens, the org plane.
@@ -195,6 +195,15 @@ describe('apps/api/src is layered', () => {
       'these back-edges are gone; remove them from KNOWN_BACK_EDGES',
     ).toEqual([]);
   });
+});
+
+test('the board engine contains no platform-specific approval-subject names', () => {
+  const forbidden = /social-publish\/v1|x-publish|channel\s*!==\s*['"]x['"]|platform\s*!==\s*['"]x['"]/;
+  const hits = sources(join(REPO, 'apps/api/src/board')).flatMap((file) => {
+    const match = readFileSync(file, 'utf8').match(forbidden);
+    return match ? [`${relative(REPO, file)}: ${match[0]}`] : [];
+  });
+  expect(hits, 'move platform-specific validation and executor rules into the subject-kind registry').toEqual([]);
 });
 
 test('no file grows past the size limit', () => {

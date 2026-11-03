@@ -55,8 +55,11 @@ Comments on a card:
 
 Approval gates:
   supi gates <boardId>               approval gates waiting on a human
-  supi approve <boardId> <gateId> [--comment "why"]
-                                     approve a gate: the card moves on
+  supi approve <boardId> <gateId> [--comment "why"] [--delivery manual|automatic]
+                                     approve a gate, choosing delivery for a frozen post
+  supi delivery <boardId> <gateId> [--mode manual|automatic] [--live-url https://…]
+        [--remind-at ISO timestamp]
+                                     update delivery of an approved frozen post
   supi reject <boardId> <gateId> [--comment "why"]
                                      reject a gate
   supi request-changes <boardId> <gateId> --comment "what to change"
@@ -283,7 +286,7 @@ exports[`supi commands against a fake API, pinned > supi 012 skill 1`] = `
   "exit": 0,
   "requests": [],
   "stderr": "",
-  "stdout": "sha256 ceecdfd9adbd6aabffb81e8d8081664890ad462c4e3de6d3500a93805de53f75 (9750 chars)",
+  "stdout": "sha256 baaa282edbb8d80dc37cb2079b0ddde84e6b9953b03983cb024759acf3f9faae (9767 chars)",
 }
 `;
 
@@ -1815,7 +1818,7 @@ exports[`supi commands against a fake API, pinned > supi 094 approve brd_1 1`] =
 {
   "exit": 1,
   "requests": [],
-  "stderr": "usage: supi approve <boardId> <gateId> [--comment "why"]
+  "stderr": "usage: supi approve <boardId> <gateId> [--comment "why"] [--delivery manual|automatic]
 ",
   "stdout": "",
 }
@@ -1869,7 +1872,112 @@ exports[`supi commands against a fake API, pinned > supi 096 approve brd_1 gat_1
 }
 `;
 
-exports[`supi commands against a fake API, pinned > supi 097 reject brd_1 gat_1 --comment no 1`] = `
+exports[`supi commands against a fake API, pinned > supi 097 approve brd_1 gat_1 --delivery manual --comment I will post it 1`] = `
+{
+  "exit": 0,
+  "requests": [
+    {
+      "body": null,
+      "headers": {
+        "Authorization": "Bearer e30.eyJzdWIiOiJwcm5faHVtYW4iLCJwcmluY2lwYWxLaW5kIjoiaHVtYW4iLCJleHAiOjE4OTM1NTcwNDV9.sig",
+        "Content-Type": "application/json",
+      },
+      "method": "GET",
+      "url": "https://work.example/v1/boards/brd_1/gates/gat_1",
+    },
+    {
+      "body": "{"decision":"approve_manual","comment":"I will post it","approvalSubjectId":"aps_1","approvalSubjectDigest":"sha256:abc"}",
+      "headers": {
+        "Authorization": "Bearer e30.eyJzdWIiOiJwcm5faHVtYW4iLCJwcmluY2lwYWxLaW5kIjoiaHVtYW4iLCJleHAiOjE4OTM1NTcwNDV9.sig",
+        "Content-Type": "application/json",
+      },
+      "method": "POST",
+      "url": "https://work.example/v1/boards/brd_1/gates/gat_1/resolve",
+    },
+  ],
+  "stderr": "",
+  "stdout": "{
+  "ok": true,
+  "method": "POST",
+  "path": "/v1/boards/brd_1/gates/gat_1/resolve"
+}
+",
+}
+`;
+
+exports[`supi commands against a fake API, pinned > supi 098 delivery brd_1 gat_1 --remind-at 2029-01-02T03:04:05.000Z 1`] = `
+{
+  "exit": 0,
+  "requests": [
+    {
+      "body": "{"remindAt":"2029-01-02T03:04:05.000Z"}",
+      "headers": {
+        "Authorization": "Bearer e30.eyJzdWIiOiJwcm5faHVtYW4iLCJwcmluY2lwYWxLaW5kIjoiaHVtYW4iLCJleHAiOjE4OTM1NTcwNDV9.sig",
+        "Content-Type": "application/json",
+      },
+      "method": "POST",
+      "url": "https://work.example/v1/boards/brd_1/gates/gat_1/delivery",
+    },
+  ],
+  "stderr": "",
+  "stdout": "{
+  "ok": true,
+  "method": "POST",
+  "path": "/v1/boards/brd_1/gates/gat_1/delivery"
+}
+",
+}
+`;
+
+exports[`supi commands against a fake API, pinned > supi 099 delivery brd_1 gat_1 --mode automatic 1`] = `
+{
+  "exit": 0,
+  "requests": [
+    {
+      "body": "{"mode":"automatic"}",
+      "headers": {
+        "Authorization": "Bearer e30.eyJzdWIiOiJwcm5faHVtYW4iLCJwcmluY2lwYWxLaW5kIjoiaHVtYW4iLCJleHAiOjE4OTM1NTcwNDV9.sig",
+        "Content-Type": "application/json",
+      },
+      "method": "POST",
+      "url": "https://work.example/v1/boards/brd_1/gates/gat_1/delivery",
+    },
+  ],
+  "stderr": "",
+  "stdout": "{
+  "ok": true,
+  "method": "POST",
+  "path": "/v1/boards/brd_1/gates/gat_1/delivery"
+}
+",
+}
+`;
+
+exports[`supi commands against a fake API, pinned > supi 100 delivery brd_1 gat_1 --live-url https://example.test/status/1 1`] = `
+{
+  "exit": 0,
+  "requests": [
+    {
+      "body": "{"liveUrl":"https://example.test/status/1"}",
+      "headers": {
+        "Authorization": "Bearer e30.eyJzdWIiOiJwcm5faHVtYW4iLCJwcmluY2lwYWxLaW5kIjoiaHVtYW4iLCJleHAiOjE4OTM1NTcwNDV9.sig",
+        "Content-Type": "application/json",
+      },
+      "method": "POST",
+      "url": "https://work.example/v1/boards/brd_1/gates/gat_1/delivery",
+    },
+  ],
+  "stderr": "",
+  "stdout": "{
+  "ok": true,
+  "method": "POST",
+  "path": "/v1/boards/brd_1/gates/gat_1/delivery"
+}
+",
+}
+`;
+
+exports[`supi commands against a fake API, pinned > supi 101 reject brd_1 gat_1 --comment no 1`] = `
 {
   "exit": 0,
   "requests": [
@@ -1893,7 +2001,7 @@ exports[`supi commands against a fake API, pinned > supi 097 reject brd_1 gat_1 
 }
 `;
 
-exports[`supi commands against a fake API, pinned > supi 098 request-changes brd_1 gat_1 1`] = `
+exports[`supi commands against a fake API, pinned > supi 102 request-changes brd_1 gat_1 1`] = `
 {
   "exit": 1,
   "requests": [],
@@ -1905,7 +2013,7 @@ exports[`supi commands against a fake API, pinned > supi 098 request-changes brd
 }
 `;
 
-exports[`supi commands against a fake API, pinned > supi 099 request-changes brd_1 gat_1 --comment rename it 1`] = `
+exports[`supi commands against a fake API, pinned > supi 103 request-changes brd_1 gat_1 --comment rename it 1`] = `
 {
   "exit": 0,
   "requests": [
@@ -1929,7 +2037,7 @@ exports[`supi commands against a fake API, pinned > supi 099 request-changes brd
 }
 `;
 
-exports[`supi commands against a fake API, pinned > supi 100 link 1`] = `
+exports[`supi commands against a fake API, pinned > supi 104 link 1`] = `
 {
   "exit": 1,
   "requests": [],
@@ -1941,7 +2049,7 @@ exports[`supi commands against a fake API, pinned > supi 100 link 1`] = `
 }
 `;
 
-exports[`supi commands against a fake API, pinned > supi 101 link add brd_1 crd_1 1`] = `
+exports[`supi commands against a fake API, pinned > supi 105 link add brd_1 crd_1 1`] = `
 {
   "exit": 1,
   "requests": [],
@@ -1951,7 +2059,7 @@ exports[`supi commands against a fake API, pinned > supi 101 link add brd_1 crd_
 }
 `;
 
-exports[`supi commands against a fake API, pinned > supi 102 link add brd_1 crd_1 crd_2 1`] = `
+exports[`supi commands against a fake API, pinned > supi 106 link add brd_1 crd_1 crd_2 1`] = `
 {
   "exit": 1,
   "requests": [],
@@ -1963,7 +2071,7 @@ usage: supi link add <boardId> <fromCardId> <toCardId> --kind blocks|relates|par
 }
 `;
 
-exports[`supi commands against a fake API, pinned > supi 103 link add brd_1 crd_1 crd_2 --kind follows 1`] = `
+exports[`supi commands against a fake API, pinned > supi 107 link add brd_1 crd_1 crd_2 --kind follows 1`] = `
 {
   "exit": 1,
   "requests": [],
@@ -1975,7 +2083,7 @@ usage: supi link add <boardId> <fromCardId> <toCardId> --kind blocks|relates|par
 }
 `;
 
-exports[`supi commands against a fake API, pinned > supi 104 link add brd_1 crd_1 crd_2 --kind blocks 1`] = `
+exports[`supi commands against a fake API, pinned > supi 108 link add brd_1 crd_1 crd_2 --kind blocks 1`] = `
 {
   "exit": 0,
   "requests": [
@@ -1999,7 +2107,7 @@ exports[`supi commands against a fake API, pinned > supi 104 link add brd_1 crd_
 }
 `;
 
-exports[`supi commands against a fake API, pinned > supi 105 link add brd_1 crd_1 crd_9 --kind relates --to-board brd_2 1`] = `
+exports[`supi commands against a fake API, pinned > supi 109 link add brd_1 crd_1 crd_9 --kind relates --to-board brd_2 1`] = `
 {
   "exit": 0,
   "requests": [
@@ -2024,7 +2132,7 @@ exports[`supi commands against a fake API, pinned > supi 105 link add brd_1 crd_
 }
 `;
 
-exports[`supi commands against a fake API, pinned > supi 106 link add brd_1 crd_1 crd_2 --kind parent --to-board brd_1 1`] = `
+exports[`supi commands against a fake API, pinned > supi 110 link add brd_1 crd_1 crd_2 --kind parent --to-board brd_1 1`] = `
 {
   "exit": 0,
   "requests": [
@@ -2048,7 +2156,7 @@ exports[`supi commands against a fake API, pinned > supi 106 link add brd_1 crd_
 }
 `;
 
-exports[`supi commands against a fake API, pinned > supi 107 link rm brd_1 crd_1 crd_9 --kind supersedes --to-board brd_2 1`] = `
+exports[`supi commands against a fake API, pinned > supi 111 link rm brd_1 crd_1 crd_9 --kind supersedes --to-board brd_2 1`] = `
 {
   "exit": 0,
   "requests": [
@@ -2072,7 +2180,7 @@ exports[`supi commands against a fake API, pinned > supi 107 link rm brd_1 crd_1
 }
 `;
 
-exports[`supi commands against a fake API, pinned > supi 108 link list brd_1 1`] = `
+exports[`supi commands against a fake API, pinned > supi 112 link list brd_1 1`] = `
 {
   "exit": 1,
   "requests": [],
@@ -2082,7 +2190,7 @@ exports[`supi commands against a fake API, pinned > supi 108 link list brd_1 1`]
 }
 `;
 
-exports[`supi commands against a fake API, pinned > supi 109 link list brd_1 crd_1 1`] = `
+exports[`supi commands against a fake API, pinned > supi 113 link list brd_1 crd_1 1`] = `
 {
   "exit": 0,
   "requests": [
@@ -2110,7 +2218,7 @@ exports[`supi commands against a fake API, pinned > supi 109 link list brd_1 crd
 }
 `;
 
-exports[`supi commands against a fake API, pinned > supi 110 label 1`] = `
+exports[`supi commands against a fake API, pinned > supi 114 label 1`] = `
 {
   "exit": 1,
   "requests": [],
@@ -2120,7 +2228,7 @@ exports[`supi commands against a fake API, pinned > supi 110 label 1`] = `
 }
 `;
 
-exports[`supi commands against a fake API, pinned > supi 111 label list 1`] = `
+exports[`supi commands against a fake API, pinned > supi 115 label list 1`] = `
 {
   "exit": 0,
   "requests": [
@@ -2144,7 +2252,7 @@ exports[`supi commands against a fake API, pinned > supi 111 label list 1`] = `
 }
 `;
 
-exports[`supi commands against a fake API, pinned > supi 112 label add bug 1`] = `
+exports[`supi commands against a fake API, pinned > supi 116 label add bug 1`] = `
 {
   "exit": 1,
   "requests": [],
@@ -2154,7 +2262,7 @@ exports[`supi commands against a fake API, pinned > supi 112 label add bug 1`] =
 }
 `;
 
-exports[`supi commands against a fake API, pinned > supi 113 label add bug red 1`] = `
+exports[`supi commands against a fake API, pinned > supi 117 label add bug red 1`] = `
 {
   "exit": 0,
   "requests": [
@@ -2178,7 +2286,7 @@ exports[`supi commands against a fake API, pinned > supi 113 label add bug red 1
 }
 `;
 
-exports[`supi commands against a fake API, pinned > supi 114 label rm 1`] = `
+exports[`supi commands against a fake API, pinned > supi 118 label rm 1`] = `
 {
   "exit": 1,
   "requests": [],
@@ -2188,7 +2296,7 @@ exports[`supi commands against a fake API, pinned > supi 114 label rm 1`] = `
 }
 `;
 
-exports[`supi commands against a fake API, pinned > supi 115 label rm lbl_1 1`] = `
+exports[`supi commands against a fake API, pinned > supi 119 label rm lbl_1 1`] = `
 {
   "exit": 0,
   "requests": [
@@ -2208,7 +2316,7 @@ exports[`supi commands against a fake API, pinned > supi 115 label rm lbl_1 1`] 
 }
 `;
 
-exports[`supi commands against a fake API, pinned > supi 116 label rm lbl_1 --json 1`] = `
+exports[`supi commands against a fake API, pinned > supi 120 label rm lbl_1 --json 1`] = `
 {
   "exit": 0,
   "requests": [
@@ -2230,7 +2338,7 @@ exports[`supi commands against a fake API, pinned > supi 116 label rm lbl_1 --js
 }
 `;
 
-exports[`supi commands against a fake API, pinned > supi 117 project 1`] = `
+exports[`supi commands against a fake API, pinned > supi 121 project 1`] = `
 {
   "exit": 1,
   "requests": [],
@@ -2243,7 +2351,7 @@ exports[`supi commands against a fake API, pinned > supi 117 project 1`] = `
 }
 `;
 
-exports[`supi commands against a fake API, pinned > supi 118 project list 1`] = `
+exports[`supi commands against a fake API, pinned > supi 122 project list 1`] = `
 {
   "exit": 0,
   "requests": [
@@ -2266,7 +2374,7 @@ exports[`supi commands against a fake API, pinned > supi 118 project list 1`] = 
 }
 `;
 
-exports[`supi commands against a fake API, pinned > supi 119 project list --json 1`] = `
+exports[`supi commands against a fake API, pinned > supi 123 project list --json 1`] = `
 {
   "exit": 0,
   "requests": [
@@ -2298,7 +2406,7 @@ exports[`supi commands against a fake API, pinned > supi 119 project list --json
 }
 `;
 
-exports[`supi commands against a fake API, pinned > supi 120 project add 1`] = `
+exports[`supi commands against a fake API, pinned > supi 124 project add 1`] = `
 {
   "exit": 1,
   "requests": [],
@@ -2308,7 +2416,7 @@ exports[`supi commands against a fake API, pinned > supi 120 project add 1`] = `
 }
 `;
 
-exports[`supi commands against a fake API, pinned > supi 121 project add Launch 1`] = `
+exports[`supi commands against a fake API, pinned > supi 125 project add Launch 1`] = `
 {
   "exit": 0,
   "requests": [
@@ -2332,7 +2440,7 @@ exports[`supi commands against a fake API, pinned > supi 121 project add Launch 
 }
 `;
 
-exports[`supi commands against a fake API, pinned > supi 122 project add Launch --description Big --target 2030-02-01 --lead usr_1 1`] = `
+exports[`supi commands against a fake API, pinned > supi 126 project add Launch --description Big --target 2030-02-01 --lead usr_1 1`] = `
 {
   "exit": 0,
   "requests": [
@@ -2356,7 +2464,7 @@ exports[`supi commands against a fake API, pinned > supi 122 project add Launch 
 }
 `;
 
-exports[`supi commands against a fake API, pinned > supi 123 project add Launch --target Feb 1`] = `
+exports[`supi commands against a fake API, pinned > supi 127 project add Launch --target Feb 1`] = `
 {
   "exit": 1,
   "requests": [],
@@ -2368,7 +2476,7 @@ usage: supi project add <name> [--description <text>] [--target YYYY-MM-DD] [--l
 }
 `;
 
-exports[`supi commands against a fake API, pinned > supi 124 project show 1`] = `
+exports[`supi commands against a fake API, pinned > supi 128 project show 1`] = `
 {
   "exit": 1,
   "requests": [],
@@ -2378,7 +2486,7 @@ exports[`supi commands against a fake API, pinned > supi 124 project show 1`] = 
 }
 `;
 
-exports[`supi commands against a fake API, pinned > supi 125 project show prj_1 1`] = `
+exports[`supi commands against a fake API, pinned > supi 129 project show prj_1 1`] = `
 {
   "exit": 0,
   "requests": [
@@ -2405,7 +2513,7 @@ Milestones
 }
 `;
 
-exports[`supi commands against a fake API, pinned > supi 126 project rm 1`] = `
+exports[`supi commands against a fake API, pinned > supi 130 project rm 1`] = `
 {
   "exit": 1,
   "requests": [],
@@ -2415,7 +2523,7 @@ exports[`supi commands against a fake API, pinned > supi 126 project rm 1`] = `
 }
 `;
 
-exports[`supi commands against a fake API, pinned > supi 127 project rm prj_1 1`] = `
+exports[`supi commands against a fake API, pinned > supi 131 project rm prj_1 1`] = `
 {
   "exit": 0,
   "requests": [
@@ -2435,7 +2543,7 @@ exports[`supi commands against a fake API, pinned > supi 127 project rm prj_1 1`
 }
 `;
 
-exports[`supi commands against a fake API, pinned > supi 128 milestone 1`] = `
+exports[`supi commands against a fake API, pinned > supi 132 milestone 1`] = `
 {
   "exit": 1,
   "requests": [],
@@ -2446,7 +2554,7 @@ exports[`supi commands against a fake API, pinned > supi 128 milestone 1`] = `
 }
 `;
 
-exports[`supi commands against a fake API, pinned > supi 129 milestone add prj_1 1`] = `
+exports[`supi commands against a fake API, pinned > supi 133 milestone add prj_1 1`] = `
 {
   "exit": 1,
   "requests": [],
@@ -2456,7 +2564,7 @@ exports[`supi commands against a fake API, pinned > supi 129 milestone add prj_1
 }
 `;
 
-exports[`supi commands against a fake API, pinned > supi 130 milestone add prj_1 Beta 1`] = `
+exports[`supi commands against a fake API, pinned > supi 134 milestone add prj_1 Beta 1`] = `
 {
   "exit": 0,
   "requests": [
@@ -2480,7 +2588,7 @@ exports[`supi commands against a fake API, pinned > supi 130 milestone add prj_1
 }
 `;
 
-exports[`supi commands against a fake API, pinned > supi 131 milestone add prj_1 Beta --target 2030-01-15 --sort 2 1`] = `
+exports[`supi commands against a fake API, pinned > supi 135 milestone add prj_1 Beta --target 2030-01-15 --sort 2 1`] = `
 {
   "exit": 0,
   "requests": [
@@ -2504,7 +2612,7 @@ exports[`supi commands against a fake API, pinned > supi 131 milestone add prj_1
 }
 `;
 
-exports[`supi commands against a fake API, pinned > supi 132 milestone add prj_1 Beta --target Jan 1`] = `
+exports[`supi commands against a fake API, pinned > supi 136 milestone add prj_1 Beta --target Jan 1`] = `
 {
   "exit": 1,
   "requests": [],
@@ -2516,7 +2624,7 @@ usage: supi milestone add <projectId> <name> [--target YYYY-MM-DD] [--sort <n>]
 }
 `;
 
-exports[`supi commands against a fake API, pinned > supi 133 milestone add prj_1 Beta --sort first 1`] = `
+exports[`supi commands against a fake API, pinned > supi 137 milestone add prj_1 Beta --sort first 1`] = `
 {
   "exit": 1,
   "requests": [],
@@ -2528,7 +2636,7 @@ usage: supi milestone add <projectId> <name> [--target YYYY-MM-DD] [--sort <n>]
 }
 `;
 
-exports[`supi commands against a fake API, pinned > supi 134 milestone rm 1`] = `
+exports[`supi commands against a fake API, pinned > supi 138 milestone rm 1`] = `
 {
   "exit": 1,
   "requests": [],
@@ -2538,7 +2646,7 @@ exports[`supi commands against a fake API, pinned > supi 134 milestone rm 1`] = 
 }
 `;
 
-exports[`supi commands against a fake API, pinned > supi 135 milestone rm mil_1 1`] = `
+exports[`supi commands against a fake API, pinned > supi 139 milestone rm mil_1 1`] = `
 {
   "exit": 0,
   "requests": [
@@ -2558,7 +2666,7 @@ exports[`supi commands against a fake API, pinned > supi 135 milestone rm mil_1 
 }
 `;
 
-exports[`supi commands against a fake API, pinned > supi 136 schedule 1`] = `
+exports[`supi commands against a fake API, pinned > supi 140 schedule 1`] = `
 {
   "exit": 1,
   "requests": [],
@@ -2572,7 +2680,7 @@ exports[`supi commands against a fake API, pinned > supi 136 schedule 1`] = `
 }
 `;
 
-exports[`supi commands against a fake API, pinned > supi 137 schedule list 1`] = `
+exports[`supi commands against a fake API, pinned > supi 141 schedule list 1`] = `
 {
   "exit": 1,
   "requests": [],
@@ -2582,7 +2690,7 @@ exports[`supi commands against a fake API, pinned > supi 137 schedule list 1`] =
 }
 `;
 
-exports[`supi commands against a fake API, pinned > supi 138 schedule list brd_1 1`] = `
+exports[`supi commands against a fake API, pinned > supi 142 schedule list brd_1 1`] = `
 {
   "exit": 0,
   "requests": [
@@ -2606,7 +2714,7 @@ exports[`supi commands against a fake API, pinned > supi 138 schedule list brd_1
 }
 `;
 
-exports[`supi commands against a fake API, pinned > supi 139 schedule add 1`] = `
+exports[`supi commands against a fake API, pinned > supi 143 schedule add 1`] = `
 {
   "exit": 1,
   "requests": [],
@@ -2617,7 +2725,7 @@ exports[`supi commands against a fake API, pinned > supi 139 schedule add 1`] = 
 }
 `;
 
-exports[`supi commands against a fake API, pinned > supi 140 schedule add brd_1 --title Standup 1`] = `
+exports[`supi commands against a fake API, pinned > supi 144 schedule add brd_1 --title Standup 1`] = `
 {
   "exit": 1,
   "requests": [],
@@ -2628,7 +2736,7 @@ exports[`supi commands against a fake API, pinned > supi 140 schedule add brd_1 
 }
 `;
 
-exports[`supi commands against a fake API, pinned > supi 141 schedule add brd_1 --title Standup --rule every weekday at 09:00 --tz Asia/Kolkata 1`] = `
+exports[`supi commands against a fake API, pinned > supi 145 schedule add brd_1 --title Standup --rule every weekday at 09:00 --tz Asia/Kolkata 1`] = `
 {
   "exit": 0,
   "requests": [
@@ -2652,7 +2760,7 @@ exports[`supi commands against a fake API, pinned > supi 141 schedule add brd_1 
 }
 `;
 
-exports[`supi commands against a fake API, pinned > supi 142 schedule add brd_1 --title S --rule daily --tz UTC --stage todo --priority 1 --overlap allow 1`] = `
+exports[`supi commands against a fake API, pinned > supi 146 schedule add brd_1 --title S --rule daily --tz UTC --stage todo --priority 1 --overlap allow 1`] = `
 {
   "exit": 0,
   "requests": [
@@ -2676,7 +2784,7 @@ exports[`supi commands against a fake API, pinned > supi 142 schedule add brd_1 
 }
 `;
 
-exports[`supi commands against a fake API, pinned > supi 143 schedule add brd_1 --title S --rule daily --tz UTC --overlap never 1`] = `
+exports[`supi commands against a fake API, pinned > supi 147 schedule add brd_1 --title S --rule daily --tz UTC --overlap never 1`] = `
 {
   "exit": 1,
   "requests": [],
@@ -2686,7 +2794,7 @@ exports[`supi commands against a fake API, pinned > supi 143 schedule add brd_1 
 }
 `;
 
-exports[`supi commands against a fake API, pinned > supi 144 schedule rm brd_1 1`] = `
+exports[`supi commands against a fake API, pinned > supi 148 schedule rm brd_1 1`] = `
 {
   "exit": 1,
   "requests": [],
@@ -2696,7 +2804,7 @@ exports[`supi commands against a fake API, pinned > supi 144 schedule rm brd_1 1
 }
 `;
 
-exports[`supi commands against a fake API, pinned > supi 145 schedule rm brd_1 sch_1 1`] = `
+exports[`supi commands against a fake API, pinned > supi 149 schedule rm brd_1 sch_1 1`] = `
 {
   "exit": 0,
   "requests": [
@@ -2716,7 +2824,7 @@ exports[`supi commands against a fake API, pinned > supi 145 schedule rm brd_1 s
 }
 `;
 
-exports[`supi commands against a fake API, pinned > supi 146 schedule pause brd_1 1`] = `
+exports[`supi commands against a fake API, pinned > supi 150 schedule pause brd_1 1`] = `
 {
   "exit": 1,
   "requests": [],
@@ -2726,7 +2834,7 @@ exports[`supi commands against a fake API, pinned > supi 146 schedule pause brd_
 }
 `;
 
-exports[`supi commands against a fake API, pinned > supi 147 schedule pause brd_1 sch_1 1`] = `
+exports[`supi commands against a fake API, pinned > supi 151 schedule pause brd_1 sch_1 1`] = `
 {
   "exit": 0,
   "requests": [
@@ -2750,7 +2858,7 @@ exports[`supi commands against a fake API, pinned > supi 147 schedule pause brd_
 }
 `;
 
-exports[`supi commands against a fake API, pinned > supi 148 schedule resume brd_1 sch_1 1`] = `
+exports[`supi commands against a fake API, pinned > supi 152 schedule resume brd_1 sch_1 1`] = `
 {
   "exit": 0,
   "requests": [
@@ -2774,7 +2882,7 @@ exports[`supi commands against a fake API, pinned > supi 148 schedule resume brd
 }
 `;
 
-exports[`supi commands against a fake API, pinned > supi 149 forge 1`] = `
+exports[`supi commands against a fake API, pinned > supi 153 forge 1`] = `
 {
   "exit": 0,
   "requests": [
@@ -2794,7 +2902,7 @@ exports[`supi commands against a fake API, pinned > supi 149 forge 1`] = `
 }
 `;
 
-exports[`supi commands against a fake API, pinned > supi 150 forge (raw answer) 1`] = `
+exports[`supi commands against a fake API, pinned > supi 154 forge (raw answer) 1`] = `
 {
   "exit": 0,
   "requests": [
@@ -2814,7 +2922,7 @@ exports[`supi commands against a fake API, pinned > supi 150 forge (raw answer) 
 }
 `;
 
-exports[`supi commands against a fake API, pinned > supi 151 forge --json 1`] = `
+exports[`supi commands against a fake API, pinned > supi 155 forge --json 1`] = `
 {
   "exit": 0,
   "requests": [
@@ -2836,7 +2944,7 @@ exports[`supi commands against a fake API, pinned > supi 151 forge --json 1`] = 
 }
 `;
 
-exports[`supi commands against a fake API, pinned > supi 152 forge forge.example 1`] = `
+exports[`supi commands against a fake API, pinned > supi 156 forge forge.example 1`] = `
 {
   "exit": 0,
   "requests": [
@@ -2856,7 +2964,7 @@ exports[`supi commands against a fake API, pinned > supi 152 forge forge.example
 }
 `;
 
-exports[`supi commands against a fake API, pinned > supi 153 forge none 1`] = `
+exports[`supi commands against a fake API, pinned > supi 157 forge none 1`] = `
 {
   "exit": 0,
   "requests": [
@@ -2876,7 +2984,7 @@ exports[`supi commands against a fake API, pinned > supi 153 forge none 1`] = `
 }
 `;
 
-exports[`supi commands against a fake API, pinned > supi 154 agents 1`] = `
+exports[`supi commands against a fake API, pinned > supi 158 agents 1`] = `
 {
   "exit": 0,
   "requests": [
@@ -2903,7 +3011,7 @@ exports[`supi commands against a fake API, pinned > supi 154 agents 1`] = `
 }
 `;
 
-exports[`supi commands against a fake API, pinned > supi 155 agent 1`] = `
+exports[`supi commands against a fake API, pinned > supi 159 agent 1`] = `
 {
   "exit": 1,
   "requests": [],
@@ -2915,7 +3023,7 @@ exports[`supi commands against a fake API, pinned > supi 155 agent 1`] = `
 }
 `;
 
-exports[`supi commands against a fake API, pinned > supi 156 agent bogus 1`] = `
+exports[`supi commands against a fake API, pinned > supi 160 agent bogus 1`] = `
 {
   "exit": 1,
   "requests": [],
@@ -2927,7 +3035,7 @@ exports[`supi commands against a fake API, pinned > supi 156 agent bogus 1`] = `
 }
 `;
 
-exports[`supi commands against a fake API, pinned > supi 157 agent create 1`] = `
+exports[`supi commands against a fake API, pinned > supi 161 agent create 1`] = `
 {
   "exit": 1,
   "requests": [],
@@ -2937,7 +3045,7 @@ exports[`supi commands against a fake API, pinned > supi 157 agent create 1`] = 
 }
 `;
 
-exports[`supi commands against a fake API, pinned > supi 158 agent create --name Builder 1`] = `
+exports[`supi commands against a fake API, pinned > supi 162 agent create --name Builder 1`] = `
 {
   "exit": 1,
   "requests": [],
@@ -2947,7 +3055,7 @@ exports[`supi commands against a fake API, pinned > supi 158 agent create --name
 }
 `;
 
-exports[`supi commands against a fake API, pinned > supi 159 agent create --name Builder --capability code 1`] = `
+exports[`supi commands against a fake API, pinned > supi 163 agent create --name Builder --capability code 1`] = `
 {
   "exit": 1,
   "requests": [],
@@ -2957,7 +3065,7 @@ exports[`supi commands against a fake API, pinned > supi 159 agent create --name
 }
 `;
 
-exports[`supi commands against a fake API, pinned > supi 160 agent create --name Builder --capability code --external-id prn_x 1`] = `
+exports[`supi commands against a fake API, pinned > supi 164 agent create --name Builder --capability code --external-id prn_x 1`] = `
 {
   "exit": 1,
   "requests": [],
@@ -2967,7 +3075,7 @@ exports[`supi commands against a fake API, pinned > supi 160 agent create --name
 }
 `;
 
-exports[`supi commands against a fake API, pinned > supi 161 agent create --name  Builder  --capability code, review --capability ops --external-id prn_0123456789abcdef0123 1`] = `
+exports[`supi commands against a fake API, pinned > supi 165 agent create --name  Builder  --capability code, review --capability ops --external-id prn_0123456789abcdef0123 1`] = `
 {
   "exit": 0,
   "requests": [
@@ -2991,7 +3099,7 @@ exports[`supi commands against a fake API, pinned > supi 161 agent create --name
 }
 `;
 
-exports[`supi commands against a fake API, pinned > supi 162 agent create --name B --capability code --external-id prn_0123456789abcdef0123 --concurrency 2 1`] = `
+exports[`supi commands against a fake API, pinned > supi 166 agent create --name B --capability code --external-id prn_0123456789abcdef0123 --concurrency 2 1`] = `
 {
   "exit": 0,
   "requests": [
@@ -3015,7 +3123,7 @@ exports[`supi commands against a fake API, pinned > supi 162 agent create --name
 }
 `;
 
-exports[`supi commands against a fake API, pinned > supi 163 agent create --name B --capability code --external-id prn_0123456789abcdef0123 --concurrency 0 1`] = `
+exports[`supi commands against a fake API, pinned > supi 167 agent create --name B --capability code --external-id prn_0123456789abcdef0123 --concurrency 0 1`] = `
 {
   "exit": 1,
   "requests": [],
@@ -3025,7 +3133,7 @@ exports[`supi commands against a fake API, pinned > supi 163 agent create --name
 }
 `;
 
-exports[`supi commands against a fake API, pinned > supi 164 agent mint-token 1`] = `
+exports[`supi commands against a fake API, pinned > supi 168 agent mint-token 1`] = `
 {
   "exit": 1,
   "requests": [],
@@ -3035,7 +3143,7 @@ exports[`supi commands against a fake API, pinned > supi 164 agent mint-token 1`
 }
 `;
 
-exports[`supi commands against a fake API, pinned > supi 165 agent mint-token agt_1 1`] = `
+exports[`supi commands against a fake API, pinned > supi 169 agent mint-token agt_1 1`] = `
 {
   "exit": 1,
   "requests": [],
@@ -3045,7 +3153,7 @@ exports[`supi commands against a fake API, pinned > supi 165 agent mint-token ag
 }
 `;
 
-exports[`supi commands against a fake API, pinned > supi 166 agent mint-token agt_1 --kind claim-run 1`] = `
+exports[`supi commands against a fake API, pinned > supi 170 agent mint-token agt_1 --kind claim-run 1`] = `
 {
   "exit": 0,
   "requests": [
@@ -3067,7 +3175,7 @@ Shown once — store it now, readable only by you (0600). Revoke it in Workspace
 }
 `;
 
-exports[`supi commands against a fake API, pinned > supi 167 agent mint-token agt_1 --kind run-only --json 1`] = `
+exports[`supi commands against a fake API, pinned > supi 171 agent mint-token agt_1 --kind run-only --json 1`] = `
 {
   "exit": 0,
   "requests": [
@@ -3096,7 +3204,7 @@ exports[`supi commands against a fake API, pinned > supi 167 agent mint-token ag
 }
 `;
 
-exports[`supi commands against a fake API, pinned > supi 168 agent mint-token agt_1 --kind claim-run --out <scratch>/secret.txt 1`] = `
+exports[`supi commands against a fake API, pinned > supi 172 agent mint-token agt_1 --kind claim-run --out <scratch>/secret.txt 1`] = `
 {
   "exit": 0,
   "requests": [
@@ -3116,7 +3224,7 @@ exports[`supi commands against a fake API, pinned > supi 168 agent mint-token ag
 }
 `;
 
-exports[`supi commands against a fake API, pinned > supi 169 agent mint-token agt_1 --kind claim-run --out <scratch>/nodir/secret.txt 1`] = `
+exports[`supi commands against a fake API, pinned > supi 173 agent mint-token agt_1 --kind claim-run --out <scratch>/nodir/secret.txt 1`] = `
 {
   "exit": 1,
   "requests": [
@@ -3136,7 +3244,7 @@ exports[`supi commands against a fake API, pinned > supi 169 agent mint-token ag
 }
 `;
 
-exports[`supi commands against a fake API, pinned > supi 170 agent mint-token agt_1 --kind claim-run (raw answer) 1`] = `
+exports[`supi commands against a fake API, pinned > supi 174 agent mint-token agt_1 --kind claim-run (raw answer) 1`] = `
 {
   "exit": 1,
   "requests": [
@@ -3156,7 +3264,7 @@ exports[`supi commands against a fake API, pinned > supi 170 agent mint-token ag
 }
 `;
 
-exports[`supi commands against a fake API, pinned > supi 171 agent queueing 1`] = `
+exports[`supi commands against a fake API, pinned > supi 175 agent queueing 1`] = `
 {
   "exit": 1,
   "requests": [],
@@ -3168,7 +3276,7 @@ exports[`supi commands against a fake API, pinned > supi 171 agent queueing 1`] 
 }
 `;
 
-exports[`supi commands against a fake API, pinned > supi 172 agent queueing agt_1 1`] = `
+exports[`supi commands against a fake API, pinned > supi 176 agent queueing agt_1 1`] = `
 {
   "exit": 1,
   "requests": [],
@@ -3178,7 +3286,7 @@ exports[`supi commands against a fake API, pinned > supi 172 agent queueing agt_
 }
 `;
 
-exports[`supi commands against a fake API, pinned > supi 173 agent queueing agt_1 --owner usr_1 --boards brd_1, brd_2, --ceiling 5 1`] = `
+exports[`supi commands against a fake API, pinned > supi 177 agent queueing agt_1 --owner usr_1 --boards brd_1, brd_2, --ceiling 5 1`] = `
 {
   "exit": 0,
   "requests": [
@@ -3202,7 +3310,7 @@ exports[`supi commands against a fake API, pinned > supi 173 agent queueing agt_
 }
 `;
 
-exports[`supi commands against a fake API, pinned > supi 174 agent queueing agt_1 --owner none --boards none 1`] = `
+exports[`supi commands against a fake API, pinned > supi 178 agent queueing agt_1 --owner none --boards none 1`] = `
 {
   "exit": 0,
   "requests": [
@@ -3226,7 +3334,7 @@ exports[`supi commands against a fake API, pinned > supi 174 agent queueing agt_
 }
 `;
 
-exports[`supi commands against a fake API, pinned > supi 175 agent queueing agt_1 --ceiling 0.5 1`] = `
+exports[`supi commands against a fake API, pinned > supi 179 agent queueing agt_1 --ceiling 0.5 1`] = `
 {
   "exit": 1,
   "requests": [],
@@ -3236,7 +3344,7 @@ exports[`supi commands against a fake API, pinned > supi 175 agent queueing agt_
 }
 `;
 
-exports[`supi commands against a fake API, pinned > supi 176 capabilities 1`] = `
+exports[`supi commands against a fake API, pinned > supi 180 capabilities 1`] = `
 {
   "exit": 0,
   "requests": [
@@ -3263,7 +3371,7 @@ exports[`supi commands against a fake API, pinned > supi 176 capabilities 1`] = 
 }
 `;
 
-exports[`supi commands against a fake API, pinned > supi 177 implications 1`] = `
+exports[`supi commands against a fake API, pinned > supi 181 implications 1`] = `
 {
   "exit": 0,
   "requests": [
@@ -3287,7 +3395,7 @@ exports[`supi commands against a fake API, pinned > supi 177 implications 1`] = 
 }
 `;
 
-exports[`supi commands against a fake API, pinned > supi 178 capability 1`] = `
+exports[`supi commands against a fake API, pinned > supi 182 capability 1`] = `
 {
   "exit": 1,
   "requests": [],
@@ -3297,7 +3405,7 @@ exports[`supi commands against a fake API, pinned > supi 178 capability 1`] = `
 }
 `;
 
-exports[`supi commands against a fake API, pinned > supi 179 capability define cap_1 1`] = `
+exports[`supi commands against a fake API, pinned > supi 183 capability define cap_1 1`] = `
 {
   "exit": 1,
   "requests": [],
@@ -3307,7 +3415,7 @@ exports[`supi commands against a fake API, pinned > supi 179 capability define c
 }
 `;
 
-exports[`supi commands against a fake API, pinned > supi 180 capability define cap_1 --definition Writes code. 1`] = `
+exports[`supi commands against a fake API, pinned > supi 184 capability define cap_1 --definition Writes code. 1`] = `
 {
   "exit": 0,
   "requests": [
@@ -3331,7 +3439,7 @@ exports[`supi commands against a fake API, pinned > supi 180 capability define c
 }
 `;
 
-exports[`supi commands against a fake API, pinned > supi 181 capability define Code Review --definition Reads a diff. 1`] = `
+exports[`supi commands against a fake API, pinned > supi 185 capability define Code Review --definition Reads a diff. 1`] = `
 {
   "exit": 0,
   "requests": [
@@ -3364,7 +3472,7 @@ exports[`supi commands against a fake API, pinned > supi 181 capability define C
 }
 `;
 
-exports[`supi commands against a fake API, pinned > supi 182 capability define Brand New --definition  Something new.  1`] = `
+exports[`supi commands against a fake API, pinned > supi 186 capability define Brand New --definition  Something new.  1`] = `
 {
   "exit": 0,
   "requests": [
@@ -3397,7 +3505,7 @@ exports[`supi commands against a fake API, pinned > supi 182 capability define B
 }
 `;
 
-exports[`supi commands against a fake API, pinned > supi 183 capability define !!! --definition x 1`] = `
+exports[`supi commands against a fake API, pinned > supi 187 capability define !!! --definition x 1`] = `
 {
   "exit": 1,
   "requests": [],
@@ -3461,8 +3569,11 @@ Comments on a card:
 
 Approval gates:
   supi gates <boardId>               approval gates waiting on a human
-  supi approve <boardId> <gateId> [--comment "why"]
-                                     approve a gate: the card moves on
+  supi approve <boardId> <gateId> [--comment "why"] [--delivery manual|automatic]
+                                     approve a gate, choosing delivery for a frozen post
+  supi delivery <boardId> <gateId> [--mode manual|automatic] [--live-url https://…]
+        [--remind-at ISO timestamp]
+                                     update delivery of an approved frozen post
   supi reject <boardId> <gateId> [--comment "why"]
                                      reject a gate
   supi request-changes <boardId> <gateId> --comment "what to change"
@@ -3591,8 +3702,11 @@ Comments on a card:
 
 Approval gates:
   supi gates <boardId>               approval gates waiting on a human
-  supi approve <boardId> <gateId> [--comment "why"]
-                                     approve a gate: the card moves on
+  supi approve <boardId> <gateId> [--comment "why"] [--delivery manual|automatic]
+                                     approve a gate, choosing delivery for a frozen post
+  supi delivery <boardId> <gateId> [--mode manual|automatic] [--live-url https://…]
+        [--remind-at ISO timestamp]
+                                     update delivery of an approved frozen post
   supi reject <boardId> <gateId> [--comment "why"]
                                      reject a gate
   supi request-changes <boardId> <gateId> --comment "what to change"
@@ -3721,8 +3835,11 @@ Comments on a card:
 
 Approval gates:
   supi gates <boardId>               approval gates waiting on a human
-  supi approve <boardId> <gateId> [--comment "why"]
-                                     approve a gate: the card moves on
+  supi approve <boardId> <gateId> [--comment "why"] [--delivery manual|automatic]
+                                     approve a gate, choosing delivery for a frozen post
+  supi delivery <boardId> <gateId> [--mode manual|automatic] [--live-url https://…]
+        [--remind-at ISO timestamp]
+                                     update delivery of an approved frozen post
   supi reject <boardId> <gateId> [--comment "why"]
                                      reject a gate
   supi request-changes <boardId> <gateId> --comment "what to change"
@@ -3956,10 +4073,10 @@ exports[`supi help, pinned > supi approve --help 1`] = `
   "exit": 0,
   "requests": [],
   "stderr": "",
-  "stdout": "supi approve <boardId> <gateId> [--comment "why"]
+  "stdout": "supi approve <boardId> <gateId> [--comment "why"] [--delivery manual|automatic]
 
-Approves the gate. The card advances to the next stage; if that stage is gated too, a new gate
-opens on the same run.
+Approves a generic gate. For an immutable publishing approval, --delivery manual|automatic reads
+the gate and binds that exact frozen subject and digest to the chosen delivery mode.
 
 Arguments:
   <boardId>             the board, as brd_… (see supi boards)
@@ -3968,16 +4085,21 @@ Arguments:
 Flags:
   --comment "why"             recorded with the decision and shown to whoever reads the card.
                               Default: no comment.
+  --delivery manual|automatic for an immutable publishing approval, bind the frozen digest to
+                              manual or automatic delivery. Default: plain approval for a
+                              generic gate.
 
 Who may run it:
   a person: member or above in the workspace
   an agent token: refused
 
 Calls:
+  GET /v1/boards/:boardId/gates/:gateId
   POST /v1/boards/:boardId/gates/:gateId/resolve
 
 Examples:
   supi approve brd_8f2c… gat_19c0… --comment "checked the diff"
+  supi approve brd_8f2c… gat_19c0… --delivery manual --comment "I will post it"
 ",
 }
 `;
@@ -4329,6 +4451,42 @@ Examples:
 }
 `;
 
+exports[`supi help, pinned > supi delivery --help 1`] = `
+{
+  "exit": 0,
+  "requests": [],
+  "stderr": "",
+  "stdout": "supi delivery <boardId> <gateId> [--mode manual|automatic] [--live-url https://…]
+    [--remind-at ISO timestamp]
+
+Changes only delivery mechanics for an already approved immutable subject. Give exactly one of
+--mode, --live-url, or --remind-at; switching modes does not require a fresh approval because
+the digest stays unchanged.
+
+Arguments:
+  <boardId>             the board, as brd_… (see supi boards)
+  <gateId>              the gate (see supi gates <boardId>)
+
+Flags:
+  --mode manual|automatic     switch delivery mode without changing the approved digest
+  --live-url https://…        record the URL of a manually published post
+  --remind-at ISO timestamp   if no live URL exists then, remind the person and offer automatic
+                              delivery
+
+Who may run it:
+  a person: member or above in the workspace
+  an agent token: refused
+
+Calls:
+  POST /v1/boards/:boardId/gates/:gateId/delivery
+
+Examples:
+  supi delivery brd_8f2c… gat_19c0… --remind-at 2029-01-02T03:04:05Z
+  supi delivery brd_8f2c… gat_19c0… --mode automatic
+",
+}
+`;
+
 exports[`supi help, pinned > supi edit-card --help 1`] = `
 {
   "exit": 0,
@@ -4494,8 +4652,11 @@ Comments on a card:
 
 Approval gates:
   supi gates <boardId>               approval gates waiting on a human
-  supi approve <boardId> <gateId> [--comment "why"]
-                                     approve a gate: the card moves on
+  supi approve <boardId> <gateId> [--comment "why"] [--delivery manual|automatic]
+                                     approve a gate, choosing delivery for a frozen post
+  supi delivery <boardId> <gateId> [--mode manual|automatic] [--live-url https://…]
+        [--remind-at ISO timestamp]
+                                     update delivery of an approved frozen post
   supi reject <boardId> <gateId> [--comment "why"]
                                      reject a gate
   supi request-changes <boardId> <gateId> --comment "what to change"
@@ -4624,8 +4785,11 @@ Comments on a card:
 
 Approval gates:
   supi gates <boardId>               approval gates waiting on a human
-  supi approve <boardId> <gateId> [--comment "why"]
-                                     approve a gate: the card moves on
+  supi approve <boardId> <gateId> [--comment "why"] [--delivery manual|automatic]
+                                     approve a gate, choosing delivery for a frozen post
+  supi delivery <boardId> <gateId> [--mode manual|automatic] [--live-url https://…]
+        [--remind-at ISO timestamp]
+                                     update delivery of an approved frozen post
   supi reject <boardId> <gateId> [--comment "why"]
                                      reject a gate
   supi request-changes <boardId> <gateId> --comment "what to change"
@@ -4859,10 +5023,10 @@ exports[`supi help, pinned > supi help approve 1`] = `
   "exit": 0,
   "requests": [],
   "stderr": "",
-  "stdout": "supi approve <boardId> <gateId> [--comment "why"]
+  "stdout": "supi approve <boardId> <gateId> [--comment "why"] [--delivery manual|automatic]
 
-Approves the gate. The card advances to the next stage; if that stage is gated too, a new gate
-opens on the same run.
+Approves a generic gate. For an immutable publishing approval, --delivery manual|automatic reads
+the gate and binds that exact frozen subject and digest to the chosen delivery mode.
 
 Arguments:
   <boardId>             the board, as brd_… (see supi boards)
@@ -4871,16 +5035,21 @@ Arguments:
 Flags:
   --comment "why"             recorded with the decision and shown to whoever reads the card.
                               Default: no comment.
+  --delivery manual|automatic for an immutable publishing approval, bind the frozen digest to
+                              manual or automatic delivery. Default: plain approval for a
+                              generic gate.
 
 Who may run it:
   a person: member or above in the workspace
   an agent token: refused
 
 Calls:
+  GET /v1/boards/:boardId/gates/:gateId
   POST /v1/boards/:boardId/gates/:gateId/resolve
 
 Examples:
   supi approve brd_8f2c… gat_19c0… --comment "checked the diff"
+  supi approve brd_8f2c… gat_19c0… --delivery manual --comment "I will post it"
 ",
 }
 `;
@@ -5200,6 +5369,42 @@ Calls:
 Examples:
   supi create-card brd_8f2c… Write the release notes for 0.0.9
   supi create-card brd_8f2c… Audit the token routes --spec spec.json --priority 2 --due 2026-11-01 --label lbl_sec
+",
+}
+`;
+
+exports[`supi help, pinned > supi help delivery 1`] = `
+{
+  "exit": 0,
+  "requests": [],
+  "stderr": "",
+  "stdout": "supi delivery <boardId> <gateId> [--mode manual|automatic] [--live-url https://…]
+    [--remind-at ISO timestamp]
+
+Changes only delivery mechanics for an already approved immutable subject. Give exactly one of
+--mode, --live-url, or --remind-at; switching modes does not require a fresh approval because
+the digest stays unchanged.
+
+Arguments:
+  <boardId>             the board, as brd_… (see supi boards)
+  <gateId>              the gate (see supi gates <boardId>)
+
+Flags:
+  --mode manual|automatic     switch delivery mode without changing the approved digest
+  --live-url https://…        record the URL of a manually published post
+  --remind-at ISO timestamp   if no live URL exists then, remind the person and offer automatic
+                              delivery
+
+Who may run it:
+  a person: member or above in the workspace
+  an agent token: refused
+
+Calls:
+  POST /v1/boards/:boardId/gates/:gateId/delivery
+
+Examples:
+  supi delivery brd_8f2c… gat_19c0… --remind-at 2029-01-02T03:04:05Z
+  supi delivery brd_8f2c… gat_19c0… --mode automatic
 ",
 }
 `;

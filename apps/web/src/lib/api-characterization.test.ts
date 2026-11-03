@@ -161,6 +161,7 @@ const CALLS: Array<[string, () => Promise<unknown>]> = [
   ['resolveGate subject', () => api.resolveGate('brd_1', 'gat_1', 'request_changes', 'rename', { id: 'aps_1', digest: 'sha256:x' })],
   ['updateApprovalDelivery mode', () => api.updateApprovalDelivery('brd_1', 'gat_1', { mode: 'manual' })],
   ['updateApprovalDelivery url', () => api.updateApprovalDelivery('brd_1', 'gat_1', { liveUrl: 'https://example.com' })],
+  ['updateApprovalDelivery reminder', () => api.updateApprovalDelivery('brd_1', 'gat_1', { remindAt: '2029-01-02T03:04:05.000Z' })],
   ['answerElicitation', () => api.answerElicitation('brd_1', 'eli_1', { option: 'yes', text: 'sure' })],
   ['getMe', () => api.getMe()],
   ['renewSession', () => api.renewSession()],

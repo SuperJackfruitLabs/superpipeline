@@ -53,7 +53,7 @@ Read-only (safe to run to answer a question):
 Changes shared state (ask first):
 `supi create-board`, `supi set-stages`, `supi set-stage`, `supi set-stale`, `supi create-card`,
 `supi edit-card`, `supi move`, `supi resume`, `supi archive`, `supi comment`, `supi approve`,
-`supi reject`, `supi request-changes`, `supi link add`, `supi link rm`, `supi label add`,
+`supi delivery`, `supi reject`, `supi request-changes`, `supi link add`, `supi link rm`, `supi label add`,
 `supi label rm`, `supi project add`, `supi project rm`, `supi milestone add`,
 `supi milestone rm`, `supi schedule add`, `supi schedule rm`, `supi schedule pause`,
 `supi schedule resume`, `supi agent create`, `supi agent mint-token`, `supi agent queueing`,
