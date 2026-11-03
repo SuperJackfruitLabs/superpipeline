@@ -53,7 +53,7 @@ export async function gateResolve({ request, env, tenantId, user, agent, stub }:
 
 // POST /v1/boards/:id/gates/:gateId/delivery — alter delivery, never approved bytes.
 export async function gateDelivery({ request, env, tenantId, user, stub }: BoardRequest, deliveryMatch: RegExpMatchArray): Promise<Response> {
-  const body = (await request.json().catch(() => null)) as { mode?: unknown; liveUrl?: unknown } | null;
+  const body = (await request.json().catch(() => null)) as { mode?: unknown; liveUrl?: unknown; remindAt?: unknown } | null;
   if (!body || typeof body !== 'object') {
     return Response.json({ error: { code: 'INVALID_APPROVAL_DELIVERY', message: 'Expected a JSON object.' } }, { status: 400 });
   }
@@ -66,6 +66,9 @@ export async function gateDelivery({ request, env, tenantId, user, stub }: Board
   if (body.liveUrl !== undefined && typeof body.liveUrl !== 'string') {
     return Response.json({ error: { code: 'INVALID_LIVE_URL', message: 'liveUrl must be a string' } }, { status: 400 });
   }
+  if (body.remindAt !== undefined && typeof body.remindAt !== 'string') {
+    return Response.json({ error: { code: 'INVALID_APPROVAL_DELIVERY', message: 'remindAt must be a string' } }, { status: 400 });
+  }
   const localActorId = user?.userId ?? 'usr_dev';
   const principalIds = await principalIdsFor(env.DB, tenantId, [localActorId]);
   const result = await stub.updateApprovalDelivery({
@@ -73,6 +76,7 @@ export async function gateDelivery({ request, env, tenantId, user, stub }: Board
     actor: principalIds.get(localActorId) ?? localActorId,
     ...(body.mode !== undefined ? { mode: body.mode } : {}),
     ...(body.liveUrl !== undefined ? { liveUrl: body.liveUrl } : {}),
+    ...(body.remindAt !== undefined ? { remindAt: body.remindAt } : {}),
   });
   if (!result.ok) return Response.json({ error: result }, { status: statusForCode(result.code) });
   return Response.json({ card: result.value, delivery: result.value.delivery });

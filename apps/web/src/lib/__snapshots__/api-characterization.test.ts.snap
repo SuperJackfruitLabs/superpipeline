@@ -10656,6 +10656,107 @@ exports[`the API client, pinned > updateApprovalDelivery mode 1`] = `
 }
 `;
 
+exports[`the API client, pinned > updateApprovalDelivery reminder 1`] = `
+{
+  "200": {
+    "requests": [
+      {
+        "abortable": false,
+        "body": "{"remindAt":"2029-01-02T03:04:05.000Z"}",
+        "credentials": null,
+        "headers": {
+          "Content-Type": "application/json",
+          "X-Tenant-Id": "tnt_dev",
+        },
+        "method": "POST",
+        "url": "/v1/boards/brd_1/gates/gat_1/delivery",
+      },
+    ],
+    "result": {
+      "response": 200,
+    },
+    "unauthorizedFired": 0,
+  },
+  "401": {
+    "requests": [
+      {
+        "abortable": false,
+        "body": "{"remindAt":"2029-01-02T03:04:05.000Z"}",
+        "credentials": null,
+        "headers": {
+          "Content-Type": "application/json",
+          "X-Tenant-Id": "tnt_dev",
+        },
+        "method": "POST",
+        "url": "/v1/boards/brd_1/gates/gat_1/delivery",
+      },
+    ],
+    "result": {
+      "response": 401,
+    },
+    "unauthorizedFired": 1,
+  },
+  "404": {
+    "requests": [
+      {
+        "abortable": false,
+        "body": "{"remindAt":"2029-01-02T03:04:05.000Z"}",
+        "credentials": null,
+        "headers": {
+          "Content-Type": "application/json",
+          "X-Tenant-Id": "tnt_dev",
+        },
+        "method": "POST",
+        "url": "/v1/boards/brd_1/gates/gat_1/delivery",
+      },
+    ],
+    "result": {
+      "response": 404,
+    },
+    "unauthorizedFired": 0,
+  },
+  "500": {
+    "requests": [
+      {
+        "abortable": false,
+        "body": "{"remindAt":"2029-01-02T03:04:05.000Z"}",
+        "credentials": null,
+        "headers": {
+          "Content-Type": "application/json",
+          "X-Tenant-Id": "tnt_dev",
+        },
+        "method": "POST",
+        "url": "/v1/boards/brd_1/gates/gat_1/delivery",
+      },
+    ],
+    "result": {
+      "response": 500,
+    },
+    "unauthorizedFired": 0,
+  },
+  "offline": {
+    "requests": [
+      {
+        "abortable": false,
+        "body": "{"remindAt":"2029-01-02T03:04:05.000Z"}",
+        "credentials": null,
+        "headers": {
+          "Content-Type": "application/json",
+          "X-Tenant-Id": "tnt_dev",
+        },
+        "method": "POST",
+        "url": "/v1/boards/brd_1/gates/gat_1/delivery",
+      },
+    ],
+    "result": {
+      "message": "Failed to fetch",
+      "thrown": "TypeError",
+    },
+    "unauthorizedFired": 0,
+  },
+}
+`;
+
 exports[`the API client, pinned > updateApprovalDelivery url 1`] = `
 {
   "200": {

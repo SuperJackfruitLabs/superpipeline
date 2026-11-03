@@ -29,7 +29,7 @@ import { runVersion, runSkill, runSelfUpdate, runLogin, runLogout, runWhoami } f
 import { runBoards, runBoard, runSetStale, runSetStages, runSetStage, runTemplates, runCreateBoard } from "./commands/boards.ts";
 import { runCard, runMove, runResume, runStale, runLog, runArchive, runCreateCard, runEditCard } from "./commands/cards.ts";
 import { runComment, runComments } from "./commands/comments.ts";
-import { runGates, runDecideGate } from "./commands/gates.ts";
+import { runGates, runDecideGate, runApproveGate, runDelivery } from "./commands/gates.ts";
 import { runLink } from "./commands/links.ts";
 import { runLabel } from "./commands/labels.ts";
 import { runProject, runMilestone } from "./commands/projects.ts";
@@ -121,9 +121,14 @@ async function main(argv: string[]): Promise<void> {
       return runGates(args);
 
     case "approve":
+      return runApproveGate(args);
+
     case "reject":
     case "request-changes":
       return runDecideGate(args);
+
+    case "delivery":
+      return runDelivery(args);
 
     case "log":
       return runLog(args);

@@ -259,6 +259,7 @@ export interface BoardStub {
     actor: string;
     mode?: 'manual' | 'automatic';
     liveUrl?: string;
+    remindAt?: string;
   }): Promise<Result<CardView & { delivery: NonNullable<GateView['delivery']> }>>;
   recordAutomaticDelivery(input: {
     gateId: string;

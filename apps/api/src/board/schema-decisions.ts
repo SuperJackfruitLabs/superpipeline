@@ -81,6 +81,16 @@ export function createDecisionTables(sql: SqlStorage): void {
     // column already exists
   }
   try {
+    sql.exec(`ALTER TABLE gates ADD COLUMN live_post_remind_at TEXT`);
+  } catch {
+    // column already exists
+  }
+  try {
+    sql.exec(`ALTER TABLE gates ADD COLUMN live_post_reminder_notified_at TEXT`);
+  } catch {
+    // column already exists
+  }
+  try {
     sql.exec(`ALTER TABLE gates ADD COLUMN approval_decider_ids_json TEXT`);
   } catch {
     // column already exists

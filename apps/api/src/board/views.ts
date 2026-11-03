@@ -277,6 +277,7 @@ export interface GateView {
   delivery?: {
     mode: 'manual' | 'automatic';
     liveUrl: string | null;
+    remindAt: string | null;
     readBackStatus: 'not_checked' | 'matched' | 'mismatch';
     recordedBy: string | null;
     recordedAt: string | null;

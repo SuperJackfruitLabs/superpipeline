@@ -1,4 +1,5 @@
 import { type GateDecision, stageCapabilitiesMet } from '@superpipeline/contract';
+import { approvalSubjectKind, nonEmptyString } from '../approval-subject-kinds';
 import { newId } from '../ids';
 import type { JsonValue } from '../json';
 import type { BoardContext } from './context';
@@ -49,10 +50,6 @@ function bytesBase64(bytes: Uint8Array): string {
   let binary = '';
   for (const byte of bytes) binary += String.fromCharCode(byte);
   return btoa(binary);
-}
-
-function nonEmptyString(value: unknown): value is string {
-  return typeof value === 'string' && value.length > 0;
 }
 
 function base64Bytes(value: string): Uint8Array {
@@ -108,74 +105,6 @@ async function completeRequestDigest(value: unknown): Promise<string> {
   return `sha256:${[...new Uint8Array(hash)].map((byte) => byte.toString(16).padStart(2, '0')).join('')}`;
 }
 
-/** Validate the complete public social-publish/v1 payload before any durable write. */
-function socialPublishPayloadError(value: unknown): string | null {
-  const payload = record(value);
-  if (!payload) return 'publicationPayload must be an object';
-  if (payload.channel !== 'x') return 'publicationPayload.channel must be "x"';
-
-  const account = record(payload.account);
-  if (!account || account.platform !== 'x' || !nonEmptyString(account.userId) || !nonEmptyString(account.username)) {
-    return 'publicationPayload.account must identify an x userId and username';
-  }
-
-  if (!Array.isArray(payload.items) || payload.items.length === 0) return 'publicationPayload.items must not be empty';
-  for (let position = 0; position < payload.items.length; position += 1) {
-    const item = record(payload.items[position]);
-    if (!item || !Number.isInteger(item.index) || item.index !== position || !nonEmptyString(item.text)) {
-      return `publicationPayload.items[${position}] needs its ordered index and exact text`;
-    }
-    if (!Array.isArray(item.media)) return `publicationPayload.items[${position}].media must be an array`;
-    for (let mediaIndex = 0; mediaIndex < item.media.length; mediaIndex += 1) {
-      const media = record(item.media[mediaIndex]);
-      if (
-        !media ||
-        !nonEmptyString(media.objectRef) ||
-        typeof media.sha256 !== 'string' ||
-        !/^[0-9a-f]{64}$/.test(media.sha256) ||
-        !nonEmptyString(media.mime) ||
-        !Number.isInteger(media.size) ||
-        (media.size as number) < 0 ||
-        typeof media.altText !== 'string' ||
-        !nonEmptyString(media.rightsRef)
-      ) {
-        return `publicationPayload.items[${position}].media[${mediaIndex}] is incomplete`;
-      }
-    }
-    for (const key of ['replyToPostId', 'quotePostId'] as const) {
-      if (item[key] !== null && !nonEmptyString(item[key])) {
-        return `publicationPayload.items[${position}].${key} must be null or a post id`;
-      }
-    }
-  }
-
-  const timing = record(payload.timing);
-  if (
-    !timing ||
-    (timing.mode !== 'immediate' && timing.mode !== 'scheduled') ||
-    (timing.notBefore !== null && !nonEmptyString(timing.notBefore)) ||
-    !nonEmptyString(timing.expiresAt) ||
-    Number.isNaN(Date.parse(timing.expiresAt)) ||
-    (timing.notBefore !== null && Number.isNaN(Date.parse(timing.notBefore))) ||
-    (timing.mode === 'scheduled' && timing.notBefore === null)
-  ) {
-    return 'publicationPayload.timing is invalid';
-  }
-  if (!Array.isArray(payload.evidenceRefs) || !payload.evidenceRefs.every(nonEmptyString)) {
-    return 'publicationPayload.evidenceRefs must be an array of references';
-  }
-  const policy = record(payload.policy);
-  if (
-    !policy ||
-    typeof policy.allowThread !== 'boolean' ||
-    !nonEmptyString(policy.duplicatePolicyId) ||
-    !nonEmptyString(policy.floodPolicyId)
-  ) {
-    return 'publicationPayload.policy is invalid';
-  }
-  return null;
-}
-
 export async function verifyApprovalSubject(deps: ApprovalSubjectsDeps, input: {
   runId: string;
   leaseEpoch: number;
@@ -204,6 +133,7 @@ export async function verifyApprovalSubject(deps: ApprovalSubjectsDeps, input: {
     .toArray()[0];
   const subject = approvalSubjectView(deps, subjectId);
   const stage = deps.stages().find((candidate) => candidate.key === (run.stage_key as string));
+  const kind = approvalSubjectKind(subject?.schema);
   if (
     !subjectRow ||
     !subject ||
@@ -218,8 +148,9 @@ export async function verifyApprovalSubject(deps: ApprovalSubjectsDeps, input: {
     !gate.decided_by ||
     !gate.resolved_at ||
     !stage ||
+    !kind ||
     stage.ownerKind !== 'capability' ||
-    !stageCapabilitiesMet(stage, ['x-publish'])
+    !stageCapabilitiesMet(stage, [...kind.executorCapabilities])
   ) {
     return { ok: false, code: 'APPROVAL_SUBJECT_NOT_VERIFIED', message: 'approval subject and gate binding is not valid' };
   }
@@ -358,7 +289,8 @@ export async function prepareApprovalSubject(deps: ApprovalSubjectsDeps, card: C
     code: 'INVALID_APPROVAL_SUBJECT',
     message,
   });
-  if (stage.approvalSubjectSchema !== 'social-publish/v1') {
+  const kind = approvalSubjectKind(stage.approvalSubjectSchema);
+  if (!kind) {
     return invalid(`unsupported approval subject schema: ${stage.approvalSubjectSchema ?? ''}`);
   }
   if (!stage.approvalDeciderPrincipalIds?.length || stage.approvalDeciderPrincipalIds.some((id) => !nonEmptyString(id))) {
@@ -368,15 +300,15 @@ export async function prepareApprovalSubject(deps: ApprovalSubjectsDeps, card: C
   if (handoff === null || typeof handoff !== 'object' || Array.isArray(handoff)) {
     return invalid('approval subject handoff must be an object');
   }
-  const payload = handoff.publicationPayload;
-  const payloadError = socialPublishPayloadError(payload);
+  const payload = kind.payload(handoff);
+  const payloadError = kind.validationError(payload);
   if (payloadError) return invalid(payloadError);
 
   const prior = deps.sql
     .exec(
       `SELECT COALESCE(MAX(revision), 0) AS revision FROM approval_subjects WHERE card_id = ? AND schema = ?`,
       card.id,
-      stage.approvalSubjectSchema,
+      kind.schema,
     )
     .one();
   const revision = Number(prior.revision) + 1;
@@ -397,7 +329,7 @@ export async function prepareApprovalSubject(deps: ApprovalSubjectsDeps, card: C
     canonical = canonicalJson({
       ...(payload as Record<string, JsonValue>),
       ...(outboundRequest && requestDigest ? { outboundRequest: { ...outboundRequest, digest: requestDigest } } : {}),
-      schema: stage.approvalSubjectSchema,
+      schema: kind.schema,
       cardId: card.id,
       projectId: card.projectId,
       revision,
@@ -412,7 +344,7 @@ export async function prepareApprovalSubject(deps: ApprovalSubjectsDeps, card: C
     ok: true,
     value: {
       id: newId('aps'),
-      schema: stage.approvalSubjectSchema,
+      schema: kind.schema,
       revision,
       canonicalBytes,
       digest,

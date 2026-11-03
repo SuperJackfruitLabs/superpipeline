@@ -24,6 +24,7 @@ export function statusForCode(code: BoardErrorCode): number {
     case 'INVALID_OUTCOME':
     case 'INVALID_APPROVAL_SUBJECT':
     case 'INVALID_APPROVAL_DELIVERY':
+    case 'GATE_DECISION_NOT_ALLOWED':
     case 'INVALID_LIVE_URL':
       return 400;
     case 'BUDGET_EXCEEDED':
@@ -46,6 +47,7 @@ export function statusForCode(code: BoardErrorCode): number {
     case 'APPROVAL_DELIVERY_NOT_AVAILABLE':
     case 'APPROVAL_DELIVERY_NOT_MANUAL':
     case 'APPROVAL_DELIVERY_STARTED':
+    case 'APPROVAL_DELIVERY_DELIVERED':
     // The question was already settled (answered, or retired with its run) — a conflict with the
     // state the caller believed in, not a bad request. Retrying it will never succeed.
     case 'DECISION_EXPIRED':
