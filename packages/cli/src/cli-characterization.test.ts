@@ -75,6 +75,9 @@ function answer(method: string, url: URL): { status: number; body: unknown } {
       gates: [{ cardId: "crd_1", stageKey: "build" }],
     },
     "GET /v1/boards/brd_1/gates/pending": { gates: [{ id: "gat_1", cardId: "crd_1", stageKey: "build", producedBy: "agt_1" }] },
+    "GET /v1/boards/brd_1/gates/gat_1": {
+      gate: { id: "gat_1", approvalSubject: { id: "aps_1", digest: "sha256:abc" } },
+    },
     "GET /v1/boards/brd_1/cards/crd_1": { card: { id: "crd_1", title: "First", spec: { goal: "ship", notes: "old" }, updatedAt: "2030-01-01T00:00:00.000Z" } },
     "GET /v1/boards/brd_1/cards/crd_1/activities": {
       activities: [
@@ -340,6 +343,10 @@ const RUNS: Scenario[] = [
   { argv: ["approve", "brd_1"] },
   { argv: ["approve", "brd_1", "gat_1"] },
   { argv: ["approve", "brd_1", "gat_1", "--comment", "fine"] },
+  { argv: ["approve", "brd_1", "gat_1", "--delivery", "manual", "--comment", "I will post it"] },
+  { argv: ["delivery", "brd_1", "gat_1", "--remind-at", "2029-01-02T03:04:05.000Z"] },
+  { argv: ["delivery", "brd_1", "gat_1", "--mode", "automatic"] },
+  { argv: ["delivery", "brd_1", "gat_1", "--live-url", "https://example.test/status/1"] },
   { argv: ["reject", "brd_1", "gat_1", "--comment", "no"] },
   { argv: ["request-changes", "brd_1", "gat_1"] },
   { argv: ["request-changes", "brd_1", "gat_1", "--comment", "rename it"] },
@@ -447,4 +454,29 @@ describe("supi commands against a fake API, pinned", () => {
       expect(await run(s)).toMatchSnapshot();
     },
   );
+});
+
+describe("manual delivery commands", () => {
+  it("binds manual approval to the exact subject read from the gate", async () => {
+    const result = await run({ argv: ["approve", "brd_1", "gat_1", "--delivery", "manual"] });
+    expect(result.exit).toBe(0);
+    expect(result.requests.map(({ method, url, body }) => ({ method, url, body }))).toEqual([
+      { method: "GET", url: "https://work.example/v1/boards/brd_1/gates/gat_1", body: null },
+      {
+        method: "POST",
+        url: "https://work.example/v1/boards/brd_1/gates/gat_1/resolve",
+        body: JSON.stringify({ decision: "approve_manual", approvalSubjectId: "aps_1", approvalSubjectDigest: "sha256:abc" }),
+      },
+    ]);
+  });
+
+  it("sends a chosen reminder time through the delivery route", async () => {
+    const result = await run({ argv: ["delivery", "brd_1", "gat_1", "--remind-at", "2029-01-02T03:04:05.000Z"] });
+    expect(result.exit).toBe(0);
+    expect(result.requests.at(-1)).toMatchObject({
+      method: "POST",
+      url: "https://work.example/v1/boards/brd_1/gates/gat_1/delivery",
+      body: JSON.stringify({ remindAt: "2029-01-02T03:04:05.000Z" }),
+    });
+  });
 });

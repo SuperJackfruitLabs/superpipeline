@@ -59,6 +59,22 @@
               Recorded: <a class="underline" href={m.deliveryGate.delivery.liveUrl} target="_blank" rel="noreferrer">{m.deliveryGate.delivery.liveUrl}</a>
               · read-back {m.deliveryGate.delivery.readBackStatus === 'not_checked' ? 'not available' : m.deliveryGate.delivery.readBackStatus}
             </p>
+            {#if m.deliveryGate.delivery.readBackStatus === 'mismatch'}
+              <p role="alert" class="border-coral/40 text-coral mono rounded-[7px] border px-3 py-2 text-xs">Mismatch: the live post digest does not match the approved frozen digest.</p>
+            {/if}
+          {/if}
+          <label for="manual-remind-at" class="mono mt-1 text-[11px]">Remind me if no live URL is recorded</label>
+          <div class="flex gap-2">
+            <input id="manual-remind-at" bind:value={m.delivery.remindAt} type="datetime-local" class="bg-surface border-border min-w-0 flex-1 rounded-[7px] border px-2.5 py-2 text-xs" />
+            <Button
+              size="sm"
+              variant="outline"
+              disabled={m.delivery.saving || m.delivery.remindAt === '' || !!m.deliveryGate.delivery?.liveUrl}
+              onclick={() => void m.delivery.change({ remindAt: new Date(m.delivery.remindAt).toISOString() })}
+            >Schedule reminder</Button>
+          </div>
+          {#if m.deliveryGate.delivery?.remindAt}
+            <p class="mono text-[11px]">Reminder scheduled for {new Date(m.deliveryGate.delivery.remindAt).toLocaleString()}.</p>
           {/if}
           <Button size="sm" variant="outline" disabled={m.delivery.saving || !!m.deliveryGate.delivery?.liveUrl} onclick={() => void m.delivery.change({ mode: 'automatic' })}>
             Switch to automatic delivery

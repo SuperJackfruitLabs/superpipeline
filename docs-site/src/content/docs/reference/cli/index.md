@@ -68,7 +68,8 @@ The verb comes first. Flags may be written `--name value` or `--name=value`, any
 | command | what it does |
 |---|---|
 | [`supi gates`](/reference/cli/gates/#supi-gates) | approval gates waiting on a human |
-| [`supi approve`](/reference/cli/gates/#supi-approve) | approve a gate: the card moves on |
+| [`supi approve`](/reference/cli/gates/#supi-approve) | approve a gate, choosing delivery for a frozen post |
+| [`supi delivery`](/reference/cli/gates/#supi-delivery) | update delivery of an approved frozen post |
 | [`supi reject`](/reference/cli/gates/#supi-reject) | reject a gate |
 | [`supi request-changes`](/reference/cli/gates/#supi-request-changes) | send the card back for rework, saying what to change |
 

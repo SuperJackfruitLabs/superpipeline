@@ -134,7 +134,7 @@ async function openBoundGate(
 function boundDecision(gate: GateRow, subject: SubjectRow, decidedBy = DECIDER) {
   return {
     gateId: gate.id,
-    decision: 'approve' as const,
+    decision: 'approve_automatic' as const,
     decidedBy,
     approvalSubjectId: subject.id,
     approvalSubjectDigest: subject.digest,
@@ -320,8 +320,18 @@ describe('bound gate resolution', () => {
     const stub = env.BOARD_DO.get(env.BOARD_DO.idFromName('approval-exact-decision')) as unknown as DurableObjectStub<BoardDO>;
     await runInDurableObject(stub, async (board: BoardDO, state) => {
       const opened = await openBoundGate(board, state, 'exact');
-      const result = await board.resolveGate(boundDecision(opened.gate, opened.subject) as never);
+      const result = await board.resolveGate({ ...boundDecision(opened.gate, opened.subject), decision: 'approve_automatic' } as never);
       expect(result).toMatchObject({ ok: true, value: { currentStageKey: 'publish' } });
+    });
+  });
+
+  it('refuses plain approve because a bound gate accepts only its own options', async () => {
+    const stub = env.BOARD_DO.get(env.BOARD_DO.idFromName('approval-own-options')) as unknown as DurableObjectStub<BoardDO>;
+    await runInDurableObject(stub, async (board: BoardDO, state) => {
+      const opened = await openBoundGate(board, state, 'own-options');
+      const result = await board.resolveGate({ ...boundDecision(opened.gate, opened.subject), decision: 'approve' } as never);
+      expect(result).toMatchObject({ ok: false, code: 'GATE_DECISION_NOT_ALLOWED' });
+      expect(state.storage.sql.exec('SELECT status, decision FROM gates WHERE id = ?', opened.gate.id).one()).toEqual({ status: 'pending', decision: null });
     });
   });
 
@@ -428,6 +438,27 @@ describe('bound gate resolution', () => {
       });
     }
   });
+  it.each([
+    ['approve_automatic', 'manual'], ['approve_manual', 'automatic'],
+  ] as const)('refuses a %s delivery switch after the publisher run completed', async (storedDecision, nextMode) => {
+    const stub = env.BOARD_DO.get(env.BOARD_DO.idFromName(`approval-delivered-${storedDecision}`)) as unknown as DurableObjectStub<BoardDO>;
+    await runInDurableObject(stub, async (board: BoardDO, state) => {
+      const opened = await openBoundGate(board, state, `delivered-${storedDecision}`);
+      await board.resolveGate({ ...boundDecision(opened.gate, opened.subject), decision: 'approve_automatic' } as never);
+      const claim = await board.claim({ agentId: PUBLISHER, capabilities: ['x-publish'] });
+      if (!claim.claimed) throw new Error('publisher fixture was not claimable');
+      const completed = await board.complete({ runId: claim.runId, leaseEpoch: claim.leaseEpoch, handoff: { summary: 'published' } });
+      expect(completed.ok).toBe(true);
+      state.storage.sql.exec('UPDATE gates SET decision = ? WHERE id = ?', storedDecision, opened.gate.id);
+      const beforeCard = state.storage.sql.exec('SELECT current_stage_key, state, current_run_id FROM cards WHERE id = ?', opened.cardId).one();
+      const beforeEvents = state.storage.sql.exec('SELECT COUNT(*) AS count FROM approval_delivery_events').one();
+      const switched = await board.updateApprovalDelivery({ gateId: opened.gate.id, actor: DECIDER, mode: nextMode });
+      expect(switched).toMatchObject({ ok: false, code: 'APPROVAL_DELIVERY_DELIVERED' });
+      expect(state.storage.sql.exec('SELECT current_stage_key, state, current_run_id FROM cards WHERE id = ?', opened.cardId).one()).toEqual(beforeCard);
+      expect(state.storage.sql.exec('SELECT decision FROM gates WHERE id = ?', opened.gate.id).one()).toEqual({ decision: storedDecision });
+      expect(state.storage.sql.exec('SELECT COUNT(*) AS count FROM approval_delivery_events').one()).toEqual(beforeEvents);
+    });
+  });
 
   it.each([
     ['approve_manual', 'automatic', 'approve', 'input-required'],
@@ -482,6 +513,53 @@ describe('bound gate resolution', () => {
     });
   });
 
+  it.each([
+    ['matched', (digest: string) => digest], ['mismatch', () => `sha256:${'f'.repeat(64)}`],
+  ] as const)('reads a public live URL back without posting credentials and marks %s', async (expectedStatus, liveDigest) => {
+    const stub = env.BOARD_DO.get(env.BOARD_DO.idFromName(`approval-readback-${expectedStatus}`)) as unknown as DurableObjectStub<BoardDO>;
+    await runInDurableObject(stub, async (board: BoardDO, state) => {
+      const opened = await openBoundGate(board, state, `readback-${expectedStatus}`);
+      await board.resolveGate({ ...boundDecision(opened.gate, opened.subject), decision: 'approve_manual' } as never);
+      const realFetch = globalThis.fetch;
+      let requestHeaders = new Headers();
+      globalThis.fetch = (async (_input: RequestInfo | URL, init?: RequestInit) => {
+        requestHeaders = new Headers(init?.headers);
+        return new Response('{}', { status: 200, headers: { 'content-type': 'application/json', 'x-superpipeline-approved-digest': liveDigest(opened.subject.digest) } });
+      }) as typeof fetch;
+      try {
+        const recorded = await board.updateApprovalDelivery({ gateId: opened.gate.id, actor: DECIDER, liveUrl: `https://x.com/fixture/status/${expectedStatus}` });
+        expect(recorded).toMatchObject({ ok: true, value: { delivery: { readBackStatus: expectedStatus } } });
+        expect(requestHeaders.has('authorization')).toBe(false);
+        expect(state.storage.sql.exec('SELECT live_post_readback_status FROM gates WHERE id = ?', opened.gate.id).one()).toEqual({ live_post_readback_status: expectedStatus });
+      } finally { globalThis.fetch = realFetch; }
+    });
+  });
+
+  it('reminds at the chosen time when manual delivery still has no live URL', async () => {
+    const stub = env.BOARD_DO.get(env.BOARD_DO.idFromName('approval-manual-reminder')) as unknown as DurableObjectStub<BoardDO>;
+    await runInDurableObject(stub, async (board: BoardDO, state) => {
+      const opened = await openBoundGate(board, state, 'manual-reminder');
+      await board.resolveGate({ ...boundDecision(opened.gate, opened.subject), decision: 'approve_manual' } as never);
+      const remindAt = '2029-01-02T03:04:05.000Z';
+      expect(await board.updateApprovalDelivery({ gateId: opened.gate.id, actor: DECIDER, remindAt } as never)).toMatchObject({
+        ok: true, value: { delivery: { mode: 'manual', liveUrl: null, remindAt } },
+      });
+      await board.sweepBoard('2029-01-02T03:04:04.999Z');
+      expect((await board.getNotifications()).filter((note) => note.kind === 'approval-delivery-reminder')).toHaveLength(0);
+      await board.sweepBoard(remindAt);
+      const reminders = (await board.getNotifications()).filter((note) => note.kind === 'approval-delivery-reminder');
+      expect(reminders).toHaveLength(1);
+      const [reminder] = reminders;
+      expect(reminder).toMatchObject({ cardId: opened.cardId, userId: 'usr_fixture_owner' });
+      expect(reminder?.body).toMatch(/record the live post URL.*switch to automatic/);
+      expect((await board.staleCards({ nowIso: remindAt, attention: true })).find((card) => card.cardId === opened.cardId)).toMatchObject({
+        why: { kind: 'needs-human', detail: expect.stringContaining('live post URL') },
+      });
+      const audits = state.storage.sql.exec("SELECT event FROM approval_delivery_events WHERE event IN ('reminder_scheduled', 'reminder_sent') ORDER BY created_at").toArray();
+      expect(audits).toEqual([{ event: 'reminder_scheduled' }, { event: 'reminder_sent' }]);
+    });
+  });
+
   it('serves the audited delivery workflow through the signed-in human route', async () => {
     const tenantId = 'tnt_delivery_route';
     const boardId = 'brd_delivery_route';
@@ -492,6 +570,15 @@ describe('bound gate resolution', () => {
       gateId = opened.gate.id;
       await board.resolveGate({ ...boundDecision(opened.gate, opened.subject), decision: 'approve_manual' } as never);
     });
+
+    const remindAt = '2029-01-02T03:04:05.000Z';
+    const reminderResponse = await SELF.fetch(`https://api.test/v1/boards/${boardId}/gates/${gateId}/delivery`, {
+      method: 'POST',
+      headers: auth(tenantId, { 'X-User-Id': DECIDER }),
+      body: JSON.stringify({ remindAt }),
+    });
+    expect(reminderResponse.status).toBe(200);
+    expect(await reminderResponse.json()).toMatchObject({ delivery: { mode: 'manual', remindAt } });
 
     const response = await SELF.fetch(`https://api.test/v1/boards/${boardId}/gates/${gateId}/delivery`, {
       method: 'POST',
@@ -721,7 +808,7 @@ describe('run-fenced approval-subject verify route', () => {
         schema: 'social-publish/v1',
         account: ACCOUNT,
       },
-      gate: { decision: 'approve', decidedBy: DECIDER, resolvedAt: expect.any(String) },
+      gate: { decision: 'approve_automatic', decidedBy: DECIDER, resolvedAt: expect.any(String) },
     });
     expect((body.subject as { canonical: { cardId: string } }).canonical.cardId).toBe(body.cardId);
   });

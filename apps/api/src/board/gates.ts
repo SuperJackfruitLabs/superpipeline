@@ -1,4 +1,5 @@
 import type { GateDecision } from '@superpipeline/contract';
+import { approvalSubjectKind } from '../approval-subject-kinds';
 import { newId } from '../ids';
 import type { BoardContext } from './context';
 import type { GateOption } from './gate-option';
@@ -36,6 +37,24 @@ export type GatesDeps = Pick<
   | 'sql'
   | 'stages'
 >;
+
+async function readBackStatus(url: URL, schema: string, approvedDigest: string): Promise<'not_checked' | 'matched' | 'mismatch'> {
+  const kind = approvalSubjectKind(schema);
+  if (!kind?.canReadBack(url)) return 'not_checked';
+  try {
+    const response = await fetch(url, {
+      method: 'GET',
+      redirect: 'follow',
+      headers: { Accept: 'application/json, text/html;q=0.9' },
+    });
+    if (!response.ok) return 'not_checked';
+    const liveDigest = await kind.readBackDigest(response);
+    if (liveDigest === null) return 'not_checked';
+    return liveDigest === approvedDigest ? 'matched' : 'mismatch';
+  } catch {
+    return 'not_checked';
+  }
+}
 
 /** The decisions a human can take at an approval gate (docs/08 §6). */
 const DEFAULT_GATE_OPTIONS: GateOption[] = [
@@ -115,6 +134,14 @@ export async function resolveGate(deps: GatesDeps, input: {
     ) {
       return { ok: false, code: 'APPROVAL_SUBJECT_MISMATCH', message: 'the approval subject is no longer active' };
     }
+    const options = JSON.parse((gate.options_json as string | null) ?? '[]') as GateOption[];
+    if (!options.some((option) => option.name === input.decision)) {
+      return {
+        ok: false,
+        code: 'GATE_DECISION_NOT_ALLOWED',
+        message: `decision "${input.decision}" is not one of this gate's options`,
+      };
+    }
   }
 
   const cardId = gate.card_id as string;
@@ -190,6 +217,7 @@ export async function updateApprovalDelivery(deps: GatesDeps, input: {
   actor: string;
   mode?: 'manual' | 'automatic';
   liveUrl?: string;
+  remindAt?: string;
 }): Promise<Result<CardView & { delivery: NonNullable<GateView['delivery']> }>> {
   const gate = deps.sql.exec(`SELECT * FROM gates WHERE id = ?`, input.gateId).toArray()[0];
   if (!gate) return { ok: false, code: 'GATE_NOT_FOUND', message: `gate not found: ${input.gateId}` };
@@ -204,16 +232,56 @@ export async function updateApprovalDelivery(deps: GatesDeps, input: {
   }
   const cardId = gate.card_id as string;
   const cardRow = deps.getCardRow(cardId);
-  const subject = deps.sql.exec(`SELECT status FROM approval_subjects WHERE id = ?`, subjectId).toArray()[0];
+  const currentMode = decision === 'approve_manual' ? 'manual' : 'automatic';
+  if (input.mode !== undefined && input.mode !== currentMode) {
+    const delivered = deps.sql
+      .exec(
+        `SELECT id FROM runs
+          WHERE card_id = ? AND status = 'ended' AND outcome = 'completed' AND started_at >= ?
+          LIMIT 1`,
+        cardId,
+        gate.resolved_at,
+      )
+      .toArray()[0];
+    if (delivered) {
+      return { ok: false, code: 'APPROVAL_DELIVERY_DELIVERED', message: 'delivery mode cannot change after the publisher run completed' };
+    }
+  }
+  const subject = deps.sql.exec(`SELECT status, schema, digest FROM approval_subjects WHERE id = ?`, subjectId).toArray()[0];
   if (!cardRow || cardRow.active_approval_subject_id !== subjectId || subject?.status !== 'active') {
     return { ok: false, code: 'APPROVAL_SUBJECT_MISMATCH', message: 'the approved subject is no longer active' };
   }
-  if ((input.mode === undefined) === (input.liveUrl === undefined)) {
-    return { ok: false, code: 'INVALID_APPROVAL_DELIVERY', message: 'provide exactly one of mode or liveUrl' };
+  const changes = [input.mode, input.liveUrl, input.remindAt].filter((value) => value !== undefined);
+  if (changes.length !== 1) {
+    return { ok: false, code: 'INVALID_APPROVAL_DELIVERY', message: 'provide exactly one of mode, liveUrl or remindAt' };
   }
 
   const now = deps.now();
-  if (input.liveUrl !== undefined) {
+  if (input.remindAt !== undefined) {
+    if (decision !== 'approve_manual' || gate.live_post_url) {
+      return { ok: false, code: 'APPROVAL_DELIVERY_NOT_MANUAL', message: 'a reminder is scheduled only for unpublished manual delivery' };
+    }
+    if (!Number.isFinite(Date.parse(input.remindAt))) {
+      return { ok: false, code: 'INVALID_APPROVAL_DELIVERY', message: 'remindAt must be an ISO timestamp' };
+    }
+    deps.ctx.storage.transactionSync(() => {
+      deps.sql.exec(
+        `UPDATE gates SET live_post_remind_at = ?, live_post_reminder_notified_at = NULL WHERE id = ?`,
+        input.remindAt,
+        input.gateId,
+      );
+      deps.sql.exec(
+        `INSERT INTO approval_delivery_events
+           (id, gate_id, subject_id, event, from_mode, to_mode, actor, live_url, created_at)
+         VALUES (?, ?, ?, 'reminder_scheduled', 'manual', 'manual', ?, NULL, ?)`,
+        newId('ade'),
+        input.gateId,
+        subjectId,
+        input.actor,
+        now,
+      );
+    });
+  } else if (input.liveUrl !== undefined) {
     if (decision !== 'approve_manual') {
       return { ok: false, code: 'APPROVAL_DELIVERY_NOT_MANUAL', message: 'a live URL is recorded only for manual delivery' };
     }
@@ -226,13 +294,15 @@ export async function updateApprovalDelivery(deps: GatesDeps, input: {
     if (parsed.protocol !== 'https:') {
       return { ok: false, code: 'INVALID_LIVE_URL', message: 'live URL must be an absolute https URL' };
     }
+    const readBack = await readBackStatus(parsed, subject.schema as string, subject.digest as string);
     deps.ctx.storage.transactionSync(() => {
       deps.sql.exec(
         `UPDATE gates SET live_post_url = ?, live_post_url_recorded_by = ?, live_post_url_recorded_at = ?,
-                          live_post_readback_status = 'not_checked' WHERE id = ?`,
+                          live_post_readback_status = ? WHERE id = ?`,
         parsed.toString(),
         input.actor,
         now,
+        readBack,
         input.gateId,
       );
       deps.sql.exec(
@@ -248,7 +318,6 @@ export async function updateApprovalDelivery(deps: GatesDeps, input: {
       );
     });
   } else {
-    const currentMode = decision === 'approve_manual' ? 'manual' : 'automatic';
     const nextMode = input.mode!;
     if (nextMode !== currentMode) {
       if (currentMode === 'automatic' && (cardRow.current_run_id || cardRow.state === 'working')) {
@@ -423,6 +492,7 @@ function rowToGate(deps: GatesDeps, r: Row): GateView {
       ? {
           mode: decision === 'approve_manual' ? ('manual' as const) : ('automatic' as const),
           liveUrl: (r.live_post_url as string | null) ?? null,
+          remindAt: (r.live_post_remind_at as string | null) ?? null,
           readBackStatus: ((r.live_post_readback_status as 'not_checked' | 'matched' | 'mismatch' | null) ?? 'not_checked'),
           recordedBy: (r.live_post_url_recorded_by as string | null) ?? null,
           recordedAt: (r.live_post_url_recorded_at as string | null) ?? null,

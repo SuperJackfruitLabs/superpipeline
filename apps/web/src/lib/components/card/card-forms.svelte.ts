@@ -303,6 +303,7 @@ export class ReferenceComposer {
 
 export class DeliveryControls {
   liveUrl = $state('');
+  remindAt = $state('');
   saving = $state(false);
   copied = $state<number | null>(null);
   #m: CardFormHost;
@@ -311,10 +312,11 @@ export class DeliveryControls {
   }
   reset(): void {
     this.liveUrl = '';
+    this.remindAt = '';
     this.saving = false;
     this.copied = null;
   }
-  async change(update: { mode: 'manual' | 'automatic' } | { liveUrl: string }): Promise<void> {
+  async change(update: { mode: 'manual' | 'automatic' } | { liveUrl: string } | { remindAt: string }): Promise<void> {
     const gate = this.#m.deliveryGate;
     const boardId = this.#m.boardId;
     if (!boardId || !gate || this.saving) return;

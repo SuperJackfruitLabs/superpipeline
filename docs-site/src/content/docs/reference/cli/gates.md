@@ -46,10 +46,10 @@ supi gates brd_8f2c…
 
 ## `supi approve`
 
-Approves the gate. The card advances to the next stage; if that stage is gated too, a new gate opens on the same run.
+Approves a generic gate. For an immutable publishing approval, `--delivery manual|automatic` reads the gate and binds that exact frozen subject and digest to the chosen delivery mode.
 
 ```sh
-supi approve <boardId> <gateId> [--comment "why"]
+supi approve <boardId> <gateId> [--comment "why"] [--delivery manual|automatic]
 ```
 
 | argument | meaning |
@@ -60,25 +60,71 @@ supi approve <boardId> <gateId> [--comment "why"]
 | flag | type | default | meaning |
 |---|---|---|---|
 | `--comment "why"` | string | no comment | recorded with the decision and shown to whoever reads the card |
+| `--delivery manual\|automatic` | one of `manual`, `automatic` | plain approval for a generic gate | for an immutable publishing approval, bind the frozen digest to manual or automatic delivery |
 
 **Who may run it**
 
 - **A person:** `member` or above in the workspace.
 - **An agent token:** refused, whatever scopes it carries.
 
-**Calls** `POST /v1/boards/:boardId/gates/:gateId/resolve`
+**Calls** `GET /v1/boards/:boardId/gates/:gateId`, then `POST /v1/boards/:boardId/gates/:gateId/resolve`
 
 **Prints** JSON: the resolved gate.
 
 **Exit status** `0` on success. `1` when:
 
 - `<boardId>` or `<gateId>` is missing
+- `--delivery` is not manual or automatic
+- the gate has no immutable approval subject
 - there is no usable credential, or the server refuses it (401) or the act (403), or answers any other error
 
 **Example**
 
 ```sh
 supi approve brd_8f2c… gat_19c0… --comment "checked the diff"
+supi approve brd_8f2c… gat_19c0… --delivery manual --comment "I will post it"
+```
+
+## `supi delivery`
+
+Changes only delivery mechanics for an already approved immutable subject. Give exactly one of `--mode`, `--live-url`, or `--remind-at`; switching modes does not require a fresh approval because the digest stays unchanged.
+
+```sh
+supi delivery <boardId> <gateId> [--mode manual|automatic] [--live-url https://…] [--remind-at ISO timestamp]
+```
+
+| argument | meaning |
+|---|---|
+| `<boardId>` | the board, as `brd_…` (see `supi boards`) |
+| `<gateId>` | the gate (see `supi gates <boardId>`) |
+
+| flag | type | default | meaning |
+|---|---|---|---|
+| `--mode manual\|automatic` | one of `manual`, `automatic` | — | switch delivery mode without changing the approved digest |
+| `--live-url https://…` | string | — | record the URL of a manually published post |
+| `--remind-at ISO timestamp` | string | — | if no live URL exists then, remind the person and offer automatic delivery |
+
+**Who may run it**
+
+- **A person:** `member` or above in the workspace.
+- **An agent token:** refused, whatever scopes it carries.
+
+**Calls** `POST /v1/boards/:boardId/gates/:gateId/delivery`
+
+**Prints** JSON: the card and its updated delivery state.
+
+**Exit status** `0` on success. `1` when:
+
+- `<boardId>` or `<gateId>` is missing
+- not exactly one delivery update is given
+- `--remind-at` is not a timestamp
+- there is no usable credential, or the server refuses it (401) or the act (403), or answers any other error
+
+**Example**
+
+```sh
+supi delivery brd_8f2c… gat_19c0… --remind-at 2029-01-02T03:04:05Z
+supi delivery brd_8f2c… gat_19c0… --mode automatic
 ```
 
 ## `supi reject`

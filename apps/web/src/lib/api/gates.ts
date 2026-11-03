@@ -59,6 +59,7 @@ export interface Gate {
   delivery?: {
     mode: 'manual' | 'automatic';
     liveUrl: string | null;
+    remindAt: string | null;
     readBackStatus: 'not_checked' | 'matched' | 'mismatch';
     recordedBy: string | null;
     recordedAt: string | null;
@@ -119,7 +120,7 @@ export function resolveGate(
 export function updateApprovalDelivery(
   boardId: string,
   gateId: string,
-  update: { mode: 'manual' | 'automatic' } | { liveUrl: string },
+  update: { mode: 'manual' | 'automatic' } | { liveUrl: string } | { remindAt: string },
 ): Promise<Response> {
   return fetch(`/v1/boards/${boardId}/gates/${gateId}/delivery`, {
     method: 'POST',

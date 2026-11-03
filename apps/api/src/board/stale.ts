@@ -1,4 +1,5 @@
 import type { BoardContext } from './context';
+import { newId } from '../ids';
 import type { CardView, Result, Row, StaleCardView, StaleSettings } from './model';
 import { handoffSummary } from './rules';
 
@@ -20,6 +21,7 @@ export type StaleDeps = Pick<
   | 'notify'
   | 'now'
   | 'rowToCard'
+  | 'setNeedsHuman'
   | 'setMeta'
   | 'sql'
   | 'stages'
@@ -137,6 +139,38 @@ export async function sweepBoard(deps: StaleDeps, nowIso: string): Promise<{ ove
     }
   } catch (err) {
     deps.emit('overdue.sweep_failed', { reason: String(err) });
+  }
+
+  // A manual delivery reminder is separate from the stale digest: the person chose an exact
+  // instant, so the board must notify once at that instant even when stale-card notices are off.
+  try {
+    const reminders = deps.sql
+      .exec(
+        `SELECT id, card_id, approval_subject_id, decided_by FROM gates
+          WHERE status = 'resolved' AND decision = 'approve_manual'
+            AND live_post_url IS NULL AND live_post_remind_at IS NOT NULL
+            AND live_post_remind_at <= ? AND live_post_reminder_notified_at IS NULL`,
+        nowIso,
+      )
+      .toArray();
+    for (const reminder of reminders) {
+      const detail = 'record the live post URL or switch to automatic without a fresh approval';
+      deps.notify('approval-delivery-reminder', reminder.card_id as string, `Manual delivery is waiting: ${detail}.`);
+      deps.setNeedsHuman(reminder.card_id as string, { reason: 'review', detail });
+      deps.sql.exec(`UPDATE gates SET live_post_reminder_notified_at = ? WHERE id = ?`, nowIso, reminder.id);
+      deps.sql.exec(
+        `INSERT INTO approval_delivery_events
+           (id, gate_id, subject_id, event, from_mode, to_mode, actor, live_url, created_at)
+         VALUES (?, ?, ?, 'reminder_sent', 'manual', 'manual', ?, NULL, ?)`,
+        newId('ade'),
+        reminder.id,
+        reminder.approval_subject_id,
+        (reminder.decided_by as string | null) ?? 'system',
+        nowIso,
+      );
+    }
+  } catch (err) {
+    deps.emit('approval_delivery_reminder.sweep_failed', { reason: String(err) });
   }
 
   // Its own try/catch, for the reason the backfill above has one: three jobs share this sweep, and
