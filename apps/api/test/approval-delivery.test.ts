@@ -1,7 +1,7 @@
 import { runInDurableObject } from 'cloudflare:test';
 import { describe, expect, it } from 'vitest';
 import type { BoardDO } from '../src/board/board-do';
-import { DECIDER, boardStub, boundDecision, openBoundGate } from './approval-subject-fixtures';
+import { DECIDER, addBoundCard, boardStub, boundDecision, openBoundGate } from './approval-subject-fixtures';
 
 /** Manual delivery after approval: the live URL, its credential-free read-back, and reminders. */
 describe('manual delivery after approval', () => {
@@ -88,6 +88,25 @@ describe('manual delivery after approval', () => {
         expect(state.storage.sql.exec('SELECT live_post_url FROM gates WHERE id = ?', opened.gate.id).one()).toEqual({ live_post_url: 'https://x.com/fixture/status/first' });
         expect(state.storage.sql.exec("SELECT COUNT(*) AS n FROM approval_delivery_events WHERE event = 'live_url_recorded'").one()).toEqual({ n: 0 });
       } finally { globalThis.fetch = realFetch; }
+    });
+  });
+
+  it('one reminder that cannot be recorded does not stop the others on the board', async () => {
+    const stub = boardStub('approval-reminder-isolation');
+    await runInDurableObject(stub, async (board: BoardDO, state) => {
+      const first = await openBoundGate(board, state, 'reminder-isolation');
+      const second = await addBoundCard(board, state);
+      const remindAt = '2029-01-02T03:04:05.000Z';
+      for (const opened of [first, second]) {
+        await board.resolveGate(boundDecision(opened.gate, opened.subject, DECIDER, 'approve_manual'));
+        await board.updateApprovalDelivery({ gateId: opened.gate.id, actor: DECIDER, remindAt });
+      }
+      // The first gate's audit row can no longer be written: its subject reference is gone.
+      state.storage.sql.exec('UPDATE gates SET approval_subject_id = NULL WHERE id = ?', first.gate.id);
+      await board.sweepBoard(remindAt);
+      const reminded = (await board.getNotifications()).filter((note) => note.kind === 'approval-delivery-reminder').map((note) => note.cardId);
+      expect(reminded).toEqual([second.cardId]);
+      expect(state.storage.sql.exec('SELECT live_post_reminder_notified_at AS at FROM gates WHERE id = ?', first.gate.id).one()).toEqual({ at: null });
     });
   });
 

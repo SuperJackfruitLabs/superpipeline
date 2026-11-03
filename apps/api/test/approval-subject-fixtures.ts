@@ -106,6 +106,15 @@ export async function openBoundGate(
     name: 'Fixture board',
     stages: options.stages ?? STAGES,
   });
+  return addBoundCard(board, state, options);
+}
+
+/** A further card at the bound gate on a board openBoundGate already set up. */
+export async function addBoundCard(
+  board: BoardDO,
+  state: DurableObjectState,
+  options: { projectId?: string | null; publicationPayload?: unknown } = {},
+) {
   const made = await board.createCard({
     title: 'Sanitized approval fixture',
     ownerUserId: 'usr_fixture_owner',

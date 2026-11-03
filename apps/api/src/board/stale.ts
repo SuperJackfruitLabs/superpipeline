@@ -14,6 +14,7 @@ export type StaleDeps = Pick<
   | 'backfillDueDates'
   | 'backfillLabelNames'
   | 'backfillTerminalStageCards'
+  | 'ctx'
   | 'emit'
   | 'fireDueSchedules'
   | 'getMeta'
@@ -153,23 +154,39 @@ export async function sweepBoard(deps: StaleDeps, nowIso: string): Promise<{ ove
         nowIso,
       )
       .toArray();
+    // Each reminder is claimed and audited in one transaction before anyone is told, so a failure
+    // after the claim costs at most this one notice instead of repeating it every sweep. And each
+    // has its own try: one gate that cannot be reminded must not silence the others on the board.
     for (const reminder of reminders) {
-      const detail = 'record the live post URL or switch to automatic without a fresh approval';
-      if (typeof reminder.card_id !== 'string') throw new Error('manual delivery reminder has no card id');
-      const cardId = reminder.card_id;
-      deps.notify('approval-delivery-reminder', cardId, `Manual delivery is waiting: ${detail}.`);
-      deps.setNeedsHuman(cardId, { reason: 'review', detail });
-      deps.sql.exec(`UPDATE gates SET live_post_reminder_notified_at = ? WHERE id = ?`, nowIso, reminder.id);
-      deps.sql.exec(
-        `INSERT INTO approval_delivery_events
-           (id, gate_id, subject_id, event, from_mode, to_mode, actor, live_url, created_at)
-         VALUES (?, ?, ?, 'reminder_sent', 'manual', 'manual', ?, NULL, ?)`,
-        newId('ade'),
-        reminder.id,
-        reminder.approval_subject_id,
-        typeof reminder.decided_by === 'string' ? reminder.decided_by : 'system',
-        nowIso,
-      );
+      try {
+        const detail = 'record the live post URL or switch to automatic without a fresh approval';
+        if (typeof reminder.card_id !== 'string') throw new Error('manual delivery reminder has no card id');
+        const cardId = reminder.card_id;
+        const claimed = deps.ctx.storage.transactionSync(() => {
+          const marked = deps.sql.exec(
+            `UPDATE gates SET live_post_reminder_notified_at = ? WHERE id = ? AND live_post_reminder_notified_at IS NULL`,
+            nowIso,
+            reminder.id,
+          );
+          if (marked.rowsWritten === 0) return false;
+          deps.sql.exec(
+            `INSERT INTO approval_delivery_events
+               (id, gate_id, subject_id, event, from_mode, to_mode, actor, live_url, created_at)
+             VALUES (?, ?, ?, 'reminder_sent', 'manual', 'manual', ?, NULL, ?)`,
+            newId('ade'),
+            reminder.id,
+            reminder.approval_subject_id,
+            typeof reminder.decided_by === 'string' ? reminder.decided_by : 'system',
+            nowIso,
+          );
+          return true;
+        });
+        if (!claimed) continue;
+        deps.notify('approval-delivery-reminder', cardId, `Manual delivery is waiting: ${detail}.`);
+        deps.setNeedsHuman(cardId, { reason: 'review', detail });
+      } catch (err) {
+        deps.emit('approval_delivery_reminder.sweep_failed', { gateId: reminder.id, reason: String(err) });
+      }
     }
   } catch (err) {
     deps.emit('approval_delivery_reminder.sweep_failed', { reason: String(err) });
