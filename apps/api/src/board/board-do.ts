@@ -264,6 +264,10 @@ export class BoardDO extends DurableObject<Env> {
     return gates.updateApprovalDelivery(this.board, ...args);
   }
 
+  recordAutomaticDelivery(...args: OpArgs<typeof gates.recordAutomaticDelivery>): ReturnType<typeof gates.recordAutomaticDelivery> {
+    return gates.recordAutomaticDelivery(this.board, ...args);
+  }
+
   getGate(...args: OpArgs<typeof gates.getGate>): ReturnType<typeof gates.getGate> {
     return gates.getGate(this.board, ...args);
   }

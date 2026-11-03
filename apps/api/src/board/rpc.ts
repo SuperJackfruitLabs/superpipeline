@@ -163,8 +163,8 @@ export interface BoardStub {
     expectedAccount: JsonValue;
   }): Promise<Result<ApprovalSubjectVerification>>;
   confirmApprovalSubject(input: { subjectId: string; expectedDigest: string }): Promise<Result<{
-    approved: true;
-    deliveryMode: 'automatic';
+    approved: boolean;
+    deliveryMode: string;
     subjectId: string;
     digest: string;
     gateId: string;
@@ -260,6 +260,13 @@ export interface BoardStub {
     mode?: 'manual' | 'automatic';
     liveUrl?: string;
   }): Promise<Result<CardView & { delivery: NonNullable<GateView['delivery']> }>>;
+  recordAutomaticDelivery(input: {
+    gateId: string;
+    subjectId: string;
+    expectedDigest: string;
+    actor: string;
+    liveUrl: string;
+  }): Promise<Result<{ deliveryMode: 'automatic'; gateId: string; subjectId: string; digest: string; liveUrl: string }>>;
   answerElicitation(input: {
     elicitationId: string;
     answeredBy: string;

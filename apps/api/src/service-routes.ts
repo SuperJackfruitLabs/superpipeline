@@ -1,5 +1,5 @@
 import type { Env } from './env';
-import { APPROVALS_READ, CARDS_READ, PUSH_WRITE, resolveHubService } from './auth/resolve';
+import { APPROVALS_READ, APPROVALS_WRITE, CARDS_READ, PUSH_WRITE, resolveHubService } from './auth/resolve';
 import { boardStub } from './board/stub';
 import { boardNamesById, cardLinksBody } from './card-links';
 import { listBoards } from './db/catalog';
@@ -13,6 +13,7 @@ import { SUBSCRIBABLE_EVENTS, isRecordEvent } from './push/events';
 const READS = /^\/v1\/boards(?:\/(brd_[0-9a-f]{16})(?:\/cards\/(card_[0-9a-f]{16})(?:\/(attempts|comments|links|activities))?)?)?$/;
 const PUSH = /^\/v1\/boards\/(brd_[0-9a-f]{16})\/push-configs$/;
 const APPROVAL = /^\/v1\/boards\/(brd_[0-9a-f]{16})\/approval-subjects\/(aps_[0-9a-f]{16})\/verify$/;
+const APPROVAL_DELIVERY = /^\/v1\/boards\/(brd_[0-9a-f]{16})\/approval-subjects\/(aps_[0-9a-f]{16})\/delivery$/;
 
 /** Decoded without verifying, only to route: resolveHubService verifies before anything is read. */
 function looksLikeService(request: Request): boolean {
@@ -33,7 +34,8 @@ export async function serviceRoute(request: Request, env: Env, path: string): Pr
   const read = request.method === 'GET' ? READS.exec(path) : null;
   const push = request.method === 'POST' ? PUSH.exec(path) : null;
   const approval = request.method === 'POST' ? APPROVAL.exec(path) : null;
-  if ((!read && !push && !approval) || !looksLikeService(request)) return null;
+  const approvalDelivery = request.method === 'POST' ? APPROVAL_DELIVERY.exec(path) : null;
+  if ((!read && !push && !approval && !approvalDelivery) || !looksLikeService(request)) return null;
 
   const svc = await resolveHubService(request, env);
   if (!svc) return refuse(401, 'UNAUTHORIZED', 'a service token for a mapped workspace is required');
@@ -68,6 +70,31 @@ export async function serviceRoute(request: Request, env: Env, path: string): Pr
       return refuse(400, 'INVALID_BODY', 'expectedDigest is required');
     }
     const result = await boardStub(env, svc.tenantId, boardId).confirmApprovalSubject({ subjectId, expectedDigest: body.expectedDigest });
+    return result.ok ? Response.json(result.value) : refuse(403, result.code, result.message);
+  }
+
+  if (approvalDelivery) {
+    if (!svc.scopes.includes(APPROVALS_WRITE)) return refuse(403, 'FORBIDDEN', 'this principal does not hold approvals:write');
+    const [, boardId, subjectId] = approvalDelivery;
+    if (!(await boardNamesById(env.DB, svc.tenantId, [boardId])).has(boardId)) return notFound('board');
+    const body: unknown = await request.json().catch(() => null);
+    if (!body || typeof body !== 'object' || !('expectedDigest' in body) || typeof body.expectedDigest !== 'string' || !('liveUrl' in body) || typeof body.liveUrl !== 'string') {
+      return refuse(400, 'INVALID_BODY', 'expectedDigest and liveUrl are required');
+    }
+    const stub = boardStub(env, svc.tenantId, boardId);
+    const confirmed = await stub.confirmApprovalSubject({ subjectId, expectedDigest: body.expectedDigest });
+    if (!confirmed.ok) return refuse(403, confirmed.code, confirmed.message);
+    if (!confirmed.value.approved) return refuse(403, 'APPROVAL_SUBJECT_NOT_VERIFIED', 'automatic delivery approval was not confirmed');
+    if ('gateId' in body && typeof body.gateId === 'string' && body.gateId !== confirmed.value.gateId) {
+      return refuse(403, 'APPROVAL_SUBJECT_NOT_VERIFIED', 'gate does not match the confirmed approval');
+    }
+    const result = await stub.recordAutomaticDelivery({
+      gateId: confirmed.value.gateId,
+      subjectId,
+      expectedDigest: body.expectedDigest,
+      actor: `svc:${svc.principalId}`,
+      liveUrl: body.liveUrl,
+    });
     return result.ok ? Response.json(result.value) : refuse(403, result.code, result.message);
   }
 

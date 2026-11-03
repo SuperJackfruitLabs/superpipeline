@@ -55,6 +55,59 @@ function nonEmptyString(value: unknown): value is string {
   return typeof value === 'string' && value.length > 0;
 }
 
+function base64Bytes(value: string): Uint8Array {
+  const binary = atob(value);
+  return Uint8Array.from(binary, (character) => character.charCodeAt(0));
+}
+
+function bigEndianSize(value: number, bytes: 4 | 8): Uint8Array {
+  const out = new Uint8Array(bytes);
+  const view = new DataView(out.buffer);
+  if (bytes === 4) view.setUint32(0, value);
+  else view.setBigUint64(0, BigInt(value));
+  return out;
+}
+
+/** Must match stk approval.GatedRequest.Digest: labelled, length-prefixed complete request bytes. */
+async function completeRequestDigest(value: unknown): Promise<string> {
+  const request = record(value);
+  if (!request || !nonEmptyString(request.method) || !nonEmptyString(request.url) || typeof request.bodyBase64 !== 'string' || !Array.isArray(request.mediaSha256)) {
+    throw new TypeError('publicationPayload.outboundRequest must contain method, url, bodyBase64, and ordered mediaSha256');
+  }
+  const mediaSha256: string[] = [];
+  for (const digest of request.mediaSha256) {
+    if (typeof digest !== 'string' || !/^[0-9a-f]{64}$/.test(digest)) {
+      throw new TypeError('publicationPayload.outboundRequest must contain method, url, bodyBase64, and ordered mediaSha256');
+    }
+    mediaSha256.push(digest);
+  }
+  try {
+    const parsed = new URL(request.url);
+    if (!parsed.protocol || !parsed.hostname) throw new TypeError();
+  } catch {
+    throw new TypeError('publicationPayload.outboundRequest.url must be absolute');
+  }
+  const chunks: Uint8Array[] = [];
+  const add = (label: string, bytes: Uint8Array) => {
+    const labelBytes = new TextEncoder().encode(label);
+    chunks.push(bigEndianSize(labelBytes.length, 8), labelBytes, bigEndianSize(bytes.length, 8), bytes);
+  };
+  add('method', new TextEncoder().encode(request.method));
+  add('url', new TextEncoder().encode(request.url));
+  add('body', base64Bytes(request.bodyBase64));
+  chunks.push(bigEndianSize(mediaSha256.length, 8));
+  mediaSha256.forEach((digest, index) => {
+    const pairs = digest.match(/../g);
+    if (!pairs) throw new TypeError('publicationPayload.outboundRequest.mediaSha256 is invalid');
+    add(`media:${index}`, Uint8Array.from(pairs, (byte) => Number.parseInt(byte, 16)));
+  });
+  const bytes = new Uint8Array(chunks.reduce((total, chunk) => total + chunk.length, 0));
+  let offset = 0;
+  for (const chunk of chunks) { bytes.set(chunk, offset); offset += chunk.length; }
+  const hash = await crypto.subtle.digest('SHA-256', bytes);
+  return `sha256:${[...new Uint8Array(hash)].map((byte) => byte.toString(16).padStart(2, '0')).join('')}`;
+}
+
 /** Validate the complete public social-publish/v1 payload before any durable write. */
 function socialPublishPayloadError(value: unknown): string | null {
   const payload = record(value);
@@ -225,8 +278,8 @@ export function confirmApprovalSubject(deps: ApprovalSubjectsDeps, input: {
   subjectId: string;
   expectedDigest: string;
 }): Result<{
-  approved: true;
-  deliveryMode: 'automatic';
+  approved: boolean;
+  deliveryMode: string;
   subjectId: string;
   digest: string;
   gateId: string;
@@ -236,30 +289,29 @@ export function confirmApprovalSubject(deps: ApprovalSubjectsDeps, input: {
     .exec(`SELECT * FROM gates WHERE approval_subject_id = ? ORDER BY rowid DESC LIMIT 1`, input.subjectId)
     .toArray()[0];
   const subject = approvalSubjectView(deps, input.subjectId);
-  const timing = record(subject?.canonical)?.timing;
+  const canonical = record(subject?.canonical);
+  const timing = canonical?.timing;
   const expiresAt = record(timing)?.expiresAt;
-  if (
-    !subjectRow ||
-    !subject ||
-    subjectRow.status !== 'active' ||
-    !gate ||
-    gate.status !== 'resolved' ||
-    gate.decision !== 'approve_automatic' ||
-    !nonEmptyString(gate.id) ||
-    gate.approval_subject_digest !== subject.digest ||
-    input.expectedDigest !== subject.digest ||
-    !nonEmptyString(expiresAt) ||
-    Date.parse(expiresAt) <= deps.nowMs()
-  ) {
+  const outboundRequest = record(canonical?.outboundRequest);
+  const requestDigest = outboundRequest?.digest;
+  if (!subjectRow || !subject || !gate || !nonEmptyString(gate.id) || !nonEmptyString(requestDigest)) {
     return { ok: false, code: 'APPROVAL_SUBJECT_NOT_VERIFIED', message: 'automatic delivery approval was not confirmed' };
   }
+  const approved =
+    subjectRow.status === 'active' &&
+    gate.status === 'resolved' &&
+    gate.decision === 'approve_automatic' &&
+    gate.approval_subject_digest === subject.digest &&
+    input.expectedDigest === requestDigest &&
+    nonEmptyString(expiresAt) &&
+    Date.parse(expiresAt) > deps.nowMs();
   return {
     ok: true,
     value: {
-      approved: true,
-      deliveryMode: 'automatic',
+      approved,
+      deliveryMode: gate.decision === 'approve_automatic' ? 'automatic' : gate.decision === 'approve_manual' ? 'manual' : 'none',
       subjectId: subject.id,
-      digest: subject.digest,
+      digest: requestDigest,
       gateId: gate.id,
     },
   };
@@ -328,10 +380,23 @@ export async function prepareApprovalSubject(deps: ApprovalSubjectsDeps, card: C
     )
     .one();
   const revision = Number(prior.revision) + 1;
+  const outboundRequest = record(record(payload)?.outboundRequest);
+  let requestDigest: string | null = null;
+  if (outboundRequest) {
+    try {
+      requestDigest = await completeRequestDigest(outboundRequest);
+    } catch (error) {
+      return invalid(error instanceof Error ? error.message : 'publicationPayload.outboundRequest is invalid');
+    }
+    if (outboundRequest.digest !== undefined && outboundRequest.digest !== requestDigest) {
+      return invalid('publicationPayload.outboundRequest.digest does not match its exact request bytes');
+    }
+  }
   let canonical: string;
   try {
     canonical = canonicalJson({
       ...(payload as Record<string, JsonValue>),
+      ...(outboundRequest && requestDigest ? { outboundRequest: { ...outboundRequest, digest: requestDigest } } : {}),
       schema: stage.approvalSubjectSchema,
       cardId: card.id,
       projectId: card.projectId,

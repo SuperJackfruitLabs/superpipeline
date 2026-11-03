@@ -3,7 +3,7 @@ import { newId } from '../ids';
 import type { BoardContext } from './context';
 import type { GateOption } from './gate-option';
 import type { CardView, Result, Row } from './model';
-import { handoffSummary, isApproveDecision } from './rules';
+import { handoffSummary, isApproveDecision, record } from './rules';
 import type { GatePendingBody, GateView, PreparedApprovalSubject } from './views';
 
 /**
@@ -290,6 +290,52 @@ export async function updateApprovalDelivery(deps: GatesDeps, input: {
 
   const view = rowToGate(deps, getGateRow(deps, input.gateId)!);
   return { ok: true, value: { ...deps.mustGetCard(cardId), delivery: view.delivery! } };
+}
+
+/** Record a provider-verified automatic delivery without granting delivery authority. */
+export function recordAutomaticDelivery(deps: GatesDeps, input: {
+  gateId: string;
+  subjectId: string;
+  expectedDigest: string;
+  actor: string;
+  liveUrl: string;
+}): Result<{ deliveryMode: 'automatic'; gateId: string; subjectId: string; digest: string; liveUrl: string }> {
+  const gate = deps.sql.exec(`SELECT * FROM gates WHERE id = ?`, input.gateId).toArray()[0];
+  const subject = deps.sql.exec(`SELECT * FROM approval_subjects WHERE id = ?`, input.subjectId).toArray()[0];
+  const subjectView = deps.approvalSubjectView(input.subjectId);
+  const requestDigest = record(record(subjectView?.canonical)?.outboundRequest)?.digest;
+  if (
+    !gate || gate.status !== 'resolved' || gate.decision !== 'approve_automatic' ||
+    gate.approval_subject_id !== input.subjectId || gate.approval_subject_digest !== subjectView?.digest ||
+    !subject || subject.status !== 'active' || subject.digest !== subjectView?.digest || requestDigest !== input.expectedDigest
+  ) {
+    return { ok: false, code: 'APPROVAL_SUBJECT_NOT_VERIFIED', message: 'automatic delivery approval and digest were not confirmed' };
+  }
+  let parsed: URL;
+  try {
+    parsed = new URL(input.liveUrl);
+  } catch {
+    return { ok: false, code: 'INVALID_LIVE_URL', message: 'live URL must be an absolute https URL' };
+  }
+  if (parsed.protocol !== 'https:') {
+    return { ok: false, code: 'INVALID_LIVE_URL', message: 'live URL must be an absolute https URL' };
+  }
+  const liveUrl = parsed.toString();
+  const now = deps.now();
+  deps.ctx.storage.transactionSync(() => {
+    deps.sql.exec(
+      `UPDATE gates SET live_post_url = ?, live_post_url_recorded_by = ?, live_post_url_recorded_at = ?,
+                        live_post_readback_status = 'matched' WHERE id = ?`,
+      liveUrl, input.actor, now, input.gateId,
+    );
+    deps.sql.exec(
+      `INSERT INTO approval_delivery_events
+         (id, gate_id, subject_id, event, from_mode, to_mode, actor, live_url, created_at)
+       VALUES (?, ?, ?, 'live_url_recorded', 'automatic', 'automatic', ?, ?, ?)`,
+      newId('ade'), input.gateId, input.subjectId, input.actor, liveUrl, now,
+    );
+  });
+  return { ok: true, value: { deliveryMode: 'automatic', gateId: input.gateId, subjectId: input.subjectId, digest: input.expectedDigest, liveUrl } };
 }
 
 export function createGate(deps: GatesDeps, cardId: string, stageKey: string, returnStageKey: string, producedBy: string, runId: string | null, approvalSubject: PreparedApprovalSubject | null = null): string {

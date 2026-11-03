@@ -182,6 +182,12 @@ describe('a publisher service confirming automatic-delivery authority', () => {
             channel: 'x',
             account: { platform: 'x', userId: 'acct_fixture_1', username: 'fixture_account' },
             items: [{ index: 0, text: 'Exact approved fixture text.', media: [], replyToPostId: null, quotePostId: null }],
+            outboundRequest: {
+              method: 'POST',
+              url: 'https://api.x.com/2/tweets',
+              bodyBase64: btoa('{"text":"Exact approved fixture text."}'),
+              mediaSha256: [],
+            },
             timing: { mode: 'immediate', notBefore: null, expiresAt: '2030-01-02T03:04:05Z' },
             evidenceRefs: ['https://example.invalid/evidence/fixture-1'],
             policy: { allowThread: false, duplicatePolicyId: 'fixture-duplicate-policy', floodPolicyId: 'fixture-flood-policy' },
@@ -192,6 +198,13 @@ describe('a publisher service confirming automatic-delivery authority', () => {
       const state = await board.getState();
       const gate = state.gates[0];
       if (!gate?.approvalSubject) throw new Error('expected a bound approval gate');
+      const canonical = gate.approvalSubject.canonical;
+      const outboundRequest = canonical && typeof canonical === 'object' && !Array.isArray(canonical) ? canonical.outboundRequest : null;
+      const requestDigest = outboundRequest && typeof outboundRequest === 'object' && !Array.isArray(outboundRequest) && typeof outboundRequest.digest === 'string'
+        ? outboundRequest.digest
+        : null;
+      if (!requestDigest) throw new Error('expected a complete request digest');
+      expect(requestDigest).toBe('sha256:1c9763d267117f796b38ee41266eb01ebc2ece548dc13ef9b96ac6ffd8aed7ca');
       const approved = await board.resolveGate({
         gateId: gate.id,
         decision: 'approve_automatic',
@@ -204,7 +217,7 @@ describe('a publisher service confirming automatic-delivery authority', () => {
       const response = await post(
         `/v1/boards/${boardId}/approval-subjects/${gate.approvalSubject.id}/verify`,
         await hubToken({ scope: 'approvals:read' }),
-        { expectedDigest: gate.approvalSubject.digest },
+        { expectedDigest: requestDigest },
       );
       const body = await response.text();
       if (response.status !== 200) throw new Error(body);
@@ -213,8 +226,39 @@ describe('a publisher service confirming automatic-delivery authority', () => {
         approved: true,
         deliveryMode: 'automatic',
         subjectId: gate.approvalSubject.id,
-        digest: gate.approvalSubject.digest,
+        digest: requestDigest,
         gateId: gate.id,
+      });
+      const mismatch = await post(
+        `/v1/boards/${boardId}/approval-subjects/${gate.approvalSubject.id}/verify`,
+        await hubToken({ scope: 'approvals:read' }),
+        { expectedDigest: `sha256:${'0'.repeat(64)}` },
+      );
+      expect(mismatch.status).toBe(200);
+      expect(await mismatch.json()).toMatchObject({ approved: false, digest: requestDigest, gateId: gate.id });
+
+      const deliveryPath = `/v1/boards/${boardId}/approval-subjects/${gate.approvalSubject.id}/delivery`;
+      expect((await post(deliveryPath, await hubToken({ scope: 'approvals:read' }), {
+        expectedDigest: requestDigest,
+        liveUrl: 'https://x.com/fixture_account/status/123',
+      })).status).toBe(403);
+      const delivered = await post(deliveryPath, await hubToken({ scope: 'approvals:write' }), {
+        expectedDigest: requestDigest,
+        liveUrl: 'https://x.com/fixture_account/status/123',
+      });
+      expect(delivered.status).toBe(200);
+      expect(await delivered.json()).toMatchObject({
+        deliveryMode: 'automatic',
+        digest: requestDigest,
+        gateId: gate.id,
+        liveUrl: 'https://x.com/fixture_account/status/123',
+      });
+      const after = await board.getGate(gate.id);
+      if (!after.ok) throw new Error(after.message);
+      expect(after.value.delivery).toMatchObject({
+        mode: 'automatic',
+        liveUrl: 'https://x.com/fixture_account/status/123',
+        readBackStatus: 'matched',
       });
     });
   });
