@@ -313,7 +313,22 @@ export async function updateApprovalDelivery(deps: GatesDeps, input: {
       return { ok: false, code: 'APPROVAL_SUBJECT_MISMATCH', message: 'the approved subject cannot be read back' };
     }
     const readBack = await readBackStatus(parsed, subject.schema, subject.digest);
-    deps.ctx.storage.transactionSync(() => {
+    // The read-back is an outbound fetch, and a Durable Object takes other requests while one
+    // is in flight. Everything checked above is checked again, inside the write: a mode switch,
+    // a spec edit or a second live URL in that window must not be overwritten by this one.
+    const stillCurrent = deps.ctx.storage.transactionSync(() => {
+      const nowGate = deps.sql.exec(`SELECT decision, live_post_url FROM gates WHERE id = ?`, input.gateId).toArray()[0];
+      const nowSubject = deps.sql.exec(`SELECT status, digest FROM approval_subjects WHERE id = ?`, subjectId).toArray()[0];
+      const nowCard = deps.getCardRow(cardId);
+      if (
+        nowGate?.decision !== 'approve_manual' ||
+        nowGate.live_post_url ||
+        nowSubject?.status !== 'active' ||
+        nowSubject.digest !== subject.digest ||
+        nowCard?.active_approval_subject_id !== subjectId
+      ) {
+        return false;
+      }
       deps.sql.exec(
         `UPDATE gates SET live_post_url = ?, live_post_url_recorded_by = ?, live_post_url_recorded_at = ?,
                           live_post_readback_status = ? WHERE id = ?`,
@@ -334,7 +349,11 @@ export async function updateApprovalDelivery(deps: GatesDeps, input: {
         parsed.toString(),
         now,
       );
+      return true;
     });
+    if (!stillCurrent) {
+      return { ok: false, code: 'APPROVAL_SUBJECT_MISMATCH', message: 'the approval changed while the live post was being read back; record the URL again' };
+    }
   } else {
     const nextMode = input.mode!;
     if (nextMode !== currentMode) {
