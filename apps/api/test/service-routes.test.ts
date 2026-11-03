@@ -207,7 +207,8 @@ describe('a publisher service confirming automatic-delivery authority', () => {
         { expectedDigest: gate.approvalSubject.digest },
       );
       const body = await response.text();
-      expect(response.status, body).toBe(200);
+      if (response.status !== 200) throw new Error(body);
+      expect(response.status).toBe(200);
       expect(JSON.parse(body)).toEqual({
         approved: true,
         deliveryMode: 'automatic',

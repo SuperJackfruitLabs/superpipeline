@@ -162,6 +162,13 @@ export interface BoardStub {
     expectedDigest: string;
     expectedAccount: JsonValue;
   }): Promise<Result<ApprovalSubjectVerification>>;
+  confirmApprovalSubject(input: { subjectId: string; expectedDigest: string }): Promise<Result<{
+    approved: true;
+    deliveryMode: 'automatic';
+    subjectId: string;
+    digest: string;
+    gateId: string;
+  }>>;
 
   /** A run as evidence for superwitness (contract C4). `NOT_INITIALIZED` means no such board here. */
   getRunEvidence(runId: string): Promise<Result<RunEvidence>>;

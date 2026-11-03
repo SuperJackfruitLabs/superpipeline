@@ -1,5 +1,5 @@
 import type { Env } from './env';
-import { CARDS_READ, PUSH_WRITE, resolveHubService } from './auth/resolve';
+import { APPROVALS_READ, CARDS_READ, PUSH_WRITE, resolveHubService } from './auth/resolve';
 import { boardStub } from './board/stub';
 import { boardNamesById, cardLinksBody } from './card-links';
 import { listBoards } from './db/catalog';
@@ -12,6 +12,7 @@ import { SUBSCRIBABLE_EVENTS, isRecordEvent } from './push/events';
  */
 const READS = /^\/v1\/boards(?:\/(brd_[0-9a-f]{16})(?:\/cards\/(card_[0-9a-f]{16})(?:\/(attempts|comments|links|activities))?)?)?$/;
 const PUSH = /^\/v1\/boards\/(brd_[0-9a-f]{16})\/push-configs$/;
+const APPROVAL = /^\/v1\/boards\/(brd_[0-9a-f]{16})\/approval-subjects\/(aps_[0-9a-f]{16})\/verify$/;
 
 /** Decoded without verifying, only to route: resolveHubService verifies before anything is read. */
 function looksLikeService(request: Request): boolean {
@@ -31,7 +32,8 @@ const notFound = (what: string) => Response.json({ error: `${what} not found` },
 export async function serviceRoute(request: Request, env: Env, path: string): Promise<Response | null> {
   const read = request.method === 'GET' ? READS.exec(path) : null;
   const push = request.method === 'POST' ? PUSH.exec(path) : null;
-  if ((!read && !push) || !looksLikeService(request)) return null;
+  const approval = request.method === 'POST' ? APPROVAL.exec(path) : null;
+  if ((!read && !push && !approval) || !looksLikeService(request)) return null;
 
   const svc = await resolveHubService(request, env);
   if (!svc) return refuse(401, 'UNAUTHORIZED', 'a service token for a mapped workspace is required');
@@ -55,6 +57,18 @@ export async function serviceRoute(request: Request, env: Env, path: string): Pr
     if (sub === 'activities') return Response.json(await stub.getCardActivities(cardId));
     const c = await stub.listComments(cardId);
     return c.ok ? Response.json({ comments: c.value }) : Response.json({ error: c }, { status: 404 });
+  }
+
+  if (approval) {
+    if (!svc.scopes.includes(APPROVALS_READ)) return refuse(403, 'FORBIDDEN', 'this principal does not hold approvals:read');
+    const [, boardId, subjectId] = approval;
+    if (!(await boardNamesById(env.DB, svc.tenantId, [boardId])).has(boardId)) return notFound('board');
+    const body: unknown = await request.json().catch(() => null);
+    if (typeof body !== 'object' || body === null || !('expectedDigest' in body) || typeof body.expectedDigest !== 'string') {
+      return refuse(400, 'INVALID_BODY', 'expectedDigest is required');
+    }
+    const result = await boardStub(env, svc.tenantId, boardId).confirmApprovalSubject({ subjectId, expectedDigest: body.expectedDigest });
+    return result.ok ? Response.json(result.value) : refuse(403, result.code, result.message);
   }
 
   if (!svc.scopes.includes(PUSH_WRITE)) return refuse(403, 'FORBIDDEN', 'this principal does not hold push:write');

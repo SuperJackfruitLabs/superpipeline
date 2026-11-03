@@ -220,6 +220,51 @@ export async function verifyApprovalSubject(deps: ApprovalSubjectsDeps, input: {
   };
 }
 
+/** Confirm the durable automatic-delivery decision to an authenticated publisher service. */
+export function confirmApprovalSubject(deps: ApprovalSubjectsDeps, input: {
+  subjectId: string;
+  expectedDigest: string;
+}): Result<{
+  approved: true;
+  deliveryMode: 'automatic';
+  subjectId: string;
+  digest: string;
+  gateId: string;
+}> {
+  const subjectRow = deps.sql.exec(`SELECT * FROM approval_subjects WHERE id = ?`, input.subjectId).toArray()[0];
+  const gate = deps.sql
+    .exec(`SELECT * FROM gates WHERE approval_subject_id = ? ORDER BY rowid DESC LIMIT 1`, input.subjectId)
+    .toArray()[0];
+  const subject = approvalSubjectView(deps, input.subjectId);
+  const timing = record(subject?.canonical)?.timing;
+  const expiresAt = record(timing)?.expiresAt;
+  if (
+    !subjectRow ||
+    !subject ||
+    subjectRow.status !== 'active' ||
+    !gate ||
+    gate.status !== 'resolved' ||
+    gate.decision !== 'approve_automatic' ||
+    !nonEmptyString(gate.id) ||
+    gate.approval_subject_digest !== subject.digest ||
+    input.expectedDigest !== subject.digest ||
+    !nonEmptyString(expiresAt) ||
+    Date.parse(expiresAt) <= deps.nowMs()
+  ) {
+    return { ok: false, code: 'APPROVAL_SUBJECT_NOT_VERIFIED', message: 'automatic delivery approval was not confirmed' };
+  }
+  return {
+    ok: true,
+    value: {
+      approved: true,
+      deliveryMode: 'automatic',
+      subjectId: subject.id,
+      digest: subject.digest,
+      gateId: gate.id,
+    },
+  };
+}
+
 /** Retire the active subject without deleting its immutable audit row. */
 export function invalidateApprovalSubject(deps: ApprovalSubjectsDeps, cardId: string, reason: string, invalidatedBy: string | null): void {
   const cardRow = deps.getCardRow(cardId);

@@ -278,6 +278,10 @@ export class BoardDO extends DurableObject<Env> {
     return approvalSubjects.verifyApprovalSubject(this.board, ...args);
   }
 
+  confirmApprovalSubject(...args: OpArgs<typeof approvalSubjects.confirmApprovalSubject>): ReturnType<typeof approvalSubjects.confirmApprovalSubject> {
+    return approvalSubjects.confirmApprovalSubject(this.board, ...args);
+  }
+
   // Questions
 
   answerElicitation(...args: OpArgs<typeof elicitations.answerElicitation>): ReturnType<typeof elicitations.answerElicitation> {
