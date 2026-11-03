@@ -87,7 +87,7 @@ a strictly lower layer; nodes in one layer do not import each other.
 |---|---|
 | 0 log | `log.ts` (the Worker's log sink; imports nothing) |
 | 1 foundations | `env.ts`, `ids.ts`, `json.ts`, `flat-error.ts`, `crypto/`, `metering/`, `telemetry/` |
-| 2 pure helpers | `push/`, `references/` |
+| 2 pure helpers | `push/`, `references/`, `approval-subject-kinds/` |
 | 3 catalog | `db/` |
 | 4 identity | `auth/` |
 | 5 run reports | `superwitness/` |

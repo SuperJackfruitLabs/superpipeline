@@ -535,6 +535,42 @@ describe('bound gate resolution', () => {
     });
   });
 
+  it('does not follow a redirect off the read-back host, and gives up on a slow one', async () => {
+    const stub = boardStub('approval-readback-redirect');
+    await runInDurableObject(stub, async (board: BoardDO, state) => {
+      const opened = await openBoundGate(board, state, 'readback-redirect');
+      await board.resolveGate(boundDecision(opened.gate, opened.subject, DECIDER, 'approve_manual'));
+      const realFetch = globalThis.fetch;
+      let redirectMode: RequestInit['redirect'];
+      let hasSignal = false;
+      globalThis.fetch = (async (_input: RequestInfo | URL, init?: RequestInit) => {
+        redirectMode = init?.redirect;
+        hasSignal = init?.signal instanceof AbortSignal;
+        return new Response(null, { status: 302, headers: { location: 'https://internal.example.invalid/' } });
+      });
+      try {
+        const recorded = await board.updateApprovalDelivery({ gateId: opened.gate.id, actor: DECIDER, liveUrl: 'https://x.com/fixture/status/redirect' });
+        expect(recorded).toMatchObject({ ok: true, value: { delivery: { readBackStatus: 'not_checked' } } });
+        expect(redirectMode).toBe('manual');
+        expect(hasSignal).toBe(true);
+      } finally { globalThis.fetch = realFetch; }
+    });
+  });
+
+  it('stores a reminder time in one canonical form, so the sweep compares like with like', async () => {
+    const stub = boardStub('approval-manual-reminder-offset');
+    await runInDurableObject(stub, async (board: BoardDO, state) => {
+      const opened = await openBoundGate(board, state, 'manual-reminder-offset');
+      await board.resolveGate(boundDecision(opened.gate, opened.subject, DECIDER, 'approve_manual'));
+      // 08:34:05 at +05:30 is 03:04:05 UTC; stored as typed, it would sort after every UTC time that day.
+      expect(await board.updateApprovalDelivery({ gateId: opened.gate.id, actor: DECIDER, remindAt: '2029-01-02T08:34:05+05:30' })).toMatchObject({
+        ok: true, value: { delivery: { remindAt: '2029-01-02T03:04:05.000Z' } },
+      });
+      await board.sweepBoard('2029-01-02T03:04:05.000Z');
+      expect((await board.getNotifications()).filter((note) => note.kind === 'approval-delivery-reminder')).toHaveLength(1);
+    });
+  });
+
   it('reminds at the chosen time when manual delivery still has no live URL', async () => {
     const stub = boardStub('approval-manual-reminder');
     await runInDurableObject(stub, async (board: BoardDO, state) => {

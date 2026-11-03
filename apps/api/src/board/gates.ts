@@ -38,13 +38,19 @@ export type GatesDeps = Pick<
   | 'stages'
 >;
 
+const READ_BACK_TIMEOUT_MS = 5_000;
+
 async function readBackStatus(url: URL, schema: string, approvedDigest: string): Promise<'not_checked' | 'matched' | 'mismatch'> {
   const kind = approvalSubjectKind(schema);
   if (!kind?.canReadBack(url)) return 'not_checked';
   try {
+    // A redirect is not followed: the host check above is the only thing standing between a
+    // person-supplied URL and a server-side fetch, and an open redirect on an allowed host
+    // would walk straight past it. A slow host is given up on, not waited out.
     const response = await fetch(url, {
       method: 'GET',
-      redirect: 'follow',
+      redirect: 'manual',
+      signal: AbortSignal.timeout(READ_BACK_TIMEOUT_MS),
       headers: { Accept: 'application/json, text/html;q=0.9' },
     });
     if (!response.ok) return 'not_checked';
@@ -266,13 +272,17 @@ export async function updateApprovalDelivery(deps: GatesDeps, input: {
     if (decision !== 'approve_manual' || gate.live_post_url) {
       return { ok: false, code: 'APPROVAL_DELIVERY_NOT_MANUAL', message: 'a reminder is scheduled only for unpublished manual delivery' };
     }
-    if (!Number.isFinite(Date.parse(input.remindAt))) {
+    const remindMs = Date.parse(input.remindAt);
+    if (!Number.isFinite(remindMs)) {
       return { ok: false, code: 'INVALID_APPROVAL_DELIVERY', message: 'remindAt must be an ISO timestamp' };
     }
+    // Stored as UTC ISO with milliseconds, the same shape as the sweep's `now`: the sweep
+    // compares the two as strings, which only orders them correctly in one shared form.
+    const remindAt = new Date(remindMs).toISOString();
     deps.ctx.storage.transactionSync(() => {
       deps.sql.exec(
         `UPDATE gates SET live_post_remind_at = ?, live_post_reminder_notified_at = NULL WHERE id = ?`,
-        input.remindAt,
+        remindAt,
         input.gateId,
       );
       deps.sql.exec(
