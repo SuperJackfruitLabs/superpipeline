@@ -198,6 +198,7 @@ describe('a publisher service confirming automatic-delivery authority', () => {
       const state = await board.getState();
       const gate = state.gates[0];
       if (!gate?.approvalSubject) throw new Error('expected a bound approval gate');
+      const approvalSubjectId = gate.approvalSubject.id;
       const canonical = gate.approvalSubject.canonical;
       const outboundRequest = canonical && typeof canonical === 'object' && !Array.isArray(canonical) ? canonical.outboundRequest : null;
       const requestDigest = outboundRequest && typeof outboundRequest === 'object' && !Array.isArray(outboundRequest) && typeof outboundRequest.digest === 'string'
@@ -229,6 +230,7 @@ describe('a publisher service confirming automatic-delivery authority', () => {
         digest: requestDigest,
         gateId: gate.id,
         expiresAt: '2030-01-02T03:04:05Z',
+        gateStatus: 'resolved',
       });
       const mismatch = await post(
         `/v1/boards/${boardId}/approval-subjects/${gate.approvalSubject.id}/verify`,
@@ -279,6 +281,21 @@ describe('a publisher service confirming automatic-delivery authority', () => {
         ).one(),
       );
       expect(events).toEqual({ n: 1 });
+
+      // Expiry is re-checked inside the recording transaction, including for
+      // an otherwise-idempotent repeat after approval has elapsed.
+      await runInDurableObject(
+        env.BOARD_DO.get(env.BOARD_DO.idFromName(`${TENANT}:${boardId}`)),
+        async (_board, storageState) => storageState.storage.sql.exec(
+          `UPDATE approval_subjects
+              SET canonical_bytes = CAST(json_set(CAST(canonical_bytes AS TEXT), '$.timing.expiresAt', '2000-01-01T00:00:00Z') AS BLOB)
+            WHERE id = ? RETURNING id`, approvalSubjectId,
+        ).one(),
+      );
+      expect((await post(deliveryPath, await hubToken({ scope: 'approvals:write' }), {
+        expectedDigest: requestDigest,
+        liveUrl: 'https://x.com/fixture_account/status/123',
+      })).status).toBe(403);
     });
   });
 });

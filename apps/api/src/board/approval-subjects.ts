@@ -215,6 +215,7 @@ export function confirmApprovalSubject(deps: ApprovalSubjectsDeps, input: {
   digest: string;
   gateId: string;
   expiresAt: string;
+  gateStatus: string;
 }> {
   const subjectRow = deps.sql.exec(`SELECT * FROM approval_subjects WHERE id = ?`, input.subjectId).toArray()[0];
   const gate = deps.sql
@@ -247,6 +248,7 @@ export function confirmApprovalSubject(deps: ApprovalSubjectsDeps, input: {
       digest: requestDigest,
       gateId: gate.id,
       expiresAt: confirmedExpiresAt,
+      gateStatus: typeof gate.status === 'string' ? gate.status : '',
     },
   };
 }
