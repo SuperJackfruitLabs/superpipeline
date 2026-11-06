@@ -18,6 +18,20 @@ const PIPELINE: BoardInit['stages'] = [
   { key: 'review', name: 'Review', order: 1, ownerKind: 'human', gate: 'approval' },
   { key: 'publish', name: 'Publish', order: 2, ownerKind: 'capability', owner: 'publish' },
 ];
+const APPROVAL_DECIDER = 'usr_fixture_decider';
+const APPROVAL_PIPELINE: BoardInit['stages'] = [
+  { key: 'draft', name: 'Draft', order: 0, ownerKind: 'capability', owner: 'writing' },
+  {
+    key: 'approve',
+    name: 'Approve exact payload',
+    order: 1,
+    ownerKind: 'human',
+    gate: 'approval',
+    approvalSubjectSchema: 'social-publish/v1',
+    approvalDeciderPrincipalIds: [APPROVAL_DECIDER],
+  },
+  { key: 'publish', name: 'Publish', order: 2, ownerKind: 'capability', owner: 'x-publish' },
+];
 const ISSUER = 'https://issuer-svc.test';
 const PLANE = 'https://api.test';
 const FLEET = 'fleet_0000000000000000sv01';
@@ -139,6 +153,149 @@ describe('a service reading cards (hub issuer)', () => {
         url: 'https://library.example.com/events', token: 'd', events: ['card.updated'],
       });
       expect(pushed.status).toBe(404);
+    });
+  });
+});
+
+describe('a publisher service confirming automatic-delivery authority', () => {
+  /**
+   * Regression target: removing the service-only approval confirmation route (or making it depend
+   * on an agent-held run credential) must stop stk before it can treat a shell caller's assertion
+   * as authority. The read-scoped service token is the trust boundary; the request digest is only
+   * a comparison value, never proof of approval.
+   */
+  it('lets only an approvals:read service confirm the stored automatic decision and exact digest', async () => {
+    await legacy(async () => {
+      const boardId = newId('brd');
+      const board = boardStub(env, TENANT, boardId);
+      await board.init({ id: boardId, tenantId: TENANT, name: 'Automatic publishing fixture', stages: APPROVAL_PIPELINE });
+      await recordBoard(env.DB, TENANT, { id: boardId, name: 'Automatic publishing fixture', stagesJson: JSON.stringify(APPROVAL_PIPELINE) });
+      const card = await board.createCard({ title: 'Publish exact fixture', ownerUserId: 'usr_fixture_owner', projectId: 'prj_fixture' });
+      if (!card.ok) throw new Error(card.message);
+      const claim = await board.claim({ agentId: 'agt_fixture_writer', capabilities: ['writing'] });
+      if (!claim.claimed) throw new Error('expected the fixture draft to be claimable');
+      const completed = await board.complete({
+        runId: claim.runId,
+        leaseEpoch: claim.leaseEpoch,
+        handoff: {
+          publicationPayload: {
+            channel: 'x',
+            account: { platform: 'x', userId: 'acct_fixture_1', username: 'fixture_account' },
+            items: [{ index: 0, text: 'Exact approved fixture text.', media: [], replyToPostId: null, quotePostId: null }],
+            outboundRequest: {
+              method: 'POST',
+              url: 'https://api.x.com/2/tweets',
+              bodyBase64: btoa('{"text":"Exact approved fixture text."}'),
+              mediaSha256: [],
+            },
+            timing: { mode: 'immediate', notBefore: null, expiresAt: '2030-01-02T03:04:05Z' },
+            evidenceRefs: ['https://example.invalid/evidence/fixture-1'],
+            policy: { allowThread: false, duplicatePolicyId: 'fixture-duplicate-policy', floodPolicyId: 'fixture-flood-policy' },
+          },
+        },
+      });
+      if (!completed.ok) throw new Error(completed.message);
+      const state = await board.getState();
+      const gate = state.gates[0];
+      if (!gate?.approvalSubject) throw new Error('expected a bound approval gate');
+      const approvalSubjectId = gate.approvalSubject.id;
+      const canonical = gate.approvalSubject.canonical;
+      const outboundRequest = canonical && typeof canonical === 'object' && !Array.isArray(canonical) ? canonical.outboundRequest : null;
+      const requestDigest = outboundRequest && typeof outboundRequest === 'object' && !Array.isArray(outboundRequest) && typeof outboundRequest.digest === 'string'
+        ? outboundRequest.digest
+        : null;
+      if (!requestDigest) throw new Error('expected a complete request digest');
+      expect(requestDigest).toBe('sha256:1c9763d267117f796b38ee41266eb01ebc2ece548dc13ef9b96ac6ffd8aed7ca');
+      const approved = await board.resolveGate({
+        gateId: gate.id,
+        decision: 'approve_automatic',
+        decidedBy: APPROVAL_DECIDER,
+        approvalSubjectId: gate.approvalSubject.id,
+        approvalSubjectDigest: gate.approvalSubject.digest,
+      });
+      if (!approved.ok) throw new Error(approved.message);
+
+      const response = await post(
+        `/v1/boards/${boardId}/approval-subjects/${gate.approvalSubject.id}/verify`,
+        await hubToken({ scope: 'approvals:read' }),
+        { expectedDigest: requestDigest },
+      );
+      const body = await response.text();
+      if (response.status !== 200) throw new Error(body);
+      expect(response.status).toBe(200);
+      expect(JSON.parse(body)).toEqual({
+        approved: true,
+        deliveryMode: 'automatic',
+        subjectId: gate.approvalSubject.id,
+        digest: requestDigest,
+        gateId: gate.id,
+        expiresAt: '2030-01-02T03:04:05Z',
+        gateStatus: 'resolved',
+      });
+      const mismatch = await post(
+        `/v1/boards/${boardId}/approval-subjects/${gate.approvalSubject.id}/verify`,
+        await hubToken({ scope: 'approvals:read' }),
+        { expectedDigest: `sha256:${'0'.repeat(64)}` },
+      );
+      expect(mismatch.status).toBe(200);
+      expect(await mismatch.json()).toMatchObject({ approved: false, digest: requestDigest, gateId: gate.id });
+
+      const deliveryPath = `/v1/boards/${boardId}/approval-subjects/${gate.approvalSubject.id}/delivery`;
+      expect((await post(deliveryPath, await hubToken({ scope: 'approvals:read' }), {
+        expectedDigest: requestDigest,
+        liveUrl: 'https://x.com/fixture_account/status/123',
+      })).status).toBe(403);
+      const delivered = await post(deliveryPath, await hubToken({ scope: 'approvals:write' }), {
+        expectedDigest: requestDigest,
+        liveUrl: 'https://x.com/fixture_account/status/123',
+      });
+      expect(delivered.status).toBe(200);
+      expect(await delivered.json()).toMatchObject({
+        deliveryMode: 'automatic',
+        digest: requestDigest,
+        gateId: gate.id,
+        liveUrl: 'https://x.com/fixture_account/status/123',
+      });
+      const after = await board.getGate(gate.id);
+      if (!after.ok) throw new Error(after.message);
+      expect(after.value.delivery).toMatchObject({
+        mode: 'automatic',
+        liveUrl: 'https://x.com/fixture_account/status/123',
+        readBackStatus: 'service_reported',
+      });
+      // Repeating the same report is idempotent; a conflicting URL cannot
+      // replace the first delivery or add another audit event.
+      expect((await post(deliveryPath, await hubToken({ scope: 'approvals:write' }), {
+        expectedDigest: requestDigest,
+        liveUrl: 'https://x.com/fixture_account/status/123',
+      })).status).toBe(200);
+      const conflict = await post(deliveryPath, await hubToken({ scope: 'approvals:write' }), {
+        expectedDigest: requestDigest,
+        liveUrl: 'https://x.com/fixture_account/status/456',
+      });
+      expect(conflict.status).toBe(403);
+      const events = await runInDurableObject(
+        env.BOARD_DO.get(env.BOARD_DO.idFromName(`${TENANT}:${boardId}`)),
+        async (_board, storageState) => storageState.storage.sql.exec(
+          `SELECT COUNT(*) AS n FROM approval_delivery_events WHERE gate_id = ? AND event = 'live_url_recorded'`, gate.id,
+        ).one(),
+      );
+      expect(events).toEqual({ n: 1 });
+
+      // Expiry is re-checked inside the recording transaction, including for
+      // an otherwise-idempotent repeat after approval has elapsed.
+      await runInDurableObject(
+        env.BOARD_DO.get(env.BOARD_DO.idFromName(`${TENANT}:${boardId}`)),
+        async (_board, storageState) => storageState.storage.sql.exec(
+          `UPDATE approval_subjects
+              SET canonical_bytes = CAST(json_set(CAST(canonical_bytes AS TEXT), '$.timing.expiresAt', '2000-01-01T00:00:00Z') AS BLOB)
+            WHERE id = ? RETURNING id`, approvalSubjectId,
+        ).one(),
+      );
+      expect((await post(deliveryPath, await hubToken({ scope: 'approvals:write' }), {
+        expectedDigest: requestDigest,
+        liveUrl: 'https://x.com/fixture_account/status/123',
+      })).status).toBe(403);
     });
   });
 });

@@ -162,6 +162,13 @@ export interface BoardStub {
     expectedDigest: string;
     expectedAccount: JsonValue;
   }): Promise<Result<ApprovalSubjectVerification>>;
+  confirmApprovalSubject(input: { subjectId: string; expectedDigest: string }): Promise<Result<{
+    approved: boolean;
+    deliveryMode: string;
+    subjectId: string;
+    digest: string;
+    gateId: string;
+  }>>;
 
   /** A run as evidence for superwitness (contract C4). `NOT_INITIALIZED` means no such board here. */
   getRunEvidence(runId: string): Promise<Result<RunEvidence>>;
@@ -254,6 +261,13 @@ export interface BoardStub {
     liveUrl?: string;
     remindAt?: string;
   }): Promise<Result<CardView & { delivery: NonNullable<GateView['delivery']> }>>;
+  recordAutomaticDelivery(input: {
+    gateId: string;
+    subjectId: string;
+    expectedDigest: string;
+    actor: string;
+    liveUrl: string;
+  }): Promise<Result<{ deliveryMode: 'automatic'; gateId: string; subjectId: string; digest: string; liveUrl: string }>>;
   answerElicitation(input: {
     elicitationId: string;
     answeredBy: string;

@@ -308,6 +308,10 @@ export async function resolveHubAgent(request: Request, env: Env): Promise<Agent
 export const EVIDENCE_READ = 'evidence:read';
 /** Read boards and cards as a service (Superlibrary's ingest). */
 export const CARDS_READ = 'cards:read';
+/** Confirm an immutable approval decision as a publisher service. */
+export const APPROVALS_READ = 'approvals:read';
+/** Record the verified result of an automatic publisher. */
+export const APPROVALS_WRITE = 'approvals:write';
 /** Register a push config as a service, for record events only. */
 export const PUSH_WRITE = 'push:write';
 

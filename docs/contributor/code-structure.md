@@ -1,5 +1,21 @@
 # Code structure guardrails
 
+## Publisher-service delivery route
+
+`POST /v1/boards/:boardId/approval-subjects/:subjectId/delivery` is called only
+by the trusted publisher service after it has attempted the exact automatic
+delivery approved by the gate. It requires the service-only
+`approvals:write` scope and records the first canonical live URL plus an audit
+event against the still-active, unexpired, digest-matching gate. Repeating the
+same URL is idempotent; a different URL is refused. The stored read-back status
+is `service_reported`, because SuperPipeline has not independently fetched or
+verified the provider post.
+
+An agent must never hold `approvals:write`: possession would let it mutate gate
+delivery state and would collapse the separation between the agent proposing
+bytes, the person approving them, and the publisher reporting the side effect.
+The publisher's separate confirmation credential needs only `approvals:read`.
+
 🔍 Description. How the code is laid out, the rules that keep it that way, and the checks that hold
 them. Two checks hold the shape and quality of the code: numbers that may only fall. Neither asks
 you to fix old code; both stop new code from making it worse, and both fail when an improvement
