@@ -306,7 +306,11 @@ an agent to call `claim`. Modeled on A2A **PushNotificationConfig**:
 - Config: `{ url, token, authentication: { schemes: ["Bearer"], credentials } }`, registered per
   agent/board.
 - Events: `work.available` (a card the agent can claim entered a stage), `gate.pending` (a card
-  is waiting on a human's approval), `gate.resolved`, `run.reclaimed`, `card.canceled`,
+  is waiting on a human's approval), `delivery.pending` (a post approved for manual delivery
+  still owes its live link; offers `record_live_url`, and `switch_to_automatic` only when the
+  approval's preview was complete; read back by the hub's sweep at `GET …/deliveries/pending`,
+  agent-or-human like `gates/pending`, until a link is recorded, the mode is switched or the
+  approval expires), `gate.resolved`, `run.reclaimed`, `card.canceled`,
   `cards.stale` (the daily stale-card digest: `{ event, boardId, boardName, cards: StaleCardView[], ts }`,
   one delivery per sweep that has a card not reported in the last 24 hours — see
   docs-site `use/stuck-cards`).

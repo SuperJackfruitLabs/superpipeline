@@ -96,6 +96,7 @@ export const BOARD_ROUTES: readonly (readonly [method: string, pattern: RegExp, 
   ['GET', /^gates\/([^/]+)$/, 'gateRead'],
   ['POST', /^gates\/([^/]+)\/resolve$/, 'gateResolve'],
   ['POST', /^gates\/([^/]+)\/delivery$/, 'gateDelivery'],
+  ['GET', /^deliveries\/pending$/, 'deliveriesPending'],
   ['GET', /^elicitations\/pending$/, 'elicitationsPending'],
   ['POST', /^elicitations\/([^/]+)\/answer$/, 'elicitationAnswer'],
 ];

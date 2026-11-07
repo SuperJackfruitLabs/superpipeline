@@ -6,7 +6,7 @@ import type { LinkKind } from './links';
 import type { AgentActivityInput, BoardEvent, BoardInit, CardView, ClaimResult, CompleteVerbInput, EstimateView, LinkInput, LinkView, NotificationView, ProfileInput, ProfileView, PushConfigInput, PushDeliveryView, Result, RunReportDrainResult, RunReportOutboxRow, RunVerbInput, ScheduleView, StageDef, StagePatch, StaleCardView, StaleSettings, UsageSummary } from './model';
 import type { FixtureBoard } from './fixture-types';
 import type { StrictDecision } from './strict-decision';
-import type { ActivityView, ApprovalSubjectVerification, AttemptView, BoardSnapshot, CommentView, ElicitationPendingBody, ElicitationView, EvidenceReferenceInput, GatePendingBody, GateView, ReferenceView, RunContext, RunEvidence, RunEvidenceV1 } from './views';
+import type { ActivityView, ApprovalSubjectVerification, AttemptView, BoardSnapshot, CommentView, DeliveryPendingBody, ElicitationPendingBody, ElicitationView, EvidenceReferenceInput, GatePendingBody, GateView, ReferenceView, RunContext, RunEvidence, RunEvidenceV1 } from './views';
 
 /**
  * The Board Durable Object as its callers see it.
@@ -186,6 +186,8 @@ export interface BoardStub {
   getPushDeliveries(opts?: { status?: string }): Promise<PushDeliveryView[]>;
   pendingGateDeliveries(): Promise<GatePendingBody[]>;
   pendingElicitationDeliveries(): Promise<ElicitationPendingBody[]>;
+  /** Manual deliveries still owed their live link, in the `delivery.pending` body. */
+  pendingDeliveryFollowUps(): Promise<DeliveryPendingBody[]>;
   dispatchPushDeliveries(sender?: PushSender, opts?: { timeoutMs?: number }): Promise<{ sent: number; failed: number }>;
   getRunReportOutbox(): Promise<RunReportOutboxRow[]>;
   sweepBoard(nowIso: string): Promise<{ overdueNotified: number; schedulesFired: number; staleNotified: number }>;

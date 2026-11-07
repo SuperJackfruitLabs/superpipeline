@@ -519,6 +519,9 @@ async function boardRoutes(owner: Who, bot: Who, coord: Who, ownerOfR: Who, view
   await hit('gate resolve', 'POST', `${b}/gates/${g}/resolve`, { as: owner, body: { decision: 'approve', comment: 'Fine' } });
   await hit('gate resolve, again', 'POST', `${b}/gates/${g}/resolve`, { as: owner, body: { decision: 'approve' } });
   await hit('gate resolve, wrong method', 'GET', `${b}/gates/${g}/resolve`, { as: owner });
+  await hit('deliveries pending, an agent', 'GET', `${b}/deliveries/pending`, { as: bot });
+  await hit('deliveries pending, a person', 'GET', `${b}/deliveries/pending`, { as: owner });
+  await hit('deliveries pending, signed out', 'GET', `${b}/deliveries/pending`);
   await hit('board, unknown subpath', 'GET', `${b}/nothing`, { as: owner });
   await hit('board, unknown deep subpath', 'POST', `${b}/a/b/c`, { as: owner, body: {} });
 

@@ -4819,10 +4819,14 @@ exports[`the Worker HTTP surface, pinned before the split > answers every route 
             {
               "id": "a",
               "label": "A",
+              "meaning": "choose",
+              "needsComment": false,
             },
             {
               "id": "b",
               "label": "B",
+              "meaning": "choose",
+              "needsComment": false,
             },
           ],
           "question": "Which source?",
@@ -4854,10 +4858,14 @@ exports[`the Worker HTTP surface, pinned before the split > answers every route 
             {
               "id": "a",
               "label": "A",
+              "meaning": "choose",
+              "needsComment": false,
             },
             {
               "id": "b",
               "label": "B",
+              "meaning": "choose",
+              "needsComment": false,
             },
           ],
           "question": "Which source?",
@@ -5352,6 +5360,39 @@ exports[`the Worker HTTP surface, pinned before the split > answers every route 
     "request": "GET /v1/boards/brd#15/gates/gate#38/resolve",
     "status": 405,
     "step": "gate resolve, wrong method",
+  },
+  {
+    "body": {
+      "deliveries": [],
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "GET /v1/boards/brd#15/deliveries/pending",
+    "status": 200,
+    "step": "deliveries pending, an agent",
+  },
+  {
+    "body": {
+      "deliveries": [],
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "GET /v1/boards/brd#15/deliveries/pending",
+    "status": 200,
+    "step": "deliveries pending, a person",
+  },
+  {
+    "body": {
+      "error": "sign in to continue",
+    },
+    "headers": {
+      "content-type": "application/json",
+    },
+    "request": "GET /v1/boards/brd#15/deliveries/pending",
+    "status": 401,
+    "step": "deliveries pending, signed out",
   },
   {
     "body": {
