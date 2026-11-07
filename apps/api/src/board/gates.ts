@@ -650,10 +650,17 @@ export function optionDelivery(id: string): 'automatic' | 'manual' | null {
   return null;
 }
 
-/** The preview's text blocks as one string, for a v1 client that draws only `handoffSummary`. */
-function previewSummary(blocks: PreviewBlock[]): string | null {
+/** Said to a v1 client when the preview had to be cut, which it otherwise could not know. */
+export const PREVIEW_SHORTENED_NOTE = 'This preview was shortened. Open the card to see everything before approving.';
+
+/**
+ * The preview's text blocks as one string, for a v1 client that draws only `handoffSummary`.
+ * When the bounds cut anything the note says so: a v1 client cannot read `previewComplete`.
+ */
+function previewSummary(blocks: PreviewBlock[], complete: boolean): string | null {
   const text = blocks.filter((b) => b.type === 'text').map((b) => b.text).join('\n\n');
-  return text.length > 0 ? text : null;
+  if (text.length === 0) return complete ? null : PREVIEW_SHORTENED_NOTE;
+  return complete ? text : `${text}\n\n${PREVIEW_SHORTENED_NOTE}`;
 }
 
 /**
@@ -720,7 +727,7 @@ function gatePendingBody(deps: GatesDeps, gate: Row): GatePendingBody | null {
     // For a subject-bound gate the summary is the preview's text: a v1 client draws
     // `handoffSummary` and nothing else, so this is how it shows the exact post until it
     // reads gate.v2.
-    handoffSummary: approvalSubject ? previewSummary(preview) : handoffSummary(deps.getCardHandoffJson(cardId)),
+    handoffSummary: approvalSubject ? previewSummary(preview, bounded.complete) : handoffSummary(deps.getCardHandoffJson(cardId)),
     ...(approvalSubject
       ? {
           approvalSubject,

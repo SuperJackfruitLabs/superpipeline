@@ -12,6 +12,7 @@ import { describe, expect, it } from 'vitest';
 import { boundedPreview, PREVIEW_BLOCKS_MAX, PREVIEW_TEXT_MAX, type PreviewBlock } from '../src/approval-subject-kinds/kind';
 import { SOCIAL_PUBLISH_V1 } from '../src/approval-subject-kinds/social-publish-v1';
 import type { BoardDO } from '../src/board/board-do';
+import { PREVIEW_SHORTENED_NOTE } from '../src/board/gates';
 import { addBoundCard, boardStub, payload, STAGES } from './approval-subject-fixtures';
 
 const HOOK = 'https://hub.example/api/bridge/superpipeline/push';
@@ -50,6 +51,24 @@ describe('gate.v2 — a subject-bound gate on the push', () => {
         { id: 'request_changes', label: 'Request changes', meaning: 'revise', needsComment: true },
         { id: 'reject', label: 'Reject', meaning: 'reject', needsComment: false },
       ]);
+    });
+  });
+});
+
+describe('gate.v2 — a preview that had to be cut', () => {
+  it('says so to a v2 client, and to a v1 client through handoffSummary', async () => {
+    await runInDurableObject(boardStub('gate-v2-cut'), async (board: BoardDO, state) => {
+      await board.init({ id: 'brd_v2cut', tenantId: 'tnt_fixture', name: 'Fixture board', stages: STAGES });
+      await board.registerPushConfig({ agentId: 'agt_bridge', url: HOOK, token: 's', events: ['gate.pending'] });
+      const base = payload();
+      const [item] = base.items;
+      await addBoundCard(board, state, { publicationPayload: { ...base, items: [{ ...item, text: 'y'.repeat(PREVIEW_TEXT_MAX + 10) }] } });
+
+      const [delivery] = await board.getPushDeliveries();
+      const body: unknown = JSON.parse(delivery?.body ?? '{}');
+      expect(body).toMatchObject({ approvalSubject: { previewComplete: false } });
+      // A v1 client draws only handoffSummary and cannot read previewComplete: the note is how it knows.
+      expect(body).toHaveProperty('handoffSummary', expect.stringContaining(PREVIEW_SHORTENED_NOTE));
     });
   });
 });

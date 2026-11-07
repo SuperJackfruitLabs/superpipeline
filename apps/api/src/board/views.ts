@@ -20,7 +20,10 @@ export interface PreparedApprovalSubject {
   createdAt: string;
 }
 
-/** What a gate option means to a client, independent of its id (charter: gate.v2 §2). */
+/**
+ * What a gate option means to a client, independent of its id (charter: gate.v2 §2). `choose` is
+ * reserved for choice gates, which no stage offers yet; `optionMeaning` never returns it today.
+ */
 export type GateOptionMeaning = 'approve' | 'reject' | 'revise' | 'choose' | 'defer';
 
 export interface ApprovalSubjectView {
