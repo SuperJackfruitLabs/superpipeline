@@ -47,10 +47,24 @@ export const CARDS_COMMANDS: CommandSpec[] = [
         default: "no labels",
         description: "a label id from `supi label list`; repeat for more than one. Applied by a second request after the card exists",
       },
+      {
+        name: "--stage",
+        value: "<stageKey>",
+        type: "string",
+        default: "the board's first stage",
+        description: "the stage the card starts in, by key (see `supi board`), e.g. a lane that does not begin at the first stage",
+      },
+      {
+        name: "--project",
+        value: "<projectId>",
+        type: "string",
+        default: "no project",
+        description: "the project the card belongs to, as prj_… (see `supi project list`); a stage that freezes an approval subject needs one",
+      },
     ],
     summary: "queue a card, with this token as its grant",
     description:
-      "Creates a card in the board's first stage. The card records the credential that queued it as its grant — " +
+      "Creates a card in the board's first stage, or the one `--stage` names. The card records the credential that queued it as its grant — " +
       "who asked for the work and on whose authority. An agent's card is also bounded by the queueing policy " +
       "`supi agent queueing` sets: which boards may receive it, whose work it is, and how many cards an hour.",
     routes: [
@@ -67,10 +81,12 @@ export const CARDS_COMMANDS: CommandSpec[] = [
       "`<boardId>` or `<title>` is missing",
       "`--spec` cannot be read or is not JSON",
       "`--due` is not `YYYY-MM-DD`",
+      "`--stage` names no stage on the board, or `--project` no project in the workspace (refused by the server)",
     ],
     examples: [
       "supi create-card brd_8f2c… Write the release notes for 0.0.9",
       "supi create-card brd_8f2c… Audit the token routes --spec spec.json --priority 2 --due 2026-11-01 --label lbl_sec",
+      "supi create-card brd_8f2c… X post: the 0.0.9 release --stage x-post --project prj_34b4… --spec post.json",
     ],
   },
   {
@@ -337,7 +353,7 @@ export async function runCreateCard({ rest, pos }: Args): Promise<void> {
   if (!pos[0] || !pos[1]) {
     fail(
       "usage: supi create-card <boardId> <title> [--spec <file|->] [--priority <n>]",
-      "  [--due YYYY-MM-DD] [--label <id>]...",
+      "  [--due YYYY-MM-DD] [--label <id>]... [--stage <stageKey>] [--project <projectId>]",
     );
   }
   const specArg = flag(rest, "--spec");
@@ -345,6 +361,11 @@ export async function runCreateCard({ rest, pos }: Args): Promise<void> {
   const dueArg = flag(rest, "--due");
   // Repeatable — a card can carry more than one label at creation.
   const labelIds = flags(rest, "--label");
+  // Both go in the create itself, which already accepts them: a card that must start mid-board
+  // (an X post lane) or belong to a project (an approval subject requires one) is born that way.
+  // Neither had a flag, so an agent queueing such a card had no way to set them at all.
+  const stageArg = flag(rest, "--stage");
+  const projectArg = flag(rest, "--project");
   // Every remaining positional is the title, so a sentence needs no quoting.
   const body: Record<string, unknown> = { title: pos.slice(1).join(" ") };
   if (specArg) {
@@ -356,6 +377,8 @@ export async function runCreateCard({ rest, pos }: Args): Promise<void> {
     }
   }
   if (priorityArg) body.priority = Number(priorityArg);
+  if (stageArg) body.stageKey = stageArg;
+  if (projectArg) body.projectId = projectArg;
   if (dueArg) {
     // Checked here, not sent and refused: `POST /cards` answers a malformed `dueAt` with a
     // 400 whose sentence is about a field named `dueAt`, not the flag the person typed.
