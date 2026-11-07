@@ -665,22 +665,6 @@ function previewSummary(blocks: PreviewBlock[], complete: boolean): string | nul
 }
 
 /**
- * The body a gate travels in, built once from the gate's own row.
- *
- * It carries what a projection needs to render a question without a second
- * round trip: the card's title, the stage, who produced the work, and the
- * options. `producedBy` is included because it is the subject of the
- * separation-of-duties check at resolution.
- *
- * Read from the row rather than from `DEFAULT_GATE_OPTIONS` so that a gate
- * keeps the options it opened with. They are the same today; a gate whose
- * wording changed under it after the fact would be a question answered
- * against a different set than the one it was asked with.
- *
- * `null` when the card is gone — a gate whose card was deleted has nothing
- * to ask about.
- */
-/**
  * A subject as a decision envelope carries it, or null when there is no such subject.
  *
  * gate.v2 §3: what the decider must see. The full canonical payload stays behind the
@@ -708,6 +692,22 @@ function subjectEnvelope(deps: GatesDeps, subjectId: string | null): ApprovalSub
   };
 }
 
+/**
+ * The body a gate travels in, built once from the gate's own row.
+ *
+ * It carries what a projection needs to render a question without a second
+ * round trip: the card's title, the stage, who produced the work, and the
+ * options. `producedBy` is included because it is the subject of the
+ * separation-of-duties check at resolution.
+ *
+ * Read from the row rather than from `DEFAULT_GATE_OPTIONS` so that a gate
+ * keeps the options it opened with. They are the same today; a gate whose
+ * wording changed under it after the fact would be a question answered
+ * against a different set than the one it was asked with.
+ *
+ * `null` when the card is gone — a gate whose card was deleted has nothing
+ * to ask about.
+ */
 function gatePendingBody(deps: GatesDeps, gate: Row): GatePendingBody | null {
   const cardId = gate.card_id as string;
   const card = deps.getCard(cardId);
