@@ -1,5 +1,5 @@
 import type { JsonValue } from '../json';
-import { nonEmptyString, publicDigest, record, type ApprovalSubjectKind } from './kind';
+import { nonEmptyString, publicDigest, record, type ApprovalSubjectKind, type PreviewBlock } from './kind';
 
 /** Validate the complete public social-publish/v1 payload before any durable write. */
 function validationError(value: unknown): string | null {
@@ -70,6 +70,29 @@ function validationError(value: unknown): string | null {
   return null;
 }
 
+/** The exact posts, the account, and when it goes out — what an approver must see. */
+function preview(value: unknown): PreviewBlock[] {
+  const payload = record(value);
+  if (!payload) return [];
+  const blocks: PreviewBlock[] = [];
+  const items = Array.isArray(payload.items) ? payload.items : [];
+  items.forEach((raw, i) => {
+    const item = record(raw);
+    if (!item || typeof item.text !== 'string') return;
+    blocks.push({ type: 'text', label: items.length > 1 ? `Post ${i + 1} of ${items.length}` : 'Post', text: item.text });
+    const media = Array.isArray(item.media) ? item.media.length : 0;
+    if (media > 0) blocks.push({ type: 'field', label: 'Media', value: `${media} attached` });
+  });
+  const account = record(payload.account);
+  if (account && typeof account.username === 'string') blocks.push({ type: 'field', label: 'Account', value: `@${account.username} on X` });
+  const timing = record(payload.timing);
+  if (timing) {
+    blocks.push({ type: 'field', label: 'Goes out', value: timing.mode === 'scheduled' && typeof timing.notBefore === 'string' ? `after ${timing.notBefore}` : 'as soon as approved' });
+    if (typeof timing.expiresAt === 'string') blocks.push({ type: 'field', label: 'Approval expires', value: timing.expiresAt });
+  }
+  return blocks;
+}
+
 export const SOCIAL_PUBLISH_V1: ApprovalSubjectKind = {
   schema: 'social-publish/v1',
   executorCapabilities: ['x-publish'],
@@ -77,4 +100,5 @@ export const SOCIAL_PUBLISH_V1: ApprovalSubjectKind = {
   validationError,
   canReadBack: (url: URL) => url.hostname === 'x.com' || url.hostname.endsWith('.x.com') || url.hostname === 'twitter.com' || url.hostname.endsWith('.twitter.com'),
   readBackDigest: publicDigest,
+  preview,
 };

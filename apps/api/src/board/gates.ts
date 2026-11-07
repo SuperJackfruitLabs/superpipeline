@@ -1,11 +1,12 @@
 import type { GateDecision } from '@superpipeline/contract';
 import { approvalSubjectKind } from '../approval-subject-kinds';
+import { boundedPreview, type PreviewBlock } from '../approval-subject-kinds/kind';
 import { newId } from '../ids';
 import type { BoardContext } from './context';
 import type { GateOption } from './gate-option';
 import type { CardView, Result, Row } from './model';
 import { handoffSummary, isApproveDecision, record } from './rules';
-import type { GatePendingBody, GateView, PreparedApprovalSubject } from './views';
+import type { GateOptionMeaning, GatePendingBody, GateView, PreparedApprovalSubject } from './views';
 
 /**
  * Approval gates: opening one, a person deciding it, the delivery it carries, and its push body.
@@ -650,6 +651,27 @@ function getGateRow(deps: GatesDeps, gateId: string): Row | null {
  * `null` when the card is gone — a gate whose card was deleted has nothing
  * to ask about.
  */
+/** What an option means to a client (charter: gate.v2 §2). An id the board adds later defaults to `defer`. */
+export function optionMeaning(id: string): GateOptionMeaning {
+  if (id === 'approve' || id === 'approve_automatic' || id === 'approve_manual') return 'approve';
+  if (id === 'reject') return 'reject';
+  if (id === 'request_changes') return 'revise';
+  return 'defer';
+}
+
+/** Which delivery an approving option chooses for an approval subject, if any. */
+export function optionDelivery(id: string): 'automatic' | 'manual' | null {
+  if (id === 'approve_automatic') return 'automatic';
+  if (id === 'approve_manual') return 'manual';
+  return null;
+}
+
+/** The preview's text blocks as one string, for a v1 client that draws only `handoffSummary`. */
+function previewSummary(blocks: PreviewBlock[]): string | null {
+  const text = blocks.filter((b) => b.type === 'text').map((b) => b.text).join('\n\n');
+  return text.length > 0 ? text : null;
+}
+
 function gatePendingBody(deps: GatesDeps, gate: Row): GatePendingBody | null {
   const cardId = gate.card_id as string;
   const card = deps.getCard(cardId);
@@ -657,8 +679,21 @@ function gatePendingBody(deps: GatesDeps, gate: Row): GatePendingBody | null {
   const boardId = deps.getMeta('boardId');
   const subjectId = (gate.approval_subject_id as string | null) ?? null;
   const subject = subjectId ? deps.approvalSubjectView(subjectId) : null;
+  // gate.v2 §3: a subject-bound gate carries what the decider must see. The full canonical
+  // payload still stays behind the authenticated route; only the kind's preview travels.
+  const kind = subject ? approvalSubjectKind(subject.schema) : null;
+  const canonical = subject ? record(subject.canonical) : null;
+  const timing = canonical ? record(canonical.timing) : null;
+  const preview = kind && canonical ? boundedPreview(kind.preview(canonical)) : [];
   const approvalSubject = subject
-    ? { id: subject.id, digest: subject.digest, schema: subject.schema, revision: subject.revision }
+    ? {
+        id: subject.id,
+        digest: subject.digest,
+        schema: subject.schema,
+        revision: subject.revision,
+        expiresAt: timing && typeof timing.expiresAt === 'string' ? timing.expiresAt : null,
+        preview,
+      }
     : null;
   return {
     event: 'gate.pending',
@@ -677,7 +712,11 @@ function gatePendingBody(deps: GatesDeps, gate: Row): GatePendingBody | null {
     // the only way to read it is to leave for the board. That was the state
     // for a day (supermessage#37) because every test asserted the gate's
     // SHAPE rather than whether a human could act on one.
-    handoffSummary: approvalSubject ? null : handoffSummary(deps.getCardHandoffJson(cardId)),
+    //
+    // For a subject-bound gate the summary is the preview's text: a v1 client draws
+    // `handoffSummary` and nothing else, so this is how it shows the exact post until it
+    // reads gate.v2.
+    handoffSummary: approvalSubject ? previewSummary(preview) : handoffSummary(deps.getCardHandoffJson(cardId)),
     ...(approvalSubject
       ? {
           approvalSubject,
@@ -687,10 +726,19 @@ function gatePendingBody(deps: GatesDeps, gate: Row): GatePendingBody | null {
     // `id`/`label`, not `name`/`title`: the wire names are pinned by
     // agentpod fixtures/ecosystem-identity/matrix_gate_events.json, which
     // three repos validate against. The board's own vocabulary stops here.
-    options: (JSON.parse(gate.options_json as string) as GateOption[]).map((o) => ({
-      id: o.name,
-      label: o.title,
-    })),
+    //
+    // gate.v2 §2 adds what each option MEANS, so a client draws by meaning and keeps no
+    // list of ids; v1 readers ignore the extra fields.
+    options: (JSON.parse(gate.options_json as string) as GateOption[]).map((o) => {
+      const delivery = optionDelivery(o.name);
+      return {
+        id: o.name,
+        label: o.title,
+        meaning: optionMeaning(o.name),
+        needsComment: o.interactive === true,
+        ...(delivery ? { delivery } : {}),
+      };
+    }),
     ts: gate.created_at as string,
   };
 }

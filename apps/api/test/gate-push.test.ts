@@ -106,10 +106,11 @@ describe('BoardDO — gate.pending (charter 2026-08-30)', () => {
       const body = JSON.parse((await board.getPushDeliveries())[0]!.body);
       // `id`/`label` on the wire; `name`/`title` is the board's own shape and
       // stops here. Pinned by agentpod fixtures/…/matrix_gate_events.json.
+      // gate.v2 §2 adds meaning and needsComment beside the pinned id/label; v1 readers ignore them.
       expect(body.options).toEqual([
-        { id: 'approve', label: 'Approve' },
-        { id: 'request_changes', label: 'Request changes' },
-        { id: 'reject', label: 'Reject' },
+        { id: 'approve', label: 'Approve', meaning: 'approve', needsComment: false },
+        { id: 'request_changes', label: 'Request changes', meaning: 'revise', needsComment: true },
+        { id: 'reject', label: 'Reject', meaning: 'reject', needsComment: false },
       ]);
     });
   });
