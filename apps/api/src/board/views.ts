@@ -292,6 +292,28 @@ export interface GateView {
 }
 
 /**
+ * A subject as a decision envelope carries it (charter: gate.v2 §3): its identity, expiry and the
+ * kind's bounded preview. The canonical payload stays behind the authenticated route.
+ */
+export type ApprovalSubjectEnvelope = Pick<ApprovalSubjectView, 'id' | 'digest' | 'schema' | 'revision'> & {
+  expiresAt: string | null;
+  preview: PreviewBlock[];
+  /** False when the preview had to be cut to its bounds; no approving option may then be offered. */
+  previewComplete: boolean;
+};
+
+/**
+ * What an option asks the person to type when they choose it (charter: the decision envelope
+ * covers questions and follow-ups §1). camelCase here, like the rest of this push body.
+ */
+export interface EnvelopeOptionInput {
+  kind: 'text' | 'url';
+  label: string;
+  required: boolean;
+  maxLength: number;
+}
+
+/**
  * What a `gate.pending` carries — the same object however it travels.
  *
  * Pushed when the gate opens, and read back by the hub's reconciliation sweep
@@ -335,12 +357,7 @@ export interface GatePendingBody {
    * §3). The canonical payload stays behind the authenticated route; only the kind's bounded
    * preview travels.
    */
-  approvalSubject?: Pick<ApprovalSubjectView, 'id' | 'digest' | 'schema' | 'revision'> & {
-    expiresAt: string | null;
-    preview: PreviewBlock[];
-    /** False when the preview had to be cut to its bounds; no approving option may then be offered. */
-    previewComplete: boolean;
-  };
+  approvalSubject?: ApprovalSubjectEnvelope;
   /** Authenticated web route for reviewing the authoritative subject. */
   reviewUrl?: string;
   /** gate.v2 §2: each option says what it means; `delivery` only on an option that approves a subject. */
@@ -388,8 +405,43 @@ export interface ElicitationPendingBody {
    *
    * `id`/`label`, not the board's `name`/`title`, for the same reason the gate's are.
    */
-  options: Array<{ id: string; label: string }>;
+  options: Array<{ id: string; label: string; meaning: GateOptionMeaning; needsComment: false }>;
+  /**
+   * Only on a question with no options: it is answered by typing, and this is how long the
+   * answer may be — the limit the answer route enforces.
+   */
+  freeText?: { maxLength: number };
   /** When the question was asked. The row's own clock, so a re-read is byte-identical. */
+  ts: string;
+}
+
+/**
+ * What a `delivery.pending` carries — a person approved a post for manual delivery and still owes
+ * the board its live link (charter: the decision envelope covers questions and follow-ups §3).
+ *
+ * Pushed when the gate is resolved `approve_manual`, and read back by the hub's sweep until a
+ * link is recorded, the mode is switched to automatic, or the approval expires. One builder
+ * serves both, for the reason {@link GatePendingBody} gives.
+ */
+export interface DeliveryPendingBody {
+  event: 'delivery.pending';
+  boardId: string | null;
+  boardName: string;
+  cardId: string;
+  cardTitle: string;
+  gateId: string;
+  stageKey: string;
+  approvalSubject: ApprovalSubjectEnvelope;
+  /** `switch_to_automatic` only when the preview was complete: the person saw everything it would post. */
+  options: Array<{
+    id: 'record_live_url' | 'switch_to_automatic';
+    label: string;
+    meaning: GateOptionMeaning;
+    needsComment: false;
+    input?: EnvelopeOptionInput;
+    delivery?: 'automatic';
+  }>;
+  /** When the gate was resolved. The gate's own clock, so a re-read is byte-identical. */
   ts: string;
 }
 

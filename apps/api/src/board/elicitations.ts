@@ -7,11 +7,17 @@ import type { GateOption } from './gate-option';
 import type { AgentActivityInput, CardView, Result, Row } from './model';
 import { HEARTBEAT_TIMEOUT_MS } from './rules';
 import type { ApprovalDetail } from './strict-decision';
-import type { ElicitationPendingBody, ElicitationStatus, ElicitationView } from './views';
+import type { ElicitationPendingBody, ElicitationStatus, ElicitationView, GateOptionMeaning } from './views';
 
 /**
  * An agent's questions (elicitations): asking, answering, cancelling, and their push body.
  */
+
+/**
+ * The longest typed answer a question takes, in characters. Advertised on a question with no
+ * options (`freeText.maxLength`) and enforced by `answerElicitation`, so the two cannot disagree.
+ */
+export const ELICITATION_TEXT_MAX = 2000;
 
 /** What questions needs from the rest of the board. */
 export type ElicitationsDeps = Pick<
@@ -85,6 +91,9 @@ export async function answerElicitation(deps: ElicitationsDeps, input: {
   }
   const text = input.text?.trim() ?? '';
   const option = input.option?.trim() ?? '';
+  if (text.length > ELICITATION_TEXT_MAX) {
+    return { ok: false, code: 'INVALID_ANSWER', message: `an answer is at most ${ELICITATION_TEXT_MAX} characters` };
+  }
   const chosenOption = elicitation.options.find((o) => o.name === option);
   if (chosenOption?.requires === 'workspace-admin' && input.answererRole !== 'owner' && input.answererRole !== 'admin')
     return { ok: false, code: 'WORKSPACE_ADMIN_REQUIRED', message: 'Only a workspace owner or admin can choose Always allow.' };
@@ -259,7 +268,8 @@ export function openElicitation(deps: ElicitationsDeps, input: AgentActivityInpu
   deps.setNeedsHuman(cardId, { reason: 'question', elicitationId: id });
   deps.emit('elicitation.opened', { elicitationId: id, cardId, runId: input.runId, signal: input.signal ?? null });
   deps.notify('input', cardId, question === '' ? 'An agent is waiting on you' : question);
-  notifyElicitationPending(deps, id);
+  // A strict decision's binding is saved after this returns, so whether it is one is said here.
+  notifyElicitationPending(deps, id, input.strictDecision !== undefined);
   return id;
 }
 
@@ -366,10 +376,11 @@ export function pendingElicitations(deps: ElicitationsDeps): ElicitationView[] {
  * `null` when the card is gone — a question about a deleted card has nothing to ask
  * about, and is the same case the gate builder already handles.
  */
-function elicitationPendingBody(deps: ElicitationsDeps, row: Row): ElicitationPendingBody | null {
+function elicitationPendingBody(deps: ElicitationsDeps, row: Row, strict: boolean): ElicitationPendingBody | null {
   const cardId = row.card_id as string;
   const card = deps.getCard(cardId);
   if (!card) return null;
+  const options = JSON.parse(row.options_json as string) as GateOption[];
   return {
     event: 'elicitation.pending',
     boardId: deps.getMeta('boardId'),
@@ -381,12 +392,33 @@ function elicitationPendingBody(deps: ElicitationsDeps, row: Row): ElicitationPe
     stageKey: row.stage_key as string,
     agentId: row.agent_id as string,
     question: (row.question as string) ?? '',
-    options: (JSON.parse(row.options_json as string) as GateOption[]).map((o) => ({
+    // The decision envelope (charter: questions and follow-ups §2): each option says what it
+    // means, as a gate's do. A question asks for no comment on an option.
+    options: options.map((o): ElicitationPendingBody['options'][number] => ({
       id: o.name,
       label: o.title,
+      meaning: questionOptionMeaning(o.name, strict),
+      needsComment: false,
     })),
+    // Nothing to tap: the answer is typed, and the reader is told how long it may be.
+    ...(options.length === 0 ? { freeText: { maxLength: ELICITATION_TEXT_MAX } } : {}),
     ts: row.created_at as string,
   };
+}
+
+/**
+ * What a question's option means. An ordinary option is a choice; a strict decision offers only
+ * approving options and `deny` (`postStrictDecision` refuses anything else), so its `deny`
+ * rejects and every other option approves.
+ */
+function questionOptionMeaning(name: string, strict: boolean): GateOptionMeaning {
+  if (!strict) return 'choose';
+  return name === 'deny' ? 'reject' : 'approve';
+}
+
+/** Whether a question is a strict decision: one is bound when it is asked. */
+function isStrictDecision(deps: ElicitationsDeps, elicitationId: SqlStorageValue): boolean {
+  return deps.sql.exec(`SELECT 1 FROM strict_decision_requests WHERE elicitation_id = ?`, elicitationId).toArray().length > 0;
 }
 
 /**
@@ -400,12 +432,12 @@ function elicitationPendingBody(deps: ElicitationsDeps, row: Row): ElicitationPe
  * advertise the stage's capability, and to nobody at all when the stage is one a
  * person owns.
  */
-function notifyElicitationPending(deps: ElicitationsDeps, elicitationId: string): void {
+function notifyElicitationPending(deps: ElicitationsDeps, elicitationId: string, strict: boolean): void {
   const row = deps.sql.exec(`SELECT * FROM elicitations WHERE id = ?`, elicitationId).toArray()[0] as
     | Row
     | undefined;
   if (!row) return;
-  const payload = elicitationPendingBody(deps, row);
+  const payload = elicitationPendingBody(deps, row, strict);
   if (!payload) return;
   const body = JSON.stringify(payload);
   const ts = deps.now();
@@ -440,6 +472,6 @@ function notifyElicitationPending(deps: ElicitationsDeps, elicitationId: string)
  */
 export async function pendingElicitationDeliveries(deps: ElicitationsDeps): Promise<ElicitationPendingBody[]> {
   return pendingElicitationRows(deps)
-    .map((r) => elicitationPendingBody(deps, r))
+    .map((r) => elicitationPendingBody(deps, r, isStrictDecision(deps, r.id)))
     .filter((b): b is ElicitationPendingBody => b !== null);
 }

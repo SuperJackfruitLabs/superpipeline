@@ -149,10 +149,11 @@ describe('elicitation.pending — telling somebody a run is blocked', () => {
 
       const [push] = elicitationPushes(await board.getPushDeliveries());
       // `name`→`id`, `title`→`label`, in the order the agent offered them. The board's
-      // own spelling stops at this boundary, as `gatePendingBody` already says.
+      // own spelling stops at this boundary, as `gatePendingBody` already says. Each option
+      // also says what it means (the decision envelope); an ordinary option is a choice.
       expect(push.options).toEqual([
-        { id: 'run_them', label: 'Run the tests' },
-        { id: 'skip', label: 'Skip them' },
+        { id: 'run_them', label: 'Run the tests', meaning: 'choose', needsComment: false },
+        { id: 'skip', label: 'Skip them', meaning: 'choose', needsComment: false },
       ]);
     });
   });

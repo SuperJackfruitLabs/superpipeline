@@ -54,10 +54,13 @@ export async function boards({ request, env, url, path }: WorkerRequest, match: 
   // and the people whose answers it lists have at least as much business reading it. Classifying
   // it human-only shipped on 2026-10-03 and every sweep pass 401'd within minutes — silently,
   // because the sweep settles nothing for a board it could not read.
+  // `deliveries/pending` joins them for the same reasons: the same sweep's read of the follow-up
+  // a manual approval owes. It names nobody, and acting on it stays on the human delivery route.
   const isEitherRoute =
     !!boardId &&
     (rest === 'gates/pending' ||
       rest === 'elicitations/pending' ||
+      rest === 'deliveries/pending' ||
       /^gates\/[^/]+$/.test(rest));
   /**
    * What a COORDINATOR agent reaches: the board, one card, and creating a card.

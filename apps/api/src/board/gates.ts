@@ -6,7 +6,7 @@ import type { BoardContext } from './context';
 import type { GateOption } from './gate-option';
 import type { CardView, Result, Row } from './model';
 import { handoffSummary, isApproveDecision, record } from './rules';
-import type { GateOptionMeaning, GatePendingBody, GateView, PreparedApprovalSubject } from './views';
+import type { ApprovalSubjectEnvelope, DeliveryPendingBody, GateOptionMeaning, GatePendingBody, GateView, PreparedApprovalSubject } from './views';
 
 /**
  * Approval gates: opening one, a person deciding it, the delivery it carries, and its push body.
@@ -184,6 +184,7 @@ export async function resolveGate(deps: GatesDeps, input: {
     // A manual approval remains on its human stage: publisher claims are impossible by routing,
     // while verifyApprovalSubject independently fences a corrupted or stale claim.
     deps.parkForHuman(cardId, { reason: 'review', detail: 'approved for manual delivery' });
+    notifyDeliveryPending(deps, input.gateId);
   } else if (isApproveDecision(input.decision)) {
     // The approver becomes the producer of any chained gate (keeps separation-of-duties intact).
     // An approval produces no new work, so a chained gate judges the same run's work.
@@ -664,6 +665,34 @@ function previewSummary(blocks: PreviewBlock[], complete: boolean): string | nul
 }
 
 /**
+ * A subject as a decision envelope carries it, or null when there is no such subject.
+ *
+ * gate.v2 §3: what the decider must see. The full canonical payload stays behind the
+ * authenticated route; only the kind's bounded preview travels. Shared by the gate and the
+ * manual-delivery follow-up, so the two cannot disagree on what a person was shown.
+ */
+function subjectEnvelope(deps: GatesDeps, subjectId: string | null): ApprovalSubjectEnvelope | null {
+  const subject = subjectId ? deps.approvalSubjectView(subjectId) : null;
+  if (!subject) return null;
+  const kind = approvalSubjectKind(subject.schema);
+  const canonical = record(subject.canonical);
+  const timing = canonical ? record(canonical.timing) : null;
+  // No kind or no readable payload means no preview at all, which is never complete.
+  const bounded = kind && canonical ? boundedPreview(kind.preview(canonical)) : { blocks: [], complete: false };
+  return {
+    id: subject.id,
+    digest: subject.digest,
+    schema: subject.schema,
+    revision: subject.revision,
+    expiresAt: timing && typeof timing.expiresAt === 'string' ? timing.expiresAt : null,
+    preview: bounded.blocks,
+    // False when the bounds cut or dropped anything: a client must then not offer an
+    // approving option, because the person could not see everything they would approve.
+    previewComplete: bounded.complete,
+  };
+}
+
+/**
  * The body a gate travels in, built once from the gate's own row.
  *
  * It carries what a projection needs to render a question without a second
@@ -684,29 +713,7 @@ function gatePendingBody(deps: GatesDeps, gate: Row): GatePendingBody | null {
   const card = deps.getCard(cardId);
   if (!card) return null;
   const boardId = deps.getMeta('boardId');
-  const subjectId = (gate.approval_subject_id as string | null) ?? null;
-  const subject = subjectId ? deps.approvalSubjectView(subjectId) : null;
-  // gate.v2 §3: a subject-bound gate carries what the decider must see. The full canonical
-  // payload still stays behind the authenticated route; only the kind's preview travels.
-  const kind = subject ? approvalSubjectKind(subject.schema) : null;
-  const canonical = subject ? record(subject.canonical) : null;
-  const timing = canonical ? record(canonical.timing) : null;
-  // No kind or no readable payload means no preview at all, which is never complete.
-  const bounded = kind && canonical ? boundedPreview(kind.preview(canonical)) : { blocks: [], complete: false };
-  const preview = bounded.blocks;
-  const approvalSubject = subject
-    ? {
-        id: subject.id,
-        digest: subject.digest,
-        schema: subject.schema,
-        revision: subject.revision,
-        expiresAt: timing && typeof timing.expiresAt === 'string' ? timing.expiresAt : null,
-        preview,
-        // False when the bounds cut or dropped anything: a client must then not offer an
-        // approving option, because the person could not see everything they would approve.
-        previewComplete: bounded.complete,
-      }
-    : null;
+  const approvalSubject = subjectEnvelope(deps, (gate.approval_subject_id as string | null) ?? null);
   return {
     event: 'gate.pending',
     boardId,
@@ -728,7 +735,9 @@ function gatePendingBody(deps: GatesDeps, gate: Row): GatePendingBody | null {
     // For a subject-bound gate the summary is the preview's text: a v1 client draws
     // `handoffSummary` and nothing else, so this is how it shows the exact post until it
     // reads gate.v2.
-    handoffSummary: approvalSubject ? previewSummary(preview, bounded.complete) : handoffSummary(deps.getCardHandoffJson(cardId)),
+    handoffSummary: approvalSubject
+      ? previewSummary(approvalSubject.preview, approvalSubject.previewComplete)
+      : handoffSummary(deps.getCardHandoffJson(cardId)),
     ...(approvalSubject
       ? {
           approvalSubject,
@@ -771,11 +780,16 @@ function notifyGatePending(deps: GatesDeps, gateId: string): void {
   if (!gate) return;
   const payload = gatePendingBody(deps, gate);
   if (!payload) return;
+  queueSubscribedPush(deps, payload);
+}
+
+/** Queue one body for every push config subscribed to its event. Subscription only, never capability. */
+function queueSubscribedPush(deps: GatesDeps, payload: GatePendingBody | DeliveryPendingBody): void {
   const body = JSON.stringify(payload);
   const ts = deps.now();
   for (const cfg of deps.sql.exec(`SELECT * FROM push_configs`).toArray()) {
-    const events = JSON.parse(cfg.events_json as string) as string[];
-    if (!events.includes('gate.pending')) continue;
+    const events: unknown = typeof cfg.events_json === 'string' ? JSON.parse(cfg.events_json) : null;
+    if (!Array.isArray(events) || !events.includes(payload.event)) continue;
     deps.sql.exec(
       `INSERT INTO push_deliveries (config_id, url, body, status, attempts, created_at) VALUES (?, ?, ?, 'pending', 0, ?)`,
       cfg.id,
@@ -804,4 +818,91 @@ export async function pendingGateDeliveries(deps: GatesDeps): Promise<GatePendin
     .toArray()
     .map((r) => gatePendingBody(deps, r as Row))
     .filter((b): b is GatePendingBody => b !== null);
+}
+
+type DeliveryOption = DeliveryPendingBody['options'][number];
+
+/** Record the link of a post the person made themselves; the delivery route takes it as `liveUrl`. */
+const RECORD_LIVE_URL: DeliveryOption = {
+  id: 'record_live_url',
+  label: 'I posted it — add the link',
+  meaning: 'defer',
+  needsComment: false,
+  input: { kind: 'url', label: 'Live link', required: true, maxLength: 2000 },
+};
+
+/** Post it automatically after all; the delivery route takes it as `mode: 'automatic'`. */
+const SWITCH_TO_AUTOMATIC: DeliveryOption = {
+  id: 'switch_to_automatic',
+  label: 'Post it automatically instead',
+  meaning: 'approve',
+  needsComment: false,
+  delivery: 'automatic',
+};
+
+/**
+ * The follow-up a manual approval owes the board, or null when nothing is owed.
+ *
+ * Owed while the gate stands resolved `approve_manual` on a subject that is still the card's
+ * active one, no live link is recorded, and the approval has not expired. Recording a link
+ * (`updateApprovalDelivery` sets `live_post_url`) or switching to automatic (it rewrites the
+ * decision) ends it. `null` too when the card is gone, as for a gate.
+ *
+ * `switch_to_automatic` is offered only when the subject's preview was complete: approving
+ * automatic delivery from a room is approving what the room showed, and a cut preview did not
+ * show everything (gate.v2 §3, the same rule a gate's approving options follow).
+ */
+function deliveryPendingBody(deps: GatesDeps, gate: Row): DeliveryPendingBody | null {
+  const subjectId = typeof gate.approval_subject_id === 'string' ? gate.approval_subject_id : null;
+  if (gate.status !== 'resolved' || gate.decision !== 'approve_manual' || !subjectId || gate.live_post_url) return null;
+  const { id: gateId, card_id: cardId, stage_key: stageKey } = gate;
+  if (typeof gateId !== 'string' || typeof cardId !== 'string' || typeof stageKey !== 'string') return null;
+  const cardRow = deps.getCardRow(cardId);
+  if (!cardRow || cardRow.archived_at || cardRow.active_approval_subject_id !== subjectId) return null;
+  const subjectRow = deps.sql.exec(`SELECT status FROM approval_subjects WHERE id = ?`, subjectId).toArray()[0];
+  if (subjectRow?.status !== 'active') return null;
+  const approvalSubject = subjectEnvelope(deps, subjectId);
+  if (!approvalSubject) return null;
+  if (approvalSubject.expiresAt !== null && Date.parse(approvalSubject.expiresAt) <= Date.parse(deps.now())) return null;
+  const card = deps.getCard(cardId);
+  if (!card) return null;
+  return {
+    event: 'delivery.pending',
+    boardId: deps.getMeta('boardId'),
+    boardName: deps.getMeta('name') ?? '',
+    cardId,
+    cardTitle: card.title,
+    gateId,
+    stageKey,
+    approvalSubject,
+    options: approvalSubject.previewComplete ? [RECORD_LIVE_URL, SWITCH_TO_AUTOMATIC] : [RECORD_LIVE_URL],
+    ts: typeof gate.resolved_at === 'string' ? gate.resolved_at : '',
+  };
+}
+
+/**
+ * Queue `delivery.pending` for a gate just resolved `approve_manual`. Fan-out by subscription
+ * only, for the reason `notifyGatePending` gives: it is addressed to a person.
+ */
+function notifyDeliveryPending(deps: GatesDeps, gateId: string): void {
+  const gate = getGateRow(deps, gateId);
+  if (!gate) return;
+  const payload = deliveryPendingBody(deps, gate);
+  if (payload) queueSubscribedPush(deps, payload);
+}
+
+/**
+ * Every manual delivery still owed its live link, in the body a push carries.
+ *
+ * The floor beneath push, as `pendingGateDeliveries` is for gates: a dead-lettered
+ * `delivery.pending` would otherwise leave nobody asking for the link. Absence from this list is
+ * how a reader learns the follow-up is settled (a link recorded, the mode switched, or expired).
+ */
+export async function pendingDeliveryFollowUps(deps: GatesDeps): Promise<DeliveryPendingBody[]> {
+  return deps.sql
+    // Candidates only; `deliveryPendingBody` decides what is owed, for the push and this read alike.
+    .exec(`SELECT * FROM gates WHERE status = 'resolved' AND decision = 'approve_manual' ORDER BY resolved_at ASC, created_at ASC`)
+    .toArray()
+    .map((r) => deliveryPendingBody(deps, r))
+    .filter((b): b is DeliveryPendingBody => b !== null);
 }

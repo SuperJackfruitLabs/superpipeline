@@ -16,6 +16,16 @@ export async function gatesPending({ stub }: BoardRequest): Promise<Response> {
   return Response.json({ gates: await stub.pendingGateDeliveries() });
 }
 
+// GET /v1/boards/:id/deliveries/pending — every manual delivery still owed its live link.
+//
+// The read half of the sweep for `delivery.pending`, the follow-up a gate resolved
+// `approve_manual` owes (charter: the decision envelope covers questions and follow-ups §3).
+// Same footing as `gates/pending`: a read that names nobody and carries no authority. Recording
+// the link or switching the mode stays on the delivery route below, with its decider checks.
+export async function deliveriesPending({ stub }: BoardRequest): Promise<Response> {
+  return Response.json({ deliveries: await stub.pendingDeliveryFollowUps() });
+}
+
 // GET /v1/boards/:id/gates/:gateId — one gate, including how it was decided.
 export async function gateRead({ stub }: BoardRequest, oneGate: RegExpMatchArray): Promise<Response> {
   const result = await stub.getGate(oneGate[1]);

@@ -276,6 +276,10 @@ export class BoardDO extends DurableObject<Env> {
     return gates.pendingGateDeliveries(this.board, ...args);
   }
 
+  pendingDeliveryFollowUps(...args: OpArgs<typeof gates.pendingDeliveryFollowUps>): ReturnType<typeof gates.pendingDeliveryFollowUps> {
+    return gates.pendingDeliveryFollowUps(this.board, ...args);
+  }
+
   // Approval subjects
 
   verifyApprovalSubject(...args: OpArgs<typeof approvalSubjects.verifyApprovalSubject>): ReturnType<typeof approvalSubjects.verifyApprovalSubject> {
