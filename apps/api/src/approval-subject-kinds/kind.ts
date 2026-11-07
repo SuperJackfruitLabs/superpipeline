@@ -20,7 +20,8 @@ function cut(v: string, max: number): string {
 
 /**
  * Clamp a kind's preview to the wire's bounds. `complete` is false when anything was cut or
- * dropped, so a client never offers to approve text the person could not see in full.
+ * dropped, or when there was nothing to show, so a client never offers to approve text the
+ * person could not see in full.
  */
 export function boundedPreview(blocks: PreviewBlock[]): { blocks: PreviewBlock[]; complete: boolean } {
   const kept = blocks.slice(0, PREVIEW_BLOCKS_MAX).map((b): PreviewBlock => {
@@ -28,7 +29,9 @@ export function boundedPreview(blocks: PreviewBlock[]): { blocks: PreviewBlock[]
     if (b.type === 'field') return { type: 'field', label: cut(b.label, PREVIEW_FIELD_MAX), value: cut(b.value, PREVIEW_FIELD_MAX) };
     return { type: 'link', label: cut(b.label, PREVIEW_FIELD_MAX), url: cut(b.url, PREVIEW_TEXT_MAX) };
   });
-  const complete = blocks.length <= PREVIEW_BLOCKS_MAX && kept.every((b, i) => JSON.stringify(b) === JSON.stringify(blocks[i]));
+  // An empty preview is never complete: there is nothing for the person to have seen.
+  const complete =
+    kept.length > 0 && blocks.length <= PREVIEW_BLOCKS_MAX && kept.every((b, i) => JSON.stringify(b) === JSON.stringify(blocks[i]));
   return { blocks: kept, complete };
 }
 

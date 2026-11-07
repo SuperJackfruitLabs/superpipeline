@@ -85,6 +85,10 @@ describe('a subject preview stays bounded', () => {
     expect(complete).toBe(false);
   });
 
+  it('is never complete when there is nothing to show', () => {
+    expect(boundedPreview([]).complete).toBe(false);
+  });
+
   it('is complete when nothing had to be cut', () => {
     expect(boundedPreview([{ type: 'text', label: 'Post', text: 'short' }]).complete).toBe(true);
   });

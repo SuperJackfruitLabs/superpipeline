@@ -691,7 +691,8 @@ function gatePendingBody(deps: GatesDeps, gate: Row): GatePendingBody | null {
   const kind = subject ? approvalSubjectKind(subject.schema) : null;
   const canonical = subject ? record(subject.canonical) : null;
   const timing = canonical ? record(canonical.timing) : null;
-  const bounded = kind && canonical ? boundedPreview(kind.preview(canonical)) : { blocks: [], complete: true };
+  // No kind or no readable payload means no preview at all, which is never complete.
+  const bounded = kind && canonical ? boundedPreview(kind.preview(canonical)) : { blocks: [], complete: false };
   const preview = bounded.blocks;
   const approvalSubject = subject
     ? {
