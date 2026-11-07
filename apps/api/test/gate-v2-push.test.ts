@@ -33,6 +33,7 @@ describe('gate.v2 — a subject-bound gate on the push', () => {
           schema: 'social-publish/v1',
           digest: expect.stringMatching(/^sha256:/),
           expiresAt: '2030-01-02T03:04:05Z',
+          previewComplete: true,
           // The exact text, character for character — spacing, Unicode and the line break kept.
           preview: expect.arrayContaining([
             { type: 'text', label: 'Post', text },
@@ -57,10 +58,21 @@ describe('a subject preview stays bounded', () => {
   it('clamps long text and drops blocks past the limit', () => {
     const long = 'x'.repeat(PREVIEW_TEXT_MAX + 50);
     const fields: PreviewBlock[] = Array.from({ length: PREVIEW_BLOCKS_MAX + 5 }, (_, i) => ({ type: 'field', label: `f${i}`, value: 'v' }));
-    const blocks = boundedPreview([{ type: 'text', text: long }, ...fields]);
+    const { blocks, complete } = boundedPreview([{ type: 'text', text: long }, ...fields]);
     expect(blocks).toHaveLength(PREVIEW_BLOCKS_MAX);
     const first = blocks[0];
     expect(first?.type === 'text' ? first.text.length : 0).toBe(PREVIEW_TEXT_MAX);
+    // Cut text means the person cannot see everything they would approve.
+    expect(complete).toBe(false);
+  });
+
+  it('is complete when nothing had to be cut', () => {
+    expect(boundedPreview([{ type: 'text', label: 'Post', text: 'short' }]).complete).toBe(true);
+  });
+
+  it('is incomplete when only a block past the limit was dropped', () => {
+    const many: PreviewBlock[] = Array.from({ length: PREVIEW_BLOCKS_MAX + 1 }, (_, i) => ({ type: 'field', label: `f${i}`, value: 'v' }));
+    expect(boundedPreview(many).complete).toBe(false);
   });
 
   it('labels each post of a thread', () => {

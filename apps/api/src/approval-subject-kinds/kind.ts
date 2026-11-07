@@ -18,13 +18,18 @@ function cut(v: string, max: number): string {
   return v.length > max ? `${v.slice(0, max - 1)}…` : v;
 }
 
-/** Clamp a kind's preview to the wire's bounds, dropping blocks past the limit. */
-export function boundedPreview(blocks: PreviewBlock[]): PreviewBlock[] {
-  return blocks.slice(0, PREVIEW_BLOCKS_MAX).map((b) => {
+/**
+ * Clamp a kind's preview to the wire's bounds. `complete` is false when anything was cut or
+ * dropped, so a client never offers to approve text the person could not see in full.
+ */
+export function boundedPreview(blocks: PreviewBlock[]): { blocks: PreviewBlock[]; complete: boolean } {
+  const kept = blocks.slice(0, PREVIEW_BLOCKS_MAX).map((b): PreviewBlock => {
     if (b.type === 'text') return { type: 'text', ...(b.label ? { label: cut(b.label, PREVIEW_FIELD_MAX) } : {}), text: cut(b.text, PREVIEW_TEXT_MAX) };
     if (b.type === 'field') return { type: 'field', label: cut(b.label, PREVIEW_FIELD_MAX), value: cut(b.value, PREVIEW_FIELD_MAX) };
     return { type: 'link', label: cut(b.label, PREVIEW_FIELD_MAX), url: cut(b.url, PREVIEW_TEXT_MAX) };
   });
+  const complete = blocks.length <= PREVIEW_BLOCKS_MAX && kept.every((b, i) => JSON.stringify(b) === JSON.stringify(blocks[i]));
+  return { blocks: kept, complete };
 }
 
 export interface ApprovalSubjectKind {

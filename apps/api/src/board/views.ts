@@ -335,6 +335,8 @@ export interface GatePendingBody {
   approvalSubject?: Pick<ApprovalSubjectView, 'id' | 'digest' | 'schema' | 'revision'> & {
     expiresAt: string | null;
     preview: PreviewBlock[];
+    /** False when the preview had to be cut to its bounds; no approving option may then be offered. */
+    previewComplete: boolean;
   };
   /** Authenticated web route for reviewing the authoritative subject. */
   reviewUrl?: string;

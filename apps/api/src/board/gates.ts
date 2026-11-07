@@ -635,22 +635,6 @@ function getGateRow(deps: GatesDeps, gateId: string): Row | null {
   return (deps.sql.exec(`SELECT * FROM gates WHERE id = ?`, gateId).toArray()[0]) ?? null;
 }
 
-/**
- * The body a gate travels in, built once from the gate's own row.
- *
- * It carries what a projection needs to render a question without a second
- * round trip: the card's title, the stage, who produced the work, and the
- * options. `producedBy` is included because it is the subject of the
- * separation-of-duties check at resolution.
- *
- * Read from the row rather than from `DEFAULT_GATE_OPTIONS` so that a gate
- * keeps the options it opened with. They are the same today; a gate whose
- * wording changed under it after the fact would be a question answered
- * against a different set than the one it was asked with.
- *
- * `null` when the card is gone — a gate whose card was deleted has nothing
- * to ask about.
- */
 /** What an option means to a client (charter: gate.v2 §2). An id the board adds later defaults to `defer`. */
 export function optionMeaning(id: string): GateOptionMeaning {
   if (id === 'approve' || id === 'approve_automatic' || id === 'approve_manual') return 'approve';
@@ -672,6 +656,22 @@ function previewSummary(blocks: PreviewBlock[]): string | null {
   return text.length > 0 ? text : null;
 }
 
+/**
+ * The body a gate travels in, built once from the gate's own row.
+ *
+ * It carries what a projection needs to render a question without a second
+ * round trip: the card's title, the stage, who produced the work, and the
+ * options. `producedBy` is included because it is the subject of the
+ * separation-of-duties check at resolution.
+ *
+ * Read from the row rather than from `DEFAULT_GATE_OPTIONS` so that a gate
+ * keeps the options it opened with. They are the same today; a gate whose
+ * wording changed under it after the fact would be a question answered
+ * against a different set than the one it was asked with.
+ *
+ * `null` when the card is gone — a gate whose card was deleted has nothing
+ * to ask about.
+ */
 function gatePendingBody(deps: GatesDeps, gate: Row): GatePendingBody | null {
   const cardId = gate.card_id as string;
   const card = deps.getCard(cardId);
@@ -684,7 +684,8 @@ function gatePendingBody(deps: GatesDeps, gate: Row): GatePendingBody | null {
   const kind = subject ? approvalSubjectKind(subject.schema) : null;
   const canonical = subject ? record(subject.canonical) : null;
   const timing = canonical ? record(canonical.timing) : null;
-  const preview = kind && canonical ? boundedPreview(kind.preview(canonical)) : [];
+  const bounded = kind && canonical ? boundedPreview(kind.preview(canonical)) : { blocks: [], complete: true };
+  const preview = bounded.blocks;
   const approvalSubject = subject
     ? {
         id: subject.id,
@@ -693,6 +694,9 @@ function gatePendingBody(deps: GatesDeps, gate: Row): GatePendingBody | null {
         revision: subject.revision,
         expiresAt: timing && typeof timing.expiresAt === 'string' ? timing.expiresAt : null,
         preview,
+        // False when the bounds cut or dropped anything: a client must then not offer an
+        // approving option, because the person could not see everything they would approve.
+        previewComplete: bounded.complete,
       }
     : null;
   return {
