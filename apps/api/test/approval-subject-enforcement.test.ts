@@ -745,24 +745,33 @@ describe('run-fenced approval-subject verify route', () => {
 });
 
 describe('bound gate notification', () => {
-  it('carries immutable subject metadata and a private review route, never mutable handoff text', async () => {
+  it('carries immutable subject metadata, a private review route, and only the frozen subject\'s text — never mutable handoff text', async () => {
+    // Since gate.v2 (charter 2026-11-07 §3) the decider must SEE what they approve, so the push
+    // carries the subject kind's preview. It is drawn from the frozen subject, never from the
+    // card's mutable handoff, and `handoffSummary` is that same preview text for v1 readers.
     const stub = env.BOARD_DO.get(env.BOARD_DO.idFromName('approval-bound-notification')) as unknown as DurableObjectStub<BoardDO>;
     await runInDurableObject(stub, async (board: BoardDO, state) => {
       const opened = await openBoundGate(board, state, 'notification');
       const [pending] = await board.pendingGateDeliveries();
+      const frozenText = payload().items[0]?.text;
+      expect(utf8(opened.subject.canonical_bytes)).toContain(JSON.stringify(frozenText).slice(1, -1));
       expect(pending).toMatchObject({
         cardId: opened.cardId,
         gateId: opened.gate.id,
-        handoffSummary: null,
         reviewUrl: `/b/brd_fixture_notification/c/${opened.cardId}`,
         approvalSubject: {
           id: opened.subject.id,
           digest: opened.subject.digest,
           schema: 'social-publish/v1',
           revision: 1,
+          preview: expect.arrayContaining([{ type: 'text', label: 'Post', text: frozenText }]),
         },
+        handoffSummary: frozenText,
       });
-      expect(JSON.stringify(pending)).not.toContain('Exact fixture text');
+      // The rest of the canonical payload (evidence, policy, the outbound request) stays behind the
+      // authenticated route.
+      expect(JSON.stringify(pending)).not.toContain('fixture-duplicate-policy');
+      expect(JSON.stringify(pending)).not.toContain('immutable://fixture/media-1');
     });
   });
 });

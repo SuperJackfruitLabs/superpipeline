@@ -5101,14 +5101,20 @@ exports[`the Worker HTTP surface, pinned before the split > answers every route 
             {
               "id": "approve",
               "label": "Approve",
+              "meaning": "approve",
+              "needsComment": false,
             },
             {
               "id": "request_changes",
               "label": "Request changes",
+              "meaning": "revise",
+              "needsComment": true,
             },
             {
               "id": "reject",
               "label": "Reject",
+              "meaning": "reject",
+              "needsComment": false,
             },
           ],
           "producedBy": "agt#9",
@@ -5140,14 +5146,20 @@ exports[`the Worker HTTP surface, pinned before the split > answers every route 
             {
               "id": "approve",
               "label": "Approve",
+              "meaning": "approve",
+              "needsComment": false,
             },
             {
               "id": "request_changes",
               "label": "Request changes",
+              "meaning": "revise",
+              "needsComment": true,
             },
             {
               "id": "reject",
               "label": "Reject",
+              "meaning": "reject",
+              "needsComment": false,
             },
           ],
           "producedBy": "agt#9",

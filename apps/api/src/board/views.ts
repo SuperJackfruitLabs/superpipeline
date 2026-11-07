@@ -1,3 +1,4 @@
+import type { PreviewBlock } from '../approval-subject-kinds/kind';
 import type { JsonValue } from '../json';
 import type { GateOption } from './gate-option';
 import type { BoardUsage, CardView, StageDef, StaleSettings } from './model';
@@ -18,6 +19,12 @@ export interface PreparedApprovalSubject {
   producedBy: string;
   createdAt: string;
 }
+
+/**
+ * What a gate option means to a client, independent of its id (charter: gate.v2 §2). `choose` is
+ * reserved for choice gates, which no stage offers yet; `optionMeaning` never returns it today.
+ */
+export type GateOptionMeaning = 'approve' | 'reject' | 'revise' | 'choose' | 'defer';
 
 export interface ApprovalSubjectView {
   id: string;
@@ -323,11 +330,21 @@ export interface GatePendingBody {
   producedBy: string;
   /** What the reviewer is being asked to approve; null for generic handoff-free gates. */
   handoffSummary: string | null;
-  /** Immutable metadata for a digest-bound gate; canonical payload stays behind the authenticated route. */
-  approvalSubject?: Pick<ApprovalSubjectView, 'id' | 'digest' | 'schema' | 'revision'>;
+  /**
+   * Immutable metadata for a digest-bound gate, and what the decider must see (charter: gate.v2
+   * §3). The canonical payload stays behind the authenticated route; only the kind's bounded
+   * preview travels.
+   */
+  approvalSubject?: Pick<ApprovalSubjectView, 'id' | 'digest' | 'schema' | 'revision'> & {
+    expiresAt: string | null;
+    preview: PreviewBlock[];
+    /** False when the preview had to be cut to its bounds; no approving option may then be offered. */
+    previewComplete: boolean;
+  };
   /** Authenticated web route for reviewing the authoritative subject. */
   reviewUrl?: string;
-  options: Array<{ id: string; label: string }>;
+  /** gate.v2 §2: each option says what it means; `delivery` only on an option that approves a subject. */
+  options: Array<{ id: string; label: string; meaning: GateOptionMeaning; needsComment: boolean; delivery?: 'automatic' | 'manual' }>;
   /** When the gate opened. The gate's own clock, so a re-read is byte-identical. */
   ts: string;
 }
