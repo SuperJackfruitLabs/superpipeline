@@ -25,6 +25,7 @@ export const ELICITATION_TEXT_MAX = 2000;
 export type ElicitationsDeps = Pick<
   BoardContext,
   | 'authorizeRun'
+  | 'decisionDeadline'
   | 'emit'
   | 'getCard'
   | 'getCardHandoffJson'
@@ -39,6 +40,8 @@ export type ElicitationsDeps = Pick<
   | 'scheduleReclaim'
   | 'setNeedsHuman'
   | 'sql'
+  | 'stages'
+  | 'startDecisionWait'
 >;
 
 /**
@@ -280,6 +283,8 @@ export function openElicitation(deps: ElicitationsDeps, input: AgentActivityInpu
   const subject = input.strictDecision === undefined ? posterSubject(input.parameter) : null;
   if (subject) deps.sql.exec(`UPDATE elicitations SET subject_json = ? WHERE id = ?`, JSON.stringify(subject), id);
   deps.setNeedsHuman(cardId, { reason: 'question', elicitationId: id });
+  // Before the push, so the push carries the deadline (charter 2026-11-08, decisions 2 and 5).
+  if (typeof run.stage_key === 'string') deps.startDecisionWait({ kind: 'question', decisionId: id, cardId, stageKey: run.stage_key });
   deps.emit('elicitation.opened', { elicitationId: id, cardId, runId: input.runId, signal: input.signal ?? null });
   deps.notify('input', cardId, question === '' ? 'An agent is waiting on you' : question);
   // A strict decision's binding is saved after this returns, so its offer is passed from here.
@@ -465,6 +470,7 @@ function elicitationPendingBody(deps: ElicitationsDeps, row: Row, strict: Strict
     ...(subject ? { approvalSubject: subject } : {}),
     // Nothing to tap: the answer is typed, and the reader is told how long it may be.
     ...(options.length === 0 ? { freeText: { maxLength: ELICITATION_TEXT_MAX } } : {}),
+    ...(typeof row.id === 'string' ? deps.decisionDeadline('question', row.id) : {}),
     ts: row.created_at as string,
   };
 }

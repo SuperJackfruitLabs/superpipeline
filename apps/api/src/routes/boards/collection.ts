@@ -65,20 +65,21 @@ export async function boardCollection({ request, env, tenantId, user, agent }: B
   }
   const name = body.name;
   const stages = body.stages as StageDef[];
-  // The two new optional fields are checked here because board create does not run the stage
+  // The optional fields below (and a stage's decision timeout) are checked here because board create does not run the stage
   // validator: a too-long summary or a malformed intro is a 400 at the door.
   for (const st of stages) {
-    const bad = st.summary === undefined ? null : stageFieldError({ key: st.key, summary: st.summary });
+    const bad = st.summary === undefined && st.timeout === undefined ? null : stageFieldError({ key: st.key, summary: st.summary, timeout: st.timeout });
     if (bad) return Response.json({ error: { code: 'INVALID_STAGES', message: bad } }, { status: 400 });
   }
   // Who approves a bound subject is decision policy, a workspace admin's to set even on a new board
   // (charter 2026-11-08, decision 6): otherwise a member, or a composing agent, could create a
   // publishing board naming themselves its deciders. A plain `gate: "approval"` stays open to any
   // creator: it only adds a human check, and a new board has no policy to weaken.
-  const setsDeciders = stages.some((st) => st.approvalSubjectSchema !== undefined || (st.approvalDeciderPrincipalIds?.length ?? 0) > 0);
+  // A timeout too: its escalation reaches the workspace's owners and admins, which is theirs to set.
+  const setsDeciders = stages.some((st) => st.approvalSubjectSchema !== undefined || (st.approvalDeciderPrincipalIds?.length ?? 0) > 0 || st.timeout !== undefined);
   if (setsDeciders && !isWorkspaceAdmin(env, user)) {
     return Response.json(
-      { error: { code: 'WORKSPACE_ADMIN_REQUIRED', message: 'only a workspace owner or admin can create a board whose stages bind an approval subject or name its deciders' } },
+      { error: { code: 'WORKSPACE_ADMIN_REQUIRED', message: 'only a workspace owner or admin can create a board whose stages bind an approval subject, name its deciders or set a decision timeout' } },
       { status: 403 },
     );
   }

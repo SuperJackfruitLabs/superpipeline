@@ -14,6 +14,8 @@ import type { CommentView } from './views';
 export type CardsDeps = Pick<
   BoardContext,
   | 'addComment'
+  | 'decisionDeadline'
+  | 'startDecisionWait'
   | 'addLink'
   | 'createCard'
   | 'createChildCard'

@@ -3,7 +3,7 @@ import type { JsonValue } from '../json';
 import type { PushSender } from '../push/deliver';
 import type { ReferenceInput } from '../references/input';
 import type { LinkKind } from './links';
-import type { AgentActivityInput, BoardEvent, BoardInit, CardView, ClaimResult, CompleteVerbInput, EstimateView, LinkInput, LinkView, NotificationView, ProfileInput, ProfileView, PushConfigInput, PushDeliveryView, Result, RunReportDrainResult, RunReportOutboxRow, RunVerbInput, ScheduleView, StageDef, StageEditor, StagePatch, StaleCardView, StaleSettings, UsageSummary } from './model';
+import type { AgentActivityInput, BoardEvent, BoardInit, CardView, ClaimResult, CompleteVerbInput, DecisionTimeout, EstimateView, LinkInput, LinkView, NotificationView, ProfileInput, ProfileView, PushConfigInput, PushDeliveryView, Result, RunReportDrainResult, RunReportOutboxRow, RunVerbInput, ScheduleView, StageDef, StageEditor, StagePatch, StaleCardView, StaleSettings, UsageSummary } from './model';
 import type { FixtureBoard } from './fixture-types';
 import type { StrictDecision } from './strict-decision';
 import type { ActivityView, ApprovalRequestView, ApprovalSubjectVerification, AttentionPendingBody, AttemptView, BoardSnapshot, CommentView, DeliveryPendingBody, ElicitationPendingBody, ElicitationView, EvidenceReferenceInput, GatePendingBody, GateView, ReferenceView, RunContext, RunEvidence, RunEvidenceV1 } from './views';
@@ -211,10 +211,11 @@ export interface BoardStub {
   pendingDeliveryFollowUps(): Promise<DeliveryPendingBody[]>;
   dispatchPushDeliveries(sender?: PushSender, opts?: { timeoutMs?: number }): Promise<{ sent: number; failed: number }>;
   getRunReportOutbox(): Promise<RunReportOutboxRow[]>;
-  sweepBoard(nowIso: string): Promise<{ overdueNotified: number; schedulesFired: number; staleNotified: number; gatesExpired: number; deliveriesExpired: number }>;
+  sweepBoard(nowIso: string): Promise<{ overdueNotified: number; schedulesFired: number; staleNotified: number; gatesExpired: number; deliveriesExpired: number; decisionsReminded: number; decisionsEscalated: number }>;
   /** Cards waiting past the threshold — the board's own unless `afterHours` is given. See `StaleCardView`. */
   staleCards(input: { nowIso: string; afterHours?: number; attention?: boolean }): Promise<StaleCardView[]>;
   setStaleSettings(input: { enabled?: boolean; afterHours?: number }): Promise<Result<StaleSettings>>;
+  setDecisionTimeout(value: unknown): Promise<Result<{ decisionTimeout: DecisionTimeout | null }>>;
   createSchedule(input: {
     title: string;
     rule: string;

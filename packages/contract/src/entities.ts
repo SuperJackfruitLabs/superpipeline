@@ -77,6 +77,23 @@ export const Membership = z.object({
 export type Membership = z.infer<typeof Membership>;
 
 /** A pipeline stage (board column). */
+/** Thirty days, in minutes: the longest a decision timeout may be. */
+export const DECISION_TIMEOUT_MAX_MINUTES = 30 * 24 * 60;
+
+/** A stage's (or a board's default) decision timeout (charter 2026-11-08, decision 1). */
+export const DecisionTimeout = z
+  .object({
+    remindAfterMinutes: z.number().int().min(1).max(DECISION_TIMEOUT_MAX_MINUTES).optional(),
+    escalateAfterMinutes: z.number().int().min(1).max(DECISION_TIMEOUT_MAX_MINUTES).optional(),
+  })
+  .strict()
+  .refine((t) => t.remindAfterMinutes !== undefined || t.escalateAfterMinutes !== undefined, 'name remindAfterMinutes, escalateAfterMinutes or both')
+  .refine(
+    (t) => t.remindAfterMinutes === undefined || t.escalateAfterMinutes === undefined || t.escalateAfterMinutes > t.remindAfterMinutes,
+    'escalateAfterMinutes must be later than remindAfterMinutes',
+  );
+export type DecisionTimeout = z.infer<typeof DecisionTimeout>;
+
 export const Stage = z.object({
   key: z.string().min(1),
   name: z.string().min(1),
@@ -123,6 +140,13 @@ export const Stage = z.object({
    */
   returnStage: z.string().min(1).optional(),
   wipLimit: z.number().int().min(1).optional(),
+  /**
+   * How long a decision waiting on this stage (its gate, a question, a delivery follow-up, a
+   * waiting card) goes unanswered before it is reminded about, then escalated to the workspace's
+   * owners and admins. Whole minutes, at most 30 days; escalate later than remind. Absent: the
+   * board's default, or none. Nothing ever resolves on a timeout.
+   */
+  timeout: DecisionTimeout.optional(),
 });
 export type Stage = z.infer<typeof Stage>;
 

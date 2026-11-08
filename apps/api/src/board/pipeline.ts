@@ -1,5 +1,6 @@
 import { capabilityTag, normalizeRequirement, returnStageError } from '@superpipeline/contract';
 import type { BoardContext } from './context';
+import { cleanTimeout, parseDecisionTimeout, timeoutError } from './rules';
 import type { BoardEvent, BoardInit, ProfileInput, ProfileView, Result, StageDef, StageEditor, StagePatch } from './model';
 import type { BoardSnapshot } from './views';
 
@@ -73,7 +74,11 @@ export function completionShapeError(c: unknown): string | null {
   return null;
 }
 
-export function stageFieldError(s: Pick<StageDef, 'key' | 'wipLimit' | 'instructions' | 'summary'>): string | null {
+export function stageFieldError(s: Pick<StageDef, 'key' | 'wipLimit' | 'instructions' | 'summary' | 'timeout'>): string | null {
+  if (s.timeout !== undefined) {
+    const bad = timeoutError(s.timeout, `stage "${s.key}" timeout`);
+    if (bad) return bad;
+  }
   if (s.summary !== undefined && (typeof s.summary !== 'string' || s.summary.length > STAGE_SUMMARY_MAX)) {
     return `stage "${s.key}" summary must be a string of at most ${STAGE_SUMMARY_MAX} characters`;
   }
@@ -136,6 +141,7 @@ function decisionPolicyOf(stage: StageDef | undefined): string {
     gate: stage?.gate === 'approval' ? 'approval' : 'none',
     approvalSubjectSchema: stage?.approvalSubjectSchema ?? null,
     approvalDeciderPrincipalIds: [...(stage?.approvalDeciderPrincipalIds ?? [])].toSorted(),
+    timeout: stage?.timeout ? cleanTimeout(stage.timeout) : null,
   });
 }
 
@@ -153,7 +159,7 @@ export function refuseDecisionPolicyChange(before: StageDef[], after: StageDef[]
       return {
         ok: false,
         code: 'WORKSPACE_ADMIN_REQUIRED',
-        message: `only a workspace owner or admin can change how decisions are made on stage "${key}" (its gate, approval subject or deciders)`,
+        message: `only a workspace owner or admin can change how decisions are made on stage "${key}" (its gate, approval subject, deciders or timeout)`,
       };
     }
   }
@@ -311,6 +317,10 @@ export async function updateStage(deps: PipelineDeps, stageKey: string, patch: S
     if (patch.returnStage === null) delete next.returnStage;
     else next.returnStage = patch.returnStage;
   }
+  if (patch.timeout !== undefined) {
+    if (patch.timeout === null) delete next.timeout;
+    else next.timeout = patch.timeout;
+  }
 
   const invalid = stageFieldError(next);
   if (invalid) return { ok: false, code: 'INVALID_STAGES', message: invalid };
@@ -434,6 +444,7 @@ export function snapshot(deps: PipelineDeps): BoardSnapshot {
   const introJson = deps.getMeta('intro');
   const intro = introJson ? (JSON.parse(introJson) as { lede: string; composeHint: string }) : null;
   const tenantId = deps.getMeta('tenantId');
+  const decisionTimeout = parseDecisionTimeout(deps.getMeta('decisionTimeout'));
   return {
     boardId,
     tenantId,
@@ -452,5 +463,7 @@ export function snapshot(deps: PipelineDeps): BoardSnapshot {
       triggerGrantCount: deps.triggerGrant()?.length ?? null,
     },
     stale: deps.staleSettings(),
+    // Only when set, so a board without one reads exactly as before.
+    ...(decisionTimeout ? { decisionTimeout } : {}),
   };
 }

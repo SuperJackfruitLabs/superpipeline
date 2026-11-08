@@ -14,7 +14,7 @@ import type { AttentionPendingBody, AttentionReason } from './views';
  */
 
 /** What attention needs from the rest of the board. */
-export type AttentionDeps = Pick<BoardContext, 'getCard' | 'getCardRow' | 'getMeta' | 'now' | 'sql' | 'stages'>;
+export type AttentionDeps = Pick<BoardContext, 'decisionDeadline' | 'getCard' | 'getCardRow' | 'getMeta' | 'now' | 'sql' | 'stages' | 'startDecisionWait'>;
 
 const ATTENTION_REASONS: ReadonlySet<string> = new Set<AttentionReason>(['repeated-failure', 'blocked', 'not-authorised']);
 
@@ -76,6 +76,12 @@ export function waitChangedError(row: Row | null, expected: string | undefined):
  * not in a wait chat carries (no wait, a question or review, or archived).
  */
 function attentionPendingBody(deps: AttentionDeps, row: Row): AttentionPendingBody | null {
+  const body = attentionBody(deps, row);
+  return body ? { ...body, ...deps.decisionDeadline('attention', body.waitId) } : null;
+}
+
+/** The body without its deadline, which the push takes from the wait it just recorded. */
+function attentionBody(deps: AttentionDeps, row: Row): AttentionPendingBody | null {
   const waitId = currentWaitId(row);
   const needs = needsOf(row);
   if (!waitId || !needs) return null;
@@ -115,8 +121,13 @@ function attentionPendingBody(deps: AttentionDeps, row: Row): AttentionPendingBo
 export function notifyAttentionPending(deps: AttentionDeps, cardId: string): void {
   const row = deps.getCardRow(cardId);
   if (!row) return;
-  const payload = attentionPendingBody(deps, row);
-  if (payload) queueSubscribedPush(deps, payload);
+  const waiting = attentionBody(deps, row);
+  if (!waiting) return;
+  // A new wait id is a new wait, with its own deadlines, which the push carries.
+  const deadline = deps.startDecisionWait({ kind: 'attention', decisionId: waiting.waitId, cardId: waiting.cardId, stageKey: waiting.stageKey });
+  const { ts, ...rest } = waiting;
+  const payload: AttentionPendingBody = { ...rest, ...deadline, ts };
+  queueSubscribedPush(deps, payload);
 }
 
 /**

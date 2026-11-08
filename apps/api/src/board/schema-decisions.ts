@@ -97,6 +97,33 @@ export function createDecisionTables(sql: SqlStorage): void {
     // column already exists
   }
   sql.exec(`CREATE INDEX IF NOT EXISTS idx_gates_run ON gates(run_id)`);
+  /**
+   * A decision waiting on a person, with the deadlines its stage's timeout gave it when it started
+   * (charter: unanswered decisions remind, then escalate, decision 2). One row per wait: a gate, a
+   * question, a manual delivery (keyed by its gate) or a waiting card (keyed by its wait id).
+   * `reminded_at` / `escalated_at` make each deadline act once (`remind_skipped` when the escalation
+   * came due first); `next_due_at` is the earlier deadline still to act on; `closed_at` marks a wait
+   * that ended or has nothing left to act on, pruned after 30 days. Durable because it is here, not in memory.
+   */
+  sql.exec(
+    `CREATE TABLE IF NOT EXISTS decision_waits (
+      kind TEXT NOT NULL CHECK (kind IN ('gate', 'question', 'delivery', 'attention')),
+      decision_id TEXT NOT NULL,
+      card_id TEXT NOT NULL,
+      stage_key TEXT NOT NULL,
+      waiting_since TEXT NOT NULL,
+      remind_at TEXT,
+      escalate_at TEXT,
+      reminded_at TEXT,
+      escalated_at TEXT,
+      remind_skipped INTEGER NOT NULL DEFAULT 0,
+      next_due_at TEXT,
+      closed_at TEXT,
+      PRIMARY KEY (kind, decision_id)
+    )`,
+  );
+  // The sweep reads due waits by `next_due_at` alone (null once nothing is left to act on).
+  sql.exec(`CREATE INDEX IF NOT EXISTS idx_decision_waits_due ON decision_waits(next_due_at)`);
   sql.exec(
     `CREATE TABLE IF NOT EXISTS approval_subjects (
       id TEXT PRIMARY KEY,

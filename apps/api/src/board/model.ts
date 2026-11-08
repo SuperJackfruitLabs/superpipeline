@@ -34,6 +34,27 @@ export interface StagePatch {
   completion?: CompletionRequirement | null;
   /** `null` removes it — the stage stops judging. */
   returnStage?: string | null;
+  /** `null` removes it: the stage falls back to the board's default, or none. */
+  timeout?: DecisionTimeout | null;
+}
+
+/**
+ * How long a decision waits on a stage before it is reminded about, then escalated (charter:
+ * unanswered decisions remind, then escalate, decision 1). Whole minutes, each optional, escalate
+ * later than remind, at most 30 days (`timeoutError` in decision-timeouts.ts).
+ */
+export interface DecisionTimeout {
+  remindAfterMinutes?: number;
+  escalateAfterMinutes?: number;
+}
+
+/** What a timed wait is: a gate, a question, a manual delivery or a waiting card. */
+export type DecisionKind = 'gate' | 'question' | 'delivery' | 'attention';
+
+/** When a waiting decision is reminded about and escalated (ISO), as the pushes and reads carry it. */
+export interface DecisionDeadline {
+  remindAt?: string;
+  escalateAt?: string;
 }
 
 /**
@@ -96,6 +117,8 @@ export interface StageDef {
   summary?: string;
   /** Stage routing strategy (docs/05 §7): `pipeline` (sequential handoff, default) vs `manager`. */
   routing?: 'pipeline' | 'manager';
+  /** When a decision waiting here is reminded about and escalated. Absent: the board's default, or none. */
+  timeout?: DecisionTimeout;
 }
 
 /** A reusable agent configuration bundle (docs/05 §7). */
@@ -394,7 +417,9 @@ export type BoardErrorCode =
   | 'INVALID_RESUME'
   | 'QUESTION_PENDING'
   | 'GATE_PENDING'
-  | 'INVALID_STALE_SETTINGS';
+  | 'INVALID_STALE_SETTINGS'
+  /** A stage's or the board's decision timeout is out of shape (`timeoutError`). */
+  | 'INVALID_TIMEOUT';
 
 export type Result<T> =
   | { ok: true; value: T }

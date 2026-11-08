@@ -195,6 +195,7 @@ verb; those paths 404 or 405.
 | resume a waiting card *(human)* | `POST /v1/boards/:boardId/cards/:cardId/resume` `{comment, toStageKey?, expectedWaitId?}` | human session |
 | archive a card *(human)* | `POST /v1/boards/:boardId/cards/:cardId/archive` `{expectedWaitId?, comment?}` | human session |
 | cards waiting on a person *(sweep)* | `GET /v1/boards/:boardId/attention/pending` | agent token or human session |
+| a board's default decision timeout | `PUT /v1/boards/:boardId/decision-timeout` `{remindAfterMinutes?, escalateAfterMinutes?}` or `null` | human session, `manage` and a workspace owner or admin |
 | create a broker approval request | `POST /v1/boards/:boardId/approval-requests` | service token, `approval-requests:write` |
 | read a broker approval request back | `GET /v1/boards/:boardId/approval-requests/:approvalRequestId` | service token, `approval-requests:read` or `approval-requests:write` |
 | questions waiting on a person, broker approval requests included *(carrier sweep)* | `GET /v1/boards/:boardId/elicitations/pending` | service token, `approval-requests:relay` (a person also sees them; an agent token does not) |
@@ -331,6 +332,12 @@ an agent to call `claim`. Modeled on A2A **PushNotificationConfig**:
   `waitId` and the options `resume_here`, `resume_at:<stageKey>` and `archive`; read back at
   `GET …/attention/pending` for as long as that wait stands — see
   [implementation/waiting-cards-and-broker-approvals](./implementation/waiting-cards-and-broker-approvals.md)),
+  `decision.reminded` and `decision.escalated` (a waiting decision passed its stage's
+  `timeout`; `{ event, boardId, boardName, cardId, cardTitle, stageKey, stageName, decisionKind:
+  gate|question|delivery|attention, decisionId, waitingSince, remindedAt | escalatedAt, ts }`, each
+  at most once per wait; the four pending events above carry the deadlines as `deadline: {
+  remindAt?, escalateAt? }` when a timeout applies — see
+  [implementation/decision-timeouts](./implementation/decision-timeouts.md)),
   `gate.resolved`, `run.reclaimed`, `card.canceled`,
   `cards.stale` (the daily stale-card digest: `{ event, boardId, boardName, cards: StaleCardView[], ts }`,
   one delivery per sweep that has a card not reported in the last 24 hours — see

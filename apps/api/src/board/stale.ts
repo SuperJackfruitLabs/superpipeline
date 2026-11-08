@@ -28,6 +28,7 @@ export type StaleDeps = Pick<
   | 'setMeta'
   | 'sql'
   | 'stages'
+  | 'sweepDecisionTimeouts'
 >;
 
 /** The default threshold, in hours, past which a waiting card counts as stale. */
@@ -49,7 +50,7 @@ const STALE_DIGEST_REPEAT_MS = 24 * 3600_000;
  * review found here (a failing backfill had been taking the overdue sweep down with it, silently
  * and forever). `schedulesFired` reports 0, honestly, when firing itself failed.
  */
-export async function sweepBoard(deps: StaleDeps, nowIso: string): Promise<{ overdueNotified: number; schedulesFired: number; staleNotified: number; gatesExpired: number; deliveriesExpired: number }> {
+export async function sweepBoard(deps: StaleDeps, nowIso: string): Promise<{ overdueNotified: number; schedulesFired: number; staleNotified: number; gatesExpired: number; deliveriesExpired: number; decisionsReminded: number; decisionsEscalated: number }> {
   // The backfill is a migration, not a sweep job. Guarded by a meta flag because its query
   // (`WHERE due_at IS NULL`) matches every card that never had a due date — i.e. most of them,
   // forever — so running it on each five-minute tick would be a full table scan for nothing.
@@ -210,6 +211,18 @@ export async function sweepBoard(deps: StaleDeps, nowIso: string): Promise<{ ove
     deps.emit('delivery_expiry.sweep_failed', { reason: String(err) });
   }
 
+  // Unanswered decisions are reminded about, then escalated, once per deadline (charter 2026-11-08,
+  // decision 2). After the expiry jobs, so a gate that just closed is not reminded about.
+  let decisionsReminded = 0;
+  let decisionsEscalated = 0;
+  try {
+    const acted = deps.sweepDecisionTimeouts(nowIso);
+    decisionsReminded = acted.reminded;
+    decisionsEscalated = acted.escalated;
+  } catch (err) {
+    deps.emit('decision_timeout.sweep_failed', { reason: String(err) });
+  }
+
   // Its own try/catch, for the reason the backfill above has one: three jobs share this sweep, and
   // a failure in any of them must not silently disable the other two. `schedulesFired` is still
   // reported as 0 when firing failed, which is honest — nothing fired.
@@ -237,7 +250,7 @@ export async function sweepBoard(deps: StaleDeps, nowIso: string): Promise<{ ove
   if (terminalBackfillError) throw terminalBackfillError;
   if (archivedReviewsError) throw archivedReviewsError;
 
-  return { overdueNotified, schedulesFired, staleNotified, gatesExpired, deliveriesExpired };
+  return { overdueNotified, schedulesFired, staleNotified, gatesExpired, deliveriesExpired, decisionsReminded, decisionsEscalated };
 }
 
 export async function setStaleSettings(deps: StaleDeps, input: { enabled?: boolean; afterHours?: number }): Promise<Result<StaleSettings>> {

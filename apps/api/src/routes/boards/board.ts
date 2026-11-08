@@ -78,6 +78,7 @@ export async function stageEdit({ request, env, user, agent, stub }: BoardReques
     summary: body.summary,
     completion: body.completion,
     returnStage: body.returnStage,
+    timeout: body.timeout,
     // A stage's gate is decision policy, a workspace admin's to change (charter decision 6); the
     // board compares and refuses `WORKSPACE_ADMIN_REQUIRED`. An agent never reaches it (above).
   }, { kind: 'person', mayChangeDecisionPolicy: !agent && isWorkspaceAdmin(env, user) });
@@ -211,6 +212,23 @@ export async function staleSettings({ request, stub }: BoardRequest): Promise<Re
   });
   if (!result.ok) return Response.json({ error: result }, { status: statusForCode(result.code) });
   return Response.json({ stale: result.value });
+}
+
+// PUT /v1/boards/:id/decision-timeout — the board's default timeout for stages without their own
+// (charter 2026-11-08, decision 1): `{ remindAfterMinutes?, escalateAfterMinutes? }`, or `null` to
+// clear it. `manage` lets the caller in, like `stale`; it is decision policy, so it also needs a
+// workspace owner or admin by the Accounts role (decision 6).
+export async function decisionTimeoutSet({ request, env, user, stub }: BoardRequest): Promise<Response> {
+  if (!isWorkspaceAdmin(env, user)) {
+    return Response.json({ error: { code: 'WORKSPACE_ADMIN_REQUIRED', message: 'only a workspace owner or admin can set the board decision timeout' } }, { status: 403 });
+  }
+  const body: unknown = await request.json().catch(() => undefined);
+  if (body === undefined) {
+    return Response.json({ error: { code: 'INVALID_TIMEOUT', message: 'send { "remindAfterMinutes"?: number, "escalateAfterMinutes"?: number } or null' } }, { status: 400 });
+  }
+  const result = await stub.setDecisionTimeout(body);
+  if (!result.ok) return Response.json({ error: result }, { status: statusForCode(result.code) });
+  return Response.json(result.value);
 }
 
 export async function budgetSet({ request, stub }: BoardRequest): Promise<Response> {

@@ -112,6 +112,7 @@ export function statusForCode(code: BoardErrorCode): number {
     // question or review is answered or decided through its own form (409, the card's state).
     case 'INVALID_RESUME':
     case 'INVALID_STALE_SETTINGS':
+    case 'INVALID_TIMEOUT':
       return 400;
     case 'QUESTION_PENDING':
     case 'GATE_PENDING':

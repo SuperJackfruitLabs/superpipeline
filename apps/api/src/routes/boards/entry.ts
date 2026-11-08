@@ -176,7 +176,7 @@ export async function boards({ request, env, url, path }: WorkerRequest, match: 
     const needed: Capability =
       request.method === 'GET' || rest.startsWith('notifications/') || /^cards\/[^/]+\/comments(\/[^/]+)?$/.test(rest)
         ? 'read'
-        : rest === '' || rest === 'stages' || rest === 'github' || rest === 'budget' || rest === 'stale' || rest === 'profiles' || rest.startsWith('schedules')
+        : rest === '' || rest === 'stages' || rest === 'github' || rest === 'budget' || rest === 'stale' || rest === 'decision-timeout' || rest === 'profiles' || rest.startsWith('schedules')
           ? 'manage'
           : 'work';
     return refuseByRole(human, needed) ?? human;
