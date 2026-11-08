@@ -11,6 +11,10 @@ async function setup(board: BoardDO) {
   if (!c.claimed) throw new Error('claim failed');
   return { runId: c.runId, leaseEpoch: c.leaseEpoch, agentId: 'agt_a', type: 'elicitation', signal: 'select', body: 'Apply exact edit?', parameter: { options: [{ name: 'approve', title: 'Approve' }, { name: 'deny', title: 'Deny' }] }, strictDecision: { version: 1, request_id: crypto.randomUUID(), decision_digest: 'a'.repeat(64), expires_at: Date.now() + 60000 } } satisfies AgentActivityInput;
 }
+/** The subject an approving answer carries: the offer's request id and decision digest. */
+function bound(input: AgentActivityInput) {
+  return input.strictDecision ? { subject: { id: input.strictDecision.request_id, digest: input.strictDecision.decision_digest } } : {};
+}
 function testBoard(name: string, test: (board: BoardDO) => Promise<void>) {
   return runInDurableObject(env.BOARD_DO.get(env.BOARD_DO.idFromName(name)) as unknown as DurableObjectStub<BoardDO>, test);
 }
@@ -35,13 +39,14 @@ describe('strict decision identity and durable response', () => {
   it('never applies a reversed older answer or reopens superseded questions', () => testBoard('strict-order', async board => {
     const input = await setup(board);
     const first = await board.postActivity(input);
-    const second = await board.postActivity({ ...input, strictDecision: { ...input.strictDecision, request_id: crypto.randomUUID(), decision_digest: 'b'.repeat(64) } });
+    const secondInput = { ...input, strictDecision: { ...input.strictDecision, request_id: crypto.randomUUID(), decision_digest: 'b'.repeat(64) } };
+    const second = await board.postActivity(secondInput);
     if (!first.ok || !second.ok) throw new Error('post failed');
     expect(await board.postActivity(input)).toEqual(first);
     expect(await board.answerElicitation({ elicitationId: first.value.elicitationId!, answeredBy: 'usr_h', option: 'approve' })).toMatchObject({ ok: false, code: 'ELICITATION_NOT_PENDING' });
     expect(await board.answerElicitation({ elicitationId: second.value.elicitationId!, answeredBy: 'agt_a', option: 'approve' })).toMatchObject({ ok: false, code: 'SEPARATION_OF_DUTIES' });
     expect(await board.answerElicitation({ elicitationId: second.value.elicitationId!, answeredBy: 'usr_h', text: 'approve' })).toMatchObject({ ok: false, code: 'INVALID_ANSWER' });
-    expect(await board.answerElicitation({ elicitationId: second.value.elicitationId!, answeredBy: 'usr_h', option: 'approve' })).toMatchObject({ ok: true });
+    expect(await board.answerElicitation({ elicitationId: second.value.elicitationId!, answeredBy: 'usr_h', option: 'approve', ...bound(secondInput) })).toMatchObject({ ok: true });
     expect(await board.answerElicitation({ elicitationId: second.value.elicitationId!, answeredBy: 'usr_h', option: 'deny' })).toMatchObject({ ok: false, code: 'ELICITATION_NOT_PENDING' });
   }));
   it('fails closed for expiry, version, missing identity, changed lease and revoked run; saved receipt remains historical', () => testBoard('strict-fences', async board => {
@@ -115,7 +120,7 @@ describe('strict decision identity and durable response', () => {
     ]) expect(await board.postActivity({ ...input, parameter: { options: bad } })).toMatchObject({ ok: false, code: 'INVALID_STRICT_DECISION' });
     const posted = await board.postActivity({ ...input, parameter: { options } });
     if (!posted.ok) throw new Error('post failed');
-    const answered = await board.answerElicitation({ elicitationId: posted.value.elicitationId!, answeredBy: 'usr_h', option: 'approve-run' }); expect(answered).toMatchObject({ ok: true });
+    const answered = await board.answerElicitation({ elicitationId: posted.value.elicitationId!, answeredBy: 'usr_h', option: 'approve-run', ...bound(input) }); expect(answered).toMatchObject({ ok: true });
   }));
 
 });
@@ -155,6 +160,6 @@ describe('always allow on a strict decision', () => {
     const id = posted.value.elicitationId!;
     for (const answererRole of ['member', 'viewer', null] as const)
       expect(await board.answerElicitation({ elicitationId: id, answeredBy: 'usr_h', answererRole, option: 'always' })).toMatchObject({ ok: false, code: 'WORKSPACE_ADMIN_REQUIRED' });
-    expect(await board.answerElicitation({ elicitationId: id, answeredBy: 'usr_h', answererRole: 'admin', option: 'always' })).toMatchObject({ ok: true });
+    expect(await board.answerElicitation({ elicitationId: id, answeredBy: 'usr_h', answererRole: 'admin', option: 'always', ...bound(input) })).toMatchObject({ ok: true });
   }));
 });

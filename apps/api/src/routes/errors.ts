@@ -31,6 +31,7 @@ export function statusForCode(code: BoardErrorCode): number {
       return 402; // Payment Required — the board/card budget cap was reached
     case 'INVALID_STRICT_DECISION':
     case 'INVALID_ANSWER':
+    case 'INVALID_ELICITATION':
       return 400;
     case 'CARD_NOT_FOUND':
     case 'RUN_NOT_FOUND':

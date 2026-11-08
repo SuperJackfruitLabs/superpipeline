@@ -1,6 +1,6 @@
 import type { PreviewBlock } from '../approval-subject-kinds/kind';
 import type { JsonValue } from '../json';
-import type { GateOption } from './gate-option';
+import type { GateOption, GateOptionMeaning, OptionScope } from './gate-option';
 import type { BoardUsage, CardView, StageDef, StaleSettings } from './model';
 import type { ApprovalDetail, StrictDecision } from './strict-decision';
 
@@ -20,11 +20,8 @@ export interface PreparedApprovalSubject {
   createdAt: string;
 }
 
-/**
- * What a gate option means to a client, independent of its id (charter: gate.v2 §2). `choose` is
- * reserved for choice gates, which no stage offers yet; `optionMeaning` never returns it today.
- */
-export type GateOptionMeaning = 'approve' | 'reject' | 'revise' | 'choose' | 'defer';
+// What an option means to a client; kept beside the option it describes.
+export type { GateOptionMeaning } from './gate-option';
 
 export interface ApprovalSubjectView {
   id: string;
@@ -224,6 +221,12 @@ export interface ElicitationView {
   strictDecision?: StrictDecision;
   /** What the approval is, for the person answering a strict decision. */
   detail?: ApprovalDetail;
+  /**
+   * The exact thing an approving answer approves, when the question has one: a strict decision's
+   * `salaam-operation/v1` or a poster's `harness-permission/v1` (charter: strict decisions bind
+   * their subject §1). An approving answer sends back its `id` and `digest`.
+   */
+  approvalSubject?: ApprovalSubjectEnvelope;
   id: string;
   cardId: string;
   runId: string;
@@ -405,7 +408,23 @@ export interface ElicitationPendingBody {
    *
    * `id`/`label`, not the board's `name`/`title`, for the same reason the gate's are.
    */
-  options: Array<{ id: string; label: string; meaning: GateOptionMeaning; needsComment: false }>;
+  options: Array<{
+    id: string;
+    label: string;
+    meaning: GateOptionMeaning;
+    needsComment: false;
+    /** How far the answer reaches (charter: strict decisions bind their subject §2), when known. */
+    scope?: OptionScope;
+    /** Who may take it; the board still refuses anyone else. */
+    requires?: 'workspace-admin';
+  }>;
+  /**
+   * The exact thing an approving option approves (charter: strict decisions bind their subject
+   * §1, §3, §7): a strict decision's `salaam-operation/v1`, or a poster's `harness-permission/v1`.
+   * A client offers no approving option unless `previewComplete`; an approving answer must carry
+   * `subject: { id, digest }` copied from here.
+   */
+  approvalSubject?: ApprovalSubjectEnvelope;
   /**
    * Only on a question with no options: it is answered by typing, and this is how long the
    * answer may be — the limit the answer route enforces.

@@ -116,7 +116,7 @@ export async function elicitationsPending({ stub }: BoardRequest): Promise<Respo
 // agent cannot reach this at all — and the DO refuses the asking agent's identity besides, so
 // the rule holds on every surface rather than only at this door.
 export async function elicitationAnswer({ request, user, stub }: BoardRequest, answerMatch: RegExpMatchArray): Promise<Response> {
-  const ap = (await request.json()) as { option?: string; text?: string };
+  const ap = (await request.json()) as { option?: string; text?: string; subject?: unknown };
   const result = await stub.answerElicitation({
     elicitationId: answerMatch[1],
     answeredBy: user?.userId ?? 'usr_dev',
@@ -124,7 +124,17 @@ export async function elicitationAnswer({ request, user, stub }: BoardRequest, a
     answererRole: user?.role ?? null,
     option: ap.option,
     text: ap.text,
+    // The subject the answerer saw (charter: strict decisions bind their subject §4). Anything but
+    // `{ id, digest }` strings is no binding, which an approving answer is refused for.
+    ...answerBinding(ap.subject),
   });
   if (!result.ok) return Response.json({ error: result }, { status: statusForCode(result.code) });
   return Response.json(result.value);
+}
+
+/** An answer's `subject` binding, when it is two strings; otherwise none. */
+function answerBinding(subject: unknown): { subject?: { id: string; digest: string } } {
+  if (subject === null || typeof subject !== 'object' || !('id' in subject) || !('digest' in subject)) return {};
+  const { id, digest } = subject;
+  return typeof id === 'string' && typeof digest === 'string' ? { subject: { id, digest } } : {};
 }

@@ -155,6 +155,14 @@ export function createDecisionTables(sql: SqlStorage): void {
       answered_at TEXT
     )`,
   );
+  // A poster's `harness-permission/v1` subject, as posted and validated (charter: strict decisions
+  // bind their subject §7). Null for every other question; a strict decision's subject is built
+  // from `strict_decision_requests`.
+  try {
+    sql.exec(`ALTER TABLE elicitations ADD COLUMN subject_json TEXT`);
+  } catch {
+    // column already exists
+  }
   sql.exec(`CREATE INDEX IF NOT EXISTS idx_elicitations_card ON elicitations(card_id)`);
   sql.exec(`CREATE INDEX IF NOT EXISTS idx_elicitations_run ON elicitations(run_id)`);
 }

@@ -32,6 +32,9 @@ export const ApprovalDetail = z.object({
     change: z.enum(['create', 'edit', 'delete']),
     bytes: z.number().int().nonnegative().max(Number.MAX_SAFE_INTEGER).nullable(),
     preview: z.string().max(1200).nullable(),
+    /** True when the person cannot see all of the file: cut, or unreadable. Optional so an offer
+     * made before producers sent it still validates; absent, it is inferred from `bytes`. */
+    preview_truncated: z.boolean().optional(),
   }).strict()).max(16),
   digest: z.string().regex(/^[a-f0-9]{64}$/),
 }).strict();

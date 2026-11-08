@@ -310,7 +310,14 @@ an agent to call `claim`. Modeled on A2A **PushNotificationConfig**:
   still owes its live link; offers `record_live_url`, and `switch_to_automatic` only when the
   approval's preview was complete; read back by the hub's sweep at `GET …/deliveries/pending`,
   agent-or-human like `gates/pending`, until a link is recorded, the mode is switched or the
-  approval expires), `gate.resolved`, `run.reclaimed`, `card.canceled`,
+  approval expires), `elicitation.pending` (an agent's question; each option carries `meaning`,
+  `needsComment` and, when known, `scope` (`once`/`run`/`always`) and `requires`
+  (`workspace-admin`); a strict decision or a poster-bound harness permission carries
+  `approvalSubject` `{id, digest, schema, revision, expiresAt, preview, previewComplete}`, and an
+  approving answer to it must send `subject: {id, digest}` back to `POST …/elicitations/:id/answer`
+  or it is refused `APPROVAL_SUBJECT_MISMATCH`; read back at `GET …/elicitations/pending` — see
+  [implementation/salaam-strict-decisions](./implementation/salaam-strict-decisions.md)),
+  `gate.resolved`, `run.reclaimed`, `card.canceled`,
   `cards.stale` (the daily stale-card digest: `{ event, boardId, boardName, cards: StaleCardView[], ts }`,
   one delivery per sweep that has a card not reported in the last 24 hours — see
   docs-site `use/stuck-cards`).

@@ -276,6 +276,7 @@ export interface BoardStub {
     answererRole?: 'owner' | 'admin' | 'member' | 'viewer' | null;
     option?: string;
     text?: string;
+    subject?: { id: string; digest: string };
   }): Promise<Result<{ card: CardView; elicitation: ElicitationView }>>;
   fetch(request: Request): Promise<Response>;
 }

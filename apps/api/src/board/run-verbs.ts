@@ -3,6 +3,7 @@ import type { JsonValue } from '../json';
 import { estimateCostUsd } from '../metering/pricing';
 import type { BoardContext } from './context';
 import { parseElicitationOptions } from './elicitation';
+import { questionPostError } from './question-subject';
 import type { AgentActivityInput, CardView, CompleteVerbInput, Result, Row, RunVerbInput } from './model';
 import { CIRCUIT_BREAKER_LIMIT, COMMENT_MAX_BYTES, HEARTBEAT_TIMEOUT_MS } from './rules';
 import { ApprovalDetail, canonicalDecisionRequest, StrictDecision } from './strict-decision';
@@ -60,6 +61,12 @@ export async function postActivity(deps: RunVerbsDeps, input: AgentActivityInput
   if (!auth.ok) return auth;
   const run = auth.run;
   const cardId = run.card_id as string;
+  // A poster's meanings, scopes and subject are checked before anything is written (charter:
+  // strict decisions bind their subject §7): a refused question leaves no trace.
+  if (input.type === 'elicitation') {
+    const refused = questionPostError(input.parameter, parseElicitationOptions(input.parameter));
+    if (refused) return { ok: false, ...refused };
+  }
   if (input.usage) {
     // Validate at the DO so every wire (REST + MCP) shares the guarantee — a negative/NaN cost
     // would otherwise poison the SUMs the budget gate relies on.
@@ -144,6 +151,8 @@ async function postStrictDecision(deps: RunVerbsDeps, input: AgentActivityInput)
   const names = options.map((o) => o.name).join(',');
   if (!['approve,deny', 'approve,approve-run,deny', 'approve,always,deny', 'approve,approve-run,always,deny'].includes(names) ||
       options.some((o) => (o.name === 'always') !== (o.requires === 'workspace-admin')) ||
+      // Its meanings and scopes follow from the option names; an offer may not say otherwise.
+      options.some((o) => o.meaning !== undefined || o.scope !== undefined) ||
     canonicalDecisionRequest(input.parameter) !== canonicalDecisionRequest(detail ? { options, detail: detail.data } : { options })) {
     return { ok: false, code: 'INVALID_STRICT_DECISION', message: 'strict decisions require exact canonical approve/deny options' };
   }

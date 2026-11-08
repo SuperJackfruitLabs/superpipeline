@@ -335,6 +335,8 @@ export type BoardErrorCode =
   | 'ELICITATION_NOT_FOUND'
   | 'ELICITATION_NOT_PENDING'
   | 'INVALID_ANSWER'
+  /** An elicitation's option said a meaning or scope outside the vocabulary, or a subject came without meanings. */
+  | 'INVALID_ELICITATION'
   | 'INVALID_STRICT_DECISION'
   | 'DECISION_CONFLICT'
   | 'DECISION_EXPIRED'
