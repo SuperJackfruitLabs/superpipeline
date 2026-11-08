@@ -74,9 +74,9 @@ describe('a question on the push says what each option means', () => {
 
       const push = await pushedQuestion(board);
       expect(push.options).toEqual([
-        { id: 'approve', label: 'Approve', meaning: 'approve', needsComment: false },
-        { id: 'approve-run', label: 'Approve for this run', meaning: 'approve', needsComment: false },
-        { id: 'deny', label: 'Deny', meaning: 'reject', needsComment: false },
+        { id: 'approve', label: 'Approve', meaning: 'approve', needsComment: false, scope: 'once' },
+        { id: 'approve-run', label: 'Approve for this run', meaning: 'approve', needsComment: false, scope: 'run' },
+        { id: 'deny', label: 'Deny', meaning: 'reject', needsComment: false, scope: 'once' },
       ]);
       expect(await board.pendingElicitationDeliveries()).toEqual([push]);
     });

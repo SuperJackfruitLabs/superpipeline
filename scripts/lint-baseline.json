@@ -21,7 +21,7 @@
   "typescript(no-unnecessary-template-expression)": 3,
   "typescript(no-unnecessary-type-assertion)": 954,
   "typescript(no-unnecessary-type-conversion)": 38,
-  "typescript(no-unsafe-type-assertion)": 1612,
+  "typescript(no-unsafe-type-assertion)": 1609,
   "typescript(require-array-sort-compare)": 5,
   "typescript(restrict-template-expressions)": 5,
   "typescript(unbound-method)": 13,

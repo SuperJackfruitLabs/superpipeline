@@ -40,7 +40,13 @@ export class QuestionAnswer {
     }
     this.answering = true;
     try {
-      const res = await answerElicitation(boardId, elicitation.id, { option, text: text || undefined });
+      // The board refuses an approval that does not carry the subject the person saw.
+      const subject = elicitation.approvalSubject;
+      const res = await answerElicitation(boardId, elicitation.id, {
+        option,
+        text: text || undefined,
+        ...(subject ? { subject: { id: subject.id, digest: subject.digest } } : {}),
+      });
       if (!res.ok) {
         const body = (await res.json().catch(() => null)) as { error?: { message?: string } } | null;
         this.error = body?.error?.message ?? `Couldn't send that answer (${res.status})`;

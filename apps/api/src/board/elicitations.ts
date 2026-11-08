@@ -6,8 +6,9 @@ import { parseElicitationOptions } from './elicitation';
 import type { GateOption } from './gate-option';
 import type { AgentActivityInput, CardView, Result, Row } from './model';
 import { HEARTBEAT_TIMEOUT_MS } from './rules';
-import type { ApprovalDetail } from './strict-decision';
-import type { ElicitationPendingBody, ElicitationStatus, ElicitationView, GateOptionMeaning } from './views';
+import { posterSubject, posterSubjectEnvelope, PosterSubject, questionOptionMeaning, questionOptionScope, strictSubjectEnvelope, subjectAnswerError } from './question-subject';
+import { ApprovalDetail, StrictDecision } from './strict-decision';
+import type { ApprovalSubjectEnvelope, ElicitationPendingBody, ElicitationStatus, ElicitationView } from './views';
 
 /**
  * An agent's questions (elicitations): asking, answering, cancelling, and their push body.
@@ -62,6 +63,8 @@ export async function answerElicitation(deps: ElicitationsDeps, input: {
   answererRole?: 'owner' | 'admin' | 'member' | 'viewer' | null;
   option?: string;
   text?: string;
+  /** The subject the answerer was shown (charter: strict decisions bind their subject §4). */
+  subject?: { id: string; digest: string };
 }): Promise<Result<{ card: CardView; elicitation: ElicitationView }>> {
   const row = deps.sql.exec(`SELECT * FROM elicitations WHERE id = ?`, input.elicitationId).toArray()[0];
   if (!row) {
@@ -106,6 +109,13 @@ export async function answerElicitation(deps: ElicitationsDeps, input: {
       code: 'INVALID_ANSWER',
       message: elicitation.options.length > 0 ? 'pick one of the offered options' : 'an answer needs some text',
     };
+  }
+  // A question with a subject is answered by an option, and an approving one carries the binding
+  // the person saw (charter: strict decisions bind their subject §4).
+  if (elicitation.approvalSubject) {
+    if (!chosenOption) return { ok: false, code: 'INVALID_ANSWER', message: 'choose one of the offered options' };
+    const refused = subjectAnswerError(elicitation.approvalSubject, questionOptionMeaning(chosenOption, elicitation.strictDecision !== undefined), input.subject, deps.nowMs());
+    if (refused) return { ok: false, ...refused };
   }
 
   // A question an agent parked the card on (`complete` with `needs-person`) has no live run to
@@ -265,11 +275,14 @@ export function openElicitation(deps: ElicitationsDeps, input: AgentActivityInpu
     JSON.stringify(parseElicitationOptions(input.parameter)),
     now,
   );
+  // A strict decision's subject is built from its offer; only a poster's own subject is kept here.
+  const subject = input.strictDecision === undefined ? posterSubject(input.parameter) : null;
+  if (subject) deps.sql.exec(`UPDATE elicitations SET subject_json = ? WHERE id = ?`, JSON.stringify(subject), id);
   deps.setNeedsHuman(cardId, { reason: 'question', elicitationId: id });
   deps.emit('elicitation.opened', { elicitationId: id, cardId, runId: input.runId, signal: input.signal ?? null });
   deps.notify('input', cardId, question === '' ? 'An agent is waiting on you' : question);
-  // A strict decision's binding is saved after this returns, so whether it is one is said here.
-  notifyElicitationPending(deps, id, input.strictDecision !== undefined);
+  // A strict decision's binding is saved after this returns, so its offer is passed from here.
+  notifyElicitationPending(deps, id, input.strictDecision === undefined ? null : { binding: input.strictDecision, detail: offeredDetail(input.parameter) });
   return id;
 }
 
@@ -296,16 +309,53 @@ export function cancelElicitationsForCard(deps: ElicitationsDeps, cardId: string
   );
 }
 
+/** What a strict decision offered: its binding and, when given, its approval detail. */
+interface StrictOffer {
+  binding: StrictDecision;
+  detail: ApprovalDetail | undefined;
+}
+
+/** The approval detail riding in an offer's `parameter`, checked when the decision was bound. */
+function offeredDetail(parameter: JsonValue | undefined): ApprovalDetail | undefined {
+  const offered = parameter !== null && typeof parameter === 'object' && !Array.isArray(parameter) ? parameter : null;
+  const parsed = offered && 'detail' in offered ? ApprovalDetail.safeParse(offered.detail) : null;
+  return parsed?.success ? parsed.data : undefined;
+}
+
+/** A JSON column's text; anything else reads as JSON `null`. */
+function sqlText(v: SqlStorageValue | undefined): string {
+  return typeof v === 'string' ? v : 'null';
+}
+
+/** A question's strict offer, read from where it was bound, or null for any other question. */
+function strictOffer(deps: ElicitationsDeps, elicitationId: SqlStorageValue): StrictOffer | null {
+  const strict = deps.sql.exec(`SELECT binding_json, payload_json FROM strict_decision_requests WHERE elicitation_id = ?`, elicitationId).toArray()[0];
+  if (!strict) return null;
+  const binding = StrictDecision.safeParse(JSON.parse(sqlText(strict.binding_json)));
+  // Checked when it was bound; reading it as an ordinary question would skip every strict check.
+  if (!binding.success) throw new Error(`invariant violation: strict decision binding for ${sqlText(elicitationId)} is malformed`);
+  const payload: unknown = JSON.parse(sqlText(strict.payload_json));
+  const parameter = payload !== null && typeof payload === 'object' && 'parameter' in payload ? payload.parameter : undefined;
+  const offered = parameter !== null && typeof parameter === 'object' && 'detail' in parameter ? ApprovalDetail.safeParse(parameter.detail) : null;
+  return { binding: binding.data, detail: offered?.success ? offered.data : undefined };
+}
+
+/** The subject a question carries: its strict offer's, or the one its poster attached. */
+function questionSubject(row: Row, strict: StrictOffer | null): ApprovalSubjectEnvelope | null {
+  if (strict) return strictSubjectEnvelope(strict.binding, strict.detail);
+  if (typeof row.subject_json !== 'string') return null;
+  const parsed = PosterSubject.safeParse(JSON.parse(row.subject_json));
+  return parsed.success ? posterSubjectEnvelope(parsed.data) : null;
+}
+
 function rowToElicitation(deps: ElicitationsDeps, row: Row): ElicitationView {
   const answeredBy = (row.answered_by as string | null) ?? null;
-  const strict = deps.sql.exec(`SELECT binding_json, payload_json FROM strict_decision_requests WHERE elicitation_id = ?`, row.id).toArray()[0];
-  // The approval detail was checked when the decision was bound; it is read from that payload.
-  const detail = strict
-    ? (JSON.parse(strict.payload_json as string) as { parameter?: { detail?: ApprovalDetail } }).parameter?.detail
-    : undefined;
+  const strict = strictOffer(deps, row.id);
+  const subject = questionSubject(row, strict);
   return {
-    ...(strict ? { strictDecision: JSON.parse(strict.binding_json as string) } : {}),
-    ...(detail ? { detail } : {}),
+    ...(strict ? { strictDecision: strict.binding } : {}),
+    ...(strict?.detail ? { detail: strict.detail } : {}),
+    ...(subject ? { approvalSubject: subject } : {}),
     id: row.id as string,
     cardId: row.card_id as string,
     runId: row.run_id as string,
@@ -376,11 +426,12 @@ export function pendingElicitations(deps: ElicitationsDeps): ElicitationView[] {
  * `null` when the card is gone — a question about a deleted card has nothing to ask
  * about, and is the same case the gate builder already handles.
  */
-function elicitationPendingBody(deps: ElicitationsDeps, row: Row, strict: boolean): ElicitationPendingBody | null {
+function elicitationPendingBody(deps: ElicitationsDeps, row: Row, strict: StrictOffer | null): ElicitationPendingBody | null {
   const cardId = row.card_id as string;
   const card = deps.getCard(cardId);
   if (!card) return null;
   const options = JSON.parse(row.options_json as string) as GateOption[];
+  const subject = questionSubject(row, strict);
   return {
     event: 'elicitation.pending',
     boardId: deps.getMeta('boardId'),
@@ -394,31 +445,24 @@ function elicitationPendingBody(deps: ElicitationsDeps, row: Row, strict: boolea
     question: (row.question as string) ?? '',
     // The decision envelope (charter: questions and follow-ups §2): each option says what it
     // means, as a gate's do. A question asks for no comment on an option.
-    options: options.map((o): ElicitationPendingBody['options'][number] => ({
-      id: o.name,
-      label: o.title,
-      meaning: questionOptionMeaning(o.name, strict),
-      needsComment: false,
-    })),
+    // Its scope and who may take it travel when known (charter: strict decisions bind their
+    // subject §2); the board still judges both.
+    options: options.map((o): ElicitationPendingBody['options'][number] => {
+      const scope = questionOptionScope(o, strict !== null);
+      return {
+        id: o.name,
+        label: o.title,
+        meaning: questionOptionMeaning(o, strict !== null),
+        needsComment: false,
+        ...(scope ? { scope } : {}),
+        ...(o.requires ? { requires: o.requires } : {}),
+      };
+    }),
+    ...(subject ? { approvalSubject: subject } : {}),
     // Nothing to tap: the answer is typed, and the reader is told how long it may be.
     ...(options.length === 0 ? { freeText: { maxLength: ELICITATION_TEXT_MAX } } : {}),
     ts: row.created_at as string,
   };
-}
-
-/**
- * What a question's option means. An ordinary option is a choice; a strict decision offers only
- * approving options and `deny` (`postStrictDecision` refuses anything else), so its `deny`
- * rejects and every other option approves.
- */
-function questionOptionMeaning(name: string, strict: boolean): GateOptionMeaning {
-  if (!strict) return 'choose';
-  return name === 'deny' ? 'reject' : 'approve';
-}
-
-/** Whether a question is a strict decision: one is bound when it is asked. */
-function isStrictDecision(deps: ElicitationsDeps, elicitationId: SqlStorageValue): boolean {
-  return deps.sql.exec(`SELECT 1 FROM strict_decision_requests WHERE elicitation_id = ?`, elicitationId).toArray().length > 0;
 }
 
 /**
@@ -432,7 +476,7 @@ function isStrictDecision(deps: ElicitationsDeps, elicitationId: SqlStorageValue
  * advertise the stage's capability, and to nobody at all when the stage is one a
  * person owns.
  */
-function notifyElicitationPending(deps: ElicitationsDeps, elicitationId: string, strict: boolean): void {
+function notifyElicitationPending(deps: ElicitationsDeps, elicitationId: string, strict: StrictOffer | null): void {
   const row = deps.sql.exec(`SELECT * FROM elicitations WHERE id = ?`, elicitationId).toArray()[0] as
     | Row
     | undefined;
@@ -472,6 +516,6 @@ function notifyElicitationPending(deps: ElicitationsDeps, elicitationId: string,
  */
 export async function pendingElicitationDeliveries(deps: ElicitationsDeps): Promise<ElicitationPendingBody[]> {
   return pendingElicitationRows(deps)
-    .map((r) => elicitationPendingBody(deps, r, isStrictDecision(deps, r.id)))
+    .map((r) => elicitationPendingBody(deps, r, strictOffer(deps, r.id)))
     .filter((b): b is ElicitationPendingBody => b !== null);
 }

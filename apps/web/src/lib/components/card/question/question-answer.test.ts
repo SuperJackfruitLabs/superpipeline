@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 const answerElicitation = vi.fn();
 vi.mock('$lib/api', () => ({ answerElicitation: (...a: unknown[]) => answerElicitation(...a) }));
+import type { Elicitation } from '$lib/api';
 import { QuestionAnswer } from './question-answer.svelte';
 
 const ask = (options: Array<{ name: string; title: string }> = []) => ({ id: 'eli_1', options }) as never;
@@ -37,6 +38,19 @@ describe('QuestionAnswer', () => {
     q.selected = 'yes';
     await q.submit();
     expect(answerElicitation).toHaveBeenCalledWith('brd_1', 'eli_1', { option: 'yes', text: undefined });
+  });
+
+  // Charter: strict decisions bind their subject §4. The board refuses an approval without the
+  // binding, so the web app sends back the subject the person was shown.
+  it('a question with a subject sends back its id and digest', async () => {
+    const bound: Elicitation = {
+      id: 'eli_2', cardId: 'crd_1', runId: 'run_1', stageKey: 'build', agentId: 'agt_a', question: 'Apply?', signal: 'select',
+      options: [{ name: 'approve', title: 'Approve' }], status: 'pending', answer: null, createdAt: '2026-11-08T00:00:00.000Z',
+      approvalSubject: { id: 'req_1', digest: 'a'.repeat(64), schema: 'salaam-operation/v1', revision: 1, expiresAt: null, preview: [], previewComplete: true },
+    };
+    q = new QuestionAnswer(() => ({ boardId: 'brd_1', elicitation: bound, after }));
+    expect(await q.send('approve')).toBe(true);
+    expect(answerElicitation).toHaveBeenCalledWith('brd_1', 'eli_2', { option: 'approve', text: undefined, subject: { id: 'req_1', digest: 'a'.repeat(64) } });
   });
 
   it('a refusal says what the server said', async () => {

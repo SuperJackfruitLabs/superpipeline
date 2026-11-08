@@ -492,7 +492,8 @@ describe('the Board Durable Object, pinned before the split', () => {
       await record('postActivity strict expired', () => board.postActivity({ ...ask, strictDecision: { ...strictDecision, request_id: '00000000-0000-4000-8000-000000000002', expires_at: 1 } }));
       const pending = await record('pendingElicitationDeliveries strict', () => board.pendingElicitationDeliveries());
       const elicitationId = pending[0]?.elicitationId ?? '';
-      await record('answerElicitation strict', () => board.answerElicitation({ elicitationId, answeredBy: 'usr_a', answererRole: 'owner', option: 'approve' }));
+      // An approving answer carries the subject it approves (charter: strict decisions bind their subject §4).
+      await record('answerElicitation strict', () => board.answerElicitation({ elicitationId, answeredBy: 'usr_a', answererRole: 'owner', option: 'approve', subject: { id: strictDecision.request_id, digest: strictDecision.decision_digest } }));
       await record('getRunContext strict', () => board.getRunContext({ runId: c.runId, agentId: 'agt_s' }));
     });
 

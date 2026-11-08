@@ -12,6 +12,7 @@
  */
 import type { GateOption } from './gate-option';
 import type { JsonValue } from '../json';
+import { isOptionMeaning, isOptionScope } from './question-subject';
 
 function asOption(raw: JsonValue): GateOption | null {
   if (typeof raw === 'string') {
@@ -29,6 +30,10 @@ function asOption(raw: JsonValue): GateOption | null {
   if (typeof o.description === 'string' && o.description.trim() !== '') option.description = o.description.trim();
   // Only one requirement exists: the option is a workspace owner's or admin's (strict "Always allow").
   if (o.requires === 'workspace-admin') option.requires = 'workspace-admin';
+  // What it means and how far it reaches, when the poster said so (charter: strict decisions bind
+  // their subject §7). A word outside the vocabulary is refused at the post (`questionPostError`).
+  if (isOptionMeaning(o.meaning)) option.meaning = o.meaning;
+  if (isOptionScope(o.scope)) option.scope = o.scope;
   return option;
 }
 

@@ -86,6 +86,19 @@ export interface Elicitation {
   createdAt: string;
   /** A strict decision's structured detail: what is being approved (readable approvals). */
   detail?: ApprovalDetail;
+  /**
+   * The exact thing an approving answer approves, when the question has one (a strict decision, or
+   * a harness permission routed through the board). An answer sends back its `id` and `digest`.
+   */
+  approvalSubject?: {
+    id: string;
+    digest: string;
+    schema: string;
+    revision: number;
+    expiresAt: string | null;
+    preview: Array<{ type: 'text'; label?: string; text: string } | { type: 'field'; label: string; value: string } | { type: 'link'; label: string; url: string }>;
+    previewComplete: boolean;
+  };
 }
 
 export interface ApprovalDetail {
@@ -136,7 +149,7 @@ export function updateApprovalDelivery(
 export function answerElicitation(
   boardId: string,
   elicitationId: string,
-  answer: { option?: string; text?: string },
+  answer: { option?: string; text?: string; subject?: { id: string; digest: string } },
 ): Promise<Response> {
   return fetch(`/v1/boards/${boardId}/elicitations/${elicitationId}/answer`, {
     method: 'POST',

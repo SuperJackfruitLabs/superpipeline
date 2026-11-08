@@ -377,6 +377,13 @@ it('round trips strict correlation through authenticated REST and deduplicates a
   const read = await pollRun(boardId, claim.runId, agent.token);
   expect(read.elicitations).toHaveLength(1);
   expect(read.elicitations[0]).toMatchObject({ id: receipt.activity.elicitationId, strictDecision });
+  // Charter: strict decisions bind their subject §4. The route passes the answer's binding through.
+  const answerStrict = (body: unknown) => SELF.fetch(`${base}/v1/boards/${boardId}/elicitations/${receipt.activity.elicitationId}/answer`, { method: 'POST', headers: human(tenantId, 'usr_a'), body: JSON.stringify(body) });
+  const unbound = await answerStrict({ option: 'approve' });
+  expect(unbound.status).toBe(409);
+  expect(await unbound.json()).toMatchObject({ error: { code: 'APPROVAL_SUBJECT_MISMATCH' } });
+  expect((await answerStrict({ option: 'approve', subject: { id: strictDecision.request_id, digest: 7 } })).status).toBe(409);
+  expect((await answerStrict({ option: 'approve', subject: { id: strictDecision.request_id, digest: strictDecision.decision_digest } })).status).toBe(200);
 });
 
 // Operator ruling 2026-10-28: an option marked for workspace admins ("Always allow") is chosen only
