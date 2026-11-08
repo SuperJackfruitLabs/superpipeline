@@ -98,8 +98,10 @@ export interface BoardContext {
   denyForeignRun(run: Row, agentId: string | null | undefined): { ok: false; code: 'NOT_RUN_OWNER'; message: string } | null;
   elicitationsForRun(runId: string): ElicitationView[];
   emit(type: string, payload: Record<string, unknown>): void;
+  endLapsedDeliveries(nowIso: string): number;
   endAttempt(cardId: string, event: string, reason: string | null, runId?: string): void;
   endReviewsOfArchivedCard(cardId: string): number;
+  expireLapsedGates(nowIso: string): number;
   fireDueSchedules(nowIso: string): Promise<{ fired: string[]; skipped: string[] }>;
   gatesForCard(cardId: string): GateView[];
   getCard(id: string): CardView | null;

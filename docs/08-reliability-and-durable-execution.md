@@ -112,6 +112,21 @@ Decisions:
    (`403 SEPARATION_OF_DUTIES` — the producer cannot resolve their own gate). A second resolve is a
    typed conflict, `409 GATE_NOT_PENDING`, **not** an idempotent no-op. **⚠️ Approver policy and
    quorum are not implemented.**
+   - **Expired subjects** *(as shipped, charter 2026-11-08 decision 7)*: approving a subject-bound
+     gate after its subject's `timing.expiresAt` is refused `409 DECISION_EXPIRED`, and the gate is
+     closed in the same call. The board sweep (five-minute cron) closes any other such gate. A closed
+     gate reads `status: "resolved", decision: "expired", decidedBy: null` (`GET …/gates/:gateId`),
+     leaves `gates/pending`, and a later resolve answers `GATE_NOT_PENDING` with `detail.reason:
+     "expired"`. The subject is invalidated and the card stays on its stage, `needsHuman.reason:
+     "blocked"`, saying why. Rejecting or requesting changes is still taken until the gate is closed.
+     A manual delivery still owed when its subject expires is recorded once on the gate (an
+     `expired` delivery event), its owner is notified, and the card says why.
+   - **Who sets decision policy** *(as shipped, decision 6)*: changing a stage's `gate`,
+     `approvalSubjectSchema` or `approvalDeciderPrincipalIds` — through `PATCH …/stages/:key` or
+     `PUT …/stages`, including adding or removing a gated stage — needs a workspace owner or admin:
+     the Accounts workspace role (`orgRole`) on the Organization plane, the local membership role
+     without it. Anyone else gets `403 WORKSPACE_ADMIN_REQUIRED`; a member keeps every other stage
+     edit. "Always allow" on a question is judged by the same role.
 4. **Timeout & escalation** are driven by the **DO alarm**, independent of any agent: on `after`,
    widen approvers / notify; on `timeoutMs`, apply `onTimeout`. A slow human never blocks compute; a
    forgotten gate resolves by policy.

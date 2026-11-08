@@ -5446,6 +5446,8 @@ exports[`the Board Durable Object, pinned before the split > runs the same state
   },
   {
     "result": {
+      "deliveriesExpired": 0,
+      "gatesExpired": 0,
       "overdueNotified": 1,
       "schedulesFired": 0,
       "staleNotified": 6,
@@ -5471,6 +5473,8 @@ exports[`the Board Durable Object, pinned before the split > runs the same state
       "SELECT last_insert_rowid() AS seq",
       "UPDATE cards SET overdue_notified_at = ? WHERE id = ?  <-  ["2099-01-01T00:00:00.000Z","card#1"]",
       "SELECT id, card_id, approval_subject_id, decided_by FROM gates WHERE status = 'resolved' AND decision = 'approve_manual' AND live_post_url IS NULL AND live_post_remind_at IS NOT NULL AND live_post_remind_at <= ? AND live_post_reminder_notified_at IS NULL  <-  ["2099-01-01T00:00:00.000Z"]",
+      "SELECT id, approval_subject_id FROM gates WHERE status = 'pending' AND approval_subject_id IS NOT NULL",
+      "SELECT id, card_id, approval_subject_id FROM gates WHERE status = 'resolved' AND decision = 'approve_manual' AND live_post_url IS NULL AND approval_subject_id IS NOT NULL AND NOT EXISTS (SELECT 1 FROM approval_delivery_events e WHERE e.gate_id = gates.id AND e.event = 'expired')",
       "SELECT * FROM schedules WHERE enabled = 1 AND next_fire_at <= ? ORDER BY next_fire_at ASC  <-  ["2099-01-01T00:00:00.000Z"]",
       "SELECT v FROM meta WHERE k = ?  <-  ["boardId"]",
       "SELECT v FROM meta WHERE k = ?  <-  ["staleAfterHours"]",
@@ -6488,6 +6492,7 @@ exports[`the Board Durable Object, pinned before the split > runs the same state
     },
     "sql": [
       "SELECT v FROM meta WHERE k = ?  <-  ["boardId"]",
+      "SELECT v FROM meta WHERE k = ?  <-  ["stages"]",
       "SELECT v FROM meta WHERE k = ?  <-  ["stages"]",
       "INSERT INTO meta (k, v) VALUES (?, ?) ON CONFLICT(k) DO UPDATE SET v = excluded.v  <-  ["stages","[{\\"key\\":\\"inbox\\",\\"name\\":\\"Inbox\\",\\"order\\":0,\\"ownerKind\\":\\"human\\",\\"summary\\":\\"Where cards start\\"},{\\"key\\":\\"research\\",\\"name\\":\\"Research\\",\\"order\\":1,\\"ownerKind\\":\\"capability\\",\\"owner\\":\\"research\\",\\"instructions\\":\\"Find the sources.\\"},{\\"key\\":\\"review\\",\\"name\\":\\"Review\\",\\"order\\":2,\\"ownerKind\\":\\"capability\\",\\"owner\\":\\"review\\",\\"gate\\":\\"approval\\"},{\\"key\\":\\"judge\\",\\"name\\":\\"Judge\\",\\"order\\":3,\\"ownerKind\\":\\"capability\\",\\"owner\\":\\"judge\\",\\"returnStage\\":\\"research\\"},{\\"key\\":\\"done\\",\\"name\\":\\"Done\\",\\"order\\":4},{\\"key\\":\\"archive\\",\\"name\\":\\"Archive\\",\\"order\\":5}]"]",
       "INSERT INTO events (type, payload_json, ts) VALUES (?, ?, ?)  <-  ["board.stages_changed","{\\"stages\\":[{\\"key\\":\\"inbox\\",\\"name\\":\\"Inbox\\",\\"order\\":0,\\"ownerKind\\":\\"human\\",\\"summary\\":\\"Where cards start\\"},{\\"key\\":\\"research\\",\\"name\\":\\"Research\\",\\"order\\":1,\\"ownerKind\\":\\"capability\\",\\"owner\\":\\"research\\",\\"instructions\\":\\"Find the sources.\\"},{\\"key\\":\\"review\\",\\"name\\":\\"Review\\",\\"order\\":2,\\"ownerKind\\":\\"capability\\",\\"owner\\":\\"review\\",\\"gate\\":\\"approval\\"},{\\"key\\":\\"judge\\",\\"name\\":\\"Judge\\",\\"order\\":3,\\"ownerKind\\":\\"capability\\",\\"owner\\":\\"judge\\",\\"returnStage\\":\\"research\\"},{\\"key\\":\\"done\\",\\"name\\":\\"Done\\",\\"order\\":4},{\\"key\\":\\"archive\\",\\"name\\":\\"Archive\\",\\"order\\":5}]}","t#273"]",
@@ -11498,6 +11503,7 @@ exports[`the Board Durable Object, pinned before the split > runs the same state
       "SELECT * FROM gates WHERE id = ?  <-  ["gate#5"]",
       "SELECT status, digest FROM approval_subjects WHERE id = ?  <-  ["aps#4"]",
       "SELECT * FROM cards WHERE id = ?  <-  ["card#1"]",
+      "SELECT * FROM approval_subjects WHERE id = ?  <-  ["aps#4"]",
       "UPDATE gates SET status = 'resolved', decision = ?, comment = ?, decided_by = ?, resolved_at = ?, decided_via = ? WHERE id = ?  <-  ["approve_manual",null,"usr_decider","t#22","api","gate#5"]",
       "INSERT INTO approval_delivery_events (id, gate_id, subject_id, event, from_mode, to_mode, actor, live_url, created_at) VALUES (?, ?, ?, 'approved', NULL, ?, ?, NULL, ?)  <-  ["ade#6","gate#5","aps#4","manual","usr_decider","t#22"]",
       "UPDATE cards SET state = 'input-required', needs_human_json = ?, delegate_agent_id = NULL, current_run_id = NULL, updated_at = ? WHERE id = ?  <-  ["{\\"reason\\":\\"review\\",\\"detail\\":\\"approved for manual delivery\\"}","t#23","card#1"]",

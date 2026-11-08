@@ -717,10 +717,14 @@ describe('run-fenced approval-subject verify route', () => {
       const opened = await openBoundGate(board, state, 'verify-expired', {
         boardId,
         tenantId,
-        publicationPayload: payload('2020-01-02T03:04:05Z'),
+        // Approved while still valid, then left to expire: approving an already-expired subject is
+        // refused at the gate (charter 2026-11-08, decision 7), so the executor's own fence is
+        // reached by a subject that expires after its approval.
+        publicationPayload: payload(new Date(Date.now() + 1_500).toISOString()),
       });
       const approved = await board.resolveGate(boundDecision(opened.gate, opened.subject) as never);
       if (!approved.ok) throw new Error(approved.message);
+      await new Promise((resolve) => setTimeout(resolve, 1_600));
       const claim = await board.claim({ agentId: PUBLISHER, capabilities: ['x-publish'] });
       if (!claim.claimed) throw new Error('publisher fixture was not claimable');
       runId = claim.runId;

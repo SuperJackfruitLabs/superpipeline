@@ -211,7 +211,7 @@ export interface BoardStub {
   pendingDeliveryFollowUps(): Promise<DeliveryPendingBody[]>;
   dispatchPushDeliveries(sender?: PushSender, opts?: { timeoutMs?: number }): Promise<{ sent: number; failed: number }>;
   getRunReportOutbox(): Promise<RunReportOutboxRow[]>;
-  sweepBoard(nowIso: string): Promise<{ overdueNotified: number; schedulesFired: number; staleNotified: number }>;
+  sweepBoard(nowIso: string): Promise<{ overdueNotified: number; schedulesFired: number; staleNotified: number; gatesExpired: number; deliveriesExpired: number }>;
   /** Cards waiting past the threshold — the board's own unless `afterHours` is given. See `StaleCardView`. */
   staleCards(input: { nowIso: string; afterHours?: number; attention?: boolean }): Promise<StaleCardView[]>;
   setStaleSettings(input: { enabled?: boolean; afterHours?: number }): Promise<Result<StaleSettings>>;

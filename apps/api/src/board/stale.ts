@@ -16,6 +16,8 @@ export type StaleDeps = Pick<
   | 'backfillTerminalStageCards'
   | 'ctx'
   | 'emit'
+  | 'endLapsedDeliveries'
+  | 'expireLapsedGates'
   | 'fireDueSchedules'
   | 'getMeta'
   | 'isAgentClaimable'
@@ -47,7 +49,7 @@ const STALE_DIGEST_REPEAT_MS = 24 * 3600_000;
  * review found here (a failing backfill had been taking the overdue sweep down with it, silently
  * and forever). `schedulesFired` reports 0, honestly, when firing itself failed.
  */
-export async function sweepBoard(deps: StaleDeps, nowIso: string): Promise<{ overdueNotified: number; schedulesFired: number; staleNotified: number }> {
+export async function sweepBoard(deps: StaleDeps, nowIso: string): Promise<{ overdueNotified: number; schedulesFired: number; staleNotified: number; gatesExpired: number; deliveriesExpired: number }> {
   // The backfill is a migration, not a sweep job. Guarded by a meta flag because its query
   // (`WHERE due_at IS NULL`) matches every card that never had a due date — i.e. most of them,
   // forever — so running it on each five-minute tick would be a full table scan for nothing.
@@ -192,6 +194,22 @@ export async function sweepBoard(deps: StaleDeps, nowIso: string): Promise<{ ove
     deps.emit('approval_delivery_reminder.sweep_failed', { reason: String(err) });
   }
 
+  // An approval subject that expired closes its pending gate, and ends its owed manual delivery
+  // visibly (charter: unanswered decisions remind, then escalate, decision 7). Isolated like the
+  // other jobs, and each gate inside it on its own.
+  let gatesExpired = 0;
+  let deliveriesExpired = 0;
+  try {
+    gatesExpired = deps.expireLapsedGates(nowIso);
+  } catch (err) {
+    deps.emit('gate_expiry.sweep_failed', { reason: String(err) });
+  }
+  try {
+    deliveriesExpired = deps.endLapsedDeliveries(nowIso);
+  } catch (err) {
+    deps.emit('delivery_expiry.sweep_failed', { reason: String(err) });
+  }
+
   // Its own try/catch, for the reason the backfill above has one: three jobs share this sweep, and
   // a failure in any of them must not silently disable the other two. `schedulesFired` is still
   // reported as 0 when firing failed, which is honest — nothing fired.
@@ -219,7 +237,7 @@ export async function sweepBoard(deps: StaleDeps, nowIso: string): Promise<{ ove
   if (terminalBackfillError) throw terminalBackfillError;
   if (archivedReviewsError) throw archivedReviewsError;
 
-  return { overdueNotified, schedulesFired, staleNotified };
+  return { overdueNotified, schedulesFired, staleNotified, gatesExpired, deliveriesExpired };
 }
 
 export async function setStaleSettings(deps: StaleDeps, input: { enabled?: boolean; afterHours?: number }): Promise<Result<StaleSettings>> {

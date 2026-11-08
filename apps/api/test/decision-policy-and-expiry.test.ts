@@ -9,14 +9,15 @@
  *    gate neither records a stale approval nor waits forever; an owed manual delivery whose subject
  *    expired ends visibly on the card.
  */
-import { env, SELF } from 'cloudflare:test';
+import { env, runInDurableObject, SELF } from 'cloudflare:test';
 import { beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { __resetJwksCacheForTests } from '../src/auth/hub-jwt';
 import { ensureOrgTenant } from '../src/auth/org-tenancy';
-import type { BoardInit, StageDef } from '../src/board/board-do';
+import type { BoardDO, BoardInit, StageDef } from '../src/board/board-do';
 import { boardStub as stubFor } from '../src/board/stub';
 import { recordBoard } from '../src/db/catalog';
 import { newId } from '../src/ids';
+import { addBoundCard, boardStub, boundDecision, DECIDER, payload, STAGES } from './approval-subject-fixtures';
 import { planeToken, withOrgPlane } from './helpers/org-plane';
 
 const TENANT = 'tnt_decision_policy';
@@ -131,6 +132,81 @@ describe('decision 6: a stage\'s decision policy is a workspace admin\'s to chan
       expect(await refused.json()).toMatchObject({ error: { code: 'WORKSPACE_ADMIN_REQUIRED' } });
       const accepted = await call('POST', path, bearer(await human('prn_0000000000000000d004', 'admin-always@example.com', 'admin')), { option: 'always' });
       expect(accepted.status).toBe(200);
+    });
+  });
+});
+
+describe('decision 7: an expired subject closes its gate', () => {
+  it('refuses an approval after the subject expired, and closes the gate as expired, settled for the hub', async () => {
+    await runInDurableObject(boardStub('dx-refuse'), async (board: BoardDO, state) => {
+      await board.init({ id: 'brd_dx_refuse', tenantId: 'tnt_fixture', name: 'Fixture board', stages: STAGES });
+      const opened = await addBoundCard(board, state, { publicationPayload: payload('2020-01-01T00:00:00Z') });
+
+      const refused = await board.resolveGate(boundDecision(opened.gate, opened.subject, DECIDER, 'approve_automatic'));
+      expect(refused).toMatchObject({ ok: false, code: 'DECISION_EXPIRED' });
+
+      // What the hub reads: gone from the pending list, and one gate resolved `expired` with no decider.
+      expect((await board.pendingGateDeliveries()).map((g) => g.gateId)).not.toContain(opened.gate.id);
+      const read = await board.getGate(opened.gate.id);
+      expect(read).toMatchObject({ ok: true, value: { status: 'resolved', decision: 'expired', decidedBy: null, resolvedAt: expect.any(String) } });
+      // Nothing was approved, and the bytes can no longer be.
+      expect(state.storage.sql.exec(`SELECT COUNT(*) AS n FROM approval_delivery_events WHERE gate_id = ?`, opened.gate.id).one().n).toBe(0);
+      expect(state.storage.sql.exec(`SELECT status, invalidation_reason FROM approval_subjects WHERE id = ?`, opened.subject.id).one()).toMatchObject({ status: 'invalidated', invalidation_reason: 'gate.expired' });
+      // The card stays, says why, and its history keeps the outcome.
+      const card = await board.getCardView(opened.cardId);
+      expect(card).toMatchObject({ ok: true, value: { state: 'input-required', currentStageKey: 'approve', needsHuman: { reason: 'blocked' } } });
+      expect((await board.getCardActivities(opened.cardId)).gates).toEqual([expect.objectContaining({ id: opened.gate.id, decision: 'expired' })]);
+
+      const again = await board.resolveGate(boundDecision(opened.gate, opened.subject, DECIDER, 'reject'));
+      expect(again).toMatchObject({ ok: false, code: 'GATE_NOT_PENDING', detail: { reason: 'expired' } });
+    });
+  });
+
+  it('still takes a rejection of an expired subject before the gate is closed: rejecting binds nothing', async () => {
+    await runInDurableObject(boardStub('dx-reject'), async (board: BoardDO, state) => {
+      await board.init({ id: 'brd_dx_reject', tenantId: 'tnt_fixture', name: 'Fixture board', stages: STAGES });
+      const opened = await addBoundCard(board, state, { publicationPayload: payload('2020-01-01T00:00:00Z') });
+      const rejected = await board.resolveGate(boundDecision(opened.gate, opened.subject, DECIDER, 'reject'));
+      expect(rejected.ok).toBe(true);
+      expect(await board.getGate(opened.gate.id)).toMatchObject({ value: { status: 'resolved', decision: 'reject' } });
+    });
+  });
+
+  it('closes a pending gate in the sweep once its subject expires, once, and leaves a live one alone', async () => {
+    await runInDurableObject(boardStub('dx-sweep'), async (board: BoardDO, state) => {
+      await board.init({ id: 'brd_dx_sweep', tenantId: 'tnt_fixture', name: 'Fixture board', stages: STAGES });
+      const lapsing = await addBoundCard(board, state); // expires 2030-01-02T03:04:05Z
+      const live = await addBoundCard(board, state, { publicationPayload: payload('2040-01-01T00:00:00Z') });
+
+      expect(await board.sweepBoard('2029-12-31T00:00:00.000Z')).toMatchObject({ gatesExpired: 0 });
+      expect(await board.getGate(lapsing.gate.id)).toMatchObject({ value: { status: 'pending' } });
+
+      expect(await board.sweepBoard('2030-06-01T00:00:00.000Z')).toMatchObject({ gatesExpired: 1 });
+      expect(await board.getGate(lapsing.gate.id)).toMatchObject({ value: { status: 'resolved', decision: 'expired', decidedBy: null } });
+      expect(await board.getGate(live.gate.id)).toMatchObject({ value: { status: 'pending' } });
+      expect((await board.pendingGateDeliveries()).map((g) => g.gateId)).toEqual([live.gate.id]);
+      expect((await board.getNotifications()).map((n) => n.body)).toContainEqual(expect.stringContaining('expired before anyone decided'));
+      const events = await board.getEvents(200);
+      expect(events.filter((e) => e.type === 'gate.resolved').map((e) => e.payload)).toContainEqual({ gateId: lapsing.gate.id, cardId: lapsing.cardId, decision: 'expired', decidedBy: null });
+
+      expect(await board.sweepBoard('2030-06-01T00:05:00.000Z')).toMatchObject({ gatesExpired: 0 });
+    });
+  });
+
+  it('ends an owed manual delivery whose approval expired, visibly and once', async () => {
+    await runInDurableObject(boardStub('dx-delivery'), async (board: BoardDO, state) => {
+      await board.init({ id: 'brd_dx_delivery', tenantId: 'tnt_fixture', name: 'Fixture board', stages: STAGES });
+      const opened = await addBoundCard(board, state); // expires 2030-01-02T03:04:05Z
+      expect((await board.resolveGate(boundDecision(opened.gate, opened.subject, DECIDER, 'approve_manual'))).ok).toBe(true);
+
+      expect(await board.sweepBoard('2029-12-31T00:00:00.000Z')).toMatchObject({ deliveriesExpired: 0 });
+      expect(await board.sweepBoard('2030-06-01T00:00:00.000Z')).toMatchObject({ deliveriesExpired: 1 });
+      const recorded = state.storage.sql.exec(`SELECT event, actor FROM approval_delivery_events WHERE gate_id = ? ORDER BY created_at, rowid`, opened.gate.id).toArray();
+      expect(recorded.map((r) => r.event)).toEqual(['approved', 'expired']);
+      expect(await board.getCardView(opened.cardId)).toMatchObject({ value: { needsHuman: { reason: 'blocked', detail: expect.stringContaining('expired before a live link') } } });
+      expect((await board.getNotifications()).map((n) => n.kind)).toContain('approval-delivery-expired');
+
+      expect(await board.sweepBoard('2030-06-01T00:05:00.000Z')).toMatchObject({ deliveriesExpired: 0 });
     });
   });
 });

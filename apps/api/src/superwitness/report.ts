@@ -36,6 +36,8 @@ export function mapRunStatus(f: RunFacts): { status: RunStatus; sourceStatus: st
       if (!f.gate) return { status: f.outcome === 'completed' ? 'succeeded' : 'waiting', sourceStatus };
       if (f.gate.status === 'pending') return { status: 'waiting', sourceStatus };
       if (f.gate.status === 'cancelled') return { status: 'cancelled', sourceStatus };
+      // Closed because its approval subject expired: nobody judged the work either way.
+      if (f.gate.decision === 'expired') return { status: 'cancelled', sourceStatus };
       return { status: f.gate.decision === 'approve' ? 'succeeded' : 'failed', sourceStatus };
     }
     case 'released':
