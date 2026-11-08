@@ -14,12 +14,16 @@ snapshot shows it as `decisionTimeout` while it is set. Without either, nothing 
 
 A timeout is decision policy. Setting or changing one needs a workspace owner or admin (the
 Accounts role on the Organization plane, the local membership without it), the same as a stage's
-gate, approval subject and deciders. Anyone else gets `403 WORKSPACE_ADMIN_REQUIRED`.
+gate, approval subject and deciders. That includes creating a board whose stages carry a timeout,
+because its escalation reaches the owners and admins. Anyone else gets `403 WORKSPACE_ADMIN_REQUIRED`.
 
 ## Deadlines
 
 A decision records its deadlines when it starts waiting, from its stage's timeout or else the
-board's default. The deadlines go in the Durable Object's `decision_waits` table, so they survive a
+board's default. The clock starts when the wait is recorded. It never starts from the card's
+`state_since`, because that field does not move when a card that is already waiting gets a new
+reason (a gate expiring into `blocked`, a lapsed delivery, a restore from the archive). Starting
+from it would put both deadlines in the past for a wait that is only seconds old. The deadlines go in the Durable Object's `decision_waits` table, so they survive a
 restart. There are four kinds of wait:
 
 | kind | starts when | `decisionId` |
@@ -47,14 +51,19 @@ long a binding stays valid, not how long anyone waits.
 ## The sweep
 
 The five-minute board sweep (`sweepBoard`) runs this as its own isolated job, after the expiry
-jobs. For every open wait whose deadline has passed:
+jobs. It reads due waits by one indexed column, `next_due_at` (the earlier deadline still to act
+on), at most 200 per sweep. For each one:
 
 - If the decision is no longer waiting (decided, cancelled, superseded, archived, expired, or a
   different wait id), the row is closed and nothing is sent.
 - **Remind** (once): the card's owner gets an in-app `decision-reminder` notice, and
   `decision.reminded` goes to every push config subscribed to it.
 - **Escalate** (once): `decision.escalated` goes out, and the owner gets a `decision-escalated`
-  notice.
+  notice. If the reminder and the escalation are due in the same sweep, only the escalation goes
+  out and the reminder is recorded as skipped (`remind_skipped`).
+
+A wait is closed (`closed_at`, `next_due_at` null) when it turns out to have ended, or when its
+last deadline acts. Closed rows are pruned 30 days later, up to 500 per sweep.
 
 ```json
 {
