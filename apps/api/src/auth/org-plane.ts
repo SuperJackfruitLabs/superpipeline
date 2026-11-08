@@ -65,6 +65,8 @@ export interface OrgPlaneClaims extends JWTPayload {
   mayGrantReach: boolean;
   /** Grant scopes — read ONLY on agent/service tokens (contract §2). On OAuth tokens it is the OAuth scope string. */
   scope?: string;
+  /** The person's role in `org`, on human tokens (Accounts `buildClaims`); absent is `member`. */
+  orgRole?: string;
   act?: { sub?: string };
   amr?: string[];
   email?: string;

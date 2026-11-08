@@ -185,7 +185,7 @@ export async function cardResume({ request, user, stub }: BoardRequest, resumeMa
 function expectedWait(body: object): { expectedWaitId?: string } | Response {
   if (!('expectedWaitId' in body) || body.expectedWaitId === undefined) return {};
   if (typeof body.expectedWaitId !== 'string' || body.expectedWaitId === '') {
-    return Response.json({ error: { code: 'WAIT_CHANGED', message: '`expectedWaitId` must be the waitId the answer was given for' } }, { status: 400 });
+    return Response.json({ error: { code: 'INVALID_WAIT_ID', message: '`expectedWaitId` must be the waitId the answer was given for' } }, { status: 400 });
   }
   return { expectedWaitId: body.expectedWaitId };
 }

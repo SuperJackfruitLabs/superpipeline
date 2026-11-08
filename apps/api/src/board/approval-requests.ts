@@ -122,7 +122,8 @@ export async function createApprovalRequest(deps: ApprovalRequestsDeps, input: {
   const row = rowFor(deps, id);
   if (!row) throw new Error(`invariant violation: approval request ${id} missing immediately after write`);
   const body = pendingBody(deps, row);
-  if (body) queueSubscribedPush(deps, body);
+  // Only to the decision carrier: an agent's push config never receives a broker's arguments.
+  if (body) queueSubscribedPush(deps, body, { servicesOnly: true });
   return { ok: true, value: { created: true, approvalRequest: viewOf(deps, row) } };
 }
 

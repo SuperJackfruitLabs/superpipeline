@@ -63,7 +63,12 @@ export async function resolvePlaneUser(request: Request, env: Env, cfg: OrgPlane
     return null;
   }
   // A token minted on a person's behalf (`act`) is the bridge speaking for them; the app's own is the web.
-  return { userId: human.userId, tenantId, role: human.role, mayDispatch: claims.mayDispatch, via: claims.act?.sub ? 'matrix' : 'web' };
+  return { userId: human.userId, tenantId, role: human.role, orgRole: orgRoleOf(claims), mayDispatch: claims.mayDispatch, via: claims.act?.sub ? 'matrix' : 'web' };
+}
+
+/** A human token's Accounts workspace role: `owner` or `admin` as named, anything else `member` (fails closed). */
+export function orgRoleOf(claims: Pick<OrgPlaneClaims, 'orgRole'>): 'owner' | 'admin' | 'member' {
+  return claims.orgRole === 'owner' || claims.orgRole === 'admin' ? claims.orgRole : 'member';
 }
 
 export async function resolvePlaneAgent(request: Request, env: Env, cfg: OrgPlaneConfig): Promise<AgentPrincipal | null> {

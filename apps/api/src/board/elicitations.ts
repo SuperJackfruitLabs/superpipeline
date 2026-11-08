@@ -518,11 +518,13 @@ function notifyElicitationPending(deps: ElicitationsDeps, elicitationId: string,
  * it already showed can no longer be answered. A stale question that still looks
  * tappable is a question that will be tapped.
  */
-export async function pendingElicitationDeliveries(deps: ElicitationsDeps): Promise<ElicitationPendingBody[]> {
+export async function pendingElicitationDeliveries(deps: ElicitationsDeps, opts?: { approvalRequests?: boolean }): Promise<ElicitationPendingBody[]> {
   const questions = pendingElicitationRows(deps)
     .map((r) => elicitationPendingBody(deps, r, strictOffer(deps, r.id)))
     .filter((b): b is ElicitationPendingBody => b !== null);
   // A broker's approval request is a subject-bound question too, belonging to no card (charter:
   // waiting cards and broker approvals reach chat §3–4); it leaves this list once decided or expired.
-  return [...questions, ...pendingApprovalRequestBodies(deps)];
+  // Only for a reader allowed to see every argument it carries — a person, or the decision carrier
+  // (`approval-requests:relay`) — never for every agent on the board.
+  return opts?.approvalRequests === true ? [...questions, ...pendingApprovalRequestBodies(deps)] : questions;
 }

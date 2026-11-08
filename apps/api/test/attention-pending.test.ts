@@ -273,6 +273,24 @@ describe('resume and archive take the wait the person answered', () => {
     });
   });
 
+  it('restoring an archived waiting card is a new wait: a fresh id, pushed again, and the old id never matches', async () => {
+    await runInDurableObject(stubFor('att-restore'), async (b: BoardDO) => {
+      const cardId = await setUp(b, 'brd_att_restore');
+      await blockAtBuild(b);
+      const before = await waitOf(b);
+      expect(await b.archiveCard({ cardId, actor: PERSON })).toMatchObject({ ok: true });
+      expect(await b.pendingAttention()).toEqual([]);
+
+      await b.updateCard(cardId, { archivedAt: null });
+      const after = await waitOf(b);
+      expect(after).not.toBe(before);
+      expect((await attentionPushes(b)).map((p) => p.waitId)).toEqual([before, after]);
+      // A tap from before the archive does not act on the restored card.
+      expect(await b.resumeCard({ cardId, comment: 'go', actor: PERSON, expectedWaitId: before })).toMatchObject({ ok: false, code: 'WAIT_CHANGED' });
+      expect(await b.resumeCard({ cardId, comment: 'go', actor: PERSON, expectedWaitId: after })).toMatchObject({ ok: true });
+    });
+  });
+
   it('archive cancels a pending review exactly as the card PATCH does', async () => {
     await runInDurableObject(stubFor('att-archive-review'), async (b: BoardDO) => {
       const cardId = await setUp(b, 'brd_att_arr');
@@ -323,6 +341,7 @@ describe('over the wire', () => {
 
     const badType = await SELF.fetch(`${base}/v1/boards/${boardId}/cards/${cardId}/archive`, { method: 'POST', headers: human('tnt_att_wire2'), body: JSON.stringify({ expectedWaitId: 7 }) });
     expect(badType.status).toBe(400);
+    expect(await badType.json()).toMatchObject({ error: { code: 'INVALID_WAIT_ID' } });
 
     // Refused by scope as well as by the route: archiving is the human half of a wait.
     expect(requiredScope(`cards/${cardId}/archive`, 'POST')).toBe(SCOPE_FORBIDDEN);

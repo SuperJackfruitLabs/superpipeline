@@ -1,4 +1,5 @@
 // Approval gates and questions: the pending reads, deciding and answering.
+import { orgPlaneMode } from '../../auth/org-plane';
 import { viaFor } from '../../auth/resolve';
 import type { GateDecision } from '../../board/board-do';
 import { principalIdsFor } from '../../db/catalog';
@@ -105,8 +106,11 @@ export async function gateDelivery({ request, env, tenantId, user, stub }: Board
 //
 // Matched before the answer route below, which it cannot collide with — that one
 // ends in `/answer` — but kept adjacent so the pair reads together.
-export async function elicitationsPending({ stub }: BoardRequest): Promise<Response> {
-  return Response.json({ elicitations: await stub.pendingElicitationDeliveries() });
+export async function elicitationsPending({ stub, user }: BoardRequest): Promise<Response> {
+  // A person sees broker approval requests too; an agent token sees card questions only, since a
+  // request's preview carries every argument the broker would send. The carrier reads them with a
+  // service token holding `approval-requests:relay` (service-routes.ts).
+  return Response.json({ elicitations: await stub.pendingElicitationDeliveries({ approvalRequests: user !== null }) });
 }
 
 // GET /v1/boards/:id/attention/pending — every card waiting on a person for a reason chat carries.
@@ -156,12 +160,24 @@ async function approvalRequestAnswer({ env, tenantId, user, stub }: BoardRequest
   const result = await stub.answerApprovalRequest({
     approvalRequestId,
     decider: { id: localId, principalId, label: user?.name ?? user?.login ?? principalId },
-    answererRole: user?.role ?? null,
+    answererRole: workspaceRoleFor(env, user),
     option: ap.option,
     ...answerBinding(ap.subject),
   });
   if (!result.ok) return Response.json({ error: result }, { status: statusForCode(result.code) });
   return Response.json(result.value);
+}
+
+/**
+ * Whose word approves a broker request (charter decision 4: workspace owners and admins). On the
+ * Organization plane that is the Accounts workspace role in the verified token (`orgRole`), never
+ * the local membership: a fresh tenant makes its first visitor a local `owner`. A plane caller with
+ * no token role (a session cookie) is no admin. Without the plane there are no Accounts roles, and
+ * the local membership is the workspace.
+ */
+function workspaceRoleFor(env: BoardRequest['env'], user: BoardRequest['user']): 'owner' | 'admin' | 'member' | 'viewer' | null {
+  if (orgPlaneMode(env).kind === 'off') return user?.role ?? null;
+  return user?.orgRole ?? null;
 }
 
 /** An answer's `subject` binding, when it is two strings; otherwise none. */

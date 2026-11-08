@@ -1,6 +1,6 @@
 import { newId } from '../ids';
 import type { JsonValue } from '../json';
-import { waitChangedError } from './attention';
+import { notifyAttentionPending, waitChangedError } from './attention';
 import type { BoardContext } from './context';
 import type { CardView, Result } from './model';
 import { COMMENT_MAX_BYTES } from './rules';
@@ -387,6 +387,9 @@ export async function updateCard(deps: CardsDeps, cardId: string, patch: {
   if (patch.archivedAt !== undefined) {
     sets.push('archived_at = ?');
     vals.push(patch.archivedAt);
+    // Archiving ends a wait and restoring starts a new one (charter: waiting cards reach chat §2):
+    // a fresh id either way, so an answer given before the archive never matches after it.
+    sets.push(`needs_human_id = CASE WHEN needs_human_json IS NULL THEN NULL ELSE 'wait_' || lower(hex(randomblob(8))) END`);
   }
   if (patch.projectId !== undefined) {
     sets.push('project_id = ?');
@@ -417,6 +420,8 @@ export async function updateCard(deps: CardsDeps, cardId: string, patch: {
       if (archiving) deps.endReviewsOfArchivedCard(cardId);
     });
   }
+  // A restored card still waiting on a person is a new wait chat is told about, as a park is.
+  if (patch.archivedAt === null && existing.archivedAt) notifyAttentionPending(deps, cardId);
   const card = deps.mustGetCard(cardId);
   deps.emit('card.updated', { card });
   return { ok: true, value: card };

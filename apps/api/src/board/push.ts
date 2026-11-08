@@ -24,10 +24,13 @@ export type PushDeps = Pick<
  * matching on capability (as `work.available` does) would send it to whichever agents advertise
  * the stage, or to nobody when a person owns it.
  */
-export function queueSubscribedPush(deps: Pick<PushDeps, 'now' | 'sql'>, payload: { event: string }): void {
+export function queueSubscribedPush(deps: Pick<PushDeps, 'now' | 'sql'>, payload: { event: string }, opts?: { servicesOnly?: boolean }): void {
   const body = JSON.stringify(payload);
   const ts = deps.now();
   for (const cfg of deps.sql.exec(`SELECT * FROM push_configs`).toArray()) {
+    // A service config subscribed to a decision event was registered with `approval-requests:relay`
+    // (service-routes.ts), so `servicesOnly` reaches the decision carrier and no agent.
+    if (opts?.servicesOnly === true && !(typeof cfg.agent_id === 'string' && cfg.agent_id.startsWith('svc:'))) continue;
     const events: unknown = typeof cfg.events_json === 'string' ? JSON.parse(cfg.events_json) : null;
     if (!Array.isArray(events) || !events.includes(payload.event)) continue;
     deps.sql.exec(

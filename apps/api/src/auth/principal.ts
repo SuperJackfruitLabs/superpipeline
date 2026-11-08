@@ -26,6 +26,14 @@ export interface UserPrincipal {
    */
   role: Role | null;
   /**
+   * The caller's role in the Accounts workspace, from a verified Organization-plane token's
+   * `orgRole` (a token naming none is `member`). Present only when the caller authenticated with a
+   * plane token; absent for a session cookie, dev headers or a hub token, which carry no Accounts
+   * role. Distinct from `role`, the local membership, which the first person to reach a fresh
+   * tenant is given as `owner` whatever Accounts says.
+   */
+  orgRole?: 'owner' | 'admin' | 'member';
+  /**
    * The surface this caller came through, when the credential says: `matrix` for a hub token or a
    * delegated (`act`) plane token, `web` for a plane token held by the app itself. Absent for a
    * session cookie or dev headers, which `viaFor` reads as `web`. Recorded on a gate decision so a

@@ -193,7 +193,8 @@ export interface BoardStub {
   registerPushConfig(input: PushConfigInput): Promise<Result<{ configId: string }>>;
   getPushDeliveries(opts?: { status?: string }): Promise<PushDeliveryView[]>;
   pendingGateDeliveries(): Promise<GatePendingBody[]>;
-  pendingElicitationDeliveries(): Promise<ElicitationPendingBody[]>;
+  /** `approvalRequests: true` adds broker approval requests: for a person or the decision carrier only. */
+  pendingElicitationDeliveries(opts?: { approvalRequests?: boolean }): Promise<ElicitationPendingBody[]>;
   /** Cards waiting on a person for a reason chat carries, in the `attention.pending` body. */
   pendingAttention(): Promise<AttentionPendingBody[]>;
   /** A broker's approval request (charter: waiting cards and broker approvals reach chat §3). */
