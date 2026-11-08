@@ -7,6 +7,12 @@ import type { GateDecision } from '@superpipeline/contract';
 /** How long an agent may go without a heartbeat before its run is reclaimed (docs/08 §3, ⚠️ OPEN). */
 export const HEARTBEAT_TIMEOUT_MS = 15 * 60 * 1000;
 
+/**
+ * The decision a gate records when its approval subject expired before anyone decided (charter
+ * 2026-11-08, decision 7). Not an option anyone can choose; the board writes it.
+ */
+export const EXPIRED_DECISION = 'expired';
+
 /** Consecutive failed/reclaimed runs before a card auto-blocks for a human (docs/08 §4, ⚠️ OPEN). */
 export const CIRCUIT_BREAKER_LIMIT = 2;
 

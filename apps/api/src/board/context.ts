@@ -101,6 +101,7 @@ export interface BoardContext {
   endLapsedDeliveries(nowIso: string): number;
   endAttempt(cardId: string, event: string, reason: string | null, runId?: string): void;
   endReviewsOfArchivedCard(cardId: string): number;
+  expireGate(gateId: string): boolean;
   expireLapsedGates(nowIso: string): number;
   fireDueSchedules(nowIso: string): Promise<{ fired: string[]; skipped: string[] }>;
   gatesForCard(cardId: string): GateView[];
@@ -149,6 +150,8 @@ export interface BoardContext {
   scheduleReclaim(): Promise<void>;
   setMeta(k: string, v: string): void;
   setNeedsHuman(cardId: string, needs: CardNeedsHuman | null): void;
+  /** Whether a subject's binding has expired (`timing.expiresAt`), by `nowIso` or now. */
+  subjectExpired(subjectId: string, nowIso?: string): boolean;
   snapshot(): BoardSnapshot;
   stages(): StageDef[];
   staleSettings(): StaleSettings;

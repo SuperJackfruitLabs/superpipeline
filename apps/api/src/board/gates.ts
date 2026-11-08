@@ -4,10 +4,9 @@ import { boundedPreview, type PreviewBlock } from '../approval-subject-kinds/kin
 import { newId } from '../ids';
 import type { BoardContext } from './context';
 import type { GateOption } from './gate-option';
-import { EXPIRED_DECISION, expireGate, subjectExpired } from './gate-expiry';
 import { queueSubscribedPush } from './push';
 import type { CardView, Result, Row } from './model';
-import { handoffSummary, isApproveDecision, record } from './rules';
+import { EXPIRED_DECISION, handoffSummary, isApproveDecision, record } from './rules';
 import type { ApprovalSubjectEnvelope, DeliveryPendingBody, GateOptionMeaning, GatePendingBody, GateView, PreparedApprovalSubject } from './views';
 
 /**
@@ -22,6 +21,7 @@ export type GatesDeps = Pick<
   | 'cancelElicitationsForCard'
   | 'ctx'
   | 'emit'
+  | 'expireGate'
   | 'getCard'
   | 'getCardHandoffJson'
   | 'getCardRow'
@@ -39,6 +39,7 @@ export type GatesDeps = Pick<
   | 'setNeedsHuman'
   | 'sql'
   | 'stages'
+  | 'subjectExpired'
 >;
 
 const READ_BACK_TIMEOUT_MS = 5_000;
@@ -163,8 +164,8 @@ export async function resolveGate(deps: GatesDeps, input: {
     // after it, approving would record what the executor will refuse anyway. The gate is closed
     // here rather than left for the sweep, so the refusal and the closed gate arrive together.
     // Rejecting or requesting changes stays possible until the gate is closed: neither binds.
-    if (optionMeaning(input.decision) === 'approve' && subjectExpired(deps, boundSubjectId)) {
-      expireGate(deps, input.gateId);
+    if (optionMeaning(input.decision) === 'approve' && deps.subjectExpired(boundSubjectId)) {
+      deps.expireGate(input.gateId);
       return { ok: false, code: 'DECISION_EXPIRED', message: 'the approval subject expired before this decision; the gate is closed as expired' };
     }
   }

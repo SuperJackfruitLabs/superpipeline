@@ -1,6 +1,6 @@
 import { newId } from '../ids';
 import type { BoardContext } from './context';
-import { record } from './rules';
+import { EXPIRED_DECISION, record } from './rules';
 
 /**
  * An expired approval subject closes its gate (charter: decisions/2026-11-08-unanswered-decisions-
@@ -14,8 +14,6 @@ export type GateExpiryDeps = Pick<
   'approvalSubjectView' | 'ctx' | 'emit' | 'getCardRow' | 'invalidateApprovalSubject' | 'notify' | 'now' | 'reportRun' | 'runJudgedByGate' | 'setNeedsHuman' | 'sql'
 >;
 
-/** The decision an expired gate records. Not an option anyone can choose; the board writes it. */
-export const EXPIRED_DECISION = 'expired';
 
 /** What a card whose approval expired says it is waiting for. */
 const EXPIRED_GATE_DETAIL = 'its approval expired before anyone decided; resume it to an earlier stage to produce it again, or move it';
