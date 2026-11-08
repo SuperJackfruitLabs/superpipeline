@@ -26,6 +26,7 @@ export function statusForCode(code: BoardErrorCode): number {
     case 'INVALID_APPROVAL_DELIVERY':
     case 'GATE_DECISION_NOT_ALLOWED':
     case 'INVALID_LIVE_URL':
+    case 'INVALID_APPROVAL_REQUEST':
       return 400;
     case 'BUDGET_EXCEEDED':
       return 402; // Payment Required — the board/card budget cap was reached
@@ -40,6 +41,7 @@ export function statusForCode(code: BoardErrorCode): number {
     case 'ELICITATION_NOT_FOUND':
     case 'SCHEDULE_NOT_FOUND':
     case 'NO_SUCH_CARD':
+    case 'APPROVAL_REQUEST_NOT_FOUND':
       return 404;
     case 'STALE_LEASE':
     case 'GATE_NOT_PENDING':
@@ -55,6 +57,10 @@ export function statusForCode(code: BoardErrorCode): number {
     case 'DECISION_CONFLICT':
     case 'ELICITATION_NOT_PENDING':
     case 'CARD_NOT_WAITING':
+    // A late tap on a wait that has ended: the card stopped waiting, or waits on something else.
+    case 'WAIT_CHANGED':
+    // A broker's idempotency key, replayed for a different request.
+    case 'REQUEST_ID_CONFLICT':
     // The stage still holds cards. A conflict with the state the caller believed in, not a
     // malformed request: the same payload succeeds once the stage is emptied.
     case 'STAGE_NOT_EMPTY':

@@ -155,20 +155,60 @@ export async function cardMove({ request, env, boardId, user, agent, stub }: Boa
 // above refuses every agent token, and the human branch requires `work`, the role a move needs.
 export async function cardResume({ request, user, stub }: BoardRequest, resumeMatch: RegExpMatchArray): Promise<Response> {
   if (!user) return Response.json({ error: 'only a person resumes a card' }, { status: 403 });
-  const body = (await request.json().catch(() => null)) as { comment?: unknown; toStageKey?: unknown } | null;
+  const body = (await request.json().catch(() => null)) as { comment?: unknown; toStageKey?: unknown; expectedWaitId?: unknown } | null;
   if (!body || typeof body !== 'object' || typeof body.comment !== 'string') {
     return Response.json({ error: { code: 'INVALID_COMMENT', message: 'send { "comment": "<what changed>", "toStageKey"?: "<stage>" }' } }, { status: 400 });
   }
   if (body.toStageKey !== undefined && typeof body.toStageKey !== 'string') {
     return Response.json({ error: { code: 'UNKNOWN_STAGE', message: '`toStageKey` must be a stage key' } }, { status: 400 });
   }
+  const expected = expectedWait(body);
+  if (expected instanceof Response) return expected;
   const result = await stub.resumeCard({
     cardId: resumeMatch[1],
     comment: body.comment,
     ...(body.toStageKey !== undefined ? { toStageKey: body.toStageKey } : {}),
+    ...expected,
     actor: { id: user.userId, name: user.name ?? user.login ?? null },
     queuedGrant: user.mayDispatch ?? null,
     queuedGrantOwner: user.userId,
+  });
+  if (!result.ok) return Response.json({ error: result }, { status: statusForCode(result.code) });
+  return Response.json(result.value);
+}
+
+/**
+ * A body's `expectedWaitId`: absent, a wait id, or the refusal to send instead. The wait a chat
+ * answer was given for (charter: waiting cards reach chat §2); the board refuses `WAIT_CHANGED`
+ * when the card is no longer in it.
+ */
+function expectedWait(body: object): { expectedWaitId?: string } | Response {
+  if (!('expectedWaitId' in body) || body.expectedWaitId === undefined) return {};
+  if (typeof body.expectedWaitId !== 'string' || body.expectedWaitId === '') {
+    return Response.json({ error: { code: 'INVALID_WAIT_ID', message: '`expectedWaitId` must be the waitId the answer was given for' } }, { status: 400 });
+  }
+  return { expectedWaitId: body.expectedWaitId };
+}
+
+// POST /v1/boards/:id/cards/:cardId/archive — archive a card as a person, with an optional remark,
+// and only while it is still in the wait named, when one is (`attention.pending`'s `archive`).
+// Archiving is what the card PATCH's `archivedAt` does: a pending review or question ends with it.
+export async function cardArchive({ request, user, stub }: BoardRequest, archiveMatch: RegExpMatchArray): Promise<Response> {
+  if (!user) return Response.json({ error: 'only a person archives a card this way' }, { status: 403 });
+  const body: unknown = await request.json().catch(() => ({}));
+  if (body === null || typeof body !== 'object') {
+    return Response.json({ error: { code: 'INVALID_COMMENT', message: 'send { "expectedWaitId"?: "<waitId>", "comment"?: "<why>" }' } }, { status: 400 });
+  }
+  if ('comment' in body && body.comment !== undefined && typeof body.comment !== 'string') {
+    return Response.json({ error: { code: 'INVALID_COMMENT', message: '`comment` must be text' } }, { status: 400 });
+  }
+  const expected = expectedWait(body);
+  if (expected instanceof Response) return expected;
+  const result = await stub.archiveCard({
+    cardId: archiveMatch[1],
+    actor: { id: user.userId, name: user.name ?? user.login ?? null },
+    ...expected,
+    ...('comment' in body && typeof body.comment === 'string' ? { comment: body.comment } : {}),
   });
   if (!result.ok) return Response.json({ error: result }, { status: statusForCode(result.code) });
   return Response.json(result.value);

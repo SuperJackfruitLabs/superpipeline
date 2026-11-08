@@ -5,7 +5,9 @@ import { logReporter } from '../superwitness/log';
 import type { BoardContext, OpArgs } from './context';
 import { migrateBoardSchema } from './schema';
 import { wireBoard } from './wiring';
+import * as approvalRequests from './approval-requests';
 import * as approvalSubjects from './approval-subjects';
+import * as attention from './attention';
 import * as store from './card-store';
 import * as cards from './cards';
 import * as claims from './claims';
@@ -36,7 +38,7 @@ export { STAGE_INSTRUCTIONS_MAX, STAGE_SUMMARY_MAX, completionShapeError, stageF
 export type { BoardStub } from './rpc';
 export { BOARD_INTRO_MAX, COMMENT_MAX_BYTES, boardIntroError, handoffSummary } from './rules';
 export { STALE_DEFAULT_HOURS } from './stale';
-export type { ActivityView, ApprovalSubjectVerification, ApprovalSubjectView, AttemptView, BoardSnapshot, CommentView, ElicitationAnswer, ElicitationPendingBody, ElicitationStatus, ElicitationView, EvidenceReferenceInput, GatePendingBody, GateView, ReferenceView, RunContext, RunEvidence, RunEvidenceGate, RunEvidenceV1 } from './views';
+export type { ActivityView, ApprovalRequestView, ApprovalSubjectVerification, AttentionPendingBody, ApprovalSubjectView, AttemptView, BoardSnapshot, CommentView, ElicitationAnswer, ElicitationPendingBody, ElicitationStatus, ElicitationView, EvidenceReferenceInput, GatePendingBody, GateView, ReferenceView, RunContext, RunEvidence, RunEvidenceGate, RunEvidenceV1 } from './views';
 
 /**
  * Board Durable Object — one instance per (tenant, board). The single-threaded DO is the live
@@ -104,6 +106,10 @@ export class BoardDO extends DurableObject<Env> {
 
   updateCard(...args: OpArgs<typeof cards.updateCard>): ReturnType<typeof cards.updateCard> {
     return cards.updateCard(this.board, ...args);
+  }
+
+  archiveCard(...args: OpArgs<typeof cards.archiveCard>): ReturnType<typeof cards.archiveCard> {
+    return cards.archiveCard(this.board, ...args);
   }
 
   deleteCard(...args: OpArgs<typeof cards.deleteCard>): ReturnType<typeof cards.deleteCard> {
@@ -294,6 +300,22 @@ export class BoardDO extends DurableObject<Env> {
 
   answerElicitation(...args: OpArgs<typeof elicitations.answerElicitation>): ReturnType<typeof elicitations.answerElicitation> {
     return elicitations.answerElicitation(this.board, ...args);
+  }
+
+  pendingAttention(...args: OpArgs<typeof attention.pendingAttention>): ReturnType<typeof attention.pendingAttention> {
+    return attention.pendingAttention(this.board, ...args);
+  }
+
+  createApprovalRequest(...args: OpArgs<typeof approvalRequests.createApprovalRequest>): ReturnType<typeof approvalRequests.createApprovalRequest> {
+    return approvalRequests.createApprovalRequest(this.board, ...args);
+  }
+
+  getApprovalRequest(...args: OpArgs<typeof approvalRequests.getApprovalRequest>): ReturnType<typeof approvalRequests.getApprovalRequest> {
+    return approvalRequests.getApprovalRequest(this.board, ...args);
+  }
+
+  answerApprovalRequest(...args: OpArgs<typeof approvalRequests.answerApprovalRequest>): ReturnType<typeof approvalRequests.answerApprovalRequest> {
+    return approvalRequests.answerApprovalRequest(this.board, ...args);
   }
 
   pendingElicitationDeliveries(...args: OpArgs<typeof elicitations.pendingElicitationDeliveries>): ReturnType<typeof elicitations.pendingElicitationDeliveries> {

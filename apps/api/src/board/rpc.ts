@@ -6,7 +6,7 @@ import type { LinkKind } from './links';
 import type { AgentActivityInput, BoardEvent, BoardInit, CardView, ClaimResult, CompleteVerbInput, EstimateView, LinkInput, LinkView, NotificationView, ProfileInput, ProfileView, PushConfigInput, PushDeliveryView, Result, RunReportDrainResult, RunReportOutboxRow, RunVerbInput, ScheduleView, StageDef, StagePatch, StaleCardView, StaleSettings, UsageSummary } from './model';
 import type { FixtureBoard } from './fixture-types';
 import type { StrictDecision } from './strict-decision';
-import type { ActivityView, ApprovalSubjectVerification, AttemptView, BoardSnapshot, CommentView, DeliveryPendingBody, ElicitationPendingBody, ElicitationView, EvidenceReferenceInput, GatePendingBody, GateView, ReferenceView, RunContext, RunEvidence, RunEvidenceV1 } from './views';
+import type { ActivityView, ApprovalRequestView, ApprovalSubjectVerification, AttentionPendingBody, AttemptView, BoardSnapshot, CommentView, DeliveryPendingBody, ElicitationPendingBody, ElicitationView, EvidenceReferenceInput, GatePendingBody, GateView, ReferenceView, RunContext, RunEvidence, RunEvidenceV1 } from './views';
 
 /**
  * The Board Durable Object as its callers see it.
@@ -146,7 +146,15 @@ export interface BoardStub {
     actor: { id: string; name: string | null };
     queuedGrant?: string[] | null;
     queuedGrantOwner?: string | null;
+    expectedWaitId?: string;
   }): Promise<Result<{ card: CardView; comment: CommentView }>>;
+  /** Archive a card as a person, optionally only while it is still in the wait named. See the method. */
+  archiveCard(input: {
+    cardId: string;
+    actor: { id: string; name: string | null };
+    expectedWaitId?: string;
+    comment?: string;
+  }): Promise<Result<{ card: CardView; comment: CommentView | null }>>;
   /** Tombstone a comment. Only its human author may; an agent's comment is never deleted. */
   deleteComment(input: { cardId: string; commentId: string; userId: string }): Promise<Result<CommentView>>;
   /** The comments on the card a run holds, for that run's agent (the MCP list tool). */
@@ -185,7 +193,20 @@ export interface BoardStub {
   registerPushConfig(input: PushConfigInput): Promise<Result<{ configId: string }>>;
   getPushDeliveries(opts?: { status?: string }): Promise<PushDeliveryView[]>;
   pendingGateDeliveries(): Promise<GatePendingBody[]>;
-  pendingElicitationDeliveries(): Promise<ElicitationPendingBody[]>;
+  /** `approvalRequests: true` adds broker approval requests: for a person or the decision carrier only. */
+  pendingElicitationDeliveries(opts?: { approvalRequests?: boolean }): Promise<ElicitationPendingBody[]>;
+  /** Cards waiting on a person for a reason chat carries, in the `attention.pending` body. */
+  pendingAttention(): Promise<AttentionPendingBody[]>;
+  /** A broker's approval request (charter: waiting cards and broker approvals reach chat §3). */
+  createApprovalRequest(input: { requestedBy: string; body: unknown }): Promise<Result<{ created: boolean; approvalRequest: ApprovalRequestView }>>;
+  getApprovalRequest(approvalRequestId: string): Promise<Result<ApprovalRequestView>>;
+  answerApprovalRequest(input: {
+    approvalRequestId: string;
+    decider: { id: string; principalId: string; label: string };
+    answererRole?: 'owner' | 'admin' | 'member' | 'viewer' | null;
+    option?: string;
+    subject?: { id: string; digest: string };
+  }): Promise<Result<{ approvalRequest: ApprovalRequestView }>>;
   /** Manual deliveries still owed their live link, in the `delivery.pending` body. */
   pendingDeliveryFollowUps(): Promise<DeliveryPendingBody[]>;
   dispatchPushDeliveries(sender?: PushSender, opts?: { timeoutMs?: number }): Promise<{ sent: number; failed: number }>;

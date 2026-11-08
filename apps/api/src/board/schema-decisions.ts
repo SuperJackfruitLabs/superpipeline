@@ -1,6 +1,7 @@
 /**
  * In-app notifications, and everything that waits on a person: approval gates and their columns,
- * approval subjects and delivery events, strict decision requests, and questions (elicitations).
+ * approval subjects and delivery events, strict decision requests, questions (elicitations) and
+ * broker approval requests.
  * Runs after `schema-columns.ts`.
  */
 export function createDecisionTables(sql: SqlStorage): void {
@@ -163,6 +164,26 @@ export function createDecisionTables(sql: SqlStorage): void {
   } catch {
     // column already exists
   }
+  // A broker's approval request (charter: waiting cards and broker approvals reach chat §3): a
+  // board-level question with a `stk-capability/v1` subject, tied to no card or run. Idempotent on
+  // the requesting principal's own id, so a retried create returns the same record and one
+  // principal's id can never collide with another's.
+  sql.exec(
+    `CREATE TABLE IF NOT EXISTS approval_requests (
+      id TEXT PRIMARY KEY,
+      request_id TEXT NOT NULL,
+      requested_by TEXT NOT NULL,
+      question TEXT NOT NULL,
+      subject_json TEXT NOT NULL,
+      status TEXT NOT NULL CHECK (status IN ('pending', 'approved', 'denied')),
+      decided_option TEXT,
+      decided_by TEXT,
+      decided_by_label TEXT,
+      decided_at TEXT,
+      created_at TEXT NOT NULL,
+      UNIQUE(requested_by, request_id)
+    )`,
+  );
   sql.exec(`CREATE INDEX IF NOT EXISTS idx_elicitations_card ON elicitations(card_id)`);
   sql.exec(`CREATE INDEX IF NOT EXISTS idx_elicitations_run ON elicitations(run_id)`);
 }

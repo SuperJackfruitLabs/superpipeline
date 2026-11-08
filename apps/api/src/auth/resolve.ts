@@ -314,6 +314,15 @@ export const APPROVALS_READ = 'approvals:read';
 export const APPROVALS_WRITE = 'approvals:write';
 /** Register a push config as a service, for record events only. */
 export const PUSH_WRITE = 'push:write';
+/** Create a broker approval request (SuperToolkit's write credential). */
+export const APPROVAL_REQUESTS_WRITE = 'approval-requests:write';
+/** Read a broker approval request's decision back (SuperToolkit's read credential). */
+export const APPROVAL_REQUESTS_READ = 'approval-requests:read';
+/**
+ * Carry decisions to people: read `elicitations/pending` with broker approval requests in it, and
+ * subscribe a push config to the decision events, approval requests included (the chat carrier).
+ */
+export const APPROVAL_REQUESTS_RELAY = 'approval-requests:relay';
 
 /**
  * Resolve a SERVICE-kind hub token — superwitness, reading evidence.

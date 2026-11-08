@@ -55,6 +55,19 @@ export const PosterSubject = z.object({
 }).strict();
 export type PosterSubject = z.infer<typeof PosterSubject>;
 
+export const STK_CAPABILITY_SCHEMA = 'stk-capability/v1';
+
+/**
+ * A broker approval's subject (charter: waiting cards and broker approvals reach chat §3): the
+ * digest of the exact request, its expiry, and a preview of everything it will do. Always revision
+ * 1: a changed request is a new approval request, never a revision of this one.
+ */
+export const StkCapabilitySubject = PosterSubject.extend({
+  schema: z.literal(STK_CAPABILITY_SCHEMA),
+  revision: z.literal(1),
+}).strict();
+export type StkCapabilitySubject = z.infer<typeof StkCapabilitySubject>;
+
 /** Why an ordinary question's post is refused, or null. A strict decision is checked elsewhere. */
 export function questionPostError(parameter: JsonValue | null | undefined, options: GateOption[]): { code: 'INVALID_ELICITATION' | 'INVALID_APPROVAL_SUBJECT'; message: string } | null {
   const offered = record(parameter);
@@ -85,7 +98,7 @@ export function posterSubject(parameter: JsonValue | null | undefined): PosterSu
 }
 
 /** A poster's subject as the push carries it: bounded, and complete only if the poster said so too. */
-export function posterSubjectEnvelope(subject: PosterSubject): ApprovalSubjectEnvelope {
+export function posterSubjectEnvelope(subject: PosterSubject | StkCapabilitySubject): ApprovalSubjectEnvelope {
   const bounded = boundedPreview(subject.preview);
   return {
     id: subject.id,

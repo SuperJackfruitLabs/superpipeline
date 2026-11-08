@@ -1,4 +1,5 @@
 // Approval gates and questions: the pending reads, deciding and answering.
+import { orgPlaneMode } from '../../auth/org-plane';
 import { viaFor } from '../../auth/resolve';
 import type { GateDecision } from '../../board/board-do';
 import { principalIdsFor } from '../../db/catalog';
@@ -105,8 +106,21 @@ export async function gateDelivery({ request, env, tenantId, user, stub }: Board
 //
 // Matched before the answer route below, which it cannot collide with — that one
 // ends in `/answer` — but kept adjacent so the pair reads together.
-export async function elicitationsPending({ stub }: BoardRequest): Promise<Response> {
-  return Response.json({ elicitations: await stub.pendingElicitationDeliveries() });
+export async function elicitationsPending({ stub, user }: BoardRequest): Promise<Response> {
+  // A person sees broker approval requests too; an agent token sees card questions only, since a
+  // request's preview carries every argument the broker would send. The carrier reads them with a
+  // service token holding `approval-requests:relay` (service-routes.ts).
+  return Response.json({ elicitations: await stub.pendingElicitationDeliveries({ approvalRequests: user !== null }) });
+}
+
+// GET /v1/boards/:id/attention/pending — every card waiting on a person for a reason chat carries.
+//
+// The read half of the sweep for `attention.pending` (charter: waiting cards and broker approvals
+// reach chat §1), on the same footing as `deliveries/pending`: it names nobody and carries no
+// authority. A card the hub posted that is no longer listed, or is listed under another `waitId`,
+// has stopped waiting on that wait; resuming or archiving stays on the human card routes.
+export async function attentionPending({ stub }: BoardRequest): Promise<Response> {
+  return Response.json({ attention: await stub.pendingAttention() });
 }
 
 // POST /v1/boards/:id/elicitations/:elicitationId/answer — the signed-in human answers an
@@ -115,8 +129,12 @@ export async function elicitationsPending({ stub }: BoardRequest): Promise<Respo
 // Deliberately a *human* route: agent tokens authenticate `claims` and `runs/*` only, so an
 // agent cannot reach this at all — and the DO refuses the asking agent's identity besides, so
 // the rule holds on every surface rather than only at this door.
-export async function elicitationAnswer({ request, user, stub }: BoardRequest, answerMatch: RegExpMatchArray): Promise<Response> {
+export async function elicitationAnswer(req: BoardRequest, answerMatch: RegExpMatchArray): Promise<Response> {
+  const { request, user, stub } = req;
   const ap = (await request.json()) as { option?: string; text?: string; subject?: unknown };
+  // A broker's approval request answers through the same route (charter: waiting cards and broker
+  // approvals reach chat §4), judged by the same subject rules plus owner-or-admin to approve.
+  if (answerMatch[1].startsWith('apr_')) return approvalRequestAnswer(req, answerMatch[1], ap);
   const result = await stub.answerElicitation({
     elicitationId: answerMatch[1],
     answeredBy: user?.userId ?? 'usr_dev',
@@ -130,6 +148,36 @@ export async function elicitationAnswer({ request, user, stub }: BoardRequest, a
   });
   if (!result.ok) return Response.json({ error: result }, { status: statusForCode(result.code) });
   return Response.json(result.value);
+}
+
+/**
+ * Answer a broker approval request. Who decided is recorded as the person's suite principal id
+ * (the broker reads it back), with their display name as the label.
+ */
+async function approvalRequestAnswer({ env, tenantId, user, stub }: BoardRequest, approvalRequestId: string, ap: { option?: string; subject?: unknown }): Promise<Response> {
+  const localId = user?.userId ?? 'usr_dev';
+  const principalId = (await principalIdsFor(env.DB, tenantId, [localId])).get(localId) ?? localId;
+  const result = await stub.answerApprovalRequest({
+    approvalRequestId,
+    decider: { id: localId, principalId, label: user?.name ?? user?.login ?? principalId },
+    answererRole: workspaceRoleFor(env, user),
+    option: ap.option,
+    ...answerBinding(ap.subject),
+  });
+  if (!result.ok) return Response.json({ error: result }, { status: statusForCode(result.code) });
+  return Response.json(result.value);
+}
+
+/**
+ * Whose word approves a broker request (charter decision 4: workspace owners and admins). On the
+ * Organization plane that is the Accounts workspace role in the verified token (`orgRole`), never
+ * the local membership: a fresh tenant makes its first visitor a local `owner`. A plane caller with
+ * no token role (a session cookie) is no admin. Without the plane there are no Accounts roles, and
+ * the local membership is the workspace.
+ */
+function workspaceRoleFor(env: BoardRequest['env'], user: BoardRequest['user']): 'owner' | 'admin' | 'member' | 'viewer' | null {
+  if (orgPlaneMode(env).kind === 'off') return user?.role ?? null;
+  return user?.orgRole ?? null;
 }
 
 /** An answer's `subject` binding, when it is two strings; otherwise none. */

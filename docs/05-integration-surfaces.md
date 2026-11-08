@@ -192,6 +192,12 @@ verb; those paths 404 or 405.
 | addReference | `PUT /v1/boards/:boardId/cards/:cardId/references` *(idempotent on `(cardId, url)`)* | **human session** — see below |
 | answerElicitation *(human)* | `POST /v1/boards/:boardId/elicitations/:elicitationId/answer` | human session |
 | resolve a gate *(human)* | `POST /v1/boards/:boardId/gates/:gateId/resolve` | human session |
+| resume a waiting card *(human)* | `POST /v1/boards/:boardId/cards/:cardId/resume` `{comment, toStageKey?, expectedWaitId?}` | human session |
+| archive a card *(human)* | `POST /v1/boards/:boardId/cards/:cardId/archive` `{expectedWaitId?, comment?}` | human session |
+| cards waiting on a person *(sweep)* | `GET /v1/boards/:boardId/attention/pending` | agent token or human session |
+| create a broker approval request | `POST /v1/boards/:boardId/approval-requests` | service token, `approval-requests:write` |
+| read a broker approval request back | `GET /v1/boards/:boardId/approval-requests/:approvalRequestId` | service token, `approval-requests:read` or `approval-requests:write` |
+| questions waiting on a person, broker approval requests included *(carrier sweep)* | `GET /v1/boards/:boardId/elicitations/pending` | service token, `approval-requests:relay` (a person also sees them; an agent token does not) |
 
 An unknown `:action` on a run returns `404 {"error":"unknown run action: …"}`; anything else
 unmatched under `/v1/boards` returns `405 {"error":"method not allowed"}`.
@@ -316,7 +322,15 @@ an agent to call `claim`. Modeled on A2A **PushNotificationConfig**:
   `approvalSubject` `{id, digest, schema, revision, expiresAt, preview, previewComplete}`, and an
   approving answer to it must send `subject: {id, digest}` back to `POST …/elicitations/:id/answer`
   or it is refused `APPROVAL_SUBJECT_MISMATCH`; read back at `GET …/elicitations/pending` — see
-  [implementation/salaam-strict-decisions](./implementation/salaam-strict-decisions.md)),
+  [implementation/salaam-strict-decisions](./implementation/salaam-strict-decisions.md); a broker
+  approval request arrives on the same event with `approvalRequestId`, but only to a push config a
+  service registered with `approval-requests:relay`, never to an agent's — see
+  [implementation/waiting-cards-and-broker-approvals](./implementation/waiting-cards-and-broker-approvals.md)),
+  `attention.pending` (a card parked on a person for `repeated-failure`, `blocked` or
+  `not-authorised` — never a question or a review, which have their own events — with its
+  `waitId` and the options `resume_here`, `resume_at:<stageKey>` and `archive`; read back at
+  `GET …/attention/pending` for as long as that wait stands — see
+  [implementation/waiting-cards-and-broker-approvals](./implementation/waiting-cards-and-broker-approvals.md)),
   `gate.resolved`, `run.reclaimed`, `card.canceled`,
   `cards.stale` (the daily stale-card digest: `{ event, boardId, boardName, cards: StaleCardView[], ts }`,
   one delivery per sweep that has a card not reported in the last 24 hours — see
@@ -330,8 +344,9 @@ an agent to call `claim`. Modeled on A2A **PushNotificationConfig**:
 The Board DO owns the subscriptions and the delivery queue. `registerPushConfig({agentId, url, token,
 capabilities, events})` stores a config (http(s)-only — the SSRF guard; `POST …/push-configs`). An
 **agent registers its own** with its bearer token (scope `claim`; the subscriber is the token's agent,
-never a header) — this is how agentpod's hub subscribes each board it works to `gate.pending` and
-`elicitation.pending`, refreshing it every sweep. A person may still register one for a named agent
+never a header) — this is how agentpod's hub subscribes each board it works to `gate.pending`,
+`elicitation.pending` and `delivery.pending` (and `attention.pending` once it carries it),
+refreshing it every sweep. A person may still register one for a named agent
 with `X-Agent-Id`. (Until 2026-10-07 the route was human-only, so the hub could not subscribe and
 no production board had a config: every gate reached its room via the hub's 5-minute sweep.) When a
 card becomes **claimable** (created at / advanced into / released or reclaimed back to a

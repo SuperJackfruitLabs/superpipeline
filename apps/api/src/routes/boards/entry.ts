@@ -61,6 +61,9 @@ export async function boards({ request, env, url, path }: WorkerRequest, match: 
     (rest === 'gates/pending' ||
       rest === 'elicitations/pending' ||
       rest === 'deliveries/pending' ||
+      // `attention/pending` too: the same sweep's read of cards waiting on a person (charter:
+      // waiting cards reach chat §1). Resuming or archiving one stays on the human routes.
+      rest === 'attention/pending' ||
       /^gates\/[^/]+$/.test(rest));
   /**
    * What a COORDINATOR agent reaches: the board, one card, and creating a card.
@@ -102,6 +105,8 @@ export async function boards({ request, env, url, path }: WorkerRequest, match: 
         // by scope (403), rather than reaching the human branch and reading as "sign in" (401).
         // `requiredScope` forbids it on every scope: resuming is the human half of a block.
         (request.method === 'POST' && /^cards\/[^/]+\/resume$/.test(rest)) ||
+        // Archive, the chat answer's other half, for the same reason as resume.
+        (request.method === 'POST' && /^cards\/[^/]+\/archive$/.test(rest)) ||
         ((request.method === 'POST' || request.method === 'DELETE') && rest === 'links') ||
         // ONE stage's prose, on `compose`. The body is then authorised field by field, so this
         // door opens for `instructions` and refuses every routing key behind it.

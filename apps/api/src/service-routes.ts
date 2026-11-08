@@ -1,9 +1,9 @@
 import type { Env } from './env';
-import { APPROVALS_READ, APPROVALS_WRITE, CARDS_READ, PUSH_WRITE, resolveHubService } from './auth/resolve';
+import { APPROVAL_REQUESTS_READ, APPROVAL_REQUESTS_RELAY, APPROVAL_REQUESTS_WRITE, APPROVALS_READ, APPROVALS_WRITE, CARDS_READ, PUSH_WRITE, resolveHubService } from './auth/resolve';
 import { boardStub } from './board/stub';
 import { boardNamesById, cardLinksBody } from './card-links';
 import { listBoards } from './db/catalog';
-import { SUBSCRIBABLE_EVENTS, isRecordEvent } from './push/events';
+import { DECISION_EVENTS, SUBSCRIBABLE_EVENTS, isRecordEvent } from './push/events';
 
 /**
  * A service (Superlibrary) reading boards and cards, and registering a push config. Every answer
@@ -13,6 +13,9 @@ import { SUBSCRIBABLE_EVENTS, isRecordEvent } from './push/events';
 const READS = /^\/v1\/boards(?:\/(brd_[0-9a-f]{16})(?:\/cards\/(card_[0-9a-f]{16})(?:\/(attempts|comments|links|activities))?)?)?$/;
 const PUSH = /^\/v1\/boards\/(brd_[0-9a-f]{16})\/push-configs$/;
 const APPROVAL = /^\/v1\/boards\/(brd_[0-9a-f]{16})\/approval-subjects\/(aps_[0-9a-f]{16})\/verify$/;
+const APPROVAL_REQUESTS = /^\/v1\/boards\/(brd_[0-9a-f]{16})\/approval-requests$/;
+const APPROVAL_REQUEST = /^\/v1\/boards\/(brd_[0-9a-f]{16})\/approval-requests\/(apr_[0-9a-f]{16})$/;
+const QUESTIONS_PENDING = /^\/v1\/boards\/(brd_[0-9a-f]{16})\/elicitations\/pending$/;
 const APPROVAL_DELIVERY = /^\/v1\/boards\/(brd_[0-9a-f]{16})\/approval-subjects\/(aps_[0-9a-f]{16})\/delivery$/;
 
 /** Decoded without verifying, only to route: resolveHubService verifies before anything is read. */
@@ -28,6 +31,8 @@ function looksLikeService(request: Request): boolean {
 }
 
 const refuse = (status: number, code: string, message: string) => Response.json({ error: { code, message } }, { status });
+/** The status of an approval-request refusal; the same as `routes/errors.ts` gives these codes. */
+const requestStatus = (code: string) => (code === 'INVALID_APPROVAL_REQUEST' ? 400 : code === 'REQUEST_ID_CONFLICT' ? 409 : 404);
 const notFound = (what: string) => Response.json({ error: `${what} not found` }, { status: 404 });
 
 export async function serviceRoute(request: Request, env: Env, path: string): Promise<Response | null> {
@@ -35,10 +40,51 @@ export async function serviceRoute(request: Request, env: Env, path: string): Pr
   const push = request.method === 'POST' ? PUSH.exec(path) : null;
   const approval = request.method === 'POST' ? APPROVAL.exec(path) : null;
   const approvalDelivery = request.method === 'POST' ? APPROVAL_DELIVERY.exec(path) : null;
-  if ((!read && !push && !approval && !approvalDelivery) || !looksLikeService(request)) return null;
+  const requestCreate = request.method === 'POST' ? APPROVAL_REQUESTS.exec(path) : null;
+  const requestRead = request.method === 'GET' ? APPROVAL_REQUEST.exec(path) : null;
+  const questions = request.method === 'GET' ? QUESTIONS_PENDING.exec(path) : null;
+  if ((!read && !push && !approval && !approvalDelivery && !requestCreate && !requestRead && !questions) || !looksLikeService(request)) return null;
 
   const svc = await resolveHubService(request, env);
   if (!svc) return refuse(401, 'UNAUTHORIZED', 'a service token for a mapped workspace is required');
+
+  /**
+   * The decision carrier's sweep: every question waiting on a person, broker approval requests
+   * included. Only a service holding `approval-requests:relay` reads it here; an agent's read of the
+   * same path lists card questions only, since a request's preview carries every argument in full.
+   */
+  if (questions) {
+    if (!svc.scopes.includes(APPROVAL_REQUESTS_RELAY)) return refuse(403, 'FORBIDDEN', 'this principal does not hold approval-requests:relay');
+    const [, boardId] = questions;
+    if (!(await boardNamesById(env.DB, svc.tenantId, [boardId])).has(boardId)) return notFound('board');
+    return Response.json({ elicitations: await boardStub(env, svc.tenantId, boardId).pendingElicitationDeliveries({ approvalRequests: true }) });
+  }
+
+  /**
+   * A broker's approval request (charter: waiting cards and broker approvals reach chat §3), on
+   * scopes of its own so no other service credential (a publisher's `approvals:*`) can raise one.
+   * Created on `approval-requests:write`; read back on `approval-requests:read` (or write): the
+   * broker reads with a separate read credential, which is a different service principal, so a
+   * read is not limited to the creator. Idempotency is per creating principal.
+   */
+  if (requestCreate || requestRead) {
+    const [, boardId, approvalRequestId] = requestCreate ?? requestRead ?? [];
+    if (requestCreate && !svc.scopes.includes(APPROVAL_REQUESTS_WRITE)) return refuse(403, 'FORBIDDEN', 'this principal does not hold approval-requests:write');
+    if (requestRead && !svc.scopes.includes(APPROVAL_REQUESTS_READ) && !svc.scopes.includes(APPROVAL_REQUESTS_WRITE)) {
+      return refuse(403, 'FORBIDDEN', 'this principal holds neither approval-requests:read nor approval-requests:write');
+    }
+    if (!boardId || !(await boardNamesById(env.DB, svc.tenantId, [boardId])).has(boardId)) return notFound('board');
+    const stub = boardStub(env, svc.tenantId, boardId);
+    if (requestRead && approvalRequestId) {
+      const found = await stub.getApprovalRequest(approvalRequestId);
+      return found.ok ? Response.json(found.value) : refuse(requestStatus(found.code), found.code, found.message);
+    }
+    const body: unknown = await request.json().catch(() => null);
+    const created = await stub.createApprovalRequest({ requestedBy: svc.principalId, body });
+    if (!created.ok) return refuse(requestStatus(created.code), created.code, created.message);
+    const { approvalRequestId: id, state } = created.value.approvalRequest;
+    return created.value.created ? Response.json({ approvalRequestId: id, state }, { status: 201 }) : Response.json({ approvalRequestId: id, state });
+  }
 
   if (read) {
     if (!svc.scopes.includes(CARDS_READ)) return refuse(403, 'FORBIDDEN', 'this principal does not hold cards:read');
@@ -98,7 +144,6 @@ export async function serviceRoute(request: Request, env: Env, path: string): Pr
     return result.ok ? Response.json(result.value) : refuse(403, result.code, result.message);
   }
 
-  if (!svc.scopes.includes(PUSH_WRITE)) return refuse(403, 'FORBIDDEN', 'this principal does not hold push:write');
   const boardId = push![1];
   if (!(await boardNamesById(env.DB, svc.tenantId, [boardId])).has(boardId)) return notFound('board');
   const body = (await request.json().catch(() => null)) as { url?: unknown; token?: unknown; events?: unknown } | null;
@@ -111,7 +156,15 @@ export async function serviceRoute(request: Request, env: Env, path: string): Pr
   }
   const unknown = body.events.filter((e) => !SUBSCRIBABLE_EVENTS.has(e));
   if (unknown.length > 0) return refuse(400, 'UNKNOWN_EVENT', `cannot subscribe to: ${unknown.join(', ')}`);
-  if (!body.events.every(isRecordEvent)) return refuse(400, 'INVALID_BODY', 'a service may subscribe to record events only');
+  if (!body.events.every((e) => isRecordEvent(e) || DECISION_EVENTS.has(e))) {
+    return refuse(400, 'INVALID_BODY', 'a service may subscribe to record events, and with approval-requests:relay to the decision events');
+  }
+  // Record events on `push:write`; the decision events (approval requests among them) only for a
+  // carrier holding `approval-requests:relay`.
+  if (body.events.some(isRecordEvent) && !svc.scopes.includes(PUSH_WRITE)) return refuse(403, 'FORBIDDEN', 'this principal does not hold push:write');
+  if (body.events.some((e) => DECISION_EVENTS.has(e)) && !svc.scopes.includes(APPROVAL_REQUESTS_RELAY)) {
+    return refuse(403, 'FORBIDDEN', 'this principal does not hold approval-requests:relay');
+  }
   const result = await boardStub(env, svc.tenantId, boardId).registerPushConfig({
     agentId: `svc:${svc.principalId}`,
     url: body.url,

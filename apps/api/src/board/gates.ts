@@ -4,6 +4,7 @@ import { boundedPreview, type PreviewBlock } from '../approval-subject-kinds/kin
 import { newId } from '../ids';
 import type { BoardContext } from './context';
 import type { GateOption } from './gate-option';
+import { queueSubscribedPush } from './push';
 import type { CardView, Result, Row } from './model';
 import { handoffSummary, isApproveDecision, record } from './rules';
 import type { ApprovalSubjectEnvelope, DeliveryPendingBody, GateOptionMeaning, GatePendingBody, GateView, PreparedApprovalSubject } from './views';
@@ -781,23 +782,6 @@ function notifyGatePending(deps: GatesDeps, gateId: string): void {
   const payload = gatePendingBody(deps, gate);
   if (!payload) return;
   queueSubscribedPush(deps, payload);
-}
-
-/** Queue one body for every push config subscribed to its event. Subscription only, never capability. */
-function queueSubscribedPush(deps: GatesDeps, payload: GatePendingBody | DeliveryPendingBody): void {
-  const body = JSON.stringify(payload);
-  const ts = deps.now();
-  for (const cfg of deps.sql.exec(`SELECT * FROM push_configs`).toArray()) {
-    const events: unknown = typeof cfg.events_json === 'string' ? JSON.parse(cfg.events_json) : null;
-    if (!Array.isArray(events) || !events.includes(payload.event)) continue;
-    deps.sql.exec(
-      `INSERT INTO push_deliveries (config_id, url, body, status, attempts, created_at) VALUES (?, ?, ?, 'pending', 0, ?)`,
-      cfg.id,
-      cfg.url,
-      body,
-      ts,
-    );
-  }
 }
 
 /**
