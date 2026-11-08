@@ -36,6 +36,15 @@ export interface StagePatch {
   returnStage?: string | null;
 }
 
+/**
+ * Who is changing the stages, as far as decision policy goes (charter: unanswered decisions remind,
+ * then escalate, decision 6). The route decides it from the Accounts workspace role; the board only
+ * compares. Omitted by internal callers that act for nobody (tests, a board's own setup).
+ */
+export interface StageEditor {
+  mayChangeDecisionPolicy: boolean;
+}
+
 export interface StageDef {
   key: string;
   name: string;

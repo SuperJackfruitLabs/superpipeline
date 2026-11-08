@@ -1,6 +1,6 @@
 import { capabilityTag, normalizeRequirement, returnStageError } from '@superpipeline/contract';
 import type { BoardContext } from './context';
-import type { BoardEvent, BoardInit, ProfileInput, ProfileView, Result, StageDef, StagePatch } from './model';
+import type { BoardEvent, BoardInit, ProfileInput, ProfileView, Result, StageDef, StageEditor, StagePatch } from './model';
 import type { BoardSnapshot } from './views';
 
 /**
@@ -130,6 +130,36 @@ export async function init(deps: PipelineDeps, board: BoardInit): Promise<BoardS
   return snapshot(deps);
 }
 
+/** The fields of a stage that say how a decision on it is made. A member may change none of them. */
+function decisionPolicyOf(stage: StageDef | undefined): string {
+  return JSON.stringify({
+    gate: stage?.gate === 'approval' ? 'approval' : 'none',
+    approvalSubjectSchema: stage?.approvalSubjectSchema ?? null,
+    approvalDeciderPrincipalIds: [...(stage?.approvalDeciderPrincipalIds ?? [])].toSorted(),
+  });
+}
+
+/**
+ * Refuse a stage change that alters any stage's decision policy, unless the editor may. Adding a
+ * gated stage or removing one changes policy too: a stage that is absent has no gate.
+ */
+export function refuseDecisionPolicyChange(before: StageDef[], after: StageDef[], editor: StageEditor | undefined): Result<never> | null {
+  if (!editor || editor.mayChangeDecisionPolicy) return null;
+  const keys = new Set([...before.map((s) => s.key), ...after.map((s) => s.key)]);
+  for (const key of keys) {
+    const was = before.find((s) => s.key === key);
+    const is = after.find((s) => s.key === key);
+    if (decisionPolicyOf(was) !== decisionPolicyOf(is)) {
+      return {
+        ok: false,
+        code: 'WORKSPACE_ADMIN_REQUIRED',
+        message: `only a workspace owner or admin can change how decisions are made on stage "${key}" (its gate, approval subject or deciders)`,
+      };
+    }
+  }
+  return null;
+}
+
 /** Rename the board (the catalog row is renamed alongside, by the Worker). */
 /**
  * Rework the board's pipeline, after it exists.
@@ -151,7 +181,7 @@ export async function init(deps: PipelineDeps, board: BoardInit): Promise<BoardS
  * The whole payload is the new pipeline — a PUT, not a patch — because order is a property of
  * the list rather than of any stage in it, and a partial update cannot express a reorder.
  */
-export async function setStages(deps: PipelineDeps, stages: StageDef[]): Promise<Result<{ stages: StageDef[] }>> {
+export async function setStages(deps: PipelineDeps, stages: StageDef[], editor?: StageEditor): Promise<Result<{ stages: StageDef[] }>> {
   if (!deps.getMeta('boardId')) return { ok: false, code: 'NOT_INITIALIZED', message: 'board is not initialized' };
   if (!Array.isArray(stages) || stages.length === 0) {
     return { ok: false, code: 'INVALID_STAGES', message: 'a board needs at least one stage' };
@@ -213,6 +243,8 @@ export async function setStages(deps: PipelineDeps, stages: StageDef[]): Promise
   const ordered = [...stages]
     .map(normalizeStageRouting)
     .toSorted((a, b) => a.order - b.order);
+  const refused = refuseDecisionPolicyChange(deps.stages(), ordered, editor);
+  if (refused) return refused;
   deps.setMeta('stages', JSON.stringify(ordered));
   deps.emit('board.stages_changed', { stages: ordered });
   return { ok: true, value: { stages: ordered } };
@@ -228,7 +260,7 @@ export async function setStages(deps: PipelineDeps, stages: StageDef[]): Promise
  * Validation is the same function the whole-pipeline write uses, so a rule accepted here is a
  * rule that would survive a replace.
  */
-export async function updateStage(deps: PipelineDeps, stageKey: string, patch: StagePatch): Promise<Result<{ stage: StageDef }>> {
+export async function updateStage(deps: PipelineDeps, stageKey: string, patch: StagePatch, editor?: StageEditor): Promise<Result<{ stage: StageDef }>> {
   if (!deps.getMeta('boardId')) return { ok: false, code: 'NOT_INITIALIZED', message: 'board is not initialized' };
   const stages = deps.stages();
   const index = stages.findIndex((s) => s.key === stageKey);
@@ -287,6 +319,8 @@ export async function updateStage(deps: PipelineDeps, stageKey: string, patch: S
 
   const normalized = normalizeStageRouting(next);
   const ordered = stages.map((s, i) => (i === index ? normalized : s));
+  const refused = refuseDecisionPolicyChange(stages, ordered, editor);
+  if (refused) return refused;
   deps.setMeta('stages', JSON.stringify(ordered));
   deps.emit('board.stages_changed', { stages: ordered });
   return { ok: true, value: { stage: normalized } };
