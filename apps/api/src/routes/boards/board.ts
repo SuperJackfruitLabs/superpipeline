@@ -2,6 +2,7 @@
 import { stagePatchRefusal } from '../../auth/scopes';
 import type { StageDef, StagePatch, BoardSnapshot } from '../../board/board-do';
 import { renameBoard, updateBoardStages, deleteBoard } from '../../db/catalog';
+import { isWorkspaceAdmin } from '../callers';
 import { statusForCode } from '../errors';
 import type { BoardRequest } from './request';
 import { registerStageCapabilities } from './stage-capabilities';
@@ -34,7 +35,7 @@ export async function boardRename({ request, env, tenantId, boardId, stub }: Boa
 // Beside the whole-pipeline PUT rather than replacing it: reordering and adding stages are
 // statements about the pipeline and stay there. This is for the fields that belong to one
 // stage, where a full replace would discard a concurrent edit to a stage nobody touched.
-export async function stageEdit({ request, agent, stub }: BoardRequest, stageMatch: RegExpMatchArray): Promise<Response> {
+export async function stageEdit({ request, env, user, agent, stub }: BoardRequest, stageMatch: RegExpMatchArray): Promise<Response> {
   const body = (await request.json().catch(() => null)) as StagePatch | null;
   if (!body || typeof body !== 'object' || Array.isArray(body)) {
     return Response.json({ error: 'a stage patch must be a JSON object' }, { status: 400 });
@@ -77,7 +78,9 @@ export async function stageEdit({ request, agent, stub }: BoardRequest, stageMat
     summary: body.summary,
     completion: body.completion,
     returnStage: body.returnStage,
-  });
+    // A stage's gate is decision policy, a workspace admin's to change (charter decision 6); the
+    // board compares and refuses `WORKSPACE_ADMIN_REQUIRED`. An agent never reaches it (above).
+  }, { kind: 'person', mayChangeDecisionPolicy: !agent && isWorkspaceAdmin(env, user) });
   if (!result.ok) {
     // `UNKNOWN_STAGE` is a 400 in the shared mapping, which is right where the stage is in
     // the BODY — `move` asking for a lane that does not exist is a bad request. Here it is a
@@ -97,7 +100,9 @@ export async function stageEdit({ request, agent, stub }: BoardRequest, stageMat
 // leaves the two disagreeing about what the board's pipeline is.
 export async function stagesReplace({ request, env, tenantId, boardId, user, stub }: BoardRequest): Promise<Response> {
   const body = (await request.json()) as { stages?: StageDef[] };
-  const r = await stub.setStages(body.stages ?? []);
+  // `manage` let this caller in by the local role; changing any stage's decision policy also needs
+  // a workspace owner or admin by the Accounts role (charter decision 6), which the board checks.
+  const r = await stub.setStages(body.stages ?? [], { kind: 'person', mayChangeDecisionPolicy: isWorkspaceAdmin(env, user) });
   if (!r.ok) return Response.json({ error: r }, { status: statusForCode(r.code) });
   await updateBoardStages(env.DB, tenantId, boardId, JSON.stringify(r.value.stages));
   await registerStageCapabilities(env, tenantId, r.value.stages, user?.userId ?? null);

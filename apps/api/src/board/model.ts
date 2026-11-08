@@ -36,6 +36,22 @@ export interface StagePatch {
   returnStage?: string | null;
 }
 
+/**
+ * Who is changing the stages, as far as decision policy goes (charter: unanswered decisions remind,
+ * then escalate, decision 6). Required on every stage write, so a caller that forgets it fails to
+ * compile rather than skipping the check:
+ * - `person`: the route judged the caller by the Accounts workspace role (`isWorkspaceAdmin`);
+ * - `internal`: a trusted caller acting for nobody (a test, a migration), which says why.
+ */
+export type StageEditor =
+  | { kind: 'person'; mayChangeDecisionPolicy: boolean }
+  | { kind: 'internal'; mayChangeDecisionPolicy: true; reason: string };
+
+/** The editor a trusted internal caller passes, naming why it may change decision policy. */
+export function internalStageEditor(reason: string): StageEditor {
+  return { kind: 'internal', mayChangeDecisionPolicy: true, reason };
+}
+
 export interface StageDef {
   key: string;
   name: string;

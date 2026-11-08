@@ -98,8 +98,11 @@ export interface BoardContext {
   denyForeignRun(run: Row, agentId: string | null | undefined): { ok: false; code: 'NOT_RUN_OWNER'; message: string } | null;
   elicitationsForRun(runId: string): ElicitationView[];
   emit(type: string, payload: Record<string, unknown>): void;
+  endLapsedDeliveries(nowIso: string): number;
   endAttempt(cardId: string, event: string, reason: string | null, runId?: string): void;
   endReviewsOfArchivedCard(cardId: string): number;
+  expireGate(gateId: string): boolean;
+  expireLapsedGates(nowIso: string): number;
   fireDueSchedules(nowIso: string): Promise<{ fired: string[]; skipped: string[] }>;
   gatesForCard(cardId: string): GateView[];
   getCard(id: string): CardView | null;
@@ -147,6 +150,8 @@ export interface BoardContext {
   scheduleReclaim(): Promise<void>;
   setMeta(k: string, v: string): void;
   setNeedsHuman(cardId: string, needs: CardNeedsHuman | null): void;
+  /** Whether a subject's binding has expired (`timing.expiresAt`), by `nowIso` or now. */
+  subjectExpired(subjectId: string, nowIso?: string): boolean;
   snapshot(): BoardSnapshot;
   stages(): StageDef[];
   staleSettings(): StaleSettings;

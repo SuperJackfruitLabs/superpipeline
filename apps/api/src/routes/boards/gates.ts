@@ -1,9 +1,9 @@
 // Approval gates and questions: the pending reads, deciding and answering.
-import { orgPlaneMode } from '../../auth/org-plane';
 import { viaFor } from '../../auth/resolve';
 import type { GateDecision } from '../../board/board-do';
 import { principalIdsFor } from '../../db/catalog';
 import { flatError } from '../../flat-error';
+import { workspaceRoleFor } from '../callers';
 import { statusForCode } from '../errors';
 import type { BoardRequest } from './request';
 
@@ -130,7 +130,7 @@ export async function attentionPending({ stub }: BoardRequest): Promise<Response
 // agent cannot reach this at all — and the DO refuses the asking agent's identity besides, so
 // the rule holds on every surface rather than only at this door.
 export async function elicitationAnswer(req: BoardRequest, answerMatch: RegExpMatchArray): Promise<Response> {
-  const { request, user, stub } = req;
+  const { request, env, user, stub } = req;
   const ap = (await request.json()) as { option?: string; text?: string; subject?: unknown };
   // A broker's approval request answers through the same route (charter: waiting cards and broker
   // approvals reach chat §4), judged by the same subject rules plus owner-or-admin to approve.
@@ -138,8 +138,9 @@ export async function elicitationAnswer(req: BoardRequest, answerMatch: RegExpMa
   const result = await stub.answerElicitation({
     elicitationId: answerMatch[1],
     answeredBy: user?.userId ?? 'usr_dev',
-    // The role from the server's own session read: the only thing that may choose "Always allow".
-    answererRole: user?.role ?? null,
+    // The workspace role from the server's own read — on the Organization plane the Accounts role,
+    // never the local membership — is the only thing that may choose "Always allow".
+    answererRole: workspaceRoleFor(env, user),
     option: ap.option,
     text: ap.text,
     // The subject the answerer saw (charter: strict decisions bind their subject §4). Anything but
@@ -166,18 +167,6 @@ async function approvalRequestAnswer({ env, tenantId, user, stub }: BoardRequest
   });
   if (!result.ok) return Response.json({ error: result }, { status: statusForCode(result.code) });
   return Response.json(result.value);
-}
-
-/**
- * Whose word approves a broker request (charter decision 4: workspace owners and admins). On the
- * Organization plane that is the Accounts workspace role in the verified token (`orgRole`), never
- * the local membership: a fresh tenant makes its first visitor a local `owner`. A plane caller with
- * no token role (a session cookie) is no admin. Without the plane there are no Accounts roles, and
- * the local membership is the workspace.
- */
-function workspaceRoleFor(env: BoardRequest['env'], user: BoardRequest['user']): 'owner' | 'admin' | 'member' | 'viewer' | null {
-  if (orgPlaneMode(env).kind === 'off') return user?.role ?? null;
-  return user?.orgRole ?? null;
 }
 
 /** An answer's `subject` binding, when it is two strings; otherwise none. */

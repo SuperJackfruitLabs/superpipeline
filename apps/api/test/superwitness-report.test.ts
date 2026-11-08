@@ -56,6 +56,8 @@ describe('mapRunStatus — the table in the plan', () => {
     [{ status: 'ended', outcome: 'submitted', pendingElicitation: false, gate: g('resolved', 'request_changes') }, 'failed', 'submitted'],
     [{ status: 'ended', outcome: 'submitted', pendingElicitation: false, gate: g('resolved', 'reject') }, 'failed', 'submitted'],
     [{ status: 'ended', outcome: 'completed', pendingElicitation: false, gate: g('cancelled') }, 'cancelled', 'completed'],
+    // A gate closed because its approval subject expired judged nothing (charter 2026-11-08, decision 7).
+    [{ status: 'ended', outcome: 'completed', pendingElicitation: false, gate: g('resolved', 'expired') }, 'cancelled', 'completed'],
     [{ status: 'ended', outcome: 'submitted', pendingElicitation: false, gate: null }, 'waiting', 'submitted'],
     [{ status: 'ended', outcome: 'blocked', pendingElicitation: false, gate: g('pending') }, 'failed', 'blocked'],
     [{ status: 'ended', outcome: 'crashed', pendingElicitation: false, gate: null }, 'failed', 'crashed'],

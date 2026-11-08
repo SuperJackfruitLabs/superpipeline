@@ -3,7 +3,7 @@ import type { JsonValue } from '../json';
 import type { PushSender } from '../push/deliver';
 import type { ReferenceInput } from '../references/input';
 import type { LinkKind } from './links';
-import type { AgentActivityInput, BoardEvent, BoardInit, CardView, ClaimResult, CompleteVerbInput, EstimateView, LinkInput, LinkView, NotificationView, ProfileInput, ProfileView, PushConfigInput, PushDeliveryView, Result, RunReportDrainResult, RunReportOutboxRow, RunVerbInput, ScheduleView, StageDef, StagePatch, StaleCardView, StaleSettings, UsageSummary } from './model';
+import type { AgentActivityInput, BoardEvent, BoardInit, CardView, ClaimResult, CompleteVerbInput, EstimateView, LinkInput, LinkView, NotificationView, ProfileInput, ProfileView, PushConfigInput, PushDeliveryView, Result, RunReportDrainResult, RunReportOutboxRow, RunVerbInput, ScheduleView, StageDef, StageEditor, StagePatch, StaleCardView, StaleSettings, UsageSummary } from './model';
 import type { FixtureBoard } from './fixture-types';
 import type { StrictDecision } from './strict-decision';
 import type { ActivityView, ApprovalRequestView, ApprovalSubjectVerification, AttentionPendingBody, AttemptView, BoardSnapshot, CommentView, DeliveryPendingBody, ElicitationPendingBody, ElicitationView, EvidenceReferenceInput, GatePendingBody, GateView, ReferenceView, RunContext, RunEvidence, RunEvidenceV1 } from './views';
@@ -95,8 +95,8 @@ export interface BoardStub {
   ): Promise<Result<CardView>>;
   deleteCard(cardId: string): Promise<Result<{ ok: true }>>;
   setName(name: string): Promise<Result<{ ok: true }>>;
-  setStages(stages: StageDef[]): Promise<Result<{ stages: StageDef[] }>>;
-  updateStage(stageKey: string, patch: StagePatch): Promise<Result<{ stage: StageDef }>>;
+  setStages(stages: StageDef[], editor: StageEditor): Promise<Result<{ stages: StageDef[] }>>;
+  updateStage(stageKey: string, patch: StagePatch, editor: StageEditor): Promise<Result<{ stage: StageDef }>>;
   destroy(): Promise<{ ok: true }>;
   getState(): Promise<BoardSnapshot>;
   getEvents(limit?: number): Promise<BoardEvent[]>;
@@ -211,7 +211,7 @@ export interface BoardStub {
   pendingDeliveryFollowUps(): Promise<DeliveryPendingBody[]>;
   dispatchPushDeliveries(sender?: PushSender, opts?: { timeoutMs?: number }): Promise<{ sent: number; failed: number }>;
   getRunReportOutbox(): Promise<RunReportOutboxRow[]>;
-  sweepBoard(nowIso: string): Promise<{ overdueNotified: number; schedulesFired: number; staleNotified: number }>;
+  sweepBoard(nowIso: string): Promise<{ overdueNotified: number; schedulesFired: number; staleNotified: number; gatesExpired: number; deliveriesExpired: number }>;
   /** Cards waiting past the threshold — the board's own unless `afterHours` is given. See `StaleCardView`. */
   staleCards(input: { nowIso: string; afterHours?: number; attention?: boolean }): Promise<StaleCardView[]>;
   setStaleSettings(input: { enabled?: boolean; afterHours?: number }): Promise<Result<StaleSettings>>;

@@ -1,5 +1,6 @@
 // Who is calling a workspace route, and whether their role reaches the act.
 import { resolveUser, resolveAgent, type UserPrincipal, type AgentPrincipal, resolveHubUser, resolveHubAgent, resolveOrgPlaneUser } from '../auth/resolve';
+import { orgPlaneMode } from '../auth/org-plane';
 import { scopePermits, type AgentScope } from '../auth/scopes';
 import { permits, type Capability } from '../db/members';
 import type { Env } from '../env';
@@ -86,4 +87,23 @@ export async function resolveWorkspaceCaller(
     );
   }
   return { tenantId: agent.tenantId, user: null, agent };
+}
+
+/**
+ * A person's workspace role where it decides policy: who approves a broker request, who may choose
+ * "Always allow", who changes a stage's decision policy (charter: workspace owners and admins). On
+ * the Organization plane that is the Accounts workspace role in the verified token (`orgRole`),
+ * never the local membership: a fresh tenant makes its first visitor a local `owner`. A plane
+ * caller with no token role (a session cookie) is no admin. Without the plane there are no Accounts
+ * roles, and the local membership is the workspace.
+ */
+export function workspaceRoleFor(env: Env, user: UserPrincipal | null): 'owner' | 'admin' | 'member' | 'viewer' | null {
+  if (orgPlaneMode(env).kind === 'off') return user?.role ?? null;
+  return user?.orgRole ?? null;
+}
+
+/** Whether this person is a workspace owner or admin, by `workspaceRoleFor`. */
+export function isWorkspaceAdmin(env: Env, user: UserPrincipal | null): boolean {
+  const role = workspaceRoleFor(env, user);
+  return role === 'owner' || role === 'admin';
 }
