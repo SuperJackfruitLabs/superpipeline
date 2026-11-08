@@ -144,6 +144,23 @@ export function createDecisionTables(sql: SqlStorage): void {
     )`,
   );
   sql.exec(`CREATE INDEX IF NOT EXISTS idx_approval_subjects_card ON approval_subjects(card_id)`);
+  /**
+   * A gate's choice of variants (charter: a gate may offer a choice of variants, 2026-11-09), in
+   * order. Each variant is its own frozen subject; the gate's `approval_subject_id` and digest stay
+   * NULL until an approval chooses one, which then becomes the gate's and the card's subject.
+   */
+  sql.exec(
+    `CREATE TABLE IF NOT EXISTS gate_variants (
+      gate_id TEXT NOT NULL,
+      position INTEGER NOT NULL,
+      variant_id TEXT NOT NULL,
+      label TEXT NOT NULL,
+      subject_id TEXT NOT NULL UNIQUE,
+      digest TEXT NOT NULL,
+      PRIMARY KEY (gate_id, position),
+      UNIQUE (gate_id, variant_id)
+    )`,
+  );
   sql.exec(
     `CREATE TABLE IF NOT EXISTS approval_delivery_events (
       id TEXT PRIMARY KEY,

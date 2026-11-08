@@ -14,6 +14,17 @@ export const HEARTBEAT_TIMEOUT_MS = 15 * 60 * 1000;
  */
 export const EXPIRED_DECISION = 'expired';
 
+/**
+ * A gate may offer a choice of at most this many variants (charter 2026-11-09, decision 1), each
+ * with an id and a short label bounded as below.
+ */
+export const VARIANTS_MAX = 3;
+export const VARIANT_ID_MAX = 64;
+export const VARIANT_LABEL_MAX = 80;
+
+/** Why a variant not chosen was invalidated (charter 2026-11-09, decision 3). Not a new status. */
+export const NOT_CHOSEN_REASON = 'choice.not_chosen';
+
 /** Consecutive failed/reclaimed runs before a card auto-blocks for a human (docs/08 §4, ⚠️ OPEN). */
 export const CIRCUIT_BREAKER_LIMIT = 2;
 

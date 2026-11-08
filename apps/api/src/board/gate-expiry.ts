@@ -1,5 +1,6 @@
 import { newId } from '../ids';
 import type { BoardContext } from './context';
+import { allVariantsExpired, gateVariants } from './gate-choice';
 import { EXPIRED_DECISION, record } from './rules';
 
 /**
@@ -44,6 +45,8 @@ export function expireGate(deps: GateExpiryDeps, gateId: string): boolean {
   const cardId = gate.card_id;
   const stageKey = typeof gate.stage_key === 'string' ? gate.stage_key : '';
   const subjectId = typeof gate.approval_subject_id === 'string' ? gate.approval_subject_id : null;
+  // A pending variant gate has no subject of its own; its variants are retired with the gate.
+  const choosing = subjectId === null && gateVariants(deps.sql, gate).length > 0;
   const judged = deps.runJudgedByGate(gate);
   const now = deps.now();
   const closed = deps.ctx.storage.transactionSync(() => {
@@ -54,7 +57,7 @@ export function expireGate(deps: GateExpiryDeps, gateId: string): boolean {
       gateId,
     );
     if (marked.rowsWritten === 0) return false;
-    if (subjectId && deps.getCardRow(cardId)?.active_approval_subject_id === subjectId) {
+    if (choosing || (subjectId && deps.getCardRow(cardId)?.active_approval_subject_id === subjectId)) {
       deps.invalidateApprovalSubject(cardId, 'gate.expired', null);
     }
     if (deps.getCardRow(cardId)?.state === 'input-required') {
@@ -69,15 +72,25 @@ export function expireGate(deps: GateExpiryDeps, gateId: string): boolean {
   return true;
 }
 
-/** Close every pending subject-bound gate whose subject has expired. The sweep's job; returns how many. */
+/**
+ * Close every pending subject-bound gate whose subject has expired, and every pending variant gate
+ * all of whose variants have (charter 2026-11-09: a variant past its expiry cannot be chosen, and
+ * the choice lapses with the last one). The sweep's job; returns how many.
+ */
 export function expireLapsedGates(deps: GateExpiryDeps, nowIso: string): number {
   let closed = 0;
-  const rows = deps.sql.exec(`SELECT id, approval_subject_id FROM gates WHERE status = 'pending' AND approval_subject_id IS NOT NULL`).toArray();
+  const rows = deps.sql
+    .exec(`SELECT id, approval_subject_id, approval_decider_ids_json FROM gates WHERE status = 'pending' AND (approval_subject_id IS NOT NULL OR approval_decider_ids_json IS NOT NULL)`)
+    .toArray();
   for (const row of rows) {
-    if (typeof row.id !== 'string' || typeof row.approval_subject_id !== 'string') continue;
+    if (typeof row.id !== 'string') continue;
     // Each gate on its own: one that cannot be closed must not keep the rest open.
     try {
-      if (subjectExpired(deps, row.approval_subject_id, nowIso) && expireGate(deps, row.id)) closed += 1;
+      const lapsed =
+        typeof row.approval_subject_id === 'string'
+          ? subjectExpired(deps, row.approval_subject_id, nowIso)
+          : allVariantsExpired({ subjectExpired: (id, at) => subjectExpired(deps, id, at) }, gateVariants(deps.sql, row), nowIso);
+      if (lapsed && expireGate(deps, row.id)) closed += 1;
     } catch (err) {
       deps.emit('gate.expiry_failed', { gateId: row.id, reason: String(err) });
     }

@@ -7,7 +7,7 @@ import { questionPostError } from './question-subject';
 import type { AgentActivityInput, CardView, CompleteVerbInput, Result, Row, RunVerbInput } from './model';
 import { CIRCUIT_BREAKER_LIMIT, COMMENT_MAX_BYTES, HEARTBEAT_TIMEOUT_MS } from './rules';
 import { ApprovalDetail, canonicalDecisionRequest, StrictDecision } from './strict-decision';
-import type { PreparedApprovalSubject } from './views';
+import type { PreparedApproval } from './views';
 
 /**
  * How a run reports and ends: activities, complete, submit for review, block, fail and release.
@@ -214,7 +214,7 @@ export async function complete(deps: RunVerbsDeps, input: CompleteVerbInput): Pr
   const stages = deps.stages();
   const stageIndex = stages.findIndex((stage) => stage.key === card.currentStageKey);
   const nextStage = stageIndex === -1 ? undefined : stages[stageIndex + 1];
-  let approvalSubject: PreparedApprovalSubject | null = null;
+  let approvalSubject: PreparedApproval | null = null;
   if (nextStage?.approvalSubjectSchema && nextStage.gate === 'approval' && !deps.isAgentClaimable(nextStage)) {
     const prepared = await deps.prepareApprovalSubject(card, nextStage, input.handoff, input.runId, run.agent_id as string);
     if (!prepared.ok) return prepared;

@@ -191,7 +191,7 @@ verb; those paths 404 or 405.
 | complete / block / fail / release | `POST /v1/boards/:boardId/runs/:runId/{complete,block,fail,release}` | agent token |
 | addReference | `PUT /v1/boards/:boardId/cards/:cardId/references` *(idempotent on `(cardId, url)`)* | **human session** — see below |
 | answerElicitation *(human)* | `POST /v1/boards/:boardId/elicitations/:elicitationId/answer` | human session |
-| resolve a gate *(human)* | `POST /v1/boards/:boardId/gates/:gateId/resolve` | human session |
+| resolve a gate *(human)* | `POST /v1/boards/:boardId/gates/:gateId/resolve` `{decision, comment?, approvalSubjectId?, approvalSubjectDigest?}`; on a variant gate an approval's binding names the variant chosen — see [implementation/variant-gates](./implementation/variant-gates.md) | human session |
 | resume a waiting card *(human)* | `POST /v1/boards/:boardId/cards/:cardId/resume` `{comment, toStageKey?, expectedWaitId?}` | human session |
 | archive a card *(human)* | `POST /v1/boards/:boardId/cards/:cardId/archive` `{expectedWaitId?, comment?}` | human session |
 | cards waiting on a person *(sweep)* | `GET /v1/boards/:boardId/attention/pending` | agent token or human session |
@@ -313,7 +313,11 @@ an agent to call `claim`. Modeled on A2A **PushNotificationConfig**:
 - Config: `{ url, token, authentication: { schemes: ["Bearer"], credentials } }`, registered per
   agent/board.
 - Events: `work.available` (a card the agent can claim entered a stage), `gate.pending` (a card
-  is waiting on a human's approval), `delivery.pending` (a post approved for manual delivery
+  is waiting on a human's approval; a subject-bound gate carries `approvalSubject` `{id, digest,
+  schema, revision, expiresAt, preview, previewComplete}`, and a gate offering a choice of
+  variants carries `approvalSubject: { variants: [{ id, label, subject }] }` with no top-level `id`
+  or `digest`, each `subject` the usual envelope with its preview bounded to an equal share of
+  16,000 bytes — see [implementation/variant-gates](./implementation/variant-gates.md)), `delivery.pending` (a post approved for manual delivery
   still owes its live link; offers `record_live_url`, and `switch_to_automatic` only when the
   approval's preview was complete; read back by the hub's sweep at `GET …/deliveries/pending`,
   agent-or-human like `gates/pending`, until a link is recorded, the mode is switched or the

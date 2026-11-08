@@ -4,7 +4,7 @@ import { notifyAttentionPending, waitChangedError } from './attention';
 import type { BoardContext } from './context';
 import type { CardNeedsHuman, CardView, Result, StageDef } from './model';
 import { CIRCUIT_BREAKER_LIMIT, COMMENT_MAX_BYTES } from './rules';
-import type { CommentView, PreparedApprovalSubject } from './views';
+import type { CommentView, PreparedApproval } from './views';
 
 /**
  * How a card moves: a person moving or resuming it, the board advancing it after a run or a gate,
@@ -282,7 +282,7 @@ export async function resumeCard(deps: MovesDeps, input: {
  * `TaskState`. It is not literally true here ("a human must act"); `openChildCount > 0` is what a
  * reader (Task 17's UI) uses to tell this park apart from a real review gate.
  */
-export function advanceCard(deps: MovesDeps, cardId: string, fromStageKey: string, producedBy: string, handoffJson: string | null, runId: string | null, approvalSubject: PreparedApprovalSubject | null = null): void {
+export function advanceCard(deps: MovesDeps, cardId: string, fromStageKey: string, producedBy: string, handoffJson: string | null, runId: string | null, approvalSubject: PreparedApproval | null = null): void {
   const openChildren = deps.openChildCount(cardId);
   if (openChildren > 0) {
     deps.sql.exec(
