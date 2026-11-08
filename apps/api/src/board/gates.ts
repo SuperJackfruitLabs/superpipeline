@@ -4,7 +4,6 @@ import { boundedPreview, type PreviewBlock } from '../approval-subject-kinds/kin
 import { newId } from '../ids';
 import type { BoardContext } from './context';
 import type { GateOption } from './gate-option';
-import { deadlineField, startDecisionWait } from './decision-timeouts';
 import { queueSubscribedPush } from './push';
 import type { CardView, Result, Row } from './model';
 import { EXPIRED_DECISION, handoffSummary, isApproveDecision, record } from './rules';
@@ -21,6 +20,7 @@ export type GatesDeps = Pick<
   | 'approvalSubjectView'
   | 'cancelElicitationsForCard'
   | 'ctx'
+  | 'decisionDeadline'
   | 'emit'
   | 'expireGate'
   | 'getCard'
@@ -40,6 +40,7 @@ export type GatesDeps = Pick<
   | 'setNeedsHuman'
   | 'sql'
   | 'stages'
+  | 'startDecisionWait'
   | 'subjectExpired'
 >;
 
@@ -199,7 +200,10 @@ export async function resolveGate(deps: GatesDeps, input: {
     // A manual approval remains on its human stage: publisher claims are impossible by routing,
     // while verifyApprovalSubject independently fences a corrupted or stale claim.
     deps.parkForHuman(cardId, { reason: 'review', detail: 'approved for manual delivery' });
-    startDecisionWait(deps, { kind: 'delivery', decisionId: input.gateId, cardId, stageKey: typeof gate.stage_key === 'string' ? gate.stage_key : '', since: now });
+    // The gate's stage; a gate row always has one, and the card's stage stands in if it ever did not.
+    const cardStage = deps.getCardRow(cardId)?.current_stage_key;
+    const deliveryStage = typeof gate.stage_key === 'string' ? gate.stage_key : typeof cardStage === 'string' ? cardStage : '';
+    deps.startDecisionWait({ kind: 'delivery', decisionId: input.gateId, cardId, stageKey: deliveryStage });
     notifyDeliveryPending(deps, input.gateId);
   } else if (isApproveDecision(input.decision)) {
     // The approver becomes the producer of any chained gate (keeps separation-of-duties intact).
@@ -520,7 +524,7 @@ export function createGate(deps: GatesDeps, cardId: string, stageKey: string, re
     }
   });
   // Before the push, so the push carries the deadline (charter 2026-11-08, decisions 2 and 5).
-  startDecisionWait(deps, { kind: 'gate', decisionId: id, cardId, stageKey, since: now });
+  deps.startDecisionWait({ kind: 'gate', decisionId: id, cardId, stageKey });
   deps.emit('gate.opened', { gateId: id, cardId, stageKey });
   deps.notify('gate', cardId, `Review needed at ${stageKey}`);
   notifyGatePending(deps, id);
@@ -762,7 +766,7 @@ function gatePendingBody(deps: GatesDeps, gate: Row): GatePendingBody | null {
           reviewUrl: `/b/${encodeURIComponent(boardId!)}/c/${encodeURIComponent(cardId)}`,
         }
       : {}),
-    ...(typeof gate.id === 'string' ? deadlineField(deps, 'gate', gate.id) : {}),
+    ...(typeof gate.id === 'string' ? deps.decisionDeadline('gate', gate.id) : {}),
     // `id`/`label`, not `name`/`title`: the wire names are pinned by
     // agentpod fixtures/ecosystem-identity/matrix_gate_events.json, which
     // three repos validate against. The board's own vocabulary stops here.
@@ -878,7 +882,7 @@ function deliveryPendingBody(deps: GatesDeps, gate: Row): DeliveryPendingBody | 
     stageKey,
     approvalSubject,
     options: approvalSubject.previewComplete ? [RECORD_LIVE_URL, SWITCH_TO_AUTOMATIC] : [RECORD_LIVE_URL],
-    ...deadlineField(deps, 'delivery', gateId),
+    ...deps.decisionDeadline('delivery', gateId),
     ts: typeof gate.resolved_at === 'string' ? gate.resolved_at : '',
   };
 }

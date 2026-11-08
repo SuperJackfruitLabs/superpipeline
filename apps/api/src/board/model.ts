@@ -48,6 +48,9 @@ export interface DecisionTimeout {
   escalateAfterMinutes?: number;
 }
 
+/** What a timed wait is: a gate, a question, a manual delivery or a waiting card. */
+export type DecisionKind = 'gate' | 'question' | 'delivery' | 'attention';
+
 /** When a waiting decision is reminded about and escalated (ISO), as the pushes and reads carry it. */
 export interface DecisionDeadline {
   remindAt?: string;

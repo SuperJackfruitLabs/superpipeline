@@ -1,4 +1,5 @@
-import type { GateDecision } from '@superpipeline/contract';
+import { DECISION_TIMEOUT_MAX_MINUTES, type GateDecision } from '@superpipeline/contract';
+import type { DecisionTimeout } from './model';
 
 /**
  * Limits and small rules more than one board module shares.
@@ -94,3 +95,45 @@ export function isApproveDecision(decision: GateDecision): boolean {
 
 /** A card state that no longer holds anything back, as a SQL list. */
 export const RESOLVED_SQL = "('completed', 'canceled')";
+
+/** What is wrong with a timeout, or null. `label` names where it was set, for the message. */
+export function timeoutError(value: unknown, label: string): string | null {
+  if (value === null || typeof value !== 'object' || Array.isArray(value)) return `${label} must be an object`;
+  const entries: Array<[string, unknown]> = Object.entries(value);
+  const t = new Map(entries);
+  const extra = [...t.keys()].filter((k) => k !== 'remindAfterMinutes' && k !== 'escalateAfterMinutes');
+  if (extra.length > 0) return `${label} takes remindAfterMinutes and escalateAfterMinutes only, not ${extra.join(', ')}`;
+  for (const key of ['remindAfterMinutes', 'escalateAfterMinutes'] as const) {
+    const v = t.get(key);
+    if (v === undefined) continue;
+    if (typeof v !== 'number' || !Number.isInteger(v) || v < 1 || v > DECISION_TIMEOUT_MAX_MINUTES) {
+      return `${label}.${key} must be a whole number of minutes from 1 to ${DECISION_TIMEOUT_MAX_MINUTES} (30 days)`;
+    }
+  }
+  const remind = t.get('remindAfterMinutes');
+  const escalate = t.get('escalateAfterMinutes');
+  if (remind === undefined && escalate === undefined) {
+    return `${label} needs remindAfterMinutes, escalateAfterMinutes or both; leave it out for none`;
+  }
+  if (typeof remind === 'number' && typeof escalate === 'number' && escalate <= remind) {
+    return `${label}.escalateAfterMinutes must be later than remindAfterMinutes`;
+  }
+  return null;
+}
+
+/** Only the two known fields, so a stored timeout never carries more than was validated. */
+export function cleanTimeout(t: object): DecisionTimeout {
+  const remind = 'remindAfterMinutes' in t && typeof t.remindAfterMinutes === 'number' ? t.remindAfterMinutes : undefined;
+  const escalate = 'escalateAfterMinutes' in t && typeof t.escalateAfterMinutes === 'number' ? t.escalateAfterMinutes : undefined;
+  return {
+    ...(remind !== undefined ? { remindAfterMinutes: remind } : {}),
+    ...(escalate !== undefined ? { escalateAfterMinutes: escalate } : {}),
+  };
+}
+
+/** A stored board default timeout, or null when unset or unreadable. */
+export function parseDecisionTimeout(raw: string | null): DecisionTimeout | null {
+  if (!raw) return null;
+  const parsed: unknown = JSON.parse(raw);
+  return parsed !== null && typeof parsed === 'object' && timeoutError(parsed, 'timeout') === null ? cleanTimeout(parsed) : null;
+}

@@ -103,6 +103,8 @@ export function wireBoard(base: BoardBase, routes: ShellRoutes): BoardContext {
     expireGate: (...a) => gateExpiry.expireGate(board, ...a),
     expireLapsedGates: (...a) => gateExpiry.expireLapsedGates(board, ...a),
     sweepDecisionTimeouts: (...a) => decisionTimeouts.sweepDecisionTimeouts(board, ...a),
+    startDecisionWait: (...a) => decisionTimeouts.startDecisionWait(board, ...a),
+    decisionDeadline: (...a) => decisionTimeouts.decisionDeadline(board, ...a),
     fireDueSchedules: (...a) => routes.fireDueSchedules(...a),
     gatesForCard: (...a) => gates.gatesForCard(board, ...a),
     getCard: (...a) => store.getCard(board, ...a),

@@ -1,6 +1,6 @@
 import { capabilityTag, normalizeRequirement, returnStageError } from '@superpipeline/contract';
 import type { BoardContext } from './context';
-import { boardDecisionTimeout, cleanTimeout, timeoutError } from './decision-timeouts';
+import { cleanTimeout, parseDecisionTimeout, timeoutError } from './rules';
 import type { BoardEvent, BoardInit, ProfileInput, ProfileView, Result, StageDef, StageEditor, StagePatch } from './model';
 import type { BoardSnapshot } from './views';
 
@@ -444,7 +444,7 @@ export function snapshot(deps: PipelineDeps): BoardSnapshot {
   const introJson = deps.getMeta('intro');
   const intro = introJson ? (JSON.parse(introJson) as { lede: string; composeHint: string }) : null;
   const tenantId = deps.getMeta('tenantId');
-  const decisionTimeout = boardDecisionTimeout(deps);
+  const decisionTimeout = parseDecisionTimeout(deps.getMeta('decisionTimeout'));
   return {
     boardId,
     tenantId,

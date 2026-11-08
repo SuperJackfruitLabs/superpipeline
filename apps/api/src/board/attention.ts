@@ -1,6 +1,5 @@
 import type { BoardContext } from './context';
 import type { CardNeedsHuman, Result, Row } from './model';
-import { deadlineField, startDecisionWait } from './decision-timeouts';
 import { queueSubscribedPush } from './push';
 import { COMMENT_MAX_BYTES } from './rules';
 import type { AttentionPendingBody, AttentionReason } from './views';
@@ -15,7 +14,7 @@ import type { AttentionPendingBody, AttentionReason } from './views';
  */
 
 /** What attention needs from the rest of the board. */
-export type AttentionDeps = Pick<BoardContext, 'getCard' | 'getCardRow' | 'getMeta' | 'now' | 'sql' | 'stages'>;
+export type AttentionDeps = Pick<BoardContext, 'decisionDeadline' | 'getCard' | 'getCardRow' | 'getMeta' | 'now' | 'sql' | 'stages' | 'startDecisionWait'>;
 
 const ATTENTION_REASONS: ReadonlySet<string> = new Set<AttentionReason>(['repeated-failure', 'blocked', 'not-authorised']);
 
@@ -78,7 +77,7 @@ export function waitChangedError(row: Row | null, expected: string | undefined):
  */
 function attentionPendingBody(deps: AttentionDeps, row: Row): AttentionPendingBody | null {
   const body = attentionBody(deps, row);
-  return body ? { ...body, ...deadlineField(deps, 'attention', body.waitId) } : null;
+  return body ? { ...body, ...deps.decisionDeadline('attention', body.waitId) } : null;
 }
 
 /** The body without its deadline, which the push takes from the wait it just recorded. */
@@ -125,7 +124,7 @@ export function notifyAttentionPending(deps: AttentionDeps, cardId: string): voi
   const waiting = attentionBody(deps, row);
   if (!waiting) return;
   // A new wait id is a new wait, with its own deadlines, which the push carries.
-  const deadline = startDecisionWait(deps, { kind: 'attention', decisionId: waiting.waitId, cardId: waiting.cardId, stageKey: waiting.stageKey, since: waiting.ts || deps.now() });
+  const deadline = deps.startDecisionWait({ kind: 'attention', decisionId: waiting.waitId, cardId: waiting.cardId, stageKey: waiting.stageKey });
   const { ts, ...rest } = waiting;
   const payload: AttentionPendingBody = { ...rest, ...deadline, ts };
   queueSubscribedPush(deps, payload);

@@ -2,7 +2,7 @@ import type { Env } from '../env';
 import type { JsonValue } from '../json';
 import type { ReferenceInput } from '../references/input';
 import type { ServiceTokenCache } from '../superwitness/client';
-import type { AgentActivityInput, BoardUsage, CardNeedsHuman, CardView, LinkInput, LinkView, Result, Row, RunAuth, RunReportDrainResult, StageDef, StaleSettings } from './model';
+import type { AgentActivityInput, BoardUsage, CardNeedsHuman, CardView, DecisionDeadline, DecisionKind, LinkInput, LinkView, Result, Row, RunAuth, RunReportDrainResult, StageDef, StaleSettings } from './model';
 import type { ApprovalSubjectView, BoardSnapshot, CommentView, ElicitationView, GateView, PreparedApprovalSubject, ReferenceView, RunEvidence } from './views';
 
 /**
@@ -94,6 +94,8 @@ export interface BoardContext {
       source?: { url: string; provider?: string; sourceType?: string; externalId?: string; title?: string; metadata?: JsonValue };
     }): Promise<Result<{ card: CardView; reference: ReferenceView | null; referenceError?: string }>>;
   createChildCard(parentCardId: string, input: { title: string; ownerUserId: string; spec?: JsonValue; priority?: number }): Promise<Result<CardView>>;
+  /** A waiting decision's deadlines as a body's `deadline` field (decision-timeouts.ts). */
+  decisionDeadline(kind: DecisionKind, decisionId: string): { deadline?: DecisionDeadline };
   createGate(cardId: string, stageKey: string, returnStageKey: string, producedBy: string, runId: string | null, approvalSubject?: PreparedApprovalSubject | null): string;
   denyForeignRun(run: Row, agentId: string | null | undefined): { ok: false; code: 'NOT_RUN_OWNER'; message: string } | null;
   elicitationsForRun(runId: string): ElicitationView[];
@@ -153,6 +155,8 @@ export interface BoardContext {
   setNeedsHuman(cardId: string, needs: CardNeedsHuman | null): void;
   /** Whether a subject's binding has expired (`timing.expiresAt`), by `nowIso` or now. */
   subjectExpired(subjectId: string, nowIso?: string): boolean;
+  /** Record a decision that just started waiting, its clock starting now; returns its `deadline` field. */
+  startDecisionWait(wait: { kind: DecisionKind; decisionId: string; cardId: string; stageKey: string }): { deadline?: DecisionDeadline };
   snapshot(): BoardSnapshot;
   stages(): StageDef[];
   staleSettings(): StaleSettings;

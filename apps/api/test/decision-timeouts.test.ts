@@ -15,7 +15,7 @@ import { recordBoard } from '../src/db/catalog';
 import { newId } from '../src/ids';
 import { ensureOrgTenant } from '../src/auth/org-tenancy';
 import { planeToken, withOrgPlane } from './helpers/org-plane';
-import { addBoundCard, boardStub, boundDecision, DECIDER, STAGES as BOUND_STAGES } from './approval-subject-fixtures';
+import { addBoundCard, boardStub, boundDecision, DECIDER, payload, STAGES as BOUND_STAGES } from './approval-subject-fixtures';
 
 const HOOK = 'https://hub.example/api/bridge/superpipeline/push';
 const EVENTS = ['gate.pending', 'elicitation.pending', 'delivery.pending', 'attention.pending', 'decision.reminded', 'decision.escalated'];
@@ -40,6 +40,21 @@ function isRecord(v: unknown): v is Record<string, unknown> {
 async function pushes(b: BoardDO, event: string): Promise<Record<string, unknown>[]> {
   const bodies: unknown[] = (await b.getPushDeliveries()).map((d) => JSON.parse(d.body));
   return bodies.filter(isRecord).filter((x) => x.event === event);
+}
+
+/** When a wait's clock started: the row's `waiting_since`, set when the wait was recorded. */
+function waitStart(state: DurableObjectState, decisionId: string): string {
+  return text(state.storage.sql.exec(`SELECT waiting_since FROM decision_waits WHERE decision_id = ?`, decisionId).one(), 'waiting_since');
+}
+
+/** When the one attention wait's clock started. */
+function attentionStart(state: DurableObjectState): string {
+  return text(state.storage.sql.exec(`SELECT waiting_since FROM decision_waits WHERE kind = 'attention'`).one(), 'waiting_since');
+}
+
+/** When the one wait of this kind started. */
+function kindStart(state: DurableObjectState, kind: string): string {
+  return text(state.storage.sql.exec(`SELECT waiting_since FROM decision_waits WHERE kind = ?`, kind).one(), 'waiting_since');
 }
 
 function text(v: unknown, key: string): string {
@@ -68,11 +83,11 @@ async function toReview(b: BoardDO): Promise<void> {
 
 describe('a gate waits with deadlines, is reminded once, then escalated once, and nothing is decided', () => {
   it('records the deadlines, carries them on the push and the read, and acts once per deadline', async () => {
-    await runInDurableObject(boardStub('dt-gate'), async (b: BoardDO) => {
+    await runInDurableObject(boardStub('dt-gate'), async (b: BoardDO, state) => {
       const cardId = await setUp(b, 'brd_dt_gate');
       await toReview(b);
       const [opened] = await pushes(b, 'gate.pending');
-      const since = text(opened, 'ts');
+      const since = waitStart(state, text(opened, 'gateId'));
       const deadline = { remindAt: plus(since, 60), escalateAt: plus(since, 240) };
       expect(opened).toMatchObject({ deadline });
       const gateId = text(opened, 'gateId');
@@ -128,15 +143,42 @@ describe('a gate waits with deadlines, is reminded once, then escalated once, an
     });
   });
 
+  it('closes a wait with nothing left to act on, closes one that ended, prunes old closed rows, and reads due rows by index', async () => {
+    await runInDurableObject(boardStub('dt-rows'), async (b: BoardDO, state) => {
+      await setUp(b, 'brd_dt_rows');
+      await toReview(b);
+      const [opened] = await pushes(b, 'gate.pending');
+      const since = waitStart(state, text(opened, 'gateId'));
+      const row = () => state.storage.sql.exec(`SELECT next_due_at, closed_at FROM decision_waits WHERE decision_id = ?`, text(opened, 'gateId')).one();
+      expect(row()).toEqual({ next_due_at: plus(since, 60), closed_at: null });
+      await b.sweepBoard(plus(since, 61));
+      expect(row()).toEqual({ next_due_at: plus(since, 240), closed_at: null });
+      // The gate is decided before its escalation: the sweep that finds it due closes the row.
+      await b.resolveGate({ gateId: text(opened, 'gateId'), decision: 'approve', decidedBy: 'usr_reviewer' });
+      expect(await b.sweepBoard(plus(since, 241))).toMatchObject({ decisionsEscalated: 0 });
+      expect(row()).toEqual({ next_due_at: null, closed_at: plus(since, 241) });
+      // Thirty days after closing, the row is pruned.
+      await b.sweepBoard(plus(since, 241 + 30 * 24 * 60 - 1));
+      expect(state.storage.sql.exec(`SELECT COUNT(*) AS n FROM decision_waits`).one().n).toBe(1);
+      await b.sweepBoard(plus(since, 241 + 30 * 24 * 60 + 1));
+      expect(state.storage.sql.exec(`SELECT COUNT(*) AS n FROM decision_waits`).one().n).toBe(0);
+      const plan = state.storage.sql.exec(`EXPLAIN QUERY PLAN SELECT * FROM decision_waits WHERE next_due_at IS NOT NULL AND next_due_at <= ? ORDER BY next_due_at ASC LIMIT 200`, since).toArray();
+      expect(JSON.stringify(plan)).toContain('idx_decision_waits_due');
+    });
+  });
+
   it('claims each deadline as it acts, so a wait picked up again does not escalate twice', async () => {
     await runInDurableObject(boardStub('dt-claim'), async (b: BoardDO, state) => {
       await setUp(b, 'brd_dt_claim');
       await toReview(b);
-      const since = text((await pushes(b, 'gate.pending'))[0], 'ts');
-      expect(await b.sweepBoard(plus(since, 241))).toMatchObject({ decisionsReminded: 1, decisionsEscalated: 1 });
-      // As if a second sweep had read the row before the first one's reminder was recorded.
-      state.storage.sql.exec(`UPDATE decision_waits SET reminded_at = NULL`);
-      expect(await b.sweepBoard(plus(since, 242))).toMatchObject({ decisionsReminded: 1, decisionsEscalated: 0 });
+      const since = waitStart(state, text((await pushes(b, 'gate.pending'))[0], 'gateId'));
+      // Both due at once: only the escalation goes out, and the reminder is recorded as skipped.
+      expect(await b.sweepBoard(plus(since, 241))).toMatchObject({ decisionsReminded: 0, decisionsEscalated: 1 });
+      expect(state.storage.sql.exec(`SELECT reminded_at, remind_skipped, next_due_at, closed_at FROM decision_waits`).one()).toEqual({ reminded_at: null, remind_skipped: 1, next_due_at: null, closed_at: plus(since, 241) });
+      expect(await pushes(b, 'decision.reminded')).toHaveLength(0);
+      // As if a second sweep had read the row before the first one's write: the claims refuse both.
+      state.storage.sql.exec(`UPDATE decision_waits SET next_due_at = ?, closed_at = NULL`, plus(since, 241));
+      expect(await b.sweepBoard(plus(since, 242))).toMatchObject({ decisionsReminded: 0, decisionsEscalated: 0 });
       expect(await pushes(b, 'decision.escalated')).toHaveLength(1);
     });
   });
@@ -152,11 +194,11 @@ describe('a gate waits with deadlines, is reminded once, then escalated once, an
   });
 
   it('does not remind about a gate decided before its deadline, and a new gate starts its own clock', async () => {
-    await runInDurableObject(boardStub('dt-closed'), async (b: BoardDO) => {
+    await runInDurableObject(boardStub('dt-closed'), async (b: BoardDO, state) => {
       await setUp(b, 'brd_dt_closed');
       await toReview(b);
       const [first] = await pushes(b, 'gate.pending');
-      const since = text(first, 'ts');
+      const since = waitStart(state, text(first, 'gateId'));
       expect((await b.resolveGate({ gateId: text(first, 'gateId'), decision: 'request_changes', decidedBy: 'usr_reviewer', comment: 'again' })).ok).toBe(true);
       expect(await b.sweepBoard(plus(since, 61))).toMatchObject({ decisionsReminded: 0 });
 
@@ -164,7 +206,7 @@ describe('a gate waits with deadlines, is reminded once, then escalated once, an
       if (!rework.claimed) throw new Error('expected the rework claim');
       await b.complete({ runId: rework.runId, leaseEpoch: rework.leaseEpoch, handoff: { note: 'fixed' } });
       const second = (await pushes(b, 'gate.pending')).find((p) => p.gateId !== first.gateId);
-      const secondSince = text(second, 'ts');
+      const secondSince = waitStart(state, text(second, 'gateId'));
       expect(second).toMatchObject({ deadline: { remindAt: plus(secondSince, 60), escalateAt: plus(secondSince, 240) } });
       expect(await b.sweepBoard(plus(secondSince, 61))).toMatchObject({ decisionsReminded: 1 });
       expect((await pushes(b, 'decision.reminded')).map((p) => p.decisionId)).toEqual([second?.gateId]);
@@ -174,7 +216,7 @@ describe('a gate waits with deadlines, is reminded once, then escalated once, an
 
 describe('every kind of waiting decision', () => {
   it('a question on a stage without its own timeout takes the board default', async () => {
-    await runInDurableObject(boardStub('dt-question'), async (b: BoardDO) => {
+    await runInDurableObject(boardStub('dt-question'), async (b: BoardDO, state) => {
       await setUp(b, 'brd_dt_question');
       expect(await b.setDecisionTimeout({ escalateAfterMinutes: 30 })).toMatchObject({ ok: true, value: { decisionTimeout: { escalateAfterMinutes: 30 } } });
       expect((await b.getState()).decisionTimeout).toEqual({ escalateAfterMinutes: 30 });
@@ -182,7 +224,8 @@ describe('every kind of waiting decision', () => {
       if (!c.claimed) throw new Error('expected a claim');
       await b.postActivity({ runId: c.runId, leaseEpoch: c.leaseEpoch, type: 'elicitation', body: 'Which table?', signal: 'select', parameter: { options: [{ name: 'a', title: 'A' }] } });
       const [asked] = await pushes(b, 'elicitation.pending');
-      const since = text(asked, 'ts');
+      // The clock starts when the wait is recorded.
+      const since = kindStart(state, 'question');
       expect(asked).toMatchObject({ deadline: { escalateAt: plus(since, 30) } });
       expect(isRecord(asked) && isRecord(asked.deadline) && 'remindAt' in asked.deadline).toBe(false);
       expect((await b.pendingElicitationDeliveries())[0]?.deadline).toEqual({ escalateAt: plus(since, 30) });
@@ -193,7 +236,7 @@ describe('every kind of waiting decision', () => {
   });
 
   it('a waiting card is keyed by its wait id', async () => {
-    await runInDurableObject(boardStub('dt-attention'), async (b: BoardDO) => {
+    await runInDurableObject(boardStub('dt-attention'), async (b: BoardDO, state) => {
       await setUp(b, 'brd_dt_attention', STAGES.map((s) => (s.key === 'build' ? { ...s, timeout: { remindAfterMinutes: 5 } } : s)));
       const p = await b.claim(PLANNER);
       if (!p.claimed) throw new Error('expected plan claim');
@@ -202,7 +245,7 @@ describe('every kind of waiting decision', () => {
       if (!c.claimed) throw new Error('expected build claim');
       await b.block({ runId: c.runId, leaseEpoch: c.leaseEpoch, reason: 'the database is down' });
       const [waiting] = await pushes(b, 'attention.pending');
-      const since = text(waiting, 'ts');
+      const since = kindStart(state, 'attention');
       expect(waiting).toMatchObject({ deadline: { remindAt: plus(since, 5) } });
       expect((await b.pendingAttention())[0]?.deadline).toEqual({ remindAt: plus(since, 5) });
       expect(await b.sweepBoard(plus(since, 6))).toMatchObject({ decisionsReminded: 1 });
@@ -218,15 +261,58 @@ describe('every kind of waiting decision', () => {
       const opened = await addBoundCard(b, state);
       expect((await b.resolveGate(boundDecision(opened.gate, opened.subject, DECIDER, 'approve_manual'))).ok).toBe(true);
       const [owed] = await pushes(b, 'delivery.pending');
-      const since = text(owed, 'ts');
+      const since = kindStart(state, 'delivery');
       expect(owed).toMatchObject({ deadline: { remindAt: plus(since, 10), escalateAt: plus(since, 20) } });
       expect((await b.pendingDeliveryFollowUps())[0]?.deadline).toEqual({ remindAt: plus(since, 10), escalateAt: plus(since, 20) });
-      // Both deadlines passed by one sweep: each acts, once.
-      expect(await b.sweepBoard(plus(since, 21))).toMatchObject({ decisionsReminded: 1, decisionsEscalated: 1 });
+      expect(await b.sweepBoard(plus(since, 11))).toMatchObject({ decisionsReminded: 1, decisionsEscalated: 0 });
+      expect(await b.sweepBoard(plus(since, 21))).toMatchObject({ decisionsReminded: 0, decisionsEscalated: 1 });
       expect((await pushes(b, 'decision.escalated'))[0]).toMatchObject({ decisionKind: 'delivery', decisionId: opened.gate.id, stageKey: 'approve' });
-      expect(state.storage.sql.exec(`SELECT reminded_at, escalated_at FROM decision_waits WHERE kind = 'delivery'`).one()).toEqual({ reminded_at: plus(since, 21), escalated_at: plus(since, 21) });
+      expect(state.storage.sql.exec(`SELECT reminded_at, escalated_at, remind_skipped, closed_at FROM decision_waits WHERE kind = 'delivery'`).one()).toEqual({ reminded_at: plus(since, 11), escalated_at: plus(since, 21), remind_skipped: 0, closed_at: plus(since, 21) });
       // Still owed: the escalation recorded no link and changed no mode.
       expect((await b.pendingDeliveryFollowUps()).map((d) => d.gateId)).toEqual([opened.gate.id]);
+    });
+  });
+});
+
+describe('a wait\'s clock starts when it is recorded, not when the card last changed state', () => {
+  const TIMED = BOUND_STAGES.map((s) => (s.key === 'approve' ? { ...s, timeout: { remindAfterMinutes: 60, escalateAfterMinutes: 120 } } : s));
+  const LONG_AGO = '2020-01-01T00:00:00.000Z';
+
+  it('a gate that expires into a block starts a fresh wait, and the same sweep neither reminds nor escalates', async () => {
+    await runInDurableObject(boardStub('dt-clock-expiry'), async (b: BoardDO, state) => {
+      const started = new Date().toISOString();
+      await b.init({ id: 'brd_dt_clock_expiry', tenantId: 'tnt_fixture', name: 'Fixture board', stages: TIMED });
+      await b.registerPushConfig({ agentId: 'agt_bridge', url: HOOK, token: 's', events: EVENTS });
+      const opened = await addBoundCard(b, state, { publicationPayload: payload('2020-01-01T00:00:00Z') });
+      state.storage.sql.exec(`UPDATE cards SET state_since = ? WHERE id = ?`, LONG_AGO, opened.cardId);
+      expect(await b.sweepBoard(new Date().toISOString())).toMatchObject({ gatesExpired: 1, decisionsReminded: 0, decisionsEscalated: 0 });
+      expect(attentionStart(state) >= started).toBe(true);
+    });
+  });
+
+  it('a manual delivery that lapses into a block starts a fresh wait', async () => {
+    await runInDurableObject(boardStub('dt-clock-delivery'), async (b: BoardDO, state) => {
+      const started = new Date().toISOString();
+      await b.init({ id: 'brd_dt_clock_delivery', tenantId: 'tnt_fixture', name: 'Fixture board', stages: TIMED });
+      await b.registerPushConfig({ agentId: 'agt_bridge', url: HOOK, token: 's', events: EVENTS });
+      const opened = await addBoundCard(b, state, { publicationPayload: payload(plus(started, 1)) });
+      expect((await b.resolveGate(boundDecision(opened.gate, opened.subject, DECIDER, 'approve_manual'))).ok).toBe(true);
+      state.storage.sql.exec(`UPDATE cards SET state_since = ? WHERE id = ?`, LONG_AGO, opened.cardId);
+      expect(await b.sweepBoard(plus(started, 2))).toMatchObject({ deliveriesExpired: 1, decisionsReminded: 0, decisionsEscalated: 0 });
+      expect(attentionStart(state) >= started).toBe(true);
+    });
+  });
+
+  it('a card restored from the archive starts a fresh wait', async () => {
+    await runInDurableObject(boardStub('dt-clock-restore'), async (b: BoardDO, state) => {
+      const started = new Date().toISOString();
+      const cardId = await setUp(b, 'brd_dt_clock_restore');
+      await toReview(b);
+      await b.updateCard(cardId, { archivedAt: started });
+      state.storage.sql.exec(`UPDATE cards SET state_since = ? WHERE id = ?`, LONG_AGO, cardId);
+      await b.updateCard(cardId, { archivedAt: null });
+      expect(attentionStart(state) >= started).toBe(true);
+      expect(await b.sweepBoard(new Date().toISOString())).toMatchObject({ decisionsReminded: 0, decisionsEscalated: 0 });
     });
   });
 });
@@ -310,6 +396,14 @@ describe('setting a timeout', () => {
       expect(refused.status).toBe(403);
       expect(await refused.json()).toMatchObject({ error: { code: 'WORKSPACE_ADMIN_REQUIRED' } });
       expect(await stubFor(env, tenantId, boardId).getState()).not.toHaveProperty('decisionTimeout');
+      // Creating a board with a stage timeout is the same policy, and refused the same way.
+      const create = await SELF.fetch('https://api.test/v1/boards', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${await token('prn_0000000000000000d0a1', 'first-timeout@example.com', 'member')}`, 'content-type': 'application/json' },
+        body: JSON.stringify({ name: 'Timed', stages: STAGES }),
+      });
+      expect(create.status).toBe(403);
+      expect(await create.json()).toMatchObject({ error: { code: 'WORKSPACE_ADMIN_REQUIRED' } });
     });
   });
 

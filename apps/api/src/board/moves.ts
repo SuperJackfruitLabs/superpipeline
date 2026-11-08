@@ -15,6 +15,8 @@ import type { CommentView, PreparedApprovalSubject } from './views';
 export type MovesDeps = Pick<
   BoardContext,
   | 'addComment'
+  | 'decisionDeadline'
+  | 'startDecisionWait'
   | 'cancelPendingReviews'
   | 'countInStage'
   | 'createGate'
