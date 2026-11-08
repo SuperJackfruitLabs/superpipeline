@@ -4,6 +4,7 @@ import { boundedPreview, type PreviewBlock } from '../approval-subject-kinds/kin
 import { newId } from '../ids';
 import type { BoardContext } from './context';
 import type { GateOption } from './gate-option';
+import { EXPIRED_DECISION, expireGate, subjectExpired } from './gate-expiry';
 import { queueSubscribedPush } from './push';
 import type { CardView, Result, Row } from './model';
 import { handoffSummary, isApproveDecision, record } from './rules';
@@ -569,131 +570,6 @@ export function endReviewsOfArchivedCard(deps: GatesDeps, cardId: string): numbe
   }
   return ended;
 }
-
-/** The decision an expired gate records. Not an option anyone can choose; the board writes it. */
-export const EXPIRED_DECISION = 'expired';
-
-/** What a card whose approval expired says it is waiting for. */
-const EXPIRED_GATE_DETAIL = 'its approval expired before anyone decided; resume it to an earlier stage to produce it again, or move it';
-
-/** When a subject's binding stops being valid (`timing.expiresAt` of its payload), or null for never. */
-function subjectExpiresAt(deps: GatesDeps, subjectId: string): string | null {
-  const view = deps.approvalSubjectView(subjectId);
-  const timing = record(record(view?.canonical)?.timing);
-  return typeof timing?.expiresAt === 'string' ? timing.expiresAt : null;
-}
-
-function subjectExpired(deps: GatesDeps, subjectId: string, nowIso: string = deps.now()): boolean {
-  const expiresAt = subjectExpiresAt(deps, subjectId);
-  return expiresAt !== null && Date.parse(expiresAt) <= Date.parse(nowIso);
-}
-
-/**
- * Close a pending subject-bound gate whose subject expired (charter decision 7). It is recorded
- * as `status: 'resolved', decision: 'expired'` with no decider, so every reader that settles a
- * decided gate — the hub's sweep reads `GET gates/:id` and settles only a resolved gate with a
- * decision — settles this one too, and it leaves `gates/pending`. The subject is invalidated (its
- * bytes can no longer be approved), the card stays where it is and says why, and the card's gate
- * history keeps the outcome. Returns whether this call closed it.
- */
-export function expireGate(deps: GatesDeps, gateId: string): boolean {
-  const gate = getGateRow(deps, gateId);
-  if (gate?.status !== 'pending' || typeof gate.card_id !== 'string') return false;
-  const cardId = gate.card_id;
-  const stageKey = typeof gate.stage_key === 'string' ? gate.stage_key : '';
-  const subjectId = typeof gate.approval_subject_id === 'string' ? gate.approval_subject_id : null;
-  const judged = deps.runJudgedByGate(gate);
-  const now = deps.now();
-  const closed = deps.ctx.storage.transactionSync(() => {
-    const marked = deps.sql.exec(
-      `UPDATE gates SET status = 'resolved', decision = ?, decided_by = NULL, resolved_at = ? WHERE id = ? AND status = 'pending'`,
-      EXPIRED_DECISION,
-      now,
-      gateId,
-    );
-    if (marked.rowsWritten === 0) return false;
-    if (subjectId && deps.getCardRow(cardId)?.active_approval_subject_id === subjectId) {
-      deps.invalidateApprovalSubject(cardId, 'gate.expired', null);
-    }
-    if (deps.getCardRow(cardId)?.state === 'input-required') {
-      deps.setNeedsHuman(cardId, { reason: 'blocked', detail: EXPIRED_GATE_DETAIL });
-    }
-    return true;
-  });
-  if (!closed) return false;
-  deps.emit('gate.resolved', { gateId, cardId, decision: EXPIRED_DECISION, decidedBy: null });
-  deps.notify('gate', cardId, `The approval at ${stageKey} expired before anyone decided: ${EXPIRED_GATE_DETAIL}.`);
-  if (judged) deps.reportRun(judged);
-  return true;
-}
-
-/** Close every pending subject-bound gate whose subject has expired. The sweep's job; returns how many. */
-export function expireLapsedGates(deps: GatesDeps, nowIso: string): number {
-  let closed = 0;
-  const rows = deps.sql.exec(`SELECT id, approval_subject_id FROM gates WHERE status = 'pending' AND approval_subject_id IS NOT NULL`).toArray();
-  for (const row of rows) {
-    if (typeof row.id !== 'string' || typeof row.approval_subject_id !== 'string') continue;
-    // Each gate on its own: one that cannot be closed must not keep the rest open.
-    try {
-      if (subjectExpired(deps, row.approval_subject_id, nowIso) && expireGate(deps, row.id)) closed += 1;
-    } catch (err) {
-      deps.emit('gate.expiry_failed', { gateId: row.id, reason: String(err) });
-    }
-  }
-  return closed;
-}
-
-/**
- * End, visibly, every manual delivery whose approval expired before its live link was recorded.
- *
- * `delivery.pending` stops being owed at the subject's expiry (`deliveryPendingBody`), and until
- * this the follow-up just dropped out of the list. Now the card records it once: an `expired`
- * delivery event on the gate, a notice to the card's owner, and the card's own wait says so. The
- * approval stays as it was — a person who posted before the expiry may still record the link.
- * Returns how many were ended.
- */
-export function endLapsedDeliveries(deps: GatesDeps, nowIso: string): number {
-  let ended = 0;
-  const rows = deps.sql
-    .exec(
-      `SELECT id, card_id, approval_subject_id FROM gates
-        WHERE status = 'resolved' AND decision = 'approve_manual' AND live_post_url IS NULL AND approval_subject_id IS NOT NULL
-          AND NOT EXISTS (SELECT 1 FROM approval_delivery_events e WHERE e.gate_id = gates.id AND e.event = 'expired')`,
-    )
-    .toArray();
-  for (const row of rows) {
-    if (typeof row.id !== 'string' || typeof row.card_id !== 'string' || typeof row.approval_subject_id !== 'string') continue;
-    try {
-      const cardId = row.card_id;
-      const cardRow = deps.getCardRow(cardId);
-      if (!cardRow || cardRow.archived_at || cardRow.active_approval_subject_id !== row.approval_subject_id) continue;
-      if (!subjectExpired(deps, row.approval_subject_id, nowIso)) continue;
-      const now = deps.now();
-      deps.ctx.storage.transactionSync(() => {
-        deps.sql.exec(
-          `INSERT INTO approval_delivery_events
-             (id, gate_id, subject_id, event, from_mode, to_mode, actor, live_url, created_at)
-           VALUES (?, ?, ?, 'expired', 'manual', 'manual', 'system', NULL, ?)`,
-          newId('ade'),
-          row.id,
-          row.approval_subject_id,
-          now,
-        );
-        if (cardRow.state === 'input-required') {
-          deps.setNeedsHuman(cardId, { reason: 'blocked', detail: EXPIRED_DELIVERY_DETAIL });
-        }
-      });
-      deps.emit('delivery.expired', { gateId: row.id, cardId: row.card_id });
-      deps.notify('approval-delivery-expired', row.card_id, `Manual delivery expired: ${EXPIRED_DELIVERY_DETAIL}.`);
-      ended += 1;
-    } catch (err) {
-      deps.emit('delivery.expiry_failed', { gateId: row.id, reason: String(err) });
-    }
-  }
-  return ended;
-}
-
-const EXPIRED_DELIVERY_DETAIL = 'the approval expired before a live link was recorded; record the link if it was posted in time, or resume it to produce it again';
 
 export function pendingGates(deps: GatesDeps): GateView[] {
   return deps.sql

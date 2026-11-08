@@ -6,6 +6,7 @@ import * as store from './card-store';
 import * as claims from './claims';
 import * as comments from './comments';
 import * as elicitations from './elicitations';
+import * as gateExpiry from './gate-expiry';
 import * as gates from './gates';
 import * as holds from './holds';
 import * as maintenance from './maintenance';
@@ -96,9 +97,9 @@ export function wireBoard(base: BoardBase, routes: ShellRoutes): BoardContext {
     elicitationsForRun: (...a) => elicitations.elicitationsForRun(board, ...a),
     emit: (...a) => store.emit(board, ...a),
     endAttempt: (...a) => moves.endAttempt(board, ...a),
-    endLapsedDeliveries: (...a) => gates.endLapsedDeliveries(board, ...a),
+    endLapsedDeliveries: (...a) => gateExpiry.endLapsedDeliveries(board, ...a),
     endReviewsOfArchivedCard: (...a) => gates.endReviewsOfArchivedCard(board, ...a),
-    expireLapsedGates: (...a) => gates.expireLapsedGates(board, ...a),
+    expireLapsedGates: (...a) => gateExpiry.expireLapsedGates(board, ...a),
     fireDueSchedules: (...a) => routes.fireDueSchedules(...a),
     gatesForCard: (...a) => gates.gatesForCard(board, ...a),
     getCard: (...a) => store.getCard(board, ...a),
