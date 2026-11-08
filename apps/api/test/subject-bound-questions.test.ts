@@ -358,6 +358,14 @@ describe('an answer to a harness permission binds its subject', () => {
     });
   });
 
+  it('fails closed when a stored subject no longer parses, instead of reading the question as unbound', async () => {
+    await runInDurableObject(stubFor('sbq-harness-corrupt'), async (board: BoardDO, state) => {
+      const { elicitationId } = await harnessQuestion(board, 'brd_sbq_harness_corrupt');
+      state.storage.sql.exec(`UPDATE elicitations SET subject_json = ? WHERE id = ?`, JSON.stringify({ schema: 'something-else/v1' }), elicitationId);
+      await expect(board.answerElicitation({ elicitationId, answeredBy: 'usr_h', option: 'allow_once' })).rejects.toThrow(/poster subject .* is malformed/);
+    });
+  });
+
   it('refuses any answer after the subject expires', async () => {
     await runInDurableObject(stubFor('sbq-harness-expired'), async (board: BoardDO) => {
       const expiresAt = new Date(Date.now() + 60_000).toISOString();

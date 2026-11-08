@@ -345,7 +345,10 @@ function questionSubject(row: Row, strict: StrictOffer | null): ApprovalSubjectE
   if (strict) return strictSubjectEnvelope(strict.binding, strict.detail);
   if (typeof row.subject_json !== 'string') return null;
   const parsed = PosterSubject.safeParse(JSON.parse(row.subject_json));
-  return parsed.success ? posterSubjectEnvelope(parsed.data) : null;
+  // Checked when it was posted; reading it as an unbound question would let an approval through
+  // with no binding and no expiry, so a stored subject that no longer parses fails closed.
+  if (!parsed.success) throw new Error(`invariant violation: poster subject for ${sqlText(row.id)} is malformed`);
+  return posterSubjectEnvelope(parsed.data);
 }
 
 function rowToElicitation(deps: ElicitationsDeps, row: Row): ElicitationView {
