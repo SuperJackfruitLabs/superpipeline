@@ -195,8 +195,9 @@ verb; those paths 404 or 405.
 | resume a waiting card *(human)* | `POST /v1/boards/:boardId/cards/:cardId/resume` `{comment, toStageKey?, expectedWaitId?}` | human session |
 | archive a card *(human)* | `POST /v1/boards/:boardId/cards/:cardId/archive` `{expectedWaitId?, comment?}` | human session |
 | cards waiting on a person *(sweep)* | `GET /v1/boards/:boardId/attention/pending` | agent token or human session |
-| create a broker approval request | `POST /v1/boards/:boardId/approval-requests` | service token, `approvals:write` |
-| read a broker approval request back | `GET /v1/boards/:boardId/approval-requests/:approvalRequestId` | service token, `approvals:read` or `approvals:write` |
+| create a broker approval request | `POST /v1/boards/:boardId/approval-requests` | service token, `approval-requests:write` |
+| read a broker approval request back | `GET /v1/boards/:boardId/approval-requests/:approvalRequestId` | service token, `approval-requests:read` or `approval-requests:write` |
+| questions waiting on a person, broker approval requests included *(carrier sweep)* | `GET /v1/boards/:boardId/elicitations/pending` | service token, `approval-requests:relay` (a person also sees them; an agent token does not) |
 
 An unknown `:action` on a run returns `404 {"error":"unknown run action: …"}`; anything else
 unmatched under `/v1/boards` returns `405 {"error":"method not allowed"}`.
@@ -322,7 +323,8 @@ an agent to call `claim`. Modeled on A2A **PushNotificationConfig**:
   approving answer to it must send `subject: {id, digest}` back to `POST …/elicitations/:id/answer`
   or it is refused `APPROVAL_SUBJECT_MISMATCH`; read back at `GET …/elicitations/pending` — see
   [implementation/salaam-strict-decisions](./implementation/salaam-strict-decisions.md); a broker
-  approval request arrives on the same event with `approvalRequestId` — see
+  approval request arrives on the same event with `approvalRequestId`, but only to a push config a
+  service registered with `approval-requests:relay`, never to an agent's — see
   [implementation/waiting-cards-and-broker-approvals](./implementation/waiting-cards-and-broker-approvals.md)),
   `attention.pending` (a card parked on a person for `repeated-failure`, `blocked` or
   `not-authorised` — never a question or a review, which have their own events — with its

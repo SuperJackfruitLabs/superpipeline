@@ -49,6 +49,10 @@ a card that parks again is listed under a new `waitId`.
 when it is cleared (a trigger on `cards.needs_human_json`, so every writer is covered). A card
 waits while it is `input-required` with a reason and not archived.
 
+**Archive and restore.** Archiving ends the wait and restoring starts a new one: both give the card
+a fresh `waitId`, so an answer given before the archive never matches after it. A restored card
+still waiting for one of the three reasons is pushed as `attention.pending` again, under its new id.
+
 **Answering.** The hub calls these as the person who answered:
 
 | Option | Call |
@@ -58,7 +62,8 @@ waits while it is `input-required` with a reason and not archived.
 | `archive` | `POST …/cards/:cardId/archive` `{ "expectedWaitId": <waitId>, "comment"?: <text> }` |
 
 Both refuse **`WAIT_CHANGED` (409)** when the card is no longer in that wait (it stopped waiting,
-was archived, or waits on something else now), and change nothing. Without `expectedWaitId` they
+was archived, or waits on something else now), and change nothing. An `expectedWaitId` that is not
+a non-empty string is **`INVALID_WAIT_ID` (400)**. Without `expectedWaitId` they
 behave as before: resume's own refusals (`CARD_NOT_WAITING`, `QUESTION_PENDING`, `GATE_PENDING`,
 `CARD_BLOCKED`, `INVALID_RESUME`) stand, and archiving an archived card returns it unchanged.
 Archive is person-only (an agent token is refused on every scope, as for resume), needs the `work`
@@ -72,7 +77,7 @@ When SuperToolkit's policy says a write needs approval and the host is connected
 the broker creates an approval request on the board its policy names and reads the decision back.
 
 **Create.** `POST /v1/boards/:boardId/approval-requests`, with a service token holding
-`approvals:write` for the board's workspace:
+`approval-requests:write` for the board's workspace:
 
 ```json
 {
@@ -99,7 +104,7 @@ unknown subject field, a revision other than 1 or a subject already expired is
 `previewComplete: false`.
 
 **Read back.** `GET /v1/boards/:boardId/approval-requests/:approvalRequestId`, with a service token
-holding `approvals:read` (or `approvals:write`):
+holding `approval-requests:read` (or `approval-requests:write`):
 
 ```json
 {
@@ -118,9 +123,21 @@ subject's expiry. `decidedBy.principalId` is the decider's suite principal id as
 it (the local user id where no principal is mapped), never a name supplied by a caller. An unknown
 id is `APPROVAL_REQUEST_NOT_FOUND` (404); a board outside the token's workspace is a 404.
 
-**In chat.** The request is a subject-bound question on `elicitation.pending`, listed by
-`GET …/elicitations/pending` until it is decided or expires, so the existing carrier posts and
-answers it unchanged. It belongs to no card, run or stage:
+The scopes are approval requests' own: a publisher's `approvals:read`/`approvals:write` neither
+raises nor reads one.
+
+**In chat.** The request is a subject-bound question on `elicitation.pending` until it is decided
+or expires. Its preview carries every argument the broker would send, so it reaches only:
+
+- a person reading `GET …/elicitations/pending` (an agent token reading the same path sees card
+  questions only, and the board snapshot and run reads never carry requests);
+- the decision carrier: a service token holding **`approval-requests:relay`** may read
+  `GET …/elicitations/pending` with requests included, and may register a push config
+  (`POST …/push-configs`) for the decision events `gate.pending`, `elicitation.pending`,
+  `delivery.pending` and `attention.pending`. Requests are pushed to service-registered configs
+  only, never to an agent's. Record events on a service config still need `push:write`.
+
+It belongs to no card, run or stage:
 
 ```json
 {
@@ -143,7 +160,11 @@ as a person with the `work` role (a viewer is refused). It is judged by the rule
 subject-bound question follows, plus one:
 
 - `allow_once` only by a workspace **owner or admin**: anyone else is refused
-  `WORKSPACE_ADMIN_REQUIRED` (403). `deny` may be chosen by any member who may work the board: a
+  `WORKSPACE_ADMIN_REQUIRED` (403). On the Organization plane that is the **Accounts** workspace
+  role, the `orgRole` in the verified token (a per-decision assertion carries it too); a token naming
+  none is a member, and a caller with no plane token (a session cookie) is no admin. The board's
+  local membership role does not count there: a fresh tenant makes its first visitor a local
+  `owner`. Without the plane there are no Accounts roles, and the local membership role decides. `deny` may be chosen by any member who may work the board: a
   denial performs nothing and the broker fails closed on it.
 - An approving answer must carry `subject: { id, digest }` matching the request, or it is refused
   `APPROVAL_SUBJECT_MISMATCH` (409); a denial may omit it, but a binding it sends must match.
