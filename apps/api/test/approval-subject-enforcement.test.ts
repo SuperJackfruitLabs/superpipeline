@@ -1,5 +1,5 @@
 import { env, runInDurableObject, SELF } from 'cloudflare:test';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { Stage } from '@superpipeline/contract';
 import { BoardDO, type BoardInit, type Result } from '../src/board/board-do';
 import {
@@ -705,6 +705,8 @@ describe('run-fenced approval-subject verify route', () => {
   });
 
   it('returns 410 for an expired otherwise-valid subject', async () => {
+    // A minute ahead: the mocked clock below passes it while the publisher's lease (15 minutes) holds.
+    const EXPIRES_AT = new Date(Date.now() + 60_000).toISOString();
     const tenantId = 'tnt_verify_expired';
     const boardId = 'brd_verify_expired';
     const stub = env.BOARD_DO.get(env.BOARD_DO.idFromName(`${tenantId}:${boardId}`)) as unknown as DurableObjectStub<BoardDO>;
@@ -717,14 +719,13 @@ describe('run-fenced approval-subject verify route', () => {
       const opened = await openBoundGate(board, state, 'verify-expired', {
         boardId,
         tenantId,
-        // Approved while still valid, then left to expire: approving an already-expired subject is
-        // refused at the gate (charter 2026-11-08, decision 7), so the executor's own fence is
-        // reached by a subject that expires after its approval.
-        publicationPayload: payload(new Date(Date.now() + 1_500).toISOString()),
+        // Approved while still valid; the executor's clock then reads past the expiry (below).
+        // Approving an already-expired subject is refused at the gate (charter 2026-11-08,
+        // decision 7), so the executor's own fence is reached by a subject that expired later.
+        publicationPayload: payload(EXPIRES_AT),
       });
       const approved = await board.resolveGate(boundDecision(opened.gate, opened.subject) as never);
       if (!approved.ok) throw new Error(approved.message);
-      await new Promise((resolve) => setTimeout(resolve, 1_600));
       const claim = await board.claim({ agentId: PUBLISHER, capabilities: ['x-publish'] });
       if (!claim.claimed) throw new Error('publisher fixture was not claimable');
       runId = claim.runId;
@@ -733,18 +734,24 @@ describe('run-fenced approval-subject verify route', () => {
       expectedDigest = opened.subject.digest;
     });
 
-    const response = await SELF.fetch(`https://api.test/v1/boards/${boardId}/runs/${runId}/approval-subject/verify`, {
-      method: 'POST',
-      headers: auth(tenantId, { 'X-Agent-Id': PUBLISHER }),
-      body: JSON.stringify({
-        leaseEpoch,
-        expectedSchema: 'social-publish/v1',
-        expectedSubjectId,
-        expectedDigest,
-        expectedAccount: ACCOUNT,
-      }),
-    });
-    expect(response.status).toBe(410);
+    // The verify route reads the clock through `Date.now()`; a mocked clock, never a real sleep.
+    const clock = vi.spyOn(Date, 'now').mockReturnValue(Date.parse(EXPIRES_AT) + 1);
+    try {
+      const response = await SELF.fetch(`https://api.test/v1/boards/${boardId}/runs/${runId}/approval-subject/verify`, {
+        method: 'POST',
+        headers: auth(tenantId, { 'X-Agent-Id': PUBLISHER }),
+        body: JSON.stringify({
+          leaseEpoch,
+          expectedSchema: 'social-publish/v1',
+          expectedSubjectId,
+          expectedDigest,
+          expectedAccount: ACCOUNT,
+        }),
+      });
+      expect(response.status).toBe(410);
+    } finally {
+      clock.mockRestore();
+    }
   });
 });
 
