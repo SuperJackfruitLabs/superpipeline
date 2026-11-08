@@ -1,7 +1,7 @@
 import type { PreviewBlock } from '../approval-subject-kinds/kind';
 import type { JsonValue } from '../json';
 import type { GateOption, GateOptionMeaning, OptionScope } from './gate-option';
-import type { BoardUsage, CardView, StageDef, StaleSettings } from './model';
+import type { BoardUsage, CardView, DecisionDeadline, DecisionTimeout, StageDef, StaleSettings } from './model';
 import type { ApprovalDetail, StrictDecision } from './strict-decision';
 
 /**
@@ -366,6 +366,12 @@ export interface GatePendingBody {
   /** gate.v2 §2: each option says what it means; `delivery` only on an option that approves a subject. */
   options: Array<{ id: string; label: string; meaning: GateOptionMeaning; needsComment: boolean; delivery?: 'automatic' | 'manual' }>;
   /** When the gate opened. The gate's own clock, so a re-read is byte-identical. */
+  /**
+   * When this decision is reminded about and escalated, when its stage (or board) sets a timeout
+   * (charter 2026-11-08, decision 5). Absent when it has none. Not the subject's `expiresAt`, which
+   * bounds a binding's validity, not anyone's patience.
+   */
+  deadline?: DecisionDeadline;
   ts: string;
 }
 
@@ -437,6 +443,12 @@ export interface ElicitationPendingBody {
    */
   approvalRequestId?: string;
   /** When the question was asked. The row's own clock, so a re-read is byte-identical. */
+  /**
+   * When this decision is reminded about and escalated, when its stage (or board) sets a timeout
+   * (charter 2026-11-08, decision 5). Absent when it has none. Not the subject's `expiresAt`, which
+   * bounds a binding's validity, not anyone's patience.
+   */
+  deadline?: DecisionDeadline;
   ts: string;
 }
 
@@ -467,6 +479,12 @@ export interface DeliveryPendingBody {
     delivery?: 'automatic';
   }>;
   /** When the gate was resolved. The gate's own clock, so a re-read is byte-identical. */
+  /**
+   * When this decision is reminded about and escalated, when its stage (or board) sets a timeout
+   * (charter 2026-11-08, decision 5). Absent when it has none. Not the subject's `expiresAt`, which
+   * bounds a binding's validity, not anyone's patience.
+   */
+  deadline?: DecisionDeadline;
   ts: string;
 }
 
@@ -517,6 +535,12 @@ export interface AttentionPendingBody {
     input?: EnvelopeOptionInput;
   }>;
   /** When the card came to rest. The card's own clock, so a re-read is byte-identical. */
+  /**
+   * When this decision is reminded about and escalated, when its stage (or board) sets a timeout
+   * (charter 2026-11-08, decision 5). Absent when it has none. Not the subject's `expiresAt`, which
+   * bounds a binding's validity, not anyone's patience.
+   */
+  deadline?: DecisionDeadline;
   ts: string;
 }
 
@@ -598,4 +622,6 @@ export interface BoardSnapshot {
   };
   /** The board's stale-card settings: how long a card may sit before it counts, and whether the digest is on. */
   stale: StaleSettings;
+  /** The board's default decision timeout for stages without their own; absent when unset. */
+  decisionTimeout?: DecisionTimeout;
 }

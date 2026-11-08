@@ -103,6 +103,7 @@ export interface BoardContext {
   endReviewsOfArchivedCard(cardId: string): number;
   expireGate(gateId: string): boolean;
   expireLapsedGates(nowIso: string): number;
+  sweepDecisionTimeouts(nowIso: string): { reminded: number; escalated: number };
   fireDueSchedules(nowIso: string): Promise<{ fired: string[]; skipped: string[] }>;
   gatesForCard(cardId: string): GateView[];
   getCard(id: string): CardView | null;

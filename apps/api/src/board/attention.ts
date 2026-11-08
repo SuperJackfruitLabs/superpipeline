@@ -1,5 +1,6 @@
 import type { BoardContext } from './context';
 import type { CardNeedsHuman, Result, Row } from './model';
+import { deadlineField, startDecisionWait } from './decision-timeouts';
 import { queueSubscribedPush } from './push';
 import { COMMENT_MAX_BYTES } from './rules';
 import type { AttentionPendingBody, AttentionReason } from './views';
@@ -76,6 +77,12 @@ export function waitChangedError(row: Row | null, expected: string | undefined):
  * not in a wait chat carries (no wait, a question or review, or archived).
  */
 function attentionPendingBody(deps: AttentionDeps, row: Row): AttentionPendingBody | null {
+  const body = attentionBody(deps, row);
+  return body ? { ...body, ...deadlineField(deps, 'attention', body.waitId) } : null;
+}
+
+/** The body without its deadline, which the push takes from the wait it just recorded. */
+function attentionBody(deps: AttentionDeps, row: Row): AttentionPendingBody | null {
   const waitId = currentWaitId(row);
   const needs = needsOf(row);
   if (!waitId || !needs) return null;
@@ -115,8 +122,13 @@ function attentionPendingBody(deps: AttentionDeps, row: Row): AttentionPendingBo
 export function notifyAttentionPending(deps: AttentionDeps, cardId: string): void {
   const row = deps.getCardRow(cardId);
   if (!row) return;
-  const payload = attentionPendingBody(deps, row);
-  if (payload) queueSubscribedPush(deps, payload);
+  const waiting = attentionBody(deps, row);
+  if (!waiting) return;
+  // A new wait id is a new wait, with its own deadlines, which the push carries.
+  const deadline = startDecisionWait(deps, { kind: 'attention', decisionId: waiting.waitId, cardId: waiting.cardId, stageKey: waiting.stageKey, since: waiting.ts || deps.now() });
+  const { ts, ...rest } = waiting;
+  const payload: AttentionPendingBody = { ...rest, ...deadline, ts };
+  queueSubscribedPush(deps, payload);
 }
 
 /**

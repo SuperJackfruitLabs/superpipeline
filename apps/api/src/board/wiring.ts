@@ -5,6 +5,7 @@ import * as approvalSubjects from './approval-subjects';
 import * as store from './card-store';
 import * as claims from './claims';
 import * as comments from './comments';
+import * as decisionTimeouts from './decision-timeouts';
 import * as elicitations from './elicitations';
 import * as gateExpiry from './gate-expiry';
 import * as gates from './gates';
@@ -101,6 +102,7 @@ export function wireBoard(base: BoardBase, routes: ShellRoutes): BoardContext {
     endReviewsOfArchivedCard: (...a) => gates.endReviewsOfArchivedCard(board, ...a),
     expireGate: (...a) => gateExpiry.expireGate(board, ...a),
     expireLapsedGates: (...a) => gateExpiry.expireLapsedGates(board, ...a),
+    sweepDecisionTimeouts: (...a) => decisionTimeouts.sweepDecisionTimeouts(board, ...a),
     fireDueSchedules: (...a) => routes.fireDueSchedules(...a),
     gatesForCard: (...a) => gates.gatesForCard(board, ...a),
     getCard: (...a) => store.getCard(board, ...a),

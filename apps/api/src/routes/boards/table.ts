@@ -3,7 +3,7 @@
 // `runs/:id/evidence-reference` and `runs/:id/approval-subject/verify` before `runs/:id/:verb`,
 // and `gates/pending` before `gates/:id`. A path no route takes is a 405 (`methodNotAllowed`).
 // Before any of these runs, `entry.ts` has resolved the caller and answered the board collection.
-import { liveFeed, boardSnapshot, boardRename, stageEdit, stagesReplace, boardDelete, boardEvents, boardUsage, notificationsList, notificationRead, profilesList, profileSet, staleSettings, budgetSet } from './board';
+import { liveFeed, boardSnapshot, boardRename, stageEdit, stagesReplace, boardDelete, boardEvents, boardUsage, notificationsList, notificationRead, profilesList, profileSet, staleSettings, budgetSet, decisionTimeoutSet } from './board';
 import { cardArchive, cardCreate, cardMove, cardResume, cardRead, cardEdit, cardDelete, cardSplit, cardReference, cardAttempts, cardActivities, cardEstimate } from './cards';
 import { commentsList, commentAdd, commentDelete, commentNeverEdited } from './comments';
 import { gatesPending, gateRead, gateResolve, gateDelivery, deliveriesPending, elicitationsPending, elicitationAnswer, attentionPending } from './gates';
@@ -53,6 +53,7 @@ export const BOARD_ROUTES: readonly Route<BoardRequest>[] = [
   route('POST', /^push\/dispatch$/, pushDispatch),
   route('GET', /^push\/deliveries$/, pushDeliveries),
   route('PUT', /^stale$/, staleSettings),
+  route('PUT', /^decision-timeout$/, decisionTimeoutSet),
   route('PUT', /^budget$/, budgetSet),
   route('PUT', /^github$/, githubConfig),
   route('POST', /^triggers$/, triggerCreate),

@@ -12,6 +12,7 @@ import * as store from './card-store';
 import * as cards from './cards';
 import * as claims from './claims';
 import * as comments from './comments';
+import * as decisionTimeouts from './decision-timeouts';
 import * as elicitations from './elicitations';
 import * as gates from './gates';
 import * as holds from './holds';
@@ -490,6 +491,10 @@ export class BoardDO extends DurableObject<Env> {
 
   setStaleSettings(...args: OpArgs<typeof stale.setStaleSettings>): ReturnType<typeof stale.setStaleSettings> {
     return stale.setStaleSettings(this.board, ...args);
+  }
+
+  setDecisionTimeout(...args: OpArgs<typeof decisionTimeouts.setBoardDecisionTimeout>): Promise<ReturnType<typeof decisionTimeouts.setBoardDecisionTimeout>> {
+    return Promise.resolve(decisionTimeouts.setBoardDecisionTimeout(this.board, ...args));
   }
 
   staleCards(...args: OpArgs<typeof stale.staleCards>): ReturnType<typeof stale.staleCards> {
