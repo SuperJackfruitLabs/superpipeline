@@ -3,7 +3,7 @@ import type { JsonValue } from '../json';
 import type { ReferenceInput } from '../references/input';
 import type { ServiceTokenCache } from '../superwitness/client';
 import type { AgentActivityInput, BoardUsage, CardNeedsHuman, CardView, DecisionDeadline, DecisionKind, LinkInput, LinkView, Result, Row, RunAuth, RunReportDrainResult, StageDef, StaleSettings } from './model';
-import type { ApprovalSubjectView, BoardSnapshot, CommentView, ElicitationView, GateView, PreparedApprovalSubject, ReferenceView, RunEvidence } from './views';
+import type { ApprovalSubjectView, BoardSnapshot, CommentView, ElicitationView, GateView, PreparedApproval, ReferenceView, RunEvidence } from './views';
 
 /**
  * The board as its modules see it: storage, environment, clock, and the operations one module
@@ -21,7 +21,7 @@ export interface BoardContext {
   addComment(input: { cardId: string; author: CommentView['author']; body: string }): Promise<Result<CommentView>>;
   addLink(input: LinkInput): Promise<Result<LinkView>>;
   addReference(input: ReferenceInput): Promise<Result<ReferenceView>>;
-  advanceCard(cardId: string, fromStageKey: string, producedBy: string, handoffJson: string | null, runId: string | null, approvalSubject?: PreparedApprovalSubject | null): void;
+  advanceCard(cardId: string, fromStageKey: string, producedBy: string, handoffJson: string | null, runId: string | null, approvalSubject?: PreparedApproval | null): void;
   allCards(): CardView[];
   allReferences(): ReferenceView[];
   approvalSubjectView(id: string): ApprovalSubjectView | null;
@@ -96,7 +96,7 @@ export interface BoardContext {
   createChildCard(parentCardId: string, input: { title: string; ownerUserId: string; spec?: JsonValue; priority?: number }): Promise<Result<CardView>>;
   /** A waiting decision's deadlines as a body's `deadline` field (decision-timeouts.ts). */
   decisionDeadline(kind: DecisionKind, decisionId: string): { deadline?: DecisionDeadline };
-  createGate(cardId: string, stageKey: string, returnStageKey: string, producedBy: string, runId: string | null, approvalSubject?: PreparedApprovalSubject | null): string;
+  createGate(cardId: string, stageKey: string, returnStageKey: string, producedBy: string, runId: string | null, approvalSubject?: PreparedApproval | null): string;
   denyForeignRun(run: Row, agentId: string | null | undefined): { ok: false; code: 'NOT_RUN_OWNER'; message: string } | null;
   elicitationsForRun(runId: string): ElicitationView[];
   emit(type: string, payload: Record<string, unknown>): void;
@@ -134,7 +134,7 @@ export interface BoardContext {
   parseHandoff(raw: string | null): JsonValue | null;
   pendingElicitations(): ElicitationView[];
   pendingGates(): GateView[];
-  prepareApprovalSubject(card: CardView, stage: StageDef, handoff: JsonValue | undefined, runId: string, producedBy: string): Promise<Result<PreparedApprovalSubject>>;
+  prepareApprovalSubject(card: CardView, stage: StageDef, handoff: JsonValue | undefined, runId: string, producedBy: string): Promise<Result<PreparedApproval>>;
   reportRun(runId: string): void;
   resolveCard(cardId: string, handoffJson: string | null, stageKey?: string): void;
   resumeParentAdvanceIfFree(parentId: string): void;

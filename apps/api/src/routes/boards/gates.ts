@@ -45,7 +45,8 @@ export async function gateResolve({ request, env, tenantId, user, agent, stub }:
   const localDeciderId = user?.userId ?? 'usr_dev';
   const gateView = await stub.getGate(gateMatch[1]);
   const principalIds =
-    gateView.ok && gateView.value.approvalSubject
+    // A variant gate is decided by the same principals before a variant is chosen (charter 2026-11-09).
+    gateView.ok && (gateView.value.approvalSubject || gateView.value.variants)
       ? await principalIdsFor(env.DB, tenantId, [localDeciderId])
       : new Map<string, string>();
   const result = await stub.resolveGate({

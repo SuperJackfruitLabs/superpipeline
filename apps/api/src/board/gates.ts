@@ -1,13 +1,16 @@
 import type { GateDecision } from '@superpipeline/contract';
 import { approvalSubjectKind } from '../approval-subject-kinds';
-import { boundedPreview, type PreviewBlock } from '../approval-subject-kinds/kind';
 import { newId } from '../ids';
 import type { BoardContext } from './context';
+import { applyVariantChoice, deciderError, gateVariants, judgeVariantDecision, optionError } from './gate-choice';
 import type { GateOption } from './gate-option';
 import { queueSubscribedPush } from './push';
 import type { CardView, Result, Row } from './model';
 import { EXPIRED_DECISION, handoffSummary, isApproveDecision, record } from './rules';
-import type { ApprovalSubjectEnvelope, DeliveryPendingBody, GateOptionMeaning, GatePendingBody, GateView, PreparedApprovalSubject } from './views';
+import { previewSummary, subjectEnvelope, variantsEnvelope, variantsSummary } from './subject-envelope';
+import type { DeliveryPendingBody, GateOptionMeaning, GatePendingBody, GateView, PreparedApproval } from './views';
+
+export { PREVIEW_SHORTENED_NOTE } from './subject-envelope';
 
 /**
  * Approval gates: opening one, a person deciding it, the delivery it carries, and its push body.
@@ -120,16 +123,20 @@ export async function resolveGate(deps: GatesDeps, input: {
     return { ok: false, code: 'SEPARATION_OF_DUTIES', message: 'the producer cannot resolve their own gate' };
   }
 
-  const boundSubjectId = (gate.approval_subject_id as string | null) ?? null;
-  if (boundSubjectId) {
-    const deciders = JSON.parse((gate.approval_decider_ids_json as string | null) ?? '[]') as string[];
-    if (input.decidedBy.startsWith('agt_') || !deciders.includes(input.decidedBy)) {
-      return {
-        ok: false,
-        code: 'APPROVAL_DECIDER_NOT_ALLOWED',
-        message: 'this principal is not an authorized human decider for the approval subject',
-      };
-    }
+  // A variant gate whose choice is still to be made (charter 2026-11-09): an approval binds one
+  // variant, which becomes the gate's subject below, and the single-subject path runs from there.
+  const variants = gate.approval_subject_id === null ? gateVariants(deps.sql, gate) : [];
+  let chosen: ReturnType<typeof gateVariants>[number] | null = null;
+  if (variants.length > 0) {
+    const judged = judgeVariantDecision(deps, gate, variants, input, optionMeaning(input.decision));
+    if (!judged.ok) return judged;
+    chosen = judged.value;
+  }
+  const boundSubjectId = chosen?.subjectId ?? (gate.approval_subject_id as string | null) ?? null;
+  const choosing = variants.length > 0;
+  if (boundSubjectId && !choosing) {
+    const refused = deciderError(gate, input.decidedBy);
+    if (refused) return refused;
     if (
       input.approvalSubjectId !== boundSubjectId ||
       input.approvalSubjectDigest !== (gate.approval_subject_digest as string)
@@ -149,19 +156,8 @@ export async function resolveGate(deps: GatesDeps, input: {
     ) {
       return { ok: false, code: 'APPROVAL_SUBJECT_MISMATCH', message: 'the approval subject is no longer active' };
     }
-    const options: unknown = JSON.parse((gate.options_json as string | null) ?? '[]');
-    if (
-      !Array.isArray(options) ||
-      !options.some(
-        (option) => option !== null && typeof option === 'object' && 'name' in option && option.name === input.decision,
-      )
-    ) {
-      return {
-        ok: false,
-        code: 'GATE_DECISION_NOT_ALLOWED',
-        message: `decision "${input.decision}" is not one of this gate's options`,
-      };
-    }
+    const notOffered = optionError(gate, input.decision);
+    if (notOffered) return notOffered;
     // An approval binds bytes that are valid only until the subject's expiry (charter decision 7):
     // after it, approving would record what the executor will refuse anyway. The gate is closed
     // here rather than left for the sweep, so the refusal and the closed gate arrive together.
@@ -174,15 +170,19 @@ export async function resolveGate(deps: GatesDeps, input: {
 
   const cardId = gate.card_id as string;
   const now = deps.now();
-  deps.sql.exec(
-    `UPDATE gates SET status = 'resolved', decision = ?, comment = ?, decided_by = ?, resolved_at = ?, decided_via = ? WHERE id = ?`,
-    input.decision,
-    input.comment ?? null,
-    input.decidedBy,
-    now,
-    input.via ?? 'api',
-    input.gateId,
-  );
+  deps.ctx.storage.transactionSync(() => {
+    // Choosing settles the set in the same write as the decision (charter 2026-11-09, decision 3).
+    if (chosen) applyVariantChoice(deps.sql, now, { id: input.gateId, cardId }, chosen, variants, input.decidedBy);
+    deps.sql.exec(
+      `UPDATE gates SET status = 'resolved', decision = ?, comment = ?, decided_by = ?, resolved_at = ?, decided_via = ? WHERE id = ?`,
+      input.decision,
+      input.comment ?? null,
+      input.decidedBy,
+      now,
+      input.via ?? 'api',
+      input.gateId,
+    );
+  });
   if (boundSubjectId && (input.decision === 'approve_manual' || input.decision === 'approve_automatic')) {
     deps.sql.exec(
       `INSERT INTO approval_delivery_events
@@ -210,7 +210,7 @@ export async function resolveGate(deps: GatesDeps, input: {
     // An approval produces no new work, so a chained gate judges the same run's work.
     deps.advanceCard(cardId, gate.stage_key as string, input.decidedBy, deps.getCardHandoffJson(cardId), (gate.run_id as string | null) ?? null);
   } else if (input.decision === 'request_changes') {
-    if (boundSubjectId) deps.invalidateApprovalSubject(cardId, 'gate.request_changes', input.decidedBy);
+    if (boundSubjectId || choosing) deps.invalidateApprovalSubject(cardId, 'gate.request_changes', input.decidedBy);
     // Keep the agent's prior handoff and add the reviewer's feedback so rework has full context.
     const prior = deps.parseHandoff(deps.getCardHandoffJson(cardId));
     const merged =
@@ -228,7 +228,7 @@ export async function resolveGate(deps: GatesDeps, input: {
     deps.emit('card.changes_requested', { cardId, gateId: input.gateId, to: gate.return_stage_key });
     deps.notifyWorkAvailable(cardId); // back on a claimable stage for rework
   } else {
-    if (boundSubjectId) deps.invalidateApprovalSubject(cardId, 'gate.reject', input.decidedBy);
+    if (boundSubjectId || choosing) deps.invalidateApprovalSubject(cardId, 'gate.reject', input.decidedBy);
     deps.sql.exec(
       `UPDATE cards SET state = 'rejected', delegate_agent_id = NULL, current_run_id = NULL, updated_at = ? WHERE id = ?`,
       now,
@@ -479,27 +479,32 @@ export function recordAutomaticDelivery(deps: GatesDeps, input: {
   });
 }
 
-export function createGate(deps: GatesDeps, cardId: string, stageKey: string, returnStageKey: string, producedBy: string, runId: string | null, approvalSubject: PreparedApprovalSubject | null = null): string {
+export function createGate(deps: GatesDeps, cardId: string, stageKey: string, returnStageKey: string, producedBy: string, runId: string | null, approval: PreparedApproval | null = null): string {
   const id = newId('gate');
   const now = deps.now();
   const stage = deps.stages().find((candidate) => candidate.key === stageKey);
+  // A choice of variants freezes one subject per variant; the gate's own subject stays NULL until
+  // an approval chooses one (charter 2026-11-09). One subject is the gate's subject from the start.
+  const variants = approval && 'variants' in approval ? approval.variants : null;
+  const approvalSubject = approval && !('variants' in approval) ? approval : null;
+  const subjects = variants ? variants.map((v) => v.subject) : approvalSubject ? [approvalSubject] : [];
   deps.ctx.storage.transactionSync(() => {
-    if (approvalSubject) {
+    for (const subject of subjects) {
       deps.sql.exec(
         `INSERT INTO approval_subjects
            (id, card_id, gate_stage_key, schema, revision, canonical_bytes, digest, status,
             producer_run_id, produced_by, created_at)
          VALUES (?, ?, ?, ?, ?, ?, ?, 'active', ?, ?, ?)`,
-        approvalSubject.id,
+        subject.id,
         cardId,
         stageKey,
-        approvalSubject.schema,
-        approvalSubject.revision,
-        approvalSubject.canonicalBytes,
-        approvalSubject.digest,
-        approvalSubject.producerRunId,
-        approvalSubject.producedBy,
-        approvalSubject.createdAt,
+        subject.schema,
+        subject.revision,
+        subject.canonicalBytes,
+        subject.digest,
+        subject.producerRunId,
+        subject.producedBy,
+        subject.createdAt,
       );
     }
     deps.sql.exec(
@@ -512,16 +517,27 @@ export function createGate(deps: GatesDeps, cardId: string, stageKey: string, re
       stageKey,
       returnStageKey,
       producedBy,
-      JSON.stringify(approvalSubject ? APPROVAL_SUBJECT_GATE_OPTIONS : DEFAULT_GATE_OPTIONS),
+      JSON.stringify(approval ? APPROVAL_SUBJECT_GATE_OPTIONS : DEFAULT_GATE_OPTIONS),
       now,
       runId,
       approvalSubject?.id ?? null,
       approvalSubject?.digest ?? null,
-      approvalSubject ? JSON.stringify(stage?.approvalDeciderPrincipalIds ?? []) : null,
+      approval ? JSON.stringify(stage?.approvalDeciderPrincipalIds ?? []) : null,
     );
     if (approvalSubject) {
       deps.sql.exec(`UPDATE cards SET active_approval_subject_id = ? WHERE id = ?`, approvalSubject.id, cardId);
     }
+    variants?.forEach((v, position) => {
+      deps.sql.exec(
+        `INSERT INTO gate_variants (gate_id, position, variant_id, label, subject_id, digest) VALUES (?, ?, ?, ?, ?, ?)`,
+        id,
+        position,
+        v.variantId,
+        v.label,
+        v.subject.id,
+        v.subject.digest,
+      );
+    });
   });
   // Before the push, so the push carries the deadline (charter 2026-11-08, decisions 2 and 5).
   deps.startDecisionWait({ kind: 'gate', decisionId: id, cardId, stageKey });
@@ -606,6 +622,12 @@ export function gatesForCard(deps: GatesDeps, cardId: string): GateView[] {
 function rowToGate(deps: GatesDeps, r: Row): GateView {
   const subjectId = (r.approval_subject_id as string | null) ?? null;
   const approvalSubject = subjectId ? deps.approvalSubjectView(subjectId) : null;
+  const stored = gateVariants(deps.sql, r);
+  const variants = stored.flatMap((v) => {
+    const subject = deps.approvalSubjectView(v.subjectId);
+    const status = deps.sql.exec(`SELECT status FROM approval_subjects WHERE id = ?`, v.subjectId).toArray()[0]?.status;
+    return subject ? [{ id: v.variantId, label: v.label, status: status === 'active' ? ('active' as const) : ('invalidated' as const), chosen: v.subjectId === subjectId, approvalSubject: subject }] : [];
+  });
   const decision = (r.decision as string | null) ?? null;
   const delivery =
     decision === 'approve_manual' || decision === 'approve_automatic'
@@ -632,7 +654,10 @@ function rowToGate(deps: GatesDeps, r: Row): GateView {
     resolvedAt: (r.resolved_at as string | null) ?? null,
     ...(approvalSubject
       ? { approvalSubject }
-      : { summary: handoffSummary(deps.getCardHandoffJson(r.card_id as string)) }),
+      : variants.length > 0
+        ? { summary: variantsSummary(stored) }
+        : { summary: handoffSummary(deps.getCardHandoffJson(r.card_id as string)) }),
+    ...(variants.length > 0 ? { variants } : {}),
     ...(delivery ? { delivery } : {}),
   };
 }
@@ -673,47 +698,6 @@ export function optionDelivery(id: string): 'automatic' | 'manual' | null {
   return null;
 }
 
-/** Said to a v1 client when the preview had to be cut, which it otherwise could not know. */
-export const PREVIEW_SHORTENED_NOTE = 'This preview was shortened. Open the card to see everything before approving.';
-
-/**
- * The preview's text blocks as one string, for a v1 client that draws only `handoffSummary`.
- * When the bounds cut anything the note says so: a v1 client cannot read `previewComplete`.
- */
-function previewSummary(blocks: PreviewBlock[], complete: boolean): string | null {
-  const text = blocks.filter((b) => b.type === 'text').map((b) => b.text).join('\n\n');
-  if (text.length === 0) return complete ? null : PREVIEW_SHORTENED_NOTE;
-  return complete ? text : `${text}\n\n${PREVIEW_SHORTENED_NOTE}`;
-}
-
-/**
- * A subject as a decision envelope carries it, or null when there is no such subject.
- *
- * gate.v2 §3: what the decider must see. The full canonical payload stays behind the
- * authenticated route; only the kind's bounded preview travels. Shared by the gate and the
- * manual-delivery follow-up, so the two cannot disagree on what a person was shown.
- */
-function subjectEnvelope(deps: GatesDeps, subjectId: string | null): ApprovalSubjectEnvelope | null {
-  const subject = subjectId ? deps.approvalSubjectView(subjectId) : null;
-  if (!subject) return null;
-  const kind = approvalSubjectKind(subject.schema);
-  const canonical = record(subject.canonical);
-  const timing = canonical ? record(canonical.timing) : null;
-  // No kind or no readable payload means no preview at all, which is never complete.
-  const bounded = kind && canonical ? boundedPreview(kind.preview(canonical)) : { blocks: [], complete: false };
-  return {
-    id: subject.id,
-    digest: subject.digest,
-    schema: subject.schema,
-    revision: subject.revision,
-    expiresAt: timing && typeof timing.expiresAt === 'string' ? timing.expiresAt : null,
-    preview: bounded.blocks,
-    // False when the bounds cut or dropped anything: a client must then not offer an
-    // approving option, because the person could not see everything they would approve.
-    previewComplete: bounded.complete,
-  };
-}
-
 /**
  * The body a gate travels in, built once from the gate's own row.
  *
@@ -735,7 +719,10 @@ function gatePendingBody(deps: GatesDeps, gate: Row): GatePendingBody | null {
   const card = deps.getCard(cardId);
   if (!card) return null;
   const boardId = deps.getMeta('boardId');
-  const approvalSubject = subjectEnvelope(deps, (gate.approval_subject_id as string | null) ?? null);
+  // A choice still to be made carries its variants instead of one subject (charter 2026-11-09, §6).
+  const variants = gate.status === 'pending' && gate.approval_subject_id === null ? gateVariants(deps.sql, gate) : [];
+  const choice = variants.length > 0 ? variantsEnvelope(deps, variants) : null;
+  const approvalSubject = choice ?? subjectEnvelope(deps, (gate.approval_subject_id as string | null) ?? null);
   return {
     event: 'gate.pending',
     boardId,
@@ -757,9 +744,11 @@ function gatePendingBody(deps: GatesDeps, gate: Row): GatePendingBody | null {
     // For a subject-bound gate the summary is the preview's text: a v1 client draws
     // `handoffSummary` and nothing else, so this is how it shows the exact post until it
     // reads gate.v2.
-    handoffSummary: approvalSubject
-      ? previewSummary(approvalSubject.preview, approvalSubject.previewComplete)
-      : handoffSummary(deps.getCardHandoffJson(cardId)),
+    handoffSummary: choice
+      ? variantsSummary(variants)
+      : approvalSubject && 'preview' in approvalSubject
+        ? previewSummary(approvalSubject.preview, approvalSubject.previewComplete)
+        : handoffSummary(deps.getCardHandoffJson(cardId)),
     ...(approvalSubject
       ? {
           approvalSubject,

@@ -1,6 +1,7 @@
 import { env } from 'cloudflare:test';
 import type { GateDecision } from '@superpipeline/contract';
 import type { BoardDO, BoardInit } from '../src/board/board-do';
+import type { JsonValue } from '../src/json';
 
 /** Shared approval-subject fixtures. All values are generic; no live account or board data belongs here. */
 export const DECIDER = 'usr_fixture_decider';
@@ -132,6 +133,34 @@ export async function addBoundCard(
   const subject = state.storage.sql.exec('SELECT * FROM approval_subjects WHERE card_id = ?', made.value.id).one() as SubjectRow;
   const gate = state.storage.sql.exec('SELECT * FROM gates WHERE card_id = ?', made.value.id).one() as GateRow;
   return { cardId: made.value.id, producerRunId: claim.runId, subject, gate };
+}
+
+/** A choice of variants for a handoff (charter 2026-11-09): each with an id, a label and a payload. */
+export function variants(texts: string[] = ['First draft.', 'Second draft.'], expiresAt?: string[]) {
+  return texts.map((text, i) => {
+    const p = payload(expiresAt?.[i]);
+    const [item] = p.items;
+    return { id: `v${i + 1}`, label: `Variant ${i + 1}`, publicationPayload: { ...p, items: [{ ...item, text }] } };
+  });
+}
+
+/** A stored string column, or '' when it is not one. */
+const text = (v: SqlStorageValue | undefined): string => (typeof v === 'string' ? v : '');
+
+/** A card at the bound gate with a choice of variants, on a board openBoundGate (or init) set up. */
+export async function addVariantCard(board: BoardDO, state: DurableObjectState, handoff: JsonValue = { variants: variants() }) {
+  const made = await board.createCard({ title: 'Variant approval fixture', ownerUserId: 'usr_fixture_owner', projectId: 'prj_fixture' });
+  if (!made.ok) throw new Error(made.message);
+  const claim = await board.claim({ agentId: PRODUCER, capabilities: ['writing'] });
+  if (!claim.claimed) throw new Error('fixture draft was not claimable');
+  const completed = await board.complete({ runId: claim.runId, leaseEpoch: claim.leaseEpoch, handoff });
+  const subjects = state.storage.sql
+    .exec('SELECT id, digest, status, revision FROM approval_subjects WHERE card_id = ? ORDER BY revision', made.value.id)
+    .toArray()
+    .map((r) => ({ id: text(r.id), digest: text(r.digest), status: text(r.status), revision: Number(r.revision) }));
+  const row = state.storage.sql.exec('SELECT id, status, approval_subject_id, approval_subject_digest FROM gates WHERE card_id = ?', made.value.id).toArray()[0];
+  const gate = row ? { id: text(row.id), status: text(row.status), approval_subject_id: row.approval_subject_id, approval_subject_digest: row.approval_subject_digest } : undefined;
+  return { cardId: made.value.id, runId: claim.runId, leaseEpoch: claim.leaseEpoch, completed, subjects, gate };
 }
 
 export function boundDecision(gate: GateRow, subject: SubjectRow, decidedBy = DECIDER, decision: GateDecision = 'approve_automatic') {

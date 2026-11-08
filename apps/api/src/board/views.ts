@@ -20,6 +20,16 @@ export interface PreparedApprovalSubject {
   createdAt: string;
 }
 
+/** One variant of a choice, frozen as its own subject (charter 2026-11-09, decision 1). */
+export interface PreparedVariant {
+  variantId: string;
+  label: string;
+  subject: PreparedApprovalSubject;
+}
+
+/** What a completion freezes for an approval gate: one subject, or a choice of variants. */
+export type PreparedApproval = PreparedApprovalSubject | { variants: PreparedVariant[] };
+
 // What an option means to a client; kept beside the option it describes.
 export type { GateOptionMeaning } from './gate-option';
 
@@ -281,8 +291,16 @@ export interface GateView {
    * deciding blind. Plain text — a reader must render it as text.
    */
   summary?: string | null;
-  /** Present only for an opt-in digest-bound gate; loaded from immutable subject storage. */
+  /**
+   * Present only for an opt-in digest-bound gate; loaded from immutable subject storage. On a
+   * variant gate, absent until a variant is chosen, then the chosen variant's subject.
+   */
   approvalSubject?: ApprovalSubjectView;
+  /**
+   * Present only on a variant gate (charter 2026-11-09): every variant, in order, with its frozen
+   * subject. `chosen` marks the one an approval bound; `status` is its subject's.
+   */
+  variants?: Array<{ id: string; label: string; status: 'active' | 'invalidated'; chosen: boolean; approvalSubject: ApprovalSubjectView }>;
   /** Human-selected delivery state for a resolved immutable publishing approval. */
   delivery?: {
     mode: 'manual' | 'automatic';
@@ -304,6 +322,16 @@ export type ApprovalSubjectEnvelope = Pick<ApprovalSubjectView, 'id' | 'digest' 
   /** False when the preview had to be cut to its bounds; no approving option may then be offered. */
   previewComplete: boolean;
 };
+
+/**
+ * A variant gate's subject on the push (charter 2026-11-09, decision 6): the variants, each with
+ * the usual envelope, and no top-level `id` or `digest`, so a client that predates variants cannot
+ * read it as a subject and falls back to the v1 card. Each preview is bounded to an equal share
+ * of the carrier's budget and says on its own whether it is complete.
+ */
+export interface VariantSubjectsEnvelope {
+  variants: Array<{ id: string; label: string; subject: ApprovalSubjectEnvelope }>;
+}
 
 /**
  * What an option asks the person to type when they choose it (charter: the decision envelope
@@ -358,9 +386,9 @@ export interface GatePendingBody {
   /**
    * Immutable metadata for a digest-bound gate, and what the decider must see (charter: gate.v2
    * §3). The canonical payload stays behind the authenticated route; only the kind's bounded
-   * preview travels.
+   * preview travels. On a variant gate, the variants instead (`VariantSubjectsEnvelope`).
    */
-  approvalSubject?: ApprovalSubjectEnvelope;
+  approvalSubject?: ApprovalSubjectEnvelope | VariantSubjectsEnvelope;
   /** Authenticated web route for reviewing the authoritative subject. */
   reviewUrl?: string;
   /** gate.v2 §2: each option says what it means; `delivery` only on an option that approves a subject. */

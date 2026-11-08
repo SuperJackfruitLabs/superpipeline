@@ -1,11 +1,11 @@
 import { type GateDecision, stageCapabilitiesMet } from '@superpipeline/contract';
-import { approvalSubjectKind, nonEmptyString } from '../approval-subject-kinds';
+import { approvalSubjectKind, nonEmptyString, type ApprovalSubjectKind } from '../approval-subject-kinds';
 import { newId } from '../ids';
 import type { JsonValue } from '../json';
 import type { BoardContext } from './context';
 import type { CardView, Result, StageDef } from './model';
-import { isApproveDecision, record } from './rules';
-import type { ApprovalSubjectVerification, ApprovalSubjectView, PreparedApprovalSubject } from './views';
+import { isApproveDecision, record, VARIANT_ID_MAX, VARIANT_LABEL_MAX, VARIANTS_MAX } from './rules';
+import type { ApprovalSubjectVerification, ApprovalSubjectView, PreparedApproval, PreparedApprovalSubject, PreparedVariant } from './views';
 
 /**
  * Immutable, digest-bound approval subjects: the canonical bytes a gate approves, preparing them
@@ -253,28 +253,49 @@ export function confirmApprovalSubject(deps: ApprovalSubjectsDeps, input: {
   };
 }
 
-/** Retire the active subject without deleting its immutable audit row. */
+/**
+ * Retire the active subject without deleting its immutable audit row, and cancel the pending gate
+ * bound to it. A variant gate whose choice is not yet made has no subject of its own (charter
+ * 2026-11-09): every still-active variant of such a gate on the card is retired with it, and the
+ * gate, when still pending, is cancelled, so a changed card can approve none of them.
+ */
 export function invalidateApprovalSubject(deps: ApprovalSubjectsDeps, cardId: string, reason: string, invalidatedBy: string | null): void {
   const cardRow = deps.getCardRow(cardId);
   const subjectId = (cardRow?.active_approval_subject_id as string | null | undefined) ?? null;
-  if (!subjectId) return;
+  const unchosen = deps.sql
+    .exec(
+      `SELECT v.gate_id, v.subject_id FROM gate_variants v
+         JOIN gates g ON g.id = v.gate_id JOIN approval_subjects s ON s.id = v.subject_id
+        WHERE g.card_id = ? AND g.approval_subject_id IS NULL AND s.status = 'active'`,
+      cardId,
+    )
+    .toArray();
+  if (!subjectId && unchosen.length === 0) return;
   const now = deps.now();
-  deps.sql.exec(
-    `UPDATE approval_subjects
-        SET status = 'invalidated', invalidated_at = ?, invalidated_by = ?, invalidation_reason = ?
-      WHERE id = ? AND status = 'active'`,
-    now,
-    invalidatedBy,
-    reason,
-    subjectId,
-  );
-  deps.sql.exec(
-    `UPDATE gates SET status = 'cancelled', resolved_at = ?
-      WHERE approval_subject_id = ? AND status = 'pending'`,
-    now,
-    subjectId,
-  );
-  deps.sql.exec(`UPDATE cards SET active_approval_subject_id = NULL WHERE id = ?`, cardId);
+  const retire = (id: SqlStorageValue) =>
+    deps.sql.exec(
+      `UPDATE approval_subjects
+          SET status = 'invalidated', invalidated_at = ?, invalidated_by = ?, invalidation_reason = ?
+        WHERE id = ? AND status = 'active'`,
+      now,
+      invalidatedBy,
+      reason,
+      id,
+    );
+  if (subjectId) {
+    retire(subjectId);
+    deps.sql.exec(
+      `UPDATE gates SET status = 'cancelled', resolved_at = ?
+        WHERE approval_subject_id = ? AND status = 'pending'`,
+      now,
+      subjectId,
+    );
+    deps.sql.exec(`UPDATE cards SET active_approval_subject_id = NULL WHERE id = ?`, cardId);
+  }
+  for (const row of unchosen) {
+    retire(row.subject_id);
+    deps.sql.exec(`UPDATE gates SET status = 'cancelled', resolved_at = ? WHERE id = ? AND status = 'pending'`, now, row.gate_id);
+  }
 
   const stage = deps.stages().find((candidate) => candidate.key === (cardRow?.current_stage_key as string));
   if (stage && deps.isAgentClaimable(stage)) {
@@ -288,12 +309,29 @@ export function invalidateApprovalSubject(deps: ApprovalSubjectsDeps, cardId: st
   }
 }
 
-export async function prepareApprovalSubject(deps: ApprovalSubjectsDeps, card: CardView, stage: StageDef, handoff: JsonValue | undefined, runId: string, producedBy: string): Promise<Result<PreparedApprovalSubject>> {
-  const invalid = (message: string): Result<PreparedApprovalSubject> => ({
-    ok: false,
-    code: 'INVALID_APPROVAL_SUBJECT',
-    message,
-  });
+/** What a completion is refused with when its subject cannot be frozen. */
+function invalidSubject(message: string): { ok: false; code: 'INVALID_APPROVAL_SUBJECT'; message: string } {
+  return { ok: false, code: 'INVALID_APPROVAL_SUBJECT', message };
+}
+
+/** A variant id or label: a string of 1 to `max` characters with no control characters. */
+function boundedName(value: unknown, max: number): value is string {
+  if (typeof value !== 'string' || value.length === 0 || value.length > max || value.trim().length === 0) return false;
+  for (let i = 0; i < value.length; i += 1) {
+    const code = value.charCodeAt(i);
+    if (code < 0x20 || code === 0x7f) return false;
+  }
+  return true;
+}
+
+/**
+ * Freeze what a completion hands an approval gate: one subject from the kind's payload, or,
+ * when the handoff carries `variants` (charter 2026-11-09, decision 1), one subject per variant.
+ * Each variant carries the fields its kind reads from a handoff, is validated exactly as a single
+ * payload is, and gets its own revision (sequential, in order) and digest.
+ */
+export async function prepareApprovalSubject(deps: ApprovalSubjectsDeps, card: CardView, stage: StageDef, handoff: JsonValue | undefined, runId: string, producedBy: string): Promise<Result<PreparedApproval>> {
+  const invalid = invalidSubject;
   const kind = approvalSubjectKind(stage.approvalSubjectSchema);
   if (!kind) {
     return invalid(`unsupported approval subject schema: ${stage.approvalSubjectSchema ?? ''}`);
@@ -301,14 +339,11 @@ export async function prepareApprovalSubject(deps: ApprovalSubjectsDeps, card: C
   if (!stage.approvalDeciderPrincipalIds?.length || stage.approvalDeciderPrincipalIds.some((id) => !nonEmptyString(id))) {
     return invalid(`stage "${stage.key}" needs at least one approval decider principal`);
   }
-  if (card.projectId === null) return invalid('approval subject card needs a project');
+  const projectId = card.projectId;
+  if (projectId === null) return invalid('approval subject card needs a project');
   if (handoff === null || typeof handoff !== 'object' || Array.isArray(handoff)) {
     return invalid('approval subject handoff must be an object');
   }
-  const payload = kind.payload(handoff);
-  const payloadError = kind.validationError(payload);
-  if (payloadError) return invalid(payloadError);
-
   const prior = deps.sql
     .exec(
       `SELECT COALESCE(MAX(revision), 0) AS revision FROM approval_subjects WHERE card_id = ? AND schema = ?`,
@@ -316,7 +351,40 @@ export async function prepareApprovalSubject(deps: ApprovalSubjectsDeps, card: C
       kind.schema,
     )
     .one();
-  const revision = Number(prior.revision) + 1;
+  const base = Number(prior.revision) + 1;
+  const freeze = (payload: unknown, revision: number) =>
+    freezeSubject(deps, kind, card.id, projectId, payload, revision, runId, producedBy);
+
+  if (handoff.variants === undefined) {
+    return freeze(kind.payload(handoff), base);
+  }
+  const variants = handoff.variants;
+  if (kind.payload(handoff) !== undefined) return invalid('a handoff carries either variants or a single payload, not both');
+  if (!Array.isArray(variants) || variants.length === 0 || variants.length > VARIANTS_MAX) {
+    return invalid(`variants must be an array of 1 to ${VARIANTS_MAX}`);
+  }
+  const seen = new Set<string>();
+  const prepared: PreparedVariant[] = [];
+  for (let position = 0; position < variants.length; position += 1) {
+    const variant = variants[position];
+    if (variant === null || typeof variant !== 'object' || Array.isArray(variant)) return invalid(`variants[${position}] must be an object`);
+    const { id, label } = variant;
+    if (!boundedName(id, VARIANT_ID_MAX)) return invalid(`variants[${position}].id must be 1 to ${VARIANT_ID_MAX} characters`);
+    if (seen.has(id)) return invalid(`variants[${position}].id "${id}" is not unique`);
+    seen.add(id);
+    if (!boundedName(label, VARIANT_LABEL_MAX)) return invalid(`variants[${position}].label must be 1 to ${VARIANT_LABEL_MAX} characters`);
+    const subject = await freeze(kind.payload(variant), base + position);
+    if (!subject.ok) return invalid(`variants[${position}]: ${subject.message}`);
+    prepared.push({ variantId: id, label, subject: subject.value });
+  }
+  return { ok: true, value: { variants: prepared } };
+}
+
+/** One payload, validated by its kind and frozen as canonical bytes with its digest. */
+async function freezeSubject(deps: ApprovalSubjectsDeps, kind: ApprovalSubjectKind, cardId: string, projectId: string, payload: unknown, revision: number, runId: string, producedBy: string): Promise<Result<PreparedApprovalSubject>> {
+  const invalid = invalidSubject;
+  const payloadError = kind.validationError(payload);
+  if (payloadError) return invalid(payloadError);
   const outboundRequest = record(record(payload)?.outboundRequest);
   let requestDigest: string | null = null;
   if (outboundRequest) {
@@ -335,8 +403,8 @@ export async function prepareApprovalSubject(deps: ApprovalSubjectsDeps, card: C
       ...(payload as Record<string, JsonValue>),
       ...(outboundRequest && requestDigest ? { outboundRequest: { ...outboundRequest, digest: requestDigest } } : {}),
       schema: kind.schema,
-      cardId: card.id,
-      projectId: card.projectId,
+      cardId,
+      projectId,
       revision,
     });
   } catch (error) {
