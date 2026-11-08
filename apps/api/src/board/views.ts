@@ -430,6 +430,12 @@ export interface ElicitationPendingBody {
    * answer may be — the limit the answer route enforces.
    */
   freeText?: { maxLength: number };
+  /**
+   * Present only on a broker approval request (charter: waiting cards and broker approvals reach
+   * chat §3): the same id as `elicitationId`. Such a question belongs to no card, run or stage, so
+   * `cardId`, `runId` and `stageKey` are empty strings and `agentId` is the requesting principal.
+   */
+  approvalRequestId?: string;
   /** When the question was asked. The row's own clock, so a re-read is byte-identical. */
   ts: string;
 }
@@ -462,6 +468,76 @@ export interface DeliveryPendingBody {
   }>;
   /** When the gate was resolved. The gate's own clock, so a re-read is byte-identical. */
   ts: string;
+}
+
+/** Why a card waiting on a person reaches chat as `attention.pending` (not a question, not a review). */
+export type AttentionReason = 'repeated-failure' | 'blocked' | 'not-authorised';
+
+/**
+ * What an `attention.pending` carries — a card has come to rest on a person for a reason that is
+ * neither a question nor a review (charter: waiting cards and broker approvals reach chat §1–2).
+ *
+ * Pushed when the card parks, and read back by the hub's sweep for as long as that same wait
+ * stands. One builder serves both, for the reason {@link GatePendingBody} gives. It has no
+ * subject: nothing is frozen, so nothing is bound.
+ *
+ * `waitId` names this particular wait. The options' answers go to the card's resume and archive
+ * routes with `expectedWaitId: waitId`, which refuse `WAIT_CHANGED` once the wait has ended, so a
+ * late tap never acts on a different wait.
+ */
+export interface AttentionPendingBody {
+  event: 'attention.pending';
+  boardId: string | null;
+  boardName: string;
+  cardId: string;
+  cardTitle: string;
+  stageKey: string;
+  /** The stage's name, or its key when the board no longer has that stage. */
+  stageName: string;
+  waitId: string;
+  reason: AttentionReason;
+  /** The run's own words, never summarised. Null when the park gave none. */
+  detail: string | null;
+  /** The agent's one line, when it wrote one. */
+  summary: string | null;
+  /** How many attempts failed, when the breaker tripped; null otherwise. */
+  failureCount: number | null;
+  /** The stages before this one, in order: each is a `resume_at:<key>` option. */
+  earlierStages: Array<{ key: string; name: string }>;
+  /**
+   * `resume_here` (approve) and one `resume_at:<stageKey>` (choose) per earlier stage, each asking
+   * for the instruction the next attempt reads; `archive` (reject). No forward move: a move skips
+   * the stage's work and cancels its gates, which deserves the board.
+   */
+  options: Array<{
+    id: string;
+    label: string;
+    meaning: GateOptionMeaning;
+    needsComment: false;
+    input?: EnvelopeOptionInput;
+  }>;
+  /** When the card came to rest. The card's own clock, so a re-read is byte-identical. */
+  ts: string;
+}
+
+/** An approval request's state: `expired` is a pending request past its subject's expiry. */
+export type ApprovalRequestState = 'pending' | 'approved' | 'denied' | 'expired';
+
+/**
+ * `GET /v1/boards/:id/approval-requests/:approvalRequestId` — a broker approval as the broker
+ * reads it back with its own credential (charter: waiting cards and broker approvals reach chat
+ * §3, §5). `decidedBy` is who the board recorded deciding, never a caller-supplied name.
+ */
+export interface ApprovalRequestView {
+  approvalRequestId: string;
+  requestId: string;
+  state: ApprovalRequestState;
+  /** `allow_once` or `deny` once decided; null while pending or expired. */
+  option: 'allow_once' | 'deny' | null;
+  decidedBy: { principalId: string; label: string } | null;
+  decidedAt: string | null;
+  subject: { id: string; digest: string };
+  expiresAt: string;
 }
 
 /** A first-class external link on a card (docs/06). Idempotent on (cardId, url). */

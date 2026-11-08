@@ -4,9 +4,9 @@
 // and `gates/pending` before `gates/:id`. A path no route takes is a 405 (`methodNotAllowed`).
 // Before any of these runs, `entry.ts` has resolved the caller and answered the board collection.
 import { liveFeed, boardSnapshot, boardRename, stageEdit, stagesReplace, boardDelete, boardEvents, boardUsage, notificationsList, notificationRead, profilesList, profileSet, staleSettings, budgetSet } from './board';
-import { cardCreate, cardMove, cardResume, cardRead, cardEdit, cardDelete, cardSplit, cardReference, cardAttempts, cardActivities, cardEstimate } from './cards';
+import { cardArchive, cardCreate, cardMove, cardResume, cardRead, cardEdit, cardDelete, cardSplit, cardReference, cardAttempts, cardActivities, cardEstimate } from './cards';
 import { commentsList, commentAdd, commentDelete, commentNeverEdited } from './comments';
-import { gatesPending, gateRead, gateResolve, gateDelivery, deliveriesPending, elicitationsPending, elicitationAnswer } from './gates';
+import { gatesPending, gateRead, gateResolve, gateDelivery, deliveriesPending, elicitationsPending, elicitationAnswer, attentionPending } from './gates';
 import { pushConfigRegister, pushDispatch, pushDeliveries, githubConfig, triggerCreate, forgeSecret, forgeWebhook, githubWebhook } from './integrations';
 import { linksEdit, cardLinks } from './links';
 import { claim, runRead, runAttempts, evidenceReference, approvalSubjectVerify, runVerb } from './runs';
@@ -26,6 +26,7 @@ export const BOARD_ROUTES: readonly Route<BoardRequest>[] = [
   route('POST', /^cards\/([^/]+)\/move$/, cardMove),
   route('POST', /^cards\/([^/]+)\/resume$/, cardResume),
   route('*', /^cards\/([^/]+)\/resume$/, methodNotAllowed),
+  route('POST', /^cards\/([^/]+)\/archive$/, cardArchive),
   route('GET', /^cards\/([^/]+)$/, cardRead),
   route('PATCH', /^cards\/([^/]+)$/, cardEdit),
   route('DELETE', /^cards\/([^/]+)$/, cardDelete),
@@ -70,5 +71,6 @@ export const BOARD_ROUTES: readonly Route<BoardRequest>[] = [
   route('POST', /^gates\/([^/]+)\/delivery$/, gateDelivery),
   route('GET', /^deliveries\/pending$/, deliveriesPending),
   route('GET', /^elicitations\/pending$/, elicitationsPending),
+  route('GET', /^attention\/pending$/, attentionPending),
   route('POST', /^elicitations\/([^/]+)\/answer$/, elicitationAnswer),
 ];

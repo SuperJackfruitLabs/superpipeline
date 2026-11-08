@@ -18,6 +18,28 @@ export type PushDeps = Pick<
   | 'sql'
 >;
 
+/**
+ * Queue one body for every push config subscribed to its event. **Subscription only, never
+ * capability**: a gate, a question, a follow-up or a waiting card is addressed to a person, and
+ * matching on capability (as `work.available` does) would send it to whichever agents advertise
+ * the stage, or to nobody when a person owns it.
+ */
+export function queueSubscribedPush(deps: Pick<PushDeps, 'now' | 'sql'>, payload: { event: string }): void {
+  const body = JSON.stringify(payload);
+  const ts = deps.now();
+  for (const cfg of deps.sql.exec(`SELECT * FROM push_configs`).toArray()) {
+    const events: unknown = typeof cfg.events_json === 'string' ? JSON.parse(cfg.events_json) : null;
+    if (!Array.isArray(events) || !events.includes(payload.event)) continue;
+    deps.sql.exec(
+      `INSERT INTO push_deliveries (config_id, url, body, status, attempts, created_at) VALUES (?, ?, ?, 'pending', 0, ?)`,
+      cfg.id,
+      cfg.url,
+      body,
+      ts,
+    );
+  }
+}
+
 /** One config's share of a single drain. */
 const MAX_PUSH_PER_CONFIG_PER_DRAIN = 10;
 

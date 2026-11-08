@@ -109,14 +109,28 @@ export async function elicitationsPending({ stub }: BoardRequest): Promise<Respo
   return Response.json({ elicitations: await stub.pendingElicitationDeliveries() });
 }
 
+// GET /v1/boards/:id/attention/pending — every card waiting on a person for a reason chat carries.
+//
+// The read half of the sweep for `attention.pending` (charter: waiting cards and broker approvals
+// reach chat §1), on the same footing as `deliveries/pending`: it names nobody and carries no
+// authority. A card the hub posted that is no longer listed, or is listed under another `waitId`,
+// has stopped waiting on that wait; resuming or archiving stays on the human card routes.
+export async function attentionPending({ stub }: BoardRequest): Promise<Response> {
+  return Response.json({ attention: await stub.pendingAttention() });
+}
+
 // POST /v1/boards/:id/elicitations/:elicitationId/answer — the signed-in human answers an
 // agent's question (docs/04 §4), which returns the card to `working` and unblocks the agent.
 //
 // Deliberately a *human* route: agent tokens authenticate `claims` and `runs/*` only, so an
 // agent cannot reach this at all — and the DO refuses the asking agent's identity besides, so
 // the rule holds on every surface rather than only at this door.
-export async function elicitationAnswer({ request, user, stub }: BoardRequest, answerMatch: RegExpMatchArray): Promise<Response> {
+export async function elicitationAnswer(req: BoardRequest, answerMatch: RegExpMatchArray): Promise<Response> {
+  const { request, user, stub } = req;
   const ap = (await request.json()) as { option?: string; text?: string; subject?: unknown };
+  // A broker's approval request answers through the same route (charter: waiting cards and broker
+  // approvals reach chat §4), judged by the same subject rules plus owner-or-admin to approve.
+  if (answerMatch[1].startsWith('apr_')) return approvalRequestAnswer(req, answerMatch[1], ap);
   const result = await stub.answerElicitation({
     elicitationId: answerMatch[1],
     answeredBy: user?.userId ?? 'usr_dev',
@@ -126,6 +140,24 @@ export async function elicitationAnswer({ request, user, stub }: BoardRequest, a
     text: ap.text,
     // The subject the answerer saw (charter: strict decisions bind their subject §4). Anything but
     // `{ id, digest }` strings is no binding, which an approving answer is refused for.
+    ...answerBinding(ap.subject),
+  });
+  if (!result.ok) return Response.json({ error: result }, { status: statusForCode(result.code) });
+  return Response.json(result.value);
+}
+
+/**
+ * Answer a broker approval request. Who decided is recorded as the person's suite principal id
+ * (the broker reads it back), with their display name as the label.
+ */
+async function approvalRequestAnswer({ env, tenantId, user, stub }: BoardRequest, approvalRequestId: string, ap: { option?: string; subject?: unknown }): Promise<Response> {
+  const localId = user?.userId ?? 'usr_dev';
+  const principalId = (await principalIdsFor(env.DB, tenantId, [localId])).get(localId) ?? localId;
+  const result = await stub.answerApprovalRequest({
+    approvalRequestId,
+    decider: { id: localId, principalId, label: user?.name ?? user?.login ?? principalId },
+    answererRole: user?.role ?? null,
+    option: ap.option,
     ...answerBinding(ap.subject),
   });
   if (!result.ok) return Response.json({ error: result }, { status: statusForCode(result.code) });

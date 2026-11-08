@@ -1,7 +1,10 @@
 import { newId } from '../ids';
 import type { JsonValue } from '../json';
+import { waitChangedError } from './attention';
 import type { BoardContext } from './context';
 import type { CardView, Result } from './model';
+import { COMMENT_MAX_BYTES } from './rules';
+import type { CommentView } from './views';
 
 /**
  * Creating, editing, splitting and deleting cards.
@@ -10,6 +13,7 @@ import type { CardView, Result } from './model';
 /** What cards needs from the rest of the board. */
 export type CardsDeps = Pick<
   BoardContext,
+  | 'addComment'
   | 'addLink'
   | 'createCard'
   | 'createChildCard'
@@ -17,6 +21,7 @@ export type CardsDeps = Pick<
   | 'emit'
   | 'endReviewsOfArchivedCard'
   | 'getCard'
+  | 'getCardRow'
   | 'getMeta'
   | 'invalidateApprovalSubject'
   | 'mustGetCard'
@@ -406,13 +411,47 @@ export async function updateCard(deps: CardsDeps, cardId: string, patch: {
         archiving ? 'card.archived' : patch.spec !== undefined ? 'card.spec_changed' : 'card.changed',
         null,
       );
-      if (archiving) deps.endReviewsOfArchivedCard(cardId);
       deps.sql.exec(`UPDATE cards SET ${sets.join(', ')} WHERE id = ?`, ...vals, cardId);
+      // After the write, so the card is already archived when its reviews end: the reason that
+      // records is not a wait chat is told about (an archived card waits on nobody).
+      if (archiving) deps.endReviewsOfArchivedCard(cardId);
     });
   }
   const card = deps.mustGetCard(cardId);
   deps.emit('card.updated', { card });
   return { ok: true, value: card };
+}
+
+/**
+ * Archive a card as a person: the `archive` answer to a waiting card (charter: waiting cards and
+ * broker approvals reach chat §2), and the board's own archive with a remark.
+ *
+ * It archives exactly as the card PATCH does (`archivedAt`), so a pending review or question ends
+ * the same way. `expectedWaitId` names the wait the person answered; a card no longer in that wait
+ * refuses `WAIT_CHANGED` and nothing is written. Without it, an already archived card is returned
+ * unchanged rather than archived again. A comment, when given, joins the card's thread.
+ */
+export async function archiveCard(deps: CardsDeps, input: {
+  cardId: string;
+  actor: { id: string; name: string | null };
+  expectedWaitId?: string;
+  comment?: string;
+}): Promise<Result<{ card: CardView; comment: CommentView | null }>> {
+  if (!deps.getMeta('boardId')) return { ok: false, code: 'NOT_INITIALIZED', message: 'board is not initialized' };
+  const card = deps.getCard(input.cardId);
+  if (!card) return { ok: false, code: 'CARD_NOT_FOUND', message: `card not found: ${input.cardId}` };
+  const changed = waitChangedError(deps.getCardRow(card.id), input.expectedWaitId);
+  if (changed) return changed;
+  const remark = input.comment?.trim() ?? '';
+  const bytes = new TextEncoder().encode(remark).length;
+  if (bytes > COMMENT_MAX_BYTES) return { ok: false, code: 'INVALID_COMMENT', message: `a comment is at most ${COMMENT_MAX_BYTES} bytes; this one is ${bytes}` };
+  if (card.archivedAt) return { ok: true, value: { card, comment: null } };
+  const archived = await updateCard(deps, card.id, { archivedAt: deps.now() });
+  if (!archived.ok) return archived;
+  if (remark === '') return { ok: true, value: { card: archived.value, comment: null } };
+  const comment = await deps.addComment({ cardId: card.id, author: { kind: 'human', ...input.actor }, body: remark });
+  if (!comment.ok) return comment;
+  return { ok: true, value: { card: deps.mustGetCard(card.id), comment: comment.value } };
 }
 
 /** Delete a card and everything scoped to it (references, runs, activities, gates, usage, notifications, links). */

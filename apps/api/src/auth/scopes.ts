@@ -125,6 +125,8 @@ export function requiredScope(
    * formality the agent signs off on itself.
    */
   if (/^cards\/[^/]+\/resume$/.test(rest)) return SCOPE_FORBIDDEN;
+  /** Archiving a card as a person — the `archive` answer to a waiting card — for the same reason. */
+  if (/^cards\/[^/]+\/archive$/.test(rest)) return SCOPE_FORBIDDEN;
   if (/^cards\/[^/]+\/move$/.test(rest)) {
     return method === 'POST' ? 'plan' : SCOPE_FORBIDDEN;
   }

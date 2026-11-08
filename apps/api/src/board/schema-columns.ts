@@ -307,6 +307,40 @@ export function migrateCardAndRunColumns(sql: SqlStorage): void {
        UPDATE cards SET stage_since = COALESCE(NEW.updated_at, NEW.created_at) WHERE id = NEW.id;
      END`,
   );
+  /**
+   * Which wait a card is in, while it waits on a person (charter: waiting cards and broker approvals
+   * reach chat §2). A new id for every wait, null when the card is not waiting.
+   *
+   * A chat answer to a waiting card carries this id, and resume and archive refuse an answer for a
+   * wait that has since ended (`WAIT_CHANGED`), so a late tap never acts on a different wait.
+   *
+   * Written by triggers rather than by each writer, for the reason `state_since` gives: more than
+   * ten statements set or clear `needs_human_json`, and an id every one of them must remember is an
+   * id one of them will forget. It changes exactly when the reason does; rewriting the same reason
+   * is the same wait. The backfill gives a card already waiting when this arrived its own wait.
+   */
+  try {
+    sql.exec(`ALTER TABLE cards ADD COLUMN needs_human_id TEXT`);
+  } catch {
+    // column already exists
+  }
+  sql.exec(
+    `CREATE TRIGGER IF NOT EXISTS cards_needs_human_wait AFTER UPDATE OF needs_human_json ON cards
+     WHEN NEW.needs_human_json IS NOT OLD.needs_human_json
+     BEGIN
+       UPDATE cards SET needs_human_id = CASE WHEN NEW.needs_human_json IS NULL THEN NULL
+                                              ELSE 'wait_' || lower(hex(randomblob(8))) END
+       WHERE id = NEW.id;
+     END`,
+  );
+  sql.exec(
+    `CREATE TRIGGER IF NOT EXISTS cards_needs_human_wait_insert AFTER INSERT ON cards
+     WHEN NEW.needs_human_json IS NOT NULL
+     BEGIN
+       UPDATE cards SET needs_human_id = 'wait_' || lower(hex(randomblob(8))) WHERE id = NEW.id;
+     END`,
+  );
+  sql.exec(`UPDATE cards SET needs_human_id = 'wait_' || lower(hex(randomblob(8))) WHERE needs_human_json IS NOT NULL AND needs_human_id IS NULL`);
   // Only `project_id` is indexed: `projectSummary` is the one query that filters cards by it,
   // and nothing here looks cards up by `milestone_id` on its own.
   sql.exec(`CREATE INDEX IF NOT EXISTS idx_cards_project ON cards(project_id)`);

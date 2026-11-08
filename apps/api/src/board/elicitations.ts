@@ -1,5 +1,6 @@
 import { canTransition, nextState, type TaskEventType } from '@superpipeline/contract';
 import { newId } from '../ids';
+import { pendingApprovalRequestBodies } from './approval-requests';
 import type { JsonValue } from '../json';
 import type { BoardContext } from './context';
 import { parseElicitationOptions } from './elicitation';
@@ -518,7 +519,10 @@ function notifyElicitationPending(deps: ElicitationsDeps, elicitationId: string,
  * tappable is a question that will be tapped.
  */
 export async function pendingElicitationDeliveries(deps: ElicitationsDeps): Promise<ElicitationPendingBody[]> {
-  return pendingElicitationRows(deps)
+  const questions = pendingElicitationRows(deps)
     .map((r) => elicitationPendingBody(deps, r, strictOffer(deps, r.id)))
     .filter((b): b is ElicitationPendingBody => b !== null);
+  // A broker's approval request is a subject-bound question too, belonging to no card (charter:
+  // waiting cards and broker approvals reach chat §3–4); it leaves this list once decided or expired.
+  return [...questions, ...pendingApprovalRequestBodies(deps)];
 }

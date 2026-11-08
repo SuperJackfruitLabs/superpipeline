@@ -341,6 +341,13 @@ export type BoardErrorCode =
   | 'DECISION_CONFLICT'
   | 'DECISION_EXPIRED'
   | 'CARD_NOT_WAITING'
+  /** A chat answer named a wait the card is no longer in (charter: waiting cards reach chat §2). */
+  | 'WAIT_CHANGED'
+  /** A broker approval request's create body is malformed, or its subject already expired. */
+  | 'INVALID_APPROVAL_REQUEST'
+  /** A broker reused its `requestId` for a different subject or question. */
+  | 'REQUEST_ID_CONFLICT'
+  | 'APPROVAL_REQUEST_NOT_FOUND'
   | 'SEPARATION_OF_DUTIES'
   | 'INVALID_URL'
   | 'UNKNOWN_EVENT'

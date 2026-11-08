@@ -13,6 +13,8 @@ import { SUBSCRIBABLE_EVENTS, isRecordEvent } from './push/events';
 const READS = /^\/v1\/boards(?:\/(brd_[0-9a-f]{16})(?:\/cards\/(card_[0-9a-f]{16})(?:\/(attempts|comments|links|activities))?)?)?$/;
 const PUSH = /^\/v1\/boards\/(brd_[0-9a-f]{16})\/push-configs$/;
 const APPROVAL = /^\/v1\/boards\/(brd_[0-9a-f]{16})\/approval-subjects\/(aps_[0-9a-f]{16})\/verify$/;
+const APPROVAL_REQUESTS = /^\/v1\/boards\/(brd_[0-9a-f]{16})\/approval-requests$/;
+const APPROVAL_REQUEST = /^\/v1\/boards\/(brd_[0-9a-f]{16})\/approval-requests\/(apr_[0-9a-f]{16})$/;
 const APPROVAL_DELIVERY = /^\/v1\/boards\/(brd_[0-9a-f]{16})\/approval-subjects\/(aps_[0-9a-f]{16})\/delivery$/;
 
 /** Decoded without verifying, only to route: resolveHubService verifies before anything is read. */
@@ -28,6 +30,8 @@ function looksLikeService(request: Request): boolean {
 }
 
 const refuse = (status: number, code: string, message: string) => Response.json({ error: { code, message } }, { status });
+/** The status of an approval-request refusal; the same as `routes/errors.ts` gives these codes. */
+const requestStatus = (code: string) => (code === 'INVALID_APPROVAL_REQUEST' ? 400 : code === 'REQUEST_ID_CONFLICT' ? 409 : 404);
 const notFound = (what: string) => Response.json({ error: `${what} not found` }, { status: 404 });
 
 export async function serviceRoute(request: Request, env: Env, path: string): Promise<Response | null> {
@@ -35,10 +39,37 @@ export async function serviceRoute(request: Request, env: Env, path: string): Pr
   const push = request.method === 'POST' ? PUSH.exec(path) : null;
   const approval = request.method === 'POST' ? APPROVAL.exec(path) : null;
   const approvalDelivery = request.method === 'POST' ? APPROVAL_DELIVERY.exec(path) : null;
-  if ((!read && !push && !approval && !approvalDelivery) || !looksLikeService(request)) return null;
+  const requestCreate = request.method === 'POST' ? APPROVAL_REQUESTS.exec(path) : null;
+  const requestRead = request.method === 'GET' ? APPROVAL_REQUEST.exec(path) : null;
+  if ((!read && !push && !approval && !approvalDelivery && !requestCreate && !requestRead) || !looksLikeService(request)) return null;
 
   const svc = await resolveHubService(request, env);
   if (!svc) return refuse(401, 'UNAUTHORIZED', 'a service token for a mapped workspace is required');
+
+  /**
+   * A broker's approval request (charter: waiting cards and broker approvals reach chat §3). Created
+   * on `approvals:write`, the broker's write credential, and read back on either: the broker reads
+   * with its own read-scoped credential, which is a different service principal, so a read is not
+   * limited to the creator. Idempotency is per creating principal.
+   */
+  if (requestCreate || requestRead) {
+    const [, boardId, approvalRequestId] = requestCreate ?? requestRead ?? [];
+    if (requestCreate && !svc.scopes.includes(APPROVALS_WRITE)) return refuse(403, 'FORBIDDEN', 'this principal does not hold approvals:write');
+    if (requestRead && !svc.scopes.includes(APPROVALS_READ) && !svc.scopes.includes(APPROVALS_WRITE)) {
+      return refuse(403, 'FORBIDDEN', 'this principal holds neither approvals:read nor approvals:write');
+    }
+    if (!boardId || !(await boardNamesById(env.DB, svc.tenantId, [boardId])).has(boardId)) return notFound('board');
+    const stub = boardStub(env, svc.tenantId, boardId);
+    if (requestRead && approvalRequestId) {
+      const found = await stub.getApprovalRequest(approvalRequestId);
+      return found.ok ? Response.json(found.value) : refuse(requestStatus(found.code), found.code, found.message);
+    }
+    const body: unknown = await request.json().catch(() => null);
+    const created = await stub.createApprovalRequest({ requestedBy: svc.principalId, body });
+    if (!created.ok) return refuse(requestStatus(created.code), created.code, created.message);
+    const { approvalRequestId: id, state } = created.value.approvalRequest;
+    return created.value.created ? Response.json({ approvalRequestId: id, state }, { status: 201 }) : Response.json({ approvalRequestId: id, state });
+  }
 
   if (read) {
     if (!svc.scopes.includes(CARDS_READ)) return refuse(403, 'FORBIDDEN', 'this principal does not hold cards:read');

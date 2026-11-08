@@ -1,5 +1,6 @@
 import type { TaskState } from '@superpipeline/contract';
 import type { JsonValue } from '../json';
+import { notifyAttentionPending, waitChangedError } from './attention';
 import type { BoardContext } from './context';
 import type { CardNeedsHuman, CardView, Result, StageDef } from './model';
 import { CIRCUIT_BREAKER_LIMIT, COMMENT_MAX_BYTES } from './rules';
@@ -176,10 +177,15 @@ export async function resumeCard(deps: MovesDeps, input: {
   actor: { id: string; name: string | null };
   queuedGrant?: string[] | null;
   queuedGrantOwner?: string | null;
+  /** The wait the person answered (`attention.pending`'s `waitId`); a different or ended wait refuses. */
+  expectedWaitId?: string;
 }): Promise<Result<{ card: CardView; comment: CommentView }>> {
   if (!deps.getMeta('boardId')) return { ok: false, code: 'NOT_INITIALIZED', message: 'board is not initialized' };
   const card = deps.getCard(input.cardId);
   if (!card) return { ok: false, code: 'CARD_NOT_FOUND', message: `card not found: ${input.cardId}` };
+  // Before anything else: a late tap must never act on a different wait (charter §2).
+  const changed = waitChangedError(deps.getCardRow(card.id), input.expectedWaitId);
+  if (changed) return changed;
   if (typeof input.comment !== 'string' || input.comment.trim() === '') {
     return { ok: false, code: 'INVALID_COMMENT', message: 'resuming a card needs a comment saying what changed' };
   }
@@ -459,6 +465,9 @@ export function setNeedsHuman(deps: MovesDeps, cardId: string, needs: CardNeedsH
     needs ? JSON.stringify(needs) : null,
     cardId,
   );
+  // A wait chat carries reaches the board's room (charter: waiting cards reach chat §1). Clearing,
+  // or a question or review, queues nothing.
+  notifyAttentionPending(deps, cardId);
 }
 
 /**
@@ -482,6 +491,7 @@ export function parkForHuman(deps: MovesDeps, cardId: string, needs: CardNeedsHu
     deps.now(),
     cardId,
   );
+  notifyAttentionPending(deps, cardId);
 }
 
 /**
