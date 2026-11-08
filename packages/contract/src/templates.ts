@@ -36,6 +36,8 @@ export interface BoardTemplateStage {
    * this existed reads back unchanged.
    */
   requires?: { all?: string[]; any?: string[] };
+  /** When a decision waiting here is reminded about, then escalated (`DecisionTimeout` in entities.ts). */
+  timeout?: { remindAfterMinutes?: number; escalateAfterMinutes?: number };
 }
 
 export interface BoardTemplate {

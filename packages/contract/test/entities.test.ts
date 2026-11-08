@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { Agent, Board, Card, Reference, Stage, Tenant } from '../src';
+import { Agent, Board, Card, DECISION_TIMEOUT_MAX_MINUTES, Reference, Stage, Tenant } from '../src';
 
 describe('entity schemas', () => {
   it('parses a board with a pipeline and applies stage defaults', () => {
@@ -253,5 +253,15 @@ describe('agent external mapping', () => {
     const base = { id: 'card_abc123', boardId: 'brd_abc123', tenantId: 'tnt_abc123', contextId: 'ctx_abc123', title: 'T', ownerUserId: 'usr_abc123', currentStageKey: 's', createdAt: '2026-10-08T14:11:45Z', updatedAt: '2026-10-08T14:11:45Z' };
     expect(Card.parse({ ...base, lastAgentId: null, queuedGrantOwner: null, stageSince: '2026-10-08T14:11:45Z' })).toMatchObject({ lastAgentId: null, stageSince: '2026-10-08T14:11:45Z' });
     expect(Card.parse({ ...base, lastAgentId: 'agt_abc123', queuedGrantOwner: 'usr_abc123' }).lastAgentId).toBe('agt_abc123');
+  });
+
+  it('carries a stage decision timeout: whole minutes, escalate after remind, at most 30 days', () => {
+    const stage = { key: 'review', name: 'Review', order: 0, ownerKind: 'human' as const, gate: 'approval' as const };
+    expect(Stage.parse({ ...stage, timeout: { remindAfterMinutes: 60, escalateAfterMinutes: 240 } }).timeout).toEqual({ remindAfterMinutes: 60, escalateAfterMinutes: 240 });
+    expect(Stage.parse({ ...stage, timeout: { escalateAfterMinutes: DECISION_TIMEOUT_MAX_MINUTES } }).timeout).toEqual({ escalateAfterMinutes: 43200 });
+    expect(Stage.parse(stage).timeout).toBeUndefined();
+    for (const timeout of [{}, { remindAfterMinutes: 0 }, { remindAfterMinutes: 1.5 }, { escalateAfterMinutes: 43201 }, { remindAfterMinutes: 60, escalateAfterMinutes: 60 }, { remindAfterMinutes: 5, after: 1 }]) {
+      expect(Stage.safeParse({ ...stage, timeout }).success).toBe(false);
+    }
   });
 });
