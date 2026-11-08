@@ -1,6 +1,10 @@
 import { env, runInDurableObject } from 'cloudflare:test';
 import { describe, it, expect } from 'vitest';
 import { BoardDO, type BoardInit } from '../src/board/board-do';
+import { internalStageEditor } from '../src/board/model';
+
+/** Tests act for nobody: decision-policy checks are the routes' (see decision-policy-and-expiry.test.ts). */
+const TEST_EDITOR = internalStageEditor('test');
 
 const STAGES: BoardInit['stages'] = [
   { key: 'draft', name: 'Draft', order: 0, ownerKind: 'capability', owner: 'writing' },
@@ -161,7 +165,7 @@ describe('schedules', () => {
 
       // The stage the schedule targets is removed after the schedule was written — `setStages`
       // only refuses to remove a stage still holding cards, and no card has reached "review" yet.
-      const removed = await board.setStages([withReview[0]!]);
+      const removed = await board.setStages([withReview[0]!], TEST_EDITOR);
       if (!removed.ok) throw new Error(removed.message);
 
       const result = await board.fireDueSchedules('2099-01-01T10:00:00.000Z');

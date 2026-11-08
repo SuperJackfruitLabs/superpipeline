@@ -143,8 +143,8 @@ function decisionPolicyOf(stage: StageDef | undefined): string {
  * Refuse a stage change that alters any stage's decision policy, unless the editor may. Adding a
  * gated stage or removing one changes policy too: a stage that is absent has no gate.
  */
-export function refuseDecisionPolicyChange(before: StageDef[], after: StageDef[], editor: StageEditor | undefined): Result<never> | null {
-  if (!editor || editor.mayChangeDecisionPolicy) return null;
+export function refuseDecisionPolicyChange(before: StageDef[], after: StageDef[], editor: StageEditor): Result<never> | null {
+  if (editor.mayChangeDecisionPolicy) return null;
   const keys = new Set([...before.map((s) => s.key), ...after.map((s) => s.key)]);
   for (const key of keys) {
     const was = before.find((s) => s.key === key);
@@ -181,7 +181,7 @@ export function refuseDecisionPolicyChange(before: StageDef[], after: StageDef[]
  * The whole payload is the new pipeline — a PUT, not a patch — because order is a property of
  * the list rather than of any stage in it, and a partial update cannot express a reorder.
  */
-export async function setStages(deps: PipelineDeps, stages: StageDef[], editor?: StageEditor): Promise<Result<{ stages: StageDef[] }>> {
+export async function setStages(deps: PipelineDeps, stages: StageDef[], editor: StageEditor): Promise<Result<{ stages: StageDef[] }>> {
   if (!deps.getMeta('boardId')) return { ok: false, code: 'NOT_INITIALIZED', message: 'board is not initialized' };
   if (!Array.isArray(stages) || stages.length === 0) {
     return { ok: false, code: 'INVALID_STAGES', message: 'a board needs at least one stage' };
@@ -260,7 +260,7 @@ export async function setStages(deps: PipelineDeps, stages: StageDef[], editor?:
  * Validation is the same function the whole-pipeline write uses, so a rule accepted here is a
  * rule that would survive a replace.
  */
-export async function updateStage(deps: PipelineDeps, stageKey: string, patch: StagePatch, editor?: StageEditor): Promise<Result<{ stage: StageDef }>> {
+export async function updateStage(deps: PipelineDeps, stageKey: string, patch: StagePatch, editor: StageEditor): Promise<Result<{ stage: StageDef }>> {
   if (!deps.getMeta('boardId')) return { ok: false, code: 'NOT_INITIALIZED', message: 'board is not initialized' };
   const stages = deps.stages();
   const index = stages.findIndex((s) => s.key === stageKey);

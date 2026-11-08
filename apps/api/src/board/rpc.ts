@@ -95,8 +95,8 @@ export interface BoardStub {
   ): Promise<Result<CardView>>;
   deleteCard(cardId: string): Promise<Result<{ ok: true }>>;
   setName(name: string): Promise<Result<{ ok: true }>>;
-  setStages(stages: StageDef[], editor?: StageEditor): Promise<Result<{ stages: StageDef[] }>>;
-  updateStage(stageKey: string, patch: StagePatch, editor?: StageEditor): Promise<Result<{ stage: StageDef }>>;
+  setStages(stages: StageDef[], editor: StageEditor): Promise<Result<{ stages: StageDef[] }>>;
+  updateStage(stageKey: string, patch: StagePatch, editor: StageEditor): Promise<Result<{ stage: StageDef }>>;
   destroy(): Promise<{ ok: true }>;
   getState(): Promise<BoardSnapshot>;
   getEvents(limit?: number): Promise<BoardEvent[]>;

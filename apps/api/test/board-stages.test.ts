@@ -1,6 +1,10 @@
 import { SELF, env, runInDurableObject } from 'cloudflare:test';
 import { describe, it, expect } from 'vitest';
 import { BoardDO, type BoardInit } from '../src/board/board-do';
+import { internalStageEditor } from '../src/board/model';
+
+/** Tests act for nobody: decision-policy checks are the routes' (see decision-policy-and-expiry.test.ts). */
+const TEST_EDITOR = internalStageEditor('test');
 
 /**
  * The audit's "written once, then fixed forever" headline: a board's pipeline was set in `init`
@@ -27,7 +31,7 @@ describe('BoardDO — the pipeline can be reworked', () => {
         { key: 'todo', name: 'Backlog', order: 1 },
         { key: 'doing', name: 'In progress', order: 0, ownerKind: 'capability', owner: 'code', wipLimit: 2, gate: 'approval' },
         { key: 'done', name: 'Done', order: 2 },
-      ]);
+      ], TEST_EDITOR);
       expect(r.ok).toBe(true);
 
       const stages = (await board.getState()).stages;
@@ -45,7 +49,7 @@ describe('BoardDO — the pipeline can be reworked', () => {
       const card = await board.createCard({ title: 'x', ownerUserId: 'usr_a' });
       expect(card.ok).toBe(true);
 
-      await board.setStages([...PIPE, { key: 'review', name: 'Review', order: 3, gate: 'approval' }]);
+      await board.setStages([...PIPE, { key: 'review', name: 'Review', order: 3, gate: 'approval' }], TEST_EDITOR);
       const snap = await board.getState();
       expect(snap.stages).toHaveLength(4);
       expect(snap.cards[0]!.currentStageKey).toBe('todo'); // untouched
@@ -57,7 +61,7 @@ describe('BoardDO — the pipeline can be reworked', () => {
       await board.init({ id: 'brd_st3', tenantId: 'tnt_a', name: 'S', stages: PIPE });
       await board.createCard({ title: 'x', ownerUserId: 'usr_a' }); // lands in `todo`
 
-      const r = await board.setStages([{ key: 'done', name: 'Done', order: 0 }]);
+      const r = await board.setStages([{ key: 'done', name: 'Done', order: 0 }], TEST_EDITOR);
       expect(r.ok).toBe(false);
       if (!r.ok) {
         expect(r.code).toBe('STAGE_NOT_EMPTY');
@@ -71,7 +75,7 @@ describe('BoardDO — the pipeline can be reworked', () => {
   it('removes an empty stage', async () => {
     await runInDurableObject(stubFor('st-empty'), async (board: BoardDO) => {
       await board.init({ id: 'brd_st4', tenantId: 'tnt_a', name: 'S', stages: PIPE });
-      const r = await board.setStages(PIPE.filter((s) => s.key !== 'doing'));
+      const r = await board.setStages(PIPE.filter((s) => s.key !== 'doing'), TEST_EDITOR);
       expect(r.ok).toBe(true);
       expect((await board.getState()).stages.map((s) => s.key)).toEqual(['todo', 'done']);
     });
@@ -81,20 +85,20 @@ describe('BoardDO — the pipeline can be reworked', () => {
     await runInDurableObject(stubFor('st-bad'), async (board: BoardDO) => {
       await board.init({ id: 'brd_st5', tenantId: 'tnt_a', name: 'S', stages: PIPE });
 
-      const empty = await board.setStages([]);
+      const empty = await board.setStages([], TEST_EDITOR);
       expect(empty.ok).toBe(false);
 
       const dup = await board.setStages([
         { key: 'todo', name: 'A', order: 0 },
         { key: 'todo', name: 'B', order: 1 },
-      ]);
+      ], TEST_EDITOR);
       expect(dup.ok).toBe(false);
       if (!dup.ok) expect(dup.code).toBe('INVALID_STAGES');
 
-      const unnamed = await board.setStages([{ key: 'todo', name: '  ', order: 0 }]);
+      const unnamed = await board.setStages([{ key: 'todo', name: '  ', order: 0 }], TEST_EDITOR);
       expect(unnamed.ok).toBe(false);
 
-      const badWip = await board.setStages([{ key: 'todo', name: 'A', order: 0, wipLimit: 0 }]);
+      const badWip = await board.setStages([{ key: 'todo', name: 'A', order: 0, wipLimit: 0 }], TEST_EDITOR);
       expect(badWip.ok).toBe(false);
 
       expect((await board.getState()).stages).toHaveLength(3); // nothing landed
@@ -160,7 +164,7 @@ describe('BoardDO — a stage carries its own instructions', () => {
         { key: 'todo', name: 'To do', order: 0 },
         { key: 'doing', name: 'Doing', order: 1, ownerKind: 'capability', owner: 'code', instructions: RULE },
         { key: 'done', name: 'Done', order: 2 },
-      ]);
+      ], TEST_EDITOR);
       expect(r.ok).toBe(true);
 
       const stages = (await board.getState()).stages;
@@ -179,7 +183,7 @@ describe('BoardDO — a stage carries its own instructions', () => {
         { key: 'todo', name: 'To do', order: 0 },
         { key: 'doing', name: 'Doing', order: 1, instructions: 'x'.repeat(4001) },
         { key: 'done', name: 'Done', order: 2 },
-      ]);
+      ], TEST_EDITOR);
       // The cap lives in the contract, but the route casts rather than parses — so a cap
       // enforced only there is a cap nothing enforces.
       expect(r.ok).toBe(false);
@@ -194,7 +198,7 @@ describe('BoardDO — a stage carries its own instructions', () => {
         { key: 'todo', name: 'To do', order: 0 },
         { key: 'doing', name: 'Doing', order: 1, instructions: '   ' },
         { key: 'done', name: 'Done', order: 2 },
-      ]);
+      ], TEST_EDITOR);
       expect(r.ok).toBe(false);
       if (!r.ok) expect(r.code).toBe('INVALID_STAGES');
     });
@@ -214,7 +218,7 @@ describe('BoardDO — one stage can be changed without rewriting the pipeline', 
   it('changes only the named stage, and only the fields given', async () => {
     await runInDurableObject(stubFor('st-patch'), async (board: BoardDO) => {
       await board.init({ id: 'brd_sp', tenantId: 'tnt_a', name: 'S', stages: PIPE });
-      const r = await board.updateStage('doing', { instructions: RULE });
+      const r = await board.updateStage('doing', { instructions: RULE }, TEST_EDITOR);
       expect(r.ok).toBe(true);
 
       const stages = (await board.getState()).stages;
@@ -232,7 +236,7 @@ describe('BoardDO — one stage can be changed without rewriting the pipeline', 
   it('refuses a stage that is not on the board, rather than creating one', async () => {
     await runInDurableObject(stubFor('st-patch-missing'), async (board: BoardDO) => {
       await board.init({ id: 'brd_spm', tenantId: 'tnt_a', name: 'S', stages: PIPE });
-      const r = await board.updateStage('nope', { instructions: RULE });
+      const r = await board.updateStage('nope', { instructions: RULE }, TEST_EDITOR);
       expect(r.ok).toBe(false);
       if (!r.ok) expect(r.code).toBe('UNKNOWN_STAGE');
     });
@@ -243,9 +247,9 @@ describe('BoardDO — one stage can be changed without rewriting the pipeline', 
     // drifts is the one nobody is looking at.
     await runInDurableObject(stubFor('st-patch-limits'), async (board: BoardDO) => {
       await board.init({ id: 'brd_spl', tenantId: 'tnt_a', name: 'S', stages: PIPE });
-      const long = await board.updateStage('doing', { instructions: 'x'.repeat(4001) });
+      const long = await board.updateStage('doing', { instructions: 'x'.repeat(4001) }, TEST_EDITOR);
       expect(long.ok).toBe(false);
-      const blank = await board.updateStage('doing', { instructions: '   ' });
+      const blank = await board.updateStage('doing', { instructions: '   ' }, TEST_EDITOR);
       expect(blank.ok).toBe(false);
     });
   });
@@ -253,11 +257,11 @@ describe('BoardDO — one stage can be changed without rewriting the pipeline', 
   it('clears a rule when asked with null, which is not the same as omitting it', async () => {
     await runInDurableObject(stubFor('st-patch-clear'), async (board: BoardDO) => {
       await board.init({ id: 'brd_spc', tenantId: 'tnt_a', name: 'S', stages: PIPE });
-      await board.updateStage('doing', { instructions: RULE });
-      await board.updateStage('doing', { name: 'In progress' });
+      await board.updateStage('doing', { instructions: RULE }, TEST_EDITOR);
+      await board.updateStage('doing', { name: 'In progress' }, TEST_EDITOR);
       expect((await board.getState()).stages.find((s) => s.key === 'doing')!.instructions).toBe(RULE);
 
-      await board.updateStage('doing', { instructions: null });
+      await board.updateStage('doing', { instructions: null }, TEST_EDITOR);
       expect((await board.getState()).stages.find((s) => s.key === 'doing')!.instructions).toBeUndefined();
     });
   });
@@ -265,7 +269,7 @@ describe('BoardDO — one stage can be changed without rewriting the pipeline', 
   it('normalises a capability owner the way the whole-pipeline write does', async () => {
     await runInDurableObject(stubFor('st-patch-norm'), async (board: BoardDO) => {
       await board.init({ id: 'brd_spn', tenantId: 'tnt_a', name: 'S', stages: PIPE });
-      await board.updateStage('doing', { owner: 'Code Review' });
+      await board.updateStage('doing', { owner: 'Code Review' }, TEST_EDITOR);
       expect((await board.getState()).stages.find((s) => s.key === 'doing')!.owner).toBe('code-review');
     });
   });

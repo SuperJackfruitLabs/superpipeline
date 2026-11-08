@@ -1,6 +1,10 @@
 import { env, runInDurableObject } from 'cloudflare:test';
 import { describe, it, expect } from 'vitest';
 import { BoardDO, type BoardInit, type CardView } from '../src/board/board-do';
+import { internalStageEditor } from '../src/board/model';
+
+/** Tests act for nobody: decision-policy checks are the routes' (see decision-policy-and-expiry.test.ts). */
+const TEST_EDITOR = internalStageEditor('test');
 
 /**
  * A finished turn says what KIND of finish it is (`StageOutcome` in @superpipeline/contract).
@@ -341,19 +345,19 @@ describe('a return stage is validated where it is written', () => {
   it('refuses a return stage that is not an earlier stage, on both writes', async () => {
     await runInDurableObject(stubFor('outcome-validate'), async (b: BoardDO) => {
       await b.init({ id: 'brd_val', tenantId: 'tnt_outcome', name: 'V', stages: UNCONFIGURED });
-      const later = await b.updateStage('integrate', { returnStage: 'done' });
+      const later = await b.updateStage('integrate', { returnStage: 'done' }, TEST_EDITOR);
       expect(!later.ok && later.code).toBe('INVALID_STAGES');
-      const missing = await b.updateStage('integrate', { returnStage: 'fxi' });
+      const missing = await b.updateStage('integrate', { returnStage: 'fxi' }, TEST_EDITOR);
       expect(!missing.ok && missing.code).toBe('INVALID_STAGES');
-      const good = await b.updateStage('integrate', { returnStage: 'fix' });
+      const good = await b.updateStage('integrate', { returnStage: 'fix' }, TEST_EDITOR);
       expect(good.ok && good.value.stage.returnStage).toBe('fix');
-      const cleared = await b.updateStage('integrate', { returnStage: null });
+      const cleared = await b.updateStage('integrate', { returnStage: null }, TEST_EDITOR);
       expect(cleared.ok && cleared.value.stage.returnStage).toBeUndefined();
 
-      const replace = await b.setStages(PIPELINE.map((s) => (s.key === 'integrate' ? { ...s, returnStage: 'integrate' } : s)));
+      const replace = await b.setStages(PIPELINE.map((s) => (s.key === 'integrate' ? { ...s, returnStage: 'integrate' } : s)), TEST_EDITOR);
       expect(!replace.ok && replace.code).toBe('INVALID_STAGES');
       // Removing the stage another one returns to is refused too, rather than leaving a dangling return.
-      const orphan = await b.setStages(PIPELINE.filter((s) => s.key !== 'fix').map((s, i) => ({ ...s, order: i })));
+      const orphan = await b.setStages(PIPELINE.filter((s) => s.key !== 'fix').map((s, i) => ({ ...s, order: i })), TEST_EDITOR);
       expect(!orphan.ok && orphan.code).toBe('INVALID_STAGES');
     });
   });

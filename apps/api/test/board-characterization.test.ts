@@ -2,6 +2,10 @@ import { env, runInDurableObject, runDurableObjectAlarm } from 'cloudflare:test'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { BoardDO, BoardInit } from '../src/board/board-do';
 import type { PushSender } from '../src/push/deliver';
+import { internalStageEditor } from '../src/board/model';
+
+/** Tests act for nobody: decision-policy checks are the routes' (see decision-policy-and-expiry.test.ts). */
+const TEST_EDITOR = internalStageEditor('test');
 
 /**
  * What the Board Durable Object does, pinned before it is split into modules
@@ -394,9 +398,9 @@ describe('the Board Durable Object, pinned before the split', () => {
       await record('enqueueAllRunReports', () => board.enqueueAllRunReports());
 
       // ----- stages and the board -----
-      await record('updateStage', () => board.updateStage('research', { summary: 'Find sources', wipLimit: 3 }));
-      await record('updateStage refused', () => board.updateStage('research', { wipLimit: 0 }));
-      await record('setStages', () => board.setStages([...STAGES, { key: 'archive', name: 'Archive', order: 5 }]));
+      await record('updateStage', () => board.updateStage('research', { summary: 'Find sources', wipLimit: 3 }, TEST_EDITOR));
+      await record('updateStage refused', () => board.updateStage('research', { wipLimit: 0 }, TEST_EDITOR));
+      await record('setStages', () => board.setStages([...STAGES, { key: 'archive', name: 'Archive', order: 5 }], TEST_EDITOR));
       await record('setName', () => board.setName('Characterization, renamed'));
       await record('deleteCard', () => board.deleteCard(child.id));
       await record('getState', () => board.getState());

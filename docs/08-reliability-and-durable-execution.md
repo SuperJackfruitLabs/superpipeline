@@ -126,7 +126,11 @@ Decisions:
      `PUT …/stages`, including adding or removing a gated stage — needs a workspace owner or admin:
      the Accounts workspace role (`orgRole`) on the Organization plane, the local membership role
      without it. Anyone else gets `403 WORKSPACE_ADMIN_REQUIRED`; a member keeps every other stage
-     edit. "Always allow" on a question is judged by the same role.
+     edit. "Always allow" on a question is judged by the same role. Creating a board whose stages
+     bind an approval subject or name deciders needs the same role; a plain `gate: "approval"` on a
+     new board does not (it only adds a human check, and a new board has no policy to weaken).
+     Every stage write in code names its editor (`StageEditor`: a `person` the route judged, or an
+     `internal` caller with a reason), so a call site that forgets fails to compile.
 4. **Timeout & escalation** are driven by the **DO alarm**, independent of any agent: on `after`,
    widen approvers / notify; on `timeoutMs`, apply `onTimeout`. A slow human never blocks compute; a
    forgotten gate resolves by policy.

@@ -15,6 +15,7 @@ import { __resetJwksCacheForTests } from '../src/auth/hub-jwt';
 import { ensureOrgTenant } from '../src/auth/org-tenancy';
 import type { BoardDO, BoardInit, StageDef } from '../src/board/board-do';
 import { boardStub as stubFor } from '../src/board/stub';
+import { internalStageEditor } from '../src/board/model';
 import { recordBoard } from '../src/db/catalog';
 import { newId } from '../src/ids';
 import { addBoundCard, boardStub, boundDecision, DECIDER, payload, STAGES } from './approval-subject-fixtures';
@@ -71,6 +72,44 @@ describe('decision 6: a stage\'s decision policy is a workspace admin\'s to chan
     const byAdmin = await call('PATCH', `/v1/boards/${boardId}/stages/review`, person('usr_dp_admin'), { gate: 'none' });
     expect(byAdmin.status).toBe(200);
     expect((await stagesOf(TENANT, boardId))[1]?.gate).toBe('none');
+  });
+
+  it('lets only a workspace admin create a board whose stages name deciders; a plain gate is anyone\'s who may create', async () => {
+    const DECIDING: BoardInit['stages'] = [
+      { key: 'draft', name: 'Draft', order: 0, ownerKind: 'capability', owner: 'writing' },
+      { key: 'approve', name: 'Approve', order: 1, ownerKind: 'human', gate: 'approval', approvalSubjectSchema: 'social-publish/v1', approvalDeciderPrincipalIds: ['usr_dp_member'] },
+    ];
+    const ORG = 'org_0000000000000000d003';
+    await withOrgPlane(async () => {
+      await ensureOrgTenant(env.DB, ORG);
+      const human = (sub: string, email: string, orgRole: string) => planeToken({ sub, email, org: ORG, orgRole });
+      // The fresh tenant's first visitor: a local owner (so `manage` admits them) whom Accounts calls a member.
+      const member = bearer(await human('prn_0000000000000000d005', 'first-create@example.com', 'member'));
+      const refused = await call('POST', '/v1/boards', member, { name: 'Publishing', stages: DECIDING });
+      expect(refused.status).toBe(403);
+      expect(await refused.json()).toMatchObject({ error: { code: 'WORKSPACE_ADMIN_REQUIRED' } });
+      expect((await call('POST', '/v1/boards', member, { name: 'Reviewed', stages: POLICY_STAGES })).status).toBe(201);
+    });
+    // Without the plane, a local admin may.
+    expect((await call('POST', '/v1/boards', person('usr_dp_admin'), { name: 'Publishing', stages: DECIDING })).status).toBe(201);
+  });
+
+  it('every stage write names its editor: a person the route judged, or an internal caller that says why', async () => {
+    const boardId = await seedBoard(TENANT);
+    const board = stubFor(env, TENANT, boardId);
+    const ungate = { gate: 'none' as const };
+    expect(await board.updateStage('review', ungate, { kind: 'person', mayChangeDecisionPolicy: false })).toMatchObject({ ok: false, code: 'WORKSPACE_ADMIN_REQUIRED' });
+    expect(await board.setStages(POLICY_STAGES.map((s) => ({ ...s, gate: 'none' as const })), { kind: 'person', mayChangeDecisionPolicy: false })).toMatchObject({ ok: false, code: 'WORKSPACE_ADMIN_REQUIRED' });
+    expect(await board.updateStage('review', ungate, internalStageEditor('test: a trusted caller'))).toMatchObject({ ok: true });
+    // A caller that forgets its editor does not compile, so no call site skips the check by omission.
+    // Never run; pinned for `pnpm typecheck`, which fails if either line stops being an error.
+    const forgets = () => {
+      // @ts-expect-error the editor is required
+      void board.updateStage('review', ungate);
+      // @ts-expect-error the editor is required
+      void board.setStages(POLICY_STAGES);
+    };
+    expect(typeof forgets).toBe('function');
   });
 
   it('on the Organization plane, judges by the Accounts role: a local owner whom Accounts calls a member is refused', async () => {

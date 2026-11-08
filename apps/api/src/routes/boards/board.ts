@@ -80,7 +80,7 @@ export async function stageEdit({ request, env, user, agent, stub }: BoardReques
     returnStage: body.returnStage,
     // A stage's gate is decision policy, a workspace admin's to change (charter decision 6); the
     // board compares and refuses `WORKSPACE_ADMIN_REQUIRED`. An agent never reaches it (above).
-  }, { mayChangeDecisionPolicy: !agent && isWorkspaceAdmin(env, user) });
+  }, { kind: 'person', mayChangeDecisionPolicy: !agent && isWorkspaceAdmin(env, user) });
   if (!result.ok) {
     // `UNKNOWN_STAGE` is a 400 in the shared mapping, which is right where the stage is in
     // the BODY — `move` asking for a lane that does not exist is a bad request. Here it is a
@@ -102,7 +102,7 @@ export async function stagesReplace({ request, env, tenantId, boardId, user, stu
   const body = (await request.json()) as { stages?: StageDef[] };
   // `manage` let this caller in by the local role; changing any stage's decision policy also needs
   // a workspace owner or admin by the Accounts role (charter decision 6), which the board checks.
-  const r = await stub.setStages(body.stages ?? [], { mayChangeDecisionPolicy: isWorkspaceAdmin(env, user) });
+  const r = await stub.setStages(body.stages ?? [], { kind: 'person', mayChangeDecisionPolicy: isWorkspaceAdmin(env, user) });
   if (!r.ok) return Response.json({ error: r }, { status: statusForCode(r.code) });
   await updateBoardStages(env.DB, tenantId, boardId, JSON.stringify(r.value.stages));
   await registerStageCapabilities(env, tenantId, r.value.stages, user?.userId ?? null);

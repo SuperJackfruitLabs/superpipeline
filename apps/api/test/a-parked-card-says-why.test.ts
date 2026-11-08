@@ -1,6 +1,10 @@
 import { env, runInDurableObject } from 'cloudflare:test';
 import { describe, it, expect } from 'vitest';
 import { BoardDO, type BoardInit, type CardView } from '../src/board/board-do';
+import { internalStageEditor } from '../src/board/model';
+
+/** Tests act for nobody: decision-policy checks are the routes' (see decision-policy-and-expiry.test.ts). */
+const TEST_EDITOR = internalStageEditor('test');
 
 /**
  * Why a card needs a human.
@@ -277,7 +281,7 @@ describe('every way a card comes to rest on a person', () => {
         { key: 'build', name: 'Build', order: 0, ownerKind: 'capability', owner: 'code',
           completion: { handoff: ['verdict'] } },
         { key: 'verify', name: 'Verify', order: 1, ownerKind: 'capability', owner: 'test' },
-      ]);
+      ], TEST_EDITOR);
       const card = await mustCreate(b);
       const c = await b.claim(CODER);
       if (!c.claimed) throw new Error('expected a claim');
