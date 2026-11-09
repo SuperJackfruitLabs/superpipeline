@@ -46,7 +46,8 @@ export async function gateResolve({ request, env, tenantId, user, agent, stub }:
   const gateView = await stub.getGate(gateMatch[1]);
   const principalIds =
     // A variant gate is decided by the same principals before a variant is chosen (charter 2026-11-09).
-    gateView.ok && (gateView.value.approvalSubject || gateView.value.variants)
+    // A quorum gate counts each person once by principal, however they answer (charter 2026-11-09).
+    gateView.ok && (gateView.value.approvalSubject || gateView.value.variants || gateView.value.quorum)
       ? await principalIdsFor(env.DB, tenantId, [localDeciderId])
       : new Map<string, string>();
   const result = await stub.resolveGate({
@@ -58,6 +59,9 @@ export async function gateResolve({ request, env, tenantId, user, agent, stub }:
     approvalSubjectDigest: gp.approvalSubjectDigest,
     // From who is calling, never from the body: a caller cannot claim another surface.
     via: viaFor(user, agent),
+    // The role in the verified token that carries this answer: a chat answer arrives with the hub
+    // acting for the person, and their own role (charter 2026-11-09, more than one approver, decision 2).
+    deciderRole: workspaceRoleFor(env, user),
   });
   if (!result.ok) return Response.json({ error: flatError(result) }, { status: statusForCode(result.code) });
   return Response.json({ card: result.value });

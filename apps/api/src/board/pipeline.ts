@@ -1,5 +1,6 @@
 import { capabilityTag, normalizeRequirement, returnStageError } from '@superpipeline/contract';
 import type { BoardContext } from './context';
+import { cleanQuorum, quorumError } from './gate-quorum';
 import { cleanTimeout, parseDecisionTimeout, timeoutError } from './rules';
 import type { BoardEvent, BoardInit, ProfileInput, ProfileView, Result, StageDef, StageEditor, StagePatch } from './model';
 import type { BoardSnapshot } from './views';
@@ -74,9 +75,15 @@ export function completionShapeError(c: unknown): string | null {
   return null;
 }
 
-export function stageFieldError(s: Pick<StageDef, 'key' | 'wipLimit' | 'instructions' | 'summary' | 'timeout'>): string | null {
+export function stageFieldError(
+  s: Pick<StageDef, 'key' | 'wipLimit' | 'instructions' | 'summary' | 'timeout' | 'quorum' | 'approvalDeciderPrincipalIds'>,
+): string | null {
   if (s.timeout !== undefined) {
     const bad = timeoutError(s.timeout, `stage "${s.key}" timeout`);
+    if (bad) return bad;
+  }
+  if (s.quorum !== undefined) {
+    const bad = quorumError(s.quorum, `stage "${s.key}" quorum`, s.approvalDeciderPrincipalIds);
     if (bad) return bad;
   }
   if (s.summary !== undefined && (typeof s.summary !== 'string' || s.summary.length > STAGE_SUMMARY_MAX)) {
@@ -108,7 +115,10 @@ export function stageFieldError(s: Pick<StageDef, 'key' | 'wipLimit' | 'instruct
  * that normalises to nothing is dropped, so a stray `{}` from an editor falls back to `owner`
  * rather than becoming a lane nobody can work.
  */
-function normalizeStageRouting(s: StageDef): StageDef {
+function normalizeStageRouting(stage: StageDef): StageDef {
+  // A quorum is stored in one spelling (`from` always present), so comparing policy and
+  // snapshotting it onto a gate never depend on how a client wrote it.
+  const s: StageDef = stage.quorum && quorumError(stage.quorum, 'quorum', stage.approvalDeciderPrincipalIds) === null ? { ...stage, quorum: cleanQuorum(stage.quorum) } : stage;
   if (s.ownerKind !== 'capability') return s;
   const out: StageDef = { ...s };
   if (s.owner) out.owner = capabilityTag(s.owner);
@@ -142,6 +152,7 @@ function decisionPolicyOf(stage: StageDef | undefined): string {
     approvalSubjectSchema: stage?.approvalSubjectSchema ?? null,
     approvalDeciderPrincipalIds: [...(stage?.approvalDeciderPrincipalIds ?? [])].toSorted(),
     timeout: stage?.timeout ? cleanTimeout(stage.timeout) : null,
+    quorum: stage?.quorum ? cleanQuorum(stage.quorum) : null,
   });
 }
 
@@ -159,7 +170,7 @@ export function refuseDecisionPolicyChange(before: StageDef[], after: StageDef[]
       return {
         ok: false,
         code: 'WORKSPACE_ADMIN_REQUIRED',
-        message: `only a workspace owner or admin can change how decisions are made on stage "${key}" (its gate, approval subject, deciders or timeout)`,
+        message: `only a workspace owner or admin can change how decisions are made on stage "${key}" (its gate, approval subject, deciders, timeout or quorum)`,
       };
     }
   }
@@ -320,6 +331,10 @@ export async function updateStage(deps: PipelineDeps, stageKey: string, patch: S
   if (patch.timeout !== undefined) {
     if (patch.timeout === null) delete next.timeout;
     else next.timeout = patch.timeout;
+  }
+  if (patch.quorum !== undefined) {
+    if (patch.quorum === null) delete next.quorum;
+    else next.quorum = patch.quorum;
   }
 
   const invalid = stageFieldError(next);

@@ -94,6 +94,19 @@ export const DecisionTimeout = z
   );
 export type DecisionTimeout = z.infer<typeof DecisionTimeout>;
 
+/**
+ * How many approvals a stage's gate needs before it passes, and from whom (charter 2026-11-09, more
+ * than one approver, decision 1): 2 to 5 of the stage's deciders (the default), or of the
+ * workspace's owners and admins. Absent, a gate passes on one approval.
+ */
+export const GateQuorum = z
+  .object({
+    required: z.number().int().min(2).max(5),
+    from: z.enum(['deciders', 'admins']).optional(),
+  })
+  .strict();
+export type GateQuorum = z.infer<typeof GateQuorum>;
+
 export const Stage = z.object({
   key: z.string().min(1),
   name: z.string().min(1),
@@ -147,6 +160,11 @@ export const Stage = z.object({
    * board's default, or none. Nothing ever resolves on a timeout.
    */
   timeout: DecisionTimeout.optional(),
+  /**
+   * How many approvals a gate on this stage needs, and from whom. Decision policy: only the
+   * workspace's owners and admins set it. Absent, one approval passes the gate.
+   */
+  quorum: GateQuorum.optional(),
 });
 export type Stage = z.infer<typeof Stage>;
 

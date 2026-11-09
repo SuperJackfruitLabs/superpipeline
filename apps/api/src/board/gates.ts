@@ -4,11 +4,12 @@ import { newId } from '../ids';
 import type { BoardContext } from './context';
 import { applyVariantChoice, deciderError, gateVariants, judgeVariantDecision, optionError } from './gate-choice';
 import type { GateOption } from './gate-option';
+import { type DeciderRole, type QuorumApproval, gateQuorum, judgeQuorumApproval, quorumApprovals, quorumSnapshot, recordQuorumApproval } from './gate-quorum';
 import { queueSubscribedPush } from './push';
 import type { CardView, Result, Row } from './model';
 import { EXPIRED_DECISION, handoffSummary, isApproveDecision, record } from './rules';
 import { previewSummary, subjectEnvelope, variantsEnvelope, variantsSummary } from './subject-envelope';
-import type { DeliveryPendingBody, GateOptionMeaning, GatePendingBody, GateView, PreparedApproval } from './views';
+import type { DeliveryPendingBody, GateApprovalRecordedBody, GateOptionMeaning, GatePendingBody, GateQuorumEnvelope, GateView, PreparedApproval } from './views';
 
 export { PREVIEW_SHORTENED_NOTE } from './subject-envelope';
 
@@ -95,6 +96,8 @@ export async function resolveGate(deps: GatesDeps, input: {
   approvalSubjectId?: string;
   approvalSubjectDigest?: string;
   via?: 'matrix' | 'web' | 'api';
+  /** The workspace role in the answer's verified token (`workspaceRoleFor`); a quorum `from: admins` reads it. */
+  deciderRole?: DeciderRole;
 }): Promise<Result<CardView>> {
   const gate = deps.sql.exec(`SELECT * FROM gates WHERE id = ?`, input.gateId).toArray()[0];
   if (!gate) return { ok: false, code: 'GATE_NOT_FOUND', message: `gate not found: ${input.gateId}` };
@@ -170,12 +173,47 @@ export async function resolveGate(deps: GatesDeps, input: {
 
   const cardId = gate.card_id as string;
   const now = deps.now();
+  // A gate that needs more than one approver (charter 2026-11-09, more than one approver): an
+  // approval is judged against the gate's quorum, after every binding check above, and recorded.
+  // Short of `required` the gate stays open; the approval that reaches it resolves the gate with
+  // the delivery every counted approval allows. Request changes and reject are unaffected: one
+  // of either ends the gate below, whatever was recorded.
+  const quorum = isApproveDecision(input.decision) ? gateQuorum(gate) : null;
+  let decision = input.decision;
+  const approval = {
+    gateId: input.gateId,
+    principalId: input.decidedBy,
+    decision: input.decision,
+    variantId: chosen?.variantId ?? null,
+    subjectId: boundSubjectId,
+    subjectDigest: chosen?.digest ?? (typeof gate.approval_subject_digest === 'string' ? gate.approval_subject_digest : null),
+    comment: input.comment ?? null,
+    via: input.via ?? 'api',
+    at: now,
+  };
+  if (quorum) {
+    const counted = judgeQuorumApproval(deps.sql, input.gateId, quorum, {
+      decidedBy: input.decidedBy,
+      decision: input.decision,
+      deciderRole: input.deciderRole ?? null,
+      variantId: approval.variantId,
+    });
+    if (!counted.ok) return counted;
+    if (!counted.value.reached) {
+      recordQuorumApproval(deps.sql, approval);
+      deps.emit('gate.approval_recorded', { gateId: input.gateId, cardId, decidedBy: input.decidedBy, count: counted.value.count, required: quorum.required });
+      notifyApprovalRecorded(deps, input.gateId, approval);
+      return { ok: true, value: deps.mustGetCard(cardId) };
+    }
+    decision = counted.value.decision;
+  }
   deps.ctx.storage.transactionSync(() => {
+    if (quorum) recordQuorumApproval(deps.sql, approval);
     // Choosing settles the set in the same write as the decision (charter 2026-11-09, decision 3).
     if (chosen) applyVariantChoice(deps.sql, now, { id: input.gateId, cardId }, chosen, variants, input.decidedBy);
     deps.sql.exec(
       `UPDATE gates SET status = 'resolved', decision = ?, comment = ?, decided_by = ?, resolved_at = ?, decided_via = ? WHERE id = ?`,
-      input.decision,
+      decision,
       input.comment ?? null,
       input.decidedBy,
       now,
@@ -183,7 +221,7 @@ export async function resolveGate(deps: GatesDeps, input: {
       input.gateId,
     );
   });
-  if (boundSubjectId && (input.decision === 'approve_manual' || input.decision === 'approve_automatic')) {
+  if (boundSubjectId && (decision === 'approve_manual' || decision === 'approve_automatic')) {
     deps.sql.exec(
       `INSERT INTO approval_delivery_events
          (id, gate_id, subject_id, event, from_mode, to_mode, actor, live_url, created_at)
@@ -191,12 +229,12 @@ export async function resolveGate(deps: GatesDeps, input: {
       newId('ade'),
       input.gateId,
       boundSubjectId,
-      input.decision === 'approve_manual' ? 'manual' : 'automatic',
+      decision === 'approve_manual' ? 'manual' : 'automatic',
       input.decidedBy,
       now,
     );
   }
-  if (input.decision === 'approve_manual' && boundSubjectId) {
+  if (decision === 'approve_manual' && boundSubjectId) {
     // A manual approval remains on its human stage: publisher claims are impossible by routing,
     // while verifyApprovalSubject independently fences a corrupted or stale claim.
     deps.parkForHuman(cardId, { reason: 'review', detail: 'approved for manual delivery' });
@@ -205,11 +243,11 @@ export async function resolveGate(deps: GatesDeps, input: {
     const deliveryStage = typeof gate.stage_key === 'string' ? gate.stage_key : typeof cardStage === 'string' ? cardStage : '';
     deps.startDecisionWait({ kind: 'delivery', decisionId: input.gateId, cardId, stageKey: deliveryStage });
     notifyDeliveryPending(deps, input.gateId);
-  } else if (isApproveDecision(input.decision)) {
+  } else if (isApproveDecision(decision)) {
     // The approver becomes the producer of any chained gate (keeps separation-of-duties intact).
     // An approval produces no new work, so a chained gate judges the same run's work.
     deps.advanceCard(cardId, gate.stage_key as string, input.decidedBy, deps.getCardHandoffJson(cardId), (gate.run_id as string | null) ?? null);
-  } else if (input.decision === 'request_changes') {
+  } else if (decision === 'request_changes') {
     if (boundSubjectId || choosing) deps.invalidateApprovalSubject(cardId, 'gate.request_changes', input.decidedBy);
     // Keep the agent's prior handoff and add the reviewer's feedback so rework has full context.
     const prior = deps.parseHandoff(deps.getCardHandoffJson(cardId));
@@ -236,7 +274,7 @@ export async function resolveGate(deps: GatesDeps, input: {
     );
     deps.emit('card.rejected', { cardId, gateId: input.gateId });
   }
-  deps.emit('gate.resolved', { gateId: input.gateId, cardId, decision: input.decision, decidedBy: input.decidedBy });
+  deps.emit('gate.resolved', { gateId: input.gateId, cardId, decision: decision, decidedBy: input.decidedBy });
   // After advanceCard: an approval into another human gate stage chains a gate on the same run.
   const judged = deps.runJudgedByGate(gate);
   if (judged) deps.reportRun(judged);
@@ -510,8 +548,8 @@ export function createGate(deps: GatesDeps, cardId: string, stageKey: string, re
     deps.sql.exec(
       `INSERT INTO gates
          (id, card_id, stage_key, return_stage_key, status, produced_by, options_json, created_at, run_id,
-          approval_subject_id, approval_subject_digest, approval_decider_ids_json)
-       VALUES (?, ?, ?, ?, 'pending', ?, ?, ?, ?, ?, ?, ?)`,
+          approval_subject_id, approval_subject_digest, approval_decider_ids_json, quorum_json)
+       VALUES (?, ?, ?, ?, 'pending', ?, ?, ?, ?, ?, ?, ?, ?)`,
       id,
       cardId,
       stageKey,
@@ -523,6 +561,8 @@ export function createGate(deps: GatesDeps, cardId: string, stageKey: string, re
       approvalSubject?.id ?? null,
       approvalSubject?.digest ?? null,
       approval ? JSON.stringify(stage?.approvalDeciderPrincipalIds ?? []) : null,
+      // Snapshotted, so a later policy edit never changes what an open gate asks for.
+      quorumSnapshot(stage?.quorum, stage?.approvalDeciderPrincipalIds),
     );
     if (approvalSubject) {
       deps.sql.exec(`UPDATE cards SET active_approval_subject_id = ? WHERE id = ?`, approvalSubject.id, cardId);
@@ -659,7 +699,44 @@ function rowToGate(deps: GatesDeps, r: Row): GateView {
         : { summary: handoffSummary(deps.getCardHandoffJson(r.card_id as string)) }),
     ...(variants.length > 0 ? { variants } : {}),
     ...(delivery ? { delivery } : {}),
+    ...quorumField(deps, r),
   };
+}
+
+/**
+ * A quorum gate's `quorum` field: what it needs and who has approved (charter 2026-11-09, more
+ * than one approver, decision 7). Empty for a gate that passes on one approval.
+ */
+function quorumField(deps: GatesDeps, gate: Row): { quorum?: GateQuorumEnvelope } {
+  const quorum = gateQuorum(gate);
+  if (!quorum || typeof gate.id !== 'string') return {};
+  // The named deciders stay on the board: the wire says how many and from whom, not who may.
+  return { quorum: { required: quorum.required, from: quorum.from, approvals: quorumApprovals(deps.sql, gate.id).map(approvalOnTheWire) } };
+}
+
+function approvalOnTheWire(a: Pick<QuorumApproval, 'principalId' | 'variantId' | 'at'>): GateQuorumEnvelope['approvals'][number] {
+  return { principalId: a.principalId, at: a.at, ...(a.variantId !== null ? { variantId: a.variantId } : {}) };
+}
+
+/**
+ * Push `gate.approval_recorded` for an approval that did not yet reach the quorum, so the carrier
+ * can say who approved and how many more are needed (decision 7). The gate is still pending, and
+ * the sweep's `gate.pending` read carries the same list.
+ */
+function notifyApprovalRecorded(deps: GatesDeps, gateId: string, approval: Pick<QuorumApproval, 'principalId' | 'variantId' | 'at'>): void {
+  const gate = getGateRow(deps, gateId);
+  if (!gate) return;
+  const { quorum } = quorumField(deps, gate);
+  if (!quorum || typeof gate.card_id !== 'string') return;
+  const body: GateApprovalRecordedBody = {
+    event: 'gate.approval_recorded',
+    boardId: deps.getMeta('boardId'),
+    cardId: gate.card_id,
+    gateId,
+    approval: approvalOnTheWire(approval),
+    quorum,
+  };
+  queueSubscribedPush(deps, body);
 }
 
 /** A card's session replay: its durable activity waterfall + the handoff carried into it (docs/07 §4). */
@@ -756,6 +833,7 @@ function gatePendingBody(deps: GatesDeps, gate: Row): GatePendingBody | null {
         }
       : {}),
     ...(typeof gate.id === 'string' ? deps.decisionDeadline('gate', gate.id) : {}),
+    ...quorumField(deps, gate),
     // `id`/`label`, not `name`/`title`: the wire names are pinned by
     // agentpod fixtures/ecosystem-identity/matrix_gate_events.json, which
     // three repos validate against. The board's own vocabulary stops here.

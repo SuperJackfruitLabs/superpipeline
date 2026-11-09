@@ -55,6 +55,8 @@ export function statusForCode(code: BoardErrorCode): number {
     // state the caller believed in, not a bad request. Retrying it will never succeed.
     case 'DECISION_EXPIRED':
     case 'DECISION_CONFLICT':
+    // Already counted on this quorum gate: the state the caller believed in, not a bad request.
+    case 'QUORUM_ALREADY_APPROVED':
     case 'ELICITATION_NOT_PENDING':
     case 'CARD_NOT_WAITING':
     // A late tap on a wait that has ended: the card stopped waiting, or waits on something else.

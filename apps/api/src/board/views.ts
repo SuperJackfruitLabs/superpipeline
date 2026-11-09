@@ -301,6 +301,8 @@ export interface GateView {
    * subject. `chosen` marks the one an approval bound; `status` is its subject's.
    */
   variants?: Array<{ id: string; label: string; status: 'active' | 'invalidated'; chosen: boolean; approvalSubject: ApprovalSubjectView }>;
+  /** Present only on a quorum gate (charter 2026-11-09, more than one approver): what it needs and who has approved. */
+  quorum?: GateQuorumEnvelope;
   /** Human-selected delivery state for a resolved immutable publishing approval. */
   delivery?: {
     mode: 'manual' | 'automatic';
@@ -331,6 +333,30 @@ export type ApprovalSubjectEnvelope = Pick<ApprovalSubjectView, 'id' | 'digest' 
  */
 export interface VariantSubjectsEnvelope {
   variants: Array<{ id: string; label: string; subject: ApprovalSubjectEnvelope }>;
+}
+
+/**
+ * A quorum gate's progress as the gate and its pushes carry it (charter 2026-11-09, more than one
+ * approver, decision 7): how many approvals it needs, from whom, and those recorded so far, oldest
+ * first. `variantId` names the variant an approval chose on a variant gate.
+ */
+export interface GateQuorumEnvelope {
+  required: number;
+  from: 'deciders' | 'admins';
+  approvals: Array<{ principalId: string; at: string; variantId?: string }>;
+}
+
+/**
+ * What a `gate.approval_recorded` carries: an approval on a quorum gate that did not yet reach it.
+ * The gate is still pending; the approval that reaches the quorum resolves it, as any approval does.
+ */
+export interface GateApprovalRecordedBody {
+  event: 'gate.approval_recorded';
+  boardId: string | null;
+  cardId: string;
+  gateId: string;
+  approval: GateQuorumEnvelope['approvals'][number];
+  quorum: GateQuorumEnvelope;
 }
 
 /**
@@ -400,6 +426,8 @@ export interface GatePendingBody {
    * bounds a binding's validity, not anyone's patience.
    */
   deadline?: DecisionDeadline;
+  /** A quorum gate's progress (charter 2026-11-09, more than one approver); absent on a gate that passes on one approval. */
+  quorum?: GateQuorumEnvelope;
   ts: string;
 }
 

@@ -277,6 +277,8 @@ export interface BoardStub {
     approvalSubjectDigest?: string;
     /** The surface the decision came through; recorded so a later conflict can say where. */
     via?: 'matrix' | 'web' | 'api';
+    /** The workspace role in the answer's verified token; a quorum `from: admins` reads it. */
+    deciderRole?: 'owner' | 'admin' | 'member' | 'viewer' | null;
   }): Promise<Result<CardView>>;
   updateApprovalDelivery(input: {
     gateId: string;
