@@ -193,6 +193,8 @@ verb; those paths 404 or 405.
 | answerElicitation *(human)* | `POST /v1/boards/:boardId/elicitations/:elicitationId/answer` | human session |
 | resolve a gate *(human)* | `POST /v1/boards/:boardId/gates/:gateId/resolve` `{decision, comment?, approvalSubjectId?, approvalSubjectDigest?}`; on a variant gate an approval's binding names the variant chosen — see [implementation/variant-gates](./implementation/variant-gates.md) | human session |
 | pull back a held approval *(human)* | `POST /v1/boards/:boardId/gates/:gateId/pull-back` `{comment}`; until the release time of an approval held by the stage's `holdFor` or the subject's not-before time, as request changes — see [implementation/release-time](./implementation/release-time.md) | human session |
+| a card's checks | `GET /v1/boards/:boardId/cards/:cardId/checks` → `{ checks: { cardId, stageKey, status: open\|passed\|returned\|closed, checks: [{ name, provider, status, url?, detail?, headSha?, updatedAt, overridden? }] } \| null }`, the card's latest arrival at a stage with checks — see [implementation/machine-checks](./implementation/machine-checks.md) | agent token or human session |
+| override a check *(human)* | `POST /v1/boards/:boardId/cards/:cardId/checks/:name/override` `{comment}`; a workspace owner or admin passes a pending check (or a failed one the card still waits on); `CHECK_OVERRIDE_NOT_ALLOWED` 403 for anyone else and every agent, `SEPARATION_OF_DUTIES` 403 for the producer, `CHECK_NOT_FOUND` 404, `CHECK_NOT_OPEN` 409 | human session |
 | resume a waiting card *(human)* | `POST /v1/boards/:boardId/cards/:cardId/resume` `{comment, toStageKey?, expectedWaitId?}` | human session |
 | archive a card *(human)* | `POST /v1/boards/:boardId/cards/:cardId/archive` `{expectedWaitId?, comment?}` | human session |
 | cards waiting on a person *(sweep)* | `GET /v1/boards/:boardId/attention/pending` | agent token or human session |
@@ -339,7 +341,7 @@ an agent to call `claim`. Modeled on A2A **PushNotificationConfig**:
   [implementation/waiting-cards-and-broker-approvals](./implementation/waiting-cards-and-broker-approvals.md)),
   `decision.reminded` and `decision.escalated` (a waiting decision passed its stage's
   `timeout`; `{ event, boardId, boardName, cardId, cardTitle, stageKey, stageName, decisionKind:
-  gate|question|delivery|attention, decisionId, waitingSince, remindedAt | escalatedAt, ts }`, each
+  gate|question|delivery|attention|checks, decisionId, waitingSince, remindedAt | escalatedAt, ts }`, each
   at most once per wait; the four pending events above carry the deadlines as `deadline: {
   remindAt?, escalateAt? }` when a timeout applies — see
   [implementation/decision-timeouts](./implementation/decision-timeouts.md)),
@@ -353,6 +355,13 @@ an agent to call `claim`. Modeled on A2A **PushNotificationConfig**:
   pulledBackBy, at, comment }`); `gate.pending` carries `release: { holdForMinutes?, notBefore? }`
   when an approval would wait, and `GET …/gates/:gateId` adds `heldUntil`, `releasedAt` and
   `pulledBack` — see [implementation/release-time](./implementation/release-time.md)),
+  `check.failed` (a machine check failed and the card went back: `{ event, boardId, cardId,
+  stageKey, check: { name, provider: ci|verdict, status: failed, detail?, url? }, returnedTo }`,
+  `returnedTo` null when it could not go back and stopped for a person) and `check.overridden` (a
+  workspace owner or admin passed one by hand: `{ event, boardId, cardId, stageKey, check: { name,
+  provider, status: overridden }, by, comment, at }`); `gate.pending` and `GET …/gates/:gateId`
+  carry `checks: [{ name, provider, status, url? }]` when the gate's stage had checks — see
+  [implementation/machine-checks](./implementation/machine-checks.md)),
   `gate.resolved`, `run.reclaimed`, `card.canceled`,
   `cards.stale` (the daily stale-card digest: `{ event, boardId, boardName, cards: StaleCardView[], ts }`,
   one delivery per sweep that has a card not reported in the last 24 hours — see
