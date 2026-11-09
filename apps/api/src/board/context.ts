@@ -101,6 +101,12 @@ export interface BoardContext {
   elicitationsForRun(runId: string): ElicitationView[];
   emit(type: string, payload: Record<string, unknown>): void;
   endLapsedDeliveries(nowIso: string): number;
+  /** What a resolved approval does when it acts, at once or at its release time (gates.ts). */
+  actOnApproval(gateId: string): void;
+  /** Send a gate's card back for changes with `comment` as feedback (gates.ts). */
+  sendBackForChanges(gateId: string, actor: string, comment: string | null, reason: string, at?: string): void;
+  /** Release every held approval whose release time has come (gate-release.ts); returns how many. */
+  releaseHeldApprovals(nowIso: string): Promise<number>;
   endAttempt(cardId: string, event: string, reason: string | null, runId?: string): void;
   endReviewsOfArchivedCard(cardId: string): number;
   expireGate(gateId: string): boolean;

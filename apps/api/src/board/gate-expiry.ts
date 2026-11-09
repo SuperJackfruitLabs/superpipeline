@@ -1,6 +1,7 @@
 import { newId } from '../ids';
 import type { BoardContext } from './context';
 import { allVariantsExpired, gateVariants } from './gate-choice';
+import { NOT_ACTED_SQL } from './gate-release';
 import { EXPIRED_DECISION, record } from './rules';
 
 /**
@@ -113,6 +114,7 @@ export function endLapsedDeliveries(deps: GateExpiryDeps, nowIso: string): numbe
     .exec(
       `SELECT id, card_id, approval_subject_id FROM gates
         WHERE status = 'resolved' AND decision = 'approve_manual' AND live_post_url IS NULL AND approval_subject_id IS NOT NULL
+          AND NOT ${NOT_ACTED_SQL}
           AND NOT EXISTS (SELECT 1 FROM approval_delivery_events e WHERE e.gate_id = gates.id AND e.event = 'expired')`,
     )
     .toArray();

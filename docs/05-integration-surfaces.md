@@ -192,6 +192,7 @@ verb; those paths 404 or 405.
 | addReference | `PUT /v1/boards/:boardId/cards/:cardId/references` *(idempotent on `(cardId, url)`)* | **human session** — see below |
 | answerElicitation *(human)* | `POST /v1/boards/:boardId/elicitations/:elicitationId/answer` | human session |
 | resolve a gate *(human)* | `POST /v1/boards/:boardId/gates/:gateId/resolve` `{decision, comment?, approvalSubjectId?, approvalSubjectDigest?}`; on a variant gate an approval's binding names the variant chosen — see [implementation/variant-gates](./implementation/variant-gates.md) | human session |
+| pull back a held approval *(human)* | `POST /v1/boards/:boardId/gates/:gateId/pull-back` `{comment}`; until the release time of an approval held by the stage's `holdFor` or the subject's not-before time, as request changes — see [implementation/release-time](./implementation/release-time.md) | human session |
 | resume a waiting card *(human)* | `POST /v1/boards/:boardId/cards/:cardId/resume` `{comment, toStageKey?, expectedWaitId?}` | human session |
 | archive a card *(human)* | `POST /v1/boards/:boardId/cards/:cardId/archive` `{expectedWaitId?, comment?}` | human session |
 | cards waiting on a person *(sweep)* | `GET /v1/boards/:boardId/attention/pending` | agent token or human session |
@@ -346,6 +347,12 @@ an agent to call `claim`. Modeled on A2A **PushNotificationConfig**:
   event, boardId, cardId, gateId, approval: { principalId, at, variantId? }, quorum: { required,
   from: deciders|admins, approvals } }`; `gate.pending` carries the same `quorum` on such a gate
   — see [implementation/quorum-gates](./implementation/quorum-gates.md)),
+  `decision.released` (a held approval reached its release time: `{ event, boardId, cardId,
+  gateId, decision, releaseAt, releasedAt, outcome: released|blocked, reason? }`) and
+  `decision.pulled_back` (a held approval was pulled back: `{ event, boardId, cardId, gateId,
+  pulledBackBy, at, comment }`); `gate.pending` carries `release: { holdForMinutes?, notBefore? }`
+  when an approval would wait, and `GET …/gates/:gateId` adds `heldUntil`, `releasedAt` and
+  `pulledBack` — see [implementation/release-time](./implementation/release-time.md)),
   `gate.resolved`, `run.reclaimed`, `card.canceled`,
   `cards.stale` (the daily stale-card digest: `{ event, boardId, boardName, cards: StaleCardView[], ts }`,
   one delivery per sweep that has a card not reported in the last 24 hours — see

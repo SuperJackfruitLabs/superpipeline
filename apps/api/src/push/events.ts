@@ -1,8 +1,8 @@
 /** Events pushed by their own fan-outs before record events existed. */
-export const PUSHED_EVENTS = ['work.available', 'cards.stale', 'elicitation.pending', 'gate.pending', 'delivery.pending', 'attention.pending', 'decision.reminded', 'decision.escalated', 'gate.approval_recorded'] as const;
+export const PUSHED_EVENTS = ['work.available', 'cards.stale', 'elicitation.pending', 'gate.pending', 'delivery.pending', 'attention.pending', 'decision.reminded', 'decision.escalated', 'gate.approval_recorded', 'decision.released', 'decision.pulled_back'] as const;
 
 /** The pushed events addressed to a person: what a decision carrier (a chat bridge) subscribes to. */
-export const DECISION_EVENTS: ReadonlySet<string> = new Set<string>(['gate.pending', 'elicitation.pending', 'delivery.pending', 'attention.pending', 'decision.reminded', 'decision.escalated', 'gate.approval_recorded']);
+export const DECISION_EVENTS: ReadonlySet<string> = new Set<string>(['gate.pending', 'elicitation.pending', 'delivery.pending', 'attention.pending', 'decision.reminded', 'decision.escalated', 'gate.approval_recorded', 'decision.released', 'decision.pulled_back']);
 
 /**
  * Board events a push config may subscribe to as "record" events (Superlibrary spec §5, plus the

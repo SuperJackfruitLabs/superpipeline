@@ -303,6 +303,18 @@ export interface GateView {
   variants?: Array<{ id: string; label: string; status: 'active' | 'invalidated'; chosen: boolean; approvalSubject: ApprovalSubjectView }>;
   /** Present only on a quorum gate (charter 2026-11-09, more than one approver): what it needs and who has approved. */
   quorum?: GateQuorumEnvelope;
+  /**
+   * When an approval here would wait before acting (charter 2026-11-09, an approval may wait for
+   * its release time, decision 7). Present only when the gate's stage set `holdFor` or a subject
+   * it binds (any variant, on a variant gate) has a scheduled not-before time.
+   */
+  release?: GateReleaseEnvelope;
+  /** The release time of an approval that is recorded but has not acted yet; absent otherwise. */
+  heldUntil?: string;
+  /** When a held approval acted (or was blocked at its release time). */
+  releasedAt?: string;
+  /** Who pulled a held approval back, when, and why (decision 4). */
+  pulledBack?: { by: string; at: string; comment: string };
   /** Human-selected delivery state for a resolved immutable publishing approval. */
   delivery?: {
     mode: 'manual' | 'automatic';
@@ -344,6 +356,41 @@ export interface GateQuorumEnvelope {
   required: number;
   from: 'deciders' | 'admins';
   approvals: Array<{ principalId: string; at: string; variantId?: string }>;
+}
+
+/**
+ * What holds an approval on this gate before it acts (charter 2026-11-09, an approval may wait for
+ * its release time, decision 7): the stage's `holdFor`, the subject's own not-before time, or both.
+ * The release time is the later of the two, fixed when the gate resolves.
+ */
+export interface GateReleaseEnvelope {
+  holdForMinutes?: number;
+  notBefore?: string;
+}
+
+/** What a `decision.released` carries: a held approval reached its release time, and acted or was blocked. */
+export interface DecisionReleasedBody {
+  event: 'decision.released';
+  boardId: string | null;
+  cardId: string;
+  gateId: string;
+  decision: string;
+  releaseAt: string;
+  releasedAt: string;
+  outcome: 'released' | 'blocked';
+  /** Why a release was blocked; only on `outcome: 'blocked'`. */
+  reason?: string;
+}
+
+/** What a `decision.pulled_back` carries: a held approval was pulled back before its release time. */
+export interface DecisionPulledBackBody {
+  event: 'decision.pulled_back';
+  boardId: string | null;
+  cardId: string;
+  gateId: string;
+  pulledBackBy: string;
+  at: string;
+  comment: string;
 }
 
 /**
@@ -428,6 +475,8 @@ export interface GatePendingBody {
   deadline?: DecisionDeadline;
   /** A quorum gate's progress (charter 2026-11-09, more than one approver); absent on a gate that passes on one approval. */
   quorum?: GateQuorumEnvelope;
+  /** When an approval would wait before acting (charter 2026-11-09, release time); absent when nothing holds it. */
+  release?: GateReleaseEnvelope;
   ts: string;
 }
 

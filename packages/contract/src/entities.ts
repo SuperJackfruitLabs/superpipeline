@@ -165,6 +165,12 @@ export const Stage = z.object({
    * workspace's owners and admins set it. Absent, one approval passes the gate.
    */
   quorum: GateQuorum.optional(),
+  /**
+   * Minutes an approval on this stage waits before it acts, 5 to 10080 (charter 2026-11-09, an
+   * approval may wait for its release time). Decision policy: only the workspace's owners and admins
+   * set it. A held approval may be pulled back until it is released. Absent, an approval acts at once.
+   */
+  holdFor: z.number().int().min(5).max(10080).optional(),
 });
 export type Stage = z.infer<typeof Stage>;
 

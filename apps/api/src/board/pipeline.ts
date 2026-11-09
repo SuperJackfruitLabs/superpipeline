@@ -1,6 +1,7 @@
 import { capabilityTag, normalizeRequirement, returnStageError } from '@superpipeline/contract';
 import type { BoardContext } from './context';
 import { cleanQuorum, quorumError } from './gate-quorum';
+import { holdForError } from './gate-release';
 import { cleanTimeout, parseDecisionTimeout, timeoutError } from './rules';
 import type { BoardEvent, BoardInit, ProfileInput, ProfileView, Result, StageDef, StageEditor, StagePatch } from './model';
 import type { BoardSnapshot } from './views';
@@ -76,8 +77,12 @@ export function completionShapeError(c: unknown): string | null {
 }
 
 export function stageFieldError(
-  s: Pick<StageDef, 'key' | 'wipLimit' | 'instructions' | 'summary' | 'timeout' | 'quorum' | 'approvalDeciderPrincipalIds'>,
+  s: Pick<StageDef, 'key' | 'wipLimit' | 'instructions' | 'summary' | 'timeout' | 'quorum' | 'holdFor' | 'approvalDeciderPrincipalIds'>,
 ): string | null {
+  if (s.holdFor !== undefined) {
+    const bad = holdForError(s.holdFor, `stage "${s.key}" holdFor`);
+    if (bad) return bad;
+  }
   if (s.timeout !== undefined) {
     const bad = timeoutError(s.timeout, `stage "${s.key}" timeout`);
     if (bad) return bad;
@@ -153,6 +158,7 @@ function decisionPolicyOf(stage: StageDef | undefined): string {
     approvalDeciderPrincipalIds: [...(stage?.approvalDeciderPrincipalIds ?? [])].toSorted(),
     timeout: stage?.timeout ? cleanTimeout(stage.timeout) : null,
     quorum: stage?.quorum ? cleanQuorum(stage.quorum) : null,
+    holdFor: stage?.holdFor ?? null,
   });
 }
 
@@ -170,7 +176,7 @@ export function refuseDecisionPolicyChange(before: StageDef[], after: StageDef[]
       return {
         ok: false,
         code: 'WORKSPACE_ADMIN_REQUIRED',
-        message: `only a workspace owner or admin can change how decisions are made on stage "${key}" (its gate, approval subject, deciders, timeout or quorum)`,
+        message: `only a workspace owner or admin can change how decisions are made on stage "${key}" (its gate, approval subject, deciders, timeout, quorum or hold)`,
       };
     }
   }
@@ -335,6 +341,10 @@ export async function updateStage(deps: PipelineDeps, stageKey: string, patch: S
   if (patch.quorum !== undefined) {
     if (patch.quorum === null) delete next.quorum;
     else next.quorum = patch.quorum;
+  }
+  if (patch.holdFor !== undefined) {
+    if (patch.holdFor === null) delete next.holdFor;
+    else next.holdFor = patch.holdFor;
   }
 
   const invalid = stageFieldError(next);

@@ -1,13 +1,14 @@
 import type { GateDecision } from '@superpipeline/contract';
-import { approvalSubjectKind } from '../approval-subject-kinds';
 import { newId } from '../ids';
 import type { BoardContext } from './context';
+import { readBackStatus } from './gate-delivery';
 import { applyVariantChoice, deciderError, gateVariants, judgeVariantDecision, optionError } from './gate-choice';
 import type { GateOption } from './gate-option';
+import { NOT_ACTED_SQL, approvalNotActed, heldDetail, heldError, holdFields, judgeReleaseTime, releaseField } from './gate-release';
 import { type DeciderRole, type QuorumApproval, gateQuorum, judgeQuorumApproval, quorumApprovals, quorumSnapshot, recordQuorumApproval } from './gate-quorum';
 import { queueSubscribedPush } from './push';
 import type { CardView, Result, Row } from './model';
-import { EXPIRED_DECISION, handoffSummary, isApproveDecision, record } from './rules';
+import { EXPIRED_DECISION, handoffSummary, isApproveDecision } from './rules';
 import { previewSummary, subjectEnvelope, variantsEnvelope, variantsSummary } from './subject-envelope';
 import type { DeliveryPendingBody, GateApprovalRecordedBody, GateOptionMeaning, GatePendingBody, GateQuorumEnvelope, GateView, PreparedApproval } from './views';
 
@@ -47,30 +48,6 @@ export type GatesDeps = Pick<
   | 'startDecisionWait'
   | 'subjectExpired'
 >;
-
-const READ_BACK_TIMEOUT_MS = 5_000;
-
-async function readBackStatus(url: URL, schema: string, approvedDigest: string): Promise<'not_checked' | 'matched' | 'mismatch'> {
-  const kind = approvalSubjectKind(schema);
-  if (!kind?.canReadBack(url)) return 'not_checked';
-  try {
-    // A redirect is not followed: the host check above is the only thing standing between a
-    // person-supplied URL and a server-side fetch, and an open redirect on an allowed host
-    // would walk straight past it. A slow host is given up on, not waited out.
-    const response = await fetch(url, {
-      method: 'GET',
-      redirect: 'manual',
-      signal: AbortSignal.timeout(READ_BACK_TIMEOUT_MS),
-      headers: { Accept: 'application/json, text/html;q=0.9' },
-    });
-    if (!response.ok) return 'not_checked';
-    const liveDigest = await kind.readBackDigest(response);
-    if (liveDigest === null) return 'not_checked';
-    return liveDigest === approvedDigest ? 'matched' : 'mismatch';
-  } catch {
-    return 'not_checked';
-  }
-}
 
 /** The decisions a human can take at an approval gate (docs/08 §6). */
 const DEFAULT_GATE_OPTIONS: GateOption[] = [
@@ -191,6 +168,12 @@ export async function resolveGate(deps: GatesDeps, input: {
     via: input.via ?? 'api',
     at: now,
   };
+  // An approval that could never act is not recorded (charter 2026-11-09, release time, decision
+  // 5): its release time is judged before anything is written, for every approval on a quorum
+  // gate too, since a later approval's release time can only be later.
+  const release = optionMeaning(input.decision) === 'approve' ? judgeReleaseTime(deps, gate, boundSubjectId, now) : null;
+  if (release && !release.ok) return release;
+  const releaseAt = release?.ok ? release.value : null;
   if (quorum) {
     const counted = judgeQuorumApproval(deps.sql, input.gateId, quorum, {
       decidedBy: input.decidedBy,
@@ -212,12 +195,13 @@ export async function resolveGate(deps: GatesDeps, input: {
     // Choosing settles the set in the same write as the decision (charter 2026-11-09, decision 3).
     if (chosen) applyVariantChoice(deps.sql, now, { id: input.gateId, cardId }, chosen, variants, input.decidedBy);
     deps.sql.exec(
-      `UPDATE gates SET status = 'resolved', decision = ?, comment = ?, decided_by = ?, resolved_at = ?, decided_via = ? WHERE id = ?`,
+      `UPDATE gates SET status = 'resolved', decision = ?, comment = ?, decided_by = ?, resolved_at = ?, decided_via = ?, release_at = ? WHERE id = ?`,
       decision,
       input.comment ?? null,
       input.decidedBy,
       now,
       input.via ?? 'api',
+      isApproveDecision(decision) ? releaseAt : null,
       input.gateId,
     );
   });
@@ -234,37 +218,16 @@ export async function resolveGate(deps: GatesDeps, input: {
       now,
     );
   }
-  if (decision === 'approve_manual' && boundSubjectId) {
-    // A manual approval remains on its human stage: publisher claims are impossible by routing,
-    // while verifyApprovalSubject independently fences a corrupted or stale claim.
-    deps.parkForHuman(cardId, { reason: 'review', detail: 'approved for manual delivery' });
-    // The gate's stage; a gate row always has one, and the card's stage stands in if it ever did not.
-    const cardStage = deps.getCardRow(cardId)?.current_stage_key;
-    const deliveryStage = typeof gate.stage_key === 'string' ? gate.stage_key : typeof cardStage === 'string' ? cardStage : '';
-    deps.startDecisionWait({ kind: 'delivery', decisionId: input.gateId, cardId, stageKey: deliveryStage });
-    notifyDeliveryPending(deps, input.gateId);
+  if (isApproveDecision(decision) && releaseAt !== null) {
+    // Held (charter 2026-11-09, release time, decision 3): recorded, but it has not acted. The card
+    // stays on the gate's human stage, which no agent claims, and says until when; the sweep's
+    // `releaseHeldApprovals` runs the action below at the release time. Never a wait on a person,
+    // so it is never reminded about or escalated (decision 8).
+    deps.setNeedsHuman(cardId, { reason: 'review', detail: heldDetail(releaseAt) });
   } else if (isApproveDecision(decision)) {
-    // The approver becomes the producer of any chained gate (keeps separation-of-duties intact).
-    // An approval produces no new work, so a chained gate judges the same run's work.
-    deps.advanceCard(cardId, gate.stage_key as string, input.decidedBy, deps.getCardHandoffJson(cardId), (gate.run_id as string | null) ?? null);
+    actOnApproval(deps, input.gateId);
   } else if (decision === 'request_changes') {
-    if (boundSubjectId || choosing) deps.invalidateApprovalSubject(cardId, 'gate.request_changes', input.decidedBy);
-    // Keep the agent's prior handoff and add the reviewer's feedback so rework has full context.
-    const prior = deps.parseHandoff(deps.getCardHandoffJson(cardId));
-    const merged =
-      prior && typeof prior === 'object' && !Array.isArray(prior)
-        ? { ...prior, feedback: input.comment ?? null }
-        : { feedback: input.comment ?? null };
-    deps.sql.exec(
-      `UPDATE cards SET current_stage_key = ?, state = 'submitted', delegate_agent_id = NULL,
-       current_run_id = NULL, failure_count = 0, auto_returns = 0, handoff_json = ?, updated_at = ? WHERE id = ?`,
-      gate.return_stage_key,
-      JSON.stringify(merged),
-      now,
-      cardId,
-    );
-    deps.emit('card.changes_requested', { cardId, gateId: input.gateId, to: gate.return_stage_key });
-    deps.notifyWorkAvailable(cardId); // back on a claimable stage for rework
+    sendBackForChanges(deps, input.gateId, input.decidedBy, input.comment ?? null, 'gate.request_changes', now);
   } else {
     if (boundSubjectId || choosing) deps.invalidateApprovalSubject(cardId, 'gate.reject', input.decidedBy);
     deps.sql.exec(
@@ -280,6 +243,56 @@ export async function resolveGate(deps: GatesDeps, input: {
   if (judged) deps.reportRun(judged);
   await deps.scheduleReclaim();
   return { ok: true, value: deps.mustGetCard(cardId) };
+}
+
+/**
+ * What an approval does when it acts: at once when the gate resolves, or at its release time
+ * (charter 2026-11-09, release time). One function for both, so a held approval acts exactly as
+ * an approval acts today. Reads the resolved gate's own row: its decision, approver and subject.
+ */
+export function actOnApproval(deps: GatesDeps, gateId: string): void {
+  const gate = getGateRow(deps, gateId);
+  if (!gate || typeof gate.card_id !== 'string' || typeof gate.stage_key !== 'string') return;
+  const cardId = gate.card_id;
+  const approvedBy = typeof gate.decided_by === 'string' ? gate.decided_by : '';
+  if (gate.decision === 'approve_manual' && typeof gate.approval_subject_id === 'string') {
+    // A manual approval remains on its human stage: publisher claims are impossible by routing,
+    // while verifyApprovalSubject independently fences a corrupted or stale claim.
+    deps.parkForHuman(cardId, { reason: 'review', detail: 'approved for manual delivery' });
+    // The follow-up's wait starts now: at release for a held approval (decision 3).
+    deps.startDecisionWait({ kind: 'delivery', decisionId: gateId, cardId, stageKey: gate.stage_key });
+    notifyDeliveryPending(deps, gateId);
+    return;
+  }
+  // The approver becomes the producer of any chained gate (keeps separation-of-duties intact).
+  // An approval produces no new work, so a chained gate judges the same run's work.
+  deps.advanceCard(cardId, gate.stage_key, approvedBy, deps.getCardHandoffJson(cardId), (gate.run_id as string | null) ?? null);
+}
+
+/**
+ * Send a gate's card back for changes: request changes, and a held approval pulled back (charter
+ * 2026-11-09, release time, decision 4). The subject is invalidated, the card returns to the
+ * gate's return stage with `comment` as feedback beside its prior handoff, and it is claimable.
+ */
+export function sendBackForChanges(deps: GatesDeps, gateId: string, actor: string, comment: string | null, reason: string, at: string = deps.now()): void {
+  const gate = getGateRow(deps, gateId);
+  if (!gate || typeof gate.card_id !== 'string') return;
+  const cardId = gate.card_id;
+  const subjectBound = typeof gate.approval_subject_id === 'string' || gateVariants(deps.sql, gate).length > 0;
+  if (subjectBound) deps.invalidateApprovalSubject(cardId, reason, actor);
+  // Keep the agent's prior handoff and add the reviewer's feedback so rework has full context.
+  const prior = deps.parseHandoff(deps.getCardHandoffJson(cardId));
+  const merged = prior && typeof prior === 'object' && !Array.isArray(prior) ? { ...prior, feedback: comment } : { feedback: comment };
+  deps.sql.exec(
+    `UPDATE cards SET current_stage_key = ?, state = 'submitted', delegate_agent_id = NULL,
+     current_run_id = NULL, failure_count = 0, auto_returns = 0, handoff_json = ?, updated_at = ? WHERE id = ?`,
+    gate.return_stage_key,
+    JSON.stringify(merged),
+    at,
+    cardId,
+  );
+  deps.emit('card.changes_requested', { cardId, gateId, to: gate.return_stage_key });
+  deps.notifyWorkAvailable(cardId); // back on a claimable stage for rework
 }
 
 /** Change delivery mechanics without changing the approved immutable bytes. */
@@ -301,6 +314,10 @@ export async function updateApprovalDelivery(deps: GatesDeps, input: {
   if (input.actor.startsWith('agt_') || !deciders.includes(input.actor)) {
     return { ok: false, code: 'APPROVAL_DECIDER_NOT_ALLOWED', message: 'this principal cannot change approval delivery' };
   }
+  // A held approval has not acted, so it has no delivery to change yet: switching it to automatic
+  // would advance the card before its release time (charter 2026-11-09, release time, decision 3).
+  const held = heldError(gate);
+  if (held) return held;
   const cardId = gate.card_id as string;
   const cardRow = deps.getCardRow(cardId);
   const currentMode = decision === 'approve_manual' ? 'manual' : 'automatic';
@@ -458,65 +475,6 @@ export async function updateApprovalDelivery(deps: GatesDeps, input: {
   return { ok: true, value: { ...deps.mustGetCard(cardId), delivery: view.delivery! } };
 }
 
-/** Record a publisher-service report without claiming that SuperPipeline verified the post. */
-export function recordAutomaticDelivery(deps: GatesDeps, input: {
-  gateId: string;
-  subjectId: string;
-  expectedDigest: string;
-  actor: string;
-  liveUrl: string;
-}): Result<{ deliveryMode: 'automatic'; gateId: string; subjectId: string; digest: string; liveUrl: string }> {
-
-  let parsed: URL;
-  try {
-    parsed = new URL(input.liveUrl);
-  } catch {
-    return { ok: false, code: 'INVALID_LIVE_URL', message: 'live URL must be an absolute https URL' };
-  }
-  if (parsed.protocol !== 'https:') {
-    return { ok: false, code: 'INVALID_LIVE_URL', message: 'live URL must be an absolute https URL' };
-  }
-  const liveUrl = parsed.toString();
-  return deps.ctx.storage.transactionSync(() => {
-    // Re-read every authority-bearing field inside the write transaction. A
-    // delivery report must not race a mode/status change or an expired subject.
-    const gate = deps.sql.exec(`SELECT * FROM gates WHERE id = ?`, input.gateId).toArray()[0];
-    const subject = deps.sql.exec(`SELECT * FROM approval_subjects WHERE id = ?`, input.subjectId).toArray()[0];
-    const subjectView = deps.approvalSubjectView(input.subjectId);
-    const canonical = record(subjectView?.canonical);
-    const requestDigest = record(canonical?.outboundRequest)?.digest;
-    const expiresAt = record(canonical?.timing)?.expiresAt;
-    if (
-      !gate || gate.status !== 'resolved' || gate.decision !== 'approve_automatic' ||
-      gate.approval_subject_id !== input.subjectId || gate.approval_subject_digest !== subjectView?.digest ||
-      !subject || subject.status !== 'active' || subject.digest !== subjectView?.digest || requestDigest !== input.expectedDigest ||
-      typeof expiresAt !== 'string' || Date.parse(expiresAt) <= Date.parse(deps.now())
-    ) {
-      return { ok: false as const, code: 'APPROVAL_SUBJECT_NOT_VERIFIED', message: 'automatic delivery approval, digest, and expiry were not confirmed' };
-    }
-    const existing = typeof gate.live_post_url === 'string' ? gate.live_post_url : null;
-    if (existing !== null) {
-      if (existing === liveUrl) {
-        return { ok: true as const, value: { deliveryMode: 'automatic' as const, gateId: input.gateId, subjectId: input.subjectId, digest: input.expectedDigest, liveUrl } };
-      }
-      return { ok: false as const, code: 'APPROVAL_SUBJECT_NOT_VERIFIED', message: 'automatic delivery already has a different live URL' };
-    }
-    const now = deps.now();
-    deps.sql.exec(
-      `UPDATE gates SET live_post_url = ?, live_post_url_recorded_by = ?, live_post_url_recorded_at = ?,
-                        live_post_readback_status = 'service_reported' WHERE id = ?`,
-      liveUrl, input.actor, now, input.gateId,
-    );
-    deps.sql.exec(
-      `INSERT INTO approval_delivery_events
-         (id, gate_id, subject_id, event, from_mode, to_mode, actor, live_url, created_at)
-       VALUES (?, ?, ?, 'live_url_recorded', 'automatic', 'automatic', ?, ?, ?)`,
-      newId('ade'), input.gateId, input.subjectId, input.actor, liveUrl, now,
-    );
-    return { ok: true as const, value: { deliveryMode: 'automatic' as const, gateId: input.gateId, subjectId: input.subjectId, digest: input.expectedDigest, liveUrl } };
-  });
-}
-
 export function createGate(deps: GatesDeps, cardId: string, stageKey: string, returnStageKey: string, producedBy: string, runId: string | null, approval: PreparedApproval | null = null): string {
   const id = newId('gate');
   const now = deps.now();
@@ -548,8 +506,8 @@ export function createGate(deps: GatesDeps, cardId: string, stageKey: string, re
     deps.sql.exec(
       `INSERT INTO gates
          (id, card_id, stage_key, return_stage_key, status, produced_by, options_json, created_at, run_id,
-          approval_subject_id, approval_subject_digest, approval_decider_ids_json, quorum_json)
-       VALUES (?, ?, ?, ?, 'pending', ?, ?, ?, ?, ?, ?, ?, ?)`,
+          approval_subject_id, approval_subject_digest, approval_decider_ids_json, quorum_json, hold_for_minutes)
+       VALUES (?, ?, ?, ?, 'pending', ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       id,
       cardId,
       stageKey,
@@ -563,6 +521,8 @@ export function createGate(deps: GatesDeps, cardId: string, stageKey: string, re
       approval ? JSON.stringify(stage?.approvalDeciderPrincipalIds ?? []) : null,
       // Snapshotted, so a later policy edit never changes what an open gate asks for.
       quorumSnapshot(stage?.quorum, stage?.approvalDeciderPrincipalIds),
+      // The stage's hold, snapshotted for the same reason (charter 2026-11-09, release time).
+      typeof stage?.holdFor === 'number' ? stage.holdFor : null,
     );
     if (approvalSubject) {
       deps.sql.exec(`UPDATE cards SET active_approval_subject_id = ? WHERE id = ?`, approvalSubject.id, cardId);
@@ -700,6 +660,8 @@ function rowToGate(deps: GatesDeps, r: Row): GateView {
     ...(variants.length > 0 ? { variants } : {}),
     ...(delivery ? { delivery } : {}),
     ...quorumField(deps, r),
+    ...releaseField(deps, r),
+    ...holdFields(r),
   };
 }
 
@@ -834,6 +796,7 @@ function gatePendingBody(deps: GatesDeps, gate: Row): GatePendingBody | null {
       : {}),
     ...(typeof gate.id === 'string' ? deps.decisionDeadline('gate', gate.id) : {}),
     ...quorumField(deps, gate),
+    ...releaseField(deps, gate),
     // `id`/`label`, not `name`/`title`: the wire names are pinned by
     // agentpod fixtures/ecosystem-identity/matrix_gate_events.json, which
     // three repos validate against. The board's own vocabulary stops here.
@@ -928,6 +891,8 @@ const SWITCH_TO_AUTOMATIC: DeliveryOption = {
 function deliveryPendingBody(deps: GatesDeps, gate: Row): DeliveryPendingBody | null {
   const subjectId = typeof gate.approval_subject_id === 'string' ? gate.approval_subject_id : null;
   if (gate.status !== 'resolved' || gate.decision !== 'approve_manual' || !subjectId || gate.live_post_url) return null;
+  // Held for its release time, or pulled back: nothing is owed until it acts (release time, decision 3).
+  if (approvalNotActed(gate)) return null;
   const { id: gateId, card_id: cardId, stage_key: stageKey } = gate;
   if (typeof gateId !== 'string' || typeof cardId !== 'string' || typeof stageKey !== 'string') return null;
   const cardRow = deps.getCardRow(cardId);
@@ -975,7 +940,7 @@ function notifyDeliveryPending(deps: GatesDeps, gateId: string): void {
 export async function pendingDeliveryFollowUps(deps: GatesDeps): Promise<DeliveryPendingBody[]> {
   return deps.sql
     // Candidates only; `deliveryPendingBody` decides what is owed, for the push and this read alike.
-    .exec(`SELECT * FROM gates WHERE status = 'resolved' AND decision = 'approve_manual' ORDER BY resolved_at ASC, created_at ASC`)
+    .exec(`SELECT * FROM gates WHERE status = 'resolved' AND decision = 'approve_manual' AND NOT ${NOT_ACTED_SQL} ORDER BY resolved_at ASC, created_at ASC`)
     .toArray()
     .map((r) => deliveryPendingBody(deps, r))
     .filter((b): b is DeliveryPendingBody => b !== null);

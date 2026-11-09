@@ -103,6 +103,23 @@ export function createDecisionTables(sql: SqlStorage): void {
   } catch {
     // column already exists
   }
+  // An approval may wait for its release time (charter 2026-11-09): the stage's `holdFor` as the
+  // gate opened with it; the release time fixed at an approval that has to wait; when it acted (or
+  // was blocked at that time); and a pull-back before it. All NULL on a gate nothing holds.
+  for (const column of [
+    'hold_for_minutes INTEGER',
+    'release_at TEXT',
+    'released_at TEXT',
+    'pulled_back_at TEXT',
+    'pulled_back_by TEXT',
+    'pulled_back_comment TEXT',
+  ]) {
+    try {
+      sql.exec(`ALTER TABLE gates ADD COLUMN ${column}`);
+    } catch {
+      // column already exists
+    }
+  }
   sql.exec(`CREATE INDEX IF NOT EXISTS idx_gates_run ON gates(run_id)`);
   /**
    * A decision waiting on a person, with the deadlines its stage's timeout gave it when it started

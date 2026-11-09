@@ -50,6 +50,8 @@ export interface StagePatch {
   timeout?: DecisionTimeout | null;
   /** `null` removes it: a gate here passes on one approval again. */
   quorum?: QuorumInput | null;
+  /** `null` removes it: an approval here acts at once again. */
+  holdFor?: number | null;
 }
 
 /**
@@ -135,6 +137,11 @@ export interface StageDef {
   timeout?: DecisionTimeout;
   /** How many approvals a gate here needs, and from whom (`quorumError` in gate-quorum.ts). Absent: one. */
   quorum?: QuorumInput;
+  /**
+   * Minutes an approval here waits before it acts (charter 2026-11-09, an approval may wait for
+   * its release time): a whole number from 5 to 10080 (`holdForError` in gate-release.ts). Absent: none.
+   */
+  holdFor?: number;
 }
 
 /** A reusable agent configuration bundle (docs/05 §7). */
@@ -397,6 +404,14 @@ export type BoardErrorCode =
   | 'DECISION_EXPIRED'
   /** The same person approved a quorum gate twice (charter 2026-11-09, more than one approver, decision 3). */
   | 'QUORUM_ALREADY_APPROVED'
+  /** An approval is recorded but its release time has not come (charter 2026-11-09, release time, decision 3). */
+  | 'APPROVAL_HELD'
+  /** A held approval was released, so it can no longer be pulled back (decision 4). */
+  | 'APPROVAL_RELEASED'
+  /** Pull back named a gate whose approval was never held (decision 4). */
+  | 'GATE_NOT_HELD'
+  /** The release time would fall after the subject's own expiry: nothing is recorded (decision 5). */
+  | 'APPROVAL_RELEASE_AFTER_EXPIRY'
   | 'CARD_NOT_WAITING'
   /** A chat answer named a wait the card is no longer in (charter: waiting cards reach chat §2). */
   | 'WAIT_CHANGED'

@@ -8,6 +8,7 @@ import * as comments from './comments';
 import * as decisionTimeouts from './decision-timeouts';
 import * as elicitations from './elicitations';
 import * as gateExpiry from './gate-expiry';
+import * as gateRelease from './gate-release';
 import * as gates from './gates';
 import * as holds from './holds';
 import * as maintenance from './maintenance';
@@ -99,6 +100,9 @@ export function wireBoard(base: BoardBase, routes: ShellRoutes): BoardContext {
     emit: (...a) => store.emit(board, ...a),
     endAttempt: (...a) => moves.endAttempt(board, ...a),
     endLapsedDeliveries: (...a) => gateExpiry.endLapsedDeliveries(board, ...a),
+    actOnApproval: (...a) => gates.actOnApproval(board, ...a),
+    sendBackForChanges: (...a) => gates.sendBackForChanges(board, ...a),
+    releaseHeldApprovals: (...a) => gateRelease.releaseHeldApprovals(board, ...a),
     endReviewsOfArchivedCard: (...a) => gates.endReviewsOfArchivedCard(board, ...a),
     expireGate: (...a) => gateExpiry.expireGate(board, ...a),
     expireLapsedGates: (...a) => gateExpiry.expireLapsedGates(board, ...a),

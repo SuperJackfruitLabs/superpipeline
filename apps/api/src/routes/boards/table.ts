@@ -6,7 +6,7 @@
 import { liveFeed, boardSnapshot, boardRename, stageEdit, stagesReplace, boardDelete, boardEvents, boardUsage, notificationsList, notificationRead, profilesList, profileSet, staleSettings, budgetSet, decisionTimeoutSet } from './board';
 import { cardArchive, cardCreate, cardMove, cardResume, cardRead, cardEdit, cardDelete, cardSplit, cardReference, cardAttempts, cardActivities, cardEstimate } from './cards';
 import { commentsList, commentAdd, commentDelete, commentNeverEdited } from './comments';
-import { gatesPending, gateRead, gateResolve, gateDelivery, deliveriesPending, elicitationsPending, elicitationAnswer, attentionPending } from './gates';
+import { gatesPending, gateRead, gateResolve, gatePullBack, gateDelivery, deliveriesPending, elicitationsPending, elicitationAnswer, attentionPending } from './gates';
 import { pushConfigRegister, pushDispatch, pushDeliveries, githubConfig, triggerCreate, forgeSecret, forgeWebhook, githubWebhook } from './integrations';
 import { linksEdit, cardLinks } from './links';
 import { claim, runRead, runAttempts, evidenceReference, approvalSubjectVerify, runVerb } from './runs';
@@ -69,6 +69,7 @@ export const BOARD_ROUTES: readonly Route<BoardRequest>[] = [
   route('GET', /^gates\/pending$/, gatesPending),
   route('GET', /^gates\/([^/]+)$/, gateRead),
   route('POST', /^gates\/([^/]+)\/resolve$/, gateResolve),
+  route('POST', /^gates\/([^/]+)\/pull-back$/, gatePullBack),
   route('POST', /^gates\/([^/]+)\/delivery$/, gateDelivery),
   route('GET', /^deliveries\/pending$/, deliveriesPending),
   route('GET', /^elicitations\/pending$/, elicitationsPending),

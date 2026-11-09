@@ -15,6 +15,8 @@ import * as comments from './comments';
 import * as decisionTimeouts from './decision-timeouts';
 import * as elicitations from './elicitations';
 import * as gates from './gates';
+import * as gateDelivery from './gate-delivery';
+import * as gateRelease from './gate-release';
 import * as holds from './holds';
 import * as maintenance from './maintenance';
 import * as metering from './metering';
@@ -267,12 +269,16 @@ export class BoardDO extends DurableObject<Env> {
     return gates.resolveGate(this.board, ...args);
   }
 
+  pullBackApproval(...args: OpArgs<typeof gateRelease.pullBackApproval>): ReturnType<typeof gateRelease.pullBackApproval> {
+    return gateRelease.pullBackApproval(this.board, ...args);
+  }
+
   updateApprovalDelivery(...args: OpArgs<typeof gates.updateApprovalDelivery>): ReturnType<typeof gates.updateApprovalDelivery> {
     return gates.updateApprovalDelivery(this.board, ...args);
   }
 
-  recordAutomaticDelivery(...args: OpArgs<typeof gates.recordAutomaticDelivery>): ReturnType<typeof gates.recordAutomaticDelivery> {
-    return gates.recordAutomaticDelivery(this.board, ...args);
+  recordAutomaticDelivery(...args: OpArgs<typeof gateDelivery.recordAutomaticDelivery>): ReturnType<typeof gateDelivery.recordAutomaticDelivery> {
+    return gateDelivery.recordAutomaticDelivery(this.board, ...args);
   }
 
   getGate(...args: OpArgs<typeof gates.getGate>): ReturnType<typeof gates.getGate> {
