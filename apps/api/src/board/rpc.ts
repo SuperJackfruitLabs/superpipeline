@@ -6,7 +6,7 @@ import type { LinkKind } from './links';
 import type { AgentActivityInput, BoardEvent, BoardInit, CardView, ClaimResult, CompleteVerbInput, DecisionTimeout, EstimateView, LinkInput, LinkView, NotificationView, ProfileInput, ProfileView, PushConfigInput, PushDeliveryView, Result, RunReportDrainResult, RunReportOutboxRow, RunVerbInput, ScheduleView, StageDef, StageEditor, StagePatch, StaleCardView, StaleSettings, UsageSummary } from './model';
 import type { FixtureBoard } from './fixture-types';
 import type { StrictDecision } from './strict-decision';
-import type { ActivityView, ApprovalRequestView, ApprovalSubjectVerification, AttentionPendingBody, AttemptView, BoardSnapshot, CommentView, DeliveryPendingBody, ElicitationPendingBody, ElicitationView, EvidenceReferenceInput, GatePendingBody, GateView, ReferenceView, RunContext, RunEvidence, RunEvidenceV1 } from './views';
+import type { ActivityView, ApprovalRequestView, CardChecksView, ApprovalSubjectVerification, AttentionPendingBody, AttemptView, BoardSnapshot, CommentView, DeliveryPendingBody, ElicitationPendingBody, ElicitationView, EvidenceReferenceInput, GatePendingBody, GateView, ReferenceView, RunContext, RunEvidence, RunEvidenceV1 } from './views';
 
 /**
  * The Board Durable Object as its callers see it.
@@ -288,6 +288,18 @@ export interface BoardStub {
     /** The workspace role in the caller's verified token; an owner or admin may pull back any held approval. */
     role?: 'owner' | 'admin' | 'member' | 'viewer' | null;
   }): Promise<Result<CardView>>;
+  /** Pass a check by hand (charter 2026-11-09, a gate may be decided by checks, decision 5). */
+  overrideCheck(input: {
+    cardId: string;
+    name: string;
+    by: string;
+    principalId?: string | null;
+    role: 'owner' | 'admin' | 'member' | 'viewer' | null;
+    agent?: boolean;
+    comment: string;
+  }): Promise<Result<{ card: CardView; checks: CardChecksView }>>;
+  /** The checks of a card's latest arrival at a stage with checks; null when it never reached one. */
+  cardChecks(cardId: string): Promise<Result<CardChecksView | null>>;
   updateApprovalDelivery(input: {
     gateId: string;
     actor: string;

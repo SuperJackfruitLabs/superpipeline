@@ -1,4 +1,5 @@
 import type { JsonValue } from '../json';
+import { mapForgeCiEvent, mapGithubCiEvent } from '../references/ci-events';
 import { mapForgeEvent } from '../references/forge-events';
 import { mapGithubEvent, type WebhookPayload } from '../references/github-events';
 import { verifyForgeSignature, verifyGithubSignature } from '../references/github-signature';
@@ -20,9 +21,21 @@ export type TriggersDeps = Pick<
   | 'getMeta'
   | 'mustGetReference'
   | 'now'
+  | 'recordCiResult'
+  | 'resetCiChecksForCard'
   | 'setMeta'
   | 'sql'
 >;
+
+/**
+ * A pull request event may carry a new head commit; a card whose open `ci` checks judged the old
+ * one starts them again, judged against what is known for the new one (charter 2026-11-09, a
+ * gate may be decided by checks, decision 6). The first head heard counts too: a check waiting for
+ * a head it did not know yet is judged then.
+ */
+function headChanged(current: Record<string, unknown>, metadata: Record<string, unknown>): boolean {
+  return typeof metadata.headSha === 'string' && current.headSha !== metadata.headSha;
+}
 
 /** Store/rotate this board's GitHub webhook secret (docs/06 §3, §6). */
 export async function setForgeSecret(deps: TriggersDeps, secret: string): Promise<Result<{ configured: true }>> {
@@ -83,6 +96,10 @@ export async function handleForgeWebhook(deps: TriggersDeps, input: {
     return { ok: true, value: { deduped: false, matched: 0, modeled: false } };
   }
 
+  // A CI result for a commit (a commit status, an Actions run): for the cards' machine checks.
+  const ci = mapForgeCiEvent(input.event, payload);
+  if (ci) return { ok: true, value: { deduped: false, matched: await deps.recordCiResult('forge', ci), modeled: true } };
+
   const mapped = mapForgeEvent(input.event, payload);
   if (!mapped) return { ok: true, value: { deduped: false, matched: 0, modeled: false } };
 
@@ -106,6 +123,7 @@ export async function handleForgeWebhook(deps: TriggersDeps, input: {
       row.id,
     );
     deps.emit('reference.updated', { reference: deps.mustGetReference(row.id as string) });
+    if (headChanged(current, mapped.metadata) && typeof row.card_id === 'string') await deps.resetCiChecksForCard(row.card_id);
   }
   return { ok: true, value: { deduped: false, matched: rows.length, modeled: true } };
 }
@@ -237,6 +255,10 @@ export async function handleGithubWebhook(deps: TriggersDeps, input: {
     }
   }
 
+  // A CI result for a commit (status, check run, check suite, workflow run): for machine checks.
+  const ci = mapGithubCiEvent(input.event, payload);
+  if (ci) return { ok: true, value: { deduped: false, matched: await deps.recordCiResult('github', ci), modeled: true } };
+
   const mapped = mapGithubEvent(input.event, payload);
   if (!mapped) return { ok: true, value: { deduped: false, matched: 0, modeled: false } };
 
@@ -260,6 +282,7 @@ export async function handleGithubWebhook(deps: TriggersDeps, input: {
       row.id,
     );
     deps.emit('reference.updated', { reference: deps.mustGetReference(row.id as string) });
+    if (headChanged(current, mapped.metadata) && typeof row.card_id === 'string') await deps.resetCiChecksForCard(row.card_id);
   }
   // `modeled: true` with `matched: 0` means "a known event for a PR/issue no card references yet"
   // — distinct from an unmodeled event or a parse miss (both `modeled: false`).

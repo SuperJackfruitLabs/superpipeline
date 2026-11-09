@@ -315,6 +315,11 @@ export interface GateView {
   releasedAt?: string;
   /** Who pulled a held approval back, when, and why (decision 4). */
   pulledBack?: { by: string; at: string; comment: string };
+  /**
+   * The checks that ran before this gate opened (charter 2026-11-09, a gate may be decided by
+   * checks, decision 7). Present only when the gate's stage had checks.
+   */
+  checks?: GateCheckSummary[];
   /** Human-selected delivery state for a resolved immutable publishing approval. */
   delivery?: {
     mode: 'manual' | 'automatic';
@@ -366,6 +371,57 @@ export interface GateQuorumEnvelope {
 export interface GateReleaseEnvelope {
   holdForMinutes?: number;
   notBefore?: string;
+}
+
+/** One check as gate.v2 carries it (charter 2026-11-09, a gate may be decided by checks, decision 7). */
+export interface GateCheckSummary {
+  name: string;
+  provider: 'ci' | 'verdict';
+  status: 'pending' | 'passed' | 'failed' | 'overridden';
+  url?: string;
+}
+
+/** One check on a card's current arrival at its stage, as `GET cards/:id/checks` reads it. */
+export interface CheckView extends GateCheckSummary {
+  /** What the result said: the failing CI context, the verdict's value, why it waits. */
+  detail?: string;
+  /** The head commit a `ci` check judged, when one is known. */
+  headSha?: string;
+  updatedAt: string;
+  /** Who passed it by hand, when and why (decision 5). */
+  overridden?: { by: string; at: string; comment: string };
+}
+
+/** The checks of a card's latest arrival at a stage with checks. */
+export interface CardChecksView {
+  cardId: string;
+  stageKey: string;
+  /** `open` while the card waits on them; `passed` once the gate opened or the stage passed; `returned` once a failure sent the card back; `closed` when the card left otherwise. */
+  status: 'open' | 'passed' | 'returned' | 'closed';
+  checks: CheckView[];
+}
+
+/** What a `check.failed` carries: a check failed and the card went back to `returnedTo`. */
+export interface CheckFailedBody {
+  event: 'check.failed';
+  boardId: string | null;
+  cardId: string;
+  stageKey: string;
+  check: { name: string; provider: 'ci' | 'verdict'; status: 'failed'; detail?: string; url?: string };
+  /** The stage the card went back to; null when it could not go back and stopped for a person. */
+  returnedTo: string | null;
+}
+
+/** What a `check.overridden` carries: a workspace owner or admin passed a check by hand. */
+export interface CheckOverriddenBody {
+  event: 'check.overridden';
+  boardId: string | null;
+  cardId: string;
+  stageKey: string;
+  check: { name: string; provider: 'ci' | 'verdict'; status: 'overridden' };
+  by: string;
+  comment: string;
+  at: string;
 }
 
 /** What a `decision.released` carries: a held approval reached its release time, and acted or was blocked. */
@@ -477,6 +533,8 @@ export interface GatePendingBody {
   quorum?: GateQuorumEnvelope;
   /** When an approval would wait before acting (charter 2026-11-09, release time); absent when nothing holds it. */
   release?: GateReleaseEnvelope;
+  /** The checks that ran before this gate opened (charter 2026-11-09, checks); absent when the stage had none. */
+  checks?: GateCheckSummary[];
   ts: string;
 }
 

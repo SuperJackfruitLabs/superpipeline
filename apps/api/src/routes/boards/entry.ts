@@ -64,7 +64,10 @@ export async function boards({ request, env, url, path }: WorkerRequest, match: 
       // `attention/pending` too: the same sweep's read of cards waiting on a person (charter:
       // waiting cards reach chat §1). Resuming or archiving one stays on the human routes.
       rest === 'attention/pending' ||
-      /^gates\/[^/]+$/.test(rest));
+      /^gates\/[^/]+$/.test(rest) ||
+      // A card's checks, on the same footing as one gate (charter 2026-11-09, a gate may be decided
+      // by checks, "who sees what"): a read that names nobody and carries no authority.
+      (request.method === 'GET' && /^cards\/[^/]+\/checks$/.test(rest)));
   /**
    * What a COORDINATOR agent reaches: the board, one card, and creating a card.
    *
@@ -107,6 +110,10 @@ export async function boards({ request, env, url, path }: WorkerRequest, match: 
         (request.method === 'POST' && /^cards\/[^/]+\/resume$/.test(rest)) ||
         // Archive, the chat answer's other half, for the same reason as resume.
         (request.method === 'POST' && /^cards\/[^/]+\/archive$/.test(rest)) ||
+        // Overriding a check, for the same reason as resume: an agent's bearer lands in the agent
+        // branch and the route refuses it by name (`CHECK_OVERRIDE_NOT_ALLOWED`); a person without
+        // a bearer is the human branch as before (charter 2026-11-09, checks, decision 5).
+        (request.method === 'POST' && /^cards\/[^/]+\/checks\/[^/]+\/override$/.test(rest)) ||
         ((request.method === 'POST' || request.method === 'DELETE') && rest === 'links') ||
         // ONE stage's prose, on `compose`. The body is then authorised field by field, so this
         // door opens for `instructions` and refuses every routing key behind it.

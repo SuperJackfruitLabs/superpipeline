@@ -129,9 +129,15 @@ export function createDecisionTables(sql: SqlStorage): void {
    * came due first); `next_due_at` is the earlier deadline still to act on; `closed_at` marks a wait
    * that ended or has nothing left to act on, pruned after 30 days. Durable because it is here, not in memory.
    */
+  // `checks` joined the kinds with machine checks (charter 2026-11-09, a gate may be decided by
+  // checks, decision 4). SQLite cannot widen a CHECK in place, so a table made before it is rebuilt
+  // once, rows and all; the index goes with the old table and is made again below.
+  const made = sql.exec(`SELECT sql FROM sqlite_master WHERE type = 'table' AND name = 'decision_waits'`).toArray()[0];
+  const madeWithoutChecks = typeof made?.sql === 'string' && !made.sql.includes("'checks'");
+  if (madeWithoutChecks) sql.exec(`ALTER TABLE decision_waits RENAME TO decision_waits_before_checks`);
   sql.exec(
     `CREATE TABLE IF NOT EXISTS decision_waits (
-      kind TEXT NOT NULL CHECK (kind IN ('gate', 'question', 'delivery', 'attention')),
+      kind TEXT NOT NULL CHECK (kind IN ('gate', 'question', 'delivery', 'attention', 'checks')),
       decision_id TEXT NOT NULL,
       card_id TEXT NOT NULL,
       stage_key TEXT NOT NULL,
@@ -146,6 +152,13 @@ export function createDecisionTables(sql: SqlStorage): void {
       PRIMARY KEY (kind, decision_id)
     )`,
   );
+  if (madeWithoutChecks) {
+    sql.exec(
+      `INSERT INTO decision_waits (kind, decision_id, card_id, stage_key, waiting_since, remind_at, escalate_at, reminded_at, escalated_at, remind_skipped, next_due_at, closed_at)
+       SELECT kind, decision_id, card_id, stage_key, waiting_since, remind_at, escalate_at, reminded_at, escalated_at, remind_skipped, next_due_at, closed_at FROM decision_waits_before_checks`,
+    );
+    sql.exec(`DROP TABLE decision_waits_before_checks`);
+  }
   // The sweep reads due waits by `next_due_at` alone (null once nothing is left to act on).
   sql.exec(`CREATE INDEX IF NOT EXISTS idx_decision_waits_due ON decision_waits(next_due_at)`);
   sql.exec(

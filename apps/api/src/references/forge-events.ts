@@ -34,6 +34,9 @@ export function mapForgeEvent(event: string, payload: unknown): GithubEventResul
       draft: !!pr.draft,
       baseRef: pr.base?.ref,
       headRef: pr.head?.ref,
+      // The pull request's head commit, which a `ci` machine check judges (charter 2026-11-09, a
+      // gate may be decided by checks, decision 6). Lowercased: CI events spell it that way too.
+      ...(typeof pr.head?.sha === 'string' && pr.head.sha !== '' ? { headSha: pr.head.sha.toLowerCase() } : {}),
       url: pr.html_url,
       ...extra,
     });

@@ -61,7 +61,8 @@ export type SignalType = z.infer<typeof Signal>;
 export const Role = z.enum(['owner', 'admin', 'member', 'viewer']);
 export type Role = z.infer<typeof Role>;
 
-export const StageGate = z.enum(['none', 'approval']);
+/** `checks`: no person decides; the stage passes when its checks pass (charter 2026-11-09, a gate may be decided by checks). */
+export const StageGate = z.enum(['none', 'approval', 'checks']);
 export type StageGate = z.infer<typeof StageGate>;
 
 export const StageOwnerKind = z.enum(['capability', 'agent', 'human']);

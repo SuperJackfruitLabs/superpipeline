@@ -112,7 +112,7 @@ export interface DecisionNoticeBody {
   stageKey: string;
   stageName: string;
   decisionKind: DecisionKind;
-  /** The gate id, the question's elicitation id, the delivery's gate id, or the card's wait id. */
+  /** The gate id, the question's elicitation id, the delivery's gate id, the card's wait id, or a check set's arrival id. */
   decisionId: string;
   waitingSince: string;
   remindedAt?: string;
@@ -148,6 +148,14 @@ function stillWaiting(deps: DecisionTimeoutDeps, kind: DecisionKind, decisionId:
         .toArray().length > 0
     );
   }
+  if (kind === 'checks') {
+    // A check set: its arrival is open, the card still waits on that stage, and a check is pending
+    // (charter 2026-11-09, a gate may be decided by checks, decision 4). Read here rather than in
+    // machine-checks.ts, which acts on arrivals and is not imported by the timeouts.
+    const arrival = deps.sql.exec(`SELECT stage_key FROM card_check_arrivals WHERE id = ? AND status = 'open'`, decisionId).toArray()[0];
+    if (!arrival || card.current_stage_key !== arrival.stage_key || card.state !== 'input-required') return false;
+    return deps.sql.exec(`SELECT 1 FROM card_checks WHERE arrival_id = ? AND status = 'pending' LIMIT 1`, decisionId).toArray().length > 0;
+  }
   // An attention wait: the card's current wait, as `currentWaitId` in attention.ts reads it (not
   // imported: that module records waits through this one).
   return card.state === 'input-required' && typeof card.needs_human_json === 'string' && card.needs_human_id === decisionId;
@@ -158,6 +166,7 @@ const KIND_WORDS: Record<DecisionKind, string> = {
   question: "An agent's question",
   delivery: 'A manual delivery',
   attention: 'A waiting card',
+  checks: "A stage's checks",
 };
 
 function noticeBody(deps: DecisionTimeoutDeps, row: { kind: DecisionKind; decisionId: string; cardId: string; stageKey: string; since: string }, event: DecisionNoticeBody['event'], at: string): DecisionNoticeBody | null {
@@ -181,7 +190,7 @@ function noticeBody(deps: DecisionTimeoutDeps, row: { kind: DecisionKind; decisi
 }
 
 function isKind(v: unknown): v is DecisionKind {
-  return v === 'gate' || v === 'question' || v === 'delivery' || v === 'attention';
+  return v === 'gate' || v === 'question' || v === 'delivery' || v === 'attention' || v === 'checks';
 }
 
 /** How many due waits one sweep acts on; the rest are due on the next. */

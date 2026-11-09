@@ -107,6 +107,31 @@ export const GateQuorum = z
   .strict();
 export type GateQuorum = z.infer<typeof GateQuorum>;
 
+/**
+ * A check a stage names (charter 2026-11-09, a gate may be decided by checks): a decider that is not
+ * a person. `ci`: every required CI context (or every reported one) is green for the head commit of
+ * the card's linked pull request. `verdict`: the latest SuperWitness verdict of `kind` (and
+ * `standard`) on the run that produced the work has a numeric value at or over `atLeast`, or says
+ * `pass`; `judgeKinds` limits whose verdicts count.
+ */
+const CheckName = z.string().min(1).max(40).regex(/^[^/\s](?:[^/]*[^/\s])?$/);
+export const StageCheck = z.discriminatedUnion('provider', [
+  z.object({ name: CheckName, provider: z.literal('ci'), contexts: z.array(z.string().min(1).max(200)).min(1).max(20).optional() }).strict(),
+  z
+    .object({
+      name: CheckName,
+      provider: z.literal('verdict'),
+      kind: z.string().min(1).max(100),
+      standard: z.string().min(1).max(200).optional(),
+      atLeast: z.number().finite().optional(),
+      pass: z.literal(true).optional(),
+      judgeKinds: z.array(z.enum(['grader', 'rule', 'agent', 'human'])).min(1).optional(),
+    })
+    .strict()
+    .refine((c) => (c.atLeast === undefined) !== (c.pass === undefined), 'say either atLeast or pass: true'),
+]);
+export type StageCheck = z.infer<typeof StageCheck>;
+
 export const Stage = z.object({
   key: z.string().min(1),
   name: z.string().min(1),
@@ -171,6 +196,14 @@ export const Stage = z.object({
    * set it. A held approval may be pulled back until it is released. Absent, an approval acts at once.
    */
   holdFor: z.number().int().min(5).max(10080).optional(),
+  /**
+   * Checks that run before people, 1 to 5 with unique names (charter 2026-11-09, a gate may be
+   * decided by checks). On an approval stage the gate opens once every check passed or was
+   * overridden; on `gate: "checks"` the stage passes then, with nobody asked. A failing check
+   * returns the card to `returnStage`, which a stage with checks must have. Decision policy: only
+   * the workspace's owners and admins set them.
+   */
+  checks: z.array(StageCheck).min(1).max(5).optional(),
 });
 export type Stage = z.infer<typeof Stage>;
 

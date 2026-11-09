@@ -154,3 +154,77 @@ export async function postRunReports(
   // 1xx/3xx: a misconfigured URL. Retryable, so it ends parked after 12 attempts rather than lost.
   return { kind: 'retry', status: res.status, code, retryAfterMs: null };
 }
+
+/**
+ * One SuperWitness verdict, as `GET /v1/verdicts` answers it, with the fields a machine check reads
+ * (charter 2026-11-09, a gate may be decided by checks, decision 1). `superseded_by` is the
+ * history read's own: the verdict that replaced this one, if any.
+ */
+export interface WitnessVerdict {
+  id: string;
+  kind: string;
+  judgeKind: string;
+  standard: string;
+  value: unknown;
+  supersedes: string | null;
+  supersededBy: string | null;
+  createdAt: string;
+}
+
+export type VerdictReadOutcome = { kind: 'ok'; verdicts: WitnessVerdict[] } | { kind: 'error'; status: number; code: string };
+
+function isObject(v: unknown): v is Record<string, unknown> {
+  return v !== null && typeof v === 'object' && !Array.isArray(v);
+}
+
+function toVerdict(v: unknown): WitnessVerdict | null {
+  if (!isObject(v)) return null;
+  const { id, kind, judge_kind: judgeKind, standard, value, supersedes, superseded_by: supersededBy, created_at: createdAt } = v;
+  if (typeof id !== 'string' || typeof kind !== 'string' || typeof judgeKind !== 'string' || typeof createdAt !== 'string') return null;
+  return {
+    id,
+    kind,
+    judgeKind,
+    standard: typeof standard === 'string' ? standard : '',
+    value,
+    supersedes: typeof supersedes === 'string' ? supersedes : null,
+    supersededBy: typeof supersededBy === 'string' ? supersededBy : null,
+    createdAt,
+  };
+}
+
+/**
+ * Read the verdicts on one subject (`GET {SUPERWITNESS_URL}/v1/verdicts?subject_kind=&subject_ref=`),
+ * with the reporter's service token: the board's one SuperWitness credential. Never follows a
+ * redirect, for the same reason the report does not.
+ */
+export async function getVerdicts(
+  cfg: ReporterConfig,
+  cache: ServiceTokenCache,
+  fetcher: ReporterFetch,
+  nowMs: number,
+  subject: { kind: 'run'; ref: string },
+): Promise<VerdictReadOutcome> {
+  const token = await cache.get(cfg, fetcher, nowMs);
+  if (!token.ok) return { kind: 'error', status: token.status, code: token.code };
+  const url = new URL('/v1/verdicts', cfg.runsUrl);
+  url.searchParams.set('subject_kind', subject.kind);
+  url.searchParams.set('subject_ref', subject.ref);
+  let res: Response;
+  try {
+    res = await fetcher(url.toString(), {
+      method: 'GET',
+      headers: { Authorization: `Bearer ${token.token}`, Accept: 'application/json' },
+      redirect: 'manual',
+      signal: AbortSignal.timeout(REPORTER_FETCH_TIMEOUT_MS),
+    });
+  } catch {
+    return { kind: 'error', status: 0, code: 'network' };
+  }
+  const body = await readJson(res);
+  if (res.status === 401 || res.status === 403) cache.drop();
+  if (res.status !== 200) return { kind: 'error', status: res.status, code: errorCode(body, res.status) };
+  const raw = isObject(body) ? body.verdicts : null;
+  if (!Array.isArray(raw)) return { kind: 'error', status: 200, code: 'bad_response' };
+  return { kind: 'ok', verdicts: raw.map(toVerdict).filter((v): v is WitnessVerdict => v !== null) };
+}

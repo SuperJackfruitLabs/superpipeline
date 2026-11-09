@@ -1,4 +1,5 @@
 import { migrateCardAndRunColumns } from './schema-columns';
+import { createCheckTables } from './schema-checks';
 import { createDecisionTables } from './schema-decisions';
 import { createRelationTables } from './schema-relations';
 
@@ -124,5 +125,6 @@ export function migrateBoardSchema(sql: SqlStorage): void {
   );
   migrateCardAndRunColumns(sql);
   createDecisionTables(sql);
+  createCheckTables(sql);
   createRelationTables(sql);
 }

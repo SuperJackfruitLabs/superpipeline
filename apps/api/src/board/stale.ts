@@ -2,6 +2,7 @@ import type { BoardContext } from './context';
 import { newId } from '../ids';
 import type { CardView, Result, Row, StaleCardView, StaleSettings } from './model';
 import { handoffSummary } from './rules';
+import type { ReporterFetch } from '../superwitness/client';
 
 /**
  * The board sweep: overdue cards, due schedules, and cards that have gone stale.
@@ -23,6 +24,7 @@ export type StaleDeps = Pick<
   | 'isAgentClaimable'
   | 'notify'
   | 'now'
+  | 'pollVerdictChecks'
   | 'releaseHeldApprovals'
   | 'rowToCard'
   | 'setNeedsHuman'
@@ -51,7 +53,11 @@ const STALE_DIGEST_REPEAT_MS = 24 * 3600_000;
  * review found here (a failing backfill had been taking the overdue sweep down with it, silently
  * and forever). `schedulesFired` reports 0, honestly, when firing itself failed.
  */
-export async function sweepBoard(deps: StaleDeps, nowIso: string): Promise<{ overdueNotified: number; schedulesFired: number; staleNotified: number; gatesExpired: number; deliveriesExpired: number; decisionsReminded: number; decisionsEscalated: number; approvalsReleased: number }> {
+export async function sweepBoard(
+  deps: StaleDeps,
+  nowIso: string,
+  opts: { verdictFetch?: ReporterFetch } = {},
+): Promise<{ overdueNotified: number; schedulesFired: number; staleNotified: number; gatesExpired: number; deliveriesExpired: number; decisionsReminded: number; decisionsEscalated: number; approvalsReleased: number; checksDecided: number }> {
   // The backfill is a migration, not a sweep job. Guarded by a meta flag because its query
   // (`WHERE due_at IS NULL`) matches every card that never had a due date — i.e. most of them,
   // forever — so running it on each five-minute tick would be a full table scan for nothing.
@@ -207,6 +213,16 @@ export async function sweepBoard(deps: StaleDeps, nowIso: string): Promise<{ ove
     deps.emit('approval_release.sweep_failed', { reason: String(err) });
   }
 
+  // Pending verdict checks ask SuperWitness, which sends no events (charter 2026-11-09, a gate may
+  // be decided by checks, decision 6). Before the timeouts, so a check that just passed is not
+  // reminded about. Isolated like the other jobs; `opts.verdictFetch` is the tests' stand-in.
+  let checksDecided = 0;
+  try {
+    checksDecided = await deps.pollVerdictChecks(nowIso, opts.verdictFetch ? { fetcher: opts.verdictFetch } : {});
+  } catch (err) {
+    deps.emit('verdict_checks.sweep_failed', { reason: String(err) });
+  }
+
   // An approval subject that expired closes its pending gate, and ends its owed manual delivery
   // visibly (charter: unanswered decisions remind, then escalate, decision 7). Isolated like the
   // other jobs, and each gate inside it on its own.
@@ -262,7 +278,7 @@ export async function sweepBoard(deps: StaleDeps, nowIso: string): Promise<{ ove
   if (terminalBackfillError) throw terminalBackfillError;
   if (archivedReviewsError) throw archivedReviewsError;
 
-  return { overdueNotified, schedulesFired, staleNotified, gatesExpired, deliveriesExpired, decisionsReminded, decisionsEscalated, approvalsReleased };
+  return { overdueNotified, schedulesFired, staleNotified, gatesExpired, deliveriesExpired, decisionsReminded, decisionsEscalated, approvalsReleased, checksDecided };
 }
 
 export async function setStaleSettings(deps: StaleDeps, input: { enabled?: boolean; afterHours?: number }): Promise<Result<StaleSettings>> {
@@ -315,7 +331,7 @@ function collectStale(deps: StaleDeps, input: { nowIso: string; afterHours?: num
   const last = stages[stages.length - 1]?.key;
   // Stages nothing will ever take a submitted card from. The last stage is excluded because
   // arriving there resolves the card (`completesOnArrival`).
-  const ownerless = stages.filter((st) => !deps.isAgentClaimable(st) && st.gate !== 'approval' && st.key !== last).map((st) => st.key);
+  const ownerless = stages.filter((st) => !deps.isAgentClaimable(st) && st.gate !== 'approval' && st.gate !== 'checks' && st.key !== last).map((st) => st.key);
   const placeholders = ownerless.map(() => '?').join(', ');
   const rows = deps.sql
     .exec(

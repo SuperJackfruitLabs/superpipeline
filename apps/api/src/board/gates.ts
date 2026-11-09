@@ -1,6 +1,7 @@
 import type { GateDecision } from '@superpipeline/contract';
 import { newId } from '../ids';
 import type { BoardContext } from './context';
+import { bindArrivalToGate, gateChecksField, passedArrivalAwaitingGate } from './check-store';
 import { readBackStatus } from './gate-delivery';
 import { applyVariantChoice, deciderError, gateVariants, judgeVariantDecision, optionError } from './gate-choice';
 import type { GateOption } from './gate-option';
@@ -23,6 +24,7 @@ export type GatesDeps = Pick<
   BoardContext,
   | 'advanceCard'
   | 'approvalSubjectView'
+  | 'awaitChecks'
   | 'cancelElicitationsForCard'
   | 'ctx'
   | 'decisionDeadline'
@@ -479,6 +481,11 @@ export function createGate(deps: GatesDeps, cardId: string, stageKey: string, re
   const id = newId('gate');
   const now = deps.now();
   const stage = deps.stages().find((candidate) => candidate.key === stageKey);
+  // Checks run before people (charter 2026-11-09, a gate may be decided by checks, decision 2): on
+  // a stage with checks the arrival records them and the card waits; this opens the gate only for
+  // the arrival whose checks all passed. Returns the arrival's id while it waits.
+  const passedArrival = stage?.checks?.length ? passedArrivalAwaitingGate(deps.sql, cardId, stageKey) : null;
+  if (stage?.checks?.length && passedArrival === null) return deps.awaitChecks(cardId, stageKey, returnStageKey, producedBy, runId, approval);
   // A choice of variants freezes one subject per variant; the gate's own subject stays NULL until
   // an approval chooses one (charter 2026-11-09). One subject is the gate's subject from the start.
   const variants = approval && 'variants' in approval ? approval.variants : null;
@@ -539,6 +546,8 @@ export function createGate(deps: GatesDeps, cardId: string, stageKey: string, re
       );
     });
   });
+  // Before the push, so the push carries the checks that passed.
+  if (passedArrival !== null) bindArrivalToGate(deps.sql, passedArrival, id);
   // Before the push, so the push carries the deadline (charter 2026-11-08, decisions 2 and 5).
   deps.startDecisionWait({ kind: 'gate', decisionId: id, cardId, stageKey });
   deps.emit('gate.opened', { gateId: id, cardId, stageKey });
@@ -662,6 +671,7 @@ function rowToGate(deps: GatesDeps, r: Row): GateView {
     ...quorumField(deps, r),
     ...releaseField(deps, r),
     ...holdFields(r),
+    ...gateChecksField(deps.sql, r),
   };
 }
 
@@ -797,6 +807,7 @@ function gatePendingBody(deps: GatesDeps, gate: Row): GatePendingBody | null {
     ...(typeof gate.id === 'string' ? deps.decisionDeadline('gate', gate.id) : {}),
     ...quorumField(deps, gate),
     ...releaseField(deps, gate),
+    ...gateChecksField(deps.sql, gate),
     // `id`/`label`, not `name`/`title`: the wire names are pinned by
     // agentpod fixtures/ecosystem-identity/matrix_gate_events.json, which
     // three repos validate against. The board's own vocabulary stops here.
