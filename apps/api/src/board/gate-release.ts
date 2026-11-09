@@ -264,6 +264,13 @@ export async function pullBackApproval(
   const refused = pullBackDeciderError(gate, input.by, input.role ?? null);
   if (refused) return refused;
   const cardId = gate.card_id;
+  // A card moved or archived during the hold is no longer this approval's to send back: its
+  // release would be blocked for the same reason, and pulling it back would yank it from where it
+  // was put.
+  const card = deps.getCardRow(cardId);
+  if (!card || card.archived_at || card.current_stage_key !== gate.stage_key || card.state !== 'input-required') {
+    return { ok: false, code: 'GATE_NOT_HELD', message: 'the card left the review during the hold; this approval will not go ahead' };
+  }
   const now = deps.now();
   // One statement claims it, and nothing awaits before the card is sent back: no release or second
   // pull-back can come between the claim and its effect.

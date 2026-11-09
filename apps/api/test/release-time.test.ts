@@ -384,6 +384,14 @@ describe('a held approval may be pulled back', () => {
       expect((await board.pullBackApproval({ gateId, by: 'usr_b', comment: 'wait' })).ok).toBe(true);
       expect(await board.pullBackApproval({ gateId, by: 'usr_b', comment: 'again' })).toMatchObject({ ok: false, code: 'GATE_NOT_HELD' });
     });
+    await runInDurableObject(stub('rt-pull-moved'), async (board: BoardDO) => {
+      const { cardId, gateId } = await openPlainGate(board, 'moved', { holdFor: 30 });
+      expect((await board.resolveGate({ gateId, decision: 'approve', decidedBy: 'usr_a' })).ok).toBe(true);
+      // Moved off the review during the hold: not this approval's to send back.
+      expect((await board.moveCard(cardId, 'research', 'usr_owner')).ok).toBe(true);
+      expect(await board.pullBackApproval({ gateId, by: 'usr_b', comment: 'wait' })).toMatchObject({ ok: false, code: 'GATE_NOT_HELD' });
+      expect((await board.getState()).cards.find((c) => c.id === cardId)).toMatchObject({ currentStageKey: 'research' });
+    });
   });
 });
 
