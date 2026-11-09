@@ -40,6 +40,8 @@ export interface BoardTemplateStage {
   timeout?: { remindAfterMinutes?: number; escalateAfterMinutes?: number };
   /** How many approvals a gate here needs, and from whom (`GateQuorum` in entities.ts). */
   quorum?: { required: number; from?: 'deciders' | 'admins' };
+  /** Minutes an approval here waits before it acts (`Stage.holdFor` in entities.ts). */
+  holdFor?: number;
 }
 
 export interface BoardTemplate {

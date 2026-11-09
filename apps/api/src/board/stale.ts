@@ -23,6 +23,7 @@ export type StaleDeps = Pick<
   | 'isAgentClaimable'
   | 'notify'
   | 'now'
+  | 'releaseHeldApprovals'
   | 'rowToCard'
   | 'setNeedsHuman'
   | 'setMeta'
@@ -50,7 +51,7 @@ const STALE_DIGEST_REPEAT_MS = 24 * 3600_000;
  * review found here (a failing backfill had been taking the overdue sweep down with it, silently
  * and forever). `schedulesFired` reports 0, honestly, when firing itself failed.
  */
-export async function sweepBoard(deps: StaleDeps, nowIso: string): Promise<{ overdueNotified: number; schedulesFired: number; staleNotified: number; gatesExpired: number; deliveriesExpired: number; decisionsReminded: number; decisionsEscalated: number }> {
+export async function sweepBoard(deps: StaleDeps, nowIso: string): Promise<{ overdueNotified: number; schedulesFired: number; staleNotified: number; gatesExpired: number; deliveriesExpired: number; decisionsReminded: number; decisionsEscalated: number; approvalsReleased: number }> {
   // The backfill is a migration, not a sweep job. Guarded by a meta flag because its query
   // (`WHERE due_at IS NULL`) matches every card that never had a due date — i.e. most of them,
   // forever — so running it on each five-minute tick would be a full table scan for nothing.
@@ -195,6 +196,17 @@ export async function sweepBoard(deps: StaleDeps, nowIso: string): Promise<{ ove
     deps.emit('approval_delivery_reminder.sweep_failed', { reason: String(err) });
   }
 
+  // A held approval whose release time has come acts, or its card is blocked with the reason
+  // (charter 2026-11-09, an approval may wait for its release time, decision 6). Before the expiry
+  // jobs, so a held approval whose subject lapsed is ended here, with its own reason. Isolated like
+  // the other jobs, and each gate inside it on its own.
+  let approvalsReleased = 0;
+  try {
+    approvalsReleased = await deps.releaseHeldApprovals(nowIso);
+  } catch (err) {
+    deps.emit('approval_release.sweep_failed', { reason: String(err) });
+  }
+
   // An approval subject that expired closes its pending gate, and ends its owed manual delivery
   // visibly (charter: unanswered decisions remind, then escalate, decision 7). Isolated like the
   // other jobs, and each gate inside it on its own.
@@ -250,7 +262,7 @@ export async function sweepBoard(deps: StaleDeps, nowIso: string): Promise<{ ove
   if (terminalBackfillError) throw terminalBackfillError;
   if (archivedReviewsError) throw archivedReviewsError;
 
-  return { overdueNotified, schedulesFired, staleNotified, gatesExpired, deliveriesExpired, decisionsReminded, decisionsEscalated };
+  return { overdueNotified, schedulesFired, staleNotified, gatesExpired, deliveriesExpired, decisionsReminded, decisionsEscalated, approvalsReleased };
 }
 
 export async function setStaleSettings(deps: StaleDeps, input: { enabled?: boolean; afterHours?: number }): Promise<Result<StaleSettings>> {

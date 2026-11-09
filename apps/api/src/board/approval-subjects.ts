@@ -3,6 +3,7 @@ import { approvalSubjectKind, nonEmptyString, type ApprovalSubjectKind } from '.
 import { newId } from '../ids';
 import type { JsonValue } from '../json';
 import type { BoardContext } from './context';
+import { heldError } from './gate-release';
 import type { CardView, Result, StageDef } from './model';
 import { isApproveDecision, record, VARIANT_ID_MAX, VARIANT_LABEL_MAX, VARIANTS_MAX } from './rules';
 import type { ApprovalSubjectVerification, ApprovalSubjectView, PreparedApproval, PreparedApprovalSubject, PreparedVariant } from './views';
@@ -154,6 +155,10 @@ export async function verifyApprovalSubject(deps: ApprovalSubjectsDeps, input: {
   ) {
     return { ok: false, code: 'APPROVAL_SUBJECT_NOT_VERIFIED', message: 'approval subject and gate binding is not valid' };
   }
+  // A held approval has not acted (charter 2026-11-09, release time, decision 3). Its card stays on
+  // the human gate stage, so no run should reach here; this fences a corrupted or stale claim.
+  const held = heldError(gate);
+  if (held) return held;
   if (
     subject.schema !== input.expectedSchema ||
     input.expectedSubjectId !== subject.id ||

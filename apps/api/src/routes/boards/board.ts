@@ -80,6 +80,7 @@ export async function stageEdit({ request, env, user, agent, stub }: BoardReques
     returnStage: body.returnStage,
     timeout: body.timeout,
     quorum: body.quorum,
+    holdFor: body.holdFor,
     // A stage's gate is decision policy, a workspace admin's to change (charter decision 6); the
     // board compares and refuses `WORKSPACE_ADMIN_REQUIRED`. An agent never reaches it (above).
   }, { kind: 'person', mayChangeDecisionPolicy: !agent && isWorkspaceAdmin(env, user) });

@@ -280,6 +280,14 @@ export interface BoardStub {
     /** The workspace role in the answer's verified token; a quorum `from: admins` reads it. */
     deciderRole?: 'owner' | 'admin' | 'member' | 'viewer' | null;
   }): Promise<Result<CardView>>;
+  /** Pull a held approval back before its release time, as request changes (charter 2026-11-09, release time). */
+  pullBackApproval(input: {
+    gateId: string;
+    by: string;
+    comment: string;
+    /** The workspace role in the caller's verified token; an owner or admin may pull back any held approval. */
+    role?: 'owner' | 'admin' | 'member' | 'viewer' | null;
+  }): Promise<Result<CardView>>;
   updateApprovalDelivery(input: {
     gateId: string;
     actor: string;

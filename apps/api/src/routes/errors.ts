@@ -57,6 +57,13 @@ export function statusForCode(code: BoardErrorCode): number {
     case 'DECISION_CONFLICT':
     // Already counted on this quorum gate: the state the caller believed in, not a bad request.
     case 'QUORUM_ALREADY_APPROVED':
+    // An approval held for its release time, already released, never held, or one whose release
+    // time falls after its subject's expiry: each a conflict with the gate's state or the subject's
+    // own timing, not a malformed request (charter 2026-11-09, release time).
+    case 'APPROVAL_HELD':
+    case 'APPROVAL_RELEASED':
+    case 'GATE_NOT_HELD':
+    case 'APPROVAL_RELEASE_AFTER_EXPIRY':
     case 'ELICITATION_NOT_PENDING':
     case 'CARD_NOT_WAITING':
     // A late tap on a wait that has ended: the card stopped waiting, or waits on something else.

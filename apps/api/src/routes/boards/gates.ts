@@ -67,6 +67,32 @@ export async function gateResolve({ request, env, tenantId, user, agent, stub }:
   return Response.json({ card: result.value });
 }
 
+// POST /v1/boards/:id/gates/:gateId/pull-back — pull a held approval back before its release time,
+// as request changes (charter 2026-11-09, an approval may wait for its release time, decision 4).
+// Judged like a decision on the gate: a decider of the gate, or an owner or admin by the role in
+// the verified token at the time of the request.
+export async function gatePullBack({ request, env, tenantId, user, stub }: BoardRequest, gateMatch: RegExpMatchArray): Promise<Response> {
+  const body = (await request.json().catch(() => null)) as { comment?: unknown } | null;
+  if (!body || typeof body !== 'object' || typeof body.comment !== 'string') {
+    return Response.json({ error: { code: 'INVALID_COMMENT', message: 'pulling back an approval needs a `comment` saying why' } }, { status: 400 });
+  }
+  const localId = user?.userId ?? 'usr_dev';
+  const gateView = await stub.getGate(gateMatch[1]);
+  // The same mapping as deciding: a gate whose deciders are principals is judged by principal.
+  const principalIds =
+    gateView.ok && (gateView.value.approvalSubject || gateView.value.variants || gateView.value.quorum)
+      ? await principalIdsFor(env.DB, tenantId, [localId])
+      : new Map<string, string>();
+  const result = await stub.pullBackApproval({
+    gateId: gateMatch[1],
+    by: principalIds.get(localId) ?? localId,
+    comment: body.comment,
+    role: workspaceRoleFor(env, user),
+  });
+  if (!result.ok) return Response.json({ error: flatError(result) }, { status: statusForCode(result.code) });
+  return Response.json({ card: result.value });
+}
+
 // POST /v1/boards/:id/gates/:gateId/delivery — alter delivery, never approved bytes.
 export async function gateDelivery({ request, env, tenantId, user, stub }: BoardRequest, deliveryMatch: RegExpMatchArray): Promise<Response> {
   const body = (await request.json().catch(() => null)) as { mode?: unknown; liveUrl?: unknown; remindAt?: unknown } | null;
