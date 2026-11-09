@@ -2,6 +2,7 @@ import type { CompletionRequirement, StageOutcome, TaskState } from '@superpipel
 import type { JsonValue } from '../json';
 import type { RunReportDraft } from '../superwitness/report';
 import type { LinkKind } from './links';
+import type { QuorumInput } from './gate-quorum';
 import type { StrictDecision } from './strict-decision';
 
 /**
@@ -36,6 +37,8 @@ export interface StagePatch {
   returnStage?: string | null;
   /** `null` removes it: the stage falls back to the board's default, or none. */
   timeout?: DecisionTimeout | null;
+  /** `null` removes it: a gate here passes on one approval again. */
+  quorum?: QuorumInput | null;
 }
 
 /**
@@ -119,6 +122,8 @@ export interface StageDef {
   routing?: 'pipeline' | 'manager';
   /** When a decision waiting here is reminded about and escalated. Absent: the board's default, or none. */
   timeout?: DecisionTimeout;
+  /** How many approvals a gate here needs, and from whom (`quorumError` in gate-quorum.ts). Absent: one. */
+  quorum?: QuorumInput;
 }
 
 /** A reusable agent configuration bundle (docs/05 §7). */
@@ -379,6 +384,8 @@ export type BoardErrorCode =
   | 'INVALID_STRICT_DECISION'
   | 'DECISION_CONFLICT'
   | 'DECISION_EXPIRED'
+  /** The same person approved a quorum gate twice (charter 2026-11-09, more than one approver, decision 3). */
+  | 'QUORUM_ALREADY_APPROVED'
   | 'CARD_NOT_WAITING'
   /** A chat answer named a wait the card is no longer in (charter: waiting cards reach chat §2). */
   | 'WAIT_CHANGED'

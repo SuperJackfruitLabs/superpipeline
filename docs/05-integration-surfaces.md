@@ -342,6 +342,10 @@ an agent to call `claim`. Modeled on A2A **PushNotificationConfig**:
   at most once per wait; the four pending events above carry the deadlines as `deadline: {
   remindAt?, escalateAt? }` when a timeout applies — see
   [implementation/decision-timeouts](./implementation/decision-timeouts.md)),
+  `gate.approval_recorded` (an approval on a gate whose stage needs a `quorum`, short of it: `{
+  event, boardId, cardId, gateId, approval: { principalId, at, variantId? }, quorum: { required,
+  from: deciders|admins, approvals } }`; `gate.pending` carries the same `quorum` on such a gate
+  — see [implementation/quorum-gates](./implementation/quorum-gates.md)),
   `gate.resolved`, `run.reclaimed`, `card.canceled`,
   `cards.stale` (the daily stale-card digest: `{ event, boardId, boardName, cards: StaleCardView[], ts }`,
   one delivery per sweep that has a card not reported in the last 24 hours — see

@@ -38,6 +38,8 @@ export interface BoardTemplateStage {
   requires?: { all?: string[]; any?: string[] };
   /** When a decision waiting here is reminded about, then escalated (`DecisionTimeout` in entities.ts). */
   timeout?: { remindAfterMinutes?: number; escalateAfterMinutes?: number };
+  /** How many approvals a gate here needs, and from whom (`GateQuorum` in entities.ts). */
+  quorum?: { required: number; from?: 'deciders' | 'admins' };
 }
 
 export interface BoardTemplate {

@@ -96,6 +96,13 @@ export function createDecisionTables(sql: SqlStorage): void {
   } catch {
     // column already exists
   }
+  // The stage's quorum as the gate opened with it (charter 2026-11-09, more than one approver); NULL
+  // for a gate that passes on one approval.
+  try {
+    sql.exec(`ALTER TABLE gates ADD COLUMN quorum_json TEXT`);
+  } catch {
+    // column already exists
+  }
   sql.exec(`CREATE INDEX IF NOT EXISTS idx_gates_run ON gates(run_id)`);
   /**
    * A decision waiting on a person, with the deadlines its stage's timeout gave it when it started
@@ -159,6 +166,24 @@ export function createDecisionTables(sql: SqlStorage): void {
       digest TEXT NOT NULL,
       PRIMARY KEY (gate_id, position),
       UNIQUE (gate_id, variant_id)
+    )`,
+  );
+  /**
+   * The approvals recorded on a quorum gate, one per person (charter 2026-11-09, more than one
+   * approver, decision 3). Each keeps the binding it was given; kept after the gate closes, as its
+   * history. `variant_id` is the variant an approval named on a variant gate, else NULL.
+   */
+  sql.exec(
+    `CREATE TABLE IF NOT EXISTS gate_approvals (
+      gate_id TEXT NOT NULL,
+      principal_id TEXT NOT NULL,
+      decision TEXT NOT NULL,
+      variant_id TEXT,
+      subject_id TEXT,
+      subject_digest TEXT,
+      via TEXT NOT NULL,
+      created_at TEXT NOT NULL,
+      PRIMARY KEY (gate_id, principal_id)
     )`,
   );
   sql.exec(
