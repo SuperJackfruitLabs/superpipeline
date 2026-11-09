@@ -22,6 +22,12 @@ import type { CardChecksView, CheckFailedBody, CheckOverriddenBody, PreparedAppr
  */
 
 /** What checks need from the rest of the board. */
+/** A card's title for a push, or '' when the card is gone. */
+function cardTitleOf(deps: Pick<BoardContext, 'getCardRow'>, cardId: string): string {
+  const title = deps.getCardRow(cardId)?.title;
+  return typeof title === 'string' ? title : '';
+}
+
 export type MachineChecksDeps = Pick<
   BoardContext,
   | 'advanceCard'
@@ -441,7 +447,9 @@ function failArrival(deps: MachineChecksDeps, arrival: Row, failed: CheckRow[]):
       event: 'check.failed',
       boardId: deps.getMeta('boardId'),
       cardId,
+      cardTitle: cardTitleOf(deps, cardId),
       stageKey,
+      arrivalId: typeof arrival.id === 'string' ? arrival.id : '',
       check: { name: c.name, provider: c.provider, status: 'failed', ...(c.detail !== null ? { detail: c.detail } : {}), ...(c.url !== null ? { url: c.url } : {}) },
       returnedTo,
     };
@@ -526,7 +534,9 @@ export async function overrideCheck(
     event: 'check.overridden',
     boardId: deps.getMeta('boardId'),
     cardId: input.cardId,
+    cardTitle: cardTitleOf(deps, input.cardId),
     stageKey: check.stageKey,
+    arrivalId: check.arrivalId,
     check: { name: check.name, provider: check.provider, status: 'overridden' },
     by: input.by,
     comment,

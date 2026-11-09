@@ -177,10 +177,12 @@ sees its checks, a read carries no authority, and the agent whose work came back
 - `gate.pending` and `GET …/gates/:gateId` gain `checks: [{ name, provider, status, url? }]`,
   present only when the gate's stage had checks (the arrival that opened it, `gates.check_arrival_id`).
   A gate on a stage without checks is unchanged, field for field.
-- `check.failed`: `{ event, boardId, cardId, stageKey, check: { name, provider, status: 'failed',
-  detail?, url? }, returnedTo }`.
-- `check.overridden`: `{ event, boardId, cardId, stageKey, check: { name, provider, status:
-  'overridden' }, by, comment, at }`.
+- `check.failed`: `{ event, boardId, cardId, cardTitle, stageKey, arrivalId, check: { name,
+  provider, status: 'failed', detail?, url? }, returnedTo }`.
+- `check.overridden`: `{ event, boardId, cardId, cardTitle, stageKey, arrivalId, check: { name,
+  provider, status: 'overridden' }, by, comment, at }`.
+- `arrivalId` names the card's arrival at the stage: the same failure worded the same way on the
+  next arrival carries a different one, so a carrier keyed on it says each once and none twice.
 - Both are pushed events and decision events (a chat bridge subscribes to them).
 - `decision_waits.kind` gains `checks` (the table is rebuilt once, rows kept, on a board made
   before it).

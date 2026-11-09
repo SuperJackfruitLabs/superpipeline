@@ -356,9 +356,10 @@ an agent to call `claim`. Modeled on A2A **PushNotificationConfig**:
   when an approval would wait, and `GET …/gates/:gateId` adds `heldUntil`, `releasedAt` and
   `pulledBack` — see [implementation/release-time](./implementation/release-time.md)),
   `check.failed` (a machine check failed and the card went back: `{ event, boardId, cardId,
-  stageKey, check: { name, provider: ci|verdict, status: failed, detail?, url? }, returnedTo }`,
+  cardTitle, stageKey, arrivalId, check: { name, provider: ci|verdict, status: failed, detail?, url? }, returnedTo }`,
   `returnedTo` null when it could not go back and stopped for a person) and `check.overridden` (a
-  workspace owner or admin passed one by hand: `{ event, boardId, cardId, stageKey, check: { name,
+  workspace owner or admin passed one by hand: `{ event, boardId, cardId, cardTitle, stageKey,
+  arrivalId, check: { name,
   provider, status: overridden }, by, comment, at }`); `gate.pending` and `GET …/gates/:gateId`
   carry `checks: [{ name, provider, status, url? }]` when the gate's stage had checks — see
   [implementation/machine-checks](./implementation/machine-checks.md)),

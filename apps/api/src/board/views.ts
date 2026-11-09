@@ -406,7 +406,11 @@ export interface CheckFailedBody {
   event: 'check.failed';
   boardId: string | null;
   cardId: string;
+  /** The card's title, so a reader knows which card without reading it back. */
+  cardTitle: string;
   stageKey: string;
+  /** The card's arrival at the stage this check belongs to: one per arrival, so a carrier says each once. */
+  arrivalId: string;
   check: { name: string; provider: 'ci' | 'verdict'; status: 'failed'; detail?: string; url?: string };
   /** The stage the card went back to; null when it could not go back and stopped for a person. */
   returnedTo: string | null;
@@ -417,7 +421,11 @@ export interface CheckOverriddenBody {
   event: 'check.overridden';
   boardId: string | null;
   cardId: string;
+  /** The card's title, so a reader knows which card without reading it back. */
+  cardTitle: string;
   stageKey: string;
+  /** The card's arrival at the stage this check belongs to: one per arrival, so a carrier says each once. */
+  arrivalId: string;
   check: { name: string; provider: 'ci' | 'verdict'; status: 'overridden' };
   by: string;
   comment: string;

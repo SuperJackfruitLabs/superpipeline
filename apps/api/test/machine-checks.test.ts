@@ -300,7 +300,9 @@ describe('ci results by webhook', () => {
           event: 'check.failed',
           boardId: 'brd_fail',
           cardId,
+          cardTitle: expect.any(String),
           stageKey: 'review',
+          arrivalId: expect.stringMatching(/./),
           check: { name: 'build', provider: 'ci', status: 'failed', detail: `CI context "unit" failed on ${SHA_A.slice(0, 12)}`, url: 'https://ci/unit/1' },
           returnedTo: 'build',
         },
@@ -312,6 +314,12 @@ describe('ci results by webhook', () => {
       await board.complete({ runId: c.runId, leaseEpoch: c.leaseEpoch, handoff: { summary: 'fixed again' } });
       // Still failing on the same head: it goes straight back again.
       expect(await cardOf(board, cardId)).toMatchObject({ currentStageKey: 'build' });
+      // Worded the same, but a different arrival: a carrier keyed on it says the second one too.
+      const failures = await pushed(board, 'check.failed');
+      expect(failures).toHaveLength(2);
+      expect(failures[0]).toMatchObject({ cardTitle: 'Fix the build' });
+      const arrivals = failures.map((f) => (typeof f === 'object' && f !== null && 'arrivalId' in f ? f.arrivalId : null));
+      expect(new Set(arrivals).size).toBe(2);
     });
   });
 
@@ -519,7 +527,7 @@ describe('override', () => {
       const r = await board.overrideCheck({ cardId, name: 'build', ...ADMIN });
       expect(r).toMatchObject({ ok: true, value: { checks: { status: 'passed', checks: [{ name: 'build', status: 'overridden', overridden: { by: 'usr_admin', comment: ADMIN.comment } }] } } });
       expect(await pushed(board, 'check.overridden')).toMatchObject([
-        { event: 'check.overridden', boardId: 'brd_ov', cardId, stageKey: 'review', check: { name: 'build', provider: 'ci', status: 'overridden' }, by: 'usr_admin', comment: ADMIN.comment, at: expect.any(String) },
+        { event: 'check.overridden', boardId: 'brd_ov', cardId, cardTitle: expect.any(String), stageKey: 'review', arrivalId: expect.stringMatching(/./), check: { name: 'build', provider: 'ci', status: 'overridden' }, by: 'usr_admin', comment: ADMIN.comment, at: expect.any(String) },
       ]);
       const [gate] = await board.pendingGateDeliveries();
       expect(gate?.checks).toEqual([{ name: 'build', provider: 'ci', status: 'overridden' }]);
