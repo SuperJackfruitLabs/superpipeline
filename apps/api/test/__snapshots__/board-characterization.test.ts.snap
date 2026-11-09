@@ -71,7 +71,7 @@ exports[`the Board Durable Object, pinned before the split > runs the same state
       "CREATE TABLE IF NOT EXISTS approval_subjects ( id TEXT PRIMARY KEY, card_id TEXT NOT NULL, gate_stage_key TEXT NOT NULL, schema TEXT NOT NULL, revision INTEGER NOT NULL, canonical_bytes BLOB NOT NULL, digest TEXT NOT NULL, status TEXT NOT NULL CHECK (status IN ('active', 'invalidated')), producer_run_id TEXT NOT NULL, produced_by TEXT NOT NULL, created_at TEXT NOT NULL, invalidated_at TEXT, invalidated_by TEXT, invalidation_reason TEXT, UNIQUE(card_id, schema, revision) )",
       "CREATE INDEX IF NOT EXISTS idx_approval_subjects_card ON approval_subjects(card_id)",
       "CREATE TABLE IF NOT EXISTS gate_variants ( gate_id TEXT NOT NULL, position INTEGER NOT NULL, variant_id TEXT NOT NULL, label TEXT NOT NULL, subject_id TEXT NOT NULL UNIQUE, digest TEXT NOT NULL, PRIMARY KEY (gate_id, position), UNIQUE (gate_id, variant_id) )",
-      "CREATE TABLE IF NOT EXISTS gate_approvals ( gate_id TEXT NOT NULL, principal_id TEXT NOT NULL, decision TEXT NOT NULL, variant_id TEXT, subject_id TEXT, subject_digest TEXT, via TEXT NOT NULL, created_at TEXT NOT NULL, PRIMARY KEY (gate_id, principal_id) )",
+      "CREATE TABLE IF NOT EXISTS gate_approvals ( gate_id TEXT NOT NULL, principal_id TEXT NOT NULL, decision TEXT NOT NULL, variant_id TEXT, subject_id TEXT, subject_digest TEXT, comment TEXT, via TEXT NOT NULL, created_at TEXT NOT NULL, PRIMARY KEY (gate_id, principal_id) )",
       "CREATE TABLE IF NOT EXISTS approval_delivery_events ( id TEXT PRIMARY KEY, gate_id TEXT NOT NULL, subject_id TEXT NOT NULL, event TEXT NOT NULL, from_mode TEXT, to_mode TEXT, actor TEXT NOT NULL, live_url TEXT, created_at TEXT NOT NULL )",
       "CREATE INDEX IF NOT EXISTS idx_approval_delivery_events_gate ON approval_delivery_events(gate_id)",
       "CREATE TABLE IF NOT EXISTS strict_decision_requests ( request_id TEXT PRIMARY KEY, agent_id TEXT NOT NULL, run_id TEXT NOT NULL, lease_epoch INTEGER NOT NULL, elicitation_id TEXT NOT NULL UNIQUE, payload_json TEXT NOT NULL, response_json TEXT NOT NULL, binding_json TEXT NOT NULL )",
@@ -269,7 +269,7 @@ exports[`the Board Durable Object, pinned before the split > runs the same state
       },
       {
         "name": "gate_approvals",
-        "sql": "CREATE TABLE gate_approvals ( gate_id TEXT NOT NULL, principal_id TEXT NOT NULL, decision TEXT NOT NULL, variant_id TEXT, subject_id TEXT, subject_digest TEXT, via TEXT NOT NULL, created_at TEXT NOT NULL, PRIMARY KEY (gate_id, principal_id) )",
+        "sql": "CREATE TABLE gate_approvals ( gate_id TEXT NOT NULL, principal_id TEXT NOT NULL, decision TEXT NOT NULL, variant_id TEXT, subject_id TEXT, subject_digest TEXT, comment TEXT, via TEXT NOT NULL, created_at TEXT NOT NULL, PRIMARY KEY (gate_id, principal_id) )",
         "tbl_name": "gate_approvals",
         "type": "table",
       },

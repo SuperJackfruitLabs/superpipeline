@@ -14,14 +14,15 @@ supermessage renders the count.
 ```
 
 - `required` is a whole number from 2 to 5. `from` is `deciders` (the default) or `admins`.
-- With `deciders` and a stage that names `approvalDeciderPrincipalIds`, `required` may not exceed
-  their number. Otherwise anyone who may decide the gate counts, as for a single approval.
+- When the stage names `approvalDeciderPrincipalIds`, only they count, with either `from`, and
+  `required` may not exceed their number. With `deciders` and no named deciders, anyone who may
+  decide the gate counts, as for a single approval.
 - With `admins`, an approval counts only when the answer's verified token carries the Accounts
   workspace role owner or admin (`workspaceRoleFor`, read when the answer arrives). A chat answer
   arrives with the hub acting for the person and carries their own role. Off the Organization
   plane, the local membership role stands in, as it does for every policy check.
-- On a subject-bound gate every approval must also come from a named decider and carry the
-  binding, exactly as a single approval does: `admins` narrows who counts, it never widens it.
+- On a subject-bound gate every approval must also carry the binding, exactly as a single approval
+  does. `admins` narrows who counts; it never widens the named deciders.
 - `quorum` is decision policy (`decisionPolicyOf`): only a workspace owner or admin may set, change
   or remove it, on a live board or when creating one (`WORKSPACE_ADMIN_REQUIRED`). It is stored in
   one spelling (`from` always present), so `{required: 2}` and `{required: 2, from: "deciders"}`
@@ -30,10 +31,12 @@ supermessage renders the count.
 
 ## The gate
 
-Each gate snapshots its stage's quorum in `gates.quorum_json` when it opens, so a later edit never
-changes what an open gate asks for. Approvals are recorded in `gate_approvals(gate_id,
-principal_id, decision, variant_id, subject_id, subject_digest, via, created_at)`, one row per
-person; they stay after the gate closes, as its history.
+Each gate snapshots its stage's quorum, and its named deciders when it names any, in
+`gates.quorum_json` when it opens, so a later edit never changes what an open gate asks for. A
+snapshot that cannot be read fails closed: no approval passes the gate, while reject and request
+changes still end it. Approvals are recorded in `gate_approvals(gate_id, principal_id, decision,
+variant_id, subject_id, subject_digest, comment, via, created_at)`, one row per person, with any
+comment; they stay after the gate closes, as its history.
 
 `resolveGate` runs every check a single approval runs (separation of duties, deciders, binding,
 expiry, offered options, the variant's binding), then:
@@ -45,6 +48,7 @@ expiry, offered options, the variant's binding), then:
 | the same person approving again | `QUORUM_ALREADY_APPROVED` (409); nothing is recorded |
 | an agent approving | `APPROVAL_DECIDER_NOT_ALLOWED` (403) |
 | `from: admins` without an owner or admin role | `APPROVAL_DECIDER_NOT_ALLOWED` (403) |
+| someone the stage did not name, when it names deciders | `APPROVAL_DECIDER_NOT_ALLOWED` (403) |
 | reject or request changes | closes the gate at once, as today, whatever was recorded |
 
 An approval cannot be withdrawn; someone who approved may still reject.

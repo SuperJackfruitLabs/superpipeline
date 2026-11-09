@@ -181,6 +181,7 @@ export function createDecisionTables(sql: SqlStorage): void {
       variant_id TEXT,
       subject_id TEXT,
       subject_digest TEXT,
+      comment TEXT,
       via TEXT NOT NULL,
       created_at TEXT NOT NULL,
       PRIMARY KEY (gate_id, principal_id)

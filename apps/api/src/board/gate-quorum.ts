@@ -14,6 +14,11 @@ export type QuorumFrom = 'deciders' | 'admins';
 export interface GateQuorum {
   required: number;
   from: QuorumFrom;
+  /**
+   * On a gate only: the stage's named deciders when it opened, which bound who may approve whatever
+   * `from` says (charter decision 1). Never carried on the wire. Absent when the stage names none.
+   */
+  deciders?: string[];
 }
 
 /** A quorum as a client may write it: `from` defaults to `deciders`. Stored as a `GateQuorum`. */
@@ -51,8 +56,10 @@ export function quorumError(value: unknown, label: string, deciders?: readonly s
   }
   const from = q.get('from');
   if (from !== undefined && from !== 'deciders' && from !== 'admins') return `${label}.from must be "deciders" or "admins"`;
+  // Named deciders bound who may approve for either `from`, so asking more of them than there are
+  // would open a gate that can never pass.
   const named = deciders?.length ?? 0;
-  if ((from ?? 'deciders') === 'deciders' && named > 0 && required > named) {
+  if (named > 0 && required > named) {
     return `${label}.required is ${required}, but the stage names only ${named} decider${named === 1 ? '' : 's'}`;
   }
   return null;
@@ -65,11 +72,38 @@ export function cleanQuorum(q: object): GateQuorum {
   return { required, from };
 }
 
-/** The quorum a gate opened with, or null for a gate that passes on one approval. */
+/**
+ * What a gate snapshots when it opens: the stage's quorum, and its named deciders when it names any.
+ * Null when the stage needs one approval.
+ */
+export function quorumSnapshot(quorum: QuorumInput | undefined, deciders: readonly string[] | undefined): string | null {
+  if (!quorum) return null;
+  const named = (deciders ?? []).filter((d) => typeof d === 'string' && d !== '');
+  return JSON.stringify({ ...cleanQuorum(quorum), ...(named.length > 0 ? { deciders: named } : {}) });
+}
+
+/** A quorum no approval can reach: what an unreadable snapshot becomes. Reject and request changes still end the gate. */
+const UNREADABLE: GateQuorum = { required: Number.MAX_SAFE_INTEGER, from: 'admins', deciders: [] };
+
+/**
+ * The quorum a gate opened with, or null for a gate that passes on one approval. A snapshot that
+ * cannot be read fails closed (`UNREADABLE`): a gate meant to need several approvers never
+ * silently becomes a gate that needs one.
+ */
 export function gateQuorum(gate: Row): GateQuorum | null {
   if (typeof gate.quorum_json !== 'string') return null;
-  const parsed: unknown = JSON.parse(gate.quorum_json);
-  return parsed !== null && typeof parsed === 'object' && quorumError(parsed, 'quorum') === null ? cleanQuorum(parsed) : null;
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(gate.quorum_json);
+  } catch {
+    return UNREADABLE;
+  }
+  if (parsed === null || typeof parsed !== 'object' || Array.isArray(parsed)) return UNREADABLE;
+  const deciders: unknown = 'deciders' in parsed ? parsed.deciders : undefined;
+  const policy = Object.fromEntries(Object.entries(parsed).filter(([key]) => key !== 'deciders'));
+  if (quorumError(policy, 'quorum') !== null) return UNREADABLE;
+  if (deciders !== undefined && (!Array.isArray(deciders) || !deciders.every((d): d is string => typeof d === 'string'))) return UNREADABLE;
+  return { ...cleanQuorum(policy), ...(Array.isArray(deciders) && deciders.length > 0 ? { deciders: deciders.filter((d): d is string => typeof d === 'string') } : {}) };
 }
 
 /** A gate's recorded approvals, oldest first. */
@@ -117,6 +151,11 @@ export function judgeQuorumApproval(
   if (input.decidedBy.startsWith('agt_')) {
     return { ok: false, code: 'APPROVAL_DECIDER_NOT_ALLOWED', message: 'an agent never counts toward a quorum' };
   }
+  // The stage's named deciders, whatever `from` says: on a gate with no frozen subject nothing else
+  // checks them (a subject-bound gate checks them before this, too).
+  if (quorum.deciders && quorum.deciders.length > 0 && !quorum.deciders.includes(input.decidedBy)) {
+    return { ok: false, code: 'APPROVAL_DECIDER_NOT_ALLOWED', message: "this gate's approvals come from the stage's named deciders" };
+  }
   if (quorum.from === 'admins' && input.deciderRole !== 'owner' && input.deciderRole !== 'admin') {
     return { ok: false, code: 'APPROVAL_DECIDER_NOT_ALLOWED', message: "this gate needs approvals from the workspace's owners and admins" };
   }
@@ -136,17 +175,28 @@ export function judgeQuorumApproval(
 /** Record one approval (decision 3). Called in the same write as the gate's resolution when it reaches the quorum. */
 export function recordQuorumApproval(
   sql: SqlStorage,
-  input: { gateId: string; principalId: string; decision: GateDecision; variantId: string | null; subjectId: string | null; subjectDigest: string | null; via: string; at: string },
+  input: {
+    gateId: string;
+    principalId: string;
+    decision: GateDecision;
+    variantId: string | null;
+    subjectId: string | null;
+    subjectDigest: string | null;
+    comment: string | null;
+    via: string;
+    at: string;
+  },
 ): void {
   sql.exec(
-    `INSERT INTO gate_approvals (gate_id, principal_id, decision, variant_id, subject_id, subject_digest, via, created_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+    `INSERT INTO gate_approvals (gate_id, principal_id, decision, variant_id, subject_id, subject_digest, comment, via, created_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     input.gateId,
     input.principalId,
     input.decision,
     input.variantId,
     input.subjectId,
     input.subjectDigest,
+    input.comment,
     input.via,
     input.at,
   );

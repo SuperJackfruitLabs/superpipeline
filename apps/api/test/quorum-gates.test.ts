@@ -273,8 +273,9 @@ describe('a quorum is decision policy', () => {
       await board.init({ id: 'brd_many', tenantId: 'tnt_fixture', name: 'Q', stages: STAGES });
       const r = await board.updateStage('approve', { quorum: { required: 2 } }, internalStageEditor('test'));
       expect(!r.ok && r.message).toMatch(/names only 1 decider/);
-      // Of owners and admins it may: their number is not the stage's to know.
-      expect((await board.updateStage('approve', { quorum: { required: 2, from: 'admins' } }, internalStageEditor('test'))).ok).toBe(true);
+      // Of owners and admins too: the named deciders bound who may approve either way.
+      const admins = await board.updateStage('approve', { quorum: { required: 2, from: 'admins' } }, internalStageEditor('test'));
+      expect(!admins.ok && admins.message).toMatch(/names only 1 decider/);
     });
   });
 
@@ -351,6 +352,44 @@ describe('over HTTP on the Organization plane', () => {
       });
       expect(create.status).toBe(403);
       expect(await create.json()).toMatchObject({ error: { code: 'WORKSPACE_ADMIN_REQUIRED' } });
+    });
+  });
+});
+
+describe('named deciders on a gate with no frozen subject', () => {
+  it('counts only the stage\'s named deciders', async () => {
+    await runInDurableObject(stub('quorum-named-plain'), async (board: BoardDO, state) => {
+      const stages = reviewPipeline({ required: 2 }).map((s) => (s.key === 'review' ? { ...s, approvalDeciderPrincipalIds: ['usr_a', 'usr_b'] } : s));
+      await board.init({ id: 'brd_named', tenantId: 'tnt_q', name: 'Q', stages });
+      const made = await board.createCard({ title: 'x', ownerUserId: 'usr_owner' });
+      if (!made.ok) throw new Error(made.message);
+      const c = await board.claim({ agentId: 'agt_r', capabilities: ['research'] });
+      if (!c.claimed) throw new Error('no claim');
+      await board.complete({ runId: c.runId, leaseEpoch: c.leaseEpoch, handoff: { summary: 'd' } });
+      const gateId = await onlyGate(board);
+      expect(await board.resolveGate({ gateId, decision: 'approve', decidedBy: 'usr_d' })).toMatchObject({ ok: false, code: 'APPROVAL_DECIDER_NOT_ALLOWED' });
+      expect(approvals(state, gateId)).toHaveLength(0);
+      expect((await board.resolveGate({ gateId, decision: 'approve', decidedBy: 'usr_a', comment: 'looks right' })).ok).toBe(true);
+      expect((await board.resolveGate({ gateId, decision: 'approve', decidedBy: 'usr_b' })).ok).toBe(true);
+      const read = await board.getGate(gateId);
+      expect(read.ok && read.value.status).toBe('resolved');
+      // Who may approve stays on the board; the wire says how many and from whom.
+      expect(read.ok && read.value.quorum).toEqual({ required: 2, from: 'deciders', approvals: expect.any(Array) });
+      // An earlier approver's comment is kept with their approval.
+      expect(state.storage.sql.exec("SELECT comment FROM gate_approvals WHERE principal_id = 'usr_a'").one()).toEqual({ comment: 'looks right' });
+    });
+  });
+});
+
+describe('an unreadable quorum fails closed', () => {
+  it.each(['not json', '{"required":1}', '{"required":2,"deciders":"usr_a"}'])('%s: no approval passes the gate, and a reject still ends it', async (stored) => {
+    await runInDurableObject(stub(`quorum-corrupt-${stored.length}`), async (board: BoardDO, state) => {
+      const { gateId } = await openPlainGate(board, `corrupt_${stored.length}`);
+      state.storage.sql.exec('UPDATE gates SET quorum_json = ? WHERE id = ?', stored, gateId);
+      for (const by of ['usr_a', 'usr_b', 'usr_c']) await board.resolveGate({ gateId, decision: 'approve', decidedBy: by, deciderRole: 'owner' });
+      const read = await board.getGate(gateId);
+      expect(read.ok && read.value.status).toBe('pending');
+      expect((await board.resolveGate({ gateId, decision: 'reject', decidedBy: 'usr_d' })).ok).toBe(true);
     });
   });
 });

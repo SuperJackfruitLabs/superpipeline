@@ -4,7 +4,7 @@ import { newId } from '../ids';
 import type { BoardContext } from './context';
 import { applyVariantChoice, deciderError, gateVariants, judgeVariantDecision, optionError } from './gate-choice';
 import type { GateOption } from './gate-option';
-import { type DeciderRole, type QuorumApproval, gateQuorum, judgeQuorumApproval, quorumApprovals, recordQuorumApproval } from './gate-quorum';
+import { type DeciderRole, type QuorumApproval, gateQuorum, judgeQuorumApproval, quorumApprovals, quorumSnapshot, recordQuorumApproval } from './gate-quorum';
 import { queueSubscribedPush } from './push';
 import type { CardView, Result, Row } from './model';
 import { EXPIRED_DECISION, handoffSummary, isApproveDecision, record } from './rules';
@@ -187,6 +187,7 @@ export async function resolveGate(deps: GatesDeps, input: {
     variantId: chosen?.variantId ?? null,
     subjectId: boundSubjectId,
     subjectDigest: chosen?.digest ?? (typeof gate.approval_subject_digest === 'string' ? gate.approval_subject_digest : null),
+    comment: input.comment ?? null,
     via: input.via ?? 'api',
     at: now,
   };
@@ -561,7 +562,7 @@ export function createGate(deps: GatesDeps, cardId: string, stageKey: string, re
       approvalSubject?.digest ?? null,
       approval ? JSON.stringify(stage?.approvalDeciderPrincipalIds ?? []) : null,
       // Snapshotted, so a later policy edit never changes what an open gate asks for.
-      stage?.quorum ? JSON.stringify(stage.quorum) : null,
+      quorumSnapshot(stage?.quorum, stage?.approvalDeciderPrincipalIds),
     );
     if (approvalSubject) {
       deps.sql.exec(`UPDATE cards SET active_approval_subject_id = ? WHERE id = ?`, approvalSubject.id, cardId);
@@ -709,7 +710,8 @@ function rowToGate(deps: GatesDeps, r: Row): GateView {
 function quorumField(deps: GatesDeps, gate: Row): { quorum?: GateQuorumEnvelope } {
   const quorum = gateQuorum(gate);
   if (!quorum || typeof gate.id !== 'string') return {};
-  return { quorum: { ...quorum, approvals: quorumApprovals(deps.sql, gate.id).map(approvalOnTheWire) } };
+  // The named deciders stay on the board: the wire says how many and from whom, not who may.
+  return { quorum: { required: quorum.required, from: quorum.from, approvals: quorumApprovals(deps.sql, gate.id).map(approvalOnTheWire) } };
 }
 
 function approvalOnTheWire(a: Pick<QuorumApproval, 'principalId' | 'variantId' | 'at'>): GateQuorumEnvelope['approvals'][number] {
