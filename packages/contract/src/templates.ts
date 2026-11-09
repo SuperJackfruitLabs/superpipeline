@@ -1,3 +1,4 @@
+import type { StageCheck } from './entities';
 /**
  * Starting pipelines, shared by everything that can create a board.
  *
@@ -25,6 +26,7 @@ export interface BoardTemplateStage {
   key: string;
   name: string;
   order: number;
+  /** A template stage is never `checks`: a stage decided by checks alone is an admin's to make. */
   gate?: 'none' | 'approval';
   wipLimit?: number;
   routing?: 'pipeline' | 'manager';
@@ -42,6 +44,9 @@ export interface BoardTemplateStage {
   quorum?: { required: number; from?: 'deciders' | 'admins' };
   /** Minutes an approval here waits before it acts (`Stage.holdFor` in entities.ts). */
   holdFor?: number;
+  /** Checks that run before people, and a return stage for when one fails (`StageCheck` in entities.ts). */
+  checks?: StageCheck[];
+  returnStage?: string;
 }
 
 export interface BoardTemplate {

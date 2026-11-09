@@ -69,9 +69,20 @@ export async function boardCollection({ request, env, tenantId, user, agent }: B
   // validator: a too-long summary or a malformed intro is a 400 at the door.
   for (const st of stages) {
     const bad =
-      st.summary === undefined && st.timeout === undefined && st.quorum === undefined && st.holdFor === undefined
+      st.summary === undefined && st.timeout === undefined && st.quorum === undefined && st.holdFor === undefined && st.checks === undefined && st.gate !== 'checks'
         ? null
-        : stageFieldError({ key: st.key, summary: st.summary, timeout: st.timeout, quorum: st.quorum, holdFor: st.holdFor, approvalDeciderPrincipalIds: st.approvalDeciderPrincipalIds });
+        : stageFieldError({
+            key: st.key,
+            summary: st.summary,
+            timeout: st.timeout,
+            quorum: st.quorum,
+            holdFor: st.holdFor,
+            approvalDeciderPrincipalIds: st.approvalDeciderPrincipalIds,
+            gate: st.gate,
+            checks: st.checks,
+            returnStage: st.returnStage,
+            ownerKind: st.ownerKind,
+          });
     if (bad) return Response.json({ error: { code: 'INVALID_STAGES', message: bad } }, { status: 400 });
   }
   // Who approves a bound subject is decision policy, a workspace admin's to set even on a new board
@@ -81,17 +92,21 @@ export async function boardCollection({ request, env, tenantId, user, agent }: B
   // A timeout too: its escalation reaches the workspace's owners and admins, which is theirs to set.
   // A quorum too: who must agree before work passes is decision policy (charter 2026-11-09, more than one approver, decision 9).
   // A hold too: when an approval acts is decision policy (charter 2026-11-09, release time, decision 2).
+  // Checks too, and a stage decided by them: who or what decides is decision policy (charter
+  // 2026-11-09, a gate may be decided by checks, decision 8).
   const setsDeciders = stages.some(
     (st) =>
       st.approvalSubjectSchema !== undefined ||
       (st.approvalDeciderPrincipalIds?.length ?? 0) > 0 ||
       st.timeout !== undefined ||
       st.quorum !== undefined ||
-      st.holdFor !== undefined,
+      st.holdFor !== undefined ||
+      st.checks !== undefined ||
+      st.gate === 'checks',
   );
   if (setsDeciders && !isWorkspaceAdmin(env, user)) {
     return Response.json(
-      { error: { code: 'WORKSPACE_ADMIN_REQUIRED', message: 'only a workspace owner or admin can create a board whose stages bind an approval subject, name its deciders, set a decision timeout, require a quorum or hold approvals' } },
+      { error: { code: 'WORKSPACE_ADMIN_REQUIRED', message: 'only a workspace owner or admin can create a board whose stages bind an approval subject, name its deciders, set a decision timeout, require a quorum, hold approvals or name checks' } },
       { status: 403 },
     );
   }

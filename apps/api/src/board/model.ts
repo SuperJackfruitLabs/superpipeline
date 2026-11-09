@@ -33,12 +33,31 @@ export interface QuorumInput {
   from?: QuorumFrom;
 }
 
+/** Who reached a SuperWitness verdict, as its `judge_kind` says (charter 2026-11-09, checks, decision 1). */
+export type VerdictJudgeKind = 'grader' | 'rule' | 'agent' | 'human';
+
+/**
+ * A check a stage names (charter 2026-11-09, a gate may be decided by checks): a decider that is
+ * not a person. `ci` reads the CI results for the head commit of the card's linked pull request;
+ * `verdict` reads a SuperWitness verdict on the run that produced the work. Judged by
+ * `checksError` in check-rules.ts.
+ */
+export type CheckDef =
+  | { name: string; provider: 'ci'; contexts?: string[] }
+  | { name: string; provider: 'verdict'; kind: string; standard?: string; atLeast?: number; pass?: true; judgeKinds?: VerdictJudgeKind[] };
+
+/** Where a check stands on one arrival of a card at its stage. */
+export type CheckStatus = 'pending' | 'passed' | 'failed' | 'overridden';
+
+/** How a stage is decided: by nobody, by a person's approval, or by its checks alone. */
+export type StageGateKind = 'none' | 'approval' | 'checks';
+
 export interface StagePatch {
   name?: string;
   owner?: string;
   ownerKind?: 'capability' | 'agent' | 'human';
   requires?: { all?: string[]; any?: string[] } | null;
-  gate?: 'none' | 'approval';
+  gate?: StageGateKind;
   wipLimit?: number | null;
   instructions?: string | null;
   /** `null` removes it. */
@@ -52,6 +71,8 @@ export interface StagePatch {
   quorum?: QuorumInput | null;
   /** `null` removes it: an approval here acts at once again. */
   holdFor?: number | null;
+  /** `null` removes them: nothing but people decides here again. */
+  checks?: CheckDef[] | null;
 }
 
 /**
@@ -65,7 +86,7 @@ export interface DecisionTimeout {
 }
 
 /** What a timed wait is: a gate, a question, a manual delivery or a waiting card. */
-export type DecisionKind = 'gate' | 'question' | 'delivery' | 'attention';
+export type DecisionKind = 'gate' | 'question' | 'delivery' | 'attention' | 'checks';
 
 /** When a waiting decision is reminded about and escalated (ISO), as the pushes and reads carry it. */
 export interface DecisionDeadline {
@@ -102,7 +123,8 @@ export interface StageDef {
    * every stage that already exists (see `StageRequirement` in @superpipeline/contract).
    */
   requires?: { all?: string[]; any?: string[] };
-  gate?: 'none' | 'approval';
+  /** `checks`: no person decides; the stage passes when every check in `checks` passes. */
+  gate?: StageGateKind;
   /** Opts this human gate into immutable, digest-bound approval subjects. */
   approvalSubjectSchema?: string;
   /** Human principals allowed to decide a bound approval subject. */
@@ -142,6 +164,13 @@ export interface StageDef {
    * its release time): a whole number from 5 to 10080 (`holdForError` in gate-release.ts). Absent: none.
    */
   holdFor?: number;
+  /**
+   * Checks that run before people (charter 2026-11-09, a gate may be decided by checks): 1 to 5,
+   * names unique. On an approval stage the gate opens only once every check passed or was
+   * overridden; on `gate: 'checks'` the stage passes then. A failing check returns the card to
+   * `returnStage`, which a stage with checks must have. Absent: none.
+   */
+  checks?: CheckDef[];
 }
 
 /** A reusable agent configuration bundle (docs/05 §7). */
@@ -412,6 +441,12 @@ export type BoardErrorCode =
   | 'GATE_NOT_HELD'
   /** The release time would fall after the subject's own expiry: nothing is recorded (decision 5). */
   | 'APPROVAL_RELEASE_AFTER_EXPIRY'
+  /** No check of that name on the card's current arrival (charter 2026-11-09, checks, decision 5). */
+  | 'CHECK_NOT_FOUND'
+  /** The check already passed or was overridden, or its arrival is over (the card was returned or moved). */
+  | 'CHECK_NOT_OPEN'
+  /** Only a workspace owner or admin may override a check; never an agent. */
+  | 'CHECK_OVERRIDE_NOT_ALLOWED'
   | 'CARD_NOT_WAITING'
   /** A chat answer named a wait the card is no longer in (charter: waiting cards reach chat §2). */
   | 'WAIT_CHANGED'

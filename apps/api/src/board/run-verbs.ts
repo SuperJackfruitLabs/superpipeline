@@ -384,8 +384,9 @@ export async function complete(deps: RunVerbsDeps, input: CompleteVerbInput): Pr
  * the key a reviewer's request-changes already uses and AgentPod's card prompt renders as its own
  * section — and kept verbatim in `findings` beside `returnedFrom`. The return is a fresh visit to
  * the target stage, so the breaker count starts over there; `auto_returns` is what bounds the loop.
+ * A failing machine check returns a card through here too (machine-checks.ts), as the ruling asks.
  */
-function returnCard(deps: RunVerbsDeps, cardId: string, fromStageKey: string, toStageKey: string, runId: string, findings: string, judgeHandoff: JsonValue | undefined, returns: number): void {
+export function returnCard(deps: Pick<RunVerbsDeps, 'emit' | 'notify' | 'notifyWorkAvailable' | 'now' | 'sql'>, cardId: string, fromStageKey: string, toStageKey: string, runId: string, findings: string, judgeHandoff: JsonValue | undefined, returns: number): void {
   const carried = {
     feedback: `Sent back from "${fromStageKey}": changes are needed.\n\n${findings}`,
     findings,
@@ -494,6 +495,7 @@ export async function submitForReview(deps: RunVerbsDeps, input: RunVerbInput & 
     cardId,
   );
   // request_changes returns to the same (worked) stage so the agent can redo it.
+  // On a stage with checks this records them instead, and the gate opens once they pass (createGate).
   deps.createGate(cardId, card.currentStageKey, card.currentStageKey, run.agent_id as string, input.runId);
   deps.reportRun(input.runId);
   await deps.scheduleReclaim();

@@ -1,7 +1,8 @@
 import type { Env } from '../env';
 import type { JsonValue } from '../json';
 import type { ReferenceInput } from '../references/input';
-import type { ServiceTokenCache } from '../superwitness/client';
+import type { CiResult } from '../references/ci-events';
+import type { ReporterFetch, ServiceTokenCache } from '../superwitness/client';
 import type { AgentActivityInput, BoardUsage, CardNeedsHuman, CardView, DecisionDeadline, DecisionKind, LinkInput, LinkView, Result, Row, RunAuth, RunReportDrainResult, StageDef, StaleSettings } from './model';
 import type { ApprovalSubjectView, BoardSnapshot, CommentView, ElicitationView, GateView, PreparedApproval, ReferenceView, RunEvidence } from './views';
 
@@ -107,6 +108,14 @@ export interface BoardContext {
   sendBackForChanges(gateId: string, actor: string, comment: string | null, reason: string, at?: string): void;
   /** Release every held approval whose release time has come (gate-release.ts); returns how many. */
   releaseHeldApprovals(nowIso: string): Promise<number>;
+  /** Record a card's check set on arriving at a stage with checks, and wait on it (machine-checks.ts). */
+  awaitChecks(cardId: string, stageKey: string, returnStageKey: string, producedBy: string, runId: string | null, approval?: PreparedApproval | null): string;
+  /** A CI result from a webhook: store it and judge the arrivals waiting on that commit (machine-checks.ts). */
+  recordCiResult(provider: 'github' | 'forge', result: CiResult): Promise<number>;
+  /** A card's pull request has a new head commit: its open `ci` checks start again (machine-checks.ts). */
+  resetCiChecksForCard(cardId: string): Promise<void>;
+  /** The sweep's read of SuperWitness for pending verdict checks (check-verdicts.ts); how many were decided. */
+  pollVerdictChecks(nowIso: string, opts?: { fetcher?: ReporterFetch }): Promise<number>;
   endAttempt(cardId: string, event: string, reason: string | null, runId?: string): void;
   endReviewsOfArchivedCard(cardId: string): number;
   expireGate(gateId: string): boolean;

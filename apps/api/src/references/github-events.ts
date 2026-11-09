@@ -30,7 +30,7 @@ export interface WebhookPullRequest {
   merged?: boolean;
   html_url?: string;
   base?: { ref?: string };
-  head?: { ref?: string };
+  head?: { ref?: string; sha?: string };
 }
 export interface WebhookIssue {
   number?: number;
@@ -61,6 +61,9 @@ export function mapGithubEvent(event: string, payload: unknown): GithubEventResu
       draft: !!pr.draft,
       baseRef: pr.base?.ref,
       headRef: pr.head?.ref,
+      // The pull request's head commit, which a `ci` machine check judges (charter 2026-11-09, a
+      // gate may be decided by checks, decision 6). Lowercased: CI events spell it that way too.
+      ...(typeof pr.head?.sha === 'string' && pr.head.sha !== '' ? { headSha: pr.head.sha.toLowerCase() } : {}),
       url: pr.html_url,
       ...extra,
     });

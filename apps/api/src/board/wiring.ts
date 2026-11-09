@@ -2,6 +2,8 @@ import type { Env } from '../env';
 import type { ServiceTokenCache } from '../superwitness/client';
 import type { BoardContext } from './context';
 import * as approvalSubjects from './approval-subjects';
+import * as checkVerdicts from './check-verdicts';
+import * as machineChecks from './machine-checks';
 import * as store from './card-store';
 import * as claims from './claims';
 import * as comments from './comments';
@@ -103,6 +105,10 @@ export function wireBoard(base: BoardBase, routes: ShellRoutes): BoardContext {
     actOnApproval: (...a) => gates.actOnApproval(board, ...a),
     sendBackForChanges: (...a) => gates.sendBackForChanges(board, ...a),
     releaseHeldApprovals: (...a) => gateRelease.releaseHeldApprovals(board, ...a),
+    awaitChecks: (...a) => machineChecks.awaitChecks(board, ...a),
+    recordCiResult: (...a) => machineChecks.recordCiResult(board, ...a),
+    resetCiChecksForCard: (...a) => machineChecks.resetCiChecksForCard(board, ...a),
+    pollVerdictChecks: (...a) => checkVerdicts.pollVerdictChecks(board, ...a),
     endReviewsOfArchivedCard: (...a) => gates.endReviewsOfArchivedCard(board, ...a),
     expireGate: (...a) => gateExpiry.expireGate(board, ...a),
     expireLapsedGates: (...a) => gateExpiry.expireLapsedGates(board, ...a),

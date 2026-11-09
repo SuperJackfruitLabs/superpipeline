@@ -42,6 +42,7 @@ export function statusForCode(code: BoardErrorCode): number {
     case 'SCHEDULE_NOT_FOUND':
     case 'NO_SUCH_CARD':
     case 'APPROVAL_REQUEST_NOT_FOUND':
+    case 'CHECK_NOT_FOUND':
       return 404;
     case 'STALE_LEASE':
     case 'GATE_NOT_PENDING':
@@ -64,6 +65,9 @@ export function statusForCode(code: BoardErrorCode): number {
     case 'APPROVAL_RELEASED':
     case 'GATE_NOT_HELD':
     case 'APPROVAL_RELEASE_AFTER_EXPIRY':
+    // A check that already passed or was overridden, or whose arrival is over: a conflict with the
+    // state the caller believed in (charter 2026-11-09, a gate may be decided by checks, decision 5).
+    case 'CHECK_NOT_OPEN':
     case 'ELICITATION_NOT_PENDING':
     case 'CARD_NOT_WAITING':
     // A late tap on a wait that has ended: the card stopped waiting, or waits on something else.
@@ -76,6 +80,7 @@ export function statusForCode(code: BoardErrorCode): number {
       return 409;
     case 'WORKSPACE_ADMIN_REQUIRED':
     case 'SEPARATION_OF_DUTIES':
+    case 'CHECK_OVERRIDE_NOT_ALLOWED':
     // The caller authenticated, but this run is another agent's: a permanent refusal of an
     // understood request, and deliberately NOT the 409 that means "your lease lapsed, re-claim".
     case 'NOT_RUN_OWNER':

@@ -1,5 +1,6 @@
 import { capabilityTag, normalizeRequirement, returnStageError } from '@superpipeline/contract';
 import type { BoardContext } from './context';
+import { checksError, cleanChecks } from './check-rules';
 import { cleanQuorum, quorumError } from './gate-quorum';
 import { holdForError } from './gate-release';
 import { cleanTimeout, parseDecisionTimeout, timeoutError } from './rules';
@@ -77,8 +78,10 @@ export function completionShapeError(c: unknown): string | null {
 }
 
 export function stageFieldError(
-  s: Pick<StageDef, 'key' | 'wipLimit' | 'instructions' | 'summary' | 'timeout' | 'quorum' | 'holdFor' | 'approvalDeciderPrincipalIds'>,
+  s: Pick<StageDef, 'key' | 'wipLimit' | 'instructions' | 'summary' | 'timeout' | 'quorum' | 'holdFor' | 'approvalDeciderPrincipalIds' | 'gate' | 'checks' | 'returnStage' | 'ownerKind'>,
 ): string | null {
+  const badChecks = checksError(s);
+  if (badChecks) return badChecks;
   if (s.holdFor !== undefined) {
     const bad = holdForError(s.holdFor, `stage "${s.key}" holdFor`);
     if (bad) return bad;
@@ -153,12 +156,13 @@ export async function init(deps: PipelineDeps, board: BoardInit): Promise<BoardS
 /** The fields of a stage that say how a decision on it is made. A member may change none of them. */
 function decisionPolicyOf(stage: StageDef | undefined): string {
   return JSON.stringify({
-    gate: stage?.gate === 'approval' ? 'approval' : 'none',
+    gate: stage?.gate === 'approval' || stage?.gate === 'checks' ? stage.gate : 'none',
     approvalSubjectSchema: stage?.approvalSubjectSchema ?? null,
     approvalDeciderPrincipalIds: [...(stage?.approvalDeciderPrincipalIds ?? [])].toSorted(),
     timeout: stage?.timeout ? cleanTimeout(stage.timeout) : null,
     quorum: stage?.quorum ? cleanQuorum(stage.quorum) : null,
     holdFor: stage?.holdFor ?? null,
+    checks: cleanChecks(stage?.checks),
   });
 }
 
@@ -176,7 +180,7 @@ export function refuseDecisionPolicyChange(before: StageDef[], after: StageDef[]
       return {
         ok: false,
         code: 'WORKSPACE_ADMIN_REQUIRED',
-        message: `only a workspace owner or admin can change how decisions are made on stage "${key}" (its gate, approval subject, deciders, timeout, quorum or hold)`,
+        message: `only a workspace owner or admin can change how decisions are made on stage "${key}" (its gate, approval subject, deciders, timeout, quorum, hold or checks)`,
       };
     }
   }
@@ -345,6 +349,10 @@ export async function updateStage(deps: PipelineDeps, stageKey: string, patch: S
   if (patch.holdFor !== undefined) {
     if (patch.holdFor === null) delete next.holdFor;
     else next.holdFor = patch.holdFor;
+  }
+  if (patch.checks !== undefined) {
+    if (patch.checks === null) delete next.checks;
+    else next.checks = patch.checks;
   }
 
   const invalid = stageFieldError(next);

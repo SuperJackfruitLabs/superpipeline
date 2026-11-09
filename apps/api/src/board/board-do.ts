@@ -17,6 +17,7 @@ import * as elicitations from './elicitations';
 import * as gates from './gates';
 import * as gateDelivery from './gate-delivery';
 import * as gateRelease from './gate-release';
+import * as machineChecks from './machine-checks';
 import * as holds from './holds';
 import * as maintenance from './maintenance';
 import * as metering from './metering';
@@ -271,6 +272,14 @@ export class BoardDO extends DurableObject<Env> {
 
   pullBackApproval(...args: OpArgs<typeof gateRelease.pullBackApproval>): ReturnType<typeof gateRelease.pullBackApproval> {
     return gateRelease.pullBackApproval(this.board, ...args);
+  }
+
+  overrideCheck(...args: OpArgs<typeof machineChecks.overrideCheck>): ReturnType<typeof machineChecks.overrideCheck> {
+    return machineChecks.overrideCheck(this.board, ...args);
+  }
+
+  cardChecks(...args: OpArgs<typeof machineChecks.cardChecks>): Promise<ReturnType<typeof machineChecks.cardChecks>> {
+    return Promise.resolve(machineChecks.cardChecks(this.board, ...args));
   }
 
   updateApprovalDelivery(...args: OpArgs<typeof gates.updateApprovalDelivery>): ReturnType<typeof gates.updateApprovalDelivery> {

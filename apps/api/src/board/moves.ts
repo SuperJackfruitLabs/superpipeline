@@ -15,6 +15,7 @@ import type { CommentView, PreparedApproval } from './views';
 export type MovesDeps = Pick<
   BoardContext,
   | 'addComment'
+  | 'awaitChecks'
   | 'decisionDeadline'
   | 'startDecisionWait'
   | 'cancelPendingReviews'
@@ -325,16 +326,21 @@ export function advanceCard(deps: MovesDeps, cardId: string, fromStageKey: strin
     return;
   }
   const gated = next.gate === 'approval' && !deps.isAgentClaimable(next);
+  // A stage decided by its checks alone waits on them like a gate, with no person asked (charter
+  // 2026-11-09, a gate may be decided by checks, decision 2). An approval stage with checks waits
+  // through `createGate`, which records them first.
+  const decidedByChecks = next.gate === 'checks' && (next.checks?.length ?? 0) > 0;
   deps.sql.exec(
     `UPDATE cards SET current_stage_key = ?, state = ?, delegate_agent_id = NULL, current_run_id = NULL, failure_count = 0, handoff_json = ?, updated_at = ? WHERE id = ?`,
     next.key,
-    gated ? 'input-required' : 'submitted',
+    gated || decidedByChecks ? 'input-required' : 'submitted',
     handoffJson,
     now,
     cardId,
   );
   deps.emit('card.advanced', { cardId, from: fromStageKey, to: next.key });
   if (gated) deps.createGate(cardId, next.key, fromStageKey, producedBy, runId, approvalSubject);
+  else if (decidedByChecks) deps.awaitChecks(cardId, next.key, fromStageKey, producedBy, runId);
   else deps.notifyWorkAvailable(cardId);
 }
 
@@ -450,7 +456,8 @@ export function resolveCard(deps: MovesDeps, cardId: string, handoffJson: string
 export function completesOnArrival(deps: MovesDeps, stage: StageDef): boolean {
   const stages = deps.stages();
   if (stages[stages.length - 1]?.key !== stage.key) return false;
-  return !deps.isAgentClaimable(stage) && stage.gate !== 'approval';
+  // A stage decided by its checks still has them to run, as a gated one has its review.
+  return !deps.isAgentClaimable(stage) && stage.gate !== 'approval' && stage.gate !== 'checks';
 }
 
 /**
