@@ -1,5 +1,5 @@
 import type { GateDecision } from '@superpipeline/contract';
-import type { Result, Row } from './model';
+import type { QuorumFrom, QuorumInput, Result, Row } from './model';
 
 /**
  * A gate that needs more than one approver (charter: decisions/2026-11-09-a-gate-may-need-more-than-
@@ -8,8 +8,7 @@ import type { Result, Row } from './model';
  * approval that reaches `required` resolves the gate, and everything after it is the ordinary path.
  */
 
-/** Who counts toward a quorum: the stage's deciders (the default), or the workspace's owners and admins. */
-export type QuorumFrom = 'deciders' | 'admins';
+export type { QuorumFrom, QuorumInput } from './model';
 
 export interface GateQuorum {
   required: number;
@@ -21,11 +20,7 @@ export interface GateQuorum {
   deciders?: string[];
 }
 
-/** A quorum as a client may write it: `from` defaults to `deciders`. Stored as a `GateQuorum`. */
-export interface QuorumInput {
-  required: number;
-  from?: QuorumFrom;
-}
+
 
 export const QUORUM_MIN = 2;
 export const QUORUM_MAX = 5;

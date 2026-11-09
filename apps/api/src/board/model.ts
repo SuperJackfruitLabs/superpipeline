@@ -2,7 +2,6 @@ import type { CompletionRequirement, StageOutcome, TaskState } from '@superpipel
 import type { JsonValue } from '../json';
 import type { RunReportDraft } from '../superwitness/report';
 import type { LinkKind } from './links';
-import type { QuorumInput } from './gate-quorum';
 import type { StrictDecision } from './strict-decision';
 
 /**
@@ -22,6 +21,18 @@ import type { StrictDecision } from './strict-decision';
  * refers to it — and reordering one stage is a statement about all of them, so both remain
  * whole-pipeline work where their consequences are visible.
  */
+/** Who counts toward a quorum: the stage's deciders (the default), or the workspace's owners and admins. */
+export type QuorumFrom = 'deciders' | 'admins';
+
+/**
+ * A stage's quorum as a client may write it (charter 2026-11-09, more than one approver): `from`
+ * defaults to `deciders`. Judged and stored by gate-quorum.ts.
+ */
+export interface QuorumInput {
+  required: number;
+  from?: QuorumFrom;
+}
+
 export interface StagePatch {
   name?: string;
   owner?: string;
