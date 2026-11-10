@@ -54,6 +54,9 @@ export async function renderApp(browser: Browser, screen: Screen, theme: Theme, 
     await page.waitForFunction(() => document.documentElement.dataset.ready === 'true', undefined, { timeout: 20_000 });
     // The Live indicator is part of the shell: wait until the feed says it is connected.
     await page.waitForFunction(() => !document.querySelector('[data-live]') || !!document.querySelector('[data-live="on"]'), undefined, { timeout: 10_000 });
+    // Connecting the feed refreshes the board, which reads again: wait for the app to settle once more.
+    await page.clock.runFor(34);
+    await page.waitForFunction(() => document.documentElement.dataset.ready === 'true', undefined, { timeout: 20_000 });
     await waitForFonts(page);
     if (screen.steps) {
       await screen.steps(page);
