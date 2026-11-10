@@ -6,6 +6,7 @@
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, render, screen } from '@testing-library/svelte';
+import { tick } from 'svelte';
 
 const env = vi.hoisted(() => {
   const state = { phone: false };
@@ -14,7 +15,8 @@ const env = vi.hoisted(() => {
 });
 vi.mock('$app/state', () => ({ page: { url: new URL('http://localhost/b/brd_134a0ddb6d434478') } }));
 vi.mock('$lib/viewport.svelte', () => ({ viewport: { get phone() { return env.phone; } }, PHONE_QUERY: '(max-width: 899.98px)', NARROW_QUERY: '(max-width: 639.98px)' }));
-vi.mock('$lib/api', async (orig) => ({ ...(await orig<typeof import('$lib/api')>()), getUsage: async () => ({ totalCostUsd: 0 }) }));
+const usage = vi.hoisted(() => ({ calls: 0 }));
+vi.mock('$lib/api', async (orig) => ({ ...(await orig<typeof import('$lib/api')>()), getUsage: async () => { usage.calls++; return { totalCostUsd: 0 }; } }));
 
 import PlanView from './PlanView.svelte';
 import { app } from '$lib/stores/app.svelte';
@@ -83,5 +85,19 @@ describe('PlanView: the Daylight greeting', () => {
     const { container } = render(PlanView);
     expect(container.querySelector('.pd-hello')).toBeNull();
     expect(container.querySelector('.qb-board')).toBeTruthy();
+  });
+});
+
+describe('PlanView: the week\'s spend', () => {
+  it('is read once per board, not again when a refresh replaces the board object', async () => {
+    // A live refresh swaps app.board for a new object with the same id. Reading the spend again would
+    // draw it as still being read (a dash) until the second read lands.
+    app.board = board();
+    render(PlanView);
+    await tick();
+    const before = usage.calls;
+    app.board = board();
+    await tick();
+    expect(usage.calls).toBe(before);
   });
 });

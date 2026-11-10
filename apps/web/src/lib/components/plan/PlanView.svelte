@@ -33,8 +33,11 @@
 
   /** The week's spend, for the Studio figures; fetched once per board. */
   let spend7d = $state<number | null | undefined>(undefined);
+  // Keyed on the id alone: a live refresh replaces app.board with a new object for the same board, and
+  // re-reading then would draw the figure as still being read until the second read lands.
+  const spendBoardId = $derived(app.board?.boardId);
   $effect(() => {
-    const id = app.board?.boardId;
+    const id = spendBoardId;
     if (!id) return;
     let live = true;
     spend7d = undefined;
