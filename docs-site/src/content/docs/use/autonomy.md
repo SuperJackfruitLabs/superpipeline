@@ -87,6 +87,13 @@ dispatching it now.
 
 Without that, an agent could launder a human's grant onto work it chose for itself.
 
+An agent's move never gets a card past a gate. The board refuses it with `409 GATE_PENDING` when it
+would end a review or checks the card is waiting on, leave or skip past a stage with a review or
+checks, or finish the card by moving it into a last stage nobody works. A person resolves the gate,
+or moves the card themselves. Moves that cross no gate work as before: into a stage the agent may
+queue to, between ungated stages, and back to an earlier stage for rework, since every gate on the
+way forward still stands.
+
 ## Next
 
 - [Stage runbooks and completion](/use/runbooks/) — what `compose` writes

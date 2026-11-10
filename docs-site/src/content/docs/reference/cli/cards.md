@@ -150,7 +150,7 @@ supi edit-card brd_8f2c… crd_41aa… --due none
 
 ## `supi move`
 
-Moves a card to another stage. Moving a card into a stage an agent works is a dispatch, so the mover is recorded as the one who queued it — and an agent mover passes the same queueing checks a create does.
+Moves a card to another stage. Moving a card into a stage an agent works is a dispatch, so the mover is recorded as the one who queued it — and an agent mover passes the same queueing checks a create does. An agent never gets a card past a gate: a move that would end a pending review or running checks, leave or skip a stage with a review or checks, or finish the card in a last stage nobody works is refused, and a person resolves the gate.
 
 ```sh
 supi move <boardId> <cardId> <stageKey>
@@ -176,6 +176,7 @@ An agent moving a card into an agent-owned stage also needs a dispatch grant and
 **Exit status** `0` on success. `1` when:
 
 - `<boardId>`, `<cardId>` or `<stageKey>` is missing
+- an agent token and the move would get the card past a gate or finish it (409 `GATE_PENDING`, naming the stage)
 - there is no usable credential, or the server refuses it (401) or the act (403), or answers any other error
 
 **Example**
