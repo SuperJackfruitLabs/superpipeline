@@ -29,6 +29,12 @@ importers:
       '@modelcontextprotocol/sdk':
         specifier: 1.32.1
         version: 1.32.1(@cfworker/json-schema@4.1.1)(zod@4.4.3)
+      '@superjackfruitlabs/treaty-cloudevents':
+        specifier: 0.0.5
+        version: 0.0.5
+      '@superjackfruitlabs/treaty-event-schemas':
+        specifier: 0.0.4
+        version: 0.0.4
       '@superpipeline/contract':
         specifier: workspace:*
         version: link:../../packages/contract
@@ -48,9 +54,6 @@ importers:
       '@superjackfruitlabs/treaty-ecosystem-identity':
         specifier: 0.0.2
         version: 0.0.2
-      '@superjackfruitlabs/treaty-event-schemas':
-        specifier: 0.0.4
-        version: 0.0.4
       '@superpipeline/agent-sdk':
         specifier: workspace:*
         version: link:../../packages/agent-sdk
@@ -1182,6 +1185,9 @@ packages:
     engines: {node: '>=22'}
     peerDependencies:
       svelte: ^5.56.0
+
+  '@superjackfruitlabs/treaty-cloudevents@0.0.5':
+    resolution: {integrity: sha512-HPAGAqQxROs4+gqmJBg4PeqfD+3JY4ejQDm4OYCC4U1HiyK0RrQYY4ri9pQKgooViJAy2cEnMzCYEd6BoHfonA==}
 
   '@superjackfruitlabs/treaty-ecosystem-identity@0.0.2':
     resolution: {integrity: sha512-52RhUdq6WVFYHgiKvpjGqZsaRcA9vWeTIPPwLV66bPoXcjM7fODxg/tZ6s96DOOTGAO1IwkbkqOthsHD+ctgSA==}
@@ -3309,6 +3315,8 @@ snapshots:
     transitivePeerDependencies:
       - '@internationalized/date'
       - '@sveltejs/kit'
+
+  '@superjackfruitlabs/treaty-cloudevents@0.0.5': {}
 
   '@superjackfruitlabs/treaty-ecosystem-identity@0.0.2': {}
 

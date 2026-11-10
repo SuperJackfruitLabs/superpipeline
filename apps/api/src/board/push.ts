@@ -1,6 +1,7 @@
 import { newId } from '../ids';
-import { PUSH_TIMEOUT_MS, type PushSender, signAndSend } from '../push/deliver';
+import { PUSH_TIMEOUT_MS, type PushOutcome, type PushSender, postWithTimeout, signAndSend } from '../push/deliver';
 import { SUBSCRIBABLE_EVENTS } from '../push/events';
+import { RELAY_CONFIG_ID, RELAYED_EVENTS, relayRequest, relaySettings } from '../push/relay';
 import { isPublicHttpUrl } from '../push/ssrf';
 import type { BoardContext } from './context';
 import type { NotificationView, PushConfigInput, PushDeliveryView, Result } from './model';
@@ -13,6 +14,7 @@ import { MAX_PUSH_ATTEMPTS } from './rules';
 /** What push delivery needs from the rest of the board. */
 export type PushDeps = Pick<
   BoardContext,
+  | 'env'
   | 'getMeta'
   | 'now'
   | 'sql'
@@ -41,6 +43,23 @@ export function queueSubscribedPush(deps: Pick<PushDeps, 'now' | 'sql'>, payload
       ts,
     );
   }
+}
+
+/**
+ * Queue a relayed event for the suite's event relay too (treaty plan step 7), when this deployment
+ * publishes to one. The direct push is queued as before, by `queueSubscribedPush`; this row rides
+ * the same queue, transaction and retries, and the drain sends it as a CloudEvent.
+ */
+export function queueRelay(deps: Pick<PushDeps, 'env' | 'now' | 'sql'>, payload: { event: string }): void {
+  const relay = relaySettings(deps.env);
+  if (!relay || !RELAYED_EVENTS.has(payload.event)) return;
+  deps.sql.exec(
+    `INSERT INTO push_deliveries (config_id, url, body, status, attempts, created_at) VALUES (?, ?, ?, 'pending', 0, ?)`,
+    RELAY_CONFIG_ID,
+    relay.url,
+    JSON.stringify(payload),
+    deps.now(),
+  );
 }
 
 /** One config's share of a single drain. */
@@ -155,9 +174,11 @@ export async function dispatchPushDeliveries(deps: PushDeps, sender: PushSender 
   const perConfig = new Map<string, number>();
   const rows = deps.sql
     .exec(
-      `SELECT d.id, d.config_id, d.url, d.body, d.attempts, c.token FROM push_deliveries d JOIN push_configs c ON d.config_id = c.id
-       WHERE d.status IN ('pending', 'failed') AND d.attempts < ? ORDER BY d.attempts ASC, d.id ASC LIMIT 500`,
+      `SELECT d.id, d.config_id, d.url, d.body, d.attempts, c.token FROM push_deliveries d LEFT JOIN push_configs c ON d.config_id = c.id
+       WHERE d.status IN ('pending', 'failed') AND d.attempts < ? AND (c.id IS NOT NULL OR d.config_id = ?)
+       ORDER BY d.attempts ASC, d.id ASC LIMIT 500`,
       MAX_PUSH_ATTEMPTS,
+      RELAY_CONFIG_ID,
     )
     .toArray()
     .filter((r) => {
@@ -170,7 +191,10 @@ export async function dispatchPushDeliveries(deps: PushDeps, sender: PushSender 
   let sent = 0;
   let failed = 0;
   for (const r of rows) {
-    const outcome = await signAndSend({ id: Number(r.id), url: r.url as string, body: r.body as string, token: r.token as string }, sender, opts?.timeoutMs);
+    const outcome =
+      r.config_id === RELAY_CONFIG_ID
+        ? await sendToRelay(deps, Number(r.id), typeof r.body === 'string' ? r.body : '', sender, opts?.timeoutMs)
+        : await signAndSend({ id: Number(r.id), url: r.url as string, body: r.body as string, token: r.token as string }, sender, opts?.timeoutMs);
     const attempts = Number(r.attempts) + 1;
     const status = outcome.ok ? 'sent' : attempts >= MAX_PUSH_ATTEMPTS ? 'dead' : 'failed';
     deps.sql.exec(`UPDATE push_deliveries SET status = ?, attempts = ?, last_status = ? WHERE id = ?`, status, attempts, outcome.status, r.id);
@@ -183,4 +207,20 @@ export async function dispatchPushDeliveries(deps: PushDeps, sender: PushSender 
     `DELETE FROM push_deliveries WHERE status IN ('sent', 'dead') AND id NOT IN (SELECT id FROM push_deliveries WHERE status IN ('sent', 'dead') ORDER BY id DESC LIMIT 100)`,
   );
   return { sent, failed };
+}
+
+/** One relay delivery: the queued body as a CloudEvent, to the relay this deployment names now. */
+async function sendToRelay(deps: Pick<PushDeps, 'env' | 'getMeta'>, id: number, body: string, sender: PushSender, timeoutMs?: number): Promise<PushOutcome> {
+  const relay = relaySettings(deps.env);
+  const boardId = deps.getMeta('boardId');
+  const tenantId = deps.getMeta('tenantId');
+  // Unset since the row was queued, or a board without its ids: retried, then dead-lettered.
+  if (!relay || !boardId || !tenantId) return { id, ok: false, status: 0 };
+  let request;
+  try {
+    request = relayRequest({ id, body }, { boardId, tenantId }, relay);
+  } catch {
+    return { id, ok: false, status: 0 };
+  }
+  return postWithTimeout(id, request.url, request.headers, body, sender, timeoutMs);
 }
