@@ -79,6 +79,12 @@ export async function moveCard(deps: MovesDeps, cardId: string, toStageKey: stri
       message: `card has ${openChildren} open sub-task${openChildren === 1 ? '' : 's'}`,
     };
   }
+  // An AGENT mover (the route passes its id) never gets a card past a gate. Deciding a gate is
+  // refused to every agent token, and the cancel and completion below would decide one for it.
+  if (queuedByAgentId) {
+    const refused = agentMoveRefusal(deps, card, target);
+    if (refused) return refused;
+  }
   const unresolvedBlockers = deps.unresolvedBlockerCount(cardId);
   const now = deps.now();
   deps.invalidateApprovalSubject(cardId, 'card.route_changed', actorUserId ?? null);
@@ -153,6 +159,60 @@ export async function moveCard(deps: MovesDeps, cardId: string, toStageKey: stri
   }
   await deps.scheduleReclaim();
   return { ok: true, value: updated };
+}
+
+/** An agent move refused for a gate: 409, and the message says a person resolves it. */
+function refuseAgentMove(message: string): Result<never> {
+  return { ok: false, code: 'GATE_PENDING', message };
+}
+
+/** Does a card in this stage have something a person or a check must decide before it leaves? */
+function stageHasGate(stage: StageDef): boolean {
+  return (
+    stage.gate === 'approval' ||
+    stage.gate === 'checks' ||
+    (stage.checks?.length ?? 0) > 0 ||
+    stage.quorum !== undefined ||
+    stage.approvalSubjectSchema !== undefined
+  );
+}
+
+/**
+ * Why an agent may not make this move, or null when it may.
+ *
+ * A person's move overrides a review (the cancel in `moveCard`); an agent's must not, because an
+ * agent can never decide a gate (`gates/:id/resolve` is refused on every scope). So an agent move is
+ * refused when it would:
+ *  - end a review or checks the card is waiting on — in either direction, since a cancelled review
+ *    decides nothing whichever way the card goes;
+ *  - leave a gated stage forward, or skip past one;
+ *  - complete the card by arriving in a last stage nobody works (`completesOnArrival`).
+ *
+ * Arriving IN a gated stage is not refused: the card waits there for a person. A move backward
+ * that ends nothing is not refused either: every gate between the two stages stands in the card's
+ * way again on its way forward, so rework cannot skip one.
+ */
+function agentMoveRefusal(deps: MovesDeps, card: CardView, target: StageDef): Result<never> | null {
+  const stages = deps.stages();
+  const from = stages.findIndex((s) => s.key === card.currentStageKey);
+  const to = stages.findIndex((s) => s.key === target.key);
+  const here = stages[from]?.name ?? card.currentStageKey;
+  if (deps.sql.exec(`SELECT 1 FROM gates WHERE card_id = ? AND status = 'pending' LIMIT 1`, card.id).toArray().length > 0) {
+    return refuseAgentMove(`this card is waiting on a review in "${here}"; a person must resolve the gate before it moves`);
+  }
+  if (deps.sql.exec(`SELECT 1 FROM card_check_arrivals WHERE card_id = ? AND status = 'open' LIMIT 1`, card.id).toArray().length > 0) {
+    return refuseAgentMove(`this card's checks in "${here}" are still deciding it; a person must resolve the gate before it moves`);
+  }
+  if (from !== -1 && to > from) {
+    const gated = stages.slice(from, to).find(stageHasGate);
+    if (gated) {
+      return refuseAgentMove(`moving this card to "${target.name}" would get it past the gate on "${gated.name}"; a person must resolve the gate, or move the card themselves`);
+    }
+  }
+  if (completesOnArrival(deps, target)) {
+    return refuseAgentMove(`moving this card to "${target.name}" would complete it; an agent cannot finish a card by moving it, a person must`);
+  }
+  return null;
 }
 
 /**
