@@ -199,7 +199,7 @@ export type SyncState = z.infer<typeof SyncState>;
  * it is a **cross-repo contract value**, not an internal one. AgentPod's
  * Application Service projects these into a Matrix room as an option list and
  * sends one back to resolve the gate; supermessage draws a button per value.
- * Pinned by `fixtures/ecosystem-identity/matrix_gate_events.json` in AgentPod,
+ * Pinned by `fixtures/ecosystem-identity/matrix_gate_events.json` in treaty,
  * which all three repos validate against.
  *
  * The consequence of that, and the reason this comment is here: adding a value

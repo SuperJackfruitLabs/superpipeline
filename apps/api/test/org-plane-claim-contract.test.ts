@@ -1,12 +1,25 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { SignJWT } from 'jose';
-import fixture from './fixtures/org-plane-token-claims.json';
+import fixture from '@superjackfruitlabs/treaty-ecosystem-identity/token_claims.json';
 import { verifyOrgPlaneToken, type OrgPlaneConfig } from '../src/auth/org-plane';
 import { __resetJwksCacheForTests } from '../src/auth/hub-jwt';
 import { PLANE, PLANE_JWKS, APP_AUD, MCP_AUD, KID, planeKeys } from './helpers/org-plane';
 
-/** Bump only after diffing against the plane's own fixture and fixing the consumer first. */
-const FIXTURE_VERSION = 1;
+/**
+ * treaty's `token_claims.json` (the package pinned in package.json) is the contract, and the
+ * organization plane mints it. Bump only after diffing the two versions and fixing org-plane.ts.
+ */
+const FIXTURE_VERSION = 9;
+
+/** sign() sets the registered claims itself: the examples' own iss and aud name the real plane. */
+const SET_BY_SIGN = new Set(['iss', 'aud', 'iat', 'exp', 'jti']);
+const examples = Object.entries(fixture.examples).map(
+  ([name, example]): [string, Record<string, unknown>] => [
+    name,
+    Object.fromEntries(Object.entries(example).filter(([k]) => !SET_BY_SIGN.has(k))),
+  ],
+);
+const always = [...fixture.standard, ...fixture.issued].filter((c) => c.required).map((c) => c.claim);
 const CFG: OrgPlaneConfig = { issuer: PLANE, jwksUrl: PLANE_JWKS, audience: APP_AUD, mcpAudience: MCP_AUD, url: PLANE };
 const fetchImpl = (async () =>
   new Response((await planeKeys()).jwksBody, { headers: { 'content-type': 'application/json' } })) as unknown as typeof fetch;
@@ -31,19 +44,19 @@ describe('the plane claim contract, as superpipeline reads it', () => {
     expect(fixture.version, 'contract fixture changed: diff it, fix org-plane.ts, then bump').toBe(FIXTURE_VERSION);
   });
 
-  it.each(Object.entries(fixture.examples))('verifies the %s example verbatim', async (_name, example) => {
-    const claims = await verifyOrgPlaneToken(await sign(example as Record<string, unknown>), CFG, APP_AUD, fetchImpl);
+  it.each(examples)('verifies the %s example verbatim', async (_name, example) => {
+    const claims = await verifyOrgPlaneToken(await sign(example), CFG, APP_AUD, fetchImpl);
     expect(claims).not.toBeNull();
     for (const [k, v] of Object.entries(example)) expect(claims![k as keyof typeof claims]).toEqual(v);
   });
 
-  it.each(fixture.always)('refuses a token missing the always-present claim %s', async (name) => {
-    const token = await sign({ ...fixture.examples.human_oauth }, name);
+  it.each(always)('refuses a token missing the always-present claim %s', async (name) => {
+    const token = await sign({ ...fixture.examples['oauth-human'] }, name);
     expect(await verifyOrgPlaneToken(token, CFG, APP_AUD, fetchImpl)).toBeNull();
   });
 
   it('never needs the removed tenant claim', async () => {
-    expect(fixture.removed).toContain('tenant');
-    expect('tenant' in fixture.examples.human_oauth).toBe(false);
+    expect(fixture.removed.map((r) => r.claim)).toContain('tenant');
+    for (const [, example] of examples) expect('tenant' in example).toBe(false);
   });
 });

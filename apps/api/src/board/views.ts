@@ -492,7 +492,7 @@ export interface EnvelopeOptionInput {
  *
  * The field names are the wire's, not the board's: `gateId` rather than `id`,
  * `options[].id`/`label` rather than `name`/`title`. They are pinned by
- * agentpod `fixtures/ecosystem-identity/matrix_gate_events.json`, which three
+ * treaty's `fixtures/ecosystem-identity/matrix_gate_events.json`, which three
  * repositories validate against, so this shape stops being ours to rename.
  */
 export interface GatePendingBody {

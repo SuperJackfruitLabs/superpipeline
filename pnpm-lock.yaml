@@ -45,6 +45,9 @@ importers:
       '@cloudflare/workers-types':
         specifier: ^4.20260619.1
         version: 4.20260619.1
+      '@superjackfruitlabs/treaty-ecosystem-identity':
+        specifier: 0.0.2
+        version: 0.0.2
       '@superpipeline/agent-sdk':
         specifier: workspace:*
         version: link:../../packages/agent-sdk
@@ -1176,6 +1179,9 @@ packages:
     engines: {node: '>=22'}
     peerDependencies:
       svelte: ^5.56.0
+
+  '@superjackfruitlabs/treaty-ecosystem-identity@0.0.2':
+    resolution: {integrity: sha512-52RhUdq6WVFYHgiKvpjGqZsaRcA9vWeTIPPwLV66bPoXcjM7fODxg/tZ6s96DOOTGAO1IwkbkqOthsHD+ctgSA==}
 
   '@sveltejs/acorn-typescript@1.0.10':
     resolution: {integrity: sha512-4WfKk68eTih+MiJD4fSbxN7E8kVBmTMPWHUPYjvl2N0rMs53YLTT8/YjKU5Dtnz5LqDjl7LEw4U7lXR2W3J5WA==}
@@ -3297,6 +3303,8 @@ snapshots:
     transitivePeerDependencies:
       - '@internationalized/date'
       - '@sveltejs/kit'
+
+  '@superjackfruitlabs/treaty-ecosystem-identity@0.0.2': {}
 
   '@sveltejs/acorn-typescript@1.0.10(acorn@8.17.0)':
     dependencies:

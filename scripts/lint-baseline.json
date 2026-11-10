@@ -19,7 +19,7 @@
   "typescript(no-non-null-assertion)": 1503,
   "typescript(no-unnecessary-boolean-literal-compare)": 1,
   "typescript(no-unnecessary-template-expression)": 3,
-  "typescript(no-unnecessary-type-assertion)": 954,
+  "typescript(no-unnecessary-type-assertion)": 953,
   "typescript(no-unnecessary-type-conversion)": 38,
   "typescript(no-unsafe-type-assertion)": 1609,
   "typescript(require-array-sort-compare)": 5,
