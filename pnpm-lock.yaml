@@ -48,6 +48,9 @@ importers:
       '@superjackfruitlabs/treaty-ecosystem-identity':
         specifier: 0.0.2
         version: 0.0.2
+      '@superjackfruitlabs/treaty-event-schemas':
+        specifier: 0.0.4
+        version: 0.0.4
       '@superpipeline/agent-sdk':
         specifier: workspace:*
         version: link:../../packages/agent-sdk
@@ -1182,6 +1185,9 @@ packages:
 
   '@superjackfruitlabs/treaty-ecosystem-identity@0.0.2':
     resolution: {integrity: sha512-52RhUdq6WVFYHgiKvpjGqZsaRcA9vWeTIPPwLV66bPoXcjM7fODxg/tZ6s96DOOTGAO1IwkbkqOthsHD+ctgSA==}
+
+  '@superjackfruitlabs/treaty-event-schemas@0.0.4':
+    resolution: {integrity: sha512-Jd76PryZ6oXdRlcJo21gfMAD0GqwdbZWZ/jQivK/CBHS5dDsZ069P6k3cqMrjg3HTavqag+ryVLOWTBNRULjUA==}
 
   '@sveltejs/acorn-typescript@1.0.10':
     resolution: {integrity: sha512-4WfKk68eTih+MiJD4fSbxN7E8kVBmTMPWHUPYjvl2N0rMs53YLTT8/YjKU5Dtnz5LqDjl7LEw4U7lXR2W3J5WA==}
@@ -3305,6 +3311,8 @@ snapshots:
       - '@sveltejs/kit'
 
   '@superjackfruitlabs/treaty-ecosystem-identity@0.0.2': {}
+
+  '@superjackfruitlabs/treaty-event-schemas@0.0.4': {}
 
   '@sveltejs/acorn-typescript@1.0.10(acorn@8.17.0)':
     dependencies:
