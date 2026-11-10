@@ -2,7 +2,7 @@
  * Matching a grant value against the principal a dispatch would run as.
  *
  * The rule is the fixture's, not ours: `fixtures/ecosystem-identity/token_claims.json` in
- * AgentPod pins it, and this is superpipeline's hand-written implementation of the same contract —
+ * treaty pins it, and this is superpipeline's hand-written implementation of the same contract —
  * duplicated in behaviour and shared in specification, which is the arrangement that has kept
  * five hand-written Go mirrors honest.
  *

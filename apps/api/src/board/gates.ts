@@ -809,7 +809,7 @@ function gatePendingBody(deps: GatesDeps, gate: Row): GatePendingBody | null {
     ...releaseField(deps, gate),
     ...gateChecksField(deps.sql, gate),
     // `id`/`label`, not `name`/`title`: the wire names are pinned by
-    // agentpod fixtures/ecosystem-identity/matrix_gate_events.json, which
+    // treaty fixtures/ecosystem-identity/matrix_gate_events.json, which
     // three repos validate against. The board's own vocabulary stops here.
     //
     // gate.v2 §2 adds what each option MEANS, so a client draws by meaning and keeps no

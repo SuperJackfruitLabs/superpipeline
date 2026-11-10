@@ -1,7 +1,9 @@
 /**
  * The claim NAMES superpipeline depends on, pinned here so a rename upstream fails a test.
  *
- * agentpod's `fixtures/ecosystem-identity/token_claims.json` is the contract, and its own
+ * token_claims v7, the hub's own issuer shape, is the contract. AgentPod retired that issuer, and
+ * its last copy of v7 (`apps/hub/src/auth/testdata/token_claims.v7.json`), on 2026-10-07; the
+ * organization plane's shape is treaty's v9, read by `org-plane-claim-contract.test.ts`. v7's own
  * `purpose` field says why it exists: "The moment a second plane reads a claim, the claim's NAME
  * is a contract: a rename in the hub is a silent authorization failure in superpipeline, which
  * fails in the direction that looks like the caller having no permission."
@@ -25,7 +27,7 @@ import { SignJWT, exportJWK, generateKeyPair } from 'jose';
 import { verifyHubToken, __resetJwksCacheForTests, type HubClaims } from '../src/auth/hub-jwt';
 
 /**
- * `version` of agentpod `fixtures/ecosystem-identity/token_claims.json`, as of 2026-10-04 — the
+ * `version` of agentpod's token claims corpus, as of 2026-10-04 — the
  * revision that added the conditional `scope` claim (superwitness service tokens). v6 added
  * `email` / `email_verified` for the suite sign-in programme.
  *
@@ -107,11 +109,11 @@ const CONTRACT_TOKEN = {
 describe('the hub claim contract, as this plane reads it', () => {
   it('pins the fixture version it was written against', () => {
     // A bump upstream is not a failure here — it is a prompt. Diff
-    // `fixtures/ecosystem-identity/token_claims.json` between the two versions, make the consumer
+    // the token_claims corpus between the two versions, make the consumer
     // agree with it, and only then move this number.
     expect(
       FIXTURE_VERSION,
-      'agentpod fixtures/ecosystem-identity/token_claims.json changed version: read the diff, fix the consumer, then bump this',
+      'token_claims changed version: read the diff, fix the consumer, then bump this',
     ).toBe(7);
   });
 

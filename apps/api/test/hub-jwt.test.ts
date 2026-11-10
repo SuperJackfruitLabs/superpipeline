@@ -16,7 +16,7 @@ import { findTenantByExternal } from '../src/db/catalog';
  * token as carrier, and explicitly not a policy-service call in the hot path.
  *
  * The claim names come from the shared corpus
- * (agentpod fixtures/ecosystem-identity/token_claims.json), not from reading the
+ * (token_claims v7, retired with the hub's issuer on 2026-10-07), not from reading the
  * hub's source. If the two ever disagree, that is the bug this arrangement
  * exists to catch — a rename in the hub is otherwise a silent authorization
  * failure here, and it fails in the direction that looks like the caller simply

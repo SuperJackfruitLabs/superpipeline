@@ -32,7 +32,7 @@
 
 import { createLocalJWKSet, jwtVerify, type JSONWebKeySet, type JWTPayload } from 'jose';
 
-/** The claims superpipeline reads. Names pinned by agentpod fixtures/ecosystem-identity/token_claims.json. */
+/** The claims superpipeline reads. Names pinned by token_claims v7, the hub's own issuer shape, retired with the hub's issuer on 2026-10-07. */
 export interface HubClaims extends JWTPayload {
   /**
    * Present when a SERVICE minted this token while asserting a principal who
