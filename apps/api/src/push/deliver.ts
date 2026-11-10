@@ -34,6 +34,25 @@ export async function signAndSend(delivery: PushDelivery, sender: PushSender, ti
   } catch {
     event = '';
   }
+  return postWithTimeout(
+    delivery.id,
+    delivery.url,
+    { 'Content-Type': 'application/json', 'X-Superpipeline-Signature': signature, 'X-Superpipeline-Event': event },
+    delivery.body,
+    sender,
+    timeoutMs,
+  );
+}
+
+/** POST one delivery, cut off at `timeoutMs`. Never throws: a failure is `ok: false`, status 0 when nothing answered. */
+export async function postWithTimeout(
+  id: number,
+  url: string,
+  headers: Record<string, string>,
+  body: string,
+  sender: PushSender,
+  timeoutMs = PUSH_TIMEOUT_MS,
+): Promise<PushOutcome> {
   // The abort signal cuts a real fetch; the race cuts a sender that ignores it.
   const abort = new AbortController();
   let timer: ReturnType<typeof setTimeout> | undefined;
@@ -44,18 +63,10 @@ export async function signAndSend(delivery: PushDelivery, sender: PushSender, ti
     }, timeoutMs);
   });
   try {
-    const res = await Promise.race([
-      sender(delivery.url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'X-Superpipeline-Signature': signature, 'X-Superpipeline-Event': event },
-        body: delivery.body,
-        signal: abort.signal,
-      }),
-      timedOut,
-    ]);
-    return { id: delivery.id, ok: res.status >= 200 && res.status < 300, status: res.status };
+    const res = await Promise.race([sender(url, { method: 'POST', headers, body, signal: abort.signal }), timedOut]);
+    return { id, ok: res.status >= 200 && res.status < 300, status: res.status };
   } catch {
-    return { id: delivery.id, ok: false, status: 0 };
+    return { id, ok: false, status: 0 };
   } finally {
     if (timer !== undefined) clearTimeout(timer);
   }

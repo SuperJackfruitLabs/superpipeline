@@ -7,7 +7,7 @@ import { applyVariantChoice, deciderError, gateVariants, judgeVariantDecision, o
 import type { GateOption } from './gate-option';
 import { NOT_ACTED_SQL, approvalNotActed, heldDetail, heldError, holdFields, judgeReleaseTime, releaseField } from './gate-release';
 import { type DeciderRole, type QuorumApproval, gateQuorum, judgeQuorumApproval, quorumApprovals, quorumSnapshot, recordQuorumApproval } from './gate-quorum';
-import { queueSubscribedPush } from './push';
+import { queueRelay, queueSubscribedPush } from './push';
 import type { CardView, Result, Row } from './model';
 import { EXPIRED_DECISION, handoffSummary, isApproveDecision } from './rules';
 import { previewSummary, subjectEnvelope, variantsEnvelope, variantsSummary } from './subject-envelope';
@@ -28,6 +28,7 @@ export type GatesDeps = Pick<
   | 'cancelElicitationsForCard'
   | 'ctx'
   | 'decisionDeadline'
+  | 'env'
   | 'emit'
   | 'expireGate'
   | 'getCard'
@@ -845,6 +846,7 @@ function notifyGatePending(deps: GatesDeps, gateId: string): void {
   const payload = gatePendingBody(deps, gate);
   if (!payload) return;
   queueSubscribedPush(deps, payload);
+  queueRelay(deps, payload);
 }
 
 /**

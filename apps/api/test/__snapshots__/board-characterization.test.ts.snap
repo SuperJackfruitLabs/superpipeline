@@ -5825,7 +5825,7 @@ exports[`the Board Durable Object, pinned before the split > runs the same state
       ],
     },
     "sql": [
-      "SELECT d.id, d.config_id, d.url, d.body, d.attempts, c.token FROM push_deliveries d JOIN push_configs c ON d.config_id = c.id WHERE d.status IN ('pending', 'failed') AND d.attempts < ? ORDER BY d.attempts ASC, d.id ASC LIMIT 500  <-  [5]",
+      "SELECT d.id, d.config_id, d.url, d.body, d.attempts, c.token FROM push_deliveries d LEFT JOIN push_configs c ON d.config_id = c.id WHERE d.status IN ('pending', 'failed') AND d.attempts < ? AND (c.id IS NOT NULL OR d.config_id = ?) ORDER BY d.attempts ASC, d.id ASC LIMIT 500  <-  [5,"relay"]",
       "UPDATE push_deliveries SET status = ?, attempts = ?, last_status = ? WHERE id = ?  <-  ["sent",1,200,1]",
       "DELETE FROM push_deliveries WHERE status IN ('sent', 'dead') AND id NOT IN (SELECT id FROM push_deliveries WHERE status IN ('sent', 'dead') ORDER BY id DESC LIMIT 100)",
     ],
@@ -8821,7 +8821,7 @@ exports[`the Board Durable Object, pinned before the split > runs the same state
     "result": true,
     "sql": [
       "SELECT id, card_id FROM runs WHERE status = 'working' AND (last_heartbeat_ms + ?) <= ?  <-  [900000,"t#283"]",
-      "SELECT d.id, d.config_id, d.url, d.body, d.attempts, c.token FROM push_deliveries d JOIN push_configs c ON d.config_id = c.id WHERE d.status IN ('pending', 'failed') AND d.attempts < ? ORDER BY d.attempts ASC, d.id ASC LIMIT 500  <-  [5]",
+      "SELECT d.id, d.config_id, d.url, d.body, d.attempts, c.token FROM push_deliveries d LEFT JOIN push_configs c ON d.config_id = c.id WHERE d.status IN ('pending', 'failed') AND d.attempts < ? AND (c.id IS NOT NULL OR d.config_id = ?) ORDER BY d.attempts ASC, d.id ASC LIMIT 500  <-  [5,"relay"]",
       "DELETE FROM push_deliveries WHERE status IN ('sent', 'dead') AND id NOT IN (SELECT id FROM push_deliveries WHERE status IN ('sent', 'dead') ORDER BY id DESC LIMIT 100)",
       "SELECT v FROM meta WHERE k = ?  <-  ["boardId"]",
       "SELECT run_id, gen, report_json, attempts FROM run_reports WHERE status = 'pending' AND next_attempt_at <= ? ORDER BY next_attempt_at ASC, run_id ASC LIMIT ?  <-  ["t#284",100]",
