@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { boundedPreview, record, type PreviewBlock } from '../approval-subject-kinds/kind';
+import { boundedPreview, emittedExpiry, record, SubjectExpiry, type PreviewBlock } from '../approval-subject-kinds/kind';
 import type { JsonValue } from '../json';
 import type { GateOption, OptionScope } from './gate-option';
 import type { ApprovalDetail, StrictDecision } from './strict-decision';
@@ -49,7 +49,7 @@ export const PosterSubject = z.object({
   id: z.string().min(1).max(256),
   digest: z.string().min(1).max(256),
   revision: z.number().int().positive().max(Number.MAX_SAFE_INTEGER),
-  expires_at: z.iso.datetime({ offset: true }),
+  expires_at: SubjectExpiry,
   preview: z.array(PostedBlock).max(POSTED_BLOCKS_MAX),
   preview_complete: z.boolean(),
 }).strict();
@@ -105,7 +105,8 @@ export function posterSubjectEnvelope(subject: PosterSubject | StkCapabilitySubj
     digest: subject.digest,
     schema: subject.schema,
     revision: subject.revision,
-    expiresAt: subject.expires_at,
+    // A question stored before expiries needed their seconds still goes out in the strict form.
+    expiresAt: emittedExpiry(subject.expires_at),
     preview: bounded.blocks,
     previewComplete: subject.preview_complete && bounded.complete,
   };

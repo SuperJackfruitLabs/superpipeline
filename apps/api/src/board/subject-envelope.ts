@@ -1,5 +1,5 @@
 import { approvalSubjectKind } from '../approval-subject-kinds';
-import { boundedPreview, PREVIEW_TOTAL_BYTES, type PreviewBlock } from '../approval-subject-kinds/kind';
+import { boundedPreview, emittedExpiry, PREVIEW_TOTAL_BYTES, type PreviewBlock } from '../approval-subject-kinds/kind';
 import type { BoardContext } from './context';
 import type { GateVariant } from './gate-choice';
 import { record } from './rules';
@@ -44,7 +44,7 @@ export function subjectEnvelope(deps: EnvelopeDeps, subjectId: string | null, to
     digest: subject.digest,
     schema: subject.schema,
     revision: subject.revision,
-    expiresAt: timing && typeof timing.expiresAt === 'string' ? timing.expiresAt : null,
+    expiresAt: timing ? emittedExpiry(timing.expiresAt) : null,
     preview: bounded.blocks,
     // False when the bounds cut or dropped anything: a client must then not offer an
     // approving option, because the person could not see everything they would approve.
