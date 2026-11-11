@@ -1,5 +1,5 @@
 import type { JsonValue } from '../json';
-import { nonEmptyString, publicDigest, record, type ApprovalSubjectKind, type PreviewBlock } from './kind';
+import { isSubjectExpiry, nonEmptyString, publicDigest, record, subjectExpiryError, type ApprovalSubjectKind, type PreviewBlock } from './kind';
 
 /** Validate the complete public social-publish/v1 payload before any durable write. */
 function validationError(value: unknown): string | null {
@@ -48,13 +48,12 @@ function validationError(value: unknown): string | null {
     !timing ||
     (timing.mode !== 'immediate' && timing.mode !== 'scheduled') ||
     (timing.notBefore !== null && !nonEmptyString(timing.notBefore)) ||
-    !nonEmptyString(timing.expiresAt) ||
-    Number.isNaN(Date.parse(timing.expiresAt)) ||
     (timing.notBefore !== null && Number.isNaN(Date.parse(timing.notBefore))) ||
     (timing.mode === 'scheduled' && timing.notBefore === null)
   ) {
     return 'publicationPayload.timing is invalid';
   }
+  if (!isSubjectExpiry(timing.expiresAt)) return subjectExpiryError('publicationPayload.timing.expiresAt');
   if (!Array.isArray(payload.evidenceRefs) || !payload.evidenceRefs.every(nonEmptyString)) {
     return 'publicationPayload.evidenceRefs must be an array of references';
   }

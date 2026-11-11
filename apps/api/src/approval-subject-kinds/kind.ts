@@ -1,3 +1,4 @@
+import { z } from 'zod';
 import type { JsonValue } from '../json';
 
 /**
@@ -124,6 +125,38 @@ export function record(value: unknown): Record<string, unknown> | null {
 
 export function nonEmptyString(value: unknown): value is string {
   return typeof value === 'string' && value.length > 0;
+}
+
+/**
+ * A subject's expiry as every reader of a decision event accepts it: an RFC 3339 date-time with
+ * seconds and an explicit offset (`2030-01-02T03:04:05Z`, `2030-01-02T08:34:05.5+05:30`). Looser
+ * spellings `Date.parse` reads (`2030-01-02`, `Jan 2 2030`, no seconds, no offset) are refused, since
+ * a strict reader would drop the event that carried them.
+ */
+export const SubjectExpiry = z.iso
+  .datetime({ offset: true })
+  .regex(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/, 'an expiry needs its seconds');
+
+/** Whether `value` is a subject expiry in the one form a subject may carry (see `SubjectExpiry`). */
+export function isSubjectExpiry(value: unknown): value is string {
+  return SubjectExpiry.safeParse(value).success;
+}
+
+/**
+ * A stored subject's expiry as an event carries it. A subject frozen before expiries were checked
+ * strictly may hold a looser spelling; it goes out as the same instant in UTC, so a strict reader
+ * keeps the event and its deadline. Null when there is no readable expiry.
+ */
+export function emittedExpiry(value: unknown): string | null {
+  if (typeof value !== 'string') return null;
+  if (isSubjectExpiry(value)) return value;
+  const ms = Date.parse(value);
+  return Number.isFinite(ms) ? new Date(ms).toISOString() : null;
+}
+
+/** The message a refused expiry gets, naming the field that carried it. */
+export function subjectExpiryError(field: string): string {
+  return `${field} must be an RFC 3339 date-time with seconds and a time zone, such as 2030-01-02T03:04:05Z`;
 }
 
 /** A public endpoint may expose the digest as a header or as a small JSON read-back document. */
