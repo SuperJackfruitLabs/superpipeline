@@ -10,7 +10,7 @@ import { Validator } from '@cfworker/json-schema';
 import schemaRaw from '../contracts/run-report.schema.json?raw';
 
 export const RUN_REPORT_SCHEMA_RAW: string = schemaRaw;
-export const RUN_REPORT_SCHEMA_SHA256 = '9b3bebd3c5fc2b827169af29f245e0d4d9ddeedba756b05354dbe24de7d82516';
+export const RUN_REPORT_SCHEMA_SHA256 = 'b2444841f2d0a31ca6abc38aad13aedb99b9a653eec182344974f827a7c042fa';
 
 const validator = new Validator(JSON.parse(schemaRaw) as object, '2020-12', false);
 

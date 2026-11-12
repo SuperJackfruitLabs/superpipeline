@@ -99,7 +99,8 @@ queued and nothing is sent.
   carries `stage_key` and `card_id`, so superwitness can read history per stage. Leave it unset until
   the superwitness it reports to accepts those two fields: superwitness refuses a field it does not
   know, and one refused report fails its whole batch. A report queued before this release has no
-  stage or card and is sent without them; a backfill fills them in.
+  stage or card and is sent without them; a backfill fills them in. Staging sets it; production
+  leaves it unset until superwitness's production release accepts the fields.
 - **Delivery.** Each board queues reports in its own `run_reports` table, in the same write as
   the run change, and sends them from its alarm in batches of up to 100. The five-minute cron
   sweep is a backstop. Failures back off from 30 s to 1 h, up to 12 attempts; a refused report is
