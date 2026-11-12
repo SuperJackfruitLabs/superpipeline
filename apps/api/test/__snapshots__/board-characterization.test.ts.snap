@@ -5170,9 +5170,31 @@ exports[`the Board Durable Object, pinned before the split > runs the same state
     "step": "summaryCounts",
   },
   {
-    "result": {},
+    "result": {
+      "agt_j": {
+        "claimed": 0,
+        "lastHeartbeatMs": "t#109",
+        "working": 0,
+      },
+      "agt_r": {
+        "claimed": 0,
+        "lastHeartbeatMs": "t#71",
+        "working": 0,
+      },
+      "agt_r2": {
+        "claimed": 0,
+        "lastHeartbeatMs": "t#160",
+        "working": 0,
+      },
+      "agt_v": {
+        "claimed": 0,
+        "lastHeartbeatMs": "t#200",
+        "working": 0,
+      },
+    },
     "sql": [
       "SELECT delegate_agent_id AS a, COUNT(*) AS n, SUM(CASE WHEN state = 'working' THEN 1 ELSE 0 END) AS w FROM cards WHERE delegate_agent_id IS NOT NULL AND archived_at IS NULL AND state NOT IN ('completed', 'rejected', 'canceled') GROUP BY delegate_agent_id",
+      "SELECT agent_id AS a, MAX(last_heartbeat_ms) AS hb FROM runs GROUP BY agent_id",
     ],
     "step": "agentLoad",
   },

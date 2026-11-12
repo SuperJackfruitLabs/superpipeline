@@ -4,7 +4,7 @@ import type { PushSender } from '../push/deliver';
 import type { ReferenceInput } from '../references/input';
 import type { LinkKind } from './links';
 import type { AgentActivityInput, BoardEvent, BoardInit, CardView, ClaimResult, CompleteVerbInput, DecisionTimeout, EstimateView, LinkInput, LinkView, NotificationView, ProfileInput, ProfileView, PushConfigInput, PushDeliveryView, Result, RunReportDrainResult, RunReportOutboxRow, RunVerbInput, ScheduleView, StageDef, StageEditor, StagePatch, StaleCardView, StaleSettings, UsageSummary } from './model';
-import type { CardEligibility, EligibilityCandidate } from './claims';
+import type { AgentBoardLoad, CardEligibility, EligibilityCandidate } from './claims';
 import type { ReserveInput } from './reservations';
 import type { FixtureBoard } from './fixture-types';
 import type { StrictDecision } from './strict-decision';
@@ -18,8 +18,8 @@ import type { ActivityView, ApprovalRequestView, CardChecksView, ApprovalSubject
 export interface BoardStub {
   /** How many live cards the board holds and how many of them need a person now. */
   summaryCounts(): Promise<{ cardCount: number; needsYouCount: number }>;
-  /** Cards each agent holds on this board right now, and of those how many it works now. */
-  agentLoad(): Promise<Record<string, { claimed: number; working: number }>>;
+  /** Each agent's cards in hand and at work on this board, and its latest run heartbeat here. */
+  agentLoad(): Promise<Record<string, AgentBoardLoad>>;
   /** Dev only (FIXTURE_IMPORT): replace this board's rows with a fixture. src/dev/fixture.ts. */
   importFixture(board: FixtureBoard): Promise<
     { ok: true; cards: number } | { ok: false; code: 'FIXTURE_IMPORT_DISABLED' | 'UNKNOWN_COLUMN'; detail?: string }

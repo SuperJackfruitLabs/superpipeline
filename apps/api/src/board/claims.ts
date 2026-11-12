@@ -448,9 +448,22 @@ export async function scheduleReclaim(deps: ClaimsDeps): Promise<void> {
   await deps.ctx.storage.setAlarm(next);
 }
 
-/** Cards each agent holds on this board right now (claimed) and, of those, works now (working). */
-export async function agentLoad(deps: ClaimsDeps): Promise<Record<string, { claimed: number; working: number }>> {
-  const out: Record<string, { claimed: number; working: number }> = {};
+/** What one agent has in hand on this board, and when it was last heard from on a run here. */
+export interface AgentBoardLoad {
+  /** Cards it holds now: claimed, not finished, not archived. */
+  claimed: number;
+  /** Of those, the ones it works now (`working`, not waiting on a person). */
+  working: number;
+  /** The latest heartbeat (a claim sets the first) on any of its runs here, ended or not; null with none. */
+  lastHeartbeatMs: number | null;
+}
+
+/**
+ * Each agent's load on this board: the cards it holds (claimed) and works (working), and its
+ * latest run heartbeat. An agent appears when it holds a card or has ever run here.
+ */
+export async function agentLoad(deps: ClaimsDeps): Promise<Record<string, AgentBoardLoad>> {
+  const out: Record<string, AgentBoardLoad> = {};
   for (const r of deps.sql
     .exec(
       `SELECT delegate_agent_id AS a, COUNT(*) AS n, SUM(CASE WHEN state = 'working' THEN 1 ELSE 0 END) AS w
@@ -458,7 +471,13 @@ export async function agentLoad(deps: ClaimsDeps): Promise<Record<string, { clai
         GROUP BY delegate_agent_id`,
     )
     .toArray()) {
-    out[r.a as string] = { claimed: Number(r.n), working: Number(r.w) };
+    out[r.a as string] = { claimed: Number(r.n), working: Number(r.w), lastHeartbeatMs: null };
+  }
+  for (const r of deps.sql.exec(`SELECT agent_id AS a, MAX(last_heartbeat_ms) AS hb FROM runs GROUP BY agent_id`).toArray()) {
+    const a = r.a;
+    if (typeof a !== 'string') continue;
+    const hb = r.hb === null || r.hb === undefined ? null : Number(r.hb);
+    out[a] = { ...(out[a] ?? { claimed: 0, working: 0 }), lastHeartbeatMs: Number.isFinite(hb) ? hb : null };
   }
   return out;
 }
