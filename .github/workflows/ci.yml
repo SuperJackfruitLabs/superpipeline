@@ -45,10 +45,11 @@ jobs:
           node-version: 22
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      # An exact version downloads directly; 'latest' asks GitHub's API, which rate-limits the runner.
+      # An exact version (.bun-version, which the release build reads too) downloads directly;
+      # 'latest' asks GitHub's API, which rate-limits the runner.
       - uses: oven-sh/setup-bun@v2
         with:
-          bun-version: 1.4.4
+          bun-version-file: .bun-version
       - run: pnpm typecheck
       - run: pnpm test
       - run: pnpm ci:test
@@ -486,7 +487,7 @@ jobs:
 
 
   # Production (app.superpipeline.dev) no longer deploys from main: a `v*` tag on a main commit
-  # deploys it, from release.yml's `deploy-production` job. Main lands on staging only.
+  # deploys it, from release.yml (deploy/release/deploy.sh). Main lands on staging only.
   # Every push to main lands on the staging plane (workbench) too, through the forced-command key
   # (estate provision/301-staging-deploy.sh), which runs that commit's deploy/staging/deploy.sh.
   # Each deploy states the results it needs. `test` runs with always() after jobs the plan may

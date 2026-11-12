@@ -1,6 +1,6 @@
 #!/bin/sh
 # Smoke a SuperPipeline copy: `sh deploy/staging/smoke.sh <base-url>`. Defaults to staging;
-# production passes ACCOUNTS=https://accounts.superjackfruit.com (release.yml).
+# production passes ACCOUNTS=https://accounts.superjackfruit.com (deploy/release/smoke.sh).
 set -eu
 base=${1:-https://staging-app.superpipeline.dev}
 accounts=${ACCOUNTS:-https://staging-accounts.superjackfruit.com}
