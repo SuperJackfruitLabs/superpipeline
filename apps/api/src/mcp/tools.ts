@@ -139,7 +139,8 @@ export function registerSuperpipelineTools(server: McpServer, deps: ToolDeps): v
     {
       description:
         'Claim the next ready card you are eligible to work, using your token\'s capabilities. ' +
-        'Returns a run + lease + the upstream handoff, or {claimed:false} when no work is available. ' +
+        'Returns a run + lease + the upstream handoff, or {claimed:false, reason} when no work is available for you ' +
+        '(reason is a stable code such as no_matching_card, capability_mismatch or concurrency_reached). ' +
         'When a previous attempt at this stage failed, `lastFailure` carries its reason — READ IT before ' +
         'repeating the same approach, because the wall it hit is probably still there.',
       inputSchema: { boardId: z.string(), maxConcurrency: z.number().int().positive().optional() },

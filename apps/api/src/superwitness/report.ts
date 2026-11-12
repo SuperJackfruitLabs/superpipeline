@@ -54,6 +54,12 @@ export interface RunReportDraft {
   boardName: string | null;
   runId: string;
   agentId: string;
+  /**
+   * The stage the run worked and its card. Optional because a draft queued before they were
+   * recorded has neither, and is sent without them.
+   */
+  stageKey?: string | null;
+  cardId?: string | null;
   title: string | null;
   status: RunStatus;
   sourceStatus: string;
@@ -68,6 +74,10 @@ export interface RunReport {
   external_ref: string;
   scope: { id: string; name?: string };
   title?: string;
+  /** The stage the run worked (`runs.stage_key`), sent only when stage reporting is on. */
+  stage_key?: string;
+  /** The card the run worked, sent only when stage reporting is on. */
+  card_id?: string;
   executor: { id?: string; name: string };
   status: RunStatus;
   source_status: string;
@@ -92,15 +102,21 @@ export function clip(s: string | null | undefined, max: number): string {
 export function buildRunReport(
   d: RunReportDraft,
   executor: { principalId: string | null; name: string | null },
+  opts: { withStage?: boolean } = {},
 ): RunReport {
   const scopeName = clip(d.boardName, 200);
   const title = clip(d.title, 200);
+  // Additive and switched: superwitness refuses a field it does not know (see SUPERWITNESS_REPORT_STAGE).
+  const stageKey = opts.withStage ? clip(d.stageKey, 128) : '';
+  const cardId = opts.withStage ? clip(d.cardId, 128) : '';
   const executorName = clip(executor.name, 200) || clip(d.agentId, 200) || 'unknown';
   return {
     source: REPORT_SOURCE,
     external_ref: externalRef(d.boardId, d.runId),
     scope: { id: clip(d.boardId, 128), ...(scopeName ? { name: scopeName } : {}) },
     ...(title ? { title } : {}),
+    ...(stageKey ? { stage_key: stageKey } : {}),
+    ...(cardId ? { card_id: cardId } : {}),
     executor: {
       ...(executor.principalId && PRINCIPAL_ID.test(executor.principalId) ? { id: executor.principalId } : {}),
       name: executorName,

@@ -22,7 +22,7 @@ const INSTRUCTIONS = `superpipeline is a Kanban board where you, an AI agent, do
 
 The loop:
 1. superpipeline_list_work — find boards with cards "readyForYou" for your capabilities, and pick a boardId.
-2. superpipeline_claim_card({boardId}) — take the next ready card. Returns {claimed, runId, leaseEpoch, card, handoff}. If {claimed:false}, there's no work for you right now — back off and try again later. The handoff is what the previous stage passed you.
+2. superpipeline_claim_card({boardId}) — take the next ready card. Returns {claimed, runId, leaseEpoch, card, handoff}. If {claimed:false}, there's no work for you right now (its reason says why) — back off and try again later. The handoff is what the previous stage passed you.
 3. Work it. Thread the returned runId + leaseEpoch into every following call. Stream progress with superpipeline_post_activity (type: thought | action | response); attach links with superpipeline_add_reference; report token usage in post_activity for cost metering. On long runs call superpipeline_heartbeat periodically to keep your lease.
 4. Finish with exactly ONE of:
    - superpipeline_complete — end your turn, saying how it went with \`outcome\`:

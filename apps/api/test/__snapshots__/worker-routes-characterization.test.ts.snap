@@ -4470,6 +4470,7 @@ exports[`the Worker HTTP surface, pinned before the split > answers every route 
   {
     "body": {
       "claimed": false,
+      "reason": "concurrency_reached",
     },
     "headers": {
       "content-type": "application/json",

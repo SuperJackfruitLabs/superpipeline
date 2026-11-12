@@ -67,6 +67,8 @@ describe('superwitness outbox — the claim site', () => {
           boardName: 'Release board',
           runId,
           agentId: 'agt_w',
+          stageKey: runRow(state, runId).stage_key,
+          cardId: runRow(state, runId).card_id,
           title: 'Build it',
           status: 'running',
           sourceStatus: 'working',

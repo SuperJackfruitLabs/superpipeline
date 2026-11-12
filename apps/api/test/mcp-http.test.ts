@@ -145,7 +145,7 @@ describe('MCP server — Streamable HTTP transport', () => {
       }),
     });
     const { result } = await rpc(res);
-    expect(JSON.parse(result.content[0].text)).toEqual({ claimed: false });
+    expect(JSON.parse(result.content[0].text)).toEqual({ claimed: false, reason: 'board_not_initialized' });
   });
 });
 

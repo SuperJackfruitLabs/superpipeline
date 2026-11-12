@@ -66,7 +66,7 @@ describe('MCP tools — claim & lifecycle', () => {
     const res = await client.callTool({ name: 'superpipeline_claim_card', arguments: { boardId: 'brd_empty' } });
 
     expect(res.isError).toBeFalsy();
-    expect(toolJson(res)).toEqual({ claimed: false });
+    expect(toolJson(res)).toEqual({ claimed: false, reason: 'no_matching_card' });
   });
 
   it('completes a run and advances the card to the next stage', async () => {
@@ -148,7 +148,7 @@ describe('MCP tools — run verbs', () => {
     });
     expect(res.isError).toBeFalsy();
     const reclaim = await client.callTool({ name: 'superpipeline_claim_card', arguments: { boardId: 'brd_block' } });
-    expect(toolJson(reclaim)).toEqual({ claimed: false });
+    expect(toolJson(reclaim)).toEqual({ claimed: false, reason: 'no_matching_card' });
   });
 
   it('release returns the card to the queue for another attempt', async () => {

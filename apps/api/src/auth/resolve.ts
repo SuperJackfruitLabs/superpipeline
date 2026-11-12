@@ -329,6 +329,13 @@ export const APPROVAL_REQUESTS_RELAY = 'approval-requests:relay';
  * stays with people.
  */
 export const GATES_READ = 'gates:read';
+/**
+ * Read who could claim a card and why not, as a service: the eligibility read a placement service
+ * filters candidates with. Its own scope rather than `cards:read`, because the answer describes
+ * the workspace's agents (their capabilities met, their load, their grants), which a reader of
+ * cards has no need to learn. Reads only.
+ */
+export const DISPATCH_READ = 'dispatch:read';
 
 /**
  * Resolve a SERVICE-kind hub token — superwitness, reading evidence.

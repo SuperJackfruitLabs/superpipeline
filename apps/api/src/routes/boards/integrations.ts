@@ -1,10 +1,11 @@
 // Push delivery, GitHub and Forgejo configuration, triggers and webhooks.
 import type { JsonValue } from '../../board/board-do';
+import { effectiveCapabilities } from '../../db/implications';
 import { statusForCode } from '../errors';
 import type { BoardRequest } from './request';
 
 // POST /v1/boards/:id/push-configs — register an agent push subscription (docs/05 §4)
-export async function pushConfigRegister({ request, agent, stub }: BoardRequest): Promise<Response> {
+export async function pushConfigRegister({ request, env, tenantId, agent, stub }: BoardRequest): Promise<Response> {
   // An agent token subscribes the agent it authenticates — never the one a header names. A
   // person (session cookie or dev headers) still names the subscriber with `X-Agent-Id`.
   const agentId = agent ? agent.agentId : request.headers.get('X-Agent-Id');
@@ -22,11 +23,21 @@ export async function pushConfigRegister({ request, agent, stub }: BoardRequest)
   if (body.events !== undefined && (!Array.isArray(body.events) || body.events.some((e) => typeof e !== 'string'))) {
     return Response.json({ error: { code: 'INVALID_BODY', message: '`events` must be an array of event names' } }, { status: 400 });
   }
+  if (body.capabilities !== undefined && (!Array.isArray(body.capabilities) || body.capabilities.some((c) => typeof c !== 'string'))) {
+    return Response.json({ error: { code: 'INVALID_BODY', message: '`capabilities` must be an array of strings' } }, { status: 400 });
+  }
+  // The capabilities `work.available` is matched on, chosen as a claim chooses them
+  // (`routes/boards/runs.ts`): an agent token's own catalog row first, the body only where the
+  // caller has no row (dev headers, or a person naming the subscriber), then expanded through the
+  // workspace's implication edges. Without the expansion a config staffed for `code-review` was
+  // never told of a `code` lane it could claim. The edges are read now, so a config picks up an
+  // edge added later when it registers again.
+  const declared = agent?.capabilities ?? body.capabilities ?? [];
   const result = await stub.registerPushConfig({
     agentId,
     url: body.url,
     token: body.token,
-    capabilities: body.capabilities,
+    capabilities: await effectiveCapabilities(env.DB, tenantId, declared),
     events: body.events,
   });
   if (!result.ok) return Response.json({ error: result }, { status: statusForCode(result.code) });

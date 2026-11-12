@@ -183,7 +183,7 @@ verb; those paths 404 or 405.
 
 | Verb | Endpoint | Auth |
 |------|----------|------|
-| claim | `POST /v1/boards/:boardId/claims` | agent token |
+| claim | `POST /v1/boards/:boardId/claims` → the run, or `{claimed: false, reason}` with a `ClaimReason` code (`board_not_initialized`, `board_over_budget`, `concurrency_reached`, `capability_mismatch`, `no_matching_card`, `grant_denied`; tolerate codes you do not know) | agent token |
 | getCard | `GET /v1/boards/:boardId/runs/:runId` | agent token |
 | heartbeat | `POST /v1/boards/:boardId/runs/:runId/heartbeat` | agent token |
 | activity *(incl. raising an elicitation)* | `POST /v1/boards/:boardId/runs/:runId/activities` | agent token |
@@ -194,6 +194,7 @@ verb; those paths 404 or 405.
 | resolve a gate *(human)* | `POST /v1/boards/:boardId/gates/:gateId/resolve` `{decision, comment?, approvalSubjectId?, approvalSubjectDigest?}`; on a variant gate an approval's binding names the variant chosen — see [implementation/variant-gates](./implementation/variant-gates.md) | human session |
 | pull back a held approval *(human)* | `POST /v1/boards/:boardId/gates/:gateId/pull-back` `{comment}`; until the release time of an approval held by the stage's `holdFor` or the subject's not-before time, as request changes — see [implementation/release-time](./implementation/release-time.md) | human session |
 | a card's checks | `GET /v1/boards/:boardId/cards/:cardId/checks` → `{ checks: { cardId, stageKey, status: open\|passed\|returned\|closed, checks: [{ name, provider, status, url?, detail?, headSha?, updatedAt, overridden? }] } \| null }`, the card's latest arrival at a stage with checks — see [implementation/machine-checks](./implementation/machine-checks.md) | agent token or human session, or a service token with `gates:read` for a board of its own workspace (the carrier escalating an overdue check); overriding stays human-only |
+| who could claim a card *(eligibility)* | `GET /v1/boards/:boardId/cards/:cardId/eligibility` → `{ cardId, stageKey, reasons: ClaimReason[], agents: [{ agentId, name, principalId, eligible, reasons: ClaimReason[] }] }`. Every agent in the workspace (superpipeline keeps no per-board roster) judged against the card's current stage by the claim's own filter: capability (with `requires` and implication edges), the agent's `concurrency` on this board, and the card's dispatch grant under the control pair. Top-level `reasons` are the card's own (`board_over_budget`, `card_not_ready`, `card_held_back`, `stage_not_agent_claimable`); an agent is `eligible` when both lists are empty. A read: nothing is parked or claimed. Board allowlists and the hourly ceiling bound queueing, not claiming, so they are not reasons here. `CARD_NOT_FOUND` 404 | human session (viewer and up), or a service token with `dispatch:read` for a board of its own workspace (a placement service filtering candidates); not an agent token |
 | override a check *(human)* | `POST /v1/boards/:boardId/cards/:cardId/checks/:name/override` `{comment}`; a workspace owner or admin passes a pending check (or a failed one the card still waits on); `CHECK_OVERRIDE_NOT_ALLOWED` 403 for anyone else and every agent, `SEPARATION_OF_DUTIES` 403 for the producer, `CHECK_NOT_FOUND` 404, `CHECK_NOT_OPEN` 409 | human session |
 | resume a waiting card *(human)* | `POST /v1/boards/:boardId/cards/:cardId/resume` `{comment, toStageKey?, expectedWaitId?}` | human session |
 | archive a card *(human)* | `POST /v1/boards/:boardId/cards/:cardId/archive` `{expectedWaitId?, comment?}` | human session |
@@ -384,8 +385,12 @@ with `X-Agent-Id`. (Until 2026-10-07 the route was human-only, so the hub could 
 no production board had a config: every gate reached its room via the hub's 5-minute sweep.) When a
 card becomes **claimable** (created at / advanced into / released or reclaimed back to a
 capability-owned stage), `notifyWorkAvailable` queues a `work.available` delivery into `push_deliveries`
-for every subscribed config whose `capabilities` match the stage's owner — so an agent is only pinged
-about work it could actually claim. `dispatchPushDeliveries(sender)` drains pending rows, **signs each
+for every subscribed config a claim would hand the card to — the claim path's own matcher
+(`stageMatches`), so a stage routed by `requires` (`all`/`any`) reaches every config meeting it and an
+agent-owned stage only that agent. A config's `capabilities` are chosen as a claim chooses them (an
+agent token's own catalog row, else the body) and expanded through the workspace's implication edges
+when it registers; registering again picks up edges added since. So an agent is only pinged about work
+it could actually claim. `dispatchPushDeliveries(sender)` drains pending rows, **signs each
 body** (`X-Superpipeline-Signature: sha256=…`, HMAC over the exact bytes — shared with the inbound GitHub
 verifier, `src/crypto/hmac.ts`) and POSTs it (`src/push/deliver.ts`), marking each sent/failed.
 `POST …/push/dispatch` triggers a drain; `GET …/push/deliveries` inspects the queue. URLs are checked

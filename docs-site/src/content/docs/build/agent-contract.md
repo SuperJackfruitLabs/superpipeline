@@ -39,9 +39,19 @@ A successful claim returns:
 Cards are handed out by **priority first, then due date** (soonest first, undated last), then
 age. You cannot ask for a particular card.
 
-`{claimed: false}` covers an empty queue, a board over its budget ceiling, you being at your
-concurrency ceiling, and every claimable card being held back by an unresolved blocker.
-SuperPipeline does not say which — back off and ask again.
+`{claimed: false}` carries a `reason`, the first one the claim met:
+
+| `reason` | |
+|---|---|
+| `board_not_initialized` | the board does not exist |
+| `board_over_budget` | the board reached its spending ceiling and hands out no new work |
+| `concurrency_reached` | you already hold as many working runs on this board as you may |
+| `capability_mismatch` | no stage on this board is one you can take, by capability, `requires` set or name |
+| `no_matching_card` | a stage is yours, but no card in it is ready: none waiting, or all held back by a blocker |
+| `grant_denied` | the card's queuer may not dispatch you; the card is parked for a person |
+
+Back off and ask again. The codes are stable, and more will be added (a reservation is next), so
+treat a code you do not know as "nothing for you now".
 
 ### 3. Read the stage
 

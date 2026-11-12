@@ -1,6 +1,6 @@
 import { agentNamesFor, principalIdsFor } from '../db/catalog';
 import { defaultReporterFetch, postRunReports, type ReporterFetch, RUN_REPORT_MAX_ATTEMPTS, runReportBackoffMs } from '../superwitness/client';
-import { reporterConfig, reportingEnabled } from '../superwitness/config';
+import { reporterConfig, reportingEnabled, reportsStage } from '../superwitness/config';
 import { logReporter } from '../superwitness/log';
 import { buildRunReport, mapRunStatus, type RunReport, type RunReportDraft } from '../superwitness/report';
 import type { BoardContext } from './context';
@@ -151,6 +151,8 @@ function runReportDraft(deps: RunReportsDeps, run: Row, reportedAt: string): Run
     boardName: deps.getMeta('name'),
     runId,
     agentId: run.agent_id as string,
+    stageKey: typeof run.stage_key === 'string' ? run.stage_key : null,
+    cardId: typeof run.card_id === 'string' ? run.card_id : null,
     title: (card?.title as string | undefined) ?? null,
     status: mapped.status,
     sourceStatus: mapped.sourceStatus,
@@ -249,11 +251,12 @@ async function drainRunReportsOnce(deps: RunReportsDeps, fetcher: ReporterFetch,
       }
 
       // Cap by bytes as well as by count: 100 reports of multibyte text can pass 256 KiB (R12).
+      const withStage = reportsStage(deps.env);
       const batch: typeof due = [];
       const reports: RunReport[] = [];
       let bytes = '{"runs":[]}'.length;
       for (const d of due) {
-        const report = buildRunReport(d.draft, executors.get(d.draft.agentId) ?? { principalId: null, name: null });
+        const report = buildRunReport(d.draft, executors.get(d.draft.agentId) ?? { principalId: null, name: null }, { withStage });
         const size = new TextEncoder().encode(JSON.stringify(report)).length + 1;
         if (batch.length > 0 && bytes + size > RUN_REPORT_BATCH_MAX_BYTES) break;
         batch.push(d);
