@@ -218,6 +218,10 @@ export class BoardDO extends DurableObject<Env> {
     return claims.claim(this.board, ...args);
   }
 
+  cardEligibility(...args: OpArgs<typeof claims.cardEligibility>): ReturnType<typeof claims.cardEligibility> {
+    return claims.cardEligibility(this.board, ...args);
+  }
+
   countReadyForCapabilities(...args: OpArgs<typeof claims.countReadyForCapabilities>): ReturnType<typeof claims.countReadyForCapabilities> {
     return claims.countReadyForCapabilities(this.board, ...args);
   }

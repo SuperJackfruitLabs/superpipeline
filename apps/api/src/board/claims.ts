@@ -220,6 +220,52 @@ export async function grantRefused(deps: Pick<ClaimsDeps, 'env'>, who: Claimant,
   return !grantPermitsAgent(grant, principalId);
 }
 
+/** One agent the eligibility read is asked about: a claimant, with what identifies it to a reader. */
+export interface EligibilityCandidate extends Claimant {
+  name: string;
+  principalId: string | null;
+}
+
+/** For one card's current stage: whether each agent could claim it now, and why not. */
+export interface CardEligibility {
+  cardId: string;
+  stageKey: string;
+  /** Reasons no agent may claim the card now (board and card); empty when the card is claimable. */
+  reasons: ClaimReason[];
+  agents: Array<{ agentId: string; name: string; principalId: string | null; eligible: boolean; reasons: ClaimReason[] }>;
+}
+
+/**
+ * The eligibility read: for this card at its current stage, every candidate with `eligible` and
+ * the reasons it is not, from the claim's own filter (`claimantRefusals`, `grantRefused`) plus the
+ * card's own claimability (`claimableWhere`'s conditions, via `isHeldBack` for blockers). Reads
+ * only: nothing is parked, reserved or claimed.
+ *
+ * An agent is eligible exactly when the card has no reasons and the agent has none.
+ */
+export async function cardEligibility(
+  deps: ClaimsDeps,
+  input: { cardId: string; agents: EligibilityCandidate[] },
+): Promise<Result<CardEligibility>> {
+  if (!deps.getMeta('boardId')) return { ok: false, code: 'NOT_INITIALIZED', message: 'board is not initialized' };
+  const row = deps.sql.exec(`SELECT * FROM cards WHERE id = ?`, input.cardId).toArray()[0];
+  if (!row) return { ok: false, code: 'CARD_NOT_FOUND', message: `card not found: ${input.cardId}` };
+  const stageKey = typeof row.current_stage_key === 'string' ? row.current_stage_key : '';
+  const reasons: ClaimReason[] = [];
+  if (deps.boardOverBudget()) reasons.push('board_over_budget');
+  if (row.state !== 'submitted' || (row.archived_at ?? null) !== null) reasons.push('card_not_ready');
+  else if (deps.isHeldBack(input.cardId)) reasons.push('card_held_back');
+  const stage = deps.stages().find((s) => s.key === stageKey);
+  if (!stage || !isAgentClaimable(stage)) reasons.push('stage_not_agent_claimable');
+  const agents: CardEligibility['agents'] = [];
+  for (const who of input.agents) {
+    const mine: ClaimReason[] = claimantRefusals(deps, who, stageKey);
+    if (await grantRefused(deps, who, row)) mine.push('grant_denied');
+    agents.push({ agentId: who.agentId, name: who.name, principalId: who.principalId, eligible: reasons.length === 0 && mine.length === 0, reasons: mine });
+  }
+  return { ok: true, value: { cardId: input.cardId, stageKey, reasons, agents } };
+}
+
 /**
  * The suite principal id this local agent maps to (`agents.external_id`), or `null` if it has
  * never been linked to one. A grant enumerates principal ids

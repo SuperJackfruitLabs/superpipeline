@@ -1,8 +1,9 @@
 import type { Env } from './env';
-import { APPROVAL_REQUESTS_READ, APPROVAL_REQUESTS_RELAY, APPROVAL_REQUESTS_WRITE, APPROVALS_READ, APPROVALS_WRITE, CARDS_READ, GATES_READ, PUSH_WRITE, resolveHubService } from './auth/resolve';
+import { APPROVAL_REQUESTS_READ, APPROVAL_REQUESTS_RELAY, APPROVAL_REQUESTS_WRITE, APPROVALS_READ, APPROVALS_WRITE, CARDS_READ, DISPATCH_READ, GATES_READ, PUSH_WRITE, resolveHubService } from './auth/resolve';
 import { boardStub } from './board/stub';
 import { boardNamesById, cardLinksBody } from './card-links';
 import { listBoards } from './db/catalog';
+import { eligibilityResponse } from './card-eligibility';
 import { flatError } from './flat-error';
 import { DECISION_EVENTS, SUBSCRIBABLE_EVENTS, isRecordEvent } from './push/events';
 
@@ -23,6 +24,8 @@ const GATES = /^\/v1\/boards\/(brd_[0-9a-f]{16})\/gates\/(pending|gate_[0-9a-f]{
 const FOLLOW_UPS = /^\/v1\/boards\/(brd_[0-9a-f]{16})\/(deliveries|attention)\/pending$/;
 /** A card's checks, which the carrier reads to escalate a check left open too long. */
 const CHECKS = /^\/v1\/boards\/(brd_[0-9a-f]{16})\/cards\/(card_[0-9a-f]{16})\/checks$/;
+/** Who could claim a card now, and why not: a placement service's candidate filter. */
+const ELIGIBILITY = /^\/v1\/boards\/(brd_[0-9a-f]{16})\/cards\/(card_[0-9a-f]{16})\/eligibility$/;
 const APPROVAL_DELIVERY = /^\/v1\/boards\/(brd_[0-9a-f]{16})\/approval-subjects\/(aps_[0-9a-f]{16})\/delivery$/;
 
 /** Decoded without verifying, only to route: resolveHubService verifies before anything is read. */
@@ -53,7 +56,8 @@ export async function serviceRoute(request: Request, env: Env, path: string): Pr
   const gates = request.method === 'GET' ? GATES.exec(path) : null;
   const followUps = request.method === 'GET' ? FOLLOW_UPS.exec(path) : null;
   const checks = request.method === 'GET' ? CHECKS.exec(path) : null;
-  if ((!read && !push && !approval && !approvalDelivery && !requestCreate && !requestRead && !questions && !gates && !followUps && !checks) || !looksLikeService(request)) {
+  const eligibility = request.method === 'GET' ? ELIGIBILITY.exec(path) : null;
+  if ((!read && !push && !approval && !approvalDelivery && !requestCreate && !requestRead && !questions && !gates && !followUps && !checks && !eligibility) || !looksLikeService(request)) {
     return null;
   }
 
@@ -114,6 +118,17 @@ export async function serviceRoute(request: Request, env: Env, path: string): Pr
     const result = await boardStub(env, svc.tenantId, boardId).cardChecks(cardId);
     // Its refusals are CARD_NOT_FOUND and NOT_INITIALIZED, both a 404 on the human route too.
     return result.ok ? Response.json({ checks: result.value }) : Response.json({ error: flatError(result) }, { status: 404 });
+  }
+
+  /**
+   * Who could claim a card now, and why not, on `dispatch:read` and GET only: the filter a
+   * placement service ranks candidates after. The person's route answers the same body.
+   */
+  if (eligibility) {
+    if (!svc.scopes.includes(DISPATCH_READ)) return refuse(403, 'FORBIDDEN', 'this principal does not hold dispatch:read');
+    const [, boardId, cardId] = eligibility;
+    if (!(await boardNamesById(env.DB, svc.tenantId, [boardId])).has(boardId)) return notFound('board');
+    return eligibilityResponse(env, svc.tenantId, boardStub(env, svc.tenantId, boardId), cardId);
   }
 
   /**

@@ -4,6 +4,7 @@ import type { PushSender } from '../push/deliver';
 import type { ReferenceInput } from '../references/input';
 import type { LinkKind } from './links';
 import type { AgentActivityInput, BoardEvent, BoardInit, CardView, ClaimResult, CompleteVerbInput, DecisionTimeout, EstimateView, LinkInput, LinkView, NotificationView, ProfileInput, ProfileView, PushConfigInput, PushDeliveryView, Result, RunReportDrainResult, RunReportOutboxRow, RunVerbInput, ScheduleView, StageDef, StageEditor, StagePatch, StaleCardView, StaleSettings, UsageSummary } from './model';
+import type { CardEligibility, EligibilityCandidate } from './claims';
 import type { FixtureBoard } from './fixture-types';
 import type { StrictDecision } from './strict-decision';
 import type { ActivityView, ApprovalRequestView, CardChecksView, ApprovalSubjectVerification, AttentionPendingBody, AttemptView, BoardSnapshot, CommentView, DeliveryPendingBody, ElicitationPendingBody, ElicitationView, EvidenceReferenceInput, GatePendingBody, GateView, ReferenceView, RunContext, RunEvidence, RunEvidenceV1 } from './views';
@@ -183,6 +184,8 @@ export interface BoardStub {
   getRunEvidenceV1(runId: string): Promise<Result<RunEvidenceV1>>;
   attachEvidenceReference(input: EvidenceReferenceInput): Promise<Result<ReferenceView>>;
   countReadyForCapabilities(agentId: string, capabilities: string[]): Promise<number>;
+  /** Whether each candidate could claim this card now, and why not (`claims.cardEligibility`). */
+  cardEligibility(input: { cardId: string; agents: EligibilityCandidate[] }): Promise<Result<CardEligibility>>;
   /** One gate, including how it was decided. See `getGate`. */
   getGate(gateId: string): Promise<Result<GateView>>;
   getCardActivities(cardId: string): Promise<{ activities: ActivityView[]; handoff: JsonValue | null; gates: GateView[] }>;
