@@ -202,6 +202,7 @@ verb; those paths 404 or 405.
 | create a broker approval request | `POST /v1/boards/:boardId/approval-requests` | service token, `approval-requests:write` |
 | read a broker approval request back | `GET /v1/boards/:boardId/approval-requests/:approvalRequestId` | service token, `approval-requests:read` or `approval-requests:write` |
 | questions waiting on a person, broker approval requests included *(carrier sweep)* | `GET /v1/boards/:boardId/elicitations/pending` | service token, `approval-requests:relay` (a person also sees them; an agent token does not) |
+| a board's pending gates, and one gate with how it was decided *(carrier sweep)* | `GET /v1/boards/:boardId/gates/pending`, `GET /v1/boards/:boardId/gates/:gateId` | service token, `gates:read`, boards of its own workspace only (an agent token or a person reads them too); deciding a gate stays human-only |
 
 An unknown `:action` on a run returns `404 {"error":"unknown run action: …"}`; anything else
 unmatched under `/v1/boards` returns `405 {"error":"method not allowed"}`.

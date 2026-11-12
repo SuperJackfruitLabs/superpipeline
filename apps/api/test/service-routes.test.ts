@@ -414,3 +414,124 @@ describe('a person cannot name a service as the subscriber', () => {
     });
   });
 });
+
+/** A board in `tenant` with one card whose review gate is open (pending). */
+async function seedBoardWithPendingGate(tenant: string): Promise<{ boardId: string; gateId: string }> {
+  const boardId = newId('brd');
+  const board = boardStub(env, tenant, boardId);
+  await board.init({ id: boardId, tenantId: tenant, name: 'Gate board', stages: PIPELINE });
+  await recordBoard(env.DB, tenant, { id: boardId, name: 'Gate board', stagesJson: JSON.stringify(PIPELINE) });
+  const card = await board.createCard({ title: 'Ship the release notes', ownerUserId: 'usr_a' });
+  if (!card.ok) throw new Error(card.message);
+  const claim = await board.claim({ agentId: 'agt_r', capabilities: ['research'] });
+  if (!claim.claimed) throw new Error('expected a research claim');
+  await board.complete({ runId: claim.runId, leaseEpoch: claim.leaseEpoch, handoff: { summary: 'drafted' } });
+  const gate = (await board.getState()).gates[0];
+  if (!gate) throw new Error('expected a pending gate');
+  return { boardId, gateId: gate.id };
+}
+
+/**
+ * The chat carrier's gate sweep: a service holding `gates:read` reads a board's pending gates and
+ * one gate, in its own workspace only, and decides nothing.
+ */
+const gateReader = (over: Record<string, unknown> = {}) =>
+  planeToken({ sub: SERVICE, principalKind: 'service', scope: 'gates:read', email: undefined, email_verified: undefined, ...over });
+
+describe('a service reading gates with gates:read (Organization plane)', () => {
+  it('reads its own board\'s pending gates and one gate, in the shape a person reads, and sees a decision made elsewhere', async () => {
+    await withOrgPlane(async () => {
+      const tenant = await ensureOrgTenant(env.DB, ORG);
+      const { boardId, gateId } = await seedBoardWithPendingGate(tenant);
+      const t = await gateReader();
+      const pending = await get(`/v1/boards/${boardId}/gates/pending`, t);
+      expect(pending.status).toBe(200);
+      const listed: unknown = await pending.json();
+      expect(listed).toEqual({ gates: [expect.objectContaining({ gateId })] });
+      const one = await get(`/v1/boards/${boardId}/gates/${gateId}`, t);
+      expect(one.status).toBe(200);
+      const body: unknown = await one.json();
+      expect(body).toMatchObject({ gate: { id: gateId, status: 'pending' } });
+      // The same JSON a person gets from the human route.
+      const human = await planeToken();
+      expect(await (await get(`/v1/boards/${boardId}/gates/${gateId}`, human)).json()).toEqual(body);
+
+      // Decided on the web: the service sees how, and the gate leaves the pending list.
+      const decided = await boardStub(env, tenant, boardId).resolveGate({ gateId, decision: 'approve', decidedBy: 'usr_a' });
+      if (!decided.ok) throw new Error(decided.message);
+      const after: unknown = await (await get(`/v1/boards/${boardId}/gates/${gateId}`, t)).json();
+      expect(after).toMatchObject({ gate: { status: 'resolved', decision: 'approve' } });
+      const none: unknown = await (await get(`/v1/boards/${boardId}/gates/pending`, t)).json();
+      expect(none).toEqual({ gates: [] });
+      // A gate that does not exist on the board is not found.
+      expect((await get(`/v1/boards/${boardId}/gates/gate_00000000000000ff`, t)).status).toBe(404);
+    });
+  });
+
+  it('is refused without gates:read, whatever else the service holds', async () => {
+    await withOrgPlane(async () => {
+      const tenant = await ensureOrgTenant(env.DB, ORG);
+      const { boardId, gateId } = await seedBoardWithPendingGate(tenant);
+      for (const scope of ['', 'cards:read push:write approval-requests:relay', 'gates:write']) {
+        const t = await gateReader({ scope });
+        for (const path of [`/v1/boards/${boardId}/gates/pending`, `/v1/boards/${boardId}/gates/${gateId}`]) {
+          const r = await get(path, t);
+          expect({ scope, path, status: r.status }).toEqual({ scope, path, status: 403 });
+          expect(await r.text()).not.toContain(gateId);
+        }
+      }
+    });
+  });
+
+  it('cannot read another workspace\'s board', async () => {
+    await withOrgPlane(async () => {
+      const tenant = await ensureOrgTenant(env.DB, ORG);
+      const other = await ensureOrgTenant(env.DB, OTHER_ORG);
+      expect(other).not.toBe(tenant);
+      const { boardId, gateId } = await seedBoardWithPendingGate(tenant);
+      const t = await gateReader({ org: OTHER_ORG });
+      for (const path of [`/v1/boards/${boardId}/gates/pending`, `/v1/boards/${boardId}/gates/${gateId}`]) {
+        const r = await get(path, t);
+        expect({ path, status: r.status }).toEqual({ path, status: 404 });
+        expect(await r.text()).not.toContain(gateId);
+      }
+    });
+  });
+
+  it('decides nothing: resolve, pull-back and delivery are refused and the gate stays open', async () => {
+    await withOrgPlane(async () => {
+      const tenant = await ensureOrgTenant(env.DB, ORG);
+      const { boardId, gateId } = await seedBoardWithPendingGate(tenant);
+      const t = await gateReader({ scope: 'gates:read cards:read' });
+      const writes: Array<[string, unknown]> = [
+        [`/v1/boards/${boardId}/gates/${gateId}/resolve`, { decision: 'approve' }],
+        [`/v1/boards/${boardId}/gates/${gateId}/pull-back`, { comment: 'wait' }],
+        [`/v1/boards/${boardId}/gates/${gateId}/delivery`, { mode: 'manual' }],
+        [`/v1/boards/${boardId}/gates/${gateId}`, { decision: 'approve' }],
+        [`/v1/boards/${boardId}/gates/pending`, {}],
+      ];
+      for (const [path, body] of writes) {
+        const r = await post(path, t, body);
+        expect({ path, refused: r.status >= 400 }).toEqual({ path, refused: true });
+      }
+      const gate = await boardStub(env, tenant, boardId).getGate(gateId);
+      if (!gate.ok) throw new Error(gate.message);
+      expect(gate.value.status).toBe('pending');
+    });
+  });
+});
+
+describe('a service reading gates with gates:read (hub issuer)', () => {
+  it('reads its own tenant\'s gates and not another tenant\'s', async () => {
+    await legacy(async () => {
+      const own = await seedBoardWithPendingGate(TENANT);
+      const foreign = await seedBoardWithPendingGate(OTHER_TENANT);
+      const t = await hubToken({ scope: 'gates:read' });
+      expect((await get(`/v1/boards/${own.boardId}/gates/pending`, t)).status).toBe(200);
+      expect((await get(`/v1/boards/${own.boardId}/gates/${own.gateId}`, t)).status).toBe(200);
+      expect((await get(`/v1/boards/${foreign.boardId}/gates/pending`, t)).status).toBe(404);
+      expect((await get(`/v1/boards/${foreign.boardId}/gates/${foreign.gateId}`, t)).status).toBe(404);
+      expect((await get(`/v1/boards/${own.boardId}/gates/pending`, await hubToken())).status).toBe(403);
+    });
+  });
+});
