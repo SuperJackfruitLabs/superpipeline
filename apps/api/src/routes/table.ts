@@ -2,7 +2,7 @@
 // boards/table.ts). The tables replaced one if-chain in `fetch` and keep its order.
 import { MCP_PROTECTED_RESOURCE_PATH } from '../mcp/auth';
 import { staleAcrossBoards, superwitnessBackfill } from './admin';
-import { agentCard, agentRegistry } from './agents';
+import { agentCard, agentLoadRead, agentRegistry } from './agents';
 import { githubSignIn, hubHandoff, planeSignIn } from './auth';
 import { boards } from './boards/entry';
 import { capabilities, implications } from './capabilities';
@@ -44,6 +44,7 @@ export const ROUTES: readonly Route<WorkerRequest>[] = [
   route('*', /^\/v1\/stale$/, staleAcrossBoards),
   route('*', /^\/v1\/projects(?:\/([^/]+)(?:\/(milestones|rollup))?)?$/, projects),
   route('*', /^\/v1\/milestones\/([^/]+)$/, milestone),
+  route('GET', /^\/v1\/agents\/load$/, agentLoadRead),
   route('*', /^\/v1\/agents\/([^/]+)\/card$/, agentCard),
   route('*', /^\/v1\/agents(?:\/([^/]+)(?:\/(tokens)(?:\/([^/]+))?)?)?$/, agentRegistry),
   route('*', /^\/v1\/boards(?:\/([^/]+))?(?:\/(.*))?$/, boards),

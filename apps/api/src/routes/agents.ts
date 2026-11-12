@@ -8,9 +8,10 @@ import { listCapabilities, ensureCapabilities } from '../db/capabilities';
 import { listBoards, listAgents, createAgent, updateAgent, createAgentToken, revokeAgentToken, deleteAgent, setAgentExternalMapping, findAgentByExternal, agentBelongsToTenant } from '../db/catalog';
 import { effectiveCapabilities } from '../db/implications';
 import { mayOwnWork } from '../db/members';
+import { serviceRoute } from '../service-routes';
 import { refuseByRole } from './callers';
 import { unexpected } from './errors';
-import type { WorkerRequest } from './router';
+import { NEXT, type Next, type WorkerRequest } from './router';
 
 // /v1/agents[/:id[/tokens/:tokenId]] — a workspace's agents + token minting (the "connect an
 // agent" surface) + token revocation, right beside it. The plaintext token is returned ONCE
@@ -42,6 +43,17 @@ export async function agentCard({ request, env }: WorkerRequest, cardMatch: RegE
       await listCapabilities(env.DB, u.tenantId),
     );
     return Response.json({ card });
+  } catch (err) {
+    return unexpected(err);
+  }
+}
+
+// GET /v1/agents/load — a placement service's read of every agent's load and last heartbeat, on
+// a service token with `dispatch:read` (service-routes.ts). Any other caller falls through to the
+// registry below, which reads `load` as an agent id, exactly as before this route.
+export async function agentLoadRead({ request, env, path }: WorkerRequest): Promise<Response | Next> {
+  try {
+    return (await serviceRoute(request, env, path)) ?? NEXT;
   } catch (err) {
     return unexpected(err);
   }

@@ -45,7 +45,7 @@ const API_LAYERS: readonly (readonly string[])[] = [
   // The Board Durable Object and its stub.
   ['board'],
   // Surfaces over the board: MCP, dev fixtures, cross-board links.
-  ['mcp', 'dev', 'card-links.ts', 'card-eligibility.ts', 'card-reservation.ts'],
+  ['mcp', 'dev', 'card-links.ts', 'card-eligibility.ts', 'card-reservation.ts', 'agent-load.ts'],
   ['service-routes.ts'],
   // The HTTP routes: the router, its tables and one module per resource.
   ['routes'],

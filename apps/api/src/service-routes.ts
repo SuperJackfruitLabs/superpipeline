@@ -3,6 +3,7 @@ import { APPROVAL_REQUESTS_READ, APPROVAL_REQUESTS_RELAY, APPROVAL_REQUESTS_WRIT
 import { boardStub } from './board/stub';
 import { boardNamesById, cardLinksBody } from './card-links';
 import { listBoards } from './db/catalog';
+import { agentLoadResponse } from './agent-load';
 import { eligibilityResponse } from './card-eligibility';
 import { clearReservationResponse, reserveResponse } from './card-reservation';
 import { flatError } from './flat-error';
@@ -29,6 +30,8 @@ const CHECKS = /^\/v1\/boards\/(brd_[0-9a-f]{16})\/cards\/(card_[0-9a-f]{16})\/c
 const ELIGIBILITY = /^\/v1\/boards\/(brd_[0-9a-f]{16})\/cards\/(card_[0-9a-f]{16})\/eligibility$/;
 /** Holding a card for the agent a placement service chose, and clearing the hold. */
 const RESERVATION = /^\/v1\/boards\/(brd_[0-9a-f]{16})\/cards\/(card_[0-9a-f]{16})\/reservation$/;
+/** Every agent's load and last run heartbeat over the workspace: a placement service's health read. */
+const AGENT_LOAD = /^\/v1\/agents\/load$/;
 const APPROVAL_DELIVERY = /^\/v1\/boards\/(brd_[0-9a-f]{16})\/approval-subjects\/(aps_[0-9a-f]{16})\/delivery$/;
 
 /** Decoded without verifying, only to route: resolveHubService verifies before anything is read. */
@@ -61,7 +64,8 @@ export async function serviceRoute(request: Request, env: Env, path: string): Pr
   const checks = request.method === 'GET' ? CHECKS.exec(path) : null;
   const eligibility = request.method === 'GET' ? ELIGIBILITY.exec(path) : null;
   const reservation = request.method === 'PUT' || request.method === 'DELETE' ? RESERVATION.exec(path) : null;
-  if ((!read && !push && !approval && !approvalDelivery && !requestCreate && !requestRead && !questions && !gates && !followUps && !checks && !eligibility && !reservation) || !looksLikeService(request)) {
+  const agentLoad = request.method === 'GET' ? AGENT_LOAD.exec(path) : null;
+  if ((!read && !push && !approval && !approvalDelivery && !requestCreate && !requestRead && !questions && !gates && !followUps && !checks && !eligibility && !reservation && !agentLoad) || !looksLikeService(request)) {
     return null;
   }
 
@@ -133,6 +137,16 @@ export async function serviceRoute(request: Request, env: Env, path: string): Pr
     const [, boardId, cardId] = eligibility;
     if (!(await boardNamesById(env.DB, svc.tenantId, [boardId])).has(boardId)) return notFound('board');
     return eligibilityResponse(env, svc.tenantId, boardStub(env, svc.tenantId, boardId), cardId);
+  }
+
+  /**
+   * Every agent of the workspace with the cards it holds over every board (`inFlight`), its
+   * `capacity` and its latest run heartbeat, on `dispatch:read` and GET only: what a placement
+   * service reads to judge the load and health of an agent that claims with its own token.
+   */
+  if (agentLoad) {
+    if (!svc.scopes.includes(DISPATCH_READ)) return refuse(403, 'FORBIDDEN', 'this principal does not hold dispatch:read');
+    return agentLoadResponse(env, svc.tenantId);
   }
 
   /**
