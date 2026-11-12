@@ -32,7 +32,7 @@ const BUILD: BoardInit['stages'] = [{ key: 'build', name: 'Build', order: 0, own
 afterEach(quietBoards);
 
 describe('buildRunReport, stage and card', () => {
-  it('leaves both out by default, so the report still fits the schema superwitness enforces today', () => {
+  it('leaves both out by default, so the report fits a superwitness without the fields', () => {
     const report = buildRunReport(DRAFT, { principalId: null, name: 'w' });
     expect(report).not.toHaveProperty('stage_key');
     expect(report).not.toHaveProperty('card_id');
@@ -44,6 +44,11 @@ describe('buildRunReport, stage and card', () => {
       stage_key: 'build',
       card_id: 'card_0123456789abcdef',
     });
+  });
+
+  it('fits the vendored schema with both, since superwitness accepts them', () => {
+    const report = buildRunReport(DRAFT, { principalId: null, name: 'w' }, { withStage: true });
+    expect(validateRunReportBody(report)).toEqual({ valid: true, errors: [] });
   });
 
   it('sends a draft queued before the fields existed without them', () => {

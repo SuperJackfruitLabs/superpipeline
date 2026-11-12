@@ -163,7 +163,10 @@
         "PLANE_LIBRARY_LINKED": "true",
         "APP_URL": "https://staging-app.superpipeline.dev",
         "ENFORCE_CONTROL_PAIR": "true",
-        "SUPERWITNESS_URL": "https://staging-app.superwitness.dev"
+        "SUPERWITNESS_URL": "https://staging-app.superwitness.dev",
+        // Staging superwitness accepts stage_key and card_id (superwitness#75). Production stays
+        // unset at the top level until superwitness's next production release carries #75.
+        "SUPERWITNESS_REPORT_STAGE": "true"
       },
       "triggers": { "crons": ["*/5 * * * *"] },
       "d1_databases": [
