@@ -1,9 +1,10 @@
 import type { Env } from './env';
-import { APPROVAL_REQUESTS_READ, APPROVAL_REQUESTS_RELAY, APPROVAL_REQUESTS_WRITE, APPROVALS_READ, APPROVALS_WRITE, CARDS_READ, DISPATCH_READ, GATES_READ, PUSH_WRITE, resolveHubService } from './auth/resolve';
+import { APPROVAL_REQUESTS_READ, APPROVAL_REQUESTS_RELAY, APPROVAL_REQUESTS_WRITE, APPROVALS_READ, APPROVALS_WRITE, CARDS_READ, DISPATCH_READ, DISPATCH_RESERVE, GATES_READ, PUSH_WRITE, resolveHubService } from './auth/resolve';
 import { boardStub } from './board/stub';
 import { boardNamesById, cardLinksBody } from './card-links';
 import { listBoards } from './db/catalog';
 import { eligibilityResponse } from './card-eligibility';
+import { clearReservationResponse, reserveResponse } from './card-reservation';
 import { flatError } from './flat-error';
 import { DECISION_EVENTS, SUBSCRIBABLE_EVENTS, isRecordEvent } from './push/events';
 
@@ -26,6 +27,8 @@ const FOLLOW_UPS = /^\/v1\/boards\/(brd_[0-9a-f]{16})\/(deliveries|attention)\/p
 const CHECKS = /^\/v1\/boards\/(brd_[0-9a-f]{16})\/cards\/(card_[0-9a-f]{16})\/checks$/;
 /** Who could claim a card now, and why not: a placement service's candidate filter. */
 const ELIGIBILITY = /^\/v1\/boards\/(brd_[0-9a-f]{16})\/cards\/(card_[0-9a-f]{16})\/eligibility$/;
+/** Holding a card for the agent a placement service chose, and clearing the hold. */
+const RESERVATION = /^\/v1\/boards\/(brd_[0-9a-f]{16})\/cards\/(card_[0-9a-f]{16})\/reservation$/;
 const APPROVAL_DELIVERY = /^\/v1\/boards\/(brd_[0-9a-f]{16})\/approval-subjects\/(aps_[0-9a-f]{16})\/delivery$/;
 
 /** Decoded without verifying, only to route: resolveHubService verifies before anything is read. */
@@ -57,7 +60,8 @@ export async function serviceRoute(request: Request, env: Env, path: string): Pr
   const followUps = request.method === 'GET' ? FOLLOW_UPS.exec(path) : null;
   const checks = request.method === 'GET' ? CHECKS.exec(path) : null;
   const eligibility = request.method === 'GET' ? ELIGIBILITY.exec(path) : null;
-  if ((!read && !push && !approval && !approvalDelivery && !requestCreate && !requestRead && !questions && !gates && !followUps && !checks && !eligibility) || !looksLikeService(request)) {
+  const reservation = request.method === 'PUT' || request.method === 'DELETE' ? RESERVATION.exec(path) : null;
+  if ((!read && !push && !approval && !approvalDelivery && !requestCreate && !requestRead && !questions && !gates && !followUps && !checks && !eligibility && !reservation) || !looksLikeService(request)) {
     return null;
   }
 
@@ -129,6 +133,19 @@ export async function serviceRoute(request: Request, env: Env, path: string): Pr
     const [, boardId, cardId] = eligibility;
     if (!(await boardNamesById(env.DB, svc.tenantId, [boardId])).has(boardId)) return notFound('board');
     return eligibilityResponse(env, svc.tenantId, boardStub(env, svc.tenantId, boardId), cardId);
+  }
+
+  /**
+   * Hold a card for one agent (PUT) or clear the hold (DELETE), on `dispatch:reserve`: what a
+   * placement service writes once it has chosen. The hold records this service as `reservedBy`.
+   */
+  if (reservation) {
+    if (!svc.scopes.includes(DISPATCH_RESERVE)) return refuse(403, 'FORBIDDEN', 'this principal does not hold dispatch:reserve');
+    const [, boardId, cardId] = reservation;
+    if (!(await boardNamesById(env.DB, svc.tenantId, [boardId])).has(boardId)) return notFound('board');
+    const stub = boardStub(env, svc.tenantId, boardId);
+    if (request.method === 'DELETE') return clearReservationResponse(stub, cardId, `svc:${svc.principalId}`);
+    return reserveResponse(env, svc.tenantId, stub, cardId, svc.principalId, await request.json().catch(() => null));
   }
 
   /**

@@ -341,6 +341,20 @@ export function migrateCardAndRunColumns(sql: SqlStorage): void {
      END`,
   );
   sql.exec(`UPDATE cards SET needs_human_id = 'wait_' || lower(hex(randomblob(8))) WHERE needs_human_json IS NOT NULL AND needs_human_id IS NULL`);
+  /**
+   * A reservation: the card is held for one agent until `reserved_until_ms`, at the stage it was
+   * made for (`reserved_stage_key`), because a placement service chose that agent (`hold.ts`).
+   * Expiry needs no sweeper: a hold whose time has passed, or whose stage the card has left, reads
+   * as no hold everywhere. Cleared on claim. Null on every card that has none, which is all of them
+   * until a service reserves one.
+   */
+  for (const column of ['reserved_for TEXT', 'reserved_until_ms INTEGER', 'reserved_stage_key TEXT', 'reserved_decision_id TEXT', 'reserved_by TEXT']) {
+    try {
+      sql.exec(`ALTER TABLE cards ADD COLUMN ${column}`);
+    } catch {
+      // column already exists
+    }
+  }
   // Only `project_id` is indexed: `projectSummary` is the one query that filters cards by it,
   // and nothing here looks cards up by `milestone_id` on its own.
   sql.exec(`CREATE INDEX IF NOT EXISTS idx_cards_project ON cards(project_id)`);

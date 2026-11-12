@@ -77,7 +77,14 @@ export function statusForCode(code: BoardErrorCode): number {
     // The stage still holds cards. A conflict with the state the caller believed in, not a
     // malformed request: the same payload succeeds once the stage is emptied.
     case 'STAGE_NOT_EMPTY':
+    // A reservation asked of a card or an agent that cannot take it now, or of a card already held
+    // for someone else: the state the placement service read has moved on (dispatch, step 1).
+    case 'CARD_NOT_CLAIMABLE':
+    case 'AGENT_NOT_ELIGIBLE':
+    case 'CARD_RESERVED':
       return 409;
+    case 'INVALID_RESERVATION':
+      return 400;
     case 'WORKSPACE_ADMIN_REQUIRED':
     case 'SEPARATION_OF_DUTIES':
     case 'CHECK_OVERRIDE_NOT_ALLOWED':

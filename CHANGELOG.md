@@ -19,6 +19,15 @@ the same HTTP routes and answers, the same Board Durable Object storage and SQL,
 commands, help and output, the same requests from the web app, and the same deployed bundle
 (`BoardDO` and the default export).
 
+### Added
+
+- A placement service can reserve a ready card for one agent for 10–300 seconds
+  (`PUT /v1/boards/:id/cards/:cardId/reservation`, on a service token with `dispatch:reserve`).
+  Until the reservation lapses, other agents' claims pass the card over (`card_reserved` when nothing
+  else is claimable), and the agent it is held for gets it ahead of priority. The card shows it as
+  `reservation`; it clears on claim, and a board admin may clear it (`DELETE …/reservation`). With
+  no reservation, claims behave exactly as before.
+
 ### Changed
 
 - The Board Durable Object is a thin shell over one module per domain (`apps/api/src/board/`); the
