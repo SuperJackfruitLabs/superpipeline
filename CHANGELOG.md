@@ -21,6 +21,9 @@ commands, help and output, the same requests from the web app, and the same depl
 
 ### Added
 
+- A stage may state what a station needs to work it: `placement` `{isolation, models, tools,
+  credentials}`, in AgentPod capability catalog ids, set with `PATCH /v1/boards/:id/stages/:key` or
+  `PUT /stages` and returned on the board. Advice for a placement service only: a claim never checks it.
 - A placement service can reserve a ready card for one agent for 10–300 seconds
   (`PUT /v1/boards/:id/cards/:cardId/reservation`, on a service token with `dispatch:reserve`).
   Until the reservation lapses, other agents' claims pass the card over (`card_reserved` when nothing

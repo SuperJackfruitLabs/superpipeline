@@ -166,6 +166,14 @@ as a board column) declares:
   before it existed reads back unchanged — and because SQLite's `json_each` raises on a scalar,
   making `owner` itself a union would have broken the registry's `boardCount` on every existing
   stage
+- `placement` — what a **station** must have to work this stage, for a placement service
+  (SuperDispatch) to filter candidates on: `isolation` (the weakest acceptable, `host` <
+  `container` < `sandbox`), `models` (any one), `tools` and `credentials` (every one). The ids are
+  AgentPod's capability catalog's (`cli:stk`, `mcp:superpipeline`, `skill:<profile>`,
+  `forge:github`), the *affordance* sense of capability, not the skill tags `owner` and `requires`
+  route on. **Advice only**: the board stores and returns it and never checks it on a claim, so an
+  agent that claims by pull is not refused for it and a board with no placement service is
+  unchanged. At most 20 ids per list; `null` on a patch removes it
 - `gate` — `none | approval` (an `approval` stage requires a human ✅ before the card advances)
 - `wipLimit` — max cards concurrently in this stage (the real Kanban constraint)
 - `entry`/`exit` hints — optional structured-handoff requirements (e.g. "a PR reference must
@@ -360,6 +368,7 @@ Events drive the WebSocket broadcast to UI clients and the webhook dispatch to s
 | **Capability tag** | The `key` of a Capability — the string a stage and an agent both carry, and the whole of what routing compares |
 | **Capability** | A record in the workspace registry (migration 0006), shaped as an A2A `AgentSkill`: `key`, `name`, `description`, `tags`, `examples`, plus an optional external mapping (an OASF dotted id, say). It gives a routing tag an identity and a definition; it does not enumerate what may exist |
 | **Requirement** | A stage's `requires`: `{all}` / `{any}` over capability tags, when one is not enough. Matching stays exact string equality on every member |
+| **Placement** | A stage's `placement`: the isolation, models, tools and credentials a station needs, in AgentPod catalog ids. Read by a placement service; never checked by the claim |
 | **Implication** | A workspace declaring that holding one capability means holding another (`code-review` implies `code`). An agent's **declared** set expands to an **effective** set over these edges, and only the effective set is matched at claim |
 | **Structured handoff** | The `metadata` an agent passes to the next stage |
 | **Event** | Append-only audit record + realtime/webhook feed item |

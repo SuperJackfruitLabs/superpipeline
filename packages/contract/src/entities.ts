@@ -132,6 +132,25 @@ export const StageCheck = z.discriminatedUnion('provider', [
 ]);
 export type StageCheck = z.infer<typeof StageCheck>;
 
+/**
+ * What a station must have to work a stage, for a placement service (SuperDispatch) to filter
+ * candidates on: ids from AgentPod's capability catalog (charter 2026-11-13). Advice only; the
+ * board never checks it on a claim. Every list names at most 20 ids.
+ */
+export const StagePlacement = z
+  .object({
+    /** The weakest isolation acceptable, `host` < `container` < `sandbox`. */
+    isolation: z.enum(['host', 'container', 'sandbox']).optional(),
+    /** Models the station may run; any one will do. */
+    models: z.array(z.string().min(1).max(200)).max(20).optional(),
+    /** Catalog ids the station must have, every one. */
+    tools: z.array(z.string().min(1).max(200)).max(20).optional(),
+    /** Credential names the station must reach, every one. */
+    credentials: z.array(z.string().min(1).max(200)).max(20).optional(),
+  })
+  .strict();
+export type StagePlacement = z.infer<typeof StagePlacement>;
+
 export const Stage = z.object({
   key: z.string().min(1),
   name: z.string().min(1),
@@ -204,6 +223,8 @@ export const Stage = z.object({
    * the workspace's owners and admins set them.
    */
   checks: z.array(StageCheck).min(1).max(5).optional(),
+  /** What a station must have to work here, for a placement service; advice only. */
+  placement: StagePlacement.optional(),
 });
 export type Stage = z.infer<typeof Stage>;
 
