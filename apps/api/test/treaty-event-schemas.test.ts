@@ -5,6 +5,7 @@
  */
 import { runInDurableObject } from 'cloudflare:test';
 import { describe, expect, it } from 'vitest';
+import catalog from '@superjackfruitlabs/treaty-event-schemas/catalog.json';
 import type { BoardDO } from '../src/board/board-do';
 import { boardStub, STAGES } from './approval-subject-fixtures';
 import { checkAgainstTreaty, treatyChecked } from './helpers/treaty-schemas';
@@ -29,7 +30,22 @@ describe("treaty's event schemas", () => {
     expect(() => checkAgainstTreaty(JSON.stringify({ event: 'gate.pending', boardId: null }))).toThrow(/gate.pending does not validate/);
   });
 
+  it("check every SuperPipeline event in treaty's catalog against its schema", () => {
+    const events = catalog.events.filter((e) => e.producer === 'superpipeline').map((e) => e.pushName);
+    expect(events).toEqual(expect.arrayContaining(['delivery.pending', 'attention.pending', 'decision.reminded', 'decision.escalated', 'gate.approval_recorded', 'decision.released', 'decision.pulled_back', 'check.failed', 'check.overridden']));
+    // An empty body fails every schema, so a throw here proves the helper holds that event's schema.
+    const refused = events.filter((event) => {
+      try {
+        checkAgainstTreaty(JSON.stringify({ event }));
+        return false;
+      } catch (err) {
+        return err instanceof Error && err.message.startsWith(`${event} does not validate`);
+      }
+    });
+    expect(refused).toEqual(events);
+  });
+
   it('skip an event treaty has no schema for yet', () => {
-    expect(() => checkAgainstTreaty(JSON.stringify({ event: 'delivery.pending' }))).not.toThrow();
+    expect(() => checkAgainstTreaty(JSON.stringify({ event: 'work.available' }))).not.toThrow();
   });
 });
