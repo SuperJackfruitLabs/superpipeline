@@ -10,6 +10,7 @@ import type { BoardInit } from '../src/board/board-do';
 import { recordBoard } from '../src/db/catalog';
 import { newId } from '../src/ids';
 import { ensureOrgTenant } from '../src/auth/org-tenancy';
+import { payload } from './approval-subject-fixtures';
 import { withIssuer } from './helpers/hub-issuer';
 import { withOrgPlane, planeToken, ORG, OTHER_ORG, SERVICE, AGENT } from './helpers/org-plane';
 
@@ -532,6 +533,233 @@ describe('a service reading gates with gates:read (hub issuer)', () => {
       expect((await get(`/v1/boards/${foreign.boardId}/gates/pending`, t)).status).toBe(404);
       expect((await get(`/v1/boards/${foreign.boardId}/gates/${foreign.gateId}`, t)).status).toBe(404);
       expect((await get(`/v1/boards/${own.boardId}/gates/pending`, await hubToken())).status).toBe(403);
+    });
+  });
+});
+
+/**
+ * A board in `tenant` with a manual delivery still owed its live link (one card approved
+ * `approve_manual`) and a card waiting on a person (a second card its agent blocked).
+ */
+async function seedBoardWithFollowUps(tenant: string): Promise<{ boardId: string; gateId: string; blockedCardId: string }> {
+  const boardId = newId('brd');
+  const board = boardStub(env, tenant, boardId);
+  await board.init({ id: boardId, tenantId: tenant, name: 'Follow-up board', stages: APPROVAL_PIPELINE });
+  await recordBoard(env.DB, tenant, { id: boardId, name: 'Follow-up board', stagesJson: JSON.stringify(APPROVAL_PIPELINE) });
+  const manual = await board.createCard({ title: 'Post the fixture by hand', ownerUserId: 'usr_fixture_owner', projectId: 'prj_fixture' });
+  if (!manual.ok) throw new Error(manual.message);
+  const draft = await board.claim({ agentId: 'agt_fixture_writer', capabilities: ['writing'] });
+  if (!draft.claimed) throw new Error('expected the fixture draft to be claimable');
+  const completed = await board.complete({ runId: draft.runId, leaseEpoch: draft.leaseEpoch, handoff: { publicationPayload: payload() } });
+  if (!completed.ok) throw new Error(completed.message);
+  const gate = (await board.getState()).gates[0];
+  if (!gate?.approvalSubject) throw new Error('expected a bound approval gate');
+  const approved = await board.resolveGate({
+    gateId: gate.id,
+    decision: 'approve_manual',
+    decidedBy: APPROVAL_DECIDER,
+    approvalSubjectId: gate.approvalSubject.id,
+    approvalSubjectDigest: gate.approvalSubject.digest,
+  });
+  if (!approved.ok) throw new Error(approved.message);
+  const blocked = await board.createCard({ title: 'Draft without credentials', ownerUserId: 'usr_fixture_owner' });
+  if (!blocked.ok) throw new Error(blocked.message);
+  const run = await board.claim({ agentId: 'agt_fixture_writer', capabilities: ['writing'] });
+  if (!run.claimed) throw new Error('expected the second draft to be claimable');
+  await board.block({ runId: run.runId, leaseEpoch: run.leaseEpoch, reason: 'no credentials' });
+  return { boardId, gateId: gate.id, blockedCardId: blocked.value.id };
+}
+
+const followUpPaths = (boardId: string) => [`/v1/boards/${boardId}/deliveries/pending`, `/v1/boards/${boardId}/attention/pending`];
+
+/**
+ * The rest of the carrier's sweep: on the same `gates:read`, a service reads the manual deliveries
+ * still owed a link and the cards waiting on a person, in its own workspace only, and changes nothing.
+ */
+describe('a service reading the follow-up sweep with gates:read (Organization plane)', () => {
+  it('reads its own board\'s owed deliveries and waiting cards, in the body a person reads', async () => {
+    await withOrgPlane(async () => {
+      const tenant = await ensureOrgTenant(env.DB, ORG);
+      const { boardId, gateId, blockedCardId } = await seedBoardWithFollowUps(tenant);
+      const t = await gateReader();
+      const human = await planeToken();
+
+      const deliveries = await get(`/v1/boards/${boardId}/deliveries/pending`, t);
+      expect(deliveries.status).toBe(200);
+      const owed: unknown = await deliveries.json();
+      expect(owed).toEqual({ deliveries: [expect.objectContaining({ gateId })] });
+      expect(await (await get(`/v1/boards/${boardId}/deliveries/pending`, human)).json()).toEqual(owed);
+
+      const attention = await get(`/v1/boards/${boardId}/attention/pending`, t);
+      expect(attention.status).toBe(200);
+      const waiting: unknown = await attention.json();
+      expect(waiting).toEqual({ attention: [expect.objectContaining({ cardId: blockedCardId, reason: 'blocked' })] });
+      expect(await (await get(`/v1/boards/${boardId}/attention/pending`, human)).json()).toEqual(waiting);
+    });
+  });
+
+  it('is refused without gates:read, whatever else the service holds', async () => {
+    await withOrgPlane(async () => {
+      const tenant = await ensureOrgTenant(env.DB, ORG);
+      const { boardId, gateId, blockedCardId } = await seedBoardWithFollowUps(tenant);
+      for (const scope of ['', 'cards:read push:write approval-requests:relay', 'gates:write']) {
+        const t = await gateReader({ scope });
+        for (const path of followUpPaths(boardId)) {
+          const r = await get(path, t);
+          expect({ scope, path, status: r.status }).toEqual({ scope, path, status: 403 });
+          const text = await r.text();
+          expect(text).not.toContain(gateId);
+          expect(text).not.toContain(blockedCardId);
+        }
+      }
+    });
+  });
+
+  it('cannot read another workspace\'s board', async () => {
+    await withOrgPlane(async () => {
+      const tenant = await ensureOrgTenant(env.DB, ORG);
+      expect(await ensureOrgTenant(env.DB, OTHER_ORG)).not.toBe(tenant);
+      const { boardId, gateId, blockedCardId } = await seedBoardWithFollowUps(tenant);
+      const t = await gateReader({ org: OTHER_ORG });
+      for (const path of followUpPaths(boardId)) {
+        const r = await get(path, t);
+        expect({ path, status: r.status }).toEqual({ path, status: 404 });
+        const text = await r.text();
+        expect(text).not.toContain(gateId);
+        expect(text).not.toContain(blockedCardId);
+      }
+    });
+  });
+
+  it('changes nothing: writes are refused, the delivery stays owed and the card stays waiting', async () => {
+    await withOrgPlane(async () => {
+      const tenant = await ensureOrgTenant(env.DB, ORG);
+      const { boardId, gateId, blockedCardId } = await seedBoardWithFollowUps(tenant);
+      const t = await gateReader({ scope: 'gates:read cards:read' });
+      const writes: Array<[string, unknown]> = [
+        [`/v1/boards/${boardId}/deliveries/pending`, {}],
+        [`/v1/boards/${boardId}/attention/pending`, {}],
+        [`/v1/boards/${boardId}/gates/${gateId}/delivery`, { liveUrl: 'https://x.com/fixture_account/status/1' }],
+        [`/v1/boards/${boardId}/cards/${blockedCardId}/resume`, { comment: 'go' }],
+        [`/v1/boards/${boardId}/cards/${blockedCardId}/archive`, {}],
+      ];
+      for (const [path, body] of writes) {
+        const r = await post(path, t, body);
+        expect({ path, refused: r.status >= 400 }).toEqual({ path, refused: true });
+      }
+      const board = boardStub(env, tenant, boardId);
+      expect(await board.pendingDeliveryFollowUps()).toEqual([expect.objectContaining({ gateId })]);
+      expect(await board.pendingAttention()).toEqual([expect.objectContaining({ cardId: blockedCardId })]);
+    });
+  });
+});
+
+describe('a service reading the follow-up sweep with gates:read (hub issuer)', () => {
+  it('reads its own tenant\'s follow-ups and not another tenant\'s', async () => {
+    await legacy(async () => {
+      const own = await seedBoardWithFollowUps(TENANT);
+      const foreign = await seedBoardWithFollowUps(OTHER_TENANT);
+      const t = await hubToken({ scope: 'gates:read' });
+      for (const path of followUpPaths(own.boardId)) expect({ path, status: (await get(path, t)).status }).toEqual({ path, status: 200 });
+      for (const path of followUpPaths(foreign.boardId)) expect({ path, status: (await get(path, t)).status }).toEqual({ path, status: 404 });
+      for (const path of followUpPaths(own.boardId)) expect({ path, status: (await get(path, await hubToken())).status }).toEqual({ path, status: 403 });
+    });
+  });
+});
+
+const CHECKS_PIPELINE: BoardInit['stages'] = [
+  { key: 'build', name: 'Build', order: 0, ownerKind: 'capability', owner: 'build' },
+  { key: 'verify', name: 'Verify', order: 1, ownerKind: 'human', gate: 'checks', returnStage: 'build', checks: [{ name: 'build', provider: 'ci', contexts: ['build'] }] },
+  { key: 'ship', name: 'Ship', order: 2, ownerKind: 'capability', owner: 'ship' },
+];
+
+/** A board in `tenant` with one card that arrived at a stage with checks, which are still open. */
+async function seedBoardWithChecks(tenant: string): Promise<{ boardId: string; cardId: string }> {
+  const boardId = newId('brd');
+  const board = boardStub(env, tenant, boardId);
+  await board.init({ id: boardId, tenantId: tenant, name: 'Checks board', stages: CHECKS_PIPELINE });
+  await recordBoard(env.DB, tenant, { id: boardId, name: 'Checks board', stagesJson: JSON.stringify(CHECKS_PIPELINE) });
+  const card = await board.createCard({ title: 'Fix the build', ownerUserId: 'usr_owner' });
+  if (!card.ok) throw new Error(card.message);
+  const run = await board.claim({ agentId: 'agt_b', capabilities: ['build'] });
+  if (!run.claimed) throw new Error('expected a build claim');
+  const done = await board.complete({ runId: run.runId, leaseEpoch: run.leaseEpoch, handoff: { summary: 'fixed' } });
+  if (!done.ok) throw new Error(done.message);
+  return { boardId, cardId: card.value.id };
+}
+
+/**
+ * A card's checks: on the same `gates:read`, a service reads them (to escalate a check left open
+ * too long), in its own workspace only, and overrides nothing.
+ */
+describe('a service reading a card\'s checks with gates:read (Organization plane)', () => {
+  it('reads its own board\'s card checks, in the body a person reads', async () => {
+    await withOrgPlane(async () => {
+      const tenant = await ensureOrgTenant(env.DB, ORG);
+      const { boardId, cardId } = await seedBoardWithChecks(tenant);
+      const t = await gateReader();
+      const r = await get(`/v1/boards/${boardId}/cards/${cardId}/checks`, t);
+      expect(r.status).toBe(200);
+      const body: unknown = await r.json();
+      expect(body).toMatchObject({ checks: { cardId, stageKey: 'verify', status: 'open', checks: [expect.objectContaining({ name: 'build' })] } });
+      expect(await (await get(`/v1/boards/${boardId}/cards/${cardId}/checks`, await planeToken())).json()).toEqual(body);
+      // A card that is not on the board answers as the human route does.
+      const missing = `/v1/boards/${boardId}/cards/card_00000000000000ff/checks`;
+      const asService = await get(missing, t);
+      const asPerson = await get(missing, await planeToken());
+      expect({ status: asService.status, body: await asService.json() }).toEqual({ status: asPerson.status, body: await asPerson.json() });
+    });
+  });
+
+  it('is refused without gates:read, whatever else the service holds', async () => {
+    await withOrgPlane(async () => {
+      const tenant = await ensureOrgTenant(env.DB, ORG);
+      const { boardId, cardId } = await seedBoardWithChecks(tenant);
+      for (const scope of ['', 'cards:read push:write approval-requests:relay', 'gates:write']) {
+        const r = await get(`/v1/boards/${boardId}/cards/${cardId}/checks`, await gateReader({ scope }));
+        expect({ scope, status: r.status }).toEqual({ scope, status: 403 });
+        expect(await r.text()).not.toContain('verify');
+      }
+    });
+  });
+
+  it('cannot read another workspace\'s board', async () => {
+    await withOrgPlane(async () => {
+      const tenant = await ensureOrgTenant(env.DB, ORG);
+      expect(await ensureOrgTenant(env.DB, OTHER_ORG)).not.toBe(tenant);
+      const { boardId, cardId } = await seedBoardWithChecks(tenant);
+      const r = await get(`/v1/boards/${boardId}/cards/${cardId}/checks`, await gateReader({ org: OTHER_ORG }));
+      // The board is not found in the caller's workspace: refused before its board is asked at all.
+      expect({ status: r.status, body: await r.json() }).toEqual({ status: 404, body: { error: 'board not found' } });
+    });
+  });
+
+  it('overrides nothing: writes are refused and the checks stay open', async () => {
+    await withOrgPlane(async () => {
+      const tenant = await ensureOrgTenant(env.DB, ORG);
+      const { boardId, cardId } = await seedBoardWithChecks(tenant);
+      const t = await gateReader({ scope: 'gates:read cards:read' });
+      for (const path of [`/v1/boards/${boardId}/cards/${cardId}/checks`, `/v1/boards/${boardId}/cards/${cardId}/checks/build/override`]) {
+        const r = await post(path, t, { comment: 'ship it' });
+        expect({ path, refused: r.status >= 400 }).toEqual({ path, refused: true });
+      }
+      const after = await boardStub(env, tenant, boardId).cardChecks(cardId);
+      if (!after.ok) throw new Error(after.message);
+      expect(after.value).toMatchObject({ status: 'open' });
+    });
+  });
+});
+
+describe('a service reading a card\'s checks with gates:read (hub issuer)', () => {
+  it('reads its own tenant\'s card checks and not another tenant\'s', async () => {
+    await legacy(async () => {
+      const own = await seedBoardWithChecks(TENANT);
+      const foreign = await seedBoardWithChecks(OTHER_TENANT);
+      const t = await hubToken({ scope: 'gates:read' });
+      expect((await get(`/v1/boards/${own.boardId}/cards/${own.cardId}/checks`, t)).status).toBe(200);
+      const foreignRead = await get(`/v1/boards/${foreign.boardId}/cards/${foreign.cardId}/checks`, t);
+      expect({ status: foreignRead.status, body: await foreignRead.json() }).toEqual({ status: 404, body: { error: 'board not found' } });
+      expect((await get(`/v1/boards/${own.boardId}/cards/${own.cardId}/checks`, await hubToken())).status).toBe(403);
     });
   });
 });
