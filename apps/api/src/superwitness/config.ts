@@ -27,6 +27,11 @@ export function reportingEnabled(env: Pick<Env, 'SUPERWITNESS_URL'>): boolean {
   return typeof env.SUPERWITNESS_URL === 'string' && env.SUPERWITNESS_URL.trim() !== '';
 }
 
+/** Whether reports carry `stage_key` and `card_id` (literal lowercase "true", as elsewhere). */
+export function reportsStage(env: Pick<Env, 'SUPERWITNESS_REPORT_STAGE'>): boolean {
+  return env.SUPERWITNESS_REPORT_STAGE === 'true';
+}
+
 function httpsUrl(v: string | undefined): URL | null {
   if (!v || v.trim() === '') return null;
   try {

@@ -87,6 +87,12 @@ export interface Env {
    * `svc_`, exchanged at `{ORG_PLANE_URL}/api/token/service` for superwitness's audience.
    */
   SUPERWITNESS_REPORTER_CREDENTIAL?: string;
+  /**
+   * When "true", each run report also carries `stage_key` and `card_id`, so superwitness can read
+   * history per stage. Off until the superwitness this deployment reports to accepts the two fields:
+   * its ingest refuses a field it does not know, and one refused report fails its whole batch.
+   */
+  SUPERWITNESS_REPORT_STAGE?: string;
   /** When "true", accept dev-mode X-Tenant-Id / X-Agent-Id headers (local + tests). Never in prod. */
   DEV_AUTH?: string;
   /**
