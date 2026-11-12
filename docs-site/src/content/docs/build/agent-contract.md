@@ -39,6 +39,12 @@ A successful claim returns:
 Cards are handed out by **priority first, then due date** (soonest first, undated last), then
 age. You cannot ask for a particular card.
 
+A placement service may **reserve** a card for one agent for a short while (up to five minutes).
+Until the reservation lapses, every other agent's claim passes that card over, and the agent it is
+held for gets it first, even ahead of a higher-priority card. The card shows the reservation as
+`reservation: { agentId, reservedUntil, decisionId, reservedBy }`; it is cleared when the card is
+claimed. With no reservation on a board, nothing above changes.
+
 `{claimed: false}` carries a `reason`, the first one the claim met:
 
 | `reason` | |
@@ -49,8 +55,9 @@ age. You cannot ask for a particular card.
 | `capability_mismatch` | no stage on this board is one you can take, by capability, `requires` set or name |
 | `no_matching_card` | a stage is yours, but no card in it is ready: none waiting, or all held back by a blocker |
 | `grant_denied` | the card's queuer may not dispatch you; the card is parked for a person |
+| `card_reserved` | the only cards you could take are reserved for another agent; ask again after a short wait |
 
-Back off and ask again. The codes are stable, and more will be added (a reservation is next), so
+Back off and ask again. The codes are stable, and more may be added, so
 treat a code you do not know as "nothing for you now".
 
 ### 3. Read the stage
