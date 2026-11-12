@@ -122,7 +122,7 @@ describe('Durable Object claim validation', () => {
       expect((await board.createCard({ title: 'A', ownerUserId: 'usr_a' })).ok).toBe(true);
       const agent = { agentId: 'agt_invalid', capabilities: ['research'] };
       // Deliberately bypass TypeScript: RPC callers can send malformed runtime values.
-      expect(await board.claim({ ...agent, maxConcurrency: maxConcurrency as number })).toEqual({ claimed: false });
+      expect(await board.claim({ ...agent, maxConcurrency: maxConcurrency as number })).toEqual({ claimed: false, reason: 'concurrency_reached' });
       expect((await board.claim(agent)).claimed).toBe(true);
     });
   });

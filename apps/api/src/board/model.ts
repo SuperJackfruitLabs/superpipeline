@@ -1,4 +1,4 @@
-import type { CompletionRequirement, StageOutcome, TaskState } from '@superpipeline/contract';
+import type { ClaimReason, CompletionRequirement, StageOutcome, TaskState } from '@superpipeline/contract';
 import type { JsonValue } from '../json';
 import type { RunReportDraft } from '../superwitness/report';
 import type { LinkKind } from './links';
@@ -517,7 +517,14 @@ export type ClaimResult =
        */
       lastFailure: { reason: string; agentId: string; stageKey: string; endedAt: string } | null;
     }
-  | { claimed: false };
+  | {
+      claimed: false;
+      /**
+       * Why nothing was handed out: the first reason the one claim filter met. Stable codes
+       * (`ClaimReason` in the contract); a client must tolerate one it does not know.
+       */
+      reason: ClaimReason;
+    };
 
 /** Per-board stale-card settings. Defaults: on, 24 hours. */
 export interface StaleSettings {

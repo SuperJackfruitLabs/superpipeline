@@ -1,4 +1,4 @@
-import { needsYou, stageCapabilitiesMet } from '@superpipeline/contract';
+import { type ClaimReason, needsYou, stageCapabilitiesMet } from '@superpipeline/contract';
 import { grantPermitsAgent, isControlPairEnforced } from '../auth/grant-match';
 import { newId } from '../ids';
 import type { JsonValue } from '../json';
@@ -55,6 +55,11 @@ export type ClaimsDeps = Pick<
  */
 const PUSH_DRAIN_BASE_MS = 5_000;
 
+/** A claim that hands out nothing, and why. */
+function refused(reason: ClaimReason): ClaimResult {
+  return { claimed: false, reason };
+}
+
 /**
  * Atomically hand a ready, capability-matched card to an agent, within its concurrency limit.
  *
@@ -65,30 +70,20 @@ const PUSH_DRAIN_BASE_MS = 5_000;
  * matters because this is the path every agent hits repeatedly. `undefined` (not passed at all)
  * means the caller never resolved it — the dev-header auth path, which carries no DB-backed
  * identity — and this method falls back to looking it up itself, exactly as before.
+ *
+ * Nothing handed out is `{claimed: false, reason}`: the first reason met, from the same filter the
+ * eligibility read uses (`ClaimReason`). The success shape is unchanged.
  */
-export async function claim(deps: ClaimsDeps, input: {
-  agentId: string;
-  capabilities: string[];
-  maxConcurrency?: number;
-  profileKey?: string;
-  principalId?: string | null;
-}): Promise<ClaimResult> {
-  if (!deps.getMeta('boardId')) return { claimed: false };
+export async function claim(deps: ClaimsDeps, input: Claimant & { profileKey?: string }): Promise<ClaimResult> {
+  if (!deps.getMeta('boardId')) return refused('board_not_initialized');
   // Budget cap (docs/07 §6): once the board hits its USD ceiling, stop handing out new work.
-  if (deps.boardOverBudget()) return { claimed: false };
-  const max = input.maxConcurrency === undefined ? 1 : input.maxConcurrency;
-  // RPC types do not validate runtime values. Invalid limits must never admit work.
-  if (typeof max !== 'number' || !Number.isInteger(max) || max <= 0) return { claimed: false };
-  const active = Number(
-    deps.sql.exec(`SELECT COUNT(*) AS n FROM runs WHERE agent_id = ? AND status = 'working'`, input.agentId).one().n,
-  );
-  if (active >= max) return { claimed: false };
+  if (deps.boardOverBudget()) return refused('board_over_budget');
+  // The agent-level half of the one filter (concurrency, capability): the eligibility read asks the
+  // same function about one card, so the two cannot disagree about who may take what.
+  const [first] = claimantRefusals(deps, input);
+  if (first) return refused(first);
 
-  const claimableKeys = deps.stages()
-    .filter((s) => stageMatches(s, input.agentId, input.capabilities))
-    .map((s) => s.key);
-  if (claimableKeys.length === 0) return { claimed: false };
-
+  const claimableKeys = claimableStageKeys(deps, input.agentId, input.capabilities);
   const placeholders = claimableKeys.map(() => '?').join(', ');
   const row = deps.sql
     .exec(
@@ -97,7 +92,7 @@ export async function claim(deps: ClaimsDeps, input: {
       ...claimableKeys,
     )
     .toArray()[0];
-  if (!row) return { claimed: false };
+  if (!row) return refused('no_matching_card');
 
   // ── The control pair, at the moment the work is handed out ──────────────
   //
@@ -112,23 +107,16 @@ export async function claim(deps: ClaimsDeps, input: {
   // parked in `input-required`, which is this board's existing way of saying a
   // person has to do something. That also bounds the noise: the card leaves
   // `submitted`, so this is evaluated once and not on every poll.
-  if (isControlPairEnforced(deps.env)) {
-    const grant = row.queued_grant ? (JSON.parse(row.queued_grant as string) as string[]) : null;
-    const principalId = input.principalId !== undefined ? input.principalId : await principalIdFor(deps, input.agentId);
-    if (!grantPermitsAgent(grant, principalId)) {
-      const why = grant
-        ? `the operator who queued this card may not dispatch ${input.agentId}`
-        : 'this card was queued without an authorising token, so no one with permission asked for it to run';
-      // Parked without ending a run — there is no run; this stops a dispatch rather
-      // than finishing one, which is why the run is left named.
-      // `row.id`: this runs inside the claim loop, where the candidate card is the row
-      // in hand and there is no `cardId` in scope. Parked without releasing a run
-      // because there is no run — this stops a dispatch rather than ending one.
-      deps.parkForHuman(row.id as string, { reason: 'not-authorised', detail: why }, false);
-      deps.notify('control-pair', row.id as string, `Not dispatched: ${why}`);
-      deps.emit('card.blocked', { cardId: row.id, reason: why });
-      return { claimed: false };
-    }
+  if (await grantRefused(deps, input, row)) {
+    const why = row.queued_grant
+      ? `the operator who queued this card may not dispatch ${input.agentId}`
+      : 'this card was queued without an authorising token, so no one with permission asked for it to run';
+    // Parked without releasing a run because there is no run — this stops a dispatch rather
+    // than ending one. `row.id`: the candidate card is the row in hand.
+    deps.parkForHuman(row.id as string, { reason: 'not-authorised', detail: why }, false);
+    deps.notify('control-pair', row.id as string, `Not dispatched: ${why}`);
+    deps.emit('card.blocked', { cardId: row.id, reason: why });
+    return refused('grant_denied');
   }
 
   const card = deps.rowToCard(row);
@@ -177,13 +165,69 @@ export async function claim(deps: ClaimsDeps, input: {
 }
 
 /**
+ * Someone who might take work: an agent and its EFFECTIVE capabilities (declared plus whatever the
+ * workspace's implication edges add, expanded at the Worker boundary because the edges live in the
+ * catalog). `maxConcurrency` absent means one. `principalId` absent means "not looked up yet";
+ * null means the agent maps to no suite principal.
+ */
+export interface Claimant {
+  agentId: string;
+  capabilities: string[];
+  maxConcurrency?: number;
+  principalId?: string | null;
+}
+
+/** The stages on this board this claimant can take, by the one stage matcher. */
+function claimableStageKeys(deps: Pick<ClaimsDeps, 'stages'>, agentId: string, capabilities: string[]): string[] {
+  return deps.stages().filter((s) => stageMatches(s, agentId, capabilities)).map((s) => s.key);
+}
+
+/**
+ * THE filter, agent half: why this claimant may not take work here — any card when `stageKey` is
+ * absent (a claim), or a card at `stageKey` (the eligibility read). Ordered as a claim meets them,
+ * so a claim reports the first.
+ *
+ * The control pair is checked separately (`grantRefused`), because it needs the card's grant and,
+ * on a claim, the card is only known once these have passed.
+ */
+export function claimantRefusals(
+  deps: Pick<ClaimsDeps, 'sql' | 'stages'>,
+  who: Claimant,
+  stageKey?: string,
+): Array<'concurrency_reached' | 'capability_mismatch'> {
+  const out: Array<'concurrency_reached' | 'capability_mismatch'> = [];
+  const max = who.maxConcurrency === undefined ? 1 : who.maxConcurrency;
+  // RPC types do not validate runtime values. An invalid limit must never admit work, and it reads
+  // as "no room", which is what it amounts to.
+  const validMax = typeof max === 'number' && Number.isInteger(max) && max > 0;
+  const active = validMax
+    ? Number(deps.sql.exec(`SELECT COUNT(*) AS n FROM runs WHERE agent_id = ? AND status = 'working'`, who.agentId).one().n)
+    : 0;
+  if (!validMax || active >= max) out.push('concurrency_reached');
+  const keys = claimableStageKeys(deps, who.agentId, who.capabilities);
+  if (stageKey === undefined ? keys.length === 0 : !keys.includes(stageKey)) out.push('capability_mismatch');
+  return out;
+}
+
+/**
+ * THE filter, grant half: under the control pair, may whoever queued this card dispatch this
+ * claimant? Only reads; parking a refused card is the claim's business.
+ */
+export async function grantRefused(deps: Pick<ClaimsDeps, 'env'>, who: Claimant, row: Row): Promise<boolean> {
+  if (!isControlPairEnforced(deps.env)) return false;
+  const grant = row.queued_grant ? (JSON.parse(row.queued_grant as string) as string[]) : null;
+  const principalId = who.principalId !== undefined ? who.principalId : await principalIdFor(deps, who.agentId);
+  return !grantPermitsAgent(grant, principalId);
+}
+
+/**
  * The suite principal id this local agent maps to (`agents.external_id`), or `null` if it has
  * never been linked to one. A grant enumerates principal ids
  * (charter decisions/2026-08-30-an-agent-is-a-principal.md §3/§5), not superpipeline's local
  * `agt_…` ids — no external token has ever heard of the latter — so this is the id
  * `grantPermitsAgent` actually needs to compare against.
  */
-async function principalIdFor(deps: ClaimsDeps, agentId: string): Promise<string | null> {
+async function principalIdFor(deps: Pick<ClaimsDeps, 'env'>, agentId: string): Promise<string | null> {
   const row = await deps.env.DB.prepare(`SELECT external_id FROM agents WHERE id = ?`)
     .bind(agentId)
     .first<{ external_id: string | null }>();
@@ -193,9 +237,7 @@ async function principalIdFor(deps: ClaimsDeps, agentId: string): Promise<string
 /** How many cards are ready (submitted) in stages these capabilities can claim — for work discovery. */
 export async function countReadyForCapabilities(deps: ClaimsDeps, agentId: string, capabilities: string[]): Promise<number> {
   if (!deps.getMeta('boardId')) return 0;
-  const claimableKeys = deps.stages()
-    .filter((s) => stageMatches(s, agentId, capabilities))
-    .map((s) => s.key);
+  const claimableKeys = claimableStageKeys(deps, agentId, capabilities);
   if (claimableKeys.length === 0) return 0;
   const placeholders = claimableKeys.map(() => '?').join(', ');
   return Number(
@@ -209,7 +251,7 @@ export function isAgentClaimable(stage: StageDef): boolean {
   return stage.ownerKind === 'capability' || stage.ownerKind === 'agent';
 }
 
-function stageMatches(stage: StageDef, agentId: string, capabilities: string[]): boolean {
+export function stageMatches(stage: StageDef, agentId: string, capabilities: string[]): boolean {
   if (stage.ownerKind === 'agent') return stage.owner === agentId;
   // The predicate lives in the contract so the claim path, the `boardCount` diagnostic and the
   // board editor's unstaffed warning can never disagree about what a stage asks for.
