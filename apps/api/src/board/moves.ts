@@ -22,6 +22,7 @@ export type MovesDeps = Pick<
   | 'countInStage'
   | 'createGate'
   | 'emit'
+  | 'env'
   | 'getCard'
   | 'getCardHandoffJson'
   | 'getCardRow'

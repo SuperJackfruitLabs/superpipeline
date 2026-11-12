@@ -1,6 +1,6 @@
 import type { BoardContext } from './context';
 import type { CardNeedsHuman, Result, Row } from './model';
-import { queueSubscribedPush } from './push';
+import { queueRelay, queueSubscribedPush } from './push';
 import { COMMENT_MAX_BYTES } from './rules';
 import type { AttentionPendingBody, AttentionReason } from './views';
 
@@ -14,7 +14,7 @@ import type { AttentionPendingBody, AttentionReason } from './views';
  */
 
 /** What attention needs from the rest of the board. */
-export type AttentionDeps = Pick<BoardContext, 'decisionDeadline' | 'getCard' | 'getCardRow' | 'getMeta' | 'now' | 'sql' | 'stages' | 'startDecisionWait'>;
+export type AttentionDeps = Pick<BoardContext, 'decisionDeadline' | 'env' | 'getCard' | 'getCardRow' | 'getMeta' | 'now' | 'sql' | 'stages' | 'startDecisionWait'>;
 
 const ATTENTION_REASONS: ReadonlySet<string> = new Set<AttentionReason>(['repeated-failure', 'blocked', 'not-authorised']);
 
@@ -128,6 +128,7 @@ export function notifyAttentionPending(deps: AttentionDeps, cardId: string): voi
   const { ts, ...rest } = waiting;
   const payload: AttentionPendingBody = { ...rest, ...deadline, ts };
   queueSubscribedPush(deps, payload);
+  queueRelay(deps, payload);
 }
 
 /**

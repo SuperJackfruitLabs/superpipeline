@@ -6,6 +6,7 @@ import type { BoardContext } from './context';
 import { parseElicitationOptions } from './elicitation';
 import type { GateOption } from './gate-option';
 import type { AgentActivityInput, CardView, Result, Row } from './model';
+import { queueRelay } from './push';
 import { HEARTBEAT_TIMEOUT_MS } from './rules';
 import { posterSubject, posterSubjectEnvelope, PosterSubject, questionOptionMeaning, questionOptionScope, strictSubjectEnvelope, subjectAnswerError } from './question-subject';
 import { ApprovalDetail, StrictDecision } from './strict-decision';
@@ -27,6 +28,7 @@ export type ElicitationsDeps = Pick<
   | 'authorizeRun'
   | 'decisionDeadline'
   | 'emit'
+  | 'env'
   | 'getCard'
   | 'getCardHandoffJson'
   | 'getMeta'
@@ -506,6 +508,7 @@ function notifyElicitationPending(deps: ElicitationsDeps, elicitationId: string,
       ts,
     );
   }
+  queueRelay(deps, payload);
 }
 
 /**

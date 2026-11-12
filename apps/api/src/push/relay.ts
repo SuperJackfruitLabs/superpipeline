@@ -4,9 +4,9 @@
  * A deployment with `RELAY_URL` and `RELAY_TOKEN` sends each relayed event to the relay as a
  * CloudEvent in HTTP binary mode, beside the direct push, which keeps running. The body is the
  * same JSON the push carries; the relay publishes it to NATS JetStream, and subscribers (the
- * AgentPod hub) receive it from there.
+ * suite's communication server) receive it from there.
  *
- * The delivery row is the outbox: it is queued in the transaction that opened the gate, and the
+ * The delivery row is the outbox: it is queued in the transaction that wrote the change, and the
  * drain retries it like any push. Its id is fixed per row, so a retry the relay already stored
  * is a duplicate there, not a second event.
  */
@@ -17,8 +17,25 @@ import type { Env } from '../env';
 /** The config id a relay delivery row carries. Not a registered push config. */
 export const RELAY_CONFIG_ID = 'relay';
 
-/** What goes through the relay in step 7: gates only (treaty docs/2026-11-11-step-7-plan.md). */
-export const RELAYED_EVENTS: ReadonlySet<string> = new Set(['gate.pending']);
+/**
+ * What goes through the relay: every event board chat carries (gates, questions, deliveries,
+ * waiting cards, decision reminders and escalations, quorum votes, held approvals, machine checks).
+ * Each has a treaty schema; `relayRequest` refuses one that has none. Record events
+ * (`card.*`, `gate.resolved`, links) and `work.available` are not relayed.
+ */
+export const RELAYED_EVENTS: ReadonlySet<string> = new Set([
+  'gate.pending',
+  'elicitation.pending',
+  'delivery.pending',
+  'attention.pending',
+  'decision.reminded',
+  'decision.escalated',
+  'gate.approval_recorded',
+  'decision.released',
+  'decision.pulled_back',
+  'check.failed',
+  'check.overridden',
+]);
 
 export interface RelaySettings {
   url: string;

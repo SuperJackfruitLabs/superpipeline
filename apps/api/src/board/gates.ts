@@ -710,6 +710,7 @@ function notifyApprovalRecorded(deps: GatesDeps, gateId: string, approval: Pick<
     quorum,
   };
   queueSubscribedPush(deps, body);
+  queueRelay(deps, body);
 }
 
 /** A card's session replay: its durable activity waterfall + the handoff carried into it (docs/07 §4). */
@@ -940,7 +941,9 @@ function notifyDeliveryPending(deps: GatesDeps, gateId: string): void {
   const gate = getGateRow(deps, gateId);
   if (!gate) return;
   const payload = deliveryPendingBody(deps, gate);
-  if (payload) queueSubscribedPush(deps, payload);
+  if (!payload) return;
+  queueSubscribedPush(deps, payload);
+  queueRelay(deps, payload);
 }
 
 /**
