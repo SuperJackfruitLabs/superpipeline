@@ -136,7 +136,7 @@ builds the frontend, and prepares local D1. Run it with the usual dev servers st
 isolated setup. `dev`, `dev:setup`, and `e2e` are package scripts, not root scripts.
 
 [CI](.github/workflows/ci.yml) runs type checks, tests, and browser E2E. `main` deploys to staging
-(staging-app.superpipeline.dev); a `v*` tag deploys production ([release](.github/workflows/release.yml)).
+(staging-app.superpipeline.dev); a `v*` tag deploys production ([release](.github/workflows/release.yml), the suite's shared release workflow).
 Passing local tests alone does not establish a deployment.
 
 ## License

@@ -11,15 +11,18 @@ the web SPA (static assets, same-origin). Same-origin means the session cookie a
 
 - **Staging.** Every push to `main` runs the `deploy-staging` job in `.github/workflows/ci.yml` after
   `test` passes; it lands that commit on the staging plane.
-- **Production.** Pushing a `v*` tag (versions stay on 0.0.x) runs the `deploy-production` job in
-  `.github/workflows/release.yml`. It refuses a tag whose commit is not on `main`, requires main's own CI
-  run for that commit to have passed `test`, `e2e` and `visual` (never `pixel`), downloads the app
-  artifact that run built (`app-<sha>`; it is never rebuilt — if it has expired after 14 days, re-run
-  main's CI for the commit), verifies it, migrates the remote D1 and runs `wrangler deploy` with
-  `DEV_AUTH:false` (`pnpm ci:deploy-app`), then smokes `https://app.superpipeline.dev`
-  (`deploy/staging/smoke.sh` with `ACCOUNTS=https://accounts.superjackfruit.com`). The same tag
-  publishes the supi CLI in an independent `release` job; either can fail without blocking the other.
-  It needs one repo secret:
+- **Production.** Pushing a `v*` tag (versions stay on 0.0.x) runs `.github/workflows/release.yml`,
+  the suite's shared release workflow (settings in `.github/release-config.json`). It refuses a tag
+  whose commit is not on `main`, requires main's own CI run for that commit to have passed (`test`,
+  `e2e` and `visual` among it; `pixel` never runs on a push), and builds the supi CLI at the tag
+  (`deploy/release/build.sh`). Then `deploy/release/deploy.sh` downloads the app artifact that CI run
+  built (`app-<sha>`; it is never rebuilt — if it has expired after 14 days, re-run main's CI for the
+  commit, then `gh workflow run release.yml -f tag=<tag>` on the mirror), verifies it, migrates the
+  remote D1 and runs `wrangler deploy` with `DEV_AUTH:false` (`pnpm ci:deploy-app`), and
+  `deploy/release/smoke.sh` smokes `https://app.superpipeline.dev` (`deploy/staging/smoke.sh` with
+  `ACCOUNTS=https://accounts.superjackfruit.com`). The release (supi binaries, `SHA256SUMS`,
+  `SKILL.md`, `install.sh`) is published only after the smoke passes; a failure leaves it a draft.
+  It needs one repo secret, which the release config names (`"secrets"`):
 
 - **`CLOUDFLARE_API_TOKEN`** — a Cloudflare API token with **Workers Scripts: Edit** and **D1: Edit**,
   scoped to your account (a single-account token lets wrangler infer the account). Add it under

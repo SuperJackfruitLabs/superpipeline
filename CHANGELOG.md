@@ -2,7 +2,9 @@
 
 All notable changes to superpipeline are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the project
-adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html). Entries go under
+`## Unreleased`; a release-prep PR stamps them `## vX.Y.Z — YYYY-MM-DD`
+(`sh .github/release/prep-release.sh vX.Y.Z`), and the release notes quote that section.
 
 > **The product was called Kaambaan until 2026-09-16.** Entries below that
 > predate the rename name the packages and hosts they actually shipped with —
@@ -10,7 +12,7 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 > Everything current is `superpipeline`, and an agent token now starts `spa_`
 > rather than `kbn_`, with no fallback.
 
-## [Unreleased]
+## Unreleased
 
 The code is restructured for maintainability. Nothing a user, an agent or an operator sees changes:
 the same HTTP routes and answers, the same Board Durable Object storage and SQL, the same `supi`
@@ -35,7 +37,7 @@ commands, help and output, the same requests from the web app, and the same depl
 - `packages/cli/README.md` held its "What it can do" section thousands of times over (186,784
   lines); it is back to one copy.
 
-## [0.0.23] — 2026-10-30
+## v0.0.23 — 2026-10-30
 
 Strict agent work: approvals a person can read and scope, and an agent that can read its own card.
 
@@ -53,7 +55,7 @@ Strict agent work: approvals a person can read and scope, and an agent that can 
 - The run read names the answerer by principal id as well as by board user id, so the hub can
   record an "Always allow" rule.
 
-## [0.0.19] — Unreleased
+## v0.0.19 — Unreleased
 
 ### Changed
 
@@ -72,7 +74,7 @@ Strict agent work: approvals a person can read and scope, and an agent that can 
 - A dismissed menu no longer leaves the page unclickable (vibekit 0.0.11).
 - The left rail fills the window height in Daylight and Studio.
 
-## [0.0.1] — 2026-06-21
+## v0.0.1 — 2026-06-21
 
 **"First Flight."** The first tagged milestone, spanning the work since the
 project's first commit on 2026-06-20 — **P0 → P14, 21 merged PRs, 72 commits**.
