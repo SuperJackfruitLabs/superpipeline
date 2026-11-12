@@ -3,6 +3,7 @@ import { APPROVAL_REQUESTS_READ, APPROVAL_REQUESTS_RELAY, APPROVAL_REQUESTS_WRIT
 import { boardStub } from './board/stub';
 import { boardNamesById, cardLinksBody } from './card-links';
 import { listBoards } from './db/catalog';
+import { flatError } from './flat-error';
 import { DECISION_EVENTS, SUBSCRIBABLE_EVENTS, isRecordEvent } from './push/events';
 
 /**
@@ -20,6 +21,8 @@ const QUESTIONS_PENDING = /^\/v1\/boards\/(brd_[0-9a-f]{16})\/elicitations\/pend
 const GATES = /^\/v1\/boards\/(brd_[0-9a-f]{16})\/gates\/(pending|gate_[0-9a-f]{16})$/;
 /** The same sweep's other reads: manual deliveries still owed a link, and cards waiting on a person. */
 const FOLLOW_UPS = /^\/v1\/boards\/(brd_[0-9a-f]{16})\/(deliveries|attention)\/pending$/;
+/** A card's checks, which the carrier reads to escalate a check left open too long. */
+const CHECKS = /^\/v1\/boards\/(brd_[0-9a-f]{16})\/cards\/(card_[0-9a-f]{16})\/checks$/;
 const APPROVAL_DELIVERY = /^\/v1\/boards\/(brd_[0-9a-f]{16})\/approval-subjects\/(aps_[0-9a-f]{16})\/delivery$/;
 
 /** Decoded without verifying, only to route: resolveHubService verifies before anything is read. */
@@ -49,7 +52,8 @@ export async function serviceRoute(request: Request, env: Env, path: string): Pr
   const questions = request.method === 'GET' ? QUESTIONS_PENDING.exec(path) : null;
   const gates = request.method === 'GET' ? GATES.exec(path) : null;
   const followUps = request.method === 'GET' ? FOLLOW_UPS.exec(path) : null;
-  if ((!read && !push && !approval && !approvalDelivery && !requestCreate && !requestRead && !questions && !gates && !followUps) || !looksLikeService(request)) {
+  const checks = request.method === 'GET' ? CHECKS.exec(path) : null;
+  if ((!read && !push && !approval && !approvalDelivery && !requestCreate && !requestRead && !questions && !gates && !followUps && !checks) || !looksLikeService(request)) {
     return null;
   }
 
@@ -96,6 +100,20 @@ export async function serviceRoute(request: Request, env: Env, path: string): Pr
     const stub = boardStub(env, svc.tenantId, boardId);
     if (which === 'deliveries') return Response.json({ deliveries: await stub.pendingDeliveryFollowUps() });
     return Response.json({ attention: await stub.pendingAttention() });
+  }
+
+  /**
+   * A card's checks, on the same `gates:read` and GET only, with the body and refusals of the human
+   * route: the carrier reads them to escalate a check left open too long. Overriding a check stays
+   * on the human route.
+   */
+  if (checks) {
+    if (!svc.scopes.includes(GATES_READ)) return refuse(403, 'FORBIDDEN', 'this principal does not hold gates:read');
+    const [, boardId, cardId] = checks;
+    if (!(await boardNamesById(env.DB, svc.tenantId, [boardId])).has(boardId)) return notFound('board');
+    const result = await boardStub(env, svc.tenantId, boardId).cardChecks(cardId);
+    // Its refusals are CARD_NOT_FOUND and NOT_INITIALIZED, both a 404 on the human route too.
+    return result.ok ? Response.json({ checks: result.value }) : Response.json({ error: flatError(result) }, { status: 404 });
   }
 
   /**
