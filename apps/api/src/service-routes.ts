@@ -1,5 +1,5 @@
 import type { Env } from './env';
-import { APPROVAL_REQUESTS_READ, APPROVAL_REQUESTS_RELAY, APPROVAL_REQUESTS_WRITE, APPROVALS_READ, APPROVALS_WRITE, CARDS_READ, PUSH_WRITE, resolveHubService } from './auth/resolve';
+import { APPROVAL_REQUESTS_READ, APPROVAL_REQUESTS_RELAY, APPROVAL_REQUESTS_WRITE, APPROVALS_READ, APPROVALS_WRITE, CARDS_READ, GATES_READ, PUSH_WRITE, resolveHubService } from './auth/resolve';
 import { boardStub } from './board/stub';
 import { boardNamesById, cardLinksBody } from './card-links';
 import { listBoards } from './db/catalog';
@@ -16,6 +16,8 @@ const APPROVAL = /^\/v1\/boards\/(brd_[0-9a-f]{16})\/approval-subjects\/(aps_[0-
 const APPROVAL_REQUESTS = /^\/v1\/boards\/(brd_[0-9a-f]{16})\/approval-requests$/;
 const APPROVAL_REQUEST = /^\/v1\/boards\/(brd_[0-9a-f]{16})\/approval-requests\/(apr_[0-9a-f]{16})$/;
 const QUESTIONS_PENDING = /^\/v1\/boards\/(brd_[0-9a-f]{16})\/elicitations\/pending$/;
+/** `gates/pending`, or one gate (`gate_<hex>`, which `pending` never matches). */
+const GATES = /^\/v1\/boards\/(brd_[0-9a-f]{16})\/gates\/(pending|gate_[0-9a-f]{16})$/;
 const APPROVAL_DELIVERY = /^\/v1\/boards\/(brd_[0-9a-f]{16})\/approval-subjects\/(aps_[0-9a-f]{16})\/delivery$/;
 
 /** Decoded without verifying, only to route: resolveHubService verifies before anything is read. */
@@ -43,7 +45,8 @@ export async function serviceRoute(request: Request, env: Env, path: string): Pr
   const requestCreate = request.method === 'POST' ? APPROVAL_REQUESTS.exec(path) : null;
   const requestRead = request.method === 'GET' ? APPROVAL_REQUEST.exec(path) : null;
   const questions = request.method === 'GET' ? QUESTIONS_PENDING.exec(path) : null;
-  if ((!read && !push && !approval && !approvalDelivery && !requestCreate && !requestRead && !questions) || !looksLikeService(request)) return null;
+  const gates = request.method === 'GET' ? GATES.exec(path) : null;
+  if ((!read && !push && !approval && !approvalDelivery && !requestCreate && !requestRead && !questions && !gates) || !looksLikeService(request)) return null;
 
   const svc = await resolveHubService(request, env);
   if (!svc) return refuse(401, 'UNAUTHORIZED', 'a service token for a mapped workspace is required');
@@ -58,6 +61,22 @@ export async function serviceRoute(request: Request, env: Env, path: string): Pr
     const [, boardId] = questions;
     if (!(await boardNamesById(env.DB, svc.tenantId, [boardId])).has(boardId)) return notFound('board');
     return Response.json({ elicitations: await boardStub(env, svc.tenantId, boardId).pendingElicitationDeliveries({ approvalRequests: true }) });
+  }
+
+  /**
+   * The chat carrier's gate sweep: the board's pending gates, and one gate with how it was decided,
+   * so a gate decided on the web is settled in the room too. Only on `gates:read`, and only GET:
+   * deciding, pulling back and delivery stay on the human routes, which a service token never reaches.
+   */
+  if (gates) {
+    if (!svc.scopes.includes(GATES_READ)) return refuse(403, 'FORBIDDEN', 'this principal does not hold gates:read');
+    const [, boardId, which] = gates;
+    if (!(await boardNamesById(env.DB, svc.tenantId, [boardId])).has(boardId)) return notFound('board');
+    const stub = boardStub(env, svc.tenantId, boardId);
+    if (which === 'pending') return Response.json({ gates: await stub.pendingGateDeliveries() });
+    const result = await stub.getGate(which);
+    // Its one refusal is GATE_NOT_FOUND, a 404 as on the human route.
+    return result.ok ? Response.json({ gate: result.value }) : Response.json({ error: result }, { status: 404 });
   }
 
   /**

@@ -323,6 +323,12 @@ export const APPROVAL_REQUESTS_READ = 'approval-requests:read';
  * subscribe a push config to the decision events, approval requests included (the chat carrier).
  */
 export const APPROVAL_REQUESTS_RELAY = 'approval-requests:relay';
+/**
+ * Read a board's pending gates and one gate as a service: the chat carrier's reconciliation sweep,
+ * settling what it put in a room once the gate is decided elsewhere. Reads only; deciding a gate
+ * stays with people.
+ */
+export const GATES_READ = 'gates:read';
 
 /**
  * Resolve a SERVICE-kind hub token — superwitness, reading evidence.
