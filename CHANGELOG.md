@@ -21,6 +21,10 @@ commands, help and output, the same requests from the web app, and the same depl
 
 ### Added
 
+- A placement service can read every agent's load and health over the whole workspace
+  (`GET /v1/agents/load`, on a service token with `dispatch:read`): the cards each agent holds now
+  over every board (`inFlight`), its `capacity` (`concurrency`), and its latest run heartbeat
+  (`lastHeartbeatAt`). A board that does not answer fails the read (503) rather than undercount.
 - A placement service can reserve a ready card for one agent for 10–300 seconds
   (`PUT /v1/boards/:id/cards/:cardId/reservation`, on a service token with `dispatch:reserve`).
   Until the reservation lapses, other agents' claims pass the card over (`card_reserved` when nothing
