@@ -122,7 +122,9 @@ export async function createApprovalRequest(deps: ApprovalRequestsDeps, input: {
   const row = rowFor(deps, id);
   if (!row) throw new Error(`invariant violation: approval request ${id} missing immediately after write`);
   const body = pendingBody(deps, row);
-  // Only to the decision carrier: an agent's push config never receives a broker's arguments.
+  // Pushed only to service configs (the decision carrier): an agent's push config never receives a
+  // broker's arguments. The relay is the other recipient: it publishes to the suite's services on
+  // this tenant's subject, the ones that carry decisions to chat.
   if (body) {
     queueSubscribedPush(deps, body, { servicesOnly: true });
     queueRelay(deps, body);
