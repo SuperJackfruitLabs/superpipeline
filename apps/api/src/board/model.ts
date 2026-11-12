@@ -73,6 +73,23 @@ export interface StagePatch {
   holdFor?: number | null;
   /** `null` removes them: nothing but people decides here again. */
   checks?: CheckDef[] | null;
+  /** `null` removes it: a placement service filters on nothing here again. */
+  placement?: StagePlacement | null;
+}
+
+/**
+ * What a station must have to work a stage, for a placement service to filter on (see
+ * `board/placement.ts`). Ids from AgentPod's capability catalog; advice only, never checked on a claim.
+ */
+export interface StagePlacement {
+  /** The weakest isolation acceptable: `host` < `container` < `sandbox`. */
+  isolation?: 'host' | 'container' | 'sandbox';
+  /** Models the station may run; any one will do. */
+  models?: string[];
+  /** Catalog ids the station must have, every one (`mcp:superpipeline`, `cli:stk`, `skill:engineering`). */
+  tools?: string[];
+  /** Credential names the station must reach, every one (`forge:github`). */
+  credentials?: string[];
 }
 
 /**
@@ -123,6 +140,8 @@ export interface StageDef {
    * every stage that already exists (see `StageRequirement` in @superpipeline/contract).
    */
   requires?: { all?: string[]; any?: string[] };
+  /** What a station must have to work here, for a placement service; advice only (`board/placement.ts`). */
+  placement?: StagePlacement;
   /** `checks`: no person decides; the stage passes when every check in `checks` passes. */
   gate?: StageGateKind;
   /** Opts this human gate into immutable, digest-bound approval subjects. */

@@ -3,6 +3,7 @@ import type { BoardContext } from './context';
 import { checksError, cleanChecks } from './check-rules';
 import { cleanQuorum, quorumError } from './gate-quorum';
 import { holdForError } from './gate-release';
+import { cleanPlacement, placementError } from './placement';
 import { cleanTimeout, parseDecisionTimeout, timeoutError } from './rules';
 import type { BoardEvent, BoardInit, ProfileInput, ProfileView, Result, StageDef, StageEditor, StagePatch } from './model';
 import type { BoardSnapshot } from './views';
@@ -78,8 +79,12 @@ export function completionShapeError(c: unknown): string | null {
 }
 
 export function stageFieldError(
-  s: Pick<StageDef, 'key' | 'wipLimit' | 'instructions' | 'summary' | 'timeout' | 'quorum' | 'holdFor' | 'approvalDeciderPrincipalIds' | 'gate' | 'checks' | 'returnStage' | 'ownerKind'>,
+  s: Pick<StageDef, 'key' | 'wipLimit' | 'instructions' | 'summary' | 'timeout' | 'quorum' | 'holdFor' | 'approvalDeciderPrincipalIds' | 'gate' | 'checks' | 'returnStage' | 'ownerKind' | 'placement'>,
 ): string | null {
+  if (s.placement !== undefined) {
+    const bad = placementError(s.placement, `stage "${s.key}" placement`);
+    if (bad) return bad;
+  }
   const badChecks = checksError(s);
   if (badChecks) return badChecks;
   if (s.holdFor !== undefined) {
@@ -126,7 +131,8 @@ export function stageFieldError(
 function normalizeStageRouting(stage: StageDef): StageDef {
   // A quorum is stored in one spelling (`from` always present), so comparing policy and
   // snapshotting it onto a gate never depend on how a client wrote it.
-  const s: StageDef = stage.quorum && quorumError(stage.quorum, 'quorum', stage.approvalDeciderPrincipalIds) === null ? { ...stage, quorum: cleanQuorum(stage.quorum) } : stage;
+  const quorate: StageDef = stage.quorum && quorumError(stage.quorum, 'quorum', stage.approvalDeciderPrincipalIds) === null ? { ...stage, quorum: cleanQuorum(stage.quorum) } : stage;
+  const s = withCleanPlacement(quorate);
   if (s.ownerKind !== 'capability') return s;
   const out: StageDef = { ...s };
   if (s.owner) out.owner = capabilityTag(s.owner);
@@ -134,6 +140,14 @@ function normalizeStageRouting(stage: StageDef): StageDef {
   if (req) out.requires = req;
   else delete out.requires;
   return out;
+}
+
+/** The stage with its placement in one spelling, or without one when it states nothing. */
+function withCleanPlacement(stage: StageDef): StageDef {
+  if (stage.placement === undefined || placementError(stage.placement, 'placement') !== null) return stage;
+  const { placement, ...rest } = stage;
+  const clean = cleanPlacement(placement);
+  return clean ? { ...rest, placement: clean } : rest;
 }
 
 export async function init(deps: PipelineDeps, board: BoardInit): Promise<BoardSnapshot> {
@@ -353,6 +367,10 @@ export async function updateStage(deps: PipelineDeps, stageKey: string, patch: S
   if (patch.checks !== undefined) {
     if (patch.checks === null) delete next.checks;
     else next.checks = patch.checks;
+  }
+  if (patch.placement !== undefined) {
+    if (patch.placement === null) delete next.placement;
+    else next.placement = patch.placement;
   }
 
   const invalid = stageFieldError(next);

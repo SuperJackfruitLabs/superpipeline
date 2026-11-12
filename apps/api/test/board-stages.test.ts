@@ -417,3 +417,55 @@ describe('PATCH /v1/boards/:id/stages/:stageKey — completion', () => {
     expect((await patch(id, { completion: { reference: 'forge' } })).status).toBe(400);
   });
 });
+
+const NEEDS = { isolation: 'sandbox' as const, tools: ['cli:stk'], credentials: ['forge:github'], models: ['gpt-5'] };
+
+/** A stage's `placement` (board/placement.ts; REST and shape in stage-placement.test.ts). */
+describe('BoardDO: a stage states what a station needs', () => {
+  it('stores it on a patch and on a rework, and removes it with null', async () => {
+    await runInDurableObject(stubFor('placement-patch'), async (board: BoardDO) => {
+      await board.init({ id: 'brd_plc1', tenantId: 'tnt_a', name: 'S', stages: PIPE });
+      const r = await board.updateStage('doing', { placement: { ...NEEDS, tools: ['cli:stk', ' cli:stk'] } }, TEST_EDITOR);
+      expect(r.ok).toBe(true);
+      const doing = () => board.getState().then((s) => s.stages.find((x) => x.key === 'doing'));
+      expect((await doing())?.placement).toEqual(NEEDS);
+
+      await board.updateStage('doing', { name: 'In progress' }, TEST_EDITOR);
+      expect((await doing())?.placement).toEqual(NEEDS);
+
+      await board.updateStage('doing', { placement: null }, TEST_EDITOR);
+      expect((await doing())?.placement).toBeUndefined();
+
+      const set = await board.setStages(PIPE.map((s) => (s.key === 'todo' ? { ...s, placement: { isolation: 'container' } } : s)), TEST_EDITOR);
+      expect(set.ok).toBe(true);
+      expect((await board.getState()).stages.find((x) => x.key === 'todo')?.placement).toEqual({ isolation: 'container' });
+    });
+  });
+
+  it('an empty placement removes the field rather than storing {}', async () => {
+    await runInDurableObject(stubFor('placement-empty'), async (board: BoardDO) => {
+      await board.init({ id: 'brd_plc3', tenantId: 'tnt_a', name: 'S', stages: PIPE });
+      await board.updateStage('doing', { placement: { tools: [] } }, TEST_EDITOR);
+      const doing = (await board.getState()).stages.find((x) => x.key === 'doing');
+      expect(doing && 'placement' in doing).toBe(false);
+    });
+  });
+
+  it('is never checked on a claim: an agent with none of it still claims', async () => {
+    await runInDurableObject(stubFor('placement-claim'), async (board: BoardDO) => {
+      await board.init({
+        id: 'brd_plc4',
+        tenantId: 'tnt_a',
+        name: 'S',
+        stages: [
+          { key: 'doing', name: 'Doing', order: 0, ownerKind: 'capability', owner: 'research', placement: NEEDS },
+          { key: 'done', name: 'Done', order: 1 },
+        ],
+      });
+      const made = await board.createCard({ title: 'Work', ownerUserId: 'usr_owner' });
+      if (!made.ok) throw new Error(made.message);
+      const c = await board.claim({ agentId: 'agt_any', capabilities: ['research'] });
+      expect(c.claimed).toBe(true);
+    });
+  });
+});
