@@ -7,6 +7,7 @@ import { liveFeed, boardSnapshot, boardRename, stageEdit, stagesReplace, boardDe
 import { cardArchive, cardCreate, cardMove, cardResume, cardRead, cardEdit, cardDelete, cardSplit, cardReference, cardAttempts, cardActivities, cardEstimate } from './cards';
 import { cardChecksRead, checkOverride } from './checks';
 import { cardEligibilityRead } from './eligibility';
+import { cardReservationClear } from './reservation';
 import { commentsList, commentAdd, commentDelete, commentNeverEdited } from './comments';
 import { gatesPending, gateRead, gateResolve, gatePullBack, gateDelivery, deliveriesPending, elicitationsPending, elicitationAnswer, attentionPending } from './gates';
 import { pushConfigRegister, pushDispatch, pushDeliveries, githubConfig, triggerCreate, forgeSecret, forgeWebhook, githubWebhook } from './integrations';
@@ -46,6 +47,7 @@ export const BOARD_ROUTES: readonly Route<BoardRequest>[] = [
   route('GET', /^cards\/([^/]+)\/links$/, cardLinks),
   route('GET', /^cards\/([^/]+)\/checks$/, cardChecksRead),
   route('GET', /^cards\/([^/]+)\/eligibility$/, cardEligibilityRead),
+  route('DELETE', /^cards\/([^/]+)\/reservation$/, cardReservationClear),
   route('POST', /^cards\/([^/]+)\/checks\/([^/]+)\/override$/, checkOverride),
   route('GET', /^events$/, boardEvents),
   route('GET', /^usage$/, boardUsage),

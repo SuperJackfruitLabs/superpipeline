@@ -1,4 +1,4 @@
-import type { ClaimReason, CompletionRequirement, StageOutcome, TaskState } from '@superpipeline/contract';
+import type { CardReservation, ClaimReason, CompletionRequirement, StageOutcome, TaskState } from '@superpipeline/contract';
 import type { JsonValue } from '../json';
 import type { RunReportDraft } from '../superwitness/report';
 import type { LinkKind } from './links';
@@ -276,6 +276,12 @@ export interface CardView {
    * so a reader that does nothing with it behaves exactly as it does today.
    */
   needsHuman?: CardNeedsHuman;
+  /**
+   * The live reservation: the agent this card is held for, until when, and the placement decision
+   * that asked for it (`hold.ts`). Absent when there is none, or it has lapsed, or the card has left
+   * the stage it was made for, so a reader that does nothing with it sees today's card.
+   */
+  reservation?: CardReservation;
   archivedAt: string | null;
   currentStageKey: string;
   state: TaskState;
@@ -487,7 +493,15 @@ export type BoardErrorCode =
   | 'GATE_PENDING'
   | 'INVALID_STALE_SETTINGS'
   /** A stage's or the board's decision timeout is out of shape (`timeoutError`). */
-  | 'INVALID_TIMEOUT';
+  | 'INVALID_TIMEOUT'
+  /** A reservation was asked for a card no agent may claim now; `detail.reasons` says why. */
+  | 'CARD_NOT_CLAIMABLE'
+  /** A reservation was asked for an agent that may not claim this card now; `detail.reasons` says why. */
+  | 'AGENT_NOT_ELIGIBLE'
+  /** The card is already held for another agent, by another decision, until `detail.reservation.reservedUntil`. */
+  | 'CARD_RESERVED'
+  /** A reservation's `ttlSeconds` or `decisionId` is out of shape. */
+  | 'INVALID_RESERVATION';
 
 export type Result<T> =
   | { ok: true; value: T }

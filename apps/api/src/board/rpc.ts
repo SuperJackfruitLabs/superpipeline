@@ -1,10 +1,11 @@
-import type { GateDecision, TaskState } from '@superpipeline/contract';
+import type { CardReservation, GateDecision, TaskState } from '@superpipeline/contract';
 import type { JsonValue } from '../json';
 import type { PushSender } from '../push/deliver';
 import type { ReferenceInput } from '../references/input';
 import type { LinkKind } from './links';
 import type { AgentActivityInput, BoardEvent, BoardInit, CardView, ClaimResult, CompleteVerbInput, DecisionTimeout, EstimateView, LinkInput, LinkView, NotificationView, ProfileInput, ProfileView, PushConfigInput, PushDeliveryView, Result, RunReportDrainResult, RunReportOutboxRow, RunVerbInput, ScheduleView, StageDef, StageEditor, StagePatch, StaleCardView, StaleSettings, UsageSummary } from './model';
 import type { CardEligibility, EligibilityCandidate } from './claims';
+import type { ReserveInput } from './reservations';
 import type { FixtureBoard } from './fixture-types';
 import type { StrictDecision } from './strict-decision';
 import type { ActivityView, ApprovalRequestView, CardChecksView, ApprovalSubjectVerification, AttentionPendingBody, AttemptView, BoardSnapshot, CommentView, DeliveryPendingBody, ElicitationPendingBody, ElicitationView, EvidenceReferenceInput, GatePendingBody, GateView, ReferenceView, RunContext, RunEvidence, RunEvidenceV1 } from './views';
@@ -186,6 +187,10 @@ export interface BoardStub {
   countReadyForCapabilities(agentId: string, capabilities: string[]): Promise<number>;
   /** Whether each candidate could claim this card now, and why not (`claims.cardEligibility`). */
   cardEligibility(input: { cardId: string; agents: EligibilityCandidate[] }): Promise<Result<CardEligibility>>;
+  /** Hold a card for one agent for a short while (`reservations.reserveCard`). */
+  reserveCard(input: ReserveInput): Promise<Result<CardReservation>>;
+  /** Clear a card's hold, live or lapsed (`reservations.clearReservation`). */
+  clearReservation(input: { cardId: string; by: string }): Promise<Result<{ cleared: boolean }>>;
   /** One gate, including how it was decided. See `getGate`. */
   getGate(gateId: string): Promise<Result<GateView>>;
   getCardActivities(cardId: string): Promise<{ activities: ActivityView[]; handoff: JsonValue | null; gates: GateView[] }>;

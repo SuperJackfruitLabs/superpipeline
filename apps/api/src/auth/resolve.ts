@@ -336,6 +336,12 @@ export const GATES_READ = 'gates:read';
  * cards has no need to learn. Reads only.
  */
 export const DISPATCH_READ = 'dispatch:read';
+/**
+ * Hold a card for one agent for a short while, and clear the hold, as a service: what a placement
+ * service writes once it has chosen (charter: SuperDispatch owns the scheduler, decision 2). Its own
+ * scope, apart from `dispatch:read`: choosing is a read, holding stops other agents taking work.
+ */
+export const DISPATCH_RESERVE = 'dispatch:reserve';
 
 /**
  * Resolve a SERVICE-kind hub token — superwitness, reading evidence.

@@ -183,7 +183,9 @@ export async function boards({ request, env, url, path }: WorkerRequest, match: 
     const needed: Capability =
       request.method === 'GET' || rest.startsWith('notifications/') || /^cards\/[^/]+\/comments(\/[^/]+)?$/.test(rest)
         ? 'read'
-        : rest === '' || rest === 'stages' || rest === 'github' || rest === 'budget' || rest === 'stale' || rest === 'decision-timeout' || rest === 'profiles' || rest.startsWith('schedules')
+        : rest === '' || rest === 'stages' || rest === 'github' || rest === 'budget' || rest === 'stale' || rest === 'decision-timeout' || rest === 'profiles' || rest.startsWith('schedules') ||
+            // Releasing a card a placement service holds overrides its choice: a board admin's call.
+            /^cards\/[^/]+\/reservation$/.test(rest)
           ? 'manage'
           : 'work';
     return refuseByRole(human, needed) ?? human;

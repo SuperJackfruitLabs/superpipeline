@@ -25,6 +25,7 @@ import * as moves from './moves';
 import * as pipeline from './pipeline';
 import * as push from './push';
 import * as references from './references';
+import * as reservations from './reservations';
 import * as runHistory from './run-history';
 import * as runReports from './run-reports';
 import * as runVerbs from './run-verbs';
@@ -220,6 +221,14 @@ export class BoardDO extends DurableObject<Env> {
 
   cardEligibility(...args: OpArgs<typeof claims.cardEligibility>): ReturnType<typeof claims.cardEligibility> {
     return claims.cardEligibility(this.board, ...args);
+  }
+
+  reserveCard(...args: OpArgs<typeof reservations.reserveCard>): ReturnType<typeof reservations.reserveCard> {
+    return reservations.reserveCard(this.board, ...args);
+  }
+
+  clearReservation(...args: OpArgs<typeof reservations.clearReservation>): ReturnType<typeof reservations.clearReservation> {
+    return reservations.clearReservation(this.board, ...args);
   }
 
   countReadyForCapabilities(...args: OpArgs<typeof claims.countReadyForCapabilities>): ReturnType<typeof claims.countReadyForCapabilities> {

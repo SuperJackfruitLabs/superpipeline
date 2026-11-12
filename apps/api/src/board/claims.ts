@@ -4,6 +4,7 @@ import { newId } from '../ids';
 import type { JsonValue } from '../json';
 import { reportingEnabled } from '../superwitness/config';
 import type { BoardContext } from './context';
+import { CLEAR_HOLD_SQL, isLiveHold, liveHoldWhere } from './hold';
 import type { ClaimResult, Result, Row, RunAuth, RunVerbInput, StageDef } from './model';
 import { HEARTBEAT_TIMEOUT_MS, MAX_PUSH_ATTEMPTS } from './rules';
 
@@ -73,6 +74,12 @@ function refused(reason: ClaimReason): ClaimResult {
  *
  * Nothing handed out is `{claimed: false, reason}`: the first reason met, from the same filter the
  * eligibility read uses (`ClaimReason`). The success shape is unchanged.
+ *
+ * A reservation (`hold.ts`) is checked here and nowhere earlier. A card held for another agent is
+ * passed over, and `card_reserved` is the answer only when nothing else was claimable. A card held
+ * for this agent comes first, ahead of any higher-priority card without a hold (charter: SuperDispatch
+ * owns the scheduler, decision 3: the placement service already weighed priority when it chose).
+ * With no live hold on the board both terms are constant, and the order is today's.
  */
 export async function claim(deps: ClaimsDeps, input: Claimant & { profileKey?: string }): Promise<ClaimResult> {
   if (!deps.getMeta('boardId')) return refused('board_not_initialized');
@@ -85,14 +92,21 @@ export async function claim(deps: ClaimsDeps, input: Claimant & { profileKey?: s
 
   const claimableKeys = claimableStageKeys(deps, input.agentId, input.capabilities);
   const placeholders = claimableKeys.map(() => '?').join(', ');
+  const holdMs = deps.nowMs();
   const row = deps.sql
     .exec(
       `SELECT * FROM cards c WHERE ${deps.claimableWhere(placeholders)}
-       ORDER BY c.priority DESC, (c.due_at IS NULL), c.due_at ASC, c.created_at ASC LIMIT 1`,
+         AND NOT (${liveHoldWhere()} AND c.reserved_for != ?)
+       ORDER BY (${liveHoldWhere()} AND c.reserved_for = ?) DESC,
+         c.priority DESC, (c.due_at IS NULL), c.due_at ASC, c.created_at ASC LIMIT 1`,
       ...claimableKeys,
+      holdMs,
+      input.agentId,
+      holdMs,
+      input.agentId,
     )
     .toArray()[0];
-  if (!row) return refused('no_matching_card');
+  if (!row) return refused(heldForOthers(deps, placeholders, claimableKeys, input.agentId, holdMs) ? 'card_reserved' : 'no_matching_card');
 
   // ── The control pair, at the moment the work is handed out ──────────────
   //
@@ -119,6 +133,9 @@ export async function claim(deps: ClaimsDeps, input: Claimant & { profileKey?: s
     return refused('grant_denied');
   }
 
+  // The hold this claim fulfils, if any; cleared with the claim, live or dead, so it never outlives it.
+  const fulfils = isLiveHold(row, holdMs) && typeof row.reserved_decision_id === 'string' ? row.reserved_decision_id : null;
+  if (row.reserved_for !== null && row.reserved_for !== undefined) deps.sql.exec(CLEAR_HOLD_SQL, row.id);
   const card = deps.rowToCard(row);
   const leaseEpoch = Number(row.claim_seq) + 1;
   const runId = newId('run');
@@ -148,7 +165,7 @@ export async function claim(deps: ClaimsDeps, input: Claimant & { profileKey?: s
     card.id,
   );
   deps.reportRun(runId);
-  deps.emit('card.claimed', { cardId: card.id, agentId: input.agentId, runId });
+  deps.emit('card.claimed', { cardId: card.id, agentId: input.agentId, runId, ...(fulfils !== null ? { reservationDecisionId: fulfils } : {}) });
   await deps.scheduleReclaim();
 
   const stage = deps.stages().find((s) => s.key === card.currentStageKey)!;
@@ -162,6 +179,17 @@ export async function claim(deps: ClaimsDeps, input: Claimant & { profileKey?: s
     handoff,
     lastFailure: lastFailureAt(deps, card.id, stage.key, runId),
   };
+}
+
+/** Whether a card this claimant could otherwise take is held for someone else right now. */
+function heldForOthers(deps: Pick<ClaimsDeps, 'claimableWhere' | 'sql'>, placeholders: string, keys: string[], agentId: string, nowMs: number): boolean {
+  return (
+    Number(
+      deps.sql
+        .exec(`SELECT COUNT(*) AS n FROM cards c WHERE ${deps.claimableWhere(placeholders)} AND ${liveHoldWhere()} AND c.reserved_for != ?`, ...keys, nowMs, agentId)
+        .one().n,
+    ) > 0
+  );
 }
 
 /**
@@ -238,8 +266,9 @@ export interface CardEligibility {
 /**
  * The eligibility read: for this card at its current stage, every candidate with `eligible` and
  * the reasons it is not, from the claim's own filter (`claimantRefusals`, `grantRefused`) plus the
- * card's own claimability (`claimableWhere`'s conditions, via `isHeldBack` for blockers). Reads
- * only: nothing is parked, reserved or claimed.
+ * card's own claimability (`claimableWhere`'s conditions, via `isHeldBack` for blockers), and a live
+ * reservation for someone else (`card_reserved`, per agent, since the agent it is held for may still
+ * claim it). Reads only: nothing is parked, reserved or claimed.
  *
  * An agent is eligible exactly when the card has no reasons and the agent has none.
  */
@@ -257,10 +286,12 @@ export async function cardEligibility(
   else if (deps.isHeldBack(input.cardId)) reasons.push('card_held_back');
   const stage = deps.stages().find((s) => s.key === stageKey);
   if (!stage || !isAgentClaimable(stage)) reasons.push('stage_not_agent_claimable');
+  const holdMs = deps.nowMs();
   const agents: CardEligibility['agents'] = [];
   for (const who of input.agents) {
     const mine: ClaimReason[] = claimantRefusals(deps, who, stageKey);
     if (await grantRefused(deps, who, row)) mine.push('grant_denied');
+    if (isLiveHold(row, holdMs) && row.reserved_for !== who.agentId) mine.push('card_reserved');
     agents.push({ agentId: who.agentId, name: who.name, principalId: who.principalId, eligible: reasons.length === 0 && mine.length === 0, reasons: mine });
   }
   return { ok: true, value: { cardId: input.cardId, stageKey, reasons, agents } };
@@ -473,6 +504,10 @@ export function notifyWorkAvailable(deps: ClaimsDeps, cardId: string): void {
   if (deps.boardOverBudget()) return;
   const stage = deps.stages().find((s) => s.key === card.currentStageKey);
   if (!stage || !isAgentClaimable(stage)) return;
+  // A held card is announced to the agent it is held for only: anyone else would be refused it by
+  // the claim. When the hold lapses no one is pinged again (nothing sweeps); the others find the
+  // card on their next claim, within their poll interval.
+  const heldFor = card.reservation?.agentId ?? null;
   const boardId = deps.getMeta('boardId');
   const ts = deps.now();
   for (const cfg of deps.sql.exec(`SELECT * FROM push_configs`).toArray()) {
@@ -480,6 +515,7 @@ export function notifyWorkAvailable(deps: ClaimsDeps, cardId: string): void {
     if (!events.includes('work.available')) continue;
     const caps = JSON.parse(cfg.capabilities_json as string) as string[];
     if (typeof cfg.agent_id !== 'string' || !stageMatches(stage, cfg.agent_id, caps)) continue;
+    if (heldFor !== null && cfg.agent_id !== heldFor) continue;
     const body = JSON.stringify({ event: 'work.available', boardId, cardId, stageKey: stage.key, ts });
     deps.sql.exec(
       `INSERT INTO push_deliveries (config_id, url, body, status, attempts, created_at) VALUES (?, ?, ?, 'pending', 0, ?)`,

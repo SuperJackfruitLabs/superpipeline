@@ -1,4 +1,5 @@
-import type { TaskState } from '@superpipeline/contract';
+import type { CardReservation, TaskState } from '@superpipeline/contract';
+import { reservationOf } from './hold';
 import type { JsonValue } from '../json';
 import { cardIdsOf, isRecordEvent, type RecordPushBody } from '../push/events';
 import type { BoardContext } from './context';
@@ -21,6 +22,7 @@ export type CardStoreDeps = Pick<
   | 'childrenCost'
   | 'ctx'
   | 'now'
+  | 'nowMs'
   | 'openChildCount'
   | 'parentIdOf'
   | 'scheduleReclaim'
@@ -139,6 +141,13 @@ export function allCards(deps: CardStoreDeps): CardView[] {
     });
 }
 
+/** `{ reservation }` when the card carries a live hold, else nothing: omitted, like `needsHuman`. */
+function reservationField(row: Row, nowMs: number): { reservation?: CardReservation } {
+  if (row.reserved_for === null || row.reserved_for === undefined) return {};
+  const reservation = reservationOf(row, nowMs);
+  return reservation ? { reservation } : {};
+}
+
 export function rowToCard(deps: CardStoreDeps, row: Row, pre?: {
     costUsd: number;
     attemptCount: number;
@@ -188,6 +197,7 @@ export function rowToCard(deps: CardStoreDeps, row: Row, pre?: {
     ...(row.needs_human_json
       ? { needsHuman: JSON.parse(row.needs_human_json as string) as CardNeedsHuman }
       : {}),
+    ...reservationField(row, deps.nowMs()),
     archivedAt: (row.archived_at as string | null) ?? null,
     currentStageKey: row.current_stage_key as string,
     state: row.state as TaskState,
