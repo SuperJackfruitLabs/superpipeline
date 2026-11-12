@@ -384,8 +384,12 @@ with `X-Agent-Id`. (Until 2026-10-07 the route was human-only, so the hub could 
 no production board had a config: every gate reached its room via the hub's 5-minute sweep.) When a
 card becomes **claimable** (created at / advanced into / released or reclaimed back to a
 capability-owned stage), `notifyWorkAvailable` queues a `work.available` delivery into `push_deliveries`
-for every subscribed config whose `capabilities` match the stage's owner — so an agent is only pinged
-about work it could actually claim. `dispatchPushDeliveries(sender)` drains pending rows, **signs each
+for every subscribed config a claim would hand the card to — the claim path's own matcher
+(`stageMatches`), so a stage routed by `requires` (`all`/`any`) reaches every config meeting it and an
+agent-owned stage only that agent. A config's `capabilities` are chosen as a claim chooses them (an
+agent token's own catalog row, else the body) and expanded through the workspace's implication edges
+when it registers; registering again picks up edges added since. So an agent is only pinged about work
+it could actually claim. `dispatchPushDeliveries(sender)` drains pending rows, **signs each
 body** (`X-Superpipeline-Signature: sha256=…`, HMAC over the exact bytes — shared with the inbound GitHub
 verifier, `src/crypto/hmac.ts`) and POSTs it (`src/push/deliver.ts`), marking each sent/failed.
 `POST …/push/dispatch` triggers a drain; `GET …/push/deliveries` inspects the queue. URLs are checked

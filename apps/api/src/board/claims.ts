@@ -408,8 +408,11 @@ export async function summaryCounts(deps: ClaimsDeps): Promise<{ cardCount: numb
 
 /**
  * Queue `work.available` deliveries for a claimable card, only to configs that could actually claim
- * it (docs/05 §4): a capability stage targets configs advertising that capability; an agent-owned
- * stage targets only that agent. No pings while the board is over budget (claim would refuse).
+ * it (docs/05 §4). A config is matched by `stageMatches`, the claim path's own stage matcher, so a
+ * `requires` stage (`all`/`any`) reaches every config that meets it and an agent-owned stage only
+ * that agent. The config's capabilities are its EFFECTIVE set: the route expands them through the
+ * workspace's implication edges when the config is registered, as a claim does at the same
+ * boundary. No pings while the board is over budget (claim would refuse).
  */
 export function notifyWorkAvailable(deps: ClaimsDeps, cardId: string): void {
   const card = deps.getCard(cardId);
@@ -424,18 +427,13 @@ export function notifyWorkAvailable(deps: ClaimsDeps, cardId: string): void {
   if (deps.boardOverBudget()) return;
   const stage = deps.stages().find((s) => s.key === card.currentStageKey);
   if (!stage || !isAgentClaimable(stage)) return;
-  const ownerCapability = stage.ownerKind === 'capability' ? stage.owner : undefined;
-  const ownerAgent = stage.ownerKind === 'agent' ? stage.owner : undefined;
   const boardId = deps.getMeta('boardId');
   const ts = deps.now();
   for (const cfg of deps.sql.exec(`SELECT * FROM push_configs`).toArray()) {
     const events = JSON.parse(cfg.events_json as string) as string[];
     if (!events.includes('work.available')) continue;
-    if (ownerAgent && (cfg.agent_id as string) !== ownerAgent) continue;
-    if (ownerCapability) {
-      const caps = JSON.parse(cfg.capabilities_json as string) as string[];
-      if (!caps.includes(ownerCapability)) continue;
-    }
+    const caps = JSON.parse(cfg.capabilities_json as string) as string[];
+    if (typeof cfg.agent_id !== 'string' || !stageMatches(stage, cfg.agent_id, caps)) continue;
     const body = JSON.stringify({ event: 'work.available', boardId, cardId, stageKey: stage.key, ts });
     deps.sql.exec(
       `INSERT INTO push_deliveries (config_id, url, body, status, attempts, created_at) VALUES (?, ?, ?, 'pending', 0, ?)`,
