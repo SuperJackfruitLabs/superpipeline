@@ -301,6 +301,12 @@ export interface CardView {
    * the stage it was made for, so a reader that does nothing with it sees today's card.
    */
   reservation?: CardReservation;
+  /**
+   * When the card's placement window ends (ISO), while it is inside one (`placement-window.ts`):
+   * pull passes it over until then unless it is held for the claimant. Absent otherwise, so a board
+   * with no window reads as before.
+   */
+  placementWindowUntil?: string;
   archivedAt: string | null;
   currentStageKey: string;
   state: TaskState;
@@ -520,7 +526,9 @@ export type BoardErrorCode =
   /** The card is already held for another agent, by another decision, until `detail.reservation.reservedUntil`. */
   | 'CARD_RESERVED'
   /** A reservation's `ttlSeconds` or `decisionId` is out of shape. */
-  | 'INVALID_RESERVATION';
+  | 'INVALID_RESERVATION'
+  /** A board's scheduling settings are out of shape (`placementWindowSeconds`). */
+  | 'INVALID_SCHEDULING';
 
 export type Result<T> =
   | { ok: true; value: T }

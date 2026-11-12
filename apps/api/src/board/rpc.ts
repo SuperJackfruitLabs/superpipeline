@@ -6,6 +6,7 @@ import type { LinkKind } from './links';
 import type { AgentActivityInput, BoardEvent, BoardInit, CardView, ClaimResult, CompleteVerbInput, DecisionTimeout, EstimateView, LinkInput, LinkView, NotificationView, ProfileInput, ProfileView, PushConfigInput, PushDeliveryView, Result, RunReportDrainResult, RunReportOutboxRow, RunVerbInput, ScheduleView, StageDef, StageEditor, StagePatch, StaleCardView, StaleSettings, UsageSummary } from './model';
 import type { CardEligibility, EligibilityCandidate } from './claims';
 import type { ReserveInput } from './reservations';
+import type { SchedulingSettings } from './placement-window';
 import type { FixtureBoard } from './fixture-types';
 import type { StrictDecision } from './strict-decision';
 import type { ActivityView, ApprovalRequestView, CardChecksView, ApprovalSubjectVerification, AttentionPendingBody, AttemptView, BoardSnapshot, CommentView, DeliveryPendingBody, ElicitationPendingBody, ElicitationView, EvidenceReferenceInput, GatePendingBody, GateView, ReferenceView, RunContext, RunEvidence, RunEvidenceV1 } from './views';
@@ -224,6 +225,10 @@ export interface BoardStub {
   staleCards(input: { nowIso: string; afterHours?: number; attention?: boolean }): Promise<StaleCardView[]>;
   setStaleSettings(input: { enabled?: boolean; afterHours?: number }): Promise<Result<StaleSettings>>;
   setDecisionTimeout(value: unknown): Promise<Result<{ decisionTimeout: DecisionTimeout | null }>>;
+  /** Set the board's placement window; 0 turns it off (`placement-window.ts`). */
+  setPlacementWindow(input: { placementWindowSeconds: number; by: string }): Promise<Result<SchedulingSettings>>;
+  /** The board's scheduling settings; null when the board is not initialized. */
+  schedulingSettings(): Promise<SchedulingSettings | null>;
   createSchedule(input: {
     title: string;
     rule: string;

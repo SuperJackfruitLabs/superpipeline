@@ -1,11 +1,13 @@
 import { type ClaimReason, needsYou, stageCapabilitiesMet } from '@superpipeline/contract';
 import { grantPermitsAgent, isControlPairEnforced } from '../auth/grant-match';
 import { newId } from '../ids';
+import { RELAY_CONFIG_ID } from '../push/relay';
 import type { JsonValue } from '../json';
 import { reportingEnabled } from '../superwitness/config';
 import type { BoardContext } from './context';
 import { CLEAR_HOLD_SQL, isLiveHold, liveHoldWhere } from './hold';
-import type { ClaimResult, Result, Row, RunAuth, RunVerbInput, StageDef } from './model';
+import type { CardView, ClaimResult, Result, Row, RunAuth, RunVerbInput, StageDef } from './model';
+import { inWindowWhere, placementWindowMs, placementWindowUntil } from './placement-window';
 import { HEARTBEAT_TIMEOUT_MS, MAX_PUSH_ATTEMPTS } from './rules';
 
 /**
@@ -80,6 +82,10 @@ function refused(reason: ClaimReason): ClaimResult {
  * for this agent comes first, ahead of any higher-priority card without a hold (charter: SuperDispatch
  * owns the scheduler, decision 3: the placement service already weighed priority when it chose).
  * With no live hold on the board both terms are constant, and the order is today's.
+ *
+ * On a board with a placement window (`placement-window.ts`), a card inside its window is passed
+ * over too, unless it is held for this claimant, and `placement_window` is the answer when nothing
+ * else was claimable. A board with no window runs exactly the query it ran before.
  */
 export async function claim(deps: ClaimsDeps, input: Claimant & { profileKey?: string }): Promise<ClaimResult> {
   if (!deps.getMeta('boardId')) return refused('board_not_initialized');
@@ -93,20 +99,28 @@ export async function claim(deps: ClaimsDeps, input: Claimant & { profileKey?: s
   const claimableKeys = claimableStageKeys(deps, input.agentId, input.capabilities);
   const placeholders = claimableKeys.map(() => '?').join(', ');
   const holdMs = deps.nowMs();
+  const windowMs = placementWindowMs(deps);
+  // Only on a board with a window: inside it, a card goes to the agent it is held for or to no one.
+  const window = windowMs > 0 ? { sql: `AND NOT (${inWindowWhere()} AND NOT ${liveHoldWhere()})`, params: [windowMs, holdMs, holdMs] } : { sql: '', params: [] };
   const row = deps.sql
     .exec(
       `SELECT * FROM cards c WHERE ${deps.claimableWhere(placeholders)}
          AND NOT (${liveHoldWhere()} AND c.reserved_for != ?)
+         ${window.sql}
        ORDER BY (${liveHoldWhere()} AND c.reserved_for = ?) DESC,
          c.priority DESC, (c.due_at IS NULL), c.due_at ASC, c.created_at ASC LIMIT 1`,
       ...claimableKeys,
       holdMs,
       input.agentId,
+      ...window.params,
       holdMs,
       input.agentId,
     )
     .toArray()[0];
-  if (!row) return refused(heldForOthers(deps, placeholders, claimableKeys, input.agentId, holdMs) ? 'card_reserved' : 'no_matching_card');
+  if (!row) {
+    if (heldForOthers(deps, placeholders, claimableKeys, input.agentId, holdMs)) return refused('card_reserved');
+    return refused(windowMs > 0 && inWindowCount(deps, placeholders, claimableKeys, windowMs, holdMs) > 0 ? 'placement_window' : 'no_matching_card');
+  }
 
   // ── The control pair, at the moment the work is handed out ──────────────
   //
@@ -136,6 +150,8 @@ export async function claim(deps: ClaimsDeps, input: Claimant & { profileKey?: s
   // The hold this claim fulfils, if any; cleared with the claim, live or dead, so it never outlives it.
   const fulfils = isLiveHold(row, holdMs) && typeof row.reserved_decision_id === 'string' ? row.reserved_decision_id : null;
   if (row.reserved_for !== null && row.reserved_for !== undefined) deps.sql.exec(CLEAR_HOLD_SQL, row.id);
+  // A claimed card is no longer waiting: its window, if any, is over. It opens again when it is next ready.
+  if (row.ready_since_ms !== null && row.ready_since_ms !== undefined) deps.sql.exec(`UPDATE cards SET ready_since_ms = NULL WHERE id = ?`, row.id);
   const card = deps.rowToCard(row);
   const leaseEpoch = Number(row.claim_seq) + 1;
   const runId = newId('run');
@@ -189,6 +205,15 @@ function heldForOthers(deps: Pick<ClaimsDeps, 'claimableWhere' | 'sql'>, placeho
         .exec(`SELECT COUNT(*) AS n FROM cards c WHERE ${deps.claimableWhere(placeholders)} AND ${liveHoldWhere()} AND c.reserved_for != ?`, ...keys, nowMs, agentId)
         .one().n,
     ) > 0
+  );
+}
+
+/** How many cards this claimant could otherwise take are inside their placement window, not held. */
+function inWindowCount(deps: Pick<ClaimsDeps, 'claimableWhere' | 'sql'>, placeholders: string, keys: string[], windowMs: number, nowMs: number): number {
+  return Number(
+    deps.sql
+      .exec(`SELECT COUNT(*) AS n FROM cards c WHERE ${deps.claimableWhere(placeholders)} AND ${inWindowWhere()} AND NOT ${liveHoldWhere()}`, ...keys, windowMs, nowMs, nowMs)
+      .one().n,
   );
 }
 
@@ -260,6 +285,12 @@ export interface CardEligibility {
   stageKey: string;
   /** Reasons no agent may claim the card now (board and card); empty when the card is claimable. */
   reasons: ClaimReason[];
+  /**
+   * When the card's placement window ends (ISO), while it is inside one; null otherwise. Not a reason:
+   * the window holds the card for placement, so a reservation made inside it is claimable at once,
+   * and an agent eligible here may claim the card once it ends.
+   */
+  placementWindowUntil: string | null;
   agents: Array<{ agentId: string; name: string; principalId: string | null; eligible: boolean; reasons: ClaimReason[] }>;
 }
 
@@ -294,7 +325,7 @@ export async function cardEligibility(
     if (isLiveHold(row, holdMs) && row.reserved_for !== who.agentId) mine.push('card_reserved');
     agents.push({ agentId: who.agentId, name: who.name, principalId: who.principalId, eligible: reasons.length === 0 && mine.length === 0, reasons: mine });
   }
-  return { ok: true, value: { cardId: input.cardId, stageKey, reasons, agents } };
+  return { ok: true, value: { cardId: input.cardId, stageKey, reasons, placementWindowUntil: placementWindowUntil(row, placementWindowMs(deps), holdMs), agents } };
 }
 
 /**
@@ -430,8 +461,17 @@ export async function scheduleReclaim(deps: ClaimsDeps): Promise<void> {
       MAX_PUSH_ATTEMPTS,
     )
     .one();
+  // A `card.ready` not yet tried goes at once: it is worth something only inside the placement
+  // window it announces (`ready.ts`). Everything else keeps the backoff.
+  const urgent =
+    Number(queued.n) > 0 &&
+    Number(
+      deps.sql
+        .exec(`SELECT COUNT(*) AS n FROM push_deliveries WHERE config_id = ? AND status = 'pending' AND attempts = 0 AND json_extract(body, '$.event') = 'card.ready'`, RELAY_CONFIG_ID)
+        .one().n,
+    ) > 0;
   const drainAt =
-    Number(queued.n) > 0 ? deps.nowMs() + PUSH_DRAIN_BASE_MS * 2 ** Number(queued.a ?? 0) : null;
+    Number(queued.n) > 0 ? deps.nowMs() + (urgent ? 0 : PUSH_DRAIN_BASE_MS * 2 ** Number(queued.a ?? 0)) : null;
 
   // Third job on the one alarm: the superwitness outbox. Only while reporting is on, so rows left
   // behind when it was switched off cannot wake the board on a loop.
@@ -492,18 +532,9 @@ export async function summaryCounts(deps: ClaimsDeps): Promise<{ cardCount: numb
  * boundary. No pings while the board is over budget (claim would refuse).
  */
 export function notifyWorkAvailable(deps: ClaimsDeps, cardId: string): void {
-  const card = deps.getCard(cardId);
-  // `state`/`archivedAt` mirror `claimableWhere`'s own conditions, by hand: this is a JS
-  // predicate over a `CardView`, not SQL, so it cannot call that helper directly. The blocked
-  // rule (unresolved `blocks`, open `parent` child) no longer needs its own hand-copy, though —
-  // it comes from the same `blockedWhere()` fragment `claimableWhere` uses, via `isHeldBack`, so
-  // the two cannot drift apart the way the archived check once risked. Any FUTURE eligibility
-  // condition added to `claimableWhere` still needs its equivalent added here too, or a push
-  // fires for work `claim` will refuse.
-  if (!card || card.state !== 'submitted' || card.archivedAt || deps.isHeldBack(cardId)) return;
-  if (deps.boardOverBudget()) return;
-  const stage = deps.stages().find((s) => s.key === card.currentStageKey);
-  if (!stage || !isAgentClaimable(stage)) return;
+  const ready = readyAt(deps, cardId);
+  if (!ready) return;
+  const { card, stage } = ready;
   // A held card is announced to the agent it is held for only: anyone else would be refused it by
   // the claim. When the hold lapses no one is pinged again (nothing sweeps); the others find the
   // card on their next claim, within their poll interval.
@@ -525,6 +556,27 @@ export function notifyWorkAvailable(deps: ClaimsDeps, cardId: string): void {
       ts,
     );
   }
+}
+
+/**
+ * The card and its stage when it is ready to be claimed by some agent now: waiting, not archived,
+ * not held back, the board under budget, at a stage an agent may claim. Null otherwise. What
+ * `notifyWorkAvailable` pings for and what opens a placement window.
+ */
+export function readyAt(deps: Pick<ClaimsDeps, 'boardOverBudget' | 'getCard' | 'isHeldBack' | 'stages'>, cardId: string): { card: CardView; stage: StageDef } | null {
+  const card = deps.getCard(cardId);
+  // `state`/`archivedAt` mirror `claimableWhere`'s own conditions, by hand: this is a JS
+  // predicate over a `CardView`, not SQL, so it cannot call that helper directly. The blocked
+  // rule (unresolved `blocks`, open `parent` child) no longer needs its own hand-copy, though —
+  // it comes from the same `blockedWhere()` fragment `claimableWhere` uses, via `isHeldBack`, so
+  // the two cannot drift apart the way the archived check once risked. Any FUTURE eligibility
+  // condition added to `claimableWhere` still needs its equivalent added here too, or a push
+  // fires for work `claim` will refuse.
+  if (!card || card.state !== 'submitted' || card.archivedAt || deps.isHeldBack(cardId)) return null;
+  if (deps.boardOverBudget()) return null;
+  const stage = deps.stages().find((s) => s.key === card.currentStageKey);
+  if (!stage || !isAgentClaimable(stage)) return null;
+  return { card, stage };
 }
 
 /**

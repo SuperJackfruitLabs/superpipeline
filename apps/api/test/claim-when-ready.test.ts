@@ -38,7 +38,13 @@ async function card(board: BoardDO, title: string, stageKey = 'build'): Promise<
   return r.value.id;
 }
 
-const relayed = async (board: BoardDO) => (await board.getPushDeliveries()).filter((d) => d.configId === RELAY_CONFIG_ID).map((d) => JSON.parse(d.body).event as string);
+/** The event a queued body names, or '' when it names none. */
+function eventOf(body: string): string {
+  const parsed: unknown = JSON.parse(body);
+  return typeof parsed === 'object' && parsed !== null && 'event' in parsed ? String(parsed.event) : '';
+}
+
+const relayed = async (board: BoardDO) => (await board.getPushDeliveries()).filter((d) => d.configId === RELAY_CONFIG_ID).map((d) => eventOf(d.body));
 
 describe('a card that just became ready, on a board with no placement window', () => {
   it('is claimable at once when it is created in an agent stage', async () => {

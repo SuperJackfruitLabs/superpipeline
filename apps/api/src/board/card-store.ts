@@ -1,5 +1,6 @@
 import type { CardReservation, TaskState } from '@superpipeline/contract';
 import { reservationOf } from './hold';
+import { placementWindowMs, placementWindowUntil } from './placement-window';
 import type { JsonValue } from '../json';
 import { cardIdsOf, isRecordEvent, type RecordPushBody } from '../push/events';
 import type { BoardContext } from './context';
@@ -148,6 +149,13 @@ function reservationField(row: Row, nowMs: number): { reservation?: CardReservat
   return reservation ? { reservation } : {};
 }
 
+/** `{ placementWindowUntil }` while the card is inside its placement window, else nothing. */
+function windowField(deps: CardStoreDeps, row: Row): { placementWindowUntil?: string } {
+  if (row.ready_since_ms === null || row.ready_since_ms === undefined) return {};
+  const until = placementWindowUntil(row, placementWindowMs({ getMeta: (k) => getMeta(deps, k) }), deps.nowMs());
+  return until ? { placementWindowUntil: until } : {};
+}
+
 export function rowToCard(deps: CardStoreDeps, row: Row, pre?: {
     costUsd: number;
     attemptCount: number;
@@ -198,6 +206,7 @@ export function rowToCard(deps: CardStoreDeps, row: Row, pre?: {
       ? { needsHuman: JSON.parse(row.needs_human_json as string) as CardNeedsHuman }
       : {}),
     ...reservationField(row, deps.nowMs()),
+    ...windowField(deps, row),
     archivedAt: (row.archived_at as string | null) ?? null,
     currentStageKey: row.current_stage_key as string,
     state: row.state as TaskState,

@@ -355,6 +355,17 @@ export function migrateCardAndRunColumns(sql: SqlStorage): void {
       // column already exists
     }
   }
+  /**
+   * When the card last became ready to claim, on a board with a placement window
+   * (`placement-window.ts`): the claim holds it back from pull until `ready_since_ms` plus the
+   * window, unless it is held for the claimant. Written only while the board has a window, cleared on
+   * claim; null on every card of a board that has none.
+   */
+  try {
+    sql.exec(`ALTER TABLE cards ADD COLUMN ready_since_ms INTEGER`);
+  } catch {
+    // column already exists
+  }
   // Only `project_id` is indexed: `projectSummary` is the one query that filters cards by it,
   // and nothing here looks cards up by `milestone_id` on its own.
   sql.exec(`CREATE INDEX IF NOT EXISTS idx_cards_project ON cards(project_id)`);
