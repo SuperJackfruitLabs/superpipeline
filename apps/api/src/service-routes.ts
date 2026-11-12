@@ -18,6 +18,8 @@ const APPROVAL_REQUEST = /^\/v1\/boards\/(brd_[0-9a-f]{16})\/approval-requests\/
 const QUESTIONS_PENDING = /^\/v1\/boards\/(brd_[0-9a-f]{16})\/elicitations\/pending$/;
 /** `gates/pending`, or one gate (`gate_<hex>`, which `pending` never matches). */
 const GATES = /^\/v1\/boards\/(brd_[0-9a-f]{16})\/gates\/(pending|gate_[0-9a-f]{16})$/;
+/** The same sweep's other reads: manual deliveries still owed a link, and cards waiting on a person. */
+const FOLLOW_UPS = /^\/v1\/boards\/(brd_[0-9a-f]{16})\/(deliveries|attention)\/pending$/;
 const APPROVAL_DELIVERY = /^\/v1\/boards\/(brd_[0-9a-f]{16})\/approval-subjects\/(aps_[0-9a-f]{16})\/delivery$/;
 
 /** Decoded without verifying, only to route: resolveHubService verifies before anything is read. */
@@ -46,7 +48,10 @@ export async function serviceRoute(request: Request, env: Env, path: string): Pr
   const requestRead = request.method === 'GET' ? APPROVAL_REQUEST.exec(path) : null;
   const questions = request.method === 'GET' ? QUESTIONS_PENDING.exec(path) : null;
   const gates = request.method === 'GET' ? GATES.exec(path) : null;
-  if ((!read && !push && !approval && !approvalDelivery && !requestCreate && !requestRead && !questions && !gates) || !looksLikeService(request)) return null;
+  const followUps = request.method === 'GET' ? FOLLOW_UPS.exec(path) : null;
+  if ((!read && !push && !approval && !approvalDelivery && !requestCreate && !requestRead && !questions && !gates && !followUps) || !looksLikeService(request)) {
+    return null;
+  }
 
   const svc = await resolveHubService(request, env);
   if (!svc) return refuse(401, 'UNAUTHORIZED', 'a service token for a mapped workspace is required');
@@ -77,6 +82,20 @@ export async function serviceRoute(request: Request, env: Env, path: string): Pr
     const result = await stub.getGate(which);
     // Its one refusal is GATE_NOT_FOUND, a 404 as on the human route.
     return result.ok ? Response.json({ gate: result.value }) : Response.json({ error: result }, { status: 404 });
+  }
+
+  /**
+   * The rest of the carrier's sweep, on the same `gates:read` and GET only: manual deliveries still
+   * owed their live link, and cards waiting on a person. Recording a link, switching the mode,
+   * resuming and archiving stay on the human routes.
+   */
+  if (followUps) {
+    if (!svc.scopes.includes(GATES_READ)) return refuse(403, 'FORBIDDEN', 'this principal does not hold gates:read');
+    const [, boardId, which] = followUps;
+    if (!(await boardNamesById(env.DB, svc.tenantId, [boardId])).has(boardId)) return notFound('board');
+    const stub = boardStub(env, svc.tenantId, boardId);
+    if (which === 'deliveries') return Response.json({ deliveries: await stub.pendingDeliveryFollowUps() });
+    return Response.json({ attention: await stub.pendingAttention() });
   }
 
   /**
