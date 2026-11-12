@@ -3,7 +3,7 @@ import { newId } from '../ids';
 import type { BoardContext } from './context';
 import type { GateOptionMeaning } from './gate-option';
 import type { Result, Row } from './model';
-import { queueSubscribedPush } from './push';
+import { queueRelay, queueSubscribedPush } from './push';
 import { posterSubjectEnvelope, StkCapabilitySubject, subjectAnswerError } from './question-subject';
 import type { ApprovalRequestView, ElicitationPendingBody } from './views';
 
@@ -25,7 +25,7 @@ import type { ApprovalRequestView, ElicitationPendingBody } from './views';
  */
 
 /** What approval requests need from the rest of the board. */
-export type ApprovalRequestsDeps = Pick<BoardContext, 'emit' | 'getMeta' | 'now' | 'nowMs' | 'sql'>;
+export type ApprovalRequestsDeps = Pick<BoardContext, 'emit' | 'env' | 'getMeta' | 'now' | 'nowMs' | 'sql'>;
 
 export const QUESTION_MAX = 1000;
 
@@ -122,8 +122,13 @@ export async function createApprovalRequest(deps: ApprovalRequestsDeps, input: {
   const row = rowFor(deps, id);
   if (!row) throw new Error(`invariant violation: approval request ${id} missing immediately after write`);
   const body = pendingBody(deps, row);
-  // Only to the decision carrier: an agent's push config never receives a broker's arguments.
-  if (body) queueSubscribedPush(deps, body, { servicesOnly: true });
+  // Pushed only to service configs (the decision carrier): an agent's push config never receives a
+  // broker's arguments. The relay is the other recipient: it publishes to the suite's services on
+  // this tenant's subject, the ones that carry decisions to chat.
+  if (body) {
+    queueSubscribedPush(deps, body, { servicesOnly: true });
+    queueRelay(deps, body);
+  }
   return { ok: true, value: { created: true, approvalRequest: viewOf(deps, row) } };
 }
 

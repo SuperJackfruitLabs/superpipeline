@@ -2,7 +2,7 @@ import type { BoardContext } from './context';
 import { deciderError, gateVariants } from './gate-choice';
 import { type DeciderRole, gateQuorum } from './gate-quorum';
 import type { CardView, Result, Row } from './model';
-import { queueSubscribedPush } from './push';
+import { queueRelay, queueSubscribedPush } from './push';
 import { COMMENT_MAX_BYTES, record } from './rules';
 import type { DecisionPulledBackBody, DecisionReleasedBody, GateReleaseEnvelope, GateView } from './views';
 
@@ -147,6 +147,7 @@ export type GateReleaseDeps = Pick<
   | 'actOnApproval'
   | 'approvalSubjectView'
   | 'emit'
+  | 'env'
   | 'getCardRow'
   | 'getMeta'
   | 'mustGetCard'
@@ -216,6 +217,7 @@ export async function releaseHeldApprovals(deps: GateReleaseDeps, nowIso: string
         ...(reason !== null ? { reason } : {}),
       };
       queueSubscribedPush(deps, body);
+      queueRelay(deps, body);
       deps.emit('decision.released', { gateId: gate.id, cardId: gate.card_id, outcome: body.outcome, ...(reason !== null ? { reason } : {}) });
       if (reason !== null) deps.notify('approval-release-blocked', gate.card_id, `A held approval did not go ahead: ${reason}.`);
       released += 1;
@@ -297,6 +299,7 @@ export async function pullBackApproval(
     comment,
   };
   queueSubscribedPush(deps, body);
+  queueRelay(deps, body);
   deps.emit('decision.pulled_back', { gateId: input.gateId, cardId, by: input.by });
   await deps.scheduleReclaim();
   return { ok: true, value: deps.mustGetCard(cardId) };

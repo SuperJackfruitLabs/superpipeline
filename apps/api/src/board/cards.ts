@@ -20,6 +20,7 @@ export type CardsDeps = Pick<
   | 'createCard'
   | 'createChildCard'
   | 'ctx'
+  | 'env'
   | 'emit'
   | 'endReviewsOfArchivedCard'
   | 'getCard'

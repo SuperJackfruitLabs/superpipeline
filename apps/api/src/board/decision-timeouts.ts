@@ -1,6 +1,6 @@
 import type { BoardContext } from './context';
 import type { DecisionDeadline, DecisionKind, DecisionTimeout, Result, StageDef } from './model';
-import { queueSubscribedPush } from './push';
+import { queueRelay, queueSubscribedPush } from './push';
 import { cleanTimeout, parseDecisionTimeout, timeoutError } from './rules';
 
 /**
@@ -100,7 +100,7 @@ export function decisionDeadline(deps: Pick<BoardContext, 'sql'>, kind: Decision
 }
 
 /** What the sweep needs from the rest of the board. */
-export type DecisionTimeoutDeps = Pick<BoardContext, 'emit' | 'getCard' | 'getCardRow' | 'getMeta' | 'notify' | 'now' | 'sql' | 'stages'>;
+export type DecisionTimeoutDeps = Pick<BoardContext, 'emit' | 'env' | 'getCard' | 'getCardRow' | 'getMeta' | 'notify' | 'now' | 'sql' | 'stages'>;
 
 /** `decision.reminded` and `decision.escalated`, pushed to the decision carrier (docs/05 §4). */
 export interface DecisionNoticeBody {
@@ -246,7 +246,10 @@ export function sweepDecisionTimeouts(deps: DecisionTimeoutDeps, nowIso: string)
         );
         if (claimed.rowsWritten > 0) {
           const body = noticeBody(deps, wait, 'decision.escalated', nowIso);
-          if (body) queueSubscribedPush(deps, body);
+          if (body) {
+            queueSubscribedPush(deps, body);
+            queueRelay(deps, body);
+          }
           deps.notify('decision-escalated', cardId, `${KIND_WORDS[kind]} on "${title}" went unanswered and was escalated to the workspace's owners and admins.`);
           deps.emit('decision.escalated', { kind, decisionId, cardId });
           result.escalated += 1;
@@ -267,7 +270,10 @@ export function sweepDecisionTimeouts(deps: DecisionTimeoutDeps, nowIso: string)
         );
         if (claimed.rowsWritten > 0) {
           const body = noticeBody(deps, wait, 'decision.reminded', nowIso);
-          if (body) queueSubscribedPush(deps, body);
+          if (body) {
+            queueSubscribedPush(deps, body);
+            queueRelay(deps, body);
+          }
           deps.notify('decision-reminder', cardId, `Reminder: ${KIND_WORDS[kind].toLowerCase()} on "${title}" is still waiting on you.`);
           deps.emit('decision.reminded', { kind, decisionId, cardId });
           result.reminded += 1;

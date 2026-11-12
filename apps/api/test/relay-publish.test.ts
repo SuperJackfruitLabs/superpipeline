@@ -1,7 +1,7 @@
 /**
- * Treaty plan step 7: a deployment with RELAY_URL and RELAY_TOKEN also publishes each gate.pending
- * to the suite's event relay, as a CloudEvent, through the board's own push queue. The direct push
- * is untouched.
+ * Treaty plan step 7: a deployment with RELAY_URL and RELAY_TOKEN also publishes each relayed event
+ * (gate.pending here; every board-chat event in relay-board-chat.test.ts) to the suite's event
+ * relay, as a CloudEvent, through the board's own push queue. The direct push is untouched.
  */
 import { env as testEnv, runInDurableObject } from 'cloudflare:test';
 import { describe, expect, it } from 'vitest';
@@ -81,7 +81,7 @@ describe('relayRequest', () => {
   });
 
   it('refuses an event treaty has no schema for', () => {
-    expect(() => relayRequest({ id: 1, body: '{"event":"delivery.pending"}' }, { boardId: 'b', tenantId: 't' }, { url: 'https://r', token: 't' })).toThrow(/no treaty schema for delivery.pending/);
+    expect(() => relayRequest({ id: 1, body: '{"event":"work.available"}' }, { boardId: 'b', tenantId: 't' }, { url: 'https://r', token: 't' })).toThrow(/no treaty schema for work.available/);
   });
 });
 
@@ -126,10 +126,11 @@ describe('publishing through the relay', () => {
     });
   });
 
-  it('publishes only gate.pending in step 7', async () => {
+  it('publishes no record event and no work.available (relay-board-chat.test.ts covers what it does publish)', async () => {
     await withBoard('relay-publish-4', RELAY, async (deps, board) => {
-      queueRelay(deps, { event: 'elicitation.pending' });
+      queueRelay(deps, { event: 'work.available' });
       queueRelay(deps, { event: 'card.created' });
+      queueRelay(deps, { event: 'gate.resolved' });
       expect(await board.getPushDeliveries()).toEqual([]);
     });
   });
