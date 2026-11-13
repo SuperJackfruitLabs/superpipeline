@@ -137,6 +137,26 @@ describe("supi edit-card — plain fields", () => {
   });
 });
 
+describe("supi card organisation", () => {
+  it.each([
+    ["add", ["lbl_old"], ["lbl_old", "lbl_new"]],
+    ["rm", ["lbl_old", "lbl_new"], ["lbl_old"]],
+  ])("%ss a label on an existing card", async (operation, labels, expected) => {
+    const card = { ...CARD, labels };
+    fetchMock.mockResolvedValueOnce(json({ card })).mockResolvedValueOnce(json({ card: { ...card, labels: expected } }));
+
+    expect(await run(["card-label", operation, "brd_1", "crd_1", "lbl_new"])).toBe(0);
+
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect(sent(0)).toEqual({ url: URL_, method: "GET", body: undefined });
+    expect(sent(1)).toEqual({
+      url: URL_,
+      method: "PATCH",
+      body: { labels: expected, expectedUpdatedAt: CARD.updatedAt },
+    });
+  });
+});
+
 describe("supi edit-card --merge-spec", () => {
   it("reads the card, merges top-level keys, and writes back with the updatedAt it read", async () => {
     fetchMock.mockResolvedValueOnce(json({ card: CARD })).mockResolvedValueOnce(json({ card: CARD }));

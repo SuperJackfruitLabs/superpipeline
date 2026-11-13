@@ -61,6 +61,13 @@ export const CARDS_COMMANDS: CommandSpec[] = [
         default: "no project",
         description: "the project the card belongs to, as prj_… (see `supi project list`); a stage that freezes an approval subject needs one",
       },
+      {
+        name: "--milestone",
+        value: "<milestoneId>",
+        type: "string",
+        default: "no milestone",
+        description: "the milestone the card belongs to, as mil_… (see `supi project show`)",
+      },
     ],
     summary: "queue a card, with this token as its grant",
     description:
@@ -81,13 +88,45 @@ export const CARDS_COMMANDS: CommandSpec[] = [
       "`<boardId>` or `<title>` is missing",
       "`--spec` cannot be read or is not JSON",
       "`--due` is not `YYYY-MM-DD`",
-      "`--stage` names no stage on the board, or `--project` no project in the workspace (refused by the server)",
+      "`--stage` names no stage on the board, `--project` no project in the workspace, or `--milestone` no milestone in that project (refused by the server)",
     ],
     examples: [
       "supi create-card brd_8f2c… Write the release notes for 0.0.9",
       "supi create-card brd_8f2c… Audit the token routes --spec spec.json --priority 2 --due 2026-11-01 --label lbl_sec",
-      "supi create-card brd_8f2c… X post: the 0.0.9 release --stage x-post --project prj_34b4… --spec post.json",
+      "supi create-card brd_8f2c… X post: the 0.0.9 release --stage x-post --project prj_34b4… --milestone mil_18a2… --spec post.json",
     ],
+  },
+  {
+    path: ["card-label", "add"],
+    group: "cards",
+    args: [BOARD, CARD, { name: "labelId", description: "the label to apply (see `supi label list`)" }],
+    flags: [],
+    summary: "add a label to an existing card",
+    description: "Reads the card's current labels, adds the named label, and writes them back only if the card has not changed in between.",
+    routes: [
+      { method: "PATCH", path: "/v1/boards/:boardId/cards/:cardId" },
+      { method: "GET", path: "/v1/boards/:boardId/cards/:cardId" },
+    ],
+    access: { role: "member", agent: "plan", note: "An agent token also needs `read` for the GET before the PATCH." },
+    output: "JSON: the card after the label is applied",
+    fails: ["an id is missing", "the card changed between the read and the write (the server's 409)"],
+    examples: ["supi card-label add brd_8f2c… crd_41aa… lbl_sec"],
+  },
+  {
+    path: ["card-label", "rm"],
+    group: "cards",
+    args: [BOARD, CARD, { name: "labelId", description: "the label to remove (see `supi label list`)" }],
+    flags: [],
+    summary: "remove a label from an existing card",
+    description: "Reads the card's current labels, removes the named label, and writes them back only if the card has not changed in between.",
+    routes: [
+      { method: "PATCH", path: "/v1/boards/:boardId/cards/:cardId" },
+      { method: "GET", path: "/v1/boards/:boardId/cards/:cardId" },
+    ],
+    access: { role: "member", agent: "plan", note: "An agent token also needs `read` for the GET before the PATCH." },
+    output: "JSON: the card after the label is removed",
+    fails: ["an id is missing", "the card changed between the read and the write (the server's 409)"],
+    examples: ["supi card-label rm brd_8f2c… crd_41aa… lbl_sec"],
   },
   {
     path: ["edit-card"],
@@ -122,7 +161,7 @@ export const CARDS_COMMANDS: CommandSpec[] = [
       { name: "--project", value: "<projectId>", type: "string", default: "unchanged", description: "the card's project" },
       { name: "--milestone", value: "<milestoneId>", type: "string", default: "unchanged", description: "the card's milestone" },
     ],
-    summary: "change a card's title, spec, priority or due date",
+    summary: "change a card's fields, project or milestone",
     description:
       "Edits a card through the same `PATCH` the web app's card drawer sends, with the same authority. Only the fields " +
       "named change. Labels, owner and archiving have their own verbs and routes.\n\n" +
@@ -360,7 +399,7 @@ export async function runCreateCard({ rest, pos }: Args): Promise<void> {
   if (!pos[0] || !pos[1]) {
     fail(
       "usage: supi create-card <boardId> <title> [--spec <file|->] [--priority <n>]",
-      "  [--due YYYY-MM-DD] [--label <id>]... [--stage <stageKey>] [--project <projectId>]",
+      "  [--due YYYY-MM-DD] [--label <id>]... [--stage <stageKey>] [--project <projectId>] [--milestone <milestoneId>]",
     );
   }
   const specArg = flag(rest, "--spec");
@@ -368,11 +407,11 @@ export async function runCreateCard({ rest, pos }: Args): Promise<void> {
   const dueArg = flag(rest, "--due");
   // Repeatable — a card can carry more than one label at creation.
   const labelIds = flags(rest, "--label");
-  // Both go in the create itself, which already accepts them: a card that must start mid-board
-  // (an X post lane) or belong to a project (an approval subject requires one) is born that way.
-  // Neither had a flag, so an agent queueing such a card had no way to set them at all.
+  // These go in the create itself, which already accepts them: a card that must start mid-board
+  // (an X post lane) or belong to a project and milestone is born that way.
   const stageArg = flag(rest, "--stage");
   const projectArg = flag(rest, "--project");
+  const milestoneArg = flag(rest, "--milestone");
   // Every remaining positional is the title, so a sentence needs no quoting.
   const body: Record<string, unknown> = { title: pos.slice(1).join(" ") };
   if (specArg) {
@@ -386,6 +425,7 @@ export async function runCreateCard({ rest, pos }: Args): Promise<void> {
   if (priorityArg) body.priority = Number(priorityArg);
   if (stageArg) body.stageKey = stageArg;
   if (projectArg) body.projectId = projectArg;
+  if (milestoneArg) body.milestoneId = milestoneArg;
   if (dueArg) {
     // Checked here, not sent and refused: `POST /cards` answers a malformed `dueAt` with a
     // 400 whose sentence is about a field named `dueAt`, not the flag the person typed.
@@ -411,6 +451,34 @@ export async function runCreateCard({ rest, pos }: Args): Promise<void> {
     return;
   }
   out(created);
+}
+
+/** Add or remove one label without clobbering a concurrent card edit. */
+export async function runCardLabel({ pos }: Args): Promise<void> {
+  const [sub, boardId, cardId, labelId] = pos;
+  if ((sub !== "add" && sub !== "rm") || !boardId || !cardId || !labelId) {
+    fail("usage: supi card-label add|rm <boardId> <cardId> <labelId>");
+  }
+  const cardPath = `/v1/boards/${boardId}/cards/${cardId}`;
+  const response = await api(cardPath);
+  if (
+    !isPlainObject(response) ||
+    !isPlainObject(response.card) ||
+    !Array.isArray(response.card.labels) ||
+    !response.card.labels.every((id: unknown) => typeof id === "string") ||
+    (response.card.updatedAt !== null && typeof response.card.updatedAt !== "string")
+  ) {
+    fail("The server returned a card without valid labels or an updatedAt value.");
+  }
+  const currentLabels = response.card.labels;
+  const labels = sub === "add" ? [...new Set([...currentLabels, labelId])] : currentLabels.filter((id) => id !== labelId);
+  out(
+    await api(
+      cardPath,
+      { method: "PATCH", body: JSON.stringify({ labels, expectedUpdatedAt: response.card.updatedAt }) },
+      { conflict: "The card changed since it was read, so its labels were not changed. Run the command again." },
+    ),
+  );
 }
 
 /**

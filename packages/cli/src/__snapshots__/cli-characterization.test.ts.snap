@@ -36,11 +36,16 @@ Cards:
   supi card <boardId> <cardId>       one card in full
   supi create-card <boardId> <title> [--spec <file|->] [--priority <n>] [--due YYYY-MM-DD]
         [--label <id>...] [--stage <stageKey>] [--project <projectId>]
+        [--milestone <milestoneId>]
                                      queue a card, with this token as its grant
+  supi card-label add <boardId> <cardId> <labelId>
+                                     add a label to an existing card
+  supi card-label rm <boardId> <cardId> <labelId>
+                                     remove a label from an existing card
   supi edit-card <boardId> <cardId> [--title <text>] [--spec <file|->] [--merge-spec <file|->]
         [--priority <n>] [--due YYYY-MM-DD|none] [--project <projectId>]
         [--milestone <milestoneId>]
-                                     change a card's title, spec, priority or due date
+                                     change a card's fields, project or milestone
   supi move <boardId> <cardId> <stageKey>
                                      move a card to another stage
   supi resume <boardId> <cardId> --comment <text> [--stage <key>]
@@ -287,7 +292,7 @@ exports[`supi commands against a fake API, pinned > supi 012 skill 1`] = `
   "exit": 0,
   "requests": [],
   "stderr": "",
-  "stdout": "sha256 baaa282edbb8d80dc37cb2079b0ddde84e6b9953b03983cb024759acf3f9faae (9767 chars)",
+  "stdout": "sha256 0762279d5ef9aee7caf55b909381874407958f28d0bd9e9bda6d815d4e94fc30 (9968 chars)",
 }
 `;
 
@@ -1205,6 +1210,9 @@ exports[`supi commands against a fake API, pinned > supi 059 card brd_1 crd_1 1`
       "goal": "ship",
       "notes": "old"
     },
+    "labels": [
+      "lbl_1"
+    ],
     "updatedAt": "2030-01-01T00:00:00.000Z"
   }
 }
@@ -1344,7 +1352,7 @@ exports[`supi commands against a fake API, pinned > supi 067 create-card brd_1 1
   "requests": [],
   "stderr": "usage: supi create-card <boardId> <title> [--spec <file|->] [--priority <n>]
 
-  [--due YYYY-MM-DD] [--label <id>]... [--stage <stageKey>] [--project <projectId>]
+  [--due YYYY-MM-DD] [--label <id>]... [--stage <stageKey>] [--project <projectId>] [--milestone <milestoneId>]
 ",
   "stdout": "",
 }
@@ -3516,6 +3524,97 @@ exports[`supi commands against a fake API, pinned > supi 187 capability define !
 }
 `;
 
+exports[`supi commands against a fake API, pinned > supi 188 create-card brd_1 Ship --project prj_1 --milestone mil_1 1`] = `
+{
+  "exit": 0,
+  "requests": [
+    {
+      "body": "{"title":"Ship","projectId":"prj_1","milestoneId":"mil_1"}",
+      "headers": {
+        "Authorization": "Bearer e30.eyJzdWIiOiJwcm5faHVtYW4iLCJwcmluY2lwYWxLaW5kIjoiaHVtYW4iLCJleHAiOjE4OTM1NTcwNDV9.sig",
+        "Content-Type": "application/json",
+      },
+      "method": "POST",
+      "url": "https://work.example/v1/boards/brd_1/cards",
+    },
+  ],
+  "stderr": "",
+  "stdout": "{
+  "card": {
+    "id": "crd_new",
+    "title": "made"
+  }
+}
+",
+}
+`;
+
+exports[`supi commands against a fake API, pinned > supi 189 card-label add brd_1 crd_1 lbl_2 1`] = `
+{
+  "exit": 0,
+  "requests": [
+    {
+      "body": null,
+      "headers": {
+        "Authorization": "Bearer e30.eyJzdWIiOiJwcm5faHVtYW4iLCJwcmluY2lwYWxLaW5kIjoiaHVtYW4iLCJleHAiOjE4OTM1NTcwNDV9.sig",
+        "Content-Type": "application/json",
+      },
+      "method": "GET",
+      "url": "https://work.example/v1/boards/brd_1/cards/crd_1",
+    },
+    {
+      "body": "{"labels":["lbl_1","lbl_2"],"expectedUpdatedAt":"2030-01-01T00:00:00.000Z"}",
+      "headers": {
+        "Authorization": "Bearer e30.eyJzdWIiOiJwcm5faHVtYW4iLCJwcmluY2lwYWxLaW5kIjoiaHVtYW4iLCJleHAiOjE4OTM1NTcwNDV9.sig",
+        "Content-Type": "application/json",
+      },
+      "method": "PATCH",
+      "url": "https://work.example/v1/boards/brd_1/cards/crd_1",
+    },
+  ],
+  "stderr": "",
+  "stdout": "{
+  "ok": true,
+  "method": "PATCH",
+  "path": "/v1/boards/brd_1/cards/crd_1"
+}
+",
+}
+`;
+
+exports[`supi commands against a fake API, pinned > supi 190 card-label rm brd_1 crd_1 lbl_1 1`] = `
+{
+  "exit": 0,
+  "requests": [
+    {
+      "body": null,
+      "headers": {
+        "Authorization": "Bearer e30.eyJzdWIiOiJwcm5faHVtYW4iLCJwcmluY2lwYWxLaW5kIjoiaHVtYW4iLCJleHAiOjE4OTM1NTcwNDV9.sig",
+        "Content-Type": "application/json",
+      },
+      "method": "GET",
+      "url": "https://work.example/v1/boards/brd_1/cards/crd_1",
+    },
+    {
+      "body": "{"labels":[],"expectedUpdatedAt":"2030-01-01T00:00:00.000Z"}",
+      "headers": {
+        "Authorization": "Bearer e30.eyJzdWIiOiJwcm5faHVtYW4iLCJwcmluY2lwYWxLaW5kIjoiaHVtYW4iLCJleHAiOjE4OTM1NTcwNDV9.sig",
+        "Content-Type": "application/json",
+      },
+      "method": "PATCH",
+      "url": "https://work.example/v1/boards/brd_1/cards/crd_1",
+    },
+  ],
+  "stderr": "",
+  "stdout": "{
+  "ok": true,
+  "method": "PATCH",
+  "path": "/v1/boards/brd_1/cards/crd_1"
+}
+",
+}
+`;
+
 exports[`supi help, pinned > supi (no arguments) 1`] = `
 {
   "exit": 0,
@@ -3551,11 +3650,16 @@ Cards:
   supi card <boardId> <cardId>       one card in full
   supi create-card <boardId> <title> [--spec <file|->] [--priority <n>] [--due YYYY-MM-DD]
         [--label <id>...] [--stage <stageKey>] [--project <projectId>]
+        [--milestone <milestoneId>]
                                      queue a card, with this token as its grant
+  supi card-label add <boardId> <cardId> <labelId>
+                                     add a label to an existing card
+  supi card-label rm <boardId> <cardId> <labelId>
+                                     remove a label from an existing card
   supi edit-card <boardId> <cardId> [--title <text>] [--spec <file|->] [--merge-spec <file|->]
         [--priority <n>] [--due YYYY-MM-DD|none] [--project <projectId>]
         [--milestone <milestoneId>]
-                                     change a card's title, spec, priority or due date
+                                     change a card's fields, project or milestone
   supi move <boardId> <cardId> <stageKey>
                                      move a card to another stage
   supi resume <boardId> <cardId> --comment <text> [--stage <key>]
@@ -3685,11 +3789,16 @@ Cards:
   supi card <boardId> <cardId>       one card in full
   supi create-card <boardId> <title> [--spec <file|->] [--priority <n>] [--due YYYY-MM-DD]
         [--label <id>...] [--stage <stageKey>] [--project <projectId>]
+        [--milestone <milestoneId>]
                                      queue a card, with this token as its grant
+  supi card-label add <boardId> <cardId> <labelId>
+                                     add a label to an existing card
+  supi card-label rm <boardId> <cardId> <labelId>
+                                     remove a label from an existing card
   supi edit-card <boardId> <cardId> [--title <text>] [--spec <file|->] [--merge-spec <file|->]
         [--priority <n>] [--due YYYY-MM-DD|none] [--project <projectId>]
         [--milestone <milestoneId>]
-                                     change a card's title, spec, priority or due date
+                                     change a card's fields, project or milestone
   supi move <boardId> <cardId> <stageKey>
                                      move a card to another stage
   supi resume <boardId> <cardId> --comment <text> [--stage <key>]
@@ -3819,11 +3928,16 @@ Cards:
   supi card <boardId> <cardId>       one card in full
   supi create-card <boardId> <title> [--spec <file|->] [--priority <n>] [--due YYYY-MM-DD]
         [--label <id>...] [--stage <stageKey>] [--project <projectId>]
+        [--milestone <milestoneId>]
                                      queue a card, with this token as its grant
+  supi card-label add <boardId> <cardId> <labelId>
+                                     add a label to an existing card
+  supi card-label rm <boardId> <cardId> <labelId>
+                                     remove a label from an existing card
   supi edit-card <boardId> <cardId> [--title <text>] [--spec <file|->] [--merge-spec <file|->]
         [--priority <n>] [--due YYYY-MM-DD|none] [--project <projectId>]
         [--milestone <milestoneId>]
-                                     change a card's title, spec, priority or due date
+                                     change a card's fields, project or milestone
   supi move <boardId> <cardId> <stageKey>
                                      move a card to another stage
   supi resume <boardId> <cardId> --comment <text> [--stage <key>]
@@ -4310,6 +4424,66 @@ Examples:
 }
 `;
 
+exports[`supi help, pinned > supi card-label add --help 1`] = `
+{
+  "exit": 0,
+  "requests": [],
+  "stderr": "",
+  "stdout": "supi card-label add <boardId> <cardId> <labelId>
+
+Reads the card's current labels, adds the named label, and writes them back only if the card has
+not changed in between.
+
+Arguments:
+  <boardId>             the board, as brd_… (see supi boards)
+  <cardId>              the card, as crd_… (see supi board <boardId>)
+  <labelId>             the label to apply (see supi label list)
+
+Who may run it:
+  a person: member or above in the workspace
+  an agent token: the plan scope
+  An agent token also needs read for the GET before the PATCH.
+
+Calls:
+  PATCH /v1/boards/:boardId/cards/:cardId
+  GET /v1/boards/:boardId/cards/:cardId
+
+Examples:
+  supi card-label add brd_8f2c… crd_41aa… lbl_sec
+",
+}
+`;
+
+exports[`supi help, pinned > supi card-label rm --help 1`] = `
+{
+  "exit": 0,
+  "requests": [],
+  "stderr": "",
+  "stdout": "supi card-label rm <boardId> <cardId> <labelId>
+
+Reads the card's current labels, removes the named label, and writes them back only if the card
+has not changed in between.
+
+Arguments:
+  <boardId>             the board, as brd_… (see supi boards)
+  <cardId>              the card, as crd_… (see supi board <boardId>)
+  <labelId>             the label to remove (see supi label list)
+
+Who may run it:
+  a person: member or above in the workspace
+  an agent token: the plan scope
+  An agent token also needs read for the GET before the PATCH.
+
+Calls:
+  PATCH /v1/boards/:boardId/cards/:cardId
+  GET /v1/boards/:boardId/cards/:cardId
+
+Examples:
+  supi card-label rm brd_8f2c… crd_41aa… lbl_sec
+",
+}
+`;
+
 exports[`supi help, pinned > supi comment --help 1`] = `
 {
   "exit": 0,
@@ -4416,7 +4590,7 @@ exports[`supi help, pinned > supi create-card --help 1`] = `
   "requests": [],
   "stderr": "",
   "stdout": "supi create-card <boardId> <title> [--spec <file|->] [--priority <n>] [--due YYYY-MM-DD]
-    [--label <id>...] [--stage <stageKey>] [--project <projectId>]
+    [--label <id>...] [--stage <stageKey>] [--project <projectId>] [--milestone <milestoneId>]
 
 Creates a card in the board's first stage, or the one --stage names. The card records the
 credential that queued it as its grant — who asked for the work and on whose authority. An
@@ -4443,6 +4617,8 @@ Flags:
   --project <projectId>       the project the card belongs to, as prj_… (see supi project list);
                               a stage that freezes an approval subject needs one. Default: no
                               project.
+  --milestone <milestoneId>   the milestone the card belongs to, as mil_… (see supi project
+                              show). Default: no milestone.
 
 Who may run it:
   a person: member or above in the workspace
@@ -4457,7 +4633,7 @@ Calls:
 Examples:
   supi create-card brd_8f2c… Write the release notes for 0.0.9
   supi create-card brd_8f2c… Audit the token routes --spec spec.json --priority 2 --due 2026-11-01 --label lbl_sec
-  supi create-card brd_8f2c… X post: the 0.0.9 release --stage x-post --project prj_34b4… --spec post.json
+  supi create-card brd_8f2c… X post: the 0.0.9 release --stage x-post --project prj_34b4… --milestone mil_18a2… --spec post.json
 ",
 }
 `;
@@ -4646,11 +4822,16 @@ Cards:
   supi card <boardId> <cardId>       one card in full
   supi create-card <boardId> <title> [--spec <file|->] [--priority <n>] [--due YYYY-MM-DD]
         [--label <id>...] [--stage <stageKey>] [--project <projectId>]
+        [--milestone <milestoneId>]
                                      queue a card, with this token as its grant
+  supi card-label add <boardId> <cardId> <labelId>
+                                     add a label to an existing card
+  supi card-label rm <boardId> <cardId> <labelId>
+                                     remove a label from an existing card
   supi edit-card <boardId> <cardId> [--title <text>] [--spec <file|->] [--merge-spec <file|->]
         [--priority <n>] [--due YYYY-MM-DD|none] [--project <projectId>]
         [--milestone <milestoneId>]
-                                     change a card's title, spec, priority or due date
+                                     change a card's fields, project or milestone
   supi move <boardId> <cardId> <stageKey>
                                      move a card to another stage
   supi resume <boardId> <cardId> --comment <text> [--stage <key>]
@@ -4780,11 +4961,16 @@ Cards:
   supi card <boardId> <cardId>       one card in full
   supi create-card <boardId> <title> [--spec <file|->] [--priority <n>] [--due YYYY-MM-DD]
         [--label <id>...] [--stage <stageKey>] [--project <projectId>]
+        [--milestone <milestoneId>]
                                      queue a card, with this token as its grant
+  supi card-label add <boardId> <cardId> <labelId>
+                                     add a label to an existing card
+  supi card-label rm <boardId> <cardId> <labelId>
+                                     remove a label from an existing card
   supi edit-card <boardId> <cardId> [--title <text>] [--spec <file|->] [--merge-spec <file|->]
         [--priority <n>] [--due YYYY-MM-DD|none] [--project <projectId>]
         [--milestone <milestoneId>]
-                                     change a card's title, spec, priority or due date
+                                     change a card's fields, project or milestone
   supi move <boardId> <cardId> <stageKey>
                                      move a card to another stage
   supi resume <boardId> <cardId> --comment <text> [--stage <key>]
@@ -5243,6 +5429,66 @@ Examples:
 }
 `;
 
+exports[`supi help, pinned > supi help card-label add 1`] = `
+{
+  "exit": 0,
+  "requests": [],
+  "stderr": "",
+  "stdout": "supi card-label add <boardId> <cardId> <labelId>
+
+Reads the card's current labels, adds the named label, and writes them back only if the card has
+not changed in between.
+
+Arguments:
+  <boardId>             the board, as brd_… (see supi boards)
+  <cardId>              the card, as crd_… (see supi board <boardId>)
+  <labelId>             the label to apply (see supi label list)
+
+Who may run it:
+  a person: member or above in the workspace
+  an agent token: the plan scope
+  An agent token also needs read for the GET before the PATCH.
+
+Calls:
+  PATCH /v1/boards/:boardId/cards/:cardId
+  GET /v1/boards/:boardId/cards/:cardId
+
+Examples:
+  supi card-label add brd_8f2c… crd_41aa… lbl_sec
+",
+}
+`;
+
+exports[`supi help, pinned > supi help card-label rm 1`] = `
+{
+  "exit": 0,
+  "requests": [],
+  "stderr": "",
+  "stdout": "supi card-label rm <boardId> <cardId> <labelId>
+
+Reads the card's current labels, removes the named label, and writes them back only if the card
+has not changed in between.
+
+Arguments:
+  <boardId>             the board, as brd_… (see supi boards)
+  <cardId>              the card, as crd_… (see supi board <boardId>)
+  <labelId>             the label to remove (see supi label list)
+
+Who may run it:
+  a person: member or above in the workspace
+  an agent token: the plan scope
+  An agent token also needs read for the GET before the PATCH.
+
+Calls:
+  PATCH /v1/boards/:boardId/cards/:cardId
+  GET /v1/boards/:boardId/cards/:cardId
+
+Examples:
+  supi card-label rm brd_8f2c… crd_41aa… lbl_sec
+",
+}
+`;
+
 exports[`supi help, pinned > supi help comment 1`] = `
 {
   "exit": 0,
@@ -5349,7 +5595,7 @@ exports[`supi help, pinned > supi help create-card 1`] = `
   "requests": [],
   "stderr": "",
   "stdout": "supi create-card <boardId> <title> [--spec <file|->] [--priority <n>] [--due YYYY-MM-DD]
-    [--label <id>...] [--stage <stageKey>] [--project <projectId>]
+    [--label <id>...] [--stage <stageKey>] [--project <projectId>] [--milestone <milestoneId>]
 
 Creates a card in the board's first stage, or the one --stage names. The card records the
 credential that queued it as its grant — who asked for the work and on whose authority. An
@@ -5376,6 +5622,8 @@ Flags:
   --project <projectId>       the project the card belongs to, as prj_… (see supi project list);
                               a stage that freezes an approval subject needs one. Default: no
                               project.
+  --milestone <milestoneId>   the milestone the card belongs to, as mil_… (see supi project
+                              show). Default: no milestone.
 
 Who may run it:
   a person: member or above in the workspace
@@ -5390,7 +5638,7 @@ Calls:
 Examples:
   supi create-card brd_8f2c… Write the release notes for 0.0.9
   supi create-card brd_8f2c… Audit the token routes --spec spec.json --priority 2 --due 2026-11-01 --label lbl_sec
-  supi create-card brd_8f2c… X post: the 0.0.9 release --stage x-post --project prj_34b4… --spec post.json
+  supi create-card brd_8f2c… X post: the 0.0.9 release --stage x-post --project prj_34b4… --milestone mil_18a2… --spec post.json
 ",
 }
 `;
