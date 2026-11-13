@@ -27,6 +27,14 @@ the web SPA (static assets, same-origin). Same-origin means the session cookie a
 - **`CLOUDFLARE_API_TOKEN`** — a Cloudflare API token with **Workers Scripts: Edit** and **D1: Edit**,
   scoped to your account (a single-account token lets wrangler infer the account). Add it under
   *Settings → Secrets and variables → Actions*.
+- **`RELEASE_SUMMARY_API_KEY`** (optional) — the key the notes' AI summary step uses. The step
+  never blocks a release: without the key, or if it fails, the notes go out with this version's
+  CHANGELOG section and the grouped commits and no summary.
+
+**Refreshing the summary.** `gh workflow run release.yml -f tag=<tag> -f summary_only=true` on the
+mirror rewrites only the Summary section of that tag's published notes and changes nothing else (no
+build, no deploy). The notes quote the tag's `## vX.Y.Z` section of `CHANGELOG.md`, so stamp the
+section (`sh .github/release/prep-release.sh vX.Y.Z`) before tagging.
 
 So the day-to-day flow is: open a PR → tests run → merge → it ships to staging; tag `v0.0.N` on main
 → it ships to production. Tags are pushed to forge and reach GitHub through the push mirror.
