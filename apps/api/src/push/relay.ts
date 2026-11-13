@@ -55,6 +55,14 @@ export function relaySettings(env: Pick<Env, 'RELAY_URL' | 'RELAY_TOKEN'> | unde
 
 const dataschemaFor = new Map(catalog.events.filter((e) => e.producer === 'superpipeline').map((e) => [e.pushName, e.dataschema]));
 
+/**
+ * Whether treaty's catalogue names a schema for this event. Every relayed event must have one
+ * (relay-publish.test.ts), or its delivery could only be dead-lettered.
+ */
+export function hasTreatySchema(event: string): boolean {
+  return dataschemaFor.has(event);
+}
+
 /** The relay request for one delivery row: where to POST and the CloudEvent's headers. */
 export function relayRequest(
   delivery: { id: number; body: string },
