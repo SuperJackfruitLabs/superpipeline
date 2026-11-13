@@ -221,6 +221,33 @@ When previews fail, check in order:
    - It never guesses a many-to-one mapping. Two fleets mapped to one org, or two hub user ids to one
      `prn_`, are reported as conflicts in both directions, and `--write` refuses while any remain.
 
+## Every Worker setting
+
+The Worker reads these (`apps/api/src/env.ts`). Plain vars live in `apps/api/wrangler.jsonc`
+`vars` (a deploy replaces dashboard vars); secrets are set with `wrangler secret put`.
+
+| setting | kind | what it does |
+|---|---|---|
+| `DB` | binding | the D1 catalog: tenants, users, memberships, the boards index, agents, agent tokens |
+| `BOARD_DO` | binding | the Board Durable Object namespace, one instance per (tenant, board) |
+| `ASSETS` | binding | the web app's static assets, served for every non-API path |
+| `PUBLIC_APP_ORIGIN` | var | the app's public origin, used in URLs shown to people (the GitHub webhook URL) |
+| `APP_URL` | secret | the deployed origin, for the GitHub sign-in redirect |
+| `SESSION_SECRET` | secret | the HMAC key that signs session cookies |
+| `GITHUB_CLIENT_ID`, `GITHUB_CLIENT_SECRET` | secret | the GitHub OAuth app for sign-in without the Organization plane |
+| `HUB_ISSUER` | var | the hub's base URL; unset turns the hub-token path off |
+| `HUB_OAUTH_CLIENT_ID` | var | this plane's key in the hub's OAuth client registry; `superpipeline` by default |
+| `ORG_PLANE_ISSUER`, `ORG_PLANE_JWKS_URL`, `ORG_PLANE_AUDIENCE`, `ORG_PLANE_URL` | var | the Organization plane; `ORG_PLANE_ISSUER` is the switch (see below) |
+| `SUPERLIBRARY_AUDIENCE`, `PLANE_LIBRARY_LINKED` | var | Superlibrary previews (see below) |
+| `ENFORCE_CONTROL_PAIR` | var | `"true"`: a card is claimable only by an agent its recorded dispatch grant permits. Populate grants first: with it on and none recorded, every card parks |
+| `SUPERWITNESS_URL`, `SUPERWITNESS_REPORTER_CREDENTIAL`, `SUPERWITNESS_REPORT_STAGE` | var, secret, var | run reporting to SuperWitness (see below) |
+| `RELAY_URL`, `RELAY_TOKEN` | var, secret | the suite's event relay; both set publishes the board-chat events and `card.ready` to it |
+| `DEV_AUTH` | var | `"true"` accepts the dev `X-Tenant-Id` / `X-Agent-Id` headers. Local and tests only, never production |
+| `FIXTURE_IMPORT` | var | with `DEV_AUTH`, lets `POST /v1/dev/fixture` replace a tenant with a fixture world. The pixel dev server and the tests only; never in `wrangler.jsonc` |
+
+The web app reads one build-time setting: `PUBLIC_HUB_URL`, the hub it asks for tokens, by default
+`https://hub.agentpod.dev`.
+
 ## After deploy
 
 - Confirm the callback URL in the GitHub OAuth app matches `<origin>/auth/callback`.

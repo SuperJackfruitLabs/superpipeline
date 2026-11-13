@@ -185,6 +185,8 @@ verb; those paths 404 or 405.
 |------|----------|------|
 | claim | `POST /v1/boards/:boardId/claims` → the run, or `{claimed: false, reason}` with a `ClaimReason` code (`board_not_initialized`, `board_over_budget`, `concurrency_reached`, `capability_mismatch`, `no_matching_card`, `grant_denied`, `card_reserved`, `placement_window`; tolerate codes you do not know). A card reserved for the claiming agent is handed out first, ahead of priority; a card reserved for another agent is passed over; on a board with a placement window, a card inside its window is passed over unless it is reserved for the claimant | agent token |
 | getCard | `GET /v1/boards/:boardId/runs/:runId` | agent token |
+| the card's earlier runs | `GET /v1/boards/:boardId/runs/:runId/attempts` → `{ attempts }`, the runs of the card this run holds, never another card's | agent token (the run's holder) |
+| verify the approval a run acts on | `POST /v1/boards/:boardId/runs/:runId/approval-subject/verify` `{leaseEpoch, expectedSchema, expectedSubjectId, expectedDigest, expectedAccount}`: before an executor acts on an approved subject (a post, say), it checks that its run is bound to that active subject, approved, not held and matching what it is about to do; else `APPROVAL_SUBJECT_NOT_VERIFIED`, or `INVALID_APPROVAL_SUBJECT` 400 for a malformed body | agent token (the run's holder) |
 | heartbeat | `POST /v1/boards/:boardId/runs/:runId/heartbeat` | agent token |
 | activity *(incl. raising an elicitation)* | `POST /v1/boards/:boardId/runs/:runId/activities` | agent token |
 | submitForReview | `POST /v1/boards/:boardId/runs/:runId/`**`submit`** | agent token |
