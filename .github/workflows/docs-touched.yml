@@ -1,0 +1,32 @@
+# Docs touched? A pull request that changes the public surface (routes, Worker settings, scopes,
+# push and relay events, MCP tools, the supi command table, the contract) must change the docs
+# (docs-site/, docs/ or a README) too, or carry the `no-docs-needed` label. The paths are in
+# scripts/docs-touched.mjs; its test is scripts/docs-touched.test.mjs.
+#
+# Forge runs this: the repo's workflows live in .github/workflows, which Forgejo reads when there is
+# no .forgejo/workflows (adding that folder would stop every workflow here from running on forge).
+# The labels come from the event payload, so adding or removing the label re-runs the check. Pull
+# requests are opened on forge only, so on the GitHub mirror this never runs.
+name: docs-touched
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, labeled, unlabeled]
+
+permissions:
+  contents: read
+
+jobs:
+  docs-touched:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: node --test scripts/docs-touched.test.mjs
+      - run: node scripts/docs-touched.mjs

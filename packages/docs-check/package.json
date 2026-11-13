@@ -6,7 +6,8 @@
   "scripts": {
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
-    "reference": "UPDATE_REFERENCE=1 vitest run src/reference.test.ts"
+    "reference": "UPDATE_REFERENCE=1 vitest run src/reference.test.ts",
+    "baseline": "UPDATE_BASELINE=1 vitest run src/docs-claims.test.ts"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",

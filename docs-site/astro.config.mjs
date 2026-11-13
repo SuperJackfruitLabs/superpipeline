@@ -91,6 +91,8 @@ export default defineConfig({
             { label: 'Writing an agent', slug: 'build/agent-contract' },
             { label: 'MCP tools', slug: 'build/mcp' },
             { label: 'Authentication', slug: 'build/auth' },
+            { label: 'Events', slug: 'build/events' },
+            { label: 'Services', slug: 'build/services' },
           ],
         },
         // Generated pages: `reference/cli/*` from packages/cli/src/commands.ts, `reference/mcp-tools`

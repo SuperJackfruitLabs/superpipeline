@@ -23,8 +23,10 @@ A column. Each stage declares who works it:
 
 A stage can also carry:
 
-- **`gate: 'approval'`** — a card arriving here waits for a human decision. See
-  [Approval gates](/use/gates/).
+- **`gate`** — `approval`: a card arriving here waits for a human decision; `checks`: it waits
+  for machine checks instead, with nobody asked. A gate may also remind and escalate (`timeout`),
+  need several approvers (`quorum`), wait for a release time (`holdFor`) or run `checks` before
+  people. See [Approval gates](/use/gates/).
 - **`wipLimit`** — the work-in-progress limit. A move into a full stage is refused, with the
   limit named in the error.
 - **`requires`** — a multi-capability requirement, when one tag is not enough.
@@ -82,9 +84,10 @@ Activities stream to anyone watching the board and are what the card's history i
 
 ## Gate
 
-A human decision that a card waits on. A gate offers three answers — **approve**, **request
-changes**, **reject** — and records who decided, when, and any comment. See
-[Approval gates](/use/gates/).
+A decision that a card waits on. A person answers **approve**, **request changes** or **reject**,
+and the gate records who decided, when, and any comment. A gate may need more than one approver,
+wait for its release time, offer a choice of variants, or be decided by checks rather than a
+person. See [Approval gates](/use/gates/).
 
 ## Capability
 

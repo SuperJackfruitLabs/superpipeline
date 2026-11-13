@@ -92,6 +92,9 @@ jobs:
       - run: npm ci && npm run build
         working-directory: docs-site
       - run: pnpm --filter @superpipeline/docs-check test
+      # The generated CLI reference pages are held to the command table by the CLI's own test. A
+      # docs-only PR skips the unit job, so without this a hand edit to those pages would pass.
+      - run: pnpm --filter @superpipeline/cli exec vitest run src/reference.test.ts
       - run: tar -czf docs.tgz -C docs-site/dist .
       - uses: actions/upload-artifact@v4
         if: success() && github.server_url == 'https://github.com'
