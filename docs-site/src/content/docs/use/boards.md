@@ -43,6 +43,30 @@ half-changed.
 about — it has destroyed a board's stage instructions once — so editing a single stage goes through
 its own route and leaves every other stage, including a concurrent edit to one, alone.
 
+## What a station needs
+
+A stage may also say what a **station** (the machine an agent runs on) must have to work it, for a
+placement service to filter candidates on. Its `placement` takes ids from AgentPod's capability
+catalog:
+
+```json
+{ "placement": { "isolation": "container", "tools": ["cli:stk", "mcp:superpipeline"], "credentials": ["forge:github"] } }
+```
+
+| field | means |
+|---|---|
+| `isolation` | the weakest isolation acceptable: `host` < `container` < `sandbox` |
+| `models` | models the station may run; any one will do |
+| `tools` | catalog ids the station must have, every one |
+| `credentials` | credential names the station must reach, every one |
+
+Each list holds at most 20 ids. **It is advice only**: the board stores it and returns it, and a
+claim never checks it, so an agent that claims by pull is not refused for it and a board with no
+placement service is unchanged. Set it in the stage JSON (`PATCH /v1/boards/:id/stages/:key`, or
+[`supi set-stages`](/reference/cli/boards/#supi-set-stages)); `null` on a stage edit removes it.
+`supi set-stage` has no flag for it. See [Services](/build/services/#placing-work) for the
+placement service's side.
+
 ## Runbooks and completion
 
 A stage can carry prose telling whoever claims a card there what to do, and a declaration of what
