@@ -14,16 +14,36 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html). Entries g
 
 ## Unreleased
 
-The code is restructured for maintainability. Nothing a user, an agent or an operator sees changes:
-the same HTTP routes and answers, the same Board Durable Object storage and SQL, the same `supi`
-commands, help and output, the same requests from the web app, and the same deployed bundle
-(`BoardDO` and the default export).
+### Changed
+
+- The landing page is on frontdoor 0.0.13: nine products in the suite frame.
+- Release: the shared release workflow maps the secrets it needs by name rather than serialising
+  every secret into one variable.
+
+## v0.0.31 — 2026-11-13
+
+The first SuperDispatch steps: a claim says why it got nothing, a placement service can read who
+could claim a card, hold it for the agent it chose and ask for a few seconds to choose, and a stage
+can say what a station needs.
 
 ### Added
 
-- A stage may state what a station needs to work it: `placement` `{isolation, models, tools,
-  credentials}`, in AgentPod capability catalog ids, set with `PATCH /v1/boards/:id/stages/:key` or
-  `PUT /stages` and returned on the board. Advice for a placement service only: a claim never checks it.
+- A null claim says why: `POST /v1/boards/:id/claims` and `superpipeline_claim_card` answer
+  `{claimed: false, reason}` with a stable `ClaimReason` code (`board_not_initialized`,
+  `board_over_budget`, `concurrency_reached`, `capability_mismatch`, `no_matching_card`,
+  `grant_denied`, then `card_reserved` and `placement_window`). Clients must tolerate codes they do
+  not know.
+- The eligibility read: `GET /v1/boards/:id/cards/:cardId/eligibility` lists every agent in the
+  workspace, judged against the card's stage by the claim's own filter, with the reasons any of
+  them cannot claim it. A person who can read the board may call it, or a service token with the
+  new `dispatch:read` scope.
+- A placement service can reserve a ready card for one agent for 10–300 seconds
+  (`PUT /v1/boards/:id/cards/:cardId/reservation`, on a service token with `dispatch:reserve`).
+  Until the reservation lapses, other agents' claims pass the card over (`card_reserved` when nothing
+  else is claimable), and the agent it is held for gets it ahead of priority. The card shows it as
+  `reservation`; it clears on claim, and a board admin may clear it (`DELETE …/reservation`). The
+  board log records `card.reserved` and `card.unreserved`. With no reservation, claims behave
+  exactly as before.
 - A board can be opted into scheduling with a **placement window** (`PUT /v1/boards/:id/scheduling`
   `{placementWindowSeconds}`, 0–30, on a service token with `dispatch:reserve`; `GET` reads it). On
   such a board a card that just became ready is held back from pull for that long, so a placement
@@ -31,12 +51,139 @@ commands, help and output, the same requests from the web app, and the same depl
   (`placement_window` when nothing else is claimable), the card and the eligibility read show
   `placementWindowUntil`, and the board relays `card.ready` at once. When no reservation comes the
   window ends on its own and pull proceeds. 0, the default, is today's board.
-- A placement service can reserve a ready card for one agent for 10–300 seconds
-  (`PUT /v1/boards/:id/cards/:cardId/reservation`, on a service token with `dispatch:reserve`).
-  Until the reservation lapses, other agents' claims pass the card over (`card_reserved` when nothing
-  else is claimable), and the agent it is held for gets it ahead of priority. The card shows it as
-  `reservation`; it clears on claim, and a board admin may clear it (`DELETE …/reservation`). With
-  no reservation, claims behave exactly as before.
+- A stage may state what a station needs to work it: `placement` `{isolation, models, tools,
+  credentials}`, in AgentPod capability catalog ids, set with `PATCH /v1/boards/:id/stages/:key` or
+  `PUT /stages` and returned on the board. Advice for a placement service only: a claim never checks it.
+- Run reports to SuperWitness carry `stage_key` and `card_id` when `SUPERWITNESS_REPORT_STAGE` is
+  `"true"`. Staging sets it; production stays unset until production SuperWitness accepts the fields.
+
+### Fixed
+
+- `work.available` follows a stage's `requires` and the workspace's implication edges, as a claim
+  does. A `requires` stage used to push to nobody, or to the wrong configs.
+
+### Changed
+
+- Releases run on the suite's shared release workflow: a `v*` tag on a green main commit builds
+  `supi` at the tag, drafts the notes from this file, deploys the app built by CI and smoke-tests
+  production. Its hooks are scripts at fixed paths under `.github/release/`.
+
+## v0.0.30 — 2026-11-12
+
+### Added
+
+- Every board-chat event goes through the suite's event relay, beside the direct push:
+  `gate.pending`, `elicitation.pending`, `delivery.pending`, `attention.pending`,
+  `decision.reminded`, `decision.escalated`, `gate.approval_recorded`, `decision.released`,
+  `decision.pulled_back`, `check.failed` and `check.overridden`. Record events and
+  `work.available` are not relayed.
+- A service token with `gates:read` can also read `GET …/deliveries/pending`,
+  `GET …/attention/pending` and `GET …/cards/:cardId/checks`, the chat carrier's other sweep reads.
+
+## v0.0.29 — 2026-11-12
+
+### Added
+
+- A service token with the new `gates:read` scope can read a board's pending gates
+  (`GET …/gates/pending`) and one gate (`GET …/gates/:gateId`), so a chat carrier can settle a gate
+  decided on the web. Deciding, pulling back and delivery stay human-only.
+
+### Changed
+
+- Approval and question subjects take only an RFC 3339 expiry with seconds and a time zone. A
+  looser one is refused `INVALID_APPROVAL_SUBJECT`.
+
+## v0.0.28 — 2026-11-10
+
+### Added
+
+- With `RELAY_URL` and `RELAY_TOKEN` set, each `gate.pending` is also published to the suite's
+  event relay as a CloudEvent (HTTP binary mode), queued in the same transaction as the push and
+  retried like one. Without them nothing changes.
+
+### Fixed
+
+- An agent's move never gets a card past a gate: a move that would end a pending review or open
+  checks, leave or skip a gated stage, or complete the card is refused `409 GATE_PENDING`.
+- The week's spend is read once per board, so a live refresh no longer draws it as a dash.
+
+### Changed
+
+- The tests check every push body they read back against treaty's event schemas, and read the
+  organization plane's claims from treaty's package.
+
+## v0.0.27 — 2026-11-09
+
+Gates and decisions: a decision says what each answer means, reminds and escalates when nobody
+answers, and a gate may offer variants, need more than one approver, wait for its release time or
+be decided by checks.
+
+### Added
+
+- Gate options say what they mean (`meaning`, `needsComment`, `delivery`), and a subject-bound
+  gate carries its expiry and a bounded preview (`gate.v2`).
+- Questions: every option carries a `meaning`; a question with no options takes free text up to
+  2000 characters. A manual delivery still owed a live link is pushed as `delivery.pending`.
+- Strict decisions and harness permissions travel with their subject; an approving answer must
+  name it back.
+- A card parked on a person (`repeated-failure`, `blocked`, `not-authorised`) is pushed as
+  `attention.pending` and read at `GET …/attention/pending`. Broker approval requests reach chat on
+  `elicitation.pending` for a service holding `approval-requests:relay`.
+- Decision timeouts: a stage's `timeout` `{remindAfterMinutes?, escalateAfterMinutes?}` (or the
+  board default, `PUT /v1/boards/:id/decision-timeout`) reminds the card owner, then escalates to
+  the workspace's owners and admins (`decision.reminded`, `decision.escalated`). Nothing resolves on
+  a timeout.
+- A gate may offer up to three variants of what it approves; approving one chooses it.
+- A gate may need more than one approver: a stage's `quorum` `{required: 2–5, from: deciders |
+  admins}`. Each approval short of it is pushed as `gate.approval_recorded`.
+- An approval may wait for its release time: a stage's `holdFor` (5 minutes to 7 days) or the
+  subject's not-before time. Until then a decider or an admin can pull it back
+  (`POST …/gates/:gateId/pull-back`); `decision.released` and `decision.pulled_back` are pushed.
+- A gate may be decided by checks: a stage's `checks` (`ci` or a SuperWitness `verdict`, 1–5)
+  run before people, and `gate: "checks"` passes the stage with nobody asked. A failing check
+  returns the card to `returnStage` (`check.failed`); an owner or admin may override one
+  (`POST …/cards/:cardId/checks/:name/override`, `check.overridden`). A card's checks are read at
+  `GET …/cards/:cardId/checks`.
+
+### Changed
+
+- Decision policy is a workspace admin's to change: a stage's `gate`, approval subject, deciders,
+  `timeout`, `quorum`, `holdFor` and `checks` need a workspace owner or admin
+  (`403 WORKSPACE_ADMIN_REQUIRED` otherwise).
+- An approval subject that expires closes its pending gate.
+
+## v0.0.26 — 2026-11-07
+
+### Added
+
+- `supi create-card --stage <stageKey> --project <projectId>`: file a card that starts mid-board
+  or belongs to a project.
+
+## v0.0.25 — 2026-11-06
+
+### Added
+
+- A publisher service can confirm an automatic-delivery approval
+  (`POST …/approval-subjects/:subjectId/verify`, `approvals:read`) and record the live URL after it
+  posts (`POST …/approval-subjects/:subjectId/delivery`, `approvals:write`). The approved subject
+  carries `outboundRequest`, a digest of the exact request, and a request that does not match it is
+  refused.
+- Manual delivery completion: a chosen-time reminder works through the REST route, the web app and
+  `supi`; a manual post's live URL is read back and a mismatch with the approved copy is flagged.
+
+### Changed
+
+- A delivered post can no longer switch between manual and automatic delivery, and a bound gate
+  accepts only its own options.
+- Pull requests get an advisory Claude review against `REVIEW.md`, and `AGENTS.md` records what
+  agents get wrong in this repo.
+
+## v0.0.24 — 2026-11-02
+
+The code is restructured for maintainability. Nothing a user, an agent or an operator sees changes:
+the same HTTP routes and answers, the same Board Durable Object storage and SQL, the same `supi`
+commands, help and output, the same requests from the web app, and the same deployed bundle
+(`BoardDO` and the default export).
 
 ### Changed
 
@@ -50,6 +197,7 @@ commands, help and output, the same requests from the web app, and the same depl
 - Lint: no `any`, no floating promises, no unexplained empty block and no stray `console` in
   shipped source; the Worker logs through one module, with the same lines and severities as
   before. See `docs/contributor/code-structure.md` and `docs/contributor/modularity-plan.md`.
+- Docs: first-board sign-in states the organization product-access prerequisite.
 
 ### Fixed
 
