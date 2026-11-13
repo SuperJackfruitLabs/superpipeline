@@ -101,7 +101,7 @@ Edits a card through the same `PATCH` the web app's card drawer sends, with the 
 `--merge-spec` is a read-modify-write: it reads the card, merges into the spec it read, and writes back with `expectedUpdatedAt` set to the card's `updatedAt` as read. If anything changed the card in between — an edit in the drawer, a claim, a move — the server answers 409 and nothing is written; run the command again to merge into the card as it now is. `--spec` replaces the spec outright and sends no precondition.
 
 ```sh
-supi edit-card <boardId> <cardId> [--title <text>] [--spec <file|->] [--merge-spec <file|->] [--priority <n>] [--due YYYY-MM-DD|none]
+supi edit-card <boardId> <cardId> [--title <text>] [--spec <file|->] [--merge-spec <file|->] [--priority <n>] [--due YYYY-MM-DD|none] [--project <projectId>] [--milestone <milestoneId>]
 ```
 
 | argument | meaning |
@@ -116,6 +116,8 @@ supi edit-card <boardId> <cardId> [--title <text>] [--spec <file|->] [--merge-sp
 | `--merge-spec <file\|->` | file path, or `-` for stdin | unchanged | a JSON object whose top-level keys are merged into the existing spec: a key given replaces that key (a nested object is replaced, not merged into), a key set to `null` is removed, every other key is kept. Cannot be combined with `--spec` |
 | `--priority <n>` | number | unchanged | the card's new priority |
 | `--due YYYY-MM-DD\|none` | string | unchanged | the new due date, or `none` to clear it; a date must be a date in `YYYY-MM-DD` form (checked before anything is sent) |
+| `--project <projectId>` | string | unchanged | the card's project |
+| `--milestone <milestoneId>` | string | unchanged | the card's milestone |
 
 **Who may run it**
 

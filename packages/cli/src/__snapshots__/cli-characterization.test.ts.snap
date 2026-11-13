@@ -38,7 +38,8 @@ Cards:
         [--label <id>...] [--stage <stageKey>] [--project <projectId>]
                                      queue a card, with this token as its grant
   supi edit-card <boardId> <cardId> [--title <text>] [--spec <file|->] [--merge-spec <file|->]
-        [--priority <n>] [--due YYYY-MM-DD|none]
+        [--priority <n>] [--due YYYY-MM-DD|none] [--project <projectId>]
+        [--milestone <milestoneId>]
                                      change a card's title, spec, priority or due date
   supi move <boardId> <cardId> <stageKey>
                                      move a card to another stage
@@ -3552,7 +3553,8 @@ Cards:
         [--label <id>...] [--stage <stageKey>] [--project <projectId>]
                                      queue a card, with this token as its grant
   supi edit-card <boardId> <cardId> [--title <text>] [--spec <file|->] [--merge-spec <file|->]
-        [--priority <n>] [--due YYYY-MM-DD|none]
+        [--priority <n>] [--due YYYY-MM-DD|none] [--project <projectId>]
+        [--milestone <milestoneId>]
                                      change a card's title, spec, priority or due date
   supi move <boardId> <cardId> <stageKey>
                                      move a card to another stage
@@ -3685,7 +3687,8 @@ Cards:
         [--label <id>...] [--stage <stageKey>] [--project <projectId>]
                                      queue a card, with this token as its grant
   supi edit-card <boardId> <cardId> [--title <text>] [--spec <file|->] [--merge-spec <file|->]
-        [--priority <n>] [--due YYYY-MM-DD|none]
+        [--priority <n>] [--due YYYY-MM-DD|none] [--project <projectId>]
+        [--milestone <milestoneId>]
                                      change a card's title, spec, priority or due date
   supi move <boardId> <cardId> <stageKey>
                                      move a card to another stage
@@ -3818,7 +3821,8 @@ Cards:
         [--label <id>...] [--stage <stageKey>] [--project <projectId>]
                                      queue a card, with this token as its grant
   supi edit-card <boardId> <cardId> [--title <text>] [--spec <file|->] [--merge-spec <file|->]
-        [--priority <n>] [--due YYYY-MM-DD|none]
+        [--priority <n>] [--due YYYY-MM-DD|none] [--project <projectId>]
+        [--milestone <milestoneId>]
                                      change a card's title, spec, priority or due date
   supi move <boardId> <cardId> <stageKey>
                                      move a card to another stage
@@ -4500,7 +4504,7 @@ exports[`supi help, pinned > supi edit-card --help 1`] = `
   "requests": [],
   "stderr": "",
   "stdout": "supi edit-card <boardId> <cardId> [--title <text>] [--spec <file|->] [--merge-spec <file|->]
-    [--priority <n>] [--due YYYY-MM-DD|none]
+    [--priority <n>] [--due YYYY-MM-DD|none] [--project <projectId>] [--milestone <milestoneId>]
 
 Edits a card through the same PATCH the web app's card drawer sends, with the same authority.
 Only the fields named change. Labels, owner and archiving have their own verbs and routes.
@@ -4528,6 +4532,8 @@ Flags:
   --due YYYY-MM-DD|none       the new due date, or none to clear it; a date must be a date in
                               YYYY-MM-DD form (checked before anything is sent). Default:
                               unchanged.
+  --project <projectId>       the card's project. Default: unchanged.
+  --milestone <milestoneId>   the card's milestone. Default: unchanged.
 
 Who may run it:
   a person: member or above in the workspace
@@ -4642,7 +4648,8 @@ Cards:
         [--label <id>...] [--stage <stageKey>] [--project <projectId>]
                                      queue a card, with this token as its grant
   supi edit-card <boardId> <cardId> [--title <text>] [--spec <file|->] [--merge-spec <file|->]
-        [--priority <n>] [--due YYYY-MM-DD|none]
+        [--priority <n>] [--due YYYY-MM-DD|none] [--project <projectId>]
+        [--milestone <milestoneId>]
                                      change a card's title, spec, priority or due date
   supi move <boardId> <cardId> <stageKey>
                                      move a card to another stage
@@ -4775,7 +4782,8 @@ Cards:
         [--label <id>...] [--stage <stageKey>] [--project <projectId>]
                                      queue a card, with this token as its grant
   supi edit-card <boardId> <cardId> [--title <text>] [--spec <file|->] [--merge-spec <file|->]
-        [--priority <n>] [--due YYYY-MM-DD|none]
+        [--priority <n>] [--due YYYY-MM-DD|none] [--project <projectId>]
+        [--milestone <milestoneId>]
                                      change a card's title, spec, priority or due date
   supi move <boardId> <cardId> <stageKey>
                                      move a card to another stage
@@ -5429,7 +5437,7 @@ exports[`supi help, pinned > supi help edit-card 1`] = `
   "requests": [],
   "stderr": "",
   "stdout": "supi edit-card <boardId> <cardId> [--title <text>] [--spec <file|->] [--merge-spec <file|->]
-    [--priority <n>] [--due YYYY-MM-DD|none]
+    [--priority <n>] [--due YYYY-MM-DD|none] [--project <projectId>] [--milestone <milestoneId>]
 
 Edits a card through the same PATCH the web app's card drawer sends, with the same authority.
 Only the fields named change. Labels, owner and archiving have their own verbs and routes.
@@ -5457,6 +5465,8 @@ Flags:
   --due YYYY-MM-DD|none       the new due date, or none to clear it; a date must be a date in
                               YYYY-MM-DD form (checked before anything is sent). Default:
                               unchanged.
+  --project <projectId>       the card's project. Default: unchanged.
+  --milestone <milestoneId>   the card's milestone. Default: unchanged.
 
 Who may run it:
   a person: member or above in the workspace

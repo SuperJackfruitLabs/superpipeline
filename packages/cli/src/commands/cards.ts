@@ -119,6 +119,8 @@ export const CARDS_COMMANDS: CommandSpec[] = [
         default: "unchanged",
         description: `the new due date, or \`none\` to clear it; a date ${DATE_FORMAT}`,
       },
+      { name: "--project", value: "<projectId>", type: "string", default: "unchanged", description: "the card's project" },
+      { name: "--milestone", value: "<milestoneId>", type: "string", default: "unchanged", description: "the card's milestone" },
     ],
     summary: "change a card's title, spec, priority or due date",
     description:
@@ -431,12 +433,16 @@ export async function runEditCard({ rest, pos }: Args): Promise<void> {
   const mergeArg = flag(rest, "--merge-spec");
   const priorityArg = flag(rest, "--priority");
   const dueArg = flag(rest, "--due");
+  const projectArg = flag(rest, "--project");
+  const milestoneArg = flag(rest, "--milestone");
   if (specArg && mergeArg) fail("--spec replaces the spec and --merge-spec merges into it; pass one.");
-  if (!titleArg && !specArg && !mergeArg && !priorityArg && !dueArg) {
+  if (!titleArg && !specArg && !mergeArg && !priorityArg && !dueArg && !projectArg && !milestoneArg) {
     fail("Nothing to change.", "  supi edit-card <boardId> <cardId> --title … | --spec … | --merge-spec … | --priority … | --due …");
   }
   const body: Record<string, unknown> = {};
   if (titleArg) body.title = titleArg;
+  if (projectArg) body.projectId = projectArg;
+  if (milestoneArg) body.milestoneId = milestoneArg;
   if (priorityArg) {
     const n = Number(priorityArg);
     if (!Number.isFinite(n)) fail(`--priority is not a number: ${priorityArg}`);
