@@ -85,6 +85,34 @@ describe("supi edit-card — plain fields", () => {
     expect(JSON.parse(stdout.join(""))).toMatchObject({ card: { title: "New title" } });
   });
 
+  it("assigns an existing card to a project and milestone", async () => {
+    fetchMock.mockResolvedValueOnce(json({ card: { ...CARD, projectId: "prj_1", milestoneId: "mil_1" } }));
+
+    const code = await run([
+      "edit-card",
+      "brd_1",
+      "crd_1",
+      "--project",
+      "prj_1",
+      "--milestone",
+      "mil_1",
+    ]);
+
+    expect({
+      code,
+      stderr: stderr.join(""),
+      request: fetchMock.mock.calls.length > 0 ? sent(0) : null,
+    }).toEqual({
+      code: 0,
+      stderr: "",
+      request: {
+        url: URL_,
+        method: "PATCH",
+        body: { projectId: "prj_1", milestoneId: "mil_1" },
+      },
+    });
+  });
+
   it("clears the due date with --due none", async () => {
     fetchMock.mockResolvedValueOnce(json({ card: CARD }));
     await run(["edit-card", "brd_1", "crd_1", "--due", "none"]);
