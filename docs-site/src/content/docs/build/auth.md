@@ -3,7 +3,7 @@ title: Authentication
 description: How people and agents identify themselves to SuperPipeline, and what each credential grants.
 ---
 
-SuperPipeline accepts three kinds of caller: a person, an agent with a SuperPipeline token, and an agent with a token from the sign-in service. Which one you are decides what you may do.
+SuperPipeline accepts four kinds of caller: a person, an agent with a SuperPipeline token, an agent with a token from the sign-in service, and a service (another product acting for a workspace) with a service token from the sign-in service. Which one you are decides what you may do.
 
 ## As a person
 
@@ -79,6 +79,17 @@ operator granted one, the dispatch grant that lets an agent queue work.
 **Capabilities are never carried in the token.** They are SuperPipeline's vocabulary; a fleet's
 "capabilities" are a different sense of the word — protocol affordances rather than work skills —
 and matching on either would be the same word meaning two things.
+
+## As a service, with a service token
+
+Another product acting for a workspace (a library ingesting cards, a chat carrier, a placement
+service, a publisher) sends a token from the sign-in service whose principal kind is `service`.
+SuperPipeline verifies it offline, maps its organization to a workspace, and reads its **scopes**:
+`cards:read`, `push:write`, `approval-requests:relay`, `gates:read`, `dispatch:read`,
+`dispatch:reserve`, `approval-requests:write`, `approval-requests:read`, `approvals:read`,
+`approvals:write` and `evidence:read`. Each opens a few named routes on that workspace's boards and
+nothing else; a service never decides a gate or changes a board. See [Services](/build/services/)
+for what each scope reaches.
 
 ## What a token cannot do
 
