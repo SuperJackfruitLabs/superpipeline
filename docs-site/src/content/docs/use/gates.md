@@ -49,6 +49,12 @@ A gate does not have to be answered in the board. If SuperPipeline is linked to 
 answered there — from a phone, in a conversation, as an ordinary reply. The decision arrives back
 as the same three options, and the card moves.
 
+What crosses between them is [Treaty](https://treaty.superjackfruit.com)'s: the board publishes the gate as a
+[`gate.pending`](https://treaty.superjackfruit.com/events/gate-pending-v1/) event through the suite's
+[event relay](https://treaty.superjackfruit.com/relay/), the room shows it as the [gate card](https://treaty.superjackfruit.com/matrix/cards/superpipeline-gate-v2/),
+and a reply is a [gate decision](https://treaty.superjackfruit.com/matrix/answers/superpipeline-gate-decision-v2/). The settled
+gate is closed in the room by the [gate outcome](https://treaty.superjackfruit.com/matrix/receipts/superpipeline-gate-outcome-v1/).
+
 That path is optional and adds nothing you must run: a standalone SuperPipeline gates entirely in its
 own interface.
 
