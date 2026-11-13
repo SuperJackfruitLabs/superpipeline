@@ -66,7 +66,13 @@ are only for first-time setup or one-off deploys.
    wrangler secret put GITHUB_CLIENT_SECRET
    wrangler secret put APP_URL               # the deployed origin, e.g. https://superpipeline-api.<sub>.workers.dev
    wrangler secret put SUPERWITNESS_REPORTER_CREDENTIAL   # optional: <svc_id>:<secret> for run reporting
+   wrangler secret put RELAY_TOKEN           # optional: the suite event relay's producer token
    ```
+   `RELAY_URL` (a plain var in `wrangler.jsonc`) and `RELAY_TOKEN` together turn on publishing to
+   the suite's event relay ([05 §4](./05-integration-surfaces.md#the-suites-event-relay)); with
+   either unset nothing is published to it. `HUB_OAUTH_CLIENT_ID` is optional too: this plane's key
+   in the hub's OAuth client registry for the cross-domain token handoff, `superpipeline` by
+   default, set only by a deployment registered under another name.
 6. **Build the web + deploy** (this builds `apps/web/build` and deploys with dev-auth OFF):
    ```
    pnpm --filter @superpipeline/api deploy

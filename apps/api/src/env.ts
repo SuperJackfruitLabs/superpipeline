@@ -25,8 +25,9 @@ export interface Env {
    */
   HUB_ISSUER?: string;
   /**
-   * The suite's event relay (treaty plan step 7). Both set: each gate.pending is also published to
-   * the relay as a CloudEvent, beside the direct push. Either unset: nothing is published to it.
+   * The suite's event relay (treaty plan step 7). Both set: every event in `RELAYED_EVENTS`
+   * (push/relay.ts: the board-chat events and `card.ready`) is also published to the relay as a
+   * CloudEvent, beside the direct push. Either unset: nothing is published to it.
    */
   RELAY_URL?: string;
   /** The relay's producer token for this deployment (secret). */

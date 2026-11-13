@@ -368,13 +368,23 @@ an agent to call `claim`. Modeled on A2A **PushNotificationConfig**:
   provider, status: overridden }, by, comment, at }`); `gate.pending` and `GET …/gates/:gateId`
   carry `checks: [{ name, provider, status, url? }]` when the gate's stage had checks — see
   [implementation/machine-checks](./implementation/machine-checks.md)),
-  `gate.resolved`, `run.reclaimed`, `card.canceled`,
-  `cards.stale` (the daily stale-card digest: `{ event, boardId, boardName, cards: StaleCardView[], ts }`,
+  and `cards.stale` (the daily stale-card digest: `{ event, boardId, boardName, cards: StaleCardView[], ts }`,
   one delivery per sweep that has a card not reported in the last 24 hours — see
-  docs-site `use/stuck-cards`).
-- **Delivery is durable**: enqueued to a **Queue**, delivered by a **Workflow** with retries +
-  exponential backoff; each delivery is **HMAC/JWT-signed**; the receiver verifies and may then
-  `claim`. SSRF defense: webhook URLs are allowlisted/ownership-verified.
+  docs-site `use/stuck-cards`). Those are `PUSHED_EVENTS` (`apps/api/src/push/events.ts`).
+- **Record events** (`RECORD_EVENTS`): `card.created`, `card.updated`, `card.moved`,
+  `card.advanced`, `card.completed`, `card.rejected`, `card.failed` (kept for subscribers, not sent
+  today), `card.blocked`, `card.deleted`, `card.resumed`, `card.comment.added`,
+  `card.comment.deleted`, `gate.resolved`, `link.added` and `link.removed`. Each body is `{ event,
+  boardId, seq, ts, cardIds }` and nothing more: the subscriber reads the cards back with its own
+  credential. A service needs `push:write` to subscribe to them, and `approval-requests:relay` to
+  subscribe to the decision events (`DECISION_EVENTS`, every pushed event above but
+  `work.available` and `cards.stale`); a service may subscribe to nothing else.
+- Nothing else can be subscribed to: a config naming any other event is refused `UNKNOWN_EVENT`.
+  `run.reclaimed` is an attempt's end reason, not an event, and no `card.canceled` event exists.
+- **Delivery is at least once**: the row is queued in `push_deliveries` in the transaction that
+  made the change, the Board DO's alarm drains it with retries and backoff (below), and each
+  delivery is **HMAC-signed** with the config's token; the receiver verifies and may then `claim`.
+  There is no Queue or Workflow binding. SSRF defense: push URLs must be public http(s) (below).
 
 ### Implementation (P7)
 
@@ -421,12 +431,34 @@ RFC1918, link-local/169.254 metadata, IPv6 ULA/link-local).
   > nobody was asked for. Found while implementing
   > `charter → decisions/2026-08-30-a-gate-closes-over-chat.md`.
 
-- **⚠️ Remaining**: events beyond `work.available` and `gate.pending` (`gate.resolved`,
-  `run.reclaimed`, `card.canceled`); **URL ownership-verification** (the literal-IP denylist
-  doesn't stop DNS rebinding — a host allowlist / challenge-response is the durable fix); auth on
-  `push/dispatch` + `push/deliveries` when real auth replaces the dev headers. **Durable transport**
+- **⚠️ Remaining**: **URL ownership-verification** (the literal-IP denylist doesn't stop DNS
+  rebinding — a host allowlist / challenge-response is the durable fix). **Durable transport**
   (Cloudflare **Queue** → **Workflow**) remains the heavier upgrade; the alarm above buys the same
-  at-least-once property for a fraction of it.
+  at-least-once property for a fraction of it. (Shipped since: the record events and every decision
+  event above, and a human session on `POST …/push/dispatch` (`work`) and `GET …/push/deliveries`
+  (`read`).)
+
+### The suite's event relay
+
+A deployment with both `RELAY_URL` and `RELAY_TOKEN` (the relay's producer token, a secret) also
+publishes `RELAYED_EVENTS` (`apps/api/src/push/relay.ts`) to the suite's event relay, beside the
+direct push, which keeps running:
+
+- **What**: every board-chat event — `gate.pending`, `elicitation.pending`, `delivery.pending`,
+  `attention.pending`, `decision.reminded`, `decision.escalated`, `gate.approval_recorded`,
+  `decision.released`, `decision.pulled_back`, `check.failed`, `check.overridden` — plus
+  `card.ready`, which a board with a placement window sends when a card becomes ready to claim. 12
+  in all. Record events (`card.*`, `gate.resolved`, links) and `work.available` are not relayed.
+- **How**: a CloudEvent in HTTP binary mode (`@superjackfruitlabs/treaty-cloudevents`), POSTed to
+  `RELAY_URL/v1/events/evt.<tenant>.superpipeline.<entity>.<verb>` with `Authorization: Bearer
+  RELAY_TOKEN`; type `com.superjackfruit.superpipeline.<entity>.<verb>.v1`, `dataschema` from
+  treaty's catalog (an event with no schema is refused, so it can only dead-letter), `source`
+  `/superpipeline/boards/<boardId>`, `time` the body's `ts`. The data is the push body.
+- **The outbox**: each producer queues one more `push_deliveries` row (config id `relay`) in the same
+  transaction as its push. The drain sends it and retries it like any push, dead-lettering after
+  `MAX_PUSH_ATTEMPTS`. Its id, `<boardId>:<row>`, is fixed per row, so a retry the relay already
+  stored is a duplicate there, not a second event.
+- Either setting unset: nothing is published to the relay.
 
 **`gate.pending` fan-out is by subscription only**, deliberately unlike `work.available`. That one
 asks *who could claim this stage* and matches on capability; a gate asks *who owns this card*, and
