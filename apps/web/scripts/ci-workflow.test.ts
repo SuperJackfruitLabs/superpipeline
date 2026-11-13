@@ -1,7 +1,8 @@
 // The CI workflow parses, every `needs` names a job that exists, every script a step runs exists, and the
 // gates are the ones the operator chose (2026-10-13): production deploy waits on `visual`, never on the `pixel` report,
 // (since 2026-10-22 production deploys from release.yml on a v* tag, gated on main's CI run for that commit;
-// release.yml is the suite's shared release workflow, and .github/release-config.json and deploy/release/ are ours)
+// release.yml is the suite's shared release workflow; .github/release-config.json, the hooks .github/release/{build,deploy,smoke}.sh
+// and deploy/release/ are ours)
 // and (2026-10-14) pixel runs only nightly or by hand, never on push or pull_request.
 import { existsSync, readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
@@ -14,7 +15,7 @@ type Step = { run?: string; uses?: string; if?: string; id?: string; env?: Recor
 type Job = { needs?: string | string[]; if?: string; steps: Step[]; 'continue-on-error'?: boolean; container?: { image: string; options?: string }; strategy?: { 'max-parallel'?: number; 'fail-fast'?: boolean; matrix?: string } };
 const wf = parse(readFileSync(join(root, '.github/workflows/ci.yml'), 'utf8')) as { on: Record<string, unknown>; jobs: Record<string, Job> };
 const rel = parse(readFileSync(join(root, '.github/workflows/release.yml'), 'utf8')) as { jobs: Record<string, Job & { permissions?: Record<string, string> }> };
-const cfg: { ci_workflow: string; deploy: string; smoke: { script: string } } = JSON.parse(readFileSync(join(root, '.github/release-config.json'), 'utf8'));
+const cfg: { ci_workflow: string; deploy?: unknown; smoke: { script?: string } } = JSON.parse(readFileSync(join(root, '.github/release-config.json'), 'utf8'));
 const releaseScript = (f: string) => readFileSync(join(root, f), 'utf8');
 const needs = (j: Job) => (j.needs === undefined ? [] : Array.isArray(j.needs) ? j.needs : [j.needs]);
 
@@ -30,7 +31,9 @@ describe('ci.yml', () => {
     expect(wf.jobs.deploy).toBeUndefined();
     for (const job of Object.values(wf.jobs)) expect(JSON.stringify(job)).not.toContain('ci:deploy-app');
     expect(rel.jobs.release).toBeDefined();
-    expect(cfg.deploy).toBe('deploy/release/deploy.sh');
+    // The deploy is the fixed-path hook, never a script path read from the config.
+    expect(cfg.deploy).toBeUndefined();
+    expect(releaseScript('.github/release/deploy.sh')).toContain('sh deploy/release/deploy.sh');
   });
   it('production deploy requires main CI (test, e2e and visual among it) to have passed, never pixel', () => {
     const gate = rel.jobs.gate;
@@ -115,14 +118,16 @@ describe('ci.yml', () => {
       expect(job.steps.some((s) => s.run?.includes('ci:build-app')), name).toBe(false);
     }
     // Production downloads the artifact of the CI run the release gate found green, never rebuilds.
-    const prod = releaseScript(cfg.deploy);
+    const prod = releaseScript('deploy/release/deploy.sh');
     expect(prod).toContain('gh run download "$CI_RUN_ID"');
     expect(prod).toContain('-n "app-$RELEASE_SHA"');
     expect(prod).toMatch(/is missing[^\n]*\n\s+exit 1/);
     expect(prod).toContain('pnpm ci:verify-app');
     expect(prod).not.toContain('ci:build-app');
     expect(prod.lastIndexOf('pnpm ci:verify-app')).toBeLessThan(prod.lastIndexOf('pnpm ci:deploy-app'));
-    expect(releaseScript(cfg.smoke.script)).toContain('smoke.sh https://app.superpipeline.dev');
+    expect(cfg.smoke.script).toBeUndefined();
+    expect(releaseScript('.github/release/smoke.sh')).toContain('sh deploy/release/smoke.sh');
+    expect(releaseScript('deploy/release/smoke.sh')).toContain('smoke.sh https://app.superpipeline.dev');
     expect(wf.jobs.unit!.steps.some((s) => s.run === 'pnpm ci:test')).toBe(true);
     // The lint ratchet blocks merge through the `test` gate whenever app code is in the change.
     expect(wf.jobs.lint?.if).toBe("needs.plan.outputs.app == 'true'");

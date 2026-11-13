@@ -1,5 +1,5 @@
 #!/bin/sh
-# The release's build (`build_command` in .github/release-config.json), run at the tag: supi for
+# The release's build (the .github/release/build.sh hook), run at the tag: supi for
 # darwin and linux, arm64 and x64 (matching `assetName()` in packages/cli/src/update.ts: a target
 # added here and not there gives a binary nothing fetches), with the tag stamped in, and the
 # skill asset. The tag is the version, so the binaries cannot come from main's CI. Bun is the
