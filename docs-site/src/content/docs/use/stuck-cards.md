@@ -41,6 +41,12 @@ A card that needs you is in `input-required`, and it says why:
 | `repeated-failure` | two attempts in a row failed, or a judge found changes needed a third time | read the log and the findings, fix the cause, then **resume** it |
 | `not-authorised` | nobody allowed to dispatch this work asked for it | staff an agent that may take it, or have someone with the grant re-queue it |
 
+On a board linked to a chat room, a `question` reaches the room as an
+[`elicitation.pending`](https://treaty.superjackfruit.com/events/elicitation-pending-v1/) event and Treaty's
+[question card](https://treaty.superjackfruit.com/matrix/cards/superpipeline-question-v2/); a card parked for any of the other
+reasons but `review` reaches it as an [`attention.pending`](https://treaty.superjackfruit.com/events/attention-pending-v1/) event
+and the [waiting card](https://treaty.superjackfruit.com/matrix/cards/superpipeline-attention-v2/).
+
 One more kind of stuck card is not in `input-required` at all: a card **sitting in a stage nothing
 claims** — no agent owns the stage, it has no approval gate, and it is not the last stage (a card
 arriving at a last stage nobody acts on is finished). An intake column such as `requested` is the

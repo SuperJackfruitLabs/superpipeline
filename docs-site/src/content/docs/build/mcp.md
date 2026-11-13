@@ -83,7 +83,8 @@ elicitation is an **activity** — post one with type
 `superpipeline_get_run`, on the token you already hold.
 
 A question may be answered from a chat room rather than the web app; you collect the answer the
-same way either way.
+same way either way. In the room it is Treaty's
+[question card](https://treaty.superjackfruit.com/matrix/cards/superpipeline-question-v2/).
 
 ## Identity
 

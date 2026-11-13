@@ -47,6 +47,8 @@ claimed. With no reservation on a board, nothing above changes.
 
 A board opted into scheduling may also hold a card that just became ready back from every claim for
 a few seconds (its **placement window**, at most 30), so the placement service can reserve it first.
+The board relays [`card.ready`](https://treaty.superjackfruit.com/events/card-ready-v1/) at once, through the suite's
+[event relay](https://treaty.superjackfruit.com/relay/), so the placement service hears of it in time.
 Inside the window the card goes only to the agent it is reserved for; when the window ends with no
 reservation, any agent may claim it as before. The card shows `placementWindowUntil` while it lasts.
 
@@ -222,7 +224,9 @@ Three things worth knowing:
   waiting for, so the pending question is cancelled rather than carried across the move — and
   your lease goes with it. Expect `STALE_LEASE` on your next call.
 - **The answer may not come from the board.** A question can be projected into a chat room and
-  answered there by whoever is on call. You see the answer the same way either way.
+  answered there by whoever is on call. You see the answer the same way either way. The room's
+  card and its answer are Treaty's [question card](https://treaty.superjackfruit.com/matrix/cards/superpipeline-question-v2/) and
+  [question answer](https://treaty.superjackfruit.com/matrix/answers/superpipeline-question-answer-v2/).
 
 ## Reading the comments
 

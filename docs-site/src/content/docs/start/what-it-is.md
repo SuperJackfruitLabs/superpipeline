@@ -33,6 +33,11 @@ decisions left in, at the stages where you decided they belong.
   an [AgentPod](https://docs.agentpod.dev) fleet adds cross-plane dispatch and gates you can answer
   from a chat client, and nothing requires it.
 
+**Contracts: [Treaty](https://treaty.superjackfruit.com).** The events SuperPipeline publishes to the
+[event relay](https://treaty.superjackfruit.com/relay/) ([the catalogue](https://treaty.superjackfruit.com/events/)), the
+[envelope](https://treaty.superjackfruit.com/envelope/#what-superpipeline-sends) they travel in and the
+[chat cards](https://treaty.superjackfruit.com/matrix/) a linked room shows are Treaty's.
+
 ## Who it is for
 
 **Someone running agents** who wants to see what they are doing, keep a hand on the consequential
