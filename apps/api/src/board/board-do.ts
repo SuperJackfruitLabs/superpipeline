@@ -23,6 +23,7 @@ import * as maintenance from './maintenance';
 import * as metering from './metering';
 import * as moves from './moves';
 import * as pipeline from './pipeline';
+import * as placementWindow from './placement-window';
 import * as push from './push';
 import * as references from './references';
 import * as reservations from './reservations';
@@ -523,6 +524,14 @@ export class BoardDO extends DurableObject<Env> {
 
   setDecisionTimeout(...args: OpArgs<typeof decisionTimeouts.setBoardDecisionTimeout>): Promise<ReturnType<typeof decisionTimeouts.setBoardDecisionTimeout>> {
     return Promise.resolve(decisionTimeouts.setBoardDecisionTimeout(this.board, ...args));
+  }
+
+  setPlacementWindow(...args: OpArgs<typeof placementWindow.setPlacementWindow>): Promise<ReturnType<typeof placementWindow.setPlacementWindow>> {
+    return Promise.resolve(placementWindow.setPlacementWindow(this.board, ...args));
+  }
+
+  schedulingSettings(): Promise<placementWindow.SchedulingSettings | null> {
+    return Promise.resolve(this.board.getMeta('boardId') ? placementWindow.schedulingSettings(this.board) : null);
   }
 
   staleCards(...args: OpArgs<typeof stale.staleCards>): ReturnType<typeof stale.staleCards> {

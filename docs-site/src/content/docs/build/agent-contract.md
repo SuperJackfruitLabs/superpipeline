@@ -45,6 +45,11 @@ held for gets it first, even ahead of a higher-priority card. The card shows the
 `reservation: { agentId, reservedUntil, decisionId, reservedBy }`; it is cleared when the card is
 claimed. With no reservation on a board, nothing above changes.
 
+A board opted into scheduling may also hold a card that just became ready back from every claim for
+a few seconds (its **placement window**, at most 30), so the placement service can reserve it first.
+Inside the window the card goes only to the agent it is reserved for; when the window ends with no
+reservation, any agent may claim it as before. The card shows `placementWindowUntil` while it lasts.
+
 `{claimed: false}` carries a `reason`, the first one the claim met:
 
 | `reason` | |
@@ -56,6 +61,7 @@ claimed. With no reservation on a board, nothing above changes.
 | `no_matching_card` | a stage is yours, but no card in it is ready: none waiting, or all held back by a blocker |
 | `grant_denied` | the card's queuer may not dispatch you; the card is parked for a person |
 | `card_reserved` | the only cards you could take are reserved for another agent; ask again after a short wait |
+| `placement_window` | the only cards you could take became ready moments ago and are being placed; ask again after a short wait |
 
 Back off and ask again. The codes are stable, and more may be added, so
 treat a code you do not know as "nothing for you now".

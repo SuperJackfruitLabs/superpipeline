@@ -152,8 +152,9 @@ async function onlyGate(board: BoardDO): Promise<string> {
 }
 
 describe('what the relay carries', () => {
-  it('is every board-chat event and nothing else', () => {
-    expect(new Set(RELAYED_EVENTS)).toEqual(new Set(BOARD_CHAT));
+  it('is every board-chat event and card.ready, and nothing else', () => {
+    // And `card.ready`, for the placement service (placement-window.test.ts).
+    expect(new Set(RELAYED_EVENTS)).toEqual(new Set([...BOARD_CHAT, 'card.ready']));
     expect(NOT_RELAYED.filter((event) => RELAYED_EVENTS.has(event))).toEqual([]);
   });
 

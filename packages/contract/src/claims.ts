@@ -27,6 +27,11 @@ import { z } from 'zod';
  * - `card_reserved` — the card is held for another agent until its reservation lapses
  *   (`CardReservation`). On a claim it is the reason only when nothing else was claimable: a held
  *   card is skipped, and the claimant gets the next card it may take.
+ * - `placement_window` — the card became ready moments ago on a board opted into scheduling, and is
+ *   held back from pull until its placement window ends (`PLACEMENT_WINDOW_SECONDS`), so the
+ *   placement service can choose who takes it (claim only). Like `card_reserved`, it is the reason
+ *   only when nothing else was claimable. The eligibility read does not count it against anyone: it
+ *   reports the window's end as `placementWindowUntil` instead.
  */
 export const ClaimReason = z.enum([
   'board_not_initialized',
@@ -39,6 +44,7 @@ export const ClaimReason = z.enum([
   'card_held_back',
   'stage_not_agent_claimable',
   'card_reserved',
+  'placement_window',
 ]);
 export type ClaimReason = z.infer<typeof ClaimReason>;
 
@@ -63,3 +69,11 @@ export type CardReservation = z.infer<typeof CardReservation>;
 
 /** How long a hold may last, in seconds: short, because another idle agent waits it out. */
 export const RESERVATION_TTL_SECONDS = { min: 10, max: 300, default: 60 } as const;
+
+/**
+ * A board's placement window, in seconds: how long a card that just became ready is held back from
+ * pull, so a placement service can reserve it first. 0 is off, today's behaviour, and the default;
+ * a placement service sets it when it opts the board in. Short, because when no reservation comes the
+ * window simply ends and pull proceeds.
+ */
+export const PLACEMENT_WINDOW_SECONDS = { min: 0, max: 30 } as const;

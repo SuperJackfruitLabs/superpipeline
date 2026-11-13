@@ -21,7 +21,9 @@ export const RELAY_CONFIG_ID = 'relay';
  * What goes through the relay: every event board chat carries (gates, questions, deliveries,
  * waiting cards, decision reminders and escalations, quorum votes, held approvals, machine checks).
  * Each has a treaty schema; `relayRequest` refuses one that has none. Record events
- * (`card.*`, `gate.resolved`, links) and `work.available` are not relayed.
+ * (`card.*`, `gate.resolved`, links) and `work.available` are not relayed. `card.ready` is, though it
+ * is not board chat: a board with a placement window sends it when a card becomes ready to claim
+ * (`board/placement-window.ts`), so the placement service can reserve the card inside the window.
  */
 export const RELAYED_EVENTS: ReadonlySet<string> = new Set([
   'gate.pending',
@@ -35,6 +37,8 @@ export const RELAYED_EVENTS: ReadonlySet<string> = new Set([
   'decision.pulled_back',
   'check.failed',
   'check.overridden',
+  // Not board chat: a card ready to claim on a board opted into scheduling, for the placement service.
+  'card.ready',
 ]);
 
 export interface RelaySettings {
@@ -50,6 +54,14 @@ export function relaySettings(env: Pick<Env, 'RELAY_URL' | 'RELAY_TOKEN'> | unde
 }
 
 const dataschemaFor = new Map(catalog.events.filter((e) => e.producer === 'superpipeline').map((e) => [e.pushName, e.dataschema]));
+
+/**
+ * Whether treaty's catalogue names a schema for this event. Every relayed event must have one
+ * (relay-publish.test.ts), or its delivery could only be dead-lettered.
+ */
+export function hasTreatySchema(event: string): boolean {
+  return dataschemaFor.has(event);
+}
 
 /** The relay request for one delivery row: where to POST and the CloudEvent's headers. */
 export function relayRequest(

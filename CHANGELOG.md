@@ -24,6 +24,13 @@ commands, help and output, the same requests from the web app, and the same depl
 - A stage may state what a station needs to work it: `placement` `{isolation, models, tools,
   credentials}`, in AgentPod capability catalog ids, set with `PATCH /v1/boards/:id/stages/:key` or
   `PUT /stages` and returned on the board. Advice for a placement service only: a claim never checks it.
+- A board can be opted into scheduling with a **placement window** (`PUT /v1/boards/:id/scheduling`
+  `{placementWindowSeconds}`, 0–30, on a service token with `dispatch:reserve`; `GET` reads it). On
+  such a board a card that just became ready is held back from pull for that long, so a placement
+  service can reserve it first: a claim passes it over unless it is reserved for the claimant
+  (`placement_window` when nothing else is claimable), the card and the eligibility read show
+  `placementWindowUntil`, and the board relays `card.ready` at once. When no reservation comes the
+  window ends on its own and pull proceeds. 0, the default, is today's board.
 - A placement service can reserve a ready card for one agent for 10–300 seconds
   (`PUT /v1/boards/:id/cards/:cardId/reservation`, on a service token with `dispatch:reserve`).
   Until the reservation lapses, other agents' claims pass the card over (`card_reserved` when nothing

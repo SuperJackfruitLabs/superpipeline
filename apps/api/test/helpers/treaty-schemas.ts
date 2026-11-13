@@ -10,6 +10,7 @@
  */
 import { Validator } from '@cfworker/json-schema';
 import catalog from '@superjackfruitlabs/treaty-event-schemas/catalog.json';
+import cardReady from '@superjackfruitlabs/treaty-event-schemas/superpipeline/card.ready.v1.json';
 import attentionPending from '@superjackfruitlabs/treaty-event-schemas/superpipeline/attention.pending.v1.json';
 import checkFailed from '@superjackfruitlabs/treaty-event-schemas/superpipeline/check.failed.v1.json';
 import checkOverridden from '@superjackfruitlabs/treaty-event-schemas/superpipeline/check.overridden.v1.json';
@@ -35,6 +36,7 @@ const SCHEMAS = [
   decisionPulledBack,
   checkFailed,
   checkOverridden,
+  cardReady,
   record,
 ];
 for (const schema of SCHEMAS) {

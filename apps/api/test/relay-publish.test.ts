@@ -8,7 +8,7 @@ import { describe, expect, it } from 'vitest';
 import { fromBinary, parseSubject, parseType } from '@superjackfruitlabs/treaty-cloudevents';
 import type { BoardDO } from '../src/board/board-do';
 import { dispatchPushDeliveries, queueRelay, queueSubscribedPush, type PushDeps } from '../src/board/push';
-import { RELAY_CONFIG_ID, relayRequest, relaySettings } from '../src/push/relay';
+import { RELAY_CONFIG_ID, RELAYED_EVENTS, hasTreatySchema, relayRequest, relaySettings } from '../src/push/relay';
 import type { PushSender } from '../src/push/deliver';
 import { boardStub, STAGES } from './approval-subject-fixtures';
 
@@ -78,6 +78,19 @@ describe('relayRequest', () => {
       dataschema: 'https://raw.githubusercontent.com/SuperJackfruitLabs/treaty/main/schemas/superpipeline/gate.pending.v1.json',
     });
     expect(parseType(event.attributes.type ?? '').version).toBe(1);
+  });
+
+  it('names card.ready by treaty\'s type and schema, on the board\'s card.ready subject', () => {
+    const body = JSON.stringify({ event: 'card.ready', boardId: 'brd_00000000000000r1', cardId: 'card_0000000000000001', stageKey: 'build', readyAt: '2026-11-13T09:00:00.000Z', ts: '2026-11-13T09:00:00.000Z' });
+    const request = relayRequest({ id: 9, body }, { boardId: 'brd_00000000000000r1', tenantId: 'tnt_relay' }, { url: 'https://relay.test', token: 't' });
+    expect(request.url).toBe('https://relay.test/v1/events/evt.tnt_relay.superpipeline.card.ready');
+    expect(request.headers['ce-type']).toBe('com.superjackfruit.superpipeline.card.ready.v1');
+    expect(request.headers['ce-dataschema']).toBe('https://raw.githubusercontent.com/SuperJackfruitLabs/treaty/main/schemas/superpipeline/card.ready.v1.json');
+  });
+
+  it('relays only events treaty has a schema for: every relayed event has one, work.available none', () => {
+    expect([...RELAYED_EVENTS].filter((event) => !hasTreatySchema(event))).toEqual([]);
+    expect(hasTreatySchema('work.available')).toBe(false);
   });
 
   it('refuses an event treaty has no schema for', () => {

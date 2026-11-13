@@ -138,7 +138,10 @@ export interface BoardContext {
   mustGetReference(id: string): ReferenceView;
   notify(kind: string, cardId: string, body: string): void;
   notifyDependents(cardId: string): void;
+  /** A card just became ready to claim: opens its placement window, if the board has one, then pings (`ready.ts`). */
   notifyWorkAvailable(cardId: string): void;
+  /** Open a card's placement window alone, with no ping: a person's move (`ready.ts`). */
+  openPlacementWindow(cardId: string): void;
   now(): string;
   nowMs(): number;
   openChildCount(cardId: string): number;

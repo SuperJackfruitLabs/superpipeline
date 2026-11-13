@@ -6,6 +6,7 @@ import { listBoards } from './db/catalog';
 import { eligibilityResponse } from './card-eligibility';
 import { clearReservationResponse, reserveResponse } from './card-reservation';
 import { flatError } from './flat-error';
+import { readSchedulingInput } from './board/placement-window';
 import { DECISION_EVENTS, SUBSCRIBABLE_EVENTS, isRecordEvent } from './push/events';
 
 /**
@@ -29,6 +30,8 @@ const CHECKS = /^\/v1\/boards\/(brd_[0-9a-f]{16})\/cards\/(card_[0-9a-f]{16})\/c
 const ELIGIBILITY = /^\/v1\/boards\/(brd_[0-9a-f]{16})\/cards\/(card_[0-9a-f]{16})\/eligibility$/;
 /** Holding a card for the agent a placement service chose, and clearing the hold. */
 const RESERVATION = /^\/v1\/boards\/(brd_[0-9a-f]{16})\/cards\/(card_[0-9a-f]{16})\/reservation$/;
+/** A board's scheduling settings: the placement window a placement service opts the board into. */
+const SCHEDULING = /^\/v1\/boards\/(brd_[0-9a-f]{16})\/scheduling$/;
 const APPROVAL_DELIVERY = /^\/v1\/boards\/(brd_[0-9a-f]{16})\/approval-subjects\/(aps_[0-9a-f]{16})\/delivery$/;
 
 /** Decoded without verifying, only to route: resolveHubService verifies before anything is read. */
@@ -61,7 +64,8 @@ export async function serviceRoute(request: Request, env: Env, path: string): Pr
   const checks = request.method === 'GET' ? CHECKS.exec(path) : null;
   const eligibility = request.method === 'GET' ? ELIGIBILITY.exec(path) : null;
   const reservation = request.method === 'PUT' || request.method === 'DELETE' ? RESERVATION.exec(path) : null;
-  if ((!read && !push && !approval && !approvalDelivery && !requestCreate && !requestRead && !questions && !gates && !followUps && !checks && !eligibility && !reservation) || !looksLikeService(request)) {
+  const scheduling = request.method === 'PUT' || request.method === 'GET' ? SCHEDULING.exec(path) : null;
+  if ((!read && !push && !approval && !approvalDelivery && !requestCreate && !requestRead && !questions && !gates && !followUps && !checks && !eligibility && !reservation && !scheduling) || !looksLikeService(request)) {
     return null;
   }
 
@@ -146,6 +150,29 @@ export async function serviceRoute(request: Request, env: Env, path: string): Pr
     const stub = boardStub(env, svc.tenantId, boardId);
     if (request.method === 'DELETE') return clearReservationResponse(stub, cardId, `svc:${svc.principalId}`);
     return reserveResponse(env, svc.tenantId, stub, cardId, svc.principalId, await request.json().catch(() => null));
+  }
+
+  /**
+   * The board's placement window: read (GET, on `dispatch:read` or `dispatch:reserve`) or set (PUT
+   * `{placementWindowSeconds}`, 0 to 30, on `dispatch:reserve`). A placement service sets it when it
+   * opts a board in and sets 0 when it opts out; 0 is today's board (`board/placement-window.ts`).
+   */
+  if (scheduling) {
+    const [, boardId] = scheduling;
+    const writes = request.method === 'PUT';
+    if (writes ? !svc.scopes.includes(DISPATCH_RESERVE) : !svc.scopes.includes(DISPATCH_READ) && !svc.scopes.includes(DISPATCH_RESERVE)) {
+      return refuse(403, 'FORBIDDEN', writes ? 'this principal does not hold dispatch:reserve' : 'this principal holds neither dispatch:read nor dispatch:reserve');
+    }
+    if (!(await boardNamesById(env.DB, svc.tenantId, [boardId])).has(boardId)) return notFound('board');
+    const stub = boardStub(env, svc.tenantId, boardId);
+    if (!writes) {
+      const settings = await stub.schedulingSettings();
+      return settings ? Response.json({ scheduling: settings }) : notFound('board');
+    }
+    const input = readSchedulingInput(await request.json().catch(() => null));
+    if (!input.ok) return refuse(400, 'INVALID_SCHEDULING', input.message);
+    const result = await stub.setPlacementWindow({ placementWindowSeconds: input.placementWindowSeconds, by: `svc:${svc.principalId}` });
+    return result.ok ? Response.json({ scheduling: result.value }) : refuse(result.code === 'INVALID_SCHEDULING' ? 400 : 404, result.code, result.message);
   }
 
   /**

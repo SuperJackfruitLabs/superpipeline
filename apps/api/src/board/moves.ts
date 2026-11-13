@@ -33,6 +33,7 @@ export type MovesDeps = Pick<
   | 'notify'
   | 'notifyDependents'
   | 'notifyWorkAvailable'
+  | 'openPlacementWindow'
   | 'now'
   | 'openChildCount'
   | 'openChildren'
@@ -158,6 +159,8 @@ export async function moveCard(deps: MovesDeps, cardId: string, toStageKey: stri
       `moved to "${target.name}" past ${unresolvedBlockers} unresolved blocker${unresolvedBlockers === 1 ? '' : 's'}${actorUserId ? ` by ${actorUserId}` : ''}`,
     );
   }
+  // Waiting at an agent stage now: on a board opted into scheduling, its placement window opens.
+  deps.openPlacementWindow(cardId);
   await deps.scheduleReclaim();
   return { ok: true, value: updated };
 }

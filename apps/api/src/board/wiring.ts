@@ -17,6 +17,7 @@ import * as maintenance from './maintenance';
 import * as metering from './metering';
 import * as moves from './moves';
 import * as pipeline from './pipeline';
+import * as ready from './ready';
 import * as references from './references';
 import * as runReports from './run-reports';
 import * as stale from './stale';
@@ -132,7 +133,8 @@ export function wireBoard(base: BoardBase, routes: ShellRoutes): BoardContext {
     mustGetReference: (...a) => references.mustGetReference(board, ...a),
     notify: (...a) => routes.notify(...a),
     notifyDependents: (...a) => holds.notifyDependents(board, ...a),
-    notifyWorkAvailable: (...a) => claims.notifyWorkAvailable(board, ...a),
+    notifyWorkAvailable: (...a) => ready.cardBecameReady(board, ...a),
+    openPlacementWindow: (...a) => ready.openPlacementWindow(board, ...a),
     now: (...a) => routes.now(...a),
     nowMs: (...a) => routes.nowMs(...a),
     openChildCount: (...a) => holds.openChildCount(board, ...a),

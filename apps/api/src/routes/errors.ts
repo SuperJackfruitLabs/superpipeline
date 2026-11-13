@@ -84,6 +84,7 @@ export function statusForCode(code: BoardErrorCode): number {
     case 'CARD_RESERVED':
       return 409;
     case 'INVALID_RESERVATION':
+    case 'INVALID_SCHEDULING':
       return 400;
     case 'WORKSPACE_ADMIN_REQUIRED':
     case 'SEPARATION_OF_DUTIES':
