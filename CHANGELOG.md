@@ -16,6 +16,12 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html). Entries g
 
 ### Changed
 
+- Docs: the published site covers gates decided by checks, decision timeouts, variants, quorum,
+  release time and pull-back, stage `placement`, service principals and their scopes, the service
+  routes, and the push and relay events. `docs/05` no longer lists events nobody can subscribe to.
+  The docs check also fails when a route, a Worker setting, an event or a service scope is named in
+  no doc and is not in `docs/undocumented-baseline.json`, and a pull request that changes that
+  surface without touching the docs needs the `no-docs-needed` label.
 - The landing page is on frontdoor 0.0.13: nine products in the suite frame.
 - Release: the shared release workflow maps the secrets it needs by name rather than serialising
   every secret into one variable.
