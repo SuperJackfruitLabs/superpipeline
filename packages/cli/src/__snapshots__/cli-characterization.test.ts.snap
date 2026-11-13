@@ -27,7 +27,7 @@ Boards and pipelines:
   supi set-stale <boardId> [--hours <n>] [--off] [--on]
                                      set when a board's waiting cards count as stale, or switch it off
   supi set-stage <boardId> <stageKey> [--instructions <file|->] [--clear-instructions]
-        [--name <name>] [--gate none|approval] [--wip <n>|none] [--owner <capability>]
+        [--name <name>] [--gate none|approval|checks] [--wip <n>|none] [--owner <capability>]
         [--completion <file|->] [--clear-completion] [--return-stage <stageKey>]
         [--clear-return-stage]
                                      change ONE stage, leaving the others alone
@@ -900,7 +900,7 @@ exports[`supi commands against a fake API, pinned > supi 042 set-stage brd_1 1`]
   "requests": [],
   "stderr": "usage: supi set-stage <boardId> <stageKey> [--instructions <file|->] [--name <name>]
 
-  [--gate none|approval] [--wip <n>] [--owner <capability>] [--completion <file|->]
+  [--gate none|approval|checks] [--wip <n>] [--owner <capability>] [--completion <file|->]
   [--clear-instructions] [--clear-completion] [--return-stage <stageKey>] [--clear-return-stage]
 ",
   "stdout": "",
@@ -3541,7 +3541,7 @@ Boards and pipelines:
   supi set-stale <boardId> [--hours <n>] [--off] [--on]
                                      set when a board's waiting cards count as stale, or switch it off
   supi set-stage <boardId> <stageKey> [--instructions <file|->] [--clear-instructions]
-        [--name <name>] [--gate none|approval] [--wip <n>|none] [--owner <capability>]
+        [--name <name>] [--gate none|approval|checks] [--wip <n>|none] [--owner <capability>]
         [--completion <file|->] [--clear-completion] [--return-stage <stageKey>]
         [--clear-return-stage]
                                      change ONE stage, leaving the others alone
@@ -3674,7 +3674,7 @@ Boards and pipelines:
   supi set-stale <boardId> [--hours <n>] [--off] [--on]
                                      set when a board's waiting cards count as stale, or switch it off
   supi set-stage <boardId> <stageKey> [--instructions <file|->] [--clear-instructions]
-        [--name <name>] [--gate none|approval] [--wip <n>|none] [--owner <capability>]
+        [--name <name>] [--gate none|approval|checks] [--wip <n>|none] [--owner <capability>]
         [--completion <file|->] [--clear-completion] [--return-stage <stageKey>]
         [--clear-return-stage]
                                      change ONE stage, leaving the others alone
@@ -3807,7 +3807,7 @@ Boards and pipelines:
   supi set-stale <boardId> [--hours <n>] [--off] [--on]
                                      set when a board's waiting cards count as stale, or switch it off
   supi set-stage <boardId> <stageKey> [--instructions <file|->] [--clear-instructions]
-        [--name <name>] [--gate none|approval] [--wip <n>|none] [--owner <capability>]
+        [--name <name>] [--gate none|approval|checks] [--wip <n>|none] [--owner <capability>]
         [--completion <file|->] [--clear-completion] [--return-stage <stageKey>]
         [--clear-return-stage]
                                      change ONE stage, leaving the others alone
@@ -4631,7 +4631,7 @@ Boards and pipelines:
   supi set-stale <boardId> [--hours <n>] [--off] [--on]
                                      set when a board's waiting cards count as stale, or switch it off
   supi set-stage <boardId> <stageKey> [--instructions <file|->] [--clear-instructions]
-        [--name <name>] [--gate none|approval] [--wip <n>|none] [--owner <capability>]
+        [--name <name>] [--gate none|approval|checks] [--wip <n>|none] [--owner <capability>]
         [--completion <file|->] [--clear-completion] [--return-stage <stageKey>]
         [--clear-return-stage]
                                      change ONE stage, leaving the others alone
@@ -4764,7 +4764,7 @@ Boards and pipelines:
   supi set-stale <boardId> [--hours <n>] [--off] [--on]
                                      set when a board's waiting cards count as stale, or switch it off
   supi set-stage <boardId> <stageKey> [--instructions <file|->] [--clear-instructions]
-        [--name <name>] [--gate none|approval] [--wip <n>|none] [--owner <capability>]
+        [--name <name>] [--gate none|approval|checks] [--wip <n>|none] [--owner <capability>]
         [--completion <file|->] [--clear-completion] [--return-stage <stageKey>]
         [--clear-return-stage]
                                      change ONE stage, leaving the others alone
@@ -6506,7 +6506,7 @@ exports[`supi help, pinned > supi help set-stage 1`] = `
   "requests": [],
   "stderr": "",
   "stdout": "supi set-stage <boardId> <stageKey> [--instructions <file|->] [--clear-instructions]
-    [--name <name>] [--gate none|approval] [--wip <n>|none] [--owner <capability>]
+    [--name <name>] [--gate none|approval|checks] [--wip <n>|none] [--owner <capability>]
     [--completion <file|->] [--clear-completion] [--return-stage <stageKey>]
     [--clear-return-stage]
 
@@ -6524,8 +6524,9 @@ Flags:
                               because shell quoting mangles paragraphs. Default: unchanged.
   --clear-instructions        remove the stage's instructions. Default: off.
   --name <name>               rename the stage. Default: unchanged.
-  --gate none|approval        approval makes a card wait for a human decision before it leaves
-                              the stage. Default: unchanged.
+  --gate none|approval|checks approval makes a card wait for a human decision before it leaves
+                              the stage; checks passes it when the stage's checks pass, with
+                              nobody asked. A workspace owner or admin only. Default: unchanged.
   --wip <n>|none              the most cards the stage may hold at once; none removes the limit.
                               Default: unchanged.
   --owner <capability>        the capability an agent must hold to claim cards here. Default:
@@ -7631,7 +7632,7 @@ exports[`supi help, pinned > supi set-stage --help 1`] = `
   "requests": [],
   "stderr": "",
   "stdout": "supi set-stage <boardId> <stageKey> [--instructions <file|->] [--clear-instructions]
-    [--name <name>] [--gate none|approval] [--wip <n>|none] [--owner <capability>]
+    [--name <name>] [--gate none|approval|checks] [--wip <n>|none] [--owner <capability>]
     [--completion <file|->] [--clear-completion] [--return-stage <stageKey>]
     [--clear-return-stage]
 
@@ -7649,8 +7650,9 @@ Flags:
                               because shell quoting mangles paragraphs. Default: unchanged.
   --clear-instructions        remove the stage's instructions. Default: off.
   --name <name>               rename the stage. Default: unchanged.
-  --gate none|approval        approval makes a card wait for a human decision before it leaves
-                              the stage. Default: unchanged.
+  --gate none|approval|checks approval makes a card wait for a human decision before it leaves
+                              the stage; checks passes it when the stage's checks pass, with
+                              nobody asked. A workspace owner or admin only. Default: unchanged.
   --wip <n>|none              the most cards the stage may hold at once; none removes the limit.
                               Default: unchanged.
   --owner <capability>        the capability an agent must hold to claim cards here. Default:

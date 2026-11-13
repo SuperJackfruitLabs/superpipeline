@@ -150,11 +150,13 @@ export const BOARDS_COMMANDS: CommandSpec[] = [
       { name: "--name", value: "<name>", type: "string", default: "unchanged", description: "rename the stage" },
       {
         name: "--gate",
-        value: "none|approval",
+        value: "none|approval|checks",
         type: "enum",
-        choices: ["none", "approval"],
+        choices: ["none", "approval", "checks"],
         default: "unchanged",
-        description: "`approval` makes a card wait for a human decision before it leaves the stage",
+        description:
+          "`approval` makes a card wait for a human decision before it leaves the stage; `checks` passes it when the stage's checks pass, with nobody asked. " +
+          "A workspace owner or admin only",
       },
       {
         name: "--wip",
@@ -323,7 +325,7 @@ export async function runSetStage({ rest, pos }: Args): Promise<void> {
   if (!pos[0] || !pos[1]) {
     fail(
       "usage: supi set-stage <boardId> <stageKey> [--instructions <file|->] [--name <name>]",
-      "  [--gate none|approval] [--wip <n>] [--owner <capability>] [--completion <file|->]\n" +
+      "  [--gate none|approval|checks] [--wip <n>] [--owner <capability>] [--completion <file|->]\n" +
         "  [--clear-instructions] [--clear-completion] [--return-stage <stageKey>] [--clear-return-stage]",
     );
   }

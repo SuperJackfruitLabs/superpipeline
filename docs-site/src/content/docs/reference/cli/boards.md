@@ -217,7 +217,7 @@ supi set-stale brd_8f2c… --off
 Changes the named fields of one stage and nothing else. At least one flag is required. A person may set any field. An agent token with `compose` may set `--instructions` only — the other fields are routing, and the server refuses them by name.
 
 ```sh
-supi set-stage <boardId> <stageKey> [--instructions <file|->] [--clear-instructions] [--name <name>] [--gate none|approval] [--wip <n>|none] [--owner <capability>] [--completion <file|->] [--clear-completion] [--return-stage <stageKey>] [--clear-return-stage]
+supi set-stage <boardId> <stageKey> [--instructions <file|->] [--clear-instructions] [--name <name>] [--gate none|approval|checks] [--wip <n>|none] [--owner <capability>] [--completion <file|->] [--clear-completion] [--return-stage <stageKey>] [--clear-return-stage]
 ```
 
 | argument | meaning |
@@ -230,7 +230,7 @@ supi set-stage <boardId> <stageKey> [--instructions <file|->] [--clear-instructi
 | `--instructions <file\|->` | file path, or `-` for stdin | unchanged | the stage's runbook — prose handed to whoever claims a card here — read from a file, or stdin for `-`. A file rather than a string because shell quoting mangles paragraphs |
 | `--clear-instructions` | boolean | off | remove the stage's instructions |
 | `--name <name>` | string | unchanged | rename the stage |
-| `--gate none\|approval` | one of `none`, `approval` | unchanged | `approval` makes a card wait for a human decision before it leaves the stage |
+| `--gate none\|approval\|checks` | one of `none`, `approval`, `checks` | unchanged | `approval` makes a card wait for a human decision before it leaves the stage; `checks` passes it when the stage's checks pass, with nobody asked. A workspace owner or admin only |
 | `--wip <n>\|none` | integer | unchanged | the most cards the stage may hold at once; `none` removes the limit |
 | `--owner <capability>` | string | unchanged | the capability an agent must hold to claim cards here |
 | `--completion <file\|->` | file path, or `-` for stdin | unchanged | what a run must produce before the board believes it finished, as JSON from a file or stdin (see Stage runbooks and completion) |

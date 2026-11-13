@@ -174,7 +174,26 @@ as a board column) declares:
   route on. **Advice only**: the board stores and returns it and never checks it on a claim, so an
   agent that claims by pull is not refused for it and a board with no placement service is
   unchanged. At most 20 ids per list; `null` on a patch removes it
-- `gate` — `none | approval` (an `approval` stage requires a human ✅ before the card advances)
+- `gate` — `none | approval | checks` (an `approval` stage requires a human ✅ before the card
+  advances; a `checks` stage passes when its `checks` pass, with nobody asked, and no agent may own
+  it)
+- `returnStage` — an earlier stage's key: where a run's `changes-needed`, or a failing check, sends
+  the card. Declaring it makes the stage a judging stage; a stage with `checks` must have one
+- `timeout` — `{remindAfterMinutes?, escalateAfterMinutes?}`, whole minutes up to 30 days, escalate
+  after remind: how long a decision waiting on this stage goes unanswered before the card owner is
+  reminded, then the workspace's owners and admins are escalated to. Absent: the board's default
+  (`PUT /v1/boards/:id/decision-timeout`), or none. Nothing resolves on a timeout
+- `quorum` — `{required: 2..5, from?: deciders | admins}`: how many approvals the gate needs, and
+  from whom. Absent: one approval passes. One reject or request for changes closes the gate
+- `holdFor` — 5 to 10080 minutes an approval waits before it acts; a held approval can be pulled
+  back (`POST …/gates/:gateId/pull-back`) until it is released. Absent: an approval acts at once
+- `checks` — 1 to 5 machine checks (`ci` with optional `contexts`, or a SuperWitness `verdict` with
+  `kind`, `standard?`, `atLeast` or `pass`, `judgeKinds?`) that run before people; a failing one
+  returns the card to `returnStage`
+- `approvalSubjectSchema`, `approvalDeciderPrincipalIds` — opt an approval gate into an immutable,
+  digest-bound subject, and name who may decide it
+- `gate`, `timeout`, `quorum`, `holdFor`, `checks` and the two approval-subject fields are
+  **decision policy**: only a workspace owner or admin may change them (`WORKSPACE_ADMIN_REQUIRED`)
 - `wipLimit` — max cards concurrently in this stage (the real Kanban constraint)
 - `entry`/`exit` hints — optional structured-handoff requirements (e.g. "a PR reference must
   be attached before exit"). **⚠️ OPEN**: how rich stage entry/exit conditions should be in v1.
