@@ -4,7 +4,8 @@
  * See README.md for why this package exists and what it deliberately cannot check.
  */
 import { describe, expect, it } from 'vitest';
-import { existsSync, readFileSync, readdirSync } from 'node:fs';
+import { existsSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
+import { SURFACE_KINDS, listSurface, namedBy, type SurfaceKind } from './surface';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -192,5 +193,114 @@ describe('the published site', () => {
       .filter(({ text }) => !/^title:/m.test(text) || !/^description:/m.test(text))
       .map(({ file }) => file);
     expect(missing).toEqual([]);
+  });
+});
+
+/**
+ * The completeness ratchet: every route, Worker or CLI setting, event and service scope the code
+ * has (`surface.ts`) must be named somewhere a reader would look, or be listed in
+ * `docs/undocumented-baseline.json`, the debt this check was born with. The baseline can only
+ * shrink: an item that a doc now names, or that the code no longer has, must leave it. That is the
+ * lint ratchet (`scripts/lint-baseline.json`) applied to the docs.
+ *
+ * "Named" is a name check, like the rest of this file: a route by its method and path (a board
+ * route may be written from its tail, `…/cards/:cardId/move`), anything else by its exact name. It
+ * says the docs mention the thing, not that what they say about it is right.
+ *
+ * The docs it reads: the published site, the top-level `docs/*.md`, `docs/contributor/`, and the
+ * READMEs. Plans and specs (`docs/superpowers/`, `docs/implementation/`, `docs/follow-ups/`) do
+ * not count: they say what was meant, not what is.
+ *
+ * Regenerate after documenting something: `pnpm -F @superpipeline/docs-check baseline`. Adding an
+ * item to the baseline by hand is possible and shows in review; prefer the sentence in the docs.
+ */
+const BASELINE = 'docs/undocumented-baseline.json';
+
+/** Every `.md` under `dir`, recursively. */
+function markdownUnder(dir: string): Array<{ file: string; text: string }> {
+  return readdirSync(join(REPO, dir), { withFileTypes: true }).flatMap((e) => {
+    const rel = `${dir}/${e.name}`;
+    if (e.isDirectory()) return markdownUnder(rel);
+    return e.name.endsWith('.md') ? [{ file: rel, text: readFileSync(join(REPO, rel), 'utf8') }] : [];
+  });
+}
+
+function referenceDocs(): Array<{ file: string; text: string }> {
+  const readmes = ['README.md', ...['packages', 'apps'].flatMap((d) => readdirSync(join(REPO, d)).map((p) => `${d}/${p}/README.md`))]
+    .filter((f) => existsSync(join(REPO, f)))
+    .map((file) => ({ file, text: read(file) }));
+  return [
+    ...publishedPages().map((p) => ({ ...p, file: `docs-site/${p.file}` })),
+    ...allDocs().map((d) => ({ ...d, file: `docs/${d.file}` })),
+    ...markdownUnder('docs/contributor'),
+    ...readmes,
+  ];
+}
+
+/** Each kind's items that no reference doc names. */
+function unnamedSurface(): Map<SurfaceKind, string[]> {
+  const surface = listSurface(REPO);
+  const docs = referenceDocs().map((d) => d.text);
+  return new Map(SURFACE_KINDS.map((kind) => [kind, surface[kind].filter((item) => !docs.some(namedBy(kind, item)))]));
+}
+
+function readBaseline(): Map<SurfaceKind, string[]> {
+  const raw: unknown = JSON.parse(read(BASELINE));
+  const listed = (kind: SurfaceKind): string[] => {
+    const v: unknown = typeof raw === 'object' && raw !== null ? Object.entries(raw).find(([k]) => k === kind)?.[1] : undefined;
+    return Array.isArray(v) ? v.filter((x): x is string => typeof x === 'string') : [];
+  };
+  return new Map(SURFACE_KINDS.map((kind) => [kind, listed(kind)]));
+}
+
+describe('the public surface, named in the docs (a ratchet)', () => {
+  it('reads the surface at all — a guard on the guard', () => {
+    // A parser that quietly stops matching passes every assertion below for free.
+    const s = listSurface(REPO);
+    expect(s.routes.length).toBeGreaterThan(100);
+    expect(s.routes).toContain('POST /v1/boards/:id/claims');
+    expect(s.routes).toContain('PUT /v1/boards/:id/scheduling');
+    expect(s.routes).toContain('* /auth/login');
+    expect(s.settings.length).toBeGreaterThan(30);
+    expect(s.settings).toContain('RELAY_URL');
+    expect(s.settings).toContain('SUPERPIPELINE_URL');
+    expect(s.events.length).toBeGreaterThan(75);
+    expect(s.events).toContain('card.reserved');
+    expect(s.events).toContain('card.ready');
+    expect(s.scopes).toHaveLength(11);
+    expect(s.scopes).toContain('dispatch:reserve');
+  });
+
+  it('the matcher reads the spellings the docs use', () => {
+    const claims = namedBy('routes', 'POST /v1/boards/:id/cards/:id/move');
+    expect(claims('`POST /v1/boards/:boardId/cards/:cardId/move`')).toBe(true);
+    expect(claims('POST …/cards/:cardId/move')).toBe(true);
+    expect(claims('GET …/cards/:cardId/move')).toBe(false);
+    expect(namedBy('routes', 'GET /v1/boards/:id/cards/:id')('GET …/cards/:cardId/move')).toBe(false);
+    expect(namedBy('events', 'card.reserved')('`card.reserved`')).toBe(true);
+    expect(namedBy('events', 'card.re')('`card.reserved`')).toBe(false);
+    expect(namedBy('scopes', 'gates:read')('on `gates:read`')).toBe(true);
+    expect(namedBy('settings', 'RELAY_URL')('`RELAY_URL_X`')).toBe(false);
+  });
+
+  it('every item is named in a doc, or is in the baseline', () => {
+    if (process.env.UPDATE_BASELINE) {
+      const missing = Object.fromEntries(unnamedSurface());
+      const about =
+        'Public surface the docs do not name yet (packages/docs-check/src/docs-claims.test.ts). ' +
+        'It may only shrink: document an item, then run `pnpm -F @superpipeline/docs-check baseline`.';
+      writeFileSync(join(REPO, BASELINE), JSON.stringify({ about, ...missing }, null, 2) + '\n');
+    }
+    const baseline = readBaseline();
+    const missing = unnamedSurface();
+    const fresh = SURFACE_KINDS.flatMap((k) => (missing.get(k) ?? []).filter((i) => !baseline.get(k)?.includes(i)).map((i) => `${k}: ${i}`));
+    expect(fresh, 'in the code, named in no doc: document it (docs-site/ or docs/)').toEqual([]);
+  });
+
+  it('the baseline holds nothing the docs now name, or the code no longer has', () => {
+    const baseline = readBaseline();
+    const missing = unnamedSurface();
+    const stale = SURFACE_KINDS.flatMap((k) => (baseline.get(k) ?? []).filter((i) => !missing.get(k)?.includes(i)).map((i) => `${k}: ${i}`));
+    expect(stale, `documented or gone: remove it from ${BASELINE} (pnpm -F @superpipeline/docs-check baseline)`).toEqual([]);
   });
 });
