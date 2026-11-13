@@ -1,5 +1,5 @@
 #!/bin/sh
-# The release's production deploy (`deploy` in .github/release-config.json). It never rebuilds
+# The release's production deploy (the .github/release/deploy.sh hook). It never rebuilds
 # the app: it downloads the artifact main's CI built and verified for this commit (`app-<sha>`
 # from CI run CI_RUN_ID, the run the release gate found green), verifies it again, applies the
 # remote D1 migrations and runs `wrangler deploy` (`pnpm ci:deploy-app`, scripts/app-artifact.mjs).
