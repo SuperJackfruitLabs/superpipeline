@@ -3,11 +3,10 @@ title: Services
 description: How another product reads boards, carries decisions to people, places work and confirms a publication, on a service token and its scopes.
 ---
 
-A **service** is another product acting for a workspace: a library ingesting cards, a chat carrier
-bringing decisions to people, a placement service choosing which agent takes a card, a publisher
-confirming what it may post. It calls SuperPipeline with a **service token** from the sign-in
-service, a token whose principal kind is `service`, and SuperPipeline verifies it offline like any
-other.
+When another product needs a narrow piece of SuperPipeline, make it a **service**, not a pretend
+person or agent. A service might ingest cards, carry decisions to people, place work, or confirm a
+publication. It calls with a **service token** from the sign-in service whose principal kind is
+`service`, and SuperPipeline verifies it offline like any other token.
 
 A service token is not a person and not an agent. It reaches only the routes on this page, each on
 the scope named for it, and only boards of the workspace the token belongs to:
@@ -114,3 +113,6 @@ still stands for exactly what it is about to send:
 
 `GET /v1/boards/:boardId/runs/:runId/evidence` and `…/evidence-v1` (`evidence:read`) return what
 a run produced, for an evaluation service.
+
+That is the service boundary: each integration gets the reads or writes it needs, while the board's
+human and agent decisions stay on their own routes.

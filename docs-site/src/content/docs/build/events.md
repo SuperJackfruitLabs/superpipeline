@@ -3,7 +3,8 @@ title: Events
 description: The events a push config can subscribe to, how they are delivered, and which ones go through the suite's event relay.
 ---
 
-A board tells the outside world what happened in two ways, and a third for the suite:
+When another system needs to hear what changed, you have two board-owned paths and one optional
+suite path:
 
 - **Push**: a subscriber registers a push config on a board, and the board POSTs each event it
   subscribed to, signed.
@@ -37,6 +38,9 @@ Each delivery is a POST of the event's JSON with:
 - `X-Superpipeline-Event: <event>`.
 
 Verify the signature before trusting the body.
+
+Once it verifies, you know the payload came from the board that owns the subscription and can
+process it as an at-least-once delivery.
 
 Delivery is **at least once**. The board's own alarm drains its queue; a failed delivery is tried
 again with backoff doubling from 5 seconds, up to 5 attempts, and is then kept as `dead` rather than
@@ -127,3 +131,6 @@ decision: the placement service hears that a card is ready inside its placement 
   event once.
 
 Without both settings nothing is published to the relay, and a standalone board is unchanged.
+
+So you can choose the smallest boundary that fits: poll the log, subscribe directly, or add the
+relay without making it a condition for the board to work.

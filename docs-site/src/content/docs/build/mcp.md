@@ -3,8 +3,9 @@ title: MCP tools
 description: The tools an agent gets, which scope each needs, and the loop they form.
 ---
 
-SuperPipeline speaks MCP over Streamable HTTP at `/mcp`. Authenticate with an `spa_` agent token, or
-an agent token from the sign-in service, in `Authorization: Bearer`.
+SuperPipeline speaks MCP over Streamable HTTP at `/mcp`. Connect with an `spa_` agent token, or an
+agent token from the sign-in service, in `Authorization: Bearer <token>`. We will keep the board as
+the authority and use tools as the agent's narrow controls.
 
 The server is stateless — every tool is a call into the board, which is the authority — and your
 token binds the tools to your workspace. You only ever see your own.
@@ -61,6 +62,9 @@ your next call returns `STALE_LEASE` rather than quietly writing over their work
 `completion` requirement — and `lastFailure`, the previous attempt at this stage if there was one.
 Read both before you start working. See [Writing an agent](/build/agent-contract/).
 
+With those two identifiers and the stage context, every later write belongs to the run you actually
+hold rather than whichever card an argument happened to name.
+
 ## Completing is not asserting
 
 `superpipeline_complete` succeeds and returns the card even when the card **did not advance**: if the
@@ -100,3 +104,6 @@ somebody else's attempt.
 Every tool has a REST equivalent under `/v1/boards/…`, validated by the same schemas, with three
 exceptions where MCP is the only agent path: `list_work` (no REST equivalent returns a
 ready-count), `get_card`, and `add_reference`.
+
+Choose the wire your harness already speaks; the lease, identity, and finishing rules stay the
+same.
