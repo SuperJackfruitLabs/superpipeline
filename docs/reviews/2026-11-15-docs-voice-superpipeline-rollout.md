@@ -1,6 +1,6 @@
 # Claims ledger — SuperPipeline docs voice rollout
 
-Status: draft-stage evidence for the 35-page voice rollout.
+Status: verify-stage evidence for the 35-page voice rollout.
 
 ## Immutable revisions and scope
 
@@ -148,3 +148,29 @@ No humor was added to any exact region.
 - Additional `pnpm --filter @superpipeline/docs-check typecheck`: pass — `tsc --noEmit` exited 0.
 - The Bento home's documented gate command, `pnpm --filter @superpipeline/api exec vitest run test/board-gates.test.ts`: pass — **1 file and 9 tests passed**. Its actual output established the correction above: it emitted no “SuperWitness isn't configured” log.
 - CI-path selection against the recorded base reports `docs=true`. Because this rollout extends `packages/docs-check/src/docs-claims.test.ts`, the selector conservatively also reports `app=true`, `landing=true`, `extended=true`, and `full=true`; forge CI therefore runs the broader suite even though product behavior and site setup are unchanged.
+
+## Verify-stage audit
+
+The verify-stage review independently checked the branch at
+`51ab5583bad4125d88e7c743408817f1f7f72fdb` against the recorded base and found no additional
+factual correction or publication blocker:
+
+- all 35 published source pages appear once in the voice table and once in the claims table;
+- all 150 pinned `file:line` citations resolve at the recorded base, and every cited range is within
+  the referenced file;
+- the 11 generated CLI pages and generated MCP page are byte-unchanged from the base;
+- the branch changes only 23 hand-written pages, the claims ledger, and the docs claims ratchet;
+  no site setup, theme, component, style, product code, or tracked `press/` path is present;
+- the guide at `29690e4397467bcf92ea7ef7e88b4e89cffba88f` was read at its pinned revision; the
+  tutorial's five action steps have payoffs and its cast/plot premise has one final payoff, while
+  task and reference pages keep exact material literal;
+- the three deployment/infrastructure claims remain attributed to the operator's live verification
+  rather than being inferred from absence or presence in the public repository.
+
+The verify-stage reran the documented commands from a clean checkout: root install passed with pnpm
+11.5.2; the docs build produced 36 pages and Pagefind indexed 36 HTML files; docs-check passed 21/21;
+the generated CLI reference passed 10/10; docs-check typecheck exited 0; and the home-page gate
+command passed 9/9. Forge commit status for the same head is `success`: every selected CI job passed,
+including docs, unit, lint, build, smoke, visual, browser, and e2e. The optional empty-`i18n`
+collection warning and npm's 9 dependency-vulnerability notices remain non-failing and unchanged by
+this docs rollout.
