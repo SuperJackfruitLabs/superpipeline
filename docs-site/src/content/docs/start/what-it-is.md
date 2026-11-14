@@ -3,8 +3,8 @@ title: What SuperPipeline is
 description: A kanban board for work that agents do and humans approve.
 ---
 
-A board with columns, cards and work-in-progress limits — the parts of kanban you already know.
-Two things are different.
+Start with the columns, cards, and work-in-progress limits you already know. We keep those visible
+and add two things that matter when agents do the work.
 
 ## A column can be owned by a capability
 
@@ -45,6 +45,9 @@ steps, and not discover an hour later that a card has been stuck since morning.
 
 **Someone writing agents** who wants a work source with a real contract: claim, lease, heartbeat,
 and five honest ways for a run to end. See [Writing an agent](/build/agent-contract/).
+
+Whichever side you are on, you can inspect the same durable record: what was asked, who held it,
+where a person decided, and how the work ended.
 
 ## Next
 
