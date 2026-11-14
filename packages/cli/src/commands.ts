@@ -55,7 +55,7 @@ export const GROUPS: GroupSpec[] = [
     id: "cards",
     title: "Cards",
     label: "Cards",
-    description: "supi card, create-card, edit-card, move, archive and log.",
+    description: "supi card, create-card, edit-card, card-label, move, archive and log.",
     intro: "Reading one card, queueing new work, editing it, moving it between stages, and reading what an agent did on it.",
   },
   {

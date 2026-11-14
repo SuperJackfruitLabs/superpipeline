@@ -27,7 +27,7 @@ import { findCommands, renderCommandHelp, renderUsage } from "./commands.ts";
 import { fail, setJsonOutput, wantsJson, type Args } from "./runtime.ts";
 import { runVersion, runSkill, runSelfUpdate, runLogin, runLogout, runWhoami } from "./commands/session.ts";
 import { runBoards, runBoard, runSetStale, runSetStages, runSetStage, runTemplates, runCreateBoard } from "./commands/boards.ts";
-import { runCard, runMove, runResume, runStale, runLog, runArchive, runCreateCard, runEditCard } from "./commands/cards.ts";
+import { runCard, runCardLabel, runMove, runResume, runStale, runLog, runArchive, runCreateCard, runEditCard } from "./commands/cards.ts";
 import { runComment, runComments } from "./commands/comments.ts";
 import { runGates, runDecideGate, runApproveGate, runDelivery } from "./commands/gates.ts";
 import { runLink } from "./commands/links.ts";
@@ -104,6 +104,9 @@ async function main(argv: string[]): Promise<void> {
 
     case "card":
       return runCard(args);
+
+    case "card-label":
+      return runCardLabel(args);
 
     case "move":
       return runMove(args);

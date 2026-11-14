@@ -78,7 +78,7 @@ function answer(method: string, url: URL): { status: number; body: unknown } {
     "GET /v1/boards/brd_1/gates/gat_1": {
       gate: { id: "gat_1", approvalSubject: { id: "aps_1", digest: "sha256:abc" } },
     },
-    "GET /v1/boards/brd_1/cards/crd_1": { card: { id: "crd_1", title: "First", spec: { goal: "ship", notes: "old" }, updatedAt: "2030-01-01T00:00:00.000Z" } },
+    "GET /v1/boards/brd_1/cards/crd_1": { card: { id: "crd_1", title: "First", spec: { goal: "ship", notes: "old" }, labels: ["lbl_1"], updatedAt: "2030-01-01T00:00:00.000Z" } },
     "GET /v1/boards/brd_1/cards/crd_1/activities": {
       activities: [
         { type: "tool", ts: "2030-01-01T10:11:12Z", action: "ran tests", result: "ok" },
@@ -439,6 +439,10 @@ const RUNS: Scenario[] = [
   { argv: ["capability", "define", "Code Review", "--definition", "Reads a diff."] },
   { argv: ["capability", "define", "Brand New", "--definition", " Something new. "] },
   { argv: ["capability", "define", "!!!", "--definition", "x"] },
+  // Card organisation additions are last so their snapshots do not renumber every existing run.
+  { argv: ["create-card", "brd_1", "Ship", "--project", "prj_1", "--milestone", "mil_1"] },
+  { argv: ["card-label", "add", "brd_1", "crd_1", "lbl_2"] },
+  { argv: ["card-label", "rm", "brd_1", "crd_1", "lbl_1"] },
 ];
 
 describe("supi help, pinned", () => {

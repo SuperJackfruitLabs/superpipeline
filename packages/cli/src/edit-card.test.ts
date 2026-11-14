@@ -85,6 +85,34 @@ describe("supi edit-card — plain fields", () => {
     expect(JSON.parse(stdout.join(""))).toMatchObject({ card: { title: "New title" } });
   });
 
+  it("assigns an existing card to a project and milestone", async () => {
+    fetchMock.mockResolvedValueOnce(json({ card: { ...CARD, projectId: "prj_1", milestoneId: "mil_1" } }));
+
+    const code = await run([
+      "edit-card",
+      "brd_1",
+      "crd_1",
+      "--project",
+      "prj_1",
+      "--milestone",
+      "mil_1",
+    ]);
+
+    expect({
+      code,
+      stderr: stderr.join(""),
+      request: fetchMock.mock.calls.length > 0 ? sent(0) : null,
+    }).toEqual({
+      code: 0,
+      stderr: "",
+      request: {
+        url: URL_,
+        method: "PATCH",
+        body: { projectId: "prj_1", milestoneId: "mil_1" },
+      },
+    });
+  });
+
   it("clears the due date with --due none", async () => {
     fetchMock.mockResolvedValueOnce(json({ card: CARD }));
     await run(["edit-card", "brd_1", "crd_1", "--due", "none"]);
@@ -106,6 +134,26 @@ describe("supi edit-card — plain fields", () => {
     expect(await run(["edit-card", "brd_1", "crd_1", "--spec", s, "--merge-spec", s])).toBe(1);
     expect(await run(["edit-card", "brd_1"])).toBe(1);
     expect(fetchMock).not.toHaveBeenCalled();
+  });
+});
+
+describe("supi card organisation", () => {
+  it.each([
+    ["add", ["lbl_old"], ["lbl_old", "lbl_new"]],
+    ["rm", ["lbl_old", "lbl_new"], ["lbl_old"]],
+  ])("%ss a label on an existing card", async (operation, labels, expected) => {
+    const card = { ...CARD, labels };
+    fetchMock.mockResolvedValueOnce(json({ card })).mockResolvedValueOnce(json({ card: { ...card, labels: expected } }));
+
+    expect(await run(["card-label", operation, "brd_1", "crd_1", "lbl_new"])).toBe(0);
+
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect(sent(0)).toEqual({ url: URL_, method: "GET", body: undefined });
+    expect(sent(1)).toEqual({
+      url: URL_,
+      method: "PATCH",
+      body: { labels: expected, expectedUpdatedAt: CARD.updatedAt },
+    });
   });
 });
 

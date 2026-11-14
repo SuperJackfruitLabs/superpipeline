@@ -52,7 +52,7 @@ Read-only (safe to run to answer a question):
 
 Changes shared state (ask first):
 `supi create-board`, `supi set-stages`, `supi set-stage`, `supi set-stale`, `supi create-card`,
-`supi edit-card`, `supi move`, `supi resume`, `supi archive`, `supi comment`, `supi approve`,
+`supi edit-card`, `supi card-label add`, `supi card-label rm`, `supi move`, `supi resume`, `supi archive`, `supi comment`, `supi approve`,
 `supi delivery`, `supi reject`, `supi request-changes`, `supi link add`, `supi link rm`, `supi label add`,
 `supi label rm`, `supi project add`, `supi project rm`, `supi milestone add`,
 `supi milestone rm`, `supi schedule add`, `supi schedule rm`, `supi schedule pause`,
@@ -121,7 +121,8 @@ without the other. These rearrange:
 ```bash
 supi project add <name> [--description <text>] [--target YYYY-MM-DD]
 supi milestone add <projectId> <name> [--target YYYY-MM-DD]
-supi edit-card <boardId> <cardId> [--title <text>] [--merge-spec <file|->] [--priority <n>] [--due YYYY-MM-DD|none]
+supi edit-card <boardId> <cardId> [--title <text>] [--merge-spec <file|->] [--priority <n>] [--due YYYY-MM-DD|none] [--project <projectId>] [--milestone <milestoneId>]
+supi card-label add|rm <boardId> <cardId> <labelId>
 supi move <boardId> <cardId> <stageKey>
 supi link add <boardId> <fromCardId> <toCardId> --kind blocks|relates|parent
 supi link rm  <boardId> <fromCardId> <toCardId> --kind blocks|relates|parent
@@ -143,7 +144,7 @@ card to a last stage nobody can act on completes it.
 ## Queueing work
 
 ```bash
-supi create-card <boardId> "<title>" [--spec <file|->] [--priority <n>] [--due YYYY-MM-DD]
+supi create-card <boardId> "<title>" [--spec <file|->] [--priority <n>] [--due YYYY-MM-DD] [--project <projectId>] [--milestone <milestoneId>]
 ```
 
 A card you queue carries **your** authority, not the operator's. The board records you as the

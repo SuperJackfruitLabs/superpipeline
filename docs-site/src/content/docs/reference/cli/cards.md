@@ -1,6 +1,6 @@
 ---
 title: "Cards"
-description: "supi card, create-card, edit-card, move, archive and log."
+description: "supi card, create-card, edit-card, card-label, move, archive and log."
 sidebar:
   label: "Cards"
   order: 4
@@ -50,7 +50,7 @@ supi card brd_8f2c… crd_41aa…
 Creates a card in the board's first stage, or the one `--stage` names. The card records the credential that queued it as its grant — who asked for the work and on whose authority. An agent's card is also bounded by the queueing policy `supi agent queueing` sets: which boards may receive it, whose work it is, and how many cards an hour.
 
 ```sh
-supi create-card <boardId> <title> [--spec <file|->] [--priority <n>] [--due YYYY-MM-DD] [--label <id>...] [--stage <stageKey>] [--project <projectId>]
+supi create-card <boardId> <title> [--spec <file|->] [--priority <n>] [--due YYYY-MM-DD] [--label <id>...] [--stage <stageKey>] [--project <projectId>] [--milestone <milestoneId>]
 ```
 
 | argument | meaning |
@@ -66,6 +66,7 @@ supi create-card <boardId> <title> [--spec <file|->] [--priority <n>] [--due YYY
 | `--label <id>` | string | no labels | a label id from `supi label list`; repeat for more than one. Applied by a second request after the card exists. Repeatable |
 | `--stage <stageKey>` | string | the board's first stage | the stage the card starts in, by key (see `supi board`), e.g. a lane that does not begin at the first stage |
 | `--project <projectId>` | string | no project | the project the card belongs to, as prj_… (see `supi project list`); a stage that freezes an approval subject needs one |
+| `--milestone <milestoneId>` | string | no milestone | the milestone the card belongs to, as mls_… (see `supi project show`) |
 
 **Who may run it**
 
@@ -83,7 +84,7 @@ The PATCH that applies `--label` also needs `plan` on an agent token. An agent's
 - `<boardId>` or `<title>` is missing
 - `--spec` cannot be read or is not JSON
 - `--due` is not `YYYY-MM-DD`
-- `--stage` names no stage on the board, or `--project` no project in the workspace (refused by the server)
+- `--stage` names no stage on the board, `--project` no project in the workspace, or `--milestone` no milestone in that project (refused by the server)
 - there is no usable credential, or the server refuses it (401) or the act (403), or answers any other error
 
 **Example**
@@ -91,7 +92,81 @@ The PATCH that applies `--label` also needs `plan` on an agent token. An agent's
 ```sh
 supi create-card brd_8f2c… Write the release notes for 0.0.9
 supi create-card brd_8f2c… Audit the token routes --spec spec.json --priority 2 --due 2026-11-01 --label lbl_sec
-supi create-card brd_8f2c… X post: the 0.0.9 release --stage x-post --project prj_34b4… --spec post.json
+supi create-card brd_8f2c… X post: the 0.0.9 release --stage x-post --project prj_34b4… --milestone mls_18a2… --spec post.json
+```
+
+## `supi card-label add`
+
+Reads the card's current labels, adds the named label, and writes them back only if the card has not changed in between.
+
+```sh
+supi card-label add <boardId> <cardId> <labelId>
+```
+
+| argument | meaning |
+|---|---|
+| `<boardId>` | the board, as `brd_…` (see `supi boards`) |
+| `<cardId>` | the card, as `crd_…` (see `supi board <boardId>`) |
+| `<labelId>` | the label to apply (see `supi label list`) |
+
+**Who may run it**
+
+- **A person:** `member` or above in the workspace.
+- **An agent token:** the `plan` scope.
+
+An agent token also needs `read` for the GET before the PATCH.
+
+**Calls** `PATCH /v1/boards/:boardId/cards/:cardId`, then `GET /v1/boards/:boardId/cards/:cardId`
+
+**Prints** JSON: the card after the label is applied.
+
+**Exit status** `0` on success. `1` when:
+
+- an id is missing
+- the card changed between the read and the write (the server's 409)
+- there is no usable credential, or the server refuses it (401) or the act (403), or answers any other error
+
+**Example**
+
+```sh
+supi card-label add brd_8f2c… crd_41aa… lbl_sec
+```
+
+## `supi card-label rm`
+
+Reads the card's current labels, removes the named label, and writes them back only if the card has not changed in between.
+
+```sh
+supi card-label rm <boardId> <cardId> <labelId>
+```
+
+| argument | meaning |
+|---|---|
+| `<boardId>` | the board, as `brd_…` (see `supi boards`) |
+| `<cardId>` | the card, as `crd_…` (see `supi board <boardId>`) |
+| `<labelId>` | the label to remove (see `supi label list`) |
+
+**Who may run it**
+
+- **A person:** `member` or above in the workspace.
+- **An agent token:** the `plan` scope.
+
+An agent token also needs `read` for the GET before the PATCH.
+
+**Calls** `PATCH /v1/boards/:boardId/cards/:cardId`, then `GET /v1/boards/:boardId/cards/:cardId`
+
+**Prints** JSON: the card after the label is removed.
+
+**Exit status** `0` on success. `1` when:
+
+- an id is missing
+- the card changed between the read and the write (the server's 409)
+- there is no usable credential, or the server refuses it (401) or the act (403), or answers any other error
+
+**Example**
+
+```sh
+supi card-label rm brd_8f2c… crd_41aa… lbl_sec
 ```
 
 ## `supi edit-card`
@@ -101,7 +176,7 @@ Edits a card through the same `PATCH` the web app's card drawer sends, with the 
 `--merge-spec` is a read-modify-write: it reads the card, merges into the spec it read, and writes back with `expectedUpdatedAt` set to the card's `updatedAt` as read. If anything changed the card in between — an edit in the drawer, a claim, a move — the server answers 409 and nothing is written; run the command again to merge into the card as it now is. `--spec` replaces the spec outright and sends no precondition.
 
 ```sh
-supi edit-card <boardId> <cardId> [--title <text>] [--spec <file|->] [--merge-spec <file|->] [--priority <n>] [--due YYYY-MM-DD|none]
+supi edit-card <boardId> <cardId> [--title <text>] [--spec <file|->] [--merge-spec <file|->] [--priority <n>] [--due YYYY-MM-DD|none] [--project <projectId>] [--milestone <milestoneId>]
 ```
 
 | argument | meaning |
@@ -116,6 +191,8 @@ supi edit-card <boardId> <cardId> [--title <text>] [--spec <file|->] [--merge-sp
 | `--merge-spec <file\|->` | file path, or `-` for stdin | unchanged | a JSON object whose top-level keys are merged into the existing spec: a key given replaces that key (a nested object is replaced, not merged into), a key set to `null` is removed, every other key is kept. Cannot be combined with `--spec` |
 | `--priority <n>` | number | unchanged | the card's new priority |
 | `--due YYYY-MM-DD\|none` | string | unchanged | the new due date, or `none` to clear it; a date must be a date in `YYYY-MM-DD` form (checked before anything is sent) |
+| `--project <projectId>` | string | unchanged | the card's project |
+| `--milestone <milestoneId>` | string | unchanged | the card's milestone |
 
 **Who may run it**
 

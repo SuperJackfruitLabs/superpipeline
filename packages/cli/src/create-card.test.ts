@@ -1,9 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 /**
- * `supi create-card --stage --project`. The create route has always accepted `stageKey` and
- * `projectId`; the CLI sent neither, so an agent queueing a card that must start mid-board (an X
- * post lane) or belong to a project (an approval subject needs one) could not. Modelled on
+ * `supi create-card --stage --project --milestone`. The create route accepts `stageKey`,
+ * `projectId` and `milestoneId`; the CLI sent none of them, so an agent queueing a card that must
+ * start mid-board (an X post lane) or belong to a project milestone could not. Modelled on
  * `edit-card.test.ts`: a mocked `fetch` and `process.argv`, asserting the request sent.
  */
 const fetchMock = vi.fn<typeof fetch>();
@@ -57,19 +57,20 @@ function sentBody(): unknown {
 const created = () => new Response(JSON.stringify({ card: { id: "card_1" } }), { status: 201 });
 
 describe("supi create-card", () => {
-  it("sends --stage and --project in the create itself", async () => {
+  it("sends --stage, --project and --milestone in the create itself", async () => {
     fetchMock.mockResolvedValue(created());
-    const code = await run(["create-card", "brd_1", "X", "post:", "the", "release", "--stage", "x-post", "--project", "prj_34b48f840daa4309"]);
+    const code = await run(["create-card", "brd_1", "X", "post:", "the", "release", "--stage", "x-post", "--project", "prj_34b48f840daa4309", "--milestone", "mil_1"]);
     expect(code).toBe(0);
-    expect(sentBody()).toMatchObject({ title: "X post: the release", stageKey: "x-post", projectId: "prj_34b48f840daa4309" });
+    expect(sentBody()).toMatchObject({ title: "X post: the release", stageKey: "x-post", projectId: "prj_34b48f840daa4309", milestoneId: "mil_1" });
     expect(fetchMock.mock.calls.filter(([, init]) => init?.method === "PATCH")).toHaveLength(0);
   });
 
-  it("without them, sends neither — the board's first stage and no project, as before", async () => {
+  it("without them, sends none — the board's first stage and no project or milestone, as before", async () => {
     fetchMock.mockResolvedValue(created());
     await run(["create-card", "brd_1", "A", "card"]);
     const body = sentBody();
     expect(body).not.toHaveProperty("stageKey");
     expect(body).not.toHaveProperty("projectId");
+    expect(body).not.toHaveProperty("milestoneId");
   });
 });

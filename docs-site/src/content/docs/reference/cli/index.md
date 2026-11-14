@@ -49,7 +49,9 @@ The verb comes first. Flags may be written `--name value` or `--name=value`, any
 |---|---|
 | [`supi card`](/reference/cli/cards/#supi-card) | one card in full |
 | [`supi create-card`](/reference/cli/cards/#supi-create-card) | queue a card, with this token as its grant |
-| [`supi edit-card`](/reference/cli/cards/#supi-edit-card) | change a card's title, spec, priority or due date |
+| [`supi card-label add`](/reference/cli/cards/#supi-card-label-add) | add a label to an existing card |
+| [`supi card-label rm`](/reference/cli/cards/#supi-card-label-rm) | remove a label from an existing card |
+| [`supi edit-card`](/reference/cli/cards/#supi-edit-card) | change a card's fields, project or milestone |
 | [`supi move`](/reference/cli/cards/#supi-move) | move a card to another stage |
 | [`supi resume`](/reference/cli/cards/#supi-resume) | send a card that is waiting on a person back to work, with a comment |
 | [`supi stale`](/reference/cli/cards/#supi-stale) | cards stuck waiting, across every board in the workspace |
