@@ -3,8 +3,9 @@ title: Concepts
 description: The things SuperPipeline is made of, and how they relate.
 ---
 
-Thirteen nouns. If you know kanban most of them are familiar; the three that are not are
-**capability**, **run** and **completion requirement**.
+Let's put names to the pieces before we move them around. If you know kanban, most of these
+thirteen nouns are familiar; the three worth keeping beside you are **capability**, **run**, and
+**completion requirement**.
 
 ## Board
 
@@ -146,3 +147,6 @@ starting context. If it is not met, the card parks on a person in the stage it i
 
 If the next stage carries a gate, the card stops there until a human answers. If the next stage is
 a last stage nobody can act on, the card is finished.
+
+That is the whole path in one view. When a later page names a lease, gate, or handoff, you now know
+which part of the card's journey it governs.

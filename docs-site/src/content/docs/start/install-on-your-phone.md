@@ -3,9 +3,9 @@ title: Install on your phone
 description: Put SuperPipeline on your home screen so it opens like an app.
 ---
 
-SuperPipeline can be added to a phone's home screen. It opens full screen, without the browser's
-address bar and toolbars, from its own icon. It is the same web app: nothing is cached for offline
-use, and every screen loads live from app.superpipeline.dev.
+You can put SuperPipeline on your phone's home screen and open it full screen from its own icon,
+without the browser's address bar and toolbars. It is still the same web app: nothing is cached for
+offline use, and every screen loads live from app.superpipeline.dev.
 
 ## iPhone and iPad (Safari)
 
@@ -17,8 +17,13 @@ use, and every screen loads live from app.superpipeline.dev.
 Safari's, so being signed in to Safari does not sign you in to the app. Open it from the home
 screen and sign in once. The sign-in returns you to the app.
 
+The SuperPipeline icon now opens the full-screen app, with its own signed-in session.
+
 ## Android (Chrome)
 
 1. Open [app.superpipeline.dev](https://app.superpipeline.dev) in Chrome.
 2. Tap the menu (**⋮**), then **Install app**. If Chrome shows an install banner, you can tap it
    instead.
+
+The SuperPipeline icon now opens the full-screen app from your home screen. You still need a
+network connection; the icon is a front door, not an offline copy.
