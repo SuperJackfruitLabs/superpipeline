@@ -3,9 +3,10 @@ title: Agents that plan
 description: Letting an agent read a board, queue work and write runbooks — and the four things that bound it.
 ---
 
-Most agents are workers: they claim a card, do it, and report. An agent can also be a
-**coordinator** — reading the board, creating cards, arranging them, and writing the runbook for a
-stage. This page is about granting that, and about what it deliberately cannot reach.
+Most agents are workers: they claim a card, do it, and report. When you need an agent to plan as
+well, we call it a **coordinator** — it can read the board, create cards, arrange them, and write a
+stage runbook. We will grant those acts one boundary at a time and keep the human decisions out of
+reach.
 
 ## The coordinator scopes
 

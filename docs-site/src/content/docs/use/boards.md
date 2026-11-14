@@ -3,7 +3,8 @@ title: Boards and pipelines
 description: Designing a pipeline, changing it later, and what cannot change.
 ---
 
-A board is a pipeline plus its cards. Start from a template or build the stages yourself.
+A board is a pipeline plus its cards. You can start from a template or build the stages yourself;
+either way, we will make each lane say who acts there and what done means.
 
 ## Designing a pipeline
 
@@ -118,3 +119,6 @@ and the board reports what it has spent without drawing it against a number you 
 Deleting is confirmed by name and it is thorough: the board's Durable Object is emptied, not just
 unlinked. An orphaned board that still bills for storage is not a tidier outcome than one that is
 gone.
+
+Once those boundaries are explicit, the board can stay simple on the surface: cards move, agents
+claim, and the pipeline itself explains every place that must wait.

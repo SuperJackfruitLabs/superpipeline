@@ -3,8 +3,8 @@ title: Planning work
 description: Labels, due dates, projects, milestones, blockers and sub-tasks — the constructs for saying what matters, when, and in what order.
 ---
 
-A board says what happens to a card. These say which cards matter, when they are wanted, and what
-has to happen first.
+A board says what happens to a card. We use labels, dates, projects, and links to say which cards
+matter, when you want them, and what has to happen first.
 
 ## Labels
 
@@ -135,3 +135,6 @@ resume it to an earlier stage or move it to start it again.
 
 - [Recurring cards](/use/recurring/) — work that comes back on a cadence
 - [Cards and their states](/use/cards/) — what a card is, and what can happen to it
+
+With those signals attached, the board can order work without hiding why one card came before
+another.

@@ -3,8 +3,9 @@ title: People and roles
 description: Who is in a workspace, and what each role may do.
 ---
 
-A workspace can have more than one person in it. Everyone has a role, and the role is enforced on
-every request — not recorded and ignored.
+As soon as a workspace has more than one person, we need to know who may only read, who may work,
+and who may change the control plane. Every person gets a role, and SuperPipeline enforces it on
+every request — it is not a decorative label.
 
 ## The four roles
 
@@ -48,3 +49,6 @@ which is invisible in a workspace of one and a disclosure in a workspace of two.
 
 `supi login` signs you in as yourself, with the same role you have in the web app. There is no
 separate, lesser terminal identity. See [From the terminal](/use/cli/).
+
+Whichever interface you use, you keep one identity and one role, so the audit record names the
+person who actually acted.

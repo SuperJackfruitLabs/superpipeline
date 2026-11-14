@@ -3,10 +3,10 @@ title: Cards and their states
 description: The unit of work, what can happen to it, and what each state means.
 ---
 
-A card is the durable unit of work. It has a title, an optional brief, a priority, an optional due
-date, labels, and an accountable human owner — always a person, even when an agent is doing the
-work. It may belong to a project and one of that project's milestones, and it may be linked to
-other cards. See [Planning work](/use/planning/).
+A card is where we keep the work and its receipts together. It has a title, an optional brief, a
+priority, an optional due date, labels, and an accountable human owner — always a person, even
+when an agent is doing the work. It may belong to a project and one of that project's milestones,
+and it may be linked to other cards. See [Planning work](/use/planning/).
 
 ## The eight states
 
@@ -166,3 +166,6 @@ its author may delete it. The agent that claims a card is handed the newest comm
 
 Every meaningful change is an event: created, moved, claimed, activity posted, gate resolved,
 reference added. The card drawer shows its own; the **Inbox** with that board chosen shows the board's Activity.
+
+That record lets you answer the useful questions later: what was asked, which attempt acted, where
+it stopped, and what evidence finally moved it on.
