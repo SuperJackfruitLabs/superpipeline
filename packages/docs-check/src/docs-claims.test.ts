@@ -194,6 +194,20 @@ describe('the published site', () => {
       .map(({ file }) => file);
     expect(missing).toEqual([]);
   });
+
+  it('documents bearer authorization with the scheme, not a bare token placeholder', () => {
+    // A copyable header without `Bearer` is not authentication advice with a stylistic flaw; it is
+    // a request the server will refuse. Hold each integration page to the complete header shape.
+    expect(read('docs-site/src/content/docs/build/auth.md')).toContain(
+      'Authorization: Bearer <agent token>',
+    );
+    expect(read('docs-site/src/content/docs/build/mcp.md')).toContain(
+      'Authorization: Bearer <token>',
+    );
+    expect(read('docs-site/src/content/docs/build/events.md')).toContain(
+      'Authorization: Bearer <RELAY_TOKEN>',
+    );
+  });
 });
 
 /**
