@@ -8,6 +8,23 @@ npm run dev     # local preview
 npm run build   # -> dist/
 ```
 
+## It wears the suite's docs theme
+
+`@superjackfruit/docs-theme`, vendored under `vendor/` with the frontdoor and vibekit tarballs it
+needs, as the landing page vendors its own. The whole design config is
+`sjlDocs({ product: 'superpipeline', status: 'lights on' })` in `astro.config.mjs`: vibekit's gold,
+the suite's faces (self-hosted, so no page fetches a font from Google), the mark beside the name,
+the street, status badges, Copy Markdown and every page at `<page>.md`, the suite footer, the 404,
+the edit link and the last-updated date. The home is the theme's `BentoHome`. `src/docs-theme.d.ts`
+declares the theme's schema module, which ships as plain JavaScript; without it `astro check` fails
+with TS7016 under `strict`.
+
+The sidebar uses the suite's groups: Start, Use it, Build on it, Run it, Reference. The theme warns
+at build time when a top-level group is anything else.
+
+**For agents**: `/llms.txt`, `/llms-full.txt` and `/llms-small.txt` (`starlight-llms-txt`, through the
+theme, with the description in `astro.config.mjs`).
+
 ## Why this is not a pnpm workspace member
 
 **It uses npm, and it lives outside `apps/` and `packages/` on purpose.** Both are
