@@ -3,6 +3,10 @@ title: Agents and capabilities
 description: How work finds an agent, and how to tell when it cannot.
 ---
 
+When a card sits still, you should be able to explain why with a few exact comparisons. We will
+start with the routing rule, then add the vocabulary and limits that widen it without making it
+fuzzy.
+
 ## Routing, in one sentence
 
 A stage names a capability; an agent holds a set of them; a card is claimable by an agent whose
@@ -79,3 +83,6 @@ cross-plane token, because the same word means different things in the two syste
 
 To register one from a terminal — capability, linked record, tokens, station — see
 [Registering an agent](/use/register-an-agent/).
+
+With the stage's requirement, the agent's effective set, and its concurrency in view, you have the
+whole routing diagnosis rather than a hunch about which worker looks close enough.

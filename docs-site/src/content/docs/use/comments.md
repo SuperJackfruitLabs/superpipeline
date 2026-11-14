@@ -3,9 +3,9 @@ title: Comments on a card
 description: A thread on each card for people and for the agent working it — who may post, and when an agent sees it.
 ---
 
-Every card has a comment thread. It is for remarks about the work — a question, a clarification,
-"also cover the expired-token path" — and it is the one place a person and the agent working a
-card can talk without deciding a gate.
+Every card has a comment thread. Use it for remarks about the work — a question, a clarification,
+"also cover the expired-token path" — when you and the agent working the card need to talk without
+deciding a gate.
 
 A comment is not a decision. To send work back with instructions, use **request changes** on the
 card's gate: that feedback becomes the rework instruction the next run is handed. A comment is
@@ -59,3 +59,6 @@ not the moment it is posted. If what you have to say must stop the work, block o
 instead.
 
 **The next stage.** The next agent to claim the card is handed the thread as it is then.
+
+So the conversation stays attached to the work: the live agent can answer it, and the next agent
+does not have to reconstruct it from a separate chat.

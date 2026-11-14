@@ -3,8 +3,9 @@ title: Recurring cards
 description: Work that comes back on a cadence — the rule grammar, the timezone, and what happens when the last one is not finished.
 ---
 
-A schedule puts a card on a board on a cadence. Maintenance, a weekly review, a monthly report —
-anything you would otherwise remember to create.
+A schedule puts a card on a board on a cadence. Use one for maintenance, a weekly review, or a
+monthly report — anything you would otherwise have to remember to create while doing something
+more interesting.
 
 ```sh
 supi schedule list <boardId>
@@ -15,6 +16,9 @@ supi schedule rm <boardId> <scheduleId>
 ```
 
 Schedules are also editable from board settings.
+
+Once the schedule is saved, the board owns the next creation time; you no longer need a separate
+reminder whose only job is to remind you to make the card.
 
 ## The rule grammar
 

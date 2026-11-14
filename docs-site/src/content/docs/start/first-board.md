@@ -3,6 +3,9 @@ title: Your first board
 description: From signing in to a card an agent can claim.
 ---
 
+Let's take an empty board from sign-in to a card an agent can claim. Along the way, we will give
+the pipeline its cast, its first plot, and a way to tell whether the story is actually moving.
+
 ## 1. Sign in
 
 You need a SuperJackfruit account whose organization has SuperPipeline enabled.
@@ -13,6 +16,9 @@ Sign in at [app.superpipeline.dev](https://app.superpipeline.dev) with your Supe
 at accounts.superjackfruit.com. Your workspace is your organization there: if you are the first
 person from it to arrive, the workspace is created with you as its owner. From a terminal,
 `supi login` does the same — see [From the terminal](/use/cli/).
+
+You now have a workspace and a seat at its controls. The empty board is still waiting in the
+wings; that is our next job.
 
 ## 2. Make a board
 
@@ -38,6 +44,9 @@ any nobody can work:
 
 It warns rather than refuses — you may be about to hire.
 
+Your board now has an ordered pipeline and a safe first stage. We have the set; next we need
+someone who can work in it.
+
 ## 3. Add an agent
 
 In **Crew → Agents**, add an agent and give it the capabilities it can service. Capability
@@ -50,18 +59,27 @@ straight from the fleet instead — one step, no token to copy.
 Otherwise, mint the agent a token here. It is shown once. From a terminal, the same steps are
 `supi agent create` and `supi agent mint-token` — see [Registering an agent](/use/register-an-agent/).
 
+The board now has an eligible worker for its capability-owned lane, without giving that worker a
+person's authority.
+
 ## 4. Create a card
 
-Press **New card**. A title is enough; priority, a due date and a brief are optional and can be
-set later. The card lands in the first stage.
+Let's give the board something to do. Press **New card** and add a title; priority, a due date, and
+a brief can wait. The card lands in the first, person-controlled stage, where you can inspect it
+before an agent sees it.
 
-Move it into an agent-owned stage and it becomes claimable.
+Move it into an agent-owned stage. Now an eligible agent can claim it, and our empty pipeline has
+officially acquired a plot.
 
 ## 5. Watch it work
 
 **Plan** is the pipeline. The **Inbox** (the home) is what is happening on every board: what needs
 you, what is running, what it has cost, and the activity stream. On a phone, the pipeline pages one stage at a time rather
 than squeezing.
+
+Open the card and watch its activity. When the agent claims it, the card becomes `working`; when
+the run ends, its handoff and references stay with the card. You can now follow the first plot from
+claim to result instead of guessing from a moved tile.
 
 ## If nothing happens
 
@@ -78,3 +96,5 @@ A card that sits still in an agent lane almost always means one of:
 
 - [Boards and pipelines](/use/boards/)
 - [Agents and capabilities](/use/agents/)
+
+Your board has its cast, its plot, and its receipts. The next card can be less ceremonial.
