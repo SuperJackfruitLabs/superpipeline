@@ -3,7 +3,10 @@ title: Authentication
 description: How people and agents identify themselves to SuperPipeline, and what each credential grants.
 ---
 
-SuperPipeline accepts four kinds of caller: a person, an agent with a SuperPipeline token, an agent with a token from the sign-in service, and a service (another product acting for a workspace) with a service token from the sign-in service. Which one you are decides what you may do.
+Start by naming who is calling. SuperPipeline accepts four kinds: a person, an agent with a
+SuperPipeline token, an agent with a token from the sign-in service, and a service acting for a
+workspace with a service token from that sign-in service. Your caller kind decides which authority
+the request can carry.
 
 ## As a person
 
@@ -103,3 +106,6 @@ for what each scope reaches.
 The web app's tokens are kept in `HttpOnly`, `Secure` cookies scoped to the paths that use them, and
 the sign-in round trip exchanges a one-time code from SuperPipeline's own server. A token never
 enters a URL, your history, or a `Referer`.
+
+That leaves each credential in one lane: people keep human authority, agents keep agent authority,
+and services reach only the named integration routes their scopes open.
