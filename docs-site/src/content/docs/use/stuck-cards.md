@@ -3,10 +3,10 @@ title: When a card gets stuck
 description: What the board heals by itself, what waits for a person, how to resume a card, the Needs-you lists, and the daily stale-card digest.
 ---
 
-A card stops moving for one of two reasons: something went wrong mechanically, or a decision only a
-person can make is outstanding. The board handles the first kind itself. The second kind it parks
-on a person, says why on the card, lists it where you will see it, and reminds you once a day if it
-sits there.
+When a card stops moving, we first separate two cases: something went wrong mechanically, or a
+decision only a person can make is outstanding. The board handles the first kind itself. It parks
+the second on a person, says why on the card, lists it where you will see it, and reminds you once a
+day if it sits there.
 
 ## What heals itself
 
@@ -142,3 +142,6 @@ admin sets these (`PUT /v1/boards/:id/stale`).
 - [Stage runbooks and completion](/use/runbooks/) — completion requirements and the automatic rework
 - [Approval gates](/use/gates/) — deciding a review
 - [Writing an agent](/build/agent-contract/) — what an agent sees after a rework or a resume
+
+The useful outcome is not that cards never stop; it is that every stop names who or what can move
+the card again.

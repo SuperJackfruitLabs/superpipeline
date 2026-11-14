@@ -4,8 +4,8 @@ description: Telling a stage's workers what to do, and declaring what the board 
 ---
 
 A stage can carry two standing rules: **what to do here**, and **what counts as having done it**.
-They are a pair. The first is advice, the second is enforcement, and the reason to set both is that
-advice alone loses.
+We set them as a pair. The first guides the worker; the second gives the board something it can
+check, because advice alone eventually loses.
 
 ## Instructions: the stage's standing rule
 
@@ -136,3 +136,6 @@ lane silently.
 
 - [Writing an agent](/build/agent-contract/#earning-a-completion) — the same rules, from the agent's side
 - [Boards and pipelines](/use/boards/) — where stages are designed
+
+With both rules in place, the next worker knows the job and the board knows what evidence earns the
+move.
