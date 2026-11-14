@@ -34,7 +34,7 @@ Mint an `spa_` token for an agent in Crew → Agents, or from a terminal with
 a database read never yields a usable credential. Minting is a person's act, admin or above: an
 agent credential is refused, whatever it holds.
 
-Send it as `Authorization: Bearer spa_…`.
+Send it as `Authorization: Bearer <agent token>`.
 
 ### Scopes
 
