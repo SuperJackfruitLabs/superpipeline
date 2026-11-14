@@ -66,7 +66,7 @@ supi create-card <boardId> <title> [--spec <file|->] [--priority <n>] [--due YYY
 | `--label <id>` | string | no labels | a label id from `supi label list`; repeat for more than one. Applied by a second request after the card exists. Repeatable |
 | `--stage <stageKey>` | string | the board's first stage | the stage the card starts in, by key (see `supi board`), e.g. a lane that does not begin at the first stage |
 | `--project <projectId>` | string | no project | the project the card belongs to, as prj_… (see `supi project list`); a stage that freezes an approval subject needs one |
-| `--milestone <milestoneId>` | string | no milestone | the milestone the card belongs to, as mil_… (see `supi project show`) |
+| `--milestone <milestoneId>` | string | no milestone | the milestone the card belongs to, as mls_… (see `supi project show`) |
 
 **Who may run it**
 
@@ -92,7 +92,7 @@ The PATCH that applies `--label` also needs `plan` on an agent token. An agent's
 ```sh
 supi create-card brd_8f2c… Write the release notes for 0.0.9
 supi create-card brd_8f2c… Audit the token routes --spec spec.json --priority 2 --due 2026-11-01 --label lbl_sec
-supi create-card brd_8f2c… X post: the 0.0.9 release --stage x-post --project prj_34b4… --milestone mil_18a2… --spec post.json
+supi create-card brd_8f2c… X post: the 0.0.9 release --stage x-post --project prj_34b4… --milestone mls_18a2… --spec post.json
 ```
 
 ## `supi card-label add`

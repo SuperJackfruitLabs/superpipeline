@@ -1479,7 +1479,7 @@ exports[`supi commands against a fake API, pinned > supi 074 edit-card brd_1 crd
   "requests": [],
   "stderr": "Nothing to change.
 
-  supi edit-card <boardId> <cardId> --title … | --spec … | --merge-spec … | --priority … | --due …
+  supi edit-card <boardId> <cardId> --title … | --spec … | --merge-spec … | --priority … | --due … | --project … | --milestone …
 ",
   "stdout": "",
 }
@@ -4617,7 +4617,7 @@ Flags:
   --project <projectId>       the project the card belongs to, as prj_… (see supi project list);
                               a stage that freezes an approval subject needs one. Default: no
                               project.
-  --milestone <milestoneId>   the milestone the card belongs to, as mil_… (see supi project
+  --milestone <milestoneId>   the milestone the card belongs to, as mls_… (see supi project
                               show). Default: no milestone.
 
 Who may run it:
@@ -4633,7 +4633,7 @@ Calls:
 Examples:
   supi create-card brd_8f2c… Write the release notes for 0.0.9
   supi create-card brd_8f2c… Audit the token routes --spec spec.json --priority 2 --due 2026-11-01 --label lbl_sec
-  supi create-card brd_8f2c… X post: the 0.0.9 release --stage x-post --project prj_34b4… --milestone mil_18a2… --spec post.json
+  supi create-card brd_8f2c… X post: the 0.0.9 release --stage x-post --project prj_34b4… --milestone mls_18a2… --spec post.json
 ",
 }
 `;
@@ -5622,7 +5622,7 @@ Flags:
   --project <projectId>       the project the card belongs to, as prj_… (see supi project list);
                               a stage that freezes an approval subject needs one. Default: no
                               project.
-  --milestone <milestoneId>   the milestone the card belongs to, as mil_… (see supi project
+  --milestone <milestoneId>   the milestone the card belongs to, as mls_… (see supi project
                               show). Default: no milestone.
 
 Who may run it:
@@ -5638,7 +5638,7 @@ Calls:
 Examples:
   supi create-card brd_8f2c… Write the release notes for 0.0.9
   supi create-card brd_8f2c… Audit the token routes --spec spec.json --priority 2 --due 2026-11-01 --label lbl_sec
-  supi create-card brd_8f2c… X post: the 0.0.9 release --stage x-post --project prj_34b4… --milestone mil_18a2… --spec post.json
+  supi create-card brd_8f2c… X post: the 0.0.9 release --stage x-post --project prj_34b4… --milestone mls_18a2… --spec post.json
 ",
 }
 `;

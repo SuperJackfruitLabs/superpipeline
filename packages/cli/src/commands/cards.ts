@@ -66,7 +66,7 @@ export const CARDS_COMMANDS: CommandSpec[] = [
         value: "<milestoneId>",
         type: "string",
         default: "no milestone",
-        description: "the milestone the card belongs to, as mil_… (see `supi project show`)",
+        description: "the milestone the card belongs to, as mls_… (see `supi project show`)",
       },
     ],
     summary: "queue a card, with this token as its grant",
@@ -93,7 +93,7 @@ export const CARDS_COMMANDS: CommandSpec[] = [
     examples: [
       "supi create-card brd_8f2c… Write the release notes for 0.0.9",
       "supi create-card brd_8f2c… Audit the token routes --spec spec.json --priority 2 --due 2026-11-01 --label lbl_sec",
-      "supi create-card brd_8f2c… X post: the 0.0.9 release --stage x-post --project prj_34b4… --milestone mil_18a2… --spec post.json",
+      "supi create-card brd_8f2c… X post: the 0.0.9 release --stage x-post --project prj_34b4… --milestone mls_18a2… --spec post.json",
     ],
   },
   {
@@ -505,7 +505,7 @@ export async function runEditCard({ rest, pos }: Args): Promise<void> {
   const milestoneArg = flag(rest, "--milestone");
   if (specArg && mergeArg) fail("--spec replaces the spec and --merge-spec merges into it; pass one.");
   if (!titleArg && !specArg && !mergeArg && !priorityArg && !dueArg && !projectArg && !milestoneArg) {
-    fail("Nothing to change.", "  supi edit-card <boardId> <cardId> --title … | --spec … | --merge-spec … | --priority … | --due …");
+    fail("Nothing to change.", "  supi edit-card <boardId> <cardId> --title … | --spec … | --merge-spec … | --priority … | --due … | --project … | --milestone …");
   }
   const body: Record<string, unknown> = {};
   if (titleArg) body.title = titleArg;
