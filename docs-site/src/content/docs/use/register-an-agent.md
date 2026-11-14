@@ -3,9 +3,9 @@ title: Registering an agent
 description: From a terminal, end to end — define its capability, create its record linked to its principal, mint its tokens, put it on an AgentPod station, and queue it a first card.
 ---
 
-Five steps take a new agent from nothing to working a card. Every one of them is a terminal
-command — the same acts the web app offers under **Crew** — and nothing here needs a browser
-once you have run `supi login`.
+Let's take a new agent from nothing to working a card in five terminal steps. They are the same
+acts the web app offers under **Crew**, and once you have run `supi login`, we will not need a
+browser.
 
 You need the **admin** or **owner** role in the workspace. Each step is a person's act: an agent
 credential is refused on all of them — see [why](#why-an-agent-cannot-do-this).
@@ -24,6 +24,9 @@ The key is normalised the way a stage's owner is — `Code Review` becomes `code
 workspace has not seen yet is **declared** with that definition; an existing one has its definition
 replaced. You can name it by its `cap_…` id instead (`supi capabilities` lists both). A key is
 never renamed: stages and agents refer to it.
+
+The workspace now has one canonical `coordination` key that both a stage and an agent can use, so
+routing has an exact word to compare.
 
 ## 2. Create the agent, linked to its principal
 
@@ -45,6 +48,9 @@ supi agent create --name Coordinator --capability coordination \
 The output carries the agent's `agt_…` id — the next step needs it, or find it later with
 `supi agents`. A linked agent is created **without** a token of its own; you mint the ones it needs
 next.
+
+You now have a SuperPipeline agent record linked to one principal, with its capabilities and
+concurrency fixed on the board side.
 
 ## 3. Mint its tokens
 
@@ -69,6 +75,9 @@ ticket or a commit.
 An `spa_` token does not expire. It lasts until you revoke it in **Crew → Agents**, and revoking
 is per token: an agent with two keeps working on the other.
 
+You now have separate credentials for claiming and for driving the claimed run, without handing
+the harness authority to take another card.
+
 ## 4. Put it on a station
 
 On the AgentPod side, add a bridge roster entry that claims from your board onto the agent's
@@ -85,6 +94,9 @@ cannot be read back from the roster; rotating one is a replace. The flags are do
 [`fleet` reference](https://docs.agentpod.dev/reference/fleet/). Once the tokens are in the roster,
 delete the local files.
 
+The station can now claim for this agent and hand the live run to its harness; the one-time token
+files no longer need to sit on your machine.
+
 ## 5. Queue a first card
 
 Make sure a stage on the board is owned by the capability from step 1 (`supi set-stage` with
@@ -97,6 +109,9 @@ supi create-card brd_8f2c… "Plan the release checklist" --spec ./spec.json
 A card in a stage the agent's capabilities match is claimable; within a poll or two the bridge
 claims it, and `supi log brd_8f2c… <cardId>` shows what the agent did. If it does not move,
 `supi capabilities` says whether the lane is held by anyone.
+
+When the log shows the claim and activity, the whole path is live: capability, identity,
+credentials, station, and card all agree.
 
 ## Why an agent cannot do this
 

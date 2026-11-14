@@ -3,7 +3,8 @@ title: Approval gates
 description: Where a person decides, how a decision reminds and escalates, and gates decided by checks.
 ---
 
-A stage can carry a gate. A card arriving there stops, and waits for a decision.
+A stage can carry a gate. When a card arrives, we stop it where the decision belongs and make the
+person or check that decides it explicit.
 
 ## Setting one
 
@@ -24,6 +25,9 @@ subject and named deciders, `timeout`, `quorum`, `holdFor` and `checks` decide w
 when, so only a workspace owner or admin may set, change or remove them, on a live board or when
 creating one. Anyone else is refused `403 WORKSPACE_ADMIN_REQUIRED`; every other stage edit stays
 open to members.
+
+The stage now has a real decision boundary: cards cannot leave it merely because an agent says the
+work is done.
 
 ## The three answers
 
@@ -182,3 +186,5 @@ Each appears with its action on the row, so answering does not mean hunting for 
 
 An agent at a gated stage finishes with **submit for review** rather than complete. See
 [Writing an agent](/build/agent-contract/).
+
+That keeps the two halves visible: an agent produces the work, and the named decider moves it on.

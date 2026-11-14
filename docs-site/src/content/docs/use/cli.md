@@ -3,9 +3,9 @@ title: From the terminal
 description: supi — boards, cards, gates, links, projects, schedules and runbooks, without a browser.
 ---
 
-`supi` is SuperPipeline from a terminal. It is also installed as `superpipeline` — the same program
-under its full name, for scripts that should read plainly. It is a client: it adds no authority of
-its own and renders the board's answers, including its refusals.
+Meet `supi`, SuperPipeline from a terminal. It is also installed as `superpipeline` — the same
+program under its full name, for scripts that should read plainly. We will use it as a client: it
+adds no authority of its own and renders the board's answers, including its refusals.
 
 This page is a tour. Every command, flag, default and environment variable — and who may run each
 one — is in the [command reference](/reference/cli/), generated from the CLI itself; `supi help
@@ -34,6 +34,8 @@ installed.
 To run it from a checkout while working on the CLI, `packages/cli/install.sh` links the two names
 at the source instead. It requires [bun](https://bun.sh) and never replaces a file it did not put
 there.
+
+You now have a verified binary under both names, ready to point at the same board the web app uses.
 
 ## Signing in
 
@@ -66,6 +68,9 @@ Explicit environment tokens are used as supplied and are never renewed or replac
 identity. If one expires, replace or unset the variable. The full resolution order, every file
 `supi` writes and every variable it reads are in the
 [command reference](/reference/cli/).
+
+After `supi whoami` names the expected account, every command below carries that same workspace
+role; the CLI does not quietly invent a second identity.
 
 ### When an agent is the one running it
 
@@ -252,3 +257,6 @@ swapped identities would make that record a lie.
 **401** means sign in (`supi login`). **403** means your role or your scopes do not permit this. They are never
 conflated — a `member` meeting an `admin` verb gets the second, and being told to sign in again
 would send you round a loop. A refusal is printed as it arrives, in the server's own words.
+
+That is the tour: you can inspect, decide, and shape work from a terminal while the board remains
+the authority for every result.
