@@ -4,12 +4,12 @@ Status: draft-stage evidence for the 35-page voice rollout.
 
 ## Immutable revisions and scope
 
-- PR base: `970369fa537612c029701955b1be3ffb05ea87f1`.
+- PR base: `f9f8bc7c30e2c868434ba867e2588210c9a1aa6e` (merge of SuperPipeline PR #102).
 - Voice guide: `SuperJackfruitLabs/sketchbook@29690e4397467bcf92ea7ef7e88b4e89cffba88f`, `ideas/2026-11-14-docs-voice-guide-v1/README.md`.
 - Reference rollout: `SuperJackfruitLabs/superdispatch`, merged PR #32; its published narrator and ledger shape were the standard, not a source of wording.
 - Scope: all 35 published pages under `docs-site/src/content/docs/`, the docs claims ratchet, and this ledger.
 - The 11 generated CLI pages and generated MCP reference remain generated and unchanged; their source tables, generators, and equality tests were reviewed with the rendered pages.
-- Product behavior, site setup, theme, components, styles, configuration, and home-page layout are unchanged. Product evidence below is pinned to the PR base.
+- Product behavior, site setup, theme, components, styles, configuration, and home-page layout are unchanged by this rollout. The branch is rebased onto the shared-theme and Bento-home merge, and product evidence below is pinned to that new PR base.
 
 ## Page-by-page voice review
 
@@ -61,7 +61,7 @@ Each row covers every material command, flag, route, setting, default, field, en
 
 | Page | Material checked | Base evidence |
 |---|---|---|
-| `index.mdx` | capability ownership; claimability; gates; completion requirements; standalone/AgentPod boundary | `packages/contract/src/entities.ts:1-423`; `packages/contract/src/completion.ts:1-119`; `apps/api/src/board/claims.ts:1-621`; `apps/api/src/board/gates.ts:1-963` |
+| `index.mdx` | capability ownership and exact capability matching; claimability and `no_matching_card`; gate states/decisions/separation; handoff and completion requirements; standalone/AgentPod boundary; local quick-start prerequisites, test count, and optional run reporting; staging/tag release paths | `packages/contract/src/entities.ts:1-423`; `packages/contract/src/completion.ts:1-119`; `apps/api/src/board/claims.ts:61-180`; `apps/api/src/board/gates.ts:55-107`; `apps/api/test/board-gates.test.ts:1-200` (nine tests); `apps/api/src/superwitness/config.ts:25-28`; `package.json:6-9`; `.github/workflows/ci.yml:492-515`; `.github/workflows/release.yml:10-15,38-159` |
 | `start/first-board.md` | product enablement and workspace bootstrap; all five templates/stages/capabilities; first-stage behavior; agent/token creation; card state and claim diagnostics | `packages/contract/src/templates.ts:1-143`; `apps/api/src/auth/org-tenancy.ts:1-92`; `apps/api/src/routes/agents.ts:1-492`; `apps/api/src/board/cards.ts:1-510`; `apps/api/src/board/claims.ts:1-621` |
 | `start/what-it-is.md` | capability routing; approval separation; agent-framework boundary; run verbs and event/Treaty boundary | `apps/api/src/board/claims.ts:1-621`; `apps/api/src/board/gates.ts:1-963`; `packages/contract/src/verbs.ts:1-104`; `apps/api/src/push/relay.ts:1-95` |
 | `start/concepts.md` | every entity; owner kinds; gates/checks/WIP/requires/instructions/completion; eight states; lease/circuit breaker; roles of capabilities, agents, labels, projects, links, schedules; complete flow | `packages/contract/src/entities.ts:1-423`; `packages/contract/src/state-machine.ts:1-101`; `packages/contract/src/completion.ts:1-119`; `apps/api/src/board/pipeline.ts:1-520`; `apps/api/src/board/run-verbs.ts:1-572` |
@@ -105,16 +105,17 @@ No factual change was made silently.
 |---|---|---|
 | `build/mcp.md` showed the incomplete copyable header ``Authorization: Bearer`` with no token position. | The page now shows ``Authorization: Bearer <token>``. | MCP accepts a bearer scheme followed by a non-empty value: `apps/api/src/mcp/auth.ts:41-43,77-81`. The claims ratchet now holds the complete shape. |
 | `build/auth.md` used the example-shaped ``Authorization: Bearer spa_…`` in general agent-auth prose. | The page now uses the exact neutral placeholder ``Authorization: Bearer <agent token>``; the preceding prose still names `spa_` tokens. | The parser requires `Bearer` plus a non-empty token and supports both local and sign-in-service agent tokens: `apps/api/src/auth/resolve.ts:29-31,189-261`. The neutral placeholder no longer implies that only one accepted token family fits the header. |
+| The new Bento home said the local gate test “logs that SuperWitness isn't configured.” | The note now says SuperWitness reporting is optional, so the test does not need it. | The documented quick-start command passed all nine tests and emitted no such log. Reporting is enabled only when `SUPERWITNESS_URL` is set: `apps/api/src/superwitness/config.ts:25-28`; the gate test uses no reporting configuration: `apps/api/test/board-gates.test.ts:1-200`. |
 
-## Deployment claims that remain UNVERIFIED
+## Deployment claims verified live by the operator's session
 
-The repository proves intended configuration and protocol behavior, but it cannot prove the current state of private infrastructure:
+The repository proves deployment intent and protocol behavior, not live private-infrastructure state. These three claims were therefore raised on card `card_8eddc6e16f58417c` and then **verified live by the operator's session, 2026-11-14**:
 
-- **UNVERIFIED:** `app.superpipeline.dev` is the currently deployed web application. `apps/api/wrangler.jsonc:1-185` and the workflows define deployment intent, not live state.
-- **UNVERIFIED:** accounts.superjackfruit.com currently has SuperPipeline product enablement and device/browser sign-in wired for the live deployment. The repository proves enforcement and flows, not the private issuer’s current configuration.
-- **UNVERIFIED:** linked deployments currently project gates, questions, and attention through the private suite relay/chat infrastructure. The repository proves optional event emission when configured, not that the private deployment is configured now.
+- `app.superpipeline.dev` is the live production deployment. The operator's session received HTTP 200 from `GET https://app.superpipeline.dev/v1/health` and used its own `supi` CLI against that deployment. The public deploy path is the tag-driven release workflow: `.github/workflows/release.yml:10-15,38-159,214-260`; `.github/workflows/ci.yml:492-515` distinguishes main's staging deploy from production.
+- accounts.superjackfruit.com is SuperPipeline's sign-in issuer, and device sign-in works. The operator's session confirmed that `supi login` / `supi whoami` resolves a human principal through it and that Accounts has been the only issuer since the 2026-10-07 cutover. Repository evidence covers the enforced flow, not the issuer's live configuration: `apps/api/src/auth/org-tenancy.ts:1-92`; `packages/cli/src/commands/session.ts:1-238`.
+- Decisions and questions reach chat through the event relay and SuperExchange. The operator's session confirmed that SuperExchange v0.0.3 is in production and all 11 production SuperPipeline boards are opted in. Repository evidence covers emission and relay behavior: `apps/api/src/push/relay.ts:1-95`; `apps/api/src/board/gates.ts:1-963`; `apps/api/src/board/elicitations.ts:1-174`.
 
-Pinned private-estate evidence was requested on card `card_8eddc6e16f58417c`. These statements remain marked unverified; absence from this public repository is not evidence that they are false.
+Only public product domains and names appear here; no private host, credential, agent, or team name is recorded.
 
 ## Mechanical claims ratchet
 
@@ -139,10 +140,11 @@ No humor was added to any exact region.
 
 ## Real checks
 
-- Root `pnpm install --frozen-lockfile`: pass — the lockfile passed supply-chain policy verification; 356 packages were added; pnpm 11.5.2 completed in 8.4 seconds.
-- Docs-only CI command from `.github/workflows/ci.yml:78-98`, run exactly as `npm ci && npm run build` in `docs-site`: pass. `npm ci` added 308 packages and audited 309; npm reported 9 dependency vulnerabilities (3 moderate, 6 high) without failing the install. Astro built **36 pages**; Pagefind indexed 36 HTML files; the sitemap was generated.
-- The successful build emitted the existing Starlight content warnings that the optional `i18n` collection is empty and the `docs → 404` entry is absent. Neither warning failed the build or points at a page changed by this rollout.
+- Root `pnpm install --frozen-lockfile`: pass — the rebased lockfile was already current; pnpm 11.5.2 completed in 439 ms.
+- Docs-only CI command from `.github/workflows/ci.yml:78-98`, run exactly as `npm ci && npm run build` in `docs-site`: pass. `npm ci` added 348 packages and audited 349; npm reported 9 dependency vulnerabilities (3 moderate, 6 high) without failing the install. Astro built **36 pages**; Pagefind indexed 36 HTML files; the sitemap was generated.
+- The successful build emitted the existing warning that the optional `i18n` collection is empty. It did not fail the build or point at a page changed by this rollout.
 - Docs claims/reference CI command, `pnpm --filter @superpipeline/docs-check test`: pass — **2 files and 21 tests passed**, including the new bearer-header ratchet and exact MCP reference generation.
 - Generated CLI CI command, `pnpm --filter @superpipeline/cli exec vitest run src/reference.test.ts`: pass — **1 file and 10 tests passed**.
 - Additional `pnpm --filter @superpipeline/docs-check typecheck`: pass — `tsc --noEmit` exited 0.
+- The Bento home's documented gate command, `pnpm --filter @superpipeline/api exec vitest run test/board-gates.test.ts`: pass — **1 file and 9 tests passed**. Its actual output established the correction above: it emitted no “SuperWitness isn't configured” log.
 - CI-path selection against the recorded base reports `docs=true`. Because this rollout extends `packages/docs-check/src/docs-claims.test.ts`, the selector conservatively also reports `app=true`, `landing=true`, `extended=true`, and `full=true`; forge CI therefore runs the broader suite even though product behavior and site setup are unchanged.

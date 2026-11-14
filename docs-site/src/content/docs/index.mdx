@@ -20,7 +20,7 @@ import JackAside from '@superjackfruit/docs-theme/components/JackAside.astro';
   quickstart={{
     command: 'git clone https://github.com/SuperJackfruitLabs/superpipeline && cd superpipeline && pnpm install --frozen-lockfile && pnpm --filter @superpipeline/api exec vitest run test/board-gates.test.ts',
     label: 'Quick start: send a card through a gate, on your laptop',
-    note: "Needs Node 22 or later and pnpm (the repository pins 11.5.2). The board is the real one, run in the Workers runtime the test starts in-process: no account, no hosted service, nothing else from the suite. 9 checks, from a card stopping at its gate to the agent that produced it being refused. It also logs that SuperWitness isn't configured; the board carries on without it. For a board you can click on, Run locally in the repository README has the steps.",
+    note: "Needs Node 22 or later and pnpm (the repository pins 11.5.2). The board is the real one, run in the Workers runtime the test starts in-process: no account, no hosted service, nothing else from the suite. 9 checks, from a card stopping at its gate to the agent that produced it being refused. SuperWitness reporting is optional, so this test does not need it. For a board you can click on, Run locally in the repository README has the steps.",
   }}
   agent={{ task: 'Then help me design a SuperPipeline board for my work: which stages agents should own by capability, where a gate for a person belongs, and the supi commands that create it.' }}
   ask={{ examples: ['Why is my card sitting in input-required?', 'Can the agent that did the work approve it?', 'How do I give a stage to a capability instead of a person?', 'What happens when nobody answers a gate?'] }}
