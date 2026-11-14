@@ -3,16 +3,17 @@ import { appendFileSync } from 'node:fs';
 import { pathToFileURL } from 'node:url';
 
 export function plan(paths, { full = false } = {}) {
-  const result = { app: false, docs: false, landing: false, extended: false, full };
-  if (!Array.isArray(paths) || paths.length === 0) result.full = true;
-  for (const path of paths ?? []) {
-    if (/^(docs-site\/|docs\/|README\.md$|CHANGELOG\.md$)/.test(path)) result.docs = true;
-    else if (path.startsWith('landing/')) result.landing = true;
-    else if (path.startsWith('apps/web/')) { result.app = true; result.extended = true; }
-    else if (/^(apps\/api\/|packages\/)/.test(path)) result.app = true;
-    else result.full = true; // Unknown/shared/build/lock/config changes never narrow coverage.
-  }
-  if (result.full) result.app = result.docs = result.landing = result.extended = true;
+  const docsOnly =
+    Array.isArray(paths) &&
+    paths.length > 0 &&
+    paths.every(path => /^(?:docs-site\/|docs\/|README(?:\.(?:md|markdown|txt|rst))?$)/.test(path));
+  const result = {
+    app: full || !docsOnly,
+    docs: true,
+    landing: full || !docsOnly,
+    extended: full || !docsOnly,
+    full: full || !docsOnly,
+  };
   const include = result.app ? [1, 2].map(shard => ({ project: 'critical', shard, total: 2 })) : [];
   if (result.extended || result.full) include.push(...[1, 2, 3, 4].map(shard => ({ project: 'extended', shard, total: 4 })));
   return { ...result, matrix: { include: include.length ? include : [{ project: 'critical', shard: 1, total: 2 }] } };
