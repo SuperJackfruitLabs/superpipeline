@@ -89,6 +89,18 @@ it('a submitted report cannot replace the admitted source request digest', () =>
     expect(d.current().status).toBe('working');
     expect(d.sql.exec('SELECT * FROM proposed_checkpoint_receipts').toArray()).toHaveLength(0);
   }));
+it('settles the selected reporter assertion without an invented host-proof callback', () =>
+  fixture(async (d) => {
+    // Decision 5 delegates operational observation to the authenticated Hub.
+    // This assertion covers the local Board boundary, not the unfinished Hub path.
+    Reflect.set(d, 'verifySource', () => {
+      throw new Error('SuperPipeline cannot inspect a producer host from report hashes');
+    });
+    const receipt = await settleCheckpointCandidate(d, raw, approved);
+    expect(receipt.reportedBy).toBe(d.reporter().principalId);
+    expect(d.current().status).toBe('ended');
+    expect(d.sql.exec('SELECT * FROM proposed_checkpoint_receipts').toArray()).toHaveLength(1);
+  }));
 it('atomic receipt/run and exact historical replay never redispatch', () =>
   fixture(async (d) => {
     const first = await settleCheckpointCandidate(d, raw, approved);
