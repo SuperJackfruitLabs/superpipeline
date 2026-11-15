@@ -67,6 +67,7 @@ async function fixture(
       verifySource: () => Promise.resolve(),
       commit: () => {
         state.storage.sql.exec("UPDATE runs SET status='ended',outcome='completed' WHERE id=?", r.binding.runId);
+        return undefined;
       },
     };
     await test(d, snapshot, actor);
@@ -154,3 +155,43 @@ it('source verifier cannot mutate the submission after its digest was bound', ()
     expect(d.current().status).toBe('working');
     expect(d.sql.exec('SELECT * FROM proposed_checkpoint_receipts').toArray()).toHaveLength(0);
   }));
+
+it('runtime Promise callback rolls back receipt and its synchronous SQL prefix', () =>
+  fixture(async (d) => {
+    Reflect.set(d, 'commit', () => {
+      d.sql.exec("UPDATE runs SET status='ended'");
+      return Promise.resolve();
+    });
+    await expect(settleCheckpointCandidate(d, raw, approved)).rejects.toThrow('ASYNC_CHECKPOINT_COMMIT');
+    expect(d.current().status).toBe('working');
+    expect(d.sql.exec('SELECT * FROM proposed_checkpoint_receipts').toArray()).toHaveLength(0);
+  }));
+it('invalid restored heartbeat values never pass admission or post-await checks', async () => {
+  for (const heartbeat of [NaN, Infinity, -Infinity, -1, 1.5, Number.MAX_SAFE_INTEGER + 1]) {
+    for (const late of [false, true])
+      await fixture(async (d) => {
+        const read = d.current.bind(d);
+        const corrupt = () => {
+          d.current = () => ({ ...read(), lastHeartbeatMs: heartbeat });
+        };
+        if (late)
+          d.verifySource = () => {
+            corrupt();
+            return Promise.resolve();
+          };
+        else corrupt();
+        await expect(settleCheckpointCandidate(d, raw, approved)).rejects.toThrow('STALE_LEASE');
+        expect(read().status).toBe('working');
+        expect(d.sql.exec('SELECT * FROM proposed_checkpoint_receipts').toArray()).toHaveLength(0);
+      });
+  }
+});
+it('invalid clocks cannot bypass reporter expiry', async () => {
+  for (const now of [NaN, Infinity, -1, 1.5, Number.MAX_SAFE_INTEGER + 1])
+    await fixture(async (d) => {
+      d.nowMs = () => now;
+      await expect(settleCheckpointCandidate(d, raw, approved)).rejects.toThrow('INVALID_CHECKPOINT_STATE');
+      expect(d.current().status).toBe('working');
+      expect(d.sql.exec('SELECT * FROM proposed_checkpoint_receipts').toArray()).toHaveLength(0);
+    });
+});

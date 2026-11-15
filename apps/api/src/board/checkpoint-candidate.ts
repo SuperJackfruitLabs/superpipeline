@@ -49,7 +49,7 @@ export interface CheckpointCandidateDeps {
   /** Must inspect exact trusted service/worker evidence; booleans/hashes supplied by a harness are not proof. */
   verifySource(input: CheckpointSubmission): Promise<void>;
   /** Synchronous run/card/reference/outbox mutation, inside the SAME transaction. No awaits. */
-  commit: (input: CheckpointSubmission, receipt: ProposedCheckpointReceipt) => void;
+  commit: (input: CheckpointSubmission, receipt: ProposedCheckpointReceipt) => undefined;
 }
 interface StoredReceipt extends Record<string, SqlStorageValue> {
   request_digest: string;
@@ -65,6 +65,16 @@ export function createProposedCheckpointTables(sql: SqlStorage): void {
     execution_id TEXT NOT NULL UNIQUE, bench_id TEXT NOT NULL, source_request TEXT NOT NULL,
     submission TEXT NOT NULL, receipt TEXT NOT NULL, UNIQUE(run_id, epoch), UNIQUE(bench_id, source_request))`);
 }
+function checkedNow(deps: CheckpointCandidateDeps): number {
+  const now = deps.nowMs();
+  if (!Number.isSafeInteger(now) || now < 0) throw new Error('INVALID_CHECKPOINT_STATE');
+  return now;
+}
+// A runtime miswiring must roll back the synchronous transaction. This cannot
+// cancel effects an invalid async callback schedules after it returns.
+function requireSynchronousCommit(result: unknown): void {
+  if (result !== undefined) throw new Error('ASYNC_CHECKPOINT_COMMIT');
+}
 function reporter(deps: CheckpointCandidateDeps, snapshot: CheckpointClaimSnapshot): VerifiedCheckpointReporter {
   const actor = deps.reporter();
   if (
@@ -73,7 +83,7 @@ function reporter(deps: CheckpointCandidateDeps, snapshot: CheckpointClaimSnapsh
     actor.principalId !== snapshot.policy.reporterPrincipalId ||
     !actor.scopes.includes('checkpoints:submit') ||
     !Number.isSafeInteger(actor.expiresAt) ||
-    actor.expiresAt <= deps.nowMs()
+    actor.expiresAt <= checkedNow(deps)
   )
     throw new Error('NOT_CHECKPOINT_REPORTER');
   return actor;
@@ -81,8 +91,10 @@ function reporter(deps: CheckpointCandidateDeps, snapshot: CheckpointClaimSnapsh
 function current(deps: CheckpointCandidateDeps, input: CheckpointSubmission, snapshot: CheckpointClaimSnapshot): void {
   const r = input.checkpoint;
   if (
+    !Number.isSafeInteger(snapshot.lastHeartbeatMs) ||
+    snapshot.lastHeartbeatMs < 0 ||
     snapshot.status !== 'working' ||
-    snapshot.lastHeartbeatMs + HEARTBEAT_TIMEOUT_MS <= deps.nowMs() ||
+    checkedNow(deps) - snapshot.lastHeartbeatMs >= HEARTBEAT_TIMEOUT_MS ||
     canonicalCheckpoint(r.binding) !== canonicalCheckpoint(snapshot.binding) ||
     r.policyDigest !== snapshot.policyDigest ||
     canonicalCheckpoint(r.start) !== canonicalCheckpoint(snapshot.start)
@@ -191,7 +203,7 @@ export async function settleCheckpointCandidate(
       reportedBy: latestActor.principalId,
       runId: r.binding.runId,
       leaseEpoch: r.binding.leaseEpoch,
-      recordedAt: new Date(deps.nowMs()).toISOString(),
+      recordedAt: new Date(checkedNow(deps)).toISOString(),
       checkpoint: r.checkpoint,
     };
     const saved = JSON.stringify(receipt);
@@ -210,7 +222,7 @@ export async function settleCheckpointCandidate(
       canonicalCheckpoint(input),
       saved,
     );
-    deps.commit(input, receipt);
+    requireSynchronousCommit(deps.commit(input, receipt));
     return receipt;
   });
 }
