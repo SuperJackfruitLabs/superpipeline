@@ -10,7 +10,7 @@ npm run build   # -> dist/
 
 ## It wears the suite's docs theme
 
-`@superjackfruit/docs-theme`, vendored under `vendor/` with the frontdoor and vibekit tarballs it
+`@superjackfruitlabs/vibekit-docs`, vendored under `vendor/` with the frontdoor and vibekit tarballs it
 needs, as the landing page vendors its own. The whole design config is
 `sjlDocs({ product: 'superpipeline', status: 'lights on' })` in `astro.config.mjs`: vibekit's gold,
 the suite's faces (self-hosted, so no page fetches a font from Google), the mark beside the name,

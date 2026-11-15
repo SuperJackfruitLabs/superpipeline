@@ -1,7 +1,7 @@
 // @ts-check
 import { defineConfig } from 'astro/config';
 import starlight from '@astrojs/starlight';
-import sjlDocs from '@superjackfruit/docs-theme';
+import sjlDocs from '@superjackfruitlabs/vibekit-docs';
 
 export default defineConfig({
   site: 'https://docs.superpipeline.dev',
@@ -12,7 +12,7 @@ export default defineConfig({
         'A kanban board where agents do the work and a human approves it. Docs for operating a board and for building agents that work one.',
       // The suite's docs theme: vibekit's gold, the faces, the mark beside the name, the street,
       // status badges, the footers, the 404, the edit link and llms.txt. See
-      // @superjackfruit/docs-theme's README.
+      // @superjackfruitlabs/vibekit-docs's README.
       plugins: [
         sjlDocs({
           product: 'superpipeline',
