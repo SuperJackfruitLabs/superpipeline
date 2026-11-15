@@ -281,7 +281,13 @@ export async function complete(deps: RunVerbsDeps, input: CompleteVerbInput): Pr
     verdict = evaluateCompletion(requirement, {
       handoff: input.handoff,
       references: deps.sql
-        .exec(`SELECT provider, source_type AS sourceType FROM card_references WHERE card_id = ?`, cardId)
+        .exec(
+          `SELECT provider, source_type AS sourceType
+             FROM card_references
+            WHERE card_id = ? AND (run_id = ? OR added_by = 'user')`,
+          cardId,
+          input.runId,
+        )
         .toArray()
         .map((r) => ({ provider: r.provider as string, sourceType: r.sourceType as string })),
     });
@@ -333,7 +339,14 @@ export async function complete(deps: RunVerbsDeps, input: CompleteVerbInput): Pr
     );
     deps.reportRun(input.runId);
     await deps.scheduleReclaim();
-    return { ok: true, value: deps.mustGetCard(cardId) };
+    const refusedCard = deps.mustGetCard(cardId);
+    if (!requirement?.reference) return { ok: true, value: refusedCard };
+    const handoff = {
+      feedback: `Your handoff was refused: ${why}. Finish this stage again and include what is missing.`,
+      refusedHandoff: input.handoff ?? null,
+    };
+    const value = { ...refusedCard, handoff };
+    return { ok: true, value };
   }
 
   if (route.kind === 'return' || route.kind === 'park') {

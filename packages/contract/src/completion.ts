@@ -101,7 +101,7 @@ export function evaluateCompletion(
     );
     if (!hit) {
       const shape = [want.provider, want.sourceType].filter(Boolean).join('/') || 'any';
-      failures.push(`this card carries no ${shape} reference`);
+      failures.push(`no ${shape} reference was linked by this run`);
     }
   }
 

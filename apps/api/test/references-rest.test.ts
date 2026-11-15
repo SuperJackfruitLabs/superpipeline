@@ -32,7 +32,7 @@ describe('REST — PUT /v1/boards/:id/cards/:cardId/references', () => {
     const r1 = await put({ url: 'https://github.com/org/repo/pull/42' });
     expect(r1.status).toBe(200);
     const ref1 = ((await r1.json()) as { reference: ReferenceView }).reference;
-    expect(ref1).toMatchObject({ provider: 'github', sourceType: 'pull_request', externalId: 'org/repo#42', addedBy: 'agent' });
+    expect(ref1).toMatchObject({ provider: 'github', sourceType: 'pull_request', externalId: 'org/repo#42', addedBy: 'user' });
 
     const r2 = await put({ url: 'https://github.com/org/repo/pull/42', title: 'updated' });
     const ref2 = ((await r2.json()) as { reference: ReferenceView }).reference;
@@ -45,12 +45,12 @@ describe('REST — PUT /v1/boards/:id/cards/:cardId/references', () => {
     expect(snap.references[0]!.title).toBe('updated');
   });
 
-  it('records caller-supplied provenance and explicit provider/sourceType', async () => {
+  it('derives provenance from the caller and records explicit provider/sourceType', async () => {
     const { boardId, cardId } = await seedBoardCard();
     const res = await SELF.fetch(`${base}/v1/boards/${boardId}/cards/${cardId}/references`, {
       method: 'PUT',
       headers: T,
-      body: JSON.stringify({ url: 'https://docs.example.com/spec', provider: 'docs', sourceType: 'doc', addedBy: 'user' }),
+      body: JSON.stringify({ url: 'https://docs.example.com/spec', provider: 'docs', sourceType: 'doc', addedBy: 'agent' }),
     });
     const ref = ((await res.json()) as { reference: ReferenceView }).reference;
     expect(ref).toMatchObject({ provider: 'docs', sourceType: 'doc', addedBy: 'user' });
