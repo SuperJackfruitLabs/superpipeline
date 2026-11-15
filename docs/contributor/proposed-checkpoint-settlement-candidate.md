@@ -170,3 +170,32 @@ usage cutoff moves forward nine fixture milliseconds. Returned values and step
 order remain identical after timestamp normalization. The independent Worker
 HTTP characterization remains unchanged. The prior completion-await policy read
 is retained once in the publish trace.
+
+## Claim discovery contract impact
+
+The additive REST request `checkpointProtocol` and optional success
+`checkpointClaim` are owned by the actual Board model, RPC input, claim matcher,
+and REST handler. Version `superpipeline.checkpoint-claim.v1` projects the
+immutable pending policy row; it is not a new source-verification assertion.
+Missing protocol skips policy stages, including on mixed boards. Malformed or
+unsupported REST versions fail before claim effects. Internal RPC matching also
+requires the exact version. Ordinary responses retain their existing shape.
+
+This follows Charter’s proposed coordinator-grant decisions 3, 6, and 7; those
+remain **proposed, not accepted**. Producer base is source-admission candidate
+`e111bc240f71a5d4f66aa5233d38ed6eb18442e3`. AgentPod’s bridge currently projects
+only ordinary claim context and needs a dedicated readiness-gated consumer before
+advertising support. That consumer must validate tenant, board, card, stage,
+agent, run, epoch, policy and digest, preserve the pending/admitted distinction,
+and reject required or unknown claims before ordinary ACP/Salaam dispatch.
+Generic SDK/MCP clients keep omitting opt-in. The generic TypeScript SDK also
+refuses unsolicited checkpoint claim/policy fields before calling its handler,
+including null or unknown markers, instead of projecting them away. Existing work discovery and
+eligibility calls without an explicit protocol cannot advertise policy stages as
+claimable by those clients.
+
+Tests exercise real Board SQL for legacy refusal, mixed ordinary work, captured
+policy projection, rollback and ignored writes. REST validation tests exercise
+unknown and malformed versions before any run is created. This does not prove
+cross-product dispatch, live source admission, grants, settlement or pilot
+acceptance. Those require the actual authenticated consumer and runtime flow.

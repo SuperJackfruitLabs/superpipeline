@@ -47,7 +47,7 @@ async function fixture(
       });
       const card = await board.createCard({ title: 'Work', ownerUserId: 'usr_example' });
       if (!card.ok) throw new Error(card.message);
-      const claim = await board.claim({ agentId: 'agt_example', capabilities: ['code'] });
+      const claim = await board.claim({ agentId: 'agt_example', capabilities: ['code'], checkpointProtocol: 'superpipeline.checkpoint-claim.v1' });
       if (!claim.claimed) throw new Error('expected claim');
       const context: BoardContext = Reflect.get(board, 'board');
       createProposedCheckpointTables(state.storage.sql);

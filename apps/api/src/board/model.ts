@@ -1,3 +1,4 @@
+import type { CheckpointClaimDiscovery } from './checkpoint-claims';
 import type { CheckpointPolicy } from './checkpoint-proposal';
 import type { CardReservation, ClaimReason, CompletionRequirement, StageOutcome, TaskState } from '@superpipeline/contract';
 import type { JsonValue } from '../json';
@@ -544,6 +545,7 @@ export type Result<T> =
 export type ClaimResult =
   | {
       claimed: true;
+      checkpointClaim?: CheckpointClaimDiscovery;
       runId: string;
       leaseEpoch: number;
       card: CardView;

@@ -104,7 +104,7 @@ export interface BoardStub {
   getState(): Promise<BoardSnapshot>;
   getEvents(limit?: number): Promise<BoardEvent[]>;
   // Agent contract (docs/04 §3)
-  claim(input: { agentId: string; capabilities: string[]; maxConcurrency?: number; profileKey?: string; principalId?: string | null }): Promise<ClaimResult>;
+  claim(input: { agentId: string; capabilities: string[]; checkpointProtocol?: string; maxConcurrency?: number; profileKey?: string; principalId?: string | null }): Promise<ClaimResult>;
   setProfile(input: ProfileInput): Promise<Result<{ key: string }>>;
   getProfiles(): Promise<ProfileView[]>;
   heartbeat(input: RunVerbInput): Promise<Result<{ acknowledged: true }>>;
