@@ -3,6 +3,8 @@ import { ApiError } from '../loading';
 import { withAuthority } from '../hub-token';
 import { fetch, headers, noteAuth } from './client';
 import type { Gate } from './gates';
+import type { Reference } from './references';
+export type { Reference } from './references';
 
 export interface Card {
   id: string;
@@ -164,25 +166,6 @@ export interface CardActivities {
   handoff: Record<string, unknown> | null;
   /** Every gate on this card, decided ones included — the card's approval history. */
   gates: Gate[];
-}
-
-export interface Reference {
-  id: string;
-  cardId: string;
-  /**
-   * The run that attached this, when an agent did it mid-run. Null for a human's, and for every
-   * reference from before the column existed — both of which belong to the card rather than to a
-   * stage.
-   */
-  runId?: string | null;
-  url: string;
-  title?: string | null;
-  subtitle?: string | null;
-  provider: string;
-  sourceType: string;
-  externalId?: string | null;
-  metadata?: Record<string, unknown> | null;
-  addedBy: 'agent' | 'user';
 }
 
 /**

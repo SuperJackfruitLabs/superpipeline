@@ -285,6 +285,8 @@ export interface GateView {
   decidedBy: string | null;
   comment: string | null;
   resolvedAt: string | null;
+  /** References attached by the run whose work this gate judges; empty when it attached none. */
+  references: ReferenceView[];
   /**
    * What is being approved: the readable part of the card's handoff (`handoffSummary`). On the
    * board snapshot's pending gates only, so a list can say what a decision is about without
@@ -520,6 +522,8 @@ export interface GatePendingBody {
   producedBy: string;
   /** What the reviewer is being asked to approve; null for generic handoff-free gates. */
   handoffSummary: string | null;
+  /** References attached by the run that opened the gate; empty says that it linked none. */
+  references: ReferenceView[];
   /**
    * Immutable metadata for a digest-bound gate, and what the decider must see (charter: gate.v2
    * §3). The canonical payload stays behind the authenticated route; only the kind's bounded
