@@ -13,6 +13,24 @@ import type { BoardErrorCode } from '../board/board-do';
  */
 export function statusForCode(code: BoardErrorCode): number {
   switch (code) {
+    case 'CHECKPOINT_SETTLEMENT_DISABLED':
+    case 'CHECKPOINT_RECEIPT_MISSING':
+      return 404;
+    case 'INVALID_CHECKPOINT':
+    case 'INVALID_CHECKPOINT_REFERENCE':
+      return 400;
+    case 'CHECKPOINT_CONFLICT':
+    case 'COMPLETION_REQUIRED':
+    case 'APPROVAL_SUBJECT_REQUIRED':
+      return 409;
+    case 'INVALID_COMPLETION_STATE':
+    case 'INVALID_CHECKPOINT_STATE':
+    case 'CHECKPOINT_SETTLEMENT_FAILED':
+    case 'CHECKPOINT_RECEIPT_NOT_SAVED':
+    case 'INVALID_CHECKPOINT_RECEIPT':
+    case 'CHECKPOINT_REFERENCE_MAPPING_REQUIRED':
+    case 'CHECKPOINT_REFERENCE_NOT_SAVED':
+      return 500;
     case 'CHECKPOINT_SOURCE_DISABLED':
     case 'CHECKPOINT_SOURCE_MISSING':
       return 404;

@@ -1,4 +1,4 @@
-/** Private, default-disabled producer candidate. No HTTP/RPC entry imports it. */
+/** Proposed settlement core. Public service callers must enforce the deployment switch. */
 import { HEARTBEAT_TIMEOUT_MS } from './rules';
 import type { VerifiedCheckpointReporter } from '../auth/checkpoint-reporter';
 export type { VerifiedCheckpointReporter } from '../auth/checkpoint-reporter';
@@ -145,6 +145,8 @@ function existing(
   digest: string,
   actor: VerifiedCheckpointReporter,
 ): ProposedCheckpointReceipt | null {
+  if (!deps.sql.exec("SELECT 1 FROM sqlite_master WHERE type='table' AND name='proposed_checkpoint_receipts'").toArray().length)
+    return null;
   const r = input.checkpoint;
   const rows = deps.sql
     .exec<StoredReceipt>(
@@ -192,7 +194,17 @@ export async function settleCheckpointCandidate(
   options?: { privateTestOnly: true },
 ): Promise<ProposedCheckpointReceipt> {
   if (!options?.privateTestOnly) throw new Error('CHECKPOINT_SETTLEMENT_DISABLED');
+  return await settleCheckpoint(deps, raw);
+}
+
+/** Internal service entry. Authentication is resolved by the Worker and rechecked
+ * against current stored source/policy here; report fields never confer authority. */
+export async function settleCheckpoint(
+  deps: CheckpointCandidateDeps, raw: Uint8Array, expectedRunId?: string,
+): Promise<ProposedCheckpointReceipt> {
   const input = parseCheckpointSubmission(raw);
+  if (expectedRunId !== undefined && input.checkpoint.binding.runId !== expectedRunId)
+    throw new Error('INVALID_CHECKPOINT');
   const requestDigest = await checkpointDigest(input);
   const reportDigest = await checkpointDigest(input.checkpoint);
   const snapshot = deps.current();
@@ -211,6 +223,7 @@ export async function settleCheckpointCandidate(
     if (completed) return completed;
     if (authority(latest) !== frozen) throw new Error('STALE_LEASE');
     current(deps, input, latest);
+    createProposedCheckpointTables(deps.sql);
     const r = input.checkpoint;
     const receipt: ProposedCheckpointReceipt = {
       version: 'superpipeline.run-checkpoint-receipt.v1',

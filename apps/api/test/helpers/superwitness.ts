@@ -1,5 +1,4 @@
 import { env, runInDurableObject } from 'cloudflare:test';
-import type { BoardDO } from '../../src/board/board-do';
 import type { ReporterFetch } from '../../src/superwitness/client';
 
 export const SW_URL = 'https://sw.test';
@@ -83,8 +82,8 @@ export function fakeSuperwitness(
 // and a drain that outlives its test then dies with an uncaught "internal error" once the test's
 // storage frame is gone. A test registers its boards here and `quietBoards` (afterEach) lets
 // that drain finish, then deletes the alarm.
-const tracked = new Set<DurableObjectStub<BoardDO>>();
-export function trackBoard(stub: DurableObjectStub<BoardDO>): DurableObjectStub<BoardDO> {
+const tracked = new Set<DurableObjectStub>();
+export function trackBoard<T extends DurableObjectStub>(stub: T): T {
   tracked.add(stub);
   return stub;
 }
@@ -93,5 +92,5 @@ export async function quietBoards(): Promise<void> {
   tracked.clear();
   // Let a drain workerd already started finish inside this test's storage frame, then stop the next.
   await new Promise((r) => setTimeout(r, 100));
-  for (const stub of stubs) await runInDurableObject(stub, async (_b: BoardDO, state) => state.storage.deleteAlarm());
+  for (const stub of stubs) await runInDurableObject(stub, async (_b, state) => state.storage.deleteAlarm());
 }

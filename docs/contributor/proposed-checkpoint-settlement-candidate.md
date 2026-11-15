@@ -3,8 +3,9 @@
 This is an isolated, disabled implementation candidate against published Treaty
 proposal `4ba0c9f857f3b01e39c6332c8a005beff0733886` and Charter's proposed coordinator
 grant decision. Publication is not acceptance. It provisions no reporter credential,
-adds no settlement HTTP/RPC route, and enables no board or pilot. The proposed
-source-only HTTP/RPC boundary described below is disabled by default.
+enables no board or pilot. Proposed source and settlement HTTP/RPC boundaries
+are implemented with independent Worker and Board default-off gates; deployment
+configuration sets neither switch.
 
 ## Implemented boundaries
 
@@ -27,7 +28,7 @@ producer host or treat supplied flags and hashes as independent proof.
 The private issuer adapter resolves the actual configured service-token path and
 requires the exact server-owned policy reporter, mapped tenant, submit scope and
 verified expiry. Body/header identity claims, agent/human credentials and another
-audience do not satisfy it. No public route imports it. Actual authenticated producer verification remains unfinished; durable claim/source
+audience do not satisfy it. The gated settlement route uses the existing issuer resolver. Actual authenticated producer verification remains unfinished; durable claim/source
 admission and the disabled-by-default source service boundary are implemented below.
 
 After asynchronous policy hashing, the candidate rechecks service expiry/scope,
@@ -278,3 +279,26 @@ Hub adapter still needs to admit only its retained authenticated preparation
 response and keep service credentials away from nodes/workers. Final settlement,
 operation-bound cancellation/reconciliation, heartbeat integration and the real
 Developer Experience pilot remain required.
+
+## Proposed settlement service boundary
+
+`PROPOSED_CHECKPOINT_SETTLEMENT=true` is independently required at the Worker and
+Board. Repository deployment configuration leaves it unset. The owned endpoints
+are `POST /v1/boards/:boardId/runs/:runId/checkpoint-settlements` and
+`GET /v1/boards/:boardId/runs/:runId/checkpoint`; other methods are refused before
+agent/human dispatch. POST requires exact `checkpoints:submit`, GET exact
+`checkpoints:read`, from an issuer-verified service in the mapped organization.
+The Board rechecks expiry, tenant and current selected policy reporter.
+
+POST reads at most 64 KiB, matches the body run to the URL, reads the immutable
+admitted source and derives forge mapping from the actual tenant catalog. It
+then uses the real Board completion/effect transaction to insert the receipt,
+commit references, complete the run/card and update the reporting outbox.
+Failure to retain the receipt rolls the complete transaction back. Exact replay
+returns the historical receipt without another completion.
+
+GET requires current read authorization and validates stored receipt shape,
+identity, epoch, member order, branches and object widths. Missing reads create
+no schema. Historical reads confer no execution or lease authority. Neither
+endpoint enables a policy, provisions a reporter, authenticates a producer host
+or establishes the unfinished Hub/Node pilot.

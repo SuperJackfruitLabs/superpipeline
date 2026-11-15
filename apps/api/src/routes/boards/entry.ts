@@ -11,6 +11,7 @@ import { dispatch, type WorkerRequest } from '../router';
 import { boardCollection } from './collection';
 import { runEvidence } from './evidence';
 import { checkpointSource } from './checkpoint-source';
+import { checkpointSettlement } from './checkpoint-settlement';
 import { BOARD_ROUTES } from './table';
 
 /**
@@ -24,6 +25,13 @@ import { BOARD_ROUTES } from './table';
 export async function boards({ request, env, url, path }: WorkerRequest, match: RegExpMatchArray): Promise<Response> {
   const boardId = match[1];
   const rest = match[2] ?? '';
+
+  const settlementMatch = boardId && request.method === 'POST' ? rest.match(/^runs\/([^/]+)\/checkpoint-settlements$/) : null;
+  if (settlementMatch) return checkpointSettlement(request, env, boardId, settlementMatch[1], 'submit');
+  const receiptMatch = boardId && request.method === 'GET' ? rest.match(/^runs\/([^/]+)\/checkpoint$/) : null;
+  if (receiptMatch) return checkpointSettlement(request, env, boardId, receiptMatch[1], 'read');
+  if (boardId && /^runs\/[^/]+\/checkpoint-settlements$/.test(rest)) return checkpointSettlement(request, env, boardId, '', 'submit');
+  if (boardId && /^runs\/[^/]+\/checkpoint$/.test(rest)) return checkpointSettlement(request, env, boardId, '', 'read');
 
   const sourceMatch = boardId && (request.method === 'GET' || request.method === 'POST')
     ? rest.match(/^runs\/([^/]+)\/checkpoint-source$/) : null;
