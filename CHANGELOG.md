@@ -14,8 +14,21 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html). Entries g
 
 ## Unreleased
 
+## v0.0.32 — 2026-11-15
+
+### Added
+
+- `supi create-card --project <prj_…> --milestone <mls_…>` files a new card under a project and a
+  milestone, and `supi edit-card --project/--milestone` moves an existing one. `supi card-label add`
+  and `supi card-label rm` add and remove a label on an existing card. The CLI reference documents
+  every new flag, and milestone ids are named `mls_…` throughout.
+
 ### Changed
 
+- Docs: the site wears the suite docs theme (five sidebar groups, a Bento home; no URL changed), and
+  every page is in the suite's docs voice, with each fact checked against the code and a test that
+  holds the bearer-header examples to it.
+- CI: a pull request that changes only docs runs only the docs checks.
 - Docs: the published site covers gates decided by checks, decision timeouts, variants, quorum,
   release time and pull-back, stage `placement`, service principals and their scopes, the service
   routes, and the push and relay events. `docs/05` no longer lists events nobody can subscribe to.
