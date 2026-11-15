@@ -16,7 +16,7 @@ export function checkpointTransaction(
   return board.commitEffects.run(board.ctx.storage, commit);
 }
 
-/** Reuse the real synchronous completion span only after candidate authorization/source proof.
+/** Reuse the real synchronous completion span only after candidate reporter authorization and stored-source binding.
  * Bound approval payloads need a separate contract review and are refused here. No async complete()
  * is smuggled into a void callback; return type is deliberately explicit.
  */

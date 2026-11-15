@@ -19,15 +19,18 @@ hashes. A submission digest includes handoff/outcome, unlike the report digest.
 `settleCheckpointCandidate` refuses before reading state unless its private test
 option is supplied. No production entry point imports it. It requires separate
 server-verified service identity/expiry and authoritative claim-time policy,
-executor/start-vector/bench/request bindings. The explicit source verifier must
-inspect trusted service/worker evidence; supplied flags and hashes are not proof.
+executor/start-vector/bench/request bindings. The selected authenticated reporter
+delegates operational observations under proposed Charter decision 5. AgentPod must
+validate authenticated node Completion against its retained source and current
+registry before constructing the entire report. SuperPipeline does not inspect a
+producer host or treat supplied flags and hashes as independent proof.
 The private issuer adapter resolves the actual configured service-token path and
 requires the exact server-owned policy reporter, mapped tenant, submit scope and
 verified expiry. Body/header identity claims, agent/human credentials and another
 audience do not satisfy it. No public route imports it. Actual authenticated producer verification remains unfinished; durable claim/source
 admission and the disabled-by-default source service boundary are implemented below.
 
-After asynchronous verification, the candidate rechecks service expiry/scope,
+After asynchronous policy hashing, the candidate rechecks service expiry/scope,
 selected reporter, exact policy/claim binding, run status and heartbeat before
 one synchronous SQLite transaction. Receipt insertion and the injected synchronous
 run/card/reference commit occur in that same transaction. A source execution or
@@ -49,7 +52,7 @@ ordinary completion guard: owner/epoch authorization alone does not check heartb
 expiry. The candidate independently checks the existing heartbeat timeout.
 
 These tests do **not** execute all 23 Treaty producer-state scenarios. In particular,
-mocked source verification does not prove stopped writers, sealed captures, remote
+a supplied delegated report does not prove stopped writers, sealed captures, remote
 pin/taskref publication, actual dirty-vector refusal, later SuperBench owner safety
 or source-host timeout recovery. Parser/state tests exercise related refusals,
 not the complete cross-product path. The expected end-to-end scenarios remain in
@@ -59,11 +62,11 @@ Before enabling any route, owner review must settle and accept the service scope
 and policy boundary. Required implementation includes issuer-derived expiry
 plumbing, claim-time durable snapshots, service-only tenant routing, current-run
 and reporter capability discovery, strict bounded request reading, authenticated
-receipt reads, and real source verification. The generic completion mutation
+receipt reads, and actual Hub validation of authenticated node Completion. The generic completion mutation
 is characterized and extracted into `completion-commit.ts`. The private
 `checkpoint-completion.ts` bridge reuses that actual helper and BoardContext,
-including real run/card/gate/outbox writes under the receipt transaction. Its
-source verifier remains a stub in integration tests. Generated commit references now have a private synchronous projection; the actual
+including real run/card/gate/outbox writes under the receipt transaction. The
+integration tests supply a delegated report; they do not execute Hub validation. Generated commit references now have a private synchronous projection; the actual
 service route must still resolve and retain the authorized tenant provider mapping;
 ordinary completion preserves existing references. This is not finished wiring.
 
@@ -99,7 +102,7 @@ scope and tenant checks; this does not add a reporter route or enable settlement
 ## Owned transaction and post-commit delivery
 
 The real async settlement entry must own the effect scope after its hashing and
-source-verification awaits. It queues immutable serialized websocket messages and
+policy-digest awaits. It queues immutable serialized websocket messages and
 alarm arming until its successful outer SQL commit. Event, notification, push and
 run-report outboxes stay inside SQL. Rollback discards effects; ordinary completion
 outside this scope preserves its characterized immediate delivery behavior.
@@ -151,11 +154,12 @@ prevent updates, deletion and replacement.
 
 Its current-run reader joins immutable stored source with actual Board SQL,
 instead of deriving source facts from a submitted checkpoint. Settlement binds
-the report's source request digest to that stored plan and passes the stored
-worker-context digest explicitly to the source verifier. The full stored plan
-remains part of the post-verification authority check. A real Board integration
-test checks completion and historical receipt replay, while explicitly stubbing
-service proof. A stored plan and its digest are not proof of launch, stopped
+the report's source request digest to that stored plan. The full stored plan,
+including the admitted worker-context digest, remains part of the post-hashing
+authority check. It is frozen before the policy digest await so a change during
+hashing cannot redefine the authority being checked. A real Board integration
+test checks completion and historical receipt replay, using a supplied delegated
+observation. Actual authenticated Hub report construction remains unfinished. A stored plan and its digest are not proof of launch, stopped
 writers, sealing or release. Settlement remains disabled. The source-only service boundary below is also
 disabled by default; it initializes source storage only during authorized admission. The
 actual coordinator, control-pair checks, node observations and producer evidence

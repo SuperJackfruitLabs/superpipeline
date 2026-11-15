@@ -113,8 +113,7 @@ async function fixture(
             lastHeartbeatMs: run.last_heartbeat_ms,
           };
         },
-        // Only source verification is a stub. Every run/card/gate/outbox/effect mutation below is real Board code.
-        verifySource: () => Promise.resolve(),
+        // A supplied delegated report exercises real Board mutations; authenticated Hub observation is not executed here.
         commit: (submission) => commitCheckpointCompletion(context, submission, { tenantId: 'tnt_realcandidate', forgeHost: provider === 'forge' ? 'forge.example.test' : null, reporterPrincipalId: policy.reporterPrincipalId }),
       };
       try {
@@ -245,9 +244,6 @@ it('post-commit delivery failure retains real settlement and exact replay never 
     );
     expect(state.storage.sql.exec('SELECT status FROM runs').one().status).toBe('ended');
     expect(state.storage.sql.exec('SELECT * FROM proposed_checkpoint_receipts').toArray()).toHaveLength(1);
-    d.verifySource = () => {
-      throw new Error('must not redispatch source');
-    };
     d.commit = () => {
       throw new Error('must not repeat completion');
     };
