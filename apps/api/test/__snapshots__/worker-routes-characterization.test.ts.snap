@@ -5001,7 +5001,7 @@ exports[`the Worker HTTP surface, pinned before the split > answers every route 
         "lastSyncedAt": null,
         "metadata": null,
         "provider": "github",
-        "runId": null,
+        "runId": "run#33",
         "sourceType": "pull_request",
         "subtitle": null,
         "syncState": "synced",

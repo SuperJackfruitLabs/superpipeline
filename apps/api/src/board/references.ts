@@ -41,7 +41,7 @@ export type ReferencesDeps = Pick<
 export async function addRunReference(deps: ReferencesDeps, input: RunVerbInput & { reference: ReferenceInput }): Promise<Result<ReferenceView>> {
   const auth = deps.authorizeRun(input);
   if (!auth.ok) return auth;
-  return deps.addReference({ ...input.reference, cardId: auth.run.card_id as string, addedBy: 'agent' });
+  return deps.addReference({ ...input.reference, cardId: auth.run.card_id as string, addedBy: 'agent', runId: input.runId });
 }
 
 export async function addReference(deps: ReferencesDeps, input: ReferenceInput): Promise<Result<ReferenceView>> {
@@ -71,7 +71,7 @@ export async function addReference(deps: ReferencesDeps, input: ReferenceInput):
     deps.sql.exec(
       `UPDATE card_references
          SET title = ?, subtitle = ?, provider = ?, source_type = ?, external_id = ?,
-             metadata_json = ?, sync_state = ?, last_synced_at = ?, updated_at = ?
+             metadata_json = ?, sync_state = ?, last_synced_at = ?, run_id = ?, updated_at = ?
        WHERE id = ?`,
       input.title ?? null,
       input.subtitle ?? null,
@@ -81,6 +81,7 @@ export async function addReference(deps: ReferencesDeps, input: ReferenceInput):
       metadataJson,
       input.syncState ?? 'synced',
       input.lastSyncedAt ?? null,
+      input.runId ?? null,
       now,
       id,
     );

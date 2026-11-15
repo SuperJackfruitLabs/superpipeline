@@ -38,12 +38,14 @@ async function createBoard(stages: unknown): Promise<string> {
   return ((await res.json()) as { boardId: string }).boardId;
 }
 
-async function addCard(boardId: string): Promise<void> {
-  await SELF.fetch(`https://api.test/v1/boards/${boardId}/cards`, {
+async function addCard(boardId: string): Promise<string> {
+  const res = await SELF.fetch(`https://api.test/v1/boards/${boardId}/cards`, {
     method: 'POST',
     headers: headers(),
     body: JSON.stringify({ title: 'Work', ownerUserId: 'usr_a' }),
   });
+  const { card } = await res.json<{ card: { id: string } }>();
+  return card.id;
 }
 
 async function claim(boardId: string, agentId: string, capability: string) {
@@ -115,6 +117,33 @@ describe('gate REST surface', () => {
       state: 'submitted',
     });
     expect(JSON.stringify(card.handoff)).toMatch(/refused.*superlibrary.*(this|current) run/i);
+  });
+
+  it('accepts an artifact a person linked for the current run', async () => {
+    const boardId = await createBoard(ARTIFACT_REVIEW_PIPELINE);
+    const cardId = await addCard(boardId);
+    const run = await claim(boardId, 'agt_r', 'research');
+    const linked = await SELF.fetch(`https://api.test/v1/boards/${boardId}/cards/${cardId}/references`, {
+      method: 'PUT',
+      headers: headers({ 'X-User-Id': 'usr_x' }),
+      body: JSON.stringify({
+        url: 'https://app.superlibrary.dev/a/itm_0123456789abcdef',
+        provider: 'superlibrary',
+        sourceType: 'artifact',
+        metadata: { version: 2 },
+        addedBy: 'user',
+      }),
+    });
+    expect(linked.status).toBe(200);
+
+    const completed = await SELF.fetch(`https://api.test/v1/boards/${boardId}/runs/${run.runId}/complete`, {
+      method: 'POST',
+      headers: headers({ 'X-Agent-Id': 'agt_r' }),
+      body: JSON.stringify({ leaseEpoch: run.leaseEpoch, handoff: { summary: 'spec v2' } }),
+    });
+    expect(completed.status).toBe(200);
+    const { card } = await completed.json<{ card: { currentStageKey: string; state: string } }>();
+    expect(card).toMatchObject({ currentStageKey: 'review', state: 'input-required' });
   });
 
   it('opens a gate on review and approves it via REST', async () => {
