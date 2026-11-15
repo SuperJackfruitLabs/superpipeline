@@ -175,7 +175,7 @@ to produce there, and a completion that does not produce it does not advance the
 | arm | what it demands |
 |---|---|
 | `handoff` | your handoff must be an **object** carrying each named key, present and non-blank. A bare string is a summary, not a report, and is refused as one. |
-| `reference` | a reference matching that shape must already be attached to the card. Attach it **before** you complete. |
+| `reference` | a reference matching that shape must have been attached by **this run**, or by a person. Attach it through the run-scoped reference tool **before** you complete; an earlier run's reference does not prove the current work was published. |
 | `live` | reserved. A stage may declare it, and it is recorded as *not checked* rather than passed — live verification is not built yet. |
 
 Every failing arm is named at once, so a person fixes both rather than discovering the second on

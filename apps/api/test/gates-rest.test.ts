@@ -1,5 +1,7 @@
-import { SELF } from 'cloudflare:test';
+import { SELF, env } from 'cloudflare:test';
 import { describe, it, expect } from 'vitest';
+import { boardStub } from '../src/board/stub';
+import { cardReference } from '../src/routes/boards/cards';
 
 const REVIEW_PIPELINE = [
   { key: 'research', name: 'Research', order: 0, ownerKind: 'capability', owner: 'research' },
@@ -131,10 +133,10 @@ describe('gate REST surface', () => {
         provider: 'superlibrary',
         sourceType: 'artifact',
         metadata: { version: 2 },
-        addedBy: 'user',
       }),
     });
     expect(linked.status).toBe(200);
+    expect((await linked.json<{ reference: { addedBy: string } }>()).reference.addedBy).toBe('user');
 
     const completed = await SELF.fetch(`https://api.test/v1/boards/${boardId}/runs/${run.runId}/complete`, {
       method: 'POST',
@@ -144,6 +146,52 @@ describe('gate REST surface', () => {
     expect(completed.status).toBe(200);
     const { card } = await completed.json<{ card: { currentStageKey: string; state: string } }>();
     expect(card).toMatchObject({ currentStageKey: 'review', state: 'input-required' });
+  });
+
+  it('does not let an agent spoof a person-linked artifact to satisfy completion', async () => {
+    const boardId = await createBoard(ARTIFACT_REVIEW_PIPELINE);
+    const cardId = await addCard(boardId);
+    const run = await claim(boardId, 'agt_r', 'research');
+    const url = new URL(`https://api.test/v1/boards/${boardId}/cards/${cardId}/references`);
+    const request = new Request(url, {
+      method: 'PUT',
+      headers: headers(),
+      body: JSON.stringify({
+        url: 'https://app.superlibrary.dev/a/itm_0123456789abcdef',
+        provider: 'superlibrary',
+        sourceType: 'artifact',
+        addedBy: 'user',
+      }),
+    });
+    const rest = `cards/${cardId}/references`;
+    const refMatch = rest.match(/^cards\/([^/]+)\/references$/);
+    if (!refMatch) throw new Error('reference route did not match');
+    const linked = await cardReference(
+      {
+        request,
+        env,
+        url,
+        tenantId: 'tnt_a',
+        boardId,
+        rest,
+        user: null,
+        agent: { tenantId: 'tnt_a', agentId: 'agt_r', capabilities: null },
+        stub: boardStub(env, 'tnt_a', boardId),
+      },
+      refMatch,
+    );
+    expect(linked.status).toBe(200);
+    expect((await linked.json<{ reference: { addedBy: string } }>()).reference.addedBy).toBe('agent');
+
+    const completed = await SELF.fetch(`https://api.test/v1/boards/${boardId}/runs/${run.runId}/complete`, {
+      method: 'POST',
+      headers: headers({ 'X-Agent-Id': 'agt_r' }),
+      body: JSON.stringify({ leaseEpoch: run.leaseEpoch, handoff: { summary: 'spec v2' } }),
+    });
+    expect(completed.status).toBe(200);
+    const { card } = await completed.json<{ card: { currentStageKey: string; state: string; handoff: unknown } }>();
+    expect(card).toMatchObject({ currentStageKey: 'research', state: 'submitted' });
+    expect(JSON.stringify(card.handoff)).toMatch(/refused.*superlibrary.*(this|current) run/i);
   });
 
   it('opens a gate on review and approves it via REST', async () => {

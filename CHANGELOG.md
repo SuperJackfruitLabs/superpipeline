@@ -14,6 +14,11 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html). Entries g
 
 ## Unreleased
 
+### Fixed
+
+- Stage completion no longer accepts an earlier run's artifact reference, and reference provenance
+  is derived from the authenticated caller so an agent cannot claim a person attached its artifact.
+
 ## v0.0.32 — 2026-11-15
 
 ### Added

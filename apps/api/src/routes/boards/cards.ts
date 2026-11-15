@@ -403,7 +403,7 @@ export async function cardSplit({ request, user, stub }: BoardRequest, splitMatc
 }
 
 // PUT /v1/boards/:id/cards/:cardId/references — idempotent reference upsert (docs/06 §1)
-export async function cardReference({ request, env, tenantId, stub }: BoardRequest, refMatch: RegExpMatchArray): Promise<Response> {
+export async function cardReference({ request, env, tenantId, agent, stub }: BoardRequest, refMatch: RegExpMatchArray): Promise<Response> {
   const body = (await request.json()) as {
     url: string;
     provider?: string;
@@ -412,7 +412,6 @@ export async function cardReference({ request, env, tenantId, stub }: BoardReque
     subtitle?: string;
     externalId?: string;
     metadata?: Record<string, unknown>;
-    addedBy?: 'agent' | 'user';
   };
   // Parsed, not cast. `ReferenceProvider` documented a constraint nothing imposed — the
   // routes cast request bodies — so `provider: "web"` reached a live card on 2026-09-28.
@@ -452,7 +451,7 @@ export async function cardReference({ request, env, tenantId, stub }: BoardReque
         subtitle: body.subtitle,
         externalId: body.externalId,
         metadata: body.metadata,
-        addedBy: body.addedBy,
+        addedBy: agent ? 'agent' : 'user',
       },
       refTenant?.forgeHost ?? null,
     ),
