@@ -92,8 +92,8 @@ test.describe('on a phone', () => {
     await openRememberedBoard(page);
     const nav = page.getByRole('navigation', { name: 'Superpipeline' });
     for (const name of [/^Inbox/, /^Plan$/, /^Crew$/]) {
-      // boundingBox() does not wait for the link to show and gives null while it is hidden, so
-      // wait as the test above does; a link that never shows still fails here.
+      // Visibility and geometry can change between browser calls during hydration.
+      // Measure until the current target really meets the same 44px floor.
       const link = nav.getByRole('link', { name });
       await expect(link).toBeVisible();
       await expectTouchHeight(link);

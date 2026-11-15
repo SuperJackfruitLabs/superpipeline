@@ -1,7 +1,6 @@
 import { expect, type Locator } from '@playwright/test';
 
-/** The existing one-shot measurement, extracted for a browser regression. */
-export async function expectTouchHeight(target: Locator, _options: { timeout?: number } = {}): Promise<void> {
-  const box = await target.boundingBox();
-  expect(box!.height).toBeGreaterThanOrEqual(44);
+/** Measure the current layout atomically; a hidden frame never meets the floor. */
+export async function expectTouchHeight(target: Locator, options: { timeout?: number } = {}): Promise<void> {
+  await expect.poll(async () => (await target.boundingBox())?.height ?? 0, options).toBeGreaterThanOrEqual(44);
 }
