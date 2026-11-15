@@ -82,7 +82,14 @@ Clock and restored heartbeat observations must be finite, nonnegative safe
 integers. Both initial admission and final current-run checks refuse invalid
 heartbeat values; invalid clock values cannot bypass service-expiry checks.
 Heartbeat expiry uses a bounded subtraction rather than overflowing timestamp
-addition. This does not introduce a new wall-clock rollback or skew policy.
+addition. A heartbeat later than the current observation is refused; neither clock
+rollback nor an apparent future heartbeat earns a grace period.
+
+Both service-token resolvers retain a safely representable issuer expiry in their
+private service context. NumericDate seconds become absolute milliseconds, with
+fractional milliseconds rounded down. Missing or unrepresentable metadata cannot
+satisfy settlement's required expiry check. Existing service routes retain their
+scope and tenant checks; this does not add a reporter route or enable settlement.
 
 ## Owned transaction and post-commit delivery
 
