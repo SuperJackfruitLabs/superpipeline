@@ -56,3 +56,21 @@ it('legacy clients can still claim an ordinary lane on a mixed board', () => fix
   expect(state.storage.sql.exec('SELECT state,current_run_id FROM cards WHERE id=?', cardId).one()).toEqual({ state: 'submitted', current_run_id: null });
   expect(state.storage.sql.exec('SELECT * FROM proposed_checkpoint_claims').toArray()).toEqual([]);
 }));
+it('dedicated-only claim skips higher priority ordinary work without ACP readiness', () => fixture(async (board, cardId, state) => {
+  const raw = state.storage.sql.exec("SELECT v FROM meta WHERE k='stages'").one().v;
+  if (typeof raw !== 'string') throw new Error('expected stages');
+  const stages: unknown[] = JSON.parse(raw);
+  state.storage.sql.exec("UPDATE meta SET v=? WHERE k='stages'", JSON.stringify([...stages, { key: 'plain', name: 'Plain', order: 1, ownerKind: 'capability', owner: 'code' }]));
+  const made = await board.createCard({ title: 'Ordinary', ownerUserId: 'usr_example', priority: 999 });
+  if (!made.ok) throw new Error(made.message);
+  state.storage.sql.exec("UPDATE cards SET current_stage_key='plain' WHERE id=?", made.value.id);
+  const input = { agentId: 'agt_example', capabilities: ['code'], checkpointProtocol: protocol, checkpointOnly: true };
+  expect(await board.claim(input)).toMatchObject({ claimed: true, card: { id: cardId }, checkpointClaim: { version: protocol } });
+  expect(state.storage.sql.exec('SELECT state FROM cards WHERE id=?', made.value.id).one().state).toBe('submitted');
+}));
+it('dedicated-only clients cannot receive ordinary work from a board without policy stages', () => fixture(async (board, _cardId, state) => {
+  state.storage.sql.exec("UPDATE meta SET v=? WHERE k='stages'", JSON.stringify([{ key: 'test', name: 'Test', order: 0, ownerKind: 'capability', owner: 'code' }]));
+  const input = { agentId: 'agt_example', capabilities: ['code'], checkpointProtocol: protocol, checkpointOnly: true };
+  expect(await board.claim(input)).toMatchObject({ claimed: false, reason: 'capability_mismatch' });
+  expect(state.storage.sql.exec('SELECT * FROM runs').toArray()).toEqual([]);
+}));
