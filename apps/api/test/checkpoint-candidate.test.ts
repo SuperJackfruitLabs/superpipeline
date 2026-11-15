@@ -1,5 +1,5 @@
 import { env, runInDurableObject } from 'cloudflare:test';
-import { expect, it } from 'vitest';
+import { expect, it, vi } from 'vitest';
 import {
   settleCheckpointCandidate,
   createProposedCheckpointTables,
@@ -66,7 +66,6 @@ async function fixture(
           throw new Error('missing run');
         return { ...snapshot, status: row.status, lastHeartbeatMs: row.last_heartbeat_ms };
       },
-      verifySource: () => Promise.resolve(),
       commit: () => {
         state.storage.sql.exec("UPDATE runs SET status='ended',outcome='completed' WHERE id=?", r.binding.runId);
         return undefined;
@@ -75,7 +74,14 @@ async function fixture(
     await test(d, snapshot, actor);
   });
 }
-it('disabled before reading state or verifying source', () =>
+function beforeTransaction(d: CheckpointCandidateDeps, change: () => void): void {
+  const transaction = d.transaction;
+  d.transaction = (commit) => {
+    change();
+    return transaction(commit);
+  };
+}
+it('disabled before reading state or accepting a report', () =>
   fixture(async (d) => {
     d.current = () => {
       throw new Error('must not read');
@@ -105,8 +111,8 @@ it('atomic receipt/run and exact historical replay never redispatch', () =>
   fixture(async (d) => {
     const first = await settleCheckpointCandidate(d, raw, approved);
     expect(d.current().status).toBe('ended');
-    d.verifySource = () => {
-      throw new Error('no redispatch');
+    d.commit = () => {
+      throw new Error('must not repeat completion');
     };
     expect(await settleCheckpointCandidate(d, raw, approved)).toEqual(first);
     expect(d.sql.exec('SELECT * FROM proposed_checkpoint_receipts').toArray()).toHaveLength(1);
@@ -136,15 +142,14 @@ it('durable receipt cannot be rewritten or deleted after settlement', () =>
 it('post-await owner, policy, node, expiry and scope changes cannot commit', async () => {
   for (const change of ['epoch', 'policy', 'node', 'expired', 'scope', 'worker-context'])
     await fixture(async (d, s, a) => {
-      d.verifySource = () => {
+      beforeTransaction(d, () => {
         if (change === 'epoch') s.binding = { ...s.binding, leaseEpoch: s.binding.leaseEpoch + 1 };
         if (change === 'policy') s.policy = { ...s.policy, allowUnchanged: !s.policy.allowUnchanged };
         if (change === 'node') s.policy = { ...s.policy, nodeId: 'foreign' };
         if (change === 'expired') a.expiresAt = d.nowMs();
         if (change === 'scope') a.scopes = [];
         if (change === 'worker-context') s.workerContextSha256 = 'f'.repeat(64);
-        return Promise.resolve();
-      };
+      });
       await expect(settleCheckpointCandidate(d, raw, approved)).rejects.toThrow(/STALE_LEASE|NOT_CHECKPOINT_REPORTER/);
       expect(d.current().status).toBe('working');
       expect(d.sql.exec('SELECT * FROM proposed_checkpoint_receipts').toArray()).toHaveLength(0);
@@ -165,12 +170,7 @@ it('same report with changed handoff is a conflict', () =>
       settleCheckpointCandidate(d, new TextEncoder().encode(JSON.stringify(changed)), approved),
     ).rejects.toThrow('CHECKPOINT_CONFLICT');
   }));
-it('source refusal and expired heartbeat preserve run/receipt', async () => {
-  await fixture(async (d) => {
-    d.verifySource = () => Promise.reject(new Error('host unavailable'));
-    await expect(settleCheckpointCandidate(d, raw, approved)).rejects.toThrow('host unavailable');
-    expect(d.current().status).toBe('working');
-  });
+it('expired heartbeat preserves run/receipt', async () => {
   await fixture(async (d) => {
     d.sql.exec('UPDATE runs SET last_heartbeat_ms=0');
     await expect(settleCheckpointCandidate(d, raw, approved)).rejects.toThrow('STALE_LEASE');
@@ -178,15 +178,20 @@ it('source refusal and expired heartbeat preserve run/receipt', async () => {
   });
 });
 
-it('source verifier cannot mutate the submission after its digest was bound', () =>
-  fixture(async (d) => {
-    d.verifySource = (input) => {
-      input.handoff.summary = 'changed during verification';
-      return Promise.resolve();
-    };
-    await expect(settleCheckpointCandidate(d, raw, approved)).rejects.toThrow('INVALID_CHECKPOINT');
-    expect(d.current().status).toBe('working');
-    expect(d.sql.exec('SELECT * FROM proposed_checkpoint_receipts').toArray()).toHaveLength(0);
+it('freezes stored authority before the actual asynchronous policy digest', () =>
+  fixture(async (d, snapshot) => {
+    const original = crypto.subtle.digest.bind(crypto.subtle);
+    let calls = 0;
+    const hash = vi.spyOn(crypto.subtle, 'digest').mockImplementation(async (...args) => {
+      const result = await original(...args);
+      if (++calls === 3) snapshot.policy.allowUnchanged = !snapshot.policy.allowUnchanged;
+      return result;
+    });
+    try {
+      await expect(settleCheckpointCandidate(d, raw, approved)).rejects.toThrow('STALE_LEASE');
+      expect(d.current().status).toBe('working');
+      expect(d.sql.exec('SELECT * FROM proposed_checkpoint_receipts').toArray()).toHaveLength(0);
+    } finally { hash.mockRestore(); }
   }));
 
 it('runtime Promise callback rolls back receipt and its synchronous SQL prefix', () =>
@@ -208,10 +213,7 @@ it('invalid restored heartbeat values never pass admission or post-await checks'
           d.current = () => ({ ...read(), lastHeartbeatMs: heartbeat });
         };
         if (late)
-          d.verifySource = () => {
-            corrupt();
-            return Promise.resolve();
-          };
+          beforeTransaction(d, corrupt);
         else corrupt();
         await expect(settleCheckpointCandidate(d, raw, approved)).rejects.toThrow('STALE_LEASE');
         expect(read().status).toBe('working');
@@ -219,17 +221,14 @@ it('invalid restored heartbeat values never pass admission or post-await checks'
       });
   }
 });
-it.each([false, true])('future heartbeat refuses settlement, including after verification (%s)', async (late) => {
+it.each([false, true])('future heartbeat refuses settlement, including after hashing (%s)', async (late) => {
   await fixture(async (d) => {
     const read = d.current.bind(d);
     const corrupt = () => {
       d.current = () => ({ ...read(), lastHeartbeatMs: d.nowMs() + 1 });
     };
     if (late)
-      d.verifySource = () => {
-        corrupt();
-        return Promise.resolve();
-      };
+      beforeTransaction(d, corrupt);
     else corrupt();
     await expect(settleCheckpointCandidate(d, raw, approved)).rejects.toThrow('STALE_LEASE');
     expect(read().status).toBe('working');

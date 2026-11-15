@@ -108,22 +108,18 @@ it('real Board completion joins stored source and refuses a relabeled request', 
   submission.checkpoint.checkpoint.key = source.benchKey;
   submission.checkpoint.checkpoint.members[0].branch = `card/${source.binding.cardId}`;
   // This integration checks Board storage/completion, not a real service fence.
-  // Actual delegated source verification is independently required before enablement.
-  const proof = vi.fn<CheckpointCandidateDeps['verifySource']>(() => Promise.resolve());
+  // Actual Hub validation of authenticated node Completion is required before enablement.
   const deps: CheckpointCandidateDeps = {
     sql: board.sql, nowMs: () => board.nowMs(), reporter: () => actor,
     current: () => currentCheckpointSource(board, source.binding.runId),
-    transaction: (commit) => checkpointTransaction(board, commit), verifySource: proof,
+    transaction: (commit) => checkpointTransaction(board, commit),
     commit: (input) => commitCheckpointCompletion(board, input, { tenantId: 'tnt_sourceexample', forgeHost: 'forge.example.test', reporterPrincipalId: actor.principalId }),
   };
   submission.checkpoint.sourceRequestSha256 = 'a'.repeat(64);
   await expect(settleCheckpointCandidate(deps, new TextEncoder().encode(JSON.stringify(submission)), privateOnly)).rejects.toThrow('INVALID_CHECKPOINT');
-  expect(proof).not.toHaveBeenCalled();
   expect(board.getRunRow(source.binding.runId)?.status).toBe('working');
   submission.checkpoint.sourceRequestSha256 = source.sourceRequestSha256;
   const saved = await settleCheckpointCandidate(deps, new TextEncoder().encode(JSON.stringify(submission)), privateOnly);
   expect(board.getRunRow(source.binding.runId)?.status).toBe('ended');
   expect(await settleCheckpointCandidate(deps, new TextEncoder().encode(JSON.stringify(submission)), privateOnly)).toEqual(saved);
-  expect(proof).toHaveBeenCalledOnce();
-  expect(proof.mock.calls[0]?.[1]).toEqual(source);
 }));

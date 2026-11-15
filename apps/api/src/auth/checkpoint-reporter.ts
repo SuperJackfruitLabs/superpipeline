@@ -12,7 +12,7 @@ export interface VerifiedCheckpointReporter {
 
 /** Expected identity must come from the current server-owned stage policy.
  * This resolves issuer authority only; settlement must recheck current policy,
- * run/epoch, heartbeat and expiry after source verification. It proves no fence.
+ * run/epoch, heartbeat and expiry after asynchronous policy hashing. It proves no fence.
  * No public route imports this adapter while settlement remains disabled.
  */
 export async function resolveCheckpointReporter(

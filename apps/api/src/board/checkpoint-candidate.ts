@@ -35,6 +35,8 @@ export interface ProposedCheckpointReceipt {
   recordedAt: string;
   checkpoint: CheckpointReport['checkpoint'];
 }
+/** Operational observations are delegated to the selected authenticated reporter.
+ * Stored source and report hashes bind work; they do not attest a producer host. */
 export interface CheckpointCandidateDeps {
   sql: SqlStorage;
   transaction(fn: () => ProposedCheckpointReceipt): ProposedCheckpointReceipt;
@@ -42,8 +44,6 @@ export interface CheckpointCandidateDeps {
   /** Re-read authoritative issuer context, policy, current run/card and stored claim snapshot. */
   reporter(): VerifiedCheckpointReporter;
   current(): CheckpointClaimSnapshot;
-  /** Must inspect exact trusted service/worker evidence; booleans/hashes supplied by a harness are not proof. */
-  verifySource(input: CheckpointSubmission, source: CheckpointSourceExpectation): Promise<void>;
   /** Synchronous run/card/reference/outbox mutation, inside the SAME transaction. No awaits. */
   commit: (input: CheckpointSubmission, receipt: ProposedCheckpointReceipt) => undefined;
 }
@@ -193,7 +193,6 @@ export async function settleCheckpointCandidate(
 ): Promise<ProposedCheckpointReceipt> {
   if (!options?.privateTestOnly) throw new Error('CHECKPOINT_SETTLEMENT_DISABLED');
   const input = parseCheckpointSubmission(raw);
-  const canonicalInput = canonicalCheckpoint(input);
   const requestDigest = await checkpointDigest(input);
   const reportDigest = await checkpointDigest(input.checkpoint);
   const snapshot = deps.current();
@@ -201,10 +200,10 @@ export async function settleCheckpointCandidate(
   const replay = existing(deps, input, requestDigest, actor);
   if (replay) return replay;
   current(deps, input, snapshot);
-  if ((await checkpointDigest(snapshot.policy)) !== snapshot.policyDigest) throw new Error('INVALID_CHECKPOINT');
+  // Freeze before the real digest await: even an in-place authority change during
+  // hashing must fail the final transaction check. No host-proof callback exists.
   const frozen = authority(snapshot);
-  await deps.verifySource(input, admittedSource(snapshot));
-  if (canonicalCheckpoint(input) !== canonicalInput) throw new Error('INVALID_CHECKPOINT');
+  if ((await checkpointDigest(snapshot.policy)) !== snapshot.policyDigest) throw new Error('INVALID_CHECKPOINT');
   return deps.transaction(() => {
     const latest = deps.current();
     const latestActor = reporter(deps, latest);
