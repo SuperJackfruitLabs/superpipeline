@@ -62,8 +62,8 @@ receipt reads, and real source verification. The generic completion mutation
 is characterized and extracted into `completion-commit.ts`. The private
 `checkpoint-completion.ts` bridge reuses that actual helper and BoardContext,
 including real run/card/gate/outbox writes under the receipt transaction. Its
-source verifier remains a stub in integration tests. Generated commit references
-still need the authorized provider mapping and synchronous reference projection;
+source verifier remains a stub in integration tests. Generated commit references now have a private synchronous projection; the actual
+service route must still resolve and retain the authorized tenant provider mapping;
 ordinary completion preserves existing references. This is not finished wiring.
 
 Hub-only reporter credentials must never reach nodes or workers. A reclaimed run
@@ -199,3 +199,27 @@ policy projection, rollback and ignored writes. REST validation tests exercise
 unknown and malformed versions before any run is created. This does not prove
 cross-product dispatch, live source admission, grants, settlement or pilot
 acceptance. Those require the actual authenticated consumer and runtime flow.
+
+## Atomic commit reference projection
+
+The private completion bridge requires a tenant reference mapping, joins its tenant
+and reporter to current Board policy, and generates one commit locator per policy
+member. GitHub uses its canonical origin; Forge requires the server-configured
+bare tenant host. Report JSON cannot select the host. Invalid or foreign mappings
+refuse settlement. Paths encode owner/repository segments; object format controls
+commit width. References carry separate reporter and executing-agent metadata.
+These links are locators, not independent evidence of fencing or release.
+
+The existing ordinary reference writer retains its promise interface and its
+characterized immediate SQL/event prefix. Its extracted synchronous span is used
+inside the owned checkpoint transaction, before completion requirements are
+checked. Read-back refuses ignored inserts or stale ignored updates. Any later
+failure rolls back references together with receipt, run, card, outbox and events;
+exact receipt replay does not rewrite reference history. Generic upsert identity
+and original added-by/run provenance remain unchanged.
+
+This helper receives server configuration, not authentication. The eventual
+service-only adapter must resolve the mapping from the authenticated tenant's
+catalog row and bind it through final verification; no request-provided mapping is
+acceptable. No HTTP/RPC route imports this private projection, and it enables no
+reporter, policy, source admission or pilot.

@@ -114,7 +114,7 @@ it('real Board completion joins stored source and refuses a relabeled request', 
     sql: board.sql, nowMs: () => board.nowMs(), reporter: () => actor,
     current: () => currentCheckpointSource(board, source.binding.runId),
     transaction: (commit) => checkpointTransaction(board, commit), verifySource: proof,
-    commit: (input) => commitCheckpointCompletion(board, input),
+    commit: (input) => commitCheckpointCompletion(board, input, { tenantId: 'tnt_sourceexample', forgeHost: 'forge.example.test', reporterPrincipalId: actor.principalId }),
   };
   submission.checkpoint.sourceRequestSha256 = 'a'.repeat(64);
   await expect(settleCheckpointCandidate(deps, new TextEncoder().encode(JSON.stringify(submission)), privateOnly)).rejects.toThrow('INVALID_CHECKPOINT');
