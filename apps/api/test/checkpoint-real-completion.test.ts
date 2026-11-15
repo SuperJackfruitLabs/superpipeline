@@ -249,3 +249,31 @@ it('post-commit delivery failure retains real settlement and exact replay never 
     const replay = await settleCheckpointCandidate(d, raw, { privateTestOnly: true });
     expect(replay.runId).toBe(parseCheckpointSubmission(raw).checkpoint.binding.runId);
   }));
+it('settlement writes a tenant-mapped commit reference with separate reporter and executor facts', () =>
+  fixture(async (d, _b, state, raw) => {
+    const input = parseCheckpointSubmission(raw);
+    const receipt = await settleCheckpointCandidate(d, raw, { privateTestOnly: true });
+    const member = input.checkpoint.checkpoint.members[0];
+    const ref = state.storage.sql.exec('SELECT * FROM card_references').one();
+    expect(ref).toMatchObject({ card_id: input.checkpoint.binding.cardId, run_id: input.checkpoint.binding.runId,
+      url: `https://forge.example.test/${member.repository}/commit/${member.commit}`, provider: 'forge', source_type: 'commit',
+      external_id: `${member.repository}@${member.commit}` });
+    expect(JSON.parse(String(ref.metadata_json))).toMatchObject({ checkpointSettlementId: receipt.settlementId,
+      reporterPrincipalId: corpus.producerBaseline.policy.reporterPrincipalId, executingAgentId: input.checkpoint.binding.agentId });
+    const before = state.storage.sql.exec('SELECT * FROM card_references').toArray();
+    expect(await settleCheckpointCandidate(d, raw, { privateTestOnly: true })).toEqual(receipt);
+    expect(state.storage.sql.exec('SELECT * FROM card_references').toArray()).toEqual(before);
+  }));
+it('ignored generated-reference insertion rolls back settlement, ownership, events and all references', () =>
+  fixture(async (d, _b, state, raw) => {
+    const cards = state.storage.sql.exec('SELECT * FROM cards').toArray();
+    const runs = state.storage.sql.exec('SELECT * FROM runs').toArray();
+    const events = state.storage.sql.exec('SELECT * FROM events').toArray();
+    state.storage.sql.exec('CREATE TRIGGER ignore_generated_reference BEFORE INSERT ON card_references BEGIN SELECT RAISE(IGNORE); END');
+    await expect(settleCheckpointCandidate(d, raw, { privateTestOnly: true })).rejects.toThrow();
+    expect(state.storage.sql.exec('SELECT * FROM proposed_checkpoint_receipts').toArray()).toEqual([]);
+    expect(state.storage.sql.exec('SELECT * FROM card_references').toArray()).toEqual([]);
+    expect(state.storage.sql.exec('SELECT * FROM cards').toArray()).toEqual(cards);
+    expect(state.storage.sql.exec('SELECT * FROM runs').toArray()).toEqual(runs);
+    expect(state.storage.sql.exec('SELECT * FROM events').toArray()).toEqual(events);
+  }));
