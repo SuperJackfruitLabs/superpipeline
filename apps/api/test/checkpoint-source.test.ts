@@ -21,7 +21,7 @@ async function fixture(check: (board: BoardContext, source: CheckpointSource, ac
     await board.init({ id, tenantId: 'tnt_sourceexample', name: 'Source', stages: [{ key: 'test', name: 'Test', order: 0, ownerKind: 'capability', owner: 'code', checkpointPolicy: policy }] });
     const made = await board.createCard({ title: 'Work', ownerUserId: 'usr_example' });
     if (!made.ok) throw new Error(made.message);
-    const claimed = await board.claim({ agentId: 'agt_example', capabilities: ['code'] });
+    const claimed = await board.claim({ agentId: 'agt_example', capabilities: ['code'], checkpointProtocol: 'superpipeline.checkpoint-claim.v1' });
     if (!claimed.claimed) throw new Error('expected claimed');
     const context: BoardContext = Reflect.get(board, 'board');
     const baseline = corpus.producerBaseline.settlementRequest.checkpoint;

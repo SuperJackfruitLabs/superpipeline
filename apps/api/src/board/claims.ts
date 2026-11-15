@@ -1,7 +1,7 @@
 import { type ClaimReason, needsYou, stageCapabilitiesMet } from '@superpipeline/contract';
 import { checkpointDigest } from './checkpoint-json';
 import { parseCheckpointPolicy } from './checkpoint-proposal';
-import { insertPendingCheckpointClaim } from './checkpoint-claims';
+import { CHECKPOINT_CLAIM_PROTOCOL, insertPendingCheckpointClaim, type CheckpointClaimDiscovery } from './checkpoint-claims';
 import { grantPermitsAgent, isControlPairEnforced } from '../auth/grant-match';
 import { newId } from '../ids';
 import { RELAY_CONFIG_ID } from '../push/relay';
@@ -79,7 +79,7 @@ function refused(reason: ClaimReason): ClaimResult {
  * identity — and this method falls back to looking it up itself, exactly as before.
  *
  * Nothing handed out is `{claimed: false, reason}`: the first reason met, from the same filter the
- * eligibility read uses (`ClaimReason`). The success shape is unchanged.
+ * eligibility read uses (`ClaimReason`). Ordinary success retains its shape; checkpoint work returns its captured policy.
  *
  * A reservation (`hold.ts`) is checked here and nowhere earlier. A card held for another agent is
  * passed over, and `card_reserved` is the answer only when nothing else was claimable. A card held
@@ -92,6 +92,8 @@ function refused(reason: ClaimReason): ClaimResult {
  * else was claimable. A board with no window runs exactly the query it ran before.
  */
 export async function claim(deps: ClaimsDeps, input: Claimant & { profileKey?: string }): Promise<ClaimResult> {
+  // Capture client capability before any await; it never grants execution authority.
+  input = { ...input, capabilities: [...input.capabilities] };
   if (!deps.getMeta('boardId')) return refused('board_not_initialized');
   // Budget cap (docs/07 §6): once the board hits its USD ceiling, stop handing out new work.
   if (deps.boardOverBudget()) return refused('board_over_budget');
@@ -100,7 +102,7 @@ export async function claim(deps: ClaimsDeps, input: Claimant & { profileKey?: s
   const [first] = claimantRefusals(deps, input);
   if (first) return refused(first);
 
-  const claimableKeys = claimableStageKeys(deps, input.agentId, input.capabilities);
+  const claimableKeys = claimableStageKeys(deps, input.agentId, input.capabilities, input.checkpointProtocol);
   const placeholders = claimableKeys.map(() => '?').join(', ');
   const holdMs = deps.nowMs();
   const windowMs = placementWindowMs(deps);
@@ -216,13 +218,15 @@ export async function claim(deps: ClaimsDeps, input: Claimant & { profileKey?: s
       !savedCard || savedCard.current_run_id !== runId || savedCard.delegate_agent_id !== input.agentId ||
       savedCard.claim_seq !== leaseEpoch || savedCard.state !== 'working' || savedCard.current_stage_key !== card.currentStageKey
     ) throw new Error('INVALID_CLAIM_STATE');
+    let checkpointClaim: CheckpointClaimDiscovery | undefined;
     if (policy !== undefined && policyDigest !== undefined) {
       const tenantId = deps.getMeta('tenantId'), boardId = deps.getMeta('boardId');
       if (!tenantId || !boardId) throw new Error('INVALID_CHECKPOINT_CLAIM');
-      insertPendingCheckpointClaim(deps.sql, {
+      const saved = insertPendingCheckpointClaim(deps.sql, {
         tenantId, boardId, cardId: card.id, stageKey: card.currentStageKey,
         agentId: input.agentId, runId, leaseEpoch, policy, policyDigest, admissionState: 'pending',
       });
+      checkpointClaim = { ...saved, version: CHECKPOINT_CLAIM_PROTOCOL };
     }
     deps.reportRun(runId);
     deps.emit('card.claimed', { cardId: card.id, agentId: input.agentId, runId, ...(fulfils !== null ? { reservationDecisionId: fulfils } : {}) });
@@ -231,6 +235,7 @@ export async function claim(deps: ClaimsDeps, input: Claimant & { profileKey?: s
     const handoff = row.handoff_json ? (JSON.parse(row.handoff_json as string) as JsonValue) : null;
     return {
       claimed: true,
+      ...(checkpointClaim ? { checkpointClaim } : {}),
       runId,
       leaseEpoch,
       card: deps.mustGetCard(card.id),
@@ -272,13 +277,15 @@ function inWindowCount(deps: Pick<ClaimsDeps, 'claimableWhere' | 'sql'>, placeho
 export interface Claimant {
   agentId: string;
   capabilities: string[];
+  checkpointProtocol?: string;
   maxConcurrency?: number;
   principalId?: string | null;
 }
 
 /** The stages on this board this claimant can take, by the one stage matcher. */
-function claimableStageKeys(deps: Pick<ClaimsDeps, 'stages'>, agentId: string, capabilities: string[]): string[] {
-  return deps.stages().filter((s) => stageMatches(s, agentId, capabilities)).map((s) => s.key);
+function claimableStageKeys(deps: Pick<ClaimsDeps, 'stages'>, agentId: string, capabilities: string[], checkpointProtocol?: string): string[] {
+  return deps.stages().filter((s) => stageMatches(s, agentId, capabilities) &&
+    (s.checkpointPolicy === undefined || checkpointProtocol === CHECKPOINT_CLAIM_PROTOCOL)).map((s) => s.key);
 }
 
 /**
@@ -303,7 +310,7 @@ export function claimantRefusals(
     ? Number(deps.sql.exec(`SELECT COUNT(*) AS n FROM runs WHERE agent_id = ? AND status = 'working'`, who.agentId).one().n)
     : 0;
   if (!validMax || active >= max) out.push('concurrency_reached');
-  const keys = claimableStageKeys(deps, who.agentId, who.capabilities);
+  const keys = claimableStageKeys(deps, who.agentId, who.capabilities, who.checkpointProtocol);
   if (stageKey === undefined ? keys.length === 0 : !keys.includes(stageKey)) out.push('capability_mismatch');
   return out;
 }

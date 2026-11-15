@@ -37,7 +37,7 @@ it('restored policy cannot be bypassed by ordinary completion or an empty card o
       stages: [stage, { key: 'done', name: 'Done', order: 1, ownerKind: 'human' }],
     });
     await board.createCard({ title: 'Work', ownerUserId: 'usr_example', spec: { completion: {} } });
-    const claim = await board.claim({ agentId: 'agt_example', capabilities: ['code'] });
+    const claim = await board.claim({ agentId: 'agt_example', capabilities: ['code'], checkpointProtocol: 'superpipeline.checkpoint-claim.v1' });
     if (!claim.claimed) throw new Error('expected claim');
     expect(
       await board.complete({

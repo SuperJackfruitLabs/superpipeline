@@ -93,6 +93,31 @@ semantics. Signatures are illustrative (finalized as zod schemas in `packages/co
   history. (Linear's `promptContext` + Hermes's structured handoff.) The agent should **not**
   need N follow-up calls to assemble context.
 
+### Proposed checkpoint claim negotiation
+
+Checkpoint policy writes remain disabled. For restored policy state, REST claims
+must explicitly send `checkpointProtocol: "superpipeline.checkpoint-claim.v1"` to
+match a stage with `checkpointPolicy`. Missing protocol clients still claim
+ordinary stages; unsupported or malformed REST protocol values return **400**.
+The internal claim matcher also refuses checkpoint stages without the exact
+protocol. This field declares client support; it grants no execution authority.
+
+A successful checkpoint-required claim includes `checkpointClaim` with `version`
+`superpipeline.checkpoint-claim.v1`, `admissionState: "pending"`, tenant/board/card/
+stage/agent identity, `runId`, `leaseEpoch`, the captured `policy`, and its
+`policyDigest`. These facts come from the immutable pending row read back inside
+the actual ownership transaction. Ordinary success omits this field. Pending
+policy is neither admitted source nor evidence of execution, checkpointing, or
+release. A dedicated coordinator must validate the full binding before execution;
+required, malformed, or unknown checkpoint claims cannot fall back to ordinary
+ACP. The generic SDK and MCP client do not advertise this protocol. The generic
+TypeScript SDK refuses unsolicited checkpoint claim or policy fields before
+invoking its work handler.
+
+This is an implementation candidate for the proposed coordinator contract, not
+acceptance, a reporter grant, or pilot enablement. See the
+[candidate boundaries](./contributor/proposed-checkpoint-settlement-candidate.md).
+
 ### Idempotency
 - **⚠️ Design intent, not shipped.** Mutating verbs are *specified* to accept an **idempotency key**
   with replays de-duplicated. **No route reads an `Idempotency-Key` header and nothing de-dupes a

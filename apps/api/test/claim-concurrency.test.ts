@@ -101,6 +101,7 @@ describe('claim input validation', () => {
     '{}broken', 'null', '[]', '"hello"',
     ...['invalid', '2', null, true, 0, -1, 1.5, {}, []].map((maxConcurrency) => JSON.stringify({ maxConcurrency })),
     '{"maxConcurrency":1e309}',
+    ...[null, false, 1, {}, [], '', 'superpipeline.checkpoint-claim.v2'].map((checkpointProtocol) => JSON.stringify({ checkpointProtocol })),
     '{"capabilities":"research"}', '{"capabilities":[42]}', '{"profileKey":42}',
   ])('rejects malformed input without claiming work: %s', async (body) => {
     const boardId = await boardWithCards();

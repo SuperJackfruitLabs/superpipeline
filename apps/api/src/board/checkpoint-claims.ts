@@ -1,4 +1,4 @@
-/** Private pending-source foundation. No public admission or settlement route is enabled. */
+/** Pending policy discovery is not source admission or settlement authority. */
 import { canonicalCheckpoint } from './checkpoint-json';
 import { parseCheckpointPolicy, type CheckpointPolicy } from './checkpoint-proposal';
 
@@ -15,6 +15,9 @@ export interface PendingCheckpointClaim {
   policyDigest: string;
   admissionState: 'pending';
 }
+export const CHECKPOINT_CLAIM_PROTOCOL = 'superpipeline.checkpoint-claim.v1';
+export type CheckpointClaimDiscovery = PendingCheckpointClaim & { version: typeof CHECKPOINT_CLAIM_PROTOCOL };
+
 export function createCheckpointClaimTables(sql: SqlStorage): void {
   sql.exec(`CREATE TABLE IF NOT EXISTS proposed_checkpoint_claims (
     run_id TEXT NOT NULL UNIQUE, epoch INTEGER NOT NULL CHECK(epoch>=1 AND epoch<=9007199254740991),
@@ -59,7 +62,7 @@ export function readCheckpointClaim(sql: SqlStorage, runId: string): PendingChec
   return decode(rows[0]);
 }
 /** Caller owns the synchronous claim transaction; do not use this to backfill an existing run. */
-export function insertPendingCheckpointClaim(sql: SqlStorage, claim: PendingCheckpointClaim): void {
+export function insertPendingCheckpointClaim(sql: SqlStorage, claim: PendingCheckpointClaim): PendingCheckpointClaim {
   const row = {
     run_id: claim.runId, epoch: claim.leaseEpoch, tenant_id: claim.tenantId, board_id: claim.boardId,
     card_id: claim.cardId, stage_key: claim.stageKey, agent_id: claim.agentId,
@@ -93,4 +96,5 @@ export function insertPendingCheckpointClaim(sql: SqlStorage, claim: PendingChec
     row.policy_json, row.policy_digest, row.admission_state);
   const saved = readCheckpointClaim(sql, claim.runId);
   if (!saved || canonicalCheckpoint(saved) !== canonicalCheckpoint(claim)) throw new Error('INVALID_CHECKPOINT_CLAIM');
+  return saved;
 }
