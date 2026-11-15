@@ -438,6 +438,13 @@ export interface AgentActivityInput extends RunVerbInput {
  * boundary surfaces as an unhandled rejection in the runtime (docs/03, docs/08).
  */
 export type BoardErrorCode =
+  | 'CHECKPOINT_SOURCE_DISABLED'
+  | 'INVALID_CHECKPOINT_SOURCE'
+  | 'NOT_CHECKPOINT_REPORTER'
+  | 'CHECKPOINT_SOURCE_CONFLICT'
+  | 'CHECKPOINT_SOURCE_MISSING'
+  | 'CHECKPOINT_SOURCE_NOT_SAVED'
+  | 'CHECKPOINT_SOURCE_FAILED'
   | 'NOT_INITIALIZED'
   | 'WORKSPACE_ADMIN_REQUIRED'
   | 'UNKNOWN_STAGE'

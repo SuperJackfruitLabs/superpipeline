@@ -10,6 +10,7 @@ import { unexpected, methodNotAllowed } from '../errors';
 import { dispatch, type WorkerRequest } from '../router';
 import { boardCollection } from './collection';
 import { runEvidence } from './evidence';
+import { checkpointSource } from './checkpoint-source';
 import { BOARD_ROUTES } from './table';
 
 /**
@@ -23,6 +24,12 @@ import { BOARD_ROUTES } from './table';
 export async function boards({ request, env, url, path }: WorkerRequest, match: RegExpMatchArray): Promise<Response> {
   const boardId = match[1];
   const rest = match[2] ?? '';
+
+  const sourceMatch = boardId && (request.method === 'GET' || request.method === 'POST')
+    ? rest.match(/^runs\/([^/]+)\/checkpoint-source$/) : null;
+  if (sourceMatch) return checkpointSource(request, env, boardId, sourceMatch[1]);
+  // Own unsupported methods too; the source handler answers before using the run identity.
+  if (boardId && /^runs\/[^/]+\/checkpoint-source$/.test(rest)) return checkpointSource(request, env, boardId, '');
 
   // Before the agent/human split below, which classifies every `runs/*` path as an agent route.
   const evidenceMatch = boardId && request.method === 'GET' ? rest.match(/^runs\/([^/]+)\/(evidence|evidence-v1)$/) : null;

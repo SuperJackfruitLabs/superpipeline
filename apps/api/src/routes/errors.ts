@@ -13,6 +13,18 @@ import type { BoardErrorCode } from '../board/board-do';
  */
 export function statusForCode(code: BoardErrorCode): number {
   switch (code) {
+    case 'CHECKPOINT_SOURCE_DISABLED':
+    case 'CHECKPOINT_SOURCE_MISSING':
+      return 404;
+    case 'NOT_CHECKPOINT_REPORTER':
+      return 403;
+    case 'INVALID_CHECKPOINT_SOURCE':
+      return 400;
+    case 'CHECKPOINT_SOURCE_CONFLICT':
+      return 409;
+    case 'CHECKPOINT_SOURCE_NOT_SAVED':
+    case 'CHECKPOINT_SOURCE_FAILED':
+      return 500;
     case 'WIP_LIMIT':
       return 409;
     case 'UNKNOWN_STAGE':

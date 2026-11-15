@@ -1,5 +1,8 @@
 import type { CardReservation, GateDecision, TaskState } from '@superpipeline/contract';
 import type { JsonValue } from '../json';
+import type { VerifiedCheckpointReporter } from '../auth/checkpoint-reporter';
+import type { CheckpointSourceReceipt } from './checkpoint-source';
+import type { CheckpointClaimSnapshot } from './checkpoint-candidate';
 import type { PushSender } from '../push/deliver';
 import type { ReferenceInput } from '../references/input';
 import type { LinkKind } from './links';
@@ -17,6 +20,8 @@ import type { ActivityView, ApprovalRequestView, CardChecksView, ApprovalSubject
 
 /** The Board DO's RPC surface as the Worker calls it — hand-typed to avoid deep RPC type instantiation. */
 export interface BoardStub {
+  admitCheckpointSource(actor: VerifiedCheckpointReporter, runId: string, raw: Uint8Array): Promise<Result<CheckpointSourceReceipt>>;
+  readCheckpointSource(actor: VerifiedCheckpointReporter, runId: string): Promise<Result<CheckpointClaimSnapshot>>;
   /** How many live cards the board holds and how many of them need a person now. */
   summaryCounts(): Promise<{ cardCount: number; needsYouCount: number }>;
   /** Cards each agent holds on this board right now, and of those how many it works now. */

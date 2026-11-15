@@ -1,5 +1,8 @@
 /** Worker bindings + config (docs/02-architecture.md). */
 export interface Env {
+  /** Proposed source-admission/read protocol only. Unset means no endpoint.
+   * Do not configure before coordinator authority and scopes are accepted. */
+  PROPOSED_CHECKPOINT_SOURCE?: string;
   /** The app's public origin, used to build URLs shown to people (the GitHub webhook URL). Plain var in wrangler.jsonc. */
   PUBLIC_APP_ORIGIN?: string;
   /** D1 catalog — tenants, users, memberships, boards index, agents, agent_tokens (P0). */
