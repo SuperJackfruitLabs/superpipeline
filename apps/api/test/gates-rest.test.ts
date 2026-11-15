@@ -7,6 +7,19 @@ const REVIEW_PIPELINE = [
   { key: 'publish', name: 'Publish', order: 2, ownerKind: 'capability', owner: 'publish' },
 ];
 
+const ARTIFACT_REVIEW_PIPELINE = [
+  {
+    key: 'research',
+    name: 'Research',
+    order: 0,
+    ownerKind: 'capability',
+    owner: 'research',
+    completion: { reference: { provider: 'superlibrary', sourceType: 'artifact' } },
+  },
+  { key: 'review', name: 'Review', order: 1, ownerKind: 'human', gate: 'approval' },
+  { key: 'publish', name: 'Publish', order: 2, ownerKind: 'capability', owner: 'publish' },
+];
+
 const SUBMIT_PIPELINE = [
   { key: 'build', name: 'Build', order: 0, ownerKind: 'capability', owner: 'build', gate: 'approval' },
   { key: 'ship', name: 'Ship', order: 1, ownerKind: 'capability', owner: 'ship' },
@@ -48,7 +61,62 @@ async function gateIdOf(boardId: string): Promise<string> {
   return body.gates[0]!.id;
 }
 
+async function linkArtifact(boardId: string, run: { runId: string; leaseEpoch: number }, agentId: string, version: number): Promise<void> {
+  const res = await SELF.fetch(`https://api.test/v1/boards/${boardId}/runs/${run.runId}/references`, {
+    method: 'POST',
+    headers: headers({ 'X-Agent-Id': agentId }),
+    body: JSON.stringify({
+      leaseEpoch: run.leaseEpoch,
+      url: 'https://app.superlibrary.dev/a/itm_0123456789abcdef',
+      provider: 'superlibrary',
+      sourceType: 'artifact',
+      metadata: { version },
+    }),
+  });
+  expect(res.status).toBe(200);
+}
+
 describe('gate REST surface', () => {
+  it('refuses revised work when only the earlier run linked the artifact', async () => {
+    // Regression caught: changing completion back to card-wide reference matching lets a stale
+    // v1 satisfy an unlinked v2 rework, opening a gate over bytes the reviewer cannot reach.
+    const boardId = await createBoard(ARTIFACT_REVIEW_PIPELINE);
+    await addCard(boardId);
+
+    const first = await claim(boardId, 'agt_r', 'research');
+    await linkArtifact(boardId, first, 'agt_r', 1);
+    await SELF.fetch(`https://api.test/v1/boards/${boardId}/runs/${first.runId}/complete`, {
+      method: 'POST',
+      headers: headers({ 'X-Agent-Id': 'agt_r' }),
+      body: JSON.stringify({ leaseEpoch: first.leaseEpoch, handoff: { summary: 'spec v1' } }),
+    });
+    const firstGate = await gateIdOf(boardId);
+    await SELF.fetch(`https://api.test/v1/boards/${boardId}/gates/${firstGate}/resolve`, {
+      method: 'POST',
+      headers: headers({ 'X-User-Id': 'usr_x' }),
+      body: JSON.stringify({ decision: 'request_changes', comment: 'Revise the spec.' }),
+    });
+
+    const revised = await claim(boardId, 'agt_r', 'research');
+    const completed = await SELF.fetch(`https://api.test/v1/boards/${boardId}/runs/${revised.runId}/complete`, {
+      method: 'POST',
+      headers: headers({ 'X-Agent-Id': 'agt_r' }),
+      body: JSON.stringify({
+        leaseEpoch: revised.leaseEpoch,
+        handoff: { summary: 'spec v2', file: 'docs-voice-pass-spec-v2.md' },
+      }),
+    });
+    expect(completed.status).toBe(200);
+    const { card } = await completed.json<{
+      card: { currentStageKey: string; state: string; handoff: unknown };
+    }>();
+    expect(card, 'the stale v1 reference must not open a gate for an unlinked v2').toMatchObject({
+      currentStageKey: 'research',
+      state: 'submitted',
+    });
+    expect(JSON.stringify(card.handoff)).toMatch(/refused.*superlibrary.*(this|current) run/i);
+  });
+
   it('opens a gate on review and approves it via REST', async () => {
     const boardId = await createBoard(REVIEW_PIPELINE);
     await addCard(boardId);
