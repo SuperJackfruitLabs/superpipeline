@@ -14,7 +14,9 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html). Entries g
 
 ## Unreleased
 
-## v0.0.33 — 2026-11-16
+### Added
+
+- A private, disabled checkpoint source-admission candidate binds a prepared source vector and worker-context digest to the actual pending claim. Settlement reads these stored facts and passes them to source verification; no public admission or settlement route is enabled.
 
 ### Fixed
 

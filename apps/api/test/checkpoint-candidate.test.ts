@@ -41,6 +41,8 @@ async function fixture(
       benchKey: r.checkpoint.key,
       benchId: r.checkpoint.benchId,
       requestId: r.checkpoint.requestId,
+      sourceRequestSha256: r.sourceRequestSha256,
+      workerContextSha256: '4'.repeat(64),
       status: 'working',
       lastHeartbeatMs: clock,
     };
@@ -80,6 +82,13 @@ it('disabled before reading state or verifying source', () =>
     };
     await expect(settleCheckpointCandidate(d, raw)).rejects.toThrow('DISABLED');
   }));
+it('a submitted report cannot replace the admitted source request digest', () =>
+  fixture(async (d, snapshot) => {
+    snapshot.sourceRequestSha256 = 'a'.repeat(64);
+    await expect(settleCheckpointCandidate(d, raw, approved)).rejects.toThrow('INVALID_CHECKPOINT');
+    expect(d.current().status).toBe('working');
+    expect(d.sql.exec('SELECT * FROM proposed_checkpoint_receipts').toArray()).toHaveLength(0);
+  }));
 it('atomic receipt/run and exact historical replay never redispatch', () =>
   fixture(async (d) => {
     const first = await settleCheckpointCandidate(d, raw, approved);
@@ -113,7 +122,7 @@ it('durable receipt cannot be rewritten or deleted after settlement', () =>
     expect(await settleCheckpointCandidate(d, raw, approved)).toEqual(saved);
   }));
 it('post-await owner, policy, node, expiry and scope changes cannot commit', async () => {
-  for (const change of ['epoch', 'policy', 'node', 'expired', 'scope'])
+  for (const change of ['epoch', 'policy', 'node', 'expired', 'scope', 'worker-context'])
     await fixture(async (d, s, a) => {
       d.verifySource = () => {
         if (change === 'epoch') s.binding = { ...s.binding, leaseEpoch: s.binding.leaseEpoch + 1 };
@@ -121,6 +130,7 @@ it('post-await owner, policy, node, expiry and scope changes cannot commit', asy
         if (change === 'node') s.policy = { ...s.policy, nodeId: 'foreign' };
         if (change === 'expired') a.expiresAt = d.nowMs();
         if (change === 'scope') a.scopes = [];
+        if (change === 'worker-context') s.workerContextSha256 = 'f'.repeat(64);
         return Promise.resolve();
       };
       await expect(settleCheckpointCandidate(d, raw, approved)).rejects.toThrow(/STALE_LEASE|NOT_CHECKPOINT_REPORTER/);
