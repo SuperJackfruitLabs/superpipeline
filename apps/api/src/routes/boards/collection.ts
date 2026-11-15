@@ -1,3 +1,4 @@
+import { stageWriteInput } from './checkpoint-policy-input';
 // The board collection: listing a workspace's boards and composing one.
 import { type StageDef, stageFieldError, boardIntroError } from '../../board/board-do';
 import { boardStub } from '../../board/stub';
@@ -42,7 +43,7 @@ export async function boardCollection({ request, env, tenantId, user, agent }: B
   // What a *valid pipeline* is remains the board's decision — it normalises owners and
   // routing on the way in (`board-do.ts`) — and duplicating that here is how a route starts
   // refusing things the board would have accepted.
-  const body = (await request.json().catch(() => null)) as { name?: unknown; stages?: unknown; intro?: unknown } | null;
+  const body = (await stageWriteInput(request, env.PROPOSED_CHECKPOINT_POLICY === 'true').catch(() => null)) as { name?: unknown; stages?: unknown; intro?: unknown } | null;
   if (!body || typeof body !== 'object') {
     return Response.json({ error: { message: 'Expected a JSON object.' } }, { status: 400 });
   }
@@ -83,7 +84,7 @@ export async function boardCollection({ request, env, tenantId, user, agent }: B
             checks: st.checks,
             returnStage: st.returnStage,
             ownerKind: st.ownerKind,
-          });
+          }, env.PROPOSED_CHECKPOINT_POLICY === 'true');
     if (bad) return Response.json({ error: { code: 'INVALID_STAGES', message: bad } }, { status: 400 });
   }
   // Who approves a bound subject is decision policy, a workspace admin's to set even on a new board
@@ -103,7 +104,7 @@ export async function boardCollection({ request, env, tenantId, user, agent }: B
       st.quorum !== undefined ||
       st.holdFor !== undefined ||
       st.checks !== undefined ||
-      st.gate === 'checks',
+      st.gate === 'checks' || st.checkpointPolicy !== undefined,
   );
   if (setsDeciders && !isWorkspaceAdmin(env, user)) {
     return Response.json(
@@ -157,7 +158,7 @@ export async function boardCollection({ request, env, tenantId, user, agent }: B
   }
 
   const id = newId('brd');
-  const snapshot = await boardStub(env, tenantId, id).init({ id, tenantId, name, stages, ...(body.intro !== undefined ? { intro: body.intro as { lede: string; composeHint: string } } : {}) });
+  const snapshot = await boardStub(env, tenantId, id).init({ id, tenantId, name, stages, ...(body.intro !== undefined ? { intro: body.intro as { lede: string; composeHint: string } } : {}) }, { kind: 'person', mayChangeDecisionPolicy: !agent && isWorkspaceAdmin(env, user) });
   await recordBoard(env.DB, tenantId, {
     id,
     name,

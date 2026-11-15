@@ -302,3 +302,30 @@ identity, epoch, member order, branches and object widths. Missing reads create
 no schema. Historical reads confer no execution or lease authority. Neither
 endpoint enables a policy, provisions a reporter, authenticates a producer host
 or establishes the unfinished Hub/Node pilot.
+
+## Private policy administration
+
+`PROPOSED_CHECKPOINT_POLICY` is a separate, default-off opt-in for proposed
+checkpoint policy administration. Only the exact value `true` enables it. It is
+not present in repository deployment configuration and does not enable source
+admission, settlement, reporter scopes, or a pilot. Those remain independent
+proposed prerequisites.
+
+With this private setting enabled at both the Worker and Board boundary, an
+issuer-authenticated workspace owner or admin may create, add, replace, or remove
+a stage checkpoint policy through the ordinary board/stage APIs. Agents and
+services cannot choose their own reporter. The existing strict policy schema,
+ordered repository/executor checks and 64 KiB UTF-8 limit apply. While this private setting is enabled, board creation and stage-admin write
+bodies use a stream-bounded 64 KiB strict lexical reader before parsing, rejecting
+duplicate parent or nested keys and invalid scalars. Excess input is cancelled
+without trusting Content-Length. With the setting off, ordinary policy-less JSON
+keeps its existing behavior.
+
+The Board independently checks its private setting and the trusted stage editor
+before initialization or mutation. A missing initialization editor has no policy
+administration permission. Any actual policy change on a stage with a working
+run or working/input-required card is refused, including adding a floor to
+legacy work and removing an existing floor. Stop or finish that work under its
+original policy before administering a replacement; a failed request changes no
+policy, claim, or event. This control does not certify supervisor fencing or
+replace the reporter's source and settlement verification.

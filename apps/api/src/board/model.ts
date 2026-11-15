@@ -132,7 +132,7 @@ export function internalStageEditor(reason: string): StageEditor {
 }
 
 export interface StageDef {
-  /** Proposed safety floor. Writes remain disabled pending owner acceptance. */
+  /** Proposed safety floor. Administration requires an explicit private opt-in and workspace admin. */
   checkpointPolicy?: CheckpointPolicy;
   key: string;
   name: string;

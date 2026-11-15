@@ -1,3 +1,4 @@
+import { stageWriteInput } from '../src/routes/boards/checkpoint-policy-input';
 import { env, runInDurableObject } from 'cloudflare:test';
 import { beforeAll, expect, it, vi } from 'vitest';
 import { BoardDO } from '../src/board/board-do';
@@ -46,11 +47,11 @@ async function fixture(check: (ctx: { id: string; tenant: string; stub: DurableO
     }
   });
 }
-async function send(path: string, body: unknown, options: { method?: string; enabled?: boolean; role?: string; kind?: string; subject?: string } = {}) {
+async function send(path: string, body: unknown, options: { method?: string; enabled?: boolean; role?: string; kind?: string; subject?: string; raw?: string } = {}) {
   const token = await planeToken({ orgRole: options.role ?? 'owner', principalKind: options.kind ?? 'human',
     ...(options.subject ? { sub: options.subject } : {}), scope: options.kind === 'agent' ? 'compose' : '' });
   const request = new Request('https://api.test' + path, { method: options.method ?? 'POST',
-    headers: { authorization: `Bearer ${token}`, 'content-type': 'application/json' }, body: JSON.stringify(body) });
+    headers: { authorization: `Bearer ${token}`, 'content-type': 'application/json' }, body: options.raw ?? JSON.stringify(body) });
   const match = path.match(/^\/v1\/boards(?:\/([^/]+)(?:\/(.*))?)?$/);
   if (!match) throw new Error('bad route fixture');
   return boards({ request, path, url: new URL(request.url), env: planeEnv(options.enabled ? { PROPOSED_CHECKPOINT_POLICY: 'true' } : {}) }, match);
@@ -130,3 +131,59 @@ it('requires admin authority on add, replacement and removal through patch and w
   }
   await onBoard(stub, async (board) => { expect((await board.getState()).stages).toEqual([plain]); });
 }));
+
+it('refuses duplicate policy keys and oversized policy-bearing wire bytes while ordinary JSON remains compatible', () => fixture(async ({ enable }) => {
+  await enable(true);
+  const raw = JSON.stringify({ name: 'Lexical', stages: [stage] });
+  const duplicate = raw.replace('"nodeId":', '"nodeId":"node_duplicate","nodeId":');
+  expect((await send('/v1/boards', {}, { enabled: true, raw: duplicate })).status).toBe(400);
+  const parentDuplicate = '{"name":"Duplicate parent","stages":[' + JSON.stringify(stage) + '],"stages":[' + JSON.stringify(plain) + ']}';
+  expect((await send('/v1/boards', {}, { enabled: true, raw: parentDuplicate })).status).toBe(400);
+  expect((await send('/v1/boards', { name: 'Bounded', stages: [stage], padding: 'x'.repeat(65536) }, { enabled: true })).status).toBe(400);
+  expect((await send('/v1/boards', { name: 'Legacy', stages: [plain], padding: 'x'.repeat(65536) })).status).toBe(201);
+}));
+it('blocks policy change and removal for a live required run, preserving the original policy and events', () => fixture(async ({ enable, stub }) => {
+  await enable(true);
+  expect((await send('/v1/boards', { name: 'Required', stages: [stage] }, { enabled: true })).status).toBe(201);
+  await onBoard(stub, async (board, state) => {
+    await board.createCard({ title: 'Required work', ownerUserId: 'usr_fixture' });
+    const claim = await board.claim({ agentId: 'agt_example', capabilities: ['code'], checkpointProtocol: 'superpipeline.checkpoint-claim.v1' });
+    expect(claim.claimed).toBe(true);
+    const before = state.storage.sql.exec('SELECT * FROM runs').toArray();
+    const events = state.storage.sql.exec('SELECT COUNT(*) AS n FROM events').one().n;
+    for (const checkpointPolicy of [null, { ...policy, allowUnchanged: !policy.allowUnchanged }]) {
+      expect(await board.updateStage('code', { checkpointPolicy }, admin)).toMatchObject({ ok: false, code: 'STAGE_NOT_EMPTY' });
+    }
+    expect(await board.setStages([plain], admin)).toMatchObject({ ok: false, code: 'STAGE_NOT_EMPTY' });
+    expect(state.storage.sql.exec('SELECT * FROM runs').toArray()).toEqual(before);
+    expect(state.storage.sql.exec('SELECT COUNT(*) AS n FROM events').one().n).toBe(events);
+    expect((await board.getState()).stages[0]?.checkpointPolicy).toEqual(policy);
+  });
+}));
+it('independently validates direct initialization and refuses removal after its private gate is disabled', () => fixture(async ({ id, tenant, stub, enable }) => {
+  await enable(true);
+  await onBoard(stub, async (board) => {
+    await expect(board.init({ id, tenantId: tenant, name: 'Malformed RPC', stages: [{ ...stage, checkpointPolicy: { ...policy, checkpointRepository: 'foreign' } }] }, admin)).rejects.toThrow();
+    expect((await board.getState()).boardId).toBeNull();
+    await board.init({ id, tenantId: tenant, name: 'Valid RPC', stages: [stage] }, admin);
+  });
+  await enable(false);
+  await onBoard(stub, async (board) => {
+    expect(await board.updateStage('code', { checkpointPolicy: null }, admin)).toMatchObject({ ok: false, code: 'INVALID_STAGES' });
+    expect(await board.setStages([plain], admin)).toMatchObject({ ok: false, code: 'INVALID_STAGES' });
+    expect((await board.getState()).stages[0]?.checkpointPolicy).toEqual(policy);
+  });
+}));
+
+it('cancels an oversized private write stream at the actual byte bound without buffering text or trusting content-length', async () => {
+  let pulls = 0, cancelled = false;
+  const body = new ReadableStream<Uint8Array>({
+    pull(controller) { pulls++; controller.enqueue(new Uint8Array(pulls === 1 ? 65536 : 1).fill(32)); },
+    cancel() { cancelled = true; },
+  }, { highWaterMark: 0 });
+  const request = new Request('https://api.test/v1/boards', { method: 'POST', headers: { 'content-length': '1' }, body });
+  const text = vi.spyOn(request, 'text');
+  await expect(stageWriteInput(request, true)).rejects.toThrow('64 KiB');
+  expect(pulls).toBe(2); expect(cancelled).toBe(true); expect(body.locked).toBe(false);
+  expect(text).not.toHaveBeenCalled();
+});

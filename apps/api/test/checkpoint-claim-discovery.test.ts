@@ -1,3 +1,4 @@
+import { initPrivateCheckpointBoard } from './helpers/checkpoint-policy';
 import { env, runInDurableObject } from 'cloudflare:test';
 import { expect, it } from 'vitest';
 import { BoardDO } from '../src/board/board-do';
@@ -11,7 +12,7 @@ async function fixture(check: (board: BoardDO, cardId: string, state: DurableObj
   const id = `brd_claimdiscovery${serial++}`;
   await withReporting(() => runInDurableObject(env.BOARD_DO.get(env.BOARD_DO.idFromName(id)), async (board, state) => {
     if (!(board instanceof BoardDO)) throw new Error('expected BoardDO');
-    await board.init({ id, tenantId: 'tnt_discoveryexample', name: 'Discovery', stages: [{
+    await initPrivateCheckpointBoard(board, { id, tenantId: 'tnt_discoveryexample', name: 'Discovery', stages: [{
       key: 'test', name: 'Test', order: 0, ownerKind: 'capability', owner: 'code',
       checkpointPolicy: parseCheckpointPolicy(new TextEncoder().encode(JSON.stringify(corpus.producerBaseline.policy))),
     }] });

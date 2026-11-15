@@ -1,3 +1,4 @@
+import { initPrivateCheckpointBoard } from './helpers/checkpoint-policy';
 import { env, runInDurableObject } from 'cloudflare:test';
 import { expect, it, vi } from 'vitest';
 import { BoardDO } from '../src/board/board-do';
@@ -30,7 +31,7 @@ it('restored policy cannot be bypassed by ordinary completion or an empty card o
   const stub = env.BOARD_DO.get(env.BOARD_DO.idFromName('checkpoint-policy-floor'));
   await runInDurableObject(stub, async (board, state) => {
     if (!(board instanceof BoardDO)) throw new Error('expected BoardDO');
-    await board.init({
+    await initPrivateCheckpointBoard(board, {
       id: 'brd_checkpointfloor',
       tenantId: 'tnt_checkpoint',
       name: 'Floor',
@@ -56,7 +57,7 @@ it('rechecks restored policy after asynchronous approval preparation before endi
   const stub = env.BOARD_DO.get(env.BOARD_DO.idFromName('checkpoint-policy-after-approval'));
   await runInDurableObject(stub, async (board, state) => {
     if (!(board instanceof BoardDO)) throw new Error('expected BoardDO');
-    await board.init({ id: 'brd_checkpointawait', tenantId: 'tnt_checkpoint', name: 'Await floor', stages: STAGES });
+    await initPrivateCheckpointBoard(board, { id: 'brd_checkpointawait', tenantId: 'tnt_checkpoint', name: 'Await floor', stages: STAGES });
     const made = await board.createCard({ title: 'Work', ownerUserId: 'usr_example', projectId: 'prj_fixture' });
     if (!made.ok) throw new Error(made.message);
     const claim = await board.claim({ agentId: PRODUCER, capabilities: ['writing'] });

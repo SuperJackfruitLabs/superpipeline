@@ -1,3 +1,4 @@
+import { checkpointStageWriteRefusal, stageWriteInput } from './checkpoint-policy-input';
 // One board: its snapshot, name, stages, settings, events, usage, notifications and profiles.
 import { stagePatchRefusal } from '../../auth/scopes';
 import type { StageDef, StagePatch, BoardSnapshot } from '../../board/board-do';
@@ -36,7 +37,7 @@ export async function boardRename({ request, env, tenantId, boardId, stub }: Boa
 // statements about the pipeline and stay there. This is for the fields that belong to one
 // stage, where a full replace would discard a concurrent edit to a stage nobody touched.
 export async function stageEdit({ request, env, user, agent, stub }: BoardRequest, stageMatch: RegExpMatchArray): Promise<Response> {
-  const body = (await request.json().catch(() => null)) as StagePatch | null;
+  const body = (await stageWriteInput(request, env.PROPOSED_CHECKPOINT_POLICY === 'true').catch(() => null)) as StagePatch | null;
   if (!body || typeof body !== 'object' || Array.isArray(body)) {
     return Response.json({ error: 'a stage patch must be a JSON object' }, { status: 400 });
   }
@@ -67,6 +68,12 @@ export async function stageEdit({ request, env, user, agent, stub }: BoardReques
   // Built from named fields rather than forwarding `body` whole: the cast above names the
   // same type `updateStage` accepts, but it is still only a compile-time assertion — it does
   // not stop a caller's JSON from carrying a key the type never declared.
+  if (body.checkpointPolicy !== undefined) {
+    const current = (await stub.getState()).stages;
+    const next = current.map((stage) => stage.key === stageMatch[1] ? { ...stage, checkpointPolicy: body.checkpointPolicy ?? undefined } : stage);
+    const denied = checkpointStageWriteRefusal(env, user, current, next);
+    if (denied) return denied;
+  }
   const result = await stub.updateStage(stageMatch[1], {
     name: body.name,
     owner: body.owner,
@@ -105,7 +112,11 @@ export async function stageEdit({ request, env, user, agent, stub }: BoardReques
 // catalog's `stages_json` is only mirrored after that succeeds, so a rejected change never
 // leaves the two disagreeing about what the board's pipeline is.
 export async function stagesReplace({ request, env, tenantId, boardId, user, stub }: BoardRequest): Promise<Response> {
-  const body = (await request.json()) as { stages?: StageDef[] };
+  const body = (await stageWriteInput(request, env.PROPOSED_CHECKPOINT_POLICY === 'true').catch(() => null)) as { stages?: StageDef[] } | null;
+  if (!body || !Array.isArray(body.stages) || body.stages.some((stage) => !stage || typeof stage.key !== 'string'))
+    return Response.json({ error: { code: 'INVALID_STAGES', message: 'stages must be an array of stage objects' } }, { status: 400 });
+  const denied = checkpointStageWriteRefusal(env, user, (await stub.getState()).stages, body.stages);
+  if (denied) return denied;
   // `manage` let this caller in by the local role; changing any stage's decision policy also needs
   // a workspace owner or admin by the Accounts role (charter decision 6), which the board checks.
   const r = await stub.setStages(body.stages ?? [], { kind: 'person', mayChangeDecisionPolicy: isWorkspaceAdmin(env, user) });

@@ -1,5 +1,7 @@
 /** Worker bindings + config (docs/02-architecture.md). */
 export interface Env {
+  /** Proposed policy administration only. Unset by default; no repository deployment opts in. */
+  PROPOSED_CHECKPOINT_POLICY?: string;
   /** Proposed settlement/read API. Unset until coordinator authority is accepted. */
   PROPOSED_CHECKPOINT_SETTLEMENT?: string;
   /** Proposed source-admission/read protocol only. Unset means no endpoint.

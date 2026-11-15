@@ -1,3 +1,4 @@
+import { initPrivateCheckpointBoard } from './helpers/checkpoint-policy';
 import { beforeAll, expect, it, vi } from 'vitest';
 import wranglerJsonc from '../wrangler.jsonc?raw';
 import { checkpointSource } from '../src/routes/boards/checkpoint-source';
@@ -81,7 +82,7 @@ async function fixture(check: (source: CheckpointSource, routePath: string, cont
       const policy = parseCheckpointPolicy(new TextEncoder().encode(JSON.stringify({
         ...corpus.producerBaseline.policy, reporterPrincipalId: SERVICE,
       })));
-      await board.init({ id, tenantId, name: 'Source', stages: [{ key: 'test', name: 'Test', order: 0,
+      await initPrivateCheckpointBoard(board, { id, tenantId, name: 'Source', stages: [{ key: 'test', name: 'Test', order: 0,
         ownerKind: 'capability', owner: 'code', checkpointPolicy: policy }] });
       const card = await board.createCard({ title: 'Work', ownerUserId: 'usr_example' });
       if (!card.ok) throw new Error(card.message);

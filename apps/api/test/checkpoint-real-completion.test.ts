@@ -1,3 +1,4 @@
+import { initPrivateCheckpointBoard } from './helpers/checkpoint-policy';
 import { env, runInDurableObject } from 'cloudflare:test';
 import { expect, it, vi } from 'vitest';
 import { BoardDO, type StageDef } from '../src/board/board-do';
@@ -39,7 +40,7 @@ async function fixture(
       if (!(board instanceof BoardDO)) throw new Error('expected BoardDO');
       const policy = parseCheckpointPolicy(new TextEncoder().encode(JSON.stringify(corpus.producerBaseline.policy)));
       for (const repository of policy.repositories) repository.provider = provider;
-      await board.init({
+      await initPrivateCheckpointBoard(board, {
         id,
         tenantId: 'tnt_realcandidate',
         name: 'Real candidate',

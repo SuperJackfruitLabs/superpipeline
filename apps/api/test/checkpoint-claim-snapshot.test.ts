@@ -1,3 +1,4 @@
+import { initPrivateCheckpointBoard } from './helpers/checkpoint-policy';
 import { env, runInDurableObject } from 'cloudflare:test';
 import { expect, it, vi } from 'vitest';
 import { BoardDO, type StageDef } from '../src/board/board-do';
@@ -13,7 +14,7 @@ async function fixture(stages: StageDef[], check: (board: BoardDO, state: Durabl
   const id = `brd_claimsnapshot${serial++}`;
   await runInDurableObject(env.BOARD_DO.get(env.BOARD_DO.idFromName(id)), async (board, state) => {
     if (!(board instanceof BoardDO)) throw new Error('expected BoardDO');
-    await board.init({ id, tenantId: 'tnt_claimsnapshot', name: 'Claim', stages });
+    await initPrivateCheckpointBoard(board, { id, tenantId: 'tnt_claimsnapshot', name: 'Claim', stages });
     const made = await board.createCard({ title: 'Work', ownerUserId: 'usr_example' });
     if (!made.ok) throw new Error(made.message);
     try { await check(board, state, made.value.id); }

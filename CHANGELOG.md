@@ -14,6 +14,8 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html). Entries g
 
 ## Unreleased
 
+- Add separate default-off proposed checkpoint policy administration with strict bounded input, workspace admin checks at the Worker and Board boundaries, and refusal to change an affected stage while work is active. No pilot or deployment is enabled.
+
 - Add proposed service-authenticated checkpoint settlement and historical receipt routes behind independent default-off Worker/Board gates, using the real atomic completion transaction and tenant catalog mapping. Pilot integration remains pending.
 
 - Align the disabled checkpoint settlement candidate with delegated reporter observation; freeze stored authority before policy hashing and retain atomic receipt/completion checks. Actual authenticated Hub report construction and pilot enablement remain pending.

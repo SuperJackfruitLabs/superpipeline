@@ -34,7 +34,7 @@ export interface BoardStub {
   >;
   drainRunReports(): Promise<RunReportDrainResult>;
   enqueueAllRunReports(): Promise<Result<{ enqueued: number; pending: number; dead: number }>>;
-  init(board: BoardInit): Promise<BoardSnapshot>;
+  init(board: BoardInit, editor?: StageEditor): Promise<BoardSnapshot>;
   createCard(input: {
     /** What the queuer was permitted to dispatch, as granted at this moment. */
     queuedGrant?: string[] | null;

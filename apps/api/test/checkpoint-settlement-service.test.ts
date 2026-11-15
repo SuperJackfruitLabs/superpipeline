@@ -1,3 +1,4 @@
+import { initPrivateCheckpointBoard } from './helpers/checkpoint-policy';
 import { env, runInDurableObject } from 'cloudflare:test';
 import { afterEach, beforeAll, expect, it } from 'vitest';
 import { BoardDO } from '../src/board/board-do';
@@ -48,7 +49,7 @@ async function fixture(check: (f: {
       const policy = parseCheckpointPolicy(new TextEncoder().encode(JSON.stringify({
         ...corpus.producerBaseline.policy, reporterPrincipalId: SERVICE,
       })));
-      await board.init({ id, tenantId, name: 'Settlement', stages: [
+      await initPrivateCheckpointBoard(board, { id, tenantId, name: 'Settlement', stages: [
         { key: 'test', name: 'Test', order: 0, ownerKind: 'capability', owner: 'code', checkpointPolicy: policy },
         { key: 'review', name: 'Review', order: 1, ownerKind: 'human' },
       ] });
