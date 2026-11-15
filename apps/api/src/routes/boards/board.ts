@@ -77,6 +77,7 @@ export async function stageEdit({ request, env, user, agent, stub }: BoardReques
     instructions: body.instructions,
     summary: body.summary,
     completion: body.completion,
+    checkpointPolicy: body.checkpointPolicy,
     returnStage: body.returnStage,
     timeout: body.timeout,
     quorum: body.quorum,

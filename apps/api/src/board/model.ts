@@ -1,3 +1,4 @@
+import type { CheckpointPolicy } from './checkpoint-proposal';
 import type { CardReservation, ClaimReason, CompletionRequirement, StageOutcome, TaskState } from '@superpipeline/contract';
 import type { JsonValue } from '../json';
 import type { RunReportDraft } from '../superwitness/report';
@@ -53,6 +54,8 @@ export type CheckStatus = 'pending' | 'passed' | 'failed' | 'overridden';
 export type StageGateKind = 'none' | 'approval' | 'checks';
 
 export interface StagePatch {
+  /** Proposed and disabled; only admin policy removal is available. */
+  checkpointPolicy?: CheckpointPolicy | null;
   name?: string;
   owner?: string;
   ownerKind?: 'capability' | 'agent' | 'human';
@@ -128,6 +131,8 @@ export function internalStageEditor(reason: string): StageEditor {
 }
 
 export interface StageDef {
+  /** Proposed safety floor. Writes remain disabled pending owner acceptance. */
+  checkpointPolicy?: CheckpointPolicy;
   key: string;
   name: string;
   order: number;
@@ -508,6 +513,7 @@ export type BoardErrorCode =
   | 'NOTHING_TO_SPLIT'
   | 'INVALID_COMMENT'
   /** `complete` named an outcome without what it needs (`outcomeInputError`), or no outcome at all. */
+  | 'CHECKPOINT_REQUIRED'
   | 'INVALID_OUTCOME'
   | 'COMMENT_NOT_FOUND'
   | 'NOT_COMMENT_AUTHOR'
