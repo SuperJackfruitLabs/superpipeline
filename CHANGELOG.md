@@ -16,6 +16,8 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html). Entries g
 
 ### Added
 
+- The disabled checkpoint completion candidate writes tenant-mapped commit links atomically with its receipt and run transition, refusing invalid mappings and ignored reference writes.
+
 - Checkpoint-required claims require explicit protocol support and return their actual captured pending policy. Legacy clients continue claiming ordinary work; checkpoint policy enablement remains disabled.
 
 - A private, disabled checkpoint source-admission candidate binds a prepared source vector and worker-context digest to the actual pending claim. Settlement reads these stored facts and passes them to source verification; no public admission or settlement route is enabled.

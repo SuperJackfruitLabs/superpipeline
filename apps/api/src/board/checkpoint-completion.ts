@@ -1,3 +1,4 @@
+import { commitCheckpointReferences, type CheckpointReferenceMapping } from './checkpoint-references';
 import { evaluateCompletion, outcomeInputError, routeOutcome, CompletionRequirement } from '@superpipeline/contract';
 import type { BoardContext } from './context';
 import { commitCompletion } from './completion-commit';
@@ -19,7 +20,7 @@ export function checkpointTransaction(
  * Bound approval payloads need a separate contract review and are refused here. No async complete()
  * is smuggled into a void callback; return type is deliberately explicit.
  */
-export function commitCheckpointCompletion(board: BoardContext, submission: CheckpointSubmission): undefined {
+export function commitCheckpointCompletion(board: BoardContext, submission: CheckpointSubmission, mapping: CheckpointReferenceMapping): undefined {
   board.commitEffects?.requireActive();
   if (!board.commitEffects) throw new Error('COMMIT_EFFECTS_REQUIRED');
   const binding = submission.checkpoint.binding;
@@ -50,6 +51,7 @@ export function commitCheckpointCompletion(board: BoardContext, submission: Chec
     if (!parsed.success) throw new Error('INVALID_COMPLETION_STATE');
     override = parsed.data;
   }
+  commitCheckpointReferences(board, submission, mapping);
   const requirement = override ?? stage.completion;
   if (requirement) {
     const references = board.sql

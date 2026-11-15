@@ -8,6 +8,7 @@ import {
   createProposedCheckpointTables,
   type CheckpointCandidateDeps,
 } from '../src/board/checkpoint-candidate';
+import { checkpointDigest } from '../src/board/checkpoint-json';
 import { parseCheckpointPolicy, parseCheckpointSubmission } from '../src/board/checkpoint-proposal';
 import corpus from './fixtures/checkpoint-settlement/cases.json';
 import { withReporting } from './helpers/superwitness';
@@ -30,12 +31,14 @@ it('ignored receipt insertion cannot advance the real run or card', () =>
 async function fixture(
   test: (d: CheckpointCandidateDeps, b: BoardContext, state: DurableObjectState, raw: Uint8Array) => Promise<void>,
   next?: Partial<StageDef>,
+  provider: 'forge' | 'github' = 'forge',
 ): Promise<void> {
   const id = `brd_realcandidate${serial++}`;
   await withReporting(() =>
     runInDurableObject(env.BOARD_DO.get(env.BOARD_DO.idFromName(id)), async (board, state) => {
       if (!(board instanceof BoardDO)) throw new Error('expected BoardDO');
       const policy = parseCheckpointPolicy(new TextEncoder().encode(JSON.stringify(corpus.producerBaseline.policy)));
+      for (const repository of policy.repositories) repository.provider = provider;
       await board.init({
         id,
         tenantId: 'tnt_realcandidate',
@@ -52,6 +55,8 @@ async function fixture(
       const context: BoardContext = Reflect.get(board, 'board');
       createProposedCheckpointTables(state.storage.sql);
       const body = structuredClone(corpus.producerBaseline.settlementRequest);
+      body.checkpoint.policyDigest = await checkpointDigest(policy);
+      for (const member of body.checkpoint.checkpoint.members) member.provider = provider;
       body.checkpoint.binding = {
         ...body.checkpoint.binding,
         boardId: id,
@@ -110,7 +115,7 @@ async function fixture(
         },
         // Only source verification is a stub. Every run/card/gate/outbox/effect mutation below is real Board code.
         verifySource: () => Promise.resolve(),
-        commit: (submission) => commitCheckpointCompletion(context, submission),
+        commit: (submission) => commitCheckpointCompletion(context, submission, { tenantId: 'tnt_realcandidate', forgeHost: provider === 'forge' ? 'forge.example.test' : null, reporterPrincipalId: policy.reporterPrincipalId }),
       };
       try {
         await test(d, context, state, raw);
@@ -258,7 +263,8 @@ it('settlement writes a tenant-mapped commit reference with separate reporter an
     expect(ref).toMatchObject({ card_id: input.checkpoint.binding.cardId, run_id: input.checkpoint.binding.runId,
       url: `https://forge.example.test/${member.repository}/commit/${member.commit}`, provider: 'forge', source_type: 'commit',
       external_id: `${member.repository}@${member.commit}` });
-    expect(JSON.parse(String(ref.metadata_json))).toMatchObject({ checkpointSettlementId: receipt.settlementId,
+    if (typeof ref.metadata_json !== 'string') throw new Error('expected reference metadata');
+    expect(JSON.parse(ref.metadata_json)).toMatchObject({ checkpointSettlementId: receipt.settlementId,
       reporterPrincipalId: corpus.producerBaseline.policy.reporterPrincipalId, executingAgentId: input.checkpoint.binding.agentId });
     const before = state.storage.sql.exec('SELECT * FROM card_references').toArray();
     expect(await settleCheckpointCandidate(d, raw, { privateTestOnly: true })).toEqual(receipt);
@@ -270,10 +276,48 @@ it('ignored generated-reference insertion rolls back settlement, ownership, even
     const runs = state.storage.sql.exec('SELECT * FROM runs').toArray();
     const events = state.storage.sql.exec('SELECT * FROM events').toArray();
     state.storage.sql.exec('CREATE TRIGGER ignore_generated_reference BEFORE INSERT ON card_references BEGIN SELECT RAISE(IGNORE); END');
-    await expect(settleCheckpointCandidate(d, raw, { privateTestOnly: true })).rejects.toThrow();
+    await expect(settleCheckpointCandidate(d, raw, { privateTestOnly: true })).rejects.toThrow('missing immediately after write');
     expect(state.storage.sql.exec('SELECT * FROM proposed_checkpoint_receipts').toArray()).toEqual([]);
     expect(state.storage.sql.exec('SELECT * FROM card_references').toArray()).toEqual([]);
     expect(state.storage.sql.exec('SELECT * FROM cards').toArray()).toEqual(cards);
     expect(state.storage.sql.exec('SELECT * FROM runs').toArray()).toEqual(runs);
     expect(state.storage.sql.exec('SELECT * FROM events').toArray()).toEqual(events);
+  }));
+it.each([null, 'https://forge.example.test', 'user@forge.example.test', 'forge.example.test:443', 'forge.example.test/path'])('refuses invalid server mapping %s without settlement effects', (forgeHost) =>
+  fixture(async (d, b, state, raw) => {
+    d.commit = (input) => commitCheckpointCompletion(b, input, { tenantId: 'tnt_realcandidate', forgeHost,
+      reporterPrincipalId: corpus.producerBaseline.policy.reporterPrincipalId });
+    await expect(settleCheckpointCandidate(d, raw, { privateTestOnly: true })).rejects.toThrow('CHECKPOINT_REFERENCE_MAPPING_REQUIRED');
+    expect(state.storage.sql.exec('SELECT * FROM card_references').toArray()).toEqual([]);
+    expect(state.storage.sql.exec('SELECT * FROM proposed_checkpoint_receipts').toArray()).toEqual([]);
+    expect(state.storage.sql.exec('SELECT status FROM runs').one().status).toBe('working');
+  }));
+it('ignored existing-reference update cannot acknowledge changed settlement metadata', () =>
+  fixture(async (d, b, state, raw) => {
+    const input = parseCheckpointSubmission(raw), member = input.checkpoint.checkpoint.members[0];
+    const original = await b.addReference({ cardId: input.checkpoint.binding.cardId,
+      url: `https://forge.example.test/${member.repository}/commit/${member.commit}`, provider: 'forge', sourceType: 'commit', title: 'Existing', addedBy: 'user' });
+    if (!original.ok) throw new Error(original.message);
+    const before = state.storage.sql.exec('SELECT * FROM card_references').toArray();
+    state.storage.sql.exec('CREATE TRIGGER ignore_generated_update BEFORE UPDATE ON card_references BEGIN SELECT RAISE(IGNORE); END');
+    await expect(settleCheckpointCandidate(d, raw, { privateTestOnly: true })).rejects.toThrow('CHECKPOINT_REFERENCE_NOT_SAVED');
+    expect(state.storage.sql.exec('SELECT * FROM card_references').toArray()).toEqual(before);
+    expect(state.storage.sql.exec('SELECT * FROM proposed_checkpoint_receipts').toArray()).toEqual([]);
+    expect(state.storage.sql.exec('SELECT status FROM runs').one().status).toBe('working');
+  }));
+
+it('GitHub commit links do not require or use a forge host', () =>
+  fixture(async (d, _b, state, raw) => {
+    const input = parseCheckpointSubmission(raw), member = input.checkpoint.checkpoint.members[0];
+    await settleCheckpointCandidate(d, raw, { privateTestOnly: true });
+    expect(state.storage.sql.exec('SELECT provider,url FROM card_references').one()).toEqual({ provider: 'github',
+      url: `https://github.com/${member.repository}/commit/${member.commit}` });
+  }, undefined, 'github'));
+it.each(['tenant', 'reporter'] as const)('foreign %s mapping cannot write checkpoint links', (foreign) =>
+  fixture(async (d, b, state, raw) => {
+    d.commit = (input) => commitCheckpointCompletion(b, input, { tenantId: foreign === 'tenant' ? 'tnt_foreign' : 'tnt_realcandidate',
+      forgeHost: 'forge.example.test', reporterPrincipalId: foreign === 'reporter' ? 'prn_foreign' : corpus.producerBaseline.policy.reporterPrincipalId });
+    await expect(settleCheckpointCandidate(d, raw, { privateTestOnly: true })).rejects.toThrow('CHECKPOINT_REFERENCE_MAPPING_REQUIRED');
+    expect(state.storage.sql.exec('SELECT * FROM card_references').toArray()).toEqual([]);
+    expect(state.storage.sql.exec('SELECT * FROM proposed_checkpoint_receipts').toArray()).toEqual([]);
   }));

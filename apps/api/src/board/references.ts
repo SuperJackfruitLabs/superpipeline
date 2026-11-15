@@ -45,6 +45,11 @@ export async function addRunReference(deps: ReferencesDeps, input: RunVerbInput 
 }
 
 export async function addReference(deps: ReferencesDeps, input: ReferenceInput): Promise<Result<ReferenceView>> {
+  return commitReference(deps, input);
+}
+
+/** Synchronous SQL/event span; callers composing writes must own the transaction. */
+export function commitReference(deps: ReferencesDeps, input: ReferenceInput): Result<ReferenceView> {
   if (!deps.getMeta('boardId')) {
     return { ok: false, code: 'NOT_INITIALIZED', message: 'board is not initialized' };
   }
