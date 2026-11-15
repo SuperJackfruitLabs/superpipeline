@@ -227,6 +227,9 @@ export async function complete(deps: RunVerbsDeps, input: CompleteVerbInput): Pr
     if (!current || current.currentStageKey !== card.currentStageKey || (fenced.run.card_id as string) !== cardId) {
       return { ok: false, code: 'STALE_LEASE', message: 'the card moved while the approval subject was prepared' };
     }
+    if (deps.stages().find((stage) => stage.key === current.currentStageKey)?.checkpointPolicy !== undefined) {
+      return { ok: false, code: 'CHECKPOINT_REQUIRED', message: 'this stage requires coordinator checkpoint settlement, which is not enabled' };
+    }
   }
   commitCompletion(deps, input, run, card, stages, approvalSubject);
   await deps.scheduleReclaim();
