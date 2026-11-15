@@ -64,3 +64,19 @@ cannot adopt an old proposal. Unknown or pending source effects remain parked;
 source cancellation, supervised repair/adoption and the real multi-repository
 pilot require their own reviewed integration. Existing scalar wire contracts,
 ordinary ACP behavior and accepted event schemas are unchanged.
+
+## Synchronous commit and clock assumptions
+
+The commit dependency explicitly returns `undefined`, so TypeScript rejects async
+functions rather than applying its permissive void-callback assignment rule. A
+compile-time regression holds that boundary. The runtime guard also rejects any
+non-undefined return and rolls back the receipt and synchronous SQL prefix. It
+cannot cancel arbitrary effects an incorrectly supplied async callback schedules
+after returning; this is not a fence for asynchronous work. Extracting and wiring
+the real synchronous completion helper remains required before integration.
+
+Clock and restored heartbeat observations must be finite, nonnegative safe
+integers. Both initial admission and final current-run checks refuse invalid
+heartbeat values; invalid clock values cannot bypass service-expiry checks.
+Heartbeat expiry uses a bounded subtraction rather than overflowing timestamp
+addition. This does not introduce a new wall-clock rollback or skew policy.
