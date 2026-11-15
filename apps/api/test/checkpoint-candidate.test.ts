@@ -75,7 +75,7 @@ async function fixture(
   });
 }
 function beforeTransaction(d: CheckpointCandidateDeps, change: () => void): void {
-  const transaction = d.transaction;
+  const transaction = d.transaction.bind(d);
   d.transaction = (commit) => {
     change();
     return transaction(commit);
