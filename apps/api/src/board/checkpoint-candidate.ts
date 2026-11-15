@@ -90,11 +90,13 @@ function reporter(deps: CheckpointCandidateDeps, snapshot: CheckpointClaimSnapsh
 }
 function current(deps: CheckpointCandidateDeps, input: CheckpointSubmission, snapshot: CheckpointClaimSnapshot): void {
   const r = input.checkpoint;
+  const now = checkedNow(deps);
   if (
     !Number.isSafeInteger(snapshot.lastHeartbeatMs) ||
     snapshot.lastHeartbeatMs < 0 ||
+    snapshot.lastHeartbeatMs > now ||
     snapshot.status !== 'working' ||
-    checkedNow(deps) - snapshot.lastHeartbeatMs >= HEARTBEAT_TIMEOUT_MS ||
+    now - snapshot.lastHeartbeatMs >= HEARTBEAT_TIMEOUT_MS ||
     canonicalCheckpoint(r.binding) !== canonicalCheckpoint(snapshot.binding) ||
     r.policyDigest !== snapshot.policyDigest ||
     canonicalCheckpoint(r.start) !== canonicalCheckpoint(snapshot.start)

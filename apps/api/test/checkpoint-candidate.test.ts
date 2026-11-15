@@ -186,6 +186,23 @@ it('invalid restored heartbeat values never pass admission or post-await checks'
       });
   }
 });
+it.each([false, true])('future heartbeat refuses settlement, including after verification (%s)', async (late) => {
+  await fixture(async (d) => {
+    const read = d.current.bind(d);
+    const corrupt = () => {
+      d.current = () => ({ ...read(), lastHeartbeatMs: d.nowMs() + 1 });
+    };
+    if (late)
+      d.verifySource = () => {
+        corrupt();
+        return Promise.resolve();
+      };
+    else corrupt();
+    await expect(settleCheckpointCandidate(d, raw, approved)).rejects.toThrow('STALE_LEASE');
+    expect(read().status).toBe('working');
+    expect(d.sql.exec('SELECT * FROM proposed_checkpoint_receipts').toArray()).toHaveLength(0);
+  });
+});
 it('invalid clocks cannot bypass reporter expiry', async () => {
   for (const now of [NaN, Infinity, -1, 1.5, Number.MAX_SAFE_INTEGER + 1])
     await fixture(async (d) => {
