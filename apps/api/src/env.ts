@@ -1,5 +1,7 @@
 /** Worker bindings + config (docs/02-architecture.md). */
 export interface Env {
+  /** Proposed settlement/read API. Unset until coordinator authority is accepted. */
+  PROPOSED_CHECKPOINT_SETTLEMENT?: string;
   /** Proposed source-admission/read protocol only. Unset means no endpoint.
    * Do not configure before coordinator authority and scopes are accepted. */
   PROPOSED_CHECKPOINT_SOURCE?: string;
