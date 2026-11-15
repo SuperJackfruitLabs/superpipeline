@@ -212,6 +212,9 @@ export async function complete(deps: RunVerbsDeps, input: CompleteVerbInput): Pr
 
   const card = deps.mustGetCard(cardId);
   const stages = deps.stages();
+  if (stages.find((stage) => stage.key === card.currentStageKey)?.checkpointPolicy !== undefined) {
+    return { ok: false, code: 'CHECKPOINT_REQUIRED', message: 'this stage requires coordinator checkpoint settlement, which is not enabled' };
+  }
   const stageIndex = stages.findIndex((stage) => stage.key === card.currentStageKey);
   const nextStage = stageIndex === -1 ? undefined : stages[stageIndex + 1];
   let approvalSubject: PreparedApproval | null = null;

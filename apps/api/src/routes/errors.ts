@@ -44,6 +44,7 @@ export function statusForCode(code: BoardErrorCode): number {
     case 'APPROVAL_REQUEST_NOT_FOUND':
     case 'CHECK_NOT_FOUND':
       return 404;
+    case 'CHECKPOINT_REQUIRED':
     case 'STALE_LEASE':
     case 'GATE_NOT_PENDING':
     case 'APPROVAL_SUBJECT_MISMATCH':

@@ -69,10 +69,11 @@ export async function boardCollection({ request, env, tenantId, user, agent }: B
   // validator: a too-long summary or a malformed intro is a 400 at the door.
   for (const st of stages) {
     const bad =
-      st.summary === undefined && st.timeout === undefined && st.quorum === undefined && st.holdFor === undefined && st.checks === undefined && st.gate !== 'checks'
+      st.summary === undefined && st.timeout === undefined && st.quorum === undefined && st.holdFor === undefined && st.checks === undefined && st.gate !== 'checks' && st.checkpointPolicy === undefined
         ? null
         : stageFieldError({
             key: st.key,
+            checkpointPolicy: st.checkpointPolicy,
             summary: st.summary,
             timeout: st.timeout,
             quorum: st.quorum,

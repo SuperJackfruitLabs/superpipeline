@@ -79,8 +79,9 @@ export function completionShapeError(c: unknown): string | null {
 }
 
 export function stageFieldError(
-  s: Pick<StageDef, 'key' | 'wipLimit' | 'instructions' | 'summary' | 'timeout' | 'quorum' | 'holdFor' | 'approvalDeciderPrincipalIds' | 'gate' | 'checks' | 'returnStage' | 'ownerKind' | 'placement'>,
+  s: Pick<StageDef, 'key' | 'wipLimit' | 'instructions' | 'summary' | 'timeout' | 'quorum' | 'holdFor' | 'approvalDeciderPrincipalIds' | 'gate' | 'checks' | 'returnStage' | 'ownerKind' | 'placement' | 'checkpointPolicy'>,
 ): string | null {
+  if (s.checkpointPolicy !== undefined) return 'checkpointPolicy is proposed and not enabled';
   if (s.placement !== undefined) {
     const bad = placementError(s.placement, `stage "${s.key}" placement`);
     if (bad) return bad;
@@ -177,6 +178,7 @@ function decisionPolicyOf(stage: StageDef | undefined): string {
     quorum: stage?.quorum ? cleanQuorum(stage.quorum) : null,
     holdFor: stage?.holdFor ?? null,
     checks: cleanChecks(stage?.checks),
+    checkpointPolicy: stage?.checkpointPolicy ?? null,
   });
 }
 
@@ -338,6 +340,10 @@ export async function updateStage(deps: PipelineDeps, stageKey: string, patch: S
   if (patch.summary !== undefined) {
     if (patch.summary === null) delete next.summary;
     else next.summary = patch.summary;
+  }
+  if (patch.checkpointPolicy !== undefined) {
+    if (patch.checkpointPolicy === null) delete next.checkpointPolicy;
+    else next.checkpointPolicy = patch.checkpointPolicy;
   }
   if (patch.completion !== undefined) {
     if (patch.completion === null) delete next.completion;
