@@ -58,6 +58,18 @@ export function createProposedCheckpointTables(sql: SqlStorage): void {
     request_digest TEXT NOT NULL, report_digest TEXT NOT NULL, reporter_id TEXT NOT NULL,
     execution_id TEXT NOT NULL UNIQUE, bench_id TEXT NOT NULL, source_request TEXT NOT NULL,
     submission TEXT NOT NULL, receipt TEXT NOT NULL, UNIQUE(run_id, epoch), UNIQUE(bench_id, source_request))`);
+  for (const action of ['UPDATE', 'DELETE']) {
+    sql.exec(`CREATE TRIGGER IF NOT EXISTS checkpoint_receipt_no_${action.toLowerCase()}
+      BEFORE ${action} ON proposed_checkpoint_receipts BEGIN
+      SELECT RAISE(ABORT, 'immutable checkpoint receipt'); END`);
+  }
+  // REPLACE deletes conflicting rows without firing DELETE triggers by default.
+  sql.exec(`CREATE TRIGGER IF NOT EXISTS checkpoint_receipt_no_replace
+    BEFORE INSERT ON proposed_checkpoint_receipts WHEN EXISTS (
+      SELECT 1 FROM proposed_checkpoint_receipts WHERE settlement_id=NEW.settlement_id
+      OR (run_id=NEW.run_id AND epoch=NEW.epoch) OR execution_id=NEW.execution_id
+      OR (bench_id=NEW.bench_id AND source_request=NEW.source_request)) BEGIN
+    SELECT RAISE(ABORT, 'immutable checkpoint receipt'); END`);
 }
 function checkedNow(deps: CheckpointCandidateDeps): number {
   const now = deps.nowMs();
@@ -218,6 +230,9 @@ export async function settleCheckpointCandidate(
       canonicalCheckpoint(input),
       saved,
     );
+    const persisted = existing(deps, input, requestDigest, latestActor);
+    if (!persisted || canonicalCheckpoint(persisted) !== canonicalCheckpoint(receipt))
+      throw new Error('CHECKPOINT_RECEIPT_NOT_SAVED');
     requireSynchronousCommit(deps.commit(input, receipt));
     return receipt;
   });
