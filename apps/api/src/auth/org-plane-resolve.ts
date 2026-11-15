@@ -9,6 +9,7 @@ import { entitles, orgPlaneMode, verifyOrgPlaneToken, ORG_PLANE_SOURCE, type Org
 import { ensureOrgTenant, provisionOrgHuman } from './org-tenancy';
 import { effectiveCapabilities } from '../db/implications';
 import { logWarn } from '../log';
+import { serviceExpiry } from './service-expiry';
 
 export function bearerOf(request: Request): string | null {
   const m = (request.headers.get('Authorization') ?? '').match(/^Bearer\s+(.+)$/i);
@@ -100,7 +101,7 @@ export async function resolvePlaneService(request: Request, env: Env, cfg: OrgPl
   if (!claims || !entitles(claims) || claims.principalKind !== 'service') return null;
   const tenantId = await findTenantByExternal(env.DB, ORG_PLANE_SOURCE, claims.org);
   if (!tenantId) return null;
-  return { principalId: claims.sub, tenantId, scopes: grantScopes(claims) };
+  return { principalId: claims.sub, tenantId, scopes: grantScopes(claims), ...serviceExpiry(claims.exp) };
 }
 
 export async function resolvePlaneMcp(request: Request, env: Env, cfg: OrgPlaneConfig): Promise<McpAuth | null> {
