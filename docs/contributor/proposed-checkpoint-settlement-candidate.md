@@ -119,3 +119,40 @@ consume structured payload/variants. The private settlement bridge therefore
 refuses those transitions rather than fabricating a subject or guessing a new
 wire shape. Ordinary bound-approval completion is preserved. Extending settlement
 to those workflows needs owner-reviewed contract/policy binding first.
+
+## Atomic claim and pending source admission
+
+The actual claim path now records a private `proposed_checkpoint_claims` identity
+in the same synchronous transaction as the run insertion and card ownership.
+It captures the server tenant, board, card, stage, executor, lease epoch, canonical
+stage policy and policy digest. Ordinary claims create no such record. A captured
+policy is immutable and explicitly pending: it contains no guessed bench, start
+vector, station, attempt, request or execution evidence. An absent row never means
+source admission succeeded. Enabling policy writes remains refused.
+
+Claim authorization freezes the selected card and server policy inputs before
+awaiting the control grant and policy digest. The synchronous transaction refuses
+changed inputs and rechecks budget, concurrency and current SQL eligibility before
+writing. It does not guess whether a changed grant would authorize the claimant.
+Run reports and durable events remain in SQL; their external notifications are
+deferred until commit. A failed claim transaction leaves neither a partial run
+nor a pending policy record or delivered claimed event.
+
+The exported storage reader validates the stored row's shape and canonical policy;
+it does not independently verify a source or turn a policy digest into authority.
+Future binding must add a separate bind-once coordinator-owned source record,
+validate the pending policy against the current run and issuer, and retain exact
+bench/request/start-vector provenance before launch. The settlement candidate's
+current-run reader must join those stored facts rather than populate them from a
+submitted checkpoint report. No source-binding operation is implemented here.
+
+The Board trace correction is limited to its two existing characterization
+records: three schema statements and their schema entries, post-await metadata,
+card and eligibility reads, run/card write readbacks, and alarm reads after the
+owned commit. Report, claimed event and alarm retain their observable order.
+The fresh eligibility clock introduces a new `t#` observation per admitted
+candidate, renumbering later normalized timestamps; the first trace's rolling
+usage cutoff moves forward nine fixture milliseconds. Returned values and step
+order remain identical after timestamp normalization. The independent Worker
+HTTP characterization remains unchanged. The prior completion-await policy read
+is retained once in the publish trace.

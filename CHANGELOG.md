@@ -22,6 +22,7 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html). Entries g
   is derived from the authenticated caller so an agent cannot claim a person attached its artifact.
 - Approval gates and Operate now show the opening run's linked artifacts and pin known SuperLibrary
   versions, with an explicit message when the run linked none.
+- Claims recheck their selected card, policy and eligibility after authorization waits and commit run/card ownership atomically. The disabled checkpoint candidate records an immutable pending policy with that transaction; source admission remains unwired.
 
 ## v0.0.32 — 2026-11-15
 
