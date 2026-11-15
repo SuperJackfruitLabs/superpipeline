@@ -101,6 +101,17 @@ it('commit failure rolls back receipt and run together', () =>
     expect(d.current().status).toBe('working');
     expect(d.sql.exec('SELECT * FROM proposed_checkpoint_receipts').toArray()).toHaveLength(0);
   }));
+it('durable receipt cannot be rewritten or deleted after settlement', () =>
+  fixture(async (d) => {
+    const saved = await settleCheckpointCandidate(d, raw, approved);
+    expect(() => d.sql.exec("UPDATE proposed_checkpoint_receipts SET receipt='{}'"))
+      .toThrow('immutable checkpoint receipt');
+    expect(() => d.sql.exec('DELETE FROM proposed_checkpoint_receipts'))
+      .toThrow('immutable checkpoint receipt');
+    expect(() => d.sql.exec('INSERT OR REPLACE INTO proposed_checkpoint_receipts SELECT * FROM proposed_checkpoint_receipts'))
+      .toThrow('immutable checkpoint receipt');
+    expect(await settleCheckpointCandidate(d, raw, approved)).toEqual(saved);
+  }));
 it('post-await owner, policy, node, expiry and scope changes cannot commit', async () => {
   for (const change of ['epoch', 'policy', 'node', 'expired', 'scope'])
     await fixture(async (d, s, a) => {

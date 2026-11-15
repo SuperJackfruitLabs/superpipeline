@@ -12,6 +12,21 @@ import { parseCheckpointPolicy, parseCheckpointSubmission } from '../src/board/c
 import corpus from './fixtures/checkpoint-settlement/cases.json';
 import { withReporting } from './helpers/superwitness';
 let serial = 0;
+it('ignored receipt insertion cannot advance the real run or card', () =>
+  fixture(async (d, board, state, body) => {
+    const cards = state.storage.sql.exec('SELECT * FROM cards').toArray();
+    const runs = state.storage.sql.exec('SELECT * FROM runs').toArray();
+    const events = state.storage.sql.exec('SELECT * FROM events').toArray();
+    state.storage.sql.exec(`CREATE TRIGGER ignore_checkpoint_receipt BEFORE INSERT ON proposed_checkpoint_receipts
+      BEGIN SELECT RAISE(IGNORE); END`);
+    await expect(settleCheckpointCandidate(d, body, { privateTestOnly: true }))
+      .rejects.toThrow('CHECKPOINT_RECEIPT_NOT_SAVED');
+    expect(state.storage.sql.exec('SELECT * FROM proposed_checkpoint_receipts').toArray()).toHaveLength(0);
+    expect(state.storage.sql.exec('SELECT * FROM cards').toArray()).toEqual(cards);
+    expect(state.storage.sql.exec('SELECT * FROM runs').toArray()).toEqual(runs);
+    expect(state.storage.sql.exec('SELECT * FROM events').toArray()).toEqual(events);
+    expect(() => board.commitEffects?.requireActive()).toThrow('COMMIT_EFFECTS_REQUIRED');
+  }));
 async function fixture(
   test: (d: CheckpointCandidateDeps, b: BoardContext, state: DurableObjectState, raw: Uint8Array) => Promise<void>,
   next?: Partial<StageDef>,
