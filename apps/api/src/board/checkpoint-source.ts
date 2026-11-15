@@ -1,4 +1,4 @@
-/** Private bind-once source admission. No HTTP/RPC route enables this candidate. */
+/** Proposed bind-once source admission. The service API is disabled by default. */
 import { Validator, type Schema } from '@cfworker/json-schema';
 import type { VerifiedCheckpointReporter } from '../auth/checkpoint-reporter';
 import type { BoardContext } from './context';
@@ -58,6 +58,7 @@ interface StoredSource {
   reporterId: string;
 }
 function stored(sql: SqlStorage, runId: string): StoredSource | null {
+  if (!sql.exec("SELECT 1 FROM sqlite_master WHERE type='table' AND name='proposed_checkpoint_sources'").toArray().length) return null;
   const rows = sql.exec('SELECT * FROM proposed_checkpoint_sources WHERE run_id=?', runId).toArray();
   if (!rows.length) return null;
   const row = rows[0];
@@ -94,9 +95,9 @@ function checkedNow(board: SourceBoard): number {
   if (!Number.isSafeInteger(now) || now < 0) throw new Error('INVALID_CHECKPOINT_SOURCE');
   return now;
 }
-function reporter(board: SourceBoard, actor: VerifiedCheckpointReporter, pending: PendingCheckpointClaim): void {
+function reporter(board: SourceBoard, actor: VerifiedCheckpointReporter, pending: PendingCheckpointClaim, scope: 'checkpoints:submit' | 'checkpoints:read' = 'checkpoints:submit'): void {
   if (actor.kind !== 'service' || actor.tenantId !== pending.tenantId ||
-    actor.principalId !== pending.policy.reporterPrincipalId || !actor.scopes.includes('checkpoints:submit') ||
+    actor.principalId !== pending.policy.reporterPrincipalId || !actor.scopes.includes(scope) ||
     !Number.isSafeInteger(actor.expiresAt) || actor.expiresAt <= checkedNow(board)
   ) throw new Error('NOT_CHECKPOINT_REPORTER');
 }
@@ -136,7 +137,16 @@ export async function admitCheckpointSourceCandidate(
   options?: { privateTestOnly: true },
 ): Promise<CheckpointSourceReceipt> {
   if (!options?.privateTestOnly) throw new Error('CHECKPOINT_SOURCE_DISABLED');
+  return await admitCheckpointSource(board, authenticated, raw);
+}
+
+/** Internal Board service entry; the RPC shell checks the deployment switch.
+ * Actor authority comes from issuer resolution, never parsed request fields. */
+export async function admitCheckpointSource(
+  board: SourceBoard, authenticated: () => VerifiedCheckpointReporter, raw: Uint8Array, expectedRunId?: string,
+): Promise<CheckpointSourceReceipt> {
   const source = parseSource(raw);
+  if (expectedRunId !== undefined && source.binding.runId !== expectedRunId) throw new Error('INVALID_CHECKPOINT_SOURCE');
   const pending = claim(board, source);
   reporter(board, authenticated(), pending);
   active(board, current(board, source, pending));
@@ -148,6 +158,7 @@ export async function admitCheckpointSourceCandidate(
     const actor = authenticated();
     reporter(board, actor, latest);
     active(board, current(board, source, latest));
+    createCheckpointSourceTables(board.sql);
     const prior = stored(board.sql, source.binding.runId);
     if (prior) {
       if (prior.receipt.sourceDigest !== digest || prior.reporterId !== actor.principalId ||
@@ -173,4 +184,14 @@ export function currentCheckpointSource(board: SourceBoard, runId: string): Chec
   const pending = claim(board, saved.source);
   if (saved.reporterId !== pending.policy.reporterPrincipalId) throw new Error('NOT_CHECKPOINT_REPORTER');
   return current(board, saved.source, pending);
+}
+
+/** Read under the current selected reporter, not the historical source reporter alone. */
+export function readCheckpointSource(board: SourceBoard, actor: VerifiedCheckpointReporter, runId: string): CheckpointClaimSnapshot {
+  const pending = readCheckpointClaim(board.sql, runId);
+  if (!pending) throw new Error('CHECKPOINT_SOURCE_MISSING');
+  reporter(board, actor, pending, 'checkpoints:read');
+  const snapshot = currentCheckpointSource(board, runId);
+  // currentCheckpointSource has rejoined the current stage policy and Board SQL.
+  return snapshot;
 }

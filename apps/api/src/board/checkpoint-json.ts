@@ -1,4 +1,4 @@
-/** Proposed settlement's lexical/canonical adapter. No route consumes it. */
+/** Proposed checkpoint lexical/canonical adapter; source routing defaults off. */
 function readCheckpointJSON(raw: Uint8Array): unknown {
   if (raw.byteLength > 65536) throw new Error('INVALID_CHECKPOINT');
   const text = new TextDecoder('utf-8', { fatal: true, ignoreBOM: true }).decode(raw);

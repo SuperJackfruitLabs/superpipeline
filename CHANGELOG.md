@@ -14,6 +14,8 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html). Entries g
 
 ## Unreleased
 
+- Add a disabled-by-default, service-only proposed checkpoint source admission/read boundary with tenant-bound routing and strict request-size limits. No policy, credential or pilot is enabled.
+
 ### Added
 
 - The disabled checkpoint completion candidate writes tenant-mapped commit links atomically with its receipt and run transition, refusing invalid mappings and ignored reference writes.

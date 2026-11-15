@@ -11,6 +11,8 @@ import * as attention from './attention';
 import * as store from './card-store';
 import * as cards from './cards';
 import * as claims from './claims';
+import * as checkpointSourceService from './checkpoint-source-service';
+import type { VerifiedCheckpointReporter } from '../auth/checkpoint-reporter';
 import * as comments from './comments';
 import * as decisionTimeouts from './decision-timeouts';
 import * as elicitations from './elicitations';
@@ -97,6 +99,13 @@ export class BoardDO extends DurableObject<Env> {
   }
 
   // Cards
+
+  admitCheckpointSource(actor: VerifiedCheckpointReporter, runId: string, raw: Uint8Array) {
+    return checkpointSourceService.admit(this.board, actor, runId, raw);
+  }
+  readCheckpointSource(actor: VerifiedCheckpointReporter, runId: string) {
+    return checkpointSourceService.read(this.board, actor, runId);
+  }
 
   createCard(...args: OpArgs<typeof cards.createCard>): ReturnType<typeof cards.createCard> {
     return cards.createCard(this.board, ...args);

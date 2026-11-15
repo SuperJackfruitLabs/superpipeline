@@ -3,7 +3,8 @@
 This is an isolated, disabled implementation candidate against published Treaty
 proposal `4ba0c9f857f3b01e39c6332c8a005beff0733886` and Charter's proposed coordinator
 grant decision. Publication is not acceptance. It provisions no reporter credential,
-adds no settlement HTTP/RPC route, and enables no board or pilot.
+adds no settlement HTTP/RPC route, and enables no board or pilot. The proposed
+source-only HTTP/RPC boundary described below is disabled by default.
 
 ## Implemented boundaries
 
@@ -23,8 +24,8 @@ inspect trusted service/worker evidence; supplied flags and hashes are not proof
 The private issuer adapter resolves the actual configured service-token path and
 requires the exact server-owned policy reporter, mapped tenant, submit scope and
 verified expiry. Body/header identity claims, agent/human credentials and another
-audience do not satisfy it. No public route imports it. Source verification and
-durable claim/source admission remain unfinished.
+audience do not satisfy it. No public route imports it. Actual authenticated producer verification remains unfinished; durable claim/source
+admission and the disabled-by-default source service boundary are implemented below.
 
 After asynchronous verification, the candidate rechecks service expiry/scope,
 selected reporter, exact policy/claim binding, run status and heartbeat before
@@ -155,8 +156,8 @@ worker-context digest explicitly to the source verifier. The full stored plan
 remains part of the post-verification authority check. A real Board integration
 test checks completion and historical receipt replay, while explicitly stubbing
 service proof. A stored plan and its digest are not proof of launch, stopped
-writers, sealing or release. This candidate remains disabled, has no HTTP/RPC
-route and does not initialize its source table in the public Board path. The
+writers, sealing or release. Settlement remains disabled. The source-only service boundary below is also
+disabled by default; it initializes source storage only during authorized admission. The
 actual coordinator, control-pair checks, node observations and producer evidence
 must be wired and verified before enablement; no live grant or pilot is claimed.
 
@@ -234,3 +235,42 @@ prior mixed selection. This avoids handing ordinary work to a dedicated worker
 whose ACP readiness was never established. It does not advertise readiness or
 grant execution: the Hub must verify its actual packaged worker, registry and
 current control pair before requesting dedicated-only work.
+
+
+## Proposed source service boundary (disabled by default)
+
+`PROPOSED_CHECKPOINT_SOURCE` must equal the literal string `true` at both the
+Worker and Board RPC shell. It is absent from deployment configuration and is
+exercised only by tests here. Do not configure it until the coordinator authority,
+scopes and protocol are accepted. Policy-enabling stage writes remain refused.
+This switch enables no settlement, node dispatch, reporter credential or pilot.
+
+The proposed `/v1/boards/:boardId/runs/:runId/checkpoint-source` boundary owns all
+methods before agent/human routing. POST requires an issuer-verified service with
+`checkpoints:submit`; GET requires `checkpoints:read`. Human/agent tokens, generic
+run scopes, body/header principal assertions and wildcard-looking scope strings
+cannot substitute. The actual issuer/audience/organization mapping and verified
+expiry are resolved through the existing service-token resolver. The Board checks
+the current exact policy reporter, tenant and expiry again. The durable-object
+name is derived only from the mapped token tenant and URL board ID.
+
+The proposed methods are `POST /v1/boards/:boardId/runs/:runId/checkpoint-source`
+for admission and `GET /v1/boards/:boardId/runs/:runId/checkpoint-source` for the
+current stored-source observation. Other methods are refused.
+
+POST retains at most 64 KiB while reading the stream, independently of supplied
+Content-Length, and refuses excess before an admission RPC. The body run must
+match the URL. The existing strict source schema rejects capabilities, tenant
+claims and unknown fields. The Board copies verified actor metadata and bytes
+before hashing, rechecks live ownership/policy/heartbeat/expiry after awaits, and
+creates immutable source storage inside the successful admission transaction.
+Exact replay returns the saved receipt; changed bindings conflict. Missing source
+reads do not create schema or manufacture admission. GET returns the saved source
+joined with current Board run/policy state under current read authorization; it
+is an observation, not an execution grant or stopped-writer proof.
+
+The route is a proposed work-owner API, not a trusted producer verifier. The real
+Hub adapter still needs to admit only its retained authenticated preparation
+response and keep service credentials away from nodes/workers. Final settlement,
+operation-bound cancellation/reconciliation, heartbeat integration and the real
+Developer Experience pilot remain required.
