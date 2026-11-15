@@ -223,3 +223,14 @@ service-only adapter must resolve the mapping from the authenticated tenant's
 catalog row and bind it through final verification; no request-provided mapping is
 acceptable. No HTTP/RPC route imports this private projection, and it enables no
 reporter, policy, source admission or pilot.
+
+## Dedicated-only claim selection
+
+Optional boolean `checkpointOnly` is owned by the same REST/RPC claim matcher.
+`true` requires the exact negotiated checkpoint protocol and excludes ordinary
+stages before priority ordering. Malformed REST values or a missing protocol are
+400; internal matching also refuses malformed values. Omitted/false retains the
+prior mixed selection. This avoids handing ordinary work to a dedicated worker
+whose ACP readiness was never established. It does not advertise readiness or
+grant execution: the Hub must verify its actual packaged worker, registry and
+current control pair before requesting dedicated-only work.

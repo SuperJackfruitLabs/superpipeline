@@ -102,7 +102,7 @@ export async function claim(deps: ClaimsDeps, input: Claimant & { profileKey?: s
   const [first] = claimantRefusals(deps, input);
   if (first) return refused(first);
 
-  const claimableKeys = claimableStageKeys(deps, input.agentId, input.capabilities, input.checkpointProtocol);
+  const claimableKeys = claimableStageKeys(deps, input.agentId, input.capabilities, input.checkpointProtocol, input.checkpointOnly);
   const placeholders = claimableKeys.map(() => '?').join(', ');
   const holdMs = deps.nowMs();
   const windowMs = placementWindowMs(deps);
@@ -278,14 +278,17 @@ export interface Claimant {
   agentId: string;
   capabilities: string[];
   checkpointProtocol?: string;
+  checkpointOnly?: boolean;
   maxConcurrency?: number;
   principalId?: string | null;
 }
 
 /** The stages on this board this claimant can take, by the one stage matcher. */
-function claimableStageKeys(deps: Pick<ClaimsDeps, 'stages'>, agentId: string, capabilities: string[], checkpointProtocol?: string): string[] {
+function claimableStageKeys(deps: Pick<ClaimsDeps, 'stages'>, agentId: string, capabilities: string[], checkpointProtocol?: string, checkpointOnly?: boolean): string[] {
+  if (checkpointOnly !== undefined && typeof checkpointOnly !== 'boolean') return [];
   return deps.stages().filter((s) => stageMatches(s, agentId, capabilities) &&
-    (s.checkpointPolicy === undefined || checkpointProtocol === CHECKPOINT_CLAIM_PROTOCOL)).map((s) => s.key);
+    (s.checkpointPolicy === undefined || checkpointProtocol === CHECKPOINT_CLAIM_PROTOCOL) &&
+    (!checkpointOnly || s.checkpointPolicy !== undefined)).map((s) => s.key);
 }
 
 /**
@@ -310,7 +313,7 @@ export function claimantRefusals(
     ? Number(deps.sql.exec(`SELECT COUNT(*) AS n FROM runs WHERE agent_id = ? AND status = 'working'`, who.agentId).one().n)
     : 0;
   if (!validMax || active >= max) out.push('concurrency_reached');
-  const keys = claimableStageKeys(deps, who.agentId, who.capabilities, who.checkpointProtocol);
+  const keys = claimableStageKeys(deps, who.agentId, who.capabilities, who.checkpointProtocol, who.checkpointOnly);
   if (stageKey === undefined ? keys.length === 0 : !keys.includes(stageKey)) out.push('capability_mismatch');
   return out;
 }

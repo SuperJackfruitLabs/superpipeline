@@ -102,6 +102,13 @@ ordinary stages; unsupported or malformed REST protocol values return **400**.
 The internal claim matcher also refuses checkpoint stages without the exact
 protocol. This field declares client support; it grants no execution authority.
 
+A dedicated worker can additionally send `checkpointOnly: true` to match only
+policy-bearing stages, leaving ordinary work available for other clients. This
+allows readiness checks for the dedicated worker without requiring ACP readiness.
+The field must be boolean; `true` requires the exact protocol above. Omitted or
+`false` retains ordinary/mixed selection semantics. A board with no matching policy
+stage returns a normal refusal and creates no run.
+
 A successful checkpoint-required claim includes `checkpointClaim` with `version`
 `superpipeline.checkpoint-claim.v1`, `admissionState: "pending"`, tenant/board/card/
 stage/agent identity, `runId`, `leaseEpoch`, the captured `policy`, and its
