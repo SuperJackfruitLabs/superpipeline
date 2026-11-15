@@ -22,7 +22,10 @@ export const subject = { id: 'sub_1', digest: 'sha256:3f9ac21e77aa', schema: 's'
 // oxlint-disable-next-line typescript/no-explicit-any -- one fixture for several panels whose props differ; each test's render checks it
 export const gatePanelProps = (over: Record<string, unknown> = {}): any => ({
   boardId: 'brd_1',
-  gate: { id: 'gat_1', cardId: 'c', status: 'pending', options: [], approvalSubject: subject, stageKey: 'review', producedBy: 'agt_r' },
+  gate: {
+    id: 'gat_1', cardId: 'c', status: 'pending', options: [], approvalSubject: subject, stageKey: 'review', producedBy: 'agt_r',
+    references: [{ id: 'ref_1', cardId: 'c', url: 'https://app.superlibrary.dev/a/itm_1111111111111111', title: 'Review brief', provider: 'superlibrary', sourceType: 'artifact', metadata: { version: 2 }, addedBy: 'agent' }],
+  },
   error: null,
   onResponse: vi.fn(async () => true),
   agent: { id: 'agt_r', name: 'Sample agent', iconUrl: null, mood: 'needs' as const },
@@ -55,6 +58,8 @@ export function gatePanelContract(C: AnyComponent, o: { decision: 'button' | 'ra
       render(C, gatePanelProps());
       expect(screen.getByText(w.heading)).toBeTruthy();
       expect(screen.getByText(w.lead ?? 'Draft ready.')).toBeTruthy();
+      expect(screen.getByRole('link', { name: 'Review brief' }).getAttribute('href')).toBe('https://app.superlibrary.dev/a/itm_1111111111111111/v/2');
+      expect(screen.getByText(/version 2/)).toBeTruthy();
       expect(screen.getByText(w.subjectHeading)).toBeTruthy();
       if (w.subjectId) expect(screen.getByText(w.subjectId)).toBeTruthy();
       expect(screen.getByText(w.digest)).toBeTruthy();

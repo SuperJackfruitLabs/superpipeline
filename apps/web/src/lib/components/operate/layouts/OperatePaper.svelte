@@ -9,6 +9,7 @@
   import { Button, Face } from '@superjackfruit/vibekit';
   import LineIcon from '$lib/components/parts/LineIcon.svelte';
   import BoardChip from '$lib/components/inbox/BoardChip.svelte';
+  import GateReferences from '$lib/components/card/gate/GateReferences.svelte';
   import { acrossBoards, askBoards, CHECKING, inboxCounts, inboxSubline, wantYou } from '$lib/components/inbox/inbox-words';
   import { greetNamed } from '$lib/greet';
   import { moveTargets } from '../operate-data';
@@ -69,6 +70,7 @@
           {:else if row.item.detail}
             <blockquote class="quote" data-reveal>“{ui.expanded[id] ? row.item.detail : cut140(row.item.detail)}”{#if row.item.detail.length > 140}<button class="more" type="button" aria-expanded={ui.expanded[id] ? 'true' : 'false'} style="margin-left: var(--vk-space-2);" onclick={() => ui.toggle(id)}>{ui.expanded[id] ? 'Show less' : 'Show all'}</button>{/if}</blockquote>
           {/if}
+          {#if row.gate}<GateReferences references={row.gate.references ?? []} />{/if}
           <div class="sig">{@render face(row.agentName, row.iconUrl, 28, 'needs')}<span>{row.agentName ? `— ${row.agentName}` : '— the board · unclaimed'}</span><BoardChip name={row.boardName} /></div>
           {#if !noOwner}<p class="hint">{stopHint(row.item)}</p>{/if}
           {#if ui.resuming === id}

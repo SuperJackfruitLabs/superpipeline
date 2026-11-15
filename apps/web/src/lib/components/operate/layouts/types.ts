@@ -1,6 +1,6 @@
 // apps/web/src/lib/components/operate/layouts/types.ts
 import type { Phase } from '@superjackfruit/vibekit';
-import type { AgentSummary, Card, Notification, Stage } from '$lib/api';
+import type { AgentSummary, Card, Gate, Notification, Stage } from '$lib/api';
 import type { AttentionAction, AttentionItem } from '$lib/components/attention/attention';
 
 /** One card waiting on a person, with what every vibe needs to draw it. */
@@ -20,6 +20,8 @@ export interface NeedRow {
   iconUrl: string | null;
   actions: AttentionAction[];
   overdue: boolean;
+  /** The pending gate this review row opens, including the opening run's references. */
+  gate: Gate | null;
 }
 
 /** One card's notifications: the newest is shown, the rest sit behind "Earlier reminders". */

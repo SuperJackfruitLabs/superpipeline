@@ -3,7 +3,6 @@ import { ApiError } from '../loading';
 import { withAuthority } from '../hub-token';
 import { fetch, headers, noteAuth } from './client';
 import type { Gate } from './gates';
-import type { Reference } from './references';
 export type { Reference } from './references';
 
 export interface Card {

@@ -16,6 +16,7 @@
   import type { CardLead } from '../card-lead';
   import type { CardAgent } from '../layouts/types';
   import { GATE_NOTE_MAX, GateDecisionModel, roleOf, sealOf } from './gate-decision.svelte';
+  import GateReferences from './GateReferences.svelte';
 
   let { boardId, gate, error, onResponse, agent, lead, conflict = null, conflictWho = '', onRefresh = async () => {}, part = 'all', showLead = true }: {
     boardId: string; gate: Gate; error: string | null; onResponse: (d: GateDecision, r: Response) => Promise<boolean>;
@@ -51,6 +52,7 @@
     <legend>Your decision is needed</legend>
     {#if part === 'all'}
       {#if showLead}<p class="qcs-by"><span class="qcs-face"><Face id={name} label={name} mood="needs" size={20} /></span>{name}: {lead.sentence ?? gate.summary ?? 'Waiting for your review.'}</p>{/if}
+      <GateReferences references={gate.references ?? []} />
       {#if subject}
         <p style="font-weight: 700;">What you are approving (revision {subject.revision})</p>
         <!-- svelte-ignore a11y_no_noninteractive_tabindex: a scrollable region must be keyboard reachable -->

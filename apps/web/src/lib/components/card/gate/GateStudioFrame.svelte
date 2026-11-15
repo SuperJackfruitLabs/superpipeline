@@ -13,6 +13,7 @@
   import type { CardAgent } from '../layouts/types';
   import { quoteHeader, quoteWhen, shortDigest } from '../studio/studio-format';
   import { sealOf } from './gate-decision.svelte';
+  import GateReferences from './GateReferences.svelte';
 
   /** `showLead` false: the caller already says who, what is needed and the sentence. */
   let { gate, agent, lead, showLead = true, footnote = 1 }: { gate: Gate; agent: CardAgent; lead: CardLead | null; vibe: Vibe; showLead?: boolean; footnote?: number } = $props();
@@ -32,6 +33,7 @@
   {#if showLead}
     <div class="ar-q"><h3><Face id={name} label={name} mood="needs" size={24} ring="mood" />{quoteHeader(name, 'review')}{#if lead?.at}<span class="mono">{quoteWhen(lead.at, new Date())}</span>{/if}</h3><blockquote>{lead?.sentence ?? gate.summary ?? 'Waiting for your review.'}</blockquote></div>
   {/if}
+  <GateReferences references={gate.references ?? []} />
   {#if subject}
     <div>
       <!-- svelte-ignore a11y_no_noninteractive_tabindex: a scrollable region must be keyboard reachable -->
