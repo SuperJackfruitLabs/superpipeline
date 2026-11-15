@@ -111,6 +111,8 @@ export interface ServicePrincipal {
    * (the hub's TOKEN_TTL).
    */
   scopes: string[];
+  /** Verified issuer expiry in absolute milliseconds; absent if not safely representable. */
+  expiresAt?: number;
 }
 
 /** The principal resolved from the bearer token (the OAuth Resource Server side, docs/05 §2). */

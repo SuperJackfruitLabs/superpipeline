@@ -1,6 +1,6 @@
 import { SELF, env } from 'cloudflare:test';
 import { describe, it, expect, beforeAll } from 'vitest';
-import { SignJWT, exportJWK, generateKeyPair } from 'jose';
+import { SignJWT, decodeJwt, exportJWK, generateKeyPair } from 'jose';
 import { setupCatalog } from './helpers/catalog';
 import { withOrgPlane, planeToken, planeEnv, ORG, OTHER_ORG, HUMAN, AGENT, SERVICE } from './helpers/org-plane';
 import { withIssuer } from './helpers/hub-issuer';
@@ -147,8 +147,9 @@ describe('plane mode — agent and service bearers', () => {
   it('resolves a service token with its grant scopes', async () => {
     await withOrgPlane(async () => {
       const tenantId = await ensureOrgTenant(env.DB, ORG);
-      const req = new Request('https://api.test/x', { headers: { Authorization: `Bearer ${await planeToken({ sub: SERVICE, principalKind: 'service', scope: 'evidence:read', email: undefined, email_verified: undefined })}` } });
-      expect(await resolveHubService(req, planeEnv())).toEqual({ principalId: SERVICE, tenantId, scopes: ['evidence:read'] });
+      const signed = await planeToken({ sub: SERVICE, principalKind: 'service', scope: 'evidence:read', email: undefined, email_verified: undefined });
+      const req = new Request('https://api.test/x', { headers: { Authorization: `Bearer ${signed}` } });
+      expect(await resolveHubService(req, planeEnv())).toEqual({ principalId: SERVICE, tenantId, scopes: ['evidence:read'], expiresAt: (decodeJwt(signed).exp ?? 0) * 1000 });
     });
   });
 });
