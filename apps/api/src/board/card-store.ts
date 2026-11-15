@@ -22,6 +22,7 @@ export type CardStoreDeps = Pick<
   | 'cardCost'
   | 'childrenCost'
   | 'ctx'
+  | 'commitEffects'
   | 'now'
   | 'nowMs'
   | 'openChildCount'
@@ -241,13 +242,19 @@ export function emit(deps: CardStoreDeps, type: string, payload: Record<string, 
   const seq = Number(deps.sql.exec(`SELECT last_insert_rowid() AS seq`).one().seq);
   if (isRecordEvent(type)) queueRecordPush(deps, type, seq, payload, ts);
   const msg = JSON.stringify({ kind: 'event', event: { seq, type, payload, ts } });
-  for (const ws of deps.ctx.getWebSockets()) {
-    try {
-      ws.send(msg);
-    } catch {
-      // drop broken sockets silently
+  const sockets = deps.ctx.getWebSockets();
+  const broadcast = (): undefined => {
+    for (const ws of sockets) {
+      try {
+        ws.send(msg);
+      } catch {
+        // drop broken sockets silently
+      }
     }
-  }
+    return undefined;
+  };
+  if (deps.commitEffects) deps.commitEffects.afterCommit(broadcast);
+  else broadcast();
 }
 
 /** Record an in-app notification for the card's owner and broadcast it (docs/07 §7). */

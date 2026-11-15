@@ -1,3 +1,4 @@
+import { CommitEffects } from './commit-effects';
 import type { Env } from '../env';
 import type { ServiceTokenCache } from '../superwitness/client';
 import type { BoardContext } from './context';
@@ -65,6 +66,7 @@ export type ShellRoutes = Pick<
 export function wireBoard(base: BoardBase, routes: ShellRoutes): BoardContext {
   const board: BoardContext = {
     sql: base.sql,
+    commitEffects: new CommitEffects(),
     ctx: base.ctx,
     env: base.env,
     reporterToken: base.reporterToken,
@@ -153,7 +155,7 @@ export function wireBoard(base: BoardBase, routes: ShellRoutes): BoardContext {
     rowToCard: (...a) => store.rowToCard(board, ...a),
     rowToReference: (...a) => references.rowToReference(...a),
     runJudgedByGate: (...a) => runReports.runJudgedByGate(board, ...a),
-    scheduleReclaim: (...a) => routes.scheduleReclaim(...a),
+    scheduleReclaim: (...a) => board.commitEffects?.alarm(() => routes.scheduleReclaim(...a)) ?? routes.scheduleReclaim(...a),
     setMeta: (...a) => store.setMeta(board, ...a),
     setNeedsHuman: (...a) => moves.setNeedsHuman(board, ...a),
     subjectExpired: (...a) => gateExpiry.subjectExpired(board, ...a),

@@ -41,7 +41,7 @@ export interface ProposedCheckpointReceipt {
 }
 export interface CheckpointCandidateDeps {
   sql: SqlStorage;
-  transaction<T>(fn: () => T): T;
+  transaction(fn: () => ProposedCheckpointReceipt): ProposedCheckpointReceipt;
   nowMs(): number;
   /** Re-read authoritative issuer context, policy, current run/card and stored claim snapshot. */
   reporter(): VerifiedCheckpointReporter;
