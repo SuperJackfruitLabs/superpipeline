@@ -1,5 +1,7 @@
 /** Private, default-disabled producer candidate. No HTTP/RPC entry imports it. */
 import { HEARTBEAT_TIMEOUT_MS } from './rules';
+import type { VerifiedCheckpointReporter } from '../auth/checkpoint-reporter';
+export type { VerifiedCheckpointReporter } from '../auth/checkpoint-reporter';
 import { canonicalCheckpoint, checkpointDigest } from './checkpoint-json';
 import {
   parseCheckpointSubmission,
@@ -8,14 +10,6 @@ import {
   type CheckpointSubmission,
 } from './checkpoint-proposal';
 
-export interface VerifiedCheckpointReporter {
-  principalId: string;
-  tenantId: string;
-  kind: 'service';
-  scopes: string[];
-  /** Absolute milliseconds from issuer-verified claims, never request JSON. */
-  expiresAt: number;
-}
 export interface CheckpointClaimSnapshot {
   tenantId: string;
   policy: CheckpointPolicy;

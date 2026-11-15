@@ -20,7 +20,11 @@ option is supplied. No production entry point imports it. It requires separate
 server-verified service identity/expiry and authoritative claim-time policy,
 executor/start-vector/bench/request bindings. The explicit source verifier must
 inspect trusted service/worker evidence; supplied flags and hashes are not proof.
-No source verifier or issuer adapter is implemented here.
+The private issuer adapter resolves the actual configured service-token path and
+requires the exact server-owned policy reporter, mapped tenant, submit scope and
+verified expiry. Body/header identity claims, agent/human credentials and another
+audience do not satisfy it. No public route imports it. Source verification and
+durable claim/source admission remain unfinished.
 
 After asynchronous verification, the candidate rechecks service expiry/scope,
 selected reporter, exact policy/claim binding, run status and heartbeat before
