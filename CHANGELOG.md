@@ -14,6 +14,10 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html). Entries g
 
 ## Unreleased
 
+### Fixed
+
+- Claims recheck their selected card, policy and eligibility after authorization waits and commit run/card ownership atomically. The disabled checkpoint candidate records an immutable pending policy with that transaction; source admission remains unwired.
+
 ## v0.0.32 — 2026-11-15
 
 ### Added
