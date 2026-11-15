@@ -102,6 +102,8 @@ async function fixture(
             benchKey: r.checkpoint.key,
             benchId: r.checkpoint.benchId,
             requestId: r.checkpoint.requestId,
+            sourceRequestSha256: r.sourceRequestSha256,
+            workerContextSha256: '4'.repeat(64),
             status: run.status,
             lastHeartbeatMs: run.last_heartbeat_ms,
           };

@@ -140,11 +140,25 @@ nor a pending policy record or delivered claimed event.
 
 The exported storage reader validates the stored row's shape and canonical policy;
 it does not independently verify a source or turn a policy digest into authority.
-Future binding must add a separate bind-once coordinator-owned source record,
-validate the pending policy against the current run and issuer, and retain exact
-bench/request/start-vector provenance before launch. The settlement candidate's
-current-run reader must join those stored facts rather than populate them from a
-submitted checkpoint report. No source-binding operation is implemented here.
+The separate private source-admission candidate now binds the prepared start
+vector, bench identity, planned request digest and worker context digest once.
+It validates the pending policy against current Board ownership and the verified
+reporter before hashing, then rechecks policy, ownership, heartbeat and reporter
+expiry/scope in the insertion transaction. Ignored inserts cannot acknowledge
+admission. Exact admission replay still requires active ownership; SQL guards
+prevent updates, deletion and replacement.
+
+Its current-run reader joins immutable stored source with actual Board SQL,
+instead of deriving source facts from a submitted checkpoint. Settlement binds
+the report's source request digest to that stored plan and passes the stored
+worker-context digest explicitly to the source verifier. The full stored plan
+remains part of the post-verification authority check. A real Board integration
+test checks completion and historical receipt replay, while explicitly stubbing
+service proof. A stored plan and its digest are not proof of launch, stopped
+writers, sealing or release. This candidate remains disabled, has no HTTP/RPC
+route and does not initialize its source table in the public Board path. The
+actual coordinator, control-pair checks, node observations and producer evidence
+must be wired and verified before enablement; no live grant or pilot is claimed.
 
 The Board trace correction is limited to its two existing characterization
 records: three schema statements and their schema entries, post-await metadata,

@@ -14,6 +14,10 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html). Entries g
 
 ## Unreleased
 
+### Added
+
+- A private, disabled checkpoint source-admission candidate binds a prepared source vector and worker-context digest to the actual pending claim. Settlement reads these stored facts and passes them to source verification; no public admission or settlement route is enabled.
+
 ### Fixed
 
 - Claims recheck their selected card, policy and eligibility after authorization waits and commit run/card ownership atomically. The disabled checkpoint candidate records an immutable pending policy with that transaction; source admission remains unwired.

@@ -19,6 +19,8 @@ export interface CheckpointClaimSnapshot {
   benchKey: string;
   benchId: string;
   requestId: string;
+  sourceRequestSha256: string;
+  workerContextSha256: string;
   status: string;
   lastHeartbeatMs: number;
 }
@@ -41,10 +43,12 @@ export interface CheckpointCandidateDeps {
   reporter(): VerifiedCheckpointReporter;
   current(): CheckpointClaimSnapshot;
   /** Must inspect exact trusted service/worker evidence; booleans/hashes supplied by a harness are not proof. */
-  verifySource(input: CheckpointSubmission): Promise<void>;
+  verifySource(input: CheckpointSubmission, source: CheckpointSourceExpectation): Promise<void>;
   /** Synchronous run/card/reference/outbox mutation, inside the SAME transaction. No awaits. */
   commit: (input: CheckpointSubmission, receipt: ProposedCheckpointReceipt) => undefined;
 }
+export type CheckpointSourceExpectation = Readonly<Pick<CheckpointClaimSnapshot,
+  'binding' | 'start' | 'benchKey' | 'benchId' | 'requestId' | 'sourceRequestSha256' | 'workerContextSha256'>>;
 interface StoredReceipt extends Record<string, SqlStorageValue> {
   request_digest: string;
   reporter_id: string;
@@ -119,6 +123,7 @@ function current(deps: CheckpointCandidateDeps, input: CheckpointSubmission, sna
     r.checkpoint.key !== snapshot.benchKey ||
     r.checkpoint.benchId !== snapshot.benchId ||
     r.checkpoint.requestId !== snapshot.requestId ||
+    r.sourceRequestSha256 !== snapshot.sourceRequestSha256 ||
     r.checkpoint.checkpointRepository !== p.checkpointRepository ||
     p.repositories.length !== r.checkpoint.members.length
   )
@@ -164,16 +169,21 @@ function existing(
   return JSON.parse(row.receipt);
 }
 
-function authority(snapshot: CheckpointClaimSnapshot): string {
-  return canonicalCheckpoint({
-    tenantId: snapshot.tenantId,
-    policy: snapshot.policy,
-    policyDigest: snapshot.policyDigest,
+function admittedSource(snapshot: CheckpointClaimSnapshot): CheckpointSourceExpectation {
+  return {
     binding: snapshot.binding,
     start: snapshot.start,
     benchKey: snapshot.benchKey,
     benchId: snapshot.benchId,
     requestId: snapshot.requestId,
+    sourceRequestSha256: snapshot.sourceRequestSha256,
+    workerContextSha256: snapshot.workerContextSha256,
+  };
+}
+function authority(snapshot: CheckpointClaimSnapshot): string {
+  return canonicalCheckpoint({
+    tenantId: snapshot.tenantId, policy: snapshot.policy, policyDigest: snapshot.policyDigest,
+    ...admittedSource(snapshot),
   });
 }
 export async function settleCheckpointCandidate(
@@ -193,7 +203,7 @@ export async function settleCheckpointCandidate(
   current(deps, input, snapshot);
   if ((await checkpointDigest(snapshot.policy)) !== snapshot.policyDigest) throw new Error('INVALID_CHECKPOINT');
   const frozen = authority(snapshot);
-  await deps.verifySource(input);
+  await deps.verifySource(input, admittedSource(snapshot));
   if (canonicalCheckpoint(input) !== canonicalInput) throw new Error('INVALID_CHECKPOINT');
   return deps.transaction(() => {
     const latest = deps.current();
