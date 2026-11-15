@@ -152,3 +152,19 @@ describe('agent SDK — dev headers (local only)', () => {
     expect(recorder.sent[0]!.headers['Authorization']).toBeUndefined();
   });
 });
+
+// Generic SDKs do not advertise checkpoint support. A mixed-version response
+// must not silently lose the required discriminator in the claim projection.
+it.each([
+  { checkpointClaim: { version: 'superpipeline.checkpoint-claim.v1' } },
+  { checkpointClaim: null },
+  { stage: { key: 'code', name: 'Code', checkpointPolicy: {} } },
+])('generic SDK refuses unsolicited checkpoint work before its handler', async (required) => {
+  let handled = false;
+  const sdk = new SuperpipelineAgent({ baseUrl: 'https://api.test', boardId: 'brd_sdkguard', token: 'spa_fixture',
+    fetch: async () => ({ ok: true, status: 200, json: async () => ({ claimed: true, runId: 'run_fixture', leaseEpoch: 1,
+      card: { id: 'card_fixture', title: 'Work', currentStageKey: 'code' }, stage: { key: 'code', name: 'Code' }, ...required }) }),
+  });
+  await expect(runOnce(sdk, async () => { handled = true; })).rejects.toThrow('checkpoint claim requires a dedicated coordinator');
+  expect(handled).toBe(false);
+});
