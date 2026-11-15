@@ -10,6 +10,7 @@
  */
 import { test, expect } from '@playwright/test';
 import { openRememberedBoard } from './support/seed';
+import { expectTouchHeight } from './support/touch-target';
 
 const BOARD_KEY = 'superpipeline.boardId';
 import { PORTS } from '../scripts/ports';
@@ -95,8 +96,7 @@ test.describe('on a phone', () => {
       // wait as the test above does; a link that never shows still fails here.
       const link = nav.getByRole('link', { name });
       await expect(link).toBeVisible();
-      const box = await link.boundingBox();
-      expect(box!.height).toBeGreaterThanOrEqual(44);
+      await expectTouchHeight(link);
     }
   });
 
