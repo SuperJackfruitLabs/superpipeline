@@ -295,9 +295,10 @@ export async function setStages(deps: PipelineDeps, stages: StageDef[], editor: 
   const ordered = [...stages]
     .map(normalizeStageRouting)
     .toSorted((a, b) => a.order - b.order);
-  const refused = refuseDecisionPolicyChange(deps.stages(), ordered, editor);
+  const before = deps.stages();
+  const refused = refuseDecisionPolicyChange(before, ordered, editor);
   if (refused) return refused;
-  const policyRefusal = checkpointPolicyWriteError(deps, deps.stages(), ordered, editor);
+  const policyRefusal = checkpointPolicyWriteError(deps, before, ordered, editor);
   if (policyRefusal) return policyRefusal;
   deps.setMeta('stages', JSON.stringify(ordered));
   deps.emit('board.stages_changed', { stages: ordered });
@@ -399,7 +400,7 @@ export async function updateStage(deps: PipelineDeps, stageKey: string, patch: S
   const ordered = stages.map((s, i) => (i === index ? normalized : s));
   const refused = refuseDecisionPolicyChange(stages, ordered, editor);
   if (refused) return refused;
-  const policyRefusal = checkpointPolicyWriteError(deps, deps.stages(), ordered, editor);
+  const policyRefusal = checkpointPolicyWriteError(deps, stages, ordered, editor);
   if (policyRefusal) return policyRefusal;
   deps.setMeta('stages', JSON.stringify(ordered));
   deps.emit('board.stages_changed', { stages: ordered });
