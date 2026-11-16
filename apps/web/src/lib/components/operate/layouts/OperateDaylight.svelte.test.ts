@@ -10,6 +10,23 @@ afterEach(cleanup);
 const agentpod = () => screen.getByRole('article', { name: /^AgentPod/ });
 
 describe('OperateDaylight', () => {
+  it('shows the artifact and pinned SuperLibrary version for a review row', () => {
+    const base = fakeModel();
+    const source = base.needs[0];
+    if (!source) throw new Error('fixture needs a review row source');
+    const review = {
+      ...source,
+      item: { ...source.item, kind: 'review' as const },
+      gate: {
+        id: 'gat_1', cardId: source.item.cardId, stageKey: 'review', status: 'pending', options: [], producedBy: 'agt_1',
+        references: [{ id: 'ref_1', cardId: source.item.cardId, url: 'https://app.superlibrary.dev/a/itm_3333333333333333', title: 'Approval spec', provider: 'superlibrary', sourceType: 'artifact', metadata: { version: 5 }, addedBy: 'agent' as const }],
+      },
+    };
+    render(OperateDaylight, { model: fakeModel({ needs: [review], needsUrgent: [review] }) });
+    expect(screen.getByRole('link', { name: 'Approval spec' }).getAttribute('href')).toBe('https://app.superlibrary.dev/a/itm_3333333333333333/v/5');
+    expect(screen.getByText(/version 5/)).toBeTruthy();
+  });
+
   it('Show all expands the agent’s words and says Show less', async () => {
     render(OperateDaylight, { model: fakeModel() });
     const btn = within(agentpod()).getByRole('button', { name: 'Show all' });

@@ -43,6 +43,7 @@ export type GatesDeps = Pick<
   | 'parkForHuman'
   | 'parseHandoff'
   | 'reportRun'
+  | 'rowToReference'
   | 'runJudgedByGate'
   | 'scheduleReclaim'
   | 'setNeedsHuman'
@@ -662,6 +663,7 @@ function rowToGate(deps: GatesDeps, r: Row): GateView {
     decidedBy: (r.decided_by as string | null) ?? null,
     comment: (r.comment as string | null) ?? null,
     resolvedAt: (r.resolved_at as string | null) ?? null,
+    references: gateReferences(deps, r),
     ...(approvalSubject
       ? { approvalSubject }
       : variants.length > 0
@@ -674,6 +676,15 @@ function rowToGate(deps: GatesDeps, r: Row): GateView {
     ...holdFields(r),
     ...gateChecksField(deps.sql, r),
   };
+}
+
+/** References attached by the run whose work this gate judges, never stale card-wide links. */
+function gateReferences(deps: GatesDeps, gate: Row): GateView['references'] {
+  if (typeof gate.run_id !== 'string') return [];
+  return deps.sql
+    .exec(`SELECT * FROM card_references WHERE run_id = ? ORDER BY created_at ASC`, gate.run_id)
+    .toArray()
+    .map((row) => deps.rowToReference(row));
 }
 
 /**
@@ -785,6 +796,7 @@ function gatePendingBody(deps: GatesDeps, gate: Row): GatePendingBody | null {
     returnStageKey: gate.return_stage_key as string,
     cardTitle: card.title,
     producedBy: gate.produced_by as string,
+    references: gateReferences(deps, gate),
     // What the reviewer is being asked to approve.
     //
     // Without it a gate asks someone to approve work they cannot see, and

@@ -8,6 +8,7 @@
   import { Button, Face, Segmented } from '@superjackfruit/vibekit';
   import LineIcon from '$lib/components/parts/LineIcon.svelte';
   import BoardChip from '$lib/components/inbox/BoardChip.svelte';
+  import GateReferences from '$lib/components/card/gate/GateReferences.svelte';
   import { acrossBoards, askBoards } from '$lib/components/inbox/inbox-words';
   import { moveTargets } from '../operate-data';
   import { CapsUi, OperateUi } from '../operate-ui.svelte';
@@ -83,6 +84,7 @@
             {:else if row.item.detail}
               <div class="bubble" data-reveal><p>{ui.expanded[id] ? row.item.detail : cut140(row.item.detail)}</p>{#if row.item.detail.length > 140}<button class="bubble__more" type="button" aria-expanded={ui.expanded[id] ? 'true' : 'false'} onclick={() => ui.toggle(id)}>{ui.expanded[id] ? 'Show less' : 'Show all'}</button>{/if}</div>
             {/if}
+            {#if row.gate}<GateReferences references={row.gate.references ?? []} />{/if}
             {#if !noOwner}<p class="hint">{stopHint(row.item)}</p>{/if}
             {#if ui.resuming === id}
               <form class="resume" aria-label="Resume {row.agentName ?? 'this card'}" onsubmit={(e) => { e.preventDefault(); void ui.send(row); }}>

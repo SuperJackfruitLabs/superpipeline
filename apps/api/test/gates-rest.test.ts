@@ -65,13 +65,19 @@ async function gateIdOf(boardId: string): Promise<string> {
   return body.gates[0]!.id;
 }
 
-async function linkArtifact(boardId: string, run: { runId: string; leaseEpoch: number }, agentId: string, version: number): Promise<void> {
+async function linkArtifact(
+  boardId: string,
+  run: { runId: string; leaseEpoch: number },
+  agentId: string,
+  version: number,
+  url = 'https://app.superlibrary.dev/a/itm_0123456789abcdef',
+): Promise<void> {
   const res = await SELF.fetch(`https://api.test/v1/boards/${boardId}/runs/${run.runId}/references`, {
     method: 'POST',
     headers: headers({ 'X-Agent-Id': agentId }),
     body: JSON.stringify({
       leaseEpoch: run.leaseEpoch,
-      url: 'https://app.superlibrary.dev/a/itm_0123456789abcdef',
+      url,
       provider: 'superlibrary',
       sourceType: 'artifact',
       metadata: { version },
@@ -119,6 +125,58 @@ describe('gate REST surface', () => {
       state: 'submitted',
     });
     expect(JSON.stringify(card.handoff)).toMatch(/refused.*superlibrary.*(this|current) run/i);
+  });
+
+  it('shows only the opening run references and their SuperLibrary versions on the web and chat gate surfaces', async () => {
+    // Regression caught: removing run-scoped references (or their metadata.version) from either gate
+    // surface makes a reviewer approve only the prose summary, without the exact artifact it names.
+    const boardId = await createBoard(ARTIFACT_REVIEW_PIPELINE);
+    await addCard(boardId);
+
+    const first = await claim(boardId, 'agt_r', 'research');
+    const staleUrl = 'https://app.superlibrary.dev/a/itm_1111111111111111';
+    await linkArtifact(boardId, first, 'agt_r', 1, staleUrl);
+    await SELF.fetch(`https://api.test/v1/boards/${boardId}/runs/${first.runId}/complete`, {
+      method: 'POST',
+      headers: headers({ 'X-Agent-Id': 'agt_r' }),
+      body: JSON.stringify({ leaseEpoch: first.leaseEpoch, handoff: { summary: 'spec v1' } }),
+    });
+    const firstGate = await gateIdOf(boardId);
+    await SELF.fetch(`https://api.test/v1/boards/${boardId}/gates/${firstGate}/resolve`, {
+      method: 'POST',
+      headers: headers({ 'X-User-Id': 'usr_x' }),
+      body: JSON.stringify({ decision: 'request_changes', comment: 'Revise the spec.' }),
+    });
+
+    const revised = await claim(boardId, 'agt_r', 'research');
+    const currentUrl = 'https://app.superlibrary.dev/a/itm_2222222222222222';
+    await linkArtifact(boardId, revised, 'agt_r', 2, currentUrl);
+    await SELF.fetch(`https://api.test/v1/boards/${boardId}/runs/${revised.runId}/complete`, {
+      method: 'POST',
+      headers: headers({ 'X-Agent-Id': 'agt_r' }),
+      body: JSON.stringify({ leaseEpoch: revised.leaseEpoch, handoff: { summary: 'spec v2' } }),
+    });
+
+    const web = await (
+      await SELF.fetch(`https://api.test/v1/boards/${boardId}`, { headers: headers() })
+    ).json<{ gates: Array<{ summary?: string; references?: unknown[] }> }>();
+    const chat = await (
+      await SELF.fetch(`https://api.test/v1/boards/${boardId}/gates/pending`, { headers: headers() })
+    ).json<{ gates: Array<{ handoffSummary: string | null; references?: unknown[] }> }>();
+    const expected = [
+      expect.objectContaining({
+        url: currentUrl,
+        provider: 'superlibrary',
+        sourceType: 'artifact',
+        metadata: { version: 2 },
+      }),
+    ];
+
+    expect(web.gates).toHaveLength(1);
+    expect(web.gates[0]).toMatchObject({ summary: 'spec v2', references: expected });
+    expect(chat.gates).toHaveLength(1);
+    expect(chat.gates[0]).toMatchObject({ handoffSummary: 'spec v2', references: expected });
+    expect(JSON.stringify({ web: web.gates[0], chat: chat.gates[0] })).not.toContain(staleUrl);
   });
 
   it('accepts an artifact a person linked for the current run', async () => {

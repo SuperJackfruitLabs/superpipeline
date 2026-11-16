@@ -25,6 +25,7 @@ export function needRows(board: BoardSnapshot, agents: AgentSummary[], items: At
       iconUrl: agentId ? (agents.find((a) => a.id === agentId)?.iconUrl ?? null) : null,
       actions: item.actions,
       overdue: overdue(card.dueAt, card.state, today),
+      gate: board.gates.find((gate) => gate.cardId === item.cardId && gate.status === 'pending') ?? null,
     }];
   });
 }

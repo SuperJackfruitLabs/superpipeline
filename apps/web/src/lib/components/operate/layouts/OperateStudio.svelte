@@ -1,6 +1,7 @@
 <!-- apps/web/src/lib/components/operate/layouts/OperateStudio.svelte -->
 <script lang="ts">
   import BoardChip from '$lib/components/inbox/BoardChip.svelte';
+  import GateReferences from '$lib/components/card/gate/GateReferences.svelte';
   import { acrossBoards, askBoards, CHECKING, inboxCounts, inboxSubline, wantYou } from '$lib/components/inbox/inbox-words';
   import { greetNamed } from '$lib/greet';
   import { viewport } from '$lib/viewport.svelte';
@@ -142,6 +143,7 @@
                 {:else}
                   <p class="op-why" class:clamp={!ui.expanded[id]} bind:this={whys[id]}>{row.item.detail ?? row.item.headline}</p>
                   {#if clamped[id] || ui.expanded[id]}<button class="ar-lk" type="button" aria-expanded={ui.expanded[id] ? 'true' : 'false'} onclick={() => ui.toggle(id)}>{ui.expanded[id] ? 'Show less' : 'Show all'}</button>{/if}
+                  {#if row.gate}<GateReferences references={row.gate.references ?? []} />{/if}
                 {/if}
               </td>
               <td>

@@ -1,4 +1,5 @@
 /** Approval gates and questions, and deciding them. */
+import type { Reference } from './references';
 import { fetch, headers, noteAuth } from './client';
 
 export interface GateOption {
@@ -49,6 +50,8 @@ export interface Gate {
   resolvedAt?: string | null;
   /** What is being approved — the readable part of the handoff. On pending gates in the snapshot. Text only. */
   summary?: string | null;
+  /** References attached by the run whose work this gate judges; empty when it attached none. */
+  references?: Reference[];
   approvalSubject?: {
     id: string;
     digest: string;

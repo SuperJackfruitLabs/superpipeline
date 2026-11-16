@@ -18,6 +18,8 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html). Entries g
 
 - Stage completion no longer accepts an earlier run's artifact reference, and reference provenance
   is derived from the authenticated caller so an agent cannot claim a person attached its artifact.
+- Approval gates and Operate now show the opening run's linked artifacts and pin known SuperLibrary
+  versions, with an explicit message when the run linked none.
 
 ## v0.0.32 — 2026-11-15
 

@@ -92,6 +92,9 @@ how much of the handoff schema is fixed vs free-form per board.
 A gate is the product's signature feature. It is **not** a new state — it is an
 `input-required` task carrying a `select` signal that renders typed actions:
 
+The gate and Operate views list every reference linked by the run being reviewed, including a
+SuperLibrary version and version-pinned link when known, or say when that run linked no artifact.
+
 - **Approve** → card advances to the next stage (new Task created there).
 - **Request changes** → the *same stage* re-opens with the human's feedback delivered to the
   agent as a `prompt`; a new Run (attempt) begins. The task returns to `working`.

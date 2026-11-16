@@ -19,6 +19,7 @@
   import type { CardLead } from '../card-lead';
   import type { CardAgent } from '../layouts/types';
   import { GATE_NOTE_MAX, GateDecisionModel, roleOf, sealOf } from './gate-decision.svelte';
+  import GateReferences from './GateReferences.svelte';
 
   /** `showLead` false: the caller already says the agent's sentence. */
   let { boardId, gate, error, onResponse, agent, lead, conflict = null, onRefresh = async () => {}, part = 'all', personName = 'there', showLead = true }: {
@@ -67,6 +68,7 @@
       <div><span class="n">{name}</span>{#if lead.at}<p class="pcs-small">{paperWhen(lead.at, new Date().toISOString())}</p>{/if}</div>
     </div>
   {/if}
+  <GateReferences references={gate.references ?? []} />
   {#if subject}
     <details class="pcs-enc" open>
       <summary><span class="t">Enclosed: the approval subject</span><span class="pcs-small">· revision {subject.revision}</span></summary>

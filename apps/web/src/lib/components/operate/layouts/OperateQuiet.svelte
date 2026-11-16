@@ -1,6 +1,7 @@
 <!-- apps/web/src/lib/components/operate/layouts/OperateQuiet.svelte -->
 <script lang="ts">
   import BoardChip from '$lib/components/inbox/BoardChip.svelte';
+  import GateReferences from '$lib/components/card/gate/GateReferences.svelte';
   import { acrossBoards, askBoards, CHECKING, inboxCounts, inboxSubline, wantYou } from '$lib/components/inbox/inbox-words';
   import { greetNamed } from '$lib/greet';
   import { viewport } from '$lib/viewport.svelte';
@@ -55,6 +56,7 @@
       {:else}
         <dl class="dl"><dt>Why it stopped</dt><dd>{row.item.detail ?? row.item.headline}</dd><dt>What to do</dt><dd>{stopHint(row.item)}</dd></dl>
       {/if}
+      {#if row.gate}<GateReferences references={row.gate.references ?? []} />{/if}
       {#if ui.resuming === id}
         <fieldset class="form"><legend>Resume this card</legend>
           <label class="lbl">Resume at<select class="inp" id="resume-at-{id}" bind:value={ui.resumeAt}>{#each resumeOptions(row.stages, row.item.stageKey) as o (o.key)}<option value={o.key}>{o.label}</option>{/each}</select></label>

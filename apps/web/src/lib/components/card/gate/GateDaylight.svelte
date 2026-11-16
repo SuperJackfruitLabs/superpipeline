@@ -19,6 +19,7 @@
   import type { CardLead } from '../card-lead';
   import type { CardAgent } from '../layouts/types';
   import { GATE_NOTE_MAX, GateDecisionModel, roleOf, sealOf } from './gate-decision.svelte';
+  import GateReferences from './GateReferences.svelte';
 
   let { boardId, gate, error, onResponse, agent, lead, conflict = null, onRefresh = async () => {}, part = 'all' }: {
     boardId: string; gate: Gate; error: string | null; onResponse: (d: GateDecision, r: Response) => Promise<boolean>;
@@ -68,6 +69,7 @@
       {#if lead.at}<span class="ds-time">{whenLabel(lead.at, new Date())}</span>{/if}
     </div>
   </div>
+  <GateReferences references={gate.references ?? []} />
   <span class="ds-flag"><Icon name="flag" size={16} /> Awaiting your review</span>
   {#if subject}
     <div class="ds-post">
