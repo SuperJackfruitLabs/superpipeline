@@ -14,6 +14,8 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html). Entries g
 
 ## Unreleased
 
+## v0.0.33 — 2026-11-16
+
 ### Fixed
 
 - Stage completion no longer accepts an earlier run's artifact reference, and reference provenance
