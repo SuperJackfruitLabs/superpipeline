@@ -36,6 +36,7 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html). Entries g
 
 ### Fixed
 
+- Test ordinary claim parity across legacy and negotiated protocol paths, including reservations, ownership, reporting and refusals.
 - Browser logo checks assert the fixed brand colour for each theme, including Studio dark.
 - Claims recheck their selected card, policy and eligibility after authorization waits and commit run/card ownership atomically. The disabled checkpoint candidate records an immutable pending policy with that transaction; source admission remains unwired.
 - The disabled checkpoint settlement candidate reads back its durable receipt before advancing work and prevents stored receipt updates, deletion and replacement.
