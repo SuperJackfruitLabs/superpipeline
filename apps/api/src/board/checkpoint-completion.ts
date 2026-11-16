@@ -55,7 +55,12 @@ export function commitCheckpointCompletion(board: BoardContext, submission: Chec
   const requirement = override ?? stage.completion;
   if (requirement) {
     const references = board.sql
-      .exec('SELECT provider,source_type FROM card_references WHERE card_id=?', binding.cardId)
+      .exec(
+        `SELECT provider,source_type FROM card_references
+         WHERE card_id=? AND (run_id=? OR added_by='user')`,
+        binding.cardId,
+        binding.runId,
+      )
       .toArray()
       .map((row) => {
         if (typeof row.provider !== 'string' || typeof row.source_type !== 'string')
@@ -71,7 +76,9 @@ export function commitCheckpointCompletion(board: BoardContext, submission: Chec
     { returnsSoFar: Number(board.getCardRow(card.id)?.auto_returns ?? 0), limit: CIRCUIT_BREAKER_LIMIT },
   );
   if (route.kind === 'refuse') throw new Error('INVALID_OUTCOME');
-  commitCompletion(board, input, authorized.run, card, stages, null, true);
+  const completion = commitCompletion(board, input, authorized.run, card, stages, null, true);
+  // A refusal must roll back the owned transaction, including references and receipt.
+  if (completion !== undefined) throw new Error('COMPLETION_REQUIRED');
   // The owned effect scope queues this alarm until the receipt/run transaction commits.
   void board.scheduleReclaim();
   return undefined;
