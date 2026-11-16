@@ -33,6 +33,7 @@ async function fixture(
   test: (d: CheckpointCandidateDeps, b: BoardContext, state: DurableObjectState, raw: Uint8Array) => Promise<void>,
   next?: Partial<StageDef>,
   provider: 'forge' | 'github' = 'forge',
+  completion?: StageDef['completion'],
 ): Promise<void> {
   const id = `brd_realcandidate${serial++}`;
   await withReporting(() =>
@@ -45,7 +46,7 @@ async function fixture(
         tenantId: 'tnt_realcandidate',
         name: 'Real candidate',
         stages: [
-          { key: 'test', name: 'Test', order: 0, ownerKind: 'capability', owner: 'code', checkpointPolicy: policy },
+          { key: 'test', name: 'Test', order: 0, ownerKind: 'capability', owner: 'code', checkpointPolicy: policy, ...(completion ? { completion } : {}) },
           { key: 'review', name: 'Review', order: 1, ownerKind: 'human', ...next },
         ],
       });
@@ -142,6 +143,27 @@ it('real completion helper commits run/card/outbox and receipt in one outer tran
       JSON.stringify(parseCheckpointSubmission(raw).handoff),
     );
   }));
+it.each(['earlier-run', 'current-run', 'user'] as const)('settlement applies current-run reference provenance to %s links', (origin) =>
+  fixture(async (d, b, state, raw) => {
+    const input = parseCheckpointSubmission(raw);
+    const added = await b.addReference({ cardId: input.checkpoint.binding.cardId,
+      url: 'https://forge.example.test/example/repository/pulls/1', provider: 'forge', sourceType: 'pull_request',
+      addedBy: origin === 'user' ? 'user' : 'agent',
+      ...(origin === 'user' ? {} : { runId: origin === 'current-run' ? input.checkpoint.binding.runId : 'run_previous' }) });
+    if (!added.ok) throw new Error(added.message);
+    const snapshot = () => Object.fromEntries(['cards', 'runs', 'events', 'run_reports', 'card_references', 'proposed_checkpoint_receipts']
+      .map((table) => [table, state.storage.sql.exec(`SELECT * FROM ${table} ORDER BY rowid`).toArray()]));
+    if (origin === 'earlier-run') {
+      const before = snapshot();
+      await expect(settleCheckpointCandidate(d, raw, { privateTestOnly: true })).rejects.toThrow('COMPLETION_REQUIRED');
+      expect(snapshot()).toEqual(before);
+      expect(b.getRunRow(input.checkpoint.binding.runId)?.status).toBe('working');
+    } else {
+      await settleCheckpointCandidate(d, raw, { privateTestOnly: true });
+      expect(b.getRunRow(input.checkpoint.binding.runId)).toMatchObject({ status: 'ended', outcome: 'completed' });
+      expect(state.storage.sql.exec('SELECT * FROM proposed_checkpoint_receipts').toArray()).toHaveLength(1);
+    }
+  }, undefined, 'forge', { reference: { provider: 'forge', sourceType: 'pull_request' } }));
 it('late outbox SQL failure rolls back real run/card/events/receipt and publishes no effects', () =>
   fixture(async (d, b, state, raw) => {
     const socket = new WebSocketPair();
