@@ -14,10 +14,13 @@ export function checkpointPolicyFieldError(value: unknown, enabled: boolean): st
     return null;
   } catch { return 'checkpointPolicy is invalid'; }
 }
+function policyValue(stages: StageDef[], key: string): string {
+  const value = stages.find((stage) => stage.key === key)?.checkpointPolicy;
+  return value === undefined ? '<absent>' : canonicalCheckpoint(value);
+}
 export function changedCheckpointStages(before: StageDef[], after: StageDef[]): string[] {
   const keys = new Set([...before.map((stage) => stage.key), ...after.map((stage) => stage.key)]);
-  return [...keys].filter((key) => canonicalCheckpoint(before.find((stage) => stage.key === key)?.checkpointPolicy ?? null) !==
-    canonicalCheckpoint(after.find((stage) => stage.key === key)?.checkpointPolicy ?? null));
+  return [...keys].filter((key) => policyValue(before, key) !== policyValue(after, key));
 }
 export function checkpointPolicyWriteError(board: Pick<BoardContext, 'sql' | 'env'>,
   before: StageDef[], after: StageDef[], editor: StageEditor): Result<never> | null {
@@ -25,7 +28,7 @@ export function checkpointPolicyWriteError(board: Pick<BoardContext, 'sql' | 'en
   if (!changed.length) return null;
   if (board.env.PROPOSED_CHECKPOINT_POLICY !== 'true')
     return { ok: false, code: 'INVALID_STAGES', message: 'checkpointPolicy is proposed and not enabled' };
-  if (editor.mayChangeDecisionPolicy !== true)
+  if (!editor.mayChangeDecisionPolicy)
     return { ok: false, code: 'WORKSPACE_ADMIN_REQUIRED', message: 'only a workspace owner or admin can administer checkpoint policy' };
   for (const key of changed) {
     // Include suspended human-input work as well as a live writer. No await occurs

@@ -1,3 +1,4 @@
+import { changedCheckpointStages } from '../src/board/checkpoint-policy-admin';
 import { stageWriteInput } from '../src/routes/boards/checkpoint-policy-input';
 import { env, runInDurableObject } from 'cloudflare:test';
 import { beforeAll, expect, it, vi } from 'vitest';
@@ -92,12 +93,12 @@ it.each([null, {}, { ...policy, extra: true }, { ...policy, checkpointRepository
 }));
 it('independently refuses direct initialization when disabled or without policy administration authority', () => fixture(async ({ id, tenant, stub, enable }) => {
   await onBoard(stub, async (board) => {
-    await expect(Reflect.apply(board.init, board, [{ id, tenantId: tenant, name: 'RPC off', stages: [stage] }, admin])).rejects.toThrow();
+    await expect(board.init({ id, tenantId: tenant, name: 'RPC off', stages: [stage] }, admin)).rejects.toThrow('checkpointPolicy is proposed and not enabled');
     expect((await board.getState()).boardId).toBeNull();
   });
   await enable(true);
   await onBoard(stub, async (board) => {
-    await expect(board.init({ id, tenantId: tenant, name: 'RPC unprivileged', stages: [stage] })).rejects.toThrow();
+    await expect(board.init({ id, tenantId: tenant, name: 'RPC unprivileged', stages: [stage] })).rejects.toThrow('WORKSPACE_ADMIN_REQUIRED');
     expect((await board.getState()).boardId).toBeNull();
   });
 }));
@@ -163,7 +164,7 @@ it('blocks policy change and removal for a live required run, preserving the ori
 it('independently validates direct initialization and refuses removal after its private gate is disabled', () => fixture(async ({ id, tenant, stub, enable }) => {
   await enable(true);
   await onBoard(stub, async (board) => {
-    await expect(board.init({ id, tenantId: tenant, name: 'Malformed RPC', stages: [{ ...stage, checkpointPolicy: { ...policy, checkpointRepository: 'foreign' } }] }, admin)).rejects.toThrow();
+    await expect(board.init({ id, tenantId: tenant, name: 'Malformed RPC', stages: [{ ...stage, checkpointPolicy: { ...policy, checkpointRepository: 'foreign' } }] }, admin)).rejects.toThrow('checkpointPolicy is invalid');
     expect((await board.getState()).boardId).toBeNull();
     await board.init({ id, tenantId: tenant, name: 'Valid RPC', stages: [stage] }, admin);
   });
@@ -186,4 +187,13 @@ it('cancels an oversized private write stream at the actual byte bound without b
   await expect(stageWriteInput(request, true)).rejects.toThrow('64 KiB');
   expect(pulls).toBe(2); expect(cancelled).toBe(true); expect(body.locked).toBe(false);
   expect(text).not.toHaveBeenCalled();
+});
+
+it('compares absence without admitting null into the strict canonicalizer and ignores policy property ordering', () => {
+  expect(changedCheckpointStages([], [plain])).toEqual([]);
+  expect(changedCheckpointStages([plain], [])).toEqual([]);
+  expect(changedCheckpointStages([plain], [stage])).toEqual(['code']);
+  expect(changedCheckpointStages([stage], [plain])).toEqual(['code']);
+  const reordered = parseCheckpointPolicy(new TextEncoder().encode(JSON.stringify(Object.fromEntries(Object.entries(policy).reverse()))));
+  expect(changedCheckpointStages([stage], [{ ...stage, checkpointPolicy: reordered }])).toEqual([]);
 });
