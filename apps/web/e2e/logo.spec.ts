@@ -28,11 +28,8 @@ for (const vibe of VIBES) {
         expect(box.width).toBeGreaterThanOrEqual(20);
         expect(box.height).toBe(box.width);
         await expect(mark).toHaveAttribute('aria-hidden', 'true');
-        // Amber on a light tile, white on a dark one, whatever the page theme (Studio's tile stays light).
-        const ground = await home.evaluate((a) => getComputedStyle(a).backgroundColor);
-        const [r, g, b] = ground.match(/\d+(\.\d+)?/g)!.map(Number);
-        const light = 0.2126 * r! + 0.7152 * g! + 0.0722 * b! > 128;
-        await expect(mark).toHaveCSS('color', light ? AMBER : WHITE);
+        // Brand colours are fixed by design: Studio keeps a light tile even in dark mode.
+        await expect(mark).toHaveCSS('color', vibe === 'daylight' && theme === 'dark' ? WHITE : AMBER);
       } else {
         await expect(mark).toHaveCount(0);
         await expect(home).toHaveText(/Superpipeline/);

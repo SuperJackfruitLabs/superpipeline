@@ -36,6 +36,7 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html). Entries g
 
 ### Fixed
 
+- Browser logo checks assert the fixed brand colour for each theme, including Studio dark.
 - Claims recheck their selected card, policy and eligibility after authorization waits and commit run/card ownership atomically. The disabled checkpoint candidate records an immutable pending policy with that transaction; source admission remains unwired.
 - The disabled checkpoint settlement candidate reads back its durable receipt before advancing work and prevents stored receipt updates, deletion and replacement.
 - Stage completion no longer accepts an earlier run's artifact reference, and reference provenance
