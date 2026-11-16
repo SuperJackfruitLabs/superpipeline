@@ -32,6 +32,7 @@ const MAX_AUTOMATIC_RETURNS = CIRCUIT_BREAKER_LIMIT;
  * Callers authorize/prepare first. outerTransaction means the caller already owns
  * the SQL transaction; ordinary calls retain their original approval-only boundary.
  * Alarm arming and the final post-await card read remain with the caller.
+ * A reference refusal returns the response handoff decoration for that read.
  */
 export function commitCompletion(
   deps: CompletionCommitDeps,
@@ -41,7 +42,7 @@ export function commitCompletion(
   stages: StageDef[],
   approvalSubject: PreparedApproval | null,
   outerTransaction = false,
-): undefined {
+): JsonValue | undefined {
   const cardId = run.card_id;
   if (typeof cardId !== 'string') throw new Error('invalid completion run card');
   const now = deps.now();
@@ -152,6 +153,12 @@ export function commitCompletion(
       now,
     );
     deps.reportRun(input.runId);
+    if (requirement?.reference) {
+      return {
+        feedback: `Your handoff was refused: ${why}. Finish this stage again and include what is missing.`,
+        refusedHandoff: input.handoff ?? null,
+      };
+    }
     return undefined;
   }
 
