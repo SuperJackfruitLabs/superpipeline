@@ -213,10 +213,10 @@ it('preserves nullable ordinary stage patches without widening checkpoint protoc
   expect(() => parseCheckpointJSON(new TextEncoder().encode('{"instructions":null}'))).toThrow('INVALID_CHECKPOINT');
 }));
 
+const stageBytes = (text: string) => new TextEncoder().encode(text);
 it('keeps the general stage envelope lexically strict while retaining JSON scalar grammar', () => {
-  const bytes = (text: string) => new TextEncoder().encode(text);
-  expect(parseStageEnvelopeJSON(bytes('{"instructions":null,"order":-0.5,"extra":1e2}'))).toEqual({ instructions: null, order: -0.5, extra: 100 });
-  for (const raw of [bytes('{"stages":[],"stages":[]}'), bytes('{"instructions":"\\ud800"}'), new Uint8Array([123, 34, 120, 34, 58, 34, 255, 34, 125])])
+  expect(parseStageEnvelopeJSON(stageBytes('{"instructions":null,"order":-0.5,"extra":1e2}'))).toEqual({ instructions: null, order: -0.5, extra: 100 });
+  for (const raw of [stageBytes('{"stages":[],"stages":[]}'), stageBytes('{"instructions":"\\ud800"}'), new Uint8Array([123, 34, 120, 34, 58, 34, 255, 34, 125])])
     expect(() => parseStageEnvelopeJSON(raw)).toThrow('INVALID_STAGE_WRITE');
-  expect(() => parseCheckpointJSON(bytes('{"order":-0.5}'))).toThrow('INVALID_CHECKPOINT');
+  expect(() => parseCheckpointJSON(stageBytes('{"order":-0.5}'))).toThrow('INVALID_CHECKPOINT');
 });
