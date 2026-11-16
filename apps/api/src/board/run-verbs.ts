@@ -231,9 +231,11 @@ export async function complete(deps: RunVerbsDeps, input: CompleteVerbInput): Pr
       return { ok: false, code: 'CHECKPOINT_REQUIRED', message: 'this stage requires coordinator checkpoint settlement, which is not enabled' };
     }
   }
-  commitCompletion(deps, input, run, card, stages, approvalSubject);
+  const referenceRefusal = commitCompletion(deps, input, run, card, stages, approvalSubject);
   await deps.scheduleReclaim();
-  return { ok: true, value: deps.mustGetCard(cardId) };
+  const value = deps.mustGetCard(cardId);
+  const response = referenceRefusal === undefined ? value : { ...value, handoff: referenceRefusal };
+  return { ok: true, value: response };
 }
 
 /**
