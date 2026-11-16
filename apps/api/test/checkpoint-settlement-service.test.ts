@@ -131,7 +131,12 @@ it('enforces independent Board default-off before touching caller bytes and leav
 
 it('rolls back the whole real completion when receipt insertion is ignored', () => fixture(async (f) => {
   // Inject the failure into the actual receipt table used by the service transaction.
-  await f.inspect(async (_board, _context, state) => {
+  await f.inspect(async (_board, context, state) => {
+    // Observe rollback independently of the ordinary reporter's concurrent retry alarm.
+    // Keep every outbox column in the assertion; do not hide a settlement mutation.
+    await state.storage.deleteAlarm();
+    if (context.reportDrain) await context.reportDrain;
+    await state.storage.deleteAlarm();
     const { createProposedCheckpointTables } = await import('../src/board/checkpoint-candidate');
     createProposedCheckpointTables(state.storage.sql);
     state.storage.sql.exec(`CREATE TRIGGER ignore_service_receipt BEFORE INSERT ON proposed_checkpoint_receipts BEGIN SELECT RAISE(IGNORE); END`);

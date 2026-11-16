@@ -1,3 +1,5 @@
+import { createCheckpointClaimTables } from './checkpoint-claims';
+import { CommitEffects } from './commit-effects';
 /** Proposed private administration gate; no deployment configuration enables it. */
 import type { BoardContext } from './context';
 import type { Result, StageDef, StageEditor } from './model';
@@ -38,4 +40,10 @@ export function checkpointPolicyWriteError(board: Pick<BoardContext, 'sql' | 'en
       return { ok: false, code: 'STAGE_NOT_EMPTY', message: `checkpoint policy on stage "${key}" cannot change while work is active` };
   }
   return null;
+}
+
+/** Called only after policy authorization/validation, immediately before the durable stage write. */
+export function prepareCheckpointPolicy(board: Pick<BoardContext, 'sql' | 'env' | 'commitEffects'>, stages: StageDef[]): void {
+  if (board.env.PROPOSED_CHECKPOINT_POLICY === 'true') board.commitEffects ??= new CommitEffects();
+  if (stages.some((stage) => stage.checkpointPolicy !== undefined)) createCheckpointClaimTables(board.sql);
 }

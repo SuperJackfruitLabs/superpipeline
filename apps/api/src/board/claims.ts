@@ -1,3 +1,5 @@
+import { parseHandoff } from './card-store';
+import { CommitEffects } from './commit-effects';
 import { type ClaimReason, needsYou, stageCapabilitiesMet } from '@superpipeline/contract';
 import { checkpointDigest } from './checkpoint-json';
 import { parseCheckpointPolicy } from './checkpoint-proposal';
@@ -102,7 +104,8 @@ export async function claim(deps: ClaimsDeps, input: Claimant & { profileKey?: s
   const [first] = claimantRefusals(deps, input);
   if (first) return refused(first);
 
-  const claimableKeys = claimableStageKeys(deps, input.agentId, input.capabilities, input.checkpointProtocol, input.checkpointOnly);
+  const selectedStages = deps.stages();
+  const claimableKeys = claimableStageKeys({ stages: () => selectedStages }, input.agentId, input.capabilities, input.checkpointProtocol, input.checkpointOnly);
   const placeholders = claimableKeys.map(() => '?').join(', ');
   const holdMs = deps.nowMs();
   const windowMs = placementWindowMs(deps);
@@ -128,6 +131,10 @@ export async function claim(deps: ClaimsDeps, input: Claimant & { profileKey?: s
     return refused(windowMs > 0 && inWindowCount(deps, placeholders, claimableKeys, windowMs, holdMs) > 0 ? 'placement_window' : 'no_matching_card');
   }
 
+  if (selectedStages.find((stage) => stage.key === row.current_stage_key)?.checkpointPolicy === undefined &&
+    input.checkpointProtocol !== CHECKPOINT_CLAIM_PROTOCOL)
+    return claimOrdinarySelected(deps, input, row, holdMs);
+
   if (typeof row.id !== 'string' || typeof row.current_stage_key !== 'string') throw new Error('INVALID_CLAIM_STATE');
   const selectedCardId = row.id, selectedStageKey = row.current_stage_key;
   // Freeze every selected authorization input before either await. A changed grant
@@ -144,7 +151,7 @@ export async function claim(deps: ClaimsDeps, input: Claimant & { profileKey?: s
     parseCheckpointPolicy(new TextEncoder().encode(JSON.stringify(selectedStage.checkpointPolicy)));
   const denied = await grantRefused(deps, input, row);
   const policyDigest = policy === undefined ? undefined : await checkpointDigest(policy);
-  if (!deps.commitEffects) throw new Error('COMMIT_EFFECTS_REQUIRED');
+  deps.commitEffects ??= new CommitEffects();
   const result = deps.commitEffects.run(deps.ctx.storage, (): ClaimResult => {
     const currentRow = deps.sql.exec('SELECT * FROM cards WHERE id=?', row.id).toArray()[0];
     if (!currentRow || JSON.stringify(currentRow) !== selectedRow || authority() !== selectedAuthority)
@@ -246,6 +253,87 @@ export async function claim(deps: ClaimsDeps, input: Claimant & { profileKey?: s
   });
   if (result.claimed) await deps.scheduleReclaim();
   return result;
+}
+
+/** Ordinary work retains its original statement, clock and delivery order. */
+async function claimOrdinarySelected(
+  deps: ClaimsDeps, input: Claimant & { profileKey?: string }, row: Row, holdMs: number,
+): Promise<ClaimResult> {
+  if (typeof row.id !== 'string') throw new Error('INVALID_CLAIM_STATE');
+  // ── The control pair, at the moment the work is handed out ──────────────
+  //
+  // The card records what its queuer was PERMITTED to dispatch
+  // (charter decisions/2026-08-13-ecosystem-identity.md, Decision 4). The
+  // human is long gone by now, which is exactly why the answer was written
+  // down when it was still askable.
+  //
+  // A refusal is made VISIBLE rather than skipped. Silently passing over the
+  // card would leave a board that looks idle while work sits on it — the
+  // decision requires a denial to be reported, never dropped — so the card is
+  // parked in `input-required`, which is this board's existing way of saying a
+  // person has to do something. That also bounds the noise: the card leaves
+  // `submitted`, so this is evaluated once and not on every poll.
+  if (await grantRefused(deps, input, row)) {
+    const why = row.queued_grant
+      ? `the operator who queued this card may not dispatch ${input.agentId}`
+      : 'this card was queued without an authorising token, so no one with permission asked for it to run';
+    // Parked without releasing a run because there is no run — this stops a dispatch rather
+    // than ending one. `row.id`: the candidate card is the row in hand.
+    deps.parkForHuman(row.id, { reason: 'not-authorised', detail: why }, false);
+    deps.notify('control-pair', row.id, `Not dispatched: ${why}`);
+    deps.emit('card.blocked', { cardId: row.id, reason: why });
+    return refused('grant_denied');
+  }
+
+  // The hold this claim fulfils, if any; cleared with the claim, live or dead, so it never outlives it.
+  const fulfils = isLiveHold(row, holdMs) && typeof row.reserved_decision_id === 'string' ? row.reserved_decision_id : null;
+  if (row.reserved_for !== null && row.reserved_for !== undefined) deps.sql.exec(CLEAR_HOLD_SQL, row.id);
+  // A claimed card is no longer waiting: its window, if any, is over. It opens again when it is next ready.
+  if (row.ready_since_ms !== null && row.ready_since_ms !== undefined) deps.sql.exec(`UPDATE cards SET ready_since_ms = NULL WHERE id = ?`, row.id);
+  const card = deps.rowToCard(row);
+  const leaseEpoch = Number(row.claim_seq) + 1;
+  const runId = newId('run');
+  const now = deps.now();
+  const nowMs = deps.nowMs();
+  deps.sql.exec(
+    `INSERT INTO runs (id, card_id, stage_key, agent_id, lease_epoch, status, outcome, last_heartbeat_ms, started_at, ended_at, profile_key, queued_by)
+     VALUES (?, ?, ?, ?, ?, 'working', NULL, ?, ?, NULL, ?, ?)`,
+    runId,
+    card.id,
+    card.currentStageKey,
+    input.agentId,
+    leaseEpoch,
+    nowMs,
+    now,
+    input.profileKey ?? null,
+    // Pinned onto the attempt so a run records WHOSE work it was, and stays
+    // answerable after the card has moved on.
+    typeof row.queued_by === 'string' ? row.queued_by : null,
+  );
+  deps.sql.exec(
+    `UPDATE cards SET state = 'working', delegate_agent_id = ?, current_run_id = ?, claim_seq = ?, updated_at = ? WHERE id = ?`,
+    input.agentId,
+    runId,
+    leaseEpoch,
+    now,
+    card.id,
+  );
+  deps.reportRun(runId);
+  deps.emit('card.claimed', { cardId: card.id, agentId: input.agentId, runId, ...(fulfils !== null ? { reservationDecisionId: fulfils } : {}) });
+  await deps.scheduleReclaim();
+
+  const stage = deps.stages().find((s) => s.key === card.currentStageKey);
+  if (!stage) throw new Error('INVALID_CLAIM_STATE');
+  const handoff = typeof row.handoff_json === 'string' ? parseHandoff(row.handoff_json) : null;
+  return {
+    claimed: true,
+    runId,
+    leaseEpoch,
+    card: deps.mustGetCard(card.id),
+    stage,
+    handoff,
+    lastFailure: lastFailureAt(deps, card.id, stage.key, runId),
+  };
 }
 
 /** Whether a card this claimant could otherwise take is held for someone else right now. */

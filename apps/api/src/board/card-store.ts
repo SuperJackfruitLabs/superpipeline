@@ -42,7 +42,13 @@ export function setMeta(deps: CardStoreDeps, k: string, v: string): void {
 
 export function stages(deps: CardStoreDeps): StageDef[] {
   const raw = getMeta(deps, 'stages');
-  return raw ? (JSON.parse(raw) as StageDef[]) : [];
+  const saved: StageDef[] = raw ? (JSON.parse(raw) as StageDef[]) : [];
+  // Legacy empty values are absence. Never serialize a checkpoint marker for ordinary work.
+  return saved.map((stage) => {
+    if (stage.checkpointPolicy !== null) return stage;
+    const { checkpointPolicy: empty, ...ordinary } = stage;
+    return ordinary;
+  });
 }
 
 export function countInStage(deps: CardStoreDeps, stageKey: string): number {

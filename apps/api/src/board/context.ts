@@ -13,7 +13,7 @@ import type { ApprovalSubjectView, BoardSnapshot, CommentView, ElicitationView, 
  * Object builds the one value (`wiring.ts`).
  */
 export interface BoardContext {
-  readonly commitEffects?: CommitEffects;
+  commitEffects?: CommitEffects;
   readonly sql: SqlStorage;
   readonly ctx: DurableObjectState;
   readonly env: Env;

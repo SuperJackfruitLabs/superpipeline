@@ -26,8 +26,10 @@ export type RunVerbsDeps = Pick<
   | 'cardCost'
   | 'createGate'
   | 'ctx'
+  | 'commitEffects'
   | 'emit'
   | 'endAttempt'
+  | 'env'
   | 'getCard'
   | 'getCardRow'
   | 'isAgentClaimable'
@@ -227,7 +229,9 @@ export async function complete(deps: RunVerbsDeps, input: CompleteVerbInput): Pr
     if (!current || current.currentStageKey !== card.currentStageKey || (fenced.run.card_id as string) !== cardId) {
       return { ok: false, code: 'STALE_LEASE', message: 'the card moved while the approval subject was prepared' };
     }
-    if (deps.stages().find((stage) => stage.key === current.currentStageKey)?.checkpointPolicy !== undefined) {
+    if ((deps.commitEffects !== undefined || deps.env.PROPOSED_CHECKPOINT_POLICY === 'true' || deps.env.PROPOSED_CHECKPOINT_SOURCE === 'true' ||
+      deps.env.PROPOSED_CHECKPOINT_SETTLEMENT === 'true' || stages.some((stage) => stage.checkpointPolicy !== undefined)) &&
+      deps.stages().find((stage) => stage.key === current.currentStageKey)?.checkpointPolicy !== undefined) {
       return { ok: false, code: 'CHECKPOINT_REQUIRED', message: 'this stage requires coordinator checkpoint settlement, which is not enabled' };
     }
   }

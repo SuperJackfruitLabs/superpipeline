@@ -1,4 +1,4 @@
-import { checkpointPolicyFieldError, checkpointPolicyWriteError } from './checkpoint-policy-admin';
+import { checkpointPolicyFieldError, checkpointPolicyWriteError, prepareCheckpointPolicy } from './checkpoint-policy-admin';
 import { capabilityTag, normalizeRequirement, returnStageError } from '@superpipeline/contract';
 import type { BoardContext } from './context';
 import { checksError, cleanChecks } from './check-rules';
@@ -21,6 +21,7 @@ export type PipelineDeps = Pick<
   | 'allReferences'
   | 'boardUsage'
   | 'countInStage'
+  | 'commitEffects'
   | 'ctx'
   | 'emit'
   | 'env'
@@ -167,6 +168,7 @@ export async function init(deps: PipelineDeps, board: BoardInit, editor: StageEd
     const stages = [...board.stages]
       .map(normalizeStageRouting)
       .toSorted((a, b) => a.order - b.order);
+    prepareCheckpointPolicy(deps, stages);
     deps.setMeta('boardId', board.id);
     deps.setMeta('tenantId', board.tenantId);
     deps.setMeta('name', board.name);
@@ -300,6 +302,7 @@ export async function setStages(deps: PipelineDeps, stages: StageDef[], editor: 
   if (refused) return refused;
   const policyRefusal = checkpointPolicyWriteError(deps, before, ordered, editor);
   if (policyRefusal) return policyRefusal;
+  prepareCheckpointPolicy(deps, ordered);
   deps.setMeta('stages', JSON.stringify(ordered));
   deps.emit('board.stages_changed', { stages: ordered });
   return { ok: true, value: { stages: ordered } };
@@ -402,6 +405,7 @@ export async function updateStage(deps: PipelineDeps, stageKey: string, patch: S
   if (refused) return refused;
   const policyRefusal = checkpointPolicyWriteError(deps, stages, ordered, editor);
   if (policyRefusal) return policyRefusal;
+  prepareCheckpointPolicy(deps, ordered);
   deps.setMeta('stages', JSON.stringify(ordered));
   deps.emit('board.stages_changed', { stages: ordered });
   return { ok: true, value: { stage: normalized } };

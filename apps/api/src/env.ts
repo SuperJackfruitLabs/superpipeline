@@ -2,10 +2,10 @@
 export interface Env {
   /** Proposed policy administration only. Unset by default; no repository deployment opts in. */
   PROPOSED_CHECKPOINT_POLICY?: string;
-  /** Proposed settlement/read API. Unset until coordinator authority is accepted. */
+  /** Proposed settlement/read API. Unset until the accepted decision’s enablement gates are verified. */
   PROPOSED_CHECKPOINT_SETTLEMENT?: string;
   /** Proposed source-admission/read protocol only. Unset means no endpoint.
-   * Do not configure before coordinator authority and scopes are accepted. */
+   * Keep unset until issuer provisioning and the accepted decision’s enablement gates are verified. */
   PROPOSED_CHECKPOINT_SOURCE?: string;
   /** The app's public origin, used to build URLs shown to people (the GitHub webhook URL). Plain var in wrangler.jsonc. */
   PUBLIC_APP_ORIGIN?: string;

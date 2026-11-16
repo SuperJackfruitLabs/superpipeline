@@ -56,6 +56,7 @@ function decode(row: Record<string, SqlStorageValue>): PendingCheckpointClaim {
 }
 /** Missing row means no captured checkpoint claim, NEVER admitted source. */
 export function readCheckpointClaim(sql: SqlStorage, runId: string): PendingCheckpointClaim | null {
+  if (!sql.exec("SELECT 1 FROM sqlite_master WHERE type='table' AND name='proposed_checkpoint_claims'").toArray().length) return null;
   const rows = sql.exec('SELECT * FROM proposed_checkpoint_claims WHERE run_id=?', runId).toArray();
   if (!rows.length) return null;
   if (rows.length !== 1 || !rows[0]) throw new Error('INVALID_CHECKPOINT_CLAIM');

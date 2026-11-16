@@ -105,6 +105,7 @@ describe('agent read surface — GET /v1/boards/:id/runs/:runId', () => {
     expect(body.card).toMatchObject({ id: cardId, title: 'Summarize incidents', state: 'working' });
     expect(body.card.spec).toEqual({ goal: 'summarize the incident reports' });
     expect(body.stage).toMatchObject({ key: 'research', name: 'Research' });
+    expect(body.stage).not.toHaveProperty('checkpointPolicy');
     expect(body.references.map((r) => r.url)).toEqual(['https://github.com/rakeshgangwar/superpipeline/issues/1']);
   });
 

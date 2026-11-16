@@ -1,4 +1,3 @@
-import { createCheckpointClaimTables } from './checkpoint-claims';
 import { migrateCardAndRunColumns } from './schema-columns';
 import { createCheckTables } from './schema-checks';
 import { createDecisionTables } from './schema-decisions';
@@ -128,5 +127,4 @@ export function migrateBoardSchema(sql: SqlStorage): void {
   createDecisionTables(sql);
   createCheckTables(sql);
   createRelationTables(sql);
-  createCheckpointClaimTables(sql);
 }

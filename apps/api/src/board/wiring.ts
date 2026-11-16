@@ -66,7 +66,8 @@ export type ShellRoutes = Pick<
 export function wireBoard(base: BoardBase, routes: ShellRoutes): BoardContext {
   const board: BoardContext = {
     sql: base.sql,
-    commitEffects: new CommitEffects(),
+    ...(base.env.PROPOSED_CHECKPOINT_POLICY === 'true' || base.env.PROPOSED_CHECKPOINT_SOURCE === 'true' ||
+      base.env.PROPOSED_CHECKPOINT_SETTLEMENT === 'true' ? { commitEffects: new CommitEffects() } : {}),
     ctx: base.ctx,
     env: base.env,
     reporterToken: base.reporterToken,

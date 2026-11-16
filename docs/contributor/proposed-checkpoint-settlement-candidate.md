@@ -1,10 +1,10 @@
 # Proposed checkpoint settlement candidate
 
-This implementation targets Treaty proposal
-`4ba0c9f857f3b01e39c6332c8a005beff0733886` and Charter’s proposed coordinator-grant
-decision. Publication and passing tests do not constitute acceptance of those
-contracts or permission to enable a pilot. Repository deployment configuration
-leaves all three independent switches unset:
+The coordinator-grant design is accepted. This implementation remains disabled;
+acceptance does not provision a reporter or authorize enablement. Issuer scopes,
+a least-privilege service principal, producer and consumer conformance, and the
+accepted decision's runtime proof gates must be verified before configuration.
+Repository deployment configuration leaves all three independent switches unset:
 
 | Switch | Proposed behavior enabled by the literal value `true` |
 | --- | --- |
@@ -97,8 +97,8 @@ member coverage, object-format widths, derived card branches and disposition.
 Independent canonical vectors cover policy, report, full submission and source
 hashes. The submission digest includes handoff/outcome, unlike the report digest.
 
-The selected reporter delegates operational observations under the proposed
-coordinator contract. SuperPipeline checks their binding to its authoritative
+The selected reporter delegates operational observations under the accepted
+coordinator design. SuperPipeline checks their binding to its authoritative
 claim and admitted source; it does not inspect a producer host or reinterpret
 supplied flags/hashes as independent writer-fencing proof. AgentPod’s guarded
 consumer must validate authenticated node Completion against its retained source,
@@ -163,8 +163,13 @@ Workers tests exercise actual Board SQLite, issuer-authenticated routing, bounde
 request parsing, claim/source immutability, post-await authorization changes,
 ignored-write refusal, reference provenance, transactional rollback and receipt
 replay. They use supplied delegated observations and do not independently prove
-producer-host behavior. Characterization updates cover actual claim storage and
-current-run reference reads without changing ordinary response contracts.
+producer-host behavior. With all switches unset, the original board characterization snapshot is unchanged.
+Ordinary boards create no checkpoint tables or triggers and allocate no commit-effect
+scope. Generic claims without checkpoint negotiation and ordinary completion retain their
+statement and delivery order. Explicit checkpoint negotiation retains its guarded
+transaction, even when the selected work has no policy.
+Policy tables are created only when an authorized policy is first installed.
+Absent policies are omitted from claim and run-context JSON, including legacy nulls.
 
 The pinned `producer-scenarios.json` describes 23 producer-state scenarios.
 Related parser/state refusals do not prove all 23 end to end. Actual stopped
@@ -172,9 +177,9 @@ writers, sealed captures, remote pin/taskref publication, dirty-vector refusal,
 later-owner safety, source-host timeout recovery and lost-reply reconciliation
 need the authenticated cross-product path and retained runtime evidence.
 
-Owner acceptance of the proposed authority, scope and policy contracts remains
-required before rollout. The opt-in Developer Experience pilot, real
-multi-repository execution and failure drills remain completion gates. Unknown or
+Issuer acceptance of the scope and policy contracts, least-privilege provisioning,
+an explicitly opted-in pilot, real multi-repository execution and failure drills
+remain enablement gates. Unknown or
 pending source effects stay parked; no timer takeover, alternate issuer or
 manufactured Current observation substitutes for proof. A reclaimed run cannot
 adopt an old proposal. No live grant, production enablement or pilot acceptance is
