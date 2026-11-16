@@ -167,8 +167,7 @@ async function exercise(scenario: Scenario, negotiated: boolean): Promise<unknow
       expect(card.context_id).toBe(created.value.contextId);
       const ids = new Map([[cardId, '<card>'], [created.value.contextId, '<context>']]);
       if (scenario.result === 'grant_denied') {
-        expect(card.needs_human_id).toEqual(expect.stringMatching(/^wait_/));
-        if (typeof card.needs_human_id !== 'string') throw new Error('expected wait ID');
+        if (typeof card.needs_human_id !== 'string' || !/^wait_/.test(card.needs_human_id)) throw new Error('expected generated wait ID');
         ids.set(card.needs_human_id, '<wait>');
       }
       for (const [index, row] of runs.entries()) {
