@@ -20,7 +20,7 @@ const CASES = [
 ] as const;
 type Scenario = (typeof CASES)[number];
 
-// Only generated card/run IDs differ between the two real DOs. Preserve every other
+// Only generated card/context/run/wait IDs differ between the two real DOs. Preserve every other
 // value, including JSON bytes, clocks, epochs, report generations and event order.
 function normalized(value: unknown, ids: Map<string, string>): unknown {
   if (typeof value === 'string') {
@@ -118,6 +118,7 @@ async function exercise(scenario: Scenario, negotiated: boolean): Promise<unknow
       const successfulClaim = async () => {
         if (!result.claimed) throw new Error(result.reason);
         expect(scenario.result).toBe('claimed');
+        expect(result.leaseEpoch, 'claim lease epoch').toBe(2);
         expect(result).toMatchObject({ leaseEpoch: 2, handoff: HANDOFF, lastFailure: { reason: 'previous tool failure', agentId: AGENT, stageKey: 'code', endedAt: NOW } });
         expect(result.stage).not.toHaveProperty('checkpointPolicy');
         expect(card).toMatchObject({ state: 'working', current_run_id: result.runId, delegate_agent_id: AGENT, claim_seq: 2, ready_since_ms: null, reserved_for: null, reserved_until_ms: null, reserved_stage_key: null, reserved_decision_id: null, reserved_by: null });
@@ -163,7 +164,13 @@ async function exercise(scenario: Scenario, negotiated: boolean): Promise<unknow
       };
       if (result.claimed) ownership = await successfulClaim();
       else refusedClaim();
-      const ids = new Map([[cardId, '<card>']]);
+      expect(card.context_id).toBe(created.value.contextId);
+      const ids = new Map([[cardId, '<card>'], [created.value.contextId, '<context>']]);
+      if (scenario.result === 'grant_denied') {
+        expect(card.needs_human_id).toEqual(expect.stringMatching(/^wait_/));
+        if (typeof card.needs_human_id !== 'string') throw new Error('expected wait ID');
+        ids.set(card.needs_human_id, '<wait>');
+      }
       for (const [index, row] of runs.entries()) {
         if (typeof row.id !== 'string') throw new Error('expected run ID');
         ids.set(row.id, `<run:${index}>`);

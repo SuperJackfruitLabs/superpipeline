@@ -4,8 +4,8 @@ import { openBoard, seedBoard, setAppearance } from './support/seed';
 /**
  * The translucent-v2 Channel mark (static/brand/README.md) where the app shows its brand.
  *
- * Daylight and Studio put the mark in the rail's home tile, in the brand amber on light and white
- * on dark. Paper's nameplate and Quiet's link row are type only by design, so their home link is
+ * Daylight uses amber on light and white on dark; Studio keeps amber on its light home tile
+ * in both themes. Paper's nameplate and Quiet's link row are type only by design, so their home link is
  * the name, never a picture. On a phone no vibe draws the rail; the check there is that no mark
  * that does render has collapsed to nothing. The favicons the page links must load.
  */
