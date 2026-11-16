@@ -1,5 +1,5 @@
 /** Proposed checkpoint lexical/canonical adapter; source routing defaults off. */
-function readCheckpointJSON(raw: Uint8Array): unknown {
+function readCheckpointJSON(raw: Uint8Array, stageEnvelope = false): unknown {
   if (raw.byteLength > 65536) throw new Error('INVALID_CHECKPOINT');
   const text = new TextDecoder('utf-8', { fatal: true, ignoreBOM: true }).decode(raw);
   let pos = 0;
@@ -64,10 +64,10 @@ function readCheckpointJSON(raw: Uint8Array): unknown {
       throw new Error('INVALID_CHECKPOINT');
     }
     const rest = text.slice(pos);
-    const atom = /^(true|false|0|[1-9][0-9]*)/.exec(rest)?.[0];
+    const atom = (stageEnvelope ? /^(null|true|false|-?(?:0|[1-9][0-9]*)(?:\.[0-9]+)?(?:[eE][+-]?[0-9]+)?)/ : /^(true|false|0|[1-9][0-9]*)/).exec(rest)?.[0];
     if (!atom) throw new Error('INVALID_CHECKPOINT');
     pos += atom.length;
-    if (atom !== 'true' && atom !== 'false' && !Number.isSafeInteger(Number(atom)))
+    if (!stageEnvelope && atom !== 'true' && atom !== 'false' && !Number.isSafeInteger(Number(atom)))
       throw new Error('INVALID_CHECKPOINT');
   }
   value(0);
@@ -116,4 +116,10 @@ export function parseCheckpointJSON(raw: Uint8Array): unknown {
   } catch {
     throw new Error('INVALID_CHECKPOINT');
   }
+}
+
+/** General stage writes retain JSON numbers and null removal; policy values are validated separately. */
+export function parseStageEnvelopeJSON(raw: Uint8Array): unknown {
+  try { return readCheckpointJSON(raw, true); }
+  catch { throw new Error('INVALID_STAGE_WRITE'); }
 }

@@ -1,7 +1,7 @@
 /** Explicit private administration uses the strict bounded lexical reader before
  * parsing any parent keys. Flag-off requests retain their existing JSON behavior. */
 import { checkpointBody } from './checkpoint-body';
-import { parseCheckpointJSON } from '../../board/checkpoint-json';
+import { parseStageEnvelopeJSON } from '../../board/checkpoint-json';
 import { changedCheckpointStages, checkpointPolicyFieldError } from '../../board/checkpoint-policy-admin';
 import type { StageDef } from '../../board/model';
 import type { Env } from '../../env';
@@ -12,7 +12,7 @@ export async function stageWriteInput(request: Request, enabled = false): Promis
   if (!enabled) return request.json();
   const raw = await checkpointBody(request);
   if (raw === null) throw new Error('checkpoint policy write exceeds 64 KiB');
-  return parseCheckpointJSON(raw);
+  return parseStageEnvelopeJSON(raw);
 }
 export function checkpointStageWriteRefusal(env: Env, user: UserPrincipal | null,
   before: StageDef[], after: StageDef[]): Response | null {

@@ -1,3 +1,4 @@
+import { parseCheckpointJSON, parseStageEnvelopeJSON } from '../src/board/checkpoint-json';
 import { changedCheckpointStages } from '../src/board/checkpoint-policy-admin';
 import { stageWriteInput } from '../src/routes/boards/checkpoint-policy-input';
 import { env, runInDurableObject } from 'cloudflare:test';
@@ -129,13 +130,9 @@ it('requires admin authority on add, replacement and removal through patch and w
     const replacement = method === 'PATCH' ? { checkpointPolicy: { ...policy, reporterPrincipalId: 'prn_alternative' } } : { stages: [{ ...stage, checkpointPolicy: { ...policy, reporterPrincipalId: 'prn_alternative' } }] };
     expect((await send(path, replacement, { method, enabled: true, role: 'member' })).status).toBe(403);
     expect((await send(path, replacement, { method, enabled: true })).status).toBe(200);
-    if (method === 'PATCH') {
-      // Null is malformed. Removal is represented by omission in a complete pipeline.
-      expect((await send(path, { checkpointPolicy: null }, { method, enabled: true })).status).toBe(400);
-    }
-    const pipeline = `/v1/boards/${id}/stages`;
-    expect((await send(pipeline, { stages: [plain] }, { method: 'PUT', enabled: true, role: 'member' })).status).toBe(403);
-    expect((await send(pipeline, { stages: [plain] }, { method: 'PUT', enabled: true })).status).toBe(200);
+    const removal = method === 'PATCH' ? { checkpointPolicy: null } : { stages: [plain] };
+    expect((await send(path, removal, { method, enabled: true, role: 'member' })).status).toBe(403);
+    expect((await send(path, removal, { method, enabled: true })).status).toBe(200);
   }
   await onBoard(stub, async (board) => { expect((await board.getState()).stages).toEqual([plain]); });
 }));
@@ -203,4 +200,23 @@ it('compares absence without admitting null into the strict canonicalizer and ig
   expect(changedCheckpointStages([stage], [plain])).toEqual(['code']);
   const reordered = parseCheckpointPolicy(new TextEncoder().encode(JSON.stringify(Object.fromEntries(Object.entries(policy).toReversed()))));
   expect(changedCheckpointStages([stage], [{ ...stage, checkpointPolicy: reordered }])).toEqual([]);
+});
+
+it('preserves nullable ordinary stage patches without widening checkpoint protocol JSON', () => fixture(async ({ id, enable, stub }) => {
+  await enable(true);
+  expect((await send('/v1/boards', { name: 'Nullable', stages: [{ ...plain, order: -0.5, instructions: 'Remove me' }] }, { enabled: true })).status).toBe(201);
+  expect((await send(`/v1/boards/${id}/stages/code`, { instructions: null }, { method: 'PATCH', enabled: true })).status).toBe(200);
+  await onBoard(stub, async (board) => {
+    const current = (await board.getState()).stages[0];
+    expect(current.instructions).toBeUndefined(); expect(current.order).toBe(-0.5);
+  });
+  expect(() => parseCheckpointJSON(new TextEncoder().encode('{"instructions":null}'))).toThrow('INVALID_CHECKPOINT');
+}));
+
+it('keeps the general stage envelope lexically strict while retaining JSON scalar grammar', () => {
+  const bytes = (text: string) => new TextEncoder().encode(text);
+  expect(parseStageEnvelopeJSON(bytes('{"instructions":null,"order":-0.5,"extra":1e2}'))).toEqual({ instructions: null, order: -0.5, extra: 100 });
+  for (const raw of [bytes('{"stages":[],"stages":[]}'), bytes('{"instructions":"\\ud800"}'), new Uint8Array([123, 34, 120, 34, 58, 34, 255, 34, 125])])
+    expect(() => parseStageEnvelopeJSON(raw)).toThrow('INVALID_STAGE_WRITE');
+  expect(() => parseCheckpointJSON(bytes('{"order":-0.5}'))).toThrow('INVALID_CHECKPOINT');
 });
