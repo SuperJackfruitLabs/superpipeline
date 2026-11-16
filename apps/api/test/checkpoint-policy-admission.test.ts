@@ -55,7 +55,7 @@ async function send(path: string, body: unknown, options: { method?: string; ena
     headers: { authorization: `Bearer ${token}`, 'content-type': 'application/json' }, body: options.raw ?? JSON.stringify(body) });
   const match = path.match(/^\/v1\/boards(?:\/([^/]+)(?:\/(.*))?)?$/);
   if (!match) throw new Error('bad route fixture');
-  return boards({ request, path, url: new URL(request.url), env: planeEnv(options.enabled ? { PROPOSED_CHECKPOINT_POLICY: 'true' } : {}) }, match);
+  return boards({ request, path, url: new URL(request.url), env: planeEnv({ PROPOSED_CHECKPOINT_POLICY: options.enabled ? 'true' : undefined }) }, match);
 }
 
 it('keeps policy creation off by default without enabling production configuration', () => fixture(async ({ stub }) => {
@@ -126,9 +126,16 @@ it('requires admin authority on add, replacement and removal through patch and w
     const addition = method === 'PATCH' ? { checkpointPolicy: policy } : { stages: [stage] };
     expect((await send(path, addition, { method, enabled: true, role: 'member' })).status).toBe(403);
     expect((await send(path, addition, { method, enabled: true })).status).toBe(200);
-    const removal = method === 'PATCH' ? { checkpointPolicy: null } : { stages: [plain] };
-    expect((await send(path, removal, { method, enabled: true, role: 'member' })).status).toBe(403);
-    expect((await send(path, removal, { method, enabled: true })).status).toBe(200);
+    const replacement = method === 'PATCH' ? { checkpointPolicy: { ...policy, reporterPrincipalId: 'prn_alternative' } } : { stages: [{ ...stage, checkpointPolicy: { ...policy, reporterPrincipalId: 'prn_alternative' } }] };
+    expect((await send(path, replacement, { method, enabled: true, role: 'member' })).status).toBe(403);
+    expect((await send(path, replacement, { method, enabled: true })).status).toBe(200);
+    if (method === 'PATCH') {
+      // Null is malformed. Removal is represented by omission in a complete pipeline.
+      expect((await send(path, { checkpointPolicy: null }, { method, enabled: true })).status).toBe(400);
+    }
+    const pipeline = `/v1/boards/${id}/stages`;
+    expect((await send(pipeline, { stages: [plain] }, { method: 'PUT', enabled: true, role: 'member' })).status).toBe(403);
+    expect((await send(pipeline, { stages: [plain] }, { method: 'PUT', enabled: true })).status).toBe(200);
   }
   await onBoard(stub, async (board) => { expect((await board.getState()).stages).toEqual([plain]); });
 }));
@@ -194,6 +201,6 @@ it('compares absence without admitting null into the strict canonicalizer and ig
   expect(changedCheckpointStages([plain], [])).toEqual([]);
   expect(changedCheckpointStages([plain], [stage])).toEqual(['code']);
   expect(changedCheckpointStages([stage], [plain])).toEqual(['code']);
-  const reordered = parseCheckpointPolicy(new TextEncoder().encode(JSON.stringify(Object.fromEntries(Object.entries(policy).reverse()))));
+  const reordered = parseCheckpointPolicy(new TextEncoder().encode(JSON.stringify(Object.fromEntries(Object.entries(policy).toReversed()))));
   expect(changedCheckpointStages([stage], [{ ...stage, checkpointPolicy: reordered }])).toEqual([]);
 });
