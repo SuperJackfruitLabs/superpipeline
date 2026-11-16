@@ -1,3 +1,4 @@
+import { CHECKPOINT_CLAIM_PROTOCOL } from '../../board/checkpoint-claims';
 // Claims and the run verbs an agent drives a card with.
 import { isKnownProvider, providerKeys, type StageOutcome } from '@superpipeline/contract';
 import { z } from 'zod';
@@ -18,7 +19,7 @@ export async function claim({ request, env, agent, stub }: BoardRequest): Promis
   if (!input || typeof input !== 'object' || Array.isArray(input)) {
     return Response.json({ error: 'claim body must be a JSON object' }, { status: 400 });
   }
-  const payload = input as { capabilities?: unknown; maxConcurrency?: unknown; profileKey?: unknown };
+  const payload = input as { capabilities?: unknown; maxConcurrency?: unknown; profileKey?: unknown; checkpointProtocol?: unknown; checkpointOnly?: unknown };
   if (payload.maxConcurrency !== undefined &&
       (typeof payload.maxConcurrency !== 'number' || !Number.isInteger(payload.maxConcurrency) || payload.maxConcurrency <= 0)) {
     return Response.json({ error: 'maxConcurrency must be a positive finite integer' }, { status: 400 });
@@ -29,6 +30,13 @@ export async function claim({ request, env, agent, stub }: BoardRequest): Promis
   }
   if (payload.profileKey !== undefined && typeof payload.profileKey !== 'string') {
     return Response.json({ error: 'profileKey must be a string' }, { status: 400 });
+  }
+  if (payload.checkpointProtocol !== undefined && payload.checkpointProtocol !== CHECKPOINT_CLAIM_PROTOCOL) {
+    return Response.json({ error: 'unsupported checkpointProtocol' }, { status: 400 });
+  }
+  if (payload.checkpointOnly !== undefined && (typeof payload.checkpointOnly !== 'boolean' ||
+      (payload.checkpointOnly && payload.checkpointProtocol !== CHECKPOINT_CLAIM_PROTOCOL))) {
+    return Response.json({ error: 'checkpointOnly must be boolean and requires checkpointProtocol when true' }, { status: 400 });
   }
   // Declared → effective. An agent staffed for `code-review` claims a `code` lane when the
   // workspace has said one implies the other. The expansion happens HERE, at the Worker
@@ -46,6 +54,8 @@ export async function claim({ request, env, agent, stub }: BoardRequest): Promis
         ? Math.min(payload.maxConcurrency, agent!.concurrency)
         : (payload.maxConcurrency ?? agent!.concurrency),
     profileKey: payload.profileKey,
+    ...(payload.checkpointProtocol === CHECKPOINT_CLAIM_PROTOCOL ? { checkpointProtocol: payload.checkpointProtocol } : {}),
+    ...(payload.checkpointOnly !== undefined ? { checkpointOnly: payload.checkpointOnly } : {}),
     principalId: agent!.externalId,
   });
   return Response.json(claimResult);

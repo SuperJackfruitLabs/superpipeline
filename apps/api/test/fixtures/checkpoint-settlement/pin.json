@@ -1,0 +1,34 @@
+{
+  "revision": "4ba0c9f857f3b01e39c6332c8a005beff0733886",
+  "status": "PROPOSED; publication is not acceptance",
+  "files": [
+    {
+      "path": "schemas/superpipeline-api/run-checkpoint.v1.json",
+      "sha256": "66682c9b1fe84a0b1a4a124ee6daaf32caa1f8a900c98e73e5c0c9e6beeaf1e3"
+    },
+    {
+      "path": "schemas/superpipeline-api/run-checkpoint-policy.v1.json",
+      "sha256": "bfe207f1a331355ab74e62aeb64e34600ce5ab2aa976d1f3390210acf72fd921"
+    },
+    {
+      "path": "schemas/superpipeline-api/checkpoint-settlement.v1.json",
+      "sha256": "e3d509c26c089f2c0a7a5960a743f0e399ec10a63903d162daf5fc7b2f6853f9"
+    },
+    {
+      "path": "schemas/superpipeline-api/run-checkpoint-receipt.v1.json",
+      "sha256": "65301974904f301341d6de0d990c120d2074cb4cf5052c1f7f767033a1cc002c"
+    },
+    {
+      "path": "fixtures/superpipeline-run-checkpoint/canonical.json",
+      "sha256": "e199f937c17a28edf8b0ab7285870faf0880dba23ccf15f51604e183052e7fb0"
+    },
+    {
+      "path": "fixtures/superpipeline-run-checkpoint/cases.json",
+      "sha256": "142a253b37405eebf912579fee1ad5329b8be7bb375a6a5e3930864690780519"
+    },
+    {
+      "path": "fixtures/superpipeline-run-checkpoint/producer-scenarios.json",
+      "sha256": "c29a7073b74e64da23939652ea11e8c658f355b73e6b4e5936ba31a7690e8d36"
+    }
+  ]
+}

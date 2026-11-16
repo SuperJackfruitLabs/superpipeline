@@ -1,5 +1,8 @@
 import type { CardReservation, GateDecision, TaskState } from '@superpipeline/contract';
 import type { JsonValue } from '../json';
+import type { VerifiedCheckpointReporter } from '../auth/checkpoint-reporter';
+import type { CheckpointSourceReceipt } from './checkpoint-source';
+import type { CheckpointClaimSnapshot, ProposedCheckpointReceipt } from './checkpoint-candidate';
 import type { PushSender } from '../push/deliver';
 import type { ReferenceInput } from '../references/input';
 import type { LinkKind } from './links';
@@ -17,6 +20,10 @@ import type { ActivityView, ApprovalRequestView, CardChecksView, ApprovalSubject
 
 /** The Board DO's RPC surface as the Worker calls it — hand-typed to avoid deep RPC type instantiation. */
 export interface BoardStub {
+  submitCheckpointSettlement(actor: VerifiedCheckpointReporter, runId: string, raw: Uint8Array): Promise<Result<ProposedCheckpointReceipt>>;
+  readCheckpointReceipt(actor: VerifiedCheckpointReporter, runId: string): Promise<Result<ProposedCheckpointReceipt>>;
+  admitCheckpointSource(actor: VerifiedCheckpointReporter, runId: string, raw: Uint8Array): Promise<Result<CheckpointSourceReceipt>>;
+  readCheckpointSource(actor: VerifiedCheckpointReporter, runId: string): Promise<Result<CheckpointClaimSnapshot>>;
   /** How many live cards the board holds and how many of them need a person now. */
   summaryCounts(): Promise<{ cardCount: number; needsYouCount: number }>;
   /** Cards each agent holds on this board right now, and of those how many it works now. */
@@ -27,7 +34,7 @@ export interface BoardStub {
   >;
   drainRunReports(): Promise<RunReportDrainResult>;
   enqueueAllRunReports(): Promise<Result<{ enqueued: number; pending: number; dead: number }>>;
-  init(board: BoardInit): Promise<BoardSnapshot>;
+  init(board: BoardInit, editor?: StageEditor): Promise<BoardSnapshot>;
   createCard(input: {
     /** What the queuer was permitted to dispatch, as granted at this moment. */
     queuedGrant?: string[] | null;
@@ -104,7 +111,7 @@ export interface BoardStub {
   getState(): Promise<BoardSnapshot>;
   getEvents(limit?: number): Promise<BoardEvent[]>;
   // Agent contract (docs/04 §3)
-  claim(input: { agentId: string; capabilities: string[]; maxConcurrency?: number; profileKey?: string; principalId?: string | null }): Promise<ClaimResult>;
+  claim(input: { agentId: string; capabilities: string[]; checkpointProtocol?: string; checkpointOnly?: boolean; maxConcurrency?: number; profileKey?: string; principalId?: string | null }): Promise<ClaimResult>;
   setProfile(input: ProfileInput): Promise<Result<{ key: string }>>;
   getProfiles(): Promise<ProfileView[]>;
   heartbeat(input: RunVerbInput): Promise<Result<{ acknowledged: true }>>;

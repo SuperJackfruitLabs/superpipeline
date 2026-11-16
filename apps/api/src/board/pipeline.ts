@@ -1,3 +1,4 @@
+import { checkpointPolicyFieldError, checkpointPolicyWriteError, prepareCheckpointPolicy } from './checkpoint-policy-admin';
 import { capabilityTag, normalizeRequirement, returnStageError } from '@superpipeline/contract';
 import type { BoardContext } from './context';
 import { checksError, cleanChecks } from './check-rules';
@@ -20,6 +21,7 @@ export type PipelineDeps = Pick<
   | 'allReferences'
   | 'boardUsage'
   | 'countInStage'
+  | 'commitEffects'
   | 'ctx'
   | 'emit'
   | 'env'
@@ -79,8 +81,11 @@ export function completionShapeError(c: unknown): string | null {
 }
 
 export function stageFieldError(
-  s: Pick<StageDef, 'key' | 'wipLimit' | 'instructions' | 'summary' | 'timeout' | 'quorum' | 'holdFor' | 'approvalDeciderPrincipalIds' | 'gate' | 'checks' | 'returnStage' | 'ownerKind' | 'placement'>,
+  s: Pick<StageDef, 'key' | 'wipLimit' | 'instructions' | 'summary' | 'timeout' | 'quorum' | 'holdFor' | 'approvalDeciderPrincipalIds' | 'gate' | 'checks' | 'returnStage' | 'ownerKind' | 'placement' | 'checkpointPolicy'>,
+  enabled = false,
 ): string | null {
+  const policyError = checkpointPolicyFieldError(s.checkpointPolicy, enabled);
+  if (policyError) return policyError;
   if (s.placement !== undefined) {
     const bad = placementError(s.placement, `stage "${s.key}" placement`);
     if (bad) return bad;
@@ -150,13 +155,20 @@ function withCleanPlacement(stage: StageDef): StageDef {
   return clean ? { ...rest, placement: clean } : rest;
 }
 
-export async function init(deps: PipelineDeps, board: BoardInit): Promise<BoardSnapshot> {
+export async function init(deps: PipelineDeps, board: BoardInit, editor: StageEditor = { kind: 'person', mayChangeDecisionPolicy: false }): Promise<BoardSnapshot> {
   if (!deps.getMeta('boardId')) {
+    for (const stage of board.stages) {
+      const bad = checkpointPolicyFieldError(stage.checkpointPolicy, deps.env.PROPOSED_CHECKPOINT_POLICY === 'true');
+      if (bad) throw new Error(bad);
+    }
+    const policyRefusal = checkpointPolicyWriteError(deps, [], board.stages, editor);
+    if (policyRefusal && !policyRefusal.ok) throw new Error(policyRefusal.code);
     // Same normalisation as `setStages`: a board created with a mis-spelled capability owner is
     // a board whose lane no agent can ever claim from.
     const stages = [...board.stages]
       .map(normalizeStageRouting)
       .toSorted((a, b) => a.order - b.order);
+    prepareCheckpointPolicy(deps, stages);
     deps.setMeta('boardId', board.id);
     deps.setMeta('tenantId', board.tenantId);
     deps.setMeta('name', board.name);
@@ -177,6 +189,7 @@ function decisionPolicyOf(stage: StageDef | undefined): string {
     quorum: stage?.quorum ? cleanQuorum(stage.quorum) : null,
     holdFor: stage?.holdFor ?? null,
     checks: cleanChecks(stage?.checks),
+    checkpointPolicy: stage?.checkpointPolicy ?? null,
   });
 }
 
@@ -234,7 +247,7 @@ export async function setStages(deps: PipelineDeps, stages: StageDef[], editor: 
     if (typeof s.name !== 'string' || s.name.trim() === '') {
       return { ok: false, code: 'INVALID_STAGES', message: `stage "${s.key}" needs a name` };
     }
-    const invalid = stageFieldError(s);
+    const invalid = stageFieldError(s, deps.env.PROPOSED_CHECKPOINT_POLICY === 'true');
     if (invalid) return { ok: false, code: 'INVALID_STAGES', message: invalid };
     // Also here, not only in the PATCH: a check the whole-pipeline write skips is a check with
     // a documented way around it.
@@ -284,8 +297,12 @@ export async function setStages(deps: PipelineDeps, stages: StageDef[], editor: 
   const ordered = [...stages]
     .map(normalizeStageRouting)
     .toSorted((a, b) => a.order - b.order);
-  const refused = refuseDecisionPolicyChange(deps.stages(), ordered, editor);
+  const before = deps.stages();
+  const refused = refuseDecisionPolicyChange(before, ordered, editor);
   if (refused) return refused;
+  const policyRefusal = checkpointPolicyWriteError(deps, before, ordered, editor);
+  if (policyRefusal) return policyRefusal;
+  prepareCheckpointPolicy(deps, ordered);
   deps.setMeta('stages', JSON.stringify(ordered));
   deps.emit('board.stages_changed', { stages: ordered });
   return { ok: true, value: { stages: ordered } };
@@ -339,6 +356,10 @@ export async function updateStage(deps: PipelineDeps, stageKey: string, patch: S
     if (patch.summary === null) delete next.summary;
     else next.summary = patch.summary;
   }
+  if (patch.checkpointPolicy !== undefined) {
+    if (patch.checkpointPolicy === null) delete next.checkpointPolicy;
+    else next.checkpointPolicy = patch.checkpointPolicy;
+  }
   if (patch.completion !== undefined) {
     if (patch.completion === null) delete next.completion;
     else {
@@ -373,7 +394,7 @@ export async function updateStage(deps: PipelineDeps, stageKey: string, patch: S
     else next.placement = patch.placement;
   }
 
-  const invalid = stageFieldError(next);
+  const invalid = stageFieldError(next, deps.env.PROPOSED_CHECKPOINT_POLICY === 'true');
   if (invalid) return { ok: false, code: 'INVALID_STAGES', message: invalid };
   const badReturn = returnStageError(next, stages);
   if (badReturn) return { ok: false, code: 'INVALID_STAGES', message: badReturn };
@@ -382,6 +403,9 @@ export async function updateStage(deps: PipelineDeps, stageKey: string, patch: S
   const ordered = stages.map((s, i) => (i === index ? normalized : s));
   const refused = refuseDecisionPolicyChange(stages, ordered, editor);
   if (refused) return refused;
+  const policyRefusal = checkpointPolicyWriteError(deps, stages, ordered, editor);
+  if (policyRefusal) return policyRefusal;
+  prepareCheckpointPolicy(deps, ordered);
   deps.setMeta('stages', JSON.stringify(ordered));
   deps.emit('board.stages_changed', { stages: ordered });
   return { ok: true, value: { stage: normalized } };

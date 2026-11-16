@@ -4,9 +4,10 @@
  */
 import { env } from 'cloudflare:test';
 import { describe, it, expect, beforeAll } from 'vitest';
-import { SignJWT, exportJWK, generateKeyPair } from 'jose';
+import { SignJWT, decodeJwt, exportJWK, generateKeyPair } from 'jose';
 import { setupCatalog } from './helpers/catalog';
 import { resolveHubService, resolveHubUser, resolveHubAgent } from '../src/auth/resolve';
+import { resolveCheckpointReporter } from '../src/auth/checkpoint-reporter';
 import { __resetJwksCacheForTests } from '../src/auth/hub-jwt';
 import { withIssuer as withHubIssuer } from './helpers/hub-issuer';
 
@@ -40,9 +41,16 @@ const token = (over: Record<string, unknown>) =>
 const req = (t: string) => new Request('https://api.test/v1/boards/brd_x/runs/run_x/evidence', { headers: { Authorization: `Bearer ${t}` } });
 
 describe('resolveHubService', () => {
+  it('the checkpoint adapter uses the configured legacy issuer and exact mapped authority', async () => {
+    const signed = await token({ scope: 'checkpoints:submit' });
+    const actor = await withIssuer(() => resolveCheckpointReporter(req(signed), env, { tenantId: TENANT, reporterPrincipalId: 'prn_0123456789abcdef0123' }));
+    expect(actor).toEqual({ kind: 'service', principalId: 'prn_0123456789abcdef0123', tenantId: TENANT, scopes: ['checkpoints:submit'], expiresAt: (decodeJwt(signed).exp ?? 0) * 1000 });
+  });
+
   it('resolves a service token to its mapped tenant and its scopes', async () => {
-    const svc = await withIssuer(async () => resolveHubService(req(await token({ scope: 'evidence:read other:thing' })), env));
-    expect(svc).toEqual({ principalId: 'prn_0123456789abcdef0123', tenantId: TENANT, scopes: ['evidence:read', 'other:thing'] });
+    const signed = await token({ scope: 'evidence:read other:thing' });
+    const svc = await withIssuer(async () => resolveHubService(req(signed), env));
+    expect(svc).toEqual({ principalId: 'prn_0123456789abcdef0123', tenantId: TENANT, scopes: ['evidence:read', 'other:thing'], expiresAt: (decodeJwt(signed).exp ?? 0) * 1000 });
   });
 
   it('a token with no scope claim holds no scopes', async () => {

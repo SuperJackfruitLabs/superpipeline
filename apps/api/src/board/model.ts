@@ -1,3 +1,5 @@
+import type { CheckpointClaimDiscovery } from './checkpoint-claims';
+import type { CheckpointPolicy } from './checkpoint-proposal';
 import type { CardReservation, ClaimReason, CompletionRequirement, StageOutcome, TaskState } from '@superpipeline/contract';
 import type { JsonValue } from '../json';
 import type { RunReportDraft } from '../superwitness/report';
@@ -53,6 +55,8 @@ export type CheckStatus = 'pending' | 'passed' | 'failed' | 'overridden';
 export type StageGateKind = 'none' | 'approval' | 'checks';
 
 export interface StagePatch {
+  /** Proposed and disabled; only admin policy removal is available. */
+  checkpointPolicy?: CheckpointPolicy | null;
   name?: string;
   owner?: string;
   ownerKind?: 'capability' | 'agent' | 'human';
@@ -128,6 +132,8 @@ export function internalStageEditor(reason: string): StageEditor {
 }
 
 export interface StageDef {
+  /** Proposed safety floor. Administration requires an explicit private opt-in and workspace admin. */
+  checkpointPolicy?: CheckpointPolicy;
   key: string;
   name: string;
   order: number;
@@ -432,6 +438,27 @@ export interface AgentActivityInput extends RunVerbInput {
  * boundary surfaces as an unhandled rejection in the runtime (docs/03, docs/08).
  */
 export type BoardErrorCode =
+  | 'CHECKPOINT_SETTLEMENT_DISABLED'
+  | 'CHECKPOINT_SETTLEMENT_FAILED'
+  | 'COMPLETION_REQUIRED'
+  | 'APPROVAL_SUBJECT_REQUIRED'
+  | 'INVALID_COMPLETION_STATE'
+  | 'INVALID_CHECKPOINT_STATE'
+  | 'INVALID_CHECKPOINT'
+  | 'CHECKPOINT_CONFLICT'
+  | 'CHECKPOINT_RECEIPT_MISSING'
+  | 'CHECKPOINT_RECEIPT_NOT_SAVED'
+  | 'INVALID_CHECKPOINT_RECEIPT'
+  | 'CHECKPOINT_REFERENCE_MAPPING_REQUIRED'
+  | 'INVALID_CHECKPOINT_REFERENCE'
+  | 'CHECKPOINT_REFERENCE_NOT_SAVED'
+  | 'CHECKPOINT_SOURCE_DISABLED'
+  | 'INVALID_CHECKPOINT_SOURCE'
+  | 'NOT_CHECKPOINT_REPORTER'
+  | 'CHECKPOINT_SOURCE_CONFLICT'
+  | 'CHECKPOINT_SOURCE_MISSING'
+  | 'CHECKPOINT_SOURCE_NOT_SAVED'
+  | 'CHECKPOINT_SOURCE_FAILED'
   | 'NOT_INITIALIZED'
   | 'WORKSPACE_ADMIN_REQUIRED'
   | 'UNKNOWN_STAGE'
@@ -508,6 +535,7 @@ export type BoardErrorCode =
   | 'NOTHING_TO_SPLIT'
   | 'INVALID_COMMENT'
   /** `complete` named an outcome without what it needs (`outcomeInputError`), or no outcome at all. */
+  | 'CHECKPOINT_REQUIRED'
   | 'INVALID_OUTCOME'
   | 'COMMENT_NOT_FOUND'
   | 'NOT_COMMENT_AUTHOR'
@@ -538,6 +566,7 @@ export type Result<T> =
 export type ClaimResult =
   | {
       claimed: true;
+      checkpointClaim?: CheckpointClaimDiscovery;
       runId: string;
       leaseEpoch: number;
       card: CardView;

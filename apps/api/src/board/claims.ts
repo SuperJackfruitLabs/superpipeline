@@ -1,4 +1,9 @@
+import { parseHandoff } from './card-store';
+import { CommitEffects } from './commit-effects';
 import { type ClaimReason, needsYou, stageCapabilitiesMet } from '@superpipeline/contract';
+import { checkpointDigest } from './checkpoint-json';
+import { parseCheckpointPolicy } from './checkpoint-proposal';
+import { CHECKPOINT_CLAIM_PROTOCOL, insertPendingCheckpointClaim, type CheckpointClaimDiscovery } from './checkpoint-claims';
 import { grantPermitsAgent, isControlPairEnforced } from '../auth/grant-match';
 import { newId } from '../ids';
 import { RELAY_CONFIG_ID } from '../push/relay';
@@ -24,6 +29,7 @@ export type ClaimsDeps = Pick<
   | 'cancelElicitationsForRun'
   | 'claimableWhere'
   | 'ctx'
+  | 'commitEffects'
   | 'emit'
   | 'endAttempt'
   | 'env'
@@ -75,7 +81,7 @@ function refused(reason: ClaimReason): ClaimResult {
  * identity — and this method falls back to looking it up itself, exactly as before.
  *
  * Nothing handed out is `{claimed: false, reason}`: the first reason met, from the same filter the
- * eligibility read uses (`ClaimReason`). The success shape is unchanged.
+ * eligibility read uses (`ClaimReason`). Ordinary success retains its shape; checkpoint work returns its captured policy.
  *
  * A reservation (`hold.ts`) is checked here and nowhere earlier. A card held for another agent is
  * passed over, and `card_reserved` is the answer only when nothing else was claimable. A card held
@@ -88,6 +94,8 @@ function refused(reason: ClaimReason): ClaimResult {
  * else was claimable. A board with no window runs exactly the query it ran before.
  */
 export async function claim(deps: ClaimsDeps, input: Claimant & { profileKey?: string }): Promise<ClaimResult> {
+  // Capture client capability before any await; it never grants execution authority.
+  input = { ...input, capabilities: [...input.capabilities] };
   if (!deps.getMeta('boardId')) return refused('board_not_initialized');
   // Budget cap (docs/07 §6): once the board hits its USD ceiling, stop handing out new work.
   if (deps.boardOverBudget()) return refused('board_over_budget');
@@ -96,7 +104,8 @@ export async function claim(deps: ClaimsDeps, input: Claimant & { profileKey?: s
   const [first] = claimantRefusals(deps, input);
   if (first) return refused(first);
 
-  const claimableKeys = claimableStageKeys(deps, input.agentId, input.capabilities);
+  const selectedStages = deps.stages();
+  const claimableKeys = claimableStageKeys({ stages: () => selectedStages }, input.agentId, input.capabilities, input.checkpointProtocol, input.checkpointOnly);
   const placeholders = claimableKeys.map(() => '?').join(', ');
   const holdMs = deps.nowMs();
   const windowMs = placementWindowMs(deps);
@@ -122,6 +131,135 @@ export async function claim(deps: ClaimsDeps, input: Claimant & { profileKey?: s
     return refused(windowMs > 0 && inWindowCount(deps, placeholders, claimableKeys, windowMs, holdMs) > 0 ? 'placement_window' : 'no_matching_card');
   }
 
+  if (selectedStages.find((stage) => stage.key === row.current_stage_key)?.checkpointPolicy === undefined &&
+    input.checkpointProtocol !== CHECKPOINT_CLAIM_PROTOCOL)
+    return claimOrdinarySelected(deps, input, row, holdMs);
+
+  if (typeof row.id !== 'string' || typeof row.current_stage_key !== 'string') throw new Error('INVALID_CLAIM_STATE');
+  const selectedCardId = row.id, selectedStageKey = row.current_stage_key;
+  // Freeze every selected authorization input before either await. A changed grant
+  // needs a fresh claim, not a synchronous guess about what its new issuer intended.
+  const authority = () => JSON.stringify({
+    tenant: deps.getMeta('tenantId'), board: deps.getMeta('boardId'), stages: deps.getMeta('stages'),
+    enforced: isControlPairEnforced(deps.env),
+  });
+  const selectedAuthority = authority();
+  const selectedRow = JSON.stringify(row);
+  const selectedStage = deps.stages().find((s) => s.key === row.current_stage_key);
+  if (!selectedStage) return refused('no_matching_card');
+  const policy = selectedStage.checkpointPolicy === undefined ? undefined :
+    parseCheckpointPolicy(new TextEncoder().encode(JSON.stringify(selectedStage.checkpointPolicy)));
+  const denied = await grantRefused(deps, input, row);
+  const policyDigest = policy === undefined ? undefined : await checkpointDigest(policy);
+  deps.commitEffects ??= new CommitEffects();
+  const result = deps.commitEffects.run(deps.ctx.storage, (): ClaimResult => {
+    const currentRow = deps.sql.exec('SELECT * FROM cards WHERE id=?', row.id).toArray()[0];
+    if (!currentRow || JSON.stringify(currentRow) !== selectedRow || authority() !== selectedAuthority)
+      return refused('no_matching_card');
+    if (deps.boardOverBudget()) return refused('board_over_budget');
+    const [refusal] = claimantRefusals(deps, input, selectedStageKey);
+    if (refusal) return refused(refusal);
+    // Re-evaluate the complete SQL eligibility predicate at the current clock:
+    // reservations, stage WIP, holds, blockers and placement may have changed.
+    const checkedMs = deps.nowMs();
+    const checkedWindowMs = placementWindowMs(deps);
+    const checkedWindow = checkedWindowMs > 0 ? {
+      sql: `AND NOT (${inWindowWhere()} AND NOT ${liveHoldWhere()})`,
+      params: [checkedWindowMs, checkedMs, checkedMs],
+    } : { sql: '', params: [] };
+    const eligible = deps.sql.exec(
+      `SELECT c.id FROM cards c WHERE ${deps.claimableWhere(placeholders)}
+       AND c.id=? AND NOT (${liveHoldWhere()} AND c.reserved_for != ?) ${checkedWindow.sql}`,
+      ...claimableKeys, row.id, checkedMs, input.agentId, ...checkedWindow.params,
+    ).toArray()[0];
+    if (!eligible) return refused('no_matching_card');
+    if (denied) {
+      const why = row.queued_grant
+        ? `the operator who queued this card may not dispatch ${input.agentId}`
+        : 'this card was queued without an authorising token, so no one with permission asked for it to run';
+      deps.parkForHuman(selectedCardId, { reason: 'not-authorised', detail: why }, false);
+      deps.notify('control-pair', selectedCardId, `Not dispatched: ${why}`);
+      deps.emit('card.blocked', { cardId: row.id, reason: why });
+      return refused('grant_denied');
+    }
+    // The hold this claim fulfils, if any; cleared with the claim, live or dead, so it never outlives it.
+    const fulfils = isLiveHold(row, checkedMs) && typeof row.reserved_decision_id === 'string' ? row.reserved_decision_id : null;
+    if (row.reserved_for !== null && row.reserved_for !== undefined) deps.sql.exec(CLEAR_HOLD_SQL, row.id);
+    // A claimed card is no longer waiting: its window, if any, is over. It opens again when it is next ready.
+    if (row.ready_since_ms !== null && row.ready_since_ms !== undefined) deps.sql.exec(`UPDATE cards SET ready_since_ms = NULL WHERE id = ?`, row.id);
+    const card = deps.rowToCard(row);
+    const leaseEpoch = Number(row.claim_seq) + 1;
+    const runId = newId('run');
+    const now = deps.now();
+    const nowMs = deps.nowMs();
+    deps.sql.exec(
+      `INSERT INTO runs (id, card_id, stage_key, agent_id, lease_epoch, status, outcome, last_heartbeat_ms, started_at, ended_at, profile_key, queued_by)
+       VALUES (?, ?, ?, ?, ?, 'working', NULL, ?, ?, NULL, ?, ?)`,
+      runId,
+      card.id,
+      card.currentStageKey,
+      input.agentId,
+      leaseEpoch,
+      nowMs,
+      now,
+      input.profileKey ?? null,
+      // Pinned onto the attempt so a run records WHOSE work it was, and stays
+      // answerable after the card has moved on.
+      (row.queued_by as string | null) ?? null,
+    );
+    deps.sql.exec(
+      `UPDATE cards SET state = 'working', delegate_agent_id = ?, current_run_id = ?, claim_seq = ?, updated_at = ? WHERE id = ?`,
+      input.agentId,
+      runId,
+      leaseEpoch,
+      now,
+      card.id,
+    );
+    // RAISE(IGNORE) and conditional writes can return without an SQL error.
+    // Read back both sides before publishing ownership or the pending policy.
+    const savedRun = deps.sql.exec('SELECT * FROM runs WHERE id=?', runId).toArray()[0];
+    const savedCard = deps.sql.exec('SELECT * FROM cards WHERE id=?', card.id).toArray()[0];
+    if (!savedRun || savedRun.card_id !== card.id || savedRun.stage_key !== card.currentStageKey ||
+      savedRun.agent_id !== input.agentId || savedRun.lease_epoch !== leaseEpoch || savedRun.status !== 'working' ||
+      savedRun.last_heartbeat_ms !== nowMs || savedRun.started_at !== now ||
+      !savedCard || savedCard.current_run_id !== runId || savedCard.delegate_agent_id !== input.agentId ||
+      savedCard.claim_seq !== leaseEpoch || savedCard.state !== 'working' || savedCard.current_stage_key !== card.currentStageKey
+    ) throw new Error('INVALID_CLAIM_STATE');
+    let checkpointClaim: CheckpointClaimDiscovery | undefined;
+    if (policy !== undefined && policyDigest !== undefined) {
+      const tenantId = deps.getMeta('tenantId'), boardId = deps.getMeta('boardId');
+      if (!tenantId || !boardId) throw new Error('INVALID_CHECKPOINT_CLAIM');
+      const saved = insertPendingCheckpointClaim(deps.sql, {
+        tenantId, boardId, cardId: card.id, stageKey: card.currentStageKey,
+        agentId: input.agentId, runId, leaseEpoch, policy, policyDigest, admissionState: 'pending',
+      });
+      checkpointClaim = { ...saved, version: CHECKPOINT_CLAIM_PROTOCOL };
+    }
+    deps.reportRun(runId);
+    deps.emit('card.claimed', { cardId: card.id, agentId: input.agentId, runId, ...(fulfils !== null ? { reservationDecisionId: fulfils } : {}) });
+
+    const stage = selectedStage;
+    const handoff = row.handoff_json ? (JSON.parse(row.handoff_json as string) as JsonValue) : null;
+    return {
+      claimed: true,
+      ...(checkpointClaim ? { checkpointClaim } : {}),
+      runId,
+      leaseEpoch,
+      card: deps.mustGetCard(card.id),
+      stage,
+      handoff,
+      lastFailure: lastFailureAt(deps, card.id, stage.key, runId),
+    };
+  });
+  if (result.claimed) await deps.scheduleReclaim();
+  return result;
+}
+
+/** Ordinary work retains its original statement, clock and delivery order. */
+async function claimOrdinarySelected(
+  deps: ClaimsDeps, input: Claimant & { profileKey?: string }, row: Row, holdMs: number,
+): Promise<ClaimResult> {
+  if (typeof row.id !== 'string') throw new Error('INVALID_CLAIM_STATE');
   // ── The control pair, at the moment the work is handed out ──────────────
   //
   // The card records what its queuer was PERMITTED to dispatch
@@ -141,8 +279,8 @@ export async function claim(deps: ClaimsDeps, input: Claimant & { profileKey?: s
       : 'this card was queued without an authorising token, so no one with permission asked for it to run';
     // Parked without releasing a run because there is no run — this stops a dispatch rather
     // than ending one. `row.id`: the candidate card is the row in hand.
-    deps.parkForHuman(row.id as string, { reason: 'not-authorised', detail: why }, false);
-    deps.notify('control-pair', row.id as string, `Not dispatched: ${why}`);
+    deps.parkForHuman(row.id, { reason: 'not-authorised', detail: why }, false);
+    deps.notify('control-pair', row.id, `Not dispatched: ${why}`);
     deps.emit('card.blocked', { cardId: row.id, reason: why });
     return refused('grant_denied');
   }
@@ -170,7 +308,7 @@ export async function claim(deps: ClaimsDeps, input: Claimant & { profileKey?: s
     input.profileKey ?? null,
     // Pinned onto the attempt so a run records WHOSE work it was, and stays
     // answerable after the card has moved on.
-    (row.queued_by as string | null) ?? null,
+    typeof row.queued_by === 'string' ? row.queued_by : null,
   );
   deps.sql.exec(
     `UPDATE cards SET state = 'working', delegate_agent_id = ?, current_run_id = ?, claim_seq = ?, updated_at = ? WHERE id = ?`,
@@ -184,8 +322,9 @@ export async function claim(deps: ClaimsDeps, input: Claimant & { profileKey?: s
   deps.emit('card.claimed', { cardId: card.id, agentId: input.agentId, runId, ...(fulfils !== null ? { reservationDecisionId: fulfils } : {}) });
   await deps.scheduleReclaim();
 
-  const stage = deps.stages().find((s) => s.key === card.currentStageKey)!;
-  const handoff = row.handoff_json ? (JSON.parse(row.handoff_json as string) as JsonValue) : null;
+  const stage = deps.stages().find((s) => s.key === card.currentStageKey);
+  if (!stage) throw new Error('INVALID_CLAIM_STATE');
+  const handoff = typeof row.handoff_json === 'string' ? parseHandoff(row.handoff_json) : null;
   return {
     claimed: true,
     runId,
@@ -226,13 +365,18 @@ function inWindowCount(deps: Pick<ClaimsDeps, 'claimableWhere' | 'sql'>, placeho
 export interface Claimant {
   agentId: string;
   capabilities: string[];
+  checkpointProtocol?: string;
+  checkpointOnly?: boolean;
   maxConcurrency?: number;
   principalId?: string | null;
 }
 
 /** The stages on this board this claimant can take, by the one stage matcher. */
-function claimableStageKeys(deps: Pick<ClaimsDeps, 'stages'>, agentId: string, capabilities: string[]): string[] {
-  return deps.stages().filter((s) => stageMatches(s, agentId, capabilities)).map((s) => s.key);
+function claimableStageKeys(deps: Pick<ClaimsDeps, 'stages'>, agentId: string, capabilities: string[], checkpointProtocol?: string, checkpointOnly?: boolean): string[] {
+  if (checkpointOnly !== undefined && typeof checkpointOnly !== 'boolean') return [];
+  return deps.stages().filter((s) => stageMatches(s, agentId, capabilities) &&
+    (s.checkpointPolicy === undefined || checkpointProtocol === CHECKPOINT_CLAIM_PROTOCOL) &&
+    (!checkpointOnly || s.checkpointPolicy !== undefined)).map((s) => s.key);
 }
 
 /**
@@ -257,7 +401,7 @@ export function claimantRefusals(
     ? Number(deps.sql.exec(`SELECT COUNT(*) AS n FROM runs WHERE agent_id = ? AND status = 'working'`, who.agentId).one().n)
     : 0;
   if (!validMax || active >= max) out.push('concurrency_reached');
-  const keys = claimableStageKeys(deps, who.agentId, who.capabilities);
+  const keys = claimableStageKeys(deps, who.agentId, who.capabilities, who.checkpointProtocol, who.checkpointOnly);
   if (stageKey === undefined ? keys.length === 0 : !keys.includes(stageKey)) out.push('capability_mismatch');
   return out;
 }

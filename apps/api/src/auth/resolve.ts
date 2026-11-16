@@ -19,6 +19,7 @@ import { verifyHubToken, planeAudience } from './hub-jwt';
 import { orgPlaneMode } from './org-plane';
 import { resolvePlaneUser, resolvePlaneAgent, resolvePlaneService } from './org-plane-resolve';
 import type { UserPrincipal, AgentPrincipal, ServicePrincipal } from './principal';
+import { serviceExpiry } from './service-expiry';
 
 export type { UserPrincipal, AgentPrincipal, ServicePrincipal } from './principal';
 
@@ -369,5 +370,5 @@ export async function resolveHubService(request: Request, env: Env): Promise<Ser
   if (!tenantId) return null;
 
   const scopes = typeof claims.scope === 'string' ? claims.scope.split(' ').filter((s) => s !== '') : [];
-  return { principalId: claims.sub, tenantId, scopes };
+  return { principalId: claims.sub, tenantId, scopes, ...serviceExpiry(claims.exp) };
 }

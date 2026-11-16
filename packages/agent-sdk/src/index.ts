@@ -188,10 +188,11 @@ export interface AgentActivity {
 
 interface ClaimResponse {
   claimed: boolean;
+  checkpointClaim?: unknown;
   runId?: string;
   leaseEpoch?: number;
   card?: ClaimedWork['card'];
-  stage?: ClaimedWork['stage'];
+  stage?: ClaimedWork['stage'] & { checkpointPolicy?: unknown };
   handoff?: unknown;
 }
 
@@ -267,6 +268,11 @@ export class SuperpipelineAgent {
     });
     if (!res.ok) throw new SuperpipelineApiError(res.status, path, await errorMessage(res, path));
     const body = (await res.json()) as ClaimResponse;
+    // This generic SDK never opts into the dedicated checkpoint protocol.
+    // Do not erase an unsolicited requirement while projecting ordinary work.
+    if ('checkpointClaim' in body || (body.stage && 'checkpointPolicy' in body.stage)) {
+      throw new Error('checkpoint claim requires a dedicated coordinator');
+    }
     if (!body.claimed || !body.runId || body.leaseEpoch === undefined || !body.card || !body.stage) {
       return null;
     }

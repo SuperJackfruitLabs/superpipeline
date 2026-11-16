@@ -14,6 +14,33 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html). Entries g
 
 ## Unreleased
 
+- Keep disabled checkpoint integration dormant: ordinary boards create no checkpoint claim tables or triggers, generic claims retain their original behavior, and policy-less claim/run context JSON omits checkpoint markers, including legacy nulls.
+
+- Add separate default-off proposed checkpoint policy administration with strict bounded input, workspace admin checks at the Worker and Board boundaries, and refusal to change an affected stage while work is active. No pilot or deployment is enabled.
+
+- Add proposed service-authenticated checkpoint settlement and historical receipt routes behind independent default-off Worker/Board gates, using the real atomic completion transaction and tenant catalog mapping. Pilot integration remains pending.
+
+- Align the disabled checkpoint settlement candidate with delegated reporter observation; freeze stored authority before policy hashing and retain atomic receipt/completion checks. Actual authenticated Hub report construction and pilot enablement remain pending.
+
+- Add a disabled-by-default, service-only proposed checkpoint source admission/read boundary with tenant-bound routing and strict request-size limits. No policy, credential or pilot is enabled.
+
+### Added
+
+- The disabled checkpoint completion candidate writes tenant-mapped commit links atomically with its receipt and run transition, refusing invalid mappings and ignored reference writes.
+
+- Dedicated checkpoint workers can explicitly request only checkpoint-policy stages, preserving ordinary work for clients with ordinary execution readiness.
+
+- Checkpoint-required claims require explicit protocol support and return their actual captured pending policy. Legacy clients continue claiming ordinary work; checkpoint policy enablement remains disabled.
+
+- A private, disabled checkpoint source-admission candidate binds a prepared source vector and worker-context digest to the actual pending claim. Settlement reads these stored facts and passes them to source verification; no public admission or settlement route is enabled.
+
+### Fixed
+
+- Test ordinary claim parity across legacy and negotiated protocol paths, including reservations, ownership, reporting and refusals.
+- Browser logo checks assert the fixed brand colour for each theme, including Studio dark.
+- Claims recheck their selected card, policy and eligibility after authorization waits and commit run/card ownership atomically. The disabled checkpoint candidate records an immutable pending policy with that transaction; source admission remains unwired.
+- The disabled checkpoint settlement candidate reads back its durable receipt before advancing work and prevents stored receipt updates, deletion and replacement.
+
 ## v0.0.33 — 2026-11-16
 
 ### Fixed

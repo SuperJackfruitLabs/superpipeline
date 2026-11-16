@@ -1,3 +1,4 @@
+import type { CommitEffects } from './commit-effects';
 import type { Env } from '../env';
 import type { JsonValue } from '../json';
 import type { ReferenceInput } from '../references/input';
@@ -12,6 +13,7 @@ import type { ApprovalSubjectView, BoardSnapshot, CommentView, ElicitationView, 
  * Object builds the one value (`wiring.ts`).
  */
 export interface BoardContext {
+  commitEffects?: CommitEffects;
   readonly sql: SqlStorage;
   readonly ctx: DurableObjectState;
   readonly env: Env;
