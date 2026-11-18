@@ -112,6 +112,10 @@ references (`SP-Board-*`, `SP-Board-Empty-*`, `SP-Phone-Board-*`) and the shell 
 retired with their allow-list keys. The visual job still captures the board and the phone board
 (`e2e/visual/screens.ts`), at the sizes those artboards had.
 
+Board settings followed (Settings and Board settings are one composition, `SettingsView` and
+`BoardSettingsView`): the four `SP-Settings-*` references and their allow-list keys were retired, and
+with them the only screen that froze a second clock.
+
 ## The references are locked
 
 `e2e/pixel/references.lock` holds the hash of every reference, `manifest.json`, `CORRECTIONS.md` and the

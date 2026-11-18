@@ -1,5 +1,5 @@
 // apps/web/e2e/pixel/screens.ts
-import { expect, type Page } from '@playwright/test';
+import type { Page } from '@playwright/test';
 import { MASK_IDS, type MaskSpec } from './masks';
 import { MANIFEST } from './reference';
 import { CARD_4605, VK_DIALOG_PART, dropDraftRegion, expireSession, fillNewCard, openMoveStep } from './dialog-steps';
@@ -15,7 +15,7 @@ export interface Screen {
   strength?: 'strong' | 'subtle' | 'off';
   /** The theme word the appearance cookie carries for the light run (`sun` for the Appearance dialog). */
   lightTheme?: 'light' | 'sun';
-  /** ISO instant the browser clock is frozen at; default DEFAULT_CLOCK. Only Board settings overrides it. */
+  /** ISO instant the browser clock is frozen at; default DEFAULT_CLOCK. No screen overrides it since Board settings' references were retired. */
   clock?: string;
   steps?: (page: Page) => Promise<void>;
   hold?: string[];
@@ -107,29 +107,6 @@ async function agentsMenus(p: Page): Promise<void> {
 const TOKEN_MASK: MaskSpec = { id: 'token-secret', why: MASK_IDS['token-secret']!, selector: '.tokbox, .wa-tok .box', side: 'both' };
 const blur = async (p: Page) => { await p.evaluate(() => (document.activeElement as HTMLElement | null)?.blur()); };
 
-/**
- * Plan ruling: start at 08:19Z, save the Reproduce rule twice (append " x", blur, remove it, blur —
- * two real PATCHes, text back to the fixture's), let two minutes pass, refresh so "synced" reads 13:51.
- */
-async function ruleSavedTwoMinutesAgo(p: Page): Promise<void> {
-  const summary = p.locator('details.stage > summary, details.st-stage > summary').filter({ has: p.locator('.t-h3, .st-name', { hasText: /^Reproduce$/ }) });
-  await summary.click();
-  const rule = p.locator('#st-rule-reproduce');
-  const patched = () => p.waitForResponse((r) => r.url().includes('/stages/reproduce') && r.request().method() === 'PATCH');
-  const toEnd = () => rule.evaluate((el: HTMLTextAreaElement) => { el.focus(); el.setSelectionRange(el.value.length, el.value.length); });
-  await toEnd();
-  await p.keyboard.type(' x');
-  await Promise.all([patched(), rule.blur()]);
-  await toEnd();
-  await p.keyboard.press('Backspace');
-  await p.keyboard.press('Backspace');
-  await Promise.all([patched(), rule.blur()]);
-  await p.clock.fastForward('02:00');
-  await p.evaluate(() => (window as unknown as { __spDev: { refresh: () => Promise<void> } }).__spDev.refresh());
-  await p.waitForFunction(() => document.documentElement.dataset.ready === 'true');
-  await expect(p.getByText('Rule saved · 2 min ago')).toBeVisible();
-  await p.evaluate(() => (document.activeElement as HTMLElement | null)?.blur());
-}
 /** Drawer backdrop (C-08): the board behind the drawer is compared on the board screens. */
 const backdrop = (v: Vibe, h: number): MaskSpec[] => ({
   daylight: [{ id: 'C-08', why: 'drawer backdrop', x: 0, y: 0, w: 760, h }],
@@ -196,7 +173,6 @@ function forVibe(v: Vibe, V: string, h: (a: string) => number): Screen[] {
     { artboard: `SP-Projects-${V}`, vibe: v, route: '/plan/projects', strength: shared(v), hold: ['**/v1/projects/*/rollup'], masks: [LIVE], steps: openProjectsPanels },
     { artboard: `SP-Workspace-Agents-${V}`, vibe: v, route: '/crew/agents', strength: shared(v), steps: agentsMenus, masks: [LIVE, TOKEN_MASK], writes: true },
     { artboard: `SP-Workspace-Other-${V}`, vibe: v, route: '/dev/workspace-review', strength: shared(v), masks: [LIVE], steps: onDx },
-    { artboard: `SP-Settings-${V}`, vibe: v, route: `${DX}/settings`, strength: shared(v), clock: '2026-10-11T08:19:00.000Z', masks: [LIVE], writes: true, steps: ruleSavedTwoMinutesAgo },
     { artboard: `SP-Spend-${V}`, vibe: v, route: `${DX}/operate/telemetry`, strength: shared(v), masks: [LIVE] },
     { artboard: `SP-Dlg-NewCard-${V}`, vibe: v, route: DX, strength: off(v), parts: VK_DIALOG_PART, steps: fillNewCard, refPatch: dropDraftRegion },
     { artboard: `SP-Dlg-Palette-${V}`, vibe: v, route: DX, strength: off(v), parts: VK_DIALOG_PART, steps: async (p) => { await p.keyboard.press('Meta+k'); await p.getByRole('combobox', { name: 'Search cards, boards, agents and actions' }).fill('agent'); await blur(p); } },

@@ -118,7 +118,14 @@ test('old Workspace links land where each tab lives now; Settings holds Labels a
   await page.goto('/workspace/labels');
   await expect(page).toHaveURL(/\/settings#labels$/);
   await expect(page.getByRole('heading', { level: 1, name: 'Settings' })).toBeVisible();
-  for (const h of [/label/i, 'Connections', 'Appearance', 'Account']) await expect(page.getByRole('heading', { level: 2, name: h }).first()).toBeVisible();
+  // The sections are tabs with counts; the hash opened Labels.
+  const tabs = page.getByRole('tablist', { name: 'Settings' }).getByRole('tab');
+  await expect(tabs).toHaveText([/^Labels/, /^Connections/, /^Appearance/, /^Account/]);
+  await expect(page.getByRole('tab', { name: /^Labels/ })).toHaveAttribute('aria-selected', 'true');
+  await expect(page.getByRole('heading', { level: 2, name: 'Labels' })).toBeVisible();
+  await page.goto('/workspace/connections');
+  await expect(page).toHaveURL(/\/settings#connections$/);
+  await expect(page.getByRole('tab', { name: /^Connections/ })).toHaveAttribute('aria-selected', 'true');
   // …and the account menu reaches it.
   await page.goto('/crew/agents');
   await rail(page).getByRole('button', { name: /^Account/ }).click();

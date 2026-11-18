@@ -18,13 +18,19 @@ vi.mock('$lib/api', async (orig) => ({ ...(await orig<typeof import('$lib/api')>
 vi.mock('$lib/stores/app.svelte', () => ({ app: { markBusy: <T,>(p: Promise<T>) => p, boardId: null, board: null, boards: [], user: { userId: 'usr_ira' } } }));
 
 import { WORKSPACE_TABS } from '$lib/layouts';
+import SettingsView from '$lib/components/settings/SettingsView.svelte';
+import VibeFrame from '$lib/composition/VibeFrame.svelte';
 import { SLOW_COPY, SLOW_MS, TRY_AGAIN } from '$lib/loading';
 
 const VIBES = ['daylight', 'paper', 'studio', 'quiet'] as const;
 const TABS = ['agents', 'people', 'capabilities', 'labels'] as const;
 
 type Tab = (typeof TABS)[number] | 'connections';
-const renderTab = (vibe: (typeof VIBES)[number], tab: Tab) => render(WORKSPACE_TABS[vibe][tab], { props: { vibe } as never });
+// Labels and Connections are Settings tabs (SettingsView, one composition in every vibe), rendered in each vibe's root.
+const renderTab = (vibe: (typeof VIBES)[number], tab: Tab) =>
+  tab === 'labels' || tab === 'connections'
+    ? render(VibeFrame, { props: { vibe, component: SettingsView, props: { initial: tab } } })
+    : render(WORKSPACE_TABS[vibe][tab], { props: { vibe } as never });
 
 beforeEach(() => { for (const f of Object.values(api)) f.mockImplementation(never); });
 afterEach(cleanup);

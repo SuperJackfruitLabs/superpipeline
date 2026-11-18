@@ -61,7 +61,8 @@ for (const vibe of VIBES) {
 for (const vibe of VIBES) {
   for (const size of SIZES) {
     test(`Q2 payload URL fully shown, dropdowns styled | ${vibe} | ${size.name}`, async ({ page }) => {
-      await openWorld(page, `${DX}/settings`, { vibe, dark: false, width: size.width, height: size.height });
+      // Board settings: GitHub is a tab (the hash names it); the schedule form opens under New schedule.
+      await openWorld(page, `${DX}/settings#github`, { vibe, dark: false, width: size.width, height: size.height });
       const url = page.locator('#gh-url');
       await expect(url).toBeVisible();
       const m = await url.evaluate((el: HTMLInputElement) => ({
@@ -72,6 +73,8 @@ for (const vibe of VIBES) {
       expect(m.sh, 'the value is cut off vertically').toBeLessThanOrEqual(m.h + 1);
       await expect(page.getByRole('button', { name: /^copy/i }).first()).toBeVisible();
 
+      await page.getByRole('tab', { name: /^Schedules/ }).click();
+      await page.getByRole('button', { name: 'New schedule' }).click();
       for (const id of ['#sc-s', '#sc-o']) {
         const s = await page.locator(id).evaluate((el) => {
           const cs = getComputedStyle(el);
@@ -91,21 +94,33 @@ for (const vibe of VIBES) {
     test(`Q3 labels named and untruncated | ${vibe} | ${size.name}`, async ({ page, request }) => {
       await request.post(`${PORTS.apiUrl}/v1/labels`, { headers: { 'X-Tenant-Id': FIXTURE_TENANT, 'X-User-Id': FIXTURE_USER }, data: { name: LONG_LABEL, colour: '#3366cc' } });
       await openWorld(page, '/settings#labels', { vibe, dark: false, width: size.width, height: size.height });
-      await expect(page.locator('[id^="lb-"]').first()).toBeVisible();
+      const table = page.getByRole('table', { name: 'Labels' }).or(page.getByRole('list', { name: 'Labels' }));
+      await expect(table).toBeVisible();
+      // At rest the labels are a table of names, not fields: no text input in it.
+      await expect(table.locator('input:not([type="color"]), textarea')).toHaveCount(0);
+      const more = page.getByRole('button', { name: /^Show \d+ more/ });
+      if (await more.count()) await more.click();
       const r = await page.evaluate(() => {
         const colour = [...document.querySelectorAll('input[type="color"]')].map((i) => i.getAttribute('aria-label') ?? '');
-        const names = [...document.querySelectorAll<HTMLInputElement>('[id^="lb-"]:not(#lb-new)')].map((i) => ({
-          v: i.value, w: i.clientWidth, sw: i.scrollWidth, sh: i.scrollHeight, h: i.clientHeight,
-        }));
+        const names = [...document.querySelectorAll<HTMLElement>('.set-name')].map((e) => ({ v: e.textContent ?? '', w: e.clientWidth, sw: e.scrollWidth, h: e.clientHeight, sh: e.scrollHeight }));
         return { colour, names };
       });
       expect(r.colour.length).toBeGreaterThan(0);
       for (const c of r.colour) expect(c).toMatch(/^Colour for .+/);
-      expect(r.names.some((n) => n.v === 'independent-verification')).toBe(true);
+      expect(r.names.some((n) => n.v === LONG_LABEL)).toBe(true);
       for (const n of r.names) {
         expect(n.sw, `label "${n.v}" is cut off (${n.sw} needed, ${n.w} shown)`).toBeLessThanOrEqual(n.w + 1);
         expect(n.sh, `label "${n.v}" is cut off vertically`).toBeLessThanOrEqual(n.h + 1);
       }
+      // Renamed in place: the long name's cell turns into a field that shows all of it.
+      await page.getByRole('button', { name: `Rename ${LONG_LABEL}` }).first().click();
+      const field = page.getByRole('textbox', { name: `Name of ${LONG_LABEL}` });
+      await expect(field).toBeFocused();
+      const f = await field.evaluate((el: HTMLInputElement) => ({ v: el.value, w: el.clientWidth, sw: el.scrollWidth }));
+      expect(f.v).toBe(LONG_LABEL);
+      expect(f.sw, 'the name field cuts the name off').toBeLessThanOrEqual(f.w + 1);
+      await page.keyboard.press('Escape');
+      await expect(field).toHaveCount(0);
     });
 
     test(`Q3 capability descriptions grow | ${vibe} | ${size.name}`, async ({ page }) => {

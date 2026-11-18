@@ -4,6 +4,8 @@ import { app } from '$lib/stores/app.svelte';
 
 export class ScheduleModel {
   schedules = $state<Schedule[]>([]);
+  /** The first read has answered (a failed read reads as none, as before). */
+  loaded = $state(false);
   busy = $state('');
   formError = $state<string | null>(null);
   title = $state('');
@@ -19,6 +21,7 @@ export class ScheduleModel {
     const req = getSchedules(this.boardId);
     void app.markBusy(req);
     this.schedules = await req.catch(() => []);
+    this.loaded = true;
   }
 
   async add(): Promise<void> {

@@ -47,7 +47,7 @@
       <div class="field">
         <label for="st-cap-{k}">Capability</label>
         <input class="input" id="st-cap-{k}" value={ownerText(stage)} onblur={(e) => model.setOwner(stage, e.currentTarget.value)} />
-        <p class="hint">Comma-separated. Agents holding it claim cards here. Saves when you leave the field.</p>
+        <p class="hint">Comma-separated. Saves on leaving.</p>
       </div>
       {#if caps.length >= 2}
         <div class="seg" role="group" aria-label="How the capabilities combine" style="align-self: end;">
@@ -55,13 +55,13 @@
           <button aria-pressed={!!stage.requires?.any} type="button" onclick={() => model.setMatch(stage, 'any')}>Any one</button>
         </div>
       {:else}
-        <p class="hint" style="align-self: end;">With two or more capabilities, choose “needs all” or “any one” here.</p>
+        <p class="hint" style="align-self: end;">Two or more combine as all or any.</p>
       {/if}
     {/if}
     <div class="field"><label for="st-wip-{k}">WIP limit</label><input class="input" id="st-wip-{k}" type="number" placeholder="No limit" min="0" value={stage.wipLimit ?? ''} oninput={(e) => (stage.wipLimit = e.currentTarget.value === '' ? undefined : Number(e.currentTarget.value))} /></div>
     <div class="field">
       <span class="lbl">Approval</span>
-      <label class="check"><input type="checkbox" checked={stage.gate === 'approval'} onchange={(e) => (stage.gate = e.currentTarget.checked ? 'approval' : undefined)} /><span>Approval gate — a person approves before a card leaves this stage</span></label>
+      <label class="check"><input type="checkbox" checked={stage.gate === 'approval'} onchange={(e) => (stage.gate = e.currentTarget.checked ? 'approval' : undefined)} /><span>Approval gate</span></label>
     </div>
     <div class="field full">
       <label for="st-rule-{k}">Standing rule for this stage</label>
@@ -72,8 +72,7 @@
       <Button variant="secondary" type="button" aria-label="Move {stage.name} earlier" disabled={index === 0} onclick={() => model.move(index, -1)} icon={ic_arrow_up_16}>Move earlier</Button>
       <Button variant="secondary" type="button" aria-label="Move {stage.name} later" disabled={index === model.draft.length - 1} onclick={() => model.move(index, 1)} icon={ic_arrow_down_16}>Move later</Button>
       <span class="t-meta t-num" style="margin-left: auto;">{cardsHere(cards)}</span>
-      <Button variant="danger" type="button" aria-label="Remove stage {stage.name}" disabled={cards > 0 || model.draft.length <= 1} onclick={() => model.removeStage(stage.key)} icon={ic_trash_16}>Remove stage</Button>
+      <Button variant="danger" type="button" aria-label="Remove stage {stage.name}" disabled={cards > 0 || model.draft.length <= 1} onclick={() => model.removeStage(stage.key)} icon={ic_trash_16}>Remove {stage.name}</Button>
     </div>
-    <p class="hint full">A stage holding cards cannot be removed until they are moved; the last stage cannot be removed.</p>
   </div>
 </details>

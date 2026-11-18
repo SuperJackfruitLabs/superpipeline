@@ -23,7 +23,7 @@ describe('screen registry', () => {
     for (const k of EXPECTED_FAILURES) expect(keys.has(k), k).toBe(true);
     for (const o of Object.values(PLATFORM_OVERRIDES)) for (const k of Object.keys(o)) expect(keys.has(k), k).toBe(true);
   });
-  it('no screen asks for a per-screen fixture or a second clock except Board settings', () => {
-    for (const s of SCREENS) if (s.clock) expect(s.artboard, s.artboard).toMatch(/^SP-Settings-/);
+  it('no screen asks for a second clock (the one that did, Board settings, was retired)', () => {
+    for (const s of SCREENS) expect(s.clock, s.artboard).toBeUndefined();
   });
 });

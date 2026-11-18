@@ -47,24 +47,17 @@ import AgentsPage from '$lib/components/workspace/agents/AgentsPage.svelte';
 import AgentsStudio from '$lib/components/workspace/agents/AgentsStudio.svelte';
 import NeedsYouTab from '$lib/components/workspace/NeedsYouTab.svelte';
 import CapabilitiesTab from '$lib/components/workspace/CapabilitiesTab.svelte';
-import LabelManager from '$lib/components/workspace/LabelManager.svelte';
 import PeopleTab from '$lib/components/workspace/PeopleTab.svelte';
-import ConnectionsTab from '$lib/components/workspace/ConnectionsTab.svelte';
 import NeedsYouStudio from '$lib/components/workspace/studio/NeedsYouStudio.svelte';
 import CapabilitiesStudio from '$lib/components/workspace/studio/CapabilitiesStudio.svelte';
-import LabelsStudio from '$lib/components/workspace/studio/LabelsStudio.svelte';
 import PeopleStudio from '$lib/components/workspace/studio/PeopleStudio.svelte';
-import ConnectionsStudio from '$lib/components/workspace/studio/ConnectionsStudio.svelte';
 import WorkspaceReview from '$lib/components/workspace/review/WorkspaceReview.svelte';
 import WorkspaceReviewStudio from '$lib/components/workspace/review/WorkspaceReviewStudio.svelte';
-import BoardSettings from '$lib/components/BoardSettings.svelte';
 import Telemetry from '$lib/components/Telemetry.svelte';
 import TelemetryStudio from '$lib/components/operate/TelemetryStudio.svelte';
 import BoardLogPage from '$lib/components/operate/BoardLogPage.svelte';
 import BoardLogPageStudio from '$lib/components/operate/BoardLogPageStudio.svelte';
 import type { BoardLogPageProps, SpendLayoutProps } from '$lib/components/operate/spend-types';
-import BoardSettingsStudio from '$lib/components/settings/BoardSettingsStudio.svelte';
-import type { SettingsLayoutProps } from '$lib/components/settings/types';
 import type { WorkspaceFrameProps, WorkspaceTabProps } from '$lib/components/workspace/types';
 import type { WorkspaceTab } from '$lib/components/workspace/workspace-counts.svelte';
 
@@ -133,23 +126,20 @@ export const WORKSPACE_LAYOUTS: Readonly<Record<Vibe, Component<WorkspaceFramePr
 };
 /** Until Task 34 the five other tabs keep their current component in every vibe. */
 // The old tab components take no props; the cast goes away with them in Task 34.
-const PAGE_TABS: Record<WorkspaceTab, Component<WorkspaceTabProps>> = {
-  'needs-you': NeedsYouTab, agents: AgentsPage, capabilities: CapabilitiesTab, labels: LabelManager, people: PeopleTab, connections: ConnectionsTab,
+/** Labels and Connections are Settings tabs now (SettingsView); Crew draws the rest. */
+type CrewSideTab = Exclude<WorkspaceTab, 'labels' | 'connections'>;
+const PAGE_TABS: Record<CrewSideTab, Component<WorkspaceTabProps>> = {
+  'needs-you': NeedsYouTab, agents: AgentsPage, capabilities: CapabilitiesTab, people: PeopleTab,
 };
-const STUDIO_TABS: Record<WorkspaceTab, Component<WorkspaceTabProps>> = {
-  'needs-you': NeedsYouStudio, agents: AgentsStudio, capabilities: CapabilitiesStudio, labels: LabelsStudio, people: PeopleStudio, connections: ConnectionsStudio,
+const STUDIO_TABS: Record<CrewSideTab, Component<WorkspaceTabProps>> = {
+  'needs-you': NeedsYouStudio, agents: AgentsStudio, capabilities: CapabilitiesStudio, people: PeopleStudio,
 };
-export const WORKSPACE_TABS: Readonly<Record<Vibe, Record<WorkspaceTab, Component<WorkspaceTabProps>>>> = {
+export const WORKSPACE_TABS: Readonly<Record<Vibe, Record<CrewSideTab, Component<WorkspaceTabProps>>>> = {
   daylight: PAGE_TABS, paper: PAGE_TABS, studio: STUDIO_TABS, quiet: PAGE_TABS,
 };
 /** The dev review route's body: D/P/Q two columns with capabilities across; Studio needs, capabilities, then a split. */
 export const WORKSPACE_REVIEW_LAYOUTS: Readonly<Record<Vibe, Component<{ initial: WorkspaceTabProps['initial'] }>>> = {
   daylight: WorkspaceReview, paper: WorkspaceReview, studio: WorkspaceReviewStudio, quiet: WorkspaceReview,
-};
-
-/** Board settings: Daylight, Paper and Quiet share one DOM; Studio numbers its sections. */
-export const SETTINGS_LAYOUTS: Readonly<Record<Vibe, Component<SettingsLayoutProps>>> = {
-  daylight: BoardSettings, paper: BoardSettings, studio: BoardSettingsStudio, quiet: BoardSettings,
 };
 
 /** Spend in detail and the full board log: Daylight, Paper and Quiet share one DOM; Studio is an annual-report page. */

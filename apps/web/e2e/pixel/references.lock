@@ -53,10 +53,6 @@
     "SP-Projects-Paper.html": "a44e921eb4b13ea85c60c4e0656a5e0988d25da2723a4e9e4ad0380f6e88e59c",
     "SP-Projects-Quiet.html": "2117e4bf52b9e4f701d792c915fd9e0140886825b22a9917722d3df6b369f05a",
     "SP-Projects-Studio.html": "a53dd4d05aee3f89850890b4b03dc3368a3d296c5bbf5c08c0e80b75f26014eb",
-    "SP-Settings-Daylight.html": "ae5f4f5cb6f211db60f1c948047b08b383ff47920c0e898c0e52e3630f7f8455",
-    "SP-Settings-Paper.html": "855bf96a5faeff4742c8f0f61e3283e1c4f42e14481db4abfa052b776d9b1b32",
-    "SP-Settings-Quiet.html": "25f7d7cdef07ddae129b8e37383c82f8ab8ea023be52c8daeade01bdeef8b813",
-    "SP-Settings-Studio.html": "a5e2e8059ed805f3abf9adf001005d692323e4d99d74fbfd16082b5cf43d116a",
     "SP-Spend-Daylight.html": "54047ed7e8d173fe20c1ff3225915eebef7c50606c8d03394a317e3dafd8e6bd",
     "SP-Spend-Paper.html": "fcbdbec7d6324cc6716599848c6d5a56c9b15989960553e3e5e0344c5dd4c9c7",
     "SP-Spend-Quiet.html": "e700feea9c4d5761a1dbe8615476057cbcca46b654d1119aa87195fef11c2afa",
@@ -71,7 +67,7 @@
     "SP-Workspace-Other-Studio.html": "98804f8a3e2693b3a265b2ee3cb80396265145b88b101a7d78f98164ef7b2fd6",
     "_vibekit-0.0.10/vibekit.css": "d16b8e30e4974b8f9e4c41ba723169d4835ae555323440f6831023403fddc95b",
     "_vibekit-0.0.4/button.css": "2e082042c6fde2999a47beff5986c7dfd4994f26facbc1e5c067b8c068474152",
-    "manifest.json": "252121356738088968e81da9b0967c075e0541be5dd4a394f31a0a59316395d1"
+    "manifest.json": "a5789128f1b341fa7e10c9770c1159537f55eca7ec30d082e0be03da5eef07f5"
   },
   "thresholds": {
     "PIXEL_THRESHOLD": 0.1,
@@ -167,10 +163,6 @@
     "SP-Projects-Paper·light",
     "SP-Projects-Studio·dark",
     "SP-Projects-Studio·light",
-    "SP-Settings-Daylight·dark",
-    "SP-Settings-Daylight·light",
-    "SP-Settings-Studio·dark",
-    "SP-Settings-Studio·light",
     "SP-Spend-Daylight·dark",
     "SP-Spend-Daylight·light",
     "SP-Spend-Studio·dark",
