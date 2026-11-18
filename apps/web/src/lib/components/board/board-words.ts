@@ -4,7 +4,7 @@
  * reference artboard; the unit tests hold the exact strings.
  */
 import { greetNamed } from '$lib/greet';
-import type { Mood, Phase } from '@superjackfruit/vibekit';
+import type { Mood, Phase } from '@superjackfruitlabs/vibekit-ui';
 import type { AttentionKind } from '$lib/components/attention/attention';
 import type { BoardSnapshot, Stage } from '$lib/api';
 import { ageStage } from '$lib/age';

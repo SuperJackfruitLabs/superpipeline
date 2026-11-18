@@ -5,7 +5,7 @@
    * Restore, the done mark, and the loading letter. No signal in any of them.
    */
   import '../paper-states.css';
-  import { Button } from '@superjackfruit/vibekit';
+  import { Button } from '@superjackfruitlabs/vibekit-ui';
   import { dayMonth } from '$lib/when';
   import Icon from '$lib/components/parts/Icon.svelte';
   import { archivedReason } from '../card-words';

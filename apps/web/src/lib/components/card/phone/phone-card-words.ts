@@ -3,7 +3,7 @@
  * Words for the four phone cards (card digests §6, 05-amendments §7–§8). Pure: every string a phone
  * layout prints that is not the agent's own text. Agent text is sentence-cased here, never rewritten.
  */
-import { greeting, type Mood, type Phase } from '@superjackfruit/vibekit';
+import { greeting, type Mood, type Phase } from '@superjackfruitlabs/vibekit-ui';
 import type { AgentSummary, Attempt, Activity, Member, Stage } from '$lib/api';
 import { isControlRow, isNarrative, visibleActivities } from '$lib/activity-groups';
 import type { LeadKind } from '$lib/components/card/card-lead';

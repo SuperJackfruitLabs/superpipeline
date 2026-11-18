@@ -3,7 +3,7 @@
   import SkeletonRows from '$lib/components/parts/SkeletonRows.svelte';
   import LoadFailed from '$lib/components/parts/LoadFailed.svelte';
   import { crewNewInPage, onCrewNew } from './crew-new';
-  import { Button } from '@superjackfruit/vibekit';
+  import { Button } from '@superjackfruitlabs/vibekit-ui';
   import LineIcon from '$lib/components/parts/LineIcon.svelte';
   import type { Role } from '$lib/api';
   import { PeopleModel } from './people-model.svelte';

@@ -2,12 +2,12 @@
 <script lang="ts">
   /** Quiet's card page (SP-CardPage-Quiet): plain sections, whole sentences, no motion. */
   import './card-page-quiet.css';
-  import { faceSvg } from '@superjackfruit/vibekit';
+  import { faceSvg } from '@superjackfruitlabs/vibekit-ui';
   import { app } from '$lib/stores/app.svelte';
   import { appearance } from '$lib/appearance.svelte';
   import { displayAgent, displayPrincipal } from '$lib/names';
   import { signOut } from '$lib/components/shell/account';
-  import { Button, Field, StageTrack } from '@superjackfruit/vibekit';
+  import { Button, Field, StageTrack } from '@superjackfruitlabs/vibekit-ui';
   import { isControlRow, isNarrative, visibleActivities } from '$lib/activity-groups';
   import CardEditForm from '../CardEditForm.svelte';
   import DeliveryPanel from '../DeliveryPanel.svelte';

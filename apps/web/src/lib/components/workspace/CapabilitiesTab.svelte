@@ -4,7 +4,7 @@
   import LoadFailed from '$lib/components/parts/LoadFailed.svelte';
   import { crewNewInPage, onCrewNew } from './crew-new';
   import { autogrow } from '$lib/autogrow';
-  import { Button, Face } from '@superjackfruit/vibekit';
+  import { Button, Face } from '@superjackfruitlabs/vibekit-ui';
   import LineIcon from '$lib/components/parts/LineIcon.svelte';
   import { CapabilitiesModel } from './capabilities-model.svelte';
   import { agentCountText, capsHeading, holdersOf, INFERRED_TITLE } from './capability-notes';

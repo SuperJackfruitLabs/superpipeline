@@ -43,7 +43,7 @@ import {
   type StaleCard,
 } from '$lib/api';
 import { flushSync, tick } from 'svelte';
-import { optimistic } from '@superjackfruit/vibekit/motion';
+import { optimistic } from '@superjackfruitlabs/vibekit-ui/motion';
 import { auth } from '$lib/auth-recovery.svelte';
 import { itemsFromBoard, type AttentionItem } from '$lib/components/attention/attention';
 import { noFilters, passesArchivedFilter, passesProjectFilter } from './card-filters';

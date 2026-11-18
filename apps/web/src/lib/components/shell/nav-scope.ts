@@ -4,7 +4,7 @@
  * on every page, and vibekit's nav says only "3 need you".
  * Say the scope in the link's accessible name and tooltip (vibekit owns the link and its text).
  */
-import { countWords } from '@superjackfruit/vibekit';
+import { countWords } from '@superjackfruitlabs/vibekit-ui';
 
 export const BOARD_SCOPE = 'on this board';
 export const ALL_BOARDS_SCOPE = 'across all boards';

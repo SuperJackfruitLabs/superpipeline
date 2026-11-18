@@ -4,7 +4,7 @@
  * store; the tests feed them the fixture world. Times read in the browser's zone unless a test
  * passes one (the harness runs in Asia/Kolkata, so 08:21Z prints 13:51).
  */
-import { countWords, greeting, type Phase } from '@superjackfruit/vibekit';
+import { countWords, greeting, type Phase } from '@superjackfruitlabs/vibekit-ui';
 import type { Card, User } from '$lib/api';
 import { plural } from '$lib/words';
 

@@ -2,10 +2,10 @@
 <script lang="ts">
   import { untrack } from 'svelte';
   import SkeletonRows from '$lib/components/parts/SkeletonRows.svelte';
-  import { attention, bumpOnChange, countUp, flashOnChange, flip, rise } from '@superjackfruit/vibekit/motion';
+  import { attention, bumpOnChange, countUp, flashOnChange, flip, rise } from '@superjackfruitlabs/vibekit-ui/motion';
   import { arrivals } from '$lib/motion/arrivals';
   /** SP-Operate-Daylight: Needs you on the left; Running, Spend and Activity on the right. */
-  import { Button, Face, LoadMore, Segmented } from '@superjackfruit/vibekit';
+  import { Button, Face, LoadMore, Segmented } from '@superjackfruitlabs/vibekit-ui';
   import LineIcon from '$lib/components/parts/LineIcon.svelte';
   import BoardChip from '$lib/components/inbox/BoardChip.svelte';
   import GateReferences from '$lib/components/card/gate/GateReferences.svelte';

@@ -2,7 +2,7 @@
 <script lang="ts">
   /** SP-Card-States-Daylight: six card tops, each the drawer's own parts at cell size. */
   import '../daylight-states.css';
-  import { Face, StageTrack } from '@superjackfruit/vibekit';
+  import { Face, StageTrack } from '@superjackfruitlabs/vibekit-ui';
   import { app } from '$lib/stores/app.svelte';
   import { displayPrincipal } from '$lib/names';
   import GateDaylight from '../gate/GateDaylight.svelte';

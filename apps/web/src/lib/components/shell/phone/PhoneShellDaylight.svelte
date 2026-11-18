@@ -1,7 +1,7 @@
 <!-- apps/web/src/lib/components/shell/phone/PhoneShellDaylight.svelte -->
 <script lang="ts">
   /** Daylight, phone (SP-Phone-Board-Daylight): the header on the phase's sky, a floating tab bar. */
-  import { Button, IconButton, Segmented } from '@superjackfruit/vibekit';
+  import { Button, IconButton, Segmented } from '@superjackfruitlabs/vibekit-ui';
   import Icon from '$lib/components/parts/Icon.svelte';
   import { shellModel as m } from '../shell-model.svelte';
   import { VIEWS, type ShellProps, type ShellView } from '../types';

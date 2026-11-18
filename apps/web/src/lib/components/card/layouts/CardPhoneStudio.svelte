@@ -2,7 +2,7 @@
 <script lang="ts">
   /** SP-Phone-Card-Studio: bar, figures, track, readout, command box, five tabs. */
   import '../phone/pc-studio.css';
-  import { Button, Face } from '@superjackfruit/vibekit';
+  import { Button, Face } from '@superjackfruitlabs/vibekit-ui';
   import type { CardLayoutProps } from './types';
   import PhoneIcon from '$lib/components/parts/PhoneIcon.svelte';
   import StudioPhonePanes from '../phone/StudioPhonePanes.svelte';

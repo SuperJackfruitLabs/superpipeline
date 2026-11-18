@@ -4,7 +4,7 @@
   /** SP-Phone-Card-Quiet: plain text, one fieldset for the decision, sixteen sections. */
   import '../phone/phone-card-shared.css';
   import '../phone/pc-quiet.css';
-  import { Button, Face } from '@superjackfruit/vibekit';
+  import { Button, Face } from '@superjackfruitlabs/vibekit-ui';
   import type { CardLayoutProps } from './types';
   import PhoneIcon from '$lib/components/parts/PhoneIcon.svelte';
   import PhoneDetails from '../phone/PhoneDetails.svelte';

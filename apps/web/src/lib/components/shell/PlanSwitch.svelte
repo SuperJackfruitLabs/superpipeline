@@ -5,7 +5,7 @@
    * form); the other vibes draw link tabs.
    */
   import { goto } from '$app/navigation';
-  import { Segmented, Tabs } from '@superjackfruit/vibekit';
+  import { Segmented, Tabs } from '@superjackfruitlabs/vibekit-ui';
   import { shellModel as m } from './shell-model.svelte';
   import { PLAN_SECTIONS, type PlanSection } from './types';
 

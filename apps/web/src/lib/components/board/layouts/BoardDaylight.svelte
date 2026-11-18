@@ -3,7 +3,7 @@
   /** Daylight desktop board: lanes under the sky, empty stages as strips, the peek from 1440px (SB §3). */
   import '../daylight/daylight.css';
   import { flushSync, onDestroy, tick, untrack } from 'svelte';
-  import { duration, flipChildren, isReducedMotion } from '@superjackfruit/vibekit/motion';
+  import { duration, flipChildren, isReducedMotion } from '@superjackfruitlabs/vibekit-ui/motion';
   import { MediaQuery } from 'svelte/reactivity';
   import { app } from '$lib/stores/app.svelte';
   import { dlCols } from '../board-words';

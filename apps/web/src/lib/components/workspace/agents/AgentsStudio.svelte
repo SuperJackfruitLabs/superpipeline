@@ -4,7 +4,7 @@
   import LoadFailed from '$lib/components/parts/LoadFailed.svelte';
   import { crewNewInPage, onCrewNew } from '../crew-new';
   import './agents-studio.css';
-  import { Button, Face } from '@superjackfruit/vibekit';
+  import { Button, Face } from '@superjackfruitlabs/vibekit-ui';
   import LineIcon from '$lib/components/parts/LineIcon.svelte';
   import { agentsHeading, agentsPanelMeta, agentStatus, bannerTitle, tokensLabel } from '../agent-status';
   import { AgentsModel } from '../agents-model.svelte';

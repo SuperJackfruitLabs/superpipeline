@@ -1,6 +1,6 @@
 <!-- apps/web/src/lib/components/card/phone/PhoneAttempts.svelte -->
 <script lang="ts">
-  import { Face } from '@superjackfruit/vibekit';
+  import { Face } from '@superjackfruitlabs/vibekit-ui';
   import type { PhoneCardView } from './phone-card-words';
   let { view }: { view: PhoneCardView } = $props();
 </script>

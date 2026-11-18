@@ -2,7 +2,7 @@
 <script lang="ts">
   /** SP-Card-States-Paper: six letter tops, each the drawer's own parts at cell size. */
   import '../paper-states.css';
-  import { Face } from '@superjackfruit/vibekit';
+  import { Face } from '@superjackfruitlabs/vibekit-ui';
   import { app } from '$lib/stores/app.svelte';
   import { displayPrincipal } from '$lib/names';
   import GatePaper from '../gate/GatePaper.svelte';

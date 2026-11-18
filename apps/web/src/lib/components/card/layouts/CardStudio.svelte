@@ -10,7 +10,7 @@
   import '../page/card-page-studio.css';
   import '../studio/card-studio.css';
   import '../studio/card-states-studio.css';
-  import { Button, Drawer, Face, StageTrack } from '@superjackfruit/vibekit';
+  import { Button, Drawer, Face, StageTrack } from '@superjackfruitlabs/vibekit-ui';
   import { CARD_DRAWER_WIDTH } from './widths';
   import { displayAgent } from '$lib/names';
   import { clockHM } from '$lib/when';

@@ -2,7 +2,7 @@
 <script lang="ts">
   /** The card states with no live decision, in Quiet (cells C, D, F): notices in ink or green, no signal. */
   import '../quiet-states.css';
-  import { Button } from '@superjackfruit/vibekit';
+  import { Button } from '@superjackfruitlabs/vibekit-ui';
   import { dayMonth } from '$lib/when';
   import { archivedReason } from '../card-words';
   import { quietRestore } from '../quiet-words';

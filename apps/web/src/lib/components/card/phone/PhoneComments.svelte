@@ -1,6 +1,6 @@
 <!-- apps/web/src/lib/components/card/phone/PhoneComments.svelte -->
 <script lang="ts">
-  import { Button } from '@superjackfruit/vibekit';
+  import { Button } from '@superjackfruitlabs/vibekit-ui';
   import type { CardModel } from '../card-model.svelte';
   let { model }: { model: CardModel } = $props();
   const id = $props.id();

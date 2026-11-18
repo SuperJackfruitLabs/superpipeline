@@ -3,7 +3,7 @@
   import ApprovalDetail from './ApprovalDetail.svelte';
   /** An agent's question in Paper (SP-Card-States-Paper B): the letter asks once, then the reply. */
   import '../paper-states.css';
-  import { Button, Face, Field, type Vibe } from '@superjackfruit/vibekit';
+  import { Button, Face, Field, type Vibe } from '@superjackfruitlabs/vibekit-ui';
   import type { Elicitation } from '$lib/api';
   import { PAPER_CAPTIONS, firstName, paperSalutation, paperWhen } from '../paper-words';
   import type { CardAgent } from '../layouts/types';

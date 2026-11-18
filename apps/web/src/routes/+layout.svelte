@@ -9,13 +9,13 @@
   import '../app.css';
   import { onMount } from 'svelte';
   import { goto, onNavigate } from '$app/navigation';
-  import { vkNavigate } from '@superjackfruit/vibekit/motion';
+  import { vkNavigate } from '@superjackfruitlabs/vibekit-ui/motion';
   import { isPageChange } from '$lib/motion/page-change';
   import { installReveal } from '$lib/motion/reveal';
   import { page } from '$app/state';
   import { holdReturnTo, registerOpenCard, releaseReturnTo } from '$lib/reconnect';
   import { app } from '$lib/stores/app.svelte';
-  import { VibeRoot } from '@superjackfruit/vibekit';
+  import { VibeRoot } from '@superjackfruitlabs/vibekit-ui';
   import { appearance } from '$lib/appearance.svelte';
   import PaletteMount from '$lib/components/dialogs/PaletteMount.svelte';
   import BoardSwitcherPopover from '$lib/components/dialogs/BoardSwitcherPopover.svelte';

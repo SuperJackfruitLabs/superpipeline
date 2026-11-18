@@ -1,12 +1,12 @@
 <!-- apps/web/src/lib/components/plan/list/ListDaylight.svelte -->
 <script lang="ts">
   /** SP-List-Daylight: one panel, one tbody per group, a Move menu on every row. */
-  import { Button, Face, StateLabel } from '@superjackfruit/vibekit';
+  import { Button, Face, StateLabel } from '@superjackfruitlabs/vibekit-ui';
   import LineIcon from '$lib/components/parts/LineIcon.svelte';
   import { untrack } from 'svelte';
   import RowMoveMenu from './RowMoveMenu.svelte';
   import { emptyText, listCaption, priClass, sortHint } from './list-model';
-  import type { State } from '@superjackfruit/vibekit';
+  import type { State } from '@superjackfruitlabs/vibekit-ui';
   import type { ListLayoutProps, ListSortKey, ListTone } from './types';
   import './list-daylight.css';
 

@@ -3,7 +3,7 @@
   import type { Stage } from '$lib/api';
   import { app } from '$lib/stores/app.svelte';
   import { columnDropTarget } from '$lib/dnd';
-  import { IconButton } from '@superjackfruit/vibekit';
+  import { IconButton } from '@superjackfruitlabs/vibekit-ui';
   import Icon from '$lib/components/parts/Icon.svelte';
   import type { BoardStage } from '../board-model';
   import type { CardSummary } from '../card-summary';

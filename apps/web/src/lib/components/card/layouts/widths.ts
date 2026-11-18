@@ -1,4 +1,4 @@
-import type { Vibe } from '@superjackfruit/vibekit';
+import type { Vibe } from '@superjackfruitlabs/vibekit-ui';
 
 /** How wide each vibe draws the card drawer. Here rather than in `$lib/layouts`, so the drawers
  * that read their own width do not import the registry that imports them. */

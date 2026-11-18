@@ -3,7 +3,7 @@
   /** Studio's gate readout (01 "Waiting for your review" / cell A): the quote, the subject table and the seal. */
   import '../studio/card-studio.css';
   import '../studio/card-states-studio.css';
-  import { Face, type Vibe } from '@superjackfruit/vibekit';
+  import { Face, type Vibe } from '@superjackfruitlabs/vibekit-ui';
   import type { Gate } from '$lib/api';
   import Icon from '$lib/components/parts/Icon.svelte';
   import RawJson from '../RawJson.svelte';

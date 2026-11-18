@@ -4,7 +4,7 @@
  * knowing about it: Paper, Studio and Quiet render CardFacts from this, Daylight's PdTile reads
  * the same helpers directly.
  */
-import type { Mood } from '@superjackfruit/vibekit';
+import type { Mood } from '@superjackfruitlabs/vibekit-ui';
 import type { AgentSummary, BoardSnapshot, Card, Member, Reference } from '$lib/api';
 import { itemsFromBoard, type AttentionItem, type AttentionKind } from '$lib/components/attention/attention';
 import { cardLead, moodFor, type CardLead } from '$lib/components/card/card-lead';

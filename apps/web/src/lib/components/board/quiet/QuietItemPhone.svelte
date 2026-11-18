@@ -2,7 +2,7 @@
 <script lang="ts">
   /** One Quiet phone item (SP-Phone-Board-Quiet `article.it`). Plain text; no icons. */
   import '../phone/phone-move.css';
-  import { Button, Face } from '@superjackfruit/vibekit';
+  import { Button, Face } from '@superjackfruitlabs/vibekit-ui';
   import type { Stage } from '$lib/api';
   import CardMoveMenu from '../CardMoveMenu.svelte';
   import type { CardSummary } from '../card-summary';

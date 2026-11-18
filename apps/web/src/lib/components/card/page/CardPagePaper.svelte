@@ -2,7 +2,7 @@
 <script lang="ts">
   /** Paper's card page (SP-CardPage-Paper): a letter from the agent, its enclosures, and the record. */
   import './card-page-paper.css';
-  import { Button, Face, Field, StageTrack } from '@superjackfruit/vibekit';
+  import { Button, Face, Field, StageTrack } from '@superjackfruitlabs/vibekit-ui';
   import { app } from '$lib/stores/app.svelte';
   import { appearance } from '$lib/appearance.svelte';
   import { displayAgent, displayPrincipal } from '$lib/names';

@@ -1,7 +1,7 @@
 // apps/web/scripts/pixel/resync/entry.ts — loaded by render.ts through Vite SSR; never imported directly.
 import { createRawSnippet } from 'svelte';
 import { render } from 'svelte/server';
-import * as vk from '@superjackfruit/vibekit';
+import * as vk from '@superjackfruitlabs/vibekit-ui';
 import Root from './Root.svelte';
 
 type Look = { vibe: string; theme: string };

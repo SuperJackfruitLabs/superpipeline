@@ -1,6 +1,6 @@
 <!-- apps/web/src/lib/components/workspace/agents/AgentRow.svelte -->
 <script lang="ts">
-  import { Face } from '@superjackfruit/vibekit';
+  import { Face } from '@superjackfruitlabs/vibekit-ui';
   import LineIcon from '$lib/components/parts/LineIcon.svelte';
   import type { AgentSummary } from '$lib/api';
   import { agentStatus, tokensLabel } from '../agent-status';

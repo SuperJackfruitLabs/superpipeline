@@ -1,5 +1,5 @@
 // apps/web/src/lib/components/settings/account-settings-words.ts
-import type { AccentChoice, Vibe } from '@superjackfruit/vibekit';
+import type { AccentChoice, Vibe } from '@superjackfruitlabs/vibekit-ui';
 
 export const SETTINGS_LEDE = 'Workspace labels and connections, and how Superpipeline looks for you.';
 /** The four sections, in page order; the account menu's Settings item hints at the first two. */

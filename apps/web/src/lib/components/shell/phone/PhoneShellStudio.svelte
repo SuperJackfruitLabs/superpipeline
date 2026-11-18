@@ -4,7 +4,7 @@
    * Studio, phone (SP-Phone-Board-Studio): a ruled header naming the section, Live and search on
    * the kicker row, the sub-bar under the header's rule, an ink tab bar.
    */
-  import { Button, IconButton, Tabs } from '@superjackfruit/vibekit';
+  import { Button, IconButton, Tabs } from '@superjackfruitlabs/vibekit-ui';
   import Icon from '$lib/components/parts/Icon.svelte';
   import '$lib/styles/shell/studio-dark.css';
   import { shellModel as m } from '../shell-model.svelte';

@@ -1,7 +1,7 @@
 <!-- apps/web/src/lib/components/plan/list/ListPaper.svelte -->
 <script lang="ts">
   /** SP-List-Paper: "The index". Move… opens the shared Move dialog. */
-  import { Face } from '@superjackfruit/vibekit';
+  import { Face } from '@superjackfruitlabs/vibekit-ui';
   import { viewport } from '$lib/viewport.svelte';
   import LineIcon from '$lib/components/parts/LineIcon.svelte';
   import { emptyText, GROUPS, listCaption, paperFacts, paperFoot, paperGroupCount, paperMastLine, priClass, sortHint } from './list-model';

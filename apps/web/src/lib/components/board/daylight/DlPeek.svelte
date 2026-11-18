@@ -1,7 +1,7 @@
 <!-- apps/web/src/lib/components/board/daylight/DlPeek.svelte -->
 <script lang="ts">
   /** What the card's agent says, beside the tile, from 1440px (SB §3.3 Peek). */
-  import { Button, Face, IconButton } from '@superjackfruit/vibekit';
+  import { Button, Face, IconButton } from '@superjackfruitlabs/vibekit-ui';
   import { app } from '$lib/stores/app.svelte';
   import { KIND_SAYS, peekEyebrow } from '../board-words';
   import type { CardSummary } from '../card-summary';

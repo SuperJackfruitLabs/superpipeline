@@ -2,7 +2,7 @@
 <script lang="ts">
   /** Paper desktop board: the front page (SB §4.1). The masthead and its h1 are the shell's. */
   import '../paper/paper.css';
-  import { Button } from '@superjackfruit/vibekit';
+  import { Button } from '@superjackfruitlabs/vibekit-ui';
   import Icon from '$lib/components/parts/Icon.svelte';
   import { paperKicker, paperSection } from '../board-words';
   import PaperPipeline from '../paper/PaperPipeline.svelte';

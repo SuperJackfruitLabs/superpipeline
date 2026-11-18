@@ -5,7 +5,7 @@
    * and its Restore, the done block, and the loading shape. No signal in any of them.
    */
   import '../daylight-states.css';
-  import { Face } from '@superjackfruit/vibekit';
+  import { Face } from '@superjackfruitlabs/vibekit-ui';
   import { whenLabel } from '$lib/when';
   import Icon from '$lib/components/parts/Icon.svelte';
   import { archivedReason, archivedTitle, doneLine, loadingBars, loadingNote, restoreNote } from '../card-words';

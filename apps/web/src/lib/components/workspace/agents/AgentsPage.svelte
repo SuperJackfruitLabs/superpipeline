@@ -5,7 +5,7 @@
   import { crewNewInPage, onCrewNew } from '../crew-new';
   /** SP-Workspace-Agents-Daylight, -Paper and -Quiet: one DOM, three looks. */
   import './agents.css';
-  import { Button } from '@superjackfruit/vibekit';
+  import { Button } from '@superjackfruitlabs/vibekit-ui';
   import LineIcon from '$lib/components/parts/LineIcon.svelte';
   import { agentsHeading, agentsPanelMeta, bannerTitle } from '../agent-status';
   import { AgentsModel } from '../agents-model.svelte';

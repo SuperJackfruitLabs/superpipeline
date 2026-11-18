@@ -2,7 +2,7 @@
 <script lang="ts">
   import SkeletonRows from '$lib/components/parts/SkeletonRows.svelte';
   import { autogrow } from '$lib/autogrow';
-  import { Button } from '@superjackfruit/vibekit';
+  import { Button } from '@superjackfruitlabs/vibekit-ui';
   import './settings/board-settings.css';
   import { viewport } from '$lib/viewport.svelte';
   import PageMain from '$lib/components/parts/PageMain.svelte';

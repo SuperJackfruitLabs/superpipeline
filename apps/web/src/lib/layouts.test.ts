@@ -3,7 +3,7 @@ import OperateDaylight from '$lib/components/operate/layouts/OperateDaylight.sve
 import OperatePaper from '$lib/components/operate/layouts/OperatePaper.svelte';
 import OperateStudio from '$lib/components/operate/layouts/OperateStudio.svelte';
 import OperateQuiet from '$lib/components/operate/layouts/OperateQuiet.svelte';
-import { VIBES } from '@superjackfruit/vibekit';
+import { VIBES } from '@superjackfruitlabs/vibekit-ui';
 import { describe, expect, it } from 'vitest';
 import { BOARD_LAYOUTS, CARD_LAYOUTS, CARD_PAGE_LAYOUTS, CARD_STATES_LAYOUTS, FACE_VARIANT, SHELL_LAYOUTS } from './layouts';
 import CardDaylight from '$lib/components/card/layouts/CardDaylight.svelte';

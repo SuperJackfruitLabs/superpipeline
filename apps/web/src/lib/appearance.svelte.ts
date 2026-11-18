@@ -25,7 +25,7 @@ import {
   type Phase,
   type Place,
   type Theme,
-} from '@superjackfruit/vibekit';
+} from '@superjackfruitlabs/vibekit-ui';
 
 const PRODUCT = 'superpipeline' as const;
 const PLACE_KEY = 'superpipeline.place';

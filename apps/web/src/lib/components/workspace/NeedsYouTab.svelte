@@ -1,7 +1,7 @@
 <!-- apps/web/src/lib/components/workspace/NeedsYouTab.svelte -->
 <script lang="ts">
   import { untrack } from 'svelte';
-  import { Button } from '@superjackfruit/vibekit';
+  import { Button } from '@superjackfruitlabs/vibekit-ui';
   import LineIcon from '$lib/components/parts/LineIcon.svelte';
   import { NeedsModel } from './needs-model.svelte';
   import { needsHeadMeta, unansweredFoot } from './needs-row';

@@ -7,7 +7,7 @@
 // grows into place instead of jumping. vibekit's .vk-reveal (0fr → 1fr) only covers hidden → shown; these swaps
 // go from one height to another, so the height is measured. Reduced motion: nothing animates. Quiet: a short
 // fade only, never a moving height. Focus and aria-expanded are the toggle's own and are left alone.
-import { duration, isReducedMotion } from '@superjackfruit/vibekit/motion';
+import { duration, isReducedMotion } from '@superjackfruitlabs/vibekit-ui/motion';
 
 export type RevealKind = 'none' | 'fade' | 'height';
 

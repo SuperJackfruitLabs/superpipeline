@@ -2,7 +2,7 @@
 <script lang="ts">
   import { viewport } from '$lib/viewport.svelte';
   /** Daylight's greeting, drawn inside the shell's sky (ShellProps.sky). */
-  import { Face } from '@superjackfruit/vibekit';
+  import { Face } from '@superjackfruitlabs/vibekit-ui';
   import { crewOf } from '../operate-data';
   import { greetingLabel } from '../operate-words';
   import { askBoards, CHECKING, inboxCounts, inboxSubline, wantYou } from '$lib/components/inbox/inbox-words';

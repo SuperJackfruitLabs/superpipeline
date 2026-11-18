@@ -2,7 +2,7 @@
 <script lang="ts">
   /** The Daylight phone greeting, drawn in the shell's sky (shell-and-board §3.3 phone crew, §3.6). PhoneHeader owns the h1, so this heading is an h2. */
   import './pd-hello.css';
-  import { Face, type Mood, type Phase } from '@superjackfruit/vibekit';
+  import { Face, type Mood, type Phase } from '@superjackfruitlabs/vibekit-ui';
   import type { BoardModel } from '../board-model';
   import { needsCounts, phoneHello, phoneHelloP } from '../phone/phone-words';
   import { joinAnd } from '$lib/words';

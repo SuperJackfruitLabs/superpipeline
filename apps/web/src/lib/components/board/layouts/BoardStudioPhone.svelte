@@ -2,7 +2,7 @@
 <script lang="ts">
   /** SP-Phone-Board-Studio: hero, quick filter, figures, 01 where the cards are, 02 the rows, 03 the stages. The shell owns the main and PhoneHeader the h1, so the hero says its line in an h2. */
   import '../studio/pb-phone.css';
-  import { Button, greeting } from '@superjackfruit/vibekit';
+  import { Button, greeting } from '@superjackfruitlabs/vibekit-ui';
   import type { BoardLayoutProps } from './types';
   import StudioCardPhone from '../studio/StudioCardPhone.svelte';
   import { daysOverdue } from '../board-words';

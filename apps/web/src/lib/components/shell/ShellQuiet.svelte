@@ -8,7 +8,7 @@
   import {
     AppNav, AppShell as VkAppShell, Button, CommandField, Masthead, StatusLine, Tabs,
     type MenuItem as VkMenuItem, type NavItem,
-  } from '@superjackfruit/vibekit';
+  } from '@superjackfruitlabs/vibekit-ui';
   import '$lib/styles/shell/quiet.css';
   import { shellModel as m } from './shell-model.svelte';
   import PlanSwitch from './PlanSwitch.svelte';

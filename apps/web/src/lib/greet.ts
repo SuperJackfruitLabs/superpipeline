@@ -1,5 +1,5 @@
 // apps/web/src/lib/greet.ts — the one place a greeting meets a name.
-import { greeting, type Phase } from '@superjackfruit/vibekit';
+import { greeting, type Phase } from '@superjackfruitlabs/vibekit-ui';
 
 /**
  * "Working late?" + "Rakesh" is "Working late, Rakesh?": the mark goes after the name, never between

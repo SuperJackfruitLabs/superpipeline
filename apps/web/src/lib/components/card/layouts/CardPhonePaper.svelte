@@ -3,7 +3,7 @@
   /** SP-Phone-Card-Paper: a letter, your reply, and five enclosures. */
   import '../phone/phone-card-shared.css';
   import '../phone/pc-paper.css';
-  import { Button, Face } from '@superjackfruit/vibekit';
+  import { Button, Face } from '@superjackfruitlabs/vibekit-ui';
   import { paperSalutation } from '../paper-words';
   import type { CardLayoutProps } from './types';
   import PhoneIcon from '$lib/components/parts/PhoneIcon.svelte';

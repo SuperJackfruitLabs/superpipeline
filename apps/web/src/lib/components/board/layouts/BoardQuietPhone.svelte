@@ -2,7 +2,7 @@
 <script lang="ts">
   /** SP-Phone-Board-Quiet: a header, five groups, the stages table. Plain text throughout. PhoneHeader owns the h1, so the board name is an h2. */
   import '../quiet/qb-phone.css';
-  import { Button } from '@superjackfruit/vibekit';
+  import { Button } from '@superjackfruitlabs/vibekit-ui';
   import type { BoardLayoutProps } from './types';
   import QuietItemPhone from '../quiet/QuietItemPhone.svelte';
   import { quietCount, quietPhoneHeader, wantsOrder } from '../phone/phone-words';

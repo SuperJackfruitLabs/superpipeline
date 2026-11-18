@@ -4,7 +4,7 @@
  * Pure. Phones pass agent text through sentenceCase (C-06); desktop prints it verbatim.
  */
 import { greetNamed } from '$lib/greet';
-import type { Mood, Phase } from '@superjackfruit/vibekit';
+import type { Mood, Phase } from '@superjackfruitlabs/vibekit-ui';
 import type { AttentionKind } from '$lib/components/attention/attention';
 import type { CardSummary, Urgency } from '$lib/components/board/card-summary';
 import { dueLong, dueShort } from '$lib/components/board/board-words';

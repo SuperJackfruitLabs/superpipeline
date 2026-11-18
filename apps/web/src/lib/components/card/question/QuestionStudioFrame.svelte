@@ -3,7 +3,7 @@
   import ApprovalDetail from './ApprovalDetail.svelte';
   /** Studio's question readout (01 "Question" / cell B): who is waiting and what they ask. */
   import '../studio/card-studio.css';
-  import { Face } from '@superjackfruit/vibekit';
+  import { Face } from '@superjackfruitlabs/vibekit-ui';
   import type { Elicitation } from '$lib/api';
   import type { CardAgent } from '../layouts/types';
   import { quoteHeader, quoteWhen } from '../studio/studio-format';

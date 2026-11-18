@@ -3,7 +3,7 @@
   /** One Daylight phone tile (SP-Phone-Board-Daylight `article.tile`), in the wants lane or a stage lane. */
   import '../phone/phone-move.css';
   import './priority-chip.css';
-  import { Button, Face } from '@superjackfruit/vibekit';
+  import { Button, Face } from '@superjackfruitlabs/vibekit-ui';
   import type { Stage } from '$lib/api';
   import CardMoveMenu from '../CardMoveMenu.svelte';
   import type { CardSummary } from '../card-summary';

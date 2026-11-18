@@ -1,7 +1,7 @@
 <!-- apps/web/src/lib/components/plan/list/ListQuiet.svelte -->
 <script lang="ts">
   /** SP-List-Quiet: a heading and a table per group; Group by and Sort by are plain selects. */
-  import { Face } from '@superjackfruit/vibekit';
+  import { Face } from '@superjackfruitlabs/vibekit-ui';
   import { viewport } from '$lib/viewport.svelte';
   import type { ListGroupBy } from '$lib/stores/app.svelte';
   import { emptyText, GROUPS, quietEmptyFoot, quietFacts, quietLede, quietSortOptions, quietState, sortHint } from './list-model';

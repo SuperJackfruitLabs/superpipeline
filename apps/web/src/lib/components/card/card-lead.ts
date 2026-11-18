@@ -6,7 +6,7 @@
  * agent's text, trimmed, never rewritten. When there is none, layouts show the kind's fallback
  * from copy.ts in the vibe's words.
  */
-import type { Mood } from '@superjackfruit/vibekit';
+import type { Mood } from '@superjackfruitlabs/vibekit-ui';
 import type { Card, Elicitation, Gate } from '$lib/api';
 
 export type LeadKind = 'question' | 'review' | 'stopped' | 'failed' | 'budget' | 'working' | 'done' | 'idle';

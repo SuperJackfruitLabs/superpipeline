@@ -9,7 +9,7 @@
   import { tick } from 'svelte';
   import './card-paper.css';
   import '../paper-states.css';
-  import { Button, Drawer, Face, Field } from '@superjackfruit/vibekit';
+  import { Button, Drawer, Face, Field } from '@superjackfruitlabs/vibekit-ui';
   import { CARD_DRAWER_WIDTH } from './widths';
   import { app } from '$lib/stores/app.svelte';
   import { displayAgent, displayPrincipal } from '$lib/names';

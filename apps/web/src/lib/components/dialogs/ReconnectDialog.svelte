@@ -5,7 +5,7 @@
    * clicks do not dismiss it, and `close={false}` draws no close button (Sign in again sits in the
    * body, before "What happened", where the reference puts it).
    */
-  import { Button, Dialog } from '@superjackfruit/vibekit';
+  import { Button, Dialog } from '@superjackfruitlabs/vibekit-ui';
   import { page } from '$app/state';
   import { app } from '$lib/stores/app.svelte';
   import { appearance } from '$lib/appearance.svelte';

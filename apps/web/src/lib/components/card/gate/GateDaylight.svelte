@@ -6,7 +6,7 @@
    * `part="controls"` draws only the note, the buttons and the alert (cell E).
    */
   import '../daylight-states.css';
-  import { Button, Face, Field, type Vibe } from '@superjackfruit/vibekit';
+  import { Button, Face, Field, type Vibe } from '@superjackfruitlabs/vibekit-ui';
   import type { Gate, GateConflict, GateDecision } from '$lib/api';
   import { app } from '$lib/stores/app.svelte';
   import { displayPrincipal } from '$lib/names';

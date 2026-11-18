@@ -2,7 +2,7 @@
 <script lang="ts">
   /** The greeting band, inside the shell's sky (PlanView passes it as `sky`). Not drawn on an empty board (O-13). */
   import './daylight.css';
-  import { Face, type Phase } from '@superjackfruit/vibekit';
+  import { Face, type Phase } from '@superjackfruitlabs/vibekit-ui';
   import type { BoardModel } from '../board-model';
   import { greetingLine } from '../board-words';
 

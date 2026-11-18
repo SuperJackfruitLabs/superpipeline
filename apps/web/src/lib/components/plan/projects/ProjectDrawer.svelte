@@ -4,7 +4,7 @@
    * page in its compact form, and "Open full page". Closing returns focus to the row that opened it.
    * A phone never opens it: the list links straight to the page.
    */
-  import { Button, Drawer } from '@superjackfruit/vibekit';
+  import { Button, Drawer } from '@superjackfruitlabs/vibekit-ui';
   import { plural } from '$lib/words';
   import { ProjectPageModel } from '../project-page-model.svelte';
   import ProjectBody from './ProjectBody.svelte';

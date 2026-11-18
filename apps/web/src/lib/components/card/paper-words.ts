@@ -1,7 +1,7 @@
 // apps/web/src/lib/components/card/paper-words.ts
 /** Paper's words for a card (screens/card.parts/20-paper.md): a letter, enclosures, the record. */
 import type { Activity, Attempt } from '$lib/api';
-import type { Phase } from '@superjackfruit/vibekit';
+import type { Phase } from '@superjackfruitlabs/vibekit-ui';
 import { ageWords } from '$lib/age';
 import { clockHM, dayMonthLong, weekdayDayMonth } from '$lib/when';
 import type { LeadKind } from './card-lead';

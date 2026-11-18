@@ -4,7 +4,7 @@
    * carries meaning, and hiding it would hide information. Only the product's own fallback, whose
    * emoji are decoration (spec §6), goes through <Words>.
    */
-  import type { Vibe } from '@superjackfruit/vibekit';
+  import type { Vibe } from '@superjackfruitlabs/vibekit-ui';
   import { leadText } from '$lib/copy';
   import type { CardLead } from './card/card-lead';
   import Words from './Words.svelte';

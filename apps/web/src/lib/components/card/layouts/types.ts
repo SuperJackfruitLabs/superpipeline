@@ -5,7 +5,7 @@
  * carries `data-section="<key>"` (an empty one is `<span hidden data-section>`), and
  * `card-layouts.svelte.test.ts` holds every layout to each key exactly once.
  */
-import type { Phase, Vibe } from '@superjackfruit/vibekit';
+import type { Phase, Vibe } from '@superjackfruitlabs/vibekit-ui';
 import type { CardModel } from '../card-model.svelte';
 import type { GateBinding, QuestionBinding } from '../bindings';
 

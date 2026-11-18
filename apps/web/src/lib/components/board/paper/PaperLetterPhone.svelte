@@ -2,7 +2,7 @@
 <script lang="ts">
   /** A letter that needs a reply (SP-Phone-Board-Paper `article.letter`). */
   import '../phone/phone-move.css';
-  import { Button, Face } from '@superjackfruit/vibekit';
+  import { Button, Face } from '@superjackfruitlabs/vibekit-ui';
   import type { Stage } from '$lib/api';
   import CardMoveMenu from '../CardMoveMenu.svelte';
   import type { CardSummary } from '../card-summary';

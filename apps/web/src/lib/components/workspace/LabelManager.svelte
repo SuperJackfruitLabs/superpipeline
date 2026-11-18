@@ -3,7 +3,7 @@
   import SkeletonRows from '$lib/components/parts/SkeletonRows.svelte';
   import LoadFailed from '$lib/components/parts/LoadFailed.svelte';
   import { autogrow } from '$lib/autogrow';
-  import { Button } from '@superjackfruit/vibekit';
+  import { Button } from '@superjackfruitlabs/vibekit-ui';
   import LineIcon from '$lib/components/parts/LineIcon.svelte';
   import { showsInferredBadge } from './label-manager';
   import { LabelsModel } from './labels-model.svelte';

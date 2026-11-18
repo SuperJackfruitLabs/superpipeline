@@ -2,7 +2,7 @@
 <script lang="ts">
   /** SP-Card-States-Quiet: six panels, each the drawer's own parts at cell size. No motion. */
   import '../quiet-states.css';
-  import { Face } from '@superjackfruit/vibekit';
+  import { Face } from '@superjackfruitlabs/vibekit-ui';
   import { whenLong, quietArchivedMeta, quietCellMeta } from '../quiet-words';
   import { clockHM } from '$lib/when';
   import GateQuiet from '../gate/GateQuiet.svelte';

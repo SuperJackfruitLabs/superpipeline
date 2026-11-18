@@ -5,7 +5,7 @@
  * shown on the reader's clock, in the app's short date form, like the board's "synced".
  */
 import { greetNamed } from '$lib/greet';
-import { greeting, type Phase, type Vibe } from '@superjackfruit/vibekit';
+import { greeting, type Phase, type Vibe } from '@superjackfruitlabs/vibekit-ui';
 import type { AgentSummary, Notification, Stage } from '$lib/api';
 import type { AttentionItem, AttentionKind } from '$lib/components/attention/attention';
 import { stageOwner } from '$lib/components/board/stage-owner';

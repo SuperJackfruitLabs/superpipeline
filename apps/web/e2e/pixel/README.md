@@ -143,7 +143,7 @@ operator briefs recorded in CORRECTIONS.md.
 ## vibekit
 
 vibekit is vendored as a tarball, `apps/web/vendor/vibekit-<version>.tgz` (the version is in
-`apps/web/package.json`, `@superjackfruit/vibekit`; now 0.0.9). The references link its stylesheet from
+`apps/web/package.json`, `@superjackfruitlabs/vibekit-ui`; now 0.0.9). The references link its stylesheet from
 `e2e/reference/mockups/_vibekit-<version>/`, so the app and the references compare against the same
 vibekit. To adopt a new version:
 

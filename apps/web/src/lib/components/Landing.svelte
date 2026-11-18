@@ -23,7 +23,7 @@
    */
   import { onMount } from 'svelte';
   import { BOARD_TEMPLATES } from '$lib/api';
-  import { greeting, Sky } from '@superjackfruit/vibekit';
+  import { greeting, Sky } from '@superjackfruitlabs/vibekit-ui';
   import { appearance } from '$lib/appearance.svelte';
   import BrandMark from '$lib/components/BrandMark.svelte';
   import { beginHubAuthorization, hubStatus } from '$lib/hub-token';

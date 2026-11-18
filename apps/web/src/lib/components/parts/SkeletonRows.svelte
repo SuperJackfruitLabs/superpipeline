@@ -16,7 +16,7 @@
    * a wait that has gone on says what to do, it does not rest on bars.
    */
   import { onMount } from 'svelte';
-  import { Button } from '@superjackfruit/vibekit';
+  import { Button } from '@superjackfruitlabs/vibekit-ui';
   import { SKELETON_DELAY_MS, SLOW_COPY, TRY_AGAIN } from '$lib/loading';
   import { loadingStatus } from '$lib/loading.svelte';
 

@@ -4,7 +4,7 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
 import { cleanup, render } from '@testing-library/svelte';
-import { ICON_NAMES, ICON_PATHS } from '@superjackfruit/vibekit';
+import { ICON_NAMES, ICON_PATHS } from '@superjackfruitlabs/vibekit-ui';
 import Icon from './Icon.svelte';
 import { NAV_ICONS, PRODUCT_ICONS, VK_ALIASES, type IconName } from './icons';
 

@@ -4,7 +4,7 @@
  * actions every shell's controls call. Shells read this; pages pass only what is theirs
  * (`ShellProps`).
  */
-import type { Phase } from '@superjackfruit/vibekit';
+import type { Phase } from '@superjackfruitlabs/vibekit-ui';
 import { goto } from '$app/navigation';
 import { app } from '$lib/stores/app.svelte';
 import { appearance } from '$lib/appearance.svelte';

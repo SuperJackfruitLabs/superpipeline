@@ -7,7 +7,7 @@ import { fileURLToPath } from 'node:url';
 import { expect, test } from '@playwright/test';
 import { MANIFEST, renderReference, resolveReference } from './reference';
 
-const ACCENTS = readFileSync(fileURLToPath(new URL('../../node_modules/@superjackfruit/vibekit/dist/styles/accents.css', import.meta.url)), 'utf8');
+const ACCENTS = readFileSync(fileURLToPath(new URL('../../node_modules/@superjackfruitlabs/vibekit-ui/dist/styles/accents.css', import.meta.url)), 'utf8');
 /** vibekit's own Gold for a vibe and theme: the block accents.css keys on product="superpipeline". */
 export function gold(vibe: string, theme: string): string {
   const key = `[data-vibe="${vibe}"][data-theme="${theme}"][data-accent="product"][data-product="superpipeline"]`;

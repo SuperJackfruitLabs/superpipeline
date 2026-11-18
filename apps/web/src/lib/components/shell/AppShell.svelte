@@ -8,7 +8,7 @@
   import { untrack } from 'svelte';
   import { goto } from '$app/navigation';
   import { appearance } from '$lib/appearance.svelte';
-  import { usePhone } from '@superjackfruit/vibekit';
+  import { usePhone } from '@superjackfruitlabs/vibekit-ui';
   import { PHONE_QUERY } from '$lib/viewport.svelte';
   import { SHELL_LAYOUTS } from '$lib/layouts';
   import { app } from '$lib/stores/app.svelte';

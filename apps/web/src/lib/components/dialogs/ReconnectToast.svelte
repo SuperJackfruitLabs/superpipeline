@@ -1,6 +1,6 @@
 <script lang="ts">
   /** The quiet renewal, said once: no scrim, the page stays usable (D-16). No reference draws it. */
-  import { Toast } from '@superjackfruit/vibekit';
+  import { Toast } from '@superjackfruitlabs/vibekit-ui';
   import { app } from '$lib/stores/app.svelte';
   import { auth } from '$lib/auth-recovery.svelte';
   import { toastSub } from './reconnect-copy';

@@ -2,7 +2,7 @@
 <script lang="ts">
   /** A short entry: in progress, coming up, shipped or closed (SP-Phone-Board-Paper `article.entry`). */
   import '../phone/phone-move.css';
-  import { Button } from '@superjackfruit/vibekit';
+  import { Button } from '@superjackfruitlabs/vibekit-ui';
   import type { Stage } from '$lib/api';
   import CardMoveMenu from '../CardMoveMenu.svelte';
   import type { CardSummary } from '../card-summary';

@@ -2,7 +2,7 @@
 <script lang="ts">
   /** One Daylight card tile (SB §3.3 Tiles). The title's ::after covers the tile, so the whole tile opens the card. */
   import './priority-chip.css';
-  import { Button, Face } from '@superjackfruit/vibekit';
+  import { Button, Face } from '@superjackfruitlabs/vibekit-ui';
   import type { Stage } from '$lib/api';
   import { app } from '$lib/stores/app.svelte';
   import { cardDraggable } from '$lib/dnd';

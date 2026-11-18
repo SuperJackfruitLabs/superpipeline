@@ -1,4 +1,4 @@
-import type { Vibe } from '@superjackfruit/vibekit';
+import type { Vibe } from '@superjackfruitlabs/vibekit-ui';
 import type { RenewReason } from '$lib/api';
 
 export const RC_LEAD: Readonly<Record<Vibe, string>> = {

@@ -6,7 +6,7 @@
    * choices, the note and the button (cell E). A refusal sits beside the button.
    */
   import '../quiet-states.css';
-  import { Button, Face, Field, type Vibe } from '@superjackfruit/vibekit';
+  import { Button, Face, Field, type Vibe } from '@superjackfruitlabs/vibekit-ui';
   import type { Gate, GateConflict, GateDecision } from '$lib/api';
   import RawJson from '../RawJson.svelte';
   import StructuredValue from '../StructuredValue.svelte';

@@ -1,5 +1,5 @@
 // apps/web/src/lib/components/workspace/agent-status.ts
-import type { Mood } from '@superjackfruit/vibekit';
+import type { Mood } from '@superjackfruitlabs/vibekit-ui';
 import type { AgentScope, AgentSummary, CapabilityRecord } from '$lib/api';
 
 export interface AgentStatus { mood: Mood; line: string }

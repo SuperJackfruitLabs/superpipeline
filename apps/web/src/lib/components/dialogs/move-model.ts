@@ -1,5 +1,5 @@
 // apps/web/src/lib/components/dialogs/move-model.ts
-import type { Mood } from '@superjackfruit/vibekit';
+import type { Mood } from '@superjackfruitlabs/vibekit-ui';
 import type { AgentSummary, Stage } from '$lib/api';
 import { ageLabel } from '$lib/age';
 import { pickupSentence, soleAgent } from './who-picks-up';

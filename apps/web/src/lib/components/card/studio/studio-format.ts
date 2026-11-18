@@ -1,7 +1,7 @@
 // apps/web/src/lib/components/card/studio/studio-format.ts
 /** Studio ("Annual report") formatters for a card (screens/card.parts/30-studio.md §3, corrected). */
 import type { Attempt, GateConflict } from '$lib/api';
-import type { Phase } from '@superjackfruit/vibekit';
+import type { Phase } from '@superjackfruitlabs/vibekit-ui';
 import { gateConflictSentence } from '../card-words';
 import { ageLabel } from '$lib/age';
 import { clockHM, dayMonth, weekdayDayMonth } from '$lib/when';

@@ -6,11 +6,11 @@
   import { greetNamed } from '$lib/greet';
   import { viewport } from '$lib/viewport.svelte';
   import SkeletonRows from '$lib/components/parts/SkeletonRows.svelte';
-  import { attention, countUp, rise } from '@superjackfruit/vibekit/motion';
+  import { attention, countUp, rise } from '@superjackfruitlabs/vibekit-ui/motion';
   import { arrivals } from '$lib/motion/arrivals';
   /** SP-Operate-Studio: the annual-report spread, with J/K/R/M/O/. on the Needs table. */
   import { tick, untrack } from 'svelte';
-  import { Face, LoadMore } from '@superjackfruit/vibekit';
+  import { Face, LoadMore } from '@superjackfruitlabs/vibekit-ui';
   import LineIcon from '$lib/components/parts/LineIcon.svelte';
   import MoveMenu from '$lib/components/parts/MoveMenu.svelte';
   import { moveTargets } from '../operate-data';

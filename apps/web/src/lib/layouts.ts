@@ -7,7 +7,7 @@ import TriggerPaper from '$lib/components/dialogs/switcher/TriggerPaper.svelte';
 import TriggerStudio from '$lib/components/dialogs/switcher/TriggerStudio.svelte';
 import TriggerQuiet from '$lib/components/dialogs/switcher/TriggerQuiet.svelte';
 import type { TriggerCopyProps } from '$lib/components/dialogs/switcher/types';
-import type { Vibe } from '@superjackfruit/vibekit';
+import type { Vibe } from '@superjackfruitlabs/vibekit-ui';
 import type { Component } from 'svelte';
 import BoardQuiet from '$lib/components/board/layouts/BoardQuiet.svelte';
 import BoardStudio from '$lib/components/board/layouts/BoardStudio.svelte';

@@ -9,7 +9,7 @@
    */
   import { createRawSnippet, tick } from 'svelte';
   import { goto } from '$app/navigation';
-  import { Button, CommandPalette, Field, type PaletteGroup } from '@superjackfruit/vibekit';
+  import { Button, CommandPalette, Field, type PaletteGroup } from '@superjackfruitlabs/vibekit-ui';
   import { app } from '$lib/stores/app.svelte';
   import { appearance } from '$lib/appearance.svelte';
   import { renameBoard } from '$lib/api';

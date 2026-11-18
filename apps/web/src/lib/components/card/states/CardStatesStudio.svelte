@@ -4,7 +4,7 @@
   import '../page/card-page-studio.css';
   import '../studio/card-studio.css';
   import '../studio/card-states-studio.css';
-  import { Face, StageTrack } from '@superjackfruit/vibekit';
+  import { Face, StageTrack } from '@superjackfruitlabs/vibekit-ui';
   import GateStudioBar from '../gate/GateStudioBar.svelte';
   import GateStudioFrame from '../gate/GateStudioFrame.svelte';
   import QuestionStudioBar from '../question/QuestionStudioBar.svelte';

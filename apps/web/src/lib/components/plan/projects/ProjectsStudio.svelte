@@ -1,7 +1,7 @@
 <script lang="ts">
   /** SP-Projects-Studio: an annual-report list, one ruled row per project. */
   import './projects-studio.css';
-  import { Button } from '@superjackfruit/vibekit';
+  import { Button } from '@superjackfruitlabs/vibekit-ui';
   import LineIcon from '$lib/components/parts/LineIcon.svelte';
   import { viewport } from '$lib/viewport.svelte';
   import { fmtTarget, HEALTH_LABEL, milestoneDate, milestonesMeta, progressPct, rollupSegments, STATE_LABEL, STUDIO_UNIT } from '../project-rollup';

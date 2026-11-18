@@ -7,10 +7,10 @@
   import { viewport } from '$lib/viewport.svelte';
   import { untrack } from 'svelte';
   import SkeletonRows from '$lib/components/parts/SkeletonRows.svelte';
-  import { attention, bumpOnChange, flashOnChange, flip, rise } from '@superjackfruit/vibekit/motion';
+  import { attention, bumpOnChange, flashOnChange, flip, rise } from '@superjackfruitlabs/vibekit-ui/motion';
   import { arrivals } from '$lib/motion/arrivals';
   /** SP-Operate-Quiet: one column, headings in reading order, most urgent first. */
-  import { Button, Face, LoadMore } from '@superjackfruit/vibekit';
+  import { Button, Face, LoadMore } from '@superjackfruitlabs/vibekit-ui';
   import { moveTargets } from '../operate-data';
   import { CapsUi, OperateUi } from '../operate-ui.svelte';
   import { moveOptionLabel, QUIET_REFUSAL, quietLede, quietLine, quietMeta, quietSpend, resumeOptions, RESUME_LABEL, stopHint, usd } from '../operate-words';

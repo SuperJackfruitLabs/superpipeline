@@ -2,7 +2,7 @@
 <script lang="ts">
   /** One story on the Paper board (SB §4.1). A lead story quotes its agent; the quote clamps at 3 lines. */
   import './paper.css';
-  import { Button, Face } from '@superjackfruit/vibekit';
+  import { Button, Face } from '@superjackfruitlabs/vibekit-ui';
   import type { Stage } from '$lib/api';
   import { app } from '$lib/stores/app.svelte';
   import Icon from '$lib/components/parts/Icon.svelte';

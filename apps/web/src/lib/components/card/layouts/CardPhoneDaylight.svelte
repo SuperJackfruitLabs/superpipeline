@@ -4,7 +4,7 @@
   /** SP-Phone-Card-Daylight: sticky head, pinned brief, the agent's bubble, the resume dock, 13 sections. */
   import '../phone/phone-card-shared.css';
   import '../phone/pc-daylight.css';
-  import { Button, Face } from '@superjackfruit/vibekit';
+  import { Button, Face } from '@superjackfruitlabs/vibekit-ui';
   import type { CardLayoutProps } from './types';
   import PhoneIcon from '$lib/components/parts/PhoneIcon.svelte';
   import PhoneDetails from '../phone/PhoneDetails.svelte';

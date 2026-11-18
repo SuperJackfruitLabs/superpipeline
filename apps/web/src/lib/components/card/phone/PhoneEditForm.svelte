@@ -1,6 +1,6 @@
 <!-- apps/web/src/lib/components/card/phone/PhoneEditForm.svelte -->
 <script lang="ts">
-  import { Button } from '@superjackfruit/vibekit';
+  import { Button } from '@superjackfruitlabs/vibekit-ui';
   /** The edit form on a phone (not drawn: today's fields, in today's order, in the phone field style). */
   import type { CardModel } from '../card-model.svelte';
   let { model }: { model: CardModel } = $props();

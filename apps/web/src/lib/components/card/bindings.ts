@@ -3,7 +3,7 @@
  * and question bindings. A leaf below both the model and the layout props (`layouts/types.ts`
  * re-exports these), so the model can name them without importing the props that name it.
  */
-import type { Mood } from '@superjackfruit/vibekit';
+import type { Mood } from '@superjackfruitlabs/vibekit-ui';
 import type { Elicitation, Gate, GateConflict, GateDecision } from '$lib/api';
 import type { QuestionAnswer } from './question/question-answer.svelte';
 

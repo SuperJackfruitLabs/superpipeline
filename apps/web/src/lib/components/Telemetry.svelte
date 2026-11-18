@@ -1,6 +1,6 @@
 <!-- apps/web/src/lib/components/Telemetry.svelte -->
 <script lang="ts">
-  import { Button, Face } from '@superjackfruit/vibekit';
+  import { Button, Face } from '@superjackfruitlabs/vibekit-ui';
   import { viewport } from '$lib/viewport.svelte';
   /** Spend, in detail — by day, agent, board, model and card, plus the board's own log. */
   import './operate/spend.css';

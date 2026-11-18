@@ -2,7 +2,7 @@
 <script lang="ts">
   /** One row of "Cards, needs you first" (SP-Phone-Board-Studio `article.pb-card`). */
   import '../phone/phone-move.css';
-  import { Button, Face, IconButton } from '@superjackfruit/vibekit';
+  import { Button, Face, IconButton } from '@superjackfruitlabs/vibekit-ui';
   import type { Stage } from '$lib/api';
   import CardMoveMenu from '../CardMoveMenu.svelte';
   import type { CardSummary } from '../card-summary';

@@ -3,7 +3,7 @@
   import ApprovalDetail from './ApprovalDetail.svelte';
   /** An agent's question in Quiet (SP-Card-States-Quiet B): one signal-edged fieldset, asked once, then the answer. */
   import '../quiet-states.css';
-  import { Button, Face, Field, type Vibe } from '@superjackfruit/vibekit';
+  import { Button, Face, Field, type Vibe } from '@superjackfruitlabs/vibekit-ui';
   import type { Elicitation } from '$lib/api';
   import { QUIET_CAPTIONS } from '../quiet-words';
   import type { CardAgent } from '../layouts/types';

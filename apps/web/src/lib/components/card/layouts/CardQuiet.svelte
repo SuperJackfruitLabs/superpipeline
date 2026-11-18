@@ -9,7 +9,7 @@
   import { tick } from 'svelte';
   import './card-quiet.css';
   import '../quiet-states.css';
-  import { Button, Drawer, Face, Field } from '@superjackfruit/vibekit';
+  import { Button, Drawer, Face, Field } from '@superjackfruitlabs/vibekit-ui';
   import { CARD_DRAWER_WIDTH } from './widths';
   import { displayAgent } from '$lib/names';
   import { isControlRow, isNarrative, visibleActivities } from '$lib/activity-groups';

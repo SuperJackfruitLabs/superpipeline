@@ -29,7 +29,7 @@ import { normalisePlan } from './plan';
 import { factItems, unclaimedChip } from './card-words';
 import { cardLead, moodFor, speakerOf } from './card-lead';
 import { trackStatus } from './state-words';
-import type { StageTrackStatus } from '@superjackfruit/vibekit';
+import type { StageTrackStatus } from '@superjackfruitlabs/vibekit-ui';
 import { QuestionAnswer } from './question/question-answer.svelte';
 import { CommentsModel } from './comments-model.svelte';
 import { ResumeModel } from './resume-model.svelte';

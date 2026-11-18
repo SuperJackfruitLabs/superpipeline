@@ -7,7 +7,7 @@
   import { appearance } from '$lib/appearance.svelte';
   import AppShell from '$lib/components/shell/AppShell.svelte';
   import PageMain from '$lib/components/parts/PageMain.svelte';
-  import { Button } from '@superjackfruit/vibekit';
+  import { Button } from '@superjackfruitlabs/vibekit-ui';
 
   const vibe = $derived(appearance.value.vibe);
   const missing = $derived(page.status === 404);

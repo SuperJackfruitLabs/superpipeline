@@ -1,7 +1,7 @@
 <!-- apps/web/src/lib/components/plan/list/ListStudio.svelte -->
 <script lang="ts">
   /** SP-List-Studio: quick filter, hero, ruled table; J/K select, ↵ open, M move, S sort, G group. */
-  import { Face } from '@superjackfruit/vibekit';
+  import { Face } from '@superjackfruitlabs/vibekit-ui';
   import { untrack } from 'svelte';
   import { viewport } from '$lib/viewport.svelte';
   import LineIcon from '$lib/components/parts/LineIcon.svelte';

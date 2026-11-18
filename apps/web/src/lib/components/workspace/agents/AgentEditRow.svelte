@@ -1,6 +1,6 @@
 <!-- apps/web/src/lib/components/workspace/agents/AgentEditRow.svelte -->
 <script lang="ts">
-  import { Button, Face } from '@superjackfruit/vibekit';
+  import { Button, Face } from '@superjackfruitlabs/vibekit-ui';
   import type { AgentSummary } from '$lib/api';
   import { agentStatus } from '../agent-status';
   import type { AgentsModel } from '../agents-model.svelte';

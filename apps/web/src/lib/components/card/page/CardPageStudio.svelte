@@ -2,7 +2,7 @@
 <script lang="ts">
   /** Studio's card page (SP-CardPage-Studio): an annual-report page for one card. */
   import './card-page-studio.css';
-  import { Button, faceSvg, StageTrack } from '@superjackfruit/vibekit';
+  import { Button, faceSvg, StageTrack } from '@superjackfruitlabs/vibekit-ui';
   import { goto } from '$app/navigation';
   import { app } from '$lib/stores/app.svelte';
   import { appearance } from '$lib/appearance.svelte';

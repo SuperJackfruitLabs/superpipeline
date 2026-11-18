@@ -3,10 +3,10 @@
   import { viewport } from '$lib/viewport.svelte';
   import { untrack } from 'svelte';
   import SkeletonRows from '$lib/components/parts/SkeletonRows.svelte';
-  import { attention, bumpOnChange, flashOnChange, flip, rise } from '@superjackfruit/vibekit/motion';
+  import { attention, bumpOnChange, flashOnChange, flip, rise } from '@superjackfruitlabs/vibekit-ui/motion';
   import { arrivals } from '$lib/motion/arrivals';
   /** SP-Operate-Paper: "The desk" — letters waiting on you, the digest, and the ledger. */
-  import { Button, Face, LoadMore } from '@superjackfruit/vibekit';
+  import { Button, Face, LoadMore } from '@superjackfruitlabs/vibekit-ui';
   import LineIcon from '$lib/components/parts/LineIcon.svelte';
   import BoardChip from '$lib/components/inbox/BoardChip.svelte';
   import GateReferences from '$lib/components/card/gate/GateReferences.svelte';

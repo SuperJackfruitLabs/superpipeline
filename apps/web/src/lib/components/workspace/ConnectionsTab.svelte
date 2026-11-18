@@ -1,6 +1,6 @@
 <!-- apps/web/src/lib/components/workspace/ConnectionsTab.svelte -->
 <script lang="ts">
-  import { Button } from '@superjackfruit/vibekit';
+  import { Button } from '@superjackfruitlabs/vibekit-ui';
   import SkeletonRows from '$lib/components/parts/SkeletonRows.svelte';
   import LoadFailed from '$lib/components/parts/LoadFailed.svelte';
   import LineIcon from '$lib/components/parts/LineIcon.svelte';

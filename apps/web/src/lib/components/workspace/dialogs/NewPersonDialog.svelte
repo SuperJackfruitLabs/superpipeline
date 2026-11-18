@@ -6,7 +6,7 @@
    * offered, as radio cards, so the dialog never takes away a choice the old form had.
    */
   import './crew-dialogs.css';
-  import { Button, Choice, Dialog, Field } from '@superjackfruit/vibekit';
+  import { Button, Choice, Dialog, Field } from '@superjackfruitlabs/vibekit-ui';
   import type { PeopleModel } from '../people-model.svelte';
   import { INVITE_ORDER, ROLE_HELP, ROLE_LABEL } from '../workspace-words';
 

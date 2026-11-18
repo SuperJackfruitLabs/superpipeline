@@ -5,7 +5,7 @@
    * headline with its dateline, "Change board" and "Write a new card", the view tabs, and a
    * double-ruled word bar.
    */
-  import { Button, Tabs } from '@superjackfruit/vibekit';
+  import { Button, Tabs } from '@superjackfruitlabs/vibekit-ui';
   import Icon from '$lib/components/parts/Icon.svelte';
   import { shellModel as m } from '../shell-model.svelte';
   import { VIEWS, type ShellProps } from '../types';

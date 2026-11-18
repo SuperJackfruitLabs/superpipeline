@@ -1,6 +1,6 @@
 <!-- apps/web/src/lib/components/workspace/WorkspaceNeedsRow.svelte -->
 <script lang="ts">
-  import { Button } from '@superjackfruit/vibekit';
+  import { Button } from '@superjackfruitlabs/vibekit-ui';
   import type { AttentionItem } from '$lib/components/attention/attention';
   import { actionLink, chipClass, clip, metaLine, WS_KIND_LABEL } from './needs-row';
   import type { NeedsModel } from './needs-model.svelte';

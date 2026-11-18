@@ -2,16 +2,20 @@ import { readFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import { dirname, join } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import * as vk from '@superjackfruit/vibekit';
+import * as vk from '@superjackfruitlabs/vibekit-ui';
+// The 0.0.20 types the board page's track and the Masthead's live toggle take; svelte-check fails if they go.
+import type { LiveToggle, StageDetail } from '@superjackfruitlabs/vibekit-ui';
 
 const require = createRequire(import.meta.url);
 // package.json is not an exported subpath; accents.css is, and sits at <pkg>/dist/styles.
-const dir = join(dirname(require.resolve('@superjackfruit/vibekit/accents.css')), '..', '..');
+const dir = join(dirname(require.resolve('@superjackfruitlabs/vibekit-ui/accents.css')), '..', '..');
 const css = ['vibekit.css', 'tokens.css', 'accents.css', 'type.css', 'derived.css'].map((f) => { try { return readFileSync(join(dir, 'dist/styles', f), 'utf8'); } catch { return ''; } }).join('\n');
 
 describe('the component-library vibekit release is the library in use', () => {
-  it('is version 0.0.12 (the motion suite)', () => expect(JSON.parse(readFileSync(join(dir, 'package.json'), 'utf8')).version).toBe('0.0.12'));
+  it('is version 0.0.20 (the Masthead live toggle and the StageTrack board form)', () => expect(JSON.parse(readFileSync(join(dir, 'package.json'), 'utf8')).version).toBe('0.0.20'));
   it('exports the components and the accent API the screens use', () => {
+    const types: [LiveToggle | null, StageDetail | null] = [null, null];
+    expect(types).toHaveLength(2);
     for (const n of ['VibeRoot', 'AppShell', 'AppNav', 'Masthead', 'StatusLine', 'PhoneTabBar', 'PhoneHeader', 'Button', 'IconButton', 'Tabs', 'Segmented',
       'QuickFilter', 'Field', 'Choice', 'CommandField', 'CommandPalette', 'Kbd', 'CopyId', 'Disclosure', 'Menu', 'DataTable', 'FactList', 'PageHead', 'Hero',
       'FigureRow', 'SmallMultiples', 'StageTrack', 'StateLabel', 'AgentName', 'Face', 'AgentQuote', 'Footnotes', 'FootnoteRef', 'SectionHeader', 'Dialog',

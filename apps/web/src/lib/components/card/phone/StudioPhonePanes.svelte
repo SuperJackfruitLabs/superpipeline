@@ -2,7 +2,7 @@
 <script lang="ts">
   import { hasStructuredDetail } from '$lib/components/card/phone/phone-card-words';
   /** The five Studio phone panes (card-studio §6). Only the active one renders. */
-  import { Face, Button } from '@superjackfruit/vibekit';
+  import { Face, Button } from '@superjackfruitlabs/vibekit-ui';
   import type { CardModel } from '../card-model.svelte';
   import PhoneIcon from '$lib/components/parts/PhoneIcon.svelte';
   import RawJson from '../RawJson.svelte';

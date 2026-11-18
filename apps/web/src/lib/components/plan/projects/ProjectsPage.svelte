@@ -1,7 +1,7 @@
 <script lang="ts">
   /** SP-Projects-Daylight, -Paper and -Quiet: the same DOM, three looks (the references' own [data-vibe] rules). */
   import './projects.css';
-  import { Button } from '@superjackfruit/vibekit';
+  import { Button } from '@superjackfruitlabs/vibekit-ui';
   import LineIcon from '$lib/components/parts/LineIcon.svelte';
   import PageMain from '$lib/components/parts/PageMain.svelte';
   import { viewport } from '$lib/viewport.svelte';

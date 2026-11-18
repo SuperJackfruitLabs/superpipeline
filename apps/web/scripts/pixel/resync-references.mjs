@@ -18,7 +18,7 @@ export const VK_DIR = `_vibekit-${VIBEKIT_VERSION}`;
 const HERE = dirname(fileURLToPath(import.meta.url));
 const WEB = resolve(HERE, '../..');
 export const REF_DIR = join(WEB, 'e2e/reference/mockups');
-const VK_STYLES = join(WEB, 'node_modules/@superjackfruit/vibekit/dist/styles');
+const VK_STYLES = join(WEB, 'node_modules/@superjackfruitlabs/vibekit-ui/dist/styles');
 
 import { LAYOUT, scopedByPage, VK } from '../../e2e/pixel/vk-guard.mjs';
 export { VK };

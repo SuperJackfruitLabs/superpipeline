@@ -1,5 +1,5 @@
 // apps/web/src/lib/components/operate/layouts/types.ts
-import type { Phase } from '@superjackfruit/vibekit';
+import type { Phase } from '@superjackfruitlabs/vibekit-ui';
 import type { AgentSummary, Card, Gate, Notification, Stage } from '$lib/api';
 import type { AttentionAction, AttentionItem } from '$lib/components/attention/attention';
 

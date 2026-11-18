@@ -6,7 +6,7 @@
    * reply (cell E). A refusal sits beside the button, where the reply was sent.
    */
   import '../paper-states.css';
-  import { Button, Face, Field, type Vibe } from '@superjackfruit/vibekit';
+  import { Button, Face, Field, type Vibe } from '@superjackfruitlabs/vibekit-ui';
   import type { Gate, GateConflict, GateDecision } from '$lib/api';
   import { app } from '$lib/stores/app.svelte';
   import { displayPrincipal } from '$lib/names';

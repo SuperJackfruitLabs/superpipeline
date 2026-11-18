@@ -9,7 +9,7 @@
   import { tick } from 'svelte';
   import './card-daylight.css';
   import '../daylight-states.css';
-  import { Button, Drawer, Face, Field, IconButton, StageTrack, StateLabel } from '@superjackfruit/vibekit';
+  import { Button, Drawer, Face, Field, IconButton, StageTrack, StateLabel } from '@superjackfruitlabs/vibekit-ui';
   import { CARD_DRAWER_WIDTH } from './widths';
   import CardMoveMenu from '$lib/components/board/CardMoveMenu.svelte';
   import { app } from '$lib/stores/app.svelte';

@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { Vibe } from '@superjackfruit/vibekit';
+  import type { Vibe } from '@superjackfruitlabs/vibekit-ui';
   import AgentFace from '$lib/components/AgentFace.svelte';
   import LeadWords from '$lib/components/LeadWords.svelte';
   import type { CardLead } from './card-lead';

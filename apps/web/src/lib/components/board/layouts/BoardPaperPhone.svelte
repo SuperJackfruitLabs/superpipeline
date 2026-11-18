@@ -2,7 +2,7 @@
 <script lang="ts">
   /** SP-Phone-Board-Paper: letters waiting on you, in progress, coming up, shipped, the pipeline, the write box. */
   import '../paper/pp-phone.css';
-  import { Button } from '@superjackfruit/vibekit';
+  import { Button } from '@superjackfruitlabs/vibekit-ui';
   import type { BoardLayoutProps } from './types';
   import PaperLetterPhone from '../paper/PaperLetterPhone.svelte';
   import PaperEntryPhone from '../paper/PaperEntryPhone.svelte';

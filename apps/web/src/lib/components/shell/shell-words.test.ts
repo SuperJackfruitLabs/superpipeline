@@ -1,6 +1,6 @@
 // apps/web/src/lib/components/shell/shell-words.test.ts
 import { describe, expect, it } from 'vitest';
-import { countWords } from '@superjackfruit/vibekit';
+import { countWords } from '@superjackfruitlabs/vibekit-ui';
 import {
   boardCounts, boardStatus, dateline, filterSummary, firstNameOf, initialsOf, needsPart, operateCount, paperShowingLine,
   projectCountOf, showingLine, statusLine, studioSubRight, userNameOf,

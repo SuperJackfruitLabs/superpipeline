@@ -1,5 +1,5 @@
 // apps/web/src/lib/components/dialogs/appearance-copy.ts
-import { greeting, type Phase, type Vibe } from '@superjackfruit/vibekit';
+import { greeting, type Phase, type Vibe } from '@superjackfruitlabs/vibekit-ui';
 
 /** The phase in words, as the Appearance readout starts ("Midday · …"). */
 export const PHASE_WORDS: Record<Phase, string> = { dawn: 'Dawn', morning: 'Morning', noon: 'Midday', golden: 'Golden hour', dusk: 'Dusk', night: 'Night' };

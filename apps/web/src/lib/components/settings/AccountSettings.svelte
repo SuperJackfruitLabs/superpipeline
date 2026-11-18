@@ -5,8 +5,8 @@
    * out of Crew), Appearance (vibe, theme, accent) and Account (sign out). The Labels and
    * Connections panels are the vibe's own (`WORKSPACE_TABS`); Studio frames them in `wo-main`.
    */
-  import { Button } from '@superjackfruit/vibekit';
-  import type { Vibe } from '@superjackfruit/vibekit';
+  import { Button } from '@superjackfruitlabs/vibekit-ui';
+  import type { Vibe } from '@superjackfruitlabs/vibekit-ui';
   import { appearance } from '$lib/appearance.svelte';
   import { WORKSPACE_TABS } from '$lib/layouts';
   import PageMain from '$lib/components/parts/PageMain.svelte';

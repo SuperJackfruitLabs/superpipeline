@@ -1,6 +1,6 @@
 <!-- apps/web/src/lib/components/card/phone/PhoneRefs.svelte -->
 <script lang="ts">
-  import { Button } from '@superjackfruit/vibekit';
+  import { Button } from '@superjackfruitlabs/vibekit-ui';
   import type { CardModel } from '../card-model.svelte';
   import type { PhoneCardView } from './phone-card-words';
   let { view, model }: { view: PhoneCardView; model: CardModel } = $props();

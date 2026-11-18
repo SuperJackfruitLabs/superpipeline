@@ -9,7 +9,7 @@
   import {
     AppNav, AppShell as VkAppShell, Button, CommandField, Face, IconButton, Masthead, Segmented, Sky, StatusLine,
     type MenuItem as VkMenuItem, type NavItem,
-  } from '@superjackfruit/vibekit';
+  } from '@superjackfruitlabs/vibekit-ui';
   import Icon from '$lib/components/parts/Icon.svelte';
   import BrandMark from '$lib/components/BrandMark.svelte';
   import '$lib/styles/shell/daylight.css';

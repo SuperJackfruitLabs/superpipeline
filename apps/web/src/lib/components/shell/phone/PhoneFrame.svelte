@@ -7,7 +7,7 @@
    * and PhoneTabBar (Inbox with the needs-you count across all boards, Plan, Crew, and You, a menu tab
    * that opens the account menu). Each vibe's shell hands in its pieces; vibekit picks the vibe's form.
    */
-  import { AppShell as VkAppShell, PhoneHeader, PhoneTabBar, type Phase, type PhoneTabItem } from '@superjackfruit/vibekit';
+  import { AppShell as VkAppShell, PhoneHeader, PhoneTabBar, type Phase, type PhoneTabItem } from '@superjackfruitlabs/vibekit-ui';
   import type { Snippet } from 'svelte';
   import Icon from '$lib/components/parts/Icon.svelte';
   import type { IconName } from '$lib/components/parts/icons';

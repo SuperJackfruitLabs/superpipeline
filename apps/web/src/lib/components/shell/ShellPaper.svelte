@@ -9,7 +9,7 @@
   import {
     AppNav, AppShell as VkAppShell, Button, CommandField, Masthead, StatusLine, Tabs,
     type MenuItem as VkMenuItem, type NavItem,
-  } from '@superjackfruit/vibekit';
+  } from '@superjackfruitlabs/vibekit-ui';
   import Icon from '$lib/components/parts/Icon.svelte';
   import '$lib/styles/shell/paper.css';
   import { shellModel as m } from './shell-model.svelte';

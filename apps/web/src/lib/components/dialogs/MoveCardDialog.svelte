@@ -7,7 +7,7 @@
    * region (`app.moveSaid`), success or refusal.
    */
   import { untrack } from 'svelte';
-  import { Button, Choice, Dialog, Face } from '@superjackfruit/vibekit';
+  import { Button, Choice, Dialog, Face } from '@superjackfruitlabs/vibekit-ui';
   import { app } from '$lib/stores/app.svelte';
   import { displayAgent } from '$lib/names';
   import { stageSummaries, summarize } from '$lib/components/board/card-summary';

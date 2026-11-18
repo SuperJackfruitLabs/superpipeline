@@ -66,9 +66,9 @@ importers:
       '@atlaskit/pragmatic-drag-and-drop':
         specifier: ^2.0.1
         version: 2.0.1
-      '@superjackfruit/vibekit':
-        specifier: file:./vendor/vibekit-0.0.12.tgz
-        version: file:apps/web/vendor/vibekit-0.0.12.tgz(@internationalized/date@3.12.2)(@sveltejs/kit@2.66.0(@opentelemetry/api@1.9.1)(@sveltejs/vite-plugin-svelte@7.1.2(svelte@5.56.3)(vite@8.0.16(@types/node@22.20.2)(esbuild@0.28.1)(jiti@2.7.0)(yaml@2.9.0)))(svelte@5.56.3)(typescript@6.0.3)(vite@8.0.16(@types/node@22.20.2)(esbuild@0.28.1)(jiti@2.7.0)(yaml@2.9.0)))(svelte@5.56.3)
+      '@superjackfruitlabs/vibekit-ui':
+        specifier: file:./vendor/superjackfruitlabs-vibekit-ui-0.0.20.tgz
+        version: file:apps/web/vendor/superjackfruitlabs-vibekit-ui-0.0.20.tgz(@internationalized/date@3.12.2)(@sveltejs/kit@2.66.0(@opentelemetry/api@1.9.1)(@sveltejs/vite-plugin-svelte@7.1.2(svelte@5.56.3)(vite@8.0.16(@types/node@22.20.2)(esbuild@0.28.1)(jiti@2.7.0)(yaml@2.9.0)))(svelte@5.56.3)(typescript@6.0.3)(vite@8.0.16(@types/node@22.20.2)(esbuild@0.28.1)(jiti@2.7.0)(yaml@2.9.0)))(svelte@5.56.3)
       '@superpipeline/contract':
         specifier: workspace:*
         version: link:../../packages/contract
@@ -1179,13 +1179,6 @@ packages:
   '@standard-schema/spec@1.1.0':
     resolution: {integrity: sha512-l2aFy5jALhniG5HgqrD6jXLi/rUWrKvqN/qJx6yoJsgKhblVd+iqqU4RCXavm/jPityDo5TCvKMnpjKnOriy0w==}
 
-  '@superjackfruit/vibekit@file:apps/web/vendor/vibekit-0.0.12.tgz':
-    resolution: {integrity: sha512-4VtaFr9G6TdWjUBxL0jk55EoH+c50d6JkaU6sQGMphe1umqEbdN+nwHwuGZsDxsJO+ESrjaNKC2niNtdRGOv9A==, tarball: file:apps/web/vendor/vibekit-0.0.12.tgz}
-    version: 0.0.12
-    engines: {node: '>=22'}
-    peerDependencies:
-      svelte: ^5.56.0
-
   '@superjackfruitlabs/treaty-cloudevents@0.0.13':
     resolution: {integrity: sha512-/qjUQFVHjzXdM15mT/tSwBRLGrmM5+kzYZZyLQIck6HsIhA6eU8waPyAJsZfGw6vbG0YfXWKAN5HDa4oiO8nRg==}
 
@@ -1194,6 +1187,13 @@ packages:
 
   '@superjackfruitlabs/treaty-event-schemas@0.0.13':
     resolution: {integrity: sha512-GMTO6CpFBP8rmIOosfB1rZKit2hzeXfBDcljFoXZ0iyA85p4/awgtY8eM9likSQzxxxCI3/xJiOJ5f+TSwU4Wg==}
+
+  '@superjackfruitlabs/vibekit-ui@file:apps/web/vendor/superjackfruitlabs-vibekit-ui-0.0.20.tgz':
+    resolution: {integrity: sha512-drVJkwPcwlZGtzCtE/RnFmAhcezOLTuBYOI0Cqh7hK85m9BexQWcFBhpCDywaWQxVS6Jv/NvltGYDuIHk5Nfjg==, tarball: file:apps/web/vendor/superjackfruitlabs-vibekit-ui-0.0.20.tgz}
+    version: 0.0.20
+    engines: {node: '>=22'}
+    peerDependencies:
+      svelte: ^5.56.0
 
   '@sveltejs/acorn-typescript@1.0.10':
     resolution: {integrity: sha512-4WfKk68eTih+MiJD4fSbxN7E8kVBmTMPWHUPYjvl2N0rMs53YLTT8/YjKU5Dtnz5LqDjl7LEw4U7lXR2W3J5WA==}
@@ -3299,7 +3299,13 @@ snapshots:
 
   '@standard-schema/spec@1.1.0': {}
 
-  '@superjackfruit/vibekit@file:apps/web/vendor/vibekit-0.0.12.tgz(@internationalized/date@3.12.2)(@sveltejs/kit@2.66.0(@opentelemetry/api@1.9.1)(@sveltejs/vite-plugin-svelte@7.1.2(svelte@5.56.3)(vite@8.0.16(@types/node@22.20.2)(esbuild@0.28.1)(jiti@2.7.0)(yaml@2.9.0)))(svelte@5.56.3)(typescript@6.0.3)(vite@8.0.16(@types/node@22.20.2)(esbuild@0.28.1)(jiti@2.7.0)(yaml@2.9.0)))(svelte@5.56.3)':
+  '@superjackfruitlabs/treaty-cloudevents@0.0.13': {}
+
+  '@superjackfruitlabs/treaty-ecosystem-identity@0.0.13': {}
+
+  '@superjackfruitlabs/treaty-event-schemas@0.0.13': {}
+
+  '@superjackfruitlabs/vibekit-ui@file:apps/web/vendor/superjackfruitlabs-vibekit-ui-0.0.20.tgz(@internationalized/date@3.12.2)(@sveltejs/kit@2.66.0(@opentelemetry/api@1.9.1)(@sveltejs/vite-plugin-svelte@7.1.2(svelte@5.56.3)(vite@8.0.16(@types/node@22.20.2)(esbuild@0.28.1)(jiti@2.7.0)(yaml@2.9.0)))(svelte@5.56.3)(typescript@6.0.3)(vite@8.0.16(@types/node@22.20.2)(esbuild@0.28.1)(jiti@2.7.0)(yaml@2.9.0)))(svelte@5.56.3)':
     dependencies:
       '@fontsource-variable/archivo': 5.3.0
       '@fontsource-variable/azeret-mono': 5.3.0
@@ -3315,12 +3321,6 @@ snapshots:
     transitivePeerDependencies:
       - '@internationalized/date'
       - '@sveltejs/kit'
-
-  '@superjackfruitlabs/treaty-cloudevents@0.0.13': {}
-
-  '@superjackfruitlabs/treaty-ecosystem-identity@0.0.13': {}
-
-  '@superjackfruitlabs/treaty-event-schemas@0.0.13': {}
 
   '@sveltejs/acorn-typescript@1.0.10(acorn@8.17.0)':
     dependencies:

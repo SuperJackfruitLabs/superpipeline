@@ -6,7 +6,7 @@
   import LineIcon from '$lib/components/parts/LineIcon.svelte';
   import type { Role } from '$lib/api';
   import { PeopleModel } from '../people-model.svelte';
-  import { Button } from '@superjackfruit/vibekit';
+  import { Button } from '@superjackfruitlabs/vibekit-ui';
   import { initials, lastOwner, peopleHeading, ROLE_LABEL, ROLE_ORDER, roleHelpTitle } from '../workspace-words';
   import NewPersonDialog from '../dialogs/NewPersonDialog.svelte';
   import type { WorkspaceTabProps } from '../types';

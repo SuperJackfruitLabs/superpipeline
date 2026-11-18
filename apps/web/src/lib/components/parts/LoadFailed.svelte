@@ -3,7 +3,7 @@
    * A read that failed, said as one: "Couldn't load X." and Try again (never "nothing here", never the
    * raw "Error: getBoard failed (500)"). `home` adds a way back to the Inbox for a whole page that failed.
    */
-  import { Button } from '@superjackfruit/vibekit';
+  import { Button } from '@superjackfruitlabs/vibekit-ui';
   import { TRY_AGAIN } from '$lib/loading';
 
   let { message, onRetry, home = false }: { message: string; onRetry?: () => unknown; home?: boolean } = $props();

@@ -5,7 +5,7 @@
    * the same 24 × 24 stroke frame. `bare` is the phone form: class `ico`, sized and stroked by the
    * phone stylesheet. `filled` fills the shapes (Daylight's current Plan and Workspace).
    */
-  import { ICON_PATHS, Icon as VkIcon } from '@superjackfruit/vibekit';
+  import { ICON_PATHS, Icon as VkIcon } from '@superjackfruitlabs/vibekit-ui';
   import { NAV_ICONS, PRODUCT_ICONS, VK_ALIASES, isVkIcon, type IconName } from './icons';
 
   let { name, size = 20, label, filled = false, bare = false, strokeWidth = 2 }: { name: IconName; size?: number; label?: string; filled?: boolean; bare?: boolean; strokeWidth?: number } = $props();

@@ -4,7 +4,7 @@
  * cards waiting on you (`lastAgentId`, since a stopped card has no delegate), then those working,
  * then whoever queued the work. Daylight's rail draws the first three faces and counts them all.
  */
-import type { Mood } from '@superjackfruit/vibekit';
+import type { Mood } from '@superjackfruitlabs/vibekit-ui';
 import type { AgentSummary, BoardSnapshot } from '$lib/api';
 import { displayAgent } from '$lib/names';
 import { joinAnd, plural } from '$lib/words';

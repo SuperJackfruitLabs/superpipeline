@@ -1,7 +1,7 @@
 <!-- apps/web/src/lib/components/plan/list/ListDaylightToolbar.svelte -->
 <script lang="ts">
   /** Daylight's Group by and summary, drawn in the shell's sub-bar (ShellProps.subTools). */
-  import { Segmented } from '@superjackfruit/vibekit';
+  import { Segmented } from '@superjackfruitlabs/vibekit-ui';
   import type { ListGroupBy } from '$lib/stores/app.svelte';
   import { daylightSum, GROUPS } from './list-model';
   import type { ListLayoutProps } from './types';

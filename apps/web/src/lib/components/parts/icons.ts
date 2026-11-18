@@ -4,7 +4,7 @@
  * `VK_ALIASES`); `PRODUCT_ICONS` holds only the glyphs the references draw that vibekit 0.0.1 has
  * no icon for. Each is a CORRECTIONS.md deviation row; delete an entry when vibekit ships it.
  */
-import { ICON_NAMES, type IconName as VkIconName } from '@superjackfruit/vibekit';
+import { ICON_NAMES, type IconName as VkIconName } from '@superjackfruitlabs/vibekit-ui';
 
 /** Reference names that are vibekit icons under another name. */
 export const VK_ALIASES = { chev: 'chevron-down', 'search-phone': 'search', close: 'x', settings: 'gear' } as const satisfies Record<string, VkIconName>;

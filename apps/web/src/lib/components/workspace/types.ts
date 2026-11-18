@@ -1,6 +1,6 @@
 // apps/web/src/lib/components/workspace/types.ts
 import type { Snippet } from 'svelte';
-import type { Vibe } from '@superjackfruit/vibekit';
+import type { Vibe } from '@superjackfruitlabs/vibekit-ui';
 import type { WorkspaceTab } from './workspace-counts.svelte';
 export interface WorkspaceFrameProps { tab: WorkspaceTab | 'review'; vibe: Vibe; children: Snippet }
 /**

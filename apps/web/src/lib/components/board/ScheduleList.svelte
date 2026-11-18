@@ -1,7 +1,7 @@
 <!-- apps/web/src/lib/components/board/ScheduleList.svelte -->
 <script lang="ts">
   import { untrack } from 'svelte';
-  import { Button } from '@superjackfruit/vibekit';
+  import { Button } from '@superjackfruitlabs/vibekit-ui';
   import LineIcon from '$lib/components/parts/LineIcon.svelte';
   import type { Stage } from '$lib/api';
   import { formatFireTime } from './schedule-format';

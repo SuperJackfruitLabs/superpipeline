@@ -6,7 +6,7 @@
    */
   import './empty/empty.css';
   import './empty/empty-studio.css';
-  import { Button, Face } from '@superjackfruit/vibekit';
+  import { Button, Face } from '@superjackfruitlabs/vibekit-ui';
   import type { BoardSnapshot } from '$lib/api';
   import type { EmptyForm } from '$lib/layouts';
   import Icon from '$lib/components/parts/Icon.svelte';

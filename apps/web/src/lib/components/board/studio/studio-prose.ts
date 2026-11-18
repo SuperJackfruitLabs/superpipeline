@@ -3,7 +3,7 @@
  * The Studio board's report prose (SB §4.2), pure functions of the board model. The hero sentence,
  * the notes and the multiples share one footnote numbering, set by `buildBoardModel`.
  */
-import type { Mood } from '@superjackfruit/vibekit';
+import type { Mood } from '@superjackfruitlabs/vibekit-ui';
 import { firstSentence, joinAnd, lcFirst, numWord, plural } from '$lib/words';
 import type { BoardModel, BoardStage, Unit } from '../board-model';
 import { daysOverdue, dueLong, dueShort, isStopped, needsAction, type CardAction } from '../board-words';

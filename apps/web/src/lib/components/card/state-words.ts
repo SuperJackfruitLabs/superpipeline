@@ -1,6 +1,6 @@
 // apps/web/src/lib/components/card/state-words.ts
 /** One word, or one short sentence, for where a card stands. Never the raw state value. */
-import type { StageTrackStatus } from '@superjackfruit/vibekit';
+import type { StageTrackStatus } from '@superjackfruitlabs/vibekit-ui';
 import type { Activity, Attempt, Card, Stage } from '$lib/api';
 import { ageWords } from '$lib/age';
 import type { CardLead, LeadKind } from './card-lead';

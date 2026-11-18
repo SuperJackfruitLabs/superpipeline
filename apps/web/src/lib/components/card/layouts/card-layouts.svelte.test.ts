@@ -9,7 +9,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, render } from '@testing-library/svelte';
 import { flushSync } from 'svelte';
-import { VIBES, type Vibe } from '@superjackfruit/vibekit';
+import { VIBES, type Vibe } from '@superjackfruitlabs/vibekit-ui';
 import { CARD_LAYOUTS, CARD_PAGE_LAYOUTS } from '$lib/layouts';
 import { CARD_SECTION_KEYS } from './types';
 import { mountModel } from '../testing/mount-model.svelte';

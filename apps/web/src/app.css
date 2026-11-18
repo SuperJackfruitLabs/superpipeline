@@ -1,7 +1,7 @@
 @layer theme, base, vk, components, utilities;
 @import 'tailwindcss';
-@import '@superjackfruit/vibekit/fonts.css';
-@import '@superjackfruit/vibekit/vibekit.css';
+@import '@superjackfruitlabs/vibekit-ui/fonts.css';
+@import '@superjackfruitlabs/vibekit-ui/vibekit.css';
 /* The Studio (Annual report) content base, under vibekit's layer so its resets never restyle a vibekit part. */
 @import './lib/styles/annual.css' layer(base);
 /* The page type scale, panel, chip and field the Plan, Workspace and Settings pages share (Daylight, Paper, Quiet); scoped to `.page`, under vibekit's layer for the same reason. */

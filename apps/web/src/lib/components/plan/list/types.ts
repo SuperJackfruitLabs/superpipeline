@@ -1,5 +1,5 @@
 // apps/web/src/lib/components/plan/list/types.ts
-import type { Mood } from '@superjackfruit/vibekit';
+import type { Mood } from '@superjackfruitlabs/vibekit-ui';
 import type { ListGroupBy, ListSort, ListSortKey, QuickFilter } from './list-keys';
 import type { CardSummary } from '$lib/components/board/card-summary';
 import type { ListUi } from './list-ui.svelte';

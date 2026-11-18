@@ -1,7 +1,7 @@
 <!-- apps/web/src/lib/components/operate/BoardLog.svelte -->
 <script lang="ts">
   import { clockHMS } from '$lib/when';
-  import { Button } from '@superjackfruit/vibekit';
+  import { Button } from '@superjackfruitlabs/vibekit-ui';
   import LineIcon from '$lib/components/parts/LineIcon.svelte';
   import { app } from '$lib/stores/app.svelte';
   import { eventLabel, logMeta, rawLine, shortId, shortTitle } from './spend-format';

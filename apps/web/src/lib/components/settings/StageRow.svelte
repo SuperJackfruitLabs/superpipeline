@@ -1,6 +1,6 @@
 <!-- apps/web/src/lib/components/settings/StageRow.svelte -->
 <script lang="ts">
-  import { Button } from '@superjackfruit/vibekit';
+  import { Button } from '@superjackfruitlabs/vibekit-ui';
   import LineIcon from '$lib/components/parts/LineIcon.svelte';
   import type { Stage } from '$lib/api';
   import { ago, cardsHere, ownerLabel, ownerText, ruleLine, stageCards, wipLine, worksBy } from './settings-words';

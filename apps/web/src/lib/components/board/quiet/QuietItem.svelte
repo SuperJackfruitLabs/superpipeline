@@ -1,6 +1,6 @@
 <!-- apps/web/src/lib/components/board/quiet/QuietItem.svelte -->
 <script lang="ts">
-  import { Face } from '@superjackfruit/vibekit';
+  import { Face } from '@superjackfruitlabs/vibekit-ui';
   import type { Stage } from '$lib/api';
   import { app } from '$lib/stores/app.svelte';
   import CardMoveMenu from '../CardMoveMenu.svelte';

@@ -1,7 +1,7 @@
 <!-- apps/web/src/lib/components/board/daylight/DlStrip.svelte -->
 <script lang="ts">
   /** An empty stage, collapsed to a 60px strip; a click expands it into an empty lane. */
-  import { Face } from '@superjackfruit/vibekit';
+  import { Face } from '@superjackfruitlabs/vibekit-ui';
   import { app } from '$lib/stores/app.svelte';
   import { columnDropTarget } from '$lib/dnd';
   import type { BoardStage } from '../board-model';

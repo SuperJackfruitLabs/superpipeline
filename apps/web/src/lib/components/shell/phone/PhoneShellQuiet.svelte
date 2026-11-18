@@ -4,7 +4,7 @@
    * Quiet, phone (SP-Phone-Board-Quiet): plain rows of words: "Board: name — Change board";
    * Search, New card and Filter; the view links. A 2px-ruled word bar, no icons.
    */
-  import { Button, CommandField, Tabs } from '@superjackfruit/vibekit';
+  import { Button, CommandField, Tabs } from '@superjackfruitlabs/vibekit-ui';
   import { shellModel as m } from '../shell-model.svelte';
   import { VIEWS, type ShellProps } from '../types';
   import { SEARCH_NAME } from './common';

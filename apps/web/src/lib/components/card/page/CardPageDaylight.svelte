@@ -8,7 +8,7 @@
    */
   import './card-page-daylight.css';
   import '../daylight-states.css';
-  import { Button, Face, Field, StageTrack, StateLabel } from '@superjackfruit/vibekit';
+  import { Button, Face, Field, StageTrack, StateLabel } from '@superjackfruitlabs/vibekit-ui';
   import { app } from '$lib/stores/app.svelte';
   import { appearance } from '$lib/appearance.svelte';
   import { displayAgent, displayPrincipal } from '$lib/names';

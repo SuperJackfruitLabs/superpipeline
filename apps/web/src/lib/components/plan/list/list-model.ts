@@ -4,7 +4,7 @@
  * so every vibe prints the same facts (spec List §3.3). A row needs you exactly when the card has
  * an attention item; `card.state` alone never decides it.
  */
-import type { Mood } from '@superjackfruit/vibekit';
+import type { Mood } from '@superjackfruitlabs/vibekit-ui';
 import type { AgentSummary, Card, Member } from '$lib/api';
 import type { AttentionItem, AttentionKind } from '$lib/components/attention/attention';
 import type { CardSummary, StageSummary } from '$lib/components/board/card-summary';

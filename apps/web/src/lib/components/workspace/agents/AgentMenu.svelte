@@ -1,7 +1,7 @@
 <!-- apps/web/src/lib/components/workspace/agents/AgentMenu.svelte -->
 <script lang="ts">
   /** The pop-up inside `details.menu`: the same items in both DOMs; Studio swaps the text classes. */
-  import { Button } from '@superjackfruit/vibekit';
+  import { Button } from '@superjackfruitlabs/vibekit-ui';
   import LineIcon from '$lib/components/parts/LineIcon.svelte';
   import type { AgentScope, AgentSummary } from '$lib/api';
   import { moreTokens, tokensInUse } from '../agent-status';

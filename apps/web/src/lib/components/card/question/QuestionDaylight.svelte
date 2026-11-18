@@ -3,7 +3,7 @@
   import ApprovalDetail from './ApprovalDetail.svelte';
   /** An agent's question in Daylight (SP-Card-States-Daylight B): asked once, then the answer box. */
   import '../daylight-states.css';
-  import { Button, Face, Field, type Vibe } from '@superjackfruit/vibekit';
+  import { Button, Face, Field, type Vibe } from '@superjackfruitlabs/vibekit-ui';
   import type { Elicitation } from '$lib/api';
   import { whenLabel } from '$lib/when';
   import Icon from '$lib/components/parts/Icon.svelte';
