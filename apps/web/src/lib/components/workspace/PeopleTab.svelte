@@ -32,10 +32,10 @@
     {#if crewNewInPage()}<Button class="btn-sm" type="button" icon={plusIcon} style="margin-left: auto;" onclick={openNew}>New person</Button>{/if}
   </div>
   {#if model.error && !creating}<p class="hint" role="alert" style="padding: var(--vk-space-3) var(--vk-space-5) 0; color: var(--vk-color-signal-text);">{model.error}</p>{/if}
-  {#if model.members === null && model.failed}
-    <LoadFailed message="Couldn't load people." onRetry={() => model.refresh()} />
+  {#if model.load.phase === 'failed'}
+    <LoadFailed message="Couldn't load people." onRetry={() => model.retry()} />
   {:else if model.members === null}
-    <SkeletonRows label="Loading people…" rows={3} rowHeight={64} />
+    <SkeletonRows label="Loading people…" rows={3} rowHeight={64} slow={model.load.phase === 'slow'} onRetry={() => model.retry()} />
   {:else}
     {#each model.members as m, i (m.userId)}
       {@const locked = lastOwner(m, model.members)}

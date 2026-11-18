@@ -25,10 +25,10 @@
 <section class="ar-sec" aria-labelledby="pt-h">
   <div class="hd"><span class="no">{review?.no ?? '01'}</span>{#if review}<span class="kick">{review.tag}</span>{/if}<h2 id="pt-h">{model.members === null ? 'People' : peopleHeading(model.members.length)}</h2><span class="r">{#if crewNewInPage()}<Button type="button" icon={plusIcon} onclick={openNew}>New person</Button>{/if}</span></div>
   {#if model.error && !creating}<p class="ar-hint" role="alert">{model.error}</p>{/if}
-  {#if model.members === null && model.failed}
-    <LoadFailed message="Couldn't load people." onRetry={() => model.refresh()} />
+  {#if model.load.phase === 'failed'}
+    <LoadFailed message="Couldn't load people." onRetry={() => model.retry()} />
   {:else if model.members === null}
-    <SkeletonRows label="Loading people…" rows={3} rowHeight={48} />
+    <SkeletonRows label="Loading people…" rows={3} rowHeight={48} slow={model.load.phase === 'slow'} onRetry={() => model.retry()} />
   {:else}
     <table class="ar-tbl wo-tbl">
       <caption class="sr">People</caption>

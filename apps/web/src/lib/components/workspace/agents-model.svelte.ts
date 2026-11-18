@@ -6,6 +6,7 @@ import {
   type AgentScope, type AgentSummary, type CapabilityRecord,
 } from '$lib/api';
 import { app } from '$lib/stores/app.svelte';
+import { loadState } from '$lib/loading.svelte';
 import { crewLists, workspaceCounts } from './workspace-counts.svelte';
 
 export interface MintedToken { agentName: string; token: string; scopes?: AgentScope[] }
@@ -41,6 +42,9 @@ export class AgentsModel {
   /** Agents whose token list is expanded past the first two. */
   allTokens = $state<string[]>([]);
 
+  /** Where the list read stands: skeleton, slow (with Try again), failed or ready. */
+  readonly load = loadState(() => ({ value: this.agents, failed: this.loadError !== null }));
+
   canCreate = $derived(!this.minting && this.newName.trim() !== '' && this.newCaps.length > 0);
 
   async refresh(): Promise<void> {
@@ -53,6 +57,9 @@ export class AgentsModel {
       this.loadError = message(e);
     }
   }
+
+  /** Try again: read the list once more. */
+  retry(): Promise<void> { return this.refresh(); }
 
   private async changed(): Promise<void> {
     // Awaited, so a mutation's counts settle under the same busy mark as its list.

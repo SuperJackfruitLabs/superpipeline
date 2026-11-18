@@ -2,8 +2,8 @@
  * The reactive side of loading.ts: a pending gate a component (or a model built in one) reads, and the
  * one polite status line per screen that every skeleton reports to.
  */
-import { untrack } from 'svelte';
-import { PendingClock, SLOW_MS, type PendingPhase } from './loading';
+import { onDestroy, untrack } from 'svelte';
+import { PendingClock, SKELETON_DELAY_MS, SLOW_MS, type PendingPhase } from './loading';
 
 export interface Pending {
   /** Draw the loading form (reserved space; skeleton bars once `skeleton`). */
@@ -29,6 +29,43 @@ export function pending(get: () => boolean): Pending {
     get busy() { return s.phase !== 'idle'; },
     get skeleton() { return s.phase === 'showing' || s.phase === 'holding'; },
     get slow() { return s.slow; },
+  };
+}
+
+export type LoadPhase = 'idle' | 'skeleton' | 'slow' | 'failed' | 'ready';
+
+/**
+ * Where a list read stands, for a model that owns one (Crew and Settings). `value` is the list (null
+ * until a read worked), `failed` that the last read failed. While nothing is known the phase is
+ * `idle` (reserve the space), then `skeleton` from 150 ms, then `slow` from 8 s, when the page says
+ * the server is slow and offers Try again: a skeleton is never where a wait rests. A list once read
+ * stays `ready` through a later refresh or a failed one; `failed` is only for a list never read.
+ *
+ * Usable from a model built in a component or on its own (tests): the clock lives in its own effect
+ * root, closed with the component when there is one.
+ */
+export function loadState(get: () => { value: unknown; failed: boolean }): { readonly phase: LoadPhase } {
+  const t = $state({ skeleton: false, slow: false });
+  const waiting = () => { const s = get(); return s.value === null && !s.failed; };
+  const stop = $effect.root(() => {
+    $effect(() => {
+      if (waiting()) {
+        const show = setTimeout(() => { t.skeleton = true; }, SKELETON_DELAY_MS);
+        const slow = setTimeout(() => { t.slow = true; }, SLOW_MS);
+        return () => { clearTimeout(show); clearTimeout(slow); };
+      }
+      t.skeleton = t.slow = false;
+      return undefined;
+    });
+  });
+  try { onDestroy(stop); } catch { /* built outside a component: lives as long as the model */ }
+  return {
+    get phase(): LoadPhase {
+      const s = get();
+      if (s.value !== null) return 'ready';
+      if (s.failed) return 'failed';
+      return t.slow ? 'slow' : t.skeleton ? 'skeleton' : 'idle';
+    },
   };
 }
 

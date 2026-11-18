@@ -36,10 +36,10 @@
   </div>
   {#if model.similar.length > 0}<p class="hint" role="status" style="padding: var(--vk-space-3) var(--vk-space-5) 0;">{similarText(model.similar)}</p>{/if}
   {#if model.error}<p class="hint" role="alert" style="padding: var(--vk-space-3) var(--vk-space-5) 0; color: var(--vk-color-signal-text);">{model.error}</p>{/if}
-  {#if model.capabilities === null && model.failed}
-    <LoadFailed message="Couldn't load capabilities." onRetry={() => model.refresh()} />
+  {#if model.load.phase === 'failed'}
+    <LoadFailed message="Couldn't load capabilities." onRetry={() => model.retry()} />
   {:else if model.capabilities === null}
-    <SkeletonRows label="Loading capabilities…" rows={3} rowHeight={64} />
+    <SkeletonRows label="Loading capabilities…" rows={3} rowHeight={64} slow={model.load.phase === 'slow'} onRetry={() => model.retry()} />
   {:else}
     {#if model.notes.length > 0 || review?.note}
       <div class="panel-body" style="display: flex; flex-direction: column; gap: var(--vk-space-2); border-bottom: 1px solid var(--vk-color-line);">

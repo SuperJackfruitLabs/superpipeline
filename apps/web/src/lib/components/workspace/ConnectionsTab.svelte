@@ -1,6 +1,8 @@
 <!-- apps/web/src/lib/components/workspace/ConnectionsTab.svelte -->
 <script lang="ts">
   import { Button } from '@superjackfruit/vibekit';
+  import SkeletonRows from '$lib/components/parts/SkeletonRows.svelte';
+  import LoadFailed from '$lib/components/parts/LoadFailed.svelte';
   import LineIcon from '$lib/components/parts/LineIcon.svelte';
   import CapabilityChips from './agents/CapabilityChips.svelte';
   import { ConnectionsModel } from './connections-model.svelte';
@@ -19,8 +21,10 @@
     <h2 class="t-h2" id="cn-h">Connections</h2>
     <p class="t-meta">Where agents push code and where they come from.</p>
   </div>
-  {#if model.loading}
-    <p class="panel-body t-meta" role="status">Loading connections…</p>
+  {#if model.load.phase === 'failed'}
+    <div class="panel-body"><LoadFailed message="Couldn't load connections." onRetry={() => model.retry()} /></div>
+  {:else if model.loading}
+    <div class="panel-body"><SkeletonRows label="Loading connections…" rows={3} rowHeight={56} slow={model.load.phase === 'slow'} onRetry={() => model.retry()} /></div>
   {:else}
     <div class="kv">
       <div><p class="t-h3">Forge host</p><p class="t-meta">Where agents push branches</p></div>

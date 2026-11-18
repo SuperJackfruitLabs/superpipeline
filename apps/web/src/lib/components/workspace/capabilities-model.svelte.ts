@@ -2,6 +2,7 @@
 import { createCapability, updateCapability, deleteCapability, addImplication, removeImplication, type AgentSummary, type CapabilityRecord } from '$lib/api';
 import { similarKeys } from '@superpipeline/contract';
 import { app } from '$lib/stores/app.svelte';
+import { loadState } from '$lib/loading.svelte';
 import { holdersOf, orphanNote, unstaffedNote, type CapNote } from './capability-notes';
 import { crewLists, workspaceCounts } from './workspace-counts.svelte';
 
@@ -12,6 +13,8 @@ export class CapabilitiesModel {
   error = $state<string | null>(null);
   /** The list could not be read: the tab says so with Try again (never an empty list, never the raw error). */
   failed = $state(false);
+  /** Where the list read stands: skeleton, slow (with Try again), failed or ready. */
+  readonly load = loadState(() => ({ value: this.capabilities, failed: this.failed }));
   newKey = $state('');
   newDescription = $state('');
   /** The New capability dialog's own error. */
@@ -32,6 +35,9 @@ export class CapabilitiesModel {
     this.failed = false;
     try { [this.capabilities, this.agents] = await load; } catch { this.failed = true; }
   }
+
+  /** Try again: read the list once more. */
+  retry(): Promise<void> { return this.refresh(); }
 
   private async bodyError(res: Response, fallback: string): Promise<string> {
     const body = (await res.json().catch(() => null)) as { error?: string } | null;

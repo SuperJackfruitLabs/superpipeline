@@ -2,10 +2,15 @@
 import { getWorkspace, setWorkspaceFleet, getForgeHost, setForgeHost, getHubPrincipals, getAgents, getCapabilities, createAgent, type WorkspaceTenant, type HubPrincipal, type AgentSummary, type CapabilityRecord } from '$lib/api';
 import { beginHubAuthorization, hubStatus } from '$lib/hub-token';
 import { app } from '$lib/stores/app.svelte';
+import { loadState } from '$lib/loading.svelte';
 import { FORGE_HOST_ERROR } from './workspace-words';
 
 export class ConnectionsModel {
   loading = $state(true);
+  /** The workspace could not be read (network, timeout): the tab says so with Try again, never "Not linked". */
+  failed = $state(false);
+  /** Where the first read stands: skeleton, slow (with Try again), failed or ready. */
+  readonly load = loadState(() => ({ value: this.loading ? null : this.workspace ?? false, failed: this.failed }));
   workspace = $state<WorkspaceTenant | null>(null);
   agents = $state<AgentSummary[]>([]);
   capabilities = $state<CapabilityRecord[]>([]);
@@ -30,16 +35,26 @@ export class ConnectionsModel {
 
   async refresh(): Promise<void> {
     const load = (async () => {
+      // The workspace is the one read this panel cannot do without: a refused one (no tenant) is null,
+      // one that never answered is a failure. The others are optional and read as empty.
       [this.workspace, this.agents, this.capabilities, this.forgeHost] = await Promise.all([
-        getWorkspace().catch(() => null), getAgents().catch(() => []), getCapabilities().catch(() => []), getForgeHost().catch(() => null),
+        getWorkspace(), getAgents().catch(() => []), getCapabilities().catch(() => []), getForgeHost().catch(() => null),
       ]);
       const status = await hubStatus().catch(() => ({ configured: false }));
       this.principals = status.configured ? await getHubPrincipals().catch(() => null) : null;
     })();
     void app.markBusy(load);
-    await load;
-    this.loading = false;
+    this.failed = false;
+    try {
+      await load;
+      this.loading = false;
+    } catch {
+      this.failed = true;
+    }
   }
+
+  /** Try again: read the panel once more. */
+  retry(): Promise<void> { return this.refresh(); }
 
   startForge(): void { this.editingForge = true; this.forgeInput = this.forgeHost ?? ''; this.forgeError = null; }
   async saveForge(): Promise<void> {

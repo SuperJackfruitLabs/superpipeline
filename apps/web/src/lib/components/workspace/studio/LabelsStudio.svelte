@@ -20,10 +20,10 @@
 <section class="ar-sec" aria-labelledby="lt-h">
   <div class="hd"><span class="no">{review?.no ?? '01'}</span>{#if review}<span class="kick">{review.tag}</span>{/if}<h2 id="lt-h">{model.labels === null ? 'Labels' : labelsHeading(model.labels.length)}</h2></div>
   <p class="wo-lede">Renames save when you leave the field. “Inferred” means a card created it.</p>
-  {#if model.labels === null && model.failed}
-    <LoadFailed message="Couldn't load labels." onRetry={() => model.refresh()} />
+  {#if model.load.phase === 'failed'}
+    <LoadFailed message="Couldn't load labels." onRetry={() => model.retry()} />
   {:else if model.labels === null}
-    <SkeletonRows label="Loading labels…" rows={3} rowHeight={48} />
+    <SkeletonRows label="Loading labels…" rows={3} rowHeight={48} slow={model.load.phase === 'slow'} onRetry={() => model.retry()} />
   {:else}
     <table class="ar-tbl wo-tbl">
       <caption class="sr">Labels</caption>

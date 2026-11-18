@@ -25,10 +25,10 @@
     <h2 class="t-h2" id="lt-h">{model.labels === null ? 'Labels' : labelsHeading(model.labels.length)}</h2>
     <p class="t-meta">Renames save when you leave the field. “Inferred” means a card created it.</p>
   </div>
-  {#if model.labels === null && model.failed}
-    <LoadFailed message="Couldn't load labels." onRetry={() => model.refresh()} />
+  {#if model.load.phase === 'failed'}
+    <LoadFailed message="Couldn't load labels." onRetry={() => model.retry()} />
   {:else if model.labels === null}
-    <SkeletonRows label="Loading labels…" rows={3} rowHeight={52} />
+    <SkeletonRows label="Loading labels…" rows={3} rowHeight={52} slow={model.load.phase === 'slow'} onRetry={() => model.retry()} />
   {:else}
     <ul style="list-style: none; margin: 0px; padding: 0px;">
       {#each model.labels as l (l.id)}

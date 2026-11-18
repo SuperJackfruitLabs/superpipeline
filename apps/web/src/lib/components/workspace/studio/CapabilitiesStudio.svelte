@@ -28,10 +28,10 @@
   <p class="wo-lede">What agents can do. A board stage asks for one; an agent holding it claims the card.</p>
   {#if model.similar.length > 0}<p class="ar-hint" role="status">{similarText(model.similar)}</p>{/if}
   {#if model.error}<p class="ar-hint" role="alert">{model.error}</p>{/if}
-  {#if model.capabilities === null && model.failed}
-    <LoadFailed message="Couldn't load capabilities." onRetry={() => model.refresh()} />
+  {#if model.load.phase === 'failed'}
+    <LoadFailed message="Couldn't load capabilities." onRetry={() => model.retry()} />
   {:else if model.capabilities === null}
-    <SkeletonRows label="Loading capabilities…" rows={3} rowHeight={48} />
+    <SkeletonRows label="Loading capabilities…" rows={3} rowHeight={48} slow={model.load.phase === 'slow'} onRetry={() => model.retry()} />
   {:else}
     {#if model.notes.length > 0 || review?.note}
       <div class="wo-note">

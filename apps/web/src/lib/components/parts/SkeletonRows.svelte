@@ -11,14 +11,24 @@
    *
    * `rowHeight` sizes each row to the real one it stands for (two lines: a title and a meta line),
    * so the page does not jump when the rows arrive.
+   *
+   * `slow` (from 8 s) adds "Still loading — the server is slow." and, given `onRetry`, Try again:
+   * a wait that has gone on says what to do, it does not rest on bars.
    */
   import { onMount } from 'svelte';
-  import { SKELETON_DELAY_MS } from '$lib/loading';
+  import { Button } from '@superjackfruit/vibekit';
+  import { SKELETON_DELAY_MS, SLOW_COPY, TRY_AGAIN } from '$lib/loading';
   import { loadingStatus } from '$lib/loading.svelte';
 
-  let { label, rows = 3, rowHeight, slow = false }: { label: string; rows?: number; rowHeight?: number; slow?: boolean } = $props();
+  let { label, rows = 3, rowHeight, slow = false, onRetry }: { label: string; rows?: number; rowHeight?: number; slow?: boolean; onRetry?: () => unknown } = $props();
   const WIDTHS = ['92%', '74%', '58%', '83%', '66%'];
   let on = $state(false);
+  let retrying = $state(false);
+  async function retry(): Promise<void> {
+    if (!onRetry || retrying) return;
+    retrying = true;
+    try { await onRetry(); } finally { retrying = false; }
+  }
   onMount(() => {
     const t = setTimeout(() => (on = true), SKELETON_DELAY_MS);
     const drop = loadingStatus.add(label);
@@ -36,5 +46,5 @@
       <span class="vk-skeleton" aria-hidden="true" style="width: {WIDTHS[i % WIDTHS.length]};"></span>
     {/if}
   {/each}
-  {#if slow}<span class="sp-skeleton__slow">Still loading — the server is slow.</span>{/if}
+  {#if slow}<span class="sp-skeleton__slow" data-slow>{SLOW_COPY}</span>{#if onRetry}<Button variant="secondary" class="btn-sm" type="button" busy={retrying} onclick={retry}>{TRY_AGAIN}</Button>{/if}{/if}
 </div>

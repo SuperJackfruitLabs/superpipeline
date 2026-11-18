@@ -50,10 +50,10 @@
     <li><span class="k"><LineIcon name="key" size={18} stroke={1.75} /></span><span><b>Tokens</b> — access keys it uses to reach this workspace. Revoke one from <em>Actions</em> if a station is retired.</span></li>
     <li><span class="k"><LineIcon name="dots" size={18} stroke={1.75} /></span><span><b>Actions</b> — edit, issue or revoke tokens, unlink, delete.</span></li>
   </ul>
-  {#if model.agents === null && model.loadError}
-    <LoadFailed message="Couldn't load the agents." onRetry={() => model.refresh()} />
+  {#if model.load.phase === 'failed'}
+    <LoadFailed message="Couldn't load the agents." onRetry={() => model.retry()} />
   {:else if model.agents === null}
-    <SkeletonRows label="Loading agents…" rows={4} rowHeight={56} />
+    <SkeletonRows label="Loading agents…" rows={4} rowHeight={56} slow={model.load.phase === 'slow'} onRetry={() => model.retry()} />
   {:else if model.agents.length === 0}
     <p class="ar-hint">No agents yet. Create one with New agent — you'll get a token to point an AI agent at this workspace.</p>
   {:else}

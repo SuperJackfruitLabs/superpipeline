@@ -56,10 +56,10 @@
     <div><span><LineIcon name="key" size={18} /></span><p class="t-meta"><strong style="color: var(--vk-color-text);">Tokens</strong> — access keys it uses to reach this workspace. Revoke one from <em>Actions</em> if a station is retired.</p></div>
     <div><span><LineIcon name="dots" size={18} /></span><p class="t-meta"><strong style="color: var(--vk-color-text);">Actions</strong> — edit, issue or revoke tokens, unlink, delete.</p></div>
   </div>
-  {#if model.agents === null && model.loadError}
-    <div class="panel-body"><LoadFailed message="Couldn't load the agents." onRetry={() => model.refresh()} /></div>
+  {#if model.load.phase === 'failed'}
+    <div class="panel-body"><LoadFailed message="Couldn't load the agents." onRetry={() => model.retry()} /></div>
   {:else if model.agents === null}
-    <div class="panel-body"><SkeletonRows label="Loading agents…" rows={4} rowHeight={72} /></div>
+    <div class="panel-body"><SkeletonRows label="Loading agents…" rows={4} rowHeight={72} slow={model.load.phase === 'slow'} onRetry={() => model.retry()} /></div>
   {:else if model.agents.length === 0}
     <div class="panel-body"><p class="t-body">No agents yet. Create one with New agent — you'll get a token to point an AI agent at this workspace.</p></div>
   {:else}

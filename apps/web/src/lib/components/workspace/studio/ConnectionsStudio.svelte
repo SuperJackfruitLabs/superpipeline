@@ -1,6 +1,8 @@
 <!-- apps/web/src/lib/components/workspace/studio/ConnectionsStudio.svelte -->
 <script lang="ts">
   import LineIcon from '$lib/components/parts/LineIcon.svelte';
+  import SkeletonRows from '$lib/components/parts/SkeletonRows.svelte';
+  import LoadFailed from '$lib/components/parts/LoadFailed.svelte';
   import CapabilityChips from '../agents/CapabilityChips.svelte';
   import { ConnectionsModel } from '../connections-model.svelte';
   import type { WorkspaceTabProps } from '../types';
@@ -14,8 +16,10 @@
 <section class="ar-sec" aria-labelledby="cn-h">
   <div class="hd"><span class="no">{review?.no ?? '01'}</span>{#if review}<span class="kick">{review.tag}</span>{/if}<h2 id="cn-h">Connections</h2></div>
   <p class="wo-lede">Where agents push code and where they come from.</p>
-  {#if model.loading}
-    <p class="ar-hint" role="status">Loading connections…</p>
+  {#if model.load.phase === 'failed'}
+    <LoadFailed message="Couldn't load connections." onRetry={() => model.retry()} />
+  {:else if model.loading}
+    <SkeletonRows label="Loading connections…" rows={3} rowHeight={48} slow={model.load.phase === 'slow'} onRetry={() => model.retry()} />
   {:else}
     <dl class="ar-kv wo-kv">
       <dt>Forge host<span>Where agents push branches</span></dt>

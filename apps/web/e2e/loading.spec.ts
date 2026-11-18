@@ -178,6 +178,29 @@ test.describe('slow and silent servers', () => {
     await ctx.close();
   });
 
+  // Contract rule 11: Crew's list read is sent on its own (it does not wait for the board or its live
+  // feed) and a wait never rests on bars: at 8 s it says the server is slow and Try again reads again.
+  test('crew shows a retry when the agents read hangs', async ({ browser }) => {
+    const ctx = await browser.newContext({ reducedMotion: 'reduce' });
+    const page = await open(ctx, 'daylight');
+    let reads = 0;
+    await page.route('**/v1/agents', (r) => { if (r.request().method() === 'GET') reads++; return new Promise(() => {}); });
+    await page.clock.install();
+    await page.goto('/crew/agents');
+    await expect(page.locator('[data-skeleton][aria-busy="true"]').first()).toBeAttached();
+    await expect.poll(() => reads).toBeGreaterThan(0);
+    await expect(page.getByText('Still loading — the server is slow.')).toHaveCount(0);
+    await page.clock.runFor(8_000);
+    const slow = page.locator('[data-skeleton]').filter({ hasText: 'Still loading — the server is slow.' });
+    await expect(slow).toBeVisible();
+    await expect(page.locator('body')).not.toContainText(/No agents yet|Error:/);
+    const before = reads;
+    await slow.getByRole('button', { name: 'Try again' }).click();
+    // The board open reads the agents too, on its own clock: count at least the one Try again sent.
+    await expect.poll(() => reads).toBeGreaterThan(before);
+    await ctx.close();
+  });
+
   test('the live pill says Connecting… first, then Live, never Reconnecting… before the feed opened', async ({ browser }) => {
     const ctx = await browser.newContext({ reducedMotion: 'reduce' });
     const page = await open(ctx, 'daylight');

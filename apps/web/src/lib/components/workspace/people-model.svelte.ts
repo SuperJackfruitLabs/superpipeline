@@ -1,6 +1,7 @@
 // apps/web/src/lib/components/workspace/people-model.svelte.ts
 import { addMember, setMemberRole, removeMember, type Member, type Role } from '$lib/api';
 import { app } from '$lib/stores/app.svelte';
+import { loadState } from '$lib/loading.svelte';
 import { crewLists, workspaceCounts } from './workspace-counts.svelte';
 
 export class PeopleModel {
@@ -13,7 +14,8 @@ export class PeopleModel {
   busy = $state(false);
   /** The list could not be read: the tab says so with Try again (never an empty list, never the raw error). */
   failed = $state(false);
-
+  /** Where the list read stands: skeleton, slow (with Try again), failed or ready. */
+  readonly load = loadState(() => ({ value: this.members, failed: this.failed }));
 
   isMe = (m: Member) => m.userId === app.user?.userId;
 
@@ -23,6 +25,9 @@ export class PeopleModel {
     this.failed = false;
     try { this.members = await req; } catch { this.failed = true; }
   }
+
+  /** Try again: read the list once more. */
+  retry(): Promise<void> { return this.refresh(); }
 
   private async fail(res: Response, fallback: string): Promise<void> {
     const body = (await res.json().catch(() => null)) as { error?: string } | null;
