@@ -5,7 +5,6 @@
   import { WORKSPACE_LAYOUTS, WORKSPACE_REVIEW_LAYOUTS } from '$lib/layouts';
   import AppShell from '$lib/components/shell/AppShell.svelte';
   import { shellModel } from '$lib/components/shell/shell-model.svelte';
-  import { needsPart } from '$lib/components/shell/shell-words';
   import { workspaceCounts } from '$lib/components/workspace/workspace-counts.svelte';
 
   /** The artboard draws the resume form open on fixture card 1dfc, with this note typed in. */
@@ -13,12 +12,8 @@
   const vibe = $derived(appearance.value.vibe);
   const Frame = $derived(WORKSPACE_LAYOUTS[vibe]);
   const Review = $derived(WORKSPACE_REVIEW_LAYOUTS[vibe]);
-  // Only Studio's workspace references draw a status line (as on the workspace pages).
-  const status = $derived(vibe === 'studio' ? shellModel.pageStatus(['Crew', needsPart(shellModel.attentionCount)]) : null);
   // Loaded during init (ssr is off): the busy mark is held before the first paint.
   void workspaceCounts.refresh();
-  // Studio's status line (the shell's signature draws it).
-  $effect(() => shellModel.showStatus(() => status));
 </script>
 
 <AppShell live={shellModel.liveToggle} here="crew" section="crew" boardName={null} bleed={vibe === 'quiet'} ownHeading>

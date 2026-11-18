@@ -39,9 +39,11 @@ select.input, select.ar-sel {
   .vk-appshell__main :is(h2, h3) > a { display: flex; align-items: center; min-height: 44px; }
 }
 
-/* 18: Daylight's phone header: the decorative sun sat on the Live chip (top-right of the title block); it goes lower, under it.
-   The one shell puts Search and New card in the row under the title, so the chip ends that row: the sun sits under it. */
-.vk-phoneheader--daylight .vk-phoneheader__sun { top: 200px !important; }
+
+/* 18: Daylight's phone header: vibekit's PhoneHeader places its decorative sun (top 128px) where the Live chip ends the
+   row under the title (Search, New card, Plan's switch, then Live), so it sits lower, under that row. Expressed in
+   space tokens: 4 x space-7 + space-2. Unlayered, so it outranks vibekit's layer without !important. */
+.vk-phoneheader--daylight .vk-phoneheader__sun { top: calc(var(--vk-space-7) * 4 + var(--vk-space-2)); }
 
 /* Rail height (live, 2026-10-14): vibekit's Daylight and Studio rails sit in a grid row as tall as the page,
    so a long lane stretched the rail to thousands of pixels and pushed its foot (the account) off-screen.

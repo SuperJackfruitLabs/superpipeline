@@ -4,10 +4,13 @@
  */
 .sh-root { min-height: 100svh; }
 /* The product mark in the rail's tile (Daylight) and square (Studio); the bar vibes write the name. */
-.sh-mark { width: 28px; height: 28px; }
-.vk-appnav--studio .sh-mark { width: 24px; height: 24px; }
+.sh-mark { width: calc(var(--vk-space-5) + var(--vk-space-1)); height: calc(var(--vk-space-5) + var(--vk-space-1)); }
+.vk-appnav--studio .sh-mark { width: var(--vk-space-5); height: var(--vk-space-5); }
 
 /*
+ * EXCEPTION, pending a vibekit fix (appnav.css, phonetabbar.css): the one vibe-specific rule in the
+ * shell outside its signature. Remove when the vibekit release that carries it is in.
+ *
  * Studio in dark: the ink rail and the phone tab bar.
  *
  * vibekit draws both as `background: var(--vk-color-text); color: var(--vk-color-bg)`: an ink slab,

@@ -12,9 +12,7 @@
   import AppShell from '$lib/components/shell/AppShell.svelte';
   import CardDrawer from '$lib/components/CardDrawer.svelte';
   import { shellModel } from '$lib/components/shell/shell-model.svelte';
-  import { needsPart } from '$lib/components/shell/shell-words';
   import { viewport } from '$lib/viewport.svelte';
-  import { plural } from '$lib/words';
   import { InboxStore } from './inbox-model.svelte';
   import { CapsUi, OperateUi } from '../operate/operate-ui.svelte';
   import InboxShow from './InboxShow.svelte';
@@ -28,25 +26,12 @@
   const caps = new CapsUi(() => model);
   const vibe = $derived(appearance.value.vibe);
   const Layout = $derived(OPERATE_LAYOUTS[vibe]);
-  const scope = $derived(model.scoped ? model.boardName : 'all boards');
-  // Only Studio draws a status line on the Inbox (the other three references end with the page).
-  const status = $derived(
-    vibe !== 'studio' ? null : model.loading || model.failed ? shellModel.pageStatus([scope]) : shellModel.pageStatus([
-      scope,
-      plural(model.cardCount, 'card', 'cards'),
-      needsPart(model.needs.length),
-      `${model.running.length} running`,
-      `${model.unread} unread`,
-    ]),
-  );
   /** The open card's board: the Inbox row it was opened from, else the board the Inbox opened for it. */
   const drawerBoardId = $derived(
     model.needs.find((r) => r.card.id === app.openCardId)?.item.boardId ?? model.running.find((r) => r.cardId === app.openCardId)?.boardId ?? app.boardId,
   );
   /** A phone card is a full-screen sheet: the Inbox behind it is hidden, as on a board. */
   const phoneCard = $derived(viewport.narrow && !!app.openCardId);
-  // Studio's status line (the shell's signature draws it).
-  $effect(() => shellModel.showStatus(() => status));
 </script>
 
 

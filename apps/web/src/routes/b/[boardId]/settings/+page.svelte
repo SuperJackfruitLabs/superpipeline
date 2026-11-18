@@ -7,16 +7,10 @@
   import { SETTINGS_LAYOUTS } from '$lib/layouts';
   import AppShell from '$lib/components/shell/AppShell.svelte';
   import { shellModel } from '$lib/components/shell/shell-model.svelte';
-  import { needsPart } from '$lib/components/shell/shell-words';
-  import { plural } from '$lib/words';
   import { app } from '$lib/stores/app.svelte';
 
   const vibe = $derived(appearance.value.vibe);
   const Layout = $derived(SETTINGS_LAYOUTS[vibe]);
-  // Only Studio's Settings reference draws a status line.
-  const status = $derived(vibe === 'studio' ? shellModel.pageStatus([`Board settings · ${app.board?.name ?? ''}`, plural(shellModel.liveCount, 'card', 'cards'), needsPart(shellModel.needsCount)]) : null);
-  // Studio's status line (the shell's signature draws it).
-  $effect(() => shellModel.showStatus(() => status));
 </script>
 
 <AppShell live={shellModel.liveToggle} here="plan" section="settings" boardName={app.board?.name ?? 'Untitled board'} bleed={vibe === 'quiet'} ownHeading>

@@ -7,5 +7,5 @@
 <p class="sig-dateline">{m.dateline}</p>
 
 <style>
-  .sig-dateline { margin: 0; padding: 6px 0 10px; border-bottom: 1px solid var(--vk-color-line); font-family: var(--vk-font-display); font-style: italic; font-size: 15px; color: var(--vk-color-muted); }
+  .sig-dateline { margin: 0; padding: var(--vk-space-1) 0 var(--vk-space-2); border-bottom: 1px solid var(--vk-color-line); font: var(--vk-type-meta); font-family: var(--vk-font-display); font-style: italic; color: var(--vk-color-muted); }
 </style>

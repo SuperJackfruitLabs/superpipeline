@@ -2,8 +2,7 @@
 /**
  * Every global value the shell shows, as reactive getters over the store and the appearance, and the
  * actions the shell's controls call. The shell reads this; pages pass only what is theirs
- * (`ShellProps`), and register what the shell's keys and signature need from them (a filter, a
- * status line).
+ * (`ShellProps`), and register what the shell's keys need from them (a filter).
  */
 import type { Phase } from '@superjackfruitlabs/vibekit-ui';
 import { untrack } from 'svelte';
@@ -26,10 +25,9 @@ import { liveUpdates } from '$lib/live/live-updates.svelte';
 const liveCards = () => (app.board?.cards ?? []).filter((c) => !c.archivedAt);
 const needIds = () => new Set(app.needsYou().map((i) => i.cardId));
 
-/** What the mounted page has handed the shell: how many filters it offers, and its status line. */
+/** What the mounted page has handed the shell: how many filters it offers. */
 class PageRegistry {
   filters = $state(0);
-  status = $state.raw<{ get: () => ShellStatus | null } | null>(null);
 }
 const page = new PageRegistry();
 
@@ -60,14 +58,6 @@ export const shellModel = {
     untrack(() => (page.filters += 1));
     let done = false;
     return () => { if (!done) { done = true; untrack(() => (page.filters -= 1)); } };
-  },
-  /** The page's status line, which Studio's signature draws; null when the page gave none. */
-  get status(): ShellStatus | null { return page.status?.get() ?? null; },
-  /** The page hands the shell its status line while it is mounted (use in `$effect`); the returned function withdraws it. */
-  showStatus(get: () => ShellStatus | null): () => void {
-    const mine = { get };
-    page.status = mine;
-    return () => untrack(() => { if (page.status === mine) page.status = null; });
   },
   get userName(): string { return userNameOf(app.user); },
   get initials(): string { return initialsOf(userNameOf(app.user)); },

@@ -67,7 +67,7 @@ describe('the shell', () => {
       const { container } = render(AppShell, board());
       await settle();
 
-      expect(screen.getAllByRole('banner').length, `${vibe}: a banner`).toBeGreaterThanOrEqual(1);
+      expect(screen.getAllByRole('banner'), `${vibe}: one banner`).toHaveLength(1);
       const nav = screen.getByRole('navigation', { name: 'Superpipeline' });
       const links = [...nav.querySelectorAll('.vk-appnav__list a')];
       expect(links.map((a) => a.textContent!.match(/Inbox|Plan|Crew/)?.[0]), vibe).toEqual(['Inbox', 'Plan', 'Crew']);
@@ -248,21 +248,13 @@ describe('the signature slot', () => {
     const { container } = inVibe('paper');
     expect(signature(container)[0]!.textContent).toMatch(/^\w+day \d+ \w+ · .+$/);
   });
-  it('Studio: the page’s status line, the needs item in the signal tone and the keys in its end group; none without one', () => {
-    const release = shellModel.showStatus(() => ({ items: [{ text: '7 cards' }, { text: '4 need you', signal: true }, { text: 'synced 13:51' }], right: ['⌘K commands', 'N new card'] }));
-    try {
-      const { container } = inVibe('studio');
-      const line = signature(container)[0]!.querySelector('.vk-statusline')!;
-      expect(line.querySelector('[data-tone="needs"]')!.textContent).toBe('4 need you');
-      const end = line.querySelector('.vk-statusline__end')!;
-      expect(end.textContent).toContain('N new card');
-      expect(end.textContent).not.toContain('7 cards');
-    } finally {
-      release();
-    }
-    cleanup();
+  it('Studio: nothing in the shell (the status line is a page footer, not a signature); the root keeps the Annual base', () => {
     const { container } = inVibe('studio');
-    expect(signature(container)[0]!.querySelector('.vk-statusline')).toBeNull();
+    expect(signature(container)[0]!.childElementCount).toBe(0);
+    expect(container.querySelector('.vk-statusline')).toBeNull();
+    expect(container.querySelector('.sh-root')!.classList.contains('ar')).toBe(true);
+    cleanup();
+    expect(inVibe('paper').container.querySelector('.sh-root')!.classList.contains('ar')).toBe(false);
   });
   it('Quiet: nothing', () => {
     const { container } = inVibe('quiet');

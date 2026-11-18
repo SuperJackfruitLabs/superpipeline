@@ -12,7 +12,7 @@
    * dateline, Studio's status line; Quiet has none.
    */
   import {
-    AppNav, AppShell as VkAppShell, Button, CommandField, IconButton, Masthead, PhoneHeader, PhoneTabBar, usePhone, useVibe,
+    AppNav, AppShell as VkAppShell, Button, CommandField, IconButton, LiveDot, Masthead, PhoneHeader, PhoneTabBar, usePhone, useVibe,
     type MenuItem as VkMenuItem, type NavItem, type PhoneTabItem, type Vibe,
   } from '@superjackfruitlabs/vibekit-ui';
   import type { Component } from 'svelte';
@@ -36,12 +36,22 @@
   const SEARCH_LABEL = 'Search cards, agents and actions';
   /** A page without a board names itself in the phone header. */
   const SECTION_TITLE: Partial<Record<ShellProps['section'], string>> = { inbox: 'Inbox', crew: 'Crew', settings: 'Settings', projects: 'Projects', project: 'Project' };
-  /** The one place the shell asks which vibe is on: the signature it draws. */
-  const SIGNATURES: Record<Vibe, Component> = { daylight: DaylightSignature, paper: PaperSignature, studio: StudioSignature, quiet: QuietSignature };
+  /**
+   * The one place the shell asks which vibe is on: the signature it draws and, for Studio's desktop,
+   * the root class `ar`. EXCEPTION: Studio's pages read the Annual content base (`styles/annual.css`)
+   * from that class; it leaves when the last Studio page stops reading Annual tokens from the shell.
+   */
+  const SIGNATURES: Record<Vibe, { component: Component; rootClass?: string }> = {
+    daylight: { component: DaylightSignature },
+    paper: { component: PaperSignature },
+    studio: { component: StudioSignature, rootClass: 'ar' },
+    quiet: { component: QuietSignature },
+  };
 
   const vibe = useVibe();
   const phone = usePhone(PHONE_QUERY);
-  const Signature = $derived(SIGNATURES[vibe.current]);
+  const signature = $derived(SIGNATURES[vibe.current]);
+  const Signature = $derived(signature.component);
 
   const items = $derived<NavItem[]>([
     { id: 'inbox', label: 'Inbox', href: m.inboxHref, icon: inboxIcon, current: here === 'inbox', count: m.inboxBadge || undefined, countIsNeeds: true, kbd: 'G I' },
@@ -103,24 +113,31 @@
 {/snippet}
 
 <!--
-  The phone: the header names the page (its one h1). Search and, on a board, New card sit in the row
-  under the title, with Plan's switch: beside a long board name they would push the header past a
-  390px screen (Quiet writes "— Switch board" on the title row too).
+  The phone: the header names the page (its one h1). Everything else sits in the row under the title,
+  drawn by the shell so it is the same in every vibe: Search, on a board Switch board and New card,
+  Plan's switch, and the Live toggle. vibekit's PhoneHeader would draw the switcher and Live in a
+  different accessible form per vibe (upstream: the title button "Name: Switch board" in Daylight and
+  Studio, a "Switch board: Name" link after the title in Paper and Quiet; Live on the eyebrow row in
+  Paper, Studio and Quiet, at the end of the row below in Daylight), so the shell does not hand it
+  either until vibekit draws one form.
 -->
 {#snippet phoneBelow()}
   <span class="sh-phone-row">
     <IconButton icon={searchIcon} label="{SEARCH_LABEL} (⌘K)" raised onclick={m.openSearch} />
-    {#if boardName !== null}<Button icon={plusIcon} onclick={m.compose}>New card</Button>{/if}
+    {#if boardName !== null}
+      <Button variant="secondary" aria-haspopup="dialog" onclick={m.openBoardSwitcher}>Switch board<span class="vk-visually-hidden">: {boardName}</span></Button>
+      <Button icon={plusIcon} onclick={m.compose}>New card</Button>
+    {/if}
   </span>
   {#if plan}<PlanSwitch value={plan} />{/if}
+  <LiveDot state={live.state} label={live.label} toggle={live} {...live.attrs} />
 {/snippet}
 {#snippet header()}
-  <PhoneHeader title={phoneTitle} eyebrow="Superpipeline · {section}" phase={m.phonePhase} {switcher} live={{ ...live, detail: undefined }} below={phoneBelow} />
+  <PhoneHeader title={phoneTitle} eyebrow="Superpipeline · {section}" phase={m.phonePhase} below={phoneBelow} />
 {/snippet}
 {#snippet tabbar()}<PhoneTabBar label="Superpipeline" items={tabs} />{/snippet}
 
-<!-- Studio's pages read the Annual content base (`styles/annual.css`) from the desktop shell, until each page carries its own. -->
-<div class={['sh-root', phone.current && 'ph-root', vibe.current === 'studio' && !phone.current && 'ar']} data-shell={phone.current ? 'phone' : 'desktop'}>
+<div class={['sh-root', phone.current && 'ph-root', !phone.current && signature.rootClass]} data-shell={phone.current ? 'phone' : 'desktop'}>
   <VkAppShell product="superpipeline" {nav} {masthead} phone={{ header, tabbar }} phoneQuery={PHONE_QUERY} {bleed}>
     {@render children()}
   </VkAppShell>

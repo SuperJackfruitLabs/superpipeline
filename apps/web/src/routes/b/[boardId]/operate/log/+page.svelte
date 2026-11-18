@@ -7,7 +7,6 @@
   import { BOARD_LOG_LAYOUTS } from '$lib/layouts';
   import AppShell from '$lib/components/shell/AppShell.svelte';
   import { shellModel } from '$lib/components/shell/shell-model.svelte';
-  import { needsPart } from '$lib/components/shell/shell-words';
   import { app } from '$lib/stores/app.svelte';
   import { newestFirst } from '$lib/components/operate/spend-format';
 
@@ -21,10 +20,6 @@
   });
   const vibe = $derived(appearance.value.vibe);
   const Layout = $derived(BOARD_LOG_LAYOUTS[vibe]);
-  // Only Studio's Spend reference draws a status line.
-  const status = $derived(vibe === 'studio' ? shellModel.pageStatus(['Board log', needsPart(shellModel.needsCount)]) : null);
-  // Studio's status line (the shell's signature draws it).
-  $effect(() => shellModel.showStatus(() => status));
 </script>
 
 <AppShell live={shellModel.liveToggle} here="plan" section="log" boardName={app.board?.name ?? 'Untitled board'} bleed={vibe === 'quiet'}>

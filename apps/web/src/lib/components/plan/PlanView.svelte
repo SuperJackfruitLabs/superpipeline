@@ -81,14 +81,6 @@
       onOpenMoveDialog: (id) => app.openMoveDialog(id),
     };
   });
-
-  const status = $derived(
-    app.view !== 'board' && vibe !== 'studio'
-      ? null // only Studio's List reference draws a status line
-      : shellModel.boardStatus,
-  );
-  // The board's counts for Studio's status line (the shell's signature draws it).
-  $effect(() => shellModel.showStatus(() => status));
 </script>
 
 {#snippet listTools()}{#if listProps && List.toolbar}<List.toolbar {...listProps} />{/if}{/snippet}

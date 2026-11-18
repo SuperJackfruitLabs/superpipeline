@@ -28,6 +28,8 @@ import { appearance } from '$lib/appearance.svelte';
 import type { StaleCard } from '$lib/api';
 import type { ShellProps } from './types';
 import { DX_AGENTS, DX_CARDS, DX_STAGES } from './__fixtures__/dx';
+import { parityTree } from '$lib/composition/guards';
+import { renderInVibes } from '$lib/composition/render-vibes';
 
 const children = createRawSnippet(() => ({ render: () => '<div id="content">page</div>' }));
 const page = (over: Partial<ShellProps> = {}): ShellProps => ({ here: 'plan', section: 'board', boardName: 'Developer Experience', plan: 'boards', live: shellModel.liveToggle, children, ...over });
@@ -65,6 +67,8 @@ describe.each(VIBES)('the shell on a phone, in %s', (vibe) => {
     expect(h1s[0]!.textContent).toMatch(/^Developer Experience(: Switch board)?$/);
     expect(h1s[0]!.closest('.vk-phoneheader')).toBeTruthy();
     expect(container.querySelector('.vk-appnav')).toBeNull();
+    expect(container.querySelectorAll('main#main')).toHaveLength(1);
+    expect(screen.getByRole('link', { name: 'Skip to content' }).getAttribute('href')).toBe('#main');
   });
 
   it('has Inbox (the all-boards count, named for its scope), Plan, Crew and You, in that order', async () => {
@@ -124,6 +128,25 @@ describe.each(VIBES)('the shell on a phone, in %s', (vibe) => {
     expect(screen.queryByRole('button', { name: /Switch board/ })).toBeNull();
     expect(screen.queryByRole('button', { name: 'New card' })).toBeNull();
     expect(screen.getAllByRole('heading', { level: 1 }).map((h) => h.textContent)).toEqual(['Crew']);
+  });
+});
+
+describe('vibe parity on a phone', () => {
+  const PAGES: Array<[string, Partial<ShellProps>]> = [
+    ['a board', { here: 'plan', section: 'board', boardName: 'Developer Experience', plan: 'boards' }],
+    ['the Inbox', { here: 'inbox', section: 'inbox', boardName: null, ownHeading: true }],
+  ];
+  it.each(PAGES)('renders the same accessibility tree in all four vibes outside the signature slot (%s)', async (_name, over) => {
+    const roots = await renderInVibes(AppShell, page(over) as never);
+    try {
+      await settle();
+      const trees = Object.fromEntries(VIBES.map((v) => [v, parityTree(roots[v])]));
+      for (const v of VIBES) expect(trees[v], `${v} against daylight`).toBe(trees.daylight);
+      expect(trees.daylight).toContain('navigation "Superpipeline"');
+      expect(trees.daylight).toContain('main ""');
+    } finally {
+      roots.unmount();
+    }
   });
 });
 

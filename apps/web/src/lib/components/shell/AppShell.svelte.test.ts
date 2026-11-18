@@ -15,11 +15,12 @@ vi.mock('$app/navigation', () => ({ goto: (...a: unknown[]) => goto(...a) }));
 
 import AppShell from './AppShell.svelte';
 import { shellModel } from './shell-model.svelte';
+import type { ShellProps } from './types';
 import { app } from '$lib/stores/app.svelte';
 import { appearance } from '$lib/appearance.svelte';
 
 const page = createRawSnippet(() => ({ render: () => '<div><input aria-label="Note" /></div>' }));
-const props = (over: Record<string, unknown> = {}) => ({ here: 'plan', section: 'board', boardName: 'Developer Experience', live: shellModel.liveToggle, children: page, ...over }) as never;
+const props = (over: Partial<ShellProps> = {}): ShellProps => ({ here: 'plan', section: 'board', boardName: 'Developer Experience', live: shellModel.liveToggle, children: page, ...over });
 
 beforeEach(() => {
   goto.mockClear();

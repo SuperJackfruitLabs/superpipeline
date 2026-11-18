@@ -11,11 +11,10 @@
 <div class="sig-sky" aria-hidden="true"><Sky phase={m.phase} /></div>
 
 <style>
-  /* The sky fills the shell's top (masthead and Plan's switch), under them, with the rail's radius. */
+  /* The sky fills the shell's top (masthead and Plan's switch), under them, with the rail's radius; vibekit's Sky places its own sun. */
   :global(.sh-top:has(> .sh-signature .sig-sky)) { position: relative; isolation: isolate; }
   .sig-sky { position: absolute; inset: 0; z-index: -1; overflow: hidden; border-radius: var(--vk-radius-lg); }
   .sig-sky :global(.vk-sky) { height: 100%; }
-  .sig-sky :global(.vk-sky__sun) { width: 36px; height: 36px; top: 18px; right: 540px; box-shadow: 0 0 30px 8px color-mix(in oklch, var(--vk-sky-sun) 45%, transparent); }
   /* Dark theme: the night sky, whatever the hour. */
   :global([data-theme='dark']) .sig-sky :global(.vk-sky) { --vk-sky-top: var(--vk-sky-night-top); --vk-sky-bottom: var(--vk-sky-night-bottom); --vk-sky-text: var(--vk-sky-night-text); --vk-sky-sun: var(--vk-sky-night-sun); }
   /* The masthead sits on the sky, not inside it: hand it the phase's ink (vibekit's Daylight masthead reads --vk-sky-text). */

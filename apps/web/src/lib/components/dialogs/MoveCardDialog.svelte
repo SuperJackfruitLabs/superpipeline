@@ -113,7 +113,5 @@
   :global(.vk-dialog.mv .vk-overlay__description strong) { color: var(--vk-color-text); }
   :global(.vk-dialog.mv .mv-set) { border: 0; padding: 0; margin: 10px 0 0; min-width: 0; }
   :global(.vk-dialog.mv .mv-min) { min-width: 0; }
-  /* The Studio shell's unscoped .st-right (styles/shell/studio.css) must not reach the rows. */
-  :global(.vk-dialog.mv .st-right) { font-family: inherit; font-weight: inherit; line-height: inherit; margin-left: 0; white-space: normal; }
   :global(.vk-dialog.mv .mv-legend) { padding: 0; margin-bottom: 8px; font: 700 15px/1.3 var(--vk-font-display); }
 </style>
