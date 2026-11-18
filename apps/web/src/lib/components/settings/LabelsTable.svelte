@@ -56,7 +56,12 @@
     await model.rename(l, value);
   }
   function onkey(e: KeyboardEvent, l: Label): void {
-    if (e.key === 'Enter') { e.preventDefault(); (e.currentTarget as HTMLInputElement).blur(); }
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      (e.currentTarget as HTMLInputElement).blur();
+      // The field leaves with the blur: focus goes back to the name, not to the page.
+      void tick().then(() => document.getElementById(`lb-name-${l.id}`)?.focus());
+    }
     else if (e.key === 'Escape') { e.preventDefault(); cancelled = true; editing = null; void tick().then(() => document.getElementById(`lb-name-${l.id}`)?.focus()); }
   }
   async function add(): Promise<void> {

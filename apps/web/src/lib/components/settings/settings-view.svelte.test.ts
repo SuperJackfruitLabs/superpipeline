@@ -156,6 +156,9 @@ describe('SettingsView', () => {
     await fireEvent.keyDown(ci, { key: 'Enter' });
     await settle();
     expect(api.updateLabel).toHaveBeenCalledWith('lbl_03', { name: 'continuous-integration' });
+    // The field is gone and focus is back on the label's name, not on the page.
+    expect(screen.queryByRole('textbox')).toBeNull();
+    expect(document.activeElement?.id).toBe('lb-name-lbl_03');
   });
 
   it('removes a label after asking', async () => {

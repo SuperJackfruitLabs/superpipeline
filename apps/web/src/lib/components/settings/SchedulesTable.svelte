@@ -8,6 +8,7 @@
   import { Button, DataTable, SectionHeader, type Column } from '@superjackfruitlabs/vibekit-ui';
   import LineIcon from '$lib/components/parts/LineIcon.svelte';
   import SkeletonRows from '$lib/components/parts/SkeletonRows.svelte';
+  import LoadFailed from '$lib/components/parts/LoadFailed.svelte';
   import type { Schedule, Stage } from '$lib/api';
   import { formatFireTime } from '$lib/components/board/schedule-format';
   import type { ScheduleModel } from '$lib/components/board/schedule-model.svelte';
@@ -36,8 +37,8 @@
 {#snippet when(s: Schedule)}<span class="set-cadence">{formatFireTime(s.nextFireAt, s.timezone)} · {formatFireTime(s.lastFiredAt, s.timezone)}</span>{/snippet}
 {#snippet actions(s: Schedule)}
   <span class="set-acts">
-    <Button variant="quiet" type="button" busy={model.busy === s.id} onclick={() => void model.toggle(s)}>{s.enabled ? 'Pause' : 'Resume'}</Button>
-    <Button variant="quiet" type="button" busy={model.busy === s.id} onclick={() => void model.remove(s)}>Remove</Button>
+    <Button variant="quiet" type="button" aria-label="{s.enabled ? 'Pause' : 'Resume'} {s.title}" busy={model.busy === s.id} onclick={() => void model.toggle(s)}>{s.enabled ? 'Pause' : 'Resume'}</Button>
+    <Button variant="quiet" type="button" aria-label="Remove {s.title}" busy={model.busy === s.id} onclick={() => void model.remove(s)}>Remove</Button>
   </span>
 {/snippet}
 {#snippet empty()}<p class="set-empty">No recurring cards on this board yet. Each one you add lists its cadence, time zone, target stage, next and last run, and who set it up, with Pause and Remove.</p>{/snippet}
@@ -70,8 +71,10 @@
       <div class="full set-acts"><Button variant="secondary" type="submit" busy={model.busy === 'add'}>Add schedule</Button><Button variant="quiet" type="button" onclick={() => (adding = false)}>Cancel</Button></div>
     </form>
   {/if}
-  {#if !model.loaded}
-    <SkeletonRows label="Loading schedules…" rows={2} rowHeight={56} />
+  {#if model.load.phase === 'failed'}
+    <LoadFailed message="Couldn't load the schedules." onRetry={() => model.retry()} />
+  {:else if model.load.phase !== 'ready'}
+    <SkeletonRows label="Loading schedules…" rows={2} rowHeight={56} slow={model.load.phase === 'slow'} onRetry={() => model.retry()} />
   {:else}
     <DataTable label="Recurring cards" {columns} rows={model.schedules} rowKey={(s) => s.id} {empty} />
   {/if}

@@ -31,6 +31,7 @@ vi.mock('$lib/stores/app.svelte', () => ({ app: { agents: [], markBusy: <T,>(p: 
 import BoardSettingsView from './BoardSettingsView.svelte';
 import { DX_STAGES } from './settings-fixture';
 import { DX_BOARD } from '$lib/test/dx-snapshot';
+import { SLOW_COPY, SLOW_MS } from '$lib/loading';
 import type { BoardSnapshot, Label } from '$lib/api';
 import { BOARD_SETTINGS_TABS } from './settings-words';
 import { parityTree, primaryActionsPerRow, rawMachineText, repeatedParagraphs } from '$lib/composition/guards';
@@ -138,9 +139,33 @@ describe('BoardSettingsView', () => {
     const row = need(within(table).getAllByRole('row')[1], 'row');
     expect(row.textContent).toMatch(/Weekly dependency check/);
     expect(within(row).getAllByRole('button').map((b) => b.textContent?.trim())).toEqual(['Pause', 'Remove']);
+    expect(within(row).getAllByRole('button').map((b) => b.getAttribute('aria-label'))).toEqual(['Pause Weekly dependency check', 'Remove Weekly dependency check']);
     expect(screen.queryByLabelText('Card title')).toBeNull();
     await fireEvent.click(screen.getByRole('button', { name: 'New schedule' }));
     expect(screen.getByLabelText('Card title')).toBeTruthy();
+  });
+
+  it('a schedules read that fails says so, never "No recurring cards"', async () => {
+    api.getSchedules.mockRejectedValue(new Error('down'));
+    render(BoardSettingsView, { board, onChanged: () => {}, initial: 'schedules' });
+    await settle();
+    expect(screen.getByText("Couldn't load the schedules.")).toBeTruthy();
+    expect(document.body.textContent).not.toMatch(/No recurring cards/);
+    expect(screen.queryByRole('table', { name: 'Recurring cards' })).toBeNull();
+    // Try again reads once more; an empty answer is then a real "none".
+    api.getSchedules.mockResolvedValue([]);
+    await fireEvent.click(screen.getByRole('button', { name: /^Try again/ }));
+    await settle();
+    expect(api.getSchedules).toHaveBeenCalledTimes(2);
+    expect(document.body.textContent).toMatch(/No recurring cards on this board yet/);
+  });
+
+  it('a slow schedules read says so after 8 s, with Try again', async () => {
+    api.getSchedules.mockImplementation(() => new Promise<never>(() => {}));
+    render(BoardSettingsView, { board, onChanged: () => {}, initial: 'schedules' });
+    await vi.advanceTimersByTimeAsync(SLOW_MS);
+    expect(document.body.textContent).toContain(SLOW_COPY);
+    expect(screen.getAllByRole('button', { name: /^Try again/ }).length).toBeGreaterThan(0);
   });
 
   it("the board's own labels: only those its cards carry, counted on this board", async () => {

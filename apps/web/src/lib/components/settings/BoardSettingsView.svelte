@@ -31,7 +31,7 @@
   const schedules = new ScheduleModel(untrack(() => board.boardId ?? ''));
   const labels = new LabelsModel();
   // Loaded during init (ssr is off): the busy marks are held before the first paint.
-  void schedules.load();
+  void schedules.refresh();
   void labels.refresh();
 
   const gh = $derived(ghState(board.github));
@@ -76,7 +76,7 @@
     <section class="set-sec">
       <SectionHeader n={order('caps')} title="Spending caps" meta="What this board and each of its cards may spend before work stops for a person." />
       <FactList label="Spending caps" items={[{ term: 'Board cap', value: capWords(board.usage?.budgetUsd) }, { term: 'Per-card cap', value: capWords(board.usage?.cardUsdCap) }]} />
-      <div class="set-acts"><a class="vk-button vk-button--secondary" href="/b/{board.boardId}/operate/telemetry">Change caps in Spend</a></div>
+      <div class="set-acts"><Button variant="secondary" href="/b/{board.boardId}/operate/telemetry">Change caps in Spend</Button></div>
     </section>
   {:else if t === 'github'}
     <section class="set-sec">
