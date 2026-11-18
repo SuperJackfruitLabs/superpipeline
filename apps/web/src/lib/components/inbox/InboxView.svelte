@@ -17,8 +17,8 @@
   import { plural } from '$lib/words';
   import { InboxStore } from './inbox-model.svelte';
   import { CapsUi, OperateUi } from '../operate/operate-ui.svelte';
-  import OperateDaylightSky from '../operate/layouts/OperateDaylightSky.svelte';
   import InboxShow from './InboxShow.svelte';
+  import OperateDaylightSky from '../operate/layouts/OperateDaylightSky.svelte';
   import LoadFailed from '$lib/components/parts/LoadFailed.svelte';
   import { UNREACHABLE_COPY } from '$lib/loading';
 
@@ -45,13 +45,16 @@
   );
   /** A phone card is a full-screen sheet: the Inbox behind it is hidden, as on a board. */
   const phoneCard = $derived(viewport.narrow && !!app.openCardId);
+  // Studio's status line (the shell's signature draws it).
+  $effect(() => shellModel.showStatus(() => status));
 </script>
 
-{#snippet sky()}<OperateDaylightSky {model} />{/snippet}
 
 <div style:display={phoneCard ? 'none' : 'contents'}>
-  <AppShell here="inbox" section="inbox" boardName={null} view={null} showing={null} {status} sky={vibe === 'daylight' ? sky : undefined} bleed={vibe === 'quiet' || vibe === 'studio'} ownHeading>
+  <AppShell live={shellModel.liveToggle} here="inbox" section="inbox" boardName={null} bleed={vibe === 'quiet' || vibe === 'studio'} ownHeading>
     <div id="content" tabindex="-1" class="min-w-0">
+      <!-- Daylight's greeting is the Inbox's own headline (its h1), drawn by the page now that the shell's sky is decoration only; the Inbox headline task rebuilds it. -->
+      {#if vibe === 'daylight'}<OperateDaylightSky {model} />{/if}
       <!-- Keyed on loading: the counted page arrives as a fresh frame instead of pushing the waiting one down (phone CLS). -->
       {#key model.loading}
       <div class="ib-pad ib-pad--{vibe}"><InboxShow form={vibe === 'quiet' ? 'words' : 'chips'} pending={model.loading} /></div>

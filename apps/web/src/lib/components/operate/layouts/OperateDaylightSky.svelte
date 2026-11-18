@@ -1,7 +1,7 @@
 <!-- apps/web/src/lib/components/operate/layouts/OperateDaylightSky.svelte -->
 <script lang="ts">
   import { viewport } from '$lib/viewport.svelte';
-  /** Daylight's greeting, drawn inside the shell's sky (ShellProps.sky). */
+  /** Daylight's greeting, the Inbox's headline (its h1), drawn at the top of the page by InboxView. */
   import { Face } from '@superjackfruitlabs/vibekit-ui';
   import { crewOf } from '../operate-data';
   import { greetingLabel } from '../operate-words';

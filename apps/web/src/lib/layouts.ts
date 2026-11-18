@@ -36,15 +36,6 @@ import CardStatesStudio from '$lib/components/card/states/CardStatesStudio.svelt
 import CardStatesPaper from '$lib/components/card/states/CardStatesPaper.svelte';
 import type { CardLayoutProps, CardPageProps, CardStatesProps } from '$lib/components/card/layouts/types';
 import { CARD_DRAWER_WIDTH } from '$lib/components/card/layouts/widths';
-import ShellDaylight from '$lib/components/shell/ShellDaylight.svelte';
-import ShellPaper from '$lib/components/shell/ShellPaper.svelte';
-import ShellStudio from '$lib/components/shell/ShellStudio.svelte';
-import ShellQuiet from '$lib/components/shell/ShellQuiet.svelte';
-import PhoneShellDaylight from '$lib/components/shell/phone/PhoneShellDaylight.svelte';
-import PhoneShellPaper from '$lib/components/shell/phone/PhoneShellPaper.svelte';
-import PhoneShellStudio from '$lib/components/shell/phone/PhoneShellStudio.svelte';
-import PhoneShellQuiet from '$lib/components/shell/phone/PhoneShellQuiet.svelte';
-import type { ShellProps } from '$lib/components/shell/types';
 import OperateDaylight from '$lib/components/operate/layouts/OperateDaylight.svelte';
 import OperatePaper from '$lib/components/operate/layouts/OperatePaper.svelte';
 import OperateStudio from '$lib/components/operate/layouts/OperateStudio.svelte';
@@ -127,14 +118,6 @@ export const CARD_PAGE_LAYOUTS: Readonly<Record<Vibe, Component<CardPageProps>>>
 /** The card-states gallery per vibe. Tasks 25–27 replace Paper, Studio and Quiet. */
 export const CARD_STATES_LAYOUTS: Readonly<Record<Vibe, Component<CardStatesProps>>> = {
   daylight: CardStatesDaylight, paper: CardStatesPaper, studio: CardStatesStudio, quiet: CardStatesQuiet,
-};
-
-/** The app frame per vibe, desktop (≥900px) and phone. */
-export const SHELL_LAYOUTS: Readonly<Record<Vibe, { desktop: Component<ShellProps>; phone: Component<ShellProps> }>> = {
-  daylight: { desktop: ShellDaylight, phone: PhoneShellDaylight },
-  paper: { desktop: ShellPaper, phone: PhoneShellPaper },
-  studio: { desktop: ShellStudio, phone: PhoneShellStudio },
-  quiet: { desktop: ShellQuiet, phone: PhoneShellQuiet },
 };
 
 /**

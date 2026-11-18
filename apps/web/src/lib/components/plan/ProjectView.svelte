@@ -21,9 +21,11 @@
   void model.refresh();
   // Only Studio's references draw a status line.
   const status = $derived(vibe === 'studio' ? shellModel.pageStatus([model.pending ? 'Projects' : plural(model.projects.length, 'project', 'projects'), 'across the workspace']) : null);
+  // Studio's status line (the shell's signature draws it).
+  $effect(() => shellModel.showStatus(() => status));
 </script>
 
-<AppShell here="plan" section="projects" boardName={null} view={null} plan="projects" showing="Projects belong to the workspace, not to a board." {status} bleed={vibe === 'quiet'} ownHeading primary={{ label: 'New project', onclick: () => (model.dialogOpen = true) }}>
+<AppShell live={shellModel.liveToggle} here="plan" section="projects" boardName={null} plan="projects" bleed={vibe === 'quiet'} ownHeading primary={{ label: 'New project', onclick: () => (model.dialogOpen = true) }}>
   <!-- Keyed on pending: the list arrives as a fresh frame rather than moving the waiting one (phone CLS). -->
   {#key model.pending}<Layout {model} {vibe} />{/key}
 </AppShell>

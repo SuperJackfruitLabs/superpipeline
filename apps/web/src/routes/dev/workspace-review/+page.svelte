@@ -17,8 +17,10 @@
   const status = $derived(vibe === 'studio' ? shellModel.pageStatus(['Crew', needsPart(shellModel.attentionCount)]) : null);
   // Loaded during init (ssr is off): the busy mark is held before the first paint.
   void workspaceCounts.refresh();
+  // Studio's status line (the shell's signature draws it).
+  $effect(() => shellModel.showStatus(() => status));
 </script>
 
-<AppShell here="crew" section="crew" boardName={null} view={null} showing={null} {status} bleed={vibe === 'quiet'} ownHeading>
+<AppShell live={shellModel.liveToggle} here="crew" section="crew" boardName={null} bleed={vibe === 'quiet'} ownHeading>
   <Frame tab="review" {vibe}><Review {initial} /></Frame>
 </AppShell>

@@ -1,7 +1,7 @@
 <script lang="ts">
   /**
-   * Plan · Boards: the board or the list, inside the vibe's shell. The view switch and the Filter
-   * button live in the shell; `?view=` picks the view from a link. Projects is Plan's other section
+   * Plan · Boards: the board or the list, inside the shell. The page draws its own top row (the view
+   * switch, Filter and the "Showing…" line, `PlanTopRow`); `?view=` picks the view from a link. Projects is Plan's other section
    * (`/plan/projects`, nav v2): an old `?view=projects` link is sent there.
    */
   import { page } from '$app/state';
@@ -15,10 +15,9 @@
   import BoardEmpty from '$lib/components/board/BoardEmpty.svelte';
   import { buildBoardModel } from '$lib/components/board/board-model';
   import { stageSummaries, summarize } from '$lib/components/board/card-summary';
-  import DlGreeting from '$lib/components/board/daylight/DlGreeting.svelte';
-  import PdHello from '$lib/components/board/daylight/PdHello.svelte';
   import AppShell from '$lib/components/shell/AppShell.svelte';
   import { shellModel } from '$lib/components/shell/shell-model.svelte';
+  import PlanTopRow from './PlanTopRow.svelte';
   import { buildRows, filtersActive, groupRows, nextSort, quickCounts } from './list/list-model';
   import { ListUi } from './list/list-ui.svelte';
   import type { ListLayoutProps } from './list/types';
@@ -54,8 +53,6 @@
   /** The empty board explains itself on a phone too; its stylesheet folds to one column below 900px. */
   const showEmpty = $derived(empty);
   // Studio's empty board keeps the page gutters (SP-Board-Empty-Studio: the card at x 104, 1296 wide); its full board bleeds.
-  /** Daylight's greeting sits in the shell's sky (the band on a desktop, the hello on a phone); not on an empty board (O-13). */
-  const greet = $derived(vibe === 'daylight' && app.view === 'board' && model !== null && !empty);
 
   const List = $derived(LIST_LAYOUTS[vibe]);
   /** The List's transient state lives here, so a re-mounted layout keeps it. */
@@ -90,27 +87,22 @@
       ? null // only Studio's List reference draws a status line
       : shellModel.boardStatus,
   );
+  // The board's counts for Studio's status line (the shell's signature draws it).
+  $effect(() => shellModel.showStatus(() => status));
 </script>
 
 {#snippet listTools()}{#if listProps && List.toolbar}<List.toolbar {...listProps} />{/if}{/snippet}
-{#snippet dlSky()}{#if model}{#if viewport.phone}<PdHello {model} phase={shellModel.phonePhase} firstName={shellModel.firstName} />{:else}<DlGreeting {model} phase={appearance.phase} firstName={shellModel.firstName} />{/if}{/if}{/snippet}
 
 <AppShell
   here="plan"
   section={app.view}
   boardName={app.board?.name ?? 'Untitled board'}
-  view={app.view}
   plan="boards"
-  showing={shellModel.showing}
-  paperShowing={shellModel.paperShowing}
-  editionCount={shellModel.editionCount}
-  studioSubRight={shellModel.studioSubRight}
-  {status}
-  sky={greet ? dlSky : undefined}
+  live={shellModel.liveToggle}
   bleed={(app.view === 'board' && !(showEmpty && vibe === 'studio')) || vibe === 'quiet'}
-  subTools={app.view === 'list' && List.toolbar ? listTools : undefined}
   ownHeading={app.view === 'list' && vibe !== 'daylight'}
 >
+  <PlanTopRow tools={app.view === 'list' && List.toolbar ? listTools : undefined} />
   {#if model && app.view === 'board' && showEmpty}
     <BoardEmpty {model} intro={app.board?.intro} form={BOARD_EMPTY_FORMS[vibe]} {me} onCompose={() => app.requestCompose()} />
   {:else if model && app.view === 'board'}

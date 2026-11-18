@@ -1,10 +1,12 @@
 // apps/web/src/lib/components/shell/shell-model.svelte.ts
 /**
- * Every global value a shell shows, as reactive getters over the store and the appearance, and the
- * actions every shell's controls call. Shells read this; pages pass only what is theirs
- * (`ShellProps`).
+ * Every global value the shell shows, as reactive getters over the store and the appearance, and the
+ * actions the shell's controls call. The shell reads this; pages pass only what is theirs
+ * (`ShellProps`), and register what the shell's keys and signature need from them (a filter, a
+ * status line).
  */
 import type { Phase } from '@superjackfruitlabs/vibekit-ui';
+import { untrack } from 'svelte';
 import { goto } from '$app/navigation';
 import { app } from '$lib/stores/app.svelte';
 import { appearance } from '$lib/appearance.svelte';
@@ -17,11 +19,19 @@ import {
   boardCounts, boardStatus, dateline, filterSummary, initialsOf, operateCount, paperShowingLine,
   showingLine, statusLine, studioSubRight, userNameOf, type OperateCount, type ShellStatus, type StatusItem,
 } from './shell-words';
-import type { ShellView } from './types';
-import { liveView, type LiveView } from '$lib/loading';
+import type { ShellLive, ShellView } from './types';
+import { liveView } from '$lib/loading';
+import { liveUpdates } from '$lib/live/live-updates.svelte';
 
 const liveCards = () => (app.board?.cards ?? []).filter((c) => !c.archivedAt);
 const needIds = () => new Set(app.needsYou().map((i) => i.cardId));
+
+/** What the mounted page has handed the shell: how many filters it offers, and its status line. */
+class PageRegistry {
+  filters = $state(0);
+  status = $state.raw<{ get: () => ShellStatus | null } | null>(null);
+}
+const page = new PageRegistry();
 
 export const shellModel = {
   get attentionCount(): number { return app.attention.length; },
@@ -29,8 +39,36 @@ export const shellModel = {
   /** The Inbox badge (nav v2): every card waiting on you, across all boards, on every page. */
   get inboxBadge(): number { return app.attention.length; },
   get connected(): boolean { return app.connected; },
-  /** The live pill: Connecting… on first load (calm), Live, Reconnecting… only after a drop, Offline. */
-  get live(): LiveView { return liveView(app.connection, appearance.value.vibe === 'quiet'); },
+  /**
+   * The masthead's Live toggle: the connection's word (Connecting… on first load, Live, Reconnecting…
+   * only after a drop, Offline), and pause/resume over `liveUpdates`. Paused, it reads Paused.
+   */
+  get liveToggle(): ShellLive {
+    const v = liveView(app.connection);
+    return {
+      state: liveUpdates.live ? v.state : 'paused', label: v.label, detail: v.detail, attrs: v.attrs,
+      live: liveUpdates.live, queued: liveUpdates.queued.length,
+      ontoggle: () => (liveUpdates.live ? liveUpdates.pause() : liveUpdates.resume()),
+      onapply: () => liveUpdates.apply(),
+    };
+  },
+  /** A page offers a filter (the board's top row): F opens the filter dialog. */
+  get filterAvailable(): boolean { return page.filters > 0; },
+  /** The page registers its filter while it is mounted; call the returned function to withdraw it (use in `$effect`). */
+  registerFilter(): () => void {
+    // Untracked: registering from an effect must not make that effect depend on the count it writes.
+    untrack(() => (page.filters += 1));
+    let done = false;
+    return () => { if (!done) { done = true; untrack(() => (page.filters -= 1)); } };
+  },
+  /** The page's status line, which Studio's signature draws; null when the page gave none. */
+  get status(): ShellStatus | null { return page.status?.get() ?? null; },
+  /** The page hands the shell its status line while it is mounted (use in `$effect`); the returned function withdraws it. */
+  showStatus(get: () => ShellStatus | null): () => void {
+    const mine = { get };
+    page.status = mine;
+    return () => untrack(() => { if (page.status === mine) page.status = null; });
+  },
   get userName(): string { return userNameOf(app.user); },
   get initials(): string { return initialsOf(userNameOf(app.user)); },
   get firstName(): string { return greetingName(app.user, app.members); },

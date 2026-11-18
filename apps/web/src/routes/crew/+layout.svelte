@@ -18,9 +18,11 @@
   const primary = $derived(newTab ? { label: CREW_NEW_LABEL[newTab], onclick: () => requestCrewNew(newTab) } : undefined);
   // Loaded during init (ssr is off): the busy mark is held before the first paint.
   void workspaceCounts.refresh();
+  // Studio's status line (the shell's signature draws it).
+  $effect(() => shellModel.showStatus(() => status));
 </script>
 
 <!-- The frame draws its own h1 (the masthead title becomes a plain line), so the page still has one. -->
-<AppShell here="crew" section="crew" boardName={null} view={null} showing={null} {status} bleed={vibe === 'quiet'} ownHeading {primary}>
+<AppShell live={shellModel.liveToggle} here="crew" section="crew" boardName={null} bleed={vibe === 'quiet'} ownHeading {primary}>
   {@render children()}
 </AppShell>

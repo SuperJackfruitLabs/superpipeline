@@ -12,8 +12,10 @@
   const Layout = $derived(SPEND_LAYOUTS[vibe]);
   // Only Studio's Spend reference draws a status line.
   const status = $derived(vibe === 'studio' ? shellModel.pageStatus(['Spend', needsPart(shellModel.needsCount)]) : null);
+  // Studio's status line (the shell's signature draws it).
+  $effect(() => shellModel.showStatus(() => status));
 </script>
 
-<AppShell here="plan" section="spend" boardName={app.board?.name ?? 'Untitled board'} view={null} showing={null} {status} bleed={vibe === 'quiet'} ownHeading>
+<AppShell live={shellModel.liveToggle} here="plan" section="spend" boardName={app.board?.name ?? 'Untitled board'} bleed={vibe === 'quiet'} ownHeading>
   <Layout {vibe} />
 </AppShell>

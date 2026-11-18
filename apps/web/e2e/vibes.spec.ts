@@ -92,10 +92,10 @@ for (const vibe of ALL_VIBES) {
 
         // Board
         const body = page.locator('body');
-        const viewRole = vibe === 'daylight' ? 'radio' : 'link';
+        // The board page's own view switch and the shell's Plan switch: link tabs in every vibe (one shell, one top row).
+        const viewRole = 'link';
         await expect(page.getByRole('button', { name: /^Launch post, in / }).or(page.getByRole('link', { name: /^Launch post, in / })).first()).toBeVisible();
         for (const [role, name] of [
-          // The view switch: Daylight's Segmented (radios) and the other vibes' Tabs (links), on the desktop and phone shells alike.
           [viewRole, 'Board'], [viewRole, /^List/], [viewRole, /^Projects/], ['button', /^(⚑ )?Review$/],
           ['button', /^(⚑ Answer agt_r|Answer$)/], ['button', 'Move Launch post to another stage'], ['button', /filter/i],
         ] as const) {

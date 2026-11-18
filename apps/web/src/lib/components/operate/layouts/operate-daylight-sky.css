@@ -12,3 +12,5 @@
 .op-greet__crew-wait { min-height: 44px; min-width: 1px; }
 /* On a phone the faces and names wrap to two rows under the summary. */
 @media (max-width: 899.98px) { .op-greet__crew-wait { min-height: 96px; flex-basis: 100%; } }
+/* In the page (no longer the phone header's greeting slot): the faces wrap within the screen. */
+.op-greet .crew { flex-wrap: wrap; min-width: 0; }

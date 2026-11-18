@@ -14,11 +14,12 @@ const goto = vi.fn();
 vi.mock('$app/navigation', () => ({ goto: (...a: unknown[]) => goto(...a) }));
 
 import AppShell from './AppShell.svelte';
+import { shellModel } from './shell-model.svelte';
 import { app } from '$lib/stores/app.svelte';
 import { appearance } from '$lib/appearance.svelte';
 
 const page = createRawSnippet(() => ({ render: () => '<div><input aria-label="Note" /></div>' }));
-const props = (over: Record<string, unknown> = {}) => ({ here: 'plan', section: 'board', boardName: 'Developer Experience', view: 'board', showing: 'Showing all 7 cards', children: page, ...over }) as never;
+const props = (over: Record<string, unknown> = {}) => ({ here: 'plan', section: 'board', boardName: 'Developer Experience', live: shellModel.liveToggle, children: page, ...over }) as never;
 
 beforeEach(() => {
   goto.mockClear();
@@ -31,7 +32,7 @@ beforeEach(() => {
 afterEach(cleanup);
 
 describe('AppShell', () => {
-  it('draws the vibe’s desktop shell', () => {
+  it('draws the one shell (vibekit’s AppShell) on a desktop', () => {
     const { container } = render(AppShell, props());
     expect(container.querySelector('.vk-appshell')).toBeTruthy();
   });
@@ -47,18 +48,24 @@ describe('AppShell', () => {
     await fireEvent.keyDown(window, { key: 'p' });
     expect(goto).toHaveBeenLastCalledWith('/b/brd_134a0ddb6d434478');
   });
-  it('N opens the composer; F opens the filter on a board but not on Plan · Projects', async () => {
+  it('N opens the composer; F opens the filter while the page offers one (the board’s top row), not on Plan · Projects', async () => {
     render(AppShell, props());
     const before = app.composeRequest;
     await fireEvent.keyDown(window, { key: 'n' });
     expect(app.composeRequest).toBe(before + 1);
     cleanup();
+    const release = shellModel.registerFilter();
     render(AppShell, props());
     await fireEvent.keyDown(window, { key: 'f' });
     expect(app.filterOpen).toBe(true);
     app.filterOpen = false;
+    release();
+    release(); // withdrawing twice does not withdraw another page's filter
+    expect(shellModel.filterAvailable).toBe(false);
+    await fireEvent.keyDown(window, { key: 'f' });
+    expect(app.filterOpen).toBe(false);
     cleanup();
-    render(AppShell, props({ here: 'plan', section: 'projects', boardName: null, view: null, plan: 'projects', showing: null }));
+    render(AppShell, props({ here: 'plan', section: 'projects', boardName: null, plan: 'projects' }));
     await fireEvent.keyDown(window, { key: 'f' });
     expect(app.filterOpen).toBe(false);
   });

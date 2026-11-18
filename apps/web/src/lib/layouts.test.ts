@@ -5,18 +5,11 @@ import OperateStudio from '$lib/components/operate/layouts/OperateStudio.svelte'
 import OperateQuiet from '$lib/components/operate/layouts/OperateQuiet.svelte';
 import { VIBES } from '@superjackfruitlabs/vibekit-ui';
 import { describe, expect, it } from 'vitest';
-import { BOARD_LAYOUTS, CARD_LAYOUTS, CARD_PAGE_LAYOUTS, CARD_STATES_LAYOUTS, FACE_VARIANT, SHELL_LAYOUTS } from './layouts';
+import { BOARD_LAYOUTS, CARD_LAYOUTS, CARD_PAGE_LAYOUTS, CARD_STATES_LAYOUTS, FACE_VARIANT } from './layouts';
+import * as registry from './layouts';
 import CardDaylight from '$lib/components/card/layouts/CardDaylight.svelte';
 import CardPageDaylight from '$lib/components/card/page/CardPageDaylight.svelte';
 import CardStatesDaylight from '$lib/components/card/states/CardStatesDaylight.svelte';
-import ShellDaylight from '$lib/components/shell/ShellDaylight.svelte';
-import ShellPaper from '$lib/components/shell/ShellPaper.svelte';
-import ShellStudio from '$lib/components/shell/ShellStudio.svelte';
-import ShellQuiet from '$lib/components/shell/ShellQuiet.svelte';
-import PhoneShellDaylight from '$lib/components/shell/phone/PhoneShellDaylight.svelte';
-import PhoneShellPaper from '$lib/components/shell/phone/PhoneShellPaper.svelte';
-import PhoneShellStudio from '$lib/components/shell/phone/PhoneShellStudio.svelte';
-import PhoneShellQuiet from '$lib/components/shell/phone/PhoneShellQuiet.svelte';
 import BoardQuiet from '$lib/components/board/layouts/BoardQuiet.svelte';
 import BoardStudio from '$lib/components/board/layouts/BoardStudio.svelte';
 import BoardPaper from '$lib/components/board/layouts/BoardPaper.svelte';
@@ -72,21 +65,8 @@ describe('the layout registry', () => {
 });
 
 describe('the shell registry', () => {
-  it('has a desktop and a phone frame for every vibe', () => {
-    for (const v of VIBES) {
-      expect(SHELL_LAYOUTS[v].desktop, v).toBeTruthy();
-      expect(SHELL_LAYOUTS[v].phone, v).toBeTruthy();
-    }
-  });
-  it('Daylight has its own desktop shell', () => expect(SHELL_LAYOUTS.daylight.desktop).toBe(ShellDaylight));
-  it('Paper, Studio and Quiet have their own desktop shells', () => {
-    expect(SHELL_LAYOUTS.paper.desktop).toBe(ShellPaper);
-    expect(SHELL_LAYOUTS.studio.desktop).toBe(ShellStudio);
-    expect(SHELL_LAYOUTS.quiet.desktop).toBe(ShellQuiet);
-  });
-  it('each vibe has its own phone shell', () => {
-    expect([SHELL_LAYOUTS.daylight.phone, SHELL_LAYOUTS.paper.phone, SHELL_LAYOUTS.studio.phone, SHELL_LAYOUTS.quiet.phone])
-      .toEqual([PhoneShellDaylight, PhoneShellPaper, PhoneShellStudio, PhoneShellQuiet]);
+  it('has no shell per vibe: one shell draws every vibe, desktop and phone (shell/ShellView.svelte)', () => {
+    expect('SHELL_LAYOUTS' in registry).toBe(false);
   });
   it('the empty board differs per vibe only in two forms (the shell owns main and h1)', () => {
     expect(BOARD_EMPTY_FORMS).toEqual({
