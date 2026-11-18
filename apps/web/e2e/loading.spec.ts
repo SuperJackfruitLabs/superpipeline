@@ -194,10 +194,13 @@ test.describe('slow and silent servers', () => {
     const slow = page.locator('[data-skeleton]').filter({ hasText: 'Still loading — the server is slow.' });
     await expect(slow).toBeVisible();
     await expect(page.locator('body')).not.toContainText(/No agents yet|Error:/);
+    // The board open and the Crew counts read the agents too. Wait until no read has started for 1.5 s,
+    // so every one of theirs has fired (and hangs in the route); then only the click can add one.
+    let seen = -1;
+    while (seen !== reads) { seen = reads; await page.waitForTimeout(1_500); }
     const before = reads;
     await slow.getByRole('button', { name: 'Try again' }).click();
-    // The board open reads the agents too, on its own clock: count at least the one Try again sent.
-    await expect.poll(() => reads).toBeGreaterThan(before);
+    await expect.poll(() => reads).toBe(before + 1);
     await ctx.close();
   });
 
