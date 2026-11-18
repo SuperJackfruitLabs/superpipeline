@@ -80,7 +80,8 @@ for (const vibe of VIBES) {
 for (const width of [1440, 1100]) {
   test(`paper ${width}: the switcher's raised name lies exactly over the board's own name`, async ({ page }) => {
     await openWorld(page, DX, { vibe: 'paper', dark: false, width, height: 900 });
-    await page.getByRole('button', { name: /Change board/ }).first().click();
+    // The one shell names the masthead's board button "…: Switch board" (B7); the raised copy still reads Change board.
+    await page.getByRole('button', { name: /Switch board/ }).first().click();
     const copy = page.locator('.bs-anchor .mh-title');
     await expect(copy).toBeVisible();
     const [a, b] = await Promise.all([copy.boundingBox(), page.locator('.vk-masthead__name').first().boundingBox()]);

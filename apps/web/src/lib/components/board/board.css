@@ -84,12 +84,13 @@
 [data-vibe="paper"] .bv-chip { border-radius: 0; background: transparent; box-shadow: inset 0 0 0 1px var(--vk-color-line); font: 600 11px/1.6 var(--vk-font-body); letter-spacing: 0.06em; text-transform: uppercase; }
 [data-vibe="paper"] .bv-tile[data-needs="1"] .bv-t::before { content: ""; display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 8px; vertical-align: 2px; background: var(--vk-color-signal); }
 
-/* Quiet: plain ruled rows in one column, larger plain heads, the words "Needs you" on a card that wants you. */
+/* Quiet: plain ruled rows in one column, larger plain heads; a card that wants you is marked by its state line's
+   weight and signal colour alone (the shared rule), whose words already say so. */
 [data-vibe="quiet"] .bv-lanes { grid-template-columns: minmax(0, 1fr); }
 [data-vibe="quiet"] .bv-lanehead h2 { font: 700 22px/1.3 var(--vk-font-body); }
 [data-vibe="quiet"] .bv-tile { padding: 10px 0; border-top: 1px solid var(--vk-color-line); }
 [data-vibe="quiet"] .bv-chip { border-radius: 4px; }
-[data-vibe="quiet"] .bv-tile[data-needs="1"] .bv-st::before { content: "Needs you · " / ""; }
+[data-vibe="quiet"] .bv-tile[data-needs="1"] .bv-st { font-weight: 700; }
 
 /* On a finger the title is a 44px target in its own right (its ::after already covers the tile). */
 @media (pointer: coarse) {

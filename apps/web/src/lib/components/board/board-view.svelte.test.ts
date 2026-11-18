@@ -86,6 +86,10 @@ describe('the board in every vibe', () => {
       const trees = Object.fromEntries(VIBES.map((v) => [v, parityTree(roots[v])]));
       for (const v of VIBES) expect(trees[v], `${v} against daylight`).toBe(trees.daylight);
       expect(trees.daylight.match(/^§$/gm)).toHaveLength(1);
+      // No vibe adds words of its own to a tile: Quiet's needs mark is weight and colour, not a prefix.
+      const states = (v: (typeof VIBES)[number]) => [...roots[v].querySelectorAll('.bv-st')].map((e) => e.textContent);
+      for (const v of VIBES) expect(states(v)).toEqual(states('daylight'));
+      expect(states('quiet')[0]).toBe('With you · no agent works this stage');
       // Per vibe: one signature slot with no words in it, one action per row, no raw ids, no clipped
       // stage names, and nothing read from Studio's annual root.
       const report = VIBES.map((v) => ({
@@ -107,7 +111,9 @@ describe('the board in every vibe', () => {
     render(BoardView, props());
     const track = screen.getByRole('list', { name: 'Stages' });
     expect([...track.querySelectorAll('.vk-stages__name')].map((n) => n.textContent)).toEqual(['Reported', 'Reproduce', 'Failing test', 'Fix', 'Integrate', 'Signed off', 'Shipped']);
-    expect(within(track).getAllByRole('listitem')[0]!.textContent).toMatch(/^Reported, 3 · a person/);
+    // The full text, hidden words included. vibekit 0.0.20's board form says "(to do)" for every stage, which is
+    // false on a board (follow-up filed for vibekit 0.0.21); when vibekit drops it this line changes with it.
+    expect(within(track).getAllByRole('listitem')[0]!.textContent).toBe('Reported, 3 · a person(to do)');
     expect(screen.getAllByRole('region').map((r) => r.getAttribute('aria-label'))).toEqual(['Reported', 'Shipped']);
     expect(screen.getByRole('region', { name: 'Reported' }).querySelector('header')!.textContent).toBe('Reported 3 cards a person works this');
   });

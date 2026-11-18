@@ -44,6 +44,8 @@ test('a human answers a blocked agent’s question from the board', async ({ pag
 
   const tile = page.locator('[data-card-id]', { hasText: 'Add the OAuth flow' });
   await expect(tile).toBeVisible();
+  // The board's signal: the tile is marked as waiting on you.
+  await expect(tile).toHaveAttribute('data-needs', '1');
   // The tile says it waits on you in its state line; its title opens the card, where the question is.
   await tile.locator('[data-card-open]').click();
   const panel = page.locator('.elicitation');

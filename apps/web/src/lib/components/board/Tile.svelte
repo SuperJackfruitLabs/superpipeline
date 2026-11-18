@@ -3,7 +3,7 @@
   /**
    * One card on the board: its title (which opens the card), priority and labels, one state line and
    * a quiet Move. Never a primary button: what a card needs is said in words, and the vibe marks a
-   * card that waits on you (`data-needs`) in its own way. A tile can be dragged to any stage.
+   * card that waits on you (`data-needs`) in its own way, never with words of its own. A tile can be dragged to any stage.
    */
   import { Button } from '@superjackfruitlabs/vibekit-ui';
   import { app } from '$lib/stores/app.svelte';

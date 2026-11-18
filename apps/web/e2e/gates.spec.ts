@@ -40,6 +40,8 @@ test('a human approves an agent-opened gate from the board', async ({ page, requ
 
   const review = page.locator('[data-lane="review"]');
   await expect(review.locator('[data-card-id]', { hasText: 'Launch post' })).toBeVisible();
+  // The board's signal: the gated card is marked as waiting on you.
+  await expect(review.locator('[data-card-id]', { hasText: 'Launch post' })).toHaveAttribute('data-needs', '1');
   // The tile does not decide (a decision there had no way to carry a note): its title opens the drawer.
   await review.locator('[data-card-open]', { hasText: 'Launch post' }).click();
   const note = page.getByLabel('Add a note (optional)');
@@ -80,6 +82,7 @@ test.describe('on a phone', () => {
     });
     await page.addInitScript((id) => window.localStorage.setItem('superpipeline.boardId', id), boardId);
     await page.goto(`/b/${boardId}`);
+    await expect(page.locator('[data-lane="review"] [data-card-id]', { hasText: 'Phone post' })).toHaveAttribute('data-needs', '1');
     // The tile's title opens the card; the decision is in the card.
     await page.locator('[data-lane="review"] [data-card-open]', { hasText: 'Phone post' }).click();
 
