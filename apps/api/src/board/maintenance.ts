@@ -68,6 +68,7 @@ export async function importFixture(deps: MaintenanceDeps, board: FixtureBoard):
       insert('card_references', board.references);
       insert('card_links', board.links);
       insert('card_comments', board.comments);
+      insert('usage_records', board.usage ?? []);
     });
   } catch (e) {
     if (e instanceof FixtureColumnError) return { ok: false, code: 'UNKNOWN_COLUMN', detail: e.message };
