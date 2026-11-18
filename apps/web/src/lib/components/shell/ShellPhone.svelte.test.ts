@@ -123,6 +123,21 @@ describe.each(VIBES)('the shell on a phone, in %s', (vibe) => {
     expect(live.textContent).toContain('Reconnecting…');
   });
 
+  // Loading contract rule 11: Connecting… turning into Live must not re-wrap the row under the title. The toggle shares
+  // one cell with a hidden pill as wide as the widest connection word, which is in no text or accessibility tree.
+  it('reserves the Live toggle the width of Reconnecting…, out of the text and accessibility trees', () => {
+    app.feedOpened = false;
+    app.connected = false;
+    const { container } = show(vibe);
+    const cell = container.querySelector('.vk-phoneheader .sh-phone-live');
+    expect(cell?.querySelector('[data-live]')).toBeTruthy();
+    const size = cell?.querySelector('.sh-phone-live-size');
+    expect(size?.getAttribute('data-word')).toBe('Reconnecting…');
+    expect(size?.getAttribute('aria-hidden')).toBe('true');
+    expect(size?.textContent).toBe('');
+    expect(container.querySelector('.vk-phoneheader')?.textContent).not.toContain('Reconnecting');
+  });
+
   it('a Crew page has no switcher and no New card, and its h1 is Crew', () => {
     show(vibe, { here: 'crew', section: 'crew', boardName: null, plan: undefined, ownHeading: true });
     expect(screen.queryByRole('button', { name: /Switch board/ })).toBeNull();

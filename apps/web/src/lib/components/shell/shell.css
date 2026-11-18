@@ -35,3 +35,12 @@
 
 /* The phone header's row under the title: Search and New card together, then Plan's switch. */
 .sh-phone-row { display: inline-flex; flex-wrap: wrap; align-items: center; gap: var(--vk-space-2); }
+/*
+ * The phone row's Live toggle reserves the width of its widest connection word: the toggle and a hidden pill
+ * (`.sh-phone-live-size`, the word in `data-word`, so it is in no text or accessibility tree) share one grid cell.
+ * The pill takes vibekit's own `.vk-live` styles, so the reservation matches each vibe's pill.
+ */
+.sh-phone-live { display: inline-grid; justify-items: start; align-items: center; }
+.sh-phone-live > * { grid-area: 1 / 1; }
+.sh-phone-live-size { visibility: hidden; pointer-events: none; }
+.sh-phone-live-size::after { content: attr(data-word); }

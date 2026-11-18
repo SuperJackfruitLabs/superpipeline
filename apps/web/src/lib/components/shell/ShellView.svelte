@@ -19,6 +19,7 @@
   import Icon from '$lib/components/parts/Icon.svelte';
   import BrandMark from '$lib/components/BrandMark.svelte';
   import { PHONE_QUERY } from '$lib/viewport.svelte';
+  import { liveView } from '$lib/loading';
   import '$lib/styles/phone-base.css';
   import './shell.css';
   import { shellModel as m } from './shell-model.svelte';
@@ -34,6 +35,8 @@
 
   /** The phone header and the search button's accessible name (the phone references). */
   const SEARCH_LABEL = 'Search cards, agents and actions';
+  /** The widest word the Live toggle says while a page loads or after a drop: the phone row reserves its width. */
+  const LIVE_RESERVE = liveView('reconnecting').label;
   /** A page without a board names itself in the phone header. */
   const SECTION_TITLE: Partial<Record<ShellProps['section'], string>> = { inbox: 'Inbox', crew: 'Crew', settings: 'Settings', projects: 'Projects', project: 'Project' };
   /**
@@ -130,7 +133,12 @@
     {/if}
   </span>
   {#if plan}<PlanSwitch value={plan} />{/if}
-  <LiveDot state={live.state} label={live.label} toggle={live} {...live.attrs} />
+  <!-- The Live toggle sits over a hidden pill as wide as its widest connection word, so Connecting… turning into Live
+       (or Reconnecting… after a drop) never re-wraps this row: the header keeps its height (loading contract, rule 11). -->
+  <span class="sh-phone-live">
+    <LiveDot state={live.state} label={live.label} toggle={live} {...live.attrs} />
+    <span class="vk-live vk-live--reconnecting sh-phone-live-size" data-word={LIVE_RESERVE} aria-hidden="true"><span class="vk-live__dot"></span></span>
+  </span>
 {/snippet}
 {#snippet header()}
   <PhoneHeader title={phoneTitle} eyebrow="Superpipeline · {section}" phase={m.phonePhase} below={phoneBelow} />
