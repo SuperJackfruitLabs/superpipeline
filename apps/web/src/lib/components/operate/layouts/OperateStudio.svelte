@@ -195,8 +195,8 @@
               {/each}
             {/each}
           </tbody>
-        {#if model.activityRemaining > 0}<LoadMore shown={model.activityPage.length} total={model.groups.length} label={`Show ${Math.min(20, model.activityRemaining)} more`} onmore={() => model.showMoreActivity()} />{/if}
         </table>
+        {#if model.activityRemaining > 0}<LoadMore shown={model.activityPage.length} total={model.groups.length} label={`Show ${Math.min(20, model.activityRemaining)} more`} onmore={() => model.showMoreActivity()} />{/if}
       {/if}
     </section>
     <div class="op-stack">
