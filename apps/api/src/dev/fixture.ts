@@ -39,14 +39,15 @@ export async function handleDevFixture(request: Request, env: Env, path: string)
                   VALUES (?,?,?,NULL,?,1,?,'agentpod',?,?,20,3,?,?)`)
         .bind(a.id, t, a.name, JSON.stringify(a.capabilities), a.externalId, a.ownerUserId, a.mayQueueTo ? JSON.stringify(a.mayQueueTo) : null, a.createdAt, a.role ?? null),
       ...Array.from({ length: a.tokens }, (_, i) => {
-        const id = `tok_fx_${a.name.replace(/-/g, '_')}_${i + 1}`;
+        // Tenant-scoped: agent names repeat across fixture worlds, and `token_hash` (and the id) are unique across tenants.
+        const id = `tok_fx_${t}_${a.name.replace(/-/g, '_')}_${i + 1}`;
         const at = new Date(Date.parse('2026-09-02T00:00:00Z') + (i + 1) * 60_000).toISOString();
         return db.prepare(`INSERT INTO agent_tokens (id, tenant_id, agent_id, token_hash, scopes_json, created_at) VALUES (?,?,?,?,?,?)`)
           .bind(id, t, a.id, `fixture-${id}`, '["claim","run"]', at);
       }),
     ]),
     ...w.capabilities.map((c) => db.prepare(`INSERT INTO capabilities (id, tenant_id, key, name, description, tags_json, examples_json, input_modes_json, output_modes_json, origin, created_by, created_at) VALUES (?,?,?,?,?,'[]','[]','[]','[]',?,?,?)`)
-      .bind(`cap_fx_${c.key}`, t, c.key, c.key, c.description, c.origin, w.user.id, c.createdAt)),
+      .bind(`cap_fx_${t}_${c.key}`, t, c.key, c.key, c.description, c.origin, w.user.id, c.createdAt)),
     ...w.implications.map((i) => db.prepare(`INSERT INTO capability_implications (tenant_id, implies_from, implies_to, created_at, created_by) VALUES (?,?,?,?,?)`)
       .bind(t, i.from, i.to, i.createdAt, w.user.id)),
     ...w.labels.map((l) => db.prepare(`INSERT INTO labels (id, tenant_id, name, colour, origin, created_by, created_at) VALUES (?,?,?,?,?,NULL,?)`)
