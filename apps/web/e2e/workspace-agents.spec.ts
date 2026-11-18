@@ -2,21 +2,28 @@
 import { expect, test } from '@playwright/test';
 import { API, TENANT } from './support/seed';
 
-test('issuing a token shows it once and counts it on the row', async ({ page, request }) => {
+// Tokens live under each agent's actions menu (composition contract, Crew): the menu counts them.
+test('issuing a token shows it once and counts it under the agent\'s actions', async ({ page, request }) => {
   const name = `e2e-quill-${Date.now()}`;
   const res = await request.post(`${API}/v1/agents`, { headers: TENANT, data: { name, capabilities: ['research'] } });
   expect(res.ok()).toBe(true);
 
   await page.goto('/crew/agents');
-  const row = page.locator('li.arow, tr').filter({ hasText: name });
-  await expect(row.getByText('1 token', { exact: true })).toBeVisible();
-
-  await page.locator(`summary[aria-label="Actions for ${name}"]`).click();
-  await page.getByRole('menuitem', { name: 'Issue a token', exact: true }).click();
+  await expect(page.getByRole('table', { name: 'Agents' })).toBeVisible();
+  // The table shows ten rows, then Show N more: open them all to reach the agent made here.
+  const more = page.getByRole('button', { name: /^Show \d+ more/ });
+  while (await more.isVisible().catch(() => false)) await more.click();
+  const actions = page.getByRole('button', { name: `Actions for ${name}` });
+  await actions.click();
+  const menu = page.getByRole('menu', { name: `Actions for ${name}` });
+  await expect(menu.getByText('1 token in use', { exact: true })).toBeVisible();
+  await menu.getByRole('menuitem', { name: 'Issue a token', exact: true }).click();
 
   const banner = page.getByRole('status').filter({ hasText: `${name}'s token.` });
   await expect(banner).toBeVisible();
   await expect(banner.getByLabel(`New token for ${name}`)).toHaveText(/^spa_/);
-  await expect(row.getByText('2 tokens', { exact: true })).toBeVisible();
-  await expect(page.getByRole('menu', { name: `Actions for ${name}` })).toBeHidden();
+  await expect(menu).toBeHidden();
+  await actions.click();
+  await expect(menu.getByText('2 tokens in use', { exact: true })).toBeVisible();
+  await expect(menu.getByRole('menuitem', { name: /^Revoke token/ })).toHaveCount(2);
 });

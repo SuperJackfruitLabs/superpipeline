@@ -1,7 +1,7 @@
 // apps/web/src/lib/components/workspace/agent-status.test.ts
 import { describe, expect, it } from 'vitest';
 import type { AgentSummary, CapabilityRecord } from '$lib/api';
-import { agentsHeading, agentsPanelMeta, agentStatus, bannerTitle, chipKeys, isUnusedCap, moreTokens, tokensInUse, tokensLabel } from './agent-status';
+import { agentFrom, agentSeen, agentsHeading, agentsPanelMeta, agentState, agentStatus, agentWorks, bannerTitle, chipKeys, isUnusedCap, moreTokens, tokensInUse, tokensLabel } from './agent-status';
 
 const A = (name: string, over: Partial<AgentSummary> = {}): AgentSummary => ({
   id: `agt_fx_${name.replace(/-/g, '_')}`, name, capabilities: [], externalId: `prn_${name}`, externalSource: 'agentpod',
@@ -18,6 +18,20 @@ describe('agent status', () => {
     expect(agentStatus(A('tester-tim', { claimedCount: 1 }))).toEqual({ mood: 'thinking', line: 'Holding 1 card' });
     expect(agentStatus(A('coder-kai', { claimedCount: 2 })).line).toBe('Holding 2 cards');
     expect(agentStatus(A('coder-kai', { claimedCount: 3, workingCount: 1 }))).toEqual({ mood: 'working', line: 'Working · 3 claimed' });
+  });
+  it('sorts an agent into needs you (a card it holds waits on a person), working or resting', () => {
+    expect(agentState(A('research-ray'))).toBe('resting');
+    expect(agentState(A('coder-kai', { claimedCount: 1, workingCount: 1 }))).toBe('working');
+    expect(agentState(A('strategy-sam', { claimedCount: 1 }))).toBe('needs');
+    expect(agentState(A('coder-kai', { claimedCount: 3, workingCount: 1 }))).toBe('needs');
+  });
+  it('words the agents table cells: works, from, last seen', () => {
+    expect(agentWorks(A('a', { capabilities: ['planning', 'fix', 'integrate'] }))).toBe('planning, fix, integrate');
+    expect(agentWorks(A('a'))).toBe('Nothing yet');
+    expect(agentFrom(A('a'))).toBe('AgentPod');
+    expect(agentFrom(A('a', { externalId: null, externalSource: null }))).toBe('This workspace');
+    expect(agentSeen(A('a', { claimedCount: 1, workingCount: 1 }))).toBe('Now');
+    expect(agentSeen(A('a'))).toBe('Not recorded');
   });
   it('heads the panel with links and work', () => {
     const fixture = Array.from({ length: 22 }, (_, i) => A(`agent-${i}`));

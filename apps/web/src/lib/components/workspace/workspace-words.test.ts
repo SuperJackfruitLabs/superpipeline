@@ -1,9 +1,26 @@
 // apps/web/src/lib/components/workspace/workspace-words.test.ts
 import { describe, expect, it } from 'vitest';
 import type { Member } from '$lib/api';
-import { FORGE_HOST_ERROR, initials, labelsHeading, lastOwner, peopleHeading, roleHelpTitle, roleHint, similarText } from './workspace-words';
+import type { AgentSummary } from '$lib/api';
+import { CREW_HELP, CREW_LEDE, crewFooter, FORGE_HOST_ERROR, initials, labelsHeading, lastOwner, peopleHeading, roleHelpTitle, roleHint, similarText } from './workspace-words';
 
 const M = (userId: string, role: Member['role']): Member => ({ userId, email: `${userId}@example.com`, name: null, role, createdAt: '2026-09-01T00:00:00Z' });
+
+const agent = (claimedCount: number, workingCount: number): Pick<AgentSummary, 'claimedCount' | 'workingCount'> => ({ claimedCount, workingCount });
+
+describe('Crew words', () => {
+  it('the lede says what the page is for, with one link to how agents pick cards', () => {
+    expect(CREW_LEDE).toBe("The agents who claim cards on your boards, and the people who share them. A card in a stage goes to an agent holding that stage's capability.");
+    expect(CREW_HELP).toEqual({ label: 'How agents pick cards', href: 'https://docs.superpipeline.dev/use/agents/' });
+  });
+  it('the footer line counts agents, those that need you and those resting', () => {
+    const fourteen = [agent(1, 0), agent(2, 0), ...Array.from({ length: 12 }, () => agent(0, 0))];
+    expect(crewFooter(fourteen)).toBe('14 agents · 2 need you · 12 resting');
+    expect(crewFooter([agent(1, 1), agent(0, 0), agent(0, 0)])).toBe('3 agents · 1 working · 2 resting');
+    expect(crewFooter([agent(1, 0)])).toBe('1 agent · 1 needs you');
+    expect(crewFooter([])).toBe('0 agents');
+  });
+});
 
 describe('workspace words', () => {
   it('heads the panels', () => {

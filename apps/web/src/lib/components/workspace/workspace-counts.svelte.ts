@@ -2,9 +2,6 @@
 import { getAgents, getCapabilities, getMembers, type AgentSummary, type CapabilityRecord, type Member } from '$lib/api';
 import { app } from '$lib/stores/app.svelte';
 
-/** Every tab component the workspace pages still draw (the dev review route draws the old set). */
-export const WORKSPACE_TAB_IDS = ['needs-you', 'agents', 'capabilities', 'labels', 'people', 'connections'] as const;
-export type WorkspaceTab = (typeof WORKSPACE_TAB_IDS)[number];
 /** Crew (nav v2): Agents, People, Capabilities. Needs you is the Inbox; Labels and Connections are in Settings. */
 export const CREW_TAB_IDS = ['agents', 'people', 'capabilities'] as const;
 export type CrewTab = (typeof CREW_TAB_IDS)[number];

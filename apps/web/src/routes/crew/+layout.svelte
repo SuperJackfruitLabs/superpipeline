@@ -1,5 +1,5 @@
 <script lang="ts">
-  /** Crew — who and what may act here: Agents, People, Capabilities. One shell; the tab page draws the frame for its vibe. */
+  /** Crew — who and what may act here: Agents, People, Capabilities. One shell; the tab page draws CrewView, the same in every vibe. */
   import { page } from '$app/state';
   import { appearance } from '$lib/appearance.svelte';
   import AppShell from '$lib/components/shell/AppShell.svelte';
@@ -16,7 +16,7 @@
   void workspaceCounts.refresh();
 </script>
 
-<!-- The frame draws its own h1 (the masthead title becomes a plain line), so the page still has one. -->
+<!-- CrewView draws its own h1 (the masthead title becomes a plain line), so the page still has one. -->
 <AppShell live={shellModel.liveToggle} here="crew" section="crew" boardName={null} bleed={vibe === 'quiet'} ownHeading {primary}>
   {@render children()}
 </AppShell>

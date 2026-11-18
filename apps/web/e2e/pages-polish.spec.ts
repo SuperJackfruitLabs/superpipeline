@@ -123,20 +123,30 @@ for (const vibe of VIBES) {
       await expect(field).toHaveCount(0);
     });
 
-    test(`Q3 capability descriptions grow | ${vibe} | ${size.name}`, async ({ page }) => {
+    test(`Q3 capability descriptions show in full, and grow while edited | ${vibe} | ${size.name}`, async ({ page }) => {
       await openWorld(page, '/crew/capabilities', { vibe, dark: false, width: size.width, height: size.height });
-      await expect(page.locator('[id^="cd-"]').first()).toBeVisible();
-      const fields = await page.evaluate(() =>
-        [...document.querySelectorAll<HTMLTextAreaElement | HTMLInputElement>('[id^="cd-"]')].map((e) => ({
-          tag: e.tagName, v: e.value, w: e.clientWidth, sw: e.scrollWidth, h: e.clientHeight, sh: e.scrollHeight,
-        })),
-      );
-      expect(fields.some((f) => f.v.length > 60), 'the fixture has a long description').toBe(true);
-      for (const f of fields) {
-        expect(f.tag).toBe('TEXTAREA');
-        expect(f.sw, 'description cut off sideways').toBeLessThanOrEqual(f.w + 1);
-        expect(f.sh, `description of ${f.v.length} characters cut off vertically`).toBeLessThanOrEqual(f.h + 1);
+      await expect(page.locator('[data-desc]').first()).toBeVisible();
+      const more = page.getByRole('button', { name: /^Show \d+ more/ });
+      while (await more.isVisible().catch(() => false)) await more.click();
+      // At rest a description is text in the table, never a one-line box that cuts it off.
+      const texts = await page.locator('[data-desc]').evaluateAll((els) => els.map((e) => ({ v: e.textContent ?? '', w: e.clientWidth, sw: e.scrollWidth, h: e.clientHeight, sh: e.scrollHeight })));
+      const long = texts.find((t) => t.v.length > 60);
+      if (!long) throw new Error('the fixture has a long description');
+      for (const t of texts) {
+        expect(t.sw, `"${t.v.slice(0, 30)}…" cut off sideways`).toBeLessThanOrEqual(t.w + 1);
+        expect(t.sh, `"${t.v.slice(0, 30)}…" cut off vertically`).toBeLessThanOrEqual(t.h + 1);
       }
+      // Edit description (from the row's actions menu) opens a field as tall as the text.
+      // A table row on a desktop; on a phone vibekit's DataTable draws each row as a card.
+      const row = page.locator('tr, .vk-datatable__card').filter({ hasText: long.v.slice(0, 40) }).first();
+      await row.getByRole('button', { name: /^Actions for / }).click();
+      await page.getByRole('menuitem', { name: 'Edit description' }).click();
+      const field = page.locator('textarea[id^="cd-"]');
+      await expect(field).toBeVisible();
+      const f = await field.evaluate((e: HTMLTextAreaElement) => ({ v: e.value, w: e.clientWidth, sw: e.scrollWidth, h: e.clientHeight, sh: e.scrollHeight }));
+      expect(f.v).toBe(long.v);
+      expect(f.sw, 'description cut off sideways').toBeLessThanOrEqual(f.w + 1);
+      expect(f.sh, `description of ${f.v.length} characters cut off vertically`).toBeLessThanOrEqual(f.h + 1);
     });
   }
 }

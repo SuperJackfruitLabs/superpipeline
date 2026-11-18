@@ -39,9 +39,6 @@ export class AgentsModel {
   /** The New agent dialog's own error, so it shows in the dialog rather than under the list. */
   createError = $state<string | null>(null);
 
-  /** Agents whose token list is expanded past the first two. */
-  allTokens = $state<string[]>([]);
-
   /** Where the list read stands: skeleton, slow (with Try again), failed or ready. */
   readonly load = loadState(() => ({ value: this.agents, failed: this.loadError !== null }));
 

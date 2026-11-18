@@ -41,25 +41,11 @@ import type { ListLayoutProps } from '$lib/components/plan/list/types';
 import ProjectsPage from '$lib/components/plan/projects/ProjectsPage.svelte';
 import ProjectsStudio from '$lib/components/plan/projects/ProjectsStudio.svelte';
 import type { ProjectsLayoutProps } from '$lib/components/plan/projects/types';
-import WorkspaceFrame from '$lib/components/workspace/WorkspaceFrame.svelte';
-import WorkspaceFrameStudio from '$lib/components/workspace/WorkspaceFrameStudio.svelte';
-import AgentsPage from '$lib/components/workspace/agents/AgentsPage.svelte';
-import AgentsStudio from '$lib/components/workspace/agents/AgentsStudio.svelte';
-import NeedsYouTab from '$lib/components/workspace/NeedsYouTab.svelte';
-import CapabilitiesTab from '$lib/components/workspace/CapabilitiesTab.svelte';
-import PeopleTab from '$lib/components/workspace/PeopleTab.svelte';
-import NeedsYouStudio from '$lib/components/workspace/studio/NeedsYouStudio.svelte';
-import CapabilitiesStudio from '$lib/components/workspace/studio/CapabilitiesStudio.svelte';
-import PeopleStudio from '$lib/components/workspace/studio/PeopleStudio.svelte';
-import WorkspaceReview from '$lib/components/workspace/review/WorkspaceReview.svelte';
-import WorkspaceReviewStudio from '$lib/components/workspace/review/WorkspaceReviewStudio.svelte';
 import Telemetry from '$lib/components/Telemetry.svelte';
 import TelemetryStudio from '$lib/components/operate/TelemetryStudio.svelte';
 import BoardLogPage from '$lib/components/operate/BoardLogPage.svelte';
 import BoardLogPageStudio from '$lib/components/operate/BoardLogPageStudio.svelte';
 import type { BoardLogPageProps, SpendLayoutProps } from '$lib/components/operate/spend-types';
-import type { WorkspaceFrameProps, WorkspaceTabProps } from '$lib/components/workspace/types';
-import type { WorkspaceTab } from '$lib/components/workspace/workspace-counts.svelte';
 
 export { FACE_VARIANT, type FaceVariant } from './face-variant';
 
@@ -118,28 +104,6 @@ export const PROJECTS_LAYOUTS: Readonly<Record<Vibe, Component<ProjectsLayoutPro
   paper: ProjectsPage,
   studio: ProjectsStudio,
   quiet: ProjectsPage,
-};
-
-/** The workspace frame (back link, title, tabs) per vibe; Daylight, Paper and Quiet share one DOM. */
-export const WORKSPACE_LAYOUTS: Readonly<Record<Vibe, Component<WorkspaceFrameProps>>> = {
-  daylight: WorkspaceFrame, paper: WorkspaceFrame, studio: WorkspaceFrameStudio, quiet: WorkspaceFrame,
-};
-/** Until Task 34 the five other tabs keep their current component in every vibe. */
-// The old tab components take no props; the cast goes away with them in Task 34.
-/** Labels and Connections are Settings tabs now (SettingsView); Crew draws the rest. */
-type CrewSideTab = Exclude<WorkspaceTab, 'labels' | 'connections'>;
-const PAGE_TABS: Record<CrewSideTab, Component<WorkspaceTabProps>> = {
-  'needs-you': NeedsYouTab, agents: AgentsPage, capabilities: CapabilitiesTab, people: PeopleTab,
-};
-const STUDIO_TABS: Record<CrewSideTab, Component<WorkspaceTabProps>> = {
-  'needs-you': NeedsYouStudio, agents: AgentsStudio, capabilities: CapabilitiesStudio, people: PeopleStudio,
-};
-export const WORKSPACE_TABS: Readonly<Record<Vibe, Record<CrewSideTab, Component<WorkspaceTabProps>>>> = {
-  daylight: PAGE_TABS, paper: PAGE_TABS, studio: STUDIO_TABS, quiet: PAGE_TABS,
-};
-/** The dev review route's body: D/P/Q two columns with capabilities across; Studio needs, capabilities, then a split. */
-export const WORKSPACE_REVIEW_LAYOUTS: Readonly<Record<Vibe, Component<{ initial: WorkspaceTabProps['initial'] }>>> = {
-  daylight: WorkspaceReview, paper: WorkspaceReview, studio: WorkspaceReviewStudio, quiet: WorkspaceReview,
 };
 
 /** Spend in detail and the full board log: Daylight, Paper and Quiet share one DOM; Studio is an annual-report page. */

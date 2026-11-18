@@ -12,6 +12,8 @@ export class PeopleModel {
   role = $state<Role>('member');
   error = $state<string | null>(null);
   busy = $state(false);
+  /** The email the New person dialog last added, so the table can show them. */
+  lastAdded = $state<string | null>(null);
   /** The list could not be read: the tab says so with Try again (never an empty list, never the raw error). */
   failed = $state(false);
   /** Where the list read stands: skeleton, slow (with Try again), failed or ready. */
@@ -47,6 +49,7 @@ export class PeopleModel {
     try {
       const res = await addMember(addr, this.role, this.name.trim() || undefined);
       if (!res.ok) { await this.fail(res, 'Adding them failed'); return false; }
+      this.lastAdded = addr;
       this.name = '';
       this.email = '';
       await this.refresh();

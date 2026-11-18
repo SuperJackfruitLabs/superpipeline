@@ -7,7 +7,7 @@
 
   let {
     selected = $bindable(), typed = $bindable(), registry, labelledBy, inputId, form, wrapInput,
-  }: { selected: string[]; typed: string; registry: CapabilityRecord[]; labelledBy: string; inputId: string; form: 'page' | 'studio' | 'dialog'; wrapInput: boolean } = $props();
+  }: { selected: string[]; typed: string; registry: CapabilityRecord[]; labelledBy: string; inputId: string; form: 'page' | 'dialog'; wrapInput: boolean } = $props();
 
   const keys = $derived(chipKeys(registry, selected));
   function flip(k: string): void {
@@ -26,13 +26,13 @@
   {#if form === 'dialog'}
     <input class="vk-field__input" id={inputId} placeholder="Add a capability" bind:value={typed} onkeydown={onKey} />
   {:else}
-    <input class={form === 'studio' ? 'ar-in' : 'input'} id={inputId} placeholder="Add a capability" style="width: 200px; min-height: 36px;" bind:value={typed} onkeydown={onKey} />
+    <input class="input" id={inputId} placeholder="Add a capability" style="width: 200px; min-height: 36px;" bind:value={typed} onkeydown={onKey} />
   {/if}
 {/snippet}
 
-<div class={form === 'studio' ? 'wa-caps' : 'caps'} role="group" aria-labelledby={labelledBy}>
+<div class="caps" role="group" aria-labelledby={labelledBy}>
   {#each keys as k (k)}
-    <button class={form === 'studio' ? 'wa-pick' : 'chip pick'} aria-pressed={selected.includes(k)} type="button" data-unused={isUnusedCap(k, registry) ? '' : undefined} onclick={() => flip(k)}>{#if selected.includes(k)}<LineIcon name="check" size={14} stroke={form === 'studio' ? 1.75 : 1.8} />{/if}{k}</button>
+    <button class="chip pick" aria-pressed={selected.includes(k)} type="button" data-unused={isUnusedCap(k, registry) ? '' : undefined} onclick={() => flip(k)}>{#if selected.includes(k)}<LineIcon name="check" size={14} stroke={1.8} />{/if}{k}</button>
   {/each}
   {#if wrapInput}<span style="display: inline-flex; gap: 6px;">{@render input()}</span>{:else}{@render input()}{/if}
 </div>

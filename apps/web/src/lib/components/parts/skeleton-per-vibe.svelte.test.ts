@@ -1,8 +1,9 @@
 // apps/web/src/lib/components/parts/skeleton-per-vibe.svelte.test.ts
 // @vitest-environment jsdom
 // The loading walk (e2e/loading.spec.ts) checks every surface in Daylight, but only Inbox, board, card page and Projects
-// in Paper, Studio and Quiet. This holds the rest: each vibe's Crew and Settings tabs wait on the shared skeleton in
-// aria-busy (never an empty list), and app.css draws that skeleton in each vibe's own way.
+// in Paper, Studio and Quiet. This holds the rest: Crew's tabs (CrewView) and Settings' Labels and Connections wait on
+// the shared skeleton in aria-busy (never an empty list) in every vibe, and app.css draws that skeleton in each vibe's
+// own way. Crew and these panels are one component in every vibe now, so each renders inside that vibe's root.
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -15,24 +16,33 @@ const api = vi.hoisted(() => ({
   getWorkspace: vi.fn<typeof Api.getWorkspace>(), getForgeHost: vi.fn<typeof Api.getForgeHost>(),
 }));
 vi.mock('$lib/api', async (orig) => ({ ...(await orig<typeof import('$lib/api')>()), ...api }));
+// jsdom has no matchMedia; vibekit's DataTable asks it for the phone width.
+vi.hoisted(() => {
+  Object.defineProperty(window, 'matchMedia', {
+    configurable: true,
+    value: (query: string): MediaQueryList => ({ matches: false, media: query, onchange: null, addEventListener: () => {}, removeEventListener: () => {}, addListener: () => {}, removeListener: () => {}, dispatchEvent: () => false }),
+  });
+});
 vi.mock('$lib/stores/app.svelte', () => ({ app: { markBusy: <T,>(p: Promise<T>) => p, boardId: null, board: null, boards: [], user: { userId: 'usr_ira' } } }));
 
-import { WORKSPACE_TABS } from '$lib/layouts';
-import SettingsView from '$lib/components/settings/SettingsView.svelte';
 import VibeFrame from '$lib/composition/VibeFrame.svelte';
+import CrewView from '$lib/components/workspace/CrewView.svelte';
+import SettingsView from '$lib/components/settings/SettingsView.svelte';
+import { crewLists } from '$lib/components/workspace/workspace-counts.svelte';
+import type { Component } from 'svelte';
 import { SLOW_COPY, SLOW_MS, TRY_AGAIN } from '$lib/loading';
 
 const VIBES = ['daylight', 'paper', 'studio', 'quiet'] as const;
 const TABS = ['agents', 'people', 'capabilities', 'labels'] as const;
 
 type Tab = (typeof TABS)[number] | 'connections';
-// Labels and Connections are Settings tabs (SettingsView, one composition in every vibe), rendered in each vibe's root.
-const renderTab = (vibe: (typeof VIBES)[number], tab: Tab) =>
-  tab === 'labels' || tab === 'connections'
-    ? render(VibeFrame, { props: { vibe, component: SettingsView, props: { initial: tab } } })
-    : render(WORKSPACE_TABS[vibe][tab], { props: { vibe } as never });
+// Labels and Connections are Settings tabs (SettingsView); the rest are Crew tabs (CrewView): one composition in every vibe.
+const renderTab = (vibe: (typeof VIBES)[number], tab: Tab) => {
+  const [component, props] = tab === 'labels' || tab === 'connections' ? [SettingsView, { initial: tab }] : [CrewView, { tab }];
+  return render(VibeFrame, { props: { vibe, component: component as Component<Record<string, unknown>>, props } });
+};
 
-beforeEach(() => { for (const f of Object.values(api)) f.mockImplementation(never); });
+beforeEach(() => { crewLists.clear(); for (const f of Object.values(api)) f.mockImplementation(never); });
 afterEach(cleanup);
 
 describe('Crew and Settings wait on the shared skeleton in every vibe', () => {

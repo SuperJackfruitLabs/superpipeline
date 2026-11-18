@@ -10,6 +10,21 @@ export function agentStatus(a: Pick<AgentSummary, 'claimedCount' | 'workingCount
   return { mood: 'resting', line: 'Resting · nothing claimed' };
 }
 
+/** Needs you: it holds a card it is not working, which waits on a person (a question or a review). */
+export type AgentState = 'needs' | 'working' | 'resting';
+export function agentState(a: Pick<AgentSummary, 'claimedCount' | 'workingCount'>): AgentState {
+  if (a.claimedCount > a.workingCount) return 'needs';
+  return a.workingCount > 0 ? 'working' : 'resting';
+}
+const STATE_MOOD: Record<AgentState, Mood> = { needs: 'needs', working: 'working', resting: 'resting' };
+export const agentMood = (a: Pick<AgentSummary, 'claimedCount' | 'workingCount'>): Mood => STATE_MOOD[agentState(a)];
+
+/** The agents table's cells: what it works, where it comes from, when it was last seen. */
+export const agentWorks = (a: Pick<AgentSummary, 'capabilities'>): string => (a.capabilities.length > 0 ? a.capabilities.join(', ') : 'Nothing yet');
+export const agentFrom = (a: Pick<AgentSummary, 'externalId'>): string => (a.externalId ? 'AgentPod' : 'This workspace');
+/** The API records no last-seen time yet: an agent at work is seen now, any other is not recorded. */
+export const agentSeen = (a: Pick<AgentSummary, 'workingCount'>): string => (a.workingCount > 0 ? 'Now' : 'Not recorded');
+
 export function agentsPanelMeta(agents: AgentSummary[]): string {
   const n = agents.length;
   const k = agents.filter((a) => a.externalId !== null).length;

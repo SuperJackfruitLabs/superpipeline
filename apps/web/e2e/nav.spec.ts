@@ -86,7 +86,7 @@ test('the Inbox count is every board’s, on a board and off it, said to a scree
   await page.goto('/crew/agents');
   await expect(rail(page).getByRole('link', { name: /^Inbox\W+\d+ needs? you across all boards/ })).toBeVisible();
   // Crew has no Needs-you tab and no badge of its own.
-  await expect(page.getByRole('tab')).toHaveText([/^Agents/, /^People/, /^Capabilities/]);
+  await expect(page.getByRole('navigation', { name: 'Crew' }).getByRole('link')).toHaveText([/^Agents/, /^People/, /^Capabilities/]);
 });
 
 test('the board chosen under Show lasts until a refresh, and is written nowhere', async ({ page, request }) => {

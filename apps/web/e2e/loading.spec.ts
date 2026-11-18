@@ -18,7 +18,9 @@ const SIZES = [{ n: 'desk', width: 1440, height: 900 }, { n: 'phone', width: 390
 /** Words that would be false before the data is in. */
 const EMPTY = 'Nothing needs you|Nothing is running|Nothing waits|Nothing is waiting|No [a-z ]{1,24} yet|Reconnecting|Nothing here|No boards|No projects|No agents|No agent is working|Nothing unread|None\\.|\\b0 (cards?|boards?|agents?|projects?|asks?|letters?)\\b|\\$0\\.00|Error:';
 /** Text that is only on screen once the fixture's data is: the surface has loaded. */
-const REAL = ['Diagnose Melissa', 'Fix the highest-severity', 'AgentPod: connector', 'Integrate editorial', 'Building in public', 'Melissa and Anna onboarding', 'Research Ray', 'research-ray', 'Coder Kai', 'coder-kai', 'Developer Experience', 'Client Quality', 'Ira Mehta'];
+const REAL = ['Diagnose Melissa', 'Fix the highest-severity', 'AgentPod: connector', 'Integrate editorial', 'Building in public', 'Melissa and Anna onboarding', 'Research Ray', 'research-ray', 'Coder Kai', 'coder-kai', 'Developer Experience', 'Client Quality', 'Ira Mehta',
+  // Crew's Capabilities: the fixture's described capability (the page has no back link to a board any more).
+  'claim-check'];
 
 const SURFACES: Record<string, string> = {
   inbox: '/inbox', home: '/', board: DX, list: `${DX}?view=list`, drawer: `${DX}/c/${CARD}`, cardpage: `${DX}/c/${CARD}/page`,
