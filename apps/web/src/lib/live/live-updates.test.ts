@@ -22,11 +22,11 @@ describe('LiveUpdates', () => {
   it('push runs now when live and queues when paused; resume applies in order', () => {
     const l = new LiveUpdates();
     const seen: number[] = [];
-    l.push(() => seen.push(1));
+    l.push('a', () => seen.push(1));
     expect(seen).toEqual([1]);
     l.pause();
-    l.push(() => seen.push(2));
-    l.push(() => seen.push(3));
+    l.push('a', () => seen.push(2));
+    l.push('b', () => seen.push(3));
     expect(seen).toEqual([1]);
     expect(l.queued).toHaveLength(2);
     l.resume();
@@ -35,11 +35,23 @@ describe('LiveUpdates', () => {
     expect(l.live).toBe(true);
     // Apply while paused plays the queue and stays paused.
     l.pause();
-    l.push(() => seen.push(4));
+    l.push('c', () => seen.push(4));
     l.apply();
     expect(seen).toEqual([1, 2, 3, 4]);
     expect(l.queued).toHaveLength(0);
     expect(l.live).toBe(false);
+  });
+  it('a key already waiting keeps its place and takes the latest change', () => {
+    const l = new LiveUpdates();
+    const seen: string[] = [];
+    l.pause();
+    l.push('board:a', () => seen.push('a1'));
+    l.push('board:b', () => seen.push('b1'));
+    l.push('board:a', () => seen.push('a2'));
+    l.push('board:a', () => seen.push('a3'));
+    expect(l.queued.map((q) => q.key)).toEqual(['board:a', 'board:b']);
+    l.resume();
+    expect(seen).toEqual(['a3', 'b1']);
   });
   it('the choice is remembered', () => {
     const a = new LiveUpdates();
@@ -70,7 +82,7 @@ describe('LiveUpdates', () => {
       let rows = snapshots[0];
       for (let i = 1; i < snapshots.length; i++) {
         const d = diffKeyed(snapshots[i - 1], snapshots[i], same);
-        l.push(() => { rows = applyDiff(rows, d); });
+        l.push(`diff:${i}`, () => { rows = applyDiff(rows, d); });
       }
       return () => rows;
     };

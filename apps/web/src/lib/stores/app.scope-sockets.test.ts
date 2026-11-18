@@ -39,6 +39,8 @@ import { app } from './app.svelte';
 import { liveUpdates } from '$lib/live/live-updates.svelte';
 import * as api from '$lib/api';
 
+/** The server ends a feed: it is closed and says so. */
+const drop = (s: FakeSocket): void => { s.closed = true; s.dispatchEvent(new Event('close')); };
 const open = (id: string) => h.sockets.filter((s) => s.boardId === id && !s.closed);
 const EVENT: BoardFeedEvent = { seq: 7, type: 'card.moved', payload: { cardId: 'card_1' }, ts: '2026-11-18T09:00:00.000Z' };
 
@@ -65,10 +67,11 @@ describe('the app’s live feeds', () => {
     // The same scope again opens nothing new.
     app.openScopeSockets(['brd_b', 'brd_a', 'brd_open']);
     expect(h.sockets).toHaveLength(2);
-    // Each event names its board.
+    // A fresh feed's opening snapshot says nothing (the board was just read); each event names its board.
+    open('brd_a')[0].emit(null);
     open('brd_a')[0].emit(EVENT);
-    open('brd_b')[0].emit(null);
-    expect(seen).toEqual([['brd_a', EVENT], ['brd_b', null]]);
+    open('brd_b')[0].emit(EVENT);
+    expect(seen).toEqual([['brd_a', EVENT], ['brd_b', EVENT]]);
     // A board leaves the scope: its socket closes; one that joins opens.
     app.openScopeSockets(['brd_b', 'brd_c']);
     expect(open('brd_a')).toHaveLength(0);
@@ -105,11 +108,99 @@ describe('the app’s live feeds', () => {
     const feed = open('brd_open')[0];
     vi.mocked(api.getBoard).mockClear();
     liveUpdates.pause();
-    feed.emit(EVENT);
+    // Three events for the board: one refresh waits, not three.
+    for (const seq of [7, 8, 9]) feed.emit({ ...EVENT, seq });
     await Promise.resolve();
     expect(api.getBoard).not.toHaveBeenCalled();
-    expect(liveUpdates.queued).toHaveLength(1);
+    expect(liveUpdates.queued.map((q) => q.key)).toEqual(['board:brd_open']);
     liveUpdates.resume();
     await vi.waitFor(() => expect(api.getBoard).toHaveBeenCalledWith('brd_open'));
+    expect(api.getBoard).toHaveBeenCalledTimes(1);
+  });
+  it('a paused page holds the feed: an open card hears its events only on resume, in order', async () => {
+    await app.openBoard('brd_open');
+    const feed = open('brd_open')[0];
+    const heard: number[] = [];
+    const off = app.onFeed((e) => heard.push(e.seq));
+    liveUpdates.pause();
+    feed.emit({ ...EVENT, seq: 7 });
+    feed.emit({ ...EVENT, seq: 8 });
+    expect(heard).toEqual([]);
+    expect(liveUpdates.queued.map((q) => q.key)).toEqual(['board:brd_open', 'feed:7', 'feed:8']);
+    liveUpdates.resume();
+    expect(heard).toEqual([7, 8]);
+    off();
+  });
+  it('a fresh feed skips its opening snapshot; a reconnected one reads the board again', async () => {
+    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
+    try {
+      await app.openBoard('brd_open');
+      vi.mocked(api.getBoard).mockClear();
+      liveUpdates.pause();
+      const first = open('brd_open')[0];
+      first.dispatchEvent(new Event('open'));
+      first.emit(null);
+      expect(liveUpdates.queued).toEqual([]);
+      // The feed drops and comes back: the way back refreshes, and so does the new feed's snapshot (one entry).
+      drop(first);
+      await vi.advanceTimersByTimeAsync(2_000);
+      const second = open('brd_open').at(-1);
+      expect(second).not.toBe(first);
+      second?.emit(null);
+      expect(liveUpdates.queued.map((q) => q.key)).toEqual(['board:brd_open']);
+      liveUpdates.resume();
+      await vi.waitFor(() => expect(api.getBoard).toHaveBeenCalledWith('brd_open'));
+      // A scope feed: the same rule.
+      const seen: Array<BoardFeedEvent | null> = [];
+      const off = app.onScopeEvent((_id, e) => seen.push(e));
+      app.openScopeSockets(['brd_a']);
+      const a = open('brd_a')[0];
+      a.emit(null);
+      expect(seen).toEqual([]);
+      drop(a);
+      await vi.advanceTimersByTimeAsync(2_000);
+      open('brd_a')[0].emit(null);
+      expect(seen).toEqual([null]);
+      off();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+  it('a scope feed that opened again starts its backoff over', () => {
+    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
+    const random = vi.spyOn(Math, 'random').mockReturnValue(0.5); // no jitter: 1 s, then 2 s, ...
+    try {
+      app.openScopeSockets(['brd_a']);
+      const first = open('brd_a')[0];
+      first.dispatchEvent(new Event('open'));
+      drop(first);
+      vi.advanceTimersByTime(1_000);
+      const second = open('brd_a')[0];
+      expect(second).not.toBe(first);
+      second.dispatchEvent(new Event('open'));
+      drop(second);
+      // Opened in between, so this is a first drop again: back after 1 s, not 2 s.
+      vi.advanceTimersByTime(1_000);
+      expect(open('brd_a')).toHaveLength(1);
+      expect(open('brd_a')[0]).not.toBe(second);
+    } finally {
+      random.mockRestore();
+      vi.useRealTimers();
+    }
+  });
+  it('dispose closes the scope feeds and cancels their reconnects', () => {
+    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
+    try {
+      app.openScopeSockets(['brd_a', 'brd_b']);
+      drop(open('brd_a')[0]);
+      app.dispose();
+      expect(h.sockets.every((s) => s.closed || s.boardId === 'brd_a')).toBe(true);
+      expect(open('brd_b')).toHaveLength(0);
+      const before = h.sockets.length;
+      vi.advanceTimersByTime(60_000);
+      expect(h.sockets).toHaveLength(before);
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });

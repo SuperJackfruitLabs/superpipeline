@@ -347,7 +347,7 @@ class AppStore {
       window.addEventListener('online', () => { this.online = true; if (this.boardId && !this.connected) void this.retry(); });
       window.addEventListener('offline', () => { this.online = false; });
     }
-    auth.configure({ restore: () => this.#restore(), onExpired: () => this.#closeSocket() });
+    auth.configure({ restore: () => this.#restore(), onExpired: () => { this.#closeSocket(); this.#stopScope(); } });
     if (!this.#watchingVisibility && typeof document !== 'undefined') {
       this.#watchingVisibility = true;
       // Signed in again in another tab: back to work without a click.
@@ -364,6 +364,8 @@ class AppStore {
     this.user = me;
     await this.refresh();
     if (this.boardId) this.#connect(this.boardId);
+    // The Inbox's other boards come back too; they were stopped when the session lapsed.
+    if (this.#scopeWanted.length) this.openScopeSockets(this.#scopeWanted);
     return true;
   }
 
@@ -516,17 +518,24 @@ class AppStore {
    * moment when a Worker restarts, and a fixed delay would have them all return in the same
    * instant.
    */
-  #connect(boardId: string): void {
+  #connect(boardId: string, reconnect = false): void {
     this.#closeSocket();
     const generation = this.#socketGeneration;
+    // A fresh feed's first message is its opening snapshot, and the board was just read: skipped.
+    // After a reconnect it is kept: whatever happened while the feed was down did not reach us.
+    let opening = !reconnect;
     const sock = openBoardSocket(boardId, (event) => {
       this.#lastMessageAt = Date.now();
       this.syncedAt = new Date();
-      // Through the Live toggle: paused, the board holds still and the refresh waits its turn.
-      liveUpdates.push(() => void this.refresh());
+      const skip = opening && event === null;
+      opening = false;
+      if (skip) return;
+      // Through the Live toggle: paused, the board holds still and one refresh waits its turn.
+      liveUpdates.push(`board:${boardId}`, () => void this.refresh());
       // Fan the event out to whoever is watching one card. The board snapshot that `refresh`
-      // reloads does not carry activities, so without this the open card learns nothing.
-      if (event) for (const fn of this.#feedListeners) fn(event);
+      // reloads does not carry activities, so without this the open card learns nothing. Paused,
+      // each event waits too (they are incremental, so one entry per event), played in order.
+      if (event && this.#feedListeners.size > 0) liveUpdates.push(`feed:${event.seq}`, () => { for (const fn of this.#feedListeners) fn(event); });
     });
     sock.addEventListener('open', () => {
       if (generation !== this.#socketGeneration) return;
@@ -547,8 +556,8 @@ class AppStore {
         if (generation !== this.#socketGeneration) return;
         // Refresh on the way back: whatever happened while the socket was down did not reach us,
         // and reconnecting to a live feed with a stale board is the same lie in slower form. Paused, it queues.
-        liveUpdates.push(() => void this.refresh());
-        this.#connect(boardId);
+        liveUpdates.push(`board:${boardId}`, () => void this.refresh());
+        this.#connect(boardId, true);
       }, delay);
     });
     this.#socket = sock;
@@ -591,7 +600,7 @@ class AppStore {
         return;
       }
       this.connected = false;
-      this.#connect(boardId);
+      this.#connect(boardId, true);
     }, STALL_CHECK_MS);
   }
 
@@ -609,7 +618,11 @@ class AppStore {
   // ---- the other boards the Inbox shows: one feed each (spec §12.2) ----
   /** Board id → its feed, for every board in the Inbox's scope except the open one. */
   #scopeSockets = new Map<string, WebSocket>();
-  #scopeRetry = new Map<string, { timer: ReturnType<typeof setTimeout> | undefined; attempt: number }>();
+  /** Reconnects waiting to fire, and how many drops in a row each board has had (0 once a feed opens). */
+  #scopeRetry = new Map<string, ReturnType<typeof setTimeout>>();
+  #scopeAttempt = new Map<string, number>();
+  /** The scope last asked for, so a renewed session can open it again. */
+  #scopeWanted: string[] = [];
   #scopeListeners = new Set<(boardId: string, event: BoardFeedEvent | null) => void>();
 
   /** Who hears the scope boards' events (the Inbox). Returns its own unsubscribe. */
@@ -623,41 +636,65 @@ class AppStore {
    * that left the scope close, boards that joined open, the rest are left as they are.
    */
   openScopeSockets(ids: string[]): void {
+    this.#scopeWanted = [...ids];
     const want = new Set(ids.filter((id) => id && id !== this.boardId));
-    for (const id of [...this.#scopeSockets.keys(), ...this.#scopeRetry.keys()]) if (!want.has(id)) this.#closeScope(id);
-    for (const id of want) if (!this.#scopeSockets.has(id) && !this.#scopeRetry.has(id)) this.#openScope(id, 0);
+    for (const id of this.#scopeIds()) if (!want.has(id)) this.#closeScope(id);
+    for (const id of want) if (!this.#scopeSockets.has(id) && !this.#scopeRetry.has(id)) this.#openScope(id, false);
   }
 
+  /** Close every scope feed and forget the scope. */
   closeScopeSockets(): void {
-    for (const id of [...this.#scopeSockets.keys(), ...this.#scopeRetry.keys()]) this.#closeScope(id);
+    this.#scopeWanted = [];
+    this.#stopScope();
   }
 
-  #openScope(boardId: string, attempt: number): void {
+  /** Close every scope feed and cancel its reconnect, keeping the scope for a renewed session. */
+  #stopScope(): void {
+    for (const id of this.#scopeIds()) this.#closeScope(id);
+  }
+  #scopeIds(): string[] {
+    return [...new Set([...this.#scopeSockets.keys(), ...this.#scopeRetry.keys()])];
+  }
+
+  /**
+   * Scope feeds have no stall watchdog: it needs to know whether a board has work in flight, and the
+   * app holds only the open board. They rely on the Worker closing a dead feed (and the Inbox being
+   * read again after every action); the open board keeps its watchdog.
+   */
+  #openScope(boardId: string, reconnect: boolean): void {
+    // The first message on a fresh feed is its opening snapshot: the board was just read, so it is
+    // skipped. After a reconnect it is the read that catches up on what happened while down.
+    let opening = !reconnect;
     const sock = openBoardSocket(boardId, (event) => {
       if (this.#scopeSockets.get(boardId) !== sock) return;
+      const skip = opening && event === null;
+      opening = false;
+      if (skip) return;
       for (const fn of this.#scopeListeners) fn(boardId, event);
     });
     this.#scopeSockets.set(boardId, sock);
-    sock.addEventListener('open', () => { if (this.#scopeSockets.get(boardId) === sock) this.#scopeRetry.delete(boardId); });
+    sock.addEventListener('open', () => { if (this.#scopeSockets.get(boardId) === sock) this.#scopeAttempt.set(boardId, 0); });
     // A dropped feed comes back the way the open board's does: backoff capped at 30 s, jittered.
     sock.addEventListener('close', () => {
       if (this.#scopeSockets.get(boardId) !== sock) return;
       this.#scopeSockets.delete(boardId);
+      const attempt = this.#scopeAttempt.get(boardId) ?? 0;
+      this.#scopeAttempt.set(boardId, attempt + 1);
       const delay = Math.min(30_000, 1000 * 2 ** attempt) * (0.75 + Math.random() * 0.5);
       const timer = setTimeout(() => {
-        if (this.#scopeRetry.get(boardId)?.timer !== timer) return;
-        this.#scopeRetry.set(boardId, { timer: undefined, attempt: attempt + 1 });
-        this.#openScope(boardId, attempt + 1);
-        // What happened while it was down did not reach us: the reopened feed's snapshot (a null event) reloads the board.
+        if (this.#scopeRetry.get(boardId) !== timer) return;
+        this.#scopeRetry.delete(boardId);
+        this.#openScope(boardId, true);
       }, delay);
-      this.#scopeRetry.set(boardId, { timer, attempt: attempt + 1 });
+      this.#scopeRetry.set(boardId, timer);
     });
   }
 
   #closeScope(boardId: string): void {
-    const retry = this.#scopeRetry.get(boardId);
-    if (retry?.timer !== undefined) clearTimeout(retry.timer);
+    const timer = this.#scopeRetry.get(boardId);
+    if (timer !== undefined) clearTimeout(timer);
     this.#scopeRetry.delete(boardId);
+    this.#scopeAttempt.delete(boardId);
     const sock = this.#scopeSockets.get(boardId);
     this.#scopeSockets.delete(boardId);
     if (sock) closeBoardSocket(sock);
@@ -832,6 +869,7 @@ class AppStore {
     // Through `#closeSocket`, so the pending reconnect goes with it. Closing the socket alone
     // would leave a timer that reopens one after the component that owned it is gone.
     this.#closeSocket();
+    this.closeScopeSockets();
     this.connected = false;
     if (this.#attentionTimer !== undefined) clearTimeout(this.#attentionTimer);
     this.#attentionTimer = undefined;

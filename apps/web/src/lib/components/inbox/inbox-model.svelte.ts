@@ -34,7 +34,8 @@ import { InboxFilters } from './inbox-filters.svelte';
 /** An attention row keyed by its card, the key a live diff and a keyed `#each` share. */
 export type KeyedItem = AttentionItem & { key: string };
 const keyed = (items: AttentionItem[]): KeyedItem[] => items.map((i) => ({ ...i, key: i.cardId }));
-const sameItem = (a: KeyedItem, b: KeyedItem): boolean => JSON.stringify(a) === JSON.stringify(b);
+/** Same row, ignoring its age: the age moves on every tick, and a row only changes when the card does. */
+const sameItem = (a: KeyedItem, b: KeyedItem): boolean => JSON.stringify({ ...a, ageHours: null }) === JSON.stringify({ ...b, ageHours: null });
 
 /** One board read: what `#applyBoard` sets. */
 interface BoardRead {
@@ -230,7 +231,7 @@ export class InboxStore implements OperateModel {
     // The open board is read too: opening a card on another board makes this one a board like the rest.
     const [snap, notes, usage] = await Promise.allSettled([getBoard(id), getNotifications(id), getUsage(id, '7d')]);
     const result: BoardRead = { snap, notes, usage };
-    if (live) liveUpdates.push(() => this.#applyBoard(id, result));
+    if (live) liveUpdates.push(`board:${id}`, () => this.#applyBoard(id, result));
     else this.#applyBoard(id, result);
   }
   /**
@@ -249,8 +250,10 @@ export class InboxStore implements OperateModel {
       const next = { ...snap.value, cards };
       this.#snaps[id] = next;
       delete this.#failed[id];
-      // A first read is not a change: nothing on the page moves for it.
-      if (prev) this.changes = { ...this.changes, [id]: diffKeyed(keyed(itemsFromBoard(prev, app.agents)), keyed(itemsFromBoard(next, app.agents)), sameItem) };
+      // A first read is not a change: nothing on the page moves for it. Both sides are read at one
+      // clock, so a card's age never differs between them.
+      const now = Date.now();
+      if (prev) this.changes = { ...this.changes, [id]: diffKeyed(keyed(itemsFromBoard(prev, app.agents, now)), keyed(itemsFromBoard(next, app.agents, now)), sameItem) };
     } else if (!this.#snaps[id]) {
       // Only a board never read has failed; a live re-read that fails keeps what the page shows.
       this.#failed[id] = true;

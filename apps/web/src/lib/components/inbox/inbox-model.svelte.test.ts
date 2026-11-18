@@ -165,7 +165,6 @@ describe('the Inbox model', () => {
   it('a scope board’s event is read again and applied as a diff; paused, it waits for Apply', async () => {
     const m = make();
     await settle();
-    await vi.waitFor(() => expect(api.sockets.some((s) => s.boardId === OTHER && !s.closed)).toBe(true));
     const feed = api.sockets.find((s) => s.boardId === OTHER && !s.closed);
     const kept = m.needs.find((r) => r.boardId === OTHER);
     expect(kept).toBeTruthy();
@@ -174,7 +173,14 @@ describe('the Inbox model', () => {
     api.getBoard.mockImplementation(async (id: string) => (id === OTHER ? { ...OTHER_BOARD, cards: [...OTHER_BOARD.cards.map((c) => ({ ...c })), added] } : DX_BOARD));
     liveUpdates.pause();
     feed?.emit({ seq: 1, type: 'card.created', payload: { cardId: added.id }, ts: '2026-11-18T09:00:00.000Z' });
-    await vi.waitFor(() => expect(liveUpdates.queued).toHaveLength(1));
+    await settle();
+    expect(liveUpdates.queued).toHaveLength(1);
+    // More events for the same board while paused: still one entry, holding the latest read.
+    feed?.emit({ seq: 2, type: 'card.moved', payload: { cardId: added.id }, ts: '2026-11-18T09:00:01.000Z' });
+    await settle();
+    feed?.emit({ seq: 3, type: 'card.moved', payload: { cardId: added.id }, ts: '2026-11-18T09:00:02.000Z' });
+    await settle();
+    expect(liveUpdates.queued.map((q) => q.key)).toEqual([`board:${OTHER}`]);
     expect(m.needs.some((r) => r.card.id === added.id)).toBe(false);
     liveUpdates.apply();
     flushSync();
@@ -197,5 +203,25 @@ describe('the Inbox model', () => {
     expect(m.needGroups).toEqual([]);
     // Filters narrow the list, never the message.
     expect(m.headline.h1).toContain(`${total} cards want you.`);
+  });
+  it('a live read compares both sides at one clock: an age that moved a millisecond changes nothing', async () => {
+    const m = make();
+    await settle();
+    const feed = api.sockets.find((s) => s.boardId === OTHER && !s.closed);
+    // Every read of the clock is a millisecond later than the last one.
+    let t = Date.parse('2026-11-18T09:00:00.000Z');
+    const clock = vi.spyOn(Date, 'now').mockImplementation(() => (t += 1));
+    try {
+      api.getBoard.mockImplementation(async (id: string) => (id === OTHER ? { ...OTHER_BOARD, cards: OTHER_BOARD.cards.map((c) => ({ ...c })) } : DX_BOARD));
+      feed?.emit({ seq: 9, type: 'card.updated', payload: {}, ts: '2026-11-18T09:00:00.000Z' });
+      await settle();
+      expect(OTHER_BOARD.cards.every((c) => c.stateSince)).toBe(true);
+      expect(m.changes[OTHER]?.order.length).toBeGreaterThan(0);
+      expect(m.changes[OTHER]?.enter).toEqual([]);
+      expect(m.changes[OTHER]?.leave).toEqual([]);
+      expect(m.changes[OTHER]?.change).toEqual([]);
+    } finally {
+      clock.mockRestore();
+    }
   });
 });

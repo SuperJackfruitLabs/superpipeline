@@ -2,7 +2,7 @@
 /**
  * Whether live updates apply as they arrive or wait behind the masthead's Live toggle (contract
  * rule 10). Every live handler hands its change to `push`: live, it runs at once; paused, it waits
- * in `queued`, which the pill counts, until Apply or resuming plays the queue in order. Nothing is
+ * in `queued` (one entry per key), which the pill counts, until Apply or resuming plays the queue in order. Nothing is
  * dropped while paused.
  *
  * The choice is the person's and is remembered in this browser (`superpipeline.liveUpdates` =
@@ -25,9 +25,13 @@ function remember(live: boolean): void {
   }
 }
 
+/** One held change: `key` names what it updates, so a later change to the same thing replaces it. */
+export interface QueuedUpdate { key: string; fn: () => void }
+
 export class LiveUpdates {
   live = $state(remembered());
-  queued = $state<Array<() => void>>([]);
+  /** What waits while paused, one entry per key (the pill counts these). */
+  queued = $state<QueuedUpdate[]>([]);
 
   pause(): void {
     this.live = false;
@@ -43,12 +47,18 @@ export class LiveUpdates {
   apply(): void {
     const run = this.queued;
     this.queued = [];
-    for (const fn of run) fn();
+    for (const q of run) q.fn();
   }
-  /** Runs `fn` now when live, otherwise queues it behind the pill's count. */
-  push(fn: () => void): void {
-    if (this.live) fn();
-    else this.queued.push(fn);
+  /**
+   * Runs `fn` now when live, otherwise queues it under `key`. A key already waiting keeps its place
+   * and takes the latest `fn` (a board read again replaces its older read), so a long pause holds one
+   * entry per board, not one per event. Incremental changes use a key of their own each (`feed:<seq>`).
+   */
+  push(key: string, fn: () => void): void {
+    if (this.live) { fn(); return; }
+    const at = this.queued.findIndex((q) => q.key === key);
+    if (at === -1) this.queued.push({ key, fn });
+    else this.queued[at] = { key, fn };
   }
 }
 
