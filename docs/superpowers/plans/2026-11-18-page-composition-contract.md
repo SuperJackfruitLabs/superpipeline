@@ -398,7 +398,7 @@ Repo `/Users/rakeshgangwar/SuperJackfruit/superpipeline`, branch `design/composi
 ### Task B16: Composition guards wired per page, proven by breaking them
 
 **Files:**
-- Create: `src/lib/composition/pages.test.ts` (unit: every view × 4 vibes through `renderInVibes` + the five guard functions on the realistic fixture), `e2e/composition.spec.ts` (height budget: Inbox < 2700 px and Board < 1800 px at 1440×900 on `seedRealistic`; `track never truncates` at 1008 px; `motion honours reduce`: count `document.getAnimations()` after a seeded event with and without `data-motion="reduce"`) Also  in : fails when a `[data-signature]` region holds any element not matching the page's allowed selectors (headline block, section-header ordinals, the scope control), per spec §11.6.
+- Create: `src/lib/composition/pages.test.ts` (unit: every view × 4 vibes through `renderInVibes` + the five guard functions on the realistic fixture), `e2e/composition.spec.ts` (height budget: Inbox < 2700 px and Board < 1800 px at 1440×900 on `seedRealistic`; `track never truncates` at 1008 px; `motion honours reduce`: count `document.getAnimations()` after a seeded event with and without `data-motion="reduce"`) Also `signatureSize(root: Element, allowed: string[]): string[]` in `guards.ts`: fails when a `[data-signature]` region holds any element not matching the page's allowed selectors (headline block, section-header ordinals, the scope control), per spec §11.6.
 - Modify: `/.github/workflows/ci.yml` only if the e2e suite list in `scripts/e2e-suites.ts` needs `composition` in `critical` (add it there)
 
 - [ ] **Step 1:** Write the tests → PASS on the finished pages.
