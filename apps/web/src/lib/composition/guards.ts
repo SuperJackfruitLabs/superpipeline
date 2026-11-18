@@ -11,6 +11,7 @@ const SIGNATURE = '[data-signature]';
 const SKIP_TEXT = new Set(['SCRIPT', 'STYLE', 'TEMPLATE', 'NOSCRIPT']);
 
 const norm = (s: string): string => s.replace(/\s+/g, ' ').trim();
+const isElement = (n: Node): n is Element => n.nodeType === 1;
 
 /** Every text node under `root` whose parent passes `keep`, in document order. */
 function textNodes(root: Element, keep: (parent: Element) => boolean): string[] {
@@ -34,11 +35,31 @@ export function primaryActionsPerRow(root: Element): { row: string; count: numbe
     .filter((r) => r.count > 1);
 }
 
-/** Rule 4: text said more than once (whitespace collapsed, at least `min` characters), outside the signature. */
+/** Elements that hold a paragraph's worth of text. A `span` counts too, when no block above it does. */
+const BLOCKS = 'p, li, dd, dt, td, th, h1, h2, h3, h4, h5, h6, figcaption, summary, label, div';
+
+/** The text a container owns: its whole text, inline markup included, minus nested blocks and the signature. */
+function ownText(el: Element): string {
+  let s = '';
+  for (const c of el.childNodes) {
+    if (c.nodeType === 3) s += c.textContent ?? '';
+    else if (isElement(c) && !SKIP_TEXT.has(c.tagName) && !c.matches(SIGNATURE) && !c.matches(BLOCKS)) s += ownText(c);
+  }
+  return s;
+}
+
+/**
+ * Rule 4: a paragraph said more than once (whitespace collapsed, at least `min` characters), outside
+ * the signature. Counted per container, so `No agent <b>works</b> this stage` is one paragraph; each
+ * container counts only the text it owns, so a `<li><p>…</p></li>` is counted once, at the `p`.
+ */
 export function repeatedParagraphs(root: Element, min = 40): string[] {
   const seen = new Map<string, number>();
-  for (const raw of textNodes(root, (p) => !p.closest(SIGNATURE))) {
-    const t = norm(raw);
+  const inBlock = (el: Element) => { const b = el.parentElement?.closest(BLOCKS); return !!b && (b === root || root.contains(b)); };
+  const candidates = [root, ...root.querySelectorAll(`${BLOCKS}, span`)].filter((el) =>
+    !el.closest(SIGNATURE) && (el.matches(BLOCKS) || (el.tagName === 'SPAN' && !inBlock(el))));
+  for (const el of candidates) {
+    const t = norm(ownText(el));
     if (t.length >= min) seen.set(t, (seen.get(t) ?? 0) + 1);
   }
   return [...seen].filter(([, n]) => n > 1).map(([t]) => t);
@@ -54,15 +75,18 @@ export function rawMachineText(root: Element): string[] {
 }
 
 /**
- * Rule 6: stage names the track clips. A browser measures it: scrollWidth beyond clientWidth.
- * jsdom has no layout (both widths are 0), so an element styled to clip, `text-overflow: ellipsis`
- * on one line (`white-space: nowrap`), also counts here. The real measured check runs in e2e.
+ * Rule 6: stage names the track clips, measured: scrollWidth beyond clientWidth. That is the whole
+ * check in a browser, so a name that fits is never reported. Only where nothing is laid out (jsdom:
+ * both widths 0) does a style fallback apply: a name styled to clip, `text-overflow: ellipsis` on one
+ * line (`white-space: nowrap`), counts. jsdom sees only inline styles and stylesheets loaded into the
+ * document, so a unit test cannot prove a name fits; the layout check lives in e2e.
  */
 export function truncatedNames(root: Element, selector = '.vk-stages__name'): string[] {
   const view = root.ownerDocument.defaultView;
   return [...root.querySelectorAll(selector)]
     .filter((el) => {
       if (el.scrollWidth > el.clientWidth) return true;
+      if (el.scrollWidth !== 0 || el.clientWidth !== 0) return false;
       const cs = view?.getComputedStyle(el);
       return cs?.getPropertyValue('text-overflow') === 'ellipsis' && cs.getPropertyValue('white-space') === 'nowrap';
     })
@@ -71,7 +95,7 @@ export function truncatedNames(root: Element, selector = '.vk-stages__name'): st
 
 // ── Vibe parity: the accessibility tree as text ──────────────────────────────────────────────────
 
-/** The roles whose names and states make up the parity contract, as vibekit's harness lists them. Static text is left out. */
+/** The roles whose names and states make up the parity contract, as vibekit's harness lists them. */
 const ROLES = new Set([
   'alert', 'alertdialog', 'banner', 'button', 'cell', 'checkbox', 'columnheader', 'combobox', 'complementary', 'contentinfo',
   'definition', 'dialog', 'figure', 'form', 'group', 'heading', 'img', 'link', 'list', 'listbox', 'listitem', 'main', 'menu',
@@ -150,8 +174,6 @@ function hiddenSelf(el: Element): boolean {
   return cs?.display === 'none' || cs?.visibility === 'hidden';
 }
 
-const isElement = (n: Node): n is Element => n.nodeType === 1;
-
 /** The words a reader hears for `node`'s content: text, alt text and child labels, hidden subtrees left out. */
 function contentText(node: Node): string {
   let s = '';
@@ -160,6 +182,7 @@ function contentText(node: Node): string {
     else if (isElement(c)) {
       const el = c;
       if (hiddenSelf(el) || SKIP_TEXT.has(el.tagName)) continue;
+      if (el.matches(SIGNATURE)) { s += ' § '; continue; }
       const label = el.getAttribute('aria-label');
       if (label) s += ` ${label} `;
       else if (el.tagName === 'IMG') s += el.getAttribute('alt') ?? '';
@@ -169,15 +192,19 @@ function contentText(node: Node): string {
   return s;
 }
 
+/** Ids resolve inside `root` first: four vibe copies of one view share a document, and so their ids. */
 function byId(root: Element, id: string): Element | null {
-  return root.ownerDocument.getElementById(id) ?? root.querySelector(`#${CSS.escape(id)}`);
+  return root.querySelector(`#${CSS.escape(id)}`) ?? root.ownerDocument.getElementById(id);
 }
+
+/** An `aria-labelledby` target's words; one inside the signature reads as `§`. */
+const labelText = (x: Element): string => (x.closest(SIGNATURE) ? '§' : x.getAttribute('aria-label') ?? contentText(x));
 
 /** A simplified accessible-name computation (accname 1.2 steps that this app's markup uses). */
 function nameOf(el: Element, role: string, root: Element): string {
   const ids = el.getAttribute('aria-labelledby');
   if (ids) {
-    const n = ids.split(/\s+/).map((id) => byId(root, id)).filter((x): x is Element => !!x).map((x) => x.getAttribute('aria-label') ?? contentText(x)).join(' ');
+    const n = ids.split(/\s+/).map((id) => byId(root, id)).filter((x): x is Element => !!x).map(labelText).join(' ');
     if (norm(n)) return n;
   }
   const label = el.getAttribute('aria-label');
@@ -187,7 +214,8 @@ function nameOf(el: Element, role: string, root: Element): string {
     const type = el.getAttribute('type');
     if (tag === 'INPUT' && ['button', 'submit', 'reset'].includes(type ?? '')) return el.getAttribute('value') ?? '';
     const id = el.getAttribute('id');
-    const forLabel = id ? root.ownerDocument.querySelector(`label[for="${CSS.escape(id)}"]`) : null;
+    const sel = id ? `label[for="${CSS.escape(id)}"]` : null;
+    const forLabel = sel ? root.querySelector(sel) ?? root.ownerDocument.querySelector(sel) : null;
     const wrap = forLabel ?? el.closest('label');
     if (wrap) return contentText(wrap);
     return el.getAttribute('placeholder') ?? el.getAttribute('title') ?? '';
@@ -213,21 +241,42 @@ function statesOf(el: Element, role: string): string[] {
   return out;
 }
 
+/** Elements that do not break a run of text; everything else starts and ends one (vibekit's harness list). */
+const INLINE = new Set(['A', 'ABBR', 'B', 'BDI', 'BDO', 'CITE', 'CODE', 'DATA', 'DFN', 'EM', 'I', 'KBD', 'MARK', 'Q', 'S', 'SAMP', 'SMALL', 'SPAN', 'STRONG', 'SUB', 'SUP', 'TIME', 'U', 'VAR']);
+
 /**
- * Vibe parity (§9): the accessibility tree as text, one line per accessible element in document
- * order: `role "name" state=value …`. Visually hidden text counts (it is read aloud); aria-hidden
- * and hidden subtrees do not. Each `[data-signature]` subtree is the single line `§`, since that is
- * where a vibe may differ. Class names never appear, so the same view in two vibes gives one string.
+ * Vibe parity (§9): the accessibility tree as text, in document order. One line per accessible
+ * element, `role "name" state=value …`, and one `text "…"` line per run of text that no ancestor's
+ * accessible name already reads (a lede, a meta line, an empty state). A run is whitespace-collapsed
+ * and spans inline markup, so wrapping a word in a `<span>` does not change it. Visually hidden text
+ * counts (it is read aloud); aria-hidden and hidden subtrees do not. Each `[data-signature]` subtree
+ * is the single line `§`, and reads as `§` inside a name, since that is where a vibe may differ.
+ * Class names never appear, so the same view in two vibes gives one string.
  */
 export function parityTree(root: Element): string {
   const out: string[] = [];
-  const visit = (el: Element): void => {
-    if (hiddenSelf(el) || SKIP_TEXT.has(el.tagName)) return;
-    if (el.matches(SIGNATURE)) { out.push('§'); return; }
-    const role = roleOf(el);
-    if (role && ROLES.has(role)) out.push([role, JSON.stringify(norm(nameOf(el, role, root))), ...statesOf(el, role)].join(' '));
-    for (const c of el.children) visit(c);
+  let run = '';
+  const flush = () => {
+    const t = norm(run);
+    if (t) out.push(`text ${JSON.stringify(t)}`);
+    run = '';
   };
-  for (const c of root.children) visit(c);
+  const visit = (node: Node, consumed: boolean): void => {
+    if (node.nodeType === 3) { if (!consumed) run += node.textContent ?? ''; return; }
+    if (!isElement(node) || hiddenSelf(node) || SKIP_TEXT.has(node.tagName)) return;
+    const el = node;
+    if (el.matches(SIGNATURE)) { flush(); out.push('§'); return; }
+    const role = roleOf(el);
+    const counted = !!role && ROLES.has(role);
+    const breaks = counted || !INLINE.has(el.tagName);
+    if (breaks) flush();
+    if (counted) out.push([role, JSON.stringify(norm(nameOf(el, role, root))), ...statesOf(el, role)].join(' '));
+    // A role named by its content has read its words already; its own inputs, images and the like have none.
+    const reads = consumed || (counted && (FROM_CONTENT.has(role) || TEXT_ROLES.has(role)));
+    for (const c of el.childNodes) visit(c, reads);
+    if (breaks) flush();
+  };
+  for (const c of root.childNodes) visit(c, false);
+  flush();
   return out.join('\n');
 }
