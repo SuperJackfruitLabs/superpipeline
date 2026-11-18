@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mockup rounds: Inbox tabs and card states</title>
+<link rel="stylesheet" href="./vk/vibekit.bundle.css">
+<link rel="stylesheet" href="./composition.css">
+<style>
+  .wrap > p.note { margin: 0 0 14px; color: #a9a59c; max-width: 90ch; }
+  .pagetabs { gap: 6px 6px; }
+  .pagetabs a[data-group]::before { content: attr(data-group) " · "; color: #a9a59c; font-weight: 400; }
+  .rowline { display: grid; grid-template-columns: auto minmax(0, 1fr) auto auto; align-items: center; gap: 14px; min-height: 52px; }
+  .rowline .t { font-weight: 600; overflow-wrap: anywhere; }
+  .rowline .cost { font: var(--vk-type-mono); color: var(--vk-color-muted); }
+  .spend { display: grid; gap: 14px; }
+  .spend .big { display: flex; align-items: baseline; gap: 12px; }
+  .spend .big b { font: var(--vk-type-h1); font-stretch: var(--vk-type-h1-stretch); }
+  .spend .big span { color: var(--vk-color-muted); }
+  .vk-meter { height: 8px; border-radius: var(--vk-radius-pill); background: var(--vk-color-line); overflow: hidden; }
+  .vk-meter__fill { display: block; height: 100%; background: var(--vk-color-primary); }
+  [data-vibe="studio"] .vk-meter, [data-vibe="paper"] .vk-meter { border-radius: 0; }
+  [data-vibe="studio"] .vk-meter__fill { background: var(--vk-stage-6); }
+  .agents { display: grid; gap: 6px; }
+  .agents .rowline { min-height: 40px; grid-template-columns: auto minmax(0, 1fr) auto; }
+  .act .rowline { grid-template-columns: auto minmax(0, 1fr) auto; align-items: start; padding: 8px 0; }
+  .act .unread { width: 8px; height: 8px; border-radius: 50%; background: var(--vk-color-signal); margin-top: 8px; }
+  .act .read { width: 8px; height: 8px; border-radius: 50%; box-shadow: inset 0 0 0 1px var(--vk-color-line); margin-top: 8px; }
+  .act .what { color: var(--vk-color-muted); font: var(--vk-type-meta); }
+  .act .when { color: var(--vk-color-muted); font: var(--vk-type-mono); white-space: nowrap; }
+  [data-vibe="studio"] .act .unread, [data-vibe="studio"] .act .read { border-radius: 0; }
+  .daylight-rows .rowline { padding: 6px 14px; border-radius: var(--vk-radius-md); background: var(--vk-color-raised); }
+  [data-vibe="daylight"] .group { padding: 16px; border-radius: 16px; background: var(--vk-color-surface); }
+  [data-vibe="paper"] .rowline, [data-vibe="studio"] .rowline, [data-vibe="quiet"] .rowline { border-top: 1px solid var(--vk-color-line); }
+  [data-vibe="paper"] .rowline:first-child, [data-vibe="studio"] .rowline:first-child, [data-vibe="quiet"] .rowline:first-child { border-top: 0; }
+  /* Card state panels. */
+  .state.panel { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 12px 20px; align-items: start; padding: 16px; border-radius: var(--vk-radius-md); background: var(--vk-color-surface); }
+  .state.panel > div { display: grid; gap: 12px; }
+  [data-vibe="studio"] .state.panel, [data-vibe="paper"] .state.panel { border-radius: 0; background: transparent; border-top: 1.5px solid var(--vk-color-rule); border-bottom: 1px solid var(--vk-color-line); padding: 14px 0; }
+  [data-vibe="quiet"] .state.panel { background: transparent; padding: 0; border-top: 1px solid var(--vk-color-line); padding-top: 12px; }
+  .choices { display: grid; gap: 8px; }
+  .vk-choice { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 10px; align-items: start; padding: 10px 12px; border-radius: var(--vk-radius-md); box-shadow: inset 0 0 0 1px var(--vk-color-line); cursor: pointer; }
+  .vk-choice:has(:checked) { box-shadow: inset 0 0 0 2px var(--vk-color-accent); background: var(--vk-color-accent-wash); }
+  .vk-choice__input { margin: 4px 0 0; }
+  .vk-choice__label { font-weight: 700; display: block; }
+  .vk-choice__desc { color: var(--vk-color-muted); font: var(--vk-type-meta); }
+  [data-vibe="studio"] .vk-choice, [data-vibe="paper"] .vk-choice { border-radius: 0; }
+  .vk-field { display: grid; gap: 6px; }
+  .vk-field__label { font-weight: 600; font: var(--vk-type-meta); color: var(--vk-color-text); }
+  .vk-field__input { width: 100%; box-sizing: border-box; padding: 8px 10px; border-radius: var(--vk-radius-md); border: 0; box-shadow: inset 0 0 0 1px var(--vk-color-line); background: var(--vk-color-raised); color: var(--vk-color-text); font: inherit; }
+  [data-vibe="studio"] .vk-field__input, [data-vibe="paper"] .vk-field__input { border-radius: 0; background: transparent; }
+  .vk-notice { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 12px; align-items: center; padding: 14px 16px; border-radius: var(--vk-radius-md); box-shadow: inset 0 0 0 2px var(--vk-color-text); }
+  .vk-notice__title { font-weight: 700; }
+  .vk-skeleton { display: block; height: 12px; margin: 8px 0; border-radius: var(--vk-radius-sm); background: var(--vk-color-line); }
+  .phone .grid { grid-template-columns: repeat(auto-fit, 390px); justify-content: start; }
+  .phone .page { width: 390px; }
+  .phone .cardhead { grid-template-columns: 1fr; }
+  .phone .cardhead .tools { grid-row: auto; grid-column: 1; justify-self: start; }
+  .phone .facts { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .phone .state.panel { grid-template-columns: 1fr; }
+  .phone .track { overflow-x: auto; grid-template-columns: repeat(var(--n), minmax(96px, 1fr)); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Mockup rounds: Inbox tabs and card states</h1>
+  <p class="sub">Two rounds waiting for a look. Inbox · Running, Spend and Activity are the three tabs the first Inbox mockups left out. Card · the states a card can be in: a pending decision, a pending question, a stopped agent, done, archived, loading, error, and the phone sheet. Same composition throughout; only the state block swaps.</p>
+  <nav class="pagetabs" id="pagetabs"></nav>
+  <div class="rules" id="rules"></div>
+  <div id="screens"></div>
+
+  <div class="ask">
+    <h2>What needs another pass?</h2>
+    <div class="options" data-multiselect>
+      <div class="option" data-choice="inbox-tabs-ok" onclick="toggleSelect(this)"><div class="letter">✓</div><div><h3>Inbox tabs read right</h3><p>Running, Spend, Activity: build the Inbox with these.</p></div></div>
+      <div class="option" data-choice="card-states-ok" onclick="toggleSelect(this)"><div class="letter">✓</div><div><h3>Card states read right</h3><p>Gate, question, stopped, done, archived, loading, error, phone: build the Card with these.</p></div></div>
+      <div class="option" data-choice="inbox-tabs-more" onclick="toggleSelect(this)"><div class="letter">?</div><div><h3>Inbox tabs: changes</h3><p>Say which tab and what.</p></div></div>
+      <div class="option" data-choice="card-states-more" onclick="toggleSelect(this)"><div class="letter">?</div><div><h3>Card states: changes</h3><p>Say which state and what.</p></div></div>
+    </div>
+  </div>
+</div>
+
+<script src="./helpers.js"></script>
+<script src="./inbox-tabs-pages.js"></script>
+<script src="./card-states-pages.js"></script>
+<script>
+const PAGES = Object.assign({}, window.ROUNDS.inboxTabs || {}, window.ROUNDS.cardStates || {});
+const keys = Object.keys(PAGES);
+const screens = document.getElementById('screens');
+const nav = document.getElementById('pagetabs');
+for (const k of keys) {
+  const a = document.createElement('a'); a.href = '#' + k; a.textContent = PAGES[k].title.split(' · ')[1]; a.dataset.group = PAGES[k].title.split(' · ')[0]; a.id = 'tab-' + k; nav.appendChild(a);
+  const s = document.createElement('section'); s.className = 'screen' + (PAGES[k].phone ? ' phone' : ''); s.id = 'screen-' + k; s.hidden = true;
+  s.innerHTML = `<div class="grid">${VIBES.map(({ v, theme, cap, note }) => `<div class="col"><p class="cap"><b>${cap}</b><span>${note}</span></p><div class="page" data-vibe="${v}" data-theme="${theme}" data-motion="reduce" data-time="off" data-phase="noon">${PAGES[k].render(v)}</div></div>`).join('')}</div>`;
+  screens.appendChild(s);
+}
+function show() {
+  const k = keys.includes(location.hash.slice(1)) ? location.hash.slice(1) : keys[0];
+  for (const x of keys) { document.getElementById('screen-' + x).hidden = x !== k; const t = document.getElementById('tab-' + x); if (x === k) t.setAttribute('aria-current', 'page'); else t.removeAttribute('aria-current'); }
+  document.getElementById('rules').innerHTML = PAGES[k].rules;
+}
+addEventListener('hashchange', show); show();
+</script>
+</body>
+</html>
