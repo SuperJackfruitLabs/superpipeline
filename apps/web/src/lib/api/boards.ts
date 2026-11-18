@@ -241,3 +241,13 @@ export function openBoardSocket(boardId: string, onEvent: (event: BoardFeedEvent
   });
   return ws;
 }
+
+/**
+ * Close a board feed opened by `openBoardSocket`, whatever state it is in. A socket still connecting
+ * closes as soon as it can; one already closed is left alone.
+ */
+export function closeBoardSocket(ws: WebSocket): void {
+  // 2 and 3 are CLOSING and CLOSED; literal so this runs where no WebSocket global exists (tests, SSR).
+  if (ws.readyState === 2 || ws.readyState === 3) return;
+  ws.close();
+}

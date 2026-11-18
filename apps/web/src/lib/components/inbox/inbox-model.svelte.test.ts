@@ -13,13 +13,22 @@ const OTHER_BOARD: BoardSnapshot = {
 const usage = (n: number) => ({ totalCostUsd: n, estimatedCostUsd: 0, totalInputTokens: 0, totalOutputTokens: 0, unpricedRecords: 0, byModel: [], byAgent: [], byCard: [], byDay: [] });
 const api = vi.hoisted(() => ({
   getBoard: vi.fn(), getNotifications: vi.fn(), getUsage: vi.fn(), setBudget: vi.fn(),
+  // Each board in scope gets a feed; these record which and hand the test their message handler.
+  sockets: [] as Array<{ boardId: string; closed: boolean; emit: (e: unknown) => void }>,
+  openBoardSocket: vi.fn<(boardId: string, onEvent: (e: unknown) => void) => unknown>(),
 }));
+api.openBoardSocket.mockImplementation((boardId, onEvent) => {
+  const s = Object.assign(new EventTarget(), { boardId, closed: false, close() { s.closed = true; }, emit: onEvent });
+  api.sockets.push(s);
+  return s;
+});
 vi.mock('$lib/api', async (orig) => ({ ...(await orig<typeof import('$lib/api')>()), ...api }));
 vi.mock('$app/navigation', () => ({ goto: vi.fn() }));
 
 import { app } from '$lib/stores/app.svelte';
 import { InboxStore, CHOOSE_A_BOARD_FOR_CAPS } from './inbox-model.svelte';
 import { inboxScope } from './inbox-scope.svelte';
+import { liveUpdates } from '$lib/live/live-updates.svelte';
 
 let stop: (() => void) | null = null;
 const make = (): InboxStore => {
@@ -43,7 +52,7 @@ beforeEach(() => {
   app.boardsFailed = false;
   app.attentionSettled = true;
 });
-afterEach(() => { stop?.(); stop = null; inboxScope.choose(null); app.board = null; app.boards = []; app.attention = []; vi.clearAllMocks(); });
+afterEach(() => { stop?.(); stop = null; api.sockets = []; liveUpdates.resume(); inboxScope.choose(null); app.board = null; app.boards = []; app.attention = []; vi.clearAllMocks(); });
 
 describe('the Inbox model', () => {
   it('is pending before the board list arrives: no boards yet is not "nothing needs you" (L1)', async () => {
@@ -139,5 +148,54 @@ describe('the Inbox model', () => {
     await settle();
     expect(m.activityShown).toBe(20);
     expect(m.activityPage).toHaveLength(20);
+  });
+  it('keeps a feed open on every other board in scope and closes them when the Inbox goes', async () => {
+    make();
+    await settle();
+    expect(api.sockets.filter((s) => !s.closed).map((s) => s.boardId)).toEqual([OTHER]);
+    inboxScope.choose(DX_ID);
+    await settle();
+    expect(api.sockets.filter((s) => !s.closed)).toEqual([]);
+    inboxScope.choose(null);
+    await settle();
+    stop?.();
+    stop = null;
+    expect(api.sockets.every((s) => s.closed)).toBe(true);
+  });
+  it('a scope board’s event is read again and applied as a diff; paused, it waits for Apply', async () => {
+    const m = make();
+    await settle();
+    await vi.waitFor(() => expect(api.sockets.some((s) => s.boardId === OTHER && !s.closed)).toBe(true));
+    const feed = api.sockets.find((s) => s.boardId === OTHER && !s.closed);
+    const kept = m.needs.find((r) => r.boardId === OTHER);
+    expect(kept).toBeTruthy();
+    const keptCard = OTHER_BOARD.cards[0];
+    const added = { ...keptCard, id: 'card_other_new', title: 'A new card that needs you' };
+    api.getBoard.mockImplementation(async (id: string) => (id === OTHER ? { ...OTHER_BOARD, cards: [...OTHER_BOARD.cards.map((c) => ({ ...c })), added] } : DX_BOARD));
+    liveUpdates.pause();
+    feed?.emit({ seq: 1, type: 'card.created', payload: { cardId: added.id }, ts: '2026-11-18T09:00:00.000Z' });
+    await vi.waitFor(() => expect(liveUpdates.queued).toHaveLength(1));
+    expect(m.needs.some((r) => r.card.id === added.id)).toBe(false);
+    liveUpdates.apply();
+    flushSync();
+    expect(m.needs.some((r) => r.card.id === added.id)).toBe(true);
+    expect(m.changes[OTHER]?.enter.map((i) => i.cardId)).toEqual([added.id]);
+    expect(m.changes[OTHER]?.leave).toEqual([]);
+    expect(m.changes[OTHER]?.change).toEqual([]);
+    // The unchanged card is the same card it was: its row keeps its identity.
+    expect(m.needs.find((r) => r.card.id === keptCard.id)?.card).toBe(kept?.card);
+  });
+  it('groups the needs by what to do, filters them, and says the headline', async () => {
+    const m = make();
+    await settle();
+    const total = m.needs.length;
+    expect(m.needGroups.reduce((n, g) => n + g.items.length, 0)).toBe(total);
+    expect(m.headline.h1).toContain(`${total} cards want you.`);
+    m.filters.group = m.needGroups[0].key;
+    expect(m.needGroups.map((g) => g.key)).toEqual([m.filters.group]);
+    m.filters.find = 'no card is called this';
+    expect(m.needGroups).toEqual([]);
+    // Filters narrow the list, never the message.
+    expect(m.headline.h1).toContain(`${total} cards want you.`);
   });
 });

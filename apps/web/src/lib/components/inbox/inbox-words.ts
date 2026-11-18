@@ -5,7 +5,7 @@
  * and are waiting on you, two cards wait for your decision and one has nobody to pick it up,
  * across three boards. Nothing is running."
  */
-import { numWord } from '$lib/words';
+import { numWord, plural } from '$lib/words';
 
 export interface InboxCounts { stopped: number; decisions: number; unclaimed: number; other: number }
 type Kinded = { item: { kind: string }; boardId: string };
@@ -53,3 +53,35 @@ export function acrossBoards(boards: number): string {
 
 /** The Inbox summary while it is still counting: no number and no "nothing" words. */
 export const CHECKING = 'Checking your boards…';
+
+// ---- the Inbox's groups (contract §11.4): what each group is called and how the headline names it ----
+
+export type InboxGroupWordsKey = 'review' | 'answer' | 'resume' | 'budget' | 'unclaimed';
+
+/** Each group's heading and the verb on its rows. */
+export const GROUP_WORDS: Record<InboxGroupWordsKey, { title: string; verb: string; one: string; many: string }> = {
+  review: { title: 'Review', verb: 'Review', one: 'review', many: 'reviews' },
+  answer: { title: 'Answer', verb: 'Answer', one: 'question', many: 'questions' },
+  resume: { title: 'Resume a stopped agent', verb: 'Resume', one: 'stopped agent', many: 'stopped agents' },
+  budget: { title: 'Over budget', verb: 'Raise the cap', one: 'card over budget', many: 'cards over budget' },
+  unclaimed: { title: 'Nobody works these stages', verb: 'Move', one: 'card nobody is set up to work', many: 'cards nobody is set up to work' },
+};
+
+/** "a and b", "a, b, and c": the headline's list. */
+export function seriesList(parts: readonly string[]): string {
+  if (parts.length <= 1) return parts[0] ?? '';
+  if (parts.length === 2) return `${parts[0]} and ${parts[1]}`;
+  return `${parts.slice(0, -1).join(', ')}, and ${parts.at(-1)}`;
+}
+
+/** The lede under the headline: the non-empty groups in order, then what is running. */
+export function groupsLede(counts: ReadonlyArray<{ key: InboxGroupWordsKey; n: number }>, running: number): string {
+  const parts = counts.filter((c) => c.n > 0).map((c, i) => `${numWord(c.n, i === 0)} ${c.n === 1 ? GROUP_WORDS[c.key].one : GROUP_WORDS[c.key].many}`);
+  const run = running === 0 ? 'Nothing is running.' : `${numWord(running, true)} running.`;
+  return parts.length ? `${seriesList(parts)}. ${run}` : run;
+}
+
+/** Why the unclaimed cards will not move, said once for the group. */
+export function unclaimedExplanation(stages: readonly string[], boards: number): string {
+  return `These cards sit in ${seriesList(stages)} on ${plural(boards, 'board', 'boards')}. No agent holds those stages and no review is asked for, so they will not move on their own.`;
+}
