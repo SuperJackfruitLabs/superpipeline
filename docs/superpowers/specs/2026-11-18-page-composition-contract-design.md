@@ -1,6 +1,6 @@
 # Page composition contract
 
-**Status:** design, awaiting the operator's approval. Decided in conversation on 2026-11-18 from a walk of production and a set of mockups the operator reviewed and accepted.
+**Status:** design, final draft for the operator's approval. Decided in conversation on 2026-11-18 from a walk of production and a set of mockups the operator reviewed and accepted; the builder-check questions are answered in §11 and §12.
 **Mockups:** `2026-11-18-page-composition-contract/` beside this file (`./serve.sh` to view). They are the reference for every page below.
 
 ## 1. Intent
@@ -27,7 +27,7 @@ This document fixes the composition once, as a contract that every page follows,
 
 **Non-goals**
 - Changing the information architecture decided on 2026-10-13 (Inbox, Plan with Boards and Projects, Crew, Settings under You). Tabs and URLs stay.
-- New vibekit components. Everything below composes what vibekit 0.0.19 already ships, including its motion suite. Two small extensions to existing components are an open question (§12).
+- New vibekit components. Everything below composes what vibekit ships, including its motion suite, plus the two extensions to existing components in §12.
 - A visual redesign of the vibes themselves.
 
 **Anti-goals**
@@ -144,7 +144,7 @@ Added in Phase 6, per page, run in CI on realistic fixtures:
 | Phase | What | Gate |
 |---|---|---|
 | 0 | Fix the live bugs: card drawer fetching from the previous board's URL; Crew and Settings never finishing their load; Activity unpaged | One PR, no design needed, can start now |
-| 1 | Prerequisites: move `apps/web` to `@superjackfruitlabs/vibekit-ui` 0.0.19 from npm (existing card); add the composition guard scaffolding and realistic fixtures | CI green on the existing harnesses |
+| 1 | Prerequisites: vibekit 0.0.20 with the Masthead live toggle and the StageTrack counts (§12), released to npm; move `apps/web` to `@superjackfruitlabs/vibekit-ui` 0.0.20 from npm (existing card); add the composition guard scaffolding and realistic fixtures | vibekit sheets and CI green; SuperPipeline CI green on the existing harnesses |
 | 2a | The shell: one `AppShell` for desktop and phone, with the masthead reduced to product, title, Live toggle, search and the page's one primary action; tabs, filter, "showing" and status lines move into the pages | Shell renders the same DOM in four vibes; existing shell e2e pass |
 | 2b | Inbox per §7, with filters (rule 8) and live motion plus the pause toggle (rules 9, 10); a mockup round for the Running, Spend (with caps) and Activity tabs first | Matches the mockups in four vibes, desktop and phone; guards pass |
 | 3 | Board, variant A, with drag-and-drop kept (§12) | Same |
@@ -167,10 +167,10 @@ A reviewer read this document as the builder would and asked nine questions. The
 6. **The parity guard exempts a marked signature region.** The signature slot is wrapped in `data-signature` and may change the headline block, the section-header ordinals and the scope control's form; outside it the accessibility tree must match across vibes, text included. A signature region larger than those three things fails the guard.
 7. **The Inbox's other tabs and the card's pending states get their own mockup rounds** before their phases build, per the mockups-first rule; the rules in §5 bind them.
 
-## 12. Open, for the operator
+## 12. Decided by the operator, 2026-11-18
 
-1. **May vibekit grow for this?** Rule 10 makes the Live pill a toggle with a queued count and Apply; vibekit's Masthead `live` is a status only. Rule 6 wants every stage named with its count and who works it; vibekit's StageTrack takes stage names only, Daylight's form names only the current stage, and its Daylight name style sets `text-overflow: ellipsis`. The mockups drew both themselves. Either vibekit 0.0.20 extends Masthead and StageTrack (cross-repo, vibekit sheets to update, every product benefits) or SuperPipeline builds a product-side pill and track inside vibekit's masthead (Phase 2 stays in one repo, the track is not shared). The author's recommendation is vibekit 0.0.20, since the track is the product's central object and a second implementation would drift.
-2. **How does "All boards" stay live?** Today one WebSocket serves the open board and every event triggers a full snapshot refresh; the Inbox reads other boards once per visit. Rules 9 and 10 show the all-boards Inbox animating diffs. Either the web app opens one socket per board in scope (no API change; a dozen sockets at most), or the API gains a workspace-level feed (an API PR, outside this document), or "Live" applies to the chosen board only and the rest refresh on a timer with the pill saying so. The author's recommendation is one socket per board in scope now, and the workspace feed as a later API item.
+1. **Vibekit grows when the suite needs it.** The operator: "You are free to expand vibekit whenever you want." So vibekit 0.0.20 extends two existing components ahead of Phase 2: Masthead's `live` becomes a toggle (pressed state, queued count, an Apply action, the ring on update) and StageTrack takes, per stage, a count and who works it, names every stage in every vibe and never truncates. Both ship with reference sheets and the cross-repo change follows the workspace's cross-repo skill: vibekit first, released to npm, then SuperPipeline. The mockups' hand-drawn pill and track are the references for the two components.
+2. **"All boards" stays live with one socket per board in scope.** The web app opens a board socket for each board the Inbox shows (a dozen at most; hibernatable sockets cost nothing idle), applies each board's events as a diff, and the Live pill speaks for all of them. The full-snapshot refresh on every event is replaced by the diff path in Phase 2b. A workspace-level feed is a later API item, outside this document, that would collapse those sockets into one.
 
 ## 13. Left to the builder
 
