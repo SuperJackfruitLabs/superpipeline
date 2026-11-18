@@ -27,10 +27,12 @@ test.beforeEach(async ({ page, request }) => {
   await page.addInitScript(([key, id]) => window.localStorage.setItem(key, id), [BOARD_KEY, boardId]);
 });
 
-test('renders the pipeline columns and connects live', async ({ page }) => {
+test('names every stage and connects live', async ({ page }) => {
   await openRememberedBoard(page);
+  // No card yet: the board explains itself, its stages in order.
+  const track = page.getByRole('list', { name: 'Stages, in order' });
   for (const col of ['Backlog', 'Ready', 'In Progress', 'Review', 'Done']) {
-    await expect(page.getByText(col, { exact: true })).toBeVisible();
+    await expect(track.getByText(col, { exact: true })).toBeVisible();
   }
   await expect(page.locator('[data-live="on"]').first()).toBeVisible();
 });
@@ -43,7 +45,7 @@ test('creates a card via the composer', async ({ page }) => {
   await expect(page.getByText('Write the launch post')).toBeVisible();
 });
 
-test('moves a card to another column via drag', async ({ page }) => {
+test('moves a card to another lane via drag', async ({ page }) => {
   await openRememberedBoard(page);
   await page.getByRole('button', { name: 'New card' }).click();
   await page.getByLabel('Card title').fill('Draggable task');
@@ -52,23 +54,25 @@ test('moves a card to another column via drag', async ({ page }) => {
   const card = page.locator('[data-card-id]', { hasText: 'Draggable task' });
   await expect(card).toBeVisible();
 
-  const ready = page.locator('[data-lane="ready"]');
-  await card.dragTo(ready);
+  // The last stage always has a lane: drop the card there.
+  const done = page.locator('[data-lane="done"]');
+  await card.dragTo(done);
 
-  await expect(page.locator('[data-lane="ready"] [data-card-id]', { hasText: 'Draggable task' })).toBeVisible();
+  await expect(page.locator('[data-lane="done"] [data-card-id]', { hasText: 'Draggable task' })).toBeVisible();
+  await expect(page.locator('[data-lane="backlog"]')).toHaveCount(0);
 });
 
 test('streams a new card to a second client in real time', async ({ browser }) => {
   const a = await browser.newPage();
   await a.addInitScript(([key, id]) => window.localStorage.setItem(key, id), [BOARD_KEY, boardId]);
   await openRememberedBoard(a);
-  await expect(a.getByText('Backlog', { exact: true })).toBeVisible();
+  await expect(a.getByRole('list', { name: 'Stages, in order' }).getByText('Backlog', { exact: true })).toBeVisible();
 
   // Second client opens the SAME board, then subscribes to its live feed.
   const b = await browser.newPage();
   await b.addInitScript(([key, id]) => window.localStorage.setItem(key, id), [BOARD_KEY, boardId]);
   await openRememberedBoard(b);
-  await expect(b.getByText('Backlog', { exact: true })).toBeVisible();
+  await expect(b.getByRole('list', { name: 'Stages, in order' }).getByText('Backlog', { exact: true })).toBeVisible();
 
   await a.getByRole('button', { name: 'New card' }).click();
   await a.getByLabel('Card title').fill('Realtime card');

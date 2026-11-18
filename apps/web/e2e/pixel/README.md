@@ -49,7 +49,7 @@ the verdict.
 Node 22 (CI and `engines`).
 
     pnpm --filter @superpipeline/web test:pixel                       # everything (builds, starts wrangler dev:pixel and vite)
-    pnpm --filter @superpipeline/web test:pixel -g "SP-Board-Paper"   # one artboard, both themes
+    pnpm --filter @superpipeline/web test:pixel -g "SP-Operate-Paper" # one artboard, both themes
     pnpm --filter @superpipeline/web test:refs                        # the references alone, no app
     pnpm --filter @superpipeline/web test:pixel:report                # open test-results/pixel/index.html
 
@@ -104,6 +104,13 @@ invented (Ira Mehta, `@vibes-fixture.invalid`).
   in the same run, so platforms cancel out.
 - Dark: a reference with a `<artboard>.dark.html` is used as is; otherwise the light file is swapped to
   `data-theme="dark"` (`reference.ts`), and the canvas takes the vibe's dark ground.
+
+## Retired references
+
+The composition contract (2026-11-18) made the board one composition in every vibe, so the twelve board
+references (`SP-Board-*`, `SP-Board-Empty-*`, `SP-Phone-Board-*`) and the shell checks drawn on them were
+retired with their allow-list keys. The visual job still captures the board and the phone board
+(`e2e/visual/screens.ts`), at the sizes those artboards had.
 
 ## The references are locked
 

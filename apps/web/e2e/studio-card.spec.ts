@@ -60,18 +60,17 @@ test('studio phone: the edit form scrolls with the body, and Save can be reached
   await expect(save).toBeFocused();
 });
 
-test('studio board: the column headers show on a desktop, the phone draws rows and no table', async ({ page, request }) => {
+// Was "the column headers show on a desktop, the phone draws rows and no table": the Studio board was an
+// annual-report table. The board is one composition now (Board variant A): lanes of tiles in every vibe.
+test('studio board: the same lanes and tiles on a desktop and a phone, no table, the card reachable by its title', async ({ page, request }) => {
   await setAppearance(page, 'studio.light.strong.0');
   const boardId = await seedBoard(request, 'Studio columns', PIPELINE);
   await request.post(`${API}/v1/boards/${boardId}/cards`, { headers: TENANT, data: { title: 'A row', ownerUserId: 'usr_a' } });
-  await page.setViewportSize({ width: 1280, height: 800 });
-  await openBoard(page, boardId);
-  // The desktop board is the annual report's table (sr-only is a 1px box Playwright still counts as visible: measure the row).
-  const deskTable = page.getByRole('table', { name: /people needed first/ });
-  await expect(deskTable.getByRole('columnheader', { name: 'Tries' })).toBeVisible();
-  expect((await deskTable.locator('thead').boundingBox())!.width).toBeGreaterThan(300);
-  await page.setViewportSize({ width: 375, height: 667 });
-  // The phone board (Task 28) is Studio's row list: no table and no column headers, the card still reachable by its title.
-  await expect(page.getByRole('button', { name: /^A row, in / })).toBeVisible();
-  await expect(page.getByRole('table')).toHaveCount(0);
+  for (const [width, height] of [[1280, 800], [375, 667]] as const) {
+    await page.setViewportSize({ width, height });
+    await openBoard(page, boardId);
+    await expect(page.getByRole('button', { name: /^A row, in / })).toBeVisible();
+    await expect(page.getByRole('list', { name: 'Stages' })).toBeVisible();
+    await expect(page.getByRole('table')).toHaveCount(0);
+  }
 });

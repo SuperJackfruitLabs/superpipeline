@@ -175,7 +175,8 @@ for (const vibe of VIBES) {
         await openWorld(page, route, { vibe, dark: false, width: size.width, height: size.height, at: '2026-10-11T17:00:00Z' });
         const text = await page.evaluate(() => document.body.innerText + '\n' + [...document.querySelectorAll('[aria-label]')].map((e) => e.getAttribute('aria-label')).join('\n'));
         expect(text).not.toMatch(/\?,/);
-        if (vibe === 'daylight') expect(text).toMatch(/Working late, Ira\?/);
+        // The greeting is the Inbox's headline; the board says how many cards want you in one attention line.
+        if (vibe === 'daylight' && name === 'inbox') expect(text).toMatch(/Working late, Ira\?/);
       });
     }
   }
@@ -196,7 +197,7 @@ for (const size of [SIZES[0], SIZES[1]]) {
   test(`Q5 daylight card titles use the card's width | ${size.name}`, async ({ page }) => {
     await openWorld(page, DX, { vibe: 'daylight', dark: false, width: size.width, height: size.height });
     const gaps = await page.evaluate(() =>
-      [...document.querySelectorAll('.dl-tile')].map((t) => {
+      [...document.querySelectorAll('.bv-tile')].map((t) => {
         // The title's text box: the heading's own padding does not count as width the title uses.
         const h = t.querySelector('h3')!;
         const cs = getComputedStyle(h);
@@ -205,27 +206,24 @@ for (const size of [SIZES[0], SIZES[1]]) {
       }),
     );
     expect(gaps.length).toBeGreaterThan(0);
-    // The tile's own padding is 10px on the right; the title must not hold back more than that.
-    for (const g of gaps) expect(g.right, `"${g.title}" stops ${g.right}px short of the card edge`).toBeLessThanOrEqual(12);
+    // The tile's own padding is 14px on the right; the title must not hold back more than that.
+    for (const g of gaps) expect(g.right, `"${g.title}" stops ${g.right}px short of the card edge`).toBeLessThanOrEqual(16);
   });
 }
 
 for (const size of [SIZES[0], SIZES[1]]) {
-  test(`Q5 studio stage columns line up | ${size.name}`, async ({ page }) => {
+  // Was "Q5 studio stage columns line up" (the Studio board's small multiples, gone with the one board
+  // composition): the stage track is what lines the stages up now, one row, every name whole.
+  test(`Q5 studio stage track: every stage in one row, no name clipped | ${size.name}`, async ({ page }) => {
     await openWorld(page, DX, { vibe: 'studio', dark: false, width: size.width, height: size.height });
-    const cols = await page.evaluate(() =>
-      [...document.querySelectorAll('.ar-sm .ar-mul')].map((m) => {
-        const top = (s: string) => m.querySelector(s)?.getBoundingClientRect().top ?? NaN;
-        return { row: Math.round(m.getBoundingClientRect().top), note: top('.note'), who: m.querySelector('.who')!.getBoundingClientRect().height };
+    const cells = await page.evaluate(() =>
+      [...document.querySelectorAll('.bv-track li.vk-stages__step')].map((li) => {
+        const name = li.querySelector('.vk-stages__name')!;
+        return { top: Math.round(li.getBoundingClientRect().top), clipped: name.scrollWidth > name.clientWidth || name.scrollHeight > name.clientHeight + 1 };
       }),
     );
-    expect(cols.length).toBe(7);
-    expect(cols.some((c) => c.who > 20), 'the fixture has a stage owner line that wraps').toBe(true);
-    const rows = new Map<number, number[]>();
-    for (const c of cols) rows.set(c.row, [...(rows.get(c.row) ?? []), c.note]);
-    expect(rows.size).toBeGreaterThan(0);
-    for (const [row, notes] of rows) {
-      expect(Math.max(...notes) - Math.min(...notes), `note rows in the grid row at ${row}: ${notes}`).toBeLessThanOrEqual(1);
-    }
+    expect(cells.length).toBe(7);
+    expect(new Set(cells.map((c) => c.top)).size).toBe(1);
+    expect(cells.filter((c) => c.clipped)).toEqual([]);
   });
 }

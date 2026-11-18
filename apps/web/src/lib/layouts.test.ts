@@ -1,41 +1,23 @@
-import { BOARD_EMPTY_FORMS, OPERATE_LAYOUTS } from './layouts';
+import { OPERATE_LAYOUTS } from './layouts';
 import OperateDaylight from '$lib/components/operate/layouts/OperateDaylight.svelte';
 import OperatePaper from '$lib/components/operate/layouts/OperatePaper.svelte';
 import OperateStudio from '$lib/components/operate/layouts/OperateStudio.svelte';
 import OperateQuiet from '$lib/components/operate/layouts/OperateQuiet.svelte';
 import { VIBES } from '@superjackfruitlabs/vibekit-ui';
 import { describe, expect, it } from 'vitest';
-import { BOARD_LAYOUTS, CARD_LAYOUTS, CARD_PAGE_LAYOUTS, CARD_STATES_LAYOUTS, FACE_VARIANT } from './layouts';
+import { CARD_LAYOUTS, CARD_PAGE_LAYOUTS, CARD_STATES_LAYOUTS, FACE_VARIANT } from './layouts';
 import * as registry from './layouts';
 import CardDaylight from '$lib/components/card/layouts/CardDaylight.svelte';
 import CardPageDaylight from '$lib/components/card/page/CardPageDaylight.svelte';
 import CardStatesDaylight from '$lib/components/card/states/CardStatesDaylight.svelte';
-import BoardQuiet from '$lib/components/board/layouts/BoardQuiet.svelte';
-import BoardStudio from '$lib/components/board/layouts/BoardStudio.svelte';
-import BoardPaper from '$lib/components/board/layouts/BoardPaper.svelte';
-import BoardDaylight from '$lib/components/board/layouts/BoardDaylight.svelte';
-import BoardDaylightPhone from '$lib/components/board/layouts/BoardDaylightPhone.svelte';
-import BoardPaperPhone from '$lib/components/board/layouts/BoardPaperPhone.svelte';
-import BoardStudioPhone from '$lib/components/board/layouts/BoardStudioPhone.svelte';
-import BoardQuietPhone from '$lib/components/board/layouts/BoardQuietPhone.svelte';
 
 describe('the layout registry', () => {
-  it('has a desktop and a phone board and a face for every vibe', () => {
-    for (const v of VIBES) {
-      expect(BOARD_LAYOUTS[v].desktop, v).toBeTruthy();
-      expect(BOARD_LAYOUTS[v].phone, v).toBeTruthy();
-      expect(FACE_VARIANT[v], v).toBeTruthy();
-    }
+  it('has a face for every vibe', () => {
+    for (const v of VIBES) expect(FACE_VARIANT[v], v).toBeTruthy();
   });
-  it('every vibe has its own desktop board and its own phone board', () => {
-    expect(BOARD_LAYOUTS.daylight.desktop).toBe(BoardDaylight);
-    expect(BOARD_LAYOUTS.paper.desktop).toBe(BoardPaper);
-    expect(BOARD_LAYOUTS.studio.desktop).toBe(BoardStudio);
-    expect(BOARD_LAYOUTS.quiet.desktop).toBe(BoardQuiet);
-    expect(BOARD_LAYOUTS.daylight.phone).toBe(BoardDaylightPhone);
-    expect(BOARD_LAYOUTS.paper.phone).toBe(BoardPaperPhone);
-    expect(BOARD_LAYOUTS.studio.phone).toBe(BoardStudioPhone);
-    expect(BOARD_LAYOUTS.quiet.phone).toBe(BoardQuietPhone);
+  it('has no board per vibe: one BoardView draws every vibe, desktop and phone, and one empty board', () => {
+    expect('BOARD_LAYOUTS' in registry).toBe(false);
+    expect('BOARD_EMPTY_FORMS' in registry).toBe(false);
   });
   it('each vibe has its own face variant', () => {
     expect(FACE_VARIANT).toEqual({ daylight: 'mood', paper: 'portrait', studio: 'light', quiet: 'name' });
@@ -67,14 +49,6 @@ describe('the layout registry', () => {
 describe('the shell registry', () => {
   it('has no shell per vibe: one shell draws every vibe, desktop and phone (shell/ShellView.svelte)', () => {
     expect('SHELL_LAYOUTS' in registry).toBe(false);
-  });
-  it('the empty board differs per vibe only in two forms (the shell owns main and h1)', () => {
-    expect(BOARD_EMPTY_FORMS).toEqual({
-      daylight: { eyebrow: 'pill', button: 'vk' },
-      paper: { eyebrow: 'pill', button: 'vk' },
-      studio: { eyebrow: 'kick', button: 'ar' },
-      quiet: { eyebrow: 'pill', button: 'vk' },
-    });
   });
 });
 

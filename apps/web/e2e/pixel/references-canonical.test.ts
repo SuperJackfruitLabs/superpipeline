@@ -30,7 +30,7 @@ describe('the guard: a page may place a vibekit component, never restyle it', ()
 });
 
 describe('references are re-synced to vibekit 0.0.1', () => {
-  it('has all 80 references', () => expect(files).toHaveLength(80));
+  it("has all 68 references (the board's twelve retired by the composition contract)", () => expect(files).toHaveLength(68));
   for (const f of files) {
     const html = readFileSync(join(DIR, f), 'utf8');
     it(`${f} names the product, so it paints Gold`, () => {

@@ -1,8 +1,8 @@
 // apps/web/src/lib/components/board/board-model.ts
 /**
- * The board, once, for every layout (spec SB §2). PlanView builds it from the snapshot and the
- * filtered cards; a layout never re-derives what is here, so the four vibes cannot disagree about
- * which card needs you, which comes first, or what a stage is called.
+ * The board, once (spec SB §2). PlanView builds it from the snapshot and the filtered cards; the
+ * board view never re-derives what is here, so nothing can disagree about which card needs you,
+ * which comes first, or what a stage is called.
  */
 import type { BoardSnapshot, Card, Stage } from '$lib/api';
 import type { AttentionItem } from '$lib/components/attention/attention';
@@ -25,6 +25,8 @@ export interface BoardModel {
   /** People needed first (plan ruling X-1). */
   ordered: CardSummary[];
   stages: BoardStage[];
+  /** The stages that get a lane: those holding a card, and the last stage (where finished work shows). */
+  laneStages: BoardStage[];
   /** The board's stage definitions, in order (what CardMoveMenu takes). */
   stageDefs: Stage[];
   needs: CardSummary[];
@@ -96,6 +98,7 @@ export function buildBoardModel(board: BoardSnapshot, filteredCards: Card[], ctx
     cards: inApiOrder,
     ordered,
     stages,
+    laneStages: stages.filter((s) => s.count > 0 || s.terminal),
     stageDefs: [...board.stages].sort((a, b) => a.order - b.order),
     needs,
     working: group('working'),

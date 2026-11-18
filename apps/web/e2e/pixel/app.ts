@@ -16,7 +16,7 @@ const QUIET_ABORT = ['https://hub.agentpod.dev/**', 'https://app.superlibrary.de
 
 /** `onPage` is a test hook (harness.spec.ts): runs after the guard and the screen's routes are installed. */
 export async function renderApp(browser: Browser, screen: Screen, theme: Theme, opts: { onPage?: (page: Page) => Promise<void>; refBoxes?: Box[] } = {}): Promise<{ shots: Buffer[]; masks: Mask[]; partMasks: Mask[][] }> {
-  const { w, h } = MANIFEST[screen.artboard]!;
+  const { w, h } = screen.size ?? MANIFEST[screen.artboard]!;
   const strength = screen.strength ?? (screen.vibe === 'quiet' ? 'off' : 'strong');
   const themeWord = theme === 'dark' ? 'dark' : screen.lightTheme ?? 'light';
   const context = await browser.newContext({
@@ -75,7 +75,7 @@ export async function renderApp(browser: Browser, screen: Screen, theme: Theme, 
     // So a page taller than the artboard grows the viewport first, and waits for the app again.
     // Grow only when the page's own (fractional) height rounds past the artboard: scrollHeight ceils, so a
     // page 2983.4px tall reads 2984, and the phone root's min-height:100dvh then stretches the main area by
-    // 0.6px, which draws the tab bar a pixel lower than the reference's (SP-Phone-Board-Paper on Linux).
+    // 0.6px, which draws the tab bar a pixel lower than the reference's (the retired SP-Phone-Board-Paper, on Linux).
     const tall = await page.evaluate(() => {
       const sh = document.documentElement.scrollHeight;
       const natural = Math.max(0, ...Array.from(document.body.children, (e) => e.getBoundingClientRect().bottom + scrollY));

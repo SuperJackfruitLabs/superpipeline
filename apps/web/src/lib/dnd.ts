@@ -52,3 +52,41 @@ export const columnDropTarget: Action<HTMLElement, DropColumnParams> = (node, pa
     },
   };
 };
+
+export interface DropCellParams {
+  stageKey: string;
+  onDrop: (cardId: string) => void;
+}
+
+/**
+ * Make a cell of the stage track (an `li`) a drop target: `data-over` is set on it while a card is
+ * held over it, and `onDrop(cardId)` runs when the card is released there. The track names every
+ * stage, so a card can be dropped on a stage that has no lane.
+ */
+export const trackCellDropTarget: Action<HTMLElement, DropCellParams> = (node, params) => {
+  let current = params;
+  const over = (on: boolean) => {
+    if (on) node.dataset.over = '';
+    else delete node.dataset.over;
+  };
+  const cleanup = dropTargetForElements({
+    element: node,
+    getData: () => ({ stageKey: current.stageKey }),
+    onDragEnter: () => over(true),
+    onDragLeave: () => over(false),
+    onDrop: ({ source }) => {
+      over(false);
+      const cardId = source.data.cardId;
+      if (typeof cardId === 'string') current.onDrop(cardId);
+    },
+  });
+  return {
+    update(next) {
+      current = next;
+    },
+    destroy() {
+      over(false);
+      cleanup();
+    },
+  };
+};

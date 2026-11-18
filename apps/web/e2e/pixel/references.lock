@@ -1,14 +1,6 @@
 {
   "files": {
     "CORRECTIONS.md": "4df9fd61f83beefe4b24f1aff99e097f11f93315eb3076ffe587b26cca7a1834",
-    "SP-Board-Daylight.html": "1c95355ca93176190c1582c7c52b0b9acdcd67e97a29b6a298e411c998e2bcd4",
-    "SP-Board-Empty-Daylight.html": "6c4a78b81a3ae4db7660b2928c3841af97ac90882dcc179138b7d41e6e0241c1",
-    "SP-Board-Empty-Paper.html": "207fd6a002c026010741469f90e53b51024481a40d11d57d0c37f5d97d20a425",
-    "SP-Board-Empty-Quiet.html": "f855616c434e3d73ef64b1bfcf47e92454fc8be8dd25992aeb0d1c9fde983413",
-    "SP-Board-Empty-Studio.html": "11ad0200b111bc7b66f16a8d71b6fcc91c967dc1b3b11bf504f92dcf94e8393e",
-    "SP-Board-Paper.html": "8a60dccd55eb9262b4cb62dfa85804e1b0eaa85bba808512d042ba5979ebaa38",
-    "SP-Board-Quiet.html": "b52585b23105cd2c84c13dca573c83ebf503a12445d0c40d11e0b35d1243c877",
-    "SP-Board-Studio.html": "c93bdb6d11069ada04d81e6410060fb8bdb091c1252b182f260ab1c22ddb2198",
     "SP-Card-Daylight.html": "653825ba9e707b4c6645e807d6c2d1340e073a06d6d21d3bd0b9272c6a13f914",
     "SP-Card-Paper.html": "d3e22220af732b2fe046ae545768d6b51b892a0c7e3c27ec2612f9107cc1522d",
     "SP-Card-Quiet.html": "0f1663a06bbe1609e4312f19552769e502dce7f358ba128ab9afccd59862a781",
@@ -53,10 +45,6 @@
     "SP-Operate-Paper.html": "ee2f8a8351b8bdcaa32f9c05bc888d1bdbf77c278491a3893d597d6701f7bef8",
     "SP-Operate-Quiet.html": "7f2c641233e0bfef5c83413f26fa33f7fe015f8d28dbfbe2d01d26a2beaf86f3",
     "SP-Operate-Studio.html": "2e97bbcd58d2f6fd207bdff202eab8448d84bd564bc92981780c13ac77bfcfea",
-    "SP-Phone-Board-Daylight.html": "68bc09a74df9e98e57ea83eebfd8928c37ce80ee212ecaddc7e0a08037c31ce2",
-    "SP-Phone-Board-Paper.html": "afc0fe31039aa4a3dd2ed8fd5890773202c8016a29779cfd3bf477d497944ceb",
-    "SP-Phone-Board-Quiet.html": "55419b2888d60478518ffef15ea49a73311f183d6f9378045e1ebd5393259815",
-    "SP-Phone-Board-Studio.html": "6d8fb08c02d81604540459085bcc405a56d7954c61ece43918ec150cdc92177f",
     "SP-Phone-Card-Daylight.html": "cf06292f14f5f0c8c87c49a268d2649c79d2344a9fdf51e493295fc407f3422a",
     "SP-Phone-Card-Paper.html": "ce8da83bec810a461c54a105c941bf9b21bfaa25b1df50d9990ec919f38ad77f",
     "SP-Phone-Card-Quiet.html": "dfbeed5487bb76c6806e91b2569a9db2076db7a0066454497758318d0bd5f128",
@@ -83,7 +71,7 @@
     "SP-Workspace-Other-Studio.html": "98804f8a3e2693b3a265b2ee3cb80396265145b88b101a7d78f98164ef7b2fd6",
     "_vibekit-0.0.10/vibekit.css": "d16b8e30e4974b8f9e4c41ba723169d4835ae555323440f6831023403fddc95b",
     "_vibekit-0.0.4/button.css": "2e082042c6fde2999a47beff5986c7dfd4994f26facbc1e5c067b8c068474152",
-    "manifest.json": "40b886eff155257ede70cde3de0fd5143862a44e06e51a79d22c4bcbef793945"
+    "manifest.json": "252121356738088968e81da9b0967c075e0541be5dd4a394f31a0a59316395d1"
   },
   "thresholds": {
     "PIXEL_THRESHOLD": 0.1,
@@ -100,10 +88,6 @@
     "token-secret"
   ],
   "allowList": [
-    "SP-Board-Daylight·dark",
-    "SP-Board-Daylight·light",
-    "SP-Board-Paper·dark",
-    "SP-Board-Paper·light",
     "SP-Card-Daylight·dark",
     "SP-Card-Daylight·light",
     "SP-Card-Paper·dark",
@@ -169,13 +153,6 @@
     "SP-Operate-Quiet·light",
     "SP-Operate-Studio·dark",
     "SP-Operate-Studio·light",
-    "SP-Phone-Board-Daylight#shell·dark",
-    "SP-Phone-Board-Daylight·dark",
-    "SP-Phone-Board-Daylight·light",
-    "SP-Phone-Board-Quiet·dark",
-    "SP-Phone-Board-Quiet·light",
-    "SP-Phone-Board-Studio·dark",
-    "SP-Phone-Board-Studio·light",
     "SP-Phone-Card-Daylight·dark",
     "SP-Phone-Card-Daylight·light",
     "SP-Phone-Card-Paper·dark",

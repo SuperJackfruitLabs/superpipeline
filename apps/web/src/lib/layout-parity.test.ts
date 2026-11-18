@@ -31,17 +31,17 @@ export function conditionalSections(src: string): string[] {
   return out;
 }
 
-// Every pre-sweep layout is gone: the board (Task 28) and the card (Tasks 22-27). What is left to
-// guard is the registry itself, so a vibe can never fall back to a missing or legacy layout.
+// Every pre-sweep layout is gone: the board (Task 28, then one BoardView for every vibe) and the card
+// (Tasks 22-27). What is left to guard is the registry itself, so a vibe can never fall back to a
+// missing or legacy layout, and the board never goes back to a layout per vibe.
 const LAYOUTS_SRC = readFileSync(new URL('./layouts.ts', import.meta.url), 'utf8');
 const VIBE_NAMES = ['Daylight', 'Paper', 'Studio', 'Quiet'];
 
-describe('every vibe has its swept board and card layouts (spec §7.3–7.5)', () => {
+describe('every vibe has its swept card layouts; the board is one composition (spec §7.3–7.5)', () => {
   it('layouts.ts imports nothing from a legacy folder', () => expect(LAYOUTS_SRC).not.toMatch(/\/legacy\//));
+  it('layouts.ts picks no board per vibe: BoardView draws every vibe', () => expect(LAYOUTS_SRC).not.toMatch(/components\/board\/layouts|BOARD_LAYOUTS/));
   for (const v of VIBE_NAMES) {
     const k = v.toLowerCase();
-    it(`${v} board: desktop Board${v} and phone Board${v}Phone`, () =>
-      expect(LAYOUTS_SRC).toContain(`${k}: { desktop: Board${v}, phone: Board${v}Phone }`));
     it(`${v} card: drawer Card${v} and phone CardPhone${v}`, () =>
       expect(LAYOUTS_SRC).toMatch(new RegExp(`${k}: \\{ drawer: Card${v}, phone: CardPhone${v},`)));
     it(`${v} card page and states`, () => {

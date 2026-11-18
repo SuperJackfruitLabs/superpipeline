@@ -9,15 +9,6 @@ import TriggerQuiet from '$lib/components/dialogs/switcher/TriggerQuiet.svelte';
 import type { TriggerCopyProps } from '$lib/components/dialogs/switcher/types';
 import type { Vibe } from '@superjackfruitlabs/vibekit-ui';
 import type { Component } from 'svelte';
-import BoardQuiet from '$lib/components/board/layouts/BoardQuiet.svelte';
-import BoardStudio from '$lib/components/board/layouts/BoardStudio.svelte';
-import BoardPaper from '$lib/components/board/layouts/BoardPaper.svelte';
-import BoardDaylight from '$lib/components/board/layouts/BoardDaylight.svelte';
-import BoardDaylightPhone from '$lib/components/board/layouts/BoardDaylightPhone.svelte';
-import BoardPaperPhone from '$lib/components/board/layouts/BoardPaperPhone.svelte';
-import BoardStudioPhone from '$lib/components/board/layouts/BoardStudioPhone.svelte';
-import BoardQuietPhone from '$lib/components/board/layouts/BoardQuietPhone.svelte';
-import type { BoardLayoutProps } from '$lib/components/board/layouts/types';
 import CardDaylight from '$lib/components/card/layouts/CardDaylight.svelte';
 import CardQuiet from '$lib/components/card/layouts/CardQuiet.svelte';
 import CardStudio from '$lib/components/card/layouts/CardStudio.svelte';
@@ -79,15 +70,6 @@ import type { WorkspaceTab } from '$lib/components/workspace/workspace-counts.sv
 
 export { FACE_VARIANT, type FaceVariant } from './face-variant';
 
-/** Every vibe has its own board, on a desktop and on a phone (switch at `viewport.phone`). */
-export interface BoardLayout { desktop: Component<BoardLayoutProps>; phone: Component<BoardLayoutProps> }
-export const BOARD_LAYOUTS: Readonly<Record<Vibe, BoardLayout>> = {
-  daylight: { desktop: BoardDaylight, phone: BoardDaylightPhone },
-  paper: { desktop: BoardPaper, phone: BoardPaperPhone },
-  studio: { desktop: BoardStudio, phone: BoardStudioPhone },
-  quiet: { desktop: BoardQuiet, phone: BoardQuietPhone },
-};
-
 /**
  * A vibe's card: the drawer layout, the phone layout (below 640px), the panel width and where it
  * sits (amendments §7.3). Every desktop card is modal over a scrim (SP-Card-Daylight draws `.dl-scrim`),
@@ -118,23 +100,6 @@ export const CARD_PAGE_LAYOUTS: Readonly<Record<Vibe, Component<CardPageProps>>>
 /** The card-states gallery per vibe. Tasks 25–27 replace Paper, Studio and Quiet. */
 export const CARD_STATES_LAYOUTS: Readonly<Record<Vibe, Component<CardStatesProps>>> = {
   daylight: CardStatesDaylight, paper: CardStatesPaper, studio: CardStatesStudio, quiet: CardStatesQuiet,
-};
-
-/**
- * What differs between the four empty boards besides CSS (SP-Board-Empty-*). The shell owns the
- * page's one main and one h1, so the heading is always an h2 and the skip link needs no form here.
- */
-export interface EmptyForm {
-  /** A product pill, or Studio's kicker line. */
-  eyebrow: 'pill' | 'kick';
-  /** `vk-button vk-button--primary`, or Studio's `.ar-btn`. */
-  button: 'vk' | 'ar';
-}
-export const BOARD_EMPTY_FORMS: Readonly<Record<Vibe, EmptyForm>> = {
-  daylight: { eyebrow: 'pill', button: 'vk' },
-  paper: { eyebrow: 'pill', button: 'vk' },
-  studio: { eyebrow: 'kick', button: 'ar' },
-  quiet: { eyebrow: 'pill', button: 'vk' },
 };
 
 /** Operate draws different markup in each vibe (four references, four DOMs). */

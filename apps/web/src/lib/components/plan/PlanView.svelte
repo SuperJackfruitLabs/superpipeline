@@ -1,23 +1,22 @@
 <script lang="ts">
   /**
-   * Plan · Boards: the board or the list, inside the shell. The page draws its own top row (the view
-   * switch, Filter and the "Showing…" line, `PlanTopRow`); `?view=` picks the view from a link. Projects is Plan's other section
+   * Plan · Boards: the board or the list, inside the shell. The board draws its own top row
+   * (`BoardView`); the List draws the same row (`BoardTopRow`) with its tools; `?view=` picks the view from a link. Projects is Plan's other section
    * (`/plan/projects`, nav v2): an old `?view=projects` link is sent there.
    */
   import { page } from '$app/state';
   import { goto } from '$app/navigation';
-  import { getUsage } from '$lib/api';
   import { app } from '$lib/stores/app.svelte';
   import { appearance } from '$lib/appearance.svelte';
-  import { viewport } from '$lib/viewport.svelte';
-  import { BOARD_EMPTY_FORMS, BOARD_LAYOUTS, LIST_LAYOUTS } from '$lib/layouts';
+  import { LIST_LAYOUTS } from '$lib/layouts';
   import { isOldProjectsLink, viewFromSearch } from '$lib/view-param';
   import BoardEmpty from '$lib/components/board/BoardEmpty.svelte';
+  import BoardTopRow from '$lib/components/board/BoardTopRow.svelte';
+  import BoardView from '$lib/components/board/BoardView.svelte';
   import { buildBoardModel } from '$lib/components/board/board-model';
   import { stageSummaries, summarize } from '$lib/components/board/card-summary';
   import AppShell from '$lib/components/shell/AppShell.svelte';
   import { shellModel } from '$lib/components/shell/shell-model.svelte';
-  import PlanTopRow from './PlanTopRow.svelte';
   import { buildRows, filtersActive, groupRows, nextSort, quickCounts } from './list/list-model';
   import { ListUi } from './list/list-ui.svelte';
   import type { ListLayoutProps } from './list/types';
@@ -30,29 +29,12 @@
 
   const vibe = $derived(appearance.value.vibe);
 
-  /** The week's spend, for the Studio figures; fetched once per board. */
-  let spend7d = $state<number | null | undefined>(undefined);
-  // Keyed on the id alone: a live refresh replaces app.board with a new object for the same board, and
-  // re-reading then would draw the figure as still being read until the second read lands.
-  const spendBoardId = $derived(app.board?.boardId);
-  $effect(() => {
-    const id = spendBoardId;
-    if (!id) return;
-    let live = true;
-    spend7d = undefined;
-    void app.markBusy(getUsage(id, '7d').then((u) => { if (live) spend7d = u.totalCostUsd; }, () => { if (live) spend7d = null; }));
-    return () => { live = false; };
-  });
-
   const me = $derived(app.user ? { id: app.user.userId, name: shellModel.userName, initials: shellModel.initials } : null);
   const model = $derived(
-    app.board ? buildBoardModel(app.board, app.filteredCards(), { agents: app.agents, members: app.members, labels: app.labelById(), nowMs: Date.now(), me, spend7d }) : null,
+    app.board ? buildBoardModel(app.board, app.filteredCards(), { agents: app.agents, members: app.members, labels: app.labelById(), nowMs: Date.now(), me, spend7d: undefined }) : null,
   );
   /** No live card at all (filters ignored): the board explains itself instead of drawing empty lanes. */
   const empty = $derived(!!app.board && app.board.cards.every((c) => c.archivedAt !== null));
-  /** The empty board explains itself on a phone too; its stylesheet folds to one column below 900px. */
-  const showEmpty = $derived(empty);
-  // Studio's empty board keeps the page gutters (SP-Board-Empty-Studio: the card at x 104, 1296 wide); its full board bleeds.
 
   const List = $derived(LIST_LAYOUTS[vibe]);
   /** The List's transient state lives here, so a re-mounted layout keeps it. */
@@ -91,16 +73,16 @@
   boardName={app.board?.name ?? 'Untitled board'}
   plan="boards"
   live={shellModel.liveToggle}
-  bleed={(app.view === 'board' && !(showEmpty && vibe === 'studio')) || vibe === 'quiet'}
+  bleed={app.view === 'board' || vibe === 'quiet'}
   ownHeading={app.view === 'list' && vibe !== 'daylight'}
 >
-  <PlanTopRow tools={app.view === 'list' && List.toolbar ? listTools : undefined} />
-  {#if model && app.view === 'board' && showEmpty}
-    <BoardEmpty {model} intro={app.board?.intro} form={BOARD_EMPTY_FORMS[vibe]} {me} onCompose={() => app.requestCompose()} />
+  {#if model && app.view === 'board' && empty}
+    <BoardTopRow filters={app.filters} />
+    <BoardEmpty {model} intro={app.board?.intro} {me} onCompose={() => app.requestCompose()} />
   {:else if model && app.view === 'board'}
-    {@const Board = BOARD_LAYOUTS[vibe][viewport.phone ? 'phone' : 'desktop']}
-    <Board {model} {vibe} phase={appearance.phase} onCompose={() => app.requestCompose()} />
+    <BoardView {model} filters={app.filters} onCompose={() => app.requestCompose()} />
   {:else if app.view === 'list'}
+    <BoardTopRow filters={app.filters} tools={List.toolbar ? listTools : undefined} />
     {#if listProps}<List.body {...listProps} />{/if}
   {/if}
 </AppShell>

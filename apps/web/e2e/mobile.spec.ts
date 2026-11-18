@@ -112,7 +112,7 @@ test.describe('on a phone', () => {
 test.describe('on a desktop', () => {
   test('the rail is still simply there, and the bottom bar is not', async ({ page }) => {
     await openRememberedBoard(page);
-    await expect(page.getByText('Backlog', { exact: true })).toBeVisible();
+    await expect(page.getByRole('list', { name: 'Stages' }).getByText('Backlog', { exact: true })).toBeVisible();
     // One navigation at a time: the rail above 900px, the bottom bar below it. Both at once was
     // the shape of the `max-[900px]:`/`min-[900px]:` bug the restructure was careful to avoid.
     const links = page.getByRole('navigation', { name: 'Superpipeline' }).getByRole('link', { name: 'Plan' });

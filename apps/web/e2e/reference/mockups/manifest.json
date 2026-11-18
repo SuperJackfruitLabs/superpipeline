@@ -1,24 +1,4 @@
 {
- "SP-Board-Daylight": {
-  "w": 1440,
-  "h": 1148,
-  "title": "Board \u00b7 Daylight"
- },
- "SP-Board-Paper": {
-  "w": 1440,
-  "h": 1913,
-  "title": "Board \u00b7 Paper"
- },
- "SP-Board-Studio": {
-  "w": 1440,
-  "h": 2541,
-  "title": "Board \u00b7 Studio"
- },
- "SP-Board-Quiet": {
-  "w": 1440,
-  "h": 2297,
-  "title": "Board \u00b7 Quiet (Agent Onboarding)"
- },
  "SP-Card-Daylight": {
   "w": 1440,
   "h": 3120,
@@ -119,26 +99,6 @@
   "h": 2201,
   "title": "List \u00b7 Quiet"
  },
- "SP-Board-Empty-Daylight": {
-  "w": 1440,
-  "h": 970,
-  "title": "Empty board \u00b7 Daylight"
- },
- "SP-Board-Empty-Paper": {
-  "w": 1440,
-  "h": 1060,
-  "title": "Empty board \u00b7 Paper"
- },
- "SP-Board-Empty-Studio": {
-  "w": 1440,
-  "h": 820,
-  "title": "Empty board \u00b7 Studio"
- },
- "SP-Board-Empty-Quiet": {
-  "w": 1440,
-  "h": 960,
-  "title": "Empty board \u00b7 Quiet"
- },
  "SP-Projects-Daylight": {
   "w": 1440,
   "h": 1311,
@@ -238,26 +198,6 @@
   "w": 1440,
   "h": 2020,
   "title": "Agent spend \u00b7 Quiet"
- },
- "SP-Phone-Board-Daylight": {
-  "w": 390,
-  "h": 3729,
-  "title": "Board phone \u00b7 Daylight"
- },
- "SP-Phone-Board-Paper": {
-  "w": 390,
-  "h": 2983,
-  "title": "Board phone \u00b7 Paper"
- },
- "SP-Phone-Board-Studio": {
-  "w": 390,
-  "h": 2861,
-  "title": "Board phone \u00b7 Studio"
- },
- "SP-Phone-Board-Quiet": {
-  "w": 390,
-  "h": 3435,
-  "title": "Board phone \u00b7 Quiet"
  },
  "SP-Phone-Card-Daylight": {
   "w": 390,

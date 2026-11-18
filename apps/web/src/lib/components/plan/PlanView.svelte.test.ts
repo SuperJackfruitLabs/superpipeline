@@ -2,7 +2,7 @@
 /**
  * What PlanView decides: an empty board draws the empty explanation (on a phone too), the page draws
  * its own top row (Board | List, Filter, the "Showing…" line), and the shell draws no greeting. The
- * shell, the board layouts and the store are the real ones.
+ * shell, the board view and the store are the real ones.
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, fireEvent, render, screen, within } from '@testing-library/svelte';
@@ -45,14 +45,15 @@ describe('PlanView: the empty board', () => {
       app.board = board(archived);
       const { container } = render(PlanView);
       expect(screen.getByRole('heading', { level: 2, name: 'No cards yet. Here is what this board does.' })).toBeTruthy();
-      expect(container.querySelector('.pd-board, .dl-board')).toBeNull();
+      expect(container.querySelector('.bv')).toBeNull();
+      expect(screen.queryAllByRole('region')).toHaveLength(0);
     });
   }
   it('draws the board, not the explanation, once a card is live', () => {
     app.board = board();
     const { container } = render(PlanView);
     expect(container.querySelector('.em')).toBeNull();
-    expect(container.querySelector('.dl-board')).toBeTruthy();
+    expect(container.querySelector('.bv')).toBeTruthy();
   });
 });
 
@@ -65,7 +66,7 @@ describe('PlanView: the greeting', () => {
       const { container } = render(PlanView);
       expect(container.querySelector('.dl-band, .pd-hello')).toBeNull();
       expect(screen.queryByRole('region', { name: 'Greeting' })).toBeNull();
-      expect(container.querySelector(phone ? '.pd-board' : '.dl-board')).toBeTruthy();
+      expect(container.querySelector('.bv')).toBeTruthy();
     });
   }
 });
@@ -92,15 +93,12 @@ describe('PlanView: the top row', () => {
 });
 
 describe('PlanView: the week\'s spend', () => {
-  it('is read once per board, not again when a refresh replaces the board object', async () => {
-    // A live refresh swaps app.board for a new object with the same id. Reading the spend again would
-    // draw it as still being read (a dash) until the second read lands.
+  // The Studio boards printed the week's spend; the one board composition does not, so it reads none
+  // (was: "is read once per board, not again when a refresh replaces the board object").
+  it('is not read: the board shows no spend figure', async () => {
     app.board = board();
     render(PlanView);
     await tick();
-    const before = usage.calls;
-    app.board = board();
-    await tick();
-    expect(usage.calls).toBe(before);
+    expect(usage.calls).toBe(0);
   });
 });

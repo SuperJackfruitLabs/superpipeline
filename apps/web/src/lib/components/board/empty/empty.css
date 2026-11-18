@@ -4,7 +4,7 @@
 .em-head { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: 24px 56px; align-items: end; }
 .em-eyebrow { margin: 0 0 10px; overflow-wrap: anywhere; }
 .em-head > div { min-width: 0; }
-.em-eyebrow:not(.kick) { font-size: 13px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--vk-product-superpipeline-fg); }
+.em-eyebrow { font-size: 13px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--vk-product-superpipeline-fg); }
 .em-eyebrow span { padding: 3px 10px; border-radius: var(--vk-radius-pill); background: var(--vk-product-superpipeline-bg); }
 .em-head h1, .em-head .em-h { margin: 0; font-family: var(--vk-font-display); font-size: 44px; line-height: 1.08; font-weight: 700; letter-spacing: -0.015em; }
 .em-lede { margin: 14px 0 0; font-size: 19px; line-height: 1.55; color: var(--vk-color-muted); max-width: 60ch; }

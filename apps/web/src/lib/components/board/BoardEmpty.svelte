@@ -2,20 +2,18 @@
 <script lang="ts">
   /**
    * A board with no live cards: what it does, step by step, and the way to write the first card (SB §6).
-   * Drawn inside the shell's main, under the shell's h1, so the heading is an h2.
+   * Drawn inside the shell's main, under the shell's h1, so the heading is an h2. One form in every vibe.
    */
   import './empty/empty.css';
-  import './empty/empty-studio.css';
   import { Button, Face } from '@superjackfruitlabs/vibekit-ui';
   import type { BoardSnapshot } from '$lib/api';
-  import type { EmptyForm } from '$lib/layouts';
   import Icon from '$lib/components/parts/Icon.svelte';
   import Initials from '$lib/components/parts/Initials.svelte';
   import { plural } from '$lib/words';
   import type { BoardModel, Me } from './board-model';
   import { emptyHint, emptyLedeHtml, emptyTags, emptyWho } from './board-words';
 
-  let { model, intro, form, me, onCompose }: { model: BoardModel; intro: BoardSnapshot['intro']; form: EmptyForm; me: Me | null; onCompose: () => void } = $props();
+  let { model, intro, me, onCompose }: { model: BoardModel; intro: BoardSnapshot['intro']; me: Me | null; onCompose: () => void } = $props();
   const title = 'No cards yet. Here is what this board does.';
 </script>
 
@@ -25,16 +23,12 @@
   <div class="em-card">
     <div class="em-head">
       <div>
-        {#if form.eyebrow === 'kick'}<p class="em-eyebrow kick">{model.boardName}</p>{:else}<p class="em-eyebrow"><span>{model.boardName}</span></p>{/if}
+        <p class="em-eyebrow"><span>{model.boardName}</span></p>
         <h2 id="em-h" class="em-h">{title}</h2>
         <p class="em-lede">{@html emptyLedeHtml(intro, model.stages.length)}</p>
       </div>
       <div class="em-cta">
-        {#if form.button === 'ar'}
-          <button class="ar-btn" type="button" onclick={onCompose}><Icon name="plus" size={20} strokeWidth={1.8} />Write the first card</button>
-        {:else}
-          <Button onclick={onCompose} icon={plus}>Write the first card</Button>
-        {/if}
+        <Button onclick={onCompose} icon={plus}>Write the first card</Button>
         <p>{emptyHint(intro)}</p>
       </div>
     </div>

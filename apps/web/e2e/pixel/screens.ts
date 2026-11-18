@@ -27,6 +27,8 @@ export interface Screen {
   refPatch?: (page: Page) => Promise<void>;
   /** The screen writes to the API (decides, resumes): re-seed the world before the next screen. */
   writes?: boolean;
+  /** The page size, for a screen with no reference artboard (the visual job's board screens); default the manifest's. */
+  size?: { w: number; h: number };
 }
 
 export const DEFAULT_CLOCK = '2026-10-11T08:21:00.000Z';
@@ -147,25 +149,8 @@ const LIBRARY_EMPTY = {
   'https://app.superlibrary.dev/api/v1/related': { status: 200, json: { items: [] } },
 };
 
-/** The board's own content, per swept vibe (the shell around it is compared on `#shell`). */
-const BOARD_PARTS: Partial<Record<Vibe, Part[]>> = {
-  daylight: [{ name: 'greeting', ref: '.dl-band', app: '.dl-band' }, { name: 'board', ref: '.dl-board', app: '.dl-board' }],
-  studio: [{ name: 'board', ref: '.bd-grid', app: '.bd-grid' }],
-  quiet: [{ name: 'board', ref: 'main.qt', app: 'div.qt' }],
-  paper: [{ name: 'columns', ref: '.pp-cols', app: '.pp-cols' }, { name: 'pipeline', ref: '.pp-pipe', app: '.pp-pipe' }],
-};
-
 function forVibe(v: Vibe, V: string, h: (a: string) => number): Screen[] {
   return [
-    { artboard: `SP-Board-${V}`, vibe: v, route: v === 'quiet' ? '/b/brd_f47143722126442c' : DX, strength: off(v), masks: [LIVE],
-      // Daylight (Task 14): the board's own content, part by part; the shell around it is compared on `#shell`.
-      parts: BOARD_PARTS[v],
-      // Daylight draws the peek open on 58f8: point at its title and let the 300 ms debounce pass.
-      steps: v === 'daylight' ? async (p) => { await p.getByRole('button', { name: /^AgentPod: connector interface/ }).first().hover(); await p.clock.runFor(400); await p.locator('.dl-peek').waitFor({ state: 'visible' }); } : undefined },
-    { artboard: `SP-Board-Empty-${V}`, vibe: v, route: '/b/brd_2441b5578f704b93', strength: off(v), masks: [LIVE],
-      // The board's own card, like the other swept boards; the shell around it is compared on `#shell` (the reference world's "4 need you" is not this empty board's).
-      parts: [{ name: 'empty-card', ref: '.em-card', app: '.em-card' }] },
-    { artboard: `SP-Phone-Board-${V}`, vibe: v, route: DX, strength: off(v), masks: [LIVE] },
     { artboard: `SP-Card-${V}`, vibe: v, route: C4605, strength: off(v), fulfil: LIBRARY_EMPTY, masks: backdrop(v, h(`SP-Card-${V}`)),
       // vibekit's Drawer focuses its first control on open; the reference is drawn unfocused.
       steps: v === 'paper' ? undefined : blur },
@@ -225,99 +210,12 @@ function forVibe(v: Vibe, V: string, h: (a: string) => number): Screen[] {
 }
 
 export const SCREENS: Screen[] = [];
-const liveDot = (selector: string): MaskSpec => ({ id: 'live-dot', why: MASK_IDS['live-dot']!, selector, side: 'both' });
-/** The shell says Live only once the board's socket is open; wait for it, not a timeout. */
-const waitLive = async (page: Page) => { await page.locator('[data-live="on"]').first().waitFor(); };
-const part = (name: string, ref: string, app: string): Part => ({ name, ref, app });
-
 /**
- * The shell of each vibe, compared part by part on its board artboard. A rail that spans the page
- * is compared by its pieces: its height follows the board below it, which the board tasks own.
- * Daylight's app side is vibekit's AppNav and Masthead (preflight ruling), so its parts name
- * vibekit's elements; the reference keeps the mockup's hand-drawn rail and top bar.
+ * The shells were compared, part by part, on the board artboards. The composition contract retired
+ * those references (the board and its shell are one composition in every vibe), so no shell check
+ * is left; the list stays so a key can still say `#shell`.
  */
-const DESKTOP_SHELL: Screen[] = [
-  {
-    artboard: 'SP-Board-Daylight', vibe: 'daylight', route: DX, steps: waitLive,
-    parts: [
-      { ...part('rail-logo', 'nav.dy-rail > .dy-logo', 'nav.vk-appnav > .vk-appnav__mark'), graphic: true },
-      part('rail-destinations', 'nav.dy-rail > .dy-dests', 'nav.vk-appnav > .vk-appnav__list'),
-      part('rail-crew', 'nav.dy-rail > .dy-crew', 'nav.vk-appnav > .vk-appnav__crew'),
-      part('rail-foot', 'nav.dy-rail > .dy-foot', 'nav.vk-appnav > .vk-appnav__foot'),
-      part('top-bar', '.dy-sky > header.dy-top', '.vk-masthead header.vk-masthead__bar'),
-      part('sub-bar', '.dy-sky > .dy-sub', '.vk-masthead .vk-masthead__tabs'),
-    ],
-    masks: [liveDot('.dy-livedot, .vk-live__dot')],
-  },
-  // Paper, Studio and Quiet: the app side is vibekit's AppNav, Masthead and StatusLine (preflight
-  // ruling), so the app selectors name vibekit's elements; the references keep the mockups' markup.
-  {
-    artboard: 'SP-Board-Paper', vibe: 'paper', route: DX, steps: waitLive,
-    parts: [
-      part('nameplate', 'header.mh .mh-name', 'nav.vk-appnav > .vk-appnav__mark'),
-      part('quiet-controls', 'header.mh .mh-quiet', 'nav.vk-appnav > .vk-appnav__foot'),
-      part('sections', 'header.mh .mh-sections > nav', 'nav.vk-appnav > .vk-appnav__list'),
-      part('edition', 'header.mh > .mh-ed', '.vk-masthead header.vk-masthead__bar'),
-      part('sub-bar', 'header.mh > .mh-tabs', '.vk-masthead > .vk-masthead__tabs'),
-    ],
-    masks: [liveDot('.mh-livedot, .vk-live__dot')],
-  },
-  {
-    artboard: 'SP-Board-Studio', vibe: 'studio', route: DX, steps: waitLive,
-    // Studio's rail is icons with tooltips: those parts are glyphs, checked for an svg, not text.
-    parts: [
-      { ...part('rail-mark', 'nav.ar-rail .ar-mark', 'nav.vk-appnav > .vk-appnav__mark'), graphic: true },
-      // Nav v2 reorders the rail (Inbox, Plan, Crew); the frozen reference still draws Plan, Operate, Workspace.
-      { ...part('rail-plan', 'nav.ar-rail a.ar-nav[aria-keyshortcuts="G P"]', 'nav.vk-appnav .vk-appnav__list > li:nth-child(2) > .vk-appnav__item'), graphic: true },
-      { ...part('rail-operate', 'nav.ar-rail a.ar-nav[aria-keyshortcuts="G O"]', 'nav.vk-appnav .vk-appnav__list > li:nth-child(1) > .vk-appnav__item'), graphic: true },
-      { ...part('rail-workspace', 'nav.ar-rail a.ar-nav[aria-keyshortcuts="G W"]', 'nav.vk-appnav .vk-appnav__list > li:nth-child(3) > .vk-appnav__item'), graphic: true },
-      { ...part('rail-theme', 'nav.ar-rail button.ar-nav[aria-label="Dark theme"]', 'nav.vk-appnav .vk-appnav__foot button[aria-label="Dark theme"]'), graphic: true },
-      { ...part('rail-appearance', 'nav.ar-rail button.ar-nav[aria-label="Appearance"]', 'nav.vk-appnav .vk-appnav__foot button[aria-label="Appearance"]'), graphic: true },
-      part('rail-account', 'nav.ar-rail .ar-acct', 'nav.vk-appnav .vk-appnav__account'),
-      { ...part('rail-signout', 'nav.ar-rail button[aria-label="Sign out"]', 'nav.vk-appnav .vk-appnav__foot button[aria-label="Sign out"]'), graphic: true },
-      part('masthead', '.bd-body > header.ar-top', '.vk-masthead header.vk-masthead__bar'),
-      part('sub-bar', '.bd-body > .ar-sub', '.vk-masthead > .vk-masthead__tabs'),
-      part('status', '.bd-body footer.ar-status', '.vk-statusline'),
-    ],
-    masks: [liveDot('header.ar-top .ar-live > i, .vk-live__dot')],
-  },
-  {
-    artboard: 'SP-Board-Quiet', vibe: 'quiet', strength: 'off', route: '/b/brd_f47143722126442c', steps: waitLive,
-    parts: [
-      part('nav-row', 'header.qn > .qn-row:nth-child(1)', 'nav.vk-appnav'),
-      part('board-row', 'header.qn > .qn-row:nth-child(2)', 'div.vk-masthead'),
-    ],
-  },
-];
-
-/**
- * The phone shells (Task 13), compared on each phone board artboard (390 wide, from the manifest):
- * the header and the tab bar. The app side is vibekit's PhoneHeader and PhoneTabBar (preflight
- * ruling); the references keep the mockups' hand-drawn header and bar.
- */
-const PHONE_SHELL: Screen[] = [
-  {
-    artboard: 'SP-Phone-Board-Daylight', vibe: 'daylight', route: DX, steps: waitLive,
-    parts: [part('header', '.greet', 'header.vk-phoneheader'), part('tab-bar', 'nav.nav', 'nav.vk-phonetabbar')],
-    masks: [liveDot('.pd-live, .vk-live__dot')],
-  },
-  {
-    artboard: 'SP-Phone-Board-Paper', vibe: 'paper', route: DX, steps: waitLive,
-    parts: [part('masthead', 'header.pm', 'header.vk-phoneheader'), part('tab-bar', 'nav.nav', 'nav.vk-phonetabbar')],
-    masks: [liveDot('.pm-live, .vk-live__dot')],
-  },
-  {
-    artboard: 'SP-Phone-Board-Studio', vibe: 'studio', route: DX, steps: waitLive,
-    parts: [part('header', 'header.ph-top', 'header.vk-phoneheader'), part('tab-bar', 'nav.ph-nav', 'nav.vk-phonetabbar')],
-    masks: [liveDot('header.ph-top .ar-live > i, .vk-live__dot')],
-  },
-  {
-    artboard: 'SP-Phone-Board-Quiet', vibe: 'quiet', strength: 'off', route: DX, steps: waitLive,
-    parts: [part('header', 'header.pq', 'header.vk-phoneheader'), part('tab-bar', 'nav.pqb', 'nav.vk-phonetabbar')],
-  },
-];
-
-export const SHELL_CHECKS: Screen[] = [...DESKTOP_SHELL, ...PHONE_SHELL];
+export const SHELL_CHECKS: Screen[] = [];
 for (const [v, V] of VIBES) {
   SCREENS.push(...forVibe(v, V, (a) => MANIFEST[a]?.h ?? 4000));
 }

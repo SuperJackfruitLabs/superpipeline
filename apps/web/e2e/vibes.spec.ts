@@ -96,8 +96,9 @@ for (const vibe of ALL_VIBES) {
         const viewRole = 'link';
         await expect(page.getByRole('button', { name: /^Launch post, in / }).or(page.getByRole('link', { name: /^Launch post, in / })).first()).toBeVisible();
         for (const [role, name] of [
-          [viewRole, 'Board'], [viewRole, /^List/], [viewRole, /^Projects/], ['button', /^(⚑ )?Review$/],
-          ['button', /^(⚑ Answer agt_r|Answer$)/], ['button', 'Move Launch post to another stage'], ['button', /filter/i],
+          // The tiles say in words that a card waits on you; each card's title opens it (where Review and Answer are).
+          [viewRole, 'Board'], [viewRole, /^List/], [viewRole, /^Projects/], ['button', /^Launch post, in /],
+          ['button', /^Add the OAuth flow, in /], ['button', 'Move Launch post to another stage'], ['button', /filter/i],
         ] as const) {
           expect(await reachable(body, role, name), `board: ${String(name)}`).toBe(true);
         }
@@ -108,8 +109,8 @@ for (const vibe of ALL_VIBES) {
         await noA11yViolations(page, 'main');
         await info.attach(`${vibe}-${theme}-${size.name}-board.png`, { body: await page.screenshot({ fullPage: true }), contentType: 'image/png' });
 
-        // Gate
-        await page.getByRole('button', { name: /^(⚑ )?Review$/ }).first().click();
+        // Gate: the card's title opens it.
+        await page.getByRole('button', { name: /^Launch post, in / }).first().click();
         const dialog = page.getByRole('dialog');
         await expect(dialog).toBeVisible();
         // The drawer paints before its detail (and so the gate) has loaded: wait for the gate, then look for what it holds.
@@ -130,7 +131,7 @@ for (const vibe of ALL_VIBES) {
         await expect(dialog).toBeHidden();
 
         // Question
-        await page.getByRole('button', { name: /^(⚑ Answer agt_r|Answer$)/ }).first().click();
+        await page.getByRole('button', { name: /^Add the OAuth flow, in / }).first().click();
         await expect(dialog).toBeVisible();
         await expect(dialog.getByText('May I run the test suite?').first()).toBeVisible();
         for (const [role, name] of [[decision, 'Run the tests'], [decision, 'Skip them'], ['textbox', /Add a note for the agent|Note (for|to) /]] as const) {
@@ -153,7 +154,7 @@ for (const vibe of ALL_VIBES) {
       const boardId = await seedBoard(request, `Bound ${vibe} ${size.name}`, BOUND_PIPELINE);
       await seedBoundGateCard(request, boardId, 'Launch post');
       await openBoard(page, boardId);
-      await page.getByRole('button', { name: /^(⚑ )?Review$/ }).first().click();
+      await page.getByRole('button', { name: /^Launch post, in / }).first().click();
       const dialog = page.getByRole('dialog');
       await expect(dialog).toBeVisible();
       await expect(dialog.getByText(flagOf(vibe))).toBeVisible();
@@ -216,7 +217,7 @@ test.describe('coarse pointer', () => {
       for (const k of known) expect(small.some((t) => t.startsWith(k)), `known vibekit gap ${k} is fixed: delete it`).toBe(true);
       expect(small.filter((t) => !known.some((k) => t.startsWith(k))), 'board').toEqual([]);
 
-      await page.getByRole('button', { name: /^(⚑ )?Review$/ }).first().tap();
+      await page.getByRole('button', { name: /^Launch post, in / }).first().tap();
       const dialog = page.getByRole('dialog');
       await expect(dialog).toBeVisible();
       await revealAll(dialog);
@@ -224,7 +225,7 @@ test.describe('coarse pointer', () => {
 
       await page.keyboard.press('Escape');
       await expect(dialog).toBeHidden();
-      await page.getByRole('button', { name: /^(⚑ Answer agt_r|Answer$)/ }).first().tap();
+      await page.getByRole('button', { name: /^Add the OAuth flow, in / }).first().tap();
       await expect(dialog.getByText('May I run the test suite?').first()).toBeVisible();
       await revealAll(dialog);
       expect(await smallTargets(dialog), 'question drawer').toEqual([]);
