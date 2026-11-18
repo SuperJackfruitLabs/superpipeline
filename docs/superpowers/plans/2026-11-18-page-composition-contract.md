@@ -87,7 +87,7 @@ Repo `/Users/rakeshgangwar/SuperJackfruit/vibekit`, branch `feat/live-toggle-and
   ```ts
   export type StageTrackForm = 'auto' | 'card' | 'cell' | 'page' | 'board';
   export interface StageDetail { count?: number; /** "a person", "3 agents", "gate · a person" */ who?: string; /** draws count and name in the signal */ needs?: boolean; }
-  export interface StageTrackProps { …existing…; /** One per stage; read by form="board" and form="page". */ details?: StageDetail[]; }
+  export interface StageTrackProps { …existing…; /** One per stage; read by form="board". */ details?: StageDetail[]; }
   ```
 - Produces: `steps()` returns `Step & { count?: number; who?: string; needs: boolean }`.
 - Board form, every vibe: `ol.vk-stages.vk-stages--{vibe}.vk-stages--board` with `--n`; each `li` carries `data-state`, `data-needs="1|0"`, a bar, `.vk-stages__name` (full name, `white-space: normal`, two-line clamp, never `text-overflow: ellipsis`), and `.vk-stages__detail` ("3 · a person"). Daylight board form names every stage (unlike its card form). Studio keeps `--_band` and padded ordinals; Paper keeps Roman numerals and rules; Quiet renders the numbered inline list with "(3 · a person)".
