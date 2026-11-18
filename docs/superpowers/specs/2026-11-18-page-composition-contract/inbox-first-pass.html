@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Inbox under one composition</title>
+
+<link rel="stylesheet" href="./vk/vibekit.bundle.css">
+<style>
+  /* The page around the two panels: neutral, so only the panels carry a vibe. */
+  html, body { margin: 0; background: #111; color: #e8e6e1; font: 15px/1.5 ui-sans-serif, system-ui, sans-serif; }
+  .wrap { max-width: 1480px; margin: 0 auto; padding: 28px 24px 64px; }
+  .wrap > h1 { font: 600 24px/1.2 ui-sans-serif, system-ui, sans-serif; margin: 0 0 6px; }
+  .wrap > p.sub { margin: 0 0 20px; color: #a9a59c; max-width: 72ch; }
+  .legend { display: flex; flex-wrap: wrap; gap: 6px 18px; margin: 0 0 22px; padding: 0; list-style: none; color: #a9a59c; font-size: 13px; }
+  .legend b { color: #e8e6e1; font-weight: 600; }
+  .cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(560px, 1fr)); gap: 24px; align-items: start; }
+  .col > .cap { display: flex; justify-content: space-between; align-items: baseline; margin: 0 0 8px; color: #a9a59c; font-size: 13px; }
+  .col > .cap b { color: #e8e6e1; font-size: 14px; }
+  .today { margin: 0 0 24px; }
+  .today summary { cursor: pointer; color: #a9a59c; font-size: 13px; }
+  .today .shots { display: grid; grid-template-columns: repeat(auto-fit, minmax(460px, 1fr)); gap: 16px; margin-top: 12px; }
+  .today img { width: 100%; border: 1px solid #333; border-radius: 6px; }
+
+  /* The panel: a page of the app at 640px, in its own vibe. Everything inside uses vibekit tokens and classes. */
+  .page { box-sizing: border-box; min-height: 980px; padding: 0 0 28px; border-radius: 14px; overflow: hidden; background: var(--vk-color-bg); color: var(--vk-color-text); font: var(--vk-type-body); }
+  .page * { box-sizing: border-box; }
+  .page p, .page h1, .page h2, .page h3, .page ul { margin: 0; }
+  .page ul { padding: 0; list-style: none; }
+  .mast { display: flex; align-items: center; gap: 16px; min-height: 64px; padding: 0 28px; }
+  .mast .eyebrow { color: var(--vk-color-muted); font: var(--vk-type-eyebrow); letter-spacing: 0.08em; text-transform: uppercase; }
+  .mast .spacer { flex: 1; }
+  .live { display: inline-flex; align-items: center; gap: 8px; color: var(--vk-color-muted); font: var(--vk-type-meta); }
+  .live::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--vk-color-success); }
+  .search { display: inline-flex; align-items: center; gap: 10px; min-height: 40px; padding: 0 14px; border-radius: var(--vk-radius-pill); background: var(--vk-color-surface); color: var(--vk-color-muted); font: var(--vk-type-meta); }
+  .search kbd { font: var(--vk-type-mono); color: var(--vk-color-faint); }
+  .body { padding: 0 28px; display: grid; gap: 22px; }
+  .scope { display: grid; gap: 10px; }
+  .scope .hint { color: var(--vk-color-muted); font: var(--vk-type-meta); }
+  .group { display: grid; gap: 12px; }
+  .group .why { max-width: 64ch; color: var(--vk-color-muted); font: var(--vk-type-meta); }
+  .row { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 14px; min-height: 60px; }
+  .row .face { width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center; background: var(--vk-color-raised); color: var(--vk-color-text); font: 700 13px/1 var(--vk-font-body); box-shadow: 0 0 0 3px var(--vk-color-signal); }
+  .row .face.m { box-shadow: 0 0 0 1px var(--vk-color-line); }
+  .row .t { font-weight: 700; overflow-wrap: anywhere; }
+  .row .m { color: var(--vk-color-muted); font: var(--vk-type-meta); display: flex; flex-wrap: wrap; gap: 4px 10px; align-items: center; }
+  .row .act { display: flex; align-items: center; gap: 10px; }
+  .compact .row { min-height: 48px; grid-template-columns: minmax(0, 1fr) auto; }
+  .compact .row .t { font-weight: 600; }
+  .groupact { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
+  .foot { padding: 18px 28px 0; color: var(--vk-color-muted); font: var(--vk-type-meta); }
+  .chip { display: inline-flex; align-items: center; padding: 1px 8px; border-radius: var(--vk-radius-pill); background: var(--vk-color-surface); font: 600 12px/1.6 var(--vk-font-body); color: var(--vk-color-muted); }
+  .more { color: var(--vk-color-accent-text); text-decoration: underline; text-underline-offset: 3px; font: var(--vk-type-meta); background: none; border: 0; padding: 0; cursor: pointer; }
+
+  /* Daylight signatures: a greeting band on the sky, raised rounded rows, mood faces, pill chips. */
+  [data-vibe="daylight"] .greet { padding: 26px 28px 22px; background: linear-gradient(180deg, color-mix(in oklch, var(--vk-color-accent) 22%, var(--vk-color-bg)) 0%, var(--vk-color-bg) 100%); display: grid; gap: 8px; }
+  [data-vibe="daylight"] .greet h1 { font: var(--vk-type-h1); letter-spacing: -0.01em; }
+  [data-vibe="daylight"] .greet p { color: var(--vk-color-muted); max-width: 62ch; }
+  [data-vibe="daylight"] .row { padding: 10px 14px; border-radius: var(--vk-radius-md); background: var(--vk-color-raised); }
+  [data-vibe="daylight"] .compact .row { padding: 4px 14px; background: transparent; border-top: 1px solid var(--vk-color-line); border-radius: 0; }
+  [data-vibe="daylight"] .compact .row:first-child { border-top: 0; }
+  [data-vibe="daylight"] .group { padding: 16px; border-radius: 16px; background: var(--vk-color-surface); }
+
+  /* Studio signatures: ink rules, mono ordinals, a condensed figure, square state marks, slab buttons. */
+  [data-vibe="studio"] .mast { border-bottom: 1px solid var(--vk-color-rule); }
+  [data-vibe="studio"] .search { border-radius: 0; background: transparent; box-shadow: inset 0 0 0 1px var(--vk-color-line); }
+  [data-vibe="studio"] .hero { padding: 8px 28px 0; }
+  [data-vibe="studio"] .row { border-top: 1px solid var(--vk-color-line); padding: 8px 0; }
+  [data-vibe="studio"] .row:first-child { border-top: 0; }
+  [data-vibe="studio"] .row .face { border-radius: 0; box-shadow: inset 0 0 0 1.5px var(--vk-color-rule); background: var(--vk-color-signal-wash); }
+  [data-vibe="studio"] .row .face.m { background: var(--vk-color-surface); }
+  [data-vibe="studio"] .row .m { font: var(--vk-type-meta); }
+  [data-vibe="studio"] .chip { border-radius: 0; background: transparent; box-shadow: inset 0 0 0 1px var(--vk-color-line); font: 500 11px/1.6 var(--vk-font-mono); }
+  [data-vibe="studio"] .scope .hint, [data-vibe="studio"] .foot, [data-vibe="studio"] .group .why { font: 500 12px/1.5 var(--vk-font-mono); }
+  [data-vibe="studio"] .group .why { font: 400 15px/1.45 var(--vk-font-serif); color: var(--vk-color-text); }
+  [data-vibe="studio"] .sm { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); border-top: 1.5px solid var(--vk-color-rule); }
+  [data-vibe="studio"] .sm button { appearance: none; border: 0; background: transparent; text-align: left; padding: 10px 10px 10px 0; border-left: 1px solid var(--vk-color-line); padding-left: 10px; cursor: pointer; color: var(--vk-color-text); display: grid; gap: 2px; }
+  [data-vibe="studio"] .sm button:first-child { border-left: 0; padding-left: 0; }
+  [data-vibe="studio"] .sm .n { font: 800 26px/1 var(--vk-font-display); font-stretch: 80%; }
+  [data-vibe="studio"] .sm .n[data-tone="needs"] { color: var(--vk-color-signal-text); }
+  [data-vibe="studio"] .sm .l { font: 500 11px/1.3 var(--vk-font-mono); color: var(--vk-color-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  [data-vibe="studio"] .sm button[aria-pressed="true"] .l { color: var(--vk-color-text); font-weight: 700; }
+
+  /* The choices below the panels, in the companion's own style. */
+  .ask { margin-top: 36px; }
+  .ask h2 { font: 600 18px/1.3 ui-sans-serif, system-ui, sans-serif; margin: 0 0 12px; }
+  .options { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 12px; }
+  .option { display: flex; gap: 12px; padding: 14px 16px; border: 1px solid #333; border-radius: 10px; background: #1a1a1a; cursor: pointer; }
+  .option.selected { border-color: #8fa8ff; background: #1c2033; }
+  .option .letter { width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; background: #2a2a2a; font-weight: 700; flex: none; }
+  .option h3 { margin: 0 0 4px; font: 600 15px/1.3 ui-sans-serif, system-ui, sans-serif; }
+  .option p { margin: 0; color: #a9a59c; font-size: 13px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Inbox under one composition</h1>
+  <p class="sub">Same content, same order, same primary action in both vibes: a headline, the board scope once, four tabs, then the 18 cards in three groups by what you have to do. Each vibe keeps its own expression on top. Real card titles from today's Inbox.</p>
+  <ul class="legend">
+    <li><b>Shared:</b> order of sections, grouping, one verb per row, counts shown once, Activity on its own tab</li>
+    <li><b>Daylight keeps:</b> the greeting band, raised rounded rows, mood faces, pill chips</li>
+    <li><b>Studio keeps:</b> the figure, ink rules, mono ordinals, square marks, slab buttons</li>
+  </ul>
+  <details class="today">
+    <summary>Show today's Inbox for comparison (top of page and the middle of the list)</summary>
+    <div class="shots"><img src="./today-inbox-top.png" alt="Today's Inbox, top"><img src="./today-inbox-mid.png" alt="Today's Inbox, middle of the list"></div>
+  </details>
+
+  <div class="cols">
+    <!-- ================= DAYLIGHT (dark, as you run it) ================= -->
+    <div class="col">
+      <p class="cap"><b>Daylight · dark</b><span>greeting band, raised rows</span></p>
+      <div class="page" data-vibe="daylight" data-theme="dark" data-motion="reduce" data-time="off" data-phase="noon">
+        <div class="mast">
+          <span class="eyebrow">Superpipeline · Inbox</span>
+          <span class="live">Live</span>
+          <span class="spacer"></span>
+          <span class="search">Search <kbd>⌘K</kbd></span>
+          <button class="vk-button vk-button--primary vk-button--sm">New card</button>
+        </div>
+        <div class="greet">
+          <h1>Working late, Rakesh? 18 cards want you.</h1>
+          <p>One review, one stopped agent, and 16 cards nobody is set up to work. Nothing is running.</p>
+        </div>
+        <div class="body">
+          <div class="scope">
+            <div class="vk-quickfilter vk-quickfilter--daylight" role="group" aria-label="Show">
+              <button class="vk-quickfilter__item" data-state="checked"><span class="vk-quickfilter__face">All boards <span class="vk-quickfilter__count">18</span></span></button>
+              <button class="vk-quickfilter__item"><span class="vk-quickfilter__face">Planning &amp; Roadmap <span class="vk-quickfilter__count">13</span></span></button>
+              <button class="vk-quickfilter__item"><span class="vk-quickfilter__face">Developer Experience <span class="vk-quickfilter__count">3</span></span></button>
+              <button class="vk-quickfilter__item"><span class="vk-quickfilter__face">Marketing &amp; Community <span class="vk-quickfilter__count">2</span></span></button>
+              <button class="vk-quickfilter__item" data-zero="true"><span class="vk-quickfilter__face">8 more <span class="vk-quickfilter__count">0</span></span></button>
+            </div>
+          </div>
+          <div class="vk-tabs vk-tabs--daylight" role="tablist">
+            <button class="vk-tabs__item" role="tab" aria-selected="true">Needs you <span class="vk-tabs__count">18</span></button>
+            <button class="vk-tabs__item" role="tab">Running <span class="vk-tabs__count">0</span></button>
+            <button class="vk-tabs__item" role="tab">Spend <span class="vk-tabs__count">$0.00</span></button>
+            <button class="vk-tabs__item" role="tab">Activity <span class="vk-tabs__count">548</span></button>
+          </div>
+
+          <section class="group">
+            <header class="vk-sectionheader vk-sectionheader--daylight"><h2 class="vk-sectionheader__title">Review</h2><span class="vk-sectionheader__count">1</span></header>
+            <div class="row">
+              <span class="face" aria-hidden="true">KK</span>
+              <div>
+                <p class="t">Protect release tags on every product repo</p>
+                <p class="m"><span class="vk-statelabel vk-statelabel--daylight" data-state="needs">Needs you</span> keeper-karen finished attempt 5 · Planning &amp; Roadmap · Approved · 10 h</p>
+              </div>
+              <div class="act"><button class="vk-button vk-button--primary vk-button--sm">Review</button></div>
+            </div>
+          </section>
+
+          <section class="group">
+            <header class="vk-sectionheader vk-sectionheader--daylight"><h2 class="vk-sectionheader__title">Resume a stopped agent</h2><span class="vk-sectionheader__count">1</span></header>
+            <div class="row">
+              <span class="face" aria-hidden="true">MM</span>
+              <div>
+                <p class="t">LinkedIn post (Fri): one selective post about shipped work</p>
+                <p class="m"><span class="vk-statelabel vk-statelabel--daylight" data-state="stopped">Stopped</span> message-melissa, twice, in Messaging brief · Marketing · 11 days · <button class="more">what it said</button></p>
+              </div>
+              <div class="act"><button class="vk-button vk-button--primary vk-button--sm">Resume</button></div>
+            </div>
+          </section>
+
+          <section class="group">
+            <header class="vk-sectionheader vk-sectionheader--daylight"><h2 class="vk-sectionheader__title">Nobody works these stages</h2><span class="vk-sectionheader__count">16</span></header>
+            <p class="why">These cards sit in Proposed and Reported on three boards. No agent holds those stages and no review is asked for, so they will not move on their own.</p>
+            <div class="groupact">
+              <button class="vk-button vk-button--secondary vk-button--sm">Move all 16…</button>
+              <button class="vk-button vk-button--quiet vk-button--sm">Staff an agent</button>
+            </div>
+            <ul class="compact">
+              <li class="row"><div><p class="t">Make the docs checks required on every product repo</p><p class="m"><span class="chip">Planning &amp; Roadmap</span> Proposed · 3 days</p></div><div class="act"><button class="vk-button vk-button--quiet vk-button--sm">Move</button></div></li>
+              <li class="row"><div><p class="t">Let CI read forge CI results without exposing infra</p><p class="m"><span class="chip">Planning &amp; Roadmap</span> Proposed · 3 days</p></div><div class="act"><button class="vk-button vk-button--quiet vk-button--sm">Move</button></div></li>
+              <li class="row"><div><p class="t">ci-bands gets its own GitHub API budget and a budget guard</p><p class="m"><span class="chip">Planning &amp; Roadmap</span> Proposed · 3 days</p></div><div class="act"><button class="vk-button vk-button--quiet vk-button--sm">Move</button></div></li>
+              <li class="row"><div><p class="t">Hub leaves its old board-room cards live after a board moves to SuperExchange</p><p class="m"><span class="chip">Developer Experience</span> Reported · 3 days</p></div><div class="act"><button class="vk-button vk-button--quiet vk-button--sm">Move</button></div></li>
+              <li class="row"><div><p class="t">LinkedIn post (Tue): one selective post about shipped work</p><p class="m"><span class="chip">Marketing &amp; Community</span> Proposed · 4 days</p></div><div class="act"><button class="vk-button vk-button--quiet vk-button--sm">Move</button></div></li>
+            </ul>
+            <button class="more">Show 11 more</button>
+          </section>
+        </div>
+        <p class="foot">18 need you · 0 running · $0.00 in the last 7 days · synced 03:24</p>
+      </div>
+    </div>
+
+    <!-- ================= STUDIO (light) ================= -->
+    <div class="col">
+      <p class="cap"><b>Studio · light</b><span>annual report: figure, rules, ordinals</span></p>
+      <div class="page" data-vibe="studio" data-theme="light" data-motion="reduce" data-time="off" data-phase="noon">
+        <div class="mast">
+          <span class="eyebrow">Superpipeline · Inbox</span>
+          <span class="live">Live</span>
+          <span class="spacer"></span>
+          <span class="search">Search <kbd>⌘K</kbd></span>
+          <button class="vk-button vk-button--primary vk-button--sm">New card</button>
+        </div>
+        <div class="hero">
+          <div class="vk-hero vk-hero--studio" data-size="section" data-tone="needs">
+            <div class="vk-hero__figure">18</div>
+            <div class="vk-hero__text">
+              <p class="vk-hero__kicker">Across three boards · nothing running</p>
+              <h1 class="vk-hero__headline">Eighteen cards want you.</h1>
+              <p class="vk-hero__lede">One review, one stopped agent, and sixteen cards nobody is set up to work.</p>
+            </div>
+          </div>
+        </div>
+        <div class="body">
+          <div class="scope">
+            <div class="sm" role="group" aria-label="Show">
+              <button aria-pressed="true"><span class="n" data-tone="needs">18</span><span class="l">All boards</span></button>
+              <button><span class="n">13</span><span class="l">Planning &amp; Roadmap</span></button>
+              <button><span class="n">3</span><span class="l">Developer Experience</span></button>
+              <button><span class="n">2</span><span class="l">Marketing &amp; Community</span></button>
+              <button><span class="n">0</span><span class="l">8 more boards</span></button>
+            </div>
+          </div>
+          <div class="vk-tabs vk-tabs--studio" role="tablist">
+            <button class="vk-tabs__item" role="tab" aria-selected="true">Needs you <span class="vk-tabs__count">18</span></button>
+            <button class="vk-tabs__item" role="tab">Running <span class="vk-tabs__count">0</span></button>
+            <button class="vk-tabs__item" role="tab">Spend <span class="vk-tabs__count">$0.00</span></button>
+            <button class="vk-tabs__item" role="tab">Activity <span class="vk-tabs__count">548</span></button>
+          </div>
+
+          <section class="group">
+            <header class="vk-sectionheader vk-sectionheader--studio"><span class="vk-sectionheader__no">01</span><h2 class="vk-sectionheader__title">Review</h2><span class="vk-sectionheader__count">1 card</span></header>
+            <div class="row">
+              <span class="face" aria-hidden="true">KK</span>
+              <div>
+                <p class="t">Protect release tags on every product repo</p>
+                <p class="m"><span class="vk-statelabel vk-statelabel--studio" data-state="needs"><span class="vk-statelabel__sq"></span>Needs you</span> keeper-karen · attempt 5 · Planning &amp; Roadmap · Approved · 10 h</p>
+              </div>
+              <div class="act"><button class="vk-button vk-button--primary vk-button--sm">Review</button></div>
+            </div>
+          </section>
+
+          <section class="group">
+            <header class="vk-sectionheader vk-sectionheader--studio"><span class="vk-sectionheader__no">02</span><h2 class="vk-sectionheader__title">Resume a stopped agent</h2><span class="vk-sectionheader__count">1 card</span></header>
+            <div class="row">
+              <span class="face" aria-hidden="true">MM</span>
+              <div>
+                <p class="t">LinkedIn post (Fri): one selective post about shipped work</p>
+                <p class="m"><span class="vk-statelabel vk-statelabel--studio" data-state="stopped"><span class="vk-statelabel__sq"></span>Stopped</span> message-melissa, twice, in Messaging brief · Marketing · 11 days · <button class="more">what it said</button></p>
+              </div>
+              <div class="act"><button class="vk-button vk-button--primary vk-button--sm">Resume</button></div>
+            </div>
+          </section>
+
+          <section class="group">
+            <header class="vk-sectionheader vk-sectionheader--studio"><span class="vk-sectionheader__no">03</span><h2 class="vk-sectionheader__title">Nobody works these stages</h2><span class="vk-sectionheader__count">16 cards</span></header>
+            <p class="why">These cards sit in Proposed and Reported on three boards. No agent holds those stages and no review is asked for, so they will not move on their own.</p>
+            <div class="groupact">
+              <button class="vk-button vk-button--secondary vk-button--sm">Move all 16…</button>
+              <button class="vk-button vk-button--quiet vk-button--sm">Staff an agent</button>
+            </div>
+            <ul class="compact">
+              <li class="row"><div><p class="t">Make the docs checks required on every product repo</p><p class="m"><span class="chip">Planning &amp; Roadmap</span> Proposed · 3 d</p></div><div class="act"><button class="vk-button vk-button--quiet vk-button--sm">Move</button></div></li>
+              <li class="row"><div><p class="t">Let CI read forge CI results without exposing infra</p><p class="m"><span class="chip">Planning &amp; Roadmap</span> Proposed · 3 d</p></div><div class="act"><button class="vk-button vk-button--quiet vk-button--sm">Move</button></div></li>
+              <li class="row"><div><p class="t">ci-bands gets its own GitHub API budget and a budget guard</p><p class="m"><span class="chip">Planning &amp; Roadmap</span> Proposed · 3 d</p></div><div class="act"><button class="vk-button vk-button--quiet vk-button--sm">Move</button></div></li>
+              <li class="row"><div><p class="t">Hub leaves its old board-room cards live after a board moves to SuperExchange</p><p class="m"><span class="chip">Developer Experience</span> Reported · 3 d</p></div><div class="act"><button class="vk-button vk-button--quiet vk-button--sm">Move</button></div></li>
+              <li class="row"><div><p class="t">LinkedIn post (Tue): one selective post about shipped work</p><p class="m"><span class="chip">Marketing &amp; Community</span> Proposed · 4 d</p></div><div class="act"><button class="vk-button vk-button--quiet vk-button--sm">Move</button></div></li>
+            </ul>
+            <button class="more">Show 11 more</button>
+          </section>
+        </div>
+        <p class="foot">18 need you · 0 running · $0.00 in the last 7 days · synced 03:24</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="ask">
+    <h2>Does the shared composition cost either vibe too much?</h2>
+    <div class="options">
+      <div class="option" data-choice="shared" onclick="toggleSelect(this)"><div class="letter">A</div><div><h3>Works. One composition, vibe on top.</h3><p>Go on to the contract and the other pages this way.</p></div></div>
+      <div class="option" data-choice="studio-own" onclick="toggleSelect(this)"><div class="letter">B</div><div><h3>Studio needs its own arrangement.</h3><p>Shared content rules, but Studio keeps a distinct grid. Two layouts per page.</p></div></div>
+      <div class="option" data-choice="adjust" onclick="toggleSelect(this)"><div class="letter">C</div><div><h3>Close, but change the grouping or the signatures.</h3><p>Tell me what in the terminal and I will redraw.</p></div></div>
+    </div>
+  </div>
+</div>
+</body>
+</html>
