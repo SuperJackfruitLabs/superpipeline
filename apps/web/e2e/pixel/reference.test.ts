@@ -5,10 +5,10 @@ import { join } from 'node:path';
 import { deriveDark, MANIFEST, REF_DIR, resolveReference } from './reference';
 
 describe('references', () => {
-  it('the manifest lists exactly the 64 committed artboards', () => {
+  it('the manifest lists exactly the 56 committed artboards', () => {
     const files = readdirSync(REF_DIR).filter((f) => /^SP-.*\.html$/.test(f) && !f.includes('.dark.')).map((f) => f.replace(/\.html$/, ''));
     expect(files.sort()).toEqual(Object.keys(MANIFEST).sort());
-    expect(files).toHaveLength(64);
+    expect(files).toHaveLength(56);
   });
   it('every artboard names its vibe in its file name', () => {
     for (const a of Object.keys(MANIFEST)) expect(a).toMatch(/-(Daylight|Paper|Studio|Quiet)$/);

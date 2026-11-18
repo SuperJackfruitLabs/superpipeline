@@ -18,8 +18,8 @@ export const CREW_FAILED = { agents: "Couldn't load the agents.", people: "Could
 
 const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`;
 /** The footer line: "14 agents · 2 need you · 12 resting" (a part that counts nobody is left out). */
-export function crewFooter(agents: Pick<AgentSummary, 'claimedCount' | 'workingCount'>[]): string {
-  const n = (s: ReturnType<typeof agentState>) => agents.filter((a) => agentState(a) === s).length;
+export function crewFooter(agents: Pick<AgentSummary, 'id' | 'workingCount'>[], needing: ReadonlySet<string>): string {
+  const n = (s: ReturnType<typeof agentState>) => agents.filter((a) => agentState(a, needing) === s).length;
   const parts = [plural(agents.length, 'agent', 'agents')];
   if (n('needs') > 0) parts.push(`${n('needs')} ${n('needs') === 1 ? 'needs' : 'need'} you`);
   if (n('working') > 0) parts.push(`${n('working')} working`);

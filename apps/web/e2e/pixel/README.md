@@ -116,6 +116,10 @@ Board settings followed (Settings and Board settings are one composition, `Setti
 `BoardSettingsView`): the four `SP-Settings-*` references and their allow-list keys were retired, and
 with them the only screen that froze a second clock.
 
+Crew followed: one `CrewView` in every vibe (a page head, tabs, one table per tab), so the eight Crew
+references (`SP-Workspace-Agents-*`, `SP-Workspace-Other-*`), their screens and allow-list keys were
+retired too. The `token-secret` mask id stays in the vocabulary.
+
 ## The references are locked
 
 `e2e/pixel/references.lock` holds the hash of every reference, `manifest.json`, `CORRECTIONS.md` and the

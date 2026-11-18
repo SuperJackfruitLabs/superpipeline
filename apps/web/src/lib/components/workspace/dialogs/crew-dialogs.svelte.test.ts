@@ -17,7 +17,7 @@ vi.hoisted(() => {
     value: (query: string): MediaQueryList => ({ matches: false, media: query, onchange: null, addEventListener: () => {}, removeEventListener: () => {}, addListener: () => {}, removeListener: () => {}, dispatchEvent: () => false }),
   });
 });
-vi.mock('$lib/stores/app.svelte', () => ({ app: { markBusy: <T,>(p: Promise<T>) => p, boardId: null, board: null, user: { userId: 'usr_ira' } } }));
+vi.mock('$lib/stores/app.svelte', () => ({ app: { markBusy: <T,>(p: Promise<T>) => p, attention: [], boardId: null, board: null, user: { userId: 'usr_ira' } } }));
 
 import CrewView from '../CrewView.svelte';
 import { crewLists } from '../workspace-counts.svelte';

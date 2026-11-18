@@ -18,7 +18,7 @@ vi.hoisted(() => {
     value: (query: string): MediaQueryList => ({ matches: false, media: query, onchange: null, addEventListener: () => {}, removeEventListener: () => {}, addListener: () => {}, removeListener: () => {}, dispatchEvent: () => false }),
   });
 });
-vi.mock('$lib/stores/app.svelte', () => ({ app: { markBusy: <T,>(p: Promise<T>) => p, boardId: null, board: null } }));
+vi.mock('$lib/stores/app.svelte', () => ({ app: { markBusy: <T,>(p: Promise<T>) => p, attention: [], boardId: null, board: null } }));
 
 import CrewView from './CrewView.svelte';
 import { crewLists } from './workspace-counts.svelte';
@@ -39,13 +39,6 @@ beforeEach(() => {
 });
 afterEach(() => { cleanup(); viewport.phone = false; });
 
-/** An empty phone tab offers New agent twice (the head and the empty sentence); either opens the dialog. */
-const firstNewAgent = async (): Promise<HTMLElement> => {
-  const [b] = await screen.findAllByRole('button', { name: 'New agent' });
-  if (!b) throw new Error('no New agent button');
-  return b;
-};
-
 describe('Crew · Agents', () => {
   it('says it is loading, then says what failed and offers to try again', async () => {
     let fail!: (e: Error) => void;
@@ -63,13 +56,16 @@ describe('Crew · Agents', () => {
     render(CrewView, { tab: 'agents' });
     expect(await screen.findByText('No agents yet. An agent gets a token to reach this workspace and claims cards at the stages that ask for its capabilities.')).toBeTruthy();
     expect(screen.queryByRole('table'), 'no empty table under the sentence').toBeNull();
+    // The sentence's New agent is the one action: the phone head draws no second.
+    expect(screen.getAllByRole('button', { name: 'New agent' })).toHaveLength(1);
   });
   it('enables Create agent only with a name and a capability, in the New agent dialog', async () => {
     api.getAgents.mockResolvedValue([]);
     api.getCapabilities.mockResolvedValue([cap('research')]);
     render(CrewView, { tab: 'agents' });
     expect(screen.queryByRole('button', { name: 'Create agent and issue token' }), 'no inline form under the list').toBeNull();
-    await fireEvent.click(await firstNewAgent());
+    await screen.findByText(/^No agents yet\./);
+    await fireEvent.click(screen.getByRole('button', { name: 'New agent' }));
     const dialog = await screen.findByRole('dialog', { name: 'New agent' });
     const create = within(dialog).getByRole('button', { name: 'Create agent and issue token' }) as HTMLButtonElement;
     expect(create.disabled).toBe(true);
@@ -84,7 +80,8 @@ describe('Crew · Agents', () => {
     api.createAgent.mockResolvedValue({ agent: { id: 'agt_t', name: 'tester-tim', capabilities: ['research'] }, token: 'spa_once', tokenId: 'tok_1' });
     api.updateAgent.mockResolvedValue(new Response('{}', { status: 200 }));
     render(CrewView, { tab: 'agents' });
-    await fireEvent.click(await firstNewAgent());
+    await screen.findByText(/^No agents yet\./);
+    await fireEvent.click(screen.getByRole('button', { name: 'New agent' }));
     const dialog = await screen.findByRole('dialog', { name: 'New agent' });
     await fireEvent.input(within(dialog).getByLabelText('Name'), { target: { value: 'tester-tim' } });
     await fireEvent.input(within(dialog).getByLabelText('Cards at once'), { target: { value: '3' } });
@@ -101,7 +98,8 @@ describe('Crew · Agents', () => {
     api.getCapabilities.mockResolvedValue([cap('research')]);
     api.createAgent.mockRejectedValue(new Error('name is taken'));
     render(CrewView, { tab: 'agents' });
-    await fireEvent.click(await firstNewAgent());
+    await screen.findByText(/^No agents yet\./);
+    await fireEvent.click(screen.getByRole('button', { name: 'New agent' }));
     const dialog = await screen.findByRole('dialog', { name: 'New agent' });
     await fireEvent.input(within(dialog).getByLabelText('Name'), { target: { value: 'tester-tim' } });
     await fireEvent.click(within(dialog).getByRole('button', { name: 'research' }));

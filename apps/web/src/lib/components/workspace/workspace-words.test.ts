@@ -6,7 +6,9 @@ import { CREW_HELP, CREW_LEDE, crewFooter, FORGE_HOST_ERROR, initials, labelsHea
 
 const M = (userId: string, role: Member['role']): Member => ({ userId, email: `${userId}@example.com`, name: null, role, createdAt: '2026-09-01T00:00:00Z' });
 
-const agent = (claimedCount: number, workingCount: number): Pick<AgentSummary, 'claimedCount' | 'workingCount'> => ({ claimedCount, workingCount });
+let n = 0;
+const agent = (needs: boolean, workingCount: number): Pick<AgentSummary, 'id' | 'workingCount'> => ({ id: needs ? `agt_needs_${n++}` : `agt_${n++}`, workingCount });
+const needingOf = (agents: Pick<AgentSummary, 'id'>[]) => new Set(agents.map((a) => a.id).filter((id) => id.startsWith('agt_needs_')));
 
 describe('Crew words', () => {
   it('the lede says what the page is for, with one link to how agents pick cards', () => {
@@ -14,11 +16,13 @@ describe('Crew words', () => {
     expect(CREW_HELP).toEqual({ label: 'How agents pick cards', href: 'https://docs.superpipeline.dev/use/agents/' });
   });
   it('the footer line counts agents, those that need you and those resting', () => {
-    const fourteen = [agent(1, 0), agent(2, 0), ...Array.from({ length: 12 }, () => agent(0, 0))];
-    expect(crewFooter(fourteen)).toBe('14 agents · 2 need you · 12 resting');
-    expect(crewFooter([agent(1, 1), agent(0, 0), agent(0, 0)])).toBe('3 agents · 1 working · 2 resting');
-    expect(crewFooter([agent(1, 0)])).toBe('1 agent · 1 needs you');
-    expect(crewFooter([])).toBe('0 agents');
+    const fourteen = [agent(true, 0), agent(true, 1), ...Array.from({ length: 12 }, () => agent(false, 0))];
+    expect(crewFooter(fourteen, needingOf(fourteen))).toBe('14 agents · 2 need you · 12 resting');
+    const three = [agent(false, 1), agent(false, 0), agent(false, 0)];
+    expect(crewFooter(three, needingOf(three))).toBe('3 agents · 1 working · 2 resting');
+    const one = [agent(true, 0)];
+    expect(crewFooter(one, needingOf(one))).toBe('1 agent · 1 needs you');
+    expect(crewFooter([], new Set())).toBe('0 agents');
   });
 });
 

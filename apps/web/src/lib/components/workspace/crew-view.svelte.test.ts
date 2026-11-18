@@ -26,16 +26,17 @@ const api = vi.hoisted(() => ({
   createCapability: vi.fn<ApiFn>(), updateCapability: vi.fn<ApiFn>(), deleteCapability: vi.fn<ApiFn>(), addImplication: vi.fn<ApiFn>(), removeImplication: vi.fn<ApiFn>(),
 }));
 vi.mock('$lib/api', async (orig) => ({ ...(await orig<typeof Api>()), ...api }));
-vi.mock('$lib/stores/app.svelte', () => ({ app: { markBusy: <T,>(p: Promise<T>) => p, boardId: null, board: null, user: { userId: 'usr_ira' } } }));
+vi.mock('$lib/stores/app.svelte', () => ({ app: { markBusy: <T,>(p: Promise<T>) => p, attention: [], boardId: null, board: null, user: { userId: 'usr_ira' } } }));
 
 import CrewView from './CrewView.svelte';
+import { app } from '$lib/stores/app.svelte';
 import { crewLists, workspaceCounts, CREW_TAB_IDS } from './workspace-counts.svelte';
 import { parityTree, primaryActionsPerRow, rawMachineText, repeatedParagraphs } from '$lib/composition/guards';
 import { renderInVibes, type VibeRoots } from '$lib/composition/render-vibes';
 import { realisticWorkspace } from '$lib/fixtures/realistic';
 import { ApiError, SLOW_COPY, SLOW_MS, TRY_AGAIN } from '$lib/loading';
 import type * as Api from '$lib/api';
-import type { AgentSummary, CapabilityRecord, Member } from '$lib/api';
+import type { AgentSummary, CapabilityRecord, Member, StaleCard } from '$lib/api';
 
 const AGENTS = realisticWorkspace().agents;
 const cap = (key: string, over: Partial<CapabilityRecord> = {}): CapabilityRecord => ({
@@ -220,10 +221,28 @@ describe('CrewView', () => {
   });
 
   it('the footer line says how many agents, how many need you and how many rest', async () => {
+    // strategy-sam works one card; with nothing on the attention list he is working, not waiting on you.
     const { container } = render(CrewView, { tab: 'agents' });
     await settle();
-    // The fixture: strategy-sam works one card and holds another that waits on an answer; the rest hold nothing.
-    expect(container.querySelector('.crew-foot')?.textContent).toBe('8 agents · 1 needs you · 7 resting');
+    expect(container.querySelector('.crew-foot')?.textContent).toBe('8 agents · 1 working · 7 resting');
+    cleanup();
+    // The attention list names him on a question: he needs you, his row carries the edge and comes first.
+    const asked: StaleCard = {
+      boardId: 'brd_rl_planning', boardName: 'Planning & Roadmap', cardId: 'card_rl_planning_002', title: 'Pricing page', ownerUserId: 'usr_ira',
+      agentId: 'agt_rl_strategy_sam', stageKey: 'shape', stageName: 'Shape', state: 'input-required',
+      why: { kind: 'needs-human', reason: 'question' }, summary: null, since: '2026-11-18T00:00:00Z', ageHours: 1, next: '',
+    };
+    app.attention = [asked];
+    try {
+      const again = render(CrewView, { tab: 'agents' });
+      await settle();
+      expect(again.container.querySelector('.crew-foot')?.textContent).toBe('8 agents · 1 needs you · 7 resting');
+      const first = again.container.querySelector('tbody tr');
+      expect(first?.getAttribute('data-needs')).toBe('true');
+      expect(first?.textContent).toContain('strategy-sam');
+    } finally {
+      app.attention = [];
+    }
   });
 
   it('an empty tab says so in a sentence with the one action that fills it', async () => {

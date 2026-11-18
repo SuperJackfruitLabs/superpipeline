@@ -616,6 +616,8 @@ export interface StaleCardView {
   cardId: string;
   title: string;
   ownerUserId: string;
+  /** The agent holding the card (its last run's agent), or null: Crew says that agent needs you. */
+  agentId: string | null;
   stageKey: string;
   stageName: string;
   state: TaskState;

@@ -9,7 +9,7 @@
   import './crew.css';
   import { Button, Tabs } from '@superjackfruitlabs/vibekit-ui';
   import { viewport } from '$lib/viewport.svelte';
-  import { crewTabs, workspaceCounts, type CrewTab } from './workspace-counts.svelte';
+  import { crewLists, crewTabs, workspaceCounts, type CrewTab } from './workspace-counts.svelte';
   import { CREW_NEW_LABEL, crewNewInPage, requestCrewNew } from './crew-new';
   import { CREW_EYEBROW, CREW_HELP, CREW_LEDE } from './workspace-words';
   import AgentsTable from './AgentsTable.svelte';
@@ -20,6 +20,9 @@
   const items = $derived(crewTabs(workspaceCounts.value).map((t) => ({ value: t.id, label: t.label, count: t.count ?? undefined, href: `/crew/${t.id}` })));
   // On a phone the header's title is the page's one h1.
   const heading = $derived(viewport.phone ? 'h2' : 'h1');
+  // An empty tab's sentence carries its one New action; the page then draws no second one.
+  const list = $derived(tab === 'agents' ? crewLists.agents : tab === 'people' ? crewLists.members : crewLists.capabilities);
+  const pageNew = $derived(crewNewInPage() && list?.length !== 0);
 </script>
 
 <div class="crew">
@@ -28,7 +31,7 @@
     <svelte:element this={heading} class="crew-title">Crew</svelte:element>
     <p class="crew-lede">{CREW_LEDE} <a class="crew-help" href={CREW_HELP.href} target="_blank" rel="noopener">{CREW_HELP.label}</a></p>
   </div>
-  {#if crewNewInPage()}<div class="crew-new"><Button onclick={() => requestCrewNew(tab)}>{CREW_NEW_LABEL[tab]}</Button></div>{/if}
+  {#if pageNew}<div class="crew-new"><Button onclick={() => requestCrewNew(tab)}>{CREW_NEW_LABEL[tab]}</Button></div>{/if}
   <Tabs label="Crew" {items} value={tab} />
   <div class="crew-body">
     {#key tab}

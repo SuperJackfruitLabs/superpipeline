@@ -57,17 +57,9 @@
     "SP-Spend-Paper.html": "fcbdbec7d6324cc6716599848c6d5a56c9b15989960553e3e5e0344c5dd4c9c7",
     "SP-Spend-Quiet.html": "e700feea9c4d5761a1dbe8615476057cbcca46b654d1119aa87195fef11c2afa",
     "SP-Spend-Studio.html": "ffd03ed28f002de0e00e0b605a7b7b12c3681c827ce5e466cb16e6a5700e51d0",
-    "SP-Workspace-Agents-Daylight.html": "68db88ec6df7b418ba63731b1d513e0a87fe5156c71c7d67e7aca84a055f33c4",
-    "SP-Workspace-Agents-Paper.html": "2772d089b3b8b46e5eab28f6dd4f92d92682a68fb7d3510b99114ffd26c55a74",
-    "SP-Workspace-Agents-Quiet.html": "d072cd7cbbfa6de58d7f49c5d9b92dbc1c45f83e79890749110b86cfc01e0413",
-    "SP-Workspace-Agents-Studio.html": "4bb3b28fc54b0bcfcb4e940d2127bc28d42905989c65aff85d8ed522e5896cb7",
-    "SP-Workspace-Other-Daylight.html": "0141e4a17abfbd4fdcccd0977379bf936abaa542aefcad0893a3b28a0f18b4d7",
-    "SP-Workspace-Other-Paper.html": "9a9d9647ee4bab036081b606fdb4139a07301374fa936865a82beef8446b42dd",
-    "SP-Workspace-Other-Quiet.html": "366b9a76c5f2050a5efd1390775b4b669c51d263badca98f08fa353daf329209",
-    "SP-Workspace-Other-Studio.html": "98804f8a3e2693b3a265b2ee3cb80396265145b88b101a7d78f98164ef7b2fd6",
     "_vibekit-0.0.10/vibekit.css": "d16b8e30e4974b8f9e4c41ba723169d4835ae555323440f6831023403fddc95b",
     "_vibekit-0.0.4/button.css": "2e082042c6fde2999a47beff5986c7dfd4994f26facbc1e5c067b8c068474152",
-    "manifest.json": "a5789128f1b341fa7e10c9770c1159537f55eca7ec30d082e0be03da5eef07f5"
+    "manifest.json": "c9ccda2b3303bc9f1ddca6796f716f3eea46907857d3d6a7f6e2a8e338eee55d"
   },
   "thresholds": {
     "PIXEL_THRESHOLD": 0.1,
@@ -166,21 +158,6 @@
     "SP-Spend-Daylight·dark",
     "SP-Spend-Daylight·light",
     "SP-Spend-Studio·dark",
-    "SP-Spend-Studio·light",
-    "SP-Workspace-Agents-Daylight·dark",
-    "SP-Workspace-Agents-Daylight·light",
-    "SP-Workspace-Agents-Paper·dark",
-    "SP-Workspace-Agents-Paper·light",
-    "SP-Workspace-Agents-Quiet·dark",
-    "SP-Workspace-Agents-Quiet·light",
-    "SP-Workspace-Agents-Studio·dark",
-    "SP-Workspace-Agents-Studio·light",
-    "SP-Workspace-Other-Daylight·dark",
-    "SP-Workspace-Other-Daylight·light",
-    "SP-Workspace-Other-Paper·light",
-    "SP-Workspace-Other-Quiet·dark",
-    "SP-Workspace-Other-Quiet·light",
-    "SP-Workspace-Other-Studio·dark",
-    "SP-Workspace-Other-Studio·light"
+    "SP-Spend-Studio·light"
   ]
 }

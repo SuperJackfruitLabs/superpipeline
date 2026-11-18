@@ -1,6 +1,6 @@
 // apps/web/e2e/pixel/screens.ts
 import type { Page } from '@playwright/test';
-import { MASK_IDS, type MaskSpec } from './masks';
+import type { MaskSpec } from './masks';
 import { MANIFEST } from './reference';
 import { CARD_4605, VK_DIALOG_PART, dropDraftRegion, expireSession, fillNewCard, openMoveStep } from './dialog-steps';
 
@@ -85,26 +85,6 @@ async function openProjectsPanels(p: Page): Promise<void> {
   await p.locator('summary', { hasText: 'Milestones' }).first().click();
   await settle(p);
 }
-/** Crew has no board in its URL; the reference's back link and need-you count are Developer Experience's. */
-async function onDx(p: Page): Promise<void> {
-  await p.evaluate(() => localStorage.setItem('superpipeline.boardId', 'brd_134a0ddb6d434478'));
-  await p.reload();
-  await p.waitForFunction(() => document.documentElement.dataset.ready === 'true');
-}
-/** writer-quill gets a fresh token (banner open, its count 2 → 3); analyst-echo opens for editing. super-chotu stays closed (MC #11). */
-async function agentsMenus(p: Page): Promise<void> {
-  await onDx(p);
-  await p.locator('summary[aria-label="Actions for writer-quill"]').click();
-  await p.getByRole('menuitem', { name: 'Issue a token', exact: true }).click();
-  // The token is issued under the busy mark: wait for it before opening the next menu.
-  await p.locator('.banner, .wa-tok').first().waitFor();
-  await p.waitForFunction(() => document.documentElement.dataset.ready === 'true');
-  await p.locator('summary[aria-label="Actions for analyst-echo"]').click();
-  await p.getByRole('menuitem', { name: 'Edit agent' }).click();
-  await p.waitForFunction(() => document.documentElement.dataset.ready === 'true');
-  await p.evaluate(() => (document.activeElement as HTMLElement | null)?.blur());
-}
-const TOKEN_MASK: MaskSpec = { id: 'token-secret', why: MASK_IDS['token-secret']!, selector: '.tokbox, .wa-tok .box', side: 'both' };
 const blur = async (p: Page) => { await p.evaluate(() => (document.activeElement as HTMLElement | null)?.blur()); };
 
 /** Drawer backdrop (C-08): the board behind the drawer is compared on the board screens. */
@@ -171,8 +151,6 @@ function forVibe(v: Vibe, V: string, h: (a: string) => number): Screen[] {
     { artboard: `SP-Operate-${V}`, vibe: v, route: `${DX}/operate`, strength: off(v), masks: [LIVE], steps: operateSteps(v) },
     { artboard: `SP-List-${V}`, vibe: v, route: `${DX}?view=list`, strength: off(v), masks: [LIVE], steps: listSteps(v) },
     { artboard: `SP-Projects-${V}`, vibe: v, route: '/plan/projects', strength: shared(v), hold: ['**/v1/projects/*/rollup'], masks: [LIVE], steps: openProjectsPanels },
-    { artboard: `SP-Workspace-Agents-${V}`, vibe: v, route: '/crew/agents', strength: shared(v), steps: agentsMenus, masks: [LIVE, TOKEN_MASK], writes: true },
-    { artboard: `SP-Workspace-Other-${V}`, vibe: v, route: '/dev/workspace-review', strength: shared(v), masks: [LIVE], steps: onDx },
     { artboard: `SP-Spend-${V}`, vibe: v, route: `${DX}/operate/telemetry`, strength: shared(v), masks: [LIVE] },
     { artboard: `SP-Dlg-NewCard-${V}`, vibe: v, route: DX, strength: off(v), parts: VK_DIALOG_PART, steps: fillNewCard, refPatch: dropDraftRegion },
     { artboard: `SP-Dlg-Palette-${V}`, vibe: v, route: DX, strength: off(v), parts: VK_DIALOG_PART, steps: async (p) => { await p.keyboard.press('Meta+k'); await p.getByRole('combobox', { name: 'Search cards, boards, agents and actions' }).fill('agent'); await blur(p); } },
