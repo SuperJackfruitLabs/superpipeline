@@ -9,7 +9,7 @@ import { test, expect } from '@playwright/test';
  * through the whole board.
  */
 import { PORTS } from '../scripts/ports';
-import { setAppearance } from './support/seed';
+import { openBoard, seedBoard, setAppearance } from './support/seed';
 const API = PORTS.apiUrl;
 const TENANT = { 'X-Tenant-Id': 'tnt_dev', 'Content-Type': 'application/json' };
 
@@ -147,3 +147,35 @@ for (const vibe of ['daylight', 'paper', 'studio', 'quiet'] as const) {
     await expect(dialog.getByRole('heading', { name: /A card to open/ }).first()).toBeInViewport();
   });
 }
+
+/**
+ * With one board remembered, a link to a card on another board read that card's comments and
+ * estimate from the remembered board: two 404s, and the drawer stuck on loading. The drawer's
+ * board is the route's.
+ */
+test("a deep link into another board loads that board's card", async ({ page, request }) => {
+  const boardA = await seedBoard(request, 'Remembered board', PIPELINE);
+  const boardB = await seedBoard(request, 'Linked board', PIPELINE);
+  const created: { card: { id: string } } = await (await request.post(`${API}/v1/boards/${boardB}/cards`, { headers: TENANT, data: { title: 'A card on the linked board', ownerUserId: 'usr_a' } })).json();
+  const cardId = created.card.id;
+
+  await openBoard(page, boardA);
+  await expect(page.getByText('Remembered board').first()).toBeVisible();
+
+  // Boot reads the remembered board while the route opens the linked one. Slowing the remembered
+  // board's read lets the linked board land first, then the remembered one take the store over, as
+  // it did in production: the drawer must not follow the store to the other board.
+  await page.route(new RegExp(`/v1/boards/${boardA}$`), async (route) => {
+    await new Promise((r) => setTimeout(r, 1_500));
+    await route.continue();
+  });
+  const notFound: string[] = [];
+  page.on('response', (r) => { if (r.status() === 404 && r.url().includes('/v1/boards/')) notFound.push(r.url()); });
+  await page.goto(`/b/${boardB}/c/${cardId}`);
+
+  const dialog = page.getByRole('dialog');
+  await expect(dialog).toHaveAccessibleName(/A card on the linked board/);
+  await page.waitForTimeout(5_000);
+  await expect(dialog.getByText(/^Loading( comments)?…$/)).toHaveCount(0);
+  expect(notFound, 'no read went to another board').toEqual([]);
+});

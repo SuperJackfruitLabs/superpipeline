@@ -39,6 +39,10 @@
       `${model.unread} unread`,
     ]),
   );
+  /** The open card's board: the Inbox row it was opened from, else the board the Inbox opened for it. */
+  const drawerBoardId = $derived(
+    model.needs.find((r) => r.card.id === app.openCardId)?.item.boardId ?? model.running.find((r) => r.cardId === app.openCardId)?.boardId ?? app.boardId,
+  );
   /** A phone card is a full-screen sheet: the Inbox behind it is hidden, as on a board. */
   const phoneCard = $derived(viewport.narrow && !!app.openCardId);
 </script>
@@ -63,7 +67,7 @@
     </div>
   </AppShell>
 </div>
-{#if app.openCardId && app.board}<CardDrawer />{/if}
+{#if app.openCardId && app.board}<CardDrawer boardId={drawerBoardId} />{/if}
 
 <style>
   /*

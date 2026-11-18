@@ -1,10 +1,13 @@
 // @vitest-environment jsdom
 // apps/web/src/lib/components/card/card-model.svelte.test.ts
+import { flushSync } from 'svelte';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { ATTEMPTS_4605, BOARD_DX, CARD_4605, REFS_4605, STAGES_DX, TZ } from './testing/card-4605';
 import { factItems } from './card-words';
 import { fakeApi, fakeApp } from './testing/fakes';
 import { mountModel } from './testing/mount-model.svelte';
+import { CardModel } from './card-model.svelte';
+import type { BoardSnapshot } from '$lib/api';
 
 vi.mock('$lib/stores/app.svelte', async () => ({ app: (await import('./testing/fakes')).fakeApp }));
 vi.mock('$lib/api', async (orig) => ({ ...(await orig<typeof import('$lib/api')>()), ...(await import('./testing/fakes')).fakeApi }));
@@ -108,5 +111,60 @@ describe('CardModel (4605 in the drawer)', () => {
     expect(model.chip).toBe('Unclaimed · error-eric ran attempt 2');
     expect(model.facts.find((f) => f.term === 'Attempt')?.value).toBe('2');
     dispose();
+  });
+});
+
+/** A board snapshot holding one card, for the route's board. */
+const snapshotWith = (boardId: string, cardId: string): BoardSnapshot => ({
+  ...BOARD_DX, boardId, name: 'Board B', cards: [{ ...CARD_4605, id: cardId, projectId: null }], gates: [], elicitations: [], references: [],
+});
+
+/** Every board-scoped request the fake API saw, as the path it would have fetched. */
+function requested(): string[] {
+  const paths: Array<[keyof typeof fakeApi, string]> = [
+    ['getComments', 'comments'], ['getEstimate', 'estimate'], ['getCardActivities', 'activities'], ['getAttempts', 'attempts'], ['listLinks', 'links'],
+  ];
+  return paths.flatMap(([fn, tail]) => fakeApi[fn].mock.calls.map((call: unknown[]) => `/boards/${String(call[0])}/cards/${String(call[1])}/${tail}`));
+}
+
+describe('CardModel takes its board from the route', () => {
+  it("loads nothing until the route's board is the open board", async () => {
+    // The app store, made reactive for this test: board A is open (remembered), the route says B.
+    const live = $state<{ boardId: string | null; board: BoardSnapshot | null }>({ boardId: 'brd_A', board: snapshotWith('brd_A', 'card_other') });
+    const saved = { boardId: fakeApp.boardId, board: fakeApp.board };
+    Object.defineProperty(fakeApp, 'boardId', { get: () => live.boardId, configurable: true });
+    Object.defineProperty(fakeApp, 'board', { get: () => live.board, configurable: true });
+    let model!: CardModel;
+    const dispose = $effect.root(() => {
+      model = new CardModel(() => ({ boardId: 'brd_B', cardId: 'card_1', surface: 'drawer' }));
+      $effect(() => model.comments.attach());
+    });
+    try {
+      flushSync();
+      await Promise.resolve();
+      expect(model.ready).toBe(false);
+      expect(requested().filter((u) => u.includes('/boards/brd_A/'))).toEqual([]);
+      expect(requested(), 'nothing is read for the card until its board is open').toEqual([]);
+
+      // openBoard(B) has started: the id moved, the snapshot is still A's.
+      live.boardId = 'brd_B';
+      flushSync();
+      await Promise.resolve();
+      expect(model.ready).toBe(false);
+      expect(requested()).toEqual([]);
+
+      live.board = snapshotWith('brd_B', 'card_1');
+      flushSync();
+      expect(model.ready).toBe(true);
+      await vi.waitFor(() => expect(model.comments.loaded).toBe(true));
+      await vi.waitFor(() => expect(model.detailLoaded).toBe(true));
+      expect(requested()).toEqual(expect.arrayContaining(['/boards/brd_B/cards/card_1/comments', '/boards/brd_B/cards/card_1/estimate']));
+      expect(requested().filter((u) => !u.startsWith('/boards/brd_B/cards/card_1/'))).toEqual([]);
+      expect(model.card?.id).toBe('card_1');
+    } finally {
+      dispose();
+      Object.defineProperty(fakeApp, 'boardId', { value: saved.boardId, writable: true, configurable: true, enumerable: true });
+      Object.defineProperty(fakeApp, 'board', { value: saved.board, writable: true, configurable: true, enumerable: true });
+    }
   });
 });

@@ -84,7 +84,7 @@
 {#if shown}
   <div style:display={phoneCard ? 'none' : 'contents'}>{@render children()}</div>
   {#if app.openCardId}
-    <CardDrawer />
+    <CardDrawer {boardId} />
   {/if}
 {:else}
   <!-- The real shell with the board's shape in it: no logo screen, no raw error text (loading-audit L4, L5). -->

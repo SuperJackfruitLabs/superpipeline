@@ -89,6 +89,18 @@ export class CardModel {
   readonly surface = $derived.by(() => this.#ctx().surface);
   readonly boardId = $derived.by(() => this.#ctx().boardId);
   readonly cardId = $derived.by(() => this.#ctx().cardId);
+  /**
+   * The card's board is the open board: the route's board id, the store's id and its snapshot all agree.
+   * Every detail read waits for this, so a drawer mounted while another board is still open (a deep link
+   * with a different board remembered) never asks that other board for the card. A model given its
+   * board (`source`, the gallery) needs no open board.
+   */
+  readonly ready = $derived.by(() => {
+    const bid = this.boardId;
+    if (bid === null) return false;
+    if (this.#opts.source) return true;
+    return app.boardId === bid && app.board?.boardId === bid;
+  });
   readonly board = $derived.by<BoardSnapshot | null>(() => this.#opts.source?.board ?? app.board);
   readonly agents = $derived.by<AgentSummary[]>(() => this.#opts.source?.agents ?? app.agents);
   readonly card = $derived<Card | undefined>(this.cardId ? this.board?.cards.find((c) => c.id === this.cardId) : undefined);
@@ -264,7 +276,7 @@ export class CardModel {
     this.subtasks = new SubtaskComposer(this);
     this.refsForm = new ReferenceComposer(this);
     this.delivery = new DeliveryControls(this);
-    this.comments = new CommentsModel(() => ({ boardId: this.boardId, cardId: this.cardId, onFeed: (fn) => app.onFeed(fn) }));
+    this.comments = new CommentsModel(() => ({ boardId: this.boardId, cardId: this.cardId, ready: this.ready, onFeed: (fn) => app.onFeed(fn) }));
     this.resume = new ResumeModel(() => ({
       boardId: this.boardId, card: this.card ?? null, stages: this.stages, gatePending: !!this.gate, questionPending: !!this.elicitation,
       agentName: this.agent.name, after: async () => { await Promise.all([app.refresh(), this.refresh()]); },
@@ -276,12 +288,13 @@ export class CardModel {
     $effect(() => this.question.follow(this.elicitation?.id ?? null));
     $effect(() => this.resume.follow(this.cardId));
 
-    // The open card changed: reset the forms, then fetch what the snapshot does not carry.
+    // The open card changed: reset the forms, then fetch what the snapshot does not carry, once its board is open.
     $effect(() => {
       const id = this.cardId;
       const bid = this.boardId;
+      const ready = this.ready;
       untrack(() => this.#reset());
-      if (!id || !bid) return;
+      if (!id || !bid || !ready) return;
       untrack(() => {
         if (this.surface === 'gallery') return;
         void app.loadBoards();
@@ -304,7 +317,7 @@ export class CardModel {
     $effect(() => {
       const id = this.cardId;
       const bid = this.boardId;
-      if (!id || !bid || this.#opts.source || this.#opts.holdDetail) return;
+      if (!id || !bid || !this.ready || this.#opts.source || this.#opts.holdDetail) return;
       let timer: ReturnType<typeof setTimeout> | undefined;
       const stop = app.onFeed((event) => {
         if (event.payload?.cardId && event.payload.cardId !== id) return;
@@ -365,10 +378,10 @@ export class CardModel {
   async refresh(): Promise<void> {
     const id = this.cardId;
     const bid = this.boardId;
-    if (!id || !bid || this.#opts.holdDetail) return;
+    if (!id || !bid || !this.ready || this.#opts.holdDetail) return;
     // Busy until the log is in, so a dev build's data-ready means the card can be read, not only the board.
     const [acts, atts, est, links] = await app.markBusy(Promise.allSettled([getCardActivities(bid, id), getAttempts(bid, id), getEstimate(bid, id), listLinks(bid, id)]));
-    if (this.cardId !== id) return;
+    if (this.cardId !== id || this.boardId !== bid) return;
     if (acts.status === 'fulfilled') this.detail = acts.value;
     if (atts.status === 'fulfilled') this.attempts = atts.value;
     if (est.status === 'fulfilled') this.estimate = est.value;

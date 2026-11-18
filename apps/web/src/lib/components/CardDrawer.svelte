@@ -13,7 +13,9 @@
   import CardPhoneSheet from '$lib/components/card/phone/CardPhoneSheet.svelte';
   import { CardModel } from '$lib/components/card/card-model.svelte';
 
-  const model = new CardModel(() => ({ boardId: app.boardId, cardId: app.openCardId, surface: 'drawer' }));
+  /** The card's board, from where the drawer is mounted (the route, or the Inbox item); never the remembered board. */
+  let { boardId }: { boardId: string | null } = $props();
+  const model = new CardModel(() => ({ boardId, cardId: app.openCardId, surface: 'drawer' }));
   const vibe = $derived(appearance.value.vibe);
   const L = $derived(CARD_LAYOUTS[vibe]);
   const Layout = $derived(viewport.narrow ? L.phone : L.drawer);
