@@ -1,6 +1,6 @@
 // apps/web/e2e/inbox-all-boards.spec.ts
 import { expect, test } from '@playwright/test';
-import { API, TENANT } from './support/seed';
+import { API, TENANT, REVIEW_PIPELINE, seedBoard } from './support/seed';
 
 const AGENT = { ...TENANT, 'X-Agent-Id': 'agt_b' };
 const PIPELINE = [
@@ -29,4 +29,19 @@ test('a person resumes a blocked card from the Inbox on all boards, and the agen
   const next = await (await request.post(`${API}/v1/boards/${boardId}/claims`, { headers: AGENT, data: { capabilities: ['build'] } })).json();
   expect(next.handoff.feedback).toBe('Unsealed it — go ahead.');
   await expect(page.locator('[data-attention-row="blocked"]').filter({ hasText: title })).toHaveCount(0);
+});
+
+test('activity renders at most 20 groups until Show more', async ({ page, request }) => {
+  const boardId = await seedBoard(request, 'Workspace activity', REVIEW_PIPELINE);
+  // Each card reaches the review gate, which notifies its owner: the signed-in dev user.
+  for (let i = 0; i < 45; i++) {
+    await request.post(`${API}/v1/boards/${boardId}/cards`, { headers: TENANT, data: { title: `Chase ${i}`, ownerUserId: 'usr_dev' } });
+    const claim = await (await request.post(`${API}/v1/boards/${boardId}/claims`, { headers: { ...TENANT, 'X-Agent-Id': 'agt_r' }, data: { capabilities: ['research'] } })).json();
+    await request.post(`${API}/v1/boards/${boardId}/runs/${claim.runId}/complete`, { headers: TENANT, data: { leaseEpoch: claim.leaseEpoch, handoff: { summary: 'drafted' } } });
+  }
+  await page.goto('/inbox');
+  const groups = page.locator('[data-activity-group]');
+  await expect(groups).toHaveCount(20);
+  await page.getByRole('button', { name: 'Show 20 more' }).click();
+  await expect(groups).toHaveCount(40);
 });

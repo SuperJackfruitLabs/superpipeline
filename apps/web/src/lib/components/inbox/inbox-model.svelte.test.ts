@@ -125,4 +125,19 @@ describe('the Inbox model', () => {
     expect(m.spend.total).toBe(1.5);
     expect(m.groups.every((g) => g.boardId === DX_ID)).toBe(true);
   });
+  it('the inbox shows 20 activity groups and says how many remain', async () => {
+    app.notifications = Array.from({ length: 129 }, (_, i) => ({ ...DX_NOTIFICATIONS[0], seq: 1000 + i, cardId: `card_many_${i}`, createdAt: new Date(Date.UTC(2026, 9, 1) + i * 60_000).toISOString() }));
+    const m = make();
+    await settle();
+    expect(m.groups).toHaveLength(129);
+    expect(m.activityPage).toHaveLength(20);
+    expect(m.activityRemaining).toBe(109);
+    m.showMoreActivity();
+    expect(m.activityPage).toHaveLength(40);
+    expect(m.activityRemaining).toBe(89);
+    inboxScope.choose(DX_ID);
+    await settle();
+    expect(m.activityShown).toBe(20);
+    expect(m.activityPage).toHaveLength(20);
+  });
 });

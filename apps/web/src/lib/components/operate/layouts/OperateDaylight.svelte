@@ -5,7 +5,7 @@
   import { attention, bumpOnChange, countUp, flashOnChange, flip, rise } from '@superjackfruit/vibekit/motion';
   import { arrivals } from '$lib/motion/arrivals';
   /** SP-Operate-Daylight: Needs you on the left; Running, Spend and Activity on the right. */
-  import { Button, Face, Segmented } from '@superjackfruit/vibekit';
+  import { Button, Face, LoadMore, Segmented } from '@superjackfruit/vibekit';
   import LineIcon from '$lib/components/parts/LineIcon.svelte';
   import BoardChip from '$lib/components/inbox/BoardChip.svelte';
   import GateReferences from '$lib/components/card/gate/GateReferences.svelte';
@@ -156,8 +156,8 @@
         <div class="seg"><Segmented size="sm" label="Which activity" options={WHICH} bind:value={() => (model.showRead ? 'all' : 'unread'), (v) => { model.showRead = v === 'all'; }} /></div>
       </div>
       {#if model.loading}<SkeletonRows label="Loading activity…" rows={2} rowHeight={56} />{:else if model.groups.length === 0}<p class="empty">{model.showRead ? (model.scoped ? 'Nothing has happened on this board yet.' : 'Nothing has happened on any board yet.') : 'Nothing unread.'}</p>{/if}
-      {#each model.groups as g (g.cardId)}
-        <div class="grp" in:rise animate:flip use:flashOnChange={g.latest.seq}>
+      {#each model.activityPage as g (g.cardId)}
+        <div class="grp" data-activity-group in:rise animate:flip use:flashOnChange={g.latest.seq}>
           <div class="grp__head">{@render face(g.agentName, g.iconUrl, 24, g.need ? 'needs' : 'resting')}<h3 class="grp__title"><a href={model.cardHref(g.cardId, g.boardId)} onclick={(e: MouseEvent) => go(e, g.cardId, g.boardId)}>{g.title}</a></h3></div>
           {#each events(g) as n (n.seq)}
             <div class="ev"><span class="ev__t">{when(n)}</span><span class="ev__body">{staleLine(n, 'daylight', g.need?.item.kind ?? null) ?? noticeBody(n)}{#if g.need}{' '}<a href="#needs">Why, in Needs you</a>{/if}</span>{#if !n.read}<button class="tick" type="button" aria-label="Mark read" onclick={() => model.markRead(n.seq, g.boardId)}><LineIcon name="tick" size={20} /></button>{/if}</div>
@@ -171,6 +171,7 @@
           {/if}
         </div>
       {/each}
+      {#if model.activityRemaining > 0}<LoadMore shown={model.activityPage.length} total={model.groups.length} label={`Show ${Math.min(20, model.activityRemaining)} more`} onmore={() => model.showMoreActivity()} />{/if}
     </section>
   </div>
 </div></div>

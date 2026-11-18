@@ -6,7 +6,7 @@
   import { attention, bumpOnChange, flashOnChange, flip, rise } from '@superjackfruit/vibekit/motion';
   import { arrivals } from '$lib/motion/arrivals';
   /** SP-Operate-Paper: "The desk" — letters waiting on you, the digest, and the ledger. */
-  import { Button, Face } from '@superjackfruit/vibekit';
+  import { Button, Face, LoadMore } from '@superjackfruit/vibekit';
   import LineIcon from '$lib/components/parts/LineIcon.svelte';
   import BoardChip from '$lib/components/inbox/BoardChip.svelte';
   import GateReferences from '$lib/components/card/gate/GateReferences.svelte';
@@ -102,8 +102,8 @@
       <div class="kick"><h2 id="k2">Since you last looked</h2><span class="kick__n">{model.loading ? '–' : model.unread} unread{model.scoped ? '' : ' · all boards'}</span></div>
       <div class="toggle" role="group" aria-label="Which activity"><button type="button" aria-pressed={model.showRead ? 'false' : 'true'} onclick={() => (model.showRead = false)}>Unread only</button><button type="button" aria-pressed={model.showRead ? 'true' : 'false'} onclick={() => (model.showRead = true)}>Show all</button></div>
       {#if model.loading}<SkeletonRows label="Loading activity…" rows={2} rowHeight={60} />{:else if model.groups.length === 0}<p class="prose">{model.showRead ? (model.scoped ? 'Nothing has happened on this board yet.' : 'Nothing has happened on any board yet.') : 'Nothing unread.'}</p>{/if}
-      {#each model.groups as g (g.cardId)}
-        <div class="dig" in:rise animate:flip use:flashOnChange={g.latest.seq}>
+      {#each model.activityPage as g (g.cardId)}
+        <div class="dig" data-activity-group in:rise animate:flip use:flashOnChange={g.latest.seq}>
           <h3>{@render face(g.agentName, g.iconUrl, 22, g.need ? 'needs' : 'resting')}<a href={model.cardHref(g.cardId, g.boardId)} onclick={(e: MouseEvent) => go(e, g.cardId, g.boardId)}>{g.title}</a></h3>
           {#each events(g) as n (n.seq)}
             <div class="dig__row"><p><span class="dig__t">{when(n)}</span>{staleLine(n, 'paper', g.need?.item.kind ?? null) ?? ` — ${noticeBody(n)} `}{#if g.need}<a href="#letters" class="lnk" style="min-height: 0px; display: inline;">The reason is in its letter.</a>{/if}</p>{#if !n.read}<button class="tick" type="button" aria-label="Mark read" onclick={() => model.markRead(n.seq, g.boardId)}><LineIcon name="tick" size={18} /></button>{/if}</div>
@@ -115,6 +115,7 @@
           </div>
         </div>
       {/each}
+      {#if model.activityRemaining > 0}<LoadMore shown={model.activityPage.length} total={model.groups.length} label={`Show ${Math.min(20, model.activityRemaining)} more`} onmore={() => model.showMoreActivity()} />{/if}
     </section>
     <aside class="col" aria-label="At work and the ledger">
       <section aria-labelledby="k3">

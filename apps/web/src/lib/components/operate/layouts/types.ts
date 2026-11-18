@@ -86,6 +86,11 @@ export interface OperateModel {
   /** Show read notifications too. */
   showRead: boolean;
   readonly groups: ActivityGroup[];
+  /** The first `activityShown` groups: what Activity draws. */
+  readonly activityPage: ActivityGroup[];
+  /** Groups still hidden behind "Show 20 more". */
+  readonly activityRemaining: number;
+  showMoreActivity(): void;
   readonly phase: Phase;
   readonly nowMs: number;
   readonly firstName: string;

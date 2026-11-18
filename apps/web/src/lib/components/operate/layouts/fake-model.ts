@@ -1,14 +1,14 @@
 // apps/web/src/lib/components/operate/layouts/fake-model.ts
 import { vi } from 'vitest';
 import { itemsFromBoard, sortAttention } from '$lib/components/attention/attention';
-import { activityGroups, needRows, spendView } from '../operate-data';
+import { ACTIVITY_PAGE, activityGroups, needRows, spendView } from '../operate-data';
 import { DX_AGENTS, DX_BOARD, DX_NOTIFICATIONS, DX_NOW } from '$lib/test/dx-snapshot';
 import type { OperateModel } from './types';
 
 export function fakeModel(over: Partial<OperateModel> = {}): OperateModel {
   const items = itemsFromBoard(DX_BOARD, DX_AGENTS, DX_NOW);
   const needs = needRows(DX_BOARD, DX_AGENTS, sortAttention(items, 'stage'), DX_NOW);
-  return {
+  const base: Omit<OperateModel, 'activityPage' | 'activityRemaining'> & Partial<OperateModel> = {
     boardId: DX_BOARD.boardId!, boardName: 'Developer Experience', scoped: true, boardCount: 1, cardCount: 7,
     stages: [...DX_BOARD.stages], agents: DX_AGENTS, needs,
     needsUrgent: needRows(DX_BOARD, DX_AGENTS, sortAttention(items, 'urgency'), DX_NOW),
@@ -18,6 +18,10 @@ export function fakeModel(over: Partial<OperateModel> = {}): OperateModel {
     cardHref: (id, board) => `/b/${board ?? DX_BOARD.boardId}/c/${id}`,
     resume: vi.fn(async () => null), move: vi.fn(async () => null), markRead: vi.fn(async () => {}),
     setCaps: vi.fn(async () => null), open: vi.fn(), openLog: vi.fn(),
+    showMoreActivity: vi.fn<() => void>(),
     ...over,
   };
+  // The page follows the groups, unless a test names its own.
+  const page = over.activityPage ?? base.groups.slice(0, ACTIVITY_PAGE);
+  return { ...base, activityPage: page, activityRemaining: over.activityRemaining ?? Math.max(0, base.groups.length - ACTIVITY_PAGE) };
 }

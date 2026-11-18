@@ -10,7 +10,7 @@
   import { arrivals } from '$lib/motion/arrivals';
   /** SP-Operate-Studio: the annual-report spread, with J/K/R/M/O/. on the Needs table. */
   import { tick, untrack } from 'svelte';
-  import { Face } from '@superjackfruit/vibekit';
+  import { Face, LoadMore } from '@superjackfruit/vibekit';
   import LineIcon from '$lib/components/parts/LineIcon.svelte';
   import MoveMenu from '$lib/components/parts/MoveMenu.svelte';
   import { moveTargets } from '../operate-data';
@@ -188,13 +188,14 @@
         <table class="ar-tbl">
           <thead><tr><th scope="col" style="width: 64px;">Time</th><th scope="col" style="width: 72px;">Kind</th><th scope="col">What</th><th scope="col" style="width: 44px;"><span class="sr">Mark read</span></th></tr></thead>
           <tbody>
-            {#each model.groups as g (g.cardId)}
-              <tr class="op-grp"><td colspan="4"><div class="in">{@render face(g.agentName, g.iconUrl, g.need ? 'needs' : 'resting')}<a class="ttl" href={model.cardHref(g.cardId, g.boardId)} onclick={(e: MouseEvent) => go(e, g.cardId, g.boardId)}>{g.title}</a><span class="end">{#if g.need?.actions.includes('resume')}<button class="ar-btn2" type="button" style="min-height: 44px;" onclick={() => { selected = model.needs.indexOf(g.need!); void ui.fromActivity(g.need!, 'needs'); }}>Resume</button>{:else if g.need?.actions.includes('move')}<button class="ar-btn2" type="button" aria-haspopup="menu" style="min-height: 44px;" onclick={() => { selected = model.needs.indexOf(g.need!); document.getElementById('needs')?.scrollIntoView?.({ block: 'start' }); openMenu(g.need!); }}>Move…</button>{/if}{#if g.earlier.length > 0}<button class="ar-lk quiet" type="button" aria-expanded={ui.earlierOpen[g.cardId] ? 'true' : 'false'} onclick={() => ui.toggleEarlier(g.cardId)}>Earlier</button>{/if}</span></div></td></tr>
+            {#each model.activityPage as g (g.cardId)}
+              <tr class="op-grp" data-activity-group><td colspan="4"><div class="in">{@render face(g.agentName, g.iconUrl, g.need ? 'needs' : 'resting')}<a class="ttl" href={model.cardHref(g.cardId, g.boardId)} onclick={(e: MouseEvent) => go(e, g.cardId, g.boardId)}>{g.title}</a><span class="end">{#if g.need?.actions.includes('resume')}<button class="ar-btn2" type="button" style="min-height: 44px;" onclick={() => { selected = model.needs.indexOf(g.need!); void ui.fromActivity(g.need!, 'needs'); }}>Resume</button>{:else if g.need?.actions.includes('move')}<button class="ar-btn2" type="button" aria-haspopup="menu" style="min-height: 44px;" onclick={() => { selected = model.needs.indexOf(g.need!); document.getElementById('needs')?.scrollIntoView?.({ block: 'start' }); openMenu(g.need!); }}>Move…</button>{/if}{#if g.earlier.length > 0}<button class="ar-lk quiet" type="button" aria-expanded={ui.earlierOpen[g.cardId] ? 'true' : 'false'} onclick={() => ui.toggleEarlier(g.cardId)}>Earlier</button>{/if}</span></div></td></tr>
               {#each events(g) as n (n.seq)}
                 <tr class="op-ev"><td><span class="m">{when(n)}</span></td><td><span class="kick">{kindCell(n)}</span></td><td>{staleLine(n, 'studio', g.need?.item.kind ?? null) ?? `${noticeBody(n)} `}{#if g.need}<a class="ar-lk" href="#needs" style="min-height: 0px;">reason ↑</a>{/if}</td><td>{#if !n.read}<button class="op-tick" type="button" aria-label="Mark read" onclick={() => model.markRead(n.seq, g.boardId)}><LineIcon name="tick-ar" size={16} stroke={1.75} /></button>{/if}</td></tr>
               {/each}
             {/each}
           </tbody>
+        {#if model.activityRemaining > 0}<LoadMore shown={model.activityPage.length} total={model.groups.length} label={`Show ${Math.min(20, model.activityRemaining)} more`} onmore={() => model.showMoreActivity()} />{/if}
         </table>
       {/if}
     </section>

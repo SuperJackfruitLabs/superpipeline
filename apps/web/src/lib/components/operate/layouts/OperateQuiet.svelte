@@ -10,7 +10,7 @@
   import { attention, bumpOnChange, flashOnChange, flip, rise } from '@superjackfruit/vibekit/motion';
   import { arrivals } from '$lib/motion/arrivals';
   /** SP-Operate-Quiet: one column, headings in reading order, most urgent first. */
-  import { Button, Face } from '@superjackfruit/vibekit';
+  import { Button, Face, LoadMore } from '@superjackfruit/vibekit';
   import { moveTargets } from '../operate-data';
   import { CapsUi, OperateUi } from '../operate-ui.svelte';
   import { moveOptionLabel, QUIET_REFUSAL, quietLede, quietLine, quietMeta, quietSpend, resumeOptions, RESUME_LABEL, stopHint, usd } from '../operate-words';
@@ -93,8 +93,8 @@
   <h2>Activity ({model.loading ? '' : `${model.unread} `}unread{model.scoped ? '' : ', all boards'})</h2>
   <div class="toggle" role="group" aria-label="Which activity"><button class="textbtn" type="button" aria-pressed={model.showRead ? 'false' : 'true'} onclick={() => (model.showRead = false)}>Unread only</button><button class="textbtn" type="button" aria-pressed={model.showRead ? 'true' : 'false'} onclick={() => (model.showRead = true)}>Show all</button></div>
   {#if model.loading}<SkeletonRows label="Loading activity…" rows={1} />{:else if model.groups.length === 0}<p class="plain">{model.showRead ? (model.scoped ? 'Nothing has happened on this board yet.' : 'Nothing has happened on any board yet.') : 'Nothing unread.'}</p>{/if}
-  {#each model.groups as g (g.cardId)}
-    <div class="item" style="padding-left: 0px;" in:rise animate:flip use:flashOnChange={g.latest.seq}>
+  {#each model.activityPage as g (g.cardId)}
+    <div class="item" data-activity-group style="padding-left: 0px;" in:rise animate:flip use:flashOnChange={g.latest.seq}>
       <h3 style="display: flex; gap: 10px; align-items: center;">{@render face(g.agentName, g.iconUrl, g.need ? 'needs' : 'resting')}<a href={model.cardHref(g.cardId, g.boardId)} onclick={(e: MouseEvent) => go(e, g.cardId, g.boardId)}>{g.title}</a></h3>
       <ul class="ev">{#each events(g) as n (n.seq)}<li><span>{quietLine(n, g.need?.item.kind ?? null, g.need !== null)}</span>{#if !n.read}<button class="textbtn" type="button" onclick={() => model.markRead(n.seq, g.boardId)}>Mark read</button>{/if}</li>{/each}</ul>
       <div class="acts" style="margin-top: var(--vk-space-2);">
@@ -104,6 +104,7 @@
       </div>
     </div>
   {/each}
+  {#if model.activityRemaining > 0}<LoadMore shown={model.activityPage.length} total={model.groups.length} label={`Show ${Math.min(20, model.activityRemaining)} more`} onmore={() => model.showMoreActivity()} />{/if}
   <h2>Spend in the last 7 days</h2>
   {#if model.usageError}<p class="plain">Couldn't load spend — {model.usageError}</p>{/if}
   {#if model.loading}<SkeletonRows label="Loading spend…" rows={1} />{:else}<p class="plain"><span class="money" use:bumpOnChange={model.spend.total}>{usd(model.spend.total)}</span>{quietSpend(model.spend.cap, model.spend.top)}</p>{/if}

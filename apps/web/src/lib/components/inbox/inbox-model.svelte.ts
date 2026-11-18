@@ -16,8 +16,8 @@ import {
 import { itemsFromBoard, sortAttention } from '$lib/components/attention/attention';
 import { refusalOf } from '$lib/components/attention/refusal';
 import { greetingName } from '../dialogs/person';
-import { activityGroups, mergeUsage, needRows, parseCap, runningRows, spendView } from '../operate/operate-data';
-import type { CapResult, NeedRow, OperateModel } from '../operate/layouts/types';
+import { ACTIVITY_PAGE, activityGroups, mergeUsage, needRows, parseCap, runningRows, spendView } from '../operate/operate-data';
+import type { ActivityGroup, CapResult, NeedRow, OperateModel } from '../operate/layouts/types';
 import { boardsNeedingFirst, inboxScope, scopeLabel } from './inbox-scope.svelte';
 import { pending, type Pending } from '$lib/loading.svelte';
 
@@ -28,6 +28,8 @@ export const CHOOSE_A_BOARD_FOR_CAPS = 'Choose one board under Show to set its c
 
 export class InboxStore implements OperateModel {
   showRead = $state(false);
+  /** How many Activity groups are drawn; a board change starts again at one page. */
+  activityShown = $state(ACTIVITY_PAGE);
   #snaps = $state<Record<string, BoardSnapshot>>({});
   #notes = $state<Record<string, Notification[]>>({});
   #usage = $state<Record<string, UsageSummary>>({});
@@ -68,6 +70,9 @@ export class InboxStore implements OperateModel {
       .sort((a, b) => b.latest.createdAt.localeCompare(a.latest.createdAt)),
   );
   get groups() { return this.loading ? [] : this.#groupsAll; }
+  get activityPage(): ActivityGroup[] { return this.groups.slice(0, this.activityShown); }
+  get activityRemaining(): number { return Math.max(0, this.groups.length - this.activityShown); }
+  showMoreActivity(): void { this.activityShown += ACTIVITY_PAGE; }
   readonly cardCount = $derived(this.#boards.reduce((n, b) => n + b.cards.filter((c) => !c.archivedAt).length, 0));
   readonly stages = $derived(this.scoped ? [...(this.#boards[0]?.stages ?? [])].sort((a, b) => a.order - b.order) : []);
 
@@ -78,6 +83,10 @@ export class InboxStore implements OperateModel {
 
   constructor() {
     this.#gate = pending(() => this.pendingNow);
+    $effect(() => {
+      void inboxScope.boardId;
+      this.activityShown = ACTIVITY_PAGE;
+    });
     $effect(() => {
       const key = this.#idsKey;
       void this.#load(key ? key.split(',').filter((id) => !this.#asked.has(id)) : []);

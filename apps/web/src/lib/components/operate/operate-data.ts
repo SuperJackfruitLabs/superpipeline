@@ -37,6 +37,9 @@ export function crewOf(rows: NeedRow[]): Array<{ name: string; iconUrl: string |
   return [...seen.values()];
 }
 
+/** Activity groups drawn at first and added by each "Show more". */
+export const ACTIVITY_PAGE = 20;
+
 export function activityGroups(notifications: Notification[], showRead: boolean, needs: NeedRow[], board: BoardSnapshot, agents: AgentSummary[]): ActivityGroup[] {
   const shown = showRead ? notifications : notifications.filter((n) => !n.read);
   const byCard = new Map<string, Notification[]>();
