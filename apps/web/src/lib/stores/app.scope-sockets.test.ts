@@ -12,10 +12,13 @@ type FakeSocket = EventTarget & { boardId: string; closed: boolean; close(): voi
 const h = vi.hoisted(() => ({
   sockets: [] as FakeSocket[],
   agents: null as null | Promise<unknown[]>,
+  renew: [] as unknown[],
 }));
 const BOARD = (id: string) => ({ boardId: id, name: id, stages: [], cards: [], gates: [], elicitations: [], references: [] });
 vi.mock('$lib/api', async (orig) => ({
   ...(await orig<typeof Api>()),
+  getMe: vi.fn<() => Promise<unknown>>(async () => ({ userId: 'usr_1', tenantId: 'tnt_1', name: 'Ira Mehta' })),
+  renewSession: vi.fn<() => Promise<unknown>>(async () => h.renew.shift() ?? { ok: true }),
   getBoard: vi.fn<(id: string) => Promise<unknown>>(async (id) => BOARD(id)),
   getBoards: vi.fn<() => Promise<unknown[]>>(async () => []),
   listAttention: vi.fn<() => Promise<unknown>>(async () => ({ cards: [], boardsUnanswered: 0 })),
@@ -37,6 +40,7 @@ vi.mock('$lib/api', async (orig) => ({
 
 import { app } from './app.svelte';
 import { liveUpdates } from '$lib/live/live-updates.svelte';
+import { auth } from '$lib/auth-recovery.svelte';
 import * as api from '$lib/api';
 
 /** The server ends a feed: it is closed and says so. */
@@ -112,7 +116,7 @@ describe('the app’s live feeds', () => {
     for (const seq of [7, 8, 9]) feed.emit({ ...EVENT, seq });
     await Promise.resolve();
     expect(api.getBoard).not.toHaveBeenCalled();
-    expect(liveUpdates.queued.map((q) => q.key)).toEqual(['board:brd_open']);
+    expect(liveUpdates.queued.map((q) => q.key)).toEqual(['app:board:brd_open']);
     liveUpdates.resume();
     await vi.waitFor(() => expect(api.getBoard).toHaveBeenCalledWith('brd_open'));
     expect(api.getBoard).toHaveBeenCalledTimes(1);
@@ -120,16 +124,43 @@ describe('the app’s live feeds', () => {
   it('a paused page holds the feed: an open card hears its events only on resume, in order', async () => {
     await app.openBoard('brd_open');
     const feed = open('brd_open')[0];
-    const heard: number[] = [];
-    const off = app.onFeed((e) => heard.push(e.seq));
+    const heard: string[] = [];
+    const off = app.onFeed((e) => heard.push(`${String(e.payload.cardId)}:${e.seq}`));
     liveUpdates.pause();
-    feed.emit({ ...EVENT, seq: 7 });
-    feed.emit({ ...EVENT, seq: 8 });
+    feed.emit({ ...EVENT, seq: 7, payload: { cardId: 'card_a' } });
+    feed.emit({ ...EVENT, seq: 8, payload: { cardId: 'card_a' } });
     expect(heard).toEqual([]);
-    expect(liveUpdates.queued.map((q) => q.key)).toEqual(['board:brd_open', 'feed:7', 'feed:8']);
+    // Another board opens while paused, and its feed numbers its events from the same seq.
+    await app.openBoard('brd_other');
+    open('brd_other')[0].emit({ ...EVENT, seq: 7, payload: { cardId: 'card_b' } });
+    expect(liveUpdates.queued.map((q) => q.key)).toEqual([
+      'app:board:brd_open', 'feed:brd_open:7', 'feed:brd_open:8', 'app:board:brd_other', 'feed:brd_other:7',
+    ]);
     liveUpdates.resume();
-    expect(heard).toEqual([7, 8]);
+    expect(heard).toEqual(['card_a:7', 'card_a:8', 'card_b:7']);
     off();
+  });
+  it('after a lapsed session is renewed, each scope board is read again once', async () => {
+    const reads: string[] = [];
+    const off = app.onScopeEvent((id) => reads.push(id));
+    app.watchAuth();
+    await app.openBoard('brd_open');
+    app.openScopeSockets(['brd_a', 'brd_b']);
+    for (const id of ['brd_a', 'brd_b']) open(id)[0].emit(null); // fresh feeds: their snapshots are skipped
+    expect(reads).toEqual([]);
+    h.renew = [{ ok: false, reason: 'login_required' }];
+    await auth.recover();
+    expect(auth.state).toBe('expired');
+    expect(open('brd_a')).toHaveLength(0);
+    expect(open('brd_b')).toHaveLength(0);
+    // Signed in again: the scope comes back as reconnects, so each opening snapshot reads its board.
+    h.renew = [{ ok: true }];
+    await auth.recover();
+    expect(auth.state).toBe('ok');
+    for (const id of ['brd_a', 'brd_b']) open(id)[0].emit(null);
+    expect(reads).toEqual(['brd_a', 'brd_b']);
+    off();
+    auth.resolved();
   });
   it('a fresh feed skips its opening snapshot; a reconnected one reads the board again', async () => {
     vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
@@ -147,7 +178,7 @@ describe('the app’s live feeds', () => {
       const second = open('brd_open').at(-1);
       expect(second).not.toBe(first);
       second?.emit(null);
-      expect(liveUpdates.queued.map((q) => q.key)).toEqual(['board:brd_open']);
+      expect(liveUpdates.queued.map((q) => q.key)).toEqual(['app:board:brd_open']);
       liveUpdates.resume();
       await vi.waitFor(() => expect(api.getBoard).toHaveBeenCalledWith('brd_open'));
       // A scope feed: the same rule.

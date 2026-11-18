@@ -231,7 +231,7 @@ export class InboxStore implements OperateModel {
     // The open board is read too: opening a card on another board makes this one a board like the rest.
     const [snap, notes, usage] = await Promise.allSettled([getBoard(id), getNotifications(id), getUsage(id, '7d')]);
     const result: BoardRead = { snap, notes, usage };
-    if (live) liveUpdates.push(`board:${id}`, () => this.#applyBoard(id, result));
+    if (live) liveUpdates.push(`inbox:board:${id}`, () => this.#applyBoard(id, result));
     else this.#applyBoard(id, result);
   }
   /**

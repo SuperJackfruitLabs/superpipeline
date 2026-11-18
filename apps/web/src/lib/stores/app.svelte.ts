@@ -365,7 +365,8 @@ class AppStore {
     await this.refresh();
     if (this.boardId) this.#connect(this.boardId);
     // The Inbox's other boards come back too; they were stopped when the session lapsed.
-    if (this.#scopeWanted.length) this.openScopeSockets(this.#scopeWanted);
+    // As reconnects, so each feed's opening snapshot reads its board: what changed during the lapse.
+    if (this.#scopeWanted.length) this.openScopeSockets(this.#scopeWanted, true);
     return true;
   }
 
@@ -531,11 +532,11 @@ class AppStore {
       opening = false;
       if (skip) return;
       // Through the Live toggle: paused, the board holds still and one refresh waits its turn.
-      liveUpdates.push(`board:${boardId}`, () => void this.refresh());
+      liveUpdates.push(`app:board:${boardId}`, () => void this.refresh());
       // Fan the event out to whoever is watching one card. The board snapshot that `refresh`
       // reloads does not carry activities, so without this the open card learns nothing. Paused,
       // each event waits too (they are incremental, so one entry per event), played in order.
-      if (event && this.#feedListeners.size > 0) liveUpdates.push(`feed:${event.seq}`, () => { for (const fn of this.#feedListeners) fn(event); });
+      if (event && this.#feedListeners.size > 0) liveUpdates.push(`feed:${boardId}:${event.seq}`, () => { for (const fn of this.#feedListeners) fn(event); });
     });
     sock.addEventListener('open', () => {
       if (generation !== this.#socketGeneration) return;
@@ -556,7 +557,7 @@ class AppStore {
         if (generation !== this.#socketGeneration) return;
         // Refresh on the way back: whatever happened while the socket was down did not reach us,
         // and reconnecting to a live feed with a stale board is the same lie in slower form. Paused, it queues.
-        liveUpdates.push(`board:${boardId}`, () => void this.refresh());
+        liveUpdates.push(`app:board:${boardId}`, () => void this.refresh());
         this.#connect(boardId, true);
       }, delay);
     });
@@ -633,13 +634,14 @@ class AppStore {
 
   /**
    * Keep one feed open per board in `ids`, minus the open board (its own feed carries it): boards
-   * that left the scope close, boards that joined open, the rest are left as they are.
+   * that left the scope close, boards that joined open, the rest are left as they are. `reconnect`
+   * opens them as coming back (their opening snapshot is kept, so each board is read again).
    */
-  openScopeSockets(ids: string[]): void {
+  openScopeSockets(ids: string[], reconnect = false): void {
     this.#scopeWanted = [...ids];
     const want = new Set(ids.filter((id) => id && id !== this.boardId));
     for (const id of this.#scopeIds()) if (!want.has(id)) this.#closeScope(id);
-    for (const id of want) if (!this.#scopeSockets.has(id) && !this.#scopeRetry.has(id)) this.#openScope(id, false);
+    for (const id of want) if (!this.#scopeSockets.has(id) && !this.#scopeRetry.has(id)) this.#openScope(id, reconnect);
   }
 
   /** Close every scope feed and forget the scope. */

@@ -45,11 +45,11 @@ describe('LiveUpdates', () => {
     const l = new LiveUpdates();
     const seen: string[] = [];
     l.pause();
-    l.push('board:a', () => seen.push('a1'));
-    l.push('board:b', () => seen.push('b1'));
-    l.push('board:a', () => seen.push('a2'));
-    l.push('board:a', () => seen.push('a3'));
-    expect(l.queued.map((q) => q.key)).toEqual(['board:a', 'board:b']);
+    l.push('inbox:board:a', () => seen.push('a1'));
+    l.push('inbox:board:b', () => seen.push('b1'));
+    l.push('inbox:board:a', () => seen.push('a2'));
+    l.push('inbox:board:a', () => seen.push('a3'));
+    expect(l.queued.map((q) => q.key)).toEqual(['inbox:board:a', 'inbox:board:b']);
     l.resume();
     expect(seen).toEqual(['a3', 'b1']);
   });

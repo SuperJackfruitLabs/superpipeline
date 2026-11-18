@@ -16,6 +16,9 @@ const api = vi.hoisted(() => ({
   // Each board in scope gets a feed; these record which and hand the test their message handler.
   sockets: [] as Array<{ boardId: string; closed: boolean; emit: (e: unknown) => void }>,
   openBoardSocket: vi.fn<(boardId: string, onEvent: (e: unknown) => void) => unknown>(),
+  // The reads `app.openBoard` makes, answered from what the test set on the app.
+  getBoards: vi.fn<() => Promise<unknown>>(), listAttention: vi.fn<() => Promise<unknown>>(), listLabels: vi.fn<() => Promise<unknown[]>>(),
+  getAgents: vi.fn<() => Promise<unknown>>(), getMembers: vi.fn<() => Promise<unknown[]>>(), listProjects: vi.fn<() => Promise<unknown[]>>(),
 }));
 api.openBoardSocket.mockImplementation((boardId, onEvent) => {
   const s = Object.assign(new EventTarget(), { boardId, closed: false, close() { s.closed = true; }, emit: onEvent });
@@ -39,6 +42,12 @@ const make = (): InboxStore => {
 const settle = async () => { for (let i = 0; i < 5; i++) { await tick(); await Promise.resolve(); } flushSync(); };
 
 beforeEach(() => {
+  api.getBoards.mockImplementation(async () => app.boards);
+  api.listAttention.mockImplementation(async () => ({ cards: app.attention, boardsUnanswered: 0 }));
+  api.listLabels.mockImplementation(async () => []);
+  api.getAgents.mockImplementation(async () => app.agents);
+  api.getMembers.mockImplementation(async () => []);
+  api.listProjects.mockImplementation(async () => []);
   api.getBoard.mockImplementation(async (id: string) => (id === OTHER ? OTHER_BOARD : DX_BOARD));
   api.getNotifications.mockImplementation(async (id: string) => (id === OTHER ? [] : DX_NOTIFICATIONS));
   api.getUsage.mockImplementation(async (id: string) => usage(id === OTHER ? 2 : 1.5));
@@ -180,7 +189,7 @@ describe('the Inbox model', () => {
     await settle();
     feed?.emit({ seq: 3, type: 'card.moved', payload: { cardId: added.id }, ts: '2026-11-18T09:00:02.000Z' });
     await settle();
-    expect(liveUpdates.queued.map((q) => q.key)).toEqual([`board:${OTHER}`]);
+    expect(liveUpdates.queued.map((q) => q.key)).toEqual([`inbox:board:${OTHER}`]);
     expect(m.needs.some((r) => r.card.id === added.id)).toBe(false);
     liveUpdates.apply();
     flushSync();
@@ -223,5 +232,29 @@ describe('the Inbox model', () => {
     } finally {
       clock.mockRestore();
     }
+  });
+  it('a paused Inbox read and the app’s refresh for the same board both wait, and both run on resume', async () => {
+    const m = make();
+    await settle();
+    const scope = api.sockets.find((s) => s.boardId === OTHER && !s.closed);
+    liveUpdates.pause();
+    scope?.emit({ seq: 1, type: 'card.updated', payload: {}, ts: '2026-11-18T09:00:00.000Z' });
+    await settle();
+    expect(liveUpdates.queued.map((q) => q.key)).toEqual([`inbox:board:${OTHER}`]);
+    // The person opens a card on that board: it becomes the open board, and its own feed speaks.
+    await app.openBoard(OTHER);
+    await settle();
+    const feed = api.sockets.filter((s) => s.boardId === OTHER && !s.closed).at(-1);
+    expect(feed).not.toBe(scope);
+    feed?.emit({ seq: 2, type: 'card.updated', payload: {}, ts: '2026-11-18T09:00:01.000Z' });
+    expect(liveUpdates.queued.map((q) => q.key)).toEqual([`inbox:board:${OTHER}`, `app:board:${OTHER}`]);
+    api.getBoard.mockClear();
+    const changesBefore = m.changes[OTHER];
+    liveUpdates.resume();
+    await settle();
+    // The Inbox's read was applied (a new diff for the board) and the app refreshed the board.
+    expect(m.changes[OTHER]).toBeDefined();
+    expect(m.changes[OTHER]).not.toBe(changesBefore);
+    expect(api.getBoard).toHaveBeenCalledWith(OTHER);
   });
 });
