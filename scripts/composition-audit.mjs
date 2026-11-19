@@ -12,6 +12,13 @@
 // The workflow (.github/workflows/composition-audit.yml) reads STAGING_URL from the repository
 // variable of that name. The operator must define it; while it is unset the job skips with a note.
 //
+// DEV-MODE PLANES ONLY. The spec seeds a realistic world through POST /v1/dev/fixture and signs in
+// with dev headers, so the target must run with DEV_AUTH and FIXTURE_IMPORT on: a dev stack, never
+// a deployed staging (there the fixture route deletes a tenant by id with no sign-in). Before
+// seeding, `preflight` asks the target read-only (GET /v1/dev/fixture: 405 when the route is on,
+// a 404 or the web app otherwise; the route answers a GET before reading anything) and stops with
+// one line when the route is not there. Never enable fixture import on a plane to make this pass.
+//
 // Outcome per test: Playwright `status` of the spec's tests: expected = pass, unexpected = FAIL,
 // flaky = pass (flaky), skipped = skipped. Exit code is 0 either way (the job is advisory); a
 // missing/unparseable result, or zero tests, exits 1.
@@ -87,28 +94,46 @@ export function runPlaywright(json, url, spawn = spawnSync) {
   if (res.error) throw new Error(`Playwright did not start: ${res.error.message}`);
 }
 
+/** Ask the target, read-only, whether it is a dev-mode plane. Resolves null when it is, else the reason it is not. */
+export async function preflight(url, fetchImpl = fetch) {
+  const probe = new URL('/v1/dev/fixture', url).href;
+  const refuse = (why) => `${url} is not a dev-mode plane (${why}): the composition audit seeds a fixture world and signs in with dev headers, so it runs only against a dev stack with DEV_AUTH and FIXTURE_IMPORT on. Never enable fixture import on a deployed plane to make it pass.`;
+  let res;
+  try { res = await fetchImpl(probe, { method: 'GET', redirect: 'manual' }); } catch (e) { return refuse(`GET ${probe} failed: ${e.message}`); }
+  return res.status === 405 ? null : refuse(`GET ${probe} answered ${res.status}, not 405`);
+}
+
 function readRows(json) {
   try { return collect(JSON.parse(readFileSync(json, 'utf8'))); } catch { return []; }
 }
 
-function main() {
-  const url = process.env.STAGING_URL;
-  const date = arg('--date') ?? new Date().toISOString().slice(0, 10);
-  const outDir = resolve(arg('--out') ?? join(root, 'docs/reviews'));
-  let json = arg('--from-json');
+/** One audit. Returns the report's path and its rows; throws (writing nothing, running nothing) when the target is refused. */
+export async function audit({ url, date, outDir, json, fetchImpl = fetch, spawn = spawnSync }) {
   if (!json) {
     if (!url) throw new Error('STAGING_URL is not set: define the repository variable to run the audit');
+    const refused = await preflight(url, fetchImpl);
+    if (refused) throw new Error(refused);
     json = join(root, 'apps/web/test-results/composition-audit.json');
-    runPlaywright(json, url);
+    runPlaywright(json, url, spawn);
   }
   const rows = readRows(json);
   mkdirSync(outDir, { recursive: true });
   const file = join(outDir, `composition-audit-${date}.md`);
   writeFileSync(file, render(rows, { date, url: url ?? '(from-json)' }));
+  return { file, rows };
+}
+
+async function main() {
+  const { file, rows } = await audit({
+    url: process.env.STAGING_URL,
+    date: arg('--date') ?? new Date().toISOString().slice(0, 10),
+    outDir: resolve(arg('--out') ?? join(root, 'docs/reviews')),
+    json: arg('--from-json'),
+  });
   console.log(file);
   if (!rows.length) process.exit(1);
 }
 
 if (import.meta.url === pathToFileURL(process.argv[1] ?? '').href) {
-  try { main(); } catch (e) { console.error(e.message); process.exit(1); }
+  main().catch((e) => { console.error(e.message); process.exit(1); });
 }
