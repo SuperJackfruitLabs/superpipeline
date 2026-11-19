@@ -52,6 +52,15 @@ export function laneWho(st: StageSummary): string {
   return d.length === 1 ? `${d[0]} works this` : `${plural(d.length, 'agent', 'agents')} work this`;
 }
 
+/**
+ * A folded lane's "Show N more" (rule 7). The fold never hides attention silently: when hidden cards
+ * want you, the label says how many ("Show 6 more · 2 want you").
+ */
+export function laneMore(n: number, wanting: number): string {
+  const more = `Show ${n} more`;
+  return wanting > 0 ? `${more} · ${wanting} ${wanting === 1 ? 'wants' : 'want'} you` : more;
+}
+
 /** The board's one attention line: how many cards here wait on you. */
 export const attentionLine = (needs: number): string =>
   needs === 0 ? 'Nothing here needs you.' : `${needs} ${needs === 1 ? 'card wants' : 'cards want'} you here.`;

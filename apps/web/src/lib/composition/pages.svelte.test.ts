@@ -160,6 +160,23 @@ const PAGES: PageRow[] = [
     }),
   },
   {
+    // Planning & Roadmap: the Idea lane's eleven cards fold to five behind "Show 6 more · 6 want you" (rule 7).
+    name: 'Board · folded lane',
+    shows: '5 of 11 shown',
+    signature: [],
+    keys: keysText(BOARD_KEYS),
+    mount: () => {
+      const planning = byId(REALISTIC_BOARD_IDS.planning);
+      app.board = planning;
+      app.boardId = planning.boardId ?? null;
+      return vibes(BoardView, {
+        model: buildBoardModel(planning, planning.cards, { agents: world.agents, members: MEMBERS, labels: labelMap, nowMs: REALISTIC_NOW_MS, me: ME, spend7d: undefined }),
+        filters: noFilters(),
+        onCompose: () => {},
+      });
+    },
+  },
+  {
     name: 'List',
     shows: 'Reported',
     signature: [], // no slot: the masthead names the board

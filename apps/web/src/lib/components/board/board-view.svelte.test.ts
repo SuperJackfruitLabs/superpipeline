@@ -38,6 +38,11 @@ beforeAll(() => {
 });
 
 const w = realisticWorkspace();
+/** The value, or a failed test naming what was missing. */
+function req<T>(x: T | null | undefined, what: string): T {
+  if (x === null || x === undefined) throw new Error(`missing: ${what}`);
+  return x;
+}
 const devex = w.boards.find((b) => b.name === 'Developer Experience')!;
 const moveCard = vi.spyOn(app, 'moveCard').mockImplementation(async () => {});
 
@@ -164,6 +169,48 @@ describe('the board in every vibe', () => {
     expect(shipped()).toHaveLength(3);
     await fireEvent.click(screen.getByRole('button', { name: 'Show 10 more' }));
     expect(shipped()).toHaveLength(13);
+  });
+
+  it('a long lane is a list (rule 7): five tiles, then Show N more saying who waits; the count stays the lane\'s', async () => {
+    // Planning & Roadmap: eleven cards in Idea, every one waiting on you, plus a working card to mix in.
+    const planning = req(w.boards.find((b) => b.name === 'Planning & Roadmap'), 'the Planning board');
+    const idea = planning.cards.filter((c) => c.currentStageKey === 'idea');
+    expect(idea).toHaveLength(11);
+    app.board = planning;
+    const model = buildBoardModel(planning, planning.cards, { agents: w.agents, members: [], labels: new Map(), nowMs: REALISTIC_NOW_MS, me: { id: REALISTIC_USER, name: 'Rakesh Gangwar', initials: 'RG' }, spend7d: undefined });
+    const { container } = render(BoardView, { ...props(), model });
+    const lane = () => req(container.querySelector<HTMLElement>('[data-lane="idea"]'), 'the Idea lane');
+    const tiles = () => [...lane().querySelectorAll('article')];
+    const order = model.ordered.filter((s) => s.stageKey === 'idea').map((s) => s.id);
+    expect(tiles().map((t) => t.querySelector('[data-card-open]')?.getAttribute('data-card-open'))).toEqual(order.slice(0, 5));
+    expect(lane().querySelector('.bv-ct')?.textContent).toBe('11 cards');
+    const more = within(lane()).getByRole('button', { name: /^Show 6 more · 6 want you/ });
+    expect(within(lane()).getByText('5 of 11 shown')).toBeTruthy();
+    await fireEvent.click(more);
+    await tick();
+    expect(tiles()).toHaveLength(11);
+    expect(tiles().map((t) => t.querySelector('[data-card-open]')?.getAttribute('data-card-open'))).toEqual(order);
+    expect(document.activeElement).toBe(tiles()[5].querySelector('[data-card-open]'));
+    expect(lane().querySelector('.bv-ct')?.textContent).toBe('11 cards');
+    expect(within(lane()).queryByRole('button', { name: /^Show \d+ more/ })).toBeNull();
+    expect(within(lane()).getByText('All 11 shown')).toBeTruthy();
+    // A drop on the folded lane still lands: the whole lane is the target.
+    req(drops.find((d) => d.kind === 'lane' && d.params.stageKey === 'idea'), 'the Idea lane drop target').params.onDrop('card_z');
+    expect(moveCard).toHaveBeenCalledWith('card_z', 'idea');
+  });
+
+  it('the fold counts only the hidden cards that want you', async () => {
+    const planning = req(w.boards.find((b) => b.name === 'Planning & Roadmap'), 'the Planning board');
+    // Two of the eleven Idea cards are taken by an agent: they no longer want you, and sort after the rest.
+    const idea = planning.cards.filter((c) => c.currentStageKey === 'idea').map((c) => c.id);
+    const taken = new Set(idea.slice(-2));
+    const cards = planning.cards.map((c) => (taken.has(c.id) ? { ...c, state: 'working' as const, lastAgentId: w.agents[0].id, delegateAgentId: w.agents[0].id } : c));
+    const board = { ...planning, cards };
+    app.board = board;
+    const model = buildBoardModel(board, cards, { agents: w.agents, members: [], labels: new Map(), nowMs: REALISTIC_NOW_MS, me: null, spend7d: undefined });
+    const { container } = render(BoardView, { ...props(), model });
+    const lane = req(container.querySelector<HTMLElement>('[data-lane="idea"]'), 'the Idea lane');
+    expect(within(lane).getByRole('button', { name: /^Show 6 more · 4 want you/ })).toBeTruthy();
   });
 
   it('the footer counts this board, not every board (the status-scope rule)', async () => {

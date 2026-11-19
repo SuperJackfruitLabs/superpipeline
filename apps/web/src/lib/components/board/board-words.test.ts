@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { DX, DX_IDS, ME, RELEASES, boardCtx } from '$lib/test/fixture-boards';
 import { buildBoardModel } from './board-model';
 import { emptyHint, emptyLedeHtml, emptyTags, emptyWho } from './board-words';
-import { attentionLine, dueLong, dueShort, laneWho, moreLabelsTitle, personInitials, tileWho } from './board-words';
+import { attentionLine, dueLong, dueShort, laneMore, laneWho, moreLabelsTitle, personInitials, tileWho } from './board-words';
 
 const m = buildBoardModel(DX, DX.cards, boardCtx());
 const by = (id: string) => m.cards.find((s) => s.id === id)!;
@@ -17,6 +17,11 @@ describe('dates', () => {
 });
 
 describe('board page words', () => {
+  it('a folded lane says how many more, and how many of them want you', () => {
+    expect(laneMore(6, 0)).toBe('Show 6 more');
+    expect(laneMore(6, 1)).toBe('Show 6 more · 1 wants you');
+    expect(laneMore(6, 2)).toBe('Show 6 more · 2 want you');
+  });
   it('initials are the first letters of the first two words', () => {
     expect(personInitials('Rakesh Gangwar')).toBe('RG');
     expect(personInitials('sam')).toBe('S');

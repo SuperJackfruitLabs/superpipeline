@@ -12,6 +12,12 @@ import type { CardSummary } from './card-summary';
 
 /** The last stage folds its finished work to this many tiles, when it holds more than one more. */
 export const TERMINAL_FOLD = 3;
+/**
+ * Any other lane is a list (rule 7): its first LANE_PAGE tiles, then "Show N more" adding LANE_STEP at a
+ * time. The same page sizes as the Inbox's groups (inbox-words GROUP_PAGE, and four pages per step).
+ */
+export const LANE_PAGE = 5;
+export const LANE_STEP = LANE_PAGE * 4;
 
 export interface LaneView {
   stage: BoardStage;
@@ -21,6 +27,8 @@ export interface LaneView {
   who: string;
   /** Tiles shown before "Show N more"; null shows them all. */
   fold: number | null;
+  /** How the fold opens: a done lane shows the rest at once; any other lane pages by LANE_STEP. */
+  paged: boolean;
 }
 
 export interface BoardView {
@@ -38,7 +46,10 @@ export function trackDetails(stages: readonly BoardStage[]): StageDetail[] {
 export function lanesOf(m: BoardModel): LaneView[] {
   return m.laneStages.map((stage) => {
     const cards = m.ordered.filter((s) => s.stageKey === stage.key);
-    return { stage, cards, count: cards.length, who: laneWho(stage), fold: stage.terminal && cards.length > TERMINAL_FOLD + 1 ? TERMINAL_FOLD : null };
+    const fold = stage.terminal
+      ? (cards.length > TERMINAL_FOLD + 1 ? TERMINAL_FOLD : null)
+      : (cards.length > LANE_PAGE ? LANE_PAGE : null);
+    return { stage, cards, count: cards.length, who: laneWho(stage), fold, paged: !stage.terminal };
   });
 }
 

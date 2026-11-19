@@ -14,6 +14,8 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html). Entries g
 
 ## Unreleased
 
+- A long lane on the board folds like the Inbox's groups: its first five cards, then "Show N more" twenty at a time, and the button says how many of the hidden cards want you ("Show 6 more · 2 want you"). The lane's count is still the whole lane, and a card dropped on a folded lane still lands there.
+
 - Board settings' "Back to the board" link sits above the page head rather than inside it, so no vibe restyles it: a vibe's own touch on a page is the headline block, never an action.
 
 - The Inbox is one composition in every vibe. One headline says how many cards want you and why (Daylight greets, Studio sets the count as its figure), the board scope is said once, and Needs you, Running, Spend and Activity are tabs with their counts. Needs you groups the cards by what you must do (Review, Answer, Resume a stopped agent, Over budget, Nobody works these stages), each with one line that says what it is for, one verb per row and "Show N more". A Filter button beside the tabs reveals find, group chips, Agent, Label and Priority menus and a sort, with a count when any is on; F opens it. Live changes move rows in and out and flash what changed, and the footer says when the page last synced or that live updates are paused.
