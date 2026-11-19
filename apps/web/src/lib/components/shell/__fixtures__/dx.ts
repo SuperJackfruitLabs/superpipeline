@@ -1,6 +1,6 @@
 // apps/web/src/lib/components/shell/__fixtures__/dx.ts
 /**
- * Developer Experience in the pixel fixture world (fixtures-and-harness.md §A.5.2, with Task 3's
+ * Developer Experience in the fixture world (e2e/visual/fixture) (fixtures-and-harness.md §A.5.2, with Task 3's
  * created_at for 4605), as `Card`s. For unit tests only.
  */
 import type { AgentSummary, Card, Stage } from '$lib/api';

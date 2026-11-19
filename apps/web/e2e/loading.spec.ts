@@ -8,7 +8,7 @@
  */
 import { test, expect, type Page, type BrowserContext } from '@playwright/test';
 import { waitForSurfaceReady, waitForLayout } from './support/readiness';
-import { seedWorld, FIXTURE_TENANT, FIXTURE_USER } from './pixel/fixture/seed';
+import { seedWorld, FIXTURE_TENANT, FIXTURE_USER } from './visual/fixture/seed';
 
 const DX = '/b/brd_134a0ddb6d434478';
 const CARD = 'card_05823a57e8224605';

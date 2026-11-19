@@ -7,7 +7,7 @@ SDK, CLI and web changes retain application types/tests, artifact smoke, critica
 browser coverage and the visual regression gate. Web source, CSS, readiness or
 matrix-test changes additionally select extended browser coverage without forcing
 docs or landing builds. Manual/nightly runs include
-both critical and extended browser projects plus the separate pixel report.
+both critical and extended browser projects.
 
 The required `test` and `e2e` job names are always-run aggregators. They require
 actual success for selected jobs and an explicit skipped result for unselected

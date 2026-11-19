@@ -1,4 +1,4 @@
-/* Ported verbatim from e2e/reference/mockups/SP-Dlg-NewCard-Daylight, SP-Dlg-NewCard-Paper, SP-Dlg-NewCard-Studio, SP-Dlg-NewCard-Quiet (prefixes nc-, eyebrow, muted, small, kbd, link, mono, wrap; excluding nc-head, nc-foot, nc-body, nc-draftrow, nc-drafted, nc-brief-tag; root :where(.fg) as .vk-dialog.nc) by scripts/pixel/extract-css.mjs. */
+/* Ported verbatim from the pixel reference SP-Dlg-NewCard-Daylight, SP-Dlg-NewCard-Paper, SP-Dlg-NewCard-Studio, SP-Dlg-NewCard-Quiet (prefixes nc-, eyebrow, muted, small, kbd, link, mono, wrap; excluding nc-head, nc-foot, nc-body, nc-draftrow, nc-drafted, nc-brief-tag; root :where(.fg) as .vk-dialog.nc) by the pixel suite's extract-css.mjs (both retired). */
 .vk-dialog.nc .eyebrow { font: 600 13px/1.2 var(--vk-font-display); color: var(--vk-color-muted); letter-spacing: .01em; }
 .vk-dialog.nc .muted { color: var(--vk-color-muted); }
 .vk-dialog.nc .small { font-size: var(--vk-text-sm); }

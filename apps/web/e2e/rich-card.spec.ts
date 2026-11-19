@@ -1,8 +1,8 @@
 import { test, expect, type Page } from '@playwright/test';
 import { PORTS } from '../scripts/ports';
-import { BASE_WORLD, IDS } from './pixel/fixture/world';
-import { FIXTURE_TENANT, FIXTURE_USER } from './pixel/fixture/seed';
-import type { Row } from './pixel/fixture/types';
+import { BASE_WORLD, IDS } from './visual/fixture/world';
+import { FIXTURE_TENANT, FIXTURE_USER } from './visual/fixture/seed';
+import type { Row } from './visual/fixture/types';
 
 /**
  * The rich card, the way a person meets it: the fixture world's 4605 (two attempts with twenty tool

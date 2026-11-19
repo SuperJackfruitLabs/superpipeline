@@ -11,9 +11,9 @@ const t = timeouts().playwright;
 // `e2e:dev` retains the Vite frontend for development and visual comparisons.
 export default defineConfig({
   testDir: './e2e',
-  // The pixel folder has its own config (e2e/pixel/playwright.pixel.config.ts, `pnpm test:pixel`);
-  // its *.test.ts files are vitest files run by `pnpm test`.
-  testIgnore: ['pixel/**', 'visual/**'],
+  // The visual folder has its own configs (e2e/visual/playwright.visual.config.ts, run by
+  // scripts/visual/base-vs-head.sh); its *.test.ts files are vitest files run by `pnpm test`.
+  testIgnore: ['visual/**'],
   fullyParallel: false,
   workers: 1,
   metadata: { project: process.env.SP_E2E_PROJECT ?? 'local', shard: process.env.SP_E2E_SHARD ?? '1/1' },
@@ -40,7 +40,7 @@ export default defineConfig({
   },
   // Set PW_CHANNEL=chrome to drive a locally-installed Chrome instead of the downloaded browser.
   projects: [
-    { name: 'critical', testIgnore: ['**/pixel/**', '**/visual/**', ...[...extendedSpecs, smokeSpec].map((name) => '**/' + name)], use: { ...devices['Desktop Chrome'], channel: process.env.PW_CHANNEL || undefined } },
+    { name: 'critical', testIgnore: ['**/visual/**', ...[...extendedSpecs, smokeSpec].map((name) => '**/' + name)], use: { ...devices['Desktop Chrome'], channel: process.env.PW_CHANNEL || undefined } },
     { name: 'extended', testMatch: extendedSpecs.map((name) => '**/' + name), use: { ...devices['Desktop Chrome'], channel: process.env.PW_CHANNEL || undefined } },
     { name: 'smoke', testMatch: '**/' + smokeSpec, retries: 0, use: { ...devices['Desktop Chrome'], channel: process.env.PW_CHANNEL || undefined } },
   ],

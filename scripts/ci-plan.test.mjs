@@ -64,7 +64,7 @@ void test('deleted and renamed paths remain conservative', () => {
 });
 
 void test('UI, CSS, browser readiness and matrix changes retain the full suite', () => {
-  for (const path of ['apps/web/src/a.svelte', 'apps/web/src/styles/a.css', 'apps/web/e2e/pixel/app.ts', 'apps/web/playwright.config.ts', 'apps/web/e2e/long-text.spec.ts']) {
+  for (const path of ['apps/web/src/a.svelte', 'apps/web/src/styles/a.css', 'apps/web/e2e/visual/app.ts', 'apps/web/playwright.config.ts', 'apps/web/e2e/long-text.spec.ts']) {
     const p = plan([path]);
     assert.equal(p.app, true); assert.equal(p.extended, true); assert.equal(p.full, true);
     assert.equal(p.docs, true); assert.equal(p.landing, true); assert.equal(p.matrix.include.length, 6);

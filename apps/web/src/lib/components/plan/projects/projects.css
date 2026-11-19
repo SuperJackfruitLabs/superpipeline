@@ -1,4 +1,4 @@
-/* Ported from e2e/reference/mockups/SP-Projects-Daylight, SP-Projects-Paper, SP-Projects-Quiet by scripts/pixel/extract-css.mjs (those references are retired; this is now ProjectsView's one composition for every vibe). */
+/* Ported from the pixel reference SP-Projects-Daylight, SP-Projects-Paper, SP-Projects-Quiet by the pixel suite's extract-css.mjs (both retired; this is now ProjectsView's one composition for every vibe). */
 :where(.scr-projects) .iconbtn { width: 44px; height: 44px; display: inline-grid; place-items: center; border: 0; border-radius: var(--vk-radius-sm); background: transparent; color: var(--vk-color-text); cursor: pointer; }
 :where(.scr-projects) .iconbtn:hover { background: var(--vk-color-raised); }
 :where(.scr-projects) .pgrid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--vk-space-4); align-items: start; }

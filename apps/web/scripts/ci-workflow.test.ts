@@ -1,9 +1,8 @@
 // The CI workflow parses, every `needs` names a job that exists, every script a step runs exists, and the
-// gates are the ones the operator chose (2026-10-13): production deploy waits on `visual`, never on the `pixel` report,
+// gates are the ones the operator chose (2026-10-13): production deploy waits on `visual`
 // (since 2026-10-22 production deploys from release.yml on a v* tag, gated on main's CI run for that commit;
 // release.yml is the suite's shared release workflow; .github/release-config.json, the hooks .github/release/{build,deploy,smoke}.sh
-// and deploy/release/ are ours)
-// and (2026-10-14) pixel runs only nightly or by hand, never on push or pull_request.
+// and deploy/release/ are ours). The pixel report was retired with its references (composition contract, 2026-11-19).
 import { existsSync, readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { join } from 'node:path';
@@ -35,7 +34,7 @@ describe('ci.yml', () => {
     expect(cfg.deploy).toBeUndefined();
     expect(releaseScript('.github/release/deploy.sh')).toContain('sh deploy/release/deploy.sh');
   });
-  it('production deploy requires main CI (test, e2e and visual among it) to have passed, never pixel', () => {
+  it('production deploy requires main CI (test, e2e and visual among it) to have passed', () => {
     const gate = rel.jobs.gate;
     expect(gate?.permissions?.actions).toBe('read');
     const onMain = gate?.steps.find((s) => s.run?.includes('merge-base --is-ancestor'));
@@ -45,8 +44,6 @@ describe('ci.yml', () => {
     const ci = gate?.steps.find((s) => s.id === 'ci');
     expect(ci?.run).toContain('runs?head_sha=$SHA&branch=main&status=success');
     expect(rel.jobs.release && needs(rel.jobs.release)).toContain('gate');
-    // pixel is a report: skipped on push and continue-on-error, so it can never fail that run.
-    expect(wf.jobs.pixel?.['continue-on-error']).toBe(true);
     for (const j of ['test', 'e2e', 'visual']) expect(wf.jobs[j]?.['continue-on-error']).toBeFalsy();
   });
   it('visual is blocking and runs base versus head in the Playwright image', () => {
@@ -59,25 +56,22 @@ describe('ci.yml', () => {
     expect(up?.uses).toBe('actions/upload-artifact@v4');
     expect(up?.if).toMatch(/github\.server_url == 'https:\/\/github\.com'/);
   });
-  it('pixel is a report: never blocks, runs only nightly at 03:30 UTC or by hand (2026-10-14)', () => {
-    const p = wf.jobs.pixel!;
-    expect(p['continue-on-error']).toBe(true);
-    expect(wf.on.schedule).toEqual([{ cron: '30 3 * * *' }]);
-    expect(wf.on).toHaveProperty('workflow_dispatch');
-    // Not on push or pull_request: on those events the job is skipped, so it cannot starve test/e2e/visual.
-    expect(p.if?.replace(/\s+/g, ' ')).toBe("github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'");
-    expect(p.steps.some((s) => /design-inputs\.mjs/.test(s.run ?? ''))).toBe(false);
-    expect(p.steps.some((s) => /test:pixel/.test(s.run ?? ''))).toBe(true);
-    expect(p.steps.some((s) => /drift-summary\.mjs/.test(s.run ?? ''))).toBe(true);
-    expect(wf.on).not.toHaveProperty('pull_request.paths');
+  it('the pixel report is retired: no job, no reference lock check, nothing runs from scripts/pixel', () => {
+    expect(wf.jobs.pixel).toBeUndefined();
+    const text = readFileSync(join(root, '.github/workflows/ci.yml'), 'utf8');
+    expect(text).not.toMatch(/scripts\/pixel\/|test:pixel|check-lock-change/);
+    for (const job of Object.values(wf.jobs)) expect(needs(job)).not.toContain('pixel');
   });
-  it('the image tag matches the guard argument in both container jobs', () => {
-    for (const j of ['visual', 'pixel', 'browser', 'smoke']) {
+  it('the image tag matches the guard argument in every container job', () => {
+    for (const j of ['visual', 'browser', 'smoke']) {
       const tag = wf.jobs[j]!.container!.image.split(':')[1];
       expect(wf.jobs[j]!.steps.some((s) => (s.run ?? '').includes(`image-guard.sh ${tag}`)), j).toBe(true);
     }
   });
   it('manual and nightly events reach the full-plan selector and browser jobs', () => {
+    expect(wf.on.schedule).toEqual([{ cron: '30 3 * * *' }]);
+    expect(wf.on).toHaveProperty('workflow_dispatch');
+    expect(wf.on).not.toHaveProperty('pull_request.paths');
     const select = wf.jobs.plan!.steps.find((s) => s.id === 'select');
     expect(select?.env?.CI_EVENT).toBe('${{ github.event_name }}');
     expect(wf.jobs.browser!.if).toBe("needs.plan.outputs.app == 'true'");
@@ -134,7 +128,7 @@ describe('ci.yml', () => {
     expect(wf.jobs.lint?.steps.some((s) => s.run === 'pnpm lint')).toBe(true);
   });
   it('Forge retains artifacts using pinned compatible actions; visual no-capture retains an outcome', () => {
-    for (const name of ['build', 'browser', 'smoke', 'visual', 'pixel']) {
+    for (const name of ['build', 'browser', 'smoke', 'visual']) {
       const upload = wf.jobs[name]!.steps.find((s) => s.uses === './.github/actions/forgejo-upload-artifact');
       expect(upload?.if).toContain("github.server_url != 'https://github.com'");
       expect(upload?.with?.['if-no-files-found']).toBe('error');

@@ -1,4 +1,4 @@
-/* Ported verbatim from e2e/reference/mockups/SP-Workspace-Other-Daylight, SP-Workspace-Other-Paper, SP-Workspace-Other-Quiet (prefixes iconbtn, caps, linked, grid2, span2, tabtag, nrow, nacts, resume, crow, stack, swatch, lrow, kv, mono, match ^\.me\b, where .scr-ws) by scripts/pixel/extract-css.mjs. */
+/* Ported verbatim from the pixel reference SP-Workspace-Other-Daylight, SP-Workspace-Other-Paper, SP-Workspace-Other-Quiet (prefixes iconbtn, caps, linked, grid2, span2, tabtag, nrow, nacts, resume, crow, stack, swatch, lrow, kv, mono, match ^\.me\b, where .scr-ws) by the pixel suite's extract-css.mjs (both retired). */
 :where(.scr-ws) .iconbtn { width: 44px; height: 44px; display: inline-grid; place-items: center; border: 0; border-radius: var(--vk-radius-sm); background: transparent; color: var(--vk-color-text); cursor: pointer; }
 :where(.scr-ws) .iconbtn:hover { background: var(--vk-color-raised); }
 :where(.scr-ws) .me { width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center; background: var(--vk-color-raised); color: var(--vk-color-text); font-size: 0.8125rem; font-weight: 700; margin: var(--vk-space-2) 0; }

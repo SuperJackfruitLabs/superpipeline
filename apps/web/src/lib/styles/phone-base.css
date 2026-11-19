@@ -1,7 +1,7 @@
 /* apps/web/src/lib/styles/phone-base.css
    The phone frame's product-only rules, under the shell's .ph-root (ShellView below PHONE_QUERY). vibekit draws the
    header and the tab bar (PhoneHeader, PhoneTabBar); nothing here restyles them.
-   Root ported from e2e/reference/mockups/SP-Phone-Board-Daylight.html (.r, lines 3-16, the same in
+   Root ported from the pixel reference SP-Phone-Board-Daylight.html (.r, lines 3-16, the same in
    the Paper and Quiet phone references). Deltas: .r → .ph-root; width:390px → width:100%;
    + min-height:100dvh, so the bar meets the screen's foot on a short page. */
 .ph-root { width: 100%; min-height: 100dvh; box-sizing: border-box; background: var(--vk-color-bg); color: var(--vk-color-text); display: flex; flex-direction: column; }

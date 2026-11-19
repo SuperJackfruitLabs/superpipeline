@@ -1,6 +1,6 @@
 import { test, expect, type Page } from '@playwright/test';
 import { PORTS } from '../scripts/ports';
-import { FIXTURE_TENANT, FIXTURE_USER } from './pixel/fixture/seed';
+import { FIXTURE_TENANT, FIXTURE_USER } from './visual/fixture/seed';
 import { openWorld, seed, DX, SIZES, VIBES, type VibeName } from './support/world';
 
 /**

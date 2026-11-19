@@ -73,7 +73,7 @@
   <NewCardDialog />
   <MoveCardDialog />
 {:else}
-  <!-- The document scrolls: the phone's sticky bottom bar and the full-page pixel comparisons depend on it. -->
+  <!-- The document scrolls: the phone's sticky bottom bar and the visual job's full-page captures depend on it. -->
   <div class="app-root">{@render children()}</div>
   <PaletteMount />
   <BoardSwitcherPopover />

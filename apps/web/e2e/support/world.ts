@@ -1,6 +1,6 @@
 // Open a page of the fixture world in one vibe, theme and size (no screenshots: callers measure).
 import type { Page, APIRequestContext } from '@playwright/test';
-import { FIXTURE_TENANT, FIXTURE_USER, seedWorld } from '../pixel/fixture/seed';
+import { FIXTURE_TENANT, FIXTURE_USER, seedWorld } from '../visual/fixture/seed';
 import { PORTS } from '../../scripts/ports';
 
 export const VIBES = ['daylight', 'paper', 'studio', 'quiet'] as const;

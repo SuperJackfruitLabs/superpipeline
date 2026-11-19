@@ -12,7 +12,7 @@ import type { Card } from '../../src/lib/api';
 import {
   realisticWorkspace, usageTokens, REALISTIC_CARD_CAP_USD, REALISTIC_MODEL, REALISTIC_NOW_MS, REALISTIC_TENANT, REALISTIC_USER,
 } from '../../src/lib/fixtures/realistic';
-import type { FixtureBoard, Row, World } from '../pixel/fixture/types';
+import type { FixtureBoard, Row, World } from '../visual/fixture/types';
 import { API } from './seed';
 
 const iso = (ms: number) => new Date(ms).toISOString();

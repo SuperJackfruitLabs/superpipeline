@@ -7,7 +7,7 @@ export async function health(): Promise<Response> {
   return Response.json({ ok: true, service: 'superpipeline-api', phase: 'P8' });
 }
 
-// Dev only: the pixel suite's fixture world (src/dev/fixture.ts). 404 unless DEV_AUTH and
+// Dev only: the web app's fixture world (src/dev/fixture.ts). 404 unless DEV_AUTH and
 // FIXTURE_IMPORT are both "true" — exactly like an unknown path.
 export async function devFixture({ request, env, path }: WorkerRequest): Promise<Response | Next> {
   const res = await handleDevFixture(request, env, path);

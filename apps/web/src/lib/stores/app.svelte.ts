@@ -74,7 +74,7 @@ export interface CardFilters {
 
 class AppStore {
   #busy = 0;
-  /** Track a load that the pixel suite must wait for (dev galleries, workspace tabs). */
+  /** Track a load that the visual capture must wait for (dev galleries, workspace tabs). */
   markBusy<T>(p: Promise<T>): Promise<T> {
     this.#busy++;
     this.noteLoaded();

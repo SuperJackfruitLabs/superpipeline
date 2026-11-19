@@ -1,16 +1,12 @@
 // apps/web/src/lib/components/parts/Icon.svelte.test.ts
 // @vitest-environment jsdom
-import { readFileSync } from 'node:fs';
-import { join } from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
 import { cleanup, render } from '@testing-library/svelte';
 import { ICON_NAMES, ICON_PATHS } from '@superjackfruitlabs/vibekit-ui';
 import Icon from './Icon.svelte';
-import { NAV_ICONS, PRODUCT_ICONS, VK_ALIASES, type IconName } from './icons';
+import { NAV_ICONS, PRODUCT_ICON_LOG, PRODUCT_ICONS, VK_ALIASES, type IconName } from './icons';
 
 afterEach(cleanup);
-
-const CORRECTIONS = readFileSync(join(process.cwd(), 'e2e/reference/mockups/CORRECTIONS.md'), 'utf8');
 
 describe('Icon', () => {
   it('draws a vibekit name with vibekit’s own paths', () => {
@@ -27,9 +23,10 @@ describe('Icon', () => {
   it('has the card glyphs the Daylight drawer and card states draw (Task 20)', () => {
     for (const k of ['open-window', 'edit', 'pushpin', 'send', 'archive', 'trash', 'flag', 'seal', 'restore']) expect(k in PRODUCT_ICONS, k).toBe(true);
   });
-  it('logs every product glyph as a CORRECTIONS.md deviation', () => {
-    const rows = CORRECTIONS.split('\n').filter((l) => l.includes('no vibekit icon'));
-    for (const k of Object.keys(PRODUCT_ICONS)) expect(rows.some((r) => r.includes(`\`${k}\``)), k).toBe(true);
+  it('logs why every product glyph exists (the vibekit version that had no icon for it), and nothing else', () => {
+    const log: Record<string, string> = PRODUCT_ICON_LOG;
+    for (const k of Object.keys(PRODUCT_ICONS)) expect(log[k], k).toMatch(/no vibekit icon in \d+\.\d+\.\d+/);
+    expect(Object.keys(log).sort()).toEqual(Object.keys(PRODUCT_ICONS).sort());
   });
   it('draws the nav v2 glyphs (Inbox tray, Crew faces) in the 24 frame at stroke 1.8, never filled', () => {
     for (const name of Object.keys(NAV_ICONS) as IconName[]) {

@@ -1,6 +1,6 @@
 // apps/web/src/lib/components/dialogs/switcher-model.test.ts
 import { describe, expect, it } from 'vitest';
-import { BOARDS } from '../../../../e2e/pixel/fixture/dialog-cases';
+import { BOARDS } from '../../../../e2e/visual/fixture/dialog-cases';
 import { boardCountText, groupBoards, needsChip, switcherOrder } from './switcher-model';
 
 const DX = 'brd_134a0ddb6d434478';

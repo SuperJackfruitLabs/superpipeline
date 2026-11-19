@@ -1,4 +1,4 @@
-/* Ported verbatim from e2e/reference/mockups/SP-Dlg-Move-Daylight, SP-Dlg-Move-Paper, SP-Dlg-Move-Studio, SP-Dlg-Move-Quiet (prefixes mv-, st, chip, kbd, muted, small; excluding mv-head, mv-foot, mv-body, mv-card; root :where(.fg) as .vk-dialog.mv) by scripts/pixel/extract-css.mjs. */
+/* Ported verbatim from the pixel reference SP-Dlg-Move-Daylight, SP-Dlg-Move-Paper, SP-Dlg-Move-Studio, SP-Dlg-Move-Quiet (prefixes mv-, st, chip, kbd, muted, small; excluding mv-head, mv-foot, mv-body, mv-card; root :where(.fg) as .vk-dialog.mv) by the pixel suite's extract-css.mjs (both retired). */
 .vk-dialog.mv .muted { color: var(--vk-color-muted); }
 .vk-dialog.mv .small { font-size: var(--vk-text-sm); }
 .vk-dialog.mv .kbd { display: inline-block; font: 500 11px/1 var(--vk-font-mono); padding: 4px 6px; border-radius: 6px; background: var(--vk-color-raised); border: 1px solid var(--vk-color-line); color: var(--vk-color-muted); }

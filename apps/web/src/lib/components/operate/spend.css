@@ -1,4 +1,4 @@
-/* Ported from e2e/reference/mockups/SP-Spend-Daylight, SP-Spend-Paper, SP-Spend-Quiet by scripts/pixel/extract-css.mjs (those references are retired; this is now SpendView's and BoardLogView's one composition for every vibe). */
+/* Ported from the pixel reference SP-Spend-Daylight, SP-Spend-Paper, SP-Spend-Quiet by the pixel suite's extract-css.mjs (both retired; this is now SpendView's and BoardLogView's one composition for every vibe). */
 :where(.scr-spend) .tiles { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--vk-space-4); }
 :where(.scr-spend) .tile { padding: var(--vk-space-4) var(--vk-space-5); display: flex; flex-direction: column; gap: 6px; }
 :where(.scr-spend) .big { margin: 0; font: 700 2rem/1.1 var(--vk-font-display); font-variant-numeric: tabular-nums; }

@@ -1,4 +1,4 @@
-/* Ported verbatim from e2e/reference/mockups/SP-Board-Studio.html (prefixes ar; excluding vk-button, ar-rail, ar-mark, ar-nav, ar-acct, ar-top, ar-board, ar-sw, ar-cmd, ar-live, ar-sub, ar-tab, ar-status, ar-sm, ar-mul, ar-share, bd, bd-body) by scripts/pixel/extract-css.mjs. */
+/* Ported verbatim from the pixel reference SP-Board-Studio.html (prefixes ar; excluding vk-button, ar-rail, ar-mark, ar-nav, ar-acct, ar-top, ar-board, ar-sw, ar-cmd, ar-live, ar-sub, ar-tab, ar-status, ar-sm, ar-mul, ar-share, bd, bd-body) by the pixel suite's extract-css.mjs (both retired). */
 :where(.ar) *, :where(.ar) *::before, :where(.ar) *::after { box-sizing: border-box; }
 :where(.ar) :where(h1, h2, h3, h4, p, ul, ol, dl, dd, dt, table, form, blockquote, figure, fieldset) { margin: 0; padding: 0; }
 :where(.ar) :where(ul, ol) { list-style: none; }

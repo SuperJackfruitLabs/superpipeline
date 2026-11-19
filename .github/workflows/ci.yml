@@ -53,9 +53,6 @@ jobs:
       - run: pnpm typecheck
       - run: pnpm test
       - run: pnpm ci:test
-      - run: node apps/web/scripts/pixel/check-lock-change.mjs "$CI_BASE"
-        env:
-          CI_BASE: ${{ github.event.pull_request.base.sha || github.event.before }}
 
 
   # Type-aware oxlint held by a per-rule ratchet (scripts/lint.mjs, scripts/lint-baseline.json):
@@ -205,7 +202,7 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
-      - run: bash apps/web/scripts/pixel/image-guard.sh v1.61.0-jammy
+      - run: bash apps/web/scripts/visual/image-guard.sh v1.61.0-jammy
       - uses: actions/download-artifact@v4
         if: success() && github.server_url == 'https://github.com'
         with:
@@ -265,7 +262,7 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
-      - run: bash apps/web/scripts/pixel/image-guard.sh v1.61.0-jammy
+      - run: bash apps/web/scripts/visual/image-guard.sh v1.61.0-jammy
       - uses: actions/download-artifact@v4
         if: success() && github.server_url == 'https://github.com'
         with:
@@ -402,7 +399,7 @@ jobs:
       - run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
       - run: pnpm install --frozen-lockfile
       - name: the image and the lockfile name the same Playwright
-        run: bash apps/web/scripts/pixel/image-guard.sh v1.61.0-jammy
+        run: bash apps/web/scripts/visual/image-guard.sh v1.61.0-jammy
       # Both trees under the runner's temp dir, on the workspace's mount, so pnpm hardlinks from its store.
       - name: base versus head
         id: compare
@@ -438,53 +435,6 @@ jobs:
         with:
           name: visual-report
           path: apps/web/test-results/visual
-          if-no-files-found: error
-          retention-days: 14
-
-
-  pixel:
-    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
-    runs-on: ubuntu-22.04
-    continue-on-error: true
-    # Playwright's own image: Chromium and its system fonts are already in it (no per-run apt
-    # install), and forge and GitHub render in the *same* userland. The tag must equal the locked
-    # @playwright/test version; the guard step below fails loudly if it does not.
-    container:
-      image: mcr.microsoft.com/playwright:v1.61.0-jammy
-      options: --ipc=host
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-      - run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
-      - uses: pnpm/action-setup@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: pnpm
-      - run: pnpm install --frozen-lockfile
-      - name: the image and the lockfile name the same Playwright
-        run: bash apps/web/scripts/pixel/image-guard.sh v1.61.0-jammy
-      # References and app render in the same Chromium, with the same font files, in the same run.
-      - run: mkdir -p apps/web/test-results/pixel-parts && pnpm --filter @superpipeline/web test:pixel
-        env:
-          PIXEL_PARTS: '1'
-          PIXEL_PARTS_DIR: ${{ github.workspace }}/apps/web/test-results/pixel-parts
-      - name: drift summary
-        if: always()
-        run: node apps/web/scripts/pixel/drift-summary.mjs apps/web/test-results/pixel/results.json
-      - uses: actions/upload-artifact@v4
-        if: always() && github.server_url == 'https://github.com'
-        with:
-          name: pixel-report
-          path: apps/web/test-results/pixel*
-          if-no-files-found: error
-          retention-days: 14
-      - uses: ./.github/actions/forgejo-upload-artifact
-        if: always() && github.server_url != 'https://github.com'
-        with:
-          name: pixel-report
-          path: apps/web/test-results/pixel*
           if-no-files-found: error
           retention-days: 14
 
@@ -592,7 +542,7 @@ jobs:
     # Read-only and a no-op until the repository has a CLAUDE_CI_API_KEY secret. It checks out
     # nothing: the script comes from the base branch and the logs through the API. Forks get
     # no secrets and skip. On a GitHub mirror of the product it does nothing.
-    needs: [plan, unit, lint, docs, landing, test, build, smoke, browser, e2e, visual, pixel]
+    needs: [plan, unit, lint, docs, landing, test, build, smoke, browser, e2e, visual]
     if: failure() && github.event_name == 'pull_request' && github.server_url != 'https://github.com'
     runs-on: ubuntu-latest
     timeout-minutes: 10

@@ -33,7 +33,7 @@ describe('the component-library vibekit release is the library in use', () => {
   it('ships the type scale and derived tokens', () => {
     for (const t of ['--vk-type-h1', '--vk-type-meta', '--vk-color-rule', '--vk-stage-7', '--vk-scrim', '--vk-color-select']) expect(css).toContain(t);
   });
-  it('loads the display faces with their optical-size axis, and both the app and the pixel references can serve those files', () => {
+  it('loads the display faces with their optical-size axis, and the app can serve those files', () => {
     const fonts = readFileSync(join(dir, 'dist/styles/fonts.css'), 'utf8');
     for (const f of ['@fontsource-variable/bricolage-grotesque/opsz.css', '@fontsource-variable/newsreader/opsz.css', '@fontsource-variable/newsreader/opsz-italic.css']) {
       expect(fonts).toContain(f);

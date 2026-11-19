@@ -1,4 +1,4 @@
-/* Ported verbatim from e2e/reference/mockups/SP-Dlg-BoardSwitcher-Daylight, SP-Dlg-BoardSwitcher-Paper, SP-Dlg-BoardSwitcher-Studio, SP-Dlg-BoardSwitcher-Quiet (prefixes bs-acts, bs-del, bs-foot, link, kbd, chip, small, muted, grow; root :where(.fg) as .vk-dialog.bs) by scripts/pixel/extract-css.mjs. */
+/* Ported verbatim from the pixel reference SP-Dlg-BoardSwitcher-Daylight, SP-Dlg-BoardSwitcher-Paper, SP-Dlg-BoardSwitcher-Studio, SP-Dlg-BoardSwitcher-Quiet (prefixes bs-acts, bs-del, bs-foot, link, kbd, chip, small, muted, grow; root :where(.fg) as .vk-dialog.bs) by the pixel suite's extract-css.mjs (both retired). */
 /* Hand edit (vibekit 0.0.9): the "This board:" row is vibekit's CommandPalette actions row, which draws the .bs-acts frame; its links keep the reference's inline row. The footer's .grow is a direct child of vibekit's footer. */
 .vk-dialog.bs .muted { color: var(--vk-color-muted); }
 .vk-dialog.bs .small { font-size: var(--vk-text-sm); }

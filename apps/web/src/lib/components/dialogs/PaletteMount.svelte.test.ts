@@ -2,7 +2,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, fireEvent, render, screen, within } from '@testing-library/svelte';
 import { tick } from 'svelte';
-import { AGENTS, BOARDS, DX_STAGES } from '../../../../e2e/pixel/fixture/dialog-cases';
+import { AGENTS, BOARDS, DX_STAGES } from '../../../../e2e/visual/fixture/dialog-cases';
 
 // bits-ui's command list measures itself.
 globalThis.ResizeObserver ??= class { observe() {} unobserve() {} disconnect() {} } as never;
