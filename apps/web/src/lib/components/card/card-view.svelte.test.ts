@@ -114,7 +114,15 @@ describe('the card in every vibe, on every surface', () => {
     render(CardView, props(model, 'drawer'));
     expect(screen.getByRole('heading', { level: 2, name: CARD_4605.title }).id).toBe('drawer-title');
     expect(screen.getByRole('button', { name: 'Close (Esc)' })).toBeTruthy();
-    expect(screen.getByRole('link', { name: 'Open in new window' }).getAttribute('href')).toBe(model.pageHref);
+    const open = screen.getByRole('link', { name: 'Open in new window' });
+    expect(open.getAttribute('href')).toBe(`/b/${BOARD_DX.boardId}/c/${CARD_4605.id}/page`);
+    expect(open.getAttribute('target')).toBe('_blank');
+    expect(open.getAttribute('rel')).toContain('noopener');
+    cleanup();
+    // The phone sheet carries the same tool.
+    render(CardView, props(model, 'phone'));
+    const phone = screen.getByRole('link', { name: 'Open in new window' });
+    expect([phone.getAttribute('href'), phone.getAttribute('target')]).toEqual([`/b/${BOARD_DX.boardId}/c/${CARD_4605.id}/page`, '_blank']);
     dispose();
   });
 });

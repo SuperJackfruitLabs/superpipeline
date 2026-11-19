@@ -136,6 +136,9 @@ for (const vibe of ['daylight', 'paper', 'studio', 'quiet'] as const) {
     await cardTitle(page).click();
     const dialog = page.getByRole('dialog');
     await expect(dialog).toBeVisible();
+    // The card's brief draws once its log is in (rule 11: head, track and the waiting state block first).
+    await expect(page.locator('html')).toHaveAttribute('data-ready', 'true');
+    await expect(dialog.locator('[data-block="brief"]')).toBeVisible();
     await page.waitForTimeout(400);
     const tops = await page.evaluate(() => {
       const d = document.querySelector('[role="dialog"]')!;
