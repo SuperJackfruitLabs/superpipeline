@@ -5,7 +5,6 @@ on:
   pull_request:
   schedule:
     - cron: '30 3 * * *'
-    - cron: '0 4 1 * *'
   workflow_dispatch:
 
 jobs:
@@ -489,34 +488,6 @@ jobs:
           if-no-files-found: error
           retention-days: 14
 
-
-  # Monthly, against staging: runs the composition spec and reports pass/fail per rule per page.
-  # The daily cron must not run it, so it matches the monthly schedule string (or a manual run).
-  composition-audit:
-    if: github.server_url == 'https://github.com' && (github.event_name == 'workflow_dispatch' || (github.event_name == 'schedule' && github.event.schedule == '0 4 1 * *'))
-    runs-on: ubuntu-22.04
-    continue-on-error: true
-    container:
-      image: mcr.microsoft.com/playwright:v1.61.0-jammy
-      options: --ipc=host
-    steps:
-      - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: pnpm
-      - run: pnpm install --frozen-lockfile
-      - run: node scripts/composition-audit.mjs
-        env:
-          STAGING_URL: ${{ vars.STAGING_URL }}
-      - uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: composition-audit
-          path: docs/reviews/composition-audit-*.md
-          if-no-files-found: error
-          retention-days: 90
 
   # Production (app.superpipeline.dev) no longer deploys from main: a `v*` tag on a main commit
   # deploys it, from release.yml (deploy/release/deploy.sh). Main lands on staging only.

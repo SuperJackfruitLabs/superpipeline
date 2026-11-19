@@ -9,11 +9,14 @@
 // after. A title without ": " is grouped under the page "(ungrouped)". Titles may sit inside
 // describe blocks; only the spec title is read, not the suite path.
 //
+// The workflow (.github/workflows/composition-audit.yml) reads STAGING_URL from the repository
+// variable of that name. The operator must define it; while it is unset the job skips with a note.
+//
 // Outcome per test: Playwright `status` of the spec's tests: expected = pass, unexpected = FAIL,
 // flaky = pass (flaky), skipped = skipped. Exit code is 0 either way (the job is advisory); a
 // missing/unparseable result, or zero tests, exits 1.
 import { spawnSync } from 'node:child_process';
-import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
@@ -46,18 +49,21 @@ export function render(rows, { date, url }) {
   const pages = new Map();
   for (const r of rows) pages.set(r.page, [...(pages.get(r.page) ?? []), r]);
   const failed = rows.filter((r) => r.verdict === 'FAIL').length;
+  const skipped = rows.filter((r) => r.verdict === 'skipped').length;
+  const passed = rows.length - failed - skipped;
+  if (!rows.length) return `# Composition audit ${date}\n\nTarget: ${url}\n\nno tests ran (the spec is missing or Playwright failed)\n`;
   const lines = [
     `# Composition audit ${date}`,
     '',
     `Target: ${url}`,
     `Spec: apps/web/${SPEC} (project ${PROJECT})`,
     '',
-    `Result: ${rows.length - failed} of ${rows.length} checks without failure; ${failed} failing.`,
+    `Result: ${passed} pass, ${failed} failing, ${skipped} skipped, of ${rows.length} checks.`,
     '',
   ];
   for (const [page, list] of pages) {
-    const bad = list.filter((r) => r.verdict === 'FAIL').length;
-    lines.push(`## ${page}`, '', `${list.length - bad} of ${list.length} pass`, '', '| Rule | Result |', '| --- | --- |');
+    const ok = list.filter((r) => r.verdict.startsWith('pass')).length;
+    lines.push(`## ${page}`, '', `${ok} of ${list.length} pass`, '', '| Rule | Result |', '| --- | --- |');
     for (const r of list) lines.push(`| ${r.rule.replaceAll('|', '\\|')} | ${r.verdict} |`);
     lines.push('');
   }
@@ -69,27 +75,38 @@ function arg(name) {
   return i < 0 ? undefined : process.argv[i + 1];
 }
 
+// Removes any earlier result first, so a Playwright that dies before writing cannot leave a stale
+// report to be parsed. Playwright's non-zero exit is the report's content; failing to start is not.
+export function runPlaywright(json, url, spawn = spawnSync) {
+  rmSync(json, { force: true });
+  mkdirSync(dirname(json), { recursive: true });
+  const res = spawn('pnpm', ['--filter', '@superpipeline/web', 'exec', 'playwright', 'test', SPEC, `--project=${PROJECT}`, '--reporter=json'], {
+    cwd: root, stdio: ['ignore', 'ignore', 'inherit'],
+    env: { ...process.env, SP_E2E_BASE_URL: url, PLAYWRIGHT_JSON_OUTPUT_NAME: json },
+  });
+  if (res.error) throw new Error(`Playwright did not start: ${res.error.message}`);
+}
+
+function readRows(json) {
+  try { return collect(JSON.parse(readFileSync(json, 'utf8'))); } catch { return []; }
+}
+
 function main() {
   const url = process.env.STAGING_URL;
   const date = arg('--date') ?? new Date().toISOString().slice(0, 10);
   const outDir = resolve(arg('--out') ?? join(root, 'docs/reviews'));
   let json = arg('--from-json');
   if (!json) {
-    if (!url) throw new Error('STAGING_URL is not set');
+    if (!url) throw new Error('STAGING_URL is not set: define the repository variable to run the audit');
     json = join(root, 'apps/web/test-results/composition-audit.json');
-    mkdirSync(dirname(json), { recursive: true });
-    // Playwright exits non-zero when a rule fails; that is the report's content, not an error here.
-    spawnSync('pnpm', ['--filter', '@superpipeline/web', 'exec', 'playwright', 'test', SPEC, `--project=${PROJECT}`, '--reporter=json'], {
-      cwd: root, stdio: ['ignore', 'ignore', 'inherit'],
-      env: { ...process.env, SP_E2E_BASE_URL: url, PLAYWRIGHT_JSON_OUTPUT_NAME: json },
-    });
+    runPlaywright(json, url);
   }
-  const rows = collect(JSON.parse(readFileSync(json, 'utf8')));
-  if (!rows.length) throw new Error('The composition spec produced no tests');
+  const rows = readRows(json);
   mkdirSync(outDir, { recursive: true });
   const file = join(outDir, `composition-audit-${date}.md`);
   writeFileSync(file, render(rows, { date, url: url ?? '(from-json)' }));
   console.log(file);
+  if (!rows.length) process.exit(1);
 }
 
 if (import.meta.url === pathToFileURL(process.argv[1] ?? '').href) {
