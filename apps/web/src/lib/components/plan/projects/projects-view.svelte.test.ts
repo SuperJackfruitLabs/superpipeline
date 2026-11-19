@@ -1,4 +1,4 @@
-// apps/web/src/lib/components/plan/projects/ProjectsPage.svelte.test.ts
+// apps/web/src/lib/components/plan/projects/projects-view.svelte.test.ts
 // @vitest-environment jsdom
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, fireEvent, render, screen } from '@testing-library/svelte';
@@ -11,7 +11,10 @@ const api = vi.hoisted(() => ({
 vi.mock('$lib/api', () => api);
 vi.mock('$lib/stores/app.svelte', () => ({ app: { board: { name: 'Developer Experience' }, boards: [], projects: [], markBusy: <T,>(p: Promise<T>) => p } }));
 
-import ProjectsPage from './ProjectsPage.svelte';
+import { VIBES } from '@superjackfruitlabs/vibekit-ui';
+import ProjectsView from './ProjectsView.svelte';
+import { parityTree, primaryActionsPerRow, rawMachineText, repeatedParagraphs } from '$lib/composition/guards';
+import { renderInVibes, type VibeRoots } from '$lib/composition/render-vibes';
 import { viewport } from '$lib/viewport.svelte';
 import { ProjectsModel } from '../projects-model.svelte';
 
@@ -25,21 +28,49 @@ beforeEach(() => {
   const snap = (boardId: string, name: string, projectId: string | null) => ({ boardId, name, stages: [], cards: [{ id: `card_${boardId}`, title: 't', projectId, archivedAt: null, currentStageKey: 'x' }] });
   api.getBoard.mockImplementation(async (id: string) => (id === 'brd_a' ? snap(id, 'Developer Experience', guild.id) : id === 'brd_b' ? snap(id, 'Platform Operations', guild.id) : snap(id, 'Client Quality', null)));
 });
-afterEach(cleanup);
+let roots: VibeRoots | null = null;
+afterEach(() => { roots?.unmount(); roots = null; cleanup(); });
 
 async function mount(): Promise<ProjectsModel> {
   const model = new ProjectsModel();
   await model.refresh();
-  render(ProjectsPage, { model, vibe: 'daylight' });
+  render(ProjectsView, { model });
   return model;
 }
 
-describe('ProjectsPage loading and failure', () => {
+const second = { ...guild, id: 'prj_7f1a2b3c4d5e6f70', name: 'Release kit — shared workflow and rollback', state: 'planned', health: 'at-risk', targetDate: '2026-12-01' };
+
+describe('ProjectsView in every vibe', () => {
+  it('renders the same accessibility tree in all four vibes outside the signature, and passes the guards', async () => {
+    api.listProjects.mockResolvedValue([guild, second]);
+    api.getProjectRollup.mockImplementation(async (id: string) => (id === guild.id
+      ? { projectId: id, cardsTotal: 7, cardsDone: 2, cardsOverdue: 1, costUsd: 1.85, computedAt: '2026-10-11T08:21:00Z', partial: false, boardsUnanswered: 0 }
+      : { projectId: id, cardsTotal: 3, cardsDone: 0, cardsOverdue: 0, costUsd: 0, computedAt: '2026-10-11T08:21:00Z', partial: false, boardsUnanswered: 0 }));
+    const model = new ProjectsModel();
+    await model.refresh();
+    roots = await renderInVibes(ProjectsView, { model });
+    const day = parityTree(roots.daylight);
+    expect(day).toContain(guild.name);
+    expect(day).toContain(second.name);
+    for (const v of VIBES) {
+      expect(parityTree(roots[v]), `${v} vibe`).toBe(day);
+      expect(primaryActionsPerRow(roots[v]), `${v}: one primary per row`).toEqual([]);
+      expect(rawMachineText(roots[v]), `${v}: no raw ids`).toEqual([]);
+      expect(repeatedParagraphs(roots[v]), `${v}: nothing said twice`).toEqual([]);
+      expect(roots[v].querySelectorAll('[data-signature]'), `${v}: one signature slot`).toHaveLength(1);
+    }
+    const r = roots;
+    const head = (v: (typeof VIBES)[number]) => r[v].querySelector('[data-signature]')?.textContent;
+    for (const v of VIBES) expect(head(v)).toBe(head('daylight'));
+  });
+});
+
+describe('ProjectsView loading and failure', () => {
   it('says nothing about "no projects" while the list is still being read', async () => {
     api.listProjects.mockReturnValue(new Promise(() => {}));
     const model = new ProjectsModel();
     void model.refresh();
-    render(ProjectsPage, { model, vibe: 'daylight' });
+    render(ProjectsView, { model });
     expect(model.pending).toBe(true);
     expect(document.body.textContent).not.toMatch(/No projects yet/);
     expect(document.querySelector('[aria-busy="true"][data-skeleton]')).not.toBeNull();
@@ -48,7 +79,7 @@ describe('ProjectsPage loading and failure', () => {
     api.listProjects.mockRejectedValue(new Error('listProjects failed (500)'));
     const model = new ProjectsModel();
     await model.refresh();
-    render(ProjectsPage, { model, vibe: 'daylight' });
+    render(ProjectsView, { model });
     expect(screen.getByText("Couldn't load projects.")).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Try again' })).toBeTruthy();
     expect(document.body.textContent).not.toMatch(/No projects yet|failed \(500\)/);
@@ -58,7 +89,7 @@ describe('ProjectsPage loading and failure', () => {
   });
 });
 
-describe('ProjectsPage', () => {
+describe('ProjectsView', () => {
   it('shows a busy skeleton while a rollup is outstanding', async () => {
     api.getProjectRollup.mockReturnValue(new Promise(() => {}));
     await mount();

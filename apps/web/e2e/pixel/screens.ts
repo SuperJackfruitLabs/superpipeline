@@ -36,7 +36,6 @@ const DX = '/b/brd_134a0ddb6d434478';
 const C4605 = `${DX}/c/card_05823a57e8224605`;
 const VIBES: Array<[Vibe, string]> = [['daylight', 'Daylight'], ['paper', 'Paper'], ['studio', 'Studio'], ['quiet', 'Quiet']];
 const off = (v: Vibe) => (v === 'quiet' ? ('off' as const) : undefined);
-const shared = (v: Vibe) => (v === 'quiet' ? ('off' as const) : ('subtle' as const));
 const dialog: Part[] = [{ name: 'dialog', ref: 'section.dlg', app: 'section.dlg' }];
 /** Park the pointer and drop focus, so no hover or focus ring is captured (Operate, List). */
 export const settle = async (p: Page) => {
@@ -64,27 +63,6 @@ const operateSteps = (v: Vibe): Screen['steps'] => {
   return undefined;
 };
 /** List draws two states: Daylight with row 1's Move menu open; Studio with row 2 selected (J twice; the selection starts empty). */
-const listSteps = (v: Vibe): Screen['steps'] => {
-  if (v === 'daylight') {
-    return async (p) => {
-      await p.getByRole('row', { name: /Fix the highest-severity blocker/ }).getByRole('button', { name: /^Move$/ }).click();
-      await settle(p);
-    };
-  }
-  if (v === 'studio') {
-    return async (p) => {
-      await p.keyboard.press('j');
-      await p.keyboard.press('j');
-      await settle(p);
-    };
-  }
-  return undefined;
-};
-/** The reference opens the create panel and the first project's milestones (PR-G2); the app opens neither by itself. */
-async function openProjectsPanels(p: Page): Promise<void> {
-  await p.locator('summary', { hasText: 'Milestones' }).first().click();
-  await settle(p);
-}
 const blur = async (p: Page) => { await p.evaluate(() => (document.activeElement as HTMLElement | null)?.blur()); };
 
 /** Drawer backdrop (C-08): the board behind the drawer is compared on the board screens. */
@@ -149,15 +127,12 @@ function forVibe(v: Vibe, V: string, h: (a: string) => number): Screen[] {
     { artboard: `SP-Phone-Card-${V}`, vibe: v, route: C4605, strength: off(v) },
     // The old Operate address opens the Inbox showing Developer Experience, as the reference does.
     { artboard: `SP-Operate-${V}`, vibe: v, route: `${DX}/operate`, strength: off(v), masks: [LIVE], steps: operateSteps(v) },
-    { artboard: `SP-List-${V}`, vibe: v, route: `${DX}?view=list`, strength: off(v), masks: [LIVE], steps: listSteps(v) },
-    { artboard: `SP-Projects-${V}`, vibe: v, route: '/plan/projects', strength: shared(v), hold: ['**/v1/projects/*/rollup'], masks: [LIVE], steps: openProjectsPanels },
-    { artboard: `SP-Spend-${V}`, vibe: v, route: `${DX}/operate/telemetry`, strength: shared(v), masks: [LIVE] },
     { artboard: `SP-Dlg-NewCard-${V}`, vibe: v, route: DX, strength: off(v), parts: VK_DIALOG_PART, steps: fillNewCard, refPatch: dropDraftRegion },
     { artboard: `SP-Dlg-Palette-${V}`, vibe: v, route: DX, strength: off(v), parts: VK_DIALOG_PART, steps: async (p) => { await p.keyboard.press('Meta+k'); await p.getByRole('combobox', { name: 'Search cards, boards, agents and actions' }).fill('agent'); await blur(p); } },
     { artboard: `SP-Dlg-Appearance-${V}`, vibe: v, route: DX, strength: v === 'quiet' ? 'off' : 'strong', lightTheme: 'sun', parts: VK_DIALOG_PART,
       steps: async (p) => { await p.getByRole('button', { name: /^Appearance/ }).first().click(); await blur(p); } },
     { artboard: `SP-Dlg-Move-${V}`, vibe: v, route: DX, strength: off(v), parts: VK_DIALOG_PART, steps: openMoveStep },
-    { artboard: `SP-Dlg-BoardSwitcher-${V}`, vibe: v, route: DX, strength: off(v), parts: [...VK_DIALOG_PART, { name: 'trigger', ref: '.bs-trigger', app: '.bs-anchor .bs-trigger' }],
+    { artboard: `SP-Dlg-BoardSwitcher-${V}`, vibe: v, route: DX, strength: off(v), parts: VK_DIALOG_PART,
       steps: async (p) => { await p.getByRole('button', { name: /Change board|Switch board/ }).first().click(); await blur(p); } },
     { artboard: `SP-Dlg-Reconnect-${V}`, vibe: v, route: CARD_4605, strength: off(v), steps: expireSession, parts: VK_DIALOG_PART },
   ];

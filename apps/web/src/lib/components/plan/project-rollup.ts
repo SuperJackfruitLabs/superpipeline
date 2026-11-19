@@ -80,7 +80,6 @@ export interface RollupSegment {
  * exactly one of those per call, for every input, including a `partial` rollup, where it carries
  * the unanswered-board count rather than being omitted.
  */
-// ProjectsStudio reads segments by position (figure, cost, provenance); the order is fixed by the tests.
 export function rollupSegments(rollup: RollupSegmentsInput, timeZone?: string): RollupSegment[] {
   const overdue = rollup.cardsOverdue > 0 ? ` · ${rollup.cardsOverdue} overdue` : '';
   return [
@@ -92,8 +91,6 @@ export function rollupSegments(rollup: RollupSegmentsInput, timeZone?: string): 
 
 export const STATE_LABEL: Record<ProjectState, string> = { planned: 'Planned', active: 'Active', paused: 'Paused', completed: 'Completed', canceled: 'Canceled' };
 export const HEALTH_LABEL: Record<ProjectHealth, string> = { 'on-track': 'On track', 'at-risk': 'At risk', 'off-track': 'Off track' };
-/** Studio's state square (`.u.<x>`) per project state. */
-export const STUDIO_UNIT: Record<ProjectState, string> = { planned: 'queued', active: 'act', paused: 'off', completed: 'done', canceled: 'off' };
 
 export const GROUP_ORDER = [
   { state: 'active', label: 'Active', id: 'g-act' },

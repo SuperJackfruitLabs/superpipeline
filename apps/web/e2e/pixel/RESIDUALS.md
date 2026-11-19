@@ -11,8 +11,6 @@ Ratios are from the full pixel run on vibekit 0.0.10 (Node 22). A screen compare
 | Key | Ratio | Cause |
 |---|---|---|
 | SP-Card-Paper·dark | 0.031% | the derived dark now casts the reference's sheet shadow as vibekit's dark shadow (fix round 2); left: the Resume note placeholder (vibekit Field textarea), the same 5 broken blocks as light |
-| SP-Projects-Studio·light | 0.606% | vibekit Button (Create, Cancel, Add, the Project pill) and the shell (rail icons, status line) |
-| SP-Projects-Studio·dark | 0.597% | vibekit Button (Create, Cancel, Add, the Project pill) and the shell (rail icons, status line) |
 | SP-Dlg-BoardSwitcher-Studio·light | 0.515% | vibekit CommandPalette switcher form: row text and keycaps rasterise a pixel off the reference's hand-drawn rows (every box matches; the trigger copy is 0.000%) |
 | SP-Dlg-BoardSwitcher-Studio·dark | 0.502% | vibekit CommandPalette switcher form: row text and keycaps rasterise a pixel off the reference's hand-drawn rows (every box matches; the trigger copy is 0.000%) |
 | SP-Dlg-Palette-Studio·light | 0.500% | vibekit CommandPalette rows (filter={false} since 0.0.9): Face tiles and keycaps rasterise differently from the reference's render |
@@ -41,8 +39,6 @@ Ratios are from the full pixel run on vibekit 0.0.10 (Node 22). A screen compare
 | SP-Dlg-Move-Quiet·dark | 0.359% | vibekit Choice stage rows and Dialog object title: sub-pixel text and Face drawing against the reference's hand-drawn rows; the description sits 2px off |
 | SP-Operate-Studio·light | 0.336% | the status line sits 52px lower than in the reference (vibekit AppShell pins it to the foot) and the rail icons differ |
 | SP-Operate-Studio·dark | 0.335% | the status line sits 52px lower than in the reference (vibekit AppShell pins it to the foot) and the rail icons differ |
-| SP-List-Studio·light | 0.317% | shell only (status line 18px lower, rail icons) |
-| SP-List-Studio·dark | 0.316% | shell only (status line 18px lower, rail icons) |
 | SP-Phone-Card-Daylight·light | 0.313% | vibekit Button text and icons rasterise differently from the reference's render, and the Resume note's Field placeholder |
 | SP-Phone-Card-Quiet·light | 0.295% | vibekit Button text and icons rasterise differently from the reference's render, and the Resume note's Field placeholder |
 | SP-Phone-Card-Daylight·dark | 0.292% | vibekit Button text and icons rasterise differently from the reference's render, and the Resume note's Field placeholder |
@@ -51,10 +47,8 @@ Ratios are from the full pixel run on vibekit 0.0.10 (Node 22). A screen compare
 | SP-Dlg-Appearance-Studio·light | 0.235% | within the bar since vibekit 0.0.10 and the picker's 1.45 type: the reference's 'See every accent's contrast' link is not drawn (its target is a mockup page the app does not have); the Paper preview's IN PROGRESS heading wraps in vibekit's preview frame; the Studio card's five swatches are vibekit's (bg, surface, primary, accent, signal) where the reference shows bg, primary, stage 5, accent, signal; Studio's readout Sky draws a smaller sun; the swatch wash strips and the foot's line rasterise a pixel off |
 | SP-Card-Daylight·light | 0.219% | the capped drawer runs to 3120px over the reference's 2832px page, so its ground shows below; the drawer bar's Open in new window is vibekit's 44px tool Button where the reference draws a 21px text link; Copy is 76px against 72px (vibekit Button's icon slot) |
 | SP-Dlg-Appearance-Daylight·light | 0.215% | within the bar since vibekit 0.0.10 and the picker's 1.45 type: the reference's 'See every accent's contrast' link is not drawn (its target is a mockup page the app does not have); the Paper preview's IN PROGRESS heading wraps in vibekit's preview frame; the Studio card's five swatches are vibekit's (bg, surface, primary, accent, signal) where the reference shows bg, primary, stage 5, accent, signal; Studio's readout Sky draws a smaller sun; the swatch wash strips and the foot's line rasterise a pixel off |
-| SP-Projects-Daylight·dark | 0.195% | vibekit Daylight shell: the Masthead's Sky draws no sun at x≈830–910 where the reference's .dy-sky does, and the AppNav foot sets the account (IM) 6–16px and the theme button 5px lower than the reference's rail foot |
 | SP-Dlg-Appearance-Daylight·dark | 0.162% | within the bar since vibekit 0.0.10 and the picker's 1.45 type: the reference's 'See every accent's contrast' link is not drawn (its target is a mockup page the app does not have); the Paper preview's IN PROGRESS heading wraps in vibekit's preview frame; the Studio card's five swatches are vibekit's (bg, surface, primary, accent, signal) where the reference shows bg, primary, stage 5, accent, signal; Studio's readout Sky draws a smaller sun; the swatch wash strips and the foot's line rasterise a pixel off |
 | SP-Phone-Card-Paper·light | 0.135% | vibekit Button text and icons rasterise differently from the reference's render, and the Resume note's Field placeholder |
-| SP-Spend-Daylight·dark | 0.134% | vibekit Daylight shell: the Masthead's Sky draws no sun at x≈830–910 where the reference's .dy-sky does, and the AppNav foot sets the account (IM) 6–16px and the theme button 5px lower than the reference's rail foot |
 | SP-Card-Paper·light | 0.131% | the Resume note placeholder (vibekit Field textarea) |
 | SP-Dlg-Appearance-Quiet·light | 0.130% | within the bar since vibekit 0.0.10 and the picker's 1.45 type: the reference's 'See every accent's contrast' link is not drawn (its target is a mockup page the app does not have); the Paper preview's IN PROGRESS heading wraps in vibekit's preview frame; the Studio card's five swatches are vibekit's (bg, surface, primary, accent, signal) where the reference shows bg, primary, stage 5, accent, signal; Studio's readout Sky draws a smaller sun; the swatch wash strips and the foot's line rasterise a pixel off |
 | SP-Phone-Card-Paper·dark | 0.126% | vibekit Button text and icons rasterise differently from the reference's render, and the Resume note's Field placeholder |
@@ -66,32 +60,20 @@ Ratios are from the full pixel run on vibekit 0.0.10 (Node 22). A screen compare
 | SP-Phone-Card-Studio·dark | 0.100% | vibekit Button text and icons rasterise differently from the reference's render, and the Resume note's Field placeholder |
 | SP-Dlg-Appearance-Quiet·dark | 0.084% | within the bar since vibekit 0.0.10 and the picker's 1.45 type: the reference's 'See every accent's contrast' link is not drawn (its target is a mockup page the app does not have); the Paper preview's IN PROGRESS heading wraps in vibekit's preview frame; the Studio card's five swatches are vibekit's (bg, surface, primary, accent, signal) where the reference shows bg, primary, stage 5, accent, signal; Studio's readout Sky draws a smaller sun; the swatch wash strips and the foot's line rasterise a pixel off |
 | SP-Dlg-Appearance-Paper·dark | 0.074% | within the bar since vibekit 0.0.10 and the picker's 1.45 type: the reference's 'See every accent's contrast' link is not drawn (its target is a mockup page the app does not have); the Paper preview's IN PROGRESS heading wraps in vibekit's preview frame; the Studio card's five swatches are vibekit's (bg, surface, primary, accent, signal) where the reference shows bg, primary, stage 5, accent, signal; Studio's readout Sky draws a smaller sun; the swatch wash strips and the foot's line rasterise a pixel off |
-| SP-Projects-Daylight·light | 0.072% | vibekit Daylight shell: the Masthead's Sky draws no sun at x≈830–910 where the reference's .dy-sky does, and the AppNav foot sets the account (IM) 6–16px and the theme button 5px lower than the reference's rail foot |
 | SP-Card-Quiet·light | 0.061% | vibekit: the Drawer bar's back link and Open tool, and the Field select text |
 | SP-Card-Quiet·dark | 0.059% | vibekit: the Drawer bar's back link and Open tool, and the Field select text |
 | SP-Card-Daylight·dark | 0.056% | the drawer bar's Open in new window is vibekit's 44px tool Button at x 1132 where the reference draws a 21px text link at x 1221; Copy is 76px (vibekit Button's icon slot) against the reference's 72px; the section twisties are vibekit's 18px chevron where the reference draws a 9×4.5px path |
-| SP-List-Daylight·dark | 0.050% | vibekit Daylight AppNav foot: the account (IM) sits 11px and the theme button 5px lower than the reference's rail foot |
-| SP-Projects-Paper·light | 0.049% | the Paper sub-bar note (span.ps-note) is 16px/1.5 (24px) at y 209 where the reference's .mh-showing is 16px/1.45 (23.2px) at y 209.4; Write a new card (vibekit Button) rasterises a few pixels off |
 | SP-Dlg-Reconnect-Daylight·dark | 0.048% | broken blocks only: vibekit Button (Sign in again) rasterises differently from the reference's render |
-| SP-Spend-Daylight·light | 0.047% | vibekit Daylight shell: the Masthead's Sky draws no sun at x≈830–910 where the reference's .dy-sky does, and the AppNav foot sets the account (IM) 6–16px and the theme button 5px lower than the reference's rail foot |
 | SP-CardPage-Studio·light | 0.043% | vibekit 0.0.4: its copy/link/edit/archive/send glyphs differ from the reference's Studio set, the 18px search glyph sits 2px off, Field select text rasterises differently (0.043%, 14 blocks) |
-| SP-Projects-Paper·dark | 0.042% | the Paper sub-bar note (span.ps-note) is 16px/1.5 (24px) at y 209 where the reference's .mh-showing is 16px/1.45 (23.2px) at y 209.4; Write a new card (vibekit Button) rasterises a few pixels off |
 | SP-Card-States-Paper·dark | 0.041% | vibekit: the gate note's Field textarea placeholder |
 | SP-Card-States-Paper·light | 0.041% | vibekit: the gate note's Field textarea placeholder |
 | SP-CardPage-Studio·dark | 0.041% | the light causes; the light band is gone (harness fix) |
 | SP-Operate-Daylight·dark | 0.041% | vibekit Daylight AppNav foot: the account (IM) sits 11px and the theme button 5px lower than the reference's rail foot |
 | SP-Dlg-NewCard-Daylight·light | 0.036% | vibekit Button and Field select rasterising (broken blocks only); Segmented sm on both sides since 0.0.9 |
 | SP-Dlg-NewCard-Quiet·light | 0.029% | vibekit Button and Field select rasterising (broken blocks only); Segmented sm on both sides since 0.0.9 |
-| SP-Spend-Studio·light | 0.029% | vibekit Studio StatusLine items are 12px/1.4 (16.8px) where the reference's are 12px/normal (14px), so they sit 1.4px higher, and the ⌘K keycap 1px lower |
-| SP-List-Quiet·light | 0.027% | shell only (vibekit Button 17px/700 New card, rail links) |
-| SP-List-Quiet·dark | 0.026% | shell only (vibekit Button 17px/700 New card, rail links) |
-| SP-Spend-Studio·dark | 0.026% | vibekit Studio StatusLine items are 12px/1.4 (16.8px) where the reference's are 12px/normal (14px), so they sit 1.4px higher, and the ⌘K keycap 1px lower |
 | SP-Dlg-NewCard-Quiet·dark | 0.025% | vibekit Button and Field select rasterising (broken blocks only); Segmented sm on both sides since 0.0.9 |
-| SP-List-Daylight·light | 0.021% | vibekit Daylight AppNav foot: the account (IM) sits 11px and the theme button 5px lower than the reference's rail foot |
 | SP-Operate-Quiet·light | 0.018% | vibekit Quiet AppNav draws the Operate count “(4 need you)” at 400 in ink where the reference sets it 700 in the signal colour |
 | SP-Operate-Quiet·dark | 0.017% | vibekit Quiet AppNav draws the Operate count “(4 need you)” at 400 in ink where the reference sets it 700 in the signal colour |
-| SP-List-Paper·light | 0.015% | vibekit Paper Tabs set the tab words at 17px/1.45 (24.65px) where the reference's .mh-tab is 17px/1.5 (25.5px), so they sit 0.4px higher; the masthead's Filter icon and Write a new card (vibekit Button) rasterise a few pixels off |
-| SP-List-Paper·dark | 0.014% | vibekit Paper Tabs set the tab words at 17px/1.45 (24.65px) where the reference's .mh-tab is 17px/1.5 (25.5px), so they sit 0.4px higher; the masthead's Filter icon and Write a new card (vibekit Button) rasterise a few pixels off |
 | SP-Operate-Daylight·light | 0.013% | vibekit Daylight AppNav foot: the account (IM) sits 11px and the theme button 5px lower than the reference's rail foot |
 
 ## Per platform
@@ -100,8 +82,6 @@ Ratios are from the full pixel run on vibekit 0.0.10 (Node 22). A screen compare
 
 | Platform | Key | Verdict | Ratio | Cause |
 |---|---|---|---|---|
-| linux-x64 | SP-List-Paper·dark | passes | 0.000% | passes on linux-x64 in the Playwright image (CI): the darwin residual (vibekit Paper Tabs' 17px/1.45 against the reference's 17px/1.5, and the masthead Button rasterising) does not show under that FreeType render |
-| linux-x64 | SP-List-Paper·light | passes | 0.000% | passes on linux-x64 in the Playwright image (CI): the darwin residual (vibekit Paper Tabs' 17px/1.45 against the reference's 17px/1.5, and the masthead Button rasterising) does not show under that FreeType render |
 | linux-x64 | SP-Dlg-NewCard-Daylight·dark | fails | 0.030% | one broken block: the Add label chip's words and the label chips' × glyphs draw 1px higher than the reference's under Linux FreeType hinting |
 | linux-x64 | SP-CardPage-Paper·light | fails | 0.043% | one broken block on the links and list markers the app's reset dropped (Change project and the crumbs drew no underline, Things to prove no decimals; restored in card-page-paper.css, so this may now pass) |
 | linux-x64 | SP-Dlg-Reconnect-Daylight·dark | either | 0.030% | flips between 0.000% and 0.030% (one broken block on vibekit's Sign in again Button) from run to run on linux-x64; focus, hover, transitions and font loading are ruled out on macOS, and the Linux run could not be reproduced locally |

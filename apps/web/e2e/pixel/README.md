@@ -120,6 +120,12 @@ Crew followed: one `CrewView` in every vibe (a page head, tabs, one table per ta
 references (`SP-Workspace-Agents-*`, `SP-Workspace-Other-*`), their screens and allow-list keys were
 retired too. The `token-secret` mask id stays in the vocabulary.
 
+List, Projects and Spend followed: one `ListView`, `ProjectsView` and `SpendView` in every vibe (and
+one `BoardLogView` for the whole log), so their twelve references (`SP-List-*`, `SP-Projects-*`,
+`SP-Spend-*`), their screens, steps and allow-list keys were retired. The board switcher's raised
+trigger is one form in every vibe now (`BoardPickButton`), so `SP-Dlg-BoardSwitcher-*` compares the
+dialog alone, without its `trigger` part.
+
 ## The references are locked
 
 `e2e/pixel/references.lock` holds the hash of every reference, `manifest.json`, `CORRECTIONS.md` and the

@@ -231,3 +231,10 @@ export function quietSpend(cap: number | null, top: Array<{ name: string; costUs
   const spent = top.length === 0 ? ' No agent has spent anything.' : ` ${top[0].name} spent the most.`;
   return `.${capText}${spent}`;
 }
+
+// ── Spend, in detail, and the board log (one composition in every vibe) ─────────────────────────
+export const SPEND_EYEBROW = 'Plan · spend, in detail';
+export const SPEND_LEDE = (board: string): string => `${board} · what agents cost, by day, agent, board, model and card.`;
+export const SPEND_COMING = 'Success rate, time in stage, throughput and gate rejections arrive with telemetry aggregation (tier 2).';
+/** The board log pages by this many events (rule 7). */
+export const LOG_PAGE = 50;

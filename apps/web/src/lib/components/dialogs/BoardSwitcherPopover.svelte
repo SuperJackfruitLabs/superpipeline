@@ -1,8 +1,8 @@
 <script lang="ts">
   /**
    * The board switcher (SP-Dlg-BoardSwitcher): vibekit's CommandPalette in its switcher form, placed
-   * under the shell's board control, with a raised copy of that control above the scrim as the
-   * reference draws it. Boards that need you come first (this one first), then the rest by last use;
+   * under the shell's board control, with a raised copy of that control above the scrim: one form in
+   * every vibe (`BoardPickButton`), as the composition contract asks. Boards that need you come first (this one first), then the rest by last use;
    * "last used" is `lastActivityAt` as calendar days in the viewer's zone. The palette's actions row
    * holds this board's Rename, Board settings and Delete board… (the ink outline is on the destructive
    * one); the footer holds the keys and New board.
@@ -12,10 +12,10 @@
   import { Button, CommandPalette, Field, type PaletteGroup } from '@superjackfruitlabs/vibekit-ui';
   import { app } from '$lib/stores/app.svelte';
   import { appearance } from '$lib/appearance.svelte';
+  import BoardPickButton from './BoardPickButton.svelte';
   import { renameBoard } from '$lib/api';
   import NewBoardDialog from '$lib/components/NewBoardDialog.svelte';
   import Icon from '$lib/components/parts/Icon.svelte';
-  import { SWITCHER_TRIGGERS } from '$lib/layouts';
   import { groupBoards, needsChip } from './switcher-model';
   import { boardCountText } from './switcher-model';
   import { relativeDay } from './relative-day';
@@ -35,7 +35,6 @@
   let copy = $state<HTMLDivElement | null>(null);
 
   const vibe = $derived(appearance.value.vibe);
-  const Trigger = $derived(SWITCHER_TRIGGERS[vibe]);
   const zone = Intl.DateTimeFormat().resolvedOptions().timeZone;
   const chip = (text: string) => createRawSnippet(() => ({ render: () => `<span><span class="chip chip--needs">${text}</span></span>` }));
 
@@ -65,12 +64,7 @@
       const t = copy?.querySelector<HTMLElement>('.bs-trigger');
       if (!t || !r || !anchor) return;
       const c = t.getBoundingClientRect();
-      // Paper raises the board's name too: lay the copy's name exactly over the real one. Lining up the trigger
-      // instead put the copy's name 8px right of the real (the copy's button carries 8px padding the real words
-      // do not), and the two names showed through each other as a doubled, smeared title.
-      const realName = real?.querySelector<HTMLElement>('.vk-masthead__name')?.getBoundingClientRect();
-      const copyName = copy?.querySelector<HTMLElement>('.mh-title')?.getBoundingClientRect();
-      const dx = realName && copyName ? realName.left - copyName.left : r.left - c.left;
+      const dx = r.left - c.left;
       // Whole pixels, as the reference places it: a fractional top moves the copy's text off by a pixel.
       anchor = { left: Math.round(anchor.left + dx), top: Math.round(anchor.top + (r.top - c.top)) };
     });
@@ -117,8 +111,8 @@
 {#if app.boardSwitcherOpen && anchor && app.board}
   <!-- The reference's raised trigger: a copy of the shell's control above the scrim. Decoration: the real one stays the control. -->
   <div class="bs-layer" aria-hidden="true" inert>
-    <div class="bs-anchor {Trigger.anchorClass}" bind:this={copy} style:left="{anchor.left}px" style:top="{anchor.top}px">
-      <Trigger.component name={app.board.name ?? ''} onclick={close} />
+    <div class="bs-anchor" bind:this={copy} style:left="{anchor.left}px" style:top="{anchor.top}px">
+      <BoardPickButton boardId={app.boardId} boardName={app.board.name ?? ''} lead="" class="bs-trigger" onopen={close} />
     </div>
   </div>
 {/if}

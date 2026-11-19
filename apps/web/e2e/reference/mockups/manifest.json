@@ -79,66 +79,6 @@
   "h": 3263,
   "title": "Operate \u00b7 Quiet"
  },
- "SP-List-Daylight": {
-  "w": 1440,
-  "h": 1293,
-  "title": "List \u00b7 Daylight"
- },
- "SP-List-Paper": {
-  "w": 1440,
-  "h": 1650,
-  "title": "List \u00b7 Paper"
- },
- "SP-List-Studio": {
-  "w": 1440,
-  "h": 1457,
-  "title": "List \u00b7 Studio"
- },
- "SP-List-Quiet": {
-  "w": 1440,
-  "h": 2201,
-  "title": "List \u00b7 Quiet"
- },
- "SP-Projects-Daylight": {
-  "w": 1440,
-  "h": 1311,
-  "title": "Board projects \u00b7 Daylight"
- },
- "SP-Projects-Paper": {
-  "w": 1440,
-  "h": 1412,
-  "title": "Board projects \u00b7 Paper"
- },
- "SP-Projects-Studio": {
-  "w": 1440,
-  "h": 1494,
-  "title": "Board projects \u00b7 Studio"
- },
- "SP-Projects-Quiet": {
-  "w": 1440,
-  "h": 1340,
-  "title": "Board projects \u00b7 Quiet"
- },
- "SP-Spend-Daylight": {
-  "w": 1440,
-  "h": 1997,
-  "title": "Agent spend \u00b7 Daylight"
- },
- "SP-Spend-Paper": {
-  "w": 1440,
-  "h": 2107,
-  "title": "Agent spend \u00b7 Paper"
- },
- "SP-Spend-Studio": {
-  "w": 1440,
-  "h": 2140,
-  "title": "Agent spend \u00b7 Studio"
- },
- "SP-Spend-Quiet": {
-  "w": 1440,
-  "h": 2020,
-  "title": "Agent spend \u00b7 Quiet"
- },
  "SP-Phone-Card-Daylight": {
   "w": 390,
   "h": 3068,

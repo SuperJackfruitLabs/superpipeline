@@ -1,11 +1,10 @@
 // apps/web/src/lib/components/plan/list/list-model.test.ts
 import { describe, expect, it } from 'vitest';
 import {
-  daylightSum, dueHuman, filterQuick, filtersActive, groupNo, groupRows, listCaption, listStateOf, nextInCycle, nextSort,
-  ownerText, paperFacts, paperFoot, paperGroupCount, paperMastLine, priClass, quickCounts, quietEmptyFoot, quietFacts,
-  quietLede, quietSortOptions, quietState, sortHint, sortRows, SORT_NOUN, STUDIO_SORT_CYCLE, studioFoot, studioHeadline,
-  studioKicker, studioLede,
+  dueHuman, groupRows, listCaption, listStateOf, nextInCycle, nextSort, ownerText, priClass, sortHint,
+  sortOptions, sortRows, SORT_CYCLE, SORT_NOUN, stateText,
 } from './list-model';
+import { groupLabel, listFoot, rowFacts } from './list-words';
 import { itemsFromBoard } from '$lib/components/attention/attention';
 import { C1DFC, C4605, C481F, C58F8, C63AC, C9ED9, CF83F, DX_AGENTS, DX_BOARD, DX_MEMBERS, DX_NOW } from '$lib/test/dx-snapshot';
 import { DX_STAGE_LIST, dxRows } from '$lib/test/list-props';
@@ -95,8 +94,8 @@ describe('sorting', () => {
     expect(sortHint({ key: 'age', ascending: false })).toBe('highest first');
     expect(sortHint({ key: 'state', ascending: true })).toBe('most urgent first');
     expect(SORT_NOUN.title).toBe('card title');
-    expect(STUDIO_SORT_CYCLE).toEqual(['priority', 'title', 'state', 'agent', 'attempts', 'age', 'due', 'cost']);
-    expect(nextInCycle(STUDIO_SORT_CYCLE, 'cost')).toBe('priority');
+    expect(SORT_CYCLE).toEqual(['priority', 'title', 'state', 'agent', 'attempts', 'age', 'due', 'cost']);
+    expect(nextInCycle(SORT_CYCLE, 'cost')).toBe('priority');
   });
 });
 
@@ -107,7 +106,6 @@ describe('grouping', () => {
       ['Reported', 1, 'a person', 0], ['Reproduce', 1, 'diagnostics · error-eric', 1], ['Failing test', 3, 'testing · tester-tim', 2],
       ['Fix', 1, 'code · 2 agents', 3], ['Shipped', 1, 'a person', 6],
     ]);
-    expect(g.map((x, i) => groupNo(x, i, 'stage'))).toEqual(['01', '02', '03', '04', '07']);
   });
   it('by state, by priority, by owner', () => {
     expect(groupRows(rows, 'state', SORT, DX_STAGE_LIST, DX_MEMBERS, DX_AGENTS).map((x) => [x.label, x.rows.length])).toEqual([['Waiting on you', 4], ['Queued', 2], ['Done', 1]]);
@@ -117,64 +115,33 @@ describe('grouping', () => {
   it('ownerText', () => {
     expect(DX_STAGE_LIST.map((s) => ownerText(s.owner))).toEqual(['a person', 'diagnostics · error-eric', 'testing · tester-tim', 'code · 2 agents', 'integration or api or testing · 3 agents', 'a person · approval', 'a person']);
   });
-  it('quick counts and the quick filter', () => {
-    expect(quickCounts(rows)).toEqual({ all: 7, needs: 4, working: 0, idle: 2, done: 1 });
-    const g = groupRows(rows, 'stage', SORT, DX_STAGE_LIST, DX_MEMBERS, DX_AGENTS);
-    expect(filterQuick(g, 'needs').map((x) => x.label)).toEqual(['Reported', 'Reproduce', 'Failing test', 'Fix']);
-    expect(filterQuick(g, 'done').map((x) => x.label)).toEqual(['Shipped']);
-    expect(filterQuick(g, 'all')).toBe(g);
-  });
-  it('filtersActive counts any axis', () => {
-    const off = { states: [], owners: [], minPriority: null, needsReview: false, live: false, overBudget: false, labels: [], showArchived: false, projectId: null };
-    expect(filtersActive(off)).toBe(false);
-    expect(filtersActive({ ...off, minPriority: 2 })).toBe(true);
-    expect(filtersActive({ ...off, labels: ['x'] })).toBe(true);
-  });
 });
 
-describe('the words each vibe prints', () => {
+describe('the words, the same in every vibe', () => {
   const empty = ['Integrate', 'Signed off'];
-  it('Daylight and Paper', () => {
-    expect(daylightSum(7, 4, SORT)).toBe('7 cards · 4 wait on you · sorted by priority');
+  it('the caption, the footer and a group heading', () => {
     expect(listCaption('Developer Experience', 'stage', SORT)).toBe('Developer Experience cards, grouped by stage, sorted by priority');
-    expect(listCaption('Developer Experience', 'stage', SORT, true)).toBe('Developer Experience cards, grouped by stage, sorted by priority ascending');
-    expect(paperMastLine('Developer Experience', 7, 4)).toBe('Developer Experience, seven cards. Four wait on you.');
-    expect(paperGroupCount(1)).toBe('— one card');
-    expect(paperGroupCount(3)).toBe('— three cards');
-    expect(paperFoot(SORT, empty)).toBe('Sorted by priority, highest first. Stages with no cards are left out: Integrate and Signed off.');
-    expect(paperFacts(r(C63AC.id))).toBe('clean-room · evidence-required · superpipeline · +1 more · ');
-    expect(paperFacts(r(CF83F.id))).toBe('Blocked by three other cards · ');
-    expect(paperFacts(r(C481F.id))).toBe('Blocked by another card');
-    expect(paperFacts(r(C4605.id))).toBe('');
+    expect(listFoot(SORT, empty)).toBe('Sorted by priority, highest first. Stages with no cards are left out: Integrate and Signed off.');
+    expect(listFoot(SORT, [])).toBe('Sorted by priority, highest first.');
+    const g = groupRows(rows, 'stage', SORT, DX_STAGE_LIST, DX_MEMBERS, DX_AGENTS);
+    expect(g.map(groupLabel)).toEqual(['Reported · a person', 'Reproduce · diagnostics · error-eric', 'Failing test · testing · tester-tim', 'Fix · code · 2 agents', 'Shipped · a person']);
+    expect(groupLabel({ ...g[0]!, owner: null })).toBe('Reported');
   });
-  it('Studio', () => {
-    expect(studioKicker('stage', 'all')).toBe('Every card, by stage');
-    expect(studioKicker('stage', 'needs')).toBe('Waiting cards, by stage');
-    expect(studioHeadline(7, 5, 7, 'stage')).toEqual({ sr: '7 ', text: 'cards sit in 5 of the board’s 7 stages' });
-    expect(studioHeadline(1, 1, 7, 'stage')).toEqual({ sr: '1 ', text: 'card sits in 1 of the board’s 7 stages' });
-    expect(studioHeadline(7, 3, 7, 'state')).toEqual({ sr: '7 ', text: 'cards in 3 states' });
-    expect(studioLede(SORT, empty)).toBe('Sorted by priority, highest first. The two empty stages, Integrate and Signed off, are left out of the list.');
-    expect(studioFoot({ visible: 7, groups: 5, groupBy: 'stage', empty: 2, sort: SORT, total: 0, selected: 1 })).toEqual(['7 cards', '5 groups · 2 empty stages hidden', 'sort Pri ↑', '$0.00 total', 'row 2 of 7']);
-    expect(studioFoot({ visible: 7, groups: 5, groupBy: 'stage', empty: 2, sort: SORT, total: 0, selected: null })).toHaveLength(4);
+  it('a row’s facts and its state', () => {
+    expect(rowFacts(r(C63AC.id))).toEqual(['clean-room', 'evidence-required', 'superpipeline', '+1 more']);
+    expect(rowFacts(r(CF83F.id))).toEqual(['Blocked by three other cards']);
+    expect(rowFacts(r(C481F.id))).toEqual(['Blocked by another card']);
+    expect(rowFacts(r(C4605.id))).toEqual([]);
+    expect(stateText(r(C63AC.id).state)).toBe('Waiting on you, no owner');
+    expect(stateText(r(C4605.id).state)).toBe('Waiting on you, stopped');
+    expect(stateText(r(CF83F.id).state)).toBe('Queued');
   });
-  it('Quiet', () => {
-    expect(quietLede(7, 4)).toBe('7 cards. 4 are waiting on you.');
-    expect(quietLede(7, 1)).toBe('7 cards. 1 is waiting on you.');
-    expect(quietLede(7, 0)).toBe('7 cards. No card is waiting on you.');
-    expect(quietFacts(r(C63AC.id))).toBe('Labels: clean-room, evidence-required, superpipeline and 1 more. Asked for by super-chotu.');
-    expect(quietFacts(r(CF83F.id))).toBe('Blocked by three other cards. Asked for by super-chotu.');
-    expect(quietFacts(r(C481F.id))).toBe('Blocked by another card.');
-    expect(quietState(r(C63AC.id).state)).toBe('Waiting on you, no owner');
-    expect(quietState(r(C4605.id).state)).toBe('Waiting on you, stopped');
-    expect(quietState(r(CF83F.id).state)).toBe('Queued');
-    expect(quietEmptyFoot(empty)).toBe('Stages with no cards are not shown: Integrate, Signed off.');
-  });
-  it('Quiet’s sort picker, and a sort it does not list (LI-G14)', () => {
-    expect(quietSortOptions(SORT).map((o) => [o.label, o.selected])).toEqual([
+  it('the Sort by picker, and a sort it does not list (LI-G14)', () => {
+    expect(sortOptions(SORT).map((o) => [o.label, o.selected])).toEqual([
       ['Priority, highest first', true], ['Card title', false], ['State', false], ['Agent', false], ['Due date', false], ['Cost', false],
     ]);
-    expect(quietSortOptions({ key: 'cost', ascending: false }).find((o) => o.selected)!.label).toBe('Cost');
-    const age = quietSortOptions({ key: 'age', ascending: false });
+    expect(sortOptions({ key: 'cost', ascending: false }).find((o) => o.selected)!.label).toBe('Cost');
+    const age = sortOptions({ key: 'age', ascending: false });
     expect(age[0]).toMatchObject({ value: 'current', label: 'Age, highest first', selected: true });
   });
 });

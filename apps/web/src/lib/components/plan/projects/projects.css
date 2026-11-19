@@ -1,4 +1,4 @@
-/* Ported verbatim from e2e/reference/mockups/SP-Projects-Daylight, SP-Projects-Paper, SP-Projects-Quiet (prefixes iconbtn, pgrid, pcard, ptitle, bar, skel, pfoot, msform, group-h, createform, where .scr-projects) by scripts/pixel/extract-css.mjs. */
+/* Ported from e2e/reference/mockups/SP-Projects-Daylight, SP-Projects-Paper, SP-Projects-Quiet by scripts/pixel/extract-css.mjs (those references are retired; this is now ProjectsView's one composition for every vibe). */
 :where(.scr-projects) .iconbtn { width: 44px; height: 44px; display: inline-grid; place-items: center; border: 0; border-radius: var(--vk-radius-sm); background: transparent; color: var(--vk-color-text); cursor: pointer; }
 :where(.scr-projects) .iconbtn:hover { background: var(--vk-color-raised); }
 :where(.scr-projects) .pgrid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--vk-space-4); align-items: start; }
@@ -24,3 +24,28 @@
 :where(.scr-projects) .plink { color: inherit; text-decoration: none; }
 :where(.scr-projects) .plink:hover, :where(.scr-projects) .plink:focus-visible { text-decoration: underline; text-underline-offset: 3px; }
 :where(.scr-projects) .pboards { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: 0; }
+/* The composition contract: one Projects in every vibe. The head is the page's one signature slot. */
+:where(.scr-projects) .pj-top { display: flex; flex-wrap: wrap; align-items: flex-end; gap: var(--vk-space-3); }
+:where(.scr-projects) .pj-head { display: flex; flex-direction: column; gap: 4px; flex: 1 1 300px; min-width: 0; }
+:where(.scr-projects) .pj-lede { color: var(--vk-color-muted); max-width: 72ch; }
+:where(.scr-projects) .pj-group { display: flex; flex-direction: column; gap: var(--vk-space-3); }
+:where(.scr-projects) .pj-name { display: flex; gap: var(--vk-space-2); align-items: flex-start; }
+:where(.scr-projects) .pj-name .ptitle { flex: 1 1 0%; }
+:where(.scr-projects) .pj-facts { display: flex; flex-wrap: wrap; gap: 6px 10px; align-items: center; }
+:where(.scr-projects) .pj-date { display: inline-flex; align-items: center; gap: 4px; }
+:where(.scr-projects) .pj-roll { display: flex; flex-direction: column; gap: 6px; }
+:where(.scr-projects) .pj-fig { color: var(--vk-color-text); }
+:where(.scr-projects) .pj-msmeta { font-weight: 400; }
+:where(.scr-projects) .pj-wide { grid-column: 1 / -1; }
+
+/* ===== The signature: the page head only. ===== */
+/* Daylight: the head sits in a band tinted with the accent. */
+[data-vibe="daylight"] :where(.scr-projects) .pj-head { padding: var(--vk-space-4); border-radius: var(--vk-radius-md); background: linear-gradient(180deg, color-mix(in oklch, var(--vk-color-accent) 22%, var(--vk-color-bg)) 0%, var(--vk-color-bg) 100%); }
+/* Paper: an italic lede and an ink rule under the head. */
+[data-vibe="paper"] :where(.scr-projects) .pj-head { padding-bottom: var(--vk-space-3); border-bottom: 2px solid var(--vk-color-rule); }
+[data-vibe="paper"] :where(.scr-projects) .pj-title { font-weight: 500; }
+[data-vibe="paper"] :where(.scr-projects) .pj-lede { font: italic 400 17px/1.45 var(--vk-font-display); color: var(--vk-color-text); }
+/* Studio: a mono kicker, a serif lede and a heavy rule (the annual-report head). */
+[data-vibe="studio"] :where(.scr-projects) .pj-head { padding-bottom: var(--vk-space-3); border-bottom: 3px solid var(--vk-color-text); }
+[data-vibe="studio"] :where(.scr-projects) .pj-eyebrow { font: 500 12px/1.5 var(--vk-font-mono); letter-spacing: 0.04em; color: var(--vk-color-text); text-transform: uppercase; }
+[data-vibe="studio"] :where(.scr-projects) .pj-lede { font: 400 15px/1.45 var(--vk-font-serif); color: var(--vk-color-text); }

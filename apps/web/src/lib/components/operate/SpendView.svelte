@@ -1,22 +1,26 @@
-<!-- apps/web/src/lib/components/Telemetry.svelte -->
+<!-- apps/web/src/lib/components/operate/SpendView.svelte -->
 <script lang="ts">
-  import { Button, Face } from '@superjackfruitlabs/vibekit-ui';
+  /**
+   * Spend, in detail, one composition in every vibe (composition contract): the page head (the page's
+   * one `[data-signature]` slot, restyled per vibe in spend.css, same words everywhere) with the time
+   * window, the four figures, spend by day, by agent, board, model and card, the budget caps, and the
+   * board log's latest events with a link to the whole log.
+   */
+  import { Face } from '@superjackfruitlabs/vibekit-ui';
   import { viewport } from '$lib/viewport.svelte';
-  /** Spend, in detail — by day, agent, board, model and card, plus the board's own log. */
-  import './operate/spend.css';
+  import './spend.css';
   import PageMain from '$lib/components/parts/PageMain.svelte';
   import LineIcon from '$lib/components/parts/LineIcon.svelte';
   import { displayAgent } from '$lib/names';
   import { app } from '$lib/stores/app.svelte';
-  import BoardLog from './operate/BoardLog.svelte';
-  import BudgetCaps from './operate/BudgetCaps.svelte';
-  import { avgPerCard, barHeight, budgetLine, busiestLine, cardsWithSpend, chartLabel, compactCount, dayLabel, dayRange, pctOf, tokenPair, usd } from './operate/spend-format';
-  import { TelemetryModel } from './operate/telemetry-model.svelte';
-  import type { SpendLayoutProps } from './operate/spend-types';
+  import BoardLog from './BoardLog.svelte';
+  import BudgetCaps from './BudgetCaps.svelte';
+  import { avgPerCard, barHeight, budgetLine, busiestLine, cardsWithSpend, chartLabel, compactCount, dayLabel, dayRange, pctOf, shortId, tokenPair, usd } from './spend-format';
+  import { TelemetryModel } from './telemetry-model.svelte';
+  import { SPEND_COMING, SPEND_EYEBROW, SPEND_LEDE } from './operate-words';
   import SkeletonRows from '$lib/components/parts/SkeletonRows.svelte';
   import LoadFailed from '$lib/components/parts/LoadFailed.svelte';
 
-  const _props: SpendLayoutProps = $props();
   const model = new TelemetryModel();
   $effect(() => { if (app.boardId) void model.load(app.boardId, model.window_); });
   const u = $derived(model.usage);
@@ -38,13 +42,13 @@
 {/snippet}
 
 <PageMain scope="scr-spend">
-  <div style="display: flex; flex-direction: column; gap: var(--vk-space-2);">
+  <div class="sp-top">
     <a class="t-meta back-link" href="/b/{app.boardId}"><LineIcon name="chev-left" size={16} />Back to the board</a>
-    <p class="t-eyebrow">Plan · spend, in detail</p>
-    <div style="display: flex; flex-wrap: wrap; align-items: flex-end; gap: var(--vk-space-4);">
-      <div style="flex: 1 1 320px; display: flex; flex-direction: column; gap: 4px;">
-        <svelte:element this={viewport.phone ? 'h2' : 'h1'} class="t-h1">Agent spend</svelte:element>
-        <p class="t-body" style="color: var(--vk-color-muted);">{model.board?.name ?? ''} · what agents cost, by day, agent, board, model and card.</p>
+    <div class="sp-headrow">
+      <div class="sp-head" data-signature>
+        <p class="t-eyebrow sp-eyebrow">{SPEND_EYEBROW}</p>
+        <svelte:element this={viewport.phone ? 'h2' : 'h1'} class="t-h1 sp-title">Agent spend</svelte:element>
+        <p class="t-body sp-lede">{SPEND_LEDE(model.board?.name ?? '')}</p>
       </div>
       <div class="seg" role="group" aria-label="Time window">
         <button aria-pressed={model.window_ === '7d'} type="button" onclick={() => (model.window_ = '7d')}>Last 7 days</button>
@@ -57,7 +61,7 @@
     <div class="panel tile">
       <p class="t-eyebrow">Spend vs budget</p>
       <p class="big">{u ? usd(model.spend) : '—'}</p>
-      <div class="bar" role="img" aria-label="{fill}% of budget used"><i style="width: {fill}%;{model.overBudget ? ' background: var(--vk-color-signal);' : ''}"></i></div>
+      <div class="bar" role="img" aria-label="{fill}% of budget used"><i class:over={model.overBudget} style="width: {fill}%;"></i></div>
       <p class="t-meta">{u ? budget.text : ''}{#if budget.setCap}<a href="#caps1" onclick={setCap}>Set a cap</a>{/if}</p>
     </div>
     <div class="panel tile">
@@ -81,7 +85,7 @@
     <div class="panel-head">
       <h2 class="t-h2" id="day-h1">Spend by day</h2>
       <span class="t-meta">{dayRange(model.days.map((d) => d.day))}</span>
-      <span class="t-meta" style="margin-left: auto;">{u ? busiestLine(model.days) : 'Loading spend…'}</span>
+      <span class="t-meta sp-end">{u ? busiestLine(model.days) : 'Loading spend…'}</span>
     </div>
     <div class="chart" role="img" aria-label={chartLabel(model.days)}>
       {#each model.days as d (d.day)}
@@ -98,10 +102,10 @@
       {:else if u.byAgent.length === 0}{@render empty('No agent cost data yet.', 'Agents on this board have not reported cost in this window. When they do, each shows with its face, a bar and its total.')}
       {:else}
         {@const max = maxOf(u.byAgent.map((a) => a.costUsd))}
-        <ul style="list-style: none; margin: 0; padding: 0;">
+        <ul class="sp-rows">
           {#each u.byAgent as a (a.agentId)}
             {@const name = displayAgent(a.agentId, app.agents)}
-            <li class="rrow"><span class="face" style="width: 24px; height: 24px;"><Face id={name} label={name} mood="resting" size={24} /></span><span class="t-body">{name}</span><div class="bar"><i style="width: {pctOf(a.costUsd, max)}%;"></i></div><span class="money t-num">{usd(a.costUsd)}</span></li>
+            <li class="rrow"><span class="face sp-face"><Face id={name} label={name} mood="resting" size={24} /></span><span class="t-body">{name}</span><div class="bar"><i style="width: {pctOf(a.costUsd, max)}%;"></i></div><span class="money t-num">{usd(a.costUsd)}</span></li>
           {/each}
         </ul>
       {/if}
@@ -112,7 +116,7 @@
       {:else if model.boardTotals.every((b) => b.costUsd === 0)}{@render empty('No board recorded spend.', 'Your boards side by side, this one highlighted, once any of them records cost.')}
       {:else}
         {@const max = maxOf(model.boardTotals.map((b) => b.costUsd))}
-        <ul style="list-style: none; margin: 0; padding: 0;">
+        <ul class="sp-rows">
           {#each model.boardTotals as b, i (b.id)}
             <li class={b.id === app.boardId ? 'rrow here' : 'rrow'}><span class="t-meta t-num">{i + 1}</span><span class="t-body">{b.name}</span><div class="bar"><i style="width: {pctOf(b.costUsd, max)}%;"></i></div><span class="money t-num">{usd(b.costUsd)}</span></li>
           {/each}
@@ -125,7 +129,7 @@
       {:else if u.byModel.length === 0}{@render empty('No model cost data yet.', 'Each model the agents used, with its total.')}
       {:else}
         {@const max = maxOf(u.byModel.map((m) => m.costUsd))}
-        <ul style="list-style: none; margin: 0; padding: 0;">
+        <ul class="sp-rows">
           {#each u.byModel as m, i (m.model)}
             <li class="rrow"><span class="t-meta t-num">{i + 1}</span><span class="t-body">{m.model}</span><div class="bar"><i style="width: {pctOf(m.costUsd, max)}%;"></i></div><span class="money t-num">{usd(m.costUsd)}</span></li>
           {/each}
@@ -139,9 +143,9 @@
       {:else}
         {@const top = [...u.byCard].sort((a, b) => b.costUsd - a.costUsd).slice(0, 8)}
         {@const max = maxOf(top.map((c) => c.costUsd))}
-        <ul style="list-style: none; margin: 0; padding: 0;">
+        <ul class="sp-rows">
           {#each top as c, i (c.cardId)}
-            <li class="rrow"><span class="t-meta t-num">{i + 1}</span><a class="t-body" href="/b/{app.boardId}/c/{c.cardId}" style="overflow-wrap: anywhere;">{model.cardTitle(c.cardId) ?? c.cardId}</a><div class="bar"><i style="width: {pctOf(c.costUsd, max)}%;"></i></div><span class="money t-num">{usd(c.costUsd)}</span></li>
+            <li class="rrow"><span class="t-meta t-num">{i + 1}</span><a class="t-body" href="/b/{app.boardId}/c/{c.cardId}">{model.cardTitle(c.cardId) ?? `Card #${shortId(c.cardId)}`}</a><div class="bar"><i style="width: {pctOf(c.costUsd, max)}%;"></i></div><span class="money t-num">{usd(c.costUsd)}</span></li>
           {/each}
         </ul>
       {/if}
@@ -149,7 +153,7 @@
     <BudgetCaps suffix="1" />
     <section class="panel" aria-label="Coming next">
       <div class="panel-head"><h2 class="t-h2">Coming next</h2></div>
-      <div class="panel-body"><p class="t-body" style="color: var(--vk-color-muted);">Success rate, time in stage, throughput and gate rejections arrive with telemetry aggregation (tier 2).</p></div>
+      <div class="panel-body"><p class="t-body sp-muted">{SPEND_COMING}</p></div>
     </section>
   </div>
 

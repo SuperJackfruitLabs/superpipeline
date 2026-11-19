@@ -22,6 +22,9 @@ describe('the layout registry', () => {
   it('each vibe has its own face variant', () => {
     expect(FACE_VARIANT).toEqual({ daylight: 'mood', paper: 'portrait', studio: 'light', quiet: 'name' });
   });
+  it('has no List, Projects, Spend, board log or switcher trigger per vibe: each is one composition (composition contract)', () => {
+    for (const k of ['LIST_LAYOUTS', 'PROJECTS_LAYOUTS', 'SPEND_LAYOUTS', 'BOARD_LOG_LAYOUTS', 'SWITCHER_TRIGGERS']) expect(k in registry, `${k} is gone`).toBe(false);
+  });
   it('every vibe has a drawer and a phone card, a width and a place', () => {
     for (const v of VIBES) {
       const L = CARD_LAYOUTS[v];
@@ -55,33 +58,5 @@ describe('the shell registry', () => {
 describe('OPERATE_LAYOUTS', () => {
   it('one Operate layout per vibe', () => {
     expect(OPERATE_LAYOUTS).toEqual({ daylight: OperateDaylight, paper: OperatePaper, studio: OperateStudio, quiet: OperateQuiet });
-  });
-});
-
-import { LIST_LAYOUTS } from './layouts';
-import ListDaylight from '$lib/components/plan/list/ListDaylight.svelte';
-import ListDaylightToolbar from '$lib/components/plan/list/ListDaylightToolbar.svelte';
-import ListPaper from '$lib/components/plan/list/ListPaper.svelte';
-import ListStudio from '$lib/components/plan/list/ListStudio.svelte';
-import ListQuiet from '$lib/components/plan/list/ListQuiet.svelte';
-
-describe('LIST_LAYOUTS', () => {
-  it('one List per vibe; only Daylight has a sub-bar toolbar', () => {
-    expect(LIST_LAYOUTS).toEqual({
-      daylight: { body: ListDaylight, toolbar: ListDaylightToolbar },
-      paper: { body: ListPaper, toolbar: null },
-      studio: { body: ListStudio, toolbar: null },
-      quiet: { body: ListQuiet, toolbar: null },
-    });
-  });
-});
-
-import { PROJECTS_LAYOUTS } from './layouts';
-import ProjectsPage from '$lib/components/plan/projects/ProjectsPage.svelte';
-import ProjectsStudio from '$lib/components/plan/projects/ProjectsStudio.svelte';
-
-describe('PROJECTS_LAYOUTS', () => {
-  it('Daylight, Paper and Quiet share one page; Studio draws its own', () => {
-    expect(PROJECTS_LAYOUTS).toEqual({ daylight: ProjectsPage, paper: ProjectsPage, studio: ProjectsStudio, quiet: ProjectsPage });
   });
 });

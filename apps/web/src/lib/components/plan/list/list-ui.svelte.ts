@@ -1,12 +1,16 @@
 /**
- * The List's transient UI state (Studio's quick filter and selected row, Daylight's open Move menu),
- * owned by PlanView so a layout that re-mounts (a re-render at another width) keeps it.
+ * The List's transient UI state (the selected row, the open Move menu, the page), owned by PlanView
+ * so a view that re-mounts (a re-render at another width) keeps it.
  */
-import type { QuickFilter } from './list-keys';
+
+/** Rows per page of the List. */
+export const LIST_PAGE = 30;
 
 export class ListUi {
-  quick = $state<QuickFilter>('all');
-  selected = $state<number | null>(null);
-  /** The card whose Move menu is open (Daylight); null when none. */
+  /** The selected row's card id (J / K, or focus in a row); null when none. */
+  selected = $state<string | null>(null);
+  /** The card whose Move menu is open; null when none. */
   moveOpen = $state<string | null>(null);
+  /** How many rows are shown (rule 7: Show N more). */
+  limit = $state(LIST_PAGE);
 }

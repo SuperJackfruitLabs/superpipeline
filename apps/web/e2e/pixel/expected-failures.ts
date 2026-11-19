@@ -56,18 +56,10 @@ export const EXPECTED_FAILURES: ReadonlySet<string> = new Set([
   'SP-Dlg-Palette-Studio·light', // 0.500% (vibekit 0.0.10, full run): vibekit CommandPalette rows (filter={false} since 0.0.9): Face tiles and keycaps rasterise differently from the reference's render
   'SP-Dlg-Reconnect-Daylight·dark', // 0.048% (vibekit 0.0.10, full run): broken blocks only: vibekit Button (Sign in again) rasterises differently from the reference's render
   'SP-Dlg-Reconnect-Daylight·light', // 0.108% (vibekit 0.0.10, full run): broken blocks only: vibekit Button (Sign in again) rasterises differently from the reference's render
-  'SP-List-Daylight·dark', // 0.050% (vibekit 0.0.10, full run): vibekit Daylight AppNav foot: the account (IM) sits 11px and the theme button 5px lower than the reference's rail foot
-  'SP-List-Daylight·light', // 0.021% (vibekit 0.0.10, full run): vibekit Daylight AppNav foot: the account (IM) sits 11px and the theme button 5px lower than the reference's rail foot
   'SP-Operate-Daylight·dark', // 0.041% (vibekit 0.0.10, full run): vibekit Daylight AppNav foot: the account (IM) sits 11px and the theme button 5px lower than the reference's rail foot
   'SP-Operate-Daylight·light', // 0.013% (vibekit 0.0.10, full run): vibekit Daylight AppNav foot: the account (IM) sits 11px and the theme button 5px lower than the reference's rail foot
-  'SP-List-Paper·dark', // 0.014% (vibekit 0.0.10, full run): vibekit Paper Tabs set the tab words at 17px/1.45 (24.65px) where the reference's .mh-tab is 17px/1.5 (25.5px), so they sit 0.4px higher; the masthead's Filter icon and Write a new card (vibekit Button) rasterise a few pixels off
-  'SP-List-Paper·light', // 0.015% (vibekit 0.0.10, full run): vibekit Paper Tabs set the tab words at 17px/1.45 (24.65px) where the reference's .mh-tab is 17px/1.5 (25.5px), so they sit 0.4px higher; the masthead's Filter icon and Write a new card (vibekit Button) rasterise a few pixels off
-  'SP-List-Quiet·dark', // 0.026% (vibekit 0.0.10, full run): shell only (vibekit Button 17px/700 New card, rail links)
-  'SP-List-Quiet·light', // 0.027% (vibekit 0.0.10, full run): shell only (vibekit Button 17px/700 New card, rail links)
   'SP-Operate-Quiet·dark', // 0.017% (vibekit 0.0.10, full run): vibekit Quiet AppNav draws the Operate count “(4 need you)” at 400 in ink where the reference sets it 700 in the signal colour
   'SP-Operate-Quiet·light', // 0.018% (vibekit 0.0.10, full run): vibekit Quiet AppNav draws the Operate count “(4 need you)” at 400 in ink where the reference sets it 700 in the signal colour
-  'SP-List-Studio·dark', // 0.316% (vibekit 0.0.10, full run): shell only (status line 18px lower, rail icons)
-  'SP-List-Studio·light', // 0.317% (vibekit 0.0.10, full run): shell only (status line 18px lower, rail icons)
   'SP-Operate-Studio·dark', // 0.335% (vibekit 0.0.10, full run): the status line sits 52px lower than in the reference (vibekit AppShell pins it to the foot) and the rail icons differ
   'SP-Operate-Studio·light', // 0.336% (vibekit 0.0.10, full run): the status line sits 52px lower than in the reference (vibekit AppShell pins it to the foot) and the rail icons differ
   'SP-Phone-Card-Daylight·dark', // 0.292% (vibekit 0.0.10, full run): vibekit Button text and icons rasterise differently from the reference's render, and the Resume note's Field placeholder
@@ -78,16 +70,6 @@ export const EXPECTED_FAILURES: ReadonlySet<string> = new Set([
   'SP-Phone-Card-Quiet·light', // 0.295% (vibekit 0.0.10, full run): vibekit Button text and icons rasterise differently from the reference's render, and the Resume note's Field placeholder
   'SP-Phone-Card-Studio·dark', // 0.100% (vibekit 0.0.10, full run): vibekit Button text and icons rasterise differently from the reference's render, and the Resume note's Field placeholder
   'SP-Phone-Card-Studio·light', // 0.104% (vibekit 0.0.10, full run): vibekit Button text and icons rasterise differently from the reference's render, and the Resume note's Field placeholder
-  'SP-Projects-Daylight·dark', // 0.195% (vibekit 0.0.10, full run): vibekit Daylight shell: the Masthead's Sky draws no sun at x≈830–910 where the reference's .dy-sky does, and the AppNav foot sets the account (IM) 6–16px and the theme button 5px lower than the reference's rail foot
-  'SP-Projects-Daylight·light', // 0.072% (vibekit 0.0.10, full run): vibekit Daylight shell: the Masthead's Sky draws no sun at x≈830–910 where the reference's .dy-sky does, and the AppNav foot sets the account (IM) 6–16px and the theme button 5px lower than the reference's rail foot
-  'SP-Projects-Paper·dark', // 0.042% (vibekit 0.0.10, full run): the Paper sub-bar note (span.ps-note) is 16px/1.5 (24px) at y 209 where the reference's .mh-showing is 16px/1.45 (23.2px) at y 209.4; Write a new card (vibekit Button) rasterises a few pixels off
-  'SP-Projects-Paper·light', // 0.049% (vibekit 0.0.10, full run): the Paper sub-bar note (span.ps-note) is 16px/1.5 (24px) at y 209 where the reference's .mh-showing is 16px/1.45 (23.2px) at y 209.4; Write a new card (vibekit Button) rasterises a few pixels off
-  'SP-Projects-Studio·dark', // 0.597% (vibekit 0.0.10, full run): vibekit Button (Create, Cancel, Add, the Project pill) and the shell (rail icons, status line)
-  'SP-Projects-Studio·light', // 0.606% (vibekit 0.0.10, full run): vibekit Button (Create, Cancel, Add, the Project pill) and the shell (rail icons, status line)
-  'SP-Spend-Daylight·dark', // 0.134% (vibekit 0.0.10, full run): vibekit Daylight shell: the Masthead's Sky draws no sun at x≈830–910 where the reference's .dy-sky does, and the AppNav foot sets the account (IM) 6–16px and the theme button 5px lower than the reference's rail foot
-  'SP-Spend-Daylight·light', // 0.047% (vibekit 0.0.10, full run): vibekit Daylight shell: the Masthead's Sky draws no sun at x≈830–910 where the reference's .dy-sky does, and the AppNav foot sets the account (IM) 6–16px and the theme button 5px lower than the reference's rail foot
-  'SP-Spend-Studio·dark', // 0.026% (vibekit 0.0.10, full run): vibekit Studio StatusLine items are 12px/1.4 (16.8px) where the reference's are 12px/normal (14px), so they sit 1.4px higher, and the ⌘K keycap 1px lower
-  'SP-Spend-Studio·light', // 0.029% (vibekit 0.0.10, full run): vibekit Studio StatusLine items are 12px/1.4 (16.8px) where the reference's are 12px/normal (14px), so they sit 1.4px higher, and the ⌘K keycap 1px lower
 ]);
 
 /** `${process.platform}-${process.arch}`, e.g. `darwin-arm64` or `linux-x64` (CI's runner). */
@@ -107,17 +89,15 @@ export const currentPlatform = (): PlatformKey => `${process.platform}-${process
  */
 export const PLATFORM_OVERRIDES: Readonly<Record<PlatformKey, Readonly<Record<string, 'fails' | 'passes' | 'either'>>>> = {
   'linux-x64': {
-    'SP-List-Paper·dark': 'passes', // 0.000% (CI linux-x64): passes on linux-x64 in the Playwright image (CI): the darwin residual (vibekit Paper Tabs' 17px/1.45 against the reference's 17px/1.5, and the masthead Button rasterising) does not show under that FreeType render
-    'SP-List-Paper·light': 'passes', // 0.000% (CI linux-x64): passes on linux-x64 in the Playwright image (CI): the darwin residual (vibekit Paper Tabs' 17px/1.45 against the reference's 17px/1.5, and the masthead Button rasterising) does not show under that FreeType render
     'SP-Dlg-NewCard-Daylight·dark': 'fails', // 0.030% (CI linux-x64): one broken block: the Add label chip's words and the label chips' × glyphs draw 1px higher than the reference's under Linux FreeType hinting
     'SP-CardPage-Paper·light': 'fails', // 0.043% (CI linux-x64): one broken block on the links and list markers the app's reset dropped (Change project and the crumbs drew no underline, Things to prove no decimals; restored in card-page-paper.css, so this may now pass)
     'SP-Dlg-Reconnect-Daylight·dark': 'either', // 0.030% (CI linux-x64): flips between 0.000% and 0.030% (one broken block on vibekit's Sign in again Button) from run to run on linux-x64; focus, hover, transitions and font loading are ruled out on macOS (the button is focused then blurred identically every run), and the Linux run could not be reproduced locally
   },
 };
 
-/** Whether `key` is expected to fail the strict compare on `platform` (default: this process's). */
-export function isExpectedFailure(key: string, platform: PlatformKey = currentPlatform()): boolean {
-  const o = PLATFORM_OVERRIDES[platform]?.[key];
+/** Whether `key` is expected to fail the strict compare on `platform` (default: this process's). `overrides` is for tests. */
+export function isExpectedFailure(key: string, platform: PlatformKey = currentPlatform(), overrides: typeof PLATFORM_OVERRIDES = PLATFORM_OVERRIDES): boolean {
+  const o = overrides[platform]?.[key];
   return o === undefined ? EXPECTED_FAILURES.has(key) : o !== 'passes';
 }
 

@@ -1,0 +1,34 @@
+/* apps/web/src/lib/components/plan/list/list.css: the List (ListView), one composition for every vibe
+   (composition contract, Board's row; rule 7). Tokens only. The table's look is vibekit's DataTable
+   form for the vibe; this file sets the page's gutters, the two pickers and the cells' contents. No
+   vibe block: the List has no signature slot (the masthead names the board). */
+
+/* The page's gutter holds the top row too (the List's row sat on the shell's edge on a phone). */
+.lv { display: grid; gap: var(--vk-space-4); padding: var(--vk-space-3) var(--vk-space-4) var(--vk-space-5); min-width: 0; }
+.lv-table { min-width: 0; }
+
+/* Group by and Sort by: the same two native pickers in every vibe, so they work on a phone. */
+.lv-pick { display: inline-flex; align-items: center; gap: var(--vk-space-2); color: var(--vk-color-muted); font: var(--vk-type-meta); }
+.lv-select { min-height: 44px; max-width: 100%; padding: 0 var(--vk-space-3); border: 1px solid var(--vk-color-line); border-radius: var(--vk-radius-sm); background: var(--vk-color-surface); color: var(--vk-color-text); font: inherit; font-size: 0.9375rem; }
+
+/* Cells. */
+.lv-title { color: var(--vk-color-text); font-weight: 700; text-decoration: none; overflow-wrap: anywhere; }
+.lv-title:hover, .lv-title:focus-visible { text-decoration: underline; text-underline-offset: 3px; }
+.lv-facts { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: 6px; color: var(--vk-color-muted); font: var(--vk-type-meta); }
+.lv-fact { padding: 1px 8px; border-radius: var(--vk-radius-pill); box-shadow: inset 0 0 0 1px var(--vk-color-line); }
+.lv-asked { display: inline-flex; align-items: center; gap: 4px; }
+.lv-pri { font-weight: 700; }
+/* What waits on you signals: P1, overdue, over budget. */
+.lv-over { color: var(--vk-color-signal-text); font-weight: 700; }
+.lv-late { display: inline-flex; align-items: center; gap: 4px; white-space: nowrap; }
+.lv-who { display: inline-flex; align-items: center; gap: var(--vk-space-2); }
+.lv-noface { flex: none; width: 24px; height: 24px; border-radius: 50%; border: 2px dashed var(--vk-color-faint); }
+.lv-muted { color: var(--vk-color-muted); }
+.lv-acts { display: inline-flex; justify-content: flex-end; position: relative; }
+
+.lv-empty { margin: 0; padding: var(--vk-space-4) 0; color: var(--vk-color-muted); }
+.lv-foot { margin: 0; color: var(--vk-color-muted); font: var(--vk-type-meta); }
+
+@media (max-width: 899.98px) {
+  .lv { padding-inline: var(--vk-space-3); }
+}

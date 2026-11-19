@@ -1,10 +1,11 @@
 // apps/web/src/lib/components/plan/list/types.ts
 import type { Mood } from '@superjackfruitlabs/vibekit-ui';
-import type { ListGroupBy, ListSort, ListSortKey, QuickFilter } from './list-keys';
+import type { ListGroupBy, ListSort, ListSortKey } from './list-keys';
+import type { CardFilters } from '$lib/stores/app.svelte';
 import type { CardSummary } from '$lib/components/board/card-summary';
 import type { ListUi } from './list-ui.svelte';
 
-export type { ListSortKey, ListSort, QuickFilter } from './list-keys';
+export type { ListSortKey, ListSort } from './list-keys';
 export type ListTone = 'needs' | 'working' | 'queued' | 'done' | 'closed';
 
 export interface ListState {
@@ -54,31 +55,30 @@ export interface ListGroup {
   rows: ListRow[];
 }
 
-export interface ListLayoutProps {
-  /** Transient state the page owns (a layout falls back to its own when absent, as in tests). */
+/** A type, not an interface, so a test can mount it through `renderInVibes`. */
+export type ListViewProps = {
+  /** Transient state the page owns (the view falls back to its own when absent, as in tests). */
   ui?: ListUi;
+  /** The board's filters: the top row's Filter control counts them. */
+  filters: CardFilters;
   boardId: string;
   boardName: string;
-  stageCount: number;
   groups: ListGroup[];
   /** Stage names with no card, board order; [] unless grouped by stage. */
   emptyStages: string[];
-  cardCount: number;
+  /** Rows that wait on you: the top row's attention line. */
   needsCount: number;
-  quickCounts: Record<QuickFilter, number>;
-  totalCostUsd: number;
   groupBy: ListGroupBy;
   sort: ListSort;
-  filtersOn: boolean;
   /** The board has at least one non-archived card at all. */
   hasCards: boolean;
   stages: Array<{ key: string; name: string }>;
   onGroupBy: (g: ListGroupBy) => void;
-  /** A header click: `nextSort(app.listSort, k)`. */
+  /** A header click or S: `nextSort(app.listSort, k)`. */
   onSort: (k: ListSortKey) => void;
-  /** Quiet's Sort by picker sets a whole sort. */
+  /** The Sort by picker sets a whole sort. */
   onSetSort: (s: ListSort) => void;
   onMove: (cardId: string, stageKey: string) => Promise<void>;
   onOpen: (cardId: string) => void;
   onOpenMoveDialog: (cardId: string) => void;
-}
+};

@@ -50,14 +50,18 @@ describe('per-platform verdicts', () => {
     expect(isExpectedFailure('SP-Nowhere·light', 'linux-x64')).toBe(false);
   });
   it('a linux-x64 override flips the verdict there only (and not on linux-arm64)', () => {
-    const o = PLATFORM_OVERRIDES['linux-x64']!;
-    const passes = Object.keys(o).find((k) => o[k] === 'passes')!;
-    const fails = Object.keys(o).find((k) => o[k] === 'fails')!;
-    expect(EXPECTED_FAILURES.has(passes)).toBe(true);
-    expect(isExpectedFailure(passes, 'linux-x64')).toBe(false);
-    expect(isExpectedFailure(passes, 'linux-arm64')).toBe(true);
-    expect(isExpectedFailure(fails, 'linux-x64')).toBe(true);
-    expect(isExpectedFailure(fails, 'darwin-arm64')).toBe(EXPECTED_FAILURES.has(fails));
+    // The live list holds no 'passes' override since the List references were retired: a synthetic one.
+    const passes = [...EXPECTED_FAILURES][0] ?? '';
+    expect(passes).not.toBe('');
+    const fails = 'SP-Nowhere·dark';
+    const o = { 'linux-x64': { [passes]: 'passes', [fails]: 'fails' } } as const;
+    expect(isExpectedFailure(passes, 'linux-x64', o)).toBe(false);
+    expect(isExpectedFailure(passes, 'linux-arm64', o)).toBe(true);
+    expect(isExpectedFailure(fails, 'linux-x64', o)).toBe(true);
+    expect(isExpectedFailure(fails, 'darwin-arm64', o)).toBe(false);
+    // The live overrides go through the same path.
+    const live = Object.entries(PLATFORM_OVERRIDES['linux-x64'] ?? {}).find(([, v]) => v === 'fails')?.[0] ?? '';
+    expect(isExpectedFailure(live, 'linux-x64')).toBe(true);
   });
   it('an override only says something the darwin list does not', () => {
     for (const o of Object.values(PLATFORM_OVERRIDES)) for (const [k, v] of Object.entries(o)) if (v !== 'either') expect(EXPECTED_FAILURES.has(k), k).toBe(v === 'passes');

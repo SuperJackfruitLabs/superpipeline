@@ -1,10 +1,10 @@
 <!-- apps/web/src/routes/b/[boardId]/operate/log/+page.svelte -->
 <script lang="ts">
-  /** The whole board log (up to 500 events), opened from Spend. */
+  /** The whole board log (up to 500 events), opened from Spend: one composition in every vibe (BoardLogView). */
   import { page } from '$app/state';
   import { getBoardEvents, type BoardEvent } from '$lib/api';
   import { appearance } from '$lib/appearance.svelte';
-  import { BOARD_LOG_LAYOUTS } from '$lib/layouts';
+  import BoardLogView from '$lib/components/operate/BoardLogView.svelte';
   import AppShell from '$lib/components/shell/AppShell.svelte';
   import { shellModel } from '$lib/components/shell/shell-model.svelte';
   import { app } from '$lib/stores/app.svelte';
@@ -19,9 +19,8 @@
     req.then((e) => { events = newestFirst(e); error = null; }).catch((e: unknown) => { events = []; error = e instanceof Error ? e.message : String(e); });
   });
   const vibe = $derived(appearance.value.vibe);
-  const Layout = $derived(BOARD_LOG_LAYOUTS[vibe]);
 </script>
 
 <AppShell live={shellModel.liveToggle} here="plan" section="log" boardName={app.board?.name ?? 'Untitled board'} bleed={vibe === 'quiet'}>
-  <Layout {vibe} {boardId} {events} {error} />
+  <BoardLogView {boardId} {events} {error} />
 </AppShell>

@@ -59,8 +59,14 @@ test('a List row’s Move gives focus back to it', async ({ page, request }) => 
   await setAppearance(page, 'paper.light.strong.0');
   await page.goto(`/b/${boardId}?view=list`);
   const move = page.getByRole('row', { name: /Focus row/ }).getByRole('button', { name: /^Move/ });
+  // Every vibe's row Move opens the stage menu under it (one List composition).
   await move.focus();
   await page.keyboard.press('Enter');
+  await expect(page.getByRole('menu', { name: 'Move to' })).toBeVisible();
+  await page.keyboard.press('Escape');
+  await expect(move).toBeFocused();
+  // M opens the Move dialog for the row that has focus; closing it gives focus back.
+  await page.keyboard.press('m');
   await expect(page.getByRole('dialog', { name: 'Focus row' })).toBeVisible();
   await page.keyboard.press('Escape');
   await expect(move).toBeFocused();
