@@ -67,8 +67,8 @@ importers:
         specifier: ^2.0.1
         version: 2.0.1
       '@superjackfruitlabs/vibekit-ui':
-        specifier: file:./vendor/superjackfruitlabs-vibekit-ui-0.0.20.tgz
-        version: file:apps/web/vendor/superjackfruitlabs-vibekit-ui-0.0.20.tgz(@internationalized/date@3.12.2)(@sveltejs/kit@2.66.0(@opentelemetry/api@1.9.1)(@sveltejs/vite-plugin-svelte@7.1.2(svelte@5.56.3)(vite@8.0.16(@types/node@22.20.2)(esbuild@0.28.1)(jiti@2.7.0)(yaml@2.9.0)))(svelte@5.56.3)(typescript@6.0.3)(vite@8.0.16(@types/node@22.20.2)(esbuild@0.28.1)(jiti@2.7.0)(yaml@2.9.0)))(svelte@5.56.3)
+        specifier: ^0.0.20
+        version: 0.0.20(@internationalized/date@3.12.2)(@sveltejs/kit@2.66.0(@opentelemetry/api@1.9.1)(@sveltejs/vite-plugin-svelte@7.1.2(svelte@5.56.3)(vite@8.0.16(@types/node@22.20.2)(esbuild@0.28.1)(jiti@2.7.0)(yaml@2.9.0)))(svelte@5.56.3)(typescript@6.0.3)(vite@8.0.16(@types/node@22.20.2)(esbuild@0.28.1)(jiti@2.7.0)(yaml@2.9.0)))(svelte@5.56.3)
       '@superpipeline/contract':
         specifier: workspace:*
         version: link:../../packages/contract
@@ -1188,9 +1188,8 @@ packages:
   '@superjackfruitlabs/treaty-event-schemas@0.0.13':
     resolution: {integrity: sha512-GMTO6CpFBP8rmIOosfB1rZKit2hzeXfBDcljFoXZ0iyA85p4/awgtY8eM9likSQzxxxCI3/xJiOJ5f+TSwU4Wg==}
 
-  '@superjackfruitlabs/vibekit-ui@file:apps/web/vendor/superjackfruitlabs-vibekit-ui-0.0.20.tgz':
-    resolution: {integrity: sha512-drVJkwPcwlZGtzCtE/RnFmAhcezOLTuBYOI0Cqh7hK85m9BexQWcFBhpCDywaWQxVS6Jv/NvltGYDuIHk5Nfjg==, tarball: file:apps/web/vendor/superjackfruitlabs-vibekit-ui-0.0.20.tgz}
-    version: 0.0.20
+  '@superjackfruitlabs/vibekit-ui@0.0.20':
+    resolution: {integrity: sha512-qLUOhR4Z2fcmA3iqVTYM7EaZsXd1b0gxDMXbIRac29uMQ7ObjNoG3wca/mPs7+y1TG8gkCYhG9EApvBcnw/f3w==}
     engines: {node: '>=22'}
     peerDependencies:
       svelte: ^5.56.0
@@ -3305,7 +3304,7 @@ snapshots:
 
   '@superjackfruitlabs/treaty-event-schemas@0.0.13': {}
 
-  '@superjackfruitlabs/vibekit-ui@file:apps/web/vendor/superjackfruitlabs-vibekit-ui-0.0.20.tgz(@internationalized/date@3.12.2)(@sveltejs/kit@2.66.0(@opentelemetry/api@1.9.1)(@sveltejs/vite-plugin-svelte@7.1.2(svelte@5.56.3)(vite@8.0.16(@types/node@22.20.2)(esbuild@0.28.1)(jiti@2.7.0)(yaml@2.9.0)))(svelte@5.56.3)(typescript@6.0.3)(vite@8.0.16(@types/node@22.20.2)(esbuild@0.28.1)(jiti@2.7.0)(yaml@2.9.0)))(svelte@5.56.3)':
+  '@superjackfruitlabs/vibekit-ui@0.0.20(@internationalized/date@3.12.2)(@sveltejs/kit@2.66.0(@opentelemetry/api@1.9.1)(@sveltejs/vite-plugin-svelte@7.1.2(svelte@5.56.3)(vite@8.0.16(@types/node@22.20.2)(esbuild@0.28.1)(jiti@2.7.0)(yaml@2.9.0)))(svelte@5.56.3)(typescript@6.0.3)(vite@8.0.16(@types/node@22.20.2)(esbuild@0.28.1)(jiti@2.7.0)(yaml@2.9.0)))(svelte@5.56.3)':
     dependencies:
       '@fontsource-variable/archivo': 5.3.0
       '@fontsource-variable/azeret-mono': 5.3.0
