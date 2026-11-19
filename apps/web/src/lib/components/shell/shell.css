@@ -46,7 +46,7 @@
 .sh-phone-live-size { visibility: hidden; pointer-events: none; }
 .sh-phone-live-size::after { content: attr(data-word); }
 
-/* The keys line (contract rule 13) ends a page's footer; on a phone the `?` help replaces it. Same text in every vibe. */
+/* The keys line (contract rule 13) ends a page's footer; on a phone it is hidden and nothing replaces it. Same text in every vibe. */
 .sh-keys { color: var(--vk-color-muted); font: var(--vk-type-meta); }
 @media (max-width: 899.98px) { .sh-keys { display: none; } }
 :is(.crew-foot, .set-foot, .sp-foot) { margin: 0; }

@@ -71,7 +71,6 @@ describe('ListView', () => {
     expect(id).not.toBe('');
     const sentence = document.getElementById(id);
     expect(sentence?.textContent).toBe(screen.getByLabelText('Keyboard').textContent);
-    expect(sentence?.classList.contains('vk-visually-hidden')).toBe(true);
   });
 
   it('groups say who works them; each row has one action, Move', () => {

@@ -90,17 +90,6 @@
     queueMicrotask(() => root?.querySelector('tr[aria-current="true"]')?.scrollIntoView?.({ block: 'nearest' }));
   }
 
-  // The table is described by vibekit's own keys sentence (same words as the footer's keys line); the footer
-  // line is the one people see, so the sentence takes vibekit's visually-hidden class and stays in the description.
-  $effect(() => {
-    if (!root) return;
-    const hide = () => root?.querySelector('.vk-datatable__keys')?.classList.add('vk-visually-hidden');
-    hide();
-    const mo = new MutationObserver(hide);
-    mo.observe(root, { childList: true, subtree: true });
-    return () => mo.disconnect();
-  });
-
   function onkeydown(e: KeyboardEvent): void {
     const t = e.target;
     if (e.defaultPrevented || e.metaKey || e.ctrlKey || e.altKey) return;

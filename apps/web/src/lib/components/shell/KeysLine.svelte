@@ -7,7 +7,7 @@
    */
   import { keysText, type KeyHint } from '$lib/keys';
 
-  let { keys, id }: { keys: readonly KeyHint[]; id?: string } = $props();
+  let { keys }: { keys: readonly KeyHint[] } = $props();
 </script>
 
-<span {id} class="sh-keys" aria-label="Keyboard">{keysText(keys)}</span>
+<span class="sh-keys" aria-label="Keyboard">{keysText(keys)}</span>
