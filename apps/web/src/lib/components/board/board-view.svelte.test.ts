@@ -131,6 +131,13 @@ describe('the board in every vibe', () => {
     }
   });
 
+  it('the open control is a stretch target: its focus ring is drawn on ::after, which the probe reads by this marker', () => {
+    const { container } = render(BoardView, props());
+    const opens = [...container.querySelectorAll('article[data-card-id] .bv-open')];
+    expect(opens.length).toBeGreaterThan(0);
+    for (const o of opens) expect(o.hasAttribute('data-stretch-target')).toBe(true);
+  });
+
   it('unclaimed tiles carry data-needs', () => {
     const { container } = render(BoardView, props());
     const reported = container.querySelector('[data-lane="reported"]')!;

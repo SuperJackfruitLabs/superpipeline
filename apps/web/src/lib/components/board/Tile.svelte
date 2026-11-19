@@ -29,6 +29,7 @@
     <button
       type="button"
       class="bv-open"
+      data-stretch-target
       data-card-open={s.id}
       aria-label={openLabel({ title: s.title, stageName: s.stageName })}
       onclick={() => app.openCard(s.id)}
