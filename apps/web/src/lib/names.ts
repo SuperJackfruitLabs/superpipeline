@@ -38,6 +38,16 @@ export function displayAgent(agentId: string | null | undefined, agents: AgentSu
 }
 
 /**
+ * An agent's name, or null when the workspace cannot name it: the page's words then say "An agent"
+ * (contract rule 5: names, never ids), as the card does. For lines a person reads, where a short id
+ * would be the only thing on the line that is not a word.
+ */
+export function knownAgent(agentId: string | null | undefined, agents: AgentSummary[]): string | null {
+  if (!agentId) return null;
+  return agents.find((a) => a.id === agentId)?.name?.trim() || null;
+}
+
+/**
  * A person's name, an AGENT's name, an email, or a short id.
  *
  * A principal is not always a person. A card queued by a coordinator records that agent's

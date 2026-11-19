@@ -53,7 +53,8 @@ export interface SpendView {
   /** Spend as a share of the board cap, 0–100; null without a cap. */
   pct: number | null;
   /** Up to five agents, most spent first. */
-  top: Array<{ name: string; costUsd: number }>;
+  /** `id` is the agent's id, the row's key: two agents nobody can name both read "An agent". */
+  top: Array<{ id: string; name: string; costUsd: number }>;
   /** Agents that spent something but are not in `top`. */
   more: number;
 }

@@ -21,7 +21,7 @@ import {
 } from '$lib/api';
 import { itemsFromBoard, sortAttention, type AttentionItem } from '$lib/components/attention/attention';
 import { refusalOf } from '$lib/components/attention/refusal';
-import { displayAgent } from '$lib/names';
+import { knownAgent } from '$lib/names';
 import { greetingName } from '../dialogs/person';
 import { ACTIVITY_PAGE, activityGroups, mergeUsage, needRows, parseCap, runningRows, spendView } from '../operate/operate-data';
 import type { ActivityGroup, CapResult, NeedRow, OperateModel } from '../operate/operate-types';
@@ -118,7 +118,7 @@ export class InboxStore implements OperateModel {
     const names = app.labelById();
     const labelIds = [...new Set(cards.flatMap((c) => c.labels))];
     return {
-      agents: agentIds.map((id) => ({ id, name: displayAgent(id, app.agents) })).toSorted((a, b) => a.name.localeCompare(b.name)),
+      agents: agentIds.map((id) => ({ id, name: knownAgent(id, app.agents) ?? 'An agent' })).toSorted((a, b) => a.name.localeCompare(b.name)),
       labels: labelIds.flatMap((id) => { const l = names.get(id); return l ? [{ id, name: l.name }] : []; }).toSorted((a, b) => a.name.localeCompare(b.name)),
       priorities: [...new Set(cards.map((c) => c.priority).filter((p) => p > 0))].toSorted((a, b) => b - a),
     };

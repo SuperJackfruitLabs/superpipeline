@@ -34,7 +34,7 @@
     <p class="ib-why">{SPEND_NONE}</p>
   {:else}
     <ul class="ib-rows ib-spend__who" aria-label="Who spent it">
-      {#each s.top as a (a.name)}
+      {#each s.top as a (a.id)}
         <li class="ib-row ib-row--spend" data-row={a.name}><span class="ib-row__face" aria-hidden="true"><Face id={a.name} label={a.name} mood="resting" size={24} /></span><span class="ib-row__t">{a.name}</span><span class="ib-cost">{usd(a.costUsd)}</span></li>
       {/each}
     </ul>

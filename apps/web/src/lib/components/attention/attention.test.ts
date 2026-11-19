@@ -85,6 +85,13 @@ describe('itemsFromBoard — one row per reason, each saying what to do', () => 
     expect(it.actions).toEqual(['answer']);
   });
 
+  it('a question from an agent the workspace cannot name says "An agent", never its id (rule 5)', () => {
+    const ask: Elicitation = { id: 'elc_1', cardId: 'crd_1', runId: 'run_1', stageKey: 'build', agentId: 'agt_2613e473e3934509', question: 'Which provider?', signal: null, options: [], status: 'pending', answer: null, createdAt: hoursAgo(1) };
+    const it = one(board([card({ state: 'input-required', needsHuman: { reason: 'question', elicitationId: 'elc_1' } })], { elicitations: [ask] }));
+    expect(it.headline).toBe('An agent asked a question');
+    expect(it.headline).not.toMatch(/agt_/);
+  });
+
   it('review: says what is being approved, and offers Review — never an approve from the list', () => {
     const gate: Gate = { id: 'gate_1', cardId: 'crd_1', stageKey: 'review', status: 'pending', options: [], producedBy: 'agt_b', summary: 'Adds the login form and its tests' };
     const it = one(board([card({ currentStageKey: 'review', state: 'input-required' })], { gates: [gate] }));

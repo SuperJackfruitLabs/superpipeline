@@ -266,6 +266,15 @@ describe('the Inbox model', () => {
     expect(m.needs.some((r) => r.card.id === added.id)).toBe(true);
     await vi.waitFor(() => expect(app.attention).toHaveLength(3), { timeout: 2000 });
   });
+  it('the Agent filter names an agent the workspace cannot name "An agent", never its id (rule 5)', async () => {
+    const m = make();
+    await settle();
+    expect(m.filterChoices.agents.length).toBeGreaterThan(0);
+    app.agents = [];
+    flushSync();
+    expect(m.filterChoices.agents.length).toBeGreaterThan(0);
+    for (const a of m.filterChoices.agents) expect(a.name).toBe('An agent');
+  });
   it('groups the needs by what to do, filters them, and says the headline', async () => {
     const m = make();
     await settle();

@@ -76,6 +76,26 @@ describe('moveTargets and parseCap', () => {
   });
 });
 
+describe('an agent the workspace cannot name (rule 5: names, never ids)', () => {
+  const GHOST = 'agt_2613e473e3934509';
+  it('Needs, Running and Activity rows carry no name, so their words say "An agent"; Spend says it too', () => {
+    const board = { ...DX_BOARD, cards: DX_BOARD.cards.map((c) => ({ ...c, delegateAgentId: GHOST, lastAgentId: GHOST })) };
+    const need = needRows(board, DX_AGENTS, sortAttention(itemsFromBoard(board, DX_AGENTS, DX_NOW), 'stage'), DX_NOW);
+    expect(need.length).toBeGreaterThan(0);
+    for (const r of need) expect(r.agentName).toBeNull();
+    for (const g of activityGroups(DX_NOTIFICATIONS, true, need, board, DX_AGENTS)) expect(g.agentName).toBeNull();
+    const running = runningRows({ ...board, cards: board.cards.map((c) => ({ ...c, state: 'working' as const })) }, DX_AGENTS);
+    expect(running.length).toBeGreaterThan(0);
+    for (const r of running) expect(r.agentName).toBeNull();
+    const usage = { totalCostUsd: 1, estimatedCostUsd: 0, totalInputTokens: 0, totalOutputTokens: 0, unpricedRecords: 0, byModel: [], byCard: [], byAgent: [{ agentId: GHOST, costUsd: 1 }], byDay: [] };
+    expect(spendView(usage, null, DX_AGENTS).top).toEqual([{ id: GHOST, name: 'An agent', costUsd: 1 }]);
+    // Two such agents are two rows (their key is the id, not the words).
+    const two = spendView({ ...usage, byAgent: [{ agentId: GHOST, costUsd: 1 }, { agentId: 'agt_ffffffffffff0001', costUsd: 2 }] }, null, DX_AGENTS).top;
+    expect(new Set(two.map((a) => a.id)).size).toBe(2);
+    expect(JSON.stringify([need.map((r) => r.agentName), running])).not.toMatch(/agt_…|…934509/);
+  });
+});
+
 describe('rows carry their board (the Inbox spans boards)', () => {
   it('every Needs, Running and Activity row names its board', () => {
     expect(new Set(rows.map((r) => [r.boardId, r.boardName].join('|')))).toEqual(new Set([`${DX_BOARD.boardId}|${DX_BOARD.name}`]));
