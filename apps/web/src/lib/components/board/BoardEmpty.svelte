@@ -10,6 +10,8 @@
   import Icon from '$lib/components/parts/Icon.svelte';
   import Initials from '$lib/components/parts/Initials.svelte';
   import { plural } from '$lib/words';
+  import { BOARD_KEYS } from '$lib/keys';
+  import KeysLine from '$lib/components/shell/KeysLine.svelte';
   import type { BoardModel, Me } from './board-model';
   import { emptyHint, emptyLedeHtml, emptyTags, emptyWho } from './board-words';
 
@@ -48,5 +50,6 @@
       {/each}
     </ol>
     <div class="em-foot"><span>Stages come from this board’s rules.</span><a href="/b/{model.boardId}/settings">Change the stages in Board settings</a></div>
+    <p class="em-keys"><KeysLine keys={BOARD_KEYS} /></p>
   </div>
 </div>

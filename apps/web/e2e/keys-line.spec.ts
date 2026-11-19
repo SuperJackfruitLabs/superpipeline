@@ -33,3 +33,10 @@ test('the keys line is absent on a phone', async ({ page, request }) => {
     await expect(page.getByLabel('Keyboard'), url).toBeHidden();
   }
 });
+
+test('an empty board ends with its keys too', async ({ page, request }) => {
+  const id = await seedBoard(request, 'Keys empty', STAGES);
+  await page.setViewportSize({ width: 1280, height: 800 });
+  await page.goto(`/b/${id}`);
+  await expect(page.getByLabel('Keyboard')).toContainText('N new card');
+});

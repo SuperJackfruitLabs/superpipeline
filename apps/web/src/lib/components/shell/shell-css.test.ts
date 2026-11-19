@@ -29,3 +29,9 @@ describe("the phone row's Live reservation in shell.css", () => {
     expect(rule('.sh-phone-live-size::after')).toMatch(/content: attr\(data-word\)/);
   });
 });
+
+describe('the keys line (contract rule 13)', () => {
+  it('is hidden under the phone query, and nothing replaces it', () => {
+    expect(css).toMatch(/@media \(max-width: 899\.98px\)\s*\{\s*\.sh-keys\s*\{\s*display: none;/);
+  });
+});

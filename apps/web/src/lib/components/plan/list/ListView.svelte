@@ -17,7 +17,7 @@
   import { attentionLine } from '$lib/components/board/board-words';
   import type { ListGroupBy } from './list-keys';
   import { GROUP_CYCLE, GROUPS, listCaption, nextInCycle, SORT_CYCLE, sortOptions, stateText } from './list-model';
-  import { LIST_KEYS } from '$lib/keys';
+  import { LIST_KEYS, keysText } from '$lib/keys';
   import KeysLine from '$lib/components/shell/KeysLine.svelte';
   import { groupLabel, listFoot, NO_MATCH, rowFacts } from './list-words';
   import { LIST_PAGE, ListUi } from './list-ui.svelte';
@@ -90,6 +90,17 @@
     queueMicrotask(() => root?.querySelector('tr[aria-current="true"]')?.scrollIntoView?.({ block: 'nearest' }));
   }
 
+  // The table is described by vibekit's own keys sentence (same words as the footer's keys line); the footer
+  // line is the one people see, so the sentence takes vibekit's visually-hidden class and stays in the description.
+  $effect(() => {
+    if (!root) return;
+    const hide = () => root?.querySelector('.vk-datatable__keys')?.classList.add('vk-visually-hidden');
+    hide();
+    const mo = new MutationObserver(hide);
+    mo.observe(root, { childList: true, subtree: true });
+    return () => mo.disconnect();
+  });
+
   function onkeydown(e: KeyboardEvent): void {
     const t = e.target;
     if (e.defaultPrevented || e.metaKey || e.ctrlKey || e.altKey) return;
@@ -137,7 +148,7 @@
   <div class="lv-table">
     <DataTable label={listCaption(p.boardName, p.groupBy, p.sort)} {columns} rows={flat} groups={paged} rowKey={(r) => r.s.id} titleKey="title"
       selected={ui.selected ?? undefined} needs={(r) => r.state.needsYou} sort={{ key: p.sort.key, dir: p.sort.ascending ? 'asc' : 'desc' }}
-      onsort={(k) => p.onSort(k as ListSortKey)} {empty} />
+      onsort={(k) => p.onSort(k as ListSortKey)} keys={keysText(LIST_KEYS)} {empty} />
   </div>
   {#if total > shown}
     <LoadMore {shown} {total} label="Show {Math.min(LIST_PAGE, total - shown)} more" onmore={() => { ui.limit += LIST_PAGE; }} />

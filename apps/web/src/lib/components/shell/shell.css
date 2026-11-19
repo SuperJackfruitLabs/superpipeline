@@ -50,3 +50,4 @@
 .sh-keys { color: var(--vk-color-muted); font: var(--vk-type-meta); }
 @media (max-width: 899.98px) { .sh-keys { display: none; } }
 :is(.crew-foot, .set-foot, .sp-foot) { margin: 0; }
+.em-keys { margin: 0; }

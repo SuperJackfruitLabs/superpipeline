@@ -63,6 +63,17 @@ describe('ListView', () => {
     expect(screen.getByLabelText('Keyboard').textContent).toMatch(/J \/ K rows · ↵ open/);
   });
 
+  it('the table is described by the keys words', async () => {
+    render(ListView, listProps());
+    await tick();
+    const table = screen.getByRole('table');
+    const id = table.getAttribute('aria-describedby') ?? '';
+    expect(id).not.toBe('');
+    const sentence = document.getElementById(id);
+    expect(sentence?.textContent).toBe(screen.getByLabelText('Keyboard').textContent);
+    expect(sentence?.classList.contains('vk-visually-hidden')).toBe(true);
+  });
+
   it('groups say who works them; each row has one action, Move', () => {
     render(ListView, listProps());
     const heads = [...document.querySelectorAll('.vk-datatable__group th')].map((h) => h.textContent?.replace(/\s+/g, ' ').trim());
