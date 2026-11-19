@@ -28,7 +28,8 @@
 .bv-lanehead { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--vk-space-1) var(--vk-space-2); }
 .bv-lanehead h2 { margin: 0; font: 700 16px/1.2 var(--vk-font-display); overflow-wrap: anywhere; }
 .bv-ct { color: var(--vk-color-muted); font: var(--vk-type-mono); }
-.bv-who { margin-left: auto; color: var(--vk-color-muted); font: var(--vk-type-meta); }
+/* Who works it can be an agent's name, which is user text: it wraps inside the lane, never widens it (long-text). */
+.bv-who { margin-left: auto; min-width: 0; color: var(--vk-color-muted); font: var(--vk-type-meta); overflow-wrap: anywhere; }
 .bv-none { margin: 0; color: var(--vk-color-muted); font: var(--vk-type-meta); }
 .bv-more { justify-self: start; }
 

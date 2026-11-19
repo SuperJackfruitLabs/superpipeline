@@ -30,7 +30,8 @@
 .lv-foot { margin: 0; color: var(--vk-color-muted); font: var(--vk-type-meta); }
 
 @media (max-width: 899.98px) {
-  .lv { padding-inline: var(--vk-space-3); }
+  /* The phone's 16px side gutter (phone-fit), as the Inbox keeps it. */
+  .lv { padding-inline: 16px; }
 }
 
 /* The table is described by vibekit's own keys sentence (same words as the footer's keys line); the footer line is

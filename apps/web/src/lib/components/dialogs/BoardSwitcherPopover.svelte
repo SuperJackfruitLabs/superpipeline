@@ -22,7 +22,7 @@
   import './css/bs.css';
   import './css/palclose.css';
 
-  /** Where the reference puts the panel under the raised control, per vibe (dialog top − anchor top). */
+  /** Where the reference puts the panel under the shell's control, per vibe (dialog top − control top). */
   const DROP: Record<string, number> = { daylight: 56, paper: 57, studio: 68, quiet: 52 };
   const SWITCHER_W = 520;
   const MARGIN = 16;
@@ -31,7 +31,11 @@
   let renaming = $state(false);
   let draftName = $state('');
   let creating = $state(false);
+  /** Where the raised copy sits (its name over the board's own name), and where the panel hangs from (the shell's control). */
   let anchor = $state<{ left: number; top: number } | null>(null);
+  let control = $state<{ left: number; top: number } | null>(null);
+  /** The board name's type in the masthead (the vibe's), worn by the copy's name so the two names are one. */
+  let nameType = $state('');
   let copy = $state<HTMLDivElement | null>(null);
 
   const vibe = $derived(appearance.value.vibe);
@@ -53,24 +57,53 @@
     }));
   });
 
-  /** Lay the raised copy over the shell's own control, then hang the panel under it. */
+  /** The first drawn text inside `el`: its box, and the element that sets its type. */
+  function nameText(el: Element | null | undefined): { left: number; top: number; owner: Element } | null {
+    if (!el) return null;
+    const walk = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
+    for (let n = walk.nextNode(); n; n = walk.nextNode()) {
+      if (!(n.textContent ?? '').trim() || !n.parentElement) continue;
+      const range = document.createRange();
+      range.selectNodeContents(n);
+      const r = range.getBoundingClientRect();
+      return { left: r.left, top: r.top, owner: n.parentElement };
+    }
+    return null;
+  }
+  function typeOf(el: Element): string {
+    const cs = getComputedStyle(el);
+    return [
+      `--bs-name-family: ${cs.fontFamily}`, `--bs-name-size: ${cs.fontSize}`, `--bs-name-weight: ${cs.fontWeight}`,
+      `--bs-name-style: ${cs.fontStyle}`, `--bs-name-stretch: ${cs.fontStretch}`, `--bs-name-ls: ${cs.letterSpacing}`,
+      `--bs-name-variation: ${cs.fontVariationSettings}`, `--bs-name-features: ${cs.fontFeatureSettings}`,
+    ].join('; ');
+  }
+
+  /**
+   * Lay the raised copy over the shell's own control, then hang the panel under that control. The copy is one form in
+   * every vibe (BoardPickButton); its name wears the masthead name's type and lies exactly over it, so the two never
+   * show through each other as a doubled title. Paper and Quiet draw the name and "Switch board" inline: the name is
+   * `.vk-masthead__name`, and the panel hangs under the words.
+   */
   $effect(() => {
-    if (!app.boardSwitcherOpen) { anchor = null; renaming = false; query = ''; return; }
+    if (!app.boardSwitcherOpen) { anchor = null; control = null; nameType = ''; renaming = false; query = ''; return; }
     const real = document.querySelector<HTMLElement>('[data-bs-trigger], .vk-masthead__title[aria-haspopup]');
-    // Paper and Quiet draw the name and "Change board" inline: the copy's control lines up with the words.
     const r = (real?.querySelector<HTMLElement>('.vk-masthead__change') ?? real)?.getBoundingClientRect();
-    anchor = r ? { left: r.left, top: r.top } : { left: 32, top: 32 };
+    // Locals, not the state just written: reading it back would make this effect depend on its own writes.
+    const at = r ? { left: Math.round(r.left), top: Math.round(r.top) } : { left: 32, top: 32 };
+    const name = nameText(real?.querySelector('.vk-masthead__name') ?? real);
+    control = at;
+    nameType = name ? typeOf(name.owner) : '';
+    anchor = name ? { left: name.left, top: name.top } : at;
     void tick().then(() => {
-      const t = copy?.querySelector<HTMLElement>('.bs-trigger');
-      if (!t || !r || !anchor) return;
-      const c = t.getBoundingClientRect();
-      const dx = r.left - c.left;
+      const c = name ? nameText(copy?.querySelector('.nc-board__name')) : null;
+      if (!name || !c || !anchor) return;
       // Whole pixels, as the reference places it: a fractional top moves the copy's text off by a pixel.
-      anchor = { left: Math.round(anchor.left + dx), top: Math.round(anchor.top + (r.top - c.top)) };
+      anchor = { left: Math.round(anchor.left + (name.left - c.left)), top: Math.round(anchor.top + (name.top - c.top)) };
     });
   });
   $effect(() => {
-    const a = anchor;
+    const a = control;
     const s = document.documentElement.style;
     if (!a) { s.removeProperty('--sp-bs-x'); s.removeProperty('--sp-bs-y'); return; }
     // O10, #26: hang under the trigger, but never past a screen edge (16px margins); the panel is as wide as fits.
@@ -111,7 +144,7 @@
 {#if app.boardSwitcherOpen && anchor && app.board}
   <!-- The reference's raised trigger: a copy of the shell's control above the scrim. Decoration: the real one stays the control. -->
   <div class="bs-layer" aria-hidden="true" inert>
-    <div class="bs-anchor" bind:this={copy} style:left="{anchor.left}px" style:top="{anchor.top}px">
+    <div class="bs-anchor" bind:this={copy} style="{nameType}; left: {anchor.left}px; top: {anchor.top}px">
       <BoardPickButton boardId={app.boardId} boardName={app.board.name ?? ''} lead="" class="bs-trigger" onopen={close} />
     </div>
   </div>

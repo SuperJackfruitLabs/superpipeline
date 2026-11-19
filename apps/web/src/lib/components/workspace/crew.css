@@ -54,7 +54,8 @@
 .crew-foot { margin: 0; color: var(--vk-color-muted); font: var(--vk-type-meta); }
 
 @media (max-width: 899.98px) {
-  .crew { padding-inline: var(--vk-space-3); }
+  /* The phone's 16px side gutter (phone-fit), as the Inbox keeps it. */
+  .crew { padding-inline: 16px; }
   .crew-form { grid-template-columns: minmax(0, 1fr); }
 }
 

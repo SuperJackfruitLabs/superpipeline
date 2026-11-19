@@ -19,3 +19,5 @@
 .bs-layer .bs-anchor { position: absolute; display: inline-flex; align-items: center; }
 /* The raised copy is one form in every vibe (BoardPickButton, composition contract). */
 .bs-layer .bs-anchor .bs-trigger { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; padding: 0 12px; border: 0; border-radius: var(--vk-radius-sm); background: var(--vk-color-surface); box-shadow: inset 0 0 0 2px var(--vk-color-text); color: var(--vk-color-text); font: 600 1.125rem/1.1 var(--vk-font-body); cursor: pointer; }
+/* Its name wears the masthead name's type (set on .bs-anchor by BoardSwitcherPopover), so it lies exactly over the board's own name. */
+.bs-layer .bs-anchor .nc-board__name { font-family: var(--bs-name-family); font-size: var(--bs-name-size); font-weight: var(--bs-name-weight); font-style: var(--bs-name-style); font-stretch: var(--bs-name-stretch); letter-spacing: var(--bs-name-ls); font-variation-settings: var(--bs-name-variation); font-feature-settings: var(--bs-name-features); }

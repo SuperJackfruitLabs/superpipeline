@@ -36,7 +36,7 @@
   }
 </script>
 
-<button class="nc-board {extra}" type="button" bind:this={trigger} aria-haspopup="listbox" aria-label="Board: {boardName}. Change board" onclick={() => (onopen ? onopen() : void show())}>{lead ? `${lead} ` : ''}{boardName} <Icon name="chev" size={16} /></button>
+<button class="nc-board {extra}" type="button" bind:this={trigger} aria-haspopup="listbox" aria-label="Board: {boardName}. Change board" onclick={() => (onopen ? onopen() : void show())}>{lead ? `${lead} ` : ''}<span class="nc-board__name">{boardName}</span> <Icon name="chev" size={16} /></button>
 {#if open}
   <div class="nc-picker" role="listbox" aria-label="Boards" tabindex="-1" bind:this={list} onkeydown={onkey}>
     {#each app.boards as b (b.id)}

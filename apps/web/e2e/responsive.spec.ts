@@ -57,10 +57,12 @@ for (const vp of WIDTHS) {
         expect(await pageScrollsSideways(page), `/b/:id${path}`).toBe(false);
       }
       await page.goto('/crew/agents');
-      await expect(page.getByRole('tab', { name: /^Agents/ })).toBeVisible();
+      // Crew's tabs are links, one URL each (the composition contract keeps the tabs and their URLs).
+      await expect(page.getByRole('main').getByRole('link', { name: /^Agents/ })).toHaveAttribute('aria-current', 'page');
       expect(await pageScrollsSideways(page), '/crew/agents').toBe(false);
       await page.goto('/settings');
-      await expect(page.getByRole('heading', { name: 'Connections' }).first()).toBeVisible();
+      // Settings is tabs now (Labels, Connections, Appearance, Account; composition contract): Connections is a tab, its heading in its own panel.
+      await expect(page.getByRole('tablist', { name: 'Settings' }).getByRole('tab', { name: /^Connections/ })).toBeVisible();
       expect(await pageScrollsSideways(page), '/settings').toBe(false);
       // The Inbox on every board: the Show row and long board names stay inside the screen.
       await page.goto('/inbox');

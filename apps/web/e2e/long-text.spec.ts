@@ -49,6 +49,8 @@ async function spills(page: Page): Promise<string[]> {
 
 let boardId = '';
 let cardId = '';
+/** A board whose first stage only the long-named agent declares, so its lane says "Agent Super… works this" every run. */
+let soloId = '';
 test.beforeAll(async ({ request }) => {
   boardId = await seedBoard(request, `Long ${LONG}`, REVIEW_PIPELINE);
   await seedGatedCard(request, boardId, `Long title: ${LONG} and then a normal sentence that keeps going`);
@@ -57,7 +59,15 @@ test.beforeAll(async ({ request }) => {
   const snap = (await (await request.get(`${API}/v1/boards/${boardId}`, { headers: TENANT })).json()) as { cards: Array<{ id: string; title: string }> };
   cardId = snap.cards.find((c) => c.title.startsWith('Long title'))!.id;
   await request.post(`${API}/v1/projects`, { headers: TENANT, data: { name: `Project ${LONG}` } });
-  await request.post(`${API}/v1/agents`, { headers: { ...TENANT, 'X-User-Id': 'usr_dev' }, data: { name: `Agent ${LONG}`, capabilities: ['research'] } });
+  // The shared workspace has other research agents, so the research lane names this one only sometimes: a capability
+  // of its own makes a lane that always names it (a long agent name once widened its lane by 159px).
+  const solo = `long-text-${Date.now()}`;
+  await request.post(`${API}/v1/agents`, { headers: { ...TENANT, 'X-User-Id': 'usr_dev' }, data: { name: `Agent ${LONG}`, capabilities: ['research', solo] } });
+  soloId = await seedBoard(request, 'Long agent lane', [
+    { key: 'solo', name: 'Solo', order: 0, ownerKind: 'capability', owner: solo },
+    { key: 'done', name: 'Done', order: 1, ownerKind: 'human' },
+  ]);
+  await request.post(`${API}/v1/boards/${soloId}/cards`, { headers: TENANT, data: { title: 'A short card' } });
 });
 
 const SIZES = [{ w: 1440, h: 900 }, { w: 1100, h: 800 }, { w: 390, h: 844 }];
@@ -83,6 +93,12 @@ for (const vibe of ['daylight', 'paper', 'studio', 'quiet']) {
         await waitForLayout(page);
         for (const p of await spills(page)) problems.push(`${path}: ${p}`);
       }
+      // A lane says who works it: here, the long-named agent.
+      await page.goto(`/b/${soloId}`);
+      await waitForAppReady(page);
+      await expect(page.getByText(`Agent ${LONG} works this`).filter({ visible: true }).first()).toBeVisible();
+      await waitForLayout(page);
+      for (const p of await spills(page)) problems.push(`/b/${soloId}: ${p}`);
       // The command palette lists the long card title.
       await page.goto(`/b/${boardId}`);
       await waitForAppReady(page);
