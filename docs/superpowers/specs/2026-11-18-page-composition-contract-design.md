@@ -135,7 +135,7 @@ Added in Phase 6, per page, run in CI on realistic fixtures:
 - **Primary actions per row ≤ 1** (buttons with the primary form inside a row).
 - **No repeated paragraph**: no identical text node longer than 40 characters appears more than once in a view.
 - **No raw JSON or id outside a disclosure**: text matching `^\{` or `^(lbl|card|usr|brd)_` only inside `details`.
-- **Height budget**: the Inbox with 18 needs and 548 activity items stays under 3 screens at 1440×900; the board under 2.
+- **Height budget**: the Inbox with 18 needs and 548 activity items stays under 3 screens at 1440×900; the board under 2. Amended 2026-11-20 by the operator: per vibe, the board stays under 1800 px in Daylight and Studio, 2100 px in Paper (it sets larger type) and 2400 px in Quiet (one column by design), measured on the realistic seed with long lanes folded at five cards.
 - **Track never truncates**: no stage name with `text-overflow` clipping; measured by comparing scrollWidth to clientWidth.
 - **Motion honours reduce**: with `data-motion="reduce"` a refresh produces zero running animations; without it, at least one.
 - **Vibe parity**: the same view renders the same DOM order and the same text in all four vibes (diff of the accessibility tree ignoring class names).
