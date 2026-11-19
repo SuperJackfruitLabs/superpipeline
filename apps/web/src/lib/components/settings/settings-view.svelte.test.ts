@@ -113,6 +113,8 @@ describe('SettingsView', () => {
     await settle();
     expect(within(screen.getByRole('table', { name: 'Labels' })).getAllByRole('row')).toHaveLength(21);
     expect(screen.queryByRole('button', { name: /^Show \d+ more/ })).toBeNull();
+    // The button is gone; focus is on the first new row, not lost to the page (M6).
+    expect(screen.getByRole('table', { name: 'Labels' }).querySelectorAll('tr[data-row]')[6]?.contains(document.activeElement)).toBe(true);
     // New label is the section's one action; it opens the form.
     await fireEvent.click(screen.getByRole('button', { name: /^New label/ }));
     await fireEvent.input(screen.getByLabelText('New label name'), { target: { value: 'triage' } });

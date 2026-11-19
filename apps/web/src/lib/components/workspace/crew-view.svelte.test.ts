@@ -218,6 +218,8 @@ describe('CrewView', () => {
     await settle();
     expect(within(table).getAllByRole('row').slice(1)).toHaveLength(14);
     expect(screen.queryByRole('button', { name: /^Show \d+ more/ })).toBeNull();
+    // The button is gone; focus is on the first new row, not lost to the page (M6).
+    expect(table.querySelectorAll('tr[data-row]')[10]?.contains(document.activeElement)).toBe(true);
   });
 
   it('the footer line says how many agents, how many need you and how many rest', async () => {

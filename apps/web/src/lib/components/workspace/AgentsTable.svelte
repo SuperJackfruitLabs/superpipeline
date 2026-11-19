@@ -16,6 +16,7 @@
   import AgentEditForm from './AgentEditForm.svelte';
   import CrewLoad from './CrewLoad.svelte';
   import NewAgentDialog from './dialogs/NewAgentDialog.svelte';
+  import { rowFocus } from '$lib/focus-row';
 
   const PAGE = 10;
   const ORDER = { needs: 0, working: 1, resting: 2 } as const;
@@ -56,6 +57,8 @@
     { key: 'seen', label: 'Last seen', cell: seen },
     { key: 'actions', label: 'Actions', align: 'end', cell: actions },
   ];
+  /** The rows, for focus after "Show N more" (the first new row). */
+  let rowsEl = $state<HTMLElement | null>(null);
 </script>
 
 {#snippet who(a: AgentSummary)}<AgentName id={a.name} name={a.name} mood={agentMood(a, needing)} src={a.iconUrl ?? undefined} size={32} />{/snippet}
@@ -84,9 +87,9 @@
 <CrewLoad phase={model.load.phase} loading={CREW_LOADING.agents} failed={CREW_FAILED.agents} onRetry={() => model.retry()}>
   {#if editing}<AgentEditForm agent={editing} {model} />{/if}
   {#if model.error && model.editingId === null}<p class="crew-error" role="alert">{model.error}</p>{/if}
-  <DataTable label="Agents" {columns} rows={shown} rowKey={(a) => a.id} needs={(a) => agentState(a, needing) === 'needs'} {empty} />
+  <div bind:this={rowsEl}><DataTable label="Agents" {columns} rows={shown} rowKey={(a) => a.id} needs={(a) => agentState(a, needing) === 'needs'} {empty} /></div>
   {#if rows.length > PAGE}
-    <LoadMore shown={shown.length} total={rows.length} label="Show {Math.min(PAGE, rows.length - shown.length)} more" onmore={() => { limit += PAGE; }} />
+    <LoadMore shown={shown.length} total={rows.length} label="Show {Math.min(PAGE, rows.length - shown.length)} more" onmore={() => { limit += PAGE; }} focusTarget={(i) => rowFocus(rowsEl, i)} />
   {/if}
   {#if rows.length > 0}<p class="crew-foot">{crewFooter(rows, needing)}</p>{/if}
 </CrewLoad>

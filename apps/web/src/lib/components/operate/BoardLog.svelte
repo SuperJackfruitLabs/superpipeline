@@ -12,6 +12,7 @@
   import { app } from '$lib/stores/app.svelte';
   import { eventLabel, logMeta, rawLine, shortId, shortTitle } from './spend-format';
   import type { BoardLogProps } from './spend-types';
+  import { rowFocus } from '$lib/focus-row';
 
   let { events, error, collapsedRows, fullLogHref, paged = false }: BoardLogProps = $props();
   let all = $state(false);
@@ -26,6 +27,8 @@
     copied = id;
     setTimeout(() => (copied = copied === id ? null : copied), 2000);
   }
+  /** The rows, for focus after "Show N more" (the first new row). */
+  let rowsEl = $state<HTMLElement | null>(null);
 </script>
 
 <section class="panel" aria-labelledby="log-h" data-reveal>
@@ -41,7 +44,7 @@
   {:else if list.length === 0}
     <p class="panel-body t-meta">Nothing has happened on this board yet.</p>
   {:else}
-    <ol class="log">
+    <ol class="log" bind:this={rowsEl}>
       {#each shown as e (e.seq)}
         {@const cardId = typeof e.payload.cardId === 'string' ? e.payload.cardId : null}
         <li class="lrow">
@@ -60,7 +63,7 @@
     <span class="sr" aria-live="polite">{copied ? 'Card id copied' : ''}</span>
     <div class="panel-body log-foot">
       {#if paged && list.length > shown.length}
-        <LoadMore shown={shown.length} total={list.length} label="Show {Math.min(collapsedRows, list.length - shown.length)} more" onmore={() => { limit += collapsedRows; }} />
+        <LoadMore shown={shown.length} total={list.length} label="Show {Math.min(collapsedRows, list.length - shown.length)} more" onmore={() => { limit += collapsedRows; }} focusTarget={(i) => rowFocus(rowsEl, i, ['li.lrow'])} />
       {:else if !paged && list.length > collapsedRows}
         <Button variant="quiet" class="btn-sm log-toggle" type="button" aria-expanded={all} onclick={() => (all = !all)}>{all ? `Show the latest ${collapsedRows}` : `Show all ${list.length} events`}</Button>
       {/if}

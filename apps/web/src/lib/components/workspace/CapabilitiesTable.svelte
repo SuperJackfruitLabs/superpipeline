@@ -15,6 +15,7 @@
   import { askedByText, CREW_EMPTY, CREW_FAILED, CREW_LOADING, similarText } from './workspace-words';
   import CrewLoad from './CrewLoad.svelte';
   import NewCapabilityDialog from './dialogs/NewCapabilityDialog.svelte';
+  import { rowFocus } from '$lib/focus-row';
 
   const PAGE = 10;
   const model = new CapabilitiesModel();
@@ -46,6 +47,8 @@
     { key: 'asked', label: 'Asked for by', cell: asked },
     { key: 'actions', label: 'Actions', align: 'end', cell: actions },
   ];
+  /** The rows, for focus after "Show N more" (the first new row). */
+  let rowsEl = $state<HTMLElement | null>(null);
 </script>
 
 {#snippet name(c: CapabilityRecord)}
@@ -97,9 +100,9 @@
       </div>
     </form>
   {/if}
-  <DataTable label="Capabilities" {columns} rows={shown} rowKey={(c) => c.id} {empty} />
+  <div bind:this={rowsEl}><DataTable label="Capabilities" {columns} rows={shown} rowKey={(c) => c.id} {empty} /></div>
   {#if model.rows.length > PAGE}
-    <LoadMore shown={shown.length} total={model.rows.length} label="Show {Math.min(PAGE, model.rows.length - shown.length)} more" onmore={() => { limit += PAGE; }} />
+    <LoadMore shown={shown.length} total={model.rows.length} label="Show {Math.min(PAGE, model.rows.length - shown.length)} more" onmore={() => { limit += PAGE; }} focusTarget={(i) => rowFocus(rowsEl, i)} />
   {/if}
 </CrewLoad>
 

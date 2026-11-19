@@ -19,6 +19,7 @@
   import type { LabelsModel } from '$lib/components/workspace/labels-model.svelte';
   import { labelsHeading } from '$lib/components/workspace/workspace-words';
   import { labelOrigin, labelsMeta, labelUse, LABELS_PAGE, showMore, usedOn } from './settings-words';
+  import { rowFocus } from '$lib/focus-row';
 
   let { model, scope = 'workspace', cards = null, boardName = null, n }: {
     model: LabelsModel;
@@ -75,6 +76,8 @@
     { key: 'used', label: 'Used on', cell: used },
     { key: 'actions', label: 'Actions', align: 'end', cell: actions },
   ];
+  /** The rows, for focus after "Show N more" (the first new row). */
+  let rowsEl = $state<HTMLElement | null>(null);
 </script>
 
 {#snippet name(l: Label)}
@@ -113,9 +116,9 @@
   {:else if model.labels === null}
     <SkeletonRows label="Loading labels…" rows={4} rowHeight={48} slow={model.load.phase === 'slow'} onRetry={() => model.retry()} />
   {:else}
-    <DataTable label="Labels" {columns} rows={shown} rowKey={(l) => l.id} {empty} />
+    <div bind:this={rowsEl}><DataTable label="Labels" {columns} rows={shown} rowKey={(l) => l.id} {empty} /></div>
     {#if !expanded && rows.length > LABELS_PAGE}
-      <LoadMore shown={shown.length} total={rows.length} label={showMore(rows.length - shown.length)} onmore={() => { expanded = true; }} />
+      <LoadMore shown={shown.length} total={rows.length} label={showMore(rows.length - shown.length)} onmore={() => { expanded = true; }} focusTarget={(i) => rowFocus(rowsEl, i)} />
     {/if}
   {/if}
   {#if model.error}<p class="set-error" role="alert">{model.error}</p>{/if}

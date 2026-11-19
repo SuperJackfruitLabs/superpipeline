@@ -12,6 +12,7 @@
   import { CREW_EMPTY, CREW_FAILED, CREW_LOADING, initials, lastOwner, ROLE_LABEL, ROLE_ORDER, roleHelpTitle } from './workspace-words';
   import CrewLoad from './CrewLoad.svelte';
   import NewPersonDialog from './dialogs/NewPersonDialog.svelte';
+  import { rowFocus } from '$lib/focus-row';
 
   const PAGE = 10;
   const model = new PeopleModel();
@@ -48,6 +49,8 @@
     { key: 'role', label: 'Role', cell: role },
     { key: 'actions', label: 'Actions', align: 'end', cell: actions },
   ];
+  /** The rows, for focus after "Show N more" (the first new row). */
+  let rowsEl = $state<HTMLElement | null>(null);
 </script>
 
 {#snippet who(m: Member)}<span class="crew-who"><AgentName id={m.userId} name={nameOf(m)} initials={initials(nameOf(m))} size={32} />{#if model.isMe(m)}<span class="crew-you">you</span>{/if}</span>{/snippet}
@@ -64,9 +67,9 @@
 
 <CrewLoad phase={model.load.phase} loading={CREW_LOADING.people} failed={CREW_FAILED.people} onRetry={() => model.retry()}>
   {#if model.error && !creating}<p class="crew-error" role="alert">{model.error}</p>{/if}
-  <DataTable label="People" {columns} rows={shown} rowKey={(m) => m.userId} {empty} />
+  <div bind:this={rowsEl}><DataTable label="People" {columns} rows={shown} rowKey={(m) => m.userId} {empty} /></div>
   {#if rows.length > PAGE}
-    <LoadMore shown={shown.length} total={rows.length} label="Show {Math.min(PAGE, rows.length - shown.length)} more" onmore={() => { limit += PAGE; }} />
+    <LoadMore shown={shown.length} total={rows.length} label="Show {Math.min(PAGE, rows.length - shown.length)} more" onmore={() => { limit += PAGE; }} focusTarget={(i) => rowFocus(rowsEl, i)} />
   {/if}
 </CrewLoad>
 

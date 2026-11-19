@@ -23,6 +23,7 @@
   import { LIST_PAGE, ListUi } from './list-ui.svelte';
   import RowMoveMenu from './RowMoveMenu.svelte';
   import type { ListRow, ListSortKey, ListTone, ListViewProps } from './types';
+  import { rowFocus } from '$lib/focus-row';
 
   let p: ListViewProps = $props();
   const ui = untrack(() => p.ui) ?? new ListUi();
@@ -140,7 +141,7 @@
       onsort={(k) => p.onSort(k as ListSortKey)} keys={keysText(LIST_KEYS)} {empty} />
   </div>
   {#if total > shown}
-    <LoadMore {shown} {total} label="Show {Math.min(LIST_PAGE, total - shown)} more" onmore={() => { ui.limit += LIST_PAGE; }} />
+    <LoadMore {shown} {total} label="Show {Math.min(LIST_PAGE, total - shown)} more" onmore={() => { ui.limit += LIST_PAGE; }} focusTarget={(i) => rowFocus(root, i)} />
   {/if}
   <p class="lv-foot">{#if total > 0}{listFoot(p.sort, p.emptyStages)} {/if}<KeysLine keys={LIST_KEYS} /></p>
 </div>

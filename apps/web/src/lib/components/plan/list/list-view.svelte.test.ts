@@ -186,6 +186,9 @@ describe('ListView', () => {
     await fireEvent.click(screen.getByRole('button', { name: /^Show 6 more/ }));
     expect(rowCount()).toBe(36);
     expect(screen.queryByRole('button', { name: /^Show \d+ more/ })).toBeNull();
+    // The button is gone; focus is on the first new row, not lost to the page (M6).
+    await tick();
+    expect(document.querySelectorAll('tr[data-row]')[30]?.contains(document.activeElement)).toBe(true);
   });
 
   it('a regroup, a new sort or new filters start again at the first page', async () => {
