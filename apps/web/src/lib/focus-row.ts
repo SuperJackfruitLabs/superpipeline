@@ -18,3 +18,12 @@ export function rowFocus(root: ParentNode | null | undefined, index: number, sel
   if (!row.hasAttribute('tabindex')) row.tabIndex = -1;
   return row;
 }
+
+/**
+ * The first element matching `selector` that is not on its way out. A card that moves lane fades out of
+ * its old one (Lane's `out:fade`), and Svelte makes an outroing element inert while it fades, so the old
+ * tile and the new one both match `[data-card-id]` for a moment; focus belongs on the new one.
+ */
+export function liveMatch(selector: string, root: ParentNode = document): HTMLElement | null {
+  return [...root.querySelectorAll<HTMLElement>(selector)].find((el) => !el.closest('[inert]')) ?? null;
+}

@@ -14,6 +14,7 @@
   import Icon from '$lib/components/parts/Icon.svelte';
   import { dirLabel, initialPick, moveNowLead, moveThen, ownerFace, primaryLabel, stageCountText } from './move-model';
   import { ownerLine } from './who-picks-up';
+  import { liveMatch } from '$lib/focus-row';
   import './css/mv.css';
 
   let pick = $state<string | undefined>(undefined);
@@ -56,15 +57,25 @@
     const id = card.id;
     close();
     // The control that opened this moved with its card (a new column, a new group): if focus could not
-    // go back to it, it goes to the card where it is now, else to the page heading.
-    setTimeout(() => {
+    // go back to it, it goes to the card where it is now, else to the page heading. With motion on, the
+    // dialog hands focus back only after its own exit, and the old tile fades out inert (Lane's out:fade):
+    // focus that lands there, or on the page when the old tile goes, is put on the live tile. Watched for
+    // a frame at a time until the old tile is gone and the dialog with it.
+    const sel = `[data-card-id="${CSS.escape(id)}"]`;
+    const until = performance.now() + 1500;
+    const settle = (): void => {
       const here = document.activeElement;
-      if (here && here !== document.body && here.isConnected) return;
-      const tile = document.querySelector<HTMLElement>(`[data-card-id="${id}"]`);
-      const target = tile?.querySelector<HTMLElement>('button, a[href], [tabindex]:not([tabindex="-1"])') ?? document.querySelector<HTMLElement>('h1');
-      if (target && !target.matches('button, a[href], [tabindex]')) target.tabIndex = -1;
-      target?.focus();
-    }, 50);
+      const lost = !here || here === document.body || !here.isConnected || !!here.closest('[inert]');
+      if (lost) {
+        const tile = liveMatch(sel);
+        const target = tile?.querySelector<HTMLElement>('button, a[href], [tabindex]:not([tabindex="-1"])') ?? document.querySelector<HTMLElement>('h1');
+        if (target && !target.matches('button, a[href], [tabindex]')) target.tabIndex = -1;
+        target?.focus();
+      }
+      const leaving = [...document.querySelectorAll(sel)].some((t) => t.closest('[inert]')) || document.querySelector('[role="dialog"]') !== null;
+      if (leaving && performance.now() < until) requestAnimationFrame(settle);
+    };
+    setTimeout(settle, 50);
   }
 </script>
 

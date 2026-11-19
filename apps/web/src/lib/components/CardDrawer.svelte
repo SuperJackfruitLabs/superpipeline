@@ -13,6 +13,7 @@
   import CardPhoneSheet from '$lib/components/card/phone/CardPhoneSheet.svelte';
   import CardView from '$lib/components/card/CardView.svelte';
   import { CardModel } from '$lib/components/card/card-model.svelte';
+  import { liveMatch } from '$lib/focus-row';
 
   /** The card's board, from where the drawer is mounted (the route, or the Inbox item); never the remembered board. */
   let { boardId }: { boardId: string | null } = $props();
@@ -34,7 +35,8 @@
     const id = openerCardId;
     openerCardId = null;
     if (!id || typeof document === 'undefined') return;
-    queueMicrotask(() => document.querySelector<HTMLElement>(`[data-card-open="${CSS.escape(id)}"]`)?.focus());
+    // The live tile: one that is fading out of its old lane (inert while it fades) also matches.
+    queueMicrotask(() => liveMatch(`[data-card-open="${CSS.escape(id)}"]`)?.focus());
   });
 
   /** On screen: checkVisibility also leaves out what a closed <details> holds (Chromium hides it with content-visibility, so it keeps a box). */

@@ -45,6 +45,7 @@ import {
 } from '$lib/api';
 import { flushSync, tick } from 'svelte';
 import { optimistic } from '@superjackfruitlabs/vibekit-ui/motion';
+import { liveMatch } from '$lib/focus-row';
 import { auth } from '$lib/auth-recovery.svelte';
 import { itemsFromBoard, type AttentionItem } from '$lib/components/attention/attention';
 import { noFilters, passesArchivedFilter, passesProjectFilter } from './card-filters';
@@ -822,7 +823,7 @@ class AppStore {
       items: () => (dom ? [...document.querySelectorAll('[data-card-slot]')] : []),
       apply: () => set(toStageKey),
       revert: () => set(from),
-      subject: () => (dom ? document.querySelector<HTMLElement>(`[data-card-id="${CSS.escape(cardId)}"]`) : null),
+      subject: () => (dom ? liveMatch(`[data-card-id="${CSS.escape(cardId)}"]`) : null),
       commit: async () => {
         const res = await moveCard(boardId, cardId, toStageKey).catch((e: unknown) => { refusal = e instanceof Error ? e.message : String(e); throw e; });
         if (!res.ok) {
