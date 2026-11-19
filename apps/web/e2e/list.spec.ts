@@ -39,7 +39,7 @@ for (const vibe of ['daylight', 'paper', 'studio', 'quiet'] as const) {
     await expect(top.getByRole('combobox', { name: /Group by/ })).toHaveValue('stage');
     await expect(top.getByRole('combobox', { name: /Sort by/ })).toBeVisible();
     await expect(top.getByRole('navigation', { name: 'View' }).getByRole('link', { name: 'List' })).toBeVisible();
-    await expect(page.getByLabel('Keyboard')).toContainText('J / K rows');
+    await expect(page.getByLabel('Keyboard', { exact: true })).toContainText('J / K rows');
 
     const rows = page.locator('tr[data-row]');
     await expect(rows.first()).toBeVisible();

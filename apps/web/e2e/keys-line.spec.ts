@@ -16,7 +16,7 @@ for (const vibe of ['daylight', 'paper', 'studio', 'quiet'] as const) {
     await page.setViewportSize({ width: 1280, height: 800 });
     for (const url of PAGES(id)) {
       await page.goto(url);
-      const keys = page.getByLabel('Keyboard');
+      const keys = page.getByLabel('Keyboard', { exact: true });
       await expect(keys, url).toBeVisible();
       expect((await keys.textContent())?.trim(), url).toMatch(/ (search|filter|rows)\b/);
     }
@@ -30,7 +30,7 @@ test('the keys line is absent on a phone', async ({ page, request }) => {
   await page.setViewportSize({ width: 390, height: 800 });
   for (const url of PAGES(id)) {
     await page.goto(url);
-    await expect(page.getByLabel('Keyboard'), url).toBeHidden();
+    await expect(page.getByLabel('Keyboard', { exact: true }), url).toBeHidden();
   }
 });
 
@@ -38,7 +38,7 @@ test('an empty board ends with its keys too', async ({ page, request }) => {
   const id = await seedBoard(request, 'Keys empty', STAGES);
   await page.setViewportSize({ width: 1280, height: 800 });
   await page.goto(`/b/${id}`);
-  await expect(page.getByLabel('Keyboard')).toContainText('N new card');
+  await expect(page.getByLabel('Keyboard', { exact: true })).toContainText('N new card');
 });
 
 test('the Inbox footer names its keys, and they work: J / K pick a row, R resumes it, O opens it, F filters', async ({ page, request }) => {
@@ -56,7 +56,7 @@ test('the Inbox footer names its keys, and they work: J / K pick a row, R resume
   }
   await page.setViewportSize({ width: 1280, height: 800 });
   await page.goto('/inbox');
-  const keys = page.locator('.ib-foot').getByLabel('Keyboard');
+  const keys = page.locator('.ib-foot').getByLabel('Keyboard', { exact: true });
   await expect(keys).toHaveText('J / K rows · O open · M move · R resume · F filter · ⌘K search · G I / P / C go to Inbox, Plan, Crew');
   await page.getByRole('radiogroup', { name: 'Show' }).locator(`[role="radio"][data-key="${id}"]`).click();
   const a = page.locator('.ib-needs .ib-row').filter({ hasText: `Keys walk A ${at}` });
