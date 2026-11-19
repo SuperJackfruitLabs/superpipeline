@@ -59,8 +59,12 @@ for (const vibe of ['daylight', 'studio', 'paper', 'quiet']) {
         await expect(page.locator('html')).toHaveAttribute('data-vibe', vibe);
         // A cold dev server can fail the first page's dynamic import ("Failed to fetch dynamically
         // imported module"); that page never recovers, so reload it once rather than flake.
+        const drawn = page.getByText(/^Long lane card \d+$/).first();
+        if (!(await drawn.waitFor({ state: 'attached', timeout: 15_000 }).then(() => true, () => false))) await page.reload();
+        await expect(drawn).toBeAttached();
+        // The lane folds after five cards (rule 7): unfold it until the last one is drawn, so the page is long.
         const last = page.getByText(`Long lane card ${CARDS}`, { exact: true }).first();
-        if (!(await last.waitFor({ state: 'attached', timeout: 15_000 }).then(() => true, () => false))) await page.reload();
+        for (let i = 0; i < CARDS && (await last.count()) === 0; i++) await page.getByRole('button', { name: /^Show \d+ more/ }).first().click();
         await expect(last).toBeAttached();
 
         const top = await measure(page);
