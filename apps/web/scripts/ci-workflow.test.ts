@@ -95,6 +95,8 @@ describe('ci.yml', () => {
     expect(browser.strategy?.['fail-fast']).toBe(false);
     const run = browser.steps.find((s) => s.run?.includes('--shard='));
     expect(run?.run).toContain('--workers=1');
+    // Balanced by test count over whole files (scripts/e2e-shard.mjs), never Playwright's contiguous slices.
+    expect(run?.run).toContain('e2e:shard --');
     expect(run?.env?.SP_E2E_PROJECT).toBe('${{ matrix.project }}');
     expect(run?.env?.SP_E2E_SHARD).toBe('${{ matrix.shard }}/${{ matrix.total }}');
     const merge = wf.jobs.e2e!.steps.find((s) => s.run?.includes('--merge'));

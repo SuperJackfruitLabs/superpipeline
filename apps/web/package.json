@@ -10,6 +10,7 @@
     "typecheck": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
     "test": "vitest run",
     "e2e": "node scripts/e2e-run.mjs",
+    "e2e:shard": "node scripts/e2e-shard.mjs",
     "visual:local": "bash scripts/visual/base-vs-head.sh HEAD~1",
     "visual:self": "VISUAL_SELF=1 bash scripts/visual/base-vs-head.sh",
     "e2e:dev": "SP_E2E_SERVER=dev playwright test"

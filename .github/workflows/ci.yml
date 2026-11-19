@@ -274,7 +274,9 @@ jobs:
           name: app-${{ github.sha }}
           path: .ci-download
       - run: mkdir -p .ci && tar -xzf .ci-download/app.tgz -C .ci && pnpm ci:verify-app
-      - run: pnpm --filter @superpipeline/web e2e -- --project=${{ matrix.project }} --shard=${{ matrix.shard }}/${{ matrix.total }} --workers=1
+      # Shards are balanced by test count over whole spec files (apps/web/scripts/e2e-shard.mjs), not Playwright's
+      # contiguous --shard slices, which left a shard empty when one file outgrew a slice.
+      - run: pnpm --filter @superpipeline/web e2e:shard -- --project=${{ matrix.project }} --shard=${{ matrix.shard }}/${{ matrix.total }} --workers=1
         env:
           SP_E2E_PREBUILT: '1'
           SP_E2E_PROJECT: ${{ matrix.project }}
