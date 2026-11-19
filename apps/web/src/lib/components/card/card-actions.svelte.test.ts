@@ -124,6 +124,30 @@ describe('references', () => {
   });
 });
 
+describe('references, busy', () => {
+  it('a double click on Add attaches the link once (B12)', async () => {
+    liveBoard();
+    fakeApi.addReference.mockClear();
+    let answer!: (r: Response) => void;
+    fakeApi.addReference.mockImplementationOnce(() => new Promise<Response>((r) => (answer = r)));
+    const { model, dispose } = await loaded();
+    render(CardView, props(model));
+    const row = need('[data-section="references"]', facts());
+    await fireEvent.click(within(row).getByRole('button', { name: 'Attach a link' }));
+    await tick();
+    await fireEvent.input(within(row).getByLabelText('Attach a link or Superlibrary item'), { target: { value: 'https://example.com/trace' } });
+    const add = within(row).getByRole('button', { name: 'Add' });
+    await fireEvent.click(add);
+    await fireEvent.click(add);
+    expect(fakeApi.addReference).toHaveBeenCalledTimes(1);
+    expect(add.getAttribute('aria-disabled')).toBe('true');
+    answer(new Response('{}', { status: 201 }));
+    await vi.waitFor(() => expect(add.getAttribute('aria-disabled')).toBeNull());
+    expect(fakeApi.addReference).toHaveBeenCalledTimes(1);
+    dispose();
+  });
+});
+
 describe('a way back from a panel', () => {
   it('Cancel returns to the sentence and focuses the verb that opened the panel', async () => {
     const { model, dispose } = await loaded();

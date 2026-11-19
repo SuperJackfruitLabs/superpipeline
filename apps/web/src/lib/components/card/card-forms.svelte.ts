@@ -281,6 +281,8 @@ export class SubtaskComposer {
 
 export class ReferenceComposer {
   url = $state('');
+  /** An add in flight: a second press (a double click) attaches nothing more, as the sub-task composer. */
+  adding = $state(false);
   #m: CardFormHost;
   constructor(m: CardFormHost) {
     this.#m = m;
@@ -290,13 +292,18 @@ export class ReferenceComposer {
   }
   async add(): Promise<void> {
     const { boardId, cardId } = this.#m;
-    if (!boardId || !cardId || this.url.trim() === '') return;
-    const res = await addReference(boardId, cardId, { url: this.url.trim() });
-    if (res.ok) {
-      this.url = '';
-      await app.refresh();
-    } else {
-      this.#m.localError = `Couldn't add that link (${res.status})`;
+    if (!boardId || !cardId || this.url.trim() === '' || this.adding) return;
+    this.adding = true;
+    try {
+      const res = await addReference(boardId, cardId, { url: this.url.trim() });
+      if (res.ok) {
+        this.url = '';
+        await app.refresh();
+      } else {
+        this.#m.localError = `Couldn't add that link (${res.status})`;
+      }
+    } finally {
+      this.adding = false;
     }
   }
 }

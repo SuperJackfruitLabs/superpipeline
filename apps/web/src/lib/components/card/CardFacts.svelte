@@ -115,11 +115,12 @@
           </ul>
         {:else}none{/if}
         {#if adding === 'reference'}
-          <form class="cv-form" data-composer="reference" onsubmit={(e) => { e.preventDefault(); void m.refsForm.add(); }}>
+          <form class="cv-form" data-composer="reference" onsubmit={(e) => { e.preventDefault(); if (!m.refsForm.adding) void m.refsForm.add(); }}>
             <Field id="cv-reference-{card.id}" type="url" label={REFERENCE_LABEL} placeholder="Paste a link to attach" bind:value={m.refsForm.url} />
             <div class="cv-row">
-              <Button type="submit" variant="secondary">Add</Button>
+              <Button type="submit" variant="secondary" aria-disabled={m.refsForm.adding ? 'true' : undefined} data-busy={m.refsForm.adding ? 'true' : undefined}>Add</Button>
               <Button variant="quiet" onclick={() => close('reference')}>Cancel</Button>
+              <span class="vk-visually-hidden" role="status">{m.refsForm.adding ? 'Adding…' : ''}</span>
             </div>
           </form>
         {:else}{' '}<Button variant="quiet" data-opens="reference" onclick={() => open('reference')}>{REFERENCE_ACTION}</Button>{/if}
