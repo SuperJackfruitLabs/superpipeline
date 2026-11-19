@@ -67,15 +67,15 @@ afterEach(() => { app.closeScopeSockets(); app.dispose(); liveUpdates.resume(); 
 describe('the app’s live feeds', () => {
   it('opens one socket per board in scope and closes the ones that leave', () => {
     const seen: Array<[string, BoardFeedEvent | null]> = [];
-    const off = app.onScopeEvent((boardId, event) => seen.push([boardId, event]));
+    const off = app.onScopeEvent((boardId, event) => seen.push([boardId, event]), () => true);
     // The open board is not in the list: its own feed already carries it.
     app.openScopeSockets(['brd_open', 'brd_a', 'brd_b']);
     expect(h.sockets.map((s) => s.boardId)).toEqual(['brd_a', 'brd_b']);
     // The same scope again opens nothing new.
     app.openScopeSockets(['brd_b', 'brd_a', 'brd_open']);
     expect(h.sockets).toHaveLength(2);
-    // A fresh feed's opening snapshot says nothing (the board was just read); each event names its board.
-    open('brd_a')[0].emit(null);
+    // A fresh feed's opening snapshot of a board the listener holds says nothing; each event names its board.
+    open('brd_a')[0].emit(null, BOARD('brd_a'));
     open('brd_a')[0].emit(EVENT);
     open('brd_b')[0].emit(EVENT);
     expect(seen).toEqual([['brd_a', EVENT], ['brd_b', EVENT]]);
@@ -145,11 +145,11 @@ describe('the app’s live feeds', () => {
   });
   it('after a lapsed session is renewed, each scope board is read again once', async () => {
     const reads: string[] = [];
-    const off = app.onScopeEvent((id) => reads.push(id));
+    const off = app.onScopeEvent((id) => reads.push(id), () => true);
     app.watchAuth();
     await app.openBoard('brd_open');
     app.openScopeSockets(['brd_a', 'brd_b']);
-    for (const id of ['brd_a', 'brd_b']) open(id)[0].emit(null); // fresh feeds: their snapshots are skipped
+    for (const id of ['brd_a', 'brd_b']) open(id)[0].emit(null, BOARD(id)); // fresh feeds: snapshots of held boards are skipped
     expect(reads).toEqual([]);
     h.renew = [{ ok: false, reason: 'login_required' }];
     await auth.recover();
@@ -186,10 +186,10 @@ describe('the app’s live feeds', () => {
       await vi.waitFor(() => expect(api.getBoard).toHaveBeenCalledWith('brd_open'));
       // A scope feed: the same rule.
       const seen: Array<BoardFeedEvent | null> = [];
-      const off = app.onScopeEvent((_id, e) => seen.push(e));
+      const off = app.onScopeEvent((_id, e) => seen.push(e), () => true);
       app.openScopeSockets(['brd_a']);
       const a = open('brd_a')[0];
-      a.emit(null);
+      a.emit(null, BOARD('brd_a'));
       expect(seen).toEqual([]);
       drop(a);
       await vi.advanceTimersByTimeAsync(2_000);
@@ -222,6 +222,27 @@ describe('the app’s live feeds', () => {
     liveUpdates.pause();
     open('brd_other')[0].emit(null);
     expect(liveUpdates.queued.map((q) => q.key)).toEqual(['app:board:brd_other']);
+  });
+  it('a scope feed hands its opening snapshot on unless every listener holds that board', () => {
+    const seen: Array<[string, BoardFeedEvent | null]> = [];
+    const judged: Array<[string, string | null]> = [];
+    const off = app.onScopeEvent((id, e) => seen.push([id, e]), (id, snap) => { judged.push([id, snap.name]); return snap.name === id; });
+    app.openScopeSockets(['brd_a', 'brd_b', 'brd_c']);
+    open('brd_a')[0].emit(null, BOARD('brd_a'));
+    // A change made between the Inbox's read and the feed's start: the listener does not hold it.
+    open('brd_b')[0].emit(null, { ...BOARD('brd_b'), name: 'Renamed' });
+    // A first message that cannot be read is never skipped.
+    open('brd_c')[0].emit(null);
+    expect(judged).toEqual([['brd_a', 'brd_a'], ['brd_b', 'Renamed']]);
+    expect(seen).toEqual([['brd_b', null], ['brd_c', null]]);
+    off();
+    // With no listener to judge, an opening snapshot is handed on.
+    const heard: string[] = [];
+    const off2 = app.onScopeEvent((id) => heard.push(id));
+    app.openScopeSockets(['brd_d']);
+    open('brd_d')[0].emit(null, BOARD('brd_d'));
+    expect(heard).toEqual(['brd_d']);
+    off2();
   });
   it('a scope feed that opened again starts its backoff over', () => {
     vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });

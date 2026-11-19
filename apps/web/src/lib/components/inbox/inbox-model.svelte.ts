@@ -145,6 +145,8 @@ export class InboxStore implements OperateModel {
   readonly #idsKey = $derived([...this.boardIds].sort().join(','));
   /** Boards read (or being read) this visit; after an action only that board is read again. */
   #asked = new Set<string>();
+  /** Opening snapshots that arrived while the board's first read was out, judged when it lands. */
+  #opening: Record<string, BoardSnapshot> = {};
 
   constructor() {
     this.#gate = pending(() => this.pendingNow);
@@ -159,9 +161,22 @@ export class InboxStore implements OperateModel {
     // One feed per board in scope (the open board's is the app's own); all close when the Inbox goes.
     $effect(() => { app.openScopeSockets(this.boardIds); });
     $effect(() => {
-      const off = app.onScopeEvent((id, event) => this.onBoardEvent(id, event));
+      const off = app.onScopeEvent((id, event) => this.onBoardEvent(id, event), (id, snapshot) => this.holdsOpening(id, snapshot));
       return () => { off(); app.closeScopeSockets(); };
     });
+  }
+
+  /**
+   * Whether a board's opening snapshot (its feed just began) is the board this page shows or will
+   * show. A board not asked for yet is left to its first read. One read but not answered yet is judged
+   * when the read lands (`#loadBoard`): the read may have started before a change the snapshot holds.
+   */
+  holdsOpening(boardId: string, snapshot: BoardSnapshot): boolean {
+    if (!this.#asked.has(boardId)) return true;
+    const held = this.#snaps[boardId];
+    if (held) return JSON.stringify(held) === JSON.stringify(snapshot);
+    this.#opening[boardId] = snapshot;
+    return true;
   }
 
   /**
@@ -255,6 +270,11 @@ export class InboxStore implements OperateModel {
     // waiting behind the Live toggle for this board: that one must not replay on Apply and undo it.
     liveUpdates.drop(key);
     this.#applyBoard(id, result);
+    // The board's feed began while this read was out: if it began on a board this read does not show,
+    // something changed in between, and it is read again (through the Live toggle, as any change).
+    const opening = this.#opening[id];
+    delete this.#opening[id];
+    if (opening && snap.status === 'fulfilled' && JSON.stringify(this.#snaps[id]) !== JSON.stringify(opening)) this.onBoardEvent(id, null);
   }
   /**
    * Set one board's read. Cards that did not change keep the object they had, so a keyed row keeps

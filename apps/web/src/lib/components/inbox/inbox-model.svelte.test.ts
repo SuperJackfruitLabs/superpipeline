@@ -15,8 +15,8 @@ const api = vi.hoisted(() => ({
   getBoard: vi.fn(), getNotifications: vi.fn(), getUsage: vi.fn(), setBudget: vi.fn(),
   moveCard: vi.fn<() => Promise<Response>>(),
   // Each board in scope gets a feed; these record which and hand the test their message handler.
-  sockets: [] as Array<{ boardId: string; closed: boolean; emit: (e: unknown) => void }>,
-  openBoardSocket: vi.fn<(boardId: string, onEvent: (e: unknown) => void) => unknown>(),
+  sockets: [] as Array<{ boardId: string; closed: boolean; emit: (e: unknown, snapshot?: unknown) => void }>,
+  openBoardSocket: vi.fn<(boardId: string, onEvent: (e: unknown, snapshot?: unknown) => void) => unknown>(),
   // The reads `app.openBoard` makes, answered from what the test set on the app.
   getBoards: vi.fn<() => Promise<unknown>>(), listAttention: vi.fn<() => Promise<unknown>>(), listLabels: vi.fn<() => Promise<unknown[]>>(),
   getAgents: vi.fn<() => Promise<unknown>>(), getMembers: vi.fn<() => Promise<unknown[]>>(), listProjects: vi.fn<() => Promise<unknown[]>>(),
@@ -171,6 +171,54 @@ describe('the Inbox model', () => {
     stop?.();
     stop = null;
     expect(api.sockets.every((s) => s.closed)).toBe(true);
+  });
+  it('a change made between the Inbox’s read of a board and its feed’s start is not lost; paused, it waits for Apply', async () => {
+    const m = make();
+    await settle();
+    const feed = api.sockets.find((s) => s.boardId === OTHER && !s.closed);
+    const added = { ...OTHER_BOARD.cards[0], id: 'card_other_gap', title: 'Made while the Inbox opened' };
+    const changed: BoardSnapshot = { ...OTHER_BOARD, cards: [...OTHER_BOARD.cards, added] };
+    api.getBoard.mockImplementation(async (id: string) => (id === OTHER ? changed : DX_BOARD));
+    api.getBoard.mockClear();
+    liveUpdates.pause();
+    // The feed begins on a board the Inbox's read does not show: the card was created in between.
+    feed?.emit(null, changed);
+    await settle();
+    expect(api.getBoard).toHaveBeenCalledWith(OTHER);
+    expect(liveUpdates.queued.map((q) => q.key)).toEqual([`inbox:board:${OTHER}`]);
+    expect(m.needs.some((r) => r.card.id === added.id)).toBe(false);
+    liveUpdates.apply();
+    flushSync();
+    expect(m.needs.some((r) => r.card.id === added.id)).toBe(true);
+  });
+  it('an opening snapshot of the board the Inbox shows reads nothing', async () => {
+    make();
+    await settle();
+    api.getBoard.mockClear();
+    api.sockets.find((s) => s.boardId === OTHER && !s.closed)?.emit(null, OTHER_BOARD);
+    await settle();
+    expect(api.getBoard).not.toHaveBeenCalled();
+    expect(liveUpdates.queued).toEqual([]);
+  });
+  it('a feed that begins while the board’s first read is out is judged when the read lands', async () => {
+    let release!: () => void;
+    const held = new Promise<void>((r) => (release = r));
+    const added = { ...OTHER_BOARD.cards[0], id: 'card_other_gap', title: 'Made while the Inbox opened' };
+    const changed: BoardSnapshot = { ...OTHER_BOARD, cards: [...OTHER_BOARD.cards, added] };
+    // The first read started before the card was made, and answers after the feed began.
+    let first = true;
+    api.getBoard.mockImplementation(async (id: string) => {
+      if (id !== OTHER) return DX_BOARD;
+      if (first) { first = false; await held; return OTHER_BOARD; }
+      return changed;
+    });
+    const m = make();
+    await settle();
+    api.sockets.find((s) => s.boardId === OTHER && !s.closed)?.emit(null, changed);
+    await settle();
+    release();
+    await settle();
+    await vi.waitFor(() => expect(m.needs.some((r) => r.card.id === added.id)).toBe(true));
   });
   it('a scope board’s event is read again and applied as a diff; paused, it waits for Apply', async () => {
     const m = make();

@@ -634,11 +634,20 @@ class AppStore {
   /** The scope last asked for, so a renewed session can open it again. */
   #scopeWanted: string[] = [];
   #scopeListeners = new Set<(boardId: string, event: BoardFeedEvent | null) => void>();
+  #scopeHolds = new Set<(boardId: string, snapshot: BoardSnapshot) => boolean>();
 
-  /** Who hears the scope boards' events (the Inbox). Returns its own unsubscribe. */
-  onScopeEvent(fn: (boardId: string, event: BoardFeedEvent | null) => void): () => void {
+  /**
+   * Who hears the scope boards' events (the Inbox). Returns its own unsubscribe. `holds` says whether a
+   * fresh feed's opening snapshot is the board the listener already shows (or will read): the store
+   * holds none of these boards, so only the listener can tell whether a change was made in between.
+   */
+  onScopeEvent(fn: (boardId: string, event: BoardFeedEvent | null) => void, holds?: (boardId: string, snapshot: BoardSnapshot) => boolean): () => void {
     this.#scopeListeners.add(fn);
-    return () => this.#scopeListeners.delete(fn);
+    if (holds) this.#scopeHolds.add(holds);
+    return () => {
+      this.#scopeListeners.delete(fn);
+      if (holds) this.#scopeHolds.delete(holds);
+    };
   }
 
   /**
@@ -673,12 +682,15 @@ class AppStore {
    * read again after every action); the open board keeps its watchdog.
    */
   #openScope(boardId: string, reconnect: boolean): void {
-    // The first message on a fresh feed is its opening snapshot: the board was just read, so it is
-    // skipped. After a reconnect it is the read that catches up on what happened while down.
+    // The first message on a fresh feed is its opening snapshot: the board as the feed began. It is
+    // skipped only when every listener holds that board already; a change made between the Inbox's
+    // read and the feed's start reaches it through this snapshot alone (as on the open board's feed).
+    // After a reconnect it is the read that catches up on what happened while down.
     let opening = !reconnect;
-    const sock = openBoardSocket(boardId, (event) => {
+    const sock = openBoardSocket(boardId, (event, snapshot) => {
       if (this.#scopeSockets.get(boardId) !== sock) return;
-      const skip = opening && event === null;
+      const holds = [...this.#scopeHolds];
+      const skip = opening && event === null && snapshot !== undefined && holds.length > 0 && holds.every((h) => h(boardId, snapshot));
       opening = false;
       if (skip) return;
       for (const fn of this.#scopeListeners) fn(boardId, event);

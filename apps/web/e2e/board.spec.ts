@@ -1,5 +1,6 @@
 import { test, expect } from '@playwright/test';
-import { openRememberedBoard } from './support/seed';
+import { REVIEW_PIPELINE, openRememberedBoard, seedBoard, seedGatedCard } from './support/seed';
+import { waitForAppReady } from './support/readiness';
 
 // Composing is a sheet now, opened by the header's one primary action. The old inline field plus
 // a 15x16px `+` popover put priority, due date and description behind a control below the WCAG
@@ -79,4 +80,22 @@ test('streams a new card to a second client in real time', async ({ browser }) =
   await a.getByRole('button', { name: 'Dispatch' }).click();
 
   await expect(b.getByText('Realtime card')).toBeVisible({ timeout: 10_000 });
+});
+
+test('streams a card another client made to the Inbox in real time', async ({ browser, request }) => {
+  // A board in the Inbox's scope with one card at its review gate (Show lists boards that need you);
+  // a second card reaches the gate after the Inbox opened.
+  const other = await seedBoard(request, 'E2E inbox stream', REVIEW_PIPELINE);
+  await seedGatedCard(request, other, `Inbox first ${Date.now()}`);
+  const b = await browser.newPage();
+  await b.addInitScript(([key, id]) => window.localStorage.setItem(key, id), [BOARD_KEY, boardId]);
+  await b.goto('/inbox');
+  await waitForAppReady(b);
+  // Shown alone under Show (a long-lived dev database holds hundreds of rows on All boards).
+  const show = b.getByRole('radiogroup', { name: 'Show' }).locator(`[role="radio"][data-key="${other}"]`);
+  await show.click();
+  await expect(show).toHaveAttribute('aria-checked', 'true');
+  const title = `Inbox realtime ${Date.now()}`;
+  await seedGatedCard(request, other, title);
+  await expect(b.getByText(title).first()).toBeVisible({ timeout: 10_000 });
 });
