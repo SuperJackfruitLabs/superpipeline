@@ -393,6 +393,17 @@ Repo `/Users/rakeshgangwar/SuperJackfruit/superpipeline`, branch `design/composi
 
 - [ ] **Step 1–4** as above; final step asserts `grep -rn "LAYOUTS\[" src` → none and `src/lib/layouts.ts` is deleted; commit `feat(plan,operate): list, projects, spend and log follow the contract; layouts.ts retired`.
 
+### Task B15b: The keys line in every page's footer (rule 13)
+
+**Files:**
+- Create: `src/lib/components/shell/KeysLine.svelte` (`{ keys: readonly { key: string; does: string }[] }` → `<span class="sh-keys" aria-label="Keyboard">J/K rows · ↵ open · M move · F filter</span>`, meta text, same DOM in every vibe); `src/lib/keys.ts` (`export const BOARD_KEYS`, `LIST_KEYS`, `INBOX_KEYS`, `CARD_KEYS` as `{ key, does }[]`, the one source the hint text and the key handlers' docs share)
+- Modify: every view's footer line (`BoardView.svelte` `.bv-foot`, `ListView`, `InboxPage` footer, `CrewView`, `SettingsView`, `SpendView`, `BoardLogView`, `ProjectsView`) renders `<KeysLine>` after the counts; `plan/list/list-words.ts` `LIST_KEYS` moves to `keys.ts`; `shell.css` (`.sh-keys` meta, hidden under `PHONE_QUERY`)
+- Test: `shell/keys-line.svelte.test.ts` (renders the words, `aria-label="Keyboard"`, same text in four vibes via `renderInVibes`), `e2e/composition.spec.ts` gains `'every page's footer ends with its keys'` (desk) and `'the keys line is absent on a phone'`
+
+- [ ] **Step 1: Tests** FAIL first. **Step 2: Implement.** The keys live in `keys.ts` only; a handler's doc comment points at its entry. **Step 3: Run** unit + e2e `composition`, `nav`, `phone-fit` → PASS. **Step 4: Commit** `feat(shell): every page's footer names its keys (rule 13)` with `Visual-Change: composition contract, footer keys`.
+
+Ruling 2026-11-19: added for the Console vibe (operator chose option a: contract-wide, every vibe); runs after B9 and B12 land so every footer exists.
+
 ## Phase 6: guards
 
 ### Task B16: Composition guards wired per page, proven by breaking them

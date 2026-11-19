@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Console: the fifth vibe</title>
+<link rel="stylesheet" href="./vk/vibekit.bundle.css">
+<link rel="stylesheet" href="./composition.css">
+<link rel="stylesheet" href="./console-vibe.css">
+<style>
+  .wrap > p.note { margin: 0 0 14px; color: #a9a59c; max-width: 90ch; }
+  .grid { grid-template-columns: repeat(auto-fit, minmax(520px, 1fr)); }
+  .themes { display: flex; gap: 6px; margin: 0 0 18px; }
+  .themes button { padding: 6px 12px; border-radius: 8px; background: #1c1c1c; color: #e8e6e1; border: 1px solid #2a2a2a; font: 600 13px/1 ui-sans-serif, system-ui, sans-serif; cursor: pointer; }
+  .themes button[aria-pressed="true"] { background: #e8e6e1; color: #111; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Console: the fifth vibe</h1>
+  <p class="sub">Dense, dark-first, monospace-led, keyboard hints always on screen. For the operator who runs the fleet all day. Same composition as the other vibes (the pages here are the approved mockups, unchanged); Console is tokens, one typeface, hairlines, square corners and a status strip in the signature slot. Studio and Quiet beside it for scale.</p>
+  <div class="themes" role="group" aria-label="Console theme"><button aria-pressed="true" data-theme="dark" onclick="setTheme('dark')">Console · dark</button><button aria-pressed="false" data-theme="light" onclick="setTheme('light')">Console · light</button></div>
+  <nav class="pagetabs" id="pagetabs"></nav>
+  <div class="rules" id="rules"></div>
+  <div id="screens"></div>
+
+  <div class="ask">
+    <h2>Does Console read right?</h2>
+    <div class="options" data-multiselect>
+      <div class="option" data-choice="console-ok" onclick="toggleSelect(this)"><div class="letter">✓</div><div><h3>Build it</h3><p>Tokens, hairlines, square, mono, the status strip: go into vibekit as the fifth vibe.</p></div></div>
+      <div class="option" data-choice="console-denser" onclick="toggleSelect(this)"><div class="letter">1</div><div><h3>Denser still</h3><p>Smaller type, 32px rows, more on one screen.</p></div></div>
+      <div class="option" data-choice="console-warmer" onclick="toggleSelect(this)"><div class="letter">2</div><div><h3>Different accent</h3><p>Say which: amber, green phosphor, or keep the product colour.</p></div></div>
+      <div class="option" data-choice="console-more" onclick="toggleSelect(this)"><div class="letter">?</div><div><h3>Changes</h3><p>Say which page and what.</p></div></div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* Reuse the approved pages verbatim: pull VIBES, the helpers and PAGES out of all-pages-four-vibes.html. */
+const CONSOLE_VIBES = `const VIBES = [
+  { v: 'console', theme: 'dark',  cap: 'Console · dark',  note: 'mono, hairlines, square, status strip, key hints' },
+  { v: 'studio',  theme: 'light', cap: 'Studio · light',  note: 'figure, ink rules, ordinals, mono' },
+  { v: 'quiet',   theme: 'light', cap: 'Quiet · light',   note: 'plain large type, one column, links' },
+];`;
+let consoleTheme = 'dark';
+function setTheme(t) {
+  consoleTheme = t;
+  for (const b of document.querySelectorAll('.themes button')) b.setAttribute('aria-pressed', String(b.dataset.theme === t));
+  for (const p of document.querySelectorAll('.page[data-vibe="console"]')) p.setAttribute('data-theme', t);
+}
+function toggleSelect(el) { el.classList.toggle('selected'); }
+fetch('./all-pages-four-vibes.html').then((r) => r.text()).then((html) => {
+  const start = html.indexOf('const VIBES');
+  const pagesAt = html.indexOf('const PAGES');
+  const end = html.indexOf('\n};', pagesAt) + 3;
+  let src = html.slice(start, end).replace(/const VIBES = \[[\s\S]*?\];/, CONSOLE_VIBES);
+  const { VIBES, PAGES } = new Function(src + '\nreturn { VIBES, PAGES };')();
+  const keys = Object.keys(PAGES);
+  const screens = document.getElementById('screens');
+  const nav = document.getElementById('pagetabs');
+  for (const k of keys) {
+    const a = document.createElement('a'); a.href = '#' + k; a.textContent = PAGES[k].title; a.id = 'tab-' + k; nav.appendChild(a);
+    const s = document.createElement('section'); s.className = 'screen'; s.id = 'screen-' + k; s.hidden = true;
+    s.innerHTML = `<div class="grid">${VIBES.map(({ v, theme, cap, note }) => `<div class="col"><p class="cap"><b>${cap}</b><span>${note}</span></p><div class="page" data-vibe="${v}" data-theme="${v === 'console' ? consoleTheme : theme}" data-motion="reduce" data-time="off" data-phase="noon">${PAGES[k].render(v)}</div></div>`).join('')}</div>`;
+    screens.appendChild(s);
+  }
+  function show() {
+    const k = keys.includes(location.hash.slice(1)) ? location.hash.slice(1) : keys[0];
+    for (const x of keys) { document.getElementById('screen-' + x).hidden = x !== k; const t = document.getElementById('tab-' + x); if (x === k) t.setAttribute('aria-current', 'page'); else t.removeAttribute('aria-current'); }
+    document.getElementById('rules').innerHTML = PAGES[k].rules;
+  }
+  addEventListener('hashchange', show); show();
+});
+</script>
+</body>
+</html>

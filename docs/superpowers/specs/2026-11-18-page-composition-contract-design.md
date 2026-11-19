@@ -65,6 +65,7 @@ Within approach 2 the operator considered keeping distinct arrangements per vibe
 10. **Live updates can be paused.** The Live pill in the masthead is the toggle. Paused, the page holds still, changes queue behind a count, and Apply or resuming plays them in order with the same motion. The choice is per person and remembered. Nothing is lost while paused.
 11. **Real loading and empty states.** A region that waits says what it waits for; after a limit it says what to do. A skeleton is never the resting state.
 12. **Jargon has an anchor.** The first use of a stage, attempt, gate or capability on a page is in a sentence that says what it is.
+13. **The keyboard is within sight.** Every page's footer line ends with the page's own keys (the board's J/K, ↵, M, F; the List's R; the Inbox's), as words from the page's `*-words.ts`, the same in every vibe (muted meta in four; Console's strip). Added 2026-11-19 with the Console vibe (operator decision, option a); on a phone the keys line gives way to the `?` help.
 
 ## 6. Who owns what: contract versus vibe
 
