@@ -265,7 +265,10 @@ export class InboxStore implements OperateModel {
     const [snap, notes, usage] = await Promise.allSettled([getBoard(id), getNotifications(id), getUsage(id, '7d')]);
     const result: BoardRead = { snap, notes, usage };
     const key = `inbox:board:${id}`;
-    if (live) { liveUpdates.push(key, () => this.#applyBoard(id, result)); return; }
+    // The Show row's chips and the rail's badge count from the workspace's attention list, not from
+    // these reads: it is read again with the board, so the two counts never disagree (and, paused,
+    // it waits with the board).
+    if (live) { liveUpdates.push(key, () => { this.#applyBoard(id, result); void app.scheduleAttention(); }); return; }
     // A read applied at once (a first read, or after the person acted) is fresher than any read still
     // waiting behind the Live toggle for this board: that one must not replay on Apply and undo it.
     liveUpdates.drop(key);

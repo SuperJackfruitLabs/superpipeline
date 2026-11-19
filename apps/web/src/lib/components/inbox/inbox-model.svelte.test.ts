@@ -249,6 +249,26 @@ describe('the Inbox model', () => {
     // The unchanged card is the same card it was: its row keeps its identity.
     expect(m.needs.find((r) => r.card.id === keptCard.id)?.card).toBe(kept?.card);
   });
+  it('a scope board’s live change reads the attention again, so the chips and the badge count what the headline counts (I1)', async () => {
+    const m = make();
+    await settle();
+    const feed = api.sockets.find((s) => s.boardId === OTHER && !s.closed);
+    const added = { ...OTHER_BOARD.cards[0], id: 'card_other_more', title: 'One more that needs you' };
+    api.getBoard.mockImplementation(async (id: string) => (id === OTHER ? { ...OTHER_BOARD, cards: [...OTHER_BOARD.cards, added] } : DX_BOARD));
+    const more = [...app.attention, { boardId: OTHER } as StaleCard];
+    api.listAttention.mockImplementation(async () => ({ cards: more, boardsUnanswered: 0 }));
+    api.listAttention.mockClear();
+    liveUpdates.pause();
+    feed?.emit({ seq: 1, type: 'card.created', payload: { cardId: added.id }, ts: '2026-11-18T09:00:00.000Z' });
+    await settle();
+    // Paused, neither count moves.
+    expect(api.listAttention).not.toHaveBeenCalled();
+    expect(m.needs.some((r) => r.card.id === added.id)).toBe(false);
+    liveUpdates.apply();
+    flushSync();
+    expect(m.needs.some((r) => r.card.id === added.id)).toBe(true);
+    await vi.waitFor(() => expect(app.attention).toHaveLength(3), { timeout: 2000 });
+  });
   it('groups the needs by what to do, filters them, and says the headline', async () => {
     const m = make();
     await settle();
