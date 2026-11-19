@@ -12,7 +12,8 @@ import type { ListGroup, ListRow, ListSort } from './types';
 export const NO_MATCH = 'No cards match these filters.';
 
 /** The keyboard line under the table. */
-export const LIST_KEYS = 'J / K to pick a row · ↵ to open it · M to move it · S to sort · G to group';
+/** R regroups: G belongs to the shell's G I / G P / G C chords. */
+export const LIST_KEYS = 'J / K to pick a row · ↵ to open it · M to move it · S to sort · R to regroup';
 
 const WORDS = ['no', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten', 'eleven', 'twelve'];
 const numberWord = (n: number): string => WORDS[n] ?? String(n);

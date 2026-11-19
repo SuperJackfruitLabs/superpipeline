@@ -118,7 +118,7 @@ describe('ListView', () => {
     expect(document.activeElement).toBe(move);
   });
 
-  it('keys: nothing is selected until J; J twice is row 2; ↵ opens, M moves, S and G cycle; a modifier does nothing', async () => {
+  it('keys: nothing is selected until J; J twice is row 2; ↵ opens, M moves, S and R cycle; a modifier does nothing', async () => {
     const p = listProps();
     render(ListView, p);
     expect(selected()).toBeNull();
@@ -135,10 +135,21 @@ describe('ListView', () => {
     expect(p.onOpenMoveDialog).toHaveBeenCalledWith(C4605.id);
     await fireEvent.keyDown(window, { key: 's' });
     expect(p.onSort).toHaveBeenCalledWith('title');
-    await fireEvent.keyDown(window, { key: 'g' });
+    await fireEvent.keyDown(window, { key: 'r' });
     expect(p.onGroupBy).toHaveBeenCalledWith('state');
     await fireEvent.keyDown(window, { key: 'j', ctrlKey: true });
     expect(selected()?.textContent).toContain(C4605.title);
+  });
+
+  it('G alone does nothing here: it starts the shell\'s G I / G P / G C chords', async () => {
+    const p = listProps();
+    render(ListView, p);
+    const g = new KeyboardEvent('keydown', { key: 'g', bubbles: true, cancelable: true });
+    window.dispatchEvent(g);
+    await tick();
+    expect(p.onGroupBy).not.toHaveBeenCalled();
+    expect(g.defaultPrevented).toBe(false);
+    expect(screen.getByText(/S to sort · R to regroup$/)).toBeTruthy();
   });
 
   it('focus in a row selects it, so M moves what has focus', async () => {
@@ -165,6 +176,28 @@ describe('ListView', () => {
     await fireEvent.click(screen.getByRole('button', { name: /^Show 6 more/ }));
     expect(rowCount()).toBe(36);
     expect(screen.queryByRole('button', { name: /^Show \d+ more/ })).toBeNull();
+  });
+
+  it('a regroup, a new sort or new filters start again at the first page', async () => {
+    const base = listProps();
+    const many = base.groups.find((g) => g.label === 'Failing test')?.rows ?? [];
+    const big: ListGroup[] = Array.from({ length: 12 }, (_, i) => ({ key: `g${i}`, label: `Group ${i + 1}`, order: i, owner: null, rows: many.map((r) => ({ ...r, s: { ...r.s, id: `${r.s.id}_${i}` } })) }));
+    const ui = new ListUi();
+    const view = render(ListView, listProps({ groups: big, ui }));
+    await fireEvent.click(screen.getByRole('button', { name: /^Show 6 more/ }));
+    expect(ui.limit).toBe(60);
+    // The same view, redrawn (live data): the page is kept.
+    await view.rerender(listProps({ groups: big, ui }));
+    expect(ui.limit).toBe(60);
+    await view.rerender(listProps({ groups: big, ui, groupBy: 'state' }));
+    expect(ui.limit).toBe(30);
+    expect(rowCount()).toBe(30);
+    ui.limit = 60;
+    await view.rerender(listProps({ groups: big, ui, groupBy: 'state', sort: { key: 'title', ascending: true } }));
+    expect(ui.limit).toBe(30);
+    ui.limit = 60;
+    await view.rerender(listProps({ groups: big, ui, groupBy: 'state', sort: { key: 'title', ascending: true }, filters: { ...base.filters, minPriority: 2 } }));
+    expect(ui.limit).toBe(30);
   });
 
   it('says why the list is empty, once', () => {

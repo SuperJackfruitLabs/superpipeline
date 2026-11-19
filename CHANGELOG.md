@@ -14,6 +14,8 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html). Entries g
 
 ## Unreleased
 
+- The List, Projects, Spend in detail and the full board log are one composition in every vibe. The List shows the same grouped table in Daylight, Paper, Studio and Quiet, with Group by and Sort by beside the Board | List tabs, one Move per row, "Show N more" past 30 cards, and the same keys everywhere: J / K pick a row, Enter opens it, M moves it, S changes the sort and R the grouping (G stays the G I / G P / G C shortcut to Inbox, Plan and Crew). The board log on its own page shows 50 events at a time. Studio users lose the List's quick filter (use Filter), its hero figure and its row-and-total footer, and gain the same grouped table and keys as every other vibe.
+
 - Keep disabled checkpoint integration dormant: ordinary boards create no checkpoint claim tables or triggers, generic claims retain their original behavior, and policy-less claim/run context JSON omits checkpoint markers, including legacy nulls.
 
 - Add separate default-off proposed checkpoint policy administration with strict bounded input, workspace admin checks at the Worker and Board boundaries, and refusal to change an affected stage while work is active. No pilot or deployment is enabled.

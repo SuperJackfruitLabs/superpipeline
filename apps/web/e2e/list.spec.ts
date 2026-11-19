@@ -29,7 +29,7 @@ test('?view=list opens the List, and a row menu moves the card on the server', a
 
 // The composition contract: one List in every vibe, on the realistic workspace's first board.
 for (const vibe of ['daylight', 'paper', 'studio', 'quiet'] as const) {
-  test(`${vibe}: the List is one composition: the pickers in the top row, one Move per row, J and G work`, async ({ page, request }) => {
+  test(`${vibe}: the List is one composition: the pickers in the top row, one Move per row, J and R work`, async ({ page, request }) => {
     const { boardIds } = await seedRealistic(request);
     await useRealistic(page, boardIds[0]);
     await setAppearance(page, `${vibe}.light.${vibe === 'quiet' ? 'off' : 'strong'}.0`);
@@ -49,7 +49,30 @@ for (const vibe of ['daylight', 'paper', 'studio', 'quiet'] as const) {
 
     await page.locator('body').press('j');
     await expect(page.locator('tr[data-row][aria-current="true"]')).toHaveCount(1);
-    await page.locator('body').press('g');
+    await page.locator('body').press('r');
     await expect(top.getByRole('combobox', { name: /Group by/ })).toHaveValue('state');
   });
 }
+
+// G belongs to the shell's G I / G P / G C chords: on the List it never regroups (R does).
+test('on the List, G P goes to Plan and G C to Crew; neither regroups the List', async ({ page, request }) => {
+  const { boardIds } = await seedRealistic(request);
+  await useRealistic(page, boardIds[0]);
+  await setAppearance(page, 'studio.light.strong.0');
+  await page.goto(`/b/${boardIds[0]}?view=list`);
+  const group = page.locator('.bv-top').getByRole('combobox', { name: /Group by/ });
+  await expect(group).toHaveValue('stage');
+
+  await page.locator('body').press('g');
+  await page.locator('body').press('p');
+  await expect(page).toHaveURL(new RegExp(`/b/${boardIds[0]}$`));
+  // Plan · Boards keeps the view the person was on: still the List, still grouped by stage.
+  await expect(group).toHaveValue('stage');
+
+  await page.locator('body').press('r');
+  await expect(group).toHaveValue('state');
+
+  await page.locator('body').press('g');
+  await page.locator('body').press('c');
+  await expect(page).toHaveURL(/\/crew\/agents$/);
+});

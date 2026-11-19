@@ -5,7 +5,8 @@
    * rule 7). The board's top row (Board | List, Filter, what is shown, the attention line) carries
    * the List's two controls, Group by and Sort by, in every vibe; then one vibekit DataTable grouped
    * as chosen, "Show N more", the keyboard line and the footer. Each row has one action, Move.
-   * J / K pick a row, ↵ opens it, M moves it, S cycles the sort, G the grouping. The vibe reaches the
+   * J / K pick a row, ↵ opens it, M moves it, S cycles the sort, R the grouping (G is the shell's
+   * G I / G P / G C chord, so the List leaves it alone). The vibe reaches the
    * table through vibekit's forms; no words differ between vibes.
    */
   import './list.css';
@@ -40,6 +41,9 @@
   const flat = $derived(paged.flatMap((g) => g.rows));
   const shown = $derived(flat.length);
   const sorts = $derived(sortOptions(p.sort));
+
+  // A regroup, a new sort or new filters start at the first page again.
+  $effect.pre(() => { ui.pageFor(JSON.stringify([p.groupBy, p.sort, p.filters])); });
 
   $effect(() => {
     if (ui.selected !== null && !flat.some((r) => r.s.id === ui.selected)) ui.selected = null;
@@ -95,7 +99,7 @@
       case 'Enter': if (!row || (t instanceof Element && t.closest('a, button'))) return; p.onOpen(row.s.id); break;
       case 'm': case 'M': if (!row) return; p.onOpenMoveDialog(row.s.id); break;
       case 's': case 'S': p.onSort(nextInCycle(SORT_CYCLE, p.sort.key)); break;
-      case 'g': case 'G': p.onGroupBy(nextInCycle(GROUP_CYCLE, p.groupBy)); break;
+      case 'r': case 'R': p.onGroupBy(nextInCycle(GROUP_CYCLE, p.groupBy)); break;
       default: return;
     }
     e.preventDefault();

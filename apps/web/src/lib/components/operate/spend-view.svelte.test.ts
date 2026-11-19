@@ -63,7 +63,11 @@ describe('SpendView and BoardLogView in every vibe', () => {
     const day = parityTree(roots.daylight);
     for (const v of VIBES) {
       expect(parityTree(roots[v]), `${v} vibe`).toBe(day);
+      expect(primaryActionsPerRow(roots[v]), `${v}: one primary per row`).toEqual([]);
       expect(rawMachineText(roots[v]), `${v}: no raw ids`).toEqual([]);
+      expect(repeatedParagraphs(roots[v]), `${v}: nothing said twice`).toEqual([]);
+      // The masthead names the board: the log page has no signature slot.
+      expect(roots[v].querySelectorAll('[data-signature]'), `${v}: no signature slot`).toHaveLength(0);
     }
     roots.unmount();
     roots = null;

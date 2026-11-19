@@ -13,4 +13,12 @@ export class ListUi {
   moveOpen = $state<string | null>(null);
   /** How many rows are shown (rule 7: Show N more). */
   limit = $state(LIST_PAGE);
+  #view = '';
+
+  /** A new grouping, sort or filter starts again at the first page; the same view keeps its page. */
+  pageFor(view: string): void {
+    if (view === this.#view) return;
+    if (this.#view !== '') this.limit = LIST_PAGE;
+    this.#view = view;
+  }
 }
