@@ -27,7 +27,7 @@ export interface BoardModel {
   stages: BoardStage[];
   /** The stages that get a lane: those holding a card, and the last stage (where finished work shows). */
   laneStages: BoardStage[];
-  /** The board's stage definitions, in order (what CardMoveMenu takes). */
+  /** The board's stage definitions, in order. */
   stageDefs: Stage[];
   needs: CardSummary[];
   working: CardSummary[];

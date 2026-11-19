@@ -63,7 +63,6 @@ afterEach(() => { cleanup(); vi.useRealTimers(); moveCard.mockClear(); app.board
 const props = () => ({
   model: buildBoardModel(devex, devex.cards, { agents: w.agents, members: [], labels: new Map(), nowMs: REALISTIC_NOW_MS, me: { id: REALISTIC_USER, name: 'Rakesh Gangwar', initials: 'RG' }, spend7d: undefined }),
   filters: noFilters(),
-  onCompose: vi.fn(),
 });
 
 describe('the board: drag and drop', () => {

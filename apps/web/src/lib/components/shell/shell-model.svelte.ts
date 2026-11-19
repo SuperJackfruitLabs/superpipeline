@@ -10,14 +10,8 @@ import { goto } from '$app/navigation';
 import { app } from '$lib/stores/app.svelte';
 import { appearance } from '$lib/appearance.svelte';
 import { activeFilterCount } from '$lib/stores/card-filters';
-import { plural } from '$lib/words';
-import { greetingName } from '../dialogs/person';
 import { signOut } from './account';
-import { crewCount, crewLine, crewScopeTitle, crewOf, crewTitle, type CrewMember } from './crew';
-import {
-  boardCounts, boardStatus, dateline, filterSummary, initialsOf, operateCount, paperShowingLine,
-  showingLine, statusLine, studioSubRight, userNameOf, type OperateCount, type ShellStatus, type StatusItem,
-} from './shell-words';
+import { boardCounts, boardStatus, dateline, initialsOf, showingLine, userNameOf, type ShellStatus } from './shell-words';
 import type { ShellLive, ShellView } from './types';
 import { liveView } from '$lib/loading';
 import { liveUpdates } from '$lib/live/live-updates.svelte';
@@ -33,11 +27,8 @@ class PageRegistry {
 const page = new PageRegistry();
 
 export const shellModel = {
-  get attentionCount(): number { return app.attention.length; },
-  get operateCount(): OperateCount | null { return operateCount(app.attention.length); },
   /** The Inbox badge (nav v2): every card waiting on you, across all boards, on every page. */
   get inboxBadge(): number { return app.attention.length; },
-  get connected(): boolean { return app.connected; },
   /**
    * The masthead's Live toggle: the connection's word (Connecting… on first load, Live, Reconnecting…
    * only after a drop, Offline), and pause/resume over `liveUpdates`. Paused, it reads Paused.
@@ -71,13 +62,6 @@ export const shellModel = {
   },
   get userName(): string { return userNameOf(app.user); },
   get initials(): string { return initialsOf(userNameOf(app.user)); },
-  get firstName(): string { return greetingName(app.user, app.members); },
-  /** Waits for the agent list: before it, names would be ids and the count would pop ("–", never a wrong line). */
-  get crew(): CrewMember[] { return app.board && app.agentsLoaded ? crewOf(app.board, app.agents, needIds()) : []; },
-  get crewCount(): string { return crewCount(this.crew); },
-  get crewLine(): string { return crewLine(this.crew); },
-  get crewScopeTitle(): string { return crewScopeTitle(this.crew); },
-  get crewTitle(): string { return crewTitle(this.crew); },
   get dark(): boolean { return appearance.theme === 'dark'; },
   get phase(): Phase { return appearance.phase; },
   /**
@@ -86,19 +70,12 @@ export const shellModel = {
    */
   get phonePhase(): Phase { return appearance.theme === 'dark' ? 'dusk' : appearance.phase; },
   get dateline(): string { return dateline(new Date(), appearance.phase); },
-  /** This board's cards waiting on a person. */
-  get needsCount(): number { return app.needsYou().length; },
   /** This board's non-archived cards. */
   get liveCount(): number { return liveCards().length; },
   /** Non-archived cards the filters let through (Studio "List 7"). */
   get listCount(): number { return app.filteredCards().filter((c) => !c.archivedAt).length; },
-  get filterSummary(): string { return filterSummary(activeFilterCount(app.filters)); },
   get showing(): string { return showingLine(this.listCount, this.liveCount, activeFilterCount(app.filters) > 0); },
-  get paperShowing(): string { return paperShowingLine(this.showing, this.needsCount, liveCards().filter((c) => c.state === 'completed').length); },
-  get editionCount(): string { return plural(this.liveCount, 'card', 'cards'); },
-  get studioSubRight(): string | null { return studioSubRight(app.syncedAt, appearance.phase); },
   get boardStatus(): ShellStatus { return boardStatus(boardCounts(app.board?.cards ?? [], needIds()), app.syncedAt, undefined, !liveUpdates.live); },
-  pageStatus(lead: ReadonlyArray<string | StatusItem | null>, right?: readonly string[]): ShellStatus { return statusLine(lead, app.syncedAt, { right }); },
   homeHref: '/inbox',
   inboxHref: '/inbox',
   get planHref(): string { return app.boardId ? `/b/${app.boardId}` : '/'; },

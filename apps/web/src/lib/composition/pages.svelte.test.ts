@@ -173,7 +173,6 @@ const PAGES: PageRow[] = [
     mount: () => vibes(BoardView, {
       model: buildBoardModel(devex, devex.cards, { agents: world.agents, members: MEMBERS, labels: labelMap, nowMs: REALISTIC_NOW_MS, me: ME, spend7d: undefined }),
       filters: noFilters(),
-      onCompose: () => {},
     }),
   },
   {
@@ -189,7 +188,6 @@ const PAGES: PageRow[] = [
       return vibes(BoardView, {
         model: buildBoardModel(planning, planning.cards, { agents: world.agents, members: MEMBERS, labels: labelMap, nowMs: REALISTIC_NOW_MS, me: ME, spend7d: undefined }),
         filters: noFilters(),
-        onCompose: () => {},
       });
     },
   },

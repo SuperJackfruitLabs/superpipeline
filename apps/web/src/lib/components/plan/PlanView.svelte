@@ -75,7 +75,7 @@
     <BoardTopRow filters={app.filters} />
     <BoardEmpty {model} intro={app.board?.intro} {me} onCompose={() => app.requestCompose()} />
   {:else if model && app.view === 'board'}
-    <BoardView {model} filters={app.filters} onCompose={() => app.requestCompose()} />
+    <BoardView {model} filters={app.filters} />
   {:else if listProps}
     <ListView {...listProps} />
   {/if}

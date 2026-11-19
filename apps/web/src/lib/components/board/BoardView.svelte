@@ -17,8 +17,8 @@
   import BoardTrack from './BoardTrack.svelte';
   import Lane from './Lane.svelte';
 
-  // onCompose: the board itself offers no compose control (the shell's New card does); kept for the page's callers.
-  let { model, filters }: { model: BoardModel; filters: CardFilters; onCompose: () => void } = $props();
+  // The board itself offers no compose control: the shell's New card does.
+  let { model, filters }: { model: BoardModel; filters: CardFilters } = $props();
 
   const view = $derived(boardView(model));
   let root = $state<HTMLElement | null>(null);
