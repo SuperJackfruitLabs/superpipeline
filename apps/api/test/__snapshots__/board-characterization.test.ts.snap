@@ -12893,6 +12893,7 @@ exports[`the Board Durable Object, pinned before the split > runs the same state
       "PRAGMA table_info(card_references)",
       "PRAGMA table_info(card_links)",
       "PRAGMA table_info(card_comments)",
+      "PRAGMA table_info(usage_records)",
     ],
     "step": "importFixture",
   },
