@@ -28,7 +28,8 @@ export default defineConfig({
     ? [['list'], ['json', { outputFile: process.env.SP_E2E_REPORT }]]
     : process.env.CI ? [['list'], ['html', { open: 'never' }]] : 'list',
   use: {
-    baseURL: PORTS.webUrl,
+    // SP_E2E_BASE_URL aims the run at an already-deployed origin (the monthly composition audit).
+    baseURL: process.env.SP_E2E_BASE_URL || PORTS.webUrl,
     // The fixture world's zone: clock words ("as of HH:MM", greetings) read the same on every machine.
     timezoneId: 'Asia/Kolkata',
     // Tests never wait on an animation: reduced motion stops vibekit's motion suite (e2e/motion.spec.ts turns it back on).
@@ -43,7 +44,7 @@ export default defineConfig({
     { name: 'extended', testMatch: extendedSpecs.map((name) => '**/' + name), use: { ...devices['Desktop Chrome'], channel: process.env.PW_CHANNEL || undefined } },
     { name: 'smoke', testMatch: '**/' + smokeSpec, retries: 0, use: { ...devices['Desktop Chrome'], channel: process.env.PW_CHANNEL || undefined } },
   ],
-  webServer: process.env.SP_E2E_SERVER === 'built' ? [{
+  webServer: process.env.SP_E2E_BASE_URL ? undefined : process.env.SP_E2E_SERVER === 'built' ? [{
     command: 'node scripts/e2e-server.mjs',
     url: `${PORTS.apiUrl}/health`,
     reuseExistingServer: false,
