@@ -63,7 +63,7 @@ export default async function globalSetup(config: FullConfig): Promise<void> {
 
   // The page itself: Vite compiles the app's modules on the first browser load, not on a fetch.
   await timed(boardId ? 'board page' : 'inbox page', async () => {
-    const browser = await chromium.launch({ channel: process.env.PW_CHANNEL || undefined });
+    const browser = await chromium.launch({ channel: process.env.PW_CHANNEL || undefined, timeout: Math.max(1, deadline - Date.now()) });
     try {
       const page = await browser.newPage();
       await page.goto(base + (boardId ? `/b/${boardId}` : '/inbox'), { timeout: Math.max(1, deadline - Date.now()) });
@@ -77,4 +77,5 @@ export default async function globalSetup(config: FullConfig): Promise<void> {
   });
 
   console.log(`[warm-up] ${base}: ${said.join(' · ')} · ${Date.now() - started} ms in all`);
+  if (said.some((s) => s.endsWith('no answer'))) console.log(`[warm-up] warm-up gave up after ${LIMIT_MS / 1000} s; the first test may fail`);
 }

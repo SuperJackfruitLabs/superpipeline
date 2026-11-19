@@ -12,6 +12,7 @@
   import CardPhoneSheet from '$lib/components/card/phone/CardPhoneSheet.svelte';
   import { CardModel } from '$lib/components/card/card-model.svelte';
   import CardPageMissing from '$lib/components/card/page/CardPageMissing.svelte';
+  import { leaveOnEscape } from '$lib/escape';
 
   const boardId = $derived(page.params.boardId!);
   const cardId = $derived(page.params.cardId!);
@@ -26,7 +27,12 @@
   const failure = $derived(app.boardId === boardId ? app.boardFailure : null);
   const model = new CardModel(() => ({ boardId, cardId, surface: 'page' }));
   const ready = $derived(app.board?.boardId === boardId);
+  const leave = (): void => void goto(model.boardHref);
 </script>
+
+<!-- Esc leaves the desktop page from anywhere on it (CARD_KEYS), not only with focus in the card; inside
+     the card, CardView's own Esc has already taken it. A phone's page is the sheet, which closes itself. -->
+<svelte:window onkeydown={(e) => { if (ready && model.card && !viewport.narrow) leaveOnEscape(e, leave); }} />
 
 <svelte:head><title>{model.card ? `${model.card.title} · ${model.boardName}` : 'Card · Superpipeline'}</title></svelte:head>
 
@@ -44,5 +50,5 @@
 {:else}
   <CardPageBar boardName={model.boardName} boardHref={model.boardHref} />
   <!-- Esc closes the page back to its board, as Close does and as the phone page's sheet does (CARD_KEYS). -->
-  <main id="content" class="cv-page"><CardView {model} surface="page" gate={model.gateBinding} question={model.questionBinding} pageHref={model.pageHref} boardHref={model.boardHref} onClose={() => void goto(model.boardHref)} /></main>
+  <main id="content" class="cv-page"><CardView {model} surface="page" gate={model.gateBinding} question={model.questionBinding} pageHref={model.pageHref} boardHref={model.boardHref} onClose={leave} /></main>
 {/if}

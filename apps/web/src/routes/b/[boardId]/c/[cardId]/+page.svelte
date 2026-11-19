@@ -8,6 +8,7 @@
    * the open board: another board's snapshot (a remembered board still loading) says nothing about this card.
    */
   import { untrack } from 'svelte';
+  import { afterNavigate } from '$app/navigation';
   import { page } from '$app/state';
   import { app } from '$lib/stores/app.svelte';
   import PlanView from '$lib/components/plan/PlanView.svelte';
@@ -17,10 +18,13 @@
    * run of this effect: `noteLoaded` reads `openCardId`, and each board read is a new `app.board`, so
    * Close and Esc on a drawer reached by its address put it straight back (the address stays this
    * route's: closing replaces the URL shallowly, and `page.params` keeps the card).
+   *
+   * A real navigation to the address (⌘K's Open card on the card just closed, a link) opens it again:
+   * `afterNavigate` forgets what was opened. A shallow `replaceState` (closing) does not fire it.
    */
   let opened: string | null = null;
   let missed: string | null = null;
-  $effect(() => {
+  function openFromAddress(): void {
     const cardId = page.params.cardId;
     const boardId = page.params.boardId;
     if (!cardId || !boardId || app.boardId !== boardId || app.board?.boardId !== boardId) return;
@@ -35,6 +39,12 @@
       app.openCardId = null;
     }
     untrack(() => app.noteLoaded());
+  }
+  $effect(openFromAddress);
+  afterNavigate(() => {
+    opened = null;
+    missed = null;
+    untrack(openFromAddress);
   });
 </script>
 

@@ -179,10 +179,12 @@ test('board: an empty board ends with its keys too', async ({ page, request }) =
   await expect(page.getByLabel('Keyboard', { exact: true })).toContainText('N new card');
 });
 
-test("card: the footer names its keys on the drawer and the page, Esc closes both, and a phone hides the line", async ({ page, request }) => {
+test("card: the footer names its keys on the drawer and the page, Esc closes both, a closed card opens again by its link, and a phone hides the line", async ({ page, request }) => {
   const id = await seedBoard(request, 'Keys card', STAGES);
   const created = await request.post(`${API}/v1/boards/${id}/cards`, { headers: TENANT, data: { title: 'A card with keys', ownerUserId: 'usr_a' } });
   const card = String((await created.json()).card.id);
+  const second = await request.post(`${API}/v1/boards/${id}/cards`, { headers: TENANT, data: { title: 'Another card with keys', ownerUserId: 'usr_a' } });
+  const other = String((await second.json()).card.id);
   await setAppearance(page, appearance('daylight'));
   await page.setViewportSize({ width: 1280, height: 800 });
 
@@ -193,12 +195,23 @@ test("card: the footer names its keys on the drawer and the page, Esc closes bot
   await drawer.getByRole('button', { name: 'Edit card' }).focus();
   await page.keyboard.press('Escape');
   await expect(drawer).toBeHidden();
+  // Closed, it opens again by its link: ⌘K's Open card on the same card.
+  await page.keyboard.press('ControlOrMeta+k');
+  const find = page.getByPlaceholder(/Jump to a card/i);
+  await find.fill('A card with keys');
+  await page.getByRole('dialog').getByRole('option', { name: /^A card with keys/ }).click();
+  await expect(drawer.getByRole('heading', { name: 'A card with keys' })).toBeVisible();
+  // From one card's address to another's, in the app (⌘K again), opens the other.
+  await page.keyboard.press('ControlOrMeta+k');
+  await find.fill('Another card with keys');
+  await page.getByRole('dialog').getByRole('option', { name: /^Another card with keys/ }).click();
+  await expect(drawer.getByRole('heading', { name: 'Another card with keys' })).toBeVisible();
+  await expect(page).toHaveURL(new RegExp(`/b/${id}/c/${other}$`));
 
-  // The page: the same line; Esc closes it back to the board, as Close does.
+  // The page: the same line; Esc closes it back to the board from the page's first focus, as Close does.
   await page.goto(`/b/${id}/c/${card}/page`);
   const main = page.getByRole('main');
   await expect(main.getByLabel('Keyboard', { exact: true })).toHaveText('Esc close · ⌘K search');
-  await main.getByRole('button', { name: 'Edit card' }).focus();
   await page.keyboard.press('Escape');
   await expect(page).toHaveURL(new RegExp(`/b/${id}$`));
 
