@@ -71,10 +71,14 @@ export function needsPart(n: number): StatusItem | null {
   return n > 0 ? { text: needYou(n), signal: true } : null;
 }
 
-/** A Studio status line: the page's items, then "synced HH:MM"; the keys on the right. */
-export function statusLine(lead: ReadonlyArray<string | StatusItem | null>, syncedAt: Date | null, opts: { right?: readonly string[]; timeZone?: string } = {}): ShellStatus {
+/**
+ * A Studio status line: the page's items, then "synced HH:MM", or "paused" while live updates wait
+ * behind the Live toggle (the pill counts what waits; the Inbox's footer says the same); the keys on the right.
+ */
+export function statusLine(lead: ReadonlyArray<string | StatusItem | null>, syncedAt: Date | null, opts: { right?: readonly string[]; timeZone?: string; paused?: boolean } = {}): ShellStatus {
   const items = lead.filter((x): x is string | StatusItem => x !== null).map((x) => (typeof x === 'string' ? { text: x } : x));
-  if (syncedAt) items.push({ text: `synced ${hhmm(syncedAt, opts.timeZone)}` });
+  if (opts.paused) items.push({ text: 'paused' });
+  else if (syncedAt) items.push({ text: `synced ${hhmm(syncedAt, opts.timeZone)}` });
   return { items, right: [...(opts.right ?? STATUS_RIGHT)] };
 }
 
@@ -89,8 +93,8 @@ export function boardCounts(cards: readonly Card[], needIds: ReadonlySet<string>
     shipped: live.filter((c) => c.state === 'completed').length,
   };
 }
-export function boardStatus(c: BoardCounts, syncedAt: Date | null, timeZone?: string): ShellStatus {
-  return statusLine([plural(c.all, 'card', 'cards'), needsPart(c.needs), c.blocked > 0 ? `${c.blocked} blocked` : null, c.shipped > 0 ? `${c.shipped} shipped` : null], syncedAt, { timeZone });
+export function boardStatus(c: BoardCounts, syncedAt: Date | null, timeZone?: string, paused = false): ShellStatus {
+  return statusLine([plural(c.all, 'card', 'cards'), needsPart(c.needs), c.blocked > 0 ? `${c.blocked} blocked` : null, c.shipped > 0 ? `${c.shipped} shipped` : null], syncedAt, { timeZone, paused });
 }
 
 /** Distinct projects among the board's non-archived cards (Studio "Projects 3"). */

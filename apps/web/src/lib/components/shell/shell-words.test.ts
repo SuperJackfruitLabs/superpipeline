@@ -74,6 +74,11 @@ describe('counts and status lines', () => {
       right: ['⌘K commands', 'N new card'],
     });
   });
+  it('paused, the board status says paused where it said synced, as the Inbox footer does (M3)', () => {
+    const { items } = boardStatus(boardCounts(DX_CARDS, DX_NEEDS), NOW, TZ, true);
+    expect(items.at(-1)).toEqual({ text: 'paused' });
+    expect(items.some((i) => i.text.startsWith('synced'))).toBe(false);
+  });
   it('each page’s status line (notes `pages.md` §1, Operate and the empty board)', () => {
     const synced = { text: 'synced 13:51' };
     const four = { text: '4 need you', signal: true };

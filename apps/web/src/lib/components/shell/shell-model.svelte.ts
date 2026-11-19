@@ -97,7 +97,7 @@ export const shellModel = {
   get paperShowing(): string { return paperShowingLine(this.showing, this.needsCount, liveCards().filter((c) => c.state === 'completed').length); },
   get editionCount(): string { return plural(this.liveCount, 'card', 'cards'); },
   get studioSubRight(): string | null { return studioSubRight(app.syncedAt, appearance.phase); },
-  get boardStatus(): ShellStatus { return boardStatus(boardCounts(app.board?.cards ?? [], needIds()), app.syncedAt); },
+  get boardStatus(): ShellStatus { return boardStatus(boardCounts(app.board?.cards ?? [], needIds()), app.syncedAt, undefined, !liveUpdates.live); },
   pageStatus(lead: ReadonlyArray<string | StatusItem | null>, right?: readonly string[]): ShellStatus { return statusLine(lead, app.syncedAt, { right }); },
   homeHref: '/inbox',
   inboxHref: '/inbox',

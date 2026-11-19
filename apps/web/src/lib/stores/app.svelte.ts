@@ -530,10 +530,11 @@ class AppStore {
     let opening = !reconnect;
     const sock = openBoardSocket(boardId, (event, snapshot) => {
       this.#lastMessageAt = Date.now();
-      this.syncedAt = new Date();
       const skip = opening && event === null && snapshot !== undefined && this.#holds(snapshot);
       opening = false;
-      if (skip) return;
+      // "Synced" is when the page last showed the board as it is: a read that lands (`#refresh`), or
+      // an opening snapshot of the very board on screen. An event held behind the Live toggle is not.
+      if (skip) { this.syncedAt = new Date(); return; }
       // Through the Live toggle: paused, the board holds still and one refresh waits its turn.
       liveUpdates.push(`app:board:${boardId}`, () => void this.refresh());
       // Fan the event out to whoever is watching one card. The board snapshot that `refresh`
@@ -734,6 +735,10 @@ class AppStore {
   async #refresh(): Promise<void> {
     if (!this.boardId) return;
     const id = this.boardId;
+    // A refresh waiting behind the Live toggle since before this read began is answered by it: once
+    // this read lands it is forgotten, so the pill does not count a change that is already on the page.
+    const key = `app:board:${id}`;
+    const waiting = liveUpdates.queued.find((q) => q.key === key)?.fn;
     try {
       const board = await getBoard(id);
       if (id !== this.boardId) return;
@@ -741,6 +746,7 @@ class AppStore {
       this.board = forViewer(board, this.user?.role);
       this.boardFailure = null;
       this.syncedAt = new Date();
+      if (waiting && liveUpdates.queued.find((q) => q.key === key)?.fn === waiting) liveUpdates.drop(key);
       this.notifications = await getNotifications(id);
     } catch (e) {
       // A board never read draws its failure (missing or failed) in place of the board; one that was

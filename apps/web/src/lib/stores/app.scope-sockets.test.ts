@@ -124,6 +124,30 @@ describe('the app’s live feeds', () => {
     await vi.waitFor(() => expect(api.getBoard).toHaveBeenCalledWith('brd_open'));
     expect(api.getBoard).toHaveBeenCalledTimes(1);
   });
+  it('paused, a held event does not move "synced"; the person’s own refresh answers what waited before it (M3)', async () => {
+    await app.openBoard('brd_open');
+    const feed = open('brd_open')[0];
+    const synced = new Date('2026-11-18T08:00:00.000Z');
+    app.syncedAt = synced;
+    liveUpdates.pause();
+    feed.emit(EVENT);
+    expect(liveUpdates.queued.map((q) => q.key)).toEqual(['app:board:brd_open']);
+    expect(app.syncedAt).toBe(synced);
+    // The person acts: the board is read at once, which answers the refresh that waited.
+    let land!: () => void;
+    vi.mocked(api.getBoard).mockImplementationOnce(async (id) => { await new Promise<void>((r) => (land = r)); return BOARD(id) as unknown as Api.BoardSnapshot; });
+    const refreshed = app.refresh();
+    await vi.waitFor(() => expect(land).toBeTypeOf('function'));
+    // An event while that read is out may not be in it: it keeps waiting.
+    feed.emit({ ...EVENT, seq: 8 });
+    land();
+    await refreshed;
+    expect(app.syncedAt).not.toBe(synced);
+    expect(liveUpdates.queued.map((q) => q.key)).toEqual(['app:board:brd_open']);
+    // With nothing new during the read, nothing is left waiting.
+    await app.refresh();
+    expect(liveUpdates.queued).toEqual([]);
+  });
   it('a paused page holds the feed: an open card hears its events only on resume, in order', async () => {
     await app.openBoard('brd_open');
     const feed = open('brd_open')[0];
