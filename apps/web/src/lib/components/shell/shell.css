@@ -36,9 +36,10 @@
 /* The phone header's row under the title: Search and New card together, then Plan's switch. */
 .sh-phone-row { display: inline-flex; flex-wrap: wrap; align-items: center; gap: var(--vk-space-2); }
 /*
- * The phone row's Live toggle reserves the width of its widest connection word: the toggle and a hidden pill
- * (`.sh-phone-live-size`, the word in `data-word`, so it is in no text or accessibility tree) share one grid cell.
- * The pill takes vibekit's own `.vk-live` styles, so the reservation matches each vibe's pill.
+ * The phone row's Live toggle reserves the width of the widest word it can show: the toggle
+ * and one hidden pill per word (`.sh-phone-live-size`, the word in `data-word`, so it is in no text or accessibility
+ * tree) share one grid cell, which is as wide as the widest of them. The pills take vibekit's own `.vk-live` styles,
+ * so the reservation follows each vibe's pill. Pinned by shell-css.test.ts.
  */
 .sh-phone-live { display: inline-grid; justify-items: start; align-items: center; }
 .sh-phone-live > * { grid-area: 1 / 1; }

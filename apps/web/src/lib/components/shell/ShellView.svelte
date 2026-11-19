@@ -12,14 +12,14 @@
    * dateline, Studio's status line; Quiet has none.
    */
   import {
-    AppNav, AppShell as VkAppShell, Button, CommandField, IconButton, LiveDot, Masthead, PhoneHeader, PhoneTabBar, usePhone, useVibe,
+    AppNav, AppShell as VkAppShell, Button, CommandField, IconButton, LIVE_LABELS, LiveDot, Masthead, PhoneHeader, PhoneTabBar, usePhone, useVibe,
     type MenuItem as VkMenuItem, type NavItem, type PhoneTabItem, type Vibe,
   } from '@superjackfruitlabs/vibekit-ui';
   import type { Component } from 'svelte';
   import Icon from '$lib/components/parts/Icon.svelte';
   import BrandMark from '$lib/components/BrandMark.svelte';
   import { PHONE_QUERY } from '$lib/viewport.svelte';
-  import { liveView } from '$lib/loading';
+  import { liveView, type Connection } from '$lib/loading';
   import '$lib/styles/phone-base.css';
   import './shell.css';
   import { shellModel as m } from './shell-model.svelte';
@@ -35,8 +35,17 @@
 
   /** The phone header and the search button's accessible name (the phone references). */
   const SEARCH_LABEL = 'Search cards, agents and actions';
-  /** The widest word the Live toggle says while a page loads or after a drop: the phone row reserves its width. */
-  const LIVE_RESERVE = liveView('reconnecting').label;
+  // A Record, so a new connection state fails the typecheck here until it has its reserved word.
+  const CONNECTIONS = Object.keys({ connecting: 1, live: 1, reconnecting: 1, offline: 1 } satisfies Record<Connection, 1>) as Connection[];
+  /**
+   * Every word the Live toggle can show: each connection's (Connecting…, Live, Reconnecting…, Offline — showing what
+   * you had) and Paused. The phone row stacks one hidden pill per word in the toggle's cell, so the cell is as wide as
+   * the widest of them whichever is widest in the vibe's font, and no change of state re-wraps the row.
+   */
+  const LIVE_WORDS: { state: Connection | 'paused'; word: string }[] = [
+    ...CONNECTIONS.map((c) => ({ state: c, word: liveView(c).label })),
+    { state: 'paused', word: LIVE_LABELS.paused },
+  ];
   /** A page without a board names itself in the phone header. */
   const SECTION_TITLE: Partial<Record<ShellProps['section'], string>> = { inbox: 'Inbox', crew: 'Crew', settings: 'Settings', projects: 'Projects', project: 'Project' };
   /**
@@ -133,11 +142,12 @@
     {/if}
   </span>
   {#if plan}<PlanSwitch value={plan} />{/if}
-  <!-- The Live toggle sits over a hidden pill as wide as its widest connection word, so Connecting… turning into Live
-       (or Reconnecting… after a drop) never re-wraps this row: the header keeps its height (loading contract, rule 11). -->
+  <!-- The Live toggle shares its cell with one hidden pill per word it can show (LIVE_WORDS), so the cell is as wide as
+       the widest: no change of connection or pause re-wraps this row, and the header keeps its height (loading contract,
+       rule 11). The words are in data-word, drawn by ::after: in no text or accessibility tree. -->
   <span class="sh-phone-live">
     <LiveDot state={live.state} label={live.label} toggle={live} {...live.attrs} />
-    <span class="vk-live vk-live--reconnecting sh-phone-live-size" data-word={LIVE_RESERVE} aria-hidden="true"><span class="vk-live__dot"></span></span>
+    {#each LIVE_WORDS as w (w.state)}<span class="vk-live vk-live--{w.state === 'connecting' ? 'offline' : w.state} sh-phone-live-size" data-word={w.word} aria-hidden="true"><span class="vk-live__dot"></span></span>{/each}
   </span>
 {/snippet}
 {#snippet header()}

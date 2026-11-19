@@ -123,19 +123,22 @@ describe.each(VIBES)('the shell on a phone, in %s', (vibe) => {
     expect(live.textContent).toContain('Reconnecting…');
   });
 
-  // Loading contract rule 11: Connecting… turning into Live must not re-wrap the row under the title. The toggle shares
-  // one cell with a hidden pill as wide as the widest connection word, which is in no text or accessibility tree.
-  it('reserves the Live toggle the width of Reconnecting…, out of the text and accessibility trees', () => {
+  // Loading contract rule 11: no change of connection or pause may re-wrap the row under the title. The toggle shares
+  // one cell with a hidden pill per word it can show (shell-css.test.ts pins the CSS that sizes the cell); the words
+  // are in no text or accessibility tree.
+  it('reserves the Live toggle a hidden pill for every word it can show, out of the text and accessibility trees, while connecting', () => {
     app.feedOpened = false;
     app.connected = false;
     const { container } = show(vibe);
     const cell = container.querySelector('.vk-phoneheader .sh-phone-live');
-    expect(cell?.querySelector('[data-live]')).toBeTruthy();
-    const size = cell?.querySelector('.sh-phone-live-size');
-    expect(size?.getAttribute('data-word')).toBe('Reconnecting…');
-    expect(size?.getAttribute('aria-hidden')).toBe('true');
-    expect(size?.textContent).toBe('');
-    expect(container.querySelector('.vk-phoneheader')?.textContent).not.toContain('Reconnecting');
+    expect(cell?.querySelector('[data-live]')?.textContent).toContain('Connecting…');
+    const pills = [...(cell?.querySelectorAll('.sh-phone-live-size') ?? [])];
+    expect(pills.map((p) => p.getAttribute('data-word'))).toEqual(['Connecting…', 'Live', 'Reconnecting…', 'Offline — showing what you had', 'Paused']);
+    for (const p of pills) {
+      expect(p.getAttribute('aria-hidden')).toBe('true');
+      expect(p.textContent).toBe('');
+    }
+    expect(container.querySelector('.vk-phoneheader')?.textContent).not.toMatch(/Reconnecting|Offline|Paused/);
   });
 
   it('a Crew page has no switcher and no New card, and its h1 is Crew', () => {
