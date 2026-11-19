@@ -41,4 +41,6 @@ export const fakeApi = {
   resumeCard: vi.fn(async () => new Response('{}', { status: 200 })),
   resolveGate: vi.fn(async () => new Response('{}', { status: 200 })),
   answerElicitation: vi.fn(async () => new Response('{}', { status: 200 })),
+  splitCard: vi.fn<(boardId: string, cardId: string, titles: string[]) => Promise<Response>>(async () => new Response('{}', { status: 201 })),
+  addReference: vi.fn<(boardId: string, cardId: string, ref: { url: string }) => Promise<Response>>(async () => new Response('{}', { status: 201 })),
 };

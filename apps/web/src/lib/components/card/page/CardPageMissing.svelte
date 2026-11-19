@@ -7,15 +7,22 @@
    */
   import SkeletonRows from '$lib/components/parts/SkeletonRows.svelte';
   import LoadFailed from '$lib/components/parts/LoadFailed.svelte';
-  import { MISSING_BOARD_COPY, UNREACHABLE_COPY } from '$lib/loading';
+  import { MISSING_BOARD_COPY, SLOW_MS, UNREACHABLE_COPY } from '$lib/loading';
 
   let { kind, boardName, boardHref, onRetry }: { kind: 'loading' | 'missing' | 'gone' | 'error'; boardName: string; boardHref: string; onRetry?: () => unknown } = $props();
+  // Rule 11: a wait that has gone on says the server is slow and offers Try again.
+  let slow = $state(false);
+  $effect(() => {
+    if (kind !== 'loading') { slow = false; return undefined; }
+    const t = setTimeout(() => (slow = true), SLOW_MS);
+    return () => clearTimeout(t);
+  });
 </script>
 
 <main id="content" style="max-width: 72ch; margin: 0 auto; padding: var(--vk-space-7) var(--vk-space-5); display: flex; flex-direction: column; gap: var(--vk-space-3);">
   {#if kind === 'loading'}
     <h1 class="vk-visually-hidden">Card</h1>
-    <SkeletonRows label="Loading the card…" rows={6} rowHeight={48} />
+    <SkeletonRows label="Loading the card…" rows={6} rowHeight={48} {slow} {onRetry} />
   {:else if kind === 'gone'}
     <h1 style="margin: 0; font: 700 var(--vk-text-xl)/1.2 var(--vk-font-display);">Board not found</h1>
     <LoadFailed message={MISSING_BOARD_COPY} home />

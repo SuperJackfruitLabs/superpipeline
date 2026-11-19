@@ -65,7 +65,7 @@ const D58F8 = 'Blocked on the forgeDestinationHold: operator must provide the au
 const D1DFC = 'this stage was not finished twice — first: the handoff is missing commit; then, after one automatic rework: the handoff is missing commit';
 const D4605 = 'not reproduced end-to-end: Melissa’s live ACP session acps_8f86d4e4-1cf2-457b-beb8-0ffb529d9023 reached Hermes and produced a model reply, while Anna has no local ACP dispatch; first failing hop cannot be identified without one fresh DM event_id/room_id/timestamp per agent plus AgentPod hub matrix-inbound/control-pair/ACP/matrix-outbound logs, matrix_rooms/ACP metadata, homeserver send-event metadata, and Supermessage sync ingestion for those event IDs. No Accounts defect established; no issue filed.';
 
-/** 4605's brief, as SP-Phone-Card-* print it (mockup-corrections card-page literal blocks). */
+/** 4605's brief (the card fixture the e2e and loading specs open). */
 const SPEC_4605 = {
   description: 'Reproduce and localize why the existing AgentPod bridge Matrix identities for Message Melissa and Audience Anna do not respond to Ira in Supermessage. Produce an evidence-backed diagnosis and exact repair proposal; do not attribute silence to missing grants without live evidence.',
   acceptanceCriteria: [

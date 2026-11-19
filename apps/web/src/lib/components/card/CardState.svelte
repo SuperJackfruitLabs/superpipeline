@@ -52,6 +52,12 @@
     // The panel takes focus at its first control, where it opened, without moving the page.
     root?.querySelector<HTMLElement>('input:not([disabled]), textarea, select')?.focus({ preventScroll: true });
   }
+  /** Cancel: back to the sentence, focus on the verb that opened the panel. */
+  async function back(): Promise<void> {
+    asked = null;
+    await tick();
+    root?.querySelector<HTMLElement>('.cv-act .vk-button--primary')?.focus({ preventScroll: true });
+  }
   const ask = $derived(gateAsk({ agent: m.agent.name, attempt: m.card?.attemptCount ?? 0, ageHours: m.ageHours, produced: m.artifacts.length, nextStage: m.stages[m.stageIndex + 1]?.name ?? null }));
   const prevStage = $derived(m.stages[m.stageIndex - 1]?.name ?? null);
 </script>
@@ -75,15 +81,15 @@
     <SkeletonRows label={LOADING_CARD} rows={2} slow={phase === 'slow'} onRetry={() => m.retry()} />
     {@render hidden('status')}{@render hidden('resume')}{@render hidden('cardActions')}
   {:else if panel === 'gate' && gate}
-    <GatePanel {...gate} {ask} {prevStage} onMove={() => m.openMove()} />
+    <GatePanel {...gate} {ask} {prevStage} onMove={() => m.openMove()} onCancel={back} />
     {@render more()}
     {@render hidden('status')}{@render hidden('resume')}
   {:else if panel === 'question' && question}
-    <QuestionPanel {...question} onMove={() => m.openMove()} />
+    <QuestionPanel {...question} onMove={() => m.openMove()} onCancel={back} />
     {@render more()}
     {@render hidden('status')}{@render hidden('resume')}
   {:else if panel === 'resume'}
-    <ResumeForm model={m} />
+    <ResumeForm model={m} onCancel={back} />
     {@render more()}
     {@render hidden('status')}
   {:else}

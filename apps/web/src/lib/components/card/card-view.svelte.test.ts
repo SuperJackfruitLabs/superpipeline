@@ -238,7 +238,7 @@ describe('the state block', () => {
     fakeApp.board = { ...BOARD_DX, cards: [{ ...CARD_4605, archivedAt: '2026-10-02T10:00:00Z' }] };
     let mounted = await loaded();
     render(CardView, props(mounted.model, 'drawer'));
-    expect(within(state()).getByText(/^Archived on 2 October\. Agents cannot claim it and it is off the board\. Restore it to bring it back to Reproduce\.$/)).toBeTruthy();
+    expect(within(state()).getByText(/^Archived on 2 October\. Agents cannot claim it and it leaves the board\. Restore it to bring it back to Reproduce\.$/)).toBeTruthy();
     expect([...state().querySelectorAll('.cv-act .vk-button')].map((b) => b.textContent!.trim())).toEqual(['Restore']);
     mounted.dispose();
     cleanup();
@@ -301,7 +301,7 @@ describe('facts, the brief and what was produced', () => {
     const labels = [...facts.querySelectorAll('dt')].find((d) => d.textContent === 'Labels')!.nextElementSibling!;
     expect(labels.textContent).toBe('estate, a removed label');
     expect(facts.textContent).not.toMatch(/\b(lbl|usr|agt|prn|prj)_/);
-    expect([...facts.querySelectorAll('dt')].map((d) => d.textContent)).toEqual(['Owner', 'Priority', 'Labels', 'Due', 'Attempt', 'Asked by', 'Project', 'Links', 'References']);
+    expect([...facts.querySelectorAll('dt')].map((d) => d.textContent)).toEqual(['Owner', 'Priority', 'Labels', 'Due', 'Attempt', 'Asked by', 'Project', 'Sub-tasks', 'Links', 'References']);
     expect(facts.textContent).toContain('Rakesh Gangwar');
     dispose();
   });
@@ -333,9 +333,9 @@ describe('facts, the brief and what was produced', () => {
     const { model, dispose } = await loaded();
     render(CardView, props(model, 'drawer'));
     for (const b of ['brief', 'produced']) expect(document.querySelector<HTMLElement>(`[data-block="${b}"]`)!.hidden, b).toBe(true);
-    for (const k of ['plan', 'decisions', 'delivery', 'subtasks']) expect(document.querySelector<HTMLElement>(`[data-section="${k}"]`)!.hidden, k).toBe(true);
-    // Sections that offer an action stay: the comment box and Add link.
-    expect(screen.getByRole('button', { name: 'Add link' })).toBeTruthy();
+    for (const k of ['plan', 'decisions', 'delivery']) expect(document.querySelector<HTMLElement>(`[data-section="${k}"]`)!.hidden, k).toBe(true);
+    // Sections that offer an action stay: the comment box, Add link, Add a sub-task, Attach a link.
+    for (const name of ['Add link', 'Add a sub-task', 'Attach a link']) expect(screen.getByRole('button', { name })).toBeTruthy();
     expect(screen.getByLabelText('Add a comment', { selector: 'textarea' })).toBeTruthy();
     dispose();
   });

@@ -77,10 +77,11 @@ describe('the state sentence (composition contract §7 "Card" 3)', () => {
     expect(stateSentence({ ...base, kind: 'failed', resumable: false })).toEqual({ text: 'error-eric failed in Reproduce after attempt 2.', needsWord: null });
     expect(stateSentence({ ...base, kind: 'budget' }).text).toBe('error-eric stopped at the spending cap in Reproduce after attempt 2. It will read your note before it tries again.');
     expect(stateSentence({ ...base, kind: 'working', ageHours: 2 })).toEqual({ text: 'error-eric is working on it in Reproduce for 2 hours. Nothing to do yet.', needsWord: null });
-    expect(stateSentence({ ...base, kind: 'done', produced: 1, since: '2026-11-14T10:00:00Z' })).toEqual({ text: 'Shipped by error-eric on 14 November. Nothing to do. What it produced is below.', needsWord: null });
+    expect(stateSentence({ ...base, kind: 'done', produced: 1, since: '2026-11-14T10:00:00Z' })).toEqual({ text: 'Shipped by error-eric on 14 November. Nothing to do. The document it produced is below.', needsWord: null });
     expect(stateSentence({ ...base, kind: 'done', agent: '' }).text).toBe('Shipped on 8 October. Nothing to do.');
+    expect(stateSentence({ ...base, kind: 'done', produced: 2 }).text).toBe('Shipped by error-eric on 8 October. Nothing to do. What it produced is below.');
     expect(stateSentence({ ...base, kind: 'idle', agent: '' })).toEqual({ text: 'Waiting in Reproduce for 2 days. Nobody has picked it up.', needsWord: null });
-    expect(stateSentence({ ...base, archivedAt: '2026-10-02T10:00:00Z' })).toEqual({ text: 'Archived on 2 October. Agents cannot claim it and it is off the board. Restore it to bring it back to Reproduce.', needsWord: 'Restore' });
+    expect(stateSentence({ ...base, archivedAt: '2026-10-02T10:00:00Z' })).toEqual({ text: 'Archived on 2 October. Agents cannot claim it and it leaves the board. Restore it to bring it back to Reproduce.', needsWord: 'Restore' });
     expect(stateSentence({ ...base, kind: 'review', agent: '' }).text).toMatch(/^Waiting for your review in Reproduce for 2 days\. An agent finished attempt 2\.$/);
   });
 });

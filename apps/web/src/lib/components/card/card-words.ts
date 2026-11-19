@@ -108,7 +108,7 @@ export function stateSentence(i: StateSentenceInput): { text: string; needsWord:
   const agent = i.agent || 'An agent';
   const madeIt = i.produced > 0 ? ` and produced ${countWords(i.produced, 'document')}` : '';
   if (i.archivedAt) {
-    return { text: `Archived on ${dayMonthLong(i.archivedAt, i.tz)}. Agents cannot claim it and it is off the board. Restore it to bring it back to ${i.stage}.`, needsWord: 'Restore' };
+    return { text: `Archived on ${dayMonthLong(i.archivedAt, i.tz)}. Agents cannot claim it and it leaves the board. Restore it to bring it back to ${i.stage}.`, needsWord: 'Restore' };
   }
   switch (i.kind) {
     case 'review':
@@ -125,7 +125,7 @@ export function stateSentence(i: StateSentenceInput): { text: string; needsWord:
       return { text: `${agent} is working on it in ${i.stage}${forAge}. Nothing to do yet.`, needsWord: null };
     case 'done': {
       const on = i.since ? ` on ${dayMonthLong(i.since, i.tz)}` : '';
-      const below = i.produced > 0 ? ` What it produced is below.` : '';
+      const below = i.produced === 1 ? ' The document it produced is below.' : i.produced > 1 ? ' What it produced is below.' : '';
       return { text: `${i.agent ? `Shipped by ${i.agent}` : 'Shipped'}${on}. Nothing to do.${below}`, needsWord: null };
     }
     default:
@@ -180,6 +180,10 @@ export function cardFacts(i: { owner: string; priority: number; labels: string[]
 }
 /** A label the catalogue no longer has is said as such, never by its id. */
 export const labelName = (l: { id: string; name: string }): string => (l.name && l.name !== l.id ? l.name : 'a removed label');
+export const SUBTASK_ACTION = 'Add a sub-task';
+export const SUBTASK_LABEL = 'New sub-task title';
+export const REFERENCE_ACTION = 'Attach a link';
+export const REFERENCE_LABEL = 'Attach a link or Superlibrary item';
 export const costFact = (cost: number, estimate: number | null): string => `${usd(cost)}${estimate ? ` of ${usd(estimate)} estimated` : ''}`;
 export const linksFact = (n: number): string => (n ? countWords(n, 'link') : 'none');
 

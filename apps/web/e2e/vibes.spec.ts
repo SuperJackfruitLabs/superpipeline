@@ -8,8 +8,16 @@ const ALL_VIBES = ['daylight', 'paper', 'studio', 'quiet'] as const;
 
 test.use({ timezoneId: 'Europe/London' });
 const SUBJECT = [/What you are signing/, /example_product/, /Approving exactly this version, revision 1 · sealed [0-9a-f]{4}·[0-9a-f]{4}/, /sha256:[0-9a-f]{64}/];
-/** No swept drawer shows a sub-task composer until the person asks for one ("Add a sub-task" reveals it). */
-const SUBTASK_COMPOSER = (_vibe: string) => false;
+/** The card shows no sub-task or reference composer until the person asks for one: its quiet action opens it in place. */
+async function composers(dialog: Locator): Promise<void> {
+  for (const [action, field] of [['Add a sub-task', 'New sub-task title'], ['Attach a link', 'Attach a link or Superlibrary item']] as const) {
+    await dialog.getByRole('button', { name: action, exact: true }).click();
+    const input = dialog.getByRole('textbox', { name: field });
+    await expect(input).toBeVisible();
+    await dialog.locator('form[data-composer]').getByRole('button', { name: 'Cancel', exact: true }).click();
+    await expect(dialog.getByRole('button', { name: action, exact: true })).toBeVisible();
+  }
+}
 const NOON = new Date('2026-10-11T12:00:00+01:00');
 
 async function revealAll(scope: Locator): Promise<void> {
@@ -105,13 +113,14 @@ for (const vibe of ALL_VIBES) {
         for (const [role, name] of [
           ['radio', /^Approve/], ['radio', /^Request changes/], ['radio', /^Reject/], ['textbox', 'Note to the agent (optional)'], ['button', 'Approve'],
           ['button', 'Edit card'], ['button', 'Archive card'], ['button', 'Delete card'], ['button', 'Comment'],
-          ['button', 'Add link'], ...(SUBTASK_COMPOSER(vibe) ? [['textbox', /New sub-task title/] as const] : []), ['button', /Close/],
+          ['button', 'Add link'], ['button', 'Add a sub-task'], ['button', 'Attach a link'], ['button', /Close/],
         ] as const) {
           expect(await reachable(dialog, role, name), `gate: ${String(name)}`).toBe(true);
         }
         await noSideScroll(page);
         await noA11yViolations(page, '[role="dialog"]');
         await info.attach(`${vibe}-${theme}-${size.name}-gate.png`, { body: await page.screenshot(), contentType: 'image/png' });
+        await composers(dialog);
         await page.keyboard.press('Escape');
         await expect(dialog).toBeHidden();
 

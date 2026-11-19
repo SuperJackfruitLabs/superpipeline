@@ -78,15 +78,15 @@ Glyphs the references draw that vibekit 0.0.1 has no icon for. The app draws the
 | SP-Dlg-* | icon `coin` | mockup-local SVG path | product glyph in `PRODUCT_ICONS` (`parts/icons.ts`), drawn in vibekit's 24 × 24 stroke frame | Tasks 37–39: no vibekit icon in 0.0.8 |
 | SP-Dlg-* | icon `swatch` | mockup-local SVG path | product glyph in `PRODUCT_ICONS` (`parts/icons.ts`), drawn in vibekit's 24 × 24 stroke frame | Tasks 37–39: no vibekit icon in 0.0.8 |
 | SP-Dlg-* | icon `power` | mockup-local SVG path | product glyph in `PRODUCT_ICONS` (`parts/icons.ts`), drawn in vibekit's 24 × 24 stroke frame | Tasks 37–39: no vibekit icon in 0.0.8 |
-| SP-Card-Daylight, SP-Card-States-Daylight | icon `open-window` | mockup-local SVG path | product glyph in `PRODUCT_ICONS` (`parts/icons.ts`), drawn in vibekit's 24 × 24 stroke frame | Task 20: no vibekit icon in 0.0.3 |
-| SP-Card-Daylight, SP-Card-States-Daylight | icon `edit` | mockup-local SVG path | product glyph in `PRODUCT_ICONS` (`parts/icons.ts`), drawn in vibekit's 24 × 24 stroke frame | Task 20: no vibekit icon in 0.0.3 |
-| SP-Card-Daylight, SP-Card-States-Daylight | icon `pin` | mockup-local SVG path | product glyph `pushpin` in `PRODUCT_ICONS` (renamed in 0.0.9 adoption: vibekit 0.0.9 adds a location `pin`) (`parts/icons.ts`), drawn in vibekit's 24 × 24 stroke frame | Task 20: no vibekit icon in 0.0.3 |
-| SP-Card-Daylight, SP-Card-States-Daylight | icon `send` | mockup-local SVG path | product glyph in `PRODUCT_ICONS` (`parts/icons.ts`), drawn in vibekit's 24 × 24 stroke frame | Task 20: no vibekit icon in 0.0.3 |
-| SP-Card-Daylight, SP-Card-States-Daylight | icon `archive` | mockup-local SVG path | product glyph in `PRODUCT_ICONS` (`parts/icons.ts`), drawn in vibekit's 24 × 24 stroke frame | Task 20: no vibekit icon in 0.0.3 |
-| SP-Card-Daylight, SP-Card-States-Daylight | icon `trash` | mockup-local SVG path | product glyph in `PRODUCT_ICONS` (`parts/icons.ts`), drawn in vibekit's 24 × 24 stroke frame | Task 20: no vibekit icon in 0.0.3 |
-| SP-Card-Daylight, SP-Card-States-Daylight | icon `flag` | mockup-local SVG path | product glyph in `PRODUCT_ICONS` (`parts/icons.ts`), drawn in vibekit's 24 × 24 stroke frame | Task 20: no vibekit icon in 0.0.3 |
-| SP-Card-Daylight, SP-Card-States-Daylight | icon `seal` | mockup-local SVG path | product glyph in `PRODUCT_ICONS` (`parts/icons.ts`), drawn in vibekit's 24 × 24 stroke frame | Task 20: no vibekit icon in 0.0.3 |
-| SP-Card-Daylight, SP-Card-States-Daylight | icon `restore` | mockup-local SVG path | product glyph in `PRODUCT_ICONS` (`parts/icons.ts`), drawn in vibekit's 24 × 24 stroke frame | Task 20: no vibekit icon in 0.0.3 |
+| * | icon `open-window` | mockup-local SVG path | product glyph in `PRODUCT_ICONS` (`parts/icons.ts`), drawn in vibekit's 24 × 24 stroke frame | Task 20: no vibekit icon in 0.0.3 |
+| * | icon `edit` | mockup-local SVG path | product glyph in `PRODUCT_ICONS` (`parts/icons.ts`), drawn in vibekit's 24 × 24 stroke frame | Task 20: no vibekit icon in 0.0.3 |
+| * | icon `pin` | mockup-local SVG path | product glyph `pushpin` in `PRODUCT_ICONS` (renamed in 0.0.9 adoption: vibekit 0.0.9 adds a location `pin`) (`parts/icons.ts`), drawn in vibekit's 24 × 24 stroke frame | Task 20: no vibekit icon in 0.0.3 |
+| * | icon `send` | mockup-local SVG path | product glyph in `PRODUCT_ICONS` (`parts/icons.ts`), drawn in vibekit's 24 × 24 stroke frame | Task 20: no vibekit icon in 0.0.3 |
+| * | icon `archive` | mockup-local SVG path | product glyph in `PRODUCT_ICONS` (`parts/icons.ts`), drawn in vibekit's 24 × 24 stroke frame | Task 20: no vibekit icon in 0.0.3 |
+| * | icon `trash` | mockup-local SVG path | product glyph in `PRODUCT_ICONS` (`parts/icons.ts`), drawn in vibekit's 24 × 24 stroke frame | Task 20: no vibekit icon in 0.0.3 |
+| * | icon `flag` | mockup-local SVG path | product glyph in `PRODUCT_ICONS` (`parts/icons.ts`), drawn in vibekit's 24 × 24 stroke frame | Task 20: no vibekit icon in 0.0.3 |
+| * | icon `seal` | mockup-local SVG path | product glyph in `PRODUCT_ICONS` (`parts/icons.ts`), drawn in vibekit's 24 × 24 stroke frame | Task 20: no vibekit icon in 0.0.3 |
+| * | icon `restore` | mockup-local SVG path | product glyph in `PRODUCT_ICONS` (`parts/icons.ts`), drawn in vibekit's 24 × 24 stroke frame | Task 20: no vibekit icon in 0.0.3 |
 
 ## Desktop shell frames vibekit 0.0.2 has no form for (Task 12)
 
@@ -140,34 +140,18 @@ The button-reset scoping above now reaches every reference that has one. Each re
 | SP-Card-\*, SP-CardPage-Studio, SP-List-\*, SP-Operate-\*, SP-Phone-\*, SP-Spend-\*, SP-Workspace-\* | `:where(button)`, `:where(.mh button)`, `:where(.ar) :where(button, …)`, `:where(.r button, …)` with `font: inherit` | reached `.vk-button` | `button:where(:not(.vk-button))` (same specificity) | Controller ruling: the board-family scoping, everywhere |
 | SP-List-Paper, SP-Operate-Paper | `.app { --mh-gutter }` | `var(--vk-space-7)` (48px): the masthead 8px wider each side than the board's | removed: the board's 56px gutter (nameplate, sections and edition at x 56, 1328 wide) | Controller ruling: one shell frame per vibe |
 | SP-Operate-Paper | `.paper` padding | `var(--vk-space-6) var(--vk-space-7) var(--vk-space-7)`: the page 48px from the edge, 8px wider each side than its own masthead and the board's page | `var(--vk-space-6) var(--mh-gutter, 56px) var(--vk-space-7)`: the page inside the 56px frame (content at x 56, 1328 wide) | Controller ruling: one shell frame per vibe (the row above fixed the masthead; the page kept the old 48px) |
-| SP-CardPage-Daylight | `textarea#dp-note[placeholder]` | For example: I sent a fresh DM to Melissa and Anna at 14:05; trace those two event IDs. | For example: what you checked, and what the agent should look at next. | §8.2-6 + plan ruling: the resume placeholder never names a card's specifics; the page ships the drawer's sentence |
-| SP-CardPage-Paper | `textarea#pg-note[placeholder]` | For example: I sent a fresh DM to each of them at 14:05; trace those. | For example: what you checked, and what the agent should look at next. | §8.2-6 + plan ruling (same) |
-| SP-CardPage-Studio | `textarea#cp-note[placeholder]` | Fresh DMs sent 14:05; trace those event IDs. | For example: what you checked, and what the agent should look at next. | §8.2-6 + plan ruling (same) |
-| SP-CardPage-Daylight | icon `mark-line` | mockup-local SVG path | product glyph in `PRODUCT_ICONS` (`parts/icons.ts`), drawn in vibekit's 24 × 24 stroke frame | Task 21: no vibekit icon in 0.0.4 |
-| SP-CardPage-Daylight | icon `comment` | mockup-local SVG path | product glyph in `PRODUCT_ICONS` (`parts/icons.ts`), drawn in vibekit's 24 × 24 stroke frame | Task 21: no vibekit icon in 0.0.4 |
-| SP-CardPage-Daylight | `select#dp-resume-at option[selected]` | 1 · Reported | 2 · Reproduce (this stage) | Ruling T20: Resume defaults to the card's current stage |
-| SP-CardPage-Paper | `select#pg-resume-at option[selected]` | I · Reported | II · Reproduce (this stage) | Ruling T20: Resume defaults to the card's current stage |
-| SP-CardPage-Studio | `select#cp-at option[value="reproduce"]` | not selected (the first option shows: 01 Reported) | `selected`: 02 Reproduce (this stage) | Ruling T20: Resume defaults to the card's current stage |
-| SP-CardPage-Quiet | `select#qp-resume-at option[selected]` | Stage 1: Reported | Stage 2: Reproduce (this stage) | Ruling T20: Resume defaults to the card's current stage |
-| SP-Card-Daylight | `select#dl-resume-at option[selected]` | 1 · Reported | 2 · Reproduce (this stage) | Ruling T20: Resume defaults to the card's current stage |
-| SP-Card-Paper | `select#pp-resume-at option[selected]` | 1 · Reported | 2 · Reproduce (this stage) | Ruling T20: Resume defaults to the card's current stage |
-| SP-Card-Studio | `select#cw-at option[value="reproduce"]` | not selected (the first option shows: 01 Reported) | `selected`: 02 Reproduce (this stage) | Ruling T20: Resume defaults to the card's current stage |
-| SP-Card-Quiet | `select#qt-resume-at option[selected]` | Stage 1: Reported | Stage 2: Reproduce (this stage) | Ruling T20: Resume defaults to the card's current stage |
-| SP-Card-Paper | `button.pp-danger` (Delete card) | `vk-button--primary` + an inset-outline override | vibekit's `vk-button--danger` (the ink outline with a verb and its object) | Fix round 1: Delete card is vibekit's danger Button on every card surface |
-| SP-Card-Quiet | `button.qt-danger` (Delete card) | `vk-button--primary` + an inset-outline override | vibekit's `vk-button--danger` (the ink outline with a verb and its object) | Fix round 1: Delete card is vibekit's danger Button on every card surface |
-| SP-Card-States-Quiet | manifest `h` | 2422 | 2496 | Fix round 1: the artboard clipped cell E's panel padding (the mockup's own content is 2496 tall); the screenshot is the full page |
+| * | icon `mark-line` | mockup-local SVG path | product glyph in `PRODUCT_ICONS` (`parts/icons.ts`), drawn in vibekit's 24 × 24 stroke frame | Task 21: no vibekit icon in 0.0.4 |
+| * | icon `comment` | mockup-local SVG path | product glyph in `PRODUCT_ICONS` (`parts/icons.ts`), drawn in vibekit's 24 × 24 stroke frame | Task 21: no vibekit icon in 0.0.4 |
 
 ## vibekit 0.0.5 adoption
 
 | Artboard | Selector | Was | Now | Ruling |
 |---|---|---|---|---|
-| SP-Card-Studio | `.cd-tabs` gap | `0 22px` | `0 24px` | vibekit 0.0.5 report concern 3: AgentPod's approved panels mockup and the Tabs sheet draw 24px; vibekit keeps 24px |
 
 ## vibekit 0.0.6 adoption
 
 | Artboard | Selector | Was | Now | Ruling |
 |---|---|---|---|---|
-| SP-Card-Paper | `.pp-scrim` background | `color-mix(in oklch, var(--vk-color-text) 45%, transparent)` | `var(--vk-scrim)` | adopt 0.0.6 step 6: the scrim is vibekit Drawer's (the `.dw` row above); the mockup's text-mix turns light in the derived dark (125 grey over the board where vibekit darkens it to 28), which the two extra C-08 rectangles had hidden |
 
 ## vibekit 0.0.7 adoption: the reference stylesheet
 
@@ -234,9 +218,6 @@ The four phone card references hand-drew their buttons (`.go`, `.send`, `.sbtn`,
 
 | Artboard | Selector | Was | Now | Ruling |
 |---|---|---|---|---|
-| SP-Phone-Card-Daylight, -Paper, -Quiet, -Studio | `.go`, `.send`, `.sbtn`, `.ar-btn`, `.ar-btn2` | hand-drawn tiles | `Button` primary / secondary | vibekit's canonical components are the design truth (fix round 1) |
-| SP-Phone-Card-Daylight, -Paper, -Quiet, -Studio | Delete card | raw "Delete card..." (`.sbtn.danger`, Studio inline outline) | `Button variant="danger"`, label "Delete card" | same; the label is the exact name the vibes e2e reads |
-| SP-Phone-Card-Daylight, -Paper, -Quiet, -Studio | `#resume-at` | "1 · Reported" selected | "2 · Reproduce (where it stopped)" selected | resume defaults to the current stage |
 
 ## Dialogs: the board behind stays behind
 
@@ -305,20 +286,11 @@ The SP-Dlg-Appearance artboards were 1200px tall and `.art` clipped the 1237–1
 
 | Artboard | Selector | Was | Now | Ruling |
 |---|---|---|---|---|
-| SP-Card-* and SP-CardPage-* (all 8) | the brief's raw-JSON row: the Copy button after View raw JSON | Copy drawn beside the closed toggle | removed: Copy appears only while the JSON is shown, beside the one toggle | Operator issue O8 (2026-10-13): one raw-JSON toggle and one Copy, Copy only while the JSON is shown |
-| SP-Card-* and SP-CardPage-* (all 8) | the card-actions Delete card button | the dark primary Button (`vk-button--primary` with a page restyle) in Daylight and the Paper and Quiet pages, `vk-button--danger` in the Paper and Quiet drawers, an inline-restyled `ar-btn2` in Studio | vibekit's quiet Button (`vk-button vk-button--quiet`), no inline style; Archive stays the secondary action; the existing confirmation is unchanged | Wave 1 audit #9 (2026-10-13): Delete is not the primary action |
-| SP-Card-* and SP-CardPage-* (all 8) | the empty Plan block ("Agent plan · none yet", "error-eric did not post a plan for this card.", Quiet's "Plan: None yet.") and the empty Decisions block ("Decisions: none yet.", Quiet's Decisions section) | drawn with nothing to show and nothing to do | removed: a section with nothing to show and no action is hidden; sections that offer an action (Project, Comments, Links) stay | Operator ruling (2026-10-13, O7): empty sections stay out of the way |
-| SP-Card-Daylight | `.dl-groups` and the brief's plan/project grid | two columns, so a lone "Other details" group sat in a narrow left column | one column: the brief uses the full drawer width | Operator issue O2 (2026-10-13): the Daylight brief uses the full drawer width |
 
 ### Fix round 1 (review of Track X)
 
 | Artboard | Selector | Was | Now | Ruling |
 |---|---|---|---|---|
-| SP-Card-Paper, SP-CardPage-Paper | the facts line's "No due date" and "No labels" | printed | removed (nothing to show, nothing to do; Edit card sets both) | Operator ruling (2026-10-13, O7) |
-| SP-Card-Paper | the brief's criteria/plan grid | two columns (1.4fr / 1fr) with the plan column empty | one column: with Plan hidden the criteria take the full width | Same |
-| SP-Card-Paper | manifest `h` | 3500 | 3261: the reference's drawn height once the empty sections went (its scrim ended there; below it the reference drew ground) | Fix round 1: raise or lower the artboard to its content |
-| SP-Phone-Card-Daylight, -Paper, -Quiet, -Studio | the empty Plan ("error-eric did not post a plan for this card.") and empty Decisions ("No decisions on this card yet.") blocks | drawn | removed | Operator ruling (2026-10-13, O7) |
-| SP-Phone-Card-Daylight, -Paper, -Quiet | the "Show tool calls" button | one toggle after the run list, for every run at once | inside the open (newest) run, after its events: each run has its own toggle | Track X fix round 1 (R4): phone parity with the drawers' per-attempt tool calls (O15) |
 ## Wave 1 Track Y: live-UI fixes (2026-10-13)
 
 | Artboard | Selector | Was | Now | Ruling |

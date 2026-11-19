@@ -11,7 +11,7 @@
   import { RESUME_NOTE_LABEL, RESUME_PLACEHOLDER, resumeLead } from './card-words';
   import { RESUME_NOTE_MAX } from './resume-model.svelte';
 
-  let { model: m }: { model: CardModel } = $props();
+  let { model: m, onCancel }: { model: CardModel; onCancel?: () => void } = $props();
   const r = $derived(m.resume);
   const targets = $derived(r.targets.filter((t) => t.allowed));
   const why = $derived(m.lead?.sentence ?? m.card?.needsHuman?.summary ?? null);
@@ -42,6 +42,7 @@
   <div class="cv-act">
     <Button type="submit" variant="primary" aria-disabled={r.busy ? 'true' : undefined} data-busy={r.busy ? 'true' : undefined}>Resume</Button>
     <Button variant="secondary" onclick={() => m.openMove()}>Move</Button>
+    {#if onCancel}<Button variant="quiet" onclick={onCancel}>Cancel</Button>{/if}
   </div>
   <span class="vk-visually-hidden" role="status">{r.busy ? 'Sending…' : ''}</span>
 </form>

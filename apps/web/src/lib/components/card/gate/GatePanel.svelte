@@ -16,8 +16,8 @@
   import { GATE_NOTE_ERROR, GATE_NOTE_LABEL, GATE_NOTE_NEEDED, gateChoiceWords, gateConflictSentence, signingMeta } from '../card-words';
   import { GATE_NOTE_MAX, GateDecisionModel, roleOf, sealOf } from './gate-decision.svelte';
 
-  let { boardId, gate, error, conflict, conflictWho, onResponse, onRefresh, ask, prevStage, onMove }: GateBinding & {
-    ask: { lead: string; rest: string }; prevStage: string | null; onMove: () => void;
+  let { boardId, gate, error, conflict, conflictWho, onResponse, onRefresh, ask, prevStage, onMove, onCancel }: GateBinding & {
+    ask: { lead: string; rest: string }; prevStage: string | null; onMove: () => void; onCancel?: () => void;
   } = $props();
 
   const model = new GateDecisionModel(() => ({ boardId, gate, onResponse }));
@@ -80,6 +80,7 @@
   <div class="cv-act">
     <Button type="submit" variant="primary" aria-disabled={model.busy ? 'true' : undefined} data-busy={model.busy ? 'true' : undefined}>{picked?.title ?? 'Send decision'}</Button>
     <Button variant="secondary" onclick={onMove}>Move</Button>
+    {#if onCancel}<Button variant="quiet" onclick={onCancel}>Cancel</Button>{/if}
     {#if conflict}
       <div class="cv-alert" role="alert"><b>Not recorded.</b> {gateConflictSentence(conflict, conflictWho)} <Button variant="quiet" onclick={() => onRefresh()}>Refresh to see it</Button></div>
     {:else if error}

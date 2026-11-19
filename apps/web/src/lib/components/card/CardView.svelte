@@ -37,13 +37,20 @@
   /** Sections under the title: h2 under a page's h1, h3 under a drawer's h2. */
   const level = $derived<2 | 3>(surface === 'page' ? 2 : 3);
   const lead = $derived(m.lead);
+  /** Esc closes the card where it can be closed, unless something inside it already took the key. */
+  function escape(e: KeyboardEvent): void {
+    if (e.key !== 'Escape' || e.defaultPrevented || !onClose) return;
+    e.preventDefault();
+    onClose();
+  }
   const details = $derived<StageDetail[]>(
     m.stages.map((_, i) => (i === m.stageIndex && !m.archived ? { who: trackWho(!!lead?.needsYou, m.agent.name, m.ageHours), needs: !!lead?.needsYou } : {})),
   );
 </script>
 
 {#if m.card}
-  <article class="cv" data-surface={surface} aria-labelledby={surface === 'gallery' ? undefined : 'drawer-title'}>
+  <!-- svelte-ignore a11y_no_noninteractive_element_interactions: Esc from any control inside the card closes it -->
+  <article class="cv" data-surface={surface} aria-labelledby={surface === 'gallery' ? undefined : 'drawer-title'} onkeydown={escape}>
     <CardHead model={m} {surface} {onClose} {boardHref} {pageHref} />
     <div class="cv-track" data-block="track">
       <StageTrack form="board" stages={m.stages.map((s) => s.name)} current={m.stageIndex} status={m.trackStatus} {details}

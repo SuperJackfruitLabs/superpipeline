@@ -11,7 +11,7 @@
   import { QUESTION_FREE_LABEL, QUESTION_ONLY_LABEL, questionLead } from '../card-words';
   import ApprovalDetail from './ApprovalDetail.svelte';
 
-  let { model, elicitation, agent, onMove }: QuestionBinding & { onMove: () => void } = $props();
+  let { model, elicitation, agent, onMove, onCancel }: QuestionBinding & { onMove: () => void; onCancel?: () => void } = $props();
   const id = $derived(`q-answer-${elicitation.id}`);
   const group = $derived(`q-${elicitation.id}`);
   /** The picked choice, from the radios' change (Choice keeps its own binding). */
@@ -45,6 +45,7 @@
   <div class="cv-act">
     <Button type="submit" variant="primary" aria-disabled={model.answering ? 'true' : undefined} data-busy={model.answering ? 'true' : undefined}>Answer</Button>
     <Button variant="secondary" onclick={onMove}>Move</Button>
+    {#if onCancel}<Button variant="quiet" onclick={onCancel}>Cancel</Button>{/if}
   </div>
   <span class="vk-visually-hidden" role="status">{model.answering ? 'Sending…' : ''}</span>
 </form>

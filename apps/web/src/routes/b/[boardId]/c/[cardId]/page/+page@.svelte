@@ -33,7 +33,7 @@
 {#if !ready && failure}
   <CardPageMissing kind={failure === 'missing' ? 'gone' : 'error'} boardName="" boardHref="/" onRetry={() => app.retry()} />
 {:else if !ready}
-  <CardPageMissing kind="loading" boardName="" boardHref="/b/{boardId}" />
+  <CardPageMissing kind="loading" boardName="" boardHref="/b/{boardId}" onRetry={() => app.retry()} />
 {:else if !model.card}
   <CardPageMissing kind="missing" boardName={model.boardName} boardHref={model.boardHref} />
 {:else if viewport.narrow}
