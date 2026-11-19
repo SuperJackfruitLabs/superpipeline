@@ -818,7 +818,8 @@ class AppStore {
     const dom = typeof document !== 'undefined';
     let refusal: string | null = null;
     const ok = await optimistic({
-      items: () => (dom ? [...document.querySelectorAll('[data-card-id]')] : []),
+      // The lane's slots, which carry the board's own motion (Lane's animate:flip): the glide and the flip move one element.
+      items: () => (dom ? [...document.querySelectorAll('[data-card-slot]')] : []),
       apply: () => set(toStageKey),
       revert: () => set(from),
       subject: () => (dom ? document.querySelector<HTMLElement>(`[data-card-id="${CSS.escape(cardId)}"]`) : null),

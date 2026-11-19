@@ -6,6 +6,7 @@
    * card that waits on you (`data-needs`) in its own way, never with words of its own. A tile can be dragged to any stage.
    */
   import { Button } from '@superjackfruitlabs/vibekit-ui';
+  import { flashOnChange } from '@superjackfruitlabs/vibekit-ui/motion';
   import { app } from '$lib/stores/app.svelte';
   import { cardDraggable } from '$lib/dnd';
   import { cardKeys, openLabel } from './open-label';
@@ -16,6 +17,8 @@
   let { s, onmove }: { s: CardSummary; onmove: () => void } = $props();
 
   const line = $derived(stateLine(s));
+  /** What the tile says, without its age: a live change to it flashes the tile once (rule 9). */
+  const version = $derived(`${s.title}|${line.text}|${line.needs}|${s.priority}|${s.labels.map((l) => l.id).join(',')}|${s.moreLabels}`);
   /** Alt with an arrow moves the card one stage along, as on every board before. */
   function step(delta: -1 | 1): void {
     const stages = [...(app.board?.stages ?? [])].sort((a, b) => a.order - b.order);
@@ -24,7 +27,7 @@
   }
 </script>
 
-<article class="bv-tile" data-row="card" data-card-id={s.id} data-needs={line.needs ? '1' : '0'} use:cardDraggable={{ cardId: s.id }}>
+<article class="bv-tile" data-row="card" data-card-id={s.id} data-needs={line.needs ? '1' : '0'} use:cardDraggable={{ cardId: s.id }} use:flashOnChange={version}>
   <h3 class="bv-t">
     <button
       type="button"

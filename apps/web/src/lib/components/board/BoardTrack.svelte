@@ -6,6 +6,7 @@
    * On a phone the track stays horizontal and scrolls sideways when it must.
    */
   import { StageTrack, type StageDetail } from '@superjackfruitlabs/vibekit-ui';
+  import { replay } from '@superjackfruitlabs/vibekit-ui/motion';
   import { app } from '$lib/stores/app.svelte';
   import { trackCellDropTarget } from '$lib/dnd';
 
@@ -38,6 +39,22 @@
     const watch = new MutationObserver(bind);
     watch.observe(el, { childList: true, subtree: true });
     return () => { watch.disconnect(); for (const t of targets) t.destroy?.(); };
+  });
+
+  // A stage's count that changes live bumps once in its cell (rule 9), as a lane's count does; never on
+  // the first draw, and nothing under reduced motion (vibekit's `replay` reads `data-motion`).
+  let said: Map<string, string> | null = null;
+  $effect(() => {
+    const now = new Map(keys.map((k, i) => [k, `${details[i]?.count ?? ''}|${details[i]?.who ?? ''}`]));
+    const was = said;
+    said = now;
+    if (!was || !wrap) return;
+    const cells = [...wrap.querySelectorAll<HTMLElement>('li.vk-stages__step')];
+    keys.forEach((k, i) => {
+      if (was.get(k) === now.get(k)) return;
+      const n = cells[i]?.querySelector<HTMLElement>('.vk-stages__detail');
+      if (n) replay(n, 'vk-bump');
+    });
   });
 </script>
 

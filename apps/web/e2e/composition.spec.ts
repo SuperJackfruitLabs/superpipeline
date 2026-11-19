@@ -72,6 +72,32 @@ async function liveChange(page: Page, request: APIRequestContext): Promise<strin
   return [...seen];
 }
 
+/** Animations running inside the board's lanes and track (the masthead's own motion is not the board's). */
+const runningOnBoard = (page: Page) => page.evaluate(() => document.getAnimations()
+  .filter((a) => a.playState === 'running' || a.pending)
+  .flatMap((a) => {
+    const t = a.effect instanceof KeyframeEffect ? a.effect.target : null;
+    if (!(t instanceof Element) || !t.closest('.bv-lanes, .bv-track')) return [];
+    const name = a instanceof CSSAnimation ? a.animationName : a.constructor.name;
+    return [`${name} on ${t.tagName.toLowerCase()}.${t.classList[0] ?? ''}`];
+  }));
+
+/** A live event on the open board, from another client: Developer Experience's first reported card moves on to Reproduce. */
+async function boardLiveChange(page: Page, request: APIRequestContext): Promise<string[]> {
+  const card = 'card_rl_devex_001';
+  const arrived = page.locator(`[data-lane="reproduce"] [data-card-id="${card}"]`);
+  await expect(page.locator(`[data-lane="reported"] [data-card-id="${card}"]`)).toHaveCount(1);
+  const res = await request.post(`${API}/v1/boards/${REALISTIC_BOARD_IDS.devex}/cards/${card}/move`, { headers: AS_OWNER, data: { toStageKey: 'reproduce' } });
+  expect(res.ok(), await res.text()).toBe(true);
+  const seen = new Set<string>();
+  await expect.poll(async () => {
+    for (const a of await runningOnBoard(page)) seen.add(a);
+    return (await arrived.count()) === 1;
+  }, { timeout: 15_000, intervals: [50] }).toBe(true);
+  for (let i = 0; i < 6; i++) { for (const a of await runningOnBoard(page)) seen.add(a); await page.waitForTimeout(50); }
+  return [...seen];
+}
+
 // ── Height budget (§9): the Inbox under three screens and a board under about two, at 1440×900 ────────────────────
 
 /** The Inbox: three screens. */
@@ -131,6 +157,21 @@ test.describe('on the realistic workspace', () => {
     await page.evaluate(() => document.documentElement.setAttribute('data-motion', 'reduce'));
     expect(await running(page), 'reduce: nothing runs before the change').toEqual([]);
     const reduced = await liveChange(page, request);
+    expect(reduced, 'reduce: nothing animates').toEqual([]);
+  });
+
+  test('board: motion honours reduce', async ({ page, request }) => {
+    await page.emulateMedia({ reducedMotion: 'no-preference' });
+    await openBoard(page, 'daylight', REALISTIC_BOARD_IDS.devex, 1440);
+    await page.waitForTimeout(1500); // the entrance settles
+    const on = await boardLiveChange(page, request);
+    expect(on.length, `motion on: the change animates (${on.join(', ')})`).toBeGreaterThan(0);
+
+    await seedRealistic(request);
+    await openBoard(page, 'daylight', REALISTIC_BOARD_IDS.devex, 1440);
+    await page.evaluate(() => document.documentElement.setAttribute('data-motion', 'reduce'));
+    expect(await runningOnBoard(page), 'reduce: nothing runs before the change').toEqual([]);
+    const reduced = await boardLiveChange(page, request);
     expect(reduced, 'reduce: nothing animates').toEqual([]);
   });
 });

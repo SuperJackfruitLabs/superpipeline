@@ -6,8 +6,13 @@
    * LANE_PAGE tiles in the lane's order, then "Show N more" a step at a time, as the Inbox's groups do,
    * saying how many of the cards it would show want you. The header counts the whole lane. The whole lane is the
    * drop target, folded or not: a card released on it moves to this stage.
+   *
+   * Live changes move (rule 9), in the Inbox's vocabulary: a tile that arrives rises in, one that
+   * leaves fades and its space closes, the others glide (`flip`), and the count ticks and bumps.
+   * All of it is off under reduced motion (vibekit's motion reads `data-motion`).
    */
   import { Button, LoadMore } from '@superjackfruitlabs/vibekit-ui';
+  import { bumpOnChange, countUp, fade, flip, rise } from '@superjackfruitlabs/vibekit-ui/motion';
   import { app } from '$lib/stores/app.svelte';
   import { columnDropTarget } from '$lib/dnd';
   import { LANE_STEP, type LaneView } from './board-view-model';
@@ -39,12 +44,15 @@
 >
   <header class="bv-lanehead">
     <h2>{lane.stage.name}</h2>
-    <span class="bv-ct">{lane.count}<span class="vk-visually-hidden">{' '}{lane.count === 1 ? 'card' : 'cards'}</span></span>
+    <span class="bv-ct"><span use:countUp={{ value: lane.count }} use:bumpOnChange={lane.count}></span><span class="vk-visually-hidden">{' '}{lane.count === 1 ? 'card' : 'cards'}</span></span>
     <span class="bv-who">{lane.who}</span>
   </header>
   {#if lane.cards.length === 0}<p class="bv-none">No cards here yet.</p>{/if}
   {#each shown as s (s.id)}
-    <Tile {s} onmove={() => app.openMoveDialog(s.id)} />
+    <!-- The slot carries the motion (animate: needs the each block's own element); app.moveCard glides the same slots. -->
+    <div class="bv-slot" data-card-slot={s.id} in:rise out:fade animate:flip>
+      <Tile {s} onmove={() => app.openMoveDialog(s.id)} />
+    </div>
   {/each}
   {#if lane.paged && lane.fold !== null}
     <div class="bv-more">

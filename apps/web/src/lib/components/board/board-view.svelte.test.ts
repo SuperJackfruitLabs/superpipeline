@@ -5,9 +5,9 @@
  * board): the drag library cannot run in jsdom, so `$lib/dnd` is replaced by recorders that keep each
  * drop target's params, and a test drops by calling `onDrop`.
  */
-import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, fireEvent, render, screen, within } from '@testing-library/svelte';
-import { tick } from 'svelte';
+import { flushSync, mount, tick, unmount } from 'svelte';
 import { VIBES } from '@superjackfruitlabs/vibekit-ui';
 
 type DropParams = { stageKey: string; onDrop: (cardId: string) => void };
@@ -22,7 +22,7 @@ const { drops, target } = vi.hoisted(() => {
 });
 vi.mock('$lib/dnd', () => ({ cardDraggable: () => ({ update() {}, destroy() {} }), columnDropTarget: target('lane'), trackCellDropTarget: target('cell') }));
 
-import type { StaleCard } from '$lib/api';
+import type { BoardSnapshot, StaleCard } from '$lib/api';
 import { app } from '$lib/stores/app.svelte';
 import { noFilters } from '$lib/stores/card-filters';
 import { parityTree, primaryActionsPerRow, rawMachineText, truncatedNames } from '$lib/composition/guards';
@@ -30,6 +30,11 @@ import { renderInVibes } from '$lib/composition/render-vibes';
 import { REALISTIC_NOW_MS, REALISTIC_USER, realisticWorkspace } from '$lib/fixtures/realistic';
 import { buildBoardModel } from './board-model';
 import BoardView from './BoardView.svelte';
+import { durationOf, stubWebAnimations } from '$lib/test/web-animations';
+
+// The lanes' live motion runs on Web Animations, which jsdom lacks (motion is on here, as in a browser).
+const animations = stubWebAnimations();
+afterAll(() => animations.restore());
 
 beforeAll(() => {
   window.matchMedia = vi.fn().mockImplementation((q: string) => ({ matches: false, media: q, onchange: null, addEventListener() {}, removeEventListener() {}, addListener() {}, removeListener() {}, dispatchEvent: () => false }));
@@ -232,5 +237,55 @@ describe('the board in every vibe', () => {
     await tick();
     expect(screen.getByText('16 cards · 3 need you · 13 shipped · synced 03:24')).toBeTruthy();
     expect(screen.queryByText(/7 need you/)).toBeNull();
+  });
+});
+
+const modelOf = (b: BoardSnapshot) => buildBoardModel(b, b.cards, { agents: w.agents, members: [], labels: new Map(), nowMs: REALISTIC_NOW_MS, me: { id: REALISTIC_USER, name: 'Rakesh Gangwar', initials: 'RG' }, spend7d: undefined });
+/** The board, then a live read: one reported card is now worked by an agent, and a new card is reported. */
+async function liveChange(): Promise<{ host: HTMLElement; changed: HTMLElement; count: HTMLElement; stop: () => void }> {
+  const host = document.body.appendChild(document.createElement('div'));
+  const p = $state({ model: modelOf(devex), filters: noFilters() });
+  const view = mount(BoardView, { target: host, props: p });
+  flushSync();
+  animations.calls.length = 0;
+  const next: BoardSnapshot = {
+    ...devex,
+    cards: [
+      ...devex.cards.map((c) => (c.id === 'card_rl_devex_002' ? { ...c, state: 'working' as const, delegateAgentId: 'agt_rl_coder_kai' } : c)),
+      { ...req(devex.cards.find((c) => c.id === 'card_rl_devex_003'), 'a reported card'), id: 'card_rl_devex_new', title: 'A bug reported just now' },
+    ],
+  };
+  app.board = next;
+  p.model = modelOf(next);
+  flushSync();
+  await tick();
+  const changed = req(host.querySelector<HTMLElement>('[data-card-id="card_rl_devex_002"]'), 'the changed tile');
+  const count = req(host.querySelector<HTMLElement>('[data-lane="reported"] .bv-ct > span'), 'the Reported count');
+  return { host, changed, count, stop: () => { void unmount(view); host.remove(); } };
+}
+
+describe('the board: live changes move (rule 9)', () => {
+  it('with motion on, the new tile rises in, the changed tile flashes and the lane count ticks and bumps', async () => {
+    const { host, changed, count, stop } = await liveChange();
+    try {
+      expect(host.querySelector('[data-card-id="card_rl_devex_new"]')).toBeTruthy();
+      expect(animations.calls.length, 'something animates').toBeGreaterThan(0);
+      expect(changed.classList.contains('vk-flash'), 'the changed tile flashes').toBe(true);
+      expect(count.classList.contains('vk-bump'), 'the count bumps').toBe(true);
+    } finally { stop(); }
+  });
+
+  it('under data-motion="reduce" the same change moves nothing', async () => {
+    document.documentElement.setAttribute('data-motion', 'reduce');
+    try {
+      const { host, changed, count, stop } = await liveChange();
+      try {
+        expect(host.querySelector('[data-card-id="card_rl_devex_new"]')).toBeTruthy();
+        expect(count.textContent).toBe('4');
+        expect(animations.calls.filter((c) => durationOf(c) > 0), 'nothing runs for a while').toEqual([]);
+        expect(changed.classList.contains('vk-flash')).toBe(false);
+        expect(count.classList.contains('vk-bump')).toBe(false);
+      } finally { stop(); }
+    } finally { document.documentElement.removeAttribute('data-motion'); }
   });
 });

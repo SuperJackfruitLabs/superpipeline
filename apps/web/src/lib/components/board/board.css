@@ -32,6 +32,8 @@
 .bv-who { margin-left: auto; min-width: 0; color: var(--vk-color-muted); font: var(--vk-type-meta); overflow-wrap: anywhere; }
 .bv-none { margin: 0; color: var(--vk-color-muted); font: var(--vk-type-meta); }
 .bv-more { justify-self: start; }
+/* The tile's slot in its lane: it carries the live motion (rise, fade, flip) and is otherwise the tile's box. */
+.bv-slot { display: grid; min-width: 0; }
 
 /* A tile: title, chips, one state line, a quiet Move. The title's ::after covers the tile, so the whole tile opens the card. */
 .bv-tile { position: relative; display: grid; gap: 6px; padding: 12px 14px; min-width: 0; }
@@ -81,7 +83,7 @@
 [data-vibe="paper"] .bv-lanehead { padding-bottom: 6px; border-bottom: 1px solid var(--vk-color-rule); }
 [data-vibe="paper"] .bv-lanehead h2 { font: 600 20px/1.2 var(--vk-font-display); }
 [data-vibe="paper"] .bv-tile { padding: 10px 0; border-top: 1px solid var(--vk-color-line); }
-[data-vibe="paper"] .bv-lanehead + .bv-tile { border-top: 0; }
+[data-vibe="paper"] .bv-lanehead + .bv-slot > .bv-tile { border-top: 0; }
 [data-vibe="paper"] .bv-chip { border-radius: 0; background: transparent; box-shadow: inset 0 0 0 1px var(--vk-color-line); font: 600 11px/1.6 var(--vk-font-body); letter-spacing: 0.06em; text-transform: uppercase; }
 [data-vibe="paper"] .bv-tile[data-needs="1"] .bv-t::before { content: ""; display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 8px; vertical-align: 2px; background: var(--vk-color-signal); }
 

@@ -8,7 +8,7 @@
  */
 import { afterEach, beforeAll, describe, expect, it } from 'vitest';
 import { cleanup, fireEvent, render, screen, within } from '@testing-library/svelte';
-import { tick } from 'svelte';
+import { flushSync, mount, tick, unmount } from 'svelte';
 import { VIBES } from '@superjackfruitlabs/vibekit-ui';
 import ListView from './ListView.svelte';
 import { ListUi } from './list-ui.svelte';
@@ -222,5 +222,51 @@ describe('ListView', () => {
     render(ListView, listProps({ groups: [], hasCards: false }));
     expect(screen.getAllByText('No cards on this board')).toHaveLength(1);
     expect(screen.queryByText('No cards match these filters.')).toBeNull();
+  });
+});
+
+/** The List, then a live read: the first row's card now has a different priority. */
+async function liveChange(): Promise<{ tr: HTMLElement; others: HTMLElement[]; stop: () => void }> {
+  const host = document.body.appendChild(document.createElement('div'));
+  const p = $state(listProps({ ui: new ListUi() }));
+  const view = mount(ListView, { target: host, props: p });
+  flushSync();
+  await tick();
+  const first = p.groups[0].rows[0];
+  p.groups = p.groups.map((g, i) => (i === 0 ? { ...g, rows: g.rows.map((r, j) => (j === 0 ? { ...r, priorityText: 'P9', s: { ...r.s, priority: 9 } } : r)) } : g));
+  flushSync();
+  await tick();
+  const link = host.querySelector<HTMLElement>(`tr[data-row] [data-card-open="${first.s.id}"]`);
+  const tr = link?.closest<HTMLElement>('tr');
+  if (!tr) throw new Error('the changed row is not drawn');
+  const others = [...host.querySelectorAll<HTMLElement>('tr[data-row]')].filter((r) => r !== tr);
+  return { tr, others, stop: () => { void unmount(view); host.remove(); } };
+}
+describe('ListView: live changes move (rule 9)', () => {
+  it('with motion on, the changed row flashes once and the others stay still', async () => {
+    const { tr, others, stop } = await liveChange();
+    try {
+      expect(tr.classList.contains('vk-flash')).toBe(true);
+      expect(others.filter((r) => r.classList.contains('vk-flash'))).toEqual([]);
+    } finally { stop(); }
+  });
+  it('under data-motion="reduce" the row changes in place', async () => {
+    document.documentElement.setAttribute('data-motion', 'reduce');
+    try {
+      const { tr, stop } = await liveChange();
+      try {
+        expect(tr.textContent).toContain('P9');
+        expect(tr.classList.contains('vk-flash')).toBe(false);
+      } finally { stop(); }
+    } finally { document.documentElement.removeAttribute('data-motion'); }
+  });
+  it('a new page ("Show N more") is not a change: nothing flashes', async () => {
+    const base = listProps();
+    const many = base.groups.find((g) => g.label === 'Failing test')?.rows ?? [];
+    const big = Array.from({ length: 12 }, (_, i) => ({ key: `g${i}`, label: `Group ${i + 1}`, order: i, owner: null, rows: many.map((r) => ({ ...r, s: { ...r.s, id: `${r.s.id}_${i}` } })) }));
+    render(ListView, listProps({ groups: big, ui: new ListUi() }));
+    await fireEvent.click(screen.getByRole('button', { name: /^Show 6 more/ }));
+    await tick();
+    expect(document.querySelectorAll('tr[data-row].vk-flash')).toHaveLength(0);
   });
 });

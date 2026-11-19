@@ -7,7 +7,9 @@
    * as chosen, "Show N more", the keyboard line and the footer. Each row has one action, Move.
    * J / K pick a row, ↵ opens it, M moves it, S cycles the sort, R the grouping (G is the shell's
    * G I / G P / G C chord, so the List leaves it alone). The vibe reaches the
-   * table through vibekit's forms; no words differ between vibes.
+   * table through vibekit's forms; no words differ between vibes. Live changes move (rule 9): a row
+   * that moved glides, one that changed or arrived flashes (RowMotion: vibekit's table takes no
+   * transitions from outside); nothing under reduced motion.
    */
   import './list.css';
   import { DataTable, Face, LoadMore, StateLabel, type Column, type State } from '@superjackfruitlabs/vibekit-ui';
@@ -24,6 +26,7 @@
   import RowMoveMenu from './RowMoveMenu.svelte';
   import type { ListRow, ListSortKey, ListTone, ListViewProps } from './types';
   import { rowFocus } from '$lib/focus-row';
+  import { RowMotion, rowsByCard } from '$lib/motion/row-motion';
 
   let p: ListViewProps = $props();
   const ui = untrack(() => p.ui) ?? new ListUi();
@@ -51,6 +54,13 @@
   $effect(() => {
     if (ui.selected !== null && !flat.some((r) => r.s.id === ui.selected)) ui.selected = null;
   });
+
+  /** What each row says, over the whole list (paging is not a change); its age is left out, it moves every minute. */
+  const versions = $derived(new Map(p.groups.flatMap((g) => g.rows).map((r) => [r.s.id, [r.s.title, r.s.stageKey, stateText(r.state), r.agent?.name ?? r.unclaimedWord, r.priorityText, r.dueHuman, r.costText, r.labelNames.join(',')].join('|')])));
+  const view = $derived(JSON.stringify([p.groupBy, p.sort, p.filters]));
+  const motion = new RowMotion(() => rowsByCard(root));
+  $effect.pre(() => { void versions; void flat; untrack(() => motion.measure()); });
+  $effect(() => { motion.play(versions, view); });
 
   const columns: Column<ListRow>[] = [
     { key: 'priority', label: 'Priority', sortable: true, cell: priority },
