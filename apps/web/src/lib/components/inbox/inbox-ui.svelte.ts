@@ -11,6 +11,9 @@ import { MOVE_FAILED, moveAllStopped } from './inbox-words';
 
 export type InboxTab = 'needs' | 'running' | 'spend' | 'activity';
 
+/** The stages a Needs you row can move to: its Move menu's items, and whether M has anything to open. */
+export const rowMoves = (row: NeedRow) => moveTargets(row.stages, row.item.stageKey);
+
 /** The calls the reader's actions make, so a test can hand in a stand-in. */
 export interface InboxActions {
   resume(row: NeedRow, comment: string, toStageKey: string): Promise<string | null>;

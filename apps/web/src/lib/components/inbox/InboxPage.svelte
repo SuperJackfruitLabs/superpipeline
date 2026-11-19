@@ -14,16 +14,15 @@
   import { shellModel } from '$lib/components/shell/shell-model.svelte';
   import { app } from '$lib/stores/app.svelte';
   import { appearance } from '$lib/appearance.svelte';
-  import { moveTargets } from '../operate/operate-data';
   import KeysLine from '$lib/components/shell/KeysLine.svelte';
   import { INBOX_KEYS } from '$lib/keys';
   import SkeletonRows from '$lib/components/parts/SkeletonRows.svelte';
   import type { LiveUpdates } from '$lib/live/live-updates.svelte';
   import { usd } from '../operate/operate-words';
   import type { InboxFilters } from './inbox-filters.svelte';
-  import { inboxGroups, type InboxGroupKey } from './inbox-groups';
+  import { inboxGroups, rowOffer, type InboxGroupKey } from './inbox-groups';
   import type { InboxStore } from './inbox-model.svelte';
-  import { InboxUi, type InboxTab } from './inbox-ui.svelte';
+  import { InboxUi, rowMoves, type InboxTab } from './inbox-ui.svelte';
   import { CHECKING, footerLine, NEEDS_HEADING, NEEDS_NONE, NO_MATCH } from './inbox-words';
   import InboxHeadline from './InboxHeadline.svelte';
   import InboxScope from './InboxScope.svelte';
@@ -72,42 +71,66 @@
   function drawn(): string[] {
     return [...(root?.querySelectorAll<HTMLElement>('.ib-needs .ib-row[data-row]') ?? [])].map((el) => el.dataset.row ?? '');
   }
+  /**
+   * J / K: the next or previous drawn row becomes the selected one and takes focus on its title link, so a
+   * screen reader says the card (as the List's table moves focus to its row's link on J / K).
+   */
   function select(step: 1 | -1): boolean {
     const ids = drawn();
     if (ids.length === 0) return false;
     const i = ui.selected ? ids.indexOf(ui.selected) : -1;
-    ui.selected = ids[i === -1 ? 0 : Math.max(0, Math.min(ids.length - 1, i + step))] ?? null;
-    queueMicrotask(() => root?.querySelector('.ib-needs .ib-row[aria-current="true"]')?.scrollIntoView?.({ block: 'nearest' }));
+    const id = ids[i === -1 ? 0 : Math.max(0, Math.min(ids.length - 1, i + step))] ?? null;
+    ui.selected = id;
+    void reveal(id);
     return true;
+  }
+  async function reveal(id: string | null): Promise<void> {
+    await tick();
+    const row = id ? root?.querySelector<HTMLElement>(`.ib-needs .ib-row[data-row="${CSS.escape(id)}"]`) : null;
+    row?.querySelector<HTMLElement>('.ib-row__t a')?.focus({ preventScroll: true });
+    row?.scrollIntoView?.({ block: 'nearest' });
   }
   /** Focus in a Needs you row (Tab) selects it, so O, M and R act on what has focus, as on the List. */
   function onfocusin(e: FocusEvent): void {
     const id = (e.target as Element | null)?.closest<HTMLElement>('.ib-needs .ib-row[data-row]')?.dataset.row;
     if (id) ui.selected = id;
   }
+  /**
+   * A selection is only ever a row on screen: another tab, a filter that hides it, or a Move or Resume that
+   * takes it away clears it, so O, M and R never act on a row the reader cannot see (J starts again at the top).
+   */
+  $effect(() => {
+    void ui.tab;
+    void groups;
+    const id = ui.selected;
+    if (id) void dropIfGone(id);
+  });
+  async function dropIfGone(id: string): Promise<void> {
+    await tick();
+    if (ui.selected === id && !drawn().includes(id)) ui.selected = null;
+  }
 
   /**
    * The Inbox's row keys (INBOX_KEYS): J / K pick a row, O opens its card, R opens Resume's form on a
-   * row that offers Resume, M opens the Move menu on a row that offers Move. Never while typing (the
-   * filter's find field), in a dialog or menu, with a modifier, or over an open dialog; a key it does not
-   * use (G, F, N: the shell's) is left alone.
+   * row that offers Resume, M opens the Move menu on a row that offers Move (`rowOffer`, as InboxRow
+   * draws them). Never while typing (the filter's find field), in a dialog or menu, with a modifier, or
+   * over an open dialog; a key it does not use (G, F, N: the shell's) is left alone.
    */
   function onkeydown(e: KeyboardEvent): void {
     const t = e.target;
     if (e.defaultPrevented || e.metaKey || e.ctrlKey || e.altKey || loading || ui.tab !== 'needs') return;
     if (t instanceof Element && t.closest('input, textarea, select, [contenteditable="true"], [role="dialog"], [role="menu"]')) return;
     if (app.openCardId || app.composeOpen || app.moveCardId || app.filterOpen || app.boardSwitcherOpen || app.cmdkOpen || appearance.pickerOpen) return;
-    const at = entries.find((x) => x.item.id === ui.selected);
+    // Only a row still on screen (the effect above clears a stale one after the page redraws; this covers the moment between).
+    const at = ui.selected && drawn().includes(ui.selected) ? entries.find((x) => x.item.id === ui.selected) : undefined;
     const row = at ? rows.get(at.item.cardId) : undefined;
+    const offer = at && row ? rowOffer(at.group.key, rowMoves(row).length) : null;
     switch (e.key) {
       case 'j': case 'J': if (!select(1)) return; break;
       case 'k': case 'K': if (!select(-1)) return; break;
       case 'o': case 'O': if (!at) return; store.open(at.item.cardId, at.item.boardId); break;
-      case 'r': case 'R': if (!row || at?.group.key !== 'resume') return; void ui.openResume(row); break;
-      case 'm': case 'M':
-        if (!row || at?.group.key !== 'unclaimed' || moveTargets(row.stages, row.item.stageKey).length === 0) return;
-        ui.moveOpen = at.item.id;
-        break;
+      case 'r': case 'R': if (!row || offer !== 'resume') return; void ui.openResume(row); break;
+      case 'm': case 'M': if (!at || offer !== 'move') return; ui.moveOpen = at.item.id; break;
       default: return;
     }
     e.preventDefault();

@@ -9,11 +9,10 @@
   import { Button, LoadMore, Menu, SectionHeader } from '@superjackfruitlabs/vibekit-ui';
   import { bumpOnChange, countUp, fade, flip, rise } from '@superjackfruitlabs/vibekit-ui/motion';
   import type { NeedRow } from '../operate/operate-types';
-  import { moveTargets } from '../operate/operate-data';
   import { moveOptionLabel, RESUME_LABEL, resumeOptions } from '../operate/operate-words';
   import type { InboxGroup } from './inbox-groups';
   import type { InboxStore } from './inbox-model.svelte';
-  import { commonTargets, type InboxUi } from './inbox-ui.svelte';
+  import { commonTargets, rowMoves, type InboxUi } from './inbox-ui.svelte';
   import InboxRow from './InboxRow.svelte';
   import { GROUP_PAGE, moveAllLabel, RESUME_AT, SEND_BACK, showMore, STAFF_LABEL } from './inbox-words';
 
@@ -70,7 +69,7 @@
           version={version(row)}
           onopen={() => store.open(item.cardId, item.boardId)}
           onverb={() => { if (group.key === 'resume') { if (row) void ui.openResume(row); } else store.open(item.cardId, item.boardId); }}
-          moves={row ? moveTargets(row.stages, item.stageKey).map((s) => ({ key: s.key, label: moveOptionLabel('daylight', s, store.agents) })) : []}
+          moves={row ? rowMoves(row).map((s) => ({ key: s.key, label: moveOptionLabel('daylight', s, store.agents) })) : []}
           onmove={(key) => { if (row) void ui.move(row, key); }}
           refusal={ui.refusals[item.cardId] ?? null}
           resuming={ui.resuming === item.cardId}

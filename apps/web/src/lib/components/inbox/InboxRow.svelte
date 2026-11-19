@@ -12,7 +12,7 @@
   import { flashOnChange } from '@superjackfruitlabs/vibekit-ui/motion';
   import type { AttentionItem } from '$lib/components/attention/attention';
   import BoardChip from './BoardChip.svelte';
-  import type { InboxGroup } from './inbox-groups';
+  import { rowOffer, type InboxGroup } from './inbox-groups';
   import { ROW_STATE, rowMeta, SAID_LABEL } from './inbox-words';
 
   let { item, group, who, href, version, onverb, onopen, moves = [], onmove, refusal = null, resuming = false, selected = false, moveOpen = false, onmoveopen, children }: {
@@ -44,6 +44,8 @@
   } = $props();
 
   const state = $derived(ROW_STATE[group.key]);
+  /** The row's one verb (inbox-groups `rowOffer`, which the Inbox's keys read too). */
+  const offer = $derived(rowOffer(group.key, moves.length));
   const go = (e: MouseEvent, f: () => void) => { e.preventDefault(); f(); };
 </script>
 
@@ -59,14 +61,14 @@
     {@render children?.()}
   </div>
   <div class="ib-row__act">
-    {#if group.key === 'review' || group.key === 'answer'}
+    {#if offer === 'open'}
       <Button {href} onclick={(e: MouseEvent) => go(e, onverb)}>{group.verb}</Button>
-    {:else if group.key === 'resume'}
+    {:else if offer === 'resume'}
       <!-- While the note form is open its Send back to work is the row's one primary (rule 3); Cancel closes it. -->
       {#if !resuming}<Button aria-expanded="false" onclick={onverb}>{group.verb}</Button>{/if}
-    {:else if group.key === 'budget'}
+    {:else if offer === 'cap'}
       <Button href="/b/{item.boardId}/operate/telemetry">{group.verb}</Button>
-    {:else if moves.length > 0}
+    {:else if offer === 'move'}
       <Menu label="Move {item.title}" items={moves.map((m) => ({ label: m.label, onselect: () => onmove?.(m.key) }))} width={300} bind:open={() => moveOpen, (o) => onmoveopen?.(o)}>
         {#snippet trigger(props)}<button {...props} type="button" class="vk-button vk-button--quiet">{group.verb}</button>{/snippet}
       </Menu>

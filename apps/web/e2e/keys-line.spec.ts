@@ -69,6 +69,8 @@ test('the Inbox footer names its keys, and they work: J / K pick a row, R resume
   await expect(a).toHaveAttribute('aria-current', 'true');
   await page.keyboard.press('j');
   await expect(b).toHaveAttribute('aria-current', 'true');
+  // Said as the List says it: focus is on the selected card's title.
+  await expect(b.locator('.ib-row__t a')).toBeFocused();
   await expect(a).not.toHaveAttribute('aria-current', 'true');
   await page.keyboard.press('k');
   await expect(a).toHaveAttribute('aria-current', 'true');

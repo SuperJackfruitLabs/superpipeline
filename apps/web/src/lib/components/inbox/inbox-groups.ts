@@ -34,6 +34,20 @@ export interface InboxGroup {
   groupActions: ('move-all' | 'staff')[];
 }
 
+/** What a Needs you row offers (rule 3): open the card, Resume, Raise the cap, Move, or nothing. */
+export type RowOffer = 'open' | 'resume' | 'cap' | 'move' | null;
+
+/**
+ * The one verb a row of `group` offers, given how many stages it can move to: InboxRow draws it and
+ * the Inbox's keys (O, R, M) act on it, so the two cannot drift.
+ */
+export function rowOffer(group: InboxGroupKey, moves: number): RowOffer {
+  if (group === 'review' || group === 'answer') return 'open';
+  if (group === 'resume') return 'resume';
+  if (group === 'budget') return 'cap';
+  return moves > 0 ? 'move' : null;
+}
+
 /** The groups in their fixed order, empty ones left out; rows keep the order they were given in. */
 export function inboxGroups(items: AttentionItem[]): InboxGroup[] {
   return GROUP_ORDER.flatMap((key): InboxGroup[] => {

@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import type { AttentionItem, AttentionKind } from '$lib/components/attention/attention';
 import { itemsFromBoard } from '$lib/components/attention/attention';
 import { realisticWorkspace, REALISTIC_NOW_MS } from '$lib/fixtures/realistic';
-import { GROUP_OF, inboxGroups, inboxHeadline } from './inbox-groups';
+import { GROUP_OF, inboxGroups, inboxHeadline, rowOffer } from './inbox-groups';
 import { GROUP_EXPLANATION } from './inbox-words';
 
 const item = (kind: AttentionKind, n: number, extra: Partial<AttentionItem> = {}): AttentionItem => ({
@@ -63,5 +63,16 @@ describe('inbox groups', () => {
     expect(inboxHeadline(real, 3, 1, 'Rakesh', 'studio').h1).toBe('18 cards want you.');
     expect(inboxHeadline(real, 3, 1, 'Rakesh', 'studio').lede)
       .toBe('One review, one question, one stopped agent, one card over budget, and 14 cards nobody is set up to work. One running.');
+  });
+});
+
+describe('rowOffer: the one verb a row draws and its keys act on', () => {
+  it('opens on Review and Answer, resumes on Resume, raises the cap on Budget, moves an unclaimed card that can move', () => {
+    expect(rowOffer('review', 0)).toBe('open');
+    expect(rowOffer('answer', 3)).toBe('open');
+    expect(rowOffer('resume', 3)).toBe('resume');
+    expect(rowOffer('budget', 3)).toBe('cap');
+    expect(rowOffer('unclaimed', 2)).toBe('move');
+    expect(rowOffer('unclaimed', 0)).toBeNull();
   });
 });

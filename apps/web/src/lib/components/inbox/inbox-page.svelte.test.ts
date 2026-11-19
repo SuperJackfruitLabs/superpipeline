@@ -331,11 +331,38 @@ describe('InboxPage keys (INBOX_KEYS)', () => {
     expect(current()).toEqual([]);
     expect(await press('j')).toBe(true);
     expect(current()).toEqual([rows()[0]?.dataset.row]);
+    // Announced as the List's table does it: focus moves to the selected row's title link (the card's title).
+    expect(document.activeElement).toBe(rows()[0]?.querySelector('.ib-row__t a'));
     await press('j');
+    expect(document.activeElement).toBe(rows()[1]?.querySelector('.ib-row__t a'));
     expect(current()).toEqual([rows()[1]?.dataset.row]);
     await press('k');
     await press('K');
     expect(current()).toEqual([rows()[0]?.dataset.row]);
+  });
+
+  it('a selection the reader can no longer see is cleared: O does nothing, J starts at the top again', async () => {
+    const { store, ui, rows, current, press } = await keysPage();
+    const open = vi.spyOn(store, 'open').mockImplementation(() => {});
+    await press('j');
+    const first = rows()[0]?.dataset.row;
+    const other = rows()[1]?.querySelector('.ib-row__t a')?.textContent ?? '';
+    expect(current()).toEqual([first]);
+    // Filter the selected row away (find matches only another row's title).
+    store.filters.find = other;
+    await settle();
+    expect(rows().map((r) => r.dataset.row)).not.toContain(first);
+    expect(ui.selected).toBeNull();
+    expect(await press('o')).toBe(false);
+    expect(open).not.toHaveBeenCalled();
+    await press('j');
+    expect(current()).toEqual([rows()[0]?.dataset.row]);
+    // Another tab clears it too.
+    ui.tab = 'running';
+    await settle();
+    ui.tab = 'needs';
+    await settle();
+    expect(ui.selected).toBeNull();
   });
 
   it('O opens the selected row’s card', async () => {
