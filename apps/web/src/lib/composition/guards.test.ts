@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { afterEach, describe, expect, it } from 'vitest';
 import { Badge, VIBES } from '@superjackfruitlabs/vibekit-ui';
-import { parityTree, primaryActionsPerRow, rawMachineText, repeatedParagraphs, truncatedNames } from './guards';
+import { keysLine, parityTree, primaryActionsPerRow, rawMachineText, repeatedParagraphs, signatureSize, truncatedNames } from './guards';
 import { renderInVibes } from './render-vibes';
 
 const html = (s: string): Element => {
@@ -117,6 +117,46 @@ describe('parityTree', () => {
     expect(parityTree(paper)).toContain('region "Waiting on you"');
     expect(parityTree(paper)).toContain('textbox "Waiting on you filter"');
     expect(parityTree(daylight)).not.toBe(parityTree(paper));
+  });
+});
+
+const sigHead = (inner: string) => `<main><div class="head" data-signature>${inner}</div><p>Outside <b>anything</b></p></main>`;
+const ALLOWED = ['.head__h', '.head__lede'];
+const KEYS = 'N new card · F filter';
+const footed = (foot: string, after = '') => `<main><h1>Board</h1><p class="foot">${foot}</p>${after}</main>`;
+
+describe('signatureSize', () => {
+  it('passes a region holding only the allowed parts, whatever those parts hold', () => {
+    expect(signatureSize(html(sigHead('<h1 class="head__h">Inbox <span>18</span></h1><p class="head__lede">Three <a href="#">kinds</a></p>')), ALLOWED)).toEqual([]);
+  });
+  it('reports each child that is not an allowed part, and not its descendants', () => {
+    expect(signatureSize(html(sigHead('<h1 class="head__h">Inbox</h1><h2 class="extra">This week</h2><nav><a href="#">x</a></nav>')), ALLOWED))
+      .toEqual(['div.head > h2.extra', 'div.head > nav']);
+  });
+  it('never allows the region itself: wrapping a section and allowing the wrapper fails', () => {
+    expect(signatureSize(html('<section class="whole" data-signature><h2>Review</h2><ul><li>Row</li></ul></section>'), ['.whole'])).toEqual(['section.whole > h2', 'section.whole > ul']);
+  });
+  it('an empty allowed list passes only an empty region', () => {
+    expect(signatureSize(html('<div class="sig" data-signature></div>'), [])).toEqual([]);
+    expect(signatureSize(html('<div class="sig" data-signature><i></i></div>'), [])).toEqual(['div.sig > i']);
+  });
+});
+
+describe('keysLine', () => {
+  it('passes a footer that ends with the keys', () => {
+    expect(keysLine(html(footed(`3 cards · <span aria-label="Keyboard">${KEYS}</span>`)), KEYS)).toEqual([]);
+  });
+  it('ignores a live region or hidden text after the keys', () => {
+    expect(keysLine(html(footed(`<span aria-label="Keyboard">${KEYS}</span>`, '<span class="sr" role="status">Saved</span><i aria-hidden="true">x</i>')), KEYS)).toEqual([]);
+  });
+  it('reports a missing line, a second line, and other words', () => {
+    expect(keysLine(html(footed('3 cards')), KEYS)).toEqual(['0 keys lines, not one']);
+    expect(keysLine(html(footed(`<span aria-label="Keyboard">${KEYS}</span> <span aria-label="Keyboard">${KEYS}</span>`)), KEYS)).toEqual(['2 keys lines, not one']);
+    expect(keysLine(html(footed('<span aria-label="Keyboard">N new card</span>')), KEYS)).toEqual([`the keys say "N new card", not "${KEYS}"`]);
+  });
+  it('reports shown text after the keys: in its footer or later on the page', () => {
+    expect(keysLine(html(footed(`<span aria-label="Keyboard">${KEYS}</span> · synced`, '<p>More</p>')), KEYS))
+      .toEqual(['"· synced" after the keys (in p.foot)', '"More" after the keys (in p)']);
   });
 });
 

@@ -1,8 +1,8 @@
 <!-- apps/web/src/lib/components/settings/BoardSettingsView.svelte -->
 <script lang="ts">
   /**
-   * Board settings, the Settings composition for one board: the page head (the one `[data-signature]`
-   * slot, as on Settings), then tabs with counts: Stages (the pipeline editor, Save pipeline), Schedules
+   * Board settings, the Settings composition for one board: the way back, the page head (the one
+   * `[data-signature]` slot, as on Settings), then tabs with counts: Stages (the pipeline editor, Save pipeline), Schedules
    * (a table, New schedule), Labels (the labels this board's cards carry, counted here), Spending caps
    * (facts, changed in Spend), GitHub (the webhook, Save GitHub settings) and Name and profiles (its name, Rename; its agent
    * profiles, Add). One action per section; each section saves on its own.
@@ -130,8 +130,9 @@
 {/snippet}
 
 <div class="page set scr-settings">
+  <!-- The way back is an action, not the headline block, so it sits outside the signature (§11.6). -->
+  <a class="set-back" href="/b/{board.boardId}"><LineIcon name="chev-left" size={16} />Back to the board</a>
   <div class="set-head" data-signature>
-    <a class="set-back" href="/b/{board.boardId}"><LineIcon name="chev-left" size={16} />Back to the board</a>
     <p class="set-eyebrow">Board settings</p>
     <svelte:element this={heading} class="set-title">{board.name}</svelte:element>
     <p class="set-lede">{BOARD_SETTINGS_LEDE}</p>

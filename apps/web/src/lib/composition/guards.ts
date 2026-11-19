@@ -93,6 +93,53 @@ export function truncatedNames(root: Element, selector = '.vk-stages__name'): st
     .map((el) => norm(el.textContent ?? ''));
 }
 
+/** An element as a report names it: its tag, then its classes (`h2.extra`). */
+const tagAndClasses = (el: Element): string => [el.tagName.toLowerCase(), ...el.classList].join('.');
+
+/**
+ * §11.6: a signature region may hold only what a vibe is allowed to change, the headline block, the
+ * section-header ordinals and the scope control. `allowed` names those parts for the page (selectors);
+ * each child of a `[data-signature]` region must match one (what an allowed part holds is the part's
+ * own). The region itself never counts, so wrapping a whole section in `data-signature` does not pass
+ * by allowing the wrapper. Returns each child that is not allowed, as `region > child`; an empty
+ * `allowed` allows only an empty region.
+ */
+export function signatureSize(root: Element, allowed: string[]): string[] {
+  const sel = allowed.join(', ');
+  const regions = [...(root.matches(SIGNATURE) ? [root] : []), ...root.querySelectorAll(SIGNATURE)];
+  return regions.flatMap((region) => [...region.children]
+    // A nested region is checked on its own.
+    .filter((c) => !SKIP_TEXT.has(c.tagName) && !c.matches(SIGNATURE) && !(sel && c.matches(sel)))
+    .map((c) => `${tagAndClasses(region)} > ${tagAndClasses(c)}`));
+}
+
+/** Text a reader is not shown in the page's flow: announcements and hidden subtrees. */
+const NOT_SHOWN = '[role="status"], [role="alert"], [aria-live], [aria-hidden="true"], [hidden]';
+
+/**
+ * Rule 13: the page's footer ends with its keys. Exactly one `aria-label="Keyboard"` element under
+ * `root`, its words exactly `expected` (`keysText(...)` from `$lib/keys`), and no shown text after it
+ * in document order: the keys end their footer line, and that line ends the page. Live regions and
+ * aria-hidden text after it do not count. Returns what breaks the rule.
+ */
+export function keysLine(root: Element, expected: string): string[] {
+  const lines = [...root.querySelectorAll('[aria-label="Keyboard"]')];
+  if (lines.length !== 1) return [`${lines.length} keys lines, not one`];
+  const [line] = lines;
+  const out: string[] = [];
+  const said = norm(line.textContent ?? '');
+  if (said !== norm(expected)) out.push(`the keys say "${said}", not "${norm(expected)}"`);
+  const walker = root.ownerDocument.createTreeWalker(root, 4 /* NodeFilter.SHOW_TEXT */);
+  for (let n = walker.nextNode(); n; n = walker.nextNode()) {
+    const parent = n.parentElement;
+    if (!parent || line.contains(n) || !(line.compareDocumentPosition(n) & 4 /* FOLLOWING */)) continue;
+    if (SKIP_TEXT.has(parent.tagName) || parent.closest(NOT_SHOWN)) continue;
+    const t = norm(n.textContent ?? '');
+    if (t) out.push(`"${t}" after the keys (in ${tagAndClasses(parent)})`);
+  }
+  return out;
+}
+
 // ── Vibe parity: the accessibility tree as text ──────────────────────────────────────────────────
 
 /** The roles whose names and states make up the parity contract, as vibekit's harness lists them. */

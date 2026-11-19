@@ -6,10 +6,12 @@
 
 .set { display: grid; gap: var(--vk-space-4); min-width: 0; }
 
-/* The page head: eyebrow (or the way back), title, one lede line. */
+/* The page head: eyebrow, title, one lede line. */
 .set-head { display: grid; gap: 6px; padding: var(--vk-space-4) 0 var(--vk-space-3); }
 .set-eyebrow { margin: 0; color: var(--vk-color-muted); font: var(--vk-type-eyebrow); letter-spacing: 0.08em; text-transform: uppercase; }
 .set-back { display: inline-flex; align-items: center; gap: 4px; min-height: 44px; width: fit-content; color: var(--vk-color-muted); }
+/* Board settings: the way back sits above the head, outside its signature, at the head's own spacing. */
+.set-back + .set-head { margin-top: calc(-1 * var(--vk-space-4)); }
 .set-title { margin: 0; font: var(--vk-type-h1); font-stretch: var(--vk-type-h1-stretch); letter-spacing: -0.01em; overflow-wrap: anywhere; }
 .set-lede { margin: 0; max-width: 70ch; color: var(--vk-color-muted); }
 
