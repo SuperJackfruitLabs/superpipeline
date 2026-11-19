@@ -51,7 +51,6 @@
     "**/test-results/**",
     "docs-site/**",
     "landing/**",
-    "apps/web/vendor/**",
     "apps/web/static/**",
     "apps/web/src/lib/vendor/**",
     "packages/cli/src/skill-embedded.ts"
