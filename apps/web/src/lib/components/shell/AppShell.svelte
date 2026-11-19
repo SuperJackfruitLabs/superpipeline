@@ -42,7 +42,7 @@
     else if (action === 'crew') void goto(shellModel.crewHref);
     else if (action === 'compose' && props.primary) props.primary.onclick();
     else if (action === 'compose' && app.boardId) app.requestCompose();
-    else if (action === 'filter' && shellModel.filterAvailable) app.filterOpen = true;
+    else if (action === 'filter' && shellModel.filterAvailable) shellModel.openFilter();
     else return;
     e.preventDefault();
   }

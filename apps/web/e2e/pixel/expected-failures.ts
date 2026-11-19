@@ -56,12 +56,6 @@ export const EXPECTED_FAILURES: ReadonlySet<string> = new Set([
   'SP-Dlg-Palette-Studio·light', // 0.500% (vibekit 0.0.10, full run): vibekit CommandPalette rows (filter={false} since 0.0.9): Face tiles and keycaps rasterise differently from the reference's render
   'SP-Dlg-Reconnect-Daylight·dark', // 0.048% (vibekit 0.0.10, full run): broken blocks only: vibekit Button (Sign in again) rasterises differently from the reference's render
   'SP-Dlg-Reconnect-Daylight·light', // 0.108% (vibekit 0.0.10, full run): broken blocks only: vibekit Button (Sign in again) rasterises differently from the reference's render
-  'SP-Operate-Daylight·dark', // 0.041% (vibekit 0.0.10, full run): vibekit Daylight AppNav foot: the account (IM) sits 11px and the theme button 5px lower than the reference's rail foot
-  'SP-Operate-Daylight·light', // 0.013% (vibekit 0.0.10, full run): vibekit Daylight AppNav foot: the account (IM) sits 11px and the theme button 5px lower than the reference's rail foot
-  'SP-Operate-Quiet·dark', // 0.017% (vibekit 0.0.10, full run): vibekit Quiet AppNav draws the Operate count “(4 need you)” at 400 in ink where the reference sets it 700 in the signal colour
-  'SP-Operate-Quiet·light', // 0.018% (vibekit 0.0.10, full run): vibekit Quiet AppNav draws the Operate count “(4 need you)” at 400 in ink where the reference sets it 700 in the signal colour
-  'SP-Operate-Studio·dark', // 0.335% (vibekit 0.0.10, full run): the status line sits 52px lower than in the reference (vibekit AppShell pins it to the foot) and the rail icons differ
-  'SP-Operate-Studio·light', // 0.336% (vibekit 0.0.10, full run): the status line sits 52px lower than in the reference (vibekit AppShell pins it to the foot) and the rail icons differ
   'SP-Phone-Card-Daylight·dark', // 0.292% (vibekit 0.0.10, full run): vibekit Button text and icons rasterise differently from the reference's render, and the Resume note's Field placeholder
   'SP-Phone-Card-Daylight·light', // 0.313% (vibekit 0.0.10, full run): vibekit Button text and icons rasterise differently from the reference's render, and the Resume note's Field placeholder
   'SP-Phone-Card-Paper·dark', // 0.126% (vibekit 0.0.10, full run): vibekit Button text and icons rasterise differently from the reference's render, and the Resume note's Field placeholder

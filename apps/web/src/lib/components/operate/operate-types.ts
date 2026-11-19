@@ -38,7 +38,11 @@ export interface ActivityGroup {
   need: NeedRow | null;
 }
 
-export interface RunningRow { cardId: string; title: string; boardId: string; boardName: string; stageName: string; agentName: string | null; iconUrl: string | null; costUsd: number }
+export interface RunningRow {
+  cardId: string; title: string; boardId: string; boardName: string; stageName: string; agentName: string | null; iconUrl: string | null; costUsd: number;
+  /** When the card started this run (its state's start), when the API says. */
+  since: string | null;
+}
 
 export interface SpendView {
   /** Spend over the last 7 days, from `GET /v1/boards/:id/usage?window=7d` (OP-G8). */

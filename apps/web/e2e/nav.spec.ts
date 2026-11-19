@@ -27,12 +27,14 @@ test.beforeEach(async ({ page, request }) => {
 });
 
 const rail = (page: import('@playwright/test').Page) => page.getByRole('navigation', { name: 'Superpipeline' });
+/** The Inbox's board scope: vibekit QuickFilter, a radio group named Show (Studio: SmallMultiples). */
+const show = (page: import('@playwright/test').Page) => page.getByRole('radiogroup', { name: 'Show' });
 
 test('the app opens on the Inbox, and the nav reads Inbox, Plan, Crew', async ({ page }) => {
   await page.goto('/');
   await expect(page).toHaveURL(/\/inbox$/);
   await expect(page.getByRole('heading', { name: 'Needs you', exact: true })).toBeVisible();
-  await expect(page.getByRole('group', { name: 'Show' }).getByRole('button', { name: /^All boards/ })).toHaveAttribute('aria-pressed', 'true');
+  await expect(show(page).getByRole('radio', { name: /^All boards/ })).toBeChecked();
   const names = await rail(page).locator('.vk-appnav__list a').allTextContents();
   expect(names.map((n) => n.match(/Inbox|Plan|Crew/)?.[0])).toEqual(['Inbox', 'Plan', 'Crew']);
   await expect(rail(page)).not.toContainText(/Operate|Workspace/);
@@ -46,13 +48,15 @@ test('the app opens on the Inbox, and the nav reads Inbox, Plan, Crew', async ({
 test('the Inbox shows a board’s spend, and its detail view breaks it down', async ({ page }) => {
   await page.goto(`/b/${boardId}/operate`);
   await expect(page).toHaveURL(/\/inbox$/);
-  await expect(page.getByRole('group', { name: 'Show' }).getByRole('button', { name: /^Nav E2E board/ }).first()).toHaveAttribute('aria-pressed', 'true');
+  await expect(show(page).getByRole('radio', { name: /^Nav E2E board/ }).first()).toBeChecked();
+  // Spend is its own tab.
+  await page.getByRole('tab', { name: /^Spend/ }).click();
   await expect(page.getByRole('heading', { name: 'Spend' })).toBeVisible();
-  await expect(page.getByText('$0.00')).toBeVisible();
+  await expect(page.getByRole('tabpanel').getByText('$0.00', { exact: true })).toBeVisible();
 
   // By-model and by-card moved to the sub-view; the summary answers "are we fine", and this
   // answers "where did it go".
-  await page.getByRole('link', { name: 'detail' }).click();
+  await page.getByRole('link', { name: 'Spend in detail' }).click();
   await expect(page).toHaveURL(/\/operate\/telemetry$/);
   await expect(page.getByText(/by agent/i).first()).toBeVisible();
 });
@@ -66,7 +70,8 @@ test('the Inbox shows what needs you on a board, and says so plainly when nothin
 
 test('the board log is reachable from the spend detail view', async ({ page }) => {
   await page.goto(`/b/${boardId}/operate`);
-  await page.getByRole('link', { name: 'detail' }).click();
+  await page.getByRole('tab', { name: /^Spend/ }).click();
+  await page.getByRole('link', { name: 'Spend in detail' }).click();
   await expect(page).toHaveURL(/\/operate\/telemetry$/);
   await expect(page.getByRole('heading', { name: 'Board log' })).toBeVisible();
   // …and the whole log is one link further.
@@ -94,20 +99,20 @@ test('the board chosen under Show lasts until a refresh, and is written nowhere'
   const id = await seedBoard(request, name, REVIEW_PIPELINE);
   await seedGatedCard(request, id, 'Ask from the chosen board');
   await page.goto('/inbox');
-  const show = page.getByRole('group', { name: 'Show' });
-  const chip = show.getByRole('button', { name: `${name}, 1 needs you` });
+  // The board's radio reads its name, its count and who it waits on: "Name: 1 — 1 needs you".
+  const chip = show(page).getByRole('radio', { name: `${name}: 1 — 1 needs you` });
   await expect(chip).toBeVisible();
   await chip.click();
-  await expect(chip).toHaveAttribute('aria-pressed', 'true');
+  await expect(chip).toBeChecked();
   // Every ask names its board next to the agent.
   await expect(page.locator('.ib-board', { hasText: name }).first()).toBeVisible();
   await rail(page).getByRole('link', { name: /^Crew/ }).click();
   await rail(page).getByRole('link', { name: /^Inbox/ }).click();
-  await expect(show.getByRole('button', { name: `${name}, 1 needs you` })).toHaveAttribute('aria-pressed', 'true');
+  await expect(show(page).getByRole('radio', { name: `${name}: 1 — 1 needs you` })).toBeChecked();
   const stored = await page.evaluate(() => JSON.stringify({ ...localStorage }) + JSON.stringify({ ...sessionStorage }) + location.href);
   expect(stored).not.toContain(id);
   await page.reload();
-  await expect(show.getByRole('button', { name: /^All boards/ })).toHaveAttribute('aria-pressed', 'true');
+  await expect(show(page).getByRole('radio', { name: /^All boards/ })).toBeChecked();
 });
 
 test('old Workspace links land where each tab lives now; Settings holds Labels and Connections', async ({ page }) => {

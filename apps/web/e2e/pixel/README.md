@@ -49,7 +49,7 @@ the verdict.
 Node 22 (CI and `engines`).
 
     pnpm --filter @superpipeline/web test:pixel                       # everything (builds, starts wrangler dev:pixel and vite)
-    pnpm --filter @superpipeline/web test:pixel -g "SP-Operate-Paper" # one artboard, both themes
+    pnpm --filter @superpipeline/web test:pixel -g "SP-Dlg-Move-Paper" # one artboard, both themes
     pnpm --filter @superpipeline/web test:refs                        # the references alone, no app
     pnpm --filter @superpipeline/web test:pixel:report                # open test-results/pixel/index.html
 
@@ -125,6 +125,11 @@ one `BoardLogView` for the whole log), so their twelve references (`SP-List-*`, 
 `SP-Spend-*`), their screens, steps and allow-list keys were retired. The board switcher's raised
 trigger is one form in every vibe now (`BoardPickButton`), so `SP-Dlg-BoardSwitcher-*` compares the
 dialog alone, without its `trigger` part.
+
+The Inbox followed: one `InboxPage` in every vibe (the headline, the board scope, four tabs and the
+Needs you groups), so the four Operate references (`SP-Operate-*`), their screen, steps and
+allow-list keys were retired. The harness's own guards and the extract-css tests read the Move dialog's
+references instead.
 
 ## The references are locked
 

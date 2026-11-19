@@ -37,30 +37,11 @@ const C4605 = `${DX}/c/card_05823a57e8224605`;
 const VIBES: Array<[Vibe, string]> = [['daylight', 'Daylight'], ['paper', 'Paper'], ['studio', 'Studio'], ['quiet', 'Quiet']];
 const off = (v: Vibe) => (v === 'quiet' ? ('off' as const) : undefined);
 const dialog: Part[] = [{ name: 'dialog', ref: 'section.dlg', app: 'section.dlg' }];
-/** Park the pointer and drop focus, so no hover or focus ring is captured (Operate, List). */
+/** Park the pointer and drop focus, so no hover or focus ring is captured. */
 export const settle = async (p: Page) => {
   await p.mouse.move(0, 0);
   await p.evaluate(() => (document.activeElement as HTMLElement | null)?.blur());
   await p.clock.runFor(100);
-};
-const agentpod = (p: Page) => p.getByRole('article', { name: /^AgentPod/ });
-/** Operate draws two states: Daylight with the AgentPod quote expanded and its resume form filled; Quiet with the resume form open. */
-const operateSteps = (v: Vibe): Screen['steps'] => {
-  if (v === 'daylight') {
-    return async (p) => {
-      await agentpod(p).getByRole('button', { name: 'Show all', exact: true }).click();
-      await agentpod(p).getByRole('button', { name: 'Resume', exact: true }).click();
-      await p.getByRole('textbox', { name: /What changed/ }).fill('The Forge mirror is now writable and tester-tim has write access. Push the red-test commit and carry on.');
-      await settle(p);
-    };
-  }
-  if (v === 'quiet') {
-    return async (p) => {
-      await agentpod(p).getByRole('button', { name: 'Resume', exact: true }).click();
-      await settle(p);
-    };
-  }
-  return undefined;
 };
 /** List draws two states: Daylight with row 1's Move menu open; Studio with row 2 selected (J twice; the selection starts empty). */
 const blur = async (p: Page) => { await p.evaluate(() => (document.activeElement as HTMLElement | null)?.blur()); };
@@ -125,8 +106,6 @@ function forVibe(v: Vibe, V: string, h: (a: string) => number): Screen[] {
         await blur(p);
       } : undefined },
     { artboard: `SP-Phone-Card-${V}`, vibe: v, route: C4605, strength: off(v) },
-    // The old Operate address opens the Inbox showing Developer Experience, as the reference does.
-    { artboard: `SP-Operate-${V}`, vibe: v, route: `${DX}/operate`, strength: off(v), masks: [LIVE], steps: operateSteps(v) },
     { artboard: `SP-Dlg-NewCard-${V}`, vibe: v, route: DX, strength: off(v), parts: VK_DIALOG_PART, steps: fillNewCard, refPatch: dropDraftRegion },
     { artboard: `SP-Dlg-Palette-${V}`, vibe: v, route: DX, strength: off(v), parts: VK_DIALOG_PART, steps: async (p) => { await p.keyboard.press('Meta+k'); await p.getByRole('combobox', { name: 'Search cards, boards, agents and actions' }).fill('agent'); await blur(p); } },
     { artboard: `SP-Dlg-Appearance-${V}`, vibe: v, route: DX, strength: v === 'quiet' ? 'off' : 'strong', lightTheme: 'sun', parts: VK_DIALOG_PART,

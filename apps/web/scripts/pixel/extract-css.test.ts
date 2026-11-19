@@ -16,13 +16,13 @@ function fixtures(files: Record<string, string>): NodeJS.ProcessEnv {
 
 describe('extract-css', () => {
   it('pulls one prefix’s rules out of a reference, media queries included, canvas rules dropped', () => {
-    const css = run('SP-Operate-Daylight', '--prefix', 'dy-');
+    const css = run('SP-Dlg-Move-Daylight', '--prefix', 'dy-');
     expect(css).toMatch(/\.dy-rail\s*[,{]/);
     expect(css).not.toMatch(/\.sc-placeholder/);
     expect(css).not.toMatch(/\.mh-|\.ar-|\.qn-/);
   });
   it('--exclude drops the rules of whole classes vibekit draws, and keeps their neighbours', () => {
-    const css = run('SP-Operate-Daylight', '--prefix', 'dy-', '--exclude', 'dy-rail,dy-dest');
+    const css = run('SP-Dlg-Move-Daylight', '--prefix', 'dy-', '--exclude', 'dy-rail,dy-dest');
     expect(css).not.toMatch(/\.dy-rail(?![\w-])/);
     expect(css).not.toMatch(/\.dy-dest(?![\w-])/);
     expect(css).toMatch(/\.dy-dests\s*\{/);

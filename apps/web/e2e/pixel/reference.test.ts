@@ -5,17 +5,17 @@ import { join } from 'node:path';
 import { deriveDark, MANIFEST, REF_DIR, resolveReference } from './reference';
 
 describe('references', () => {
-  it('the manifest lists exactly the 44 committed artboards', () => {
+  it('the manifest lists exactly the 40 committed artboards', () => {
     const files = readdirSync(REF_DIR).filter((f) => /^SP-.*\.html$/.test(f) && !f.includes('.dark.')).map((f) => f.replace(/\.html$/, ''));
     expect(files.sort()).toEqual(Object.keys(MANIFEST).sort());
-    expect(files).toHaveLength(44);
+    expect(files).toHaveLength(40);
   });
   it('every artboard names its vibe in its file name', () => {
     for (const a of Object.keys(MANIFEST)) expect(a).toMatch(/-(Daylight|Paper|Studio|Quiet)$/);
   });
   it('dark is derived from the light file unless an explicit export exists', () => {
-    expect(resolveReference('SP-Operate-Paper', 'light')).toMatchObject({ derivedDark: false });
-    expect(resolveReference('SP-Operate-Paper', 'dark')).toMatchObject({ derivedDark: true });
+    expect(resolveReference('SP-Dlg-Move-Paper', 'light')).toMatchObject({ derivedDark: false });
+    expect(resolveReference('SP-Dlg-Move-Paper', 'dark')).toMatchObject({ derivedDark: true });
     expect(resolveReference('SP-Nope-Paper', 'light')).toBeNull();
   });
   it('deriveDark leaves no light theme behind', () => {

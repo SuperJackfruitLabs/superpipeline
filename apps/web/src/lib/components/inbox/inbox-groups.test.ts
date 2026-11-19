@@ -4,6 +4,7 @@ import type { AttentionItem, AttentionKind } from '$lib/components/attention/att
 import { itemsFromBoard } from '$lib/components/attention/attention';
 import { realisticWorkspace, REALISTIC_NOW_MS } from '$lib/fixtures/realistic';
 import { GROUP_OF, inboxGroups, inboxHeadline } from './inbox-groups';
+import { GROUP_EXPLANATION } from './inbox-words';
 
 const item = (kind: AttentionKind, n: number, extra: Partial<AttentionItem> = {}): AttentionItem => ({
   id: `${kind}:brd_${n % 3}:card_${n}`, kind, boardId: `brd_${n % 3}`, boardName: `Board ${n % 3}`, cardId: `card_${n}`,
@@ -30,7 +31,7 @@ describe('inbox groups', () => {
     // Empty groups are left out; only the unclaimed group explains itself.
     const two = inboxGroups([item('no-owner', 1, { stageName: 'Idea' }), item('no-owner', 2, { stageName: 'Reported' }), item('question', 3)]);
     expect(two.map((g) => g.key)).toEqual(['answer', 'unclaimed']);
-    expect(two[0].explanation).toBeUndefined();
+    expect(two[0].explanation).toBe(GROUP_EXPLANATION.answer);
     expect(two[1].explanation).toBe('These cards sit in Idea and Reported on 2 boards. No agent holds those stages and no review is asked for, so they will not move on their own.');
     expect(inboxGroups([])).toEqual([]);
   });

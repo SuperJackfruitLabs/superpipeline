@@ -40,6 +40,8 @@ test('activity renders at most 20 groups until Show more', async ({ page, reques
     await request.post(`${API}/v1/boards/${boardId}/runs/${claim.runId}/complete`, { headers: TENANT, data: { leaseEpoch: claim.leaseEpoch, handoff: { summary: 'drafted' } } });
   }
   await page.goto('/inbox');
+  // Activity is its own tab (composition contract rule 7).
+  await page.getByRole('tab', { name: /^Activity/ }).click();
   const groups = page.locator('[data-activity-group]');
   await expect(groups).toHaveCount(20);
   await page.getByRole('button', { name: 'Show 20 more' }).click();

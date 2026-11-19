@@ -59,26 +59,6 @@
   "h": 2496,
   "title": "Card states \u00b7 Quiet"
  },
- "SP-Operate-Daylight": {
-  "w": 1440,
-  "h": 2093,
-  "title": "Operate \u00b7 Daylight"
- },
- "SP-Operate-Paper": {
-  "w": 1440,
-  "h": 1900,
-  "title": "Operate \u00b7 Paper"
- },
- "SP-Operate-Studio": {
-  "w": 1440,
-  "h": 1910,
-  "title": "Operate \u00b7 Studio"
- },
- "SP-Operate-Quiet": {
-  "w": 1440,
-  "h": 3263,
-  "title": "Operate \u00b7 Quiet"
- },
  "SP-Phone-Card-Daylight": {
   "w": 390,
   "h": 3068,

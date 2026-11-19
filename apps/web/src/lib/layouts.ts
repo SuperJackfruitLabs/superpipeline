@@ -22,11 +22,6 @@ import CardStatesStudio from '$lib/components/card/states/CardStatesStudio.svelt
 import CardStatesPaper from '$lib/components/card/states/CardStatesPaper.svelte';
 import type { CardLayoutProps, CardPageProps, CardStatesProps } from '$lib/components/card/layouts/types';
 import { CARD_DRAWER_WIDTH } from '$lib/components/card/layouts/widths';
-import OperateDaylight from '$lib/components/operate/layouts/OperateDaylight.svelte';
-import OperatePaper from '$lib/components/operate/layouts/OperatePaper.svelte';
-import OperateStudio from '$lib/components/operate/layouts/OperateStudio.svelte';
-import OperateQuiet from '$lib/components/operate/layouts/OperateQuiet.svelte';
-import type { OperateLayoutProps } from '$lib/components/operate/layouts/props';
 
 export { FACE_VARIANT, type FaceVariant } from './face-variant';
 
@@ -60,12 +55,4 @@ export const CARD_PAGE_LAYOUTS: Readonly<Record<Vibe, Component<CardPageProps>>>
 /** The card-states gallery per vibe. Tasks 25–27 replace Paper, Studio and Quiet. */
 export const CARD_STATES_LAYOUTS: Readonly<Record<Vibe, Component<CardStatesProps>>> = {
   daylight: CardStatesDaylight, paper: CardStatesPaper, studio: CardStatesStudio, quiet: CardStatesQuiet,
-};
-
-/** Operate draws different markup in each vibe (four references, four DOMs). */
-export const OPERATE_LAYOUTS: Readonly<Record<Vibe, Component<OperateLayoutProps>>> = {
-  daylight: OperateDaylight,
-  paper: OperatePaper,
-  studio: OperateStudio,
-  quiet: OperateQuiet,
 };

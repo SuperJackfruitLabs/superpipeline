@@ -37,8 +37,6 @@ Ratios are from the full pixel run on vibekit 0.0.10 (Node 22). A screen compare
 | SP-Dlg-Move-Daylight·dark | 0.363% | vibekit Choice stage rows and Dialog object title: sub-pixel text and Face drawing against the reference's hand-drawn rows; the description sits 2px off |
 | SP-Dlg-Move-Quiet·light | 0.360% | vibekit Choice stage rows and Dialog object title: sub-pixel text and Face drawing against the reference's hand-drawn rows; the description sits 2px off |
 | SP-Dlg-Move-Quiet·dark | 0.359% | vibekit Choice stage rows and Dialog object title: sub-pixel text and Face drawing against the reference's hand-drawn rows; the description sits 2px off |
-| SP-Operate-Studio·light | 0.336% | the status line sits 52px lower than in the reference (vibekit AppShell pins it to the foot) and the rail icons differ |
-| SP-Operate-Studio·dark | 0.335% | the status line sits 52px lower than in the reference (vibekit AppShell pins it to the foot) and the rail icons differ |
 | SP-Phone-Card-Daylight·light | 0.313% | vibekit Button text and icons rasterise differently from the reference's render, and the Resume note's Field placeholder |
 | SP-Phone-Card-Quiet·light | 0.295% | vibekit Button text and icons rasterise differently from the reference's render, and the Resume note's Field placeholder |
 | SP-Phone-Card-Daylight·dark | 0.292% | vibekit Button text and icons rasterise differently from the reference's render, and the Resume note's Field placeholder |
@@ -68,13 +66,9 @@ Ratios are from the full pixel run on vibekit 0.0.10 (Node 22). A screen compare
 | SP-Card-States-Paper·dark | 0.041% | vibekit: the gate note's Field textarea placeholder |
 | SP-Card-States-Paper·light | 0.041% | vibekit: the gate note's Field textarea placeholder |
 | SP-CardPage-Studio·dark | 0.041% | the light causes; the light band is gone (harness fix) |
-| SP-Operate-Daylight·dark | 0.041% | vibekit Daylight AppNav foot: the account (IM) sits 11px and the theme button 5px lower than the reference's rail foot |
 | SP-Dlg-NewCard-Daylight·light | 0.036% | vibekit Button and Field select rasterising (broken blocks only); Segmented sm on both sides since 0.0.9 |
 | SP-Dlg-NewCard-Quiet·light | 0.029% | vibekit Button and Field select rasterising (broken blocks only); Segmented sm on both sides since 0.0.9 |
 | SP-Dlg-NewCard-Quiet·dark | 0.025% | vibekit Button and Field select rasterising (broken blocks only); Segmented sm on both sides since 0.0.9 |
-| SP-Operate-Quiet·light | 0.018% | vibekit Quiet AppNav draws the Operate count “(4 need you)” at 400 in ink where the reference sets it 700 in the signal colour |
-| SP-Operate-Quiet·dark | 0.017% | vibekit Quiet AppNav draws the Operate count “(4 need you)” at 400 in ink where the reference sets it 700 in the signal colour |
-| SP-Operate-Daylight·light | 0.013% | vibekit Daylight AppNav foot: the account (IM) sits 11px and the theme button 5px lower than the reference's rail foot |
 
 ## Per platform
 

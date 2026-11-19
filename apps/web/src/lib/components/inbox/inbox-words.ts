@@ -5,6 +5,9 @@
  * and are waiting on you, two cards wait for your decision and one has nobody to pick it up,
  * across three boards. Nothing is running."
  */
+import type { AttentionItem, AttentionKind } from '$lib/components/attention/attention';
+import { ageWords } from '$lib/age';
+import { clockHM } from '$lib/when';
 import { numWord, plural } from '$lib/words';
 
 export interface InboxCounts { stopped: number; decisions: number; unclaimed: number; other: number }
@@ -81,7 +84,124 @@ export function groupsLede(counts: ReadonlyArray<{ key: InboxGroupWordsKey; n: n
   return parts.length ? `${seriesList(parts)}. ${run}` : run;
 }
 
+/**
+ * What each group is for, said once above its rows (rule 4). The first group on the page anchors its
+ * jargon (rule 12): a gate, a stage and an attempt are each said in a sentence that says what they are.
+ */
+export const GROUP_EXPLANATION: Record<Exclude<InboxGroupWordsKey, 'unclaimed'>, string> = {
+  review: 'Each card here reached a gate: a stage where a person approves the work before the card moves on. Open it to read what the last attempt, the agent’s latest run at the stage, produced.',
+  answer: 'An agent asked a question while working its stage, the step of the board it holds, and waits for your answer before it goes on.',
+  resume: 'These agents stopped and wait on you. Resume one with a note on what changed; it reads the note and picks the card up again.',
+  budget: 'These cards spent past their cap, the most one card may cost. No agent picks one up again until the cap is raised.',
+};
+
 /** Why the unclaimed cards will not move, said once for the group. */
 export function unclaimedExplanation(stages: readonly string[], boards: number): string {
   return `These cards sit in ${seriesList(stages)} on ${plural(boards, 'board', 'boards')}. No agent holds those stages and no review is asked for, so they will not move on their own.`;
 }
+
+// ---- the Inbox page (composition contract, Inbox) ----
+
+/** The Needs you tab's own heading, read by a screen reader above the groups. */
+export const NEEDS_HEADING = 'Needs you';
+/** Nothing in scope needs you: the Needs you tab says so plainly. */
+export const NEEDS_NONE = 'Nothing is waiting on you.';
+/** The filters hide every card that needs you. */
+export const NO_MATCH = 'No card that needs you matches these filters.';
+
+/** The filter chips, one per group, in the groups' order. */
+export const GROUP_CHIP: Record<InboxGroupWordsKey, string> = {
+  review: 'Review', answer: 'Answer', resume: 'Stopped', budget: 'Over budget', unclaimed: 'Unclaimed',
+};
+
+/** What happened, per kind: who (the agent's name), the attempt count when known, the stage. */
+const WHAT: Record<AttentionKind, (who: string, n: number | undefined, stage: string) => string> = {
+  review: (who, n, stage) => (n ? `${who} finished attempt ${n} · ${stage}` : `${who} finished · ${stage}`),
+  'sub-tasks': (_who, _n, stage) => `Waiting on its sub-tasks · ${stage}`,
+  question: (who, _n, stage) => `${who} asked · ${stage}`,
+  blocked: (who, _n, stage) => `${who} stopped · ${stage}`,
+  'repeated-failure': (who, n, stage) => `${who} failed ${n && n > 1 ? `${numWord(n)} times` : 'again'} · ${stage}`,
+  failed: (who, n, stage) => `${who} failed${n ? ` attempt ${n}` : ''} · ${stage}`,
+  refused: (who, _n, stage) => `${who} was refused · ${stage}`,
+  budget: (_who, _n, stage) => `Spent past its cap · ${stage}`,
+  'no-owner': (_who, _n, stage) => stage,
+};
+
+/** A row's meta line after its state and board: who did what, where, and how long ago. */
+export function rowMeta(item: AttentionItem, agent: string | null): string {
+  const what = WHAT[item.kind](agent ?? 'An agent', item.attemptCount, item.stageName);
+  return item.ageHours === null ? what : `${what} · ${ageWords(item.ageHours)}`;
+}
+
+/** The row's state word, per group. */
+export const ROW_STATE: Record<InboxGroupWordsKey, { state: 'needs' | 'stopped'; label: string }> = {
+  review: { state: 'needs', label: 'Needs you' },
+  answer: { state: 'needs', label: 'Asked' },
+  resume: { state: 'stopped', label: 'Stopped' },
+  budget: { state: 'stopped', label: 'Over budget' },
+  unclaimed: { state: 'needs', label: 'Unclaimed' },
+};
+
+/** The disclosure that holds an agent's own words on a row. */
+export const SAID_LABEL = 'What it said';
+export const RESUME_AT = 'Resume at';
+export const SEND_BACK = 'Send back to work';
+/** "Move all 14…": the unclaimed group's action, a menu of the stages every card in it can go to. */
+export const moveAllLabel = (n: number): string => `Move all ${n}…`;
+export const STAFF_LABEL = 'Staff an agent';
+
+/** Studio's kicker over the figure: "Across three boards · nothing running". */
+export function studioKicker(boards: number, running: number): string {
+  const where = boards <= 1 ? 'On one board' : `Across ${numWord(boards)} boards`;
+  const run = running === 0 ? 'nothing running' : `${numWord(running)} running`;
+  return `${where} · ${run}`;
+}
+
+const usd = (n: number): string => `$${n.toFixed(2)}`;
+
+/** The page's last line: "18 need you · 0 running · $0.00 in the last 7 days · synced 03:24". Paused, it says what waits. */
+export function footerLine(
+  f: { needs: number; running: number; spendUsd: number; syncedAt: string | null; paused: boolean; queued: number }, timeZone?: string,
+): string {
+  const head = `${f.needs} need${f.needs === 1 ? 's' : ''} you · ${f.running} running · ${usd(f.spendUsd)} in the last 7 days`;
+  if (f.paused) return `${head} · paused${f.queued ? `, ${plural(f.queued, 'update', 'updates')} waiting` : ''}`;
+  return f.syncedAt ? `${head} · synced ${clockHM(f.syncedAt, timeZone)}` : head;
+}
+
+/** Group paging (rule 7): the rows a group shows before "Show N more", and how many each press adds. */
+export const GROUP_PAGE = 5;
+export const showMore = (n: number): string => `Show ${n} more`;
+
+// ---- Running ----
+/** "coder-kai · Fix · since 14:02 · 11 min". */
+export function runningMeta(r: { agentName: string | null; stageName: string; since: string | null }, nowMs: number, timeZone?: string): string {
+  const who = r.agentName ?? 'An agent';
+  if (!r.since) return `${who} · ${r.stageName}`;
+  const mins = Math.max(0, Math.round((nowMs - Date.parse(r.since)) / 60_000));
+  const long = mins < 60 ? `${mins} min` : ageWords(mins / 60);
+  return `${who} · ${r.stageName} · since ${clockHM(r.since, timeZone)} · ${long}`;
+}
+export const RUNNING_NONE = 'No agent is working anything right now.';
+export const RUNNING_NOTE = 'Agents on every board in scope appear here; the board chip says which.';
+
+// ---- Spend ----
+/** Beside the figure: the cap and the share used, on one board; caps are set per board. */
+export function spendCapLine(total: number, cap: number | null, scoped: boolean): string {
+  if (!scoped) return 'across every board in scope';
+  if (cap === null) return 'no cap on this board';
+  return `of a ${usd(cap)} cap · ${Math.round((total / cap) * 100)}%`;
+}
+export const spendMeta = (scope: string): string => `${scope} · last 7 days`;
+export const SPEND_NONE = 'No agent has spent anything in the last 7 days.';
+export const SPEND_NOTE = 'A card over its own cap shows in Needs you under Over budget.';
+export const SPEND_DETAIL = 'Spend in detail';
+export const SPEND_FAILED = 'Couldn’t load spend. Try again in a moment.';
+export const spendCapVerb = (hasCap: boolean): string => (hasCap ? 'Change the cap' : 'Set a cap');
+
+// ---- Activity ----
+export const activityMeta = (cards: number): string => plural(cards, 'card', 'cards');
+export const earlierLabel = (n: number): string => `${n} earlier`;
+export const IN_NEEDS = 'In Needs you';
+export const MARK_READ = 'Mark read';
+export const ACTIVITY_WHICH = [{ value: 'unread', label: 'Unread only' }, { value: 'all', label: 'Show all' }];
+export const activityNone = (showRead: boolean): string => (showRead ? 'Nothing has happened on these boards yet.' : 'Nothing unread.');

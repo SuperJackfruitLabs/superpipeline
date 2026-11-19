@@ -6,7 +6,7 @@
 import type { Phase, Vibe } from '@superjackfruitlabs/vibekit-ui';
 import type { AttentionItem, AttentionKind } from '$lib/components/attention/attention';
 import { greetNamed } from '$lib/greet';
-import { GROUP_WORDS, groupsLede, unclaimedExplanation, wantYou } from './inbox-words';
+import { GROUP_EXPLANATION, GROUP_WORDS, groupsLede, unclaimedExplanation, wantYou } from './inbox-words';
 
 export type InboxGroupKey = 'review' | 'answer' | 'resume' | 'budget' | 'unclaimed';
 
@@ -29,7 +29,8 @@ export interface InboxGroup {
   title: string;
   verb: string;
   items: AttentionItem[];
-  explanation?: string;
+  /** What the group is for, said once above its rows. */
+  explanation: string;
   groupActions: ('move-all' | 'staff')[];
 }
 
@@ -39,7 +40,7 @@ export function inboxGroups(items: AttentionItem[]): InboxGroup[] {
     const rows = items.filter((i) => GROUP_OF[i.kind] === key);
     if (rows.length === 0) return [];
     const { title, verb } = GROUP_WORDS[key];
-    if (key !== 'unclaimed') return [{ key, title, verb, items: rows, groupActions: [] }];
+    if (key !== 'unclaimed') return [{ key, title, verb, items: rows, explanation: GROUP_EXPLANATION[key], groupActions: [] }];
     const stages = [...new Set(rows.map((i) => i.stageName))];
     const boards = new Set(rows.map((i) => i.boardId)).size;
     return [{ key, title, verb, items: rows, explanation: unclaimedExplanation(stages, boards), groupActions: ['move-all', 'staff'] }];

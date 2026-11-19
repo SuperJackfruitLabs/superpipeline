@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // apps/web/scripts/pixel/extract-css.mjs — port a reference's CSS verbatim, by class prefix.
-// Usage: node scripts/pixel/extract-css.mjs SP-Operate-Daylight --prefix dy-,vk-sky [--exclude dy-rail,dy-top] [--out src/lib/styles/vibes/daylight/shell.css]
+// Usage: node scripts/pixel/extract-css.mjs SP-Dlg-Move-Daylight --prefix dy-,vk-sky [--exclude dy-rail,dy-top] [--out src/lib/styles/vibes/daylight/shell.css]
 // --exclude drops every rule whose selector names one of those classes (whole class names): the parts vibekit draws.
 // --scope '<selector>' puts the scope in front of every selector; a leading [data-theme|vibe|time|phase…] stays in front of it.
 // <Artboard> may be a comma list: the rules of all of them, each distinct rule once, in first-seen order.

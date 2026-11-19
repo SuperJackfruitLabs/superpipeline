@@ -4,7 +4,7 @@
 # (built for the host OS) are never touched. The report lands in apps/web/test-results/pixel-linux/.
 #
 #   apps/web/scripts/pixel/linux-container.sh                 # full suite
-#   apps/web/scripts/pixel/linux-container.sh -g SP-Operate-Quiet
+#   apps/web/scripts/pixel/linux-container.sh -g SP-Dlg-Move-Quiet
 #
 # SP_PIXEL_PLATFORM=linux/amd64 matches CI's ubuntu-latest (x86_64; emulated on Apple silicon, slower).
 # Use it: text rasterises differently on arm64 Linux, so an arm64 run is not CI's verdict.

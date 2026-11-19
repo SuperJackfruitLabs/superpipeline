@@ -20,7 +20,7 @@ const ANNUAL_EXCLUDE = 'vk-button,ar-rail,ar-mark,ar-nav,ar-acct,ar-top,ar-board
 describe('extract-css flags', () => {
   it('--exclude drops the shell and board rules from the Annual base', () => {
     // The Annual base came from the Studio board; every Studio reference carries the same frame.
-    const css = run('SP-Operate-Studio', '--prefix', 'ar', '--exclude', ANNUAL_EXCLUDE);
+    const css = run('SP-Dlg-Move-Studio', '--prefix', 'ar', '--exclude', ANNUAL_EXCLUDE);
     expect(css).toContain('.ar .u.needs {');
     expect(css).toContain('.ar-tbl {');
     for (const gone of ['ar-rail', 'ar-top', 'ar-sub', 'ar-status', 'ar-sm', 'ar-share', 'vk-button']) expect(css).not.toMatch(new RegExp(`\\.${gone}(?![\\w-])`));

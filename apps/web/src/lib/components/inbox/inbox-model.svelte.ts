@@ -3,7 +3,7 @@
  * The Inbox's data: what needs you, what is running, what it cost and what happened, on every
  * board or on the one chosen in the Show row (`inboxScope`, in memory only). The open board reads
  * live from the app store; every other board in scope is read once per visit and again after the
- * person acts on it. The four Operate layouts draw it unchanged; each row carries its board.
+ * person acts on it. One page draws it in every vibe (InboxPage); each row carries its board.
  *
  * Live (contract rules 8-10): every other board in scope has its own feed (`app.openScopeSockets`);
  * an event reloads that board and applies the result through the Live toggle (`liveUpdates`), so a
@@ -12,6 +12,7 @@
  */
 import { goto } from '$app/navigation';
 import { tick } from 'svelte';
+import type { Vibe } from '@superjackfruitlabs/vibekit-ui';
 import { app } from '$lib/stores/app.svelte';
 import { appearance } from '$lib/appearance.svelte';
 import {
@@ -20,9 +21,10 @@ import {
 } from '$lib/api';
 import { itemsFromBoard, sortAttention, type AttentionItem } from '$lib/components/attention/attention';
 import { refusalOf } from '$lib/components/attention/refusal';
+import { displayAgent } from '$lib/names';
 import { greetingName } from '../dialogs/person';
 import { ACTIVITY_PAGE, activityGroups, mergeUsage, needRows, parseCap, runningRows, spendView } from '../operate/operate-data';
-import type { ActivityGroup, CapResult, NeedRow, OperateModel } from '../operate/layouts/types';
+import type { ActivityGroup, CapResult, NeedRow, OperateModel } from '../operate/operate-types';
 import { boardsNeedingFirst, inboxScope, scopeLabel } from './inbox-scope.svelte';
 import { pending, type Pending } from '$lib/loading.svelte';
 import type { BoardFeedEvent, Card } from '$lib/api';
@@ -66,6 +68,8 @@ export class InboxStore implements OperateModel {
   readonly filters = new InboxFilters();
   /** What the last live update changed on each board's attention list, for the page to animate. */
   changes = $state.raw<Record<string, Diff<KeyedItem>>>({});
+  /** When a board's read last landed on the page (ISO): the footer's "synced". */
+  syncedAt = $state<string | null>(null);
   /** Boards being read again after a live event, and those whose events arrived meanwhile. */
   #reading = new Set<string>();
   #readAgain = new Set<string>();
@@ -111,8 +115,22 @@ export class InboxStore implements OperateModel {
     }));
   }
   /** The page's one message, over every need in scope (filters narrow the list, not the message). */
-  get headline(): { h1: string; lede: string } {
-    return inboxHeadline(inboxGroups(this.#needsAll.map((r) => r.item)), this.boardCount, this.#runningAll.length, this.firstName || null, appearance.value.vibe, appearance.phase);
+  get headline(): { h1: string; lede: string } { return this.headlineFor(appearance.value.vibe); }
+  /** The headline in a given vibe: Daylight greets first. */
+  headlineFor(vibe: Vibe): { h1: string; lede: string } {
+    return inboxHeadline(inboxGroups(this.#needsAll.map((r) => r.item)), this.boardCount, this.#runningAll.length, this.firstName || null, vibe, appearance.phase);
+  }
+  /** What the filter row's menus offer: the agents, labels and priorities on the cards that need you, by name. */
+  get filterChoices(): { agents: { id: string; name: string }[]; labels: { id: string; name: string }[]; priorities: number[] } {
+    const cards = this.#needsAll.map((r) => r.card);
+    const agentIds = [...new Set(cards.map((c) => c.lastAgentId).filter((id): id is string => !!id))];
+    const names = app.labelById();
+    const labelIds = [...new Set(cards.flatMap((c) => c.labels))];
+    return {
+      agents: agentIds.map((id) => ({ id, name: displayAgent(id, app.agents) })).toSorted((a, b) => a.name.localeCompare(b.name)),
+      labels: labelIds.flatMap((id) => { const l = names.get(id); return l ? [{ id, name: l.name }] : []; }).toSorted((a, b) => a.name.localeCompare(b.name)),
+      priorities: [...new Set(cards.map((c) => c.priority).filter((p) => p > 0))].toSorted((a, b) => b - a),
+    };
   }
   #cardOf(i: AttentionItem): Card | undefined {
     return this.#snap(i.boardId)?.cards.find((c) => c.id === i.cardId);
@@ -262,6 +280,7 @@ export class InboxStore implements OperateModel {
     if (usage.status === 'fulfilled') this.#usage[id] = usage.value;
     else this.#usageError = 'try again in a moment';
     this.#settled[id] = true;
+    this.syncedAt = new Date().toISOString();
   }
   async #after(boardId: string): Promise<void> {
     if (boardId === app.boardId) await app.refresh();

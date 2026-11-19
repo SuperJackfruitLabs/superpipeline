@@ -5,7 +5,7 @@ import type { AttentionItem } from '$lib/components/attention/attention';
 import { overdue } from '$lib/components/board/card-due';
 import { displayAgent } from '$lib/names';
 import { CAP_ERROR } from './operate-words';
-import type { ActivityGroup, NeedRow, RunningRow, SpendView } from './layouts/types';
+import type { ActivityGroup, NeedRow, RunningRow, SpendView } from './operate-types';
 
 const byOrder = (stages: Stage[]): Stage[] => [...stages].sort((a, b) => a.order - b.order);
 
@@ -74,6 +74,7 @@ export function runningRows(board: BoardSnapshot, agents: AgentSummary[]): Runni
         agentName: agentId ? displayAgent(agentId, agents) : null,
         iconUrl: agentId ? (agents.find((a) => a.id === agentId)?.iconUrl ?? null) : null,
         costUsd: c.costUsd,
+        since: c.stateSince ?? null,
       };
     });
 }

@@ -14,7 +14,7 @@ import { PAPER_PHASE } from '$lib/components/shell/shell-words';
 import { ageShort, ageWords } from '$lib/age';
 import { clockHM } from '$lib/when';
 import { numWord } from '$lib/words';
-import type { NeedRow } from './layouts/types';
+import type { NeedRow } from './operate-types';
 
 export const RESUME_HINT = 'Fix what it says, then resume it with a note it will read.';
 export const RESUME_LABEL = 'What changed, or what should the agent do differently? It reads this.';

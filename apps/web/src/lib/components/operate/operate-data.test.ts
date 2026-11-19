@@ -46,7 +46,7 @@ describe('runningRows and spendView', () => {
   it('nothing runs on the fixture board', () => expect(runningRows(DX_BOARD, DX_AGENTS)).toEqual([]));
   it('a working card is a running row', () => {
     const board = { ...DX_BOARD, cards: [{ ...C58F8, state: 'working', delegateAgentId: 'agt_fx_tester_tim', costUsd: 0.42 }] };
-    expect(runningRows(board, DX_AGENTS)).toEqual([{ cardId: C58F8.id, title: C58F8.title, boardId: DX_BOARD.boardId, boardName: DX_BOARD.name, stageName: 'Failing test', agentName: 'tester-tim', iconUrl: null, costUsd: 0.42 }]);
+    expect(runningRows(board, DX_AGENTS)).toEqual([{ cardId: C58F8.id, title: C58F8.title, boardId: DX_BOARD.boardId, boardName: DX_BOARD.name, stageName: 'Failing test', agentName: 'tester-tim', iconUrl: null, costUsd: 0.42, since: C58F8.stateSince ?? null }]);
   });
   it('spend with no usage, no cap', () => {
     expect(spendView(null, DX_BOARD.usage, DX_AGENTS)).toEqual({ total: 0, cap: null, cardCap: null, overBudget: false, pct: null, top: [] });

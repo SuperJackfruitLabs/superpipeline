@@ -6,7 +6,7 @@ import { renderReference, resolveReference } from './reference';
 import { renderApp } from './app';
 import { SCREENS } from './screens';
 
-const ART = 'SP-Operate-Studio';
+const ART = 'SP-Dlg-Move-Studio';
 const src = () => resolveReference(ART, 'light')!;
 
 test('a clean reference renders with every family it uses loaded', async ({ page }) => {

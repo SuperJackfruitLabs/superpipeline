@@ -1,0 +1,234 @@
+// apps/web/src/lib/components/inbox/inbox-page.svelte.test.ts
+// @vitest-environment jsdom
+/**
+ * The Inbox, one composition in every vibe (composition contract §7, Inbox), on the realistic
+ * workspace (18 cards need you across three boards, 548 notifications): the contract order, the same
+ * tree outside the signature slots, one verb per row, counts once, the hidden filter row, jargon
+ * anchored where it is first used, and live changes that move only when motion is on.
+ */
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { cleanup, fireEvent, waitFor } from '@testing-library/svelte';
+import { flushSync, tick } from 'svelte';
+import { VIBES } from '@superjackfruitlabs/vibekit-ui';
+import type * as Api from '$lib/api';
+import type { BoardSnapshot, StaleCard } from '$lib/api';
+import { realisticWorkspace, REALISTIC_BOARD_IDS } from '$lib/fixtures/realistic';
+
+vi.hoisted(() => {
+  Object.defineProperty(window, 'matchMedia', {
+    configurable: true,
+    value: (query: string): MediaQueryList => ({ matches: false, media: query, onchange: null, addEventListener: () => {}, removeEventListener: () => {}, addListener: () => {}, removeListener: () => {}, dispatchEvent: () => false }),
+  });
+});
+
+type ApiFn = (...args: never[]) => Promise<unknown>;
+const api = vi.hoisted(() => ({
+  getBoard: vi.fn<ApiFn>(), getNotifications: vi.fn<ApiFn>(), getUsage: vi.fn<ApiFn>(),
+  sockets: [] as Array<{ boardId: string; emit: (e: unknown) => void }>,
+  openBoardSocket: vi.fn<(boardId: string, onEvent: (e: unknown) => void) => unknown>(),
+}));
+api.openBoardSocket.mockImplementation((boardId, onEvent) => {
+  const s = Object.assign(new EventTarget(), { boardId, close() {}, emit: onEvent });
+  api.sockets.push(s);
+  return s;
+});
+vi.mock('$lib/api', async (orig) => ({ ...(await orig<typeof Api>()), ...api }));
+vi.mock('$app/navigation', () => ({ goto: vi.fn<() => Promise<void>>() }));
+
+import { app } from '$lib/stores/app.svelte';
+import { liveUpdates } from '$lib/live/live-updates.svelte';
+import { parityTree, primaryActionsPerRow, rawMachineText, repeatedParagraphs } from '$lib/composition/guards';
+import { renderInVibes, type VibeRoots } from '$lib/composition/render-vibes';
+import { InboxStore } from './inbox-model.svelte';
+import { inboxScope } from './inbox-scope.svelte';
+import { GROUP_EXPLANATION } from './inbox-words';
+import InboxPage from './InboxPage.svelte';
+
+const world = realisticWorkspace();
+/** A workspace-feed row: only its board counts here (the Show row's numbers). */
+const stale = (boardId: string, i: number): StaleCard => ({
+  boardId, boardName: '', cardId: `card_${boardId}_${i}`, title: '', ownerUserId: '', stageKey: '', stageName: '', state: 'submitted',
+  why: { kind: 'no-owner' }, summary: null, since: '', ageHours: 0, next: '',
+});
+let boards: Record<string, BoardSnapshot> = {};
+let stop: (() => void) | null = null;
+let roots: VibeRoots | null = null;
+
+const make = (): InboxStore => {
+  let s!: InboxStore;
+  stop = $effect.root(() => { s = new InboxStore(); });
+  return s;
+};
+const settle = async () => { for (let i = 0; i < 5; i++) { await tick(); await Promise.resolve(); } flushSync(); };
+/** A store that has counted every board. */
+async function counted(): Promise<InboxStore> {
+  const store = make();
+  await waitFor(() => expect(store.loading).toBe(false), { timeout: 2_000 });
+  await settle();
+  return store;
+}
+const props = (store: InboxStore) => ({ store, filters: store.filters, live: liveUpdates });
+/** The one element `sel` names under `root`; a missing one fails the test where it is asked for. */
+function one(root: Element, sel: string): HTMLElement {
+  const el = root.querySelector<HTMLElement>(sel);
+  if (!el) throw new Error(`nothing matches ${sel}`);
+  return el;
+}
+function button(root: Element, start: string): HTMLButtonElement {
+  const b = [...root.querySelectorAll('button')].find((x) => x.textContent?.trim().startsWith(start));
+  if (!b) throw new Error(`no button "${start}…"`);
+  return b;
+}
+const stopped = (root: Element) => one(root, '[data-attention-row="blocked"]');
+
+beforeEach(() => {
+  boards = Object.fromEntries(world.boards.map((b) => [b.boardId ?? '', b]));
+  api.getBoard.mockImplementation(async (id: string) => boards[id]);
+  api.getNotifications.mockImplementation(async (id: string) => world.notifications[id] ?? []);
+  api.getUsage.mockImplementation(async (id: string) => world.usage[id]);
+  app.boards = world.boards.map((b) => ({ id: b.boardId ?? '', name: b.name ?? '', cardCount: b.cards.length, needsYouCount: 0, lastActivityAt: null }));
+  const counts = { [REALISTIC_BOARD_IDS.planning]: 13, [REALISTIC_BOARD_IDS.devex]: 3, [REALISTIC_BOARD_IDS.marketing]: 2 };
+  app.attention = Object.entries(counts).flatMap(([boardId, n]) => Array.from({ length: n }, (_, i) => stale(boardId, i)));
+  app.agents = world.agents;
+  app.boardId = '';
+  app.board = null;
+  app.boardsLoaded = true;
+  app.boardsFailed = false;
+  app.attentionSettled = true;
+  liveUpdates.resume();
+});
+afterEach(() => {
+  roots?.unmount();
+  roots = null;
+  cleanup();
+  stop?.();
+  stop = null;
+  api.sockets = [];
+  inboxScope.choose(null);
+  app.boards = [];
+  app.attention = [];
+  vi.clearAllMocks();
+});
+
+const titles = (root: Element) => [...root.querySelectorAll('.ib-group .vk-sectionheader__title')].map((h) => h.textContent);
+
+describe('InboxPage in every vibe', () => {
+  it('renders the contract order in all four vibes with the same tree outside the signature', async () => {
+    roots = await renderInVibes(InboxPage, props(await counted()));
+    const day = roots.daylight;
+    // Headline, scope, tabs (with Filter at the end), the filter row, the groups, the footer.
+    const order = ['.ib-head[data-signature]', '.ib-scope[data-signature]', '[role="tablist"]', '.vk-tabs__end', '.ib-filters', '.ib-group', '.ib-foot'];
+    const at = order.map((sel) => one(day, sel));
+    for (let i = 1; i < at.length; i++) expect(at[i - 1].compareDocumentPosition(at[i]) & Node.DOCUMENT_POSITION_FOLLOWING, `${order[i - 1]} before ${order[i]}`).toBeTruthy();
+    expect(titles(day)).toEqual(['Review', 'Answer', 'Resume a stopped agent', 'Over budget', 'Nobody works these stages']);
+    expect([...day.querySelectorAll('[role="tab"]')].map((t) => t.textContent?.replace(/\s+/g, ' ').trim())).toEqual(['Needs you18 (18)', 'Running1 (1)', 'Spend$38.37 ($38.37)', 'Activity115 (115)']);
+    const tree = parityTree(day);
+    for (const v of VIBES) expect(parityTree(roots[v]), `${v} vibe`).toBe(tree);
+    // The vibes differ inside the headline only: Daylight greets, Studio sets the figure.
+    expect(day.querySelector('.ib-head h1')?.textContent).toMatch(/18 cards want you\.$/);
+    expect(roots.studio.querySelector('.vk-hero__figure')?.textContent).toBe('18');
+    expect(roots.paper.querySelector('.ib-head h1')?.textContent).toBe('18 cards want you.');
+  });
+
+  it('one primary action per row', async () => {
+    roots = await renderInVibes(InboxPage, props(await counted()));
+    for (const v of VIBES) {
+      expect(roots[v].querySelectorAll('[data-row]').length, `${v}: rows`).toBeGreaterThan(0);
+      expect(primaryActionsPerRow(roots[v]), `${v} vibe`).toEqual([]);
+    }
+    // Review, Answer, Resume and Raise the cap are the row's one primary verb; Move stays quiet.
+    const day = roots.daylight;
+    const verbs = (key: string) => [...day.querySelectorAll(`#ib-g-${key} [data-row] .vk-button--primary`)].map((b) => b.textContent?.trim());
+    expect(verbs('review')).toEqual(['Review']);
+    expect(verbs('resume')).toEqual(['Resume']);
+    expect(verbs('budget')).toEqual(['Raise the cap']);
+    expect(verbs('unclaimed')).toEqual([]);
+  });
+
+  it('no repeated paragraph and no raw ids', async () => {
+    roots = await renderInVibes(InboxPage, props(await counted()));
+    for (const v of VIBES) {
+      expect(repeatedParagraphs(roots[v]), `${v} vibe`).toEqual([]);
+      expect(rawMachineText(roots[v]), `${v} vibe`).toEqual([]);
+    }
+  });
+
+  it('counts appear once', async () => {
+    roots = await renderInVibes(InboxPage, props(await counted()));
+    for (const v of VIBES) {
+      const root = roots[v];
+      const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+      const eighteen: string[] = [];
+      for (let n = walker.nextNode(); n; n = walker.nextNode()) {
+        const el = n.parentElement;
+        if (!el || el.closest('[data-signature], [role="tablist"]')) continue;
+        if (/\b18\b/.test(n.textContent ?? '')) eighteen.push(n.textContent ?? '');
+      }
+      expect(eighteen, `${v}: the footer says it, nothing else`).toEqual([expect.stringMatching(/^18 need you · /)]);
+    }
+  });
+
+  it('the filter row is hidden until the Filter button is pressed and shows the active count', async () => {
+    const store = await counted();
+    roots = await renderInVibes(InboxPage, props(store));
+    const day = roots.daylight;
+    const row = one(day, '.ib-filters');
+    const control = button(day, 'Filter');
+    expect(row.getAttribute('data-open')).toBe('false');
+    const shut = one(row, ':scope > div');
+    const inert = () => shut.inert || shut.hasAttribute('inert');
+    expect(inert(), 'shut: out of reach').toBe(true);
+    expect(control.getAttribute('aria-expanded')).toBe('false');
+    expect(control.querySelector('.vk-badge')).toBeNull();
+    await fireEvent.click(control);
+    await settle();
+    expect(row.getAttribute('data-open')).toBe('true');
+    expect(inert()).toBe(false);
+    expect(control.getAttribute('aria-expanded')).toBe('true');
+    // A group chip narrows to its group, and the control counts the filter that is on.
+    const chip = button(row, 'Unclaimed');
+    await fireEvent.click(chip);
+    await settle();
+    expect(chip.getAttribute('aria-pressed')).toBe('true');
+    expect(control.querySelector('.vk-badge')?.textContent).toContain('1');
+    expect(titles(day)).toEqual(['Nobody works these stages']);
+  });
+
+  it('the first stage, attempt and gate word on the page sits in a sentence that says what it is', async () => {
+    const store = await counted();
+    roots = await renderInVibes(InboxPage, props(store));
+    for (const v of VIBES) {
+      const root = roots[v];
+      const lede = root.querySelector('[data-signature] .ib-head__lede, [data-signature] .vk-hero__lede')?.textContent;
+      expect(lede, `${v}: the headline lede`).toBe(store.headlineFor(v).lede);
+      expect(lede).toBe('One review, one question, one stopped agent, one card over budget, and 14 cards nobody is set up to work. One running.');
+      const blocks = [...root.querySelectorAll('h1, h2, h3, h4, p, li, summary, button, a')].filter((el) => !el.closest('[data-signature]'));
+      for (const word of [/\bgate\b/i, /\battempt\b/i, /\bstage\b/i]) {
+        const first = blocks.find((el) => word.test(el.textContent ?? ''));
+        expect(first?.textContent, `${v}: first ${word}`).toBe(GROUP_EXPLANATION.review);
+      }
+      expect([...root.querySelectorAll('.ib-why')].map((p) => p.textContent).slice(0, 4)).toEqual([GROUP_EXPLANATION.review, GROUP_EXPLANATION.answer, GROUP_EXPLANATION.resume, GROUP_EXPLANATION.budget]);
+    }
+  });
+
+  it('under data-motion=reduce a diff produces no running animations; with motion on it produces at least one', async () => {
+    const store = await counted();
+    roots = await renderInVibes(InboxPage, props(store));
+    // Daylight with motion on; Paper keeps renderInVibes' reduced motion.
+    const motionOn = roots.daylight;
+    const reduced = roots.paper;
+    motionOn.removeAttribute('data-motion');
+    expect(stopped(motionOn).classList.contains('vk-flash')).toBe(false);
+    // The marketing board speaks: its stopped card now says something new, read and applied as a diff.
+    const m = boards[REALISTIC_BOARD_IDS.marketing];
+    boards[REALISTIC_BOARD_IDS.marketing] = { ...m, cards: m.cards.map((c) => (c.needsHuman ? { ...c, needsHuman: { ...c.needsHuman, detail: 'The release page is up now; the link still points at the old address.' } } : c)) };
+    const feed = api.sockets.find((s) => s.boardId === REALISTIC_BOARD_IDS.marketing);
+    if (!feed) throw new Error('the marketing board has no feed');
+    feed.emit({ seq: 1, type: 'card.updated', payload: {}, ts: '2026-11-18T09:00:00.000Z' });
+    await waitFor(() => expect(stopped(motionOn).textContent).toContain('The release page is up now'));
+    await settle();
+    expect(stopped(motionOn).classList.contains('vk-flash'), 'motion on: the changed row flashes').toBe(true);
+    expect(stopped(reduced).textContent).toContain('The release page is up now');
+    expect(stopped(reduced).classList.contains('vk-flash'), 'reduced: it changes in place').toBe(false);
+  });
+});

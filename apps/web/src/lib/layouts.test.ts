@@ -1,8 +1,3 @@
-import { OPERATE_LAYOUTS } from './layouts';
-import OperateDaylight from '$lib/components/operate/layouts/OperateDaylight.svelte';
-import OperatePaper from '$lib/components/operate/layouts/OperatePaper.svelte';
-import OperateStudio from '$lib/components/operate/layouts/OperateStudio.svelte';
-import OperateQuiet from '$lib/components/operate/layouts/OperateQuiet.svelte';
 import { VIBES } from '@superjackfruitlabs/vibekit-ui';
 import { describe, expect, it } from 'vitest';
 import { CARD_LAYOUTS, CARD_PAGE_LAYOUTS, CARD_STATES_LAYOUTS, FACE_VARIANT } from './layouts';
@@ -55,8 +50,8 @@ describe('the shell registry', () => {
   });
 });
 
-describe('OPERATE_LAYOUTS', () => {
-  it('one Operate layout per vibe', () => {
-    expect(OPERATE_LAYOUTS).toEqual({ daylight: OperateDaylight, paper: OperatePaper, studio: OperateStudio, quiet: OperateQuiet });
+describe('the Inbox registry', () => {
+  it('has no Inbox per vibe: one InboxPage draws every vibe (inbox/InboxPage.svelte)', () => {
+    expect('OPERATE_LAYOUTS' in registry).toBe(false);
   });
 });

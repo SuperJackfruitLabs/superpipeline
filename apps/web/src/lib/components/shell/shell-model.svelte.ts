@@ -25,9 +25,10 @@ import { liveUpdates } from '$lib/live/live-updates.svelte';
 const liveCards = () => (app.board?.cards ?? []).filter((c) => !c.archivedAt);
 const needIds = () => new Set(app.needsYou().map((i) => i.cardId));
 
-/** What the mounted page has handed the shell: how many filters it offers. */
+/** What the mounted page has handed the shell: how many filters it offers, and how the latest one opens. */
 class PageRegistry {
   filters = $state(0);
+  openers: Array<() => void> = [];
 }
 const page = new PageRegistry();
 
@@ -52,12 +53,21 @@ export const shellModel = {
   },
   /** A page offers a filter (the board's top row): F opens the filter dialog. */
   get filterAvailable(): boolean { return page.filters > 0; },
-  /** The page registers its filter while it is mounted; call the returned function to withdraw it (use in `$effect`). */
-  registerFilter(): () => void {
+  /**
+   * The page registers its filter while it is mounted; call the returned function to withdraw it (use in `$effect`).
+   * `open` is how F opens it (the Inbox's filter row); without it F opens the board's Filter cards dialog.
+   */
+  registerFilter(open?: () => void): () => void {
     // Untracked: registering from an effect must not make that effect depend on the count it writes.
     untrack(() => (page.filters += 1));
+    if (open) page.openers.push(open);
     let done = false;
-    return () => { if (!done) { done = true; untrack(() => (page.filters -= 1)); } };
+    return () => {
+      if (done) return;
+      done = true;
+      untrack(() => (page.filters -= 1));
+      if (open) page.openers = page.openers.filter((o) => o !== open);
+    };
   },
   get userName(): string { return userNameOf(app.user); },
   get initials(): string { return initialsOf(userNameOf(app.user)); },
@@ -100,7 +110,7 @@ export const shellModel = {
   openSearch(): void { app.cmdkOpen = true; },
   compose(): void { app.requestCompose(); },
   setView(v: ShellView): void { app.setView(v); },
-  openFilter(): void { app.filterOpen = true; },
+  openFilter(): void { const open = page.openers.at(-1); if (open) open(); else app.filterOpen = true; },
   openBoardSwitcher(): void { app.boardSwitcherOpen = true; },
   openAppearance(): void { appearance.pickerOpen = true; },
   openSettings(): void { void goto('/settings'); },
