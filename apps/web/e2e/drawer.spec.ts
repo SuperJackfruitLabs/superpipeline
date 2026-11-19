@@ -88,7 +88,7 @@ test('closing returns focus to the card that opened it', async ({ page, request 
 test('a card tile exposes one button for itself, not a button inside a button', async ({ page, request }) => {
   const boardId = await boardWithACard(request);
   await page.goto(`/b/${boardId}`);
-  await expect(page.getByText('Intake', { exact: true })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Intake', exact: true })).toBeVisible();
 
   // The tile used to be `role="button"` wrapping a real button and, with a reference, an anchor.
   // An element with a button role may not contain interactive descendants.

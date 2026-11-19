@@ -1,12 +1,10 @@
 // apps/web/src/lib/components/card/card-words.test.ts
 import { describe, expect, it } from 'vitest';
 import {
-  agentRole, archivedReason, askedHeading, archivedTitle, askedByTitle, attemptsLine, briefMeta, briefSummary, costSummary, criteriaCount,
-  doneLine, emptyNoteCaption, emptyNoteError, factItems, gateConflictSentence, grantLine, handoffLine, initials, linksSummary,
-  loadingBars, loadingNote, noteHint, ownerChip, pageSmall, planNone, planProgress, projectLine, provenanceLine, relatedLine,
-  replySub, restoreNote, RESUME_PLACEHOLDER, subtasksLine, talkSummary, unclaimedChip, usd, whatHappenedSummary,
+  attemptsLine, cardCrumb, cardFacts, costFact, countWords, criterionKey, emptyNoteError, factItems, gateAsk, gateChoiceWords, gateConflictSentence,
+  handoffLine, historyMeta, initials, labelName, noteHint, planProgress, producedMeta, producedTitle, projectLine, questionLead, relatedLine,
+  RESUME_PLACEHOLDER, signingMeta, stateSentence, subtasksLine, trackWho, unclaimedChip, usd, type StateSentenceInput,
 } from './card-words';
-import { cardLead } from './card-lead';
 import { ATTEMPTS_4605, CARD_4605, STAGES_DX, TZ } from './testing/card-4605';
 
 const names = (id: string) => ({ agt_fx_error_eric: 'error-eric' } as Record<string, string>)[id] ?? id;
@@ -16,22 +14,8 @@ describe('people and provenance', () => {
     expect(unclaimedChip({ delegateName: null, lastAgentName: 'error-eric', attemptCount: 2 })).toBe('Unclaimed · error-eric ran attempt 2');
     expect(unclaimedChip({ delegateName: 'coder-kai', lastAgentName: 'error-eric', attemptCount: 2 })).toBe('coder-kai · working it');
     expect(unclaimedChip({ delegateName: null, lastAgentName: null, attemptCount: 0 })).toBe('Unclaimed');
-    expect(ownerChip('Rakesh Gangwar')).toBe('Owner · Rakesh Gangwar');
     expect(initials('Rakesh Gangwar')).toBe('RG');
     expect(initials('super-chotu')).toBe('S');
-    expect(askedByTitle('super-chotu', true, 32)).toBe('super-chotu, an agent, with dispatch authority on this board');
-    expect(askedByTitle('Rakesh Gangwar', false, 32)).toBeNull();
-  });
-  it('provenance and grant sentences', () => {
-    expect(provenanceLine({ queuedByName: 'super-chotu', byAgent: true, covers: true }, null)).toBe('Asked by super-chotu (an agent, allowed to dispatch the one working it). Unclaimed now.');
-    expect(provenanceLine({ queuedByName: 'Rakesh Gangwar', byAgent: false, covers: null }, 'error-eric')).toBe('Asked by Rakesh Gangwar (a person). error-eric is working it.');
-    expect(grantLine('super-chotu', 'Rakesh Gangwar', 32)).toBe('Queued by super-chotu on Rakesh Gangwar\'s grant · 32 agents may be dispatched.');
-    expect(grantLine('super-chotu', 'Rakesh Gangwar', 1)).toBe('Queued by super-chotu on Rakesh Gangwar\'s grant · 1 agent may be dispatched.');
-  });
-  it('roles on the page', () => {
-    expect(agentRole({ stageName: 'Reproduce', attempt: 2, delegated: false })).toBe('Agent for Reproduce · ran attempt 2 · Unclaimed now');
-    expect(agentRole({ stageName: 'Reproduce', attempt: 2, delegated: true })).toBe('Agent for Reproduce · ran attempt 2 · working it now');
-    expect(pageSmall(cardLead({ card: CARD_4605 }), 'error-eric')).toBe('error-eric is waiting for your reply');
   });
 });
 
@@ -46,20 +30,7 @@ describe('facts, brief, plan, project', () => {
     expect(factItems({ card: { ...CARD_4605, priority: 0, attemptCount: 1, dueAt: '2026-10-20' }, stageName: 'Reproduce', ageHours: 5.2, labelNames: ['bug'], projectName: null, tz: TZ }))
       .toEqual([{ term: 'Priority', value: 'none' }, { term: 'Due', value: '20 Oct' }, { term: 'Labels', value: 'bug' }, { term: 'In Reproduce for', value: '5 hours' }]);
   });
-  it('brief words', () => {
-    expect(briefMeta(true, 5, false)).toBe('Description and 5 criteria · Show');
-    expect(briefMeta(true, 5, true)).toBe('Description and 5 criteria · Hide');
-    expect(briefMeta(false, 1, false)).toBe('1 criterion · Show');
-    expect(briefSummary(10, false, true, 'drawer')).toBe('Details · 10 fields, project');
-    expect(briefSummary(10, true, true, 'drawer')).toBe('Details · 10 fields, plan, project');
-    expect(briefSummary(10, false, true, 'page')).toBe('10 details');
-    expect(briefSummary(10, false, true, 'phone')).toBe('10 fields');
-    expect(criteriaCount(5)).toBe('5 acceptance criteria');
-    expect(criteriaCount(1)).toBe('1 acceptance criterion');
-  });
   it('plan and project', () => {
-    expect(planNone('error-eric')).toBe('error-eric did not post a plan for this card.');
-    expect(planNone('')).toBe('The agent did not post a plan for this card.');
     expect(planProgress(3, 4)).toBe('3 / 4 steps · 75%');
     expect(projectLine('Marketing & Community — Melissa and Anna onboarding', null)).toBe('Marketing & Community — Melissa and Anna onboarding · no milestone');
   });
@@ -67,17 +38,8 @@ describe('facts, brief, plan, project', () => {
 
 describe('what happened, links, cost, talk', () => {
   it('summaries', () => {
-    expect(whatHappenedSummary(2, 0)).toBe('2 runs · no decisions yet');
-    expect(whatHappenedSummary(1, 1)).toBe('1 run · 1 decision');
-    expect(linksSummary({ links: 0, children: 0, openChildren: 0, refs: 5, related: 0 }, 'drawer')).toBe('no links · no sub-tasks · 5 references · no related work');
-    expect(linksSummary({ links: 0, children: 0, openChildren: 0, refs: 5, related: 0 }, 'page')).toBe('5 references');
-    expect(linksSummary({ links: 2, children: 3, openChildren: 1, refs: 1, related: 2 }, 'drawer')).toBe('2 links · 1 of 3 sub-tasks open · 1 reference · 2 related');
     expect(subtasksLine(0, 0)).toBe('0 open of 0');
-    expect(costSummary(0, null, null)).toBe('$0.00 · no estimate · no delivery');
-    expect(costSummary(1.5, 4, 'manual')).toBe('$1.50 · est. $4.00 · manual delivery');
     expect(usd(0)).toBe('$0.00');
-    expect(talkSummary(0)).toBe('No comments yet');
-    expect(talkSummary(2)).toBe('2 comments');
     expect(relatedLine('absent', 0)).toBe('No related prior work found in Superlibrary.');
     expect(relatedLine('ok', 0)).toBe('No related prior work found in Superlibrary.');
     expect(relatedLine('unavailable', 0)).toBe('Related prior work could not be loaded from Superlibrary.');
@@ -93,38 +55,76 @@ describe('what happened, links, cost, talk', () => {
   });
 });
 
-describe('reply, archive, done, gate, loading', () => {
+describe('reply and gate', () => {
   it('reply words', () => {
-    expect(replySub(CARD_4605, 'error-eric')).toBe('Stopped after 2 attempts. Tell error-eric what to do differently.');
-    expect(replySub({ ...CARD_4605, needsHuman: { reason: 'repeated-failure', failureCount: 3 } }, 'error-eric')).toBe('Failed 3 times; the board stopped retrying. Tell error-eric what to do differently.');
-    expect(replySub({ ...CARD_4605, needsHuman: { reason: 'not-authorised' } }, 'error-eric')).toBe('Not dispatched: nobody with permission asked for it. Say who should pick it up.');
     expect(noteHint(0)).toBe('Needed before you send. 0 / 8000');
     expect(emptyNoteError('error-eric')).toBe('Add a note for error-eric first.');
-    expect(emptyNoteCaption('error-eric')).toBe('Pressing it with no note says “Add a note for error-eric first.”');
     expect(RESUME_PLACEHOLDER).toBe('For example: what you checked, and what the agent should look at next.');
   });
-  it('archived', () => {
-    expect(archivedTitle('2026-10-09T05:30:00Z', TZ)).toBe('Archived 9 Oct');
-    const cancelled = [{ status: 'cancelled', resolvedAt: '2026-10-09T05:30:03Z' }];
-    expect(archivedReason('2026-10-09T05:30:00Z', cancelled)).toBe('Its pending review was cancelled when the card was archived.');
-    expect(archivedReason('2026-10-09T05:30:00Z', [{ status: 'cancelled', resolvedAt: '2026-10-09T05:31:00Z' }])).toBe('It is off the board. Restore puts it back.');
-    expect(restoreNote('Messaging approval')).toBe('Puts it back on the board at Messaging approval.');
-  });
-  it('done, gate conflict, loading', () => {
-    expect(doneLine('Resident', '2026-10-08T13:56:34.688Z', 5, new Date('2026-10-11T08:21:00Z'), TZ)).toBe('Reached Resident on Thu 8 Oct, 19:26 · 5 attempts');
+  it('gate conflict', () => {
     expect(gateConflictSentence({ decidedBy: 'usr_b19776fac3c94df4', decidedAt: '2026-10-11T07:32:00Z', via: 'matrix' }, 'Rakesh Gangwar', TZ))
       .toBe('This gate was already decided from Matrix by Rakesh Gangwar at 13:02.');
     expect(gateConflictSentence({ decidedBy: 'x', decidedAt: '2026-10-11T07:32:00Z', via: 'web' }, 'Pat', TZ)).toBe('This gate was already decided from the web app by Pat at 13:02.');
-    expect(loadingNote('error-eric')).toBe('Loading what error-eric said and the card’s history…');
-    expect(loadingBars(7, 1)).toEqual([1, 2.8, 1, 1, 1]);
-    expect(loadingBars(3, 0)).toEqual([2.8, 1, 1]);
   });
 });
 
-describe('askedHeading (#11)', () => {
-  it('names the agent only when an agent works the stage; neutral for a person-owned stage', () => {
-    expect(askedHeading({ key: 'review', name: 'Review', order: 1, ownerKind: 'human', owner: 'usr_fx_ira' }, 'error-eric')).toBe('What this card asks');
-    expect(askedHeading({ key: 'fix', name: 'Fix', order: 2, ownerKind: 'capability' }, 'error-eric')).toBe('What error-eric was asked');
-    expect(askedHeading(undefined, 'the agent')).toBe('What the agent was asked');
+const base: StateSentenceInput = { kind: 'stopped', archivedAt: null, stage: 'Reproduce', ageHours: 66, agent: 'error-eric', attempt: 2, produced: 0, reason: null, nextStage: 'Failing test', since: '2026-10-08T14:11:45Z', resumable: true, tz: TZ };
+describe('the state sentence (composition contract §7 "Card" 3)', () => {
+  it('says where, for how long, what is wanted, who did what last, and the verb that answers it', () => {
+    expect(stateSentence({ ...base, kind: 'review', produced: 1 })).toEqual({ text: 'Waiting for your review in Reproduce for 2 days. error-eric finished attempt 2 and produced one document.', needsWord: 'Review' });
+    expect(stateSentence({ ...base, kind: 'question', ageHours: 3 })).toEqual({ text: 'Waiting for your answer in Reproduce for 3 hours. error-eric asked a question and holds the card until you reply.', needsWord: 'Answer' });
+    expect(stateSentence({ ...base, reason: 'The tests failed twice.' })).toEqual({ text: 'error-eric stopped in Reproduce after attempt 2: The tests failed twice. It will read your note before it tries again.', needsWord: 'Resume' });
+    expect(stateSentence({ ...base, kind: 'failed', resumable: false })).toEqual({ text: 'error-eric failed in Reproduce after attempt 2.', needsWord: null });
+    expect(stateSentence({ ...base, kind: 'budget' }).text).toBe('error-eric stopped at the spending cap in Reproduce after attempt 2. It will read your note before it tries again.');
+    expect(stateSentence({ ...base, kind: 'working', ageHours: 2 })).toEqual({ text: 'error-eric is working on it in Reproduce for 2 hours. Nothing to do yet.', needsWord: null });
+    expect(stateSentence({ ...base, kind: 'done', produced: 1, since: '2026-11-14T10:00:00Z' })).toEqual({ text: 'Shipped by error-eric on 14 November. Nothing to do. What it produced is below.', needsWord: null });
+    expect(stateSentence({ ...base, kind: 'done', agent: '' }).text).toBe('Shipped on 8 October. Nothing to do.');
+    expect(stateSentence({ ...base, kind: 'idle', agent: '' })).toEqual({ text: 'Waiting in Reproduce for 2 days. Nobody has picked it up.', needsWord: null });
+    expect(stateSentence({ ...base, archivedAt: '2026-10-02T10:00:00Z' })).toEqual({ text: 'Archived on 2 October. Agents cannot claim it and it is off the board. Restore it to bring it back to Reproduce.', needsWord: 'Restore' });
+    expect(stateSentence({ ...base, kind: 'review', agent: '' }).text).toMatch(/^Waiting for your review in Reproduce for 2 days\. An agent finished attempt 2\.$/);
+  });
+});
+
+describe('the panels', () => {
+  it('the decision panel asks, says when, and what approving does', () => {
+    expect(gateAsk({ agent: 'keeper-karen', attempt: 5, ageHours: 10, produced: 1, nextStage: 'Done' })).toEqual({ lead: 'keeper-karen asks you to approve attempt 5.', rest: 'It finished 10 hours ago and produced one document. Approving moves the card to Done.' });
+    expect(gateAsk({ agent: '', attempt: 1, ageHours: 0.2, produced: 0, nextStage: null })).toEqual({ lead: 'An agent asks you to approve attempt 1.', rest: 'It finished under an hour ago.' });
+    expect(gateChoiceWords('changes', 'request_changes', 'Building')).toBe('Send it back to Building with a note the agent will read.');
+    expect(gateChoiceWords('approve', 'approve_manual', null)).toBe('You post the approved text yourself.');
+    expect(gateChoiceWords('reject', 'reject', null)).toBe('Stop the card here.');
+    expect(signingMeta('sha256:3f9a', 2)).toBe('sha256 · two fields');
+    expect(questionLead('scout-sam', false)).toBe('scout-sam asks:');
+    expect(questionLead('', true)).toBe('The agent needs you to sign in:');
+  });
+});
+
+describe('facts, produced, history', () => {
+  it('facts in words, never ids', () => {
+    expect(cardFacts({ owner: 'Rakesh', priority: 1, labels: ['estate', 'release'], dueAt: null, attempts: 5, askedBy: 'Rakesh', tz: TZ })).toEqual([
+      { term: 'Owner', value: 'Rakesh' }, { term: 'Priority', value: 'P1' }, { term: 'Labels', value: 'estate, release' }, { term: 'Due', value: 'none' },
+      { term: 'Attempt', value: '5' }, { term: 'Asked by', value: 'Rakesh' },
+    ]);
+    expect(cardFacts({ owner: '', priority: 0, labels: [], dueAt: '2026-10-20', attempts: 0, askedBy: '', tz: TZ }).map((f) => f.value)).toEqual(['nobody', 'none', 'none', '20 October', 'none yet']);
+    expect(labelName({ id: 'lbl_x', name: 'lbl_x' })).toBe('a removed label');
+    expect(labelName({ id: 'lbl_x', name: 'estate' })).toBe('estate');
+    expect(costFact(1.5, 4)).toBe('$1.50 of $4.00 estimated');
+    expect(costFact(1.5, null)).toBe('$1.50');
+  });
+  it('what was produced', () => {
+    expect(producedTitle(5)).toBe('What attempt 5 produced');
+    expect(producedTitle(0)).toBe('What it must produce');
+    expect(producedMeta(1, 3)).toBe('one document · three criteria');
+    expect(producedMeta(0, 1)).toBe('one criterion');
+    expect(criterionKey(0)).toBe('AC-01');
+    expect(countWords(12, 'entry', 'entries')).toBe('12 entries');
+  });
+  it('history meta, the crumb and the track line', () => {
+    const now = Date.parse('2026-10-11T08:21:00Z');
+    expect(historyMeta(12, '2026-10-10T22:21:00Z', now)).toBe('12 entries · last 10 hours ago');
+    expect(historyMeta(1, null, now)).toBe('1 entry');
+    expect(cardCrumb('Planning & Roadmap', 'Approved', '4854')).toBe('Planning & Roadmap · Approved · card 4854');
+    expect(trackWho(true, 'keeper-karen', 10)).toBe('you · 10 h');
+    expect(trackWho(false, 'builder-bo', 2.5)).toBe('builder-bo · 2 h');
+    expect(trackWho(false, '', null)).toBe('');
   });
 });

@@ -1,8 +1,7 @@
 // apps/web/src/lib/components/card/state-words.ts
 /** One word, or one short sentence, for where a card stands. Never the raw state value. */
 import type { StageTrackStatus } from '@superjackfruitlabs/vibekit-ui';
-import type { Activity, Attempt, Card, Stage } from '$lib/api';
-import { ageWords } from '$lib/age';
+import type { Activity, Attempt } from '$lib/api';
 import type { CardLead, LeadKind } from './card-lead';
 
 export type StripKind = LeadKind | 'archived';
@@ -25,40 +24,6 @@ export function stripAria(i: number, n: number, name: string, kind: StripKind, f
   return `${form === 'drawer' ? 'Stages: stage' : 'Stage'} ${i + 1} of ${n}, ${name}, ${word}`;
 }
 
-export function stateWord(card: Pick<Card, 'state' | 'archivedAt'>, lead: Pick<CardLead, 'kind' | 'needsYou'>): string {
-  if (card.archivedAt) return 'Archived';
-  if (lead.kind === 'failed') return 'Failed';
-  if (lead.needsYou) return 'Waiting on you';
-  if (card.state === 'working') return 'Working';
-  if (card.state === 'completed') return 'Done';
-  if (card.state === 'rejected') return 'Rejected';
-  return 'Queued';
-}
-
-/** The state pill: "Waiting on you · 2 days" on desktop, the word alone on phones. */
-export function waitingWord(card: Pick<Card, 'state' | 'archivedAt'>, lead: Pick<CardLead, 'kind' | 'needsYou'>, ageHours: number | null, form: 'desktop' | 'phone'): string {
-  const word = stateWord(card, lead);
-  return word === 'Waiting on you' && form === 'desktop' && ageHours !== null ? `${word} · ${ageWords(ageHours)}` : word;
-}
-
-/** Signal only for "needs you"; archived is never signal (§8.2-3). */
-export function pillTone(card: Pick<Card, 'state' | 'archivedAt'>, lead: Pick<CardLead, 'needsYou'>): 'needs' | 'working' | 'done' | 'off' {
-  if (card.archivedAt) return 'off';
-  if (lead.needsYou) return 'needs';
-  if (card.state === 'working') return 'working';
-  if (card.state === 'completed') return 'done';
-  return 'off';
-}
-
-const STOP_VERB: Readonly<Record<LeadKind, string>> = {
-  stopped: 'Stopped', failed: 'Stopped', budget: 'Stopped', review: 'Waiting for review', question: 'Asked a question',
-  working: 'Working', done: 'Finished', idle: 'Queued',
-};
-/** "Stopped in stage 2 of 7. Next: Failing test." (G-8). */
-export function stopLine(lead: Pick<CardLead, 'kind'>, i: number, stages: Pick<Stage, 'name'>[]): string {
-  const next = stages[i + 1];
-  return `${STOP_VERB[lead.kind]} in stage ${i + 1} of ${stages.length}.${next ? ` Next: ${next.name}.` : ''}`;
-}
 
 /** How a run ended, lower case. "Sent back" is derived: completed, but the board refused the completion. */
 export function attemptWord(a: Pick<Attempt, 'outcome' | 'completion'>): string {

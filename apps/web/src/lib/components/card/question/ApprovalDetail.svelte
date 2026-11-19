@@ -22,7 +22,7 @@
     </div>
   {/each}
   <details class="approval-digest">
-    <summary>Details</summary>
+    <summary style="min-height: 44px; display: flex; align-items: center; cursor: pointer;">Details</summary>
     <code style="overflow-wrap: anywhere;">{detail.digest}</code>
   </details>
 </div>

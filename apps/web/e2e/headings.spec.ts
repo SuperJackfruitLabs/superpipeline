@@ -71,9 +71,8 @@ for (const vibe of VIBES) {
       await setAppearance(page, `${vibe}.light.strong.0`);
       await page.setViewportSize({ width: size.width, height: size.height });
       await page.goto(`/b/${boardId}/c/${card.card.id}/page`);
-      // Paper's page is a letter: its h1 is "Re: <title>" (the phone's hidden h1 is the plain title).
-      const letter = vibe === 'paper' && size.width >= 640;
-      await expect(page.locator('h1')).toHaveText(`${letter ? 'Re: ' : ''}Page heading ${vibe}`);
+      // One composition in every vibe: the h1 is the card's title.
+      await expect(page.locator('h1')).toHaveText(`Page heading ${vibe}`);
       await expect(page.locator('h1')).toHaveCount(1);
       await expect(page.locator('main')).toHaveCount(1);
     });

@@ -5,10 +5,10 @@ import { join } from 'node:path';
 import { deriveDark, MANIFEST, REF_DIR, resolveReference } from './reference';
 
 describe('references', () => {
-  it('the manifest lists exactly the 40 committed artboards', () => {
+  it('the manifest lists exactly the 24 committed artboards', () => {
     const files = readdirSync(REF_DIR).filter((f) => /^SP-.*\.html$/.test(f) && !f.includes('.dark.')).map((f) => f.replace(/\.html$/, ''));
     expect(files.sort()).toEqual(Object.keys(MANIFEST).sort());
-    expect(files).toHaveLength(40);
+    expect(files).toHaveLength(24);
   });
   it('every artboard names its vibe in its file name', () => {
     for (const a of Object.keys(MANIFEST)) expect(a).toMatch(/-(Daylight|Paper|Studio|Quiet)$/);
@@ -27,7 +27,7 @@ describe('references', () => {
     const out = deriveDark('<html lang="en" style="x"><body><div class="pg" data-vibe="paper" data-theme="light"></div></body></html>');
     expect(out).toMatch(/<html lang="en" style="x" data-vibe="paper" data-theme="dark">/);
     // A real reference: its <html> background comes from :root, so <html> must carry the theme.
-    const ref = deriveDark(readFileSync(join(REF_DIR, 'SP-CardPage-Paper.html'), 'utf8'));
+    const ref = deriveDark(readFileSync(join(REF_DIR, 'SP-Operate-Paper.html'), 'utf8'));
     expect(ref).toMatch(/<html[^>]*data-vibe="paper"[^>]*data-theme="dark"/);
   });
 });

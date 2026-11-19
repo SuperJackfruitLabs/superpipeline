@@ -39,8 +39,5 @@ describe('deriveDark: drop shadows stay dark (fix round 2)', () => {
     const html = '<html><body><style>.r { box-shadow: inset 0 0 0 2px var(--vk-color-text); }</style><div data-vibe="paper" data-theme="light"></div></body></html>';
     expect(deriveDark(html)).toContain('inset 0 0 0 2px var(--vk-color-text)');
   });
-  it('SP-Card-Paper: the sheet shadow no longer glows in the derived dark', () => {
-    const out = deriveDark(readFileSync(join(REF_DIR, 'SP-Card-Paper.html'), 'utf8'));
-    expect(out).not.toContain('color-mix(in oklch, var(--vk-color-text) 30%, transparent)');
-  });
+
 });

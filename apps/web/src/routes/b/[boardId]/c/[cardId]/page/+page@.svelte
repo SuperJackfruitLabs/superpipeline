@@ -1,15 +1,14 @@
 <script lang="ts">
   /**
-   * A card on its own page (amendments §7.4). `@` resets to the root layout, whose bare slot
+   * A card on its own page (amendments §7.4): the card's one composition (CardView), with an h1. `@` resets to the root layout, whose bare slot
    * draws no shell. The page opens the board itself; links to it are shared, so it must stand alone.
    */
   import { page } from '$app/state';
   import { goto } from '$app/navigation';
   import { app } from '$lib/stores/app.svelte';
-  import { cardPersonName } from '$lib/components/dialogs/person';
-  import { appearance } from '$lib/appearance.svelte';
   import { viewport } from '$lib/viewport.svelte';
-  import { CARD_PAGE_LAYOUTS } from '$lib/layouts';
+  import CardView from '$lib/components/card/CardView.svelte';
+  import CardPageBar from '$lib/components/card/page/CardPageBar.svelte';
   import CardPhoneSheet from '$lib/components/card/phone/CardPhoneSheet.svelte';
   import { CardModel } from '$lib/components/card/card-model.svelte';
   import CardPageMissing from '$lib/components/card/page/CardPageMissing.svelte';
@@ -26,10 +25,7 @@
   });
   const failure = $derived(app.boardId === boardId ? app.boardFailure : null);
   const model = new CardModel(() => ({ boardId, cardId, surface: 'page' }));
-  const vibe = $derived(appearance.value.vibe);
-  const Page = $derived(CARD_PAGE_LAYOUTS[vibe]);
   const ready = $derived(app.board?.boardId === boardId);
-  const personName = $derived(cardPersonName(app.user, app.members));
 </script>
 
 <svelte:head><title>{model.card ? `${model.card.title} · ${model.boardName}` : 'Card · Superpipeline'}</title></svelte:head>
@@ -44,7 +40,8 @@
   <!-- Below 640px every vibe's page is its phone card in the same modal sheet as the drawer's (§7.7); Close goes back to the board. The page's one
        main and h1 stay here, since the phone card titles itself with an h2. -->
   <main id="content"><h1 class="vk-visually-hidden">{model.card.title}</h1></main>
-  <CardPhoneSheet {model} {vibe} phase={appearance.phase} {personName} gate={model.gateBinding} question={model.questionBinding} pageHref={model.pageHref} onClose={() => void goto(model.boardHref)} />
+  <CardPhoneSheet {model} gate={model.gateBinding} question={model.questionBinding} pageHref={model.pageHref} boardHref={model.boardHref} onClose={() => void goto(model.boardHref)} />
 {:else}
-  <Page {model} {vibe} phase={appearance.phase} {personName} gate={model.gateBinding} question={model.questionBinding} pageHref={model.pageHref} boardHref={model.boardHref} />
+  <CardPageBar boardName={model.boardName} boardHref={model.boardHref} />
+  <main id="content" class="cv-page"><CardView {model} surface="page" gate={model.gateBinding} question={model.questionBinding} pageHref={model.pageHref} boardHref={model.boardHref} /></main>
 {/if}

@@ -1,7 +1,7 @@
 // apps/web/src/lib/components/plan/filter-words.ts
 /** The Filter dialog's choices, in words: a person's name and a state in plain language, never an id or a raw value. */
 import type { AgentSummary, Member } from '$lib/api';
-import { STATE_WORD } from '../card/paper-words';
+import { STATE_WORD } from '../card/card-words';
 
 /** `submitted` → "Queued", `input-required` → "Waiting on you". An unknown state is spelled out, never shown raw. */
 export function stateLabel(state: string): string {

@@ -5,20 +5,6 @@
  * The keys are polished after deploy. The list only shrinks.
  */
 export const EXPECTED_FAILURES: ReadonlySet<string> = new Set([
-  'SP-Card-Daylight·dark', // 0.056% (vibekit 0.0.10, full run): the drawer bar's Open in new window is vibekit's 44px tool Button at x 1132 where the reference draws a 21px text link at x 1221; Copy is 76px (vibekit Button's icon slot) against the reference's 72px; the section twisties are vibekit's 18px chevron where the reference draws a 9×4.5px path
-  'SP-Card-Daylight·light', // 0.219% (vibekit 0.0.10, full run): the capped drawer runs to 3120px over the reference's 2832px page, so its ground shows below; the drawer bar's Open in new window is vibekit's 44px tool Button where the reference draws a 21px text link; Copy is 76px against 72px (vibekit Button's icon slot)
-  'SP-Card-Paper·dark', // 0.031% (vibekit 0.0.10, full run): the derived dark now casts the reference's sheet shadow as vibekit's dark shadow (fix round 2); left: the Resume note placeholder (vibekit Field textarea), the same 5 broken blocks as light
-  'SP-Card-Paper·light', // 0.131% (vibekit 0.0.10, full run): the Resume note placeholder (vibekit Field textarea)
-  'SP-Card-Quiet·dark', // 0.059% (vibekit 0.0.10, full run): vibekit: the Drawer bar's back link and Open tool, and the Field select text
-  'SP-Card-Quiet·light', // 0.061% (vibekit 0.0.10, full run): vibekit: the Drawer bar's back link and Open tool, and the Field select text
-  'SP-Card-States-Paper·dark', // 0.041% (vibekit 0.0.10, full run): vibekit: the gate note's Field textarea placeholder
-  'SP-Card-States-Paper·light', // 0.041% (vibekit 0.0.10, full run): vibekit: the gate note's Field textarea placeholder
-  'SP-Card-States-Studio·dark', // 0.483% (vibekit 0.0.10, full run): vibekit: StageTrack's cell form cuts a long current name to one line ('Messaging…') where the reference wraps it to two, which shifts what follows by 13px
-  'SP-Card-States-Studio·light', // 0.472% (vibekit 0.0.10, full run): vibekit: StageTrack's cell form cuts a long current name to one line ('Messaging…') where the reference wraps it to two, which shifts what follows by 13px
-  'SP-Card-Studio·dark', // 0.116% (vibekit 0.0.10, full run): vibekit: the Drawer bar (crumb row, Open tool)
-  'SP-Card-Studio·light', // 0.122% (vibekit 0.0.10, full run): vibekit: the Drawer bar (crumb row, Open tool)
-  'SP-CardPage-Studio·dark', // 0.041% (vibekit 0.0.10, full run): the light causes; the light band is gone (harness fix)
-  'SP-CardPage-Studio·light', // 0.043% (vibekit 0.0.10, full run): vibekit 0.0.4: its copy/link/edit/archive/send glyphs differ from the reference's Studio set, the 18px search glyph sits 2px off, Field select text rasterises differently (0.043%, 14 blocks)
   'SP-Dlg-Appearance-Daylight·dark', // 0.162% (vibekit 0.0.10, full run): within the bar since vibekit 0.0.10 and the picker's 1.45 type: the reference's 'See every accent's contrast' link is not drawn (its target is a mockup page the app does not have); the Paper preview's IN PROGRESS heading wraps in vibekit's preview frame; the Studio card's five swatches are vibekit's (bg, surface, primary, accent, signal) where the reference shows bg, primary, stage 5, accent, signal; Studio's readout Sky draws a smaller sun; the swatch wash strips and the foot's line rasterise a pixel off
   'SP-Dlg-Appearance-Daylight·light', // 0.215% (vibekit 0.0.10, full run): within the bar since vibekit 0.0.10 and the picker's 1.45 type: the reference's 'See every accent's contrast' link is not drawn (its target is a mockup page the app does not have); the Paper preview's IN PROGRESS heading wraps in vibekit's preview frame; the Studio card's five swatches are vibekit's (bg, surface, primary, accent, signal) where the reference shows bg, primary, stage 5, accent, signal; Studio's readout Sky draws a smaller sun; the swatch wash strips and the foot's line rasterise a pixel off
   'SP-Dlg-Appearance-Paper·dark', // 0.074% (vibekit 0.0.10, full run): within the bar since vibekit 0.0.10 and the picker's 1.45 type: the reference's 'See every accent's contrast' link is not drawn (its target is a mockup page the app does not have); the Paper preview's IN PROGRESS heading wraps in vibekit's preview frame; the Studio card's five swatches are vibekit's (bg, surface, primary, accent, signal) where the reference shows bg, primary, stage 5, accent, signal; Studio's readout Sky draws a smaller sun; the swatch wash strips and the foot's line rasterise a pixel off
@@ -56,14 +42,6 @@ export const EXPECTED_FAILURES: ReadonlySet<string> = new Set([
   'SP-Dlg-Palette-Studio·light', // 0.500% (vibekit 0.0.10, full run): vibekit CommandPalette rows (filter={false} since 0.0.9): Face tiles and keycaps rasterise differently from the reference's render
   'SP-Dlg-Reconnect-Daylight·dark', // 0.048% (vibekit 0.0.10, full run): broken blocks only: vibekit Button (Sign in again) rasterises differently from the reference's render
   'SP-Dlg-Reconnect-Daylight·light', // 0.108% (vibekit 0.0.10, full run): broken blocks only: vibekit Button (Sign in again) rasterises differently from the reference's render
-  'SP-Phone-Card-Daylight·dark', // 0.292% (vibekit 0.0.10, full run): vibekit Button text and icons rasterise differently from the reference's render, and the Resume note's Field placeholder
-  'SP-Phone-Card-Daylight·light', // 0.313% (vibekit 0.0.10, full run): vibekit Button text and icons rasterise differently from the reference's render, and the Resume note's Field placeholder
-  'SP-Phone-Card-Paper·dark', // 0.126% (vibekit 0.0.10, full run): vibekit Button text and icons rasterise differently from the reference's render, and the Resume note's Field placeholder
-  'SP-Phone-Card-Paper·light', // 0.135% (vibekit 0.0.10, full run): vibekit Button text and icons rasterise differently from the reference's render, and the Resume note's Field placeholder
-  'SP-Phone-Card-Quiet·dark', // 0.284% (vibekit 0.0.10, full run): vibekit Button text and icons rasterise differently from the reference's render, and the Resume note's Field placeholder
-  'SP-Phone-Card-Quiet·light', // 0.295% (vibekit 0.0.10, full run): vibekit Button text and icons rasterise differently from the reference's render, and the Resume note's Field placeholder
-  'SP-Phone-Card-Studio·dark', // 0.100% (vibekit 0.0.10, full run): vibekit Button text and icons rasterise differently from the reference's render, and the Resume note's Field placeholder
-  'SP-Phone-Card-Studio·light', // 0.104% (vibekit 0.0.10, full run): vibekit Button text and icons rasterise differently from the reference's render, and the Resume note's Field placeholder
 ]);
 
 /** `${process.platform}-${process.arch}`, e.g. `darwin-arm64` or `linux-x64` (CI's runner). */
@@ -84,7 +62,6 @@ export const currentPlatform = (): PlatformKey => `${process.platform}-${process
 export const PLATFORM_OVERRIDES: Readonly<Record<PlatformKey, Readonly<Record<string, 'fails' | 'passes' | 'either'>>>> = {
   'linux-x64': {
     'SP-Dlg-NewCard-Daylight·dark': 'fails', // 0.030% (CI linux-x64): one broken block: the Add label chip's words and the label chips' × glyphs draw 1px higher than the reference's under Linux FreeType hinting
-    'SP-CardPage-Paper·light': 'fails', // 0.043% (CI linux-x64): one broken block on the links and list markers the app's reset dropped (Change project and the crumbs drew no underline, Things to prove no decimals; restored in card-page-paper.css, so this may now pass)
     'SP-Dlg-Reconnect-Daylight·dark': 'either', // 0.030% (CI linux-x64): flips between 0.000% and 0.030% (one broken block on vibekit's Sign in again Button) from run to run on linux-x64; focus, hover, transitions and font loading are ruled out on macOS (the button is focused then blurred identically every run), and the Linux run could not be reproduced locally
   },
 };

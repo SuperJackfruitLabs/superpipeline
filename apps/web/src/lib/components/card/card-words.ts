@@ -1,9 +1,9 @@
 // apps/web/src/lib/components/card/card-words.ts
-/** The sentences every card surface prints (shared spec §4 and 05-amendments). Pure. */
+/** The card's words, one set for every vibe and surface (the vibe never changes wording). Pure. */
 import type { Attempt, Card, GateConflict, Stage } from '$lib/api';
 import { ageWords } from '$lib/age';
-import { dayMonth, clockHM, whenLabel } from '$lib/when';
-import type { CardLead } from './card-lead';
+import { dayMonth, dayMonthLong, clockHM } from '$lib/when';
+import type { LeadKind } from './card-lead';
 import { attemptWord } from './state-words';
 
 export const usd = (n: number): string => `$${n.toFixed(2)}`;
@@ -17,32 +17,6 @@ export function initials(name: string): string {
 export function unclaimedChip(i: { delegateName: string | null; lastAgentName: string | null; attemptCount: number }): string {
   if (i.delegateName) return `${i.delegateName} · working it`;
   return i.lastAgentName ? `Unclaimed · ${i.lastAgentName} ran attempt ${i.attemptCount}` : 'Unclaimed';
-}
-export const ownerChip = (name: string): string => `Owner · ${name}`;
-export const askedByTitle = (name: string, byAgent: boolean, grantSize: number | null): string | null =>
-  byAgent && (grantSize ?? 0) > 0 ? `${name}, an agent, with dispatch authority on this board` : null;
-
-export function provenanceLine(p: { queuedByName: string; byAgent: boolean; covers: boolean | null }, delegateName: string | null): string {
-  const who = `${p.byAgent ? 'an agent' : 'a person'}${p.covers ? ', allowed to dispatch the one working it' : ''}`;
-  return `Asked by ${p.queuedByName} (${who}).${delegateName ? ` ${delegateName} is working it.` : ' Unclaimed now.'}`;
-}
-/** API-3; the count is every principal in the grant (all `prn_…`). */
-export const grantLine = (queuedByName: string, ownerName: string, n: number): string =>
-  `Queued by ${queuedByName} on ${ownerName}'s grant · ${n} agent${s(n)} may be dispatched.`;
-
-export function replySub(card: Pick<Card, 'attemptCount' | 'needsHuman'>, agent: string): string {
-  const reason = card.needsHuman?.reason;
-  if (reason === 'not-authorised') return 'Not dispatched: nobody with permission asked for it. Say who should pick it up.';
-  if (reason === 'repeated-failure') return `Failed ${card.needsHuman?.failureCount ?? card.attemptCount} times; the board stopped retrying. Tell ${agent} what to do differently.`;
-  return `Stopped after ${card.attemptCount} attempt${s(card.attemptCount)}. Tell ${agent} what to do differently.`;
-}
-
-export function agentRole(i: { stageName: string; attempt: number; delegated: boolean }): string {
-  return `Agent for ${i.stageName} · ran attempt ${i.attempt} · ${i.delegated ? 'working it now' : 'Unclaimed now'}`;
-}
-export function pageSmall(lead: Pick<CardLead, 'kind' | 'needsYou'>, agent: string): string {
-  if (lead.needsYou) return `${agent} is waiting for your reply`;
-  return lead.kind === 'done' ? `Finished by ${agent}` : `${agent} is working`;
 }
 
 export interface FactInput { card: Pick<Card, 'priority' | 'dueAt' | 'attemptCount'>; stageName: string; ageHours: number | null; labelNames: string[]; projectName: string | null; tz?: string }
@@ -59,40 +33,14 @@ export function factItems(i: FactInput): Array<{ term: string; value: string }> 
   return out;
 }
 
-export function briefMeta(hasDescription: boolean, criteria: number, open: boolean): string {
-  const what = [hasDescription ? 'Description' : null, criteria ? `${criteria} criteri${criteria === 1 ? 'on' : 'a'}` : null].filter(Boolean).join(' and ');
-  return `${what || 'Nothing written'} · ${open ? 'Hide' : 'Show'}`;
-}
-export function briefSummary(rows: number, hasPlan: boolean, hasProject: boolean, surface: 'drawer' | 'page' | 'phone'): string {
-  if (surface === 'page') return `${rows} details`;
-  if (surface === 'phone') return `${rows} fields`;
-  return `Details · ${rows} fields${hasPlan ? ', plan' : ''}${hasProject ? ', project' : ''}`;
-}
-export const criteriaCount = (n: number): string => `${n} acceptance criteri${n === 1 ? 'on' : 'a'}`;
-export const planNone = (agent: string): string => `${agent || 'The agent'} did not post a plan for this card.`;
 export const planProgress = (done: number, n: number): string => `${done} / ${n} steps · ${Math.round((100 * done) / n)}%`;
 export const projectLine = (project: string, milestone: string | null): string => `${project} · ${milestone ?? 'no milestone'}`;
 
-export const whatHappenedSummary = (runs: number, decisions: number): string =>
-  `${runs} run${s(runs)} · ${decisions ? `${decisions} decision${s(decisions)}` : 'no decisions yet'}`;
-export function linksSummary(c: { links: number; children: number; openChildren: number; refs: number; related: number }, surface: 'drawer' | 'page'): string {
-  const parts = [
-    c.links ? `${c.links} link${s(c.links)}` : surface === 'drawer' ? 'no links' : null,
-    c.children ? `${c.openChildren} of ${c.children} sub-tasks open` : surface === 'drawer' ? 'no sub-tasks' : null,
-    c.refs || surface === 'drawer' ? `${c.refs} reference${s(c.refs)}` : null,
-    c.related ? `${c.related} related` : surface === 'drawer' ? 'no related work' : null,
-  ];
-  return parts.filter(Boolean).join(' · ');
-}
 export const subtasksLine = (open: number, n: number): string => `${open} open of ${n}`;
-export const talkSummary = (n: number): string => (n ? `${n} comment${s(n)}` : 'No comments yet');
 export function relatedLine(phase: 'loading' | 'ok' | 'unavailable' | 'absent', n: number): string {
   if (phase === 'unavailable') return 'Related prior work could not be loaded from Superlibrary.';
   if (phase === 'loading') return 'Looking for related prior work…';
   return n ? `${n} related piece${s(n)} of prior work in Superlibrary.` : 'No related prior work found in Superlibrary.';
-}
-export function costSummary(cost: number, estimate: number | null, deliveryMode: string | null): string {
-  return `${usd(cost)} · ${estimate ? `est. ${usd(estimate)}` : 'no estimate'} · ${deliveryMode ? `${deliveryMode} delivery` : 'no delivery'}`;
 }
 
 /** D-8: the carried handoff in one line, or what stands in for it before the first stage output. */
@@ -111,35 +59,152 @@ export const attemptsLine = (attempts: Attempt[], name: (agentId: string) => str
 
 export const noteHint = (len: number): string => `Needed before you send. ${len} / 8000`;
 export const emptyNoteError = (agent: string): string => `Add a note for ${agent || 'the agent'} first.`;
-export const emptyNoteCaption = (agent: string): string => `Pressing it with no note says “Add a note for ${agent || 'the agent'} first.”`;
 /** §8.2-6: never names a card's specifics. */
 export const RESUME_PLACEHOLDER = 'For example: what you checked, and what the agent should look at next.';
-
-export const archivedTitle = (archivedAt: string, tz?: string): string => `Archived ${dayMonth(archivedAt, tz)}`;
-/** API-2: a review cancelled within 5 s of the archive was cancelled by it. */
-export function archivedReason(archivedAt: string, gates: Array<{ status: string; resolvedAt?: string | null }>): string {
-  const at = Date.parse(archivedAt);
-  const byArchive = gates.some((g) => (g.status === 'cancelled' || g.status === 'canceled') && g.resolvedAt && Math.abs(Date.parse(g.resolvedAt) - at) <= 5000);
-  return byArchive ? 'Its pending review was cancelled when the card was archived.' : 'It is off the board. Restore puts it back.';
-}
-export const restoreNote = (stageName: string): string => `Puts it back on the board at ${stageName}.`;
-export const doneLine = (lastStage: string, finishedAt: string, attempts: number, now: Date, tz?: string): string =>
-  `Reached ${lastStage} on ${whenLabel(finishedAt, now, tz)} · ${attempts} attempt${s(attempts)}`;
 
 const VIA: Readonly<Record<GateConflict['via'], string>> = { matrix: 'Matrix', web: 'the web app', api: 'the API' };
 /** API-1: who already decided, where, and when. The bold "Not recorded." is drawn by the layout. */
 export const gateConflictSentence = (c: GateConflict, deciderName: string, tz?: string): string =>
   `This gate was already decided from ${VIA[c.via]} by ${deciderName} at ${clockHM(c.decidedAt, tz)}.`;
 
-export const loadingNote = (agent: string): string => `Loading what ${agent || 'the agent'} said and the card’s history…`;
-/** D-14: at most five bars, the wide one at the current stage (first or second). */
-export function loadingBars(stages: number, stageIndex: number): number[] {
-  const n = Math.min(Math.max(stages, 1), 5);
-  const wide = Math.min(stageIndex, 1, n - 1);
-  return Array.from({ length: n }, (_, i) => (i === wide ? 2.8 : 1));
+// ---- the one composition (composition contract §7 "Card"): the same words in every vibe ----
+
+/** A card's state in a word, for filters and lists: `submitted` → "Queued", never the raw value. */
+export const STATE_WORD: Readonly<Record<string, string>> = { working: 'Working', completed: 'Done', submitted: 'Queued', queued: 'Queued', rejected: 'Rejected', failed: 'Failed', 'input-required': 'Waiting on you' };
+
+const COUNT_WORDS = ['no', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten'];
+/** "one document", "3 documents" */
+export const countWords = (n: number, one: string, many = `${one}s`): string => `${COUNT_WORDS[n] ?? n} ${n === 1 ? one : many}`;
+
+/** What the state sentence is built from: the card model, read, never asked. */
+export interface StateSentenceInput {
+  kind: LeadKind;
+  archivedAt: string | null;
+  stage: string;
+  ageHours: number | null;
+  /** Who did the last thing: the delegate, the asker, the producer, else the last run's agent; '' for nobody. */
+  agent: string;
+  attempt: number;
+  /** Documents the last attempt produced. */
+  produced: number;
+  /** The card's own short reason for stopping (`needsHuman.summary`), when it has one. */
+  reason: string | null;
+  /** Where it goes after this stage, for "Approving moves the card to …". */
+  nextStage: string | null;
+  /** When it reached its state (done: when it was shipped). */
+  since: string | null;
+  /** Resume is the right answer (the server would take it). */
+  resumable: boolean;
+  tz?: string;
 }
 
-/** The pinned brief's heading (#11): the agent's name only when an agent works the stage; neutral for a person's stage. */
-export function askedHeading(stage: Stage | undefined, agentName: string): string {
-  return stage?.ownerKind === 'human' ? 'What this card asks' : `What ${agentName} was asked`;
+/**
+ * The card's one sentence (rule 1): where it is, for how long, what is wanted, who did what last, and
+ * the verb that answers it (`needsWord`: Review, Answer, Resume or Restore; null when nothing waits on you).
+ */
+export function stateSentence(i: StateSentenceInput): { text: string; needsWord: string | null } {
+  const age = i.ageHours === null ? null : ageWords(i.ageHours);
+  const forAge = age ? ` for ${age}` : '';
+  const agent = i.agent || 'An agent';
+  const madeIt = i.produced > 0 ? ` and produced ${countWords(i.produced, 'document')}` : '';
+  if (i.archivedAt) {
+    return { text: `Archived on ${dayMonthLong(i.archivedAt, i.tz)}. Agents cannot claim it and it is off the board. Restore it to bring it back to ${i.stage}.`, needsWord: 'Restore' };
+  }
+  switch (i.kind) {
+    case 'review':
+      return { text: `Waiting for your review in ${i.stage}${forAge}. ${agent} finished attempt ${i.attempt}${madeIt}.`, needsWord: 'Review' };
+    case 'question':
+      return { text: `Waiting for your answer in ${i.stage}${forAge}. ${agent} asked a question and holds the card until you reply.`, needsWord: 'Answer' };
+    case 'stopped': case 'failed': case 'budget': {
+      const how = i.kind === 'failed' ? 'failed' : i.kind === 'budget' ? 'stopped at the spending cap' : 'stopped';
+      const why = i.reason ? `: ${i.reason.replace(/\.$/, '')}.` : '.';
+      const next = i.resumable ? ' It will read your note before it tries again.' : '';
+      return { text: `${agent} ${how} in ${i.stage} after attempt ${i.attempt}${why}${next}`, needsWord: i.resumable ? 'Resume' : null };
+    }
+    case 'working':
+      return { text: `${agent} is working on it in ${i.stage}${forAge}. Nothing to do yet.`, needsWord: null };
+    case 'done': {
+      const on = i.since ? ` on ${dayMonthLong(i.since, i.tz)}` : '';
+      const below = i.produced > 0 ? ` What it produced is below.` : '';
+      return { text: `${i.agent ? `Shipped by ${i.agent}` : 'Shipped'}${on}. Nothing to do.${below}`, needsWord: null };
+    }
+    default:
+      return { text: `Waiting in ${i.stage}${forAge}. Nobody has picked it up.`, needsWord: null };
+  }
 }
+
+/** The decision panel's sentence: what is asked, when it finished, what approving does. */
+export function gateAsk(i: { agent: string; attempt: number; ageHours: number | null; produced: number; nextStage: string | null }): { lead: string; rest: string } {
+  const lead = `${i.agent || 'An agent'} asks you to approve attempt ${i.attempt}.`;
+  const when = i.ageHours === null ? 'It finished' : i.ageHours < 1 ? 'It finished under an hour ago' : `It finished ${ageWords(i.ageHours)} ago`;
+  const made = i.produced > 0 ? ` and produced ${countWords(i.produced, 'document')}` : '';
+  const moves = i.nextStage ? ` Approving moves the card to ${i.nextStage}.` : '';
+  return { lead, rest: `${when}${made}.${moves}` };
+}
+
+/** What each decision does, when the gate does not say. */
+export function gateChoiceWords(role: 'approve' | 'changes' | 'reject', name: string, prevStage: string | null): string {
+  if (name === 'approve_manual') return 'You post the approved text yourself.';
+  if (name === 'approve_automatic') return 'The board posts the approved text for you.';
+  if (role === 'approve') return 'The work is done; move the card on.';
+  if (role === 'changes') return `Send it back${prevStage ? ` to ${prevStage}` : ''} with a note the agent will read.`;
+  return 'Stop the card here.';
+}
+export const GATE_NOTE_LABEL = 'Note to the agent (optional)';
+export const GATE_NOTE_NEEDED = 'Say what needs to change';
+export const GATE_NOTE_ERROR = 'Request changes needs a note: the agent reads it on its next attempt.';
+/** "What you are signing" meta: the hash and how many fields it seals. */
+export const signingMeta = (digest: string, fields: number): string => `${digest.includes(':') ? digest.slice(0, digest.indexOf(':')) : 'digest'} · ${countWords(fields, 'field')}`;
+
+/** The question panel's lead: who asks, or who needs a sign-in. */
+export const questionLead = (agent: string, auth: boolean): string => `${agent || 'The agent'} ${auth ? 'needs you to sign in:' : 'asks:'}`;
+export const QUESTION_FREE_LABEL = 'Or answer in your own words';
+export const QUESTION_ONLY_LABEL = 'Your answer';
+
+/** The resume panel's lead, in the card's own words when it has them. */
+export const resumeLead = (agent: string, stage: string, attempt: number): string => `${agent || 'The agent'} stopped in ${stage} after attempt ${attempt}.`;
+export const RESUME_NOTE_LABEL = 'Note for the next attempt';
+
+export interface CardFact { term: string; value: string }
+/** Facts in words (rule 5): names, never ids; "none" where nothing is set. Project, sub-tasks, cost, links and references have rows of their own. */
+export function cardFacts(i: { owner: string; priority: number; labels: string[]; dueAt: string | null; attempts: number; askedBy: string; tz?: string }): CardFact[] {
+  const out: CardFact[] = [
+    { term: 'Owner', value: i.owner || 'nobody' },
+    { term: 'Priority', value: i.priority > 0 ? `P${i.priority}` : 'none' },
+    { term: 'Labels', value: i.labels.length ? i.labels.join(', ') : 'none' },
+    { term: 'Due', value: i.dueAt ? dayMonthLong(i.dueAt, i.tz) : 'none' },
+    { term: 'Attempt', value: i.attempts > 0 ? String(i.attempts) : 'none yet' },
+  ];
+  if (i.askedBy) out.push({ term: 'Asked by', value: i.askedBy });
+  return out;
+}
+/** A label the catalogue no longer has is said as such, never by its id. */
+export const labelName = (l: { id: string; name: string }): string => (l.name && l.name !== l.id ? l.name : 'a removed label');
+export const costFact = (cost: number, estimate: number | null): string => `${usd(cost)}${estimate ? ` of ${usd(estimate)} estimated` : ''}`;
+export const linksFact = (n: number): string => (n ? countWords(n, 'link') : 'none');
+
+/** "What attempt 5 produced", or what it must produce before the first attempt. */
+export const producedTitle = (attempt: number): string => (attempt > 0 ? `What attempt ${attempt} produced` : 'What it must produce');
+export function producedMeta(documents: number, criteria: number): string {
+  return [documents ? countWords(documents, 'document') : null, criteria ? countWords(criteria, 'criterion', 'criteria') : null].filter(Boolean).join(' · ');
+}
+/** "AC-01" */
+export const criterionKey = (i: number): string => `AC-${String(i + 1).padStart(2, '0')}`;
+
+/** "Conversation and history" meta: how many entries, and when the last was. */
+export function historyMeta(entries: number, lastAt: string | null, now: number): string {
+  const n = entries === 1 ? '1 entry' : `${entries} entries`;
+  if (!lastAt) return n;
+  const h = Math.max(0, (now - Date.parse(lastAt)) / 3_600_000);
+  return `${n} · last ${h < 1 ? 'under an hour' : ageWords(h)} ago`;
+}
+export const RAW_META = 'JSON';
+/** The crumb above the title: board · stage · card 4605. */
+export const cardCrumb = (board: string, stage: string, shortId: string): string => `${board} · ${stage} · card ${shortId}`;
+/** The track's line under the current stage: who has it, and for how long. */
+export const trackWho = (needsYou: boolean, agent: string, ageHours: number | null): string =>
+  [needsYou ? 'you' : agent || null, ageHours === null ? null : ageShortWords(ageHours)].filter(Boolean).join(' · ');
+const ageShortWords = (h: number): string => (h < 1 ? 'under 1 h' : h < 48 ? `${Math.floor(h)} h` : `${Math.floor(h / 24)} d`);
+/** The state block while the card's log is on its way (rule 11). */
+export const LOADING_CARD = 'Loading the card…';
+export const FAILED_CARD = { title: 'Could not load the card.', body: 'The service did not answer. Nothing was lost.' } as const;

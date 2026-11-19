@@ -1,53 +1,10 @@
 <script lang="ts">
   import type { Reference } from '$lib/api';
+  import { artifactRow } from '../references';
 
   let { references = [] as Reference[] }: { references?: Reference[] } = $props();
 
-  interface ReferenceRow {
-    id: string;
-    title: string;
-    url: string;
-    version: string | null;
-  }
-
-  const versionValue = (value: unknown): string | null => {
-    if (typeof value === 'number' && Number.isSafeInteger(value) && value > 0) return String(value);
-    if (typeof value === 'string' && /^[1-9]\d*$/.test(value)) return value;
-    return null;
-  };
-
-  function rowOf(reference: Reference): ReferenceRow {
-    let url = reference.url;
-    let version: string | null = null;
-    try {
-      const parsed = new URL(reference.url);
-      const pinned = parsed.pathname.match(/^(\/a\/[^/]+)\/v\/([1-9]\d*)\/?$/);
-      const pinnedVersion = pinned?.[2];
-      if (pinnedVersion) {
-        version = pinnedVersion;
-      } else if (reference.provider === 'superlibrary') {
-        const item = parsed.pathname.match(/^(\/a\/[^/]+)\/?$/);
-        const itemPath = item?.[1];
-        version = versionValue(reference.metadata?.version);
-        if (itemPath && version) {
-          parsed.pathname = `${itemPath}/v/${version}`;
-          parsed.search = '';
-          parsed.hash = '';
-          url = parsed.toString();
-        }
-      }
-    } catch {
-      // Keep malformed legacy links visible; the browser will still expose the original href.
-    }
-    return {
-      id: reference.id,
-      title: reference.title?.trim() || reference.subtitle?.trim() || reference.url,
-      url,
-      version,
-    };
-  }
-
-  const rows = $derived(references.map(rowOf));
+  const rows = $derived(references.map(artifactRow));
 </script>
 
 <section class="gate-references" aria-label="Artifacts linked by this run">

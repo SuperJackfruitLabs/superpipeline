@@ -64,6 +64,8 @@ test('a half-typed resume note survives the expired session and the sign-in roun
   const path = `/b/${board.boardId}/c/${snap.cards[0]!.id}`;
   await page.goto(path);
   await expect(page.locator('html')).toHaveAttribute('data-ready', 'true');
+  // The card says it stopped; Resume opens the note in place of that sentence.
+  await page.getByRole('dialog').getByRole('button', { name: 'Resume', exact: true }).click();
   const note = page.getByRole('textbox', { name: /note|what changed/i }).first();
   await note.fill('Half a thought');
 
@@ -73,7 +75,7 @@ test('a half-typed resume note survives the expired session and the sign-in roun
   await expect(page.getByRole('alertdialog', { name: 'Sign in again to keep going' })).toBeVisible();
   await expect(note).toHaveValue('Half a thought');
 
-  // Signed in again: the same card opens and the note comes back from sessionStorage.
+  // Signed in again: the same card opens with its resume note open again, the note back from sessionStorage.
   await page.unrouteAll({ behavior: 'ignoreErrors' });
   await page.goto(path);
   await expect(page.locator('html')).toHaveAttribute('data-ready', 'true');

@@ -44,7 +44,9 @@ test('a human approves an agent-opened gate from the board', async ({ page, requ
   await expect(review.locator('[data-card-id]', { hasText: 'Launch post' })).toHaveAttribute('data-needs', '1');
   // The tile does not decide (a decision there had no way to carry a note): its title opens the drawer.
   await review.locator('[data-card-open]', { hasText: 'Launch post' }).click();
-  const note = page.getByLabel('Add a note (optional)');
+  // The card says what waits on you; Review opens the decision in place of that sentence.
+  await page.getByRole('dialog').getByRole('button', { name: 'Review', exact: true }).click();
+  const note = page.getByLabel('Note to the agent (optional)');
   await expect(note).toBeVisible();
   await expect(page.getByRole('button', { name: 'Approve' })).toBeVisible();
 
@@ -85,14 +87,20 @@ test.describe('on a phone', () => {
     await expect(page.locator('[data-lane="review"] [data-card-id]', { hasText: 'Phone post' })).toHaveAttribute('data-needs', '1');
     // The tile's title opens the card; the decision is in the card.
     await page.locator('[data-lane="review"] [data-card-open]', { hasText: 'Phone post' }).click();
+    await page.getByRole('dialog').getByRole('button', { name: 'Review', exact: true }).click();
 
-    const note = page.getByLabel('Add a note (optional)');
+    const note = page.getByLabel('Note to the agent (optional)');
     await expect(note).toBeVisible();
     expect(await note.evaluate((el) => parseFloat(getComputedStyle(el).fontSize))).toBeGreaterThanOrEqual(16);
+    // Each decision is a choice the whole row of which is the target; the one button sends the picked one.
     for (const name of ['Approve', 'Request changes', 'Reject']) {
-      const box = await page.getByRole('button', { name, exact: true }).boundingBox();
-      expect(box!.height, name).toBeGreaterThanOrEqual(44);
+      const row = page.getByRole('radio', { name: new RegExp(`^${name}`) }).locator('xpath=ancestor::label[1]');
+      const box = await row.boundingBox();
+      expect(box?.height ?? 0, name).toBeGreaterThanOrEqual(44);
+      expect((box?.x ?? 0) + (box?.width ?? 999), name).toBeLessThanOrEqual(390);
     }
+    const send = await page.getByRole('button', { name: 'Approve', exact: true }).boundingBox();
+    expect(send?.height ?? 0).toBeGreaterThanOrEqual(44);
     const nbox = await note.boundingBox();
     expect(nbox!.x + nbox!.width).toBeLessThanOrEqual(390);
   });

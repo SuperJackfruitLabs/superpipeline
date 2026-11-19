@@ -2,26 +2,12 @@ import AxeBuilder from '@axe-core/playwright';
 import { expect, test, type Locator, type Page } from '@playwright/test';
 import { BOUND_PIPELINE, openBoard, REVIEW_PIPELINE, seedBoard, seedBoundGateCard, seedGatedCard, seedQuestionCard, setAppearance } from './support/seed';
 
-// Every vibe × theme runs against whatever layout the registry gives it. LAYOUT_VIBES lists the
-// vibes whose own layouts have shipped (all four).
-// RADIO_DECISIONS lists the vibes where a decision is a radio choice plus a submit button.
+// Every vibe × theme runs against the card's one composition (CardView): the same words and
+// controls in every vibe. The card says what waits on you; Review and Answer open their panel in place.
 const ALL_VIBES = ['daylight', 'paper', 'studio', 'quiet'] as const;
-const LAYOUT_VIBES: readonly string[] = ['daylight', 'paper', 'studio', 'quiet']; // documents progress; every vibe runs regardless
-const RADIO_DECISIONS = new Set<string>(['paper', 'quiet']);
-const SUBMIT: Record<string, string> = { paper: 'Send reply', quiet: 'Submit decision' };
 
 test.use({ timezoneId: 'Europe/London' });
-/** What each vibe's gate panel prints. Daylight follows SP-Card-States-Daylight; the rest are pre-sweep until Tasks 25–27. */
-const GATE_FLAG: Record<string, string | RegExp> = { daylight: 'Awaiting your review', paper: /^Your reply$/, studio: /^Waiting for your review$/, quiet: /^Your decision is needed$/ };
-const flagOf = (vibe: string) => GATE_FLAG[vibe]!;
-const SUBJECT: Record<string, RegExp[]> = {
-  daylight: [/· revision 1/, /digest [0-9a-f]{4}·[0-9a-f]{4}/, /example_product/, /Approving exactly this version · sealed [0-9a-f]{4}·[0-9a-f]{4}/],
-};
-SUBJECT.paper = [/· revision 1/, /digest sha256:[0-9a-f]{8}…/, /example_product/, /Approving exactly this version, sealed [0-9a-f]{4}·[0-9a-f]{4}/];
-SUBJECT.studio = [/^Revision$/, /sha256:[0-9a-f]{8}…/, /example_product/, /sealed [0-9a-f]{4}·[0-9a-f]{4}/];
-SUBJECT.quiet = [/What you are approving \(revision 1\)/, /Sealed: [0-9a-f]{4}·[0-9a-f]{4}/, /example_product/];
-const NOTE_LABEL: Record<string, string | RegExp> = { studio: /^Add a note \(optional\)/, quiet: /^Note for .* \(optional\)/ };
-const subjectOf = (vibe: string) => SUBJECT[vibe] ?? [/Immutable approval subject · revision 1/, /sha256:[0-9a-f]{64}/, /"username": "example_product"/, /Approving exactly this version · sealed [0-9a-f]{4}·[0-9a-f]{4}/];
+const SUBJECT = [/What you are signing/, /example_product/, /Approving exactly this version, revision 1 · sealed [0-9a-f]{4}·[0-9a-f]{4}/, /sha256:[0-9a-f]{64}/];
 /** No swept drawer shows a sub-task composer until the person asks for one ("Add a sub-task" reveals it). */
 const SUBTASK_COMPOSER = (_vibe: string) => false;
 const NOON = new Date('2026-10-11T12:00:00+01:00');
@@ -113,17 +99,16 @@ for (const vibe of ALL_VIBES) {
         await page.getByRole('button', { name: /^Launch post, in / }).first().click();
         const dialog = page.getByRole('dialog');
         await expect(dialog).toBeVisible();
-        // The drawer paints before its detail (and so the gate) has loaded: wait for the gate, then look for what it holds.
-        await expect(dialog.getByText(flagOf(vibe))).toBeVisible();
-        const decision = RADIO_DECISIONS.has(vibe) ? 'radio' : 'button';
+        // The drawer paints before its detail (and so the gate) has loaded: wait for the sentence, then open the decision.
+        await expect(dialog.getByText(/^Waiting for your review/)).toBeVisible();
+        await dialog.getByRole('button', { name: 'Review', exact: true }).click();
         for (const [role, name] of [
-          [decision, 'Approve'], [decision, 'Request changes'], [decision, 'Reject'], ['textbox', NOTE_LABEL[vibe] ?? 'Add a note (optional)'],
+          ['radio', /^Approve/], ['radio', /^Request changes/], ['radio', /^Reject/], ['textbox', 'Note to the agent (optional)'], ['button', 'Approve'],
           ['button', 'Edit card'], ['button', 'Archive card'], ['button', 'Delete card'], ['button', 'Comment'],
           ['button', 'Add link'], ...(SUBTASK_COMPOSER(vibe) ? [['textbox', /New sub-task title/] as const] : []), ['button', /Close/],
         ] as const) {
           expect(await reachable(dialog, role, name), `gate: ${String(name)}`).toBe(true);
         }
-        if (SUBMIT[vibe] && RADIO_DECISIONS.has(vibe)) expect(await reachable(dialog, 'button', SUBMIT[vibe]!)).toBe(true);
         await noSideScroll(page);
         await noA11yViolations(page, '[role="dialog"]');
         await info.attach(`${vibe}-${theme}-${size.name}-gate.png`, { body: await page.screenshot(), contentType: 'image/png' });
@@ -133,8 +118,9 @@ for (const vibe of ALL_VIBES) {
         // Question
         await page.getByRole('button', { name: /^Add the OAuth flow, in / }).first().click();
         await expect(dialog).toBeVisible();
+        await dialog.getByRole('button', { name: 'Answer', exact: true }).click();
         await expect(dialog.getByText('May I run the test suite?').first()).toBeVisible();
-        for (const [role, name] of [[decision, 'Run the tests'], [decision, 'Skip them'], ['textbox', /Add a note for the agent|Note (for|to) /]] as const) {
+        for (const [role, name] of [['radio', /^Run the tests/], ['radio', /^Skip them/], ['textbox', 'Or answer in your own words'], ['button', 'Answer']] as const) {
           expect(await reachable(dialog, role, name), `question: ${String(name)}`).toBe(true);
         }
         await noA11yViolations(page, '[role="dialog"]');
@@ -157,8 +143,9 @@ for (const vibe of ALL_VIBES) {
       await page.getByRole('button', { name: /^Launch post, in / }).first().click();
       const dialog = page.getByRole('dialog');
       await expect(dialog).toBeVisible();
-      await expect(dialog.getByText(flagOf(vibe))).toBeVisible();
-      for (const text of subjectOf(vibe)) {
+      await expect(dialog.getByText(/^Waiting for your review/)).toBeVisible();
+      await dialog.getByRole('button', { name: 'Review', exact: true }).click();
+      for (const text of SUBJECT) {
         expect(await reachableText(dialog, text), `subject: ${String(text)}`).toBe(true);
       }
       await noSideScroll(page);
@@ -220,12 +207,14 @@ test.describe('coarse pointer', () => {
       await page.getByRole('button', { name: /^Launch post, in / }).first().tap();
       const dialog = page.getByRole('dialog');
       await expect(dialog).toBeVisible();
+      await dialog.getByRole('button', { name: 'Review', exact: true }).tap();
       await revealAll(dialog);
       expect(await smallTargets(dialog), 'card drawer').toEqual([]);
 
       await page.keyboard.press('Escape');
       await expect(dialog).toBeHidden();
       await page.getByRole('button', { name: /^Add the OAuth flow, in / }).first().tap();
+      await dialog.getByRole('button', { name: 'Answer', exact: true }).tap();
       await expect(dialog.getByText('May I run the test suite?').first()).toBeVisible();
       await revealAll(dialog);
       expect(await smallTargets(dialog), 'question drawer').toEqual([]);

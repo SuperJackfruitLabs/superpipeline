@@ -131,6 +131,11 @@ Needs you groups), so the four Operate references (`SP-Operate-*`), their screen
 allow-list keys were retired. The harness's own guards and the extract-css tests read the Move dialog's
 references instead.
 
+The card followed: one `CardView` draws the drawer, the phone sheet, the standalone page and the
+card-states gallery in every vibe, so its sixteen references (`SP-Card-*`, `SP-CardPage-*`,
+`SP-Card-States-*`, `SP-Phone-Card-*`), their screens, steps, allow-list and RESIDUALS rows and their
+linux-x64 override were retired. `card-states.html` beside the composition contract is the reference now.
+
 ## The references are locked
 
 `e2e/pixel/references.lock` holds the hash of every reference, `manifest.json`, `CORRECTIONS.md` and the

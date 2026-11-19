@@ -1,0 +1,145 @@
+/* apps/web/src/lib/components/card/card.css: the card (CardView), one composition for every vibe and
+   every surface (composition contract §7 "Card"; card-states.html, composition.css .cardhead, .facts,
+   .artifact, .checklist, .state.panel). Tokens only. The first part is the same in every vibe; the
+   phone form is a breakpoint; the last part is each vibe's signature, keyed on the vibe root's
+   data-vibe, and it changes surfaces, rules and marks, never words or order. */
+
+.cv { display: grid; gap: var(--vk-space-5); padding: var(--vk-space-5) var(--vk-space-6) var(--vk-space-6); min-width: 0; overflow-wrap: anywhere; color: var(--vk-color-text); }
+.cv p, .cv dl, .cv dd, .cv ul { margin: 0; }
+.cv ul { padding: 0; list-style: none; }
+.cv-meta { color: var(--vk-color-muted); font: var(--vk-type-meta); }
+.cv-mono { font: var(--vk-type-mono); overflow-wrap: anywhere; }
+.cv-pre { white-space: pre-line; }
+.cv-link { color: inherit; text-decoration: underline; text-underline-offset: 3px; }
+.cv-linkbtn { all: unset; cursor: pointer; text-decoration: underline; text-underline-offset: 3px; }
+.cv-linkbtn:focus-visible { outline: 3px solid var(--vk-color-text); outline-offset: 2px; }
+.cv-row { display: flex; flex-wrap: wrap; align-items: center; gap: var(--vk-space-2) var(--vk-space-3); }
+.cv-list { display: grid; gap: var(--vk-space-1); }
+.cv-alert { color: var(--vk-color-signal-text); font-weight: 600; }
+.cv-grouphead { font-weight: 700; }
+.cv-grouphead .cv-meta { font-weight: 400; }
+
+/* 1. The head: crumb, title and tools on the right; the edit form and an alert under the title. */
+.cv-head { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: var(--vk-space-2) var(--vk-space-4); align-items: start; }
+.cv-head > :not(.cv-tools) { grid-column: 1 / -1; }
+.cv-head > .cv-crumb, .cv-head > .cv-title { grid-column: 1; }
+.cv-crumb { color: var(--vk-color-muted); font: var(--vk-type-meta); }
+.cv-title { margin: 0; font: var(--vk-type-h1); font-stretch: var(--vk-type-h1-stretch); font-size: 1.75rem; line-height: 1.2; }
+.cv-tools { grid-column: 2; grid-row: 2 / span 2; display: flex; flex-wrap: wrap; justify-content: flex-end; gap: var(--vk-space-2); }
+.cv-sig { display: none; }
+.cv-edit { padding-top: var(--vk-space-2); }
+
+/* 2. The track: vibekit's board form, the current stage named; it scrolls sideways on a phone if it must. */
+.cv-track { min-width: 0; }
+
+/* 3. The state block: the sentence (or the panel that replaces it) and the action column. */
+.cv-state { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: var(--vk-space-3) var(--vk-space-5); align-items: start; padding: var(--vk-space-4); border-radius: var(--vk-radius-md); background: var(--vk-color-surface); }
+.cv-state > .sp-skeleton, .cv-state > .vk-notice, .cv-state > .cv-panel, .cv-state > .cv-more { grid-column: 1 / -1; }
+.cv-say, .cv-panel__body { display: grid; gap: var(--vk-space-3); min-width: 0; }
+.cv-sentence { font-size: 1.0625rem; line-height: 1.5; }
+.cv-act { display: flex; flex-wrap: wrap; justify-content: flex-end; align-items: center; gap: var(--vk-space-2); }
+.cv-more { display: flex; flex-wrap: wrap; gap: var(--vk-space-1) var(--vk-space-3); }
+.cv-panel { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: var(--vk-space-3) var(--vk-space-5); align-items: start; min-width: 0; }
+.cv-panel .cv-act { flex-direction: column; align-items: stretch; max-width: 16rem; }
+.cv-choices { display: grid; gap: var(--vk-space-2); margin: 0; padding: 0; border: 0; min-width: 0; }
+.cv-note { display: grid; gap: var(--vk-space-1); }
+.cv-subject { display: grid; gap: var(--vk-space-2); max-height: 20rem; overflow-y: auto; }
+.cv-subject:focus-visible { outline: 3px solid var(--vk-color-text); outline-offset: 2px; }
+
+/* 4. Facts: three columns of words; the longer ones take the row. */
+.cv-dl { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--vk-space-3) var(--vk-space-5); }
+.cv-dl > div { display: grid; gap: 2px; min-width: 0; align-content: start; }
+.cv-dl dt { color: var(--vk-color-muted); font: var(--vk-type-eyebrow); }
+.cv-dl dd { font-weight: 600; }
+.cv-dl .cv-wide { grid-column: 1 / -1; }
+.cv-dl--stack { grid-template-columns: minmax(0, 1fr); }
+.cv-dl--stack dd { font-weight: 400; }
+.cv-form { display: grid; gap: var(--vk-space-3); max-width: 32rem; font-weight: 400; }
+
+/* 5 and 6. The brief and what was produced: a section header, then the content. */
+.cv-sec { display: grid; gap: var(--vk-space-3); min-width: 0; }
+.cv-sec[hidden] { display: none; }
+.cv-p { line-height: 1.55; }
+.cv-groups { display: grid; gap: var(--vk-space-4); }
+.cv-group, .cv-plan { display: grid; gap: var(--vk-space-2); }
+.cv-art { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: var(--vk-space-3); padding: 10px 14px; border: 1px solid var(--vk-color-line); border-radius: var(--vk-radius-md); }
+.cv-art__t { display: grid; gap: 2px; min-width: 0; }
+.cv-art__title { font-weight: 600; }
+.cv-check li { display: flex; gap: var(--vk-space-3); padding: 6px 0; border-top: 1px solid var(--vk-color-line); }
+.cv-check li:first-child { border-top: 0; }
+.cv-key { flex: none; min-width: 3rem; color: var(--vk-color-muted); font: var(--vk-type-mono); }
+.cv-box { flex: none; display: inline-grid; place-items: center; width: 1.1em; height: 1.1em; border: 1px solid var(--vk-color-line); border-radius: var(--vk-radius-sm); font-size: 0.8em; }
+.cv-check li[data-done="1"] > span:last-child { color: var(--vk-color-muted); text-decoration: line-through; }
+
+/* 7. History and raw data: closed disclosures with a count. */
+.cv-disc { min-width: 0; }
+.cv-history, .cv-raw { display: grid; gap: var(--vk-space-4); min-width: 0; padding-top: var(--vk-space-2); }
+.cv-runs { display: grid; gap: var(--vk-space-2); }
+.cv-run { display: grid; gap: var(--vk-space-2); min-width: 0; border-top: 1px solid var(--vk-color-line); padding-top: var(--vk-space-2); }
+.cv-runhead { all: unset; display: flex; flex-wrap: wrap; gap: var(--vk-space-1) var(--vk-space-2); align-items: baseline; min-height: 44px; cursor: pointer; overflow-wrap: anywhere; }
+.cv-runhead:focus-visible { outline: 3px solid var(--vk-color-text); outline-offset: 2px; }
+.cv-runbody { display: grid; gap: var(--vk-space-2); min-width: 0; }
+.cv-events { display: grid; gap: var(--vk-space-2); }
+.cv-events li { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: var(--vk-space-3); min-width: 0; }
+.cv-events li[data-stop="1"] { color: var(--vk-color-signal-text); }
+.cv-time { color: var(--vk-color-muted); font: var(--vk-type-mono); }
+.cv-handed, .cv-comments { display: grid; gap: var(--vk-space-2); min-width: 0; }
+
+/* Read, not drawn: as wide as its box and wrapping, so a long hidden label never makes its box scroll sideways. */
+.cv .vk-visually-hidden { left: 0; width: 100%; white-space: normal; }
+/* The structured value's keys read in the text colour on the state block's surface (contrast). */
+.cv .cv-subject .sv-k { color: var(--vk-color-text); }
+
+/* The phone form is a breakpoint of the same layout: the head stacks, tools under the title, the state
+   block's actions under its sentence, facts in two columns, the track scrolls sideways if it must. */
+@media (max-width: 639.98px) {
+  .cv { padding: var(--vk-space-4) var(--vk-space-4) var(--vk-space-6); gap: var(--vk-space-4); }
+  .cv-head { grid-template-columns: minmax(0, 1fr); }
+  .cv-tools { grid-column: 1; grid-row: auto; justify-content: flex-start; }
+  .cv-title { font-size: 1.375rem; }
+  .cv-state, .cv-panel { grid-template-columns: minmax(0, 1fr); }
+  .cv-act { justify-content: flex-start; }
+  .cv-panel .cv-act { max-width: none; }
+  .cv-dl { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .cv-dl--stack { grid-template-columns: minmax(0, 1fr); }
+  .cv-track { overflow-x: auto; overscroll-behavior-x: contain; }
+  .cv-track .vk-stages--board:not(.vk-stages--quiet) { min-width: calc(var(--n, 1) * 6.5rem); }
+  .cv-art { grid-template-columns: minmax(0, 1fr); }
+}
+
+/* The standalone page: the same view, centred in a readable measure. */
+.cv-page { max-width: 64rem; margin: 0 auto; }
+.cv-pagebar { display: flex; flex-wrap: wrap; align-items: center; gap: var(--vk-space-2) var(--vk-space-3); max-width: 64rem; margin: 0 auto; padding: var(--vk-space-3) var(--vk-space-6) 0; }
+.cv-pagebar__home { display: inline-grid; place-items: center; min-width: 44px; min-height: 44px; color: var(--vk-color-text); }
+.cv-pagebar__end { display: flex; gap: var(--vk-space-2); margin-left: auto; }
+
+/* The phone sheet: one document in normal flow; a focused or scrolled-to control stays clear of the sticky head and the tab bar (WCAG 2.4.11). */
+.pcard-host { display: block; min-height: 100dvh; background: var(--vk-color-bg); outline: none; }
+html:has(.pcard-host) { scroll-padding-block: 96px; }
+
+/* ===== Signatures. ===== */
+
+/* Daylight: raised rounded blocks for the brief and what was produced. */
+[data-vibe="daylight"] .cv-sec { padding: var(--vk-space-4); border-radius: 16px; background: var(--vk-color-surface); }
+
+/* Studio: ink rules, mono meta, square marks; the state block sits between rules, no box. */
+[data-vibe="studio"] .cv-sig { display: block; height: 0; border-top: 1.5px solid var(--vk-color-rule); }
+[data-vibe="studio"] .cv-state { border-radius: 0; background: transparent; border-top: 1.5px solid var(--vk-color-rule); border-bottom: 1px solid var(--vk-color-line); padding: var(--vk-space-3) 0; }
+[data-vibe="studio"] :is(.cv-crumb, .cv-meta, .cv-time) { font: 500 12px/1.5 var(--vk-font-mono); }
+[data-vibe="studio"] .cv-dl dt { font: 700 11px/1.2 var(--vk-font-body); letter-spacing: 0.1em; text-transform: uppercase; }
+[data-vibe="studio"] :is(.cv-art, .cv-box) { border-radius: 0; }
+
+/* Paper: Newsreader heads, italic ledes, ink rules. */
+[data-vibe="paper"] .cv-sig { display: block; height: 0; border-top: 1px solid var(--vk-color-rule); }
+[data-vibe="paper"] .cv-title { font-weight: 500; }
+[data-vibe="paper"] .cv-state { border-radius: 0; background: transparent; border-top: 1.5px solid var(--vk-color-rule); border-bottom: 1px solid var(--vk-color-line); padding: var(--vk-space-3) 0; }
+[data-vibe="paper"] .cv-sentence { font: italic 400 1.0625rem/1.45 var(--vk-font-display); }
+[data-vibe="paper"] .cv-sentence b { font-style: normal; }
+[data-vibe="paper"] .cv-dl dt { font: 600 11px/1.2 var(--vk-font-body); letter-spacing: 0.12em; text-transform: uppercase; }
+[data-vibe="paper"] .cv-art { border-radius: 2px; }
+
+/* Quiet: larger plain type, one column, ruled rows, no boxes. */
+[data-vibe="quiet"] .cv { font-size: 1.0625rem; }
+[data-vibe="quiet"] .cv-state { background: transparent; padding: var(--vk-space-3) 0 0; border-radius: 0; border-top: 1px solid var(--vk-color-line); }
+[data-vibe="quiet"] .cv-dl { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+[data-vibe="quiet"] .cv-art { border: 0; border-top: 1px solid var(--vk-color-line); border-radius: 0; padding-inline: 0; }
