@@ -522,13 +522,16 @@ class AppStore {
   #connect(boardId: string, reconnect = false): void {
     this.#closeSocket();
     const generation = this.#socketGeneration;
-    // A fresh feed's first message is its opening snapshot, and the board was just read: skipped.
+    // A fresh feed's first message is its opening snapshot: the board as the feed began. The board was
+    // read before that (then the notifications, the attention and the labels), so a change made in
+    // between reaches this client through the snapshot alone: it is skipped only when it is the board
+    // already held. Skipping every one lost a card another client created in that gap.
     // After a reconnect it is kept: whatever happened while the feed was down did not reach us.
     let opening = !reconnect;
-    const sock = openBoardSocket(boardId, (event) => {
+    const sock = openBoardSocket(boardId, (event, snapshot) => {
       this.#lastMessageAt = Date.now();
       this.syncedAt = new Date();
-      const skip = opening && event === null;
+      const skip = opening && event === null && snapshot !== undefined && this.#holds(snapshot);
       opening = false;
       if (skip) return;
       // Through the Live toggle: paused, the board holds still and one refresh waits its turn.
@@ -562,6 +565,12 @@ class AppStore {
       }, delay);
     });
     this.#socket = sock;
+  }
+
+  /** Whether `snapshot` is the board on screen: the same read, as this viewer sees it. */
+  #holds(snapshot: BoardSnapshot): boolean {
+    return !!this.board && snapshot.boardId === this.board.boardId
+      && JSON.stringify(forViewer(snapshot, this.user?.role)) === JSON.stringify(this.board);
   }
 
   /**

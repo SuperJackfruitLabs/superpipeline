@@ -8,18 +8,20 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type * as Api from '$lib/api';
 import type { BoardFeedEvent } from '$lib/api';
 
-type FakeSocket = EventTarget & { boardId: string; closed: boolean; close(): void; emit(e: BoardFeedEvent | null): void };
+type FakeSocket = EventTarget & { boardId: string; closed: boolean; close(): void; emit(e: BoardFeedEvent | null, snapshot?: unknown): void };
 const h = vi.hoisted(() => ({
   sockets: [] as FakeSocket[],
   agents: null as null | Promise<unknown[]>,
   renew: [] as unknown[],
+  /** A board read that is not the plain `BOARD(id)`. */
+  boards: {} as Record<string, unknown>,
 }));
 const BOARD = (id: string) => ({ boardId: id, name: id, stages: [], cards: [], gates: [], elicitations: [], references: [] });
 vi.mock('$lib/api', async (orig) => ({
   ...(await orig<typeof Api>()),
   getMe: vi.fn<() => Promise<unknown>>(async () => ({ userId: 'usr_1', tenantId: 'tnt_1', name: 'Ira Mehta' })),
   renewSession: vi.fn<() => Promise<unknown>>(async () => h.renew.shift() ?? { ok: true }),
-  getBoard: vi.fn<(id: string) => Promise<unknown>>(async (id) => BOARD(id)),
+  getBoard: vi.fn<(id: string) => Promise<unknown>>(async (id) => h.boards[id] ?? BOARD(id)),
   getBoards: vi.fn<() => Promise<unknown[]>>(async () => []),
   listAttention: vi.fn<() => Promise<unknown>>(async () => ({ cards: [], boardsUnanswered: 0 })),
   getNotifications: vi.fn<() => Promise<unknown[]>>(async () => []),
@@ -27,11 +29,11 @@ vi.mock('$lib/api', async (orig) => ({
   getAgents: vi.fn<() => Promise<unknown[]>>(() => h.agents ?? Promise.resolve([])),
   getMembers: vi.fn<() => Promise<unknown[]>>(async () => []),
   listProjects: vi.fn<() => Promise<unknown[]>>(async () => []),
-  openBoardSocket: vi.fn<(boardId: string, onEvent: (e: BoardFeedEvent | null) => void) => FakeSocket>((boardId, onEvent) => {
+  openBoardSocket: vi.fn<(boardId: string, onEvent: (e: BoardFeedEvent | null, snapshot?: unknown) => void) => FakeSocket>((boardId, onEvent) => {
     const s = Object.assign(new EventTarget(), {
       boardId, closed: false,
       close() { s.closed = true; },
-      emit(e: BoardFeedEvent | null) { onEvent(e); },
+      emit(e: BoardFeedEvent | null, snapshot?: unknown) { onEvent(e, snapshot); },
     });
     h.sockets.push(s);
     return s;
@@ -51,6 +53,7 @@ const EVENT: BoardFeedEvent = { seq: 7, type: 'card.moved', payload: { cardId: '
 beforeEach(() => {
   h.sockets = [];
   h.agents = null;
+  h.boards = {};
   localStorage.clear();
   app.dispose();
   app.closeScopeSockets();
@@ -162,7 +165,7 @@ describe('the app’s live feeds', () => {
     off();
     auth.resolved();
   });
-  it('a fresh feed skips its opening snapshot; a reconnected one reads the board again', async () => {
+  it('a fresh feed skips an opening snapshot of the board it holds; a reconnected one reads the board again', async () => {
     vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
     try {
       await app.openBoard('brd_open');
@@ -170,7 +173,7 @@ describe('the app’s live feeds', () => {
       liveUpdates.pause();
       const first = open('brd_open')[0];
       first.dispatchEvent(new Event('open'));
-      first.emit(null);
+      first.emit(null, BOARD('brd_open'));
       expect(liveUpdates.queued).toEqual([]);
       // The feed drops and comes back: the way back refreshes, and so does the new feed's snapshot (one entry).
       drop(first);
@@ -196,6 +199,29 @@ describe('the app’s live feeds', () => {
     } finally {
       vi.useRealTimers();
     }
+  });
+  it('a fresh feed whose opening snapshot is not the board it read reads it again: a card made in between arrives', async () => {
+    await app.openBoard('brd_open');
+    vi.mocked(api.getBoard).mockClear();
+    const feed = open('brd_open')[0];
+    feed.dispatchEvent(new Event('open'));
+    // Another client created a card after this one read the board and before its feed began.
+    const card = { id: 'card_new', title: 'Realtime card', currentStageKey: 'backlog' };
+    h.boards.brd_open = { ...BOARD('brd_open'), cards: [card] };
+    feed.emit(null, { ...BOARD('brd_open'), cards: [card] });
+    await vi.waitFor(() => expect(app.board?.cards.map((c) => c.id)).toEqual(['card_new']));
+    expect(api.getBoard).toHaveBeenCalledTimes(1);
+  });
+  it('paused, an opening snapshot that differs waits as one read; one that cannot be read is not skipped', async () => {
+    await app.openBoard('brd_open');
+    liveUpdates.pause();
+    open('brd_open')[0].emit(null, { ...BOARD('brd_open'), name: 'Renamed' });
+    expect(liveUpdates.queued.map((q) => q.key)).toEqual(['app:board:brd_open']);
+    liveUpdates.resume();
+    await app.openBoard('brd_other');
+    liveUpdates.pause();
+    open('brd_other')[0].emit(null);
+    expect(liveUpdates.queued.map((q) => q.key)).toEqual(['app:board:brd_other']);
   });
   it('a scope feed that opened again starts its backoff over', () => {
     vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
