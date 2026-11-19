@@ -27,7 +27,7 @@ describe('references', () => {
     const out = deriveDark('<html lang="en" style="x"><body><div class="pg" data-vibe="paper" data-theme="light"></div></body></html>');
     expect(out).toMatch(/<html lang="en" style="x" data-vibe="paper" data-theme="dark">/);
     // A real reference: its <html> background comes from :root, so <html> must carry the theme.
-    const ref = deriveDark(readFileSync(join(REF_DIR, 'SP-Operate-Paper.html'), 'utf8'));
+    const ref = deriveDark(readFileSync(join(REF_DIR, 'SP-Dlg-Move-Paper.html'), 'utf8'));
     expect(ref).toMatch(/<html[^>]*data-vibe="paper"[^>]*data-theme="dark"/);
   });
 });

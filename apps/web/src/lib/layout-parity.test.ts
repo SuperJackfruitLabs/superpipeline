@@ -1,4 +1,3 @@
-import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 
 /** Template comments, script comments: a word that only a comment mentions is not used. */
@@ -34,12 +33,14 @@ export function conditionalSections(src: string): string[] {
 // Every pre-sweep layout is gone: the board (one BoardView for every vibe) and the card (one CardView
 // for every vibe and surface). What is left to guard is the registry itself, so no surface goes back
 // to a layout per vibe.
-const LAYOUTS_SRC = readFileSync(new URL('./layouts.ts', import.meta.url), 'utf8');
+/** Every per-vibe layout file left under a component folder (layouts/ or legacy/); the contract retired them all. */
+const PER_VIBE_FILES = Object.keys(import.meta.glob(['./components/**/layouts/**/*.svelte', './components/**/legacy/**/*.svelte']));
 
-describe('the board and the card are one composition each (composition contract §8)', () => {
-  it('layouts.ts imports nothing from a legacy folder', () => expect(LAYOUTS_SRC).not.toMatch(/\/legacy\//));
-  it('layouts.ts picks no board per vibe: BoardView draws every vibe', () => expect(LAYOUTS_SRC).not.toMatch(/components\/board\/layouts|BOARD_LAYOUTS/));
-  it('layouts.ts picks no card per vibe: CardView draws every vibe and surface', () => expect(LAYOUTS_SRC).not.toMatch(/components\/card\/|CARD_(PAGE_|STATES_)?LAYOUTS/));
+describe('every page is one composition (composition contract §8)', () => {
+  it('no per-vibe layout or legacy component is left, and layouts.ts is gone', () => {
+    expect(PER_VIBE_FILES).toEqual([]);
+    expect(Object.keys(import.meta.glob('./layouts.ts'))).toEqual([]);
+  });
 });
 
 describe('the parity guards catch what they are for', () => {
