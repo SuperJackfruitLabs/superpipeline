@@ -15,7 +15,7 @@
   "typescript(consistent-type-imports)": 94,
   "typescript(no-base-to-string)": 50,
   "typescript(no-misused-spread)": 6,
-  "typescript(no-non-null-assertion)": 1190,
+  "typescript(no-non-null-assertion)": 1189,
   "typescript(no-unnecessary-boolean-literal-compare)": 1,
   "typescript(no-unnecessary-template-expression)": 3,
   "typescript(no-unnecessary-type-assertion)": 813,

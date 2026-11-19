@@ -89,14 +89,16 @@ test.describe('on a phone', () => {
     // The audit measured eight controls under 24x24. A bottom bar whose targets are hard to hit
     // is the same failure wearing a different layout.
     await openRememberedBoard(page);
+    // The board route draws a waiting shell (the board's shape) and then swaps in the board's own shell,
+    // nav and all: a link found visible in the first can be gone by the time it is measured (boundingBox()
+    // gave null on a busy runner). Wait for the board itself, then measure until the box is there; the
+    // floor is the same, and a link that never shows or stays small still fails here.
+    await expect(page.getByText(/^Backlog\b/).first()).toBeVisible();
     const nav = page.getByRole('navigation', { name: 'Superpipeline' });
     for (const name of [/^Inbox/, /^Plan$/, /^Crew$/]) {
-      // boundingBox() does not wait for the link to show and gives null while it is hidden, so
-      // wait as the test above does; a link that never shows still fails here.
       const link = nav.getByRole('link', { name });
       await expect(link).toBeVisible();
-      const box = await link.boundingBox();
-      expect(box!.height).toBeGreaterThanOrEqual(44);
+      await expect.poll(async () => (await link.boundingBox())?.height ?? 0, { message: `${String(name)} clears the 44px floor` }).toBeGreaterThanOrEqual(44);
     }
   });
 
