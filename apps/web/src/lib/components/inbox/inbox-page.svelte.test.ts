@@ -234,6 +234,30 @@ describe('InboxPage in every vibe', () => {
     expect(stopped(reduced).classList.contains('vk-flash'), 'reduced: it changes in place').toBe(false);
   });
 
+  it('every tab’s headings go down one level at a time, and no tab names itself twice (M9)', async () => {
+    // A card at work, so Running has rows with titles.
+    const d = boards[REALISTIC_BOARD_IDS.devex];
+    boards[REALISTIC_BOARD_IDS.devex] = { ...d, cards: d.cards.map((c, i) => (i === 0 ? { ...c, state: 'working' as const, delegateAgentId: c.lastAgentId } : c)) };
+    const store = await counted();
+    for (const tab of ['needs', 'running', 'spend', 'activity'] as const) {
+      const ui = new InboxUi(() => store);
+      ui.tab = tab;
+      roots = await renderInVibes(InboxPage, { ...props(store), ui });
+      for (const v of VIBES) {
+        const levels = [...roots[v].querySelectorAll('h1, h2, h3, h4, h5, h6')].map((h) => Number(h.tagName[1]));
+        expect(levels[0], `${tab} in ${v}: the page starts at h1`).toBe(1);
+        const skips = levels.flatMap((l, i) => (i > 0 && l > levels[i - 1] + 1 ? [`h${levels[i - 1]} → h${l}`] : []));
+        expect(skips, `${tab} in ${v}`).toEqual([]);
+        // Spend's rows are names, not titles; every other tab's rows carry a heading under the section's.
+        expect(tab === 'spend' || levels.filter((l) => l >= 3).length > 1, `${tab} in ${v}: rows are titled`).toBe(true);
+        const names = [...roots[v].querySelectorAll('h1, h2, h3, h4')].map((h) => h.textContent?.trim());
+        expect(names.filter((n, i) => n && names.indexOf(n) !== i), `${tab} in ${v}: a heading said twice`).toEqual([]);
+      }
+      roots.unmount();
+      roots = null;
+    }
+  });
+
   it('Running pages like a group: five, then "Show N more" (rule 7)', async () => {
     // Thirty cards at work across the boards.
     const d = boards[REALISTIC_BOARD_IDS.devex];

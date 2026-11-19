@@ -14,7 +14,7 @@
   import { GROUP_OF, type InboxGroupKey } from '../inbox-groups';
   import type { InboxStore } from '../inbox-model.svelte';
   import type { InboxUi } from '../inbox-ui.svelte';
-  import { ACTIVITY_WHICH, activityMeta, activityNone, earlierLabel, GROUP_PAGE, IN_NEEDS, MARK_READ, showMore } from '../inbox-words';
+  import { ACTIVITY_HEADING, ACTIVITY_WHICH, activityMeta, activityNone, earlierLabel, GROUP_PAGE, IN_NEEDS, MARK_READ, showMore } from '../inbox-words';
 
   let { store, ui, onneeds }: { store: InboxStore; ui: InboxUi; onneeds(group: InboxGroupKey): void } = $props();
   const line = (n: Notification, kind: Parameters<typeof staleLine>[2]) => staleLine(n, 'daylight', kind) ?? noticeBody(n);
@@ -23,7 +23,7 @@
 </script>
 
 <section class="ib-group ib-act" aria-labelledby="ib-act-h" bind:this={root}>
-  <div id="ib-act-h"><SectionHeader n={1} title="Activity" meta={activityMeta(store.groups.length)} /></div>
+  <div id="ib-act-h"><SectionHeader n={1} title={ACTIVITY_HEADING} meta={activityMeta(store.groups.length)} /></div>
   <div class="ib-groupact">
     <Segmented label="Which activity" options={ACTIVITY_WHICH} bind:value={() => (store.showRead ? 'all' : 'unread'), (v) => { store.showRead = v === 'all'; }} />
   </div>
@@ -37,7 +37,7 @@
             <span class="ib-unread" data-read={g.latest.read ? 'true' : 'false'} aria-hidden="true"></span>
             <!-- data-reveal: "N earlier" grows the row into place (lib/motion/reveal.ts). -->
             <div class="ib-row__body" data-reveal>
-              <h4 class="ib-row__t" id="ib-act-{g.cardId}"><a href={store.cardHref(g.cardId, g.boardId)} onclick={(e) => go(e, g.cardId, g.boardId)}>{g.title}</a></h4>
+              <h3 class="ib-row__t" id="ib-act-{g.cardId}"><a href={store.cardHref(g.cardId, g.boardId)} onclick={(e) => go(e, g.cardId, g.boardId)}>{g.title}</a></h3>
               <p class="ib-row__meta">{#if !g.latest.read}<span class="vk-visually-hidden">Unread: </span>{/if}{line(g.latest, g.need?.item.kind ?? null)}
                 {#if g.need}{' · '}<a href="#ib-g-{GROUP_OF[g.need.item.kind]}" onclick={(e) => { e.preventDefault(); onneeds(GROUP_OF[g.need!.item.kind]); }}>{IN_NEEDS}</a>{/if}
                 {#if g.earlier.length > 0}{' · '}<button type="button" class="ib-more" aria-expanded={ui.earlierOpen[g.cardId] ? 'true' : 'false'} onclick={() => ui.toggleEarlier(g.cardId)}>{earlierLabel(g.earlier.length)}</button>{/if}

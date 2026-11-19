@@ -9,7 +9,7 @@
   import { usd } from '../../operate/operate-words';
   import BoardChip from '../BoardChip.svelte';
   import type { InboxStore } from '../inbox-model.svelte';
-  import { GROUP_PAGE, RUNNING_NONE, RUNNING_NOTE, runningMeta, showMore } from '../inbox-words';
+  import { GROUP_PAGE, RUNNING_HEADING, RUNNING_NONE, RUNNING_NOTE, runningMeta, showMore } from '../inbox-words';
 
   let { store }: { store: InboxStore } = $props();
   const rows = $derived(store.running);
@@ -21,7 +21,7 @@
 </script>
 
 <section class="ib-group" aria-labelledby="ib-running-h" bind:this={root}>
-  <div id="ib-running-h"><SectionHeader n={1} title="Running" meta={`${rows.length} ${rows.length === 1 ? 'card' : 'cards'}`} /></div>
+  <div id="ib-running-h"><SectionHeader n={1} title={RUNNING_HEADING} meta={`${rows.length} ${rows.length === 1 ? 'card' : 'cards'}`} /></div>
   {#if rows.length === 0}
     <p class="ib-why">{RUNNING_NONE}</p>
   {:else}
@@ -31,7 +31,7 @@
           <article class="ib-row ib-row--run" data-row={r.cardId} aria-labelledby="ib-run-{r.cardId}">
             <span class="ib-row__face" aria-hidden="true">{#if r.agentName}<Face id={r.agentName} label={r.agentName} mood="working" size={32} src={r.iconUrl ?? undefined} />{/if}</span>
             <div class="ib-row__body">
-              <h4 class="ib-row__t" id="ib-run-{r.cardId}"><a href={store.cardHref(r.cardId, r.boardId)} onclick={(e) => go(e, r.cardId, r.boardId)}>{r.title}</a></h4>
+              <h3 class="ib-row__t" id="ib-run-{r.cardId}"><a href={store.cardHref(r.cardId, r.boardId)} onclick={(e) => go(e, r.cardId, r.boardId)}>{r.title}</a></h3>
               <p class="ib-row__meta"><BoardChip name={r.boardName} /> {runningMeta(r, store.nowMs)}</p>
             </div>
             <span class="ib-cost">{usd(r.costUsd)}</span>

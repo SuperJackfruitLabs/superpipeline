@@ -10,7 +10,7 @@
   import { countUp } from '@superjackfruitlabs/vibekit-ui/motion';
   import { usd } from '../../operate/operate-words';
   import { CHOOSE_A_BOARD_FOR_CAPS, type InboxStore } from '../inbox-model.svelte';
-  import { SPEND_DETAIL, SPEND_FAILED, SPEND_NONE, SPEND_NOTE, spendCapLine, spendCapVerb, spendMeta, spendMore } from '../inbox-words';
+  import { SPEND_DETAIL, SPEND_FAILED, SPEND_HEADING, SPEND_NONE, SPEND_NOTE, spendCapLine, spendCapVerb, spendMeta, spendMore } from '../inbox-words';
 
   let { store }: { store: InboxStore } = $props();
   const s = $derived(store.spend);
@@ -18,7 +18,7 @@
 </script>
 
 <section class="ib-group ib-spend" aria-labelledby="ib-spend-h">
-  <div id="ib-spend-h"><SectionHeader n={1} title="Spend" meta={spendMeta(store.scoped ? store.boardName : 'All boards')} /></div>
+  <div id="ib-spend-h"><SectionHeader n={1} title={SPEND_HEADING} meta={spendMeta(store.scoped ? store.boardName : 'All boards')} /></div>
   {#if store.usageError}<p class="ib-why" role="status">{SPEND_FAILED}</p>{/if}
   <p class="ib-spend__big"><b class="ib-spend__n" use:countUp={{ value: s.total, format: usd }}></b> <span class="ib-spend__cap">{spendCapLine(s.total, s.cap, store.scoped)}</span></p>
   {#if store.scoped && s.cap !== null}<Meter value={s.total} max={s.cap} label="Spend against the board cap" tone="plain" />{/if}

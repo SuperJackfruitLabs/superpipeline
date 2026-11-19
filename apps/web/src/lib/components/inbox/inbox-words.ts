@@ -104,6 +104,10 @@ export function unclaimedExplanation(stages: readonly string[], boards: number):
 
 /** The Needs you tab's own heading, read by a screen reader above the groups. */
 export const NEEDS_HEADING = 'Needs you';
+/** The other tabs' section headers (an h2 each, their rows h3): one heading per tab, never a hidden twin. */
+export const RUNNING_HEADING = 'Running';
+export const SPEND_HEADING = 'Spend';
+export const ACTIVITY_HEADING = 'Activity';
 /** Nothing in scope needs you: the Needs you tab says so plainly. */
 export const NEEDS_NONE = 'Nothing is waiting on you.';
 /** The filters hide every card that needs you. */
