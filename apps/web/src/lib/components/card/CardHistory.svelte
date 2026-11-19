@@ -45,7 +45,8 @@
           {@const entry = m.stageByRun.get(g.runId)}
           {@const isOpen = m.isRunOpen(g.runId, ri === 0)}
           {@const n = (m.attempts.findIndex((x) => x.runId === g.runId) + 1) || runs.length - ri}
-          <div class="cv-run" data-attempt={g.runId}>
+          <!-- data-reveal: opening an attempt grows it into place (lib/motion/reveal.ts), as the forks' attempts did. -->
+          <div class="cv-run" data-attempt={g.runId} data-reveal>
             <button class="cv-runhead" type="button" data-attempt-head={g.runId} aria-expanded={isOpen} aria-controls={isOpen ? `cv-run-${g.runId}` : undefined} onclick={() => m.toggleRun(g.runId, ri === 0)}>
               <b>Attempt {n} · {stageNameOf(g.stageKey)} · {who}</b> <span class="cv-meta">{a ? attemptWord(a) : (g.outcome ?? 'working')} · {g.counts.total} events · {g.counts.error} errors</span>
             </button>

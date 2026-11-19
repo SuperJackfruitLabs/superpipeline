@@ -17,9 +17,16 @@ async function clickAndRead(page: Page, toggle: ReturnType<Page['locator']>): Pr
   }))));
 }
 
-/** The first expand toggle: an Activity row's "N earlier" on the Inbox; Quiet keeps its card's closed attempt. */
+/**
+ * The first expand toggle: an Activity row's "N earlier" on the Inbox; Quiet keeps its card's closed attempt, which
+ * sits in the card's "Conversation and history", closed until asked for (rule 5), so that is opened first.
+ */
 function where(vibe: string): { route: string; open?: (p: Page) => Promise<void>; toggle: (p: Page) => ReturnType<Page['locator']> } {
-  if (vibe === 'quiet') return { route: `${DX}/c/card_05823a57e8224605`, toggle: (p) => p.locator('[data-reveal] button[data-attempt-head][aria-expanded="false"]').first() };
+  if (vibe === 'quiet') return {
+    route: `${DX}/c/card_05823a57e8224605`,
+    open: (p) => p.locator('[data-block="history"] summary', { hasText: 'Conversation and history' }).first().click(),
+    toggle: (p) => p.locator('[data-reveal] button[data-attempt-head][aria-expanded="false"]').first(),
+  };
   return {
     route: '/inbox',
     open: (p) => p.getByRole('tab', { name: /^Activity/ }).click(),
