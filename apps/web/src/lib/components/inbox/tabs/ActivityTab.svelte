@@ -25,7 +25,7 @@
 <section class="ib-group ib-act" aria-labelledby="ib-act-h" bind:this={root}>
   <div id="ib-act-h"><SectionHeader n={1} title="Activity" meta={activityMeta(store.groups.length)} /></div>
   <div class="ib-groupact">
-    <Segmented size="sm" label="Which activity" options={ACTIVITY_WHICH} bind:value={() => (store.showRead ? 'all' : 'unread'), (v) => { store.showRead = v === 'all'; }} />
+    <Segmented label="Which activity" options={ACTIVITY_WHICH} bind:value={() => (store.showRead ? 'all' : 'unread'), (v) => { store.showRead = v === 'all'; }} />
   </div>
   {#if store.groups.length === 0}
     <p class="ib-why">{activityNone(store.showRead)}</p>
@@ -47,7 +47,7 @@
               {/if}
             </div>
             <span class="ib-when">{when(g.latest)}</span>
-            <div class="ib-row__act">{#if !g.latest.read}<Button variant="quiet" size="sm" aria-label="{MARK_READ}: {g.title}" onclick={() => store.markRead(g.latest.seq, g.boardId)}>{MARK_READ}</Button>{/if}</div>
+            <div class="ib-row__act">{#if !g.latest.read}<Button variant="quiet" aria-label="{MARK_READ}: {g.title}" onclick={() => store.markRead(g.latest.seq, g.boardId)}>{MARK_READ}</Button>{/if}</div>
           </article>
         </li>
       {/each}

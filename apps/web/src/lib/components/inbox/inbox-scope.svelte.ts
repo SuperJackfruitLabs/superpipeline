@@ -42,4 +42,3 @@ export function boardsNeedingFirst<T extends ScopeBoard>(boards: readonly T[], a
   return boards.map((b, i) => ({ b, i })).sort((x, y) => (counts.get(y.b.id) ?? 0) - (counts.get(x.b.id) ?? 0) || x.i - y.i).map((x) => x.b);
 }
 
-export const SHOW_NOTE = 'Boards that need you come first. Your choice stays until you refresh or open the Inbox in a new tab.';

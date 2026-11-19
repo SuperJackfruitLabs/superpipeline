@@ -39,8 +39,8 @@
     <label class="ib-field">{RESUME_AT}<select class="ib-select" id="resume-at-{id}" bind:value={ui.resumeAt}>{#each resumeOptions(row.stages, row.item.stageKey) as o (o.key)}<option value={o.key}>{o.label}</option>{/each}</select></label>
     <label class="ib-field">{RESUME_LABEL}<textarea class="ib-textarea" bind:value={ui.text}></textarea></label>
     <div class="ib-resume__acts">
-      <Button size="sm" type="submit" aria-disabled={ui.canSend ? 'false' : 'true'}>{SEND_BACK}</Button>
-      <Button variant="quiet" size="sm" onclick={() => ui.cancel()}>Cancel</Button>
+      <Button type="submit" aria-disabled={ui.canSend ? 'false' : 'true'}>{SEND_BACK}</Button>
+      <Button variant="quiet" onclick={() => ui.cancel()}>Cancel</Button>
     </div>
   </form>
 {/snippet}
@@ -52,10 +52,10 @@
     <div class="ib-groupact">
       {#if targets.length > 0}
         <Menu label={moveAllLabel(total)} items={targets.map((name) => ({ label: name, onselect: () => void ui.moveAll(groupRows, name) }))} width={280} align="start">
-          {#snippet trigger(props)}<button {...props} type="button" class="vk-button vk-button--secondary vk-button--sm">{moveAllLabel(total)}</button>{/snippet}
+          {#snippet trigger(props)}<button {...props} type="button" class="vk-button vk-button--secondary">{moveAllLabel(total)}</button>{/snippet}
         </Menu>
       {/if}
-      {#if group.groupActions.includes('staff')}<Button variant="quiet" size="sm" href="/crew/capabilities">{STAFF_LABEL}</Button>{/if}
+      {#if group.groupActions.includes('staff')}<Button variant="quiet" href="/crew/capabilities">{STAFF_LABEL}</Button>{/if}
     </div>
   {/if}
   <ul class="ib-rows">

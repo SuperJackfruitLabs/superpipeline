@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect, type Page } from '@playwright/test';
 import { openBoard, REVIEW_PIPELINE, seedBoard, seedGatedCard } from './support/seed';
 
 const BOARD_KEY = 'superpipeline.boardId';
@@ -28,7 +28,7 @@ test.beforeEach(async ({ page, request }) => {
 
 const rail = (page: import('@playwright/test').Page) => page.getByRole('navigation', { name: 'Superpipeline' });
 /** The Inbox's board scope: vibekit QuickFilter, a radio group named Show (Studio: SmallMultiples). */
-const show = (page: import('@playwright/test').Page) => page.getByRole('radiogroup', { name: 'Show' });
+const show = (page: Page) => page.getByRole('radiogroup', { name: 'Show' });
 
 test('the app opens on the Inbox, and the nav reads Inbox, Plan, Crew', async ({ page }) => {
   await page.goto('/');

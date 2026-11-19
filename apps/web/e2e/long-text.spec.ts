@@ -73,6 +73,8 @@ for (const vibe of ['daylight', 'paper', 'studio', 'quiet']) {
         await page.goto(path);
         if (path.endsWith('/operate')) await page.waitForURL('**/inbox');
         await waitForAppReady(page);
+        // The Inbox spans every board and pages each group: show this board's cards (the shared dev workspace has many).
+        if (path === '/inbox') await page.getByRole('radiogroup', { name: 'Show' }).locator(`[role="radio"][data-key="${boardId}"]`).click();
         // Each surface must contain its seeded title: missing content is a failure,
         // not a swallowed ten-second wait followed by a vacuous geometry check.
         const title = path === '/plan/projects' ? `Project ${LONG}`

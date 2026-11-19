@@ -55,14 +55,14 @@
   </div>
   <div class="ib-row__act">
     {#if group.key === 'review' || group.key === 'answer'}
-      <Button size="sm" {href} onclick={(e: MouseEvent) => go(e, onverb)}>{group.verb}</Button>
+      <Button {href} onclick={(e: MouseEvent) => go(e, onverb)}>{group.verb}</Button>
     {:else if group.key === 'resume'}
-      <Button size="sm" aria-expanded={resuming ? 'true' : 'false'} onclick={onverb}>{group.verb}</Button>
+      <Button aria-expanded={resuming ? 'true' : 'false'} onclick={onverb}>{group.verb}</Button>
     {:else if group.key === 'budget'}
-      <Button size="sm" href="/b/{item.boardId}/operate/telemetry">{group.verb}</Button>
+      <Button href="/b/{item.boardId}/operate/telemetry">{group.verb}</Button>
     {:else if moves.length > 0}
       <Menu label="Move {item.title}" items={moves.map((m) => ({ label: m.label, onselect: () => onmove?.(m.key) }))} width={300}>
-        {#snippet trigger(props)}<button {...props} type="button" class="vk-button vk-button--quiet vk-button--sm">{group.verb}</button>{/snippet}
+        {#snippet trigger(props)}<button {...props} type="button" class="vk-button vk-button--quiet">{group.verb}</button>{/snippet}
       </Menu>
     {/if}
   </div>

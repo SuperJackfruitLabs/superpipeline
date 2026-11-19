@@ -31,7 +31,7 @@
 
 {#snippet menu(label: string, shown: string, items: MenuItem[])}
   <Menu {label} {items} width={260} align="start">
-    {#snippet trigger(props)}<button {...props} type="button" class="vk-button vk-button--ghost vk-button--sm ib-menu">{shown}</button>{/snippet}
+    {#snippet trigger(props)}<button {...props} type="button" class="vk-button vk-button--ghost ib-menu">{shown}</button>{/snippet}
   </Menu>
 {/snippet}
 
@@ -40,7 +40,7 @@
     <div class="ib-filters__row" role="group" aria-label="Filter the cards that need you">
       <label class="ib-find"><span class="vk-visually-hidden">Find a card in your inbox</span><input type="search" class="ib-find__input" placeholder="Find a card in your inbox" bind:value={filters.find} /></label>
       {#each groups as g (g.key)}
-        <Button variant="ghost" size="sm" pressed={filters.group === g.key} onclick={() => toggle(g.key)}>{GROUP_CHIP[g.key]} <span class="vk-tabs__count">{g.items.length}</span></Button>
+        <Button variant="ghost" pressed={filters.group === g.key} onclick={() => toggle(g.key)}>{GROUP_CHIP[g.key]} <span class="vk-tabs__count">{g.items.length}</span></Button>
       {/each}
       <span class="ib-filters__break" aria-hidden="true"></span>
       {@render menu('Agent', `Agent · ${nameOf(choices.agents, filters.agent)}`, pick('Agent', filters.agent, choices.agents.map((a) => ({ value: a.id, label: a.name })), (v) => (filters.agent = v)))}
@@ -49,7 +49,7 @@
       <span class="ib-filters__sort">
         {@render menu('Sort', SORTS.find((x) => x.value === filters.sort)?.label ?? 'Oldest first', [{ radio: 'Sort', value: filters.sort, options: SORTS, onvaluechange: (v) => (filters.sort = v as InboxSort) }])}
       </span>
-      {#if filters.active > 0}<Button variant="text" size="sm" onclick={() => filters.clear()}>Clear filters</Button>{/if}
+      {#if filters.active > 0}<Button variant="text" onclick={() => filters.clear()}>Clear filters</Button>{/if}
     </div>
   </div>
 </div>

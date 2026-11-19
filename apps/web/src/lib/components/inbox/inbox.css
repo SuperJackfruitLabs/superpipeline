@@ -14,6 +14,11 @@
 /* The scope: vibekit QuickFilter (Studio: SmallMultiples). While counting it holds its row. */
 .ib-scope { min-width: 0; }
 .ib-scope__wait { min-height: 44px; }
+/* A long board name wraps inside its chip, never past the screen. Below 640px vibekit makes the row a scroller, so it is left alone there. */
+@media (min-width: 640px) {
+  .ib-scope .vk-quickfilter__item, .ib-scope .vk-smallmultiples__item { max-width: 100%; min-width: 0; }
+  .ib-scope .vk-quickfilter__face, .ib-scope .vk-quickfilter__label, .ib-scope .vk-smallmultiples__name { white-space: normal; overflow-wrap: anywhere; }
+}
 
 /* The tabs row: the tabs, then Filter at the end. */
 .ib-tabs { min-width: 0; }
@@ -24,6 +29,10 @@
 .ib-tabs .vk-badge { margin-left: 6px; }
 
 /* The filter row, revealed under the tabs. */
+/* Shut, it is out of sight and out of reach (inert); it hides once the row has closed. */
+.ib-filters > div { transition: visibility 0s linear var(--vk-d-base); }
+.ib-filters[data-open="false"] > div { visibility: hidden; }
+.ib-filters[data-open="true"] > div { transition-delay: 0s; }
 .ib-filters__row { display: flex; flex-wrap: wrap; align-items: center; gap: var(--vk-space-2) 10px; padding: 2px 2px var(--vk-space-2); }
 .ib-filters__break { flex-basis: 100%; height: 0; }
 .ib-filters__sort { margin-left: auto; }
@@ -31,6 +40,9 @@
 .ib-find__input { width: 100%; min-height: 44px; padding: 0 var(--vk-space-3); border: 0; border-radius: var(--vk-radius-md); background: var(--vk-color-surface); box-shadow: inset 0 0 0 1px var(--vk-color-line); color: var(--vk-color-text); font: inherit; }
 .ib-find__input:focus-visible { outline: 2px solid var(--vk-color-primary); outline-offset: 2px; }
 .ib-menu::after { content: " ⌄"; color: var(--vk-color-muted); }
+
+/* Needs you: the groups, one under another. */
+.ib-needs { display: grid; gap: var(--vk-space-5); min-width: 0; }
 
 /* A group: header with its count, one line that says what it is for, its actions, rows, Show N more. */
 .ib-group { display: grid; gap: var(--vk-space-3); min-width: 0; scroll-margin-top: var(--vk-space-6); }
@@ -83,6 +95,9 @@
 
 @media (max-width: 899.98px) {
   .ib { padding: var(--vk-space-2) 16px var(--vk-space-5); }
+  /* Phone targets are 44px (pages-polish Q4): the scope's chips, and a row's title link without growing its line. */
+  .ib-scope .vk-quickfilter__item { min-height: 44px; }
+  .ib-row__t a { display: inline-flex; align-items: center; min-height: 44px; margin-block: -10px; }
   .ib-row, .ib-row--run, .ib-row--act { grid-template-columns: auto minmax(0, 1fr); }
   .ib-row__act, .ib-cost, .ib-row--act .ib-when { grid-column: 2; justify-content: flex-start; }
 }

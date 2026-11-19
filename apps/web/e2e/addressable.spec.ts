@@ -104,7 +104,8 @@ test('a board id from nowhere says so and offers the way home, and keeps the rem
 
   await page.getByRole('link', { name: 'Go to your Inbox' }).click();
   await expect(page).toHaveURL(/\/inbox$/);
-  await expect(page.getByText('Boards that need you come first.')).toBeVisible();
+  // The Inbox is up: its board scope (All boards, then the boards that need you) is drawn.
+  await expect(page.getByRole('radiogroup', { name: 'Show' }).getByRole('radio', { name: /^All boards/ })).toBeChecked();
 });
 
 test('opening a card puts its address in the bar, so the link is copyable', async ({

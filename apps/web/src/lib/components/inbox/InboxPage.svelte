@@ -68,7 +68,7 @@
 </script>
 
 {#snippet filterControl()}
-  <Button variant="ghost" size="sm" aria-expanded={filters.open && ui.tab === 'needs' ? 'true' : 'false'} aria-controls={FILTER_ROW} onclick={toggleFilter}>Filter{#if filters.active > 0}{' '}<Badge count={filters.active} needs words="{filters.active} on" />{/if}</Button>
+  <Button variant="ghost" aria-expanded={filters.open && ui.tab === 'needs' ? 'true' : 'false'} aria-controls={FILTER_ROW} onclick={toggleFilter}>Filter{#if filters.active > 0}{' '}<Badge count={filters.active} needs words="{filters.active} on" />{/if}</Button>
 {/snippet}
 
 {#snippet panel(tab: InboxTab)}
@@ -76,11 +76,13 @@
     <SkeletonRows label={CHECKING} rows={4} rowHeight={72} slow={store.slow} onRetry={() => store.retry()} />
   {:else if tab === 'needs'}
     <InboxFilterRow {filters} groups={allGroups} choices={store.filterChoices} id={FILTER_ROW} />
-    <h2 class="vk-visually-hidden">{NEEDS_HEADING}</h2>
-    {#if groups.length === 0}<p class="ib-why">{store.needs.length === 0 ? NEEDS_NONE : NO_MATCH}</p>{/if}
-    {#each groups as g, i (g.key)}
-      <InboxGroup group={g} n={i + 1} {rows} {store} {ui} />
-    {/each}
+    <section class="ib-needs" aria-labelledby="ib-needs-h">
+      <h2 class="vk-visually-hidden" id="ib-needs-h">{NEEDS_HEADING}</h2>
+      {#if groups.length === 0}<p class="ib-why">{store.needs.length === 0 ? NEEDS_NONE : NO_MATCH}</p>{/if}
+      {#each groups as g, i (g.key)}
+        <InboxGroup group={g} n={i + 1} {rows} {store} {ui} />
+      {/each}
+    </section>
   {:else if tab === 'running'}
     <RunningTab {store} />
   {:else if tab === 'spend'}

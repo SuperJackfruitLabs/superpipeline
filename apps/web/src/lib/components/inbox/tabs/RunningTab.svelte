@@ -31,7 +31,7 @@
               <p class="ib-row__meta"><BoardChip name={r.boardName} /> {runningMeta(r, store.nowMs)}</p>
             </div>
             <span class="ib-cost">{usd(r.costUsd)}</span>
-            <div class="ib-row__act"><Button variant="quiet" size="sm" href={store.cardHref(r.cardId, r.boardId)} onclick={(e: MouseEvent) => go(e, r.cardId, r.boardId)}>Open</Button></div>
+            <div class="ib-row__act"><Button variant="quiet" href={store.cardHref(r.cardId, r.boardId)} onclick={(e: MouseEvent) => go(e, r.cardId, r.boardId)}>Open</Button></div>
           </article>
         </li>
       {/each}

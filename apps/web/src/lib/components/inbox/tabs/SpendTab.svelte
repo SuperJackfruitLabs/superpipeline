@@ -24,8 +24,8 @@
   {#if store.scoped && s.cap !== null}<Meter value={s.total} max={s.cap} label="Spend against the board cap" tone="plain" />{/if}
   <div class="ib-groupact">
     {#if store.scoped}
-      <Button variant="secondary" size="sm" href="{detail}#caps1">{spendCapVerb(s.cap !== null || s.cardCap !== null)}</Button>
-      <Button variant="quiet" size="sm" href={detail}>{SPEND_DETAIL}</Button>
+      <Button variant="secondary" href="{detail}#caps1">{spendCapVerb(s.cap !== null || s.cardCap !== null)}</Button>
+      <Button variant="quiet" href={detail}>{SPEND_DETAIL}</Button>
     {:else}
       <p class="ib-why">{CHOOSE_A_BOARD_FOR_CAPS}</p>
     {/if}
