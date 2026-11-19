@@ -53,7 +53,7 @@ globalThis.ResizeObserver ??= class implements ResizeObserver { observe(): void 
 import { app } from '$lib/stores/app.svelte';
 import { liveUpdates } from '$lib/live/live-updates.svelte';
 import { noFilters } from '$lib/stores/card-filters';
-import { BOARD_KEYS, INBOX_KEYS, LIST_KEYS, PAGE_KEYS, keysText } from '$lib/keys';
+import { BOARD_KEYS, CARD_KEYS, INBOX_KEYS, LIST_KEYS, PAGE_KEYS, keysText } from '$lib/keys';
 import { REALISTIC_BOARD_IDS, REALISTIC_NOW_MS, REALISTIC_TENANT, REALISTIC_USER, realisticWorkspace } from '$lib/fixtures/realistic';
 import { keysLine, parityTree, primaryActionsPerRow, rawMachineText, repeatedParagraphs, signatureSize, truncatedNames } from './guards';
 import { renderInVibes, type VibeRoots } from './render-vibes';
@@ -252,8 +252,8 @@ const PAGES: PageRow[] = [
     name: `Card · ${surface}`,
     shows: 'Decide whether the roadmap',
     signature: [],
-    // Pending: the card's footer has no keys line yet (CARD_KEYS in $lib/keys); the row then reads keysText(CARD_KEYS).
-    keys: null,
+    // The card's footer is the end of its last block (Raw data), the same on all three surfaces.
+    keys: keysText(CARD_KEYS),
     mount: async () => {
       app.board = planningLabelled;
       app.boardId = planningLabelled.boardId ?? null;
