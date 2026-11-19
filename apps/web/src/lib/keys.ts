@@ -26,11 +26,19 @@ export const LIST_KEYS: readonly KeyHint[] = [
 ];
 
 /**
- * The Inbox (InboxPage's footer): F opens its filter row (the page registers its opener with
- * `shellModel.registerFilter`, and the shell's F calls it), then the shell's keys. The one Inbox has
- * no row keys of its own: J / K, O, M and R went with OperateStudio's handler (29f20837).
+ * The Inbox (InboxPage `onkeydown`): J / K pick a Needs you row, O opens its card, M opens the Move
+ * menu on a row that offers Move, R opens Resume's form on a row that offers Resume; F opens the
+ * filter row (the page registers its opener with `shellModel.registerFilter`, the shell's F calls it);
+ * then the shell's keys.
  */
-export const INBOX_KEYS: readonly KeyHint[] = [{ key: 'F', does: 'filter' }, ...GLOBAL_KEYS];
+export const INBOX_KEYS: readonly KeyHint[] = [
+  { key: 'J / K', does: 'rows' },
+  { key: 'O', does: 'open' },
+  { key: 'M', does: 'move' },
+  { key: 'R', does: 'resume' },
+  { key: 'F', does: 'filter' },
+  ...GLOBAL_KEYS,
+];
 
 /** A card (CardPageStudio `onKey`, CardStudio `onKey`). Wired into the Card page once that page lands. */
 export const CARD_KEYS: readonly KeyHint[] = [

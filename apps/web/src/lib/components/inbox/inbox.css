@@ -56,6 +56,8 @@
 /* A row: face, title and meta, the one verb at the end. */
 .ib-row { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: start; gap: var(--vk-space-3); min-height: 52px; padding: var(--vk-space-2) 0; min-width: 0; }
 .ib-row--run, .ib-row--act { grid-template-columns: auto minmax(0, 1fr) auto auto; }
+/* The row J / K picked: raised, with a mark in the gutter beside it (the row's own box does not move). */
+.ib-row[data-selected="true"] { background: var(--vk-color-raised); box-shadow: -4px 0 0 var(--vk-color-text); }
 .ib-row--spend { grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; min-height: 40px; }
 .ib-row__face { display: inline-flex; width: 32px; min-height: 32px; }
 .ib-row__body { display: grid; gap: 4px; min-width: 0; }
@@ -106,6 +108,7 @@
 /* ---- Rows per vibe (the list-row treatment): surfaces and rules, never words ---- */
 [data-vibe="daylight"] .ib-group { padding: var(--vk-space-4); border-radius: 16px; background: var(--vk-color-surface); }
 [data-vibe="daylight"] .ib-row { padding: 6px 14px; border-radius: var(--vk-radius-md); background: var(--vk-color-raised); }
+[data-vibe="daylight"] .ib-row[data-selected="true"] { box-shadow: inset 3px 0 0 var(--vk-color-text); }
 [data-vibe="paper"] .ib-li + .ib-li .ib-row,
 [data-vibe="studio"] .ib-li + .ib-li .ib-row,
 [data-vibe="quiet"] .ib-li + .ib-li .ib-row { border-top: 1px solid var(--vk-color-line); }

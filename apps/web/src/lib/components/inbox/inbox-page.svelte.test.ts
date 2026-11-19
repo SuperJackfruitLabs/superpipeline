@@ -7,7 +7,7 @@
  * anchored where it is first used, and live changes that move only when motion is on.
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { cleanup, fireEvent, waitFor, within } from '@testing-library/svelte';
+import { cleanup, fireEvent, render, waitFor, within } from '@testing-library/svelte';
 import { flushSync, tick } from 'svelte';
 import { VIBES } from '@superjackfruitlabs/vibekit-ui';
 import type * as Api from '$lib/api';
@@ -274,8 +274,8 @@ describe('InboxPage in every vibe', () => {
       expect(keys?.getAttribute('aria-label'), `${v} vibe`).toBe('Keyboard');
       expect(keys?.textContent, `${v} vibe`).toBe(keysText(INBOX_KEYS));
     }
-    // Only keys the Inbox answers: F (its filter row) and the shell's; no row keys (the Inbox has no J / K handler).
-    expect(keysText(INBOX_KEYS)).toBe('F filter · ⌘K search · G I / P / C go to Inbox, Plan, Crew');
+    // The keys the Inbox answers: its row keys (InboxPage onkeydown), F (its filter row) and the shell's.
+    expect(keysText(INBOX_KEYS)).toBe('J / K rows · O open · M move · R resume · F filter · ⌘K search · G I / P / C go to Inbox, Plan, Crew');
   });
 
   it('Studio says the count in words beside its figure, as the mockup does', async () => {
@@ -302,5 +302,84 @@ describe('InboxPage in every vibe', () => {
       expect(primaryActionsPerRow(roots[v]), `${v} vibe`).toEqual([]);
       expect(row.querySelectorAll('.vk-button--primary')).toHaveLength(1);
     }
+  });
+});
+
+/** One page (the four-vibe render would put four window handlers on one window), with what the key tests ask of it. */
+async function keysPage() {
+  const store = await counted();
+  const ui = new InboxUi(() => store);
+  const { container } = render(InboxPage, { ...props(store), ui });
+  await settle();
+  const rows = () => [...container.querySelectorAll<HTMLElement>('.ib-needs .ib-row[data-row]')];
+  const current = () => rows().filter((r) => r.getAttribute('aria-current') === 'true').map((r) => r.dataset.row);
+  /** Presses `key` on `target`; true when the page took it (preventDefault). */
+  const press = async (key: string, target: Window | Element = window) => { const taken = !(await fireEvent.keyDown(target, { key })); await settle(); return taken; };
+  /** Selects a row the way Tab does (focus in it), then leaves focus on the page so the next key reaches the window. */
+  const focusRow = async (row: HTMLElement) => {
+    row.querySelector<HTMLElement>('.ib-row__t a')?.focus();
+    await settle();
+    if (document.activeElement instanceof HTMLElement) document.activeElement.blur();
+  };
+  return { store, ui, container, rows, current, press, focusRow };
+}
+
+describe('InboxPage keys (INBOX_KEYS)', () => {
+  it('J and K move the selection down and up the drawn rows, and it is marked aria-current', async () => {
+    const { rows, current, press } = await keysPage();
+    expect(rows().length).toBeGreaterThan(2);
+    expect(current()).toEqual([]);
+    expect(await press('j')).toBe(true);
+    expect(current()).toEqual([rows()[0]?.dataset.row]);
+    await press('j');
+    expect(current()).toEqual([rows()[1]?.dataset.row]);
+    await press('k');
+    await press('K');
+    expect(current()).toEqual([rows()[0]?.dataset.row]);
+  });
+
+  it('O opens the selected row’s card', async () => {
+    const { store, press } = await keysPage();
+    const open = vi.spyOn(store, 'open').mockImplementation(() => {});
+    expect(await press('o')).toBe(false);
+    expect(open).not.toHaveBeenCalled();
+    await press('j');
+    expect(await press('o')).toBe(true);
+    const first = store.needGroups[0]?.items[0];
+    expect(open).toHaveBeenCalledWith(first?.cardId, first?.boardId);
+  });
+
+  it('R opens Resume’s form only on a row that offers Resume', async () => {
+    const { container, press, focusRow } = await keysPage();
+    await press('j');
+    expect(container.querySelector('.ib-row[aria-current="true"]')?.getAttribute('data-attention-row')).not.toBe('blocked');
+    expect(await press('r')).toBe(false);
+    expect(container.querySelector('.ib-resume')).toBeNull();
+    const row = stopped(container);
+    await focusRow(row);
+    expect(row.getAttribute('aria-current')).toBe('true');
+    expect(await press('r')).toBe(true);
+    expect(row.querySelector('.ib-resume')).not.toBeNull();
+  });
+
+  it('M opens the Move menu only on a row that offers Move', async () => {
+    const { container, ui, press, focusRow } = await keysPage();
+    await press('j');
+    expect(await press('m')).toBe(false);
+    expect(ui.moveOpen).toBeNull();
+    const row = [...container.querySelectorAll<HTMLElement>('[data-attention-row="no-owner"]')].find((r) => within(r).queryByRole('button', { name: 'Move' }));
+    if (!row) throw new Error('no unclaimed row with a Move menu');
+    await focusRow(row);
+    expect(await press('m')).toBe(true);
+    expect(ui.moveOpen).toBe(row.dataset.row);
+  });
+
+  it('leaves a bare G to the shell’s chords, and keys typed in the find field move no row', async () => {
+    const { container, current, press } = await keysPage();
+    expect(await press('g')).toBe(false);
+    await fireEvent.click(button(container, 'Filter'));
+    await settle();
+    expect(await press('j', one(container, '#ib-filter-row input'))).toBe(false);
+    expect(current()).toEqual([]);
   });
 });

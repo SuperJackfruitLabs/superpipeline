@@ -5,7 +5,7 @@
    * (state, board, who did what where, how long), the agent's own words behind "What it said", and
    * the group's one verb: Review / Answer open the card, Resume opens the note form under the row,
    * Raise the cap opens the board's spend, Move is a quiet menu of the stages an agent works. A row
-   * whose facts change flashes once (`version`).
+   * whose facts change flashes once (`version`). The row J / K picked says so (`aria-current`).
    */
   import type { Snippet } from 'svelte';
   import { Button, Face, Menu, StateLabel } from '@superjackfruitlabs/vibekit-ui';
@@ -15,7 +15,7 @@
   import type { InboxGroup } from './inbox-groups';
   import { ROW_STATE, rowMeta, SAID_LABEL } from './inbox-words';
 
-  let { item, group, who, href, version, onverb, onopen, moves = [], onmove, refusal = null, resuming = false, children }: {
+  let { item, group, who, href, version, onverb, onopen, moves = [], onmove, refusal = null, resuming = false, selected = false, moveOpen = false, onmoveopen, children }: {
     item: AttentionItem;
     group: InboxGroup;
     /** The agent that last worked the card; null for a card nobody holds. */
@@ -34,6 +34,11 @@
     refusal?: string | null;
     /** Resume's form is open under this row. */
     resuming?: boolean;
+    /** The row J / K picked (aria-current, as the List's selected row). */
+    selected?: boolean;
+    /** Its Move menu is open (M opens it). */
+    moveOpen?: boolean;
+    onmoveopen?(open: boolean): void;
     /** What opens under the row: Resume's note form. */
     children?: Snippet;
   } = $props();
@@ -42,7 +47,7 @@
   const go = (e: MouseEvent, f: () => void) => { e.preventDefault(); f(); };
 </script>
 
-<article class="ib-row" data-row={item.id} data-attention-row={item.kind} aria-labelledby="ib-t-{item.id}" use:flashOnChange={version}>
+<article class="ib-row" data-row={item.id} data-attention-row={item.kind} data-selected={selected ? 'true' : undefined} aria-current={selected ? 'true' : undefined} aria-labelledby="ib-t-{item.id}" use:flashOnChange={version}>
   <span class="ib-row__face" aria-hidden="true">{#if who}<Face id={who.name} label={who.name} mood="needs" size={32} src={who.iconUrl ?? undefined} />{/if}</span>
   <div class="ib-row__body">
     <h4 class="ib-row__t" id="ib-t-{item.id}"><a {href} onclick={(e) => go(e, onopen)}>{item.title}</a></h4>
@@ -62,7 +67,7 @@
     {:else if group.key === 'budget'}
       <Button href="/b/{item.boardId}/operate/telemetry">{group.verb}</Button>
     {:else if moves.length > 0}
-      <Menu label="Move {item.title}" items={moves.map((m) => ({ label: m.label, onselect: () => onmove?.(m.key) }))} width={300}>
+      <Menu label="Move {item.title}" items={moves.map((m) => ({ label: m.label, onselect: () => onmove?.(m.key) }))} width={300} bind:open={() => moveOpen, (o) => onmoveopen?.(o)}>
         {#snippet trigger(props)}<button {...props} type="button" class="vk-button vk-button--quiet">{group.verb}</button>{/snippet}
       </Menu>
     {/if}

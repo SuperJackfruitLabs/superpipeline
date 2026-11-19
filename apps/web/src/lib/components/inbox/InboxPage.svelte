@@ -12,6 +12,9 @@
   import { Badge, Button, Tabs } from '@superjackfruitlabs/vibekit-ui';
   import { tick, untrack } from 'svelte';
   import { shellModel } from '$lib/components/shell/shell-model.svelte';
+  import { app } from '$lib/stores/app.svelte';
+  import { appearance } from '$lib/appearance.svelte';
+  import { moveTargets } from '../operate/operate-data';
   import KeysLine from '$lib/components/shell/KeysLine.svelte';
   import { INBOX_KEYS } from '$lib/keys';
   import SkeletonRows from '$lib/components/parts/SkeletonRows.svelte';
@@ -61,6 +64,55 @@
   }
   $effect(() => shellModel.registerFilter(() => void openFilter()));
 
+  /** Every Needs you row with its group, in the page's order: what O, M and R look up. */
+  const entries = $derived(groups.flatMap((g) => g.items.map((item) => ({ item, group: g }))));
+  let root = $state<HTMLElement | null>(null);
+
+  /** The Needs you rows drawn now, in order (each group shows its first page): what J and K walk. */
+  function drawn(): string[] {
+    return [...(root?.querySelectorAll<HTMLElement>('.ib-needs .ib-row[data-row]') ?? [])].map((el) => el.dataset.row ?? '');
+  }
+  function select(step: 1 | -1): boolean {
+    const ids = drawn();
+    if (ids.length === 0) return false;
+    const i = ui.selected ? ids.indexOf(ui.selected) : -1;
+    ui.selected = ids[i === -1 ? 0 : Math.max(0, Math.min(ids.length - 1, i + step))] ?? null;
+    queueMicrotask(() => root?.querySelector('.ib-needs .ib-row[aria-current="true"]')?.scrollIntoView?.({ block: 'nearest' }));
+    return true;
+  }
+  /** Focus in a Needs you row (Tab) selects it, so O, M and R act on what has focus, as on the List. */
+  function onfocusin(e: FocusEvent): void {
+    const id = (e.target as Element | null)?.closest<HTMLElement>('.ib-needs .ib-row[data-row]')?.dataset.row;
+    if (id) ui.selected = id;
+  }
+
+  /**
+   * The Inbox's row keys (INBOX_KEYS): J / K pick a row, O opens its card, R opens Resume's form on a
+   * row that offers Resume, M opens the Move menu on a row that offers Move. Never while typing (the
+   * filter's find field), in a dialog or menu, with a modifier, or over an open dialog; a key it does not
+   * use (G, F, N: the shell's) is left alone.
+   */
+  function onkeydown(e: KeyboardEvent): void {
+    const t = e.target;
+    if (e.defaultPrevented || e.metaKey || e.ctrlKey || e.altKey || loading || ui.tab !== 'needs') return;
+    if (t instanceof Element && t.closest('input, textarea, select, [contenteditable="true"], [role="dialog"], [role="menu"]')) return;
+    if (app.openCardId || app.composeOpen || app.moveCardId || app.filterOpen || app.boardSwitcherOpen || app.cmdkOpen || appearance.pickerOpen) return;
+    const at = entries.find((x) => x.item.id === ui.selected);
+    const row = at ? rows.get(at.item.cardId) : undefined;
+    switch (e.key) {
+      case 'j': case 'J': if (!select(1)) return; break;
+      case 'k': case 'K': if (!select(-1)) return; break;
+      case 'o': case 'O': if (!at) return; store.open(at.item.cardId, at.item.boardId); break;
+      case 'r': case 'R': if (!row || at?.group.key !== 'resume') return; void ui.openResume(row); break;
+      case 'm': case 'M':
+        if (!row || at?.group.key !== 'unclaimed' || moveTargets(row.stages, row.item.stageKey).length === 0) return;
+        ui.moveOpen = at.item.id;
+        break;
+      default: return;
+    }
+    e.preventDefault();
+  }
+
   /** An Activity row's "In Needs you": that group, in view. */
   async function showGroup(key: InboxGroupKey): Promise<void> {
     ui.tab = 'needs';
@@ -94,7 +146,10 @@
   {/if}
 {/snippet}
 
-<div class="ib" aria-busy={loading ? 'true' : undefined}>
+<svelte:window {onkeydown} />
+
+<!-- svelte-ignore a11y_no_static_element_interactions -->
+<div class="ib" aria-busy={loading ? 'true' : undefined} bind:this={root} {onfocusin}>
   <InboxHeadline {store} />
   <InboxScope pending={loading} />
   <div class="ib-tabs">

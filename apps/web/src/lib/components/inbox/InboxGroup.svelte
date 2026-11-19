@@ -74,6 +74,9 @@
           onmove={(key) => { if (row) void ui.move(row, key); }}
           refusal={ui.refusals[item.cardId] ?? null}
           resuming={ui.resuming === item.cardId}
+          selected={ui.selected === item.id}
+          moveOpen={ui.moveOpen === item.id}
+          onmoveopen={(o) => (ui.moveOpen = o ? item.id : ui.moveOpen === item.id ? null : ui.moveOpen)}
         >{#if row && ui.resuming === item.cardId}{@render resumeForm(row)}{/if}</InboxRow>
       </li>
     {/each}
