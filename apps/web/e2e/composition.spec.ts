@@ -72,19 +72,30 @@ async function liveChange(page: Page, request: APIRequestContext): Promise<strin
   return [...seen];
 }
 
-// ── Height budget (§9): the Inbox under three screens and a board under two, at 1440×900 ────────────────────────────
+// ── Height budget (§9): the Inbox under three screens and a board under about two, at 1440×900 ────────────────────
+
+/** The Inbox: three screens. */
+const INBOX_BUDGET = 2700;
+/**
+ * A board, per vibe (controller ruling, 2026-11-19). Rule 7 is met (every lane pages behind "Show N more"), and
+ * 1800 px (two screens) was the plan's estimate, not the rule: Quiet is one column by design and Paper sets larger
+ * type, so on the realistic seed they need more room for the same five-tile lanes.
+ */
+const BOARD_BUDGET: Record<Vibe, number> = { daylight: 1800, studio: 1800, paper: 2100, quiet: 2400 };
 
 test.describe('on the realistic workspace', () => {
   test.beforeEach(async ({ request }) => { await seedRealistic(request); });
 
   for (const vibe of VIBES) {
-    test(`${vibe}: height budget — the Inbox under 2700 px and every board under 1800 px at 1440×900`, async ({ page }) => {
-      // Soft, so one run reports every page's height.
+    test(`inbox: height budget, under ${INBOX_BUDGET} px at 1440×900 (${vibe})`, async ({ page }) => {
       await openInbox(page, vibe);
-      expect.soft(await pageHeight(page), `${vibe} Inbox`).toBeLessThan(2700);
+      expect(await pageHeight(page), `${vibe} Inbox`).toBeLessThan(INBOX_BUDGET);
+    });
+    test(`board: height budget, under ${BOARD_BUDGET[vibe]} px at 1440×900 (${vibe})`, async ({ page }) => {
       for (const id of BOARDS) {
         await openBoard(page, vibe, id, 1440);
-        expect.soft(await pageHeight(page), `${vibe} ${id}`).toBeLessThan(1800);
+        // Soft, so one run reports every board's height.
+        expect.soft(await pageHeight(page), `${vibe} ${id}`).toBeLessThan(BOARD_BUDGET[vibe]);
       }
     });
   }
@@ -92,7 +103,7 @@ test.describe('on the realistic workspace', () => {
   // ── Track never truncates (§9, rule 6): at 1008 px every stage is named in full ─────────────────────────────────────
 
   for (const vibe of VIBES) {
-    test(`${vibe}: the track never truncates a stage name at 1008 px`, async ({ page }) => {
+    test(`board: the track never truncates a stage name at 1008 px (${vibe})`, async ({ page }) => {
       for (const id of BOARDS) {
         await openBoard(page, vibe, id, 1008);
         const names = page.locator('.vk-stages__name');
@@ -107,7 +118,7 @@ test.describe('on the realistic workspace', () => {
 
   // ── Motion honours reduce (§9, rule 9): a live change animates, and under data-motion="reduce" nothing does ──────
 
-  test('motion honours reduce: a live change animates with motion on, and nothing animates under data-motion="reduce"', async ({ page, request }) => {
+  test('inbox: motion honours reduce, a live change animates with motion on and nothing animates under data-motion="reduce"', async ({ page, request }) => {
     await page.emulateMedia({ reducedMotion: 'no-preference' });
     await openInbox(page, 'daylight');
     await page.waitForTimeout(1500); // the entrance settles
@@ -132,7 +143,7 @@ const STAGES = [
 const KEY_PAGES = (id: string) => [`/b/${id}`, `/b/${id}?view=list`, '/inbox', '/crew/agents', '/settings', `/b/${id}/operate/telemetry`, '/plan/projects'];
 
 for (const vibe of VIBES) {
-  test(`${vibe}: every page's footer ends with its keys`, async ({ page, request }) => {
+  test(`every page: the footer ends with its keys (${vibe})`, async ({ page, request }) => {
     const id = await seedBoard(request, 'Keys line', STAGES);
     await request.post(`${API}/v1/boards/${id}/cards`, { headers: TENANT, data: { title: 'A card', ownerUserId: 'usr_a' } });
     await setAppearance(page, appearance(vibe));
@@ -147,7 +158,7 @@ for (const vibe of VIBES) {
   });
 }
 
-test('the keys line is absent on a phone', async ({ page, request }) => {
+test('every page: no keys line on a phone', async ({ page, request }) => {
   const id = await seedBoard(request, 'Keys phone', STAGES);
   await request.post(`${API}/v1/boards/${id}/cards`, { headers: TENANT, data: { title: 'A card', ownerUserId: 'usr_a' } });
   await setAppearance(page, appearance('daylight'));
@@ -159,7 +170,7 @@ test('the keys line is absent on a phone', async ({ page, request }) => {
   }
 });
 
-test('an empty board ends with its keys too', async ({ page, request }) => {
+test('board: an empty board ends with its keys too', async ({ page, request }) => {
   const id = await seedBoard(request, 'Keys empty', STAGES);
   await page.setViewportSize({ width: 1280, height: 800 });
   await page.goto(`/b/${id}`);

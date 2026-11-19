@@ -2,7 +2,13 @@ import type { APIRequestContext, Page } from '@playwright/test';
 import { expect } from '@playwright/test';
 
 import { PORTS } from '../../scripts/ports';
-export const API = PORTS.apiUrl;
+/**
+ * Where the specs reach the app and its API. SP_E2E_BASE_URL (playwright.config.ts) aims a run at an
+ * already-deployed origin, which serves the API at the same origin (the monthly composition audit);
+ * unset, the local dev servers.
+ */
+export const WEB = process.env.SP_E2E_BASE_URL || PORTS.webUrl;
+export const API = process.env.SP_E2E_BASE_URL || PORTS.apiUrl;
 export const TENANT = { 'X-Tenant-Id': 'tnt_dev', 'Content-Type': 'application/json' };
 export const AGENT = { ...TENANT, 'X-Agent-Id': 'agt_r' };
 
@@ -61,7 +67,7 @@ export async function openRememberedBoard(page: Page): Promise<void> {
 
 /** Sets the person's appearance before any page script runs. */
 export async function setAppearance(page: Page, value: string): Promise<void> {
-  await page.context().addCookies([{ name: 'vk_appearance', value, url: PORTS.webUrl }]);
+  await page.context().addCookies([{ name: 'vk_appearance', value, url: WEB }]);
 }
 
 /** A pipeline whose review stage binds its gate to an immutable approval subject (needs a project and a decider). */

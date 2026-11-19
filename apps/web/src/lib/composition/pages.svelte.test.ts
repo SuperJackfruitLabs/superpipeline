@@ -18,6 +18,7 @@ import { cleanup, waitFor } from '@testing-library/svelte';
 import { flushSync, tick, type Component } from 'svelte';
 import { VIBES } from '@superjackfruitlabs/vibekit-ui';
 import type * as Api from '$lib/api';
+import type * as Superlibrary from '$lib/superlibrary';
 import type { BoardEvent, BoardSnapshot, CapabilityRecord, Member, Project, StaleCard } from '$lib/api';
 
 vi.hoisted(() => {
@@ -36,12 +37,16 @@ const api = vi.hoisted(() => ({
   openBoardSocket: vi.fn<Fn>(), listProjects: vi.fn<Fn>(), getProject: vi.fn<Fn>(), getProjectRollup: vi.fn<Fn>(),
   getAgents: vi.fn<Fn>(), getCapabilities: vi.fn<Fn>(), getMembers: vi.fn<Fn>(), listLabels: vi.fn<Fn>(),
   getWorkspace: vi.fn<Fn>(), getForgeHost: vi.fn<Fn>(), getHubPrincipals: vi.fn<Fn>(), getProfiles: vi.fn<Fn>(), getSchedules: vi.fn<Fn>(),
+  getCardActivities: vi.fn<Fn>(), getAttempts: vi.fn<Fn>(), getEstimate: vi.fn<Fn>(), listLinks: vi.fn<Fn>(), getComments: vi.fn<Fn>(),
 }));
 vi.mock('$lib/api', async (orig) => ({ ...(await orig<typeof Api>()), ...api }));
 // The drag library cannot run in jsdom (board-view.svelte.test.ts tests the drops).
 vi.mock('$lib/dnd', () => ({ cardDraggable: () => ({ update() {}, destroy() {} }), columnDropTarget: () => ({ update() {}, destroy() {} }), trackCellDropTarget: () => ({ update() {}, destroy() {} }) }));
 vi.mock('$app/navigation', () => ({ goto: vi.fn<() => Promise<void>>() }));
 vi.mock('$lib/hub-token', () => ({ hubStatus: async () => ({ configured: false }), beginHubAuthorization: async () => {} }));
+// The card's related work reads SuperLibrary; nothing is related here.
+vi.mock('$lib/superlibrary', async (orig) => ({ ...(await orig<typeof Superlibrary>()), relatedForCard: async () => [] }));
+globalThis.ResizeObserver ??= class implements ResizeObserver { observe(): void {} unobserve(): void {} disconnect(): void {} };
 
 import { app } from '$lib/stores/app.svelte';
 import { liveUpdates } from '$lib/live/live-updates.svelte';
@@ -68,6 +73,8 @@ import SettingsView from '$lib/components/settings/SettingsView.svelte';
 import BoardSettingsView from '$lib/components/settings/BoardSettingsView.svelte';
 import { BOARD_SETTINGS_TABS, SETTINGS_TABS } from '$lib/components/settings/settings-words';
 import { LABELS } from '$lib/components/settings/settings-fixture';
+import CardView from '$lib/components/card/CardView.svelte';
+import { CardModel } from '$lib/components/card/card-model.svelte';
 
 // ── The realistic workspace, and what pages need beside it ───────────────────────────────────────
 
@@ -80,6 +87,12 @@ const devex: BoardSnapshot = (() => {
   return { ...b, cards: b.cards.map((c, i) => ({ ...c, labels: i < 6 ? [LABELS[i % 4].id] : [] })) };
 })();
 const labelMap = new Map(LABELS.map((l) => [l.id, { name: l.name, colour: l.colour }]));
+/** The card rows' card: Planning's review card, at its approval gate, with two labels (Facts names them). */
+const REVIEW_CARD = 'card_rl_planning_001';
+const planningLabelled: BoardSnapshot = (() => {
+  const b = byId(REALISTIC_BOARD_IDS.planning);
+  return { ...b, cards: b.cards.map((c) => (c.id === REVIEW_CARD ? { ...c, labels: [LABELS[1].id, LABELS[10].id] } : c)) };
+})();
 const MEMBERS: Member[] = [
   { userId: REALISTIC_USER, email: 'owner@realistic-fixture.invalid', name: 'Asha Rao', role: 'owner', createdAt: '2026-09-01T00:00:00Z' },
   { userId: 'usr_rl_dev', email: 'dev@realistic-fixture.invalid', name: 'Dev Rao', role: 'member', createdAt: '2026-09-02T00:00:00Z' },
@@ -230,7 +243,26 @@ const PAGES: PageRow[] = [
     keys: PAGE,
     mount: () => vibes(BoardSettingsView, { board: devex, onChanged: () => {}, initial: id }),
   })),
-  // Card: added when B12 merges (drawer, page and phone sheet; its break is a raw label id in Facts).
+  // The card, on its three surfaces: one composition (§7 Card, §11.3), an empty signature rule.
+  ...(['drawer', 'phone', 'page'] as const).map((surface): PageRow => ({
+    name: `Card · ${surface}`,
+    shows: 'Decide whether the roadmap',
+    signature: [],
+    // Pending: the card's footer has no keys line yet (CARD_KEYS in $lib/keys); the row then reads keysText(CARD_KEYS).
+    keys: null,
+    mount: async () => {
+      app.board = planningLabelled;
+      app.boardId = planningLabelled.boardId ?? null;
+      app.labels = LABELS;
+      app.members = MEMBERS;
+      let model!: CardModel;
+      stops.push($effect.root(() => {
+        model = new CardModel(() => ({ boardId: planningLabelled.boardId ?? '', cardId: REVIEW_CARD, surface: surface === 'phone' ? 'drawer' : surface }));
+      }));
+      await waitFor(() => { if (!model.detailLoaded) throw new Error('the card detail is still loading'); }, { timeout: 2_000 });
+      return vibes(CardView, { model, surface, gate: model.gateBinding, question: model.questionBinding, pageHref: model.pageHref, boardHref: model.boardHref, onClose: () => {} });
+    },
+  })),
 ];
 
 // ── Setup ────────────────────────────────────────────────────────────────────────────────────────
@@ -260,6 +292,12 @@ beforeEach(() => {
   api.getForgeHost.mockResolvedValue('forge.example.com');
   api.getHubPrincipals.mockResolvedValue([]);
   api.getProfiles.mockResolvedValue([]);
+  const gates = planningLabelled.gates.filter((g) => g.cardId === REVIEW_CARD);
+  api.getCardActivities.mockResolvedValue({ activities: [], handoff: { summary: gates[0]?.summary ?? null }, gates });
+  api.getAttempts.mockResolvedValue([]);
+  api.getEstimate.mockResolvedValue({ stageKey: 'decide', estimatedUsd: null, sampleSize: 0 });
+  api.listLinks.mockResolvedValue({ links: [], externalLinks: [] });
+  api.getComments.mockResolvedValue([]);
   api.getSchedules.mockResolvedValue([{ id: 'sch_rl_1', title: 'Weekly dependency check', rule: 'weekly on mon at 09:00', timezone: 'Asia/Kolkata', stageKey: 'reported', enabled: true, nextFireAt: null, lastFiredAt: null, createdBy: 'Asha Rao', skipCount: 0 }]);
 
   app.user = { userId: REALISTIC_USER, tenantId: REALISTIC_TENANT, name: 'Asha Rao' };
@@ -290,6 +328,8 @@ afterEach(() => {
   app.board = null;
   app.boardId = null;
   app.boards = [];
+  app.labels = [];
+  app.members = [];
   app.attention = [];
   vi.useRealTimers();
 });
