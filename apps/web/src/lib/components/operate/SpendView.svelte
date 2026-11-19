@@ -9,6 +9,8 @@
   import { Face } from '@superjackfruitlabs/vibekit-ui';
   import { viewport } from '$lib/viewport.svelte';
   import './spend.css';
+  import { PAGE_KEYS } from '$lib/keys';
+  import KeysLine from '$lib/components/shell/KeysLine.svelte';
   import PageMain from '$lib/components/parts/PageMain.svelte';
   import LineIcon from '$lib/components/parts/LineIcon.svelte';
   import { displayAgent } from '$lib/names';
@@ -158,4 +160,5 @@
   </div>
 
   <BoardLog events={model.events} error={model.eventsError} collapsedRows={8} fullLogHref="/b/{app.boardId}/operate/log" />
+  <p class="sp-foot"><KeysLine keys={PAGE_KEYS} /></p>
 </PageMain>

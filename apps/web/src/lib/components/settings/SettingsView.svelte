@@ -8,6 +8,8 @@
    * `ontab` lets the route keep it in step.
    */
   import './settings.css';
+  import { PAGE_KEYS } from '$lib/keys';
+  import KeysLine from '$lib/components/shell/KeysLine.svelte';
   import { Tabs } from '@superjackfruitlabs/vibekit-ui';
   import { app } from '$lib/stores/app.svelte';
   import { viewport } from '$lib/viewport.svelte';
@@ -53,4 +55,5 @@
     <p class="set-lede">{SETTINGS_LEDE}</p>
   </div>
   <Tabs label="Settings" mode="panels" {items} value={tab} onchange={choose} {panel} />
+  <p class="set-foot"><KeysLine keys={PAGE_KEYS} /></p>
 </div>

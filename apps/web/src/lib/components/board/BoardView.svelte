@@ -11,6 +11,8 @@
   import { shellModel } from '$lib/components/shell/shell-model.svelte';
   import type { BoardModel } from './board-model';
   import { boardView, footerLine } from './board-view-model';
+  import { BOARD_KEYS } from '$lib/keys';
+  import KeysLine from '$lib/components/shell/KeysLine.svelte';
   import BoardTopRow from './BoardTopRow.svelte';
   import BoardTrack from './BoardTrack.svelte';
   import Lane from './Lane.svelte';
@@ -39,5 +41,5 @@
       <Lane {lane} />
     {/each}
   </div>
-  <p class="bv-foot">{footerLine(shellModel.boardStatus)}</p>
+  <p class="bv-foot">{footerLine(shellModel.boardStatus)} <KeysLine keys={BOARD_KEYS} /></p>
 </div>

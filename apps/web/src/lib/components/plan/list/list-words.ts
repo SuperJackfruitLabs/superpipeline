@@ -11,10 +11,6 @@ import type { ListGroup, ListRow, ListSort } from './types';
 /** Filters hide every card (a board with none says so in the top row's line). */
 export const NO_MATCH = 'No cards match these filters.';
 
-/** The keyboard line under the table. */
-/** R regroups: G belongs to the shell's G I / G P / G C chords. */
-export const LIST_KEYS = 'J / K to pick a row · ↵ to open it · M to move it · S to sort · R to regroup';
-
 const WORDS = ['no', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten', 'eleven', 'twelve'];
 const numberWord = (n: number): string => WORDS[n] ?? String(n);
 const blockedText = (n: number): string => (n === 1 ? 'Blocked by another card' : `Blocked by ${numberWord(n)} other cards`);

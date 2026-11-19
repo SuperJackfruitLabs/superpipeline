@@ -8,6 +8,8 @@
    * profiles, Add). One action per section; each section saves on its own.
    */
   import './settings.css';
+  import { PAGE_KEYS } from '$lib/keys';
+  import KeysLine from '$lib/components/shell/KeysLine.svelte';
   import { untrack } from 'svelte';
   import { Button, FactList, SectionHeader, Tabs } from '@superjackfruitlabs/vibekit-ui';
   import SkeletonRows from '$lib/components/parts/SkeletonRows.svelte';
@@ -135,5 +137,6 @@
     <p class="set-lede">{BOARD_SETTINGS_LEDE}</p>
   </div>
   <Tabs label="Board settings" mode="panels" {items} value={tab} onchange={choose} {panel} />
+  <p class="set-foot"><KeysLine keys={PAGE_KEYS} /></p>
   <span class="sr" role="status">{model.busyWords}</span>
 </div>

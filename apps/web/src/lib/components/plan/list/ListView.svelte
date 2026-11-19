@@ -17,7 +17,9 @@
   import { attentionLine } from '$lib/components/board/board-words';
   import type { ListGroupBy } from './list-keys';
   import { GROUP_CYCLE, GROUPS, listCaption, nextInCycle, SORT_CYCLE, sortOptions, stateText } from './list-model';
-  import { groupLabel, LIST_KEYS, listFoot, NO_MATCH, rowFacts } from './list-words';
+  import { LIST_KEYS } from '$lib/keys';
+  import KeysLine from '$lib/components/shell/KeysLine.svelte';
+  import { groupLabel, listFoot, NO_MATCH, rowFacts } from './list-words';
   import { LIST_PAGE, ListUi } from './list-ui.svelte';
   import RowMoveMenu from './RowMoveMenu.svelte';
   import type { ListRow, ListSortKey, ListTone, ListViewProps } from './types';
@@ -135,10 +137,10 @@
   <div class="lv-table">
     <DataTable label={listCaption(p.boardName, p.groupBy, p.sort)} {columns} rows={flat} groups={paged} rowKey={(r) => r.s.id} titleKey="title"
       selected={ui.selected ?? undefined} needs={(r) => r.state.needsYou} sort={{ key: p.sort.key, dir: p.sort.ascending ? 'asc' : 'desc' }}
-      onsort={(k) => p.onSort(k as ListSortKey)} keys={LIST_KEYS} {empty} />
+      onsort={(k) => p.onSort(k as ListSortKey)} {empty} />
   </div>
   {#if total > shown}
     <LoadMore {shown} {total} label="Show {Math.min(LIST_PAGE, total - shown)} more" onmore={() => { ui.limit += LIST_PAGE; }} />
   {/if}
-  {#if total > 0}<p class="lv-foot">{listFoot(p.sort, p.emptyStages)}</p>{/if}
+  <p class="lv-foot">{#if total > 0}{listFoot(p.sort, p.emptyStages)} {/if}<KeysLine keys={LIST_KEYS} /></p>
 </div>

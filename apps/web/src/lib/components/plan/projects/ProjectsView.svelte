@@ -9,6 +9,8 @@
   import './projects.css';
   import { Button } from '@superjackfruitlabs/vibekit-ui';
   import LineIcon from '$lib/components/parts/LineIcon.svelte';
+  import { PAGE_KEYS } from '$lib/keys';
+  import KeysLine from '$lib/components/shell/KeysLine.svelte';
   import PageMain from '$lib/components/parts/PageMain.svelte';
   import { viewport } from '$lib/viewport.svelte';
   import { fmtTarget, HEALTH_LABEL, milestoneDate, milestonesMeta, progressPct, rollupSegments, STATE_LABEL } from '../project-rollup';
@@ -122,5 +124,5 @@
     </section>
   {/each}
 
-  <p class="t-meta">{PROJECTS_FOOT}</p>
+  <p class="t-meta">{PROJECTS_FOOT} <KeysLine keys={PAGE_KEYS} /></p>
 </PageMain>

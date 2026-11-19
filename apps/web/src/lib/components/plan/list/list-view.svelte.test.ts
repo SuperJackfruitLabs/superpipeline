@@ -60,7 +60,7 @@ describe('ListView', () => {
     expect(screen.getByRole('combobox', { name: /Sort by/ })).toBeTruthy();
     expect(screen.getByText('4 cards want you here.')).toBeTruthy();
     expect(screen.getByText('Sorted by priority, highest first. Stages with no cards are left out: Integrate and Signed off.')).toBeTruthy();
-    expect(screen.getByText(/J \/ K to pick a row/)).toBeTruthy();
+    expect(screen.getByLabelText('Keyboard').textContent).toMatch(/J \/ K rows · ↵ open/);
   });
 
   it('groups say who works them; each row has one action, Move', () => {
@@ -149,7 +149,7 @@ describe('ListView', () => {
     await tick();
     expect(p.onGroupBy).not.toHaveBeenCalled();
     expect(g.defaultPrevented).toBe(false);
-    expect(screen.getByText(/S to sort · R to regroup$/)).toBeTruthy();
+    expect(screen.getByLabelText('Keyboard').textContent).toMatch(/S sort · R regroup/);
   });
 
   it('focus in a row selects it, so M moves what has focus', async () => {

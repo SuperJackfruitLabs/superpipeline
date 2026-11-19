@@ -6,6 +6,8 @@
    * no signature slot.
    */
   import './spend.css';
+  import { PAGE_KEYS } from '$lib/keys';
+  import KeysLine from '$lib/components/shell/KeysLine.svelte';
   import PageMain from '$lib/components/parts/PageMain.svelte';
   import LineIcon from '$lib/components/parts/LineIcon.svelte';
   import BoardLog from './BoardLog.svelte';
@@ -18,4 +20,5 @@
 <PageMain scope="scr-spend">
   <a class="t-meta back-link" href="/b/{boardId}/operate/telemetry"><LineIcon name="chev-left" size={16} />Back to spend</a>
   <BoardLog {events} {error} collapsedRows={LOG_PAGE} fullLogHref={null} paged />
+  <p class="sp-foot"><KeysLine keys={PAGE_KEYS} /></p>
 </PageMain>

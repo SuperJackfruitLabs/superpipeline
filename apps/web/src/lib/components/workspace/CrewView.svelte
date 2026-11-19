@@ -7,6 +7,8 @@
    * in crew.css, and no words differ between vibes anywhere.
    */
   import './crew.css';
+  import { PAGE_KEYS } from '$lib/keys';
+  import KeysLine from '$lib/components/shell/KeysLine.svelte';
   import { Button, Tabs } from '@superjackfruitlabs/vibekit-ui';
   import { viewport } from '$lib/viewport.svelte';
   import { crewLists, crewTabs, workspaceCounts, type CrewTab } from './workspace-counts.svelte';
@@ -38,4 +40,5 @@
       {#if tab === 'agents'}<AgentsTable />{:else if tab === 'people'}<PeopleTable />{:else}<CapabilitiesTable />{/if}
     {/key}
   </div>
+  <p class="crew-foot"><KeysLine keys={PAGE_KEYS} /></p>
 </div>
