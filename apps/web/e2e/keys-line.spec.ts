@@ -6,7 +6,7 @@ const STAGES = [
   { key: 'todo', name: 'To do', order: 0, ownerKind: 'human' },
   { key: 'done', name: 'Done', order: 1, ownerKind: 'human' },
 ];
-const PAGES = (id: string) => [`/b/${id}`, `/b/${id}?view=list`, '/crew/agents', '/settings', `/b/${id}/operate/telemetry`, '/plan/projects'];
+const PAGES = (id: string) => [`/b/${id}`, `/b/${id}?view=list`, '/inbox', '/crew/agents', '/settings', `/b/${id}/operate/telemetry`, '/plan/projects'];
 
 for (const vibe of ['daylight', 'paper', 'studio', 'quiet'] as const) {
   test(`${vibe}: every page's footer ends with its keys`, async ({ page, request }) => {
@@ -39,4 +39,18 @@ test('an empty board ends with its keys too', async ({ page, request }) => {
   await page.setViewportSize({ width: 1280, height: 800 });
   await page.goto(`/b/${id}`);
   await expect(page.getByLabel('Keyboard')).toContainText('N new card');
+});
+
+test('the Inbox footer names F, and F opens the filter row it names', async ({ page, request }) => {
+  const id = await seedBoard(request, 'Keys inbox', STAGES);
+  await request.post(`${API}/v1/boards/${id}/cards`, { headers: TENANT, data: { title: 'A card', ownerUserId: 'usr_a' } });
+  await page.setViewportSize({ width: 1280, height: 800 });
+  await page.goto('/inbox');
+  const keys = page.locator('.ib-foot').getByLabel('Keyboard');
+  await expect(keys).toHaveText('F filter · ⌘K search · G I / P / C go to Inbox, Plan, Crew');
+  const filter = page.getByRole('button', { name: /^Filter/ });
+  await expect(filter).toHaveAttribute('aria-expanded', 'false');
+  await page.locator('body').press('f');
+  await expect(filter).toHaveAttribute('aria-expanded', 'true');
+  await expect(page.locator('#ib-filter-row input').first()).toBeFocused();
 });

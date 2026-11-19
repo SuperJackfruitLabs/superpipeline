@@ -13,6 +13,7 @@ import { VIBES } from '@superjackfruitlabs/vibekit-ui';
 import type * as Api from '$lib/api';
 import type { BoardSnapshot, StaleCard } from '$lib/api';
 import { realisticWorkspace, REALISTIC_BOARD_IDS } from '$lib/fixtures/realistic';
+import { INBOX_KEYS, keysText } from '$lib/keys';
 
 vi.hoisted(() => {
   Object.defineProperty(window, 'matchMedia', {
@@ -258,10 +259,23 @@ describe('InboxPage in every vibe', () => {
     liveUpdates.pause();
     for (const k of ['a', 'b', 'c', 'd', 'e', 'f', 'g']) liveUpdates.push(`test:${k}`, () => {});
     await settle();
-    const foot = one(roots.daylight, '.ib-foot').textContent ?? '';
+    // The footer's words, then its keys line (rule 13).
+    const footEl = one(roots.daylight, '.ib-foot');
+    const foot = (footEl.textContent ?? '').replace(footEl.querySelector('.sh-keys')?.textContent ?? '', '').trim();
     expect(foot).toMatch(/· paused$/);
     expect(roots.daylight.textContent).not.toMatch(/updates? waiting/);
     liveUpdates.queued = [];
+  });
+
+  it('the footer line ends with the Inbox keys, the same words in every vibe (rule 13)', async () => {
+    roots = await renderInVibes(InboxPage, props(await counted()));
+    for (const v of VIBES) {
+      const keys = one(roots[v], '.ib-foot').lastElementChild;
+      expect(keys?.getAttribute('aria-label'), `${v} vibe`).toBe('Keyboard');
+      expect(keys?.textContent, `${v} vibe`).toBe(keysText(INBOX_KEYS));
+    }
+    // Only keys the Inbox answers: F (its filter row) and the shell's; no row keys (the Inbox has no J / K handler).
+    expect(keysText(INBOX_KEYS)).toBe('F filter · ⌘K search · G I / P / C go to Inbox, Plan, Crew');
   });
 
   it('Studio says the count in words beside its figure, as the mockup does', async () => {

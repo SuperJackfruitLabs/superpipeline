@@ -4,7 +4,7 @@
    * The Inbox, one composition in every vibe (composition contract §7, Inbox): the headline, the
    * board scope, the tabs (Needs you, Running, Spend, Activity, each with its count) with the Filter
    * control at the row's end and the filter row hidden under it, the tab's content, and the footer
-   * line. Needs you is the groups in the order of what the person must do. Outside the signature
+   * line, which ends with the page's keys (rule 13). Needs you is the groups in the order of what the person must do. Outside the signature
    * slots (the headline, the scope control, the section ordinals) the markup and words are the same
    * in every vibe; each vibe's look is CSS on the vibe root (inbox.css).
    */
@@ -12,6 +12,8 @@
   import { Badge, Button, Tabs } from '@superjackfruitlabs/vibekit-ui';
   import { tick, untrack } from 'svelte';
   import { shellModel } from '$lib/components/shell/shell-model.svelte';
+  import KeysLine from '$lib/components/shell/KeysLine.svelte';
+  import { INBOX_KEYS } from '$lib/keys';
   import SkeletonRows from '$lib/components/parts/SkeletonRows.svelte';
   import type { LiveUpdates } from '$lib/live/live-updates.svelte';
   import { usd } from '../operate/operate-words';
@@ -99,6 +101,6 @@
     <Tabs label="Inbox" mode="panels" {items} value={ui.tab} onchange={(v) => (ui.tab = v)} {panel} end={filterControl} />
   </div>
   {#if !loading}
-    <p class="ib-foot">{footerLine({ needs: store.needs.length, running: store.running.length, spendUsd: store.spend.total, syncedAt: store.syncedAt, paused: !live.live })}</p>
+    <p class="ib-foot">{footerLine({ needs: store.needs.length, running: store.running.length, spendUsd: store.spend.total, syncedAt: store.syncedAt, paused: !live.live })} <KeysLine keys={INBOX_KEYS} /></p>
   {/if}
 </div>
