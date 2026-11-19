@@ -23,7 +23,7 @@
   import { inboxGroups, rowOffer, type InboxGroupKey } from './inbox-groups';
   import type { InboxStore } from './inbox-model.svelte';
   import { InboxUi, rowMoves, type InboxTab } from './inbox-ui.svelte';
-  import { CHECKING, footerLine, NEEDS_HEADING, NEEDS_NONE, NO_MATCH } from './inbox-words';
+  import { CHECKING, footerLine, GROUP_PAGE, NEEDS_HEADING, NEEDS_NONE, NO_MATCH } from './inbox-words';
   import InboxHeadline from './InboxHeadline.svelte';
   import InboxScope from './InboxScope.svelte';
   import InboxFilterRow from './InboxFilterRow.svelte';
@@ -63,23 +63,24 @@
   }
   $effect(() => shellModel.registerFilter(() => void openFilter()));
 
-  /** Every Needs you row with its group, in the page's order: what O, M and R look up. */
-  const entries = $derived(groups.flatMap((g) => g.items.map((item) => ({ item, group: g }))));
+  /**
+   * The Needs you rows the page holds now, in order: each group's shown page, after the filters, on the
+   * Needs you tab once counted. J / K walk them, and O, M and R act only on one of them. From the model, not
+   * the DOM: a row that is leaving stays in the DOM through its fade, but it is no longer one of these.
+   */
+  const visible = $derived(
+    loading || ui.tab !== 'needs' ? [] : groups.flatMap((g) => g.items.slice(0, ui.groupShown[g.key] ?? GROUP_PAGE).map((item) => ({ item, group: g }))),
+  );
   let root = $state<HTMLElement | null>(null);
 
-  /** The Needs you rows drawn now, in order (each group shows its first page): what J and K walk. */
-  function drawn(): string[] {
-    return [...(root?.querySelectorAll<HTMLElement>('.ib-needs .ib-row[data-row]') ?? [])].map((el) => el.dataset.row ?? '');
-  }
   /**
-   * J / K: the next or previous drawn row becomes the selected one and takes focus on its title link, so a
+   * J / K: the next or previous row becomes the selected one and takes focus on its title link, so a
    * screen reader says the card (as the List's table moves focus to its row's link on J / K).
    */
   function select(step: 1 | -1): boolean {
-    const ids = drawn();
-    if (ids.length === 0) return false;
-    const i = ui.selected ? ids.indexOf(ui.selected) : -1;
-    const id = ids[i === -1 ? 0 : Math.max(0, Math.min(ids.length - 1, i + step))] ?? null;
+    if (visible.length === 0) return false;
+    const i = visible.findIndex((x) => x.item.id === ui.selected);
+    const id = visible[i === -1 ? 0 : Math.max(0, Math.min(visible.length - 1, i + step))]?.item.id ?? null;
     ui.selected = id;
     void reveal(id);
     return true;
@@ -96,33 +97,31 @@
     if (id) ui.selected = id;
   }
   /**
-   * A selection is only ever a row on screen: another tab, a filter that hides it, or a Move or Resume that
-   * takes it away clears it, so O, M and R never act on a row the reader cannot see (J starts again at the top).
+   * A selection is only ever a row the page holds: another tab, a filter that hides it, or a Move or Resume
+   * that takes it away clears it at once (not after its fade), so O, M and R never act on a row the reader is
+   * losing, and J starts again at the top. An open Move menu on such a row is forgotten too.
    */
   $effect(() => {
-    void ui.tab;
-    void groups;
-    const id = ui.selected;
-    if (id) void dropIfGone(id);
+    const ids = new Set(visible.map((x) => x.item.id));
+    if (ui.selected && !ids.has(ui.selected)) ui.selected = null;
+    if (ui.moveOpen && !ids.has(ui.moveOpen)) ui.moveOpen = null;
   });
-  async function dropIfGone(id: string): Promise<void> {
-    await tick();
-    if (ui.selected === id && !drawn().includes(id)) ui.selected = null;
-  }
 
   /**
    * The Inbox's row keys (INBOX_KEYS): J / K pick a row, O opens its card, R opens Resume's form on a
    * row that offers Resume, M opens the Move menu on a row that offers Move (`rowOffer`, as InboxRow
-   * draws them). Never while typing (the filter's find field), in a dialog or menu, with a modifier, or
-   * over an open dialog; a key it does not use (G, F, N: the shell's) is left alone.
+   * draws them). Never while typing (the filter's find field), in a dialog or menu, with a modifier, over an
+   * open dialog or an open Move menu; a key it does not use (G, F, N: the shell's) is left alone.
    */
   function onkeydown(e: KeyboardEvent): void {
     const t = e.target;
     if (e.defaultPrevented || e.metaKey || e.ctrlKey || e.altKey || loading || ui.tab !== 'needs') return;
     if (t instanceof Element && t.closest('input, textarea, select, [contenteditable="true"], [role="dialog"], [role="menu"]')) return;
     if (app.openCardId || app.composeOpen || app.moveCardId || app.filterOpen || app.boardSwitcherOpen || app.cmdkOpen || appearance.pickerOpen) return;
-    // Only a row still on screen (the effect above clears a stale one after the page redraws; this covers the moment between).
-    const at = ui.selected && drawn().includes(ui.selected) ? entries.find((x) => x.item.id === ui.selected) : undefined;
+    // An open Move menu keeps its keys (J must not take focus off its trigger).
+    if (ui.moveOpen) return;
+    // Only a row the page holds (the model, not the DOM: a leaving row still fades out there).
+    const at = visible.find((x) => x.item.id === ui.selected);
     const row = at ? rows.get(at.item.cardId) : undefined;
     const offer = at && row ? rowOffer(at.group.key, rowMoves(row).length) : null;
     switch (e.key) {

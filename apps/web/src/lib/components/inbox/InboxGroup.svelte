@@ -18,7 +18,8 @@
 
   let { group, n, rows, store, ui }: { group: InboxGroup; n: number; rows: Map<string, NeedRow>; store: InboxStore; ui: InboxUi } = $props();
 
-  let shown = $state(GROUP_PAGE);
+  /** The group's page lives on the Inbox's UI state, so the page's keys know which rows are shown. */
+  const shown = $derived(ui.groupShown[group.key] ?? GROUP_PAGE);
   const total = $derived(group.items.length);
   const page = $derived(group.items.slice(0, shown));
   const need = (cardId: string) => rows.get(cardId);
@@ -81,6 +82,6 @@
     {/each}
   </ul>
   {#if total > GROUP_PAGE}
-    <LoadMore {shown} {total} label={showMore(Math.min(GROUP_PAGE * 4, total - shown))} onmore={() => { shown = Math.min(total, shown + GROUP_PAGE * 4); }} focusTarget={(i) => root?.querySelectorAll<HTMLElement>('.ib-row__t a')[i]} />
+    <LoadMore {shown} {total} label={showMore(Math.min(GROUP_PAGE * 4, total - shown))} onmore={() => { ui.groupShown[group.key] = Math.min(total, shown + GROUP_PAGE * 4); }} focusTarget={(i) => root?.querySelectorAll<HTMLElement>('.ib-row__t a')[i]} />
   {/if}
 </section>

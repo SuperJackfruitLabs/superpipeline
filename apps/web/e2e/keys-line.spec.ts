@@ -90,4 +90,6 @@ test('the Inbox footer names its keys, and they work: J / K pick a row, R resume
   await expect(a).toHaveAttribute('aria-current', 'true');
   await page.keyboard.press('o');
   await expect(page.getByRole('heading', { name: `Keys walk A ${at}` }).first()).toBeVisible();
+  // Its two stopped cards would stay in every later run's Resume group on a long-lived dev database.
+  await request.delete(`${API}/v1/boards/${id}`, { headers: TENANT });
 });

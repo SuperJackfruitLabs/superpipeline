@@ -24,6 +24,8 @@ export class InboxUi {
   tab = $state<InboxTab>('needs');
   /** The Needs you row J / K pick (its attention item id), or focus in a row; O, M and R act on it. Null: none yet. */
   selected = $state<string | null>(null);
+  /** How many rows each Needs you group shows (its "Show N more"), by group key; unset: the first page. */
+  groupShown = $state<Record<string, number>>({});
   /** The row whose Move menu is open (M, or its trigger): its attention item id. */
   moveOpen = $state<string | null>(null);
   resuming = $state<string | null>(null);

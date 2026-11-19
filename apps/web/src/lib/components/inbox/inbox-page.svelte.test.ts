@@ -365,6 +365,52 @@ describe('InboxPage keys (INBOX_KEYS)', () => {
     expect(ui.selected).toBeNull();
   });
 
+  it('with motion on, a row filtered away while it fades out is no longer selected and O does nothing', async () => {
+    const { store, ui, container, press, focusRow } = await keysPage();
+    // Motion on (keysPage renders without renderInVibes' data-motion="reduce"; matchMedia says no reduced motion).
+    expect(container.closest('[data-motion="reduce"]')).toBeNull();
+    const open = vi.spyOn(store, 'open').mockImplementation(() => {});
+    // A group with two rows: select its first, keep its second, so the selected row leaves through its own
+    // out:fade while the group stays.
+    const pair = [...container.querySelectorAll('.ib-needs .ib-group')].map((g) => [...g.querySelectorAll<HTMLElement>('.ib-row[data-row]')]).find((r) => r.length >= 2);
+    if (!pair) throw new Error('no group with two rows');
+    const [first, sibling] = pair;
+    if (!first || !sibling) throw new Error('no pair');
+    await focusRow(first);
+    expect(ui.selected).toBe(first.dataset.row);
+    const title = sibling.querySelector('.ib-row__t a')?.textContent ?? '';
+    expect(title).not.toBe('');
+    // jsdom has no Web Animations: Svelte's transitions get an animation that runs and never finishes, so the
+    // leaving row's out:fade is still under way when the keys are pressed.
+    const had = { animate: Object.getOwnPropertyDescriptor(Element.prototype, 'animate'), getAnimations: Object.getOwnPropertyDescriptor(Element.prototype, 'getAnimations') };
+    Object.defineProperty(Element.prototype, 'animate', { configurable: true, writable: true, value: () => ({ onfinish: null, cancel() {}, play() {}, pause() {}, currentTime: 0, playState: 'running' }) });
+    Object.defineProperty(Element.prototype, 'getAnimations', { configurable: true, writable: true, value: () => [] });
+    try {
+      store.filters.find = title;
+      flushSync();
+      await tick();
+      // The fade has not finished: the row is still in the DOM, but the page no longer holds it.
+      expect(first.isConnected, 'the leaving row is still drawn').toBe(true);
+      expect(ui.selected).toBeNull();
+      expect(await press('o')).toBe(false);
+      expect(open).not.toHaveBeenCalled();
+    } finally {
+      for (const [name, d] of Object.entries(had)) {
+        if (d) Object.defineProperty(Element.prototype, name, d);
+        else Reflect.deleteProperty(Element.prototype, name);
+      }
+    }
+  });
+
+  it('an open Move menu keeps the keys: J does not move the selection', async () => {
+    const { ui, current, press } = await keysPage();
+    await press('j');
+    const at = current();
+    ui.moveOpen = at[0] ?? null;
+    expect(await press('j')).toBe(false);
+    expect(current()).toEqual(at);
+  });
+
   it('O opens the selected row’s card', async () => {
     const { store, press } = await keysPage();
     const open = vi.spyOn(store, 'open').mockImplementation(() => {});
