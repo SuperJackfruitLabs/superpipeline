@@ -14,6 +14,10 @@ export default defineConfig({
   // The visual folder has its own configs (e2e/visual/playwright.visual.config.ts, run by
   // scripts/visual/base-vs-head.sh); its *.test.ts files are vitest files run by `pnpm test`.
   testIgnore: ['visual/**'],
+  // Warms the servers once (after webServer is up, before any test): a cold dev server's first board
+  // read outlasted the expect timeout, so a fresh run's first test failed. Under SP_E2E_BASE_URL it
+  // warms the given origin. It never fails the run.
+  globalSetup: './e2e/global-setup.ts',
   fullyParallel: false,
   workers: 1,
   metadata: { project: process.env.SP_E2E_PROJECT ?? 'local', shard: process.env.SP_E2E_SHARD ?? '1/1' },
