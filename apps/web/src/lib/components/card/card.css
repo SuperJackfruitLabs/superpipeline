@@ -107,6 +107,9 @@
   .cv-art { grid-template-columns: minmax(0, 1fr); }
 }
 
+/* The drawer's panel: the page ground, raised over the scrim. */
+.cv-drawer { background: var(--vk-color-bg); color: var(--vk-color-text); box-shadow: -8px 0 32px color-mix(in oklch, var(--vk-color-text) 18%, transparent); }
+
 /* The standalone page: the same view, centred in a readable measure. */
 .cv-page { max-width: 64rem; margin: 0 auto; }
 .cv-pagebar { display: flex; flex-wrap: wrap; align-items: center; gap: var(--vk-space-2) var(--vk-space-3); max-width: 64rem; margin: 0 auto; padding: var(--vk-space-3) var(--vk-space-6) 0; }
