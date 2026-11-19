@@ -12,9 +12,11 @@ const html = (s: string): Element => {
 };
 afterEach(() => { document.body.innerHTML = ''; });
 
-const size = (el: Element, scroll: number, client: number) => {
+const size = (el: Element, scroll: number, client: number, tall: { scroll: number; client: number } = { scroll: 20, client: 20 }) => {
   Object.defineProperty(el, 'scrollWidth', { value: scroll });
   Object.defineProperty(el, 'clientWidth', { value: client });
+  Object.defineProperty(el, 'scrollHeight', { value: tall.scroll });
+  Object.defineProperty(el, 'clientHeight', { value: tall.client });
 };
 const lede = (out: string, sig: string) => `<main><h1>Board</h1><p>${out}</p><div data-signature><p>${sig}</p></div><p class="meta">Updated <time>2 min</time> ago</p></main>`;
 const facts = (n: string) => `<h2><span data-signature>${n}</span> Facts</h2><section aria-labelledby="t"><b id="t"><span data-signature>${n}</span></b></section>`;
@@ -72,6 +74,15 @@ describe('truncatedNames', () => {
     size(fits, 40, 80);
     size(clipped, 180, 120);
     expect(truncatedNames(root)).toEqual(['Signed off by the reviewer']);
+  });
+  it('with layout, a name a line clamp cuts is reported: taller than its box, past a pixel of rounding', () => {
+    const root = html(`
+      <span class="vk-stages__name">Waiting for the security review of the release candidate</span>
+      <span class="vk-stages__name">Two lines that fit</span>`);
+    const [cut, fits] = root.querySelectorAll('.vk-stages__name');
+    size(cut, 80, 80, { scroll: 66, client: 44 });
+    size(fits, 80, 80, { scroll: 45, client: 44 });
+    expect(truncatedNames(root)).toEqual(['Waiting for the security review of the release candidate']);
   });
 });
 

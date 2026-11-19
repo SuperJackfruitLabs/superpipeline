@@ -75,9 +75,11 @@ export function rawMachineText(root: Element): string[] {
 }
 
 /**
- * Rule 6: stage names the track clips, measured: scrollWidth beyond clientWidth. That is the whole
+ * Rule 6: stage names the track clips, measured: content wider than the box (scrollWidth beyond
+ * clientWidth) or taller than it (scrollHeight beyond clientHeight, past a pixel of rounding), so a
+ * name a line clamp or a max-height cuts counts as well as one an ellipsis ends. That is the whole
  * check in a browser, so a name that fits is never reported. Only where nothing is laid out (jsdom:
- * both widths 0) does a style fallback apply: a name styled to clip, `text-overflow: ellipsis` on one
+ * every size 0) does a style fallback apply: a name styled to clip, `text-overflow: ellipsis` on one
  * line (`white-space: nowrap`), counts. jsdom sees only inline styles and stylesheets loaded into the
  * document, so a unit test cannot prove a name fits; the layout check lives in e2e.
  */
@@ -85,8 +87,8 @@ export function truncatedNames(root: Element, selector = '.vk-stages__name'): st
   const view = root.ownerDocument.defaultView;
   return [...root.querySelectorAll(selector)]
     .filter((el) => {
-      if (el.scrollWidth > el.clientWidth) return true;
-      if (el.scrollWidth !== 0 || el.clientWidth !== 0) return false;
+      if (el.scrollWidth > el.clientWidth || el.scrollHeight > el.clientHeight + 1) return true;
+      if (el.scrollWidth !== 0 || el.clientWidth !== 0 || el.scrollHeight !== 0 || el.clientHeight !== 0) return false;
       const cs = view?.getComputedStyle(el);
       return cs?.getPropertyValue('text-overflow') === 'ellipsis' && cs.getPropertyValue('white-space') === 'nowrap';
     })

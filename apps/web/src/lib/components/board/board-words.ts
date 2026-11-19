@@ -53,8 +53,8 @@ export function laneWho(st: StageSummary): string {
 }
 
 /**
- * A folded lane's "Show N more" (rule 7). The fold never hides attention silently: when hidden cards
- * want you, the label says how many ("Show 6 more · 2 want you").
+ * A folded lane's "Show N more" (rule 7): `n` is what the press shows, `wanting` how many of those want
+ * you, so the two numbers agree. The fold never hides attention silently: "Show 6 more · 2 want you".
  */
 export function laneMore(n: number, wanting: number): string {
   const more = `Show ${n} more`;

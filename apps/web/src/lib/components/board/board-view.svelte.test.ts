@@ -213,6 +213,21 @@ describe('the board in every vibe', () => {
     expect(within(lane).getByRole('button', { name: /^Show 6 more · 4 want you/ })).toBeTruthy();
   });
 
+  it('the fold\'s two numbers agree: past a page, it counts the wanting cards the press shows, not every hidden one', async () => {
+    const planning = req(w.boards.find((b) => b.name === 'Planning & Roadmap'), 'the Planning board');
+    const idea = planning.cards.filter((c) => c.currentStageKey === 'idea');
+    // Thirty cards in Idea, every one waiting on you: 25 hidden, the next press shows 20 of them.
+    const extra = Array.from({ length: 30 - idea.length }, (_, i) => ({ ...idea[1], id: `card_rl_planning_x${i}`, title: `Another idea ${i}` }));
+    const board = { ...planning, cards: [...planning.cards, ...extra] };
+    app.board = board;
+    const model = buildBoardModel(board, board.cards, { agents: w.agents, members: [], labels: new Map(), nowMs: REALISTIC_NOW_MS, me: null, spend7d: undefined });
+    const { container } = render(BoardView, { ...props(), model });
+    const lane = req(container.querySelector<HTMLElement>('[data-lane="idea"]'), 'the Idea lane');
+    await fireEvent.click(within(lane).getByRole('button', { name: /^Show 20 more · 20 want you/ }));
+    await tick();
+    expect(within(lane).getByRole('button', { name: /^Show 5 more · 5 want you/ })).toBeTruthy();
+  });
+
   it('the footer counts this board, not every board (the status-scope rule)', async () => {
     render(BoardView, props());
     await tick();

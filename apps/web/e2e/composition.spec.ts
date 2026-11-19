@@ -109,8 +109,9 @@ test.describe('on the realistic workspace', () => {
         const names = page.locator('.vk-stages__name');
         expect(await names.count(), `${vibe} ${id}: the track names its stages`).toBeGreaterThan(3);
         const clipped = await names.evaluateAll((els) => els
-          .filter((el) => el.scrollWidth > el.clientWidth || el.getBoundingClientRect().width === 0)
-          .map((el) => `${el.textContent?.trim()} ${el.scrollWidth}>${el.clientWidth}`));
+          // Clipped either way: wider than its box (an ellipsis), or taller (vibekit's board form clamps to two lines).
+          .filter((el) => el.scrollWidth > el.clientWidth || el.scrollHeight > el.clientHeight + 1 || el.getBoundingClientRect().width === 0)
+          .map((el) => `${el.textContent?.trim()} ${el.scrollWidth}×${el.scrollHeight} in ${el.clientWidth}×${el.clientHeight}`));
         expect(clipped, `${vibe} ${id}`).toEqual([]);
       }
     });
@@ -178,7 +179,7 @@ test('board: an empty board ends with its keys too', async ({ page, request }) =
   await expect(page.getByLabel('Keyboard', { exact: true })).toContainText('N new card');
 });
 
-test('the Inbox footer names its keys, and they work: J / K pick a row, R resumes it, O opens it, F filters', async ({ page, request }) => {
+test('inbox: the footer names its keys, and they work (J / K pick a row, R resumes it, O opens it, F filters)', async ({ page, request }) => {
   // One board with two blocked cards (two Resume rows), shown alone under Show.
   const at = Date.now();
   const id = await seedBoard(request, 'Keys inbox', [

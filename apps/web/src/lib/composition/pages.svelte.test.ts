@@ -43,6 +43,8 @@ vi.mock('$lib/api', async (orig) => ({ ...(await orig<typeof Api>()), ...api }))
 // The drag library cannot run in jsdom (board-view.svelte.test.ts tests the drops).
 vi.mock('$lib/dnd', () => ({ cardDraggable: () => ({ update() {}, destroy() {} }), columnDropTarget: () => ({ update() {}, destroy() {} }), trackCellDropTarget: () => ({ update() {}, destroy() {} }) }));
 vi.mock('$app/navigation', () => ({ goto: vi.fn<() => Promise<void>>() }));
+// The card page route reads its ids from the URL.
+vi.mock('$app/state', () => ({ page: { params: { boardId: 'brd_rl_planning', cardId: 'card_rl_planning_001' }, url: new URL('http://localhost/b/brd_rl_planning/c/card_rl_planning_001/page') } }));
 vi.mock('$lib/hub-token', () => ({ hubStatus: async () => ({ configured: false }), beginHubAuthorization: async () => {} }));
 // The card's related work reads SuperLibrary; nothing is related here.
 vi.mock('$lib/superlibrary', async (orig) => ({ ...(await orig<typeof Superlibrary>()), relatedForCard: async () => [] }));
@@ -74,6 +76,8 @@ import BoardSettingsView from '$lib/components/settings/BoardSettingsView.svelte
 import { BOARD_SETTINGS_TABS, SETTINGS_TABS } from '$lib/components/settings/settings-words';
 import { LABELS } from '$lib/components/settings/settings-fixture';
 import CardView from '$lib/components/card/CardView.svelte';
+import CardPageRoute from '../../routes/b/[boardId]/c/[cardId]/page/+page@.svelte';
+import BoardEmpty from '$lib/components/board/BoardEmpty.svelte';
 import { CardModel } from '$lib/components/card/card-model.svelte';
 
 // ── The realistic workspace, and what pages need beside it ───────────────────────────────────────
@@ -260,9 +264,29 @@ const PAGES: PageRow[] = [
         model = new CardModel(() => ({ boardId: planningLabelled.boardId ?? '', cardId: REVIEW_CARD, surface: surface === 'phone' ? 'drawer' : surface }));
       }));
       await waitFor(() => { if (!model.detailLoaded) throw new Error('the card detail is still loading'); }, { timeout: 2_000 });
+      // The page surface is mounted through its route, so a keys line the route draws around CardView counts too.
+      if (surface === 'page') {
+        const roots = await vibes(CardPageRoute, {});
+        await waitFor(() => { if (!roots.daylight.querySelector('[data-block="facts"]')) throw new Error('the card page is still loading'); }, { timeout: 2_000 });
+        return roots;
+      }
       return vibes(CardView, { model, surface, gate: model.gateBinding, question: model.questionBinding, pageHref: model.pageHref, boardHref: model.boardHref, onClose: () => {} });
     },
   })),
+  {
+    // A board with no live cards: what it does, and the way to write the first card.
+    name: 'Board · empty',
+    shows: 'No cards yet. Here is what this board does.',
+    signature: [],
+    keys: keysText(BOARD_KEYS),
+    mount: () => {
+      const empty: BoardSnapshot = { ...devex, cards: [] };
+      return vibes(BoardEmpty, {
+        model: buildBoardModel(empty, [], { agents: world.agents, members: MEMBERS, labels: labelMap, nowMs: REALISTIC_NOW_MS, me: ME, spend7d: undefined }),
+        intro: empty.intro, me: ME, onCompose: () => {},
+      });
+    },
+  },
 ];
 
 // ── Setup ────────────────────────────────────────────────────────────────────────────────────────
@@ -358,7 +382,7 @@ describe('composition guards on every page, in every vibe', () => {
       }));
       expect(report).toEqual(VIBES.map((v) => ({ v, primaryPerRow: [], saidTwice: [], rawIds: [], clipped: [], signature: [], keys: [] })));
       // A pending row is a tripwire: once the page has a keys line, its row must name the keys.
-      expect(r.daylight.querySelector('[aria-label="Keyboard"]') === null, `${page.name}: keys line present ⇔ its row names the keys`).toBe(page.keys === null);
+      expect(VIBES.filter((v) => r[v].querySelector('[aria-label="Keyboard"]') !== null), `${page.name}: the vibes with a keys line, which its row must name`).toEqual(page.keys === null ? [] : [...VIBES]);
     });
   }
 });
