@@ -29,15 +29,8 @@ import { boardsNeedingFirst, inboxScope, scopeLabel } from './inbox-scope.svelte
 import { pending, type Pending } from '$lib/loading.svelte';
 import type { BoardFeedEvent, Card } from '$lib/api';
 import { liveUpdates } from '$lib/live/live-updates.svelte';
-import { diffKeyed, type Diff } from '$lib/live/diff';
 import { inboxGroups, inboxHeadline, type InboxGroup } from './inbox-groups';
 import { InboxFilters } from './inbox-filters.svelte';
-
-/** An attention row keyed by its card, the key a live diff and a keyed `#each` share. */
-export type KeyedItem = AttentionItem & { key: string };
-const keyed = (items: AttentionItem[]): KeyedItem[] => items.map((i) => ({ ...i, key: i.cardId }));
-/** Same row, ignoring its age: the age moves on every tick, and a row only changes when the card does. */
-const sameItem = (a: KeyedItem, b: KeyedItem): boolean => JSON.stringify({ ...a, ageHours: null }) === JSON.stringify({ ...b, ageHours: null });
 
 /** One board read: what `#applyBoard` sets. */
 interface BoardRead {
@@ -66,8 +59,6 @@ export class InboxStore implements OperateModel {
   #gate: Pending;
   /** The filter row: find, group chips, Agent, Label, Priority and the sort. */
   readonly filters = new InboxFilters();
-  /** What the last live update changed on each board's attention list, for the page to animate. */
-  changes = $state.raw<Record<string, Diff<KeyedItem>>>({});
   /** When a board's read last landed on the page (ISO): the footer's "synced". */
   syncedAt = $state<string | null>(null);
   /** Boards being read again after a live event, and those whose events arrived meanwhile. */
@@ -281,7 +272,7 @@ export class InboxStore implements OperateModel {
   }
   /**
    * Set one board's read. Cards that did not change keep the object they had, so a keyed row keeps
-   * its identity (key = card id); what changed on the board's attention list is kept in `changes`.
+   * its identity (key = card id): the page's keyed rows and their motion show what entered, left or changed.
    */
   #applyBoard(id: string, { snap, notes, usage }: BoardRead): void {
     this.#usageError = null;
@@ -295,10 +286,6 @@ export class InboxStore implements OperateModel {
       const next = { ...snap.value, cards };
       this.#snaps[id] = next;
       delete this.#failed[id];
-      // A first read is not a change: nothing on the page moves for it. Both sides are read at one
-      // clock, so a card's age never differs between them.
-      const now = Date.now();
-      if (prev) this.changes = { ...this.changes, [id]: diffKeyed(keyed(itemsFromBoard(prev, app.agents, now)), keyed(itemsFromBoard(next, app.agents, now)), sameItem) };
     } else if (!this.#snaps[id]) {
       // Only a board never read has failed; a live re-read that fails keeps what the page shows.
       this.#failed[id] = true;

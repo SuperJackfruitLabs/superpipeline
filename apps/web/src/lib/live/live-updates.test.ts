@@ -1,6 +1,5 @@
 // apps/web/src/lib/live/live-updates.test.ts
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { applyDiff, diffKeyed } from './diff';
 import { LiveUpdates, LIVE_UPDATES_KEY } from './live-updates.svelte';
 
 function memoryStorage(): Storage {
@@ -81,32 +80,30 @@ describe('LiveUpdates', () => {
     expect(() => b.pause()).not.toThrow();
     expect(b.live).toBe(false);
   });
-  it('queued diffs replay in order and match a fresh snapshot', () => {
+  it('queued reads replay in order and end on the latest one', () => {
     type Row = { key: string; v: number };
-    const same = (a: Row, b: Row) => a.v === b.v;
     const snapshots: Row[][] = [
       [{ key: 'a', v: 1 }, { key: 'b', v: 1 }],
       [{ key: 'b', v: 2 }, { key: 'c', v: 1 }],
       [{ key: 'c', v: 1 }, { key: 'b', v: 2 }, { key: 'd', v: 1 }],
       [{ key: 'd', v: 5 }, { key: 'c', v: 1 }],
     ];
-    const play = (l: LiveUpdates): (() => Row[]) => {
+    const play = (l: LiveUpdates): { rows: () => Row[]; order: number[] } => {
       let rows = snapshots[0];
-      for (let i = 1; i < snapshots.length; i++) {
-        const d = diffKeyed(snapshots[i - 1], snapshots[i], same);
-        l.push(`diff:${i}`, () => { rows = applyDiff(rows, d); });
-      }
-      return () => rows;
+      const order: number[] = [];
+      for (let i = 1; i < snapshots.length; i++) l.push(`read:${i}`, () => { rows = snapshots[i]; order.push(i); });
+      return { rows: () => rows, order };
     };
-    const live = play(new LiveUpdates())();
+    const live = play(new LiveUpdates());
     const paused = new LiveUpdates();
     paused.pause();
     const held = play(paused);
-    // Paused: nothing moved, three diffs wait.
-    expect(held()).toEqual(snapshots[0]);
+    // Paused: nothing moved, three reads wait.
+    expect(held.rows()).toEqual(snapshots[0]);
     expect(paused.queued).toHaveLength(3);
     paused.apply();
-    expect(held()).toEqual(live);
-    expect(held()).toEqual(snapshots[3]);
+    expect(held.order).toEqual([1, 2, 3]);
+    expect(held.rows()).toEqual(live.rows());
+    expect(held.rows()).toEqual(snapshots[3]);
   });
 });

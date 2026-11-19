@@ -213,7 +213,7 @@ describe('InboxPage in every vibe', () => {
     }
   });
 
-  it('under data-motion=reduce a diff produces no running animations; with motion on it produces at least one', async () => {
+  it('under data-motion=reduce a live change produces no running animations; with motion on it produces at least one', async () => {
     const store = await counted();
     roots = await renderInVibes(InboxPage, props(store));
     // Daylight with motion on; Paper keeps renderInVibes' reduced motion.
@@ -221,7 +221,7 @@ describe('InboxPage in every vibe', () => {
     const reduced = roots.paper;
     motionOn.removeAttribute('data-motion');
     expect(stopped(motionOn).classList.contains('vk-flash')).toBe(false);
-    // The marketing board speaks: its stopped card now says something new, read and applied as a diff.
+    // The marketing board speaks: its stopped card now says something new, read and applied.
     const m = boards[REALISTIC_BOARD_IDS.marketing];
     boards[REALISTIC_BOARD_IDS.marketing] = { ...m, cards: m.cards.map((c) => (c.needsHuman ? { ...c, needsHuman: { ...c.needsHuman, detail: 'The release page is up now; the link still points at the old address.' } } : c)) };
     const feed = api.sockets.find((s) => s.boardId === REALISTIC_BOARD_IDS.marketing);

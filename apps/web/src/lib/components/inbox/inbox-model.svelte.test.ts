@@ -220,7 +220,7 @@ describe('the Inbox model', () => {
     await settle();
     await vi.waitFor(() => expect(m.needs.some((r) => r.card.id === added.id)).toBe(true));
   });
-  it('a scope board’s event is read again and applied as a diff; paused, it waits for Apply', async () => {
+  it('a scope board’s event is read again and applied; paused, it waits for Apply', async () => {
     const m = make();
     await settle();
     const feed = api.sockets.find((s) => s.boardId === OTHER && !s.closed);
@@ -243,9 +243,6 @@ describe('the Inbox model', () => {
     liveUpdates.apply();
     flushSync();
     expect(m.needs.some((r) => r.card.id === added.id)).toBe(true);
-    expect(m.changes[OTHER]?.enter.map((i) => i.cardId)).toEqual([added.id]);
-    expect(m.changes[OTHER]?.leave).toEqual([]);
-    expect(m.changes[OTHER]?.change).toEqual([]);
     // The unchanged card is the same card it was: its row keeps its identity.
     expect(m.needs.find((r) => r.card.id === keptCard.id)?.card).toBe(kept?.card);
   });
@@ -281,26 +278,6 @@ describe('the Inbox model', () => {
     expect(m.needGroups).toEqual([]);
     // Filters narrow the list, never the message.
     expect(m.headline.h1).toContain(`${total} cards want you.`);
-  });
-  it('a live read compares both sides at one clock: an age that moved a millisecond changes nothing', async () => {
-    const m = make();
-    await settle();
-    const feed = api.sockets.find((s) => s.boardId === OTHER && !s.closed);
-    // Every read of the clock is a millisecond later than the last one.
-    let t = Date.parse('2026-11-18T09:00:00.000Z');
-    const clock = vi.spyOn(Date, 'now').mockImplementation(() => (t += 1));
-    try {
-      api.getBoard.mockImplementation(async (id: string) => (id === OTHER ? { ...OTHER_BOARD, cards: OTHER_BOARD.cards.map((c) => ({ ...c })) } : DX_BOARD));
-      feed?.emit({ seq: 9, type: 'card.updated', payload: {}, ts: '2026-11-18T09:00:00.000Z' });
-      await settle();
-      expect(OTHER_BOARD.cards.every((c) => c.stateSince)).toBe(true);
-      expect(m.changes[OTHER]?.order.length).toBeGreaterThan(0);
-      expect(m.changes[OTHER]?.enter).toEqual([]);
-      expect(m.changes[OTHER]?.leave).toEqual([]);
-      expect(m.changes[OTHER]?.change).toEqual([]);
-    } finally {
-      clock.mockRestore();
-    }
   });
   it('paused, the person’s own action on a board is not undone by an older read waiting for Apply (rule 10)', async () => {
     const m = make();
@@ -341,12 +318,11 @@ describe('the Inbox model', () => {
     feed?.emit({ seq: 2, type: 'card.updated', payload: {}, ts: '2026-11-18T09:00:01.000Z' });
     expect(liveUpdates.queued.map((q) => q.key)).toEqual([`inbox:board:${OTHER}`, `app:board:${OTHER}`]);
     api.getBoard.mockClear();
-    const changesBefore = m.changes[OTHER];
+    m.syncedAt = null;
     liveUpdates.resume();
     await settle();
-    // The Inbox's read was applied (a new diff for the board) and the app refreshed the board.
-    expect(m.changes[OTHER]).toBeDefined();
-    expect(m.changes[OTHER]).not.toBe(changesBefore);
+    // The Inbox's read was applied (it set the page's synced time) and the app refreshed the board.
+    expect(m.syncedAt).not.toBeNull();
     expect(api.getBoard).toHaveBeenCalledWith(OTHER);
   });
 });
