@@ -39,7 +39,8 @@
 .ib-find { display: inline-flex; flex: 1 1 220px; max-width: 360px; min-width: 0; }
 .ib-find__input { width: 100%; min-height: 44px; padding: 0 var(--vk-space-3); border: 0; border-radius: var(--vk-radius-md); background: var(--vk-color-surface); box-shadow: inset 0 0 0 1px var(--vk-color-line); color: var(--vk-color-text); font: inherit; }
 .ib-find__input:focus-visible { outline: 2px solid var(--vk-color-primary); outline-offset: 2px; }
-.ib-menu::after { content: " ⌄"; color: var(--vk-color-muted); }
+/* The menu's chevron is drawn, not said: it stays out of the trigger's name. */
+.ib-menu__chev { margin-left: 6px; color: var(--vk-color-muted); }
 
 /* Needs you: the groups, one under another. */
 .ib-needs { display: grid; gap: var(--vk-space-5); min-width: 0; }

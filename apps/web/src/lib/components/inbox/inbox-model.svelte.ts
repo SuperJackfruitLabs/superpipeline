@@ -249,8 +249,12 @@ export class InboxStore implements OperateModel {
     // The open board is read too: opening a card on another board makes this one a board like the rest.
     const [snap, notes, usage] = await Promise.allSettled([getBoard(id), getNotifications(id), getUsage(id, '7d')]);
     const result: BoardRead = { snap, notes, usage };
-    if (live) liveUpdates.push(`inbox:board:${id}`, () => this.#applyBoard(id, result));
-    else this.#applyBoard(id, result);
+    const key = `inbox:board:${id}`;
+    if (live) { liveUpdates.push(key, () => this.#applyBoard(id, result)); return; }
+    // A read applied at once (a first read, or after the person acted) is fresher than any read still
+    // waiting behind the Live toggle for this board: that one must not replay on Apply and undo it.
+    liveUpdates.drop(key);
+    this.#applyBoard(id, result);
   }
   /**
    * Set one board's read. Cards that did not change keep the object they had, so a keyed row keeps

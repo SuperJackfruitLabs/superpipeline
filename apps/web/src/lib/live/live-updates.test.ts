@@ -53,6 +53,18 @@ describe('LiveUpdates', () => {
     l.resume();
     expect(seen).toEqual(['a3', 'b1']);
   });
+  it('drop forgets what waits under a key and keeps the rest in order', () => {
+    const l = new LiveUpdates();
+    l.pause();
+    const ran: string[] = [];
+    l.push('a', () => ran.push('a'));
+    l.push('b', () => ran.push('b'));
+    l.push('c', () => ran.push('c'));
+    l.drop('b');
+    l.drop('nothing');
+    l.apply();
+    expect(ran).toEqual(['a', 'c']);
+  });
   it('the choice is remembered', () => {
     const a = new LiveUpdates();
     expect(a.live).toBe(true);

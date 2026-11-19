@@ -7,6 +7,7 @@
 import { tick } from 'svelte';
 import type { NeedRow } from '../operate/operate-types';
 import { moveTargets } from '../operate/operate-data';
+import { MOVE_FAILED, moveAllStopped } from './inbox-words';
 
 export type InboxTab = 'needs' | 'running' | 'spend' | 'activity';
 
@@ -24,6 +25,10 @@ export class InboxUi {
   busy = $state(false);
   refusals = $state<Record<string, string>>({});
   earlierOpen = $state<Record<string, boolean>>({});
+  /** How many earlier entries an Activity row shows once open (rule 7). */
+  earlierShown = $state<Record<string, number>>({});
+  /** Why "Move all" stopped part way, said once under the group's actions. */
+  moveAllNote = $state<string | null>(null);
   readonly canSend = $derived(this.text.trim().length > 0 && !this.busy);
   readonly #actions: () => InboxActions;
 
@@ -54,16 +59,35 @@ export class InboxUi {
   }
 
   async move(row: NeedRow, toKey: string): Promise<void> {
-    const refused = await this.#actions().move(row, toKey);
+    const refused = await this.#refusal(row, toKey);
     if (refused) this.refusals[row.item.cardId] = refused;
     else delete this.refusals[row.item.cardId];
   }
 
-  /** "Move all N…": each card to its own board's stage of that name, one after another. */
+  /**
+   * "Move all N…": each card to its own board's stage of that name, one after another. The first
+   * refusal or failure stops it, and the page says how many moved and why the rest did not.
+   */
   async moveAll(rows: NeedRow[], stageName: string): Promise<void> {
-    for (const row of rows) {
+    this.moveAllNote = null;
+    const todo = rows.flatMap((row) => {
       const to = moveTargets(row.stages, row.item.stageKey).find((s) => s.name === stageName);
-      if (to) await this.move(row, to.key);
+      return to ? [{ row, key: to.key }] : [];
+    });
+    let moved = 0;
+    for (const { row, key } of todo) {
+      const refused = await this.#refusal(row, key);
+      if (refused) { this.moveAllNote = moveAllStopped(moved, todo.length, refused); return; }
+      moved += 1;
+    }
+  }
+
+  /** A move's refusal, or the failure said in words; null when it moved. */
+  async #refusal(row: NeedRow, toKey: string): Promise<string | null> {
+    try {
+      return await this.#actions().move(row, toKey);
+    } catch {
+      return MOVE_FAILED;
     }
   }
 

@@ -13,6 +13,7 @@ const OTHER_BOARD: BoardSnapshot = {
 const usage = (n: number) => ({ totalCostUsd: n, estimatedCostUsd: 0, totalInputTokens: 0, totalOutputTokens: 0, unpricedRecords: 0, byModel: [], byAgent: [], byCard: [], byDay: [] });
 const api = vi.hoisted(() => ({
   getBoard: vi.fn(), getNotifications: vi.fn(), getUsage: vi.fn(), setBudget: vi.fn(),
+  moveCard: vi.fn<() => Promise<Response>>(),
   // Each board in scope gets a feed; these record which and hand the test their message handler.
   sockets: [] as Array<{ boardId: string; closed: boolean; emit: (e: unknown) => void }>,
   openBoardSocket: vi.fn<(boardId: string, onEvent: (e: unknown) => void) => unknown>(),
@@ -232,6 +233,29 @@ describe('the Inbox model', () => {
     } finally {
       clock.mockRestore();
     }
+  });
+  it('paused, the person’s own action on a board is not undone by an older read waiting for Apply (rule 10)', async () => {
+    const m = make();
+    await settle();
+    const feed = api.sockets.find((s) => s.boardId === OTHER && !s.closed);
+    const row = m.needs.find((r) => r.boardId === OTHER);
+    if (!row) throw new Error('the other board has nothing that needs you');
+    liveUpdates.pause();
+    // An event arrives: its read (the card still waiting) is held behind the Live toggle.
+    feed?.emit({ seq: 1, type: 'card.updated', payload: {}, ts: '2026-11-18T09:00:00.000Z' });
+    await settle();
+    expect(liveUpdates.queued.map((q) => q.key)).toEqual([`inbox:board:${OTHER}`]);
+    // The person moves the card: the board's next read no longer holds it.
+    api.moveCard.mockResolvedValue(new Response(null, { status: 200 }));
+    api.getBoard.mockImplementation(async (id: string) => (id === OTHER ? { ...OTHER_BOARD, cards: [] } : DX_BOARD));
+    expect(await m.move(row, 'test')).toBeNull();
+    await settle();
+    expect(m.needs.some((r) => r.boardId === OTHER)).toBe(false);
+    // Apply plays nothing older over it.
+    expect(liveUpdates.queued).toEqual([]);
+    liveUpdates.apply();
+    flushSync();
+    expect(m.needs.some((r) => r.boardId === OTHER)).toBe(false);
   });
   it('a paused Inbox read and the app’s refresh for the same board both wait, and both run on resume', async () => {
     const m = make();

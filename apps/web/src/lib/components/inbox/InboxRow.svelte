@@ -57,7 +57,8 @@
     {#if group.key === 'review' || group.key === 'answer'}
       <Button {href} onclick={(e: MouseEvent) => go(e, onverb)}>{group.verb}</Button>
     {:else if group.key === 'resume'}
-      <Button aria-expanded={resuming ? 'true' : 'false'} onclick={onverb}>{group.verb}</Button>
+      <!-- While the note form is open its Send back to work is the row's one primary (rule 3); Cancel closes it. -->
+      {#if !resuming}<Button aria-expanded="false" onclick={onverb}>{group.verb}</Button>{/if}
     {:else if group.key === 'budget'}
       <Button href="/b/{item.boardId}/operate/telemetry">{group.verb}</Button>
     {:else if moves.length > 0}

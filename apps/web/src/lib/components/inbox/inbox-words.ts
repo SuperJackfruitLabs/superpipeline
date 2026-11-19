@@ -150,6 +150,20 @@ export const SEND_BACK = 'Send back to work';
 export const moveAllLabel = (n: number): string => `Move all ${n}…`;
 export const STAFF_LABEL = 'Staff an agent';
 
+const ONES = ['', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten', 'eleven', 'twelve', 'thirteen', 'fourteen', 'fifteen', 'sixteen', 'seventeen', 'eighteen', 'nineteen'];
+const TENS = ['', '', 'twenty', 'thirty', 'forty', 'fifty', 'sixty', 'seventy', 'eighty', 'ninety'];
+/** 1 to 99 in words ("eighteen", "forty-two"); digits from 100. */
+function spelled(n: number): string {
+  if (!Number.isInteger(n) || n < 1 || n > 99) return String(n);
+  return n < 20 ? ONES[n] : `${TENS[Math.floor(n / 10)]}${n % 10 ? `-${ONES[n % 10]}` : ''}`;
+}
+/** Studio's headline beside its figure, the count in words: "Eighteen cards want you." */
+export function studioHeadline(n: number): string {
+  if (n === 0) return wantYou(0);
+  const w = spelled(n);
+  return `${w.charAt(0).toUpperCase()}${w.slice(1)} ${n === 1 ? 'card wants' : 'cards want'} you.`;
+}
+
 /** Studio's kicker over the figure: "Across three boards · nothing running". */
 export function studioKicker(boards: number, running: number): string {
   const where = boards <= 1 ? 'On one board' : `Across ${numWord(boards)} boards`;
@@ -159,12 +173,13 @@ export function studioKicker(boards: number, running: number): string {
 
 const usd = (n: number): string => `$${n.toFixed(2)}`;
 
-/** The page's last line: "18 need you · 0 running · $0.00 in the last 7 days · synced 03:24". Paused, it says what waits. */
+/** The page's last line: "18 need you · 0 running · $0.00 in the last 7 days · synced 03:24", or "· paused". */
 export function footerLine(
-  f: { needs: number; running: number; spendUsd: number; syncedAt: string | null; paused: boolean; queued: number }, timeZone?: string,
+  f: { needs: number; running: number; spendUsd: number; syncedAt: string | null; paused: boolean }, timeZone?: string,
 ): string {
   const head = `${f.needs} need${f.needs === 1 ? 's' : ''} you · ${f.running} running · ${usd(f.spendUsd)} in the last 7 days`;
-  if (f.paused) return `${head} · paused${f.queued ? `, ${plural(f.queued, 'update', 'updates')} waiting` : ''}`;
+  // Paused: the Live pill counts what waits (rule 2), so the footer only says it is paused.
+  if (f.paused) return `${head} · paused`;
   return f.syncedAt ? `${head} · synced ${clockHM(f.syncedAt, timeZone)}` : head;
 }
 
@@ -194,6 +209,8 @@ export function spendCapLine(total: number, cap: number | null, scoped: boolean)
 export const spendMeta = (scope: string): string => `${scope} · last 7 days`;
 export const SPEND_NONE = 'No agent has spent anything in the last 7 days.';
 export const SPEND_NOTE = 'A card over its own cap shows in Needs you under Over budget.';
+/** Under the five who spent most: how many more there are. */
+export const spendMore = (n: number): string => `${plural(n, 'more agent', 'more agents')} spent less.`;
 export const SPEND_DETAIL = 'Spend in detail';
 export const SPEND_FAILED = 'Couldn’t load spend. Try again in a moment.';
 export const spendCapVerb = (hasCap: boolean): string => (hasCap ? 'Change the cap' : 'Set a cap');
@@ -202,6 +219,12 @@ export const spendCapVerb = (hasCap: boolean): string => (hasCap ? 'Change the c
 export const activityMeta = (cards: number): string => plural(cards, 'card', 'cards');
 export const earlierLabel = (n: number): string => `${n} earlier`;
 export const IN_NEEDS = 'In Needs you';
+/** A move that never reached the server, or failed there without a reason. */
+export const MOVE_FAILED = 'Couldn’t reach Superpipeline. Try again in a moment.';
+/** "Move all": some moved, then one was refused or failed, and the rest were left where they are. */
+export function moveAllStopped(moved: number, total: number, why: string): string {
+  return `Moved ${moved} of ${total}; the rest did not move: ${why}`;
+}
 export const MARK_READ = 'Mark read';
 export const ACTIVITY_WHICH = [{ value: 'unread', label: 'Unread only' }, { value: 'all', label: 'Show all' }];
 export const activityNone = (showRead: boolean): string => (showRead ? 'Nothing has happened on these boards yet.' : 'Nothing unread.');

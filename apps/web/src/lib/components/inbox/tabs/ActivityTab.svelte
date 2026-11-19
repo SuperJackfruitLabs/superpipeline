@@ -14,7 +14,7 @@
   import { GROUP_OF, type InboxGroupKey } from '../inbox-groups';
   import type { InboxStore } from '../inbox-model.svelte';
   import type { InboxUi } from '../inbox-ui.svelte';
-  import { ACTIVITY_WHICH, activityMeta, activityNone, earlierLabel, IN_NEEDS, MARK_READ, showMore } from '../inbox-words';
+  import { ACTIVITY_WHICH, activityMeta, activityNone, earlierLabel, GROUP_PAGE, IN_NEEDS, MARK_READ, showMore } from '../inbox-words';
 
   let { store, ui, onneeds }: { store: InboxStore; ui: InboxUi; onneeds(group: InboxGroupKey): void } = $props();
   const line = (n: Notification, kind: Parameters<typeof staleLine>[2]) => staleLine(n, 'daylight', kind) ?? noticeBody(n);
@@ -43,7 +43,9 @@
                 {#if g.earlier.length > 0}{' · '}<button type="button" class="ib-more" aria-expanded={ui.earlierOpen[g.cardId] ? 'true' : 'false'} onclick={() => ui.toggleEarlier(g.cardId)}>{earlierLabel(g.earlier.length)}</button>{/if}
               </p>
               {#if ui.earlierOpen[g.cardId]}
-                <ul class="ib-earlier">{#each g.earlier as n (n.seq)}<li><span class="ib-when">{when(n)}</span> {line(n, g.need?.item.kind ?? null)}</li>{/each}</ul>
+                {@const upTo = ui.earlierShown[g.cardId] ?? GROUP_PAGE}
+                <ul class="ib-earlier">{#each g.earlier.slice(0, upTo) as n (n.seq)}<li><span class="ib-when">{when(n)}</span> {line(n, g.need?.item.kind ?? null)}</li>{/each}</ul>
+                {#if g.earlier.length > upTo}<button type="button" class="ib-more" onclick={() => { ui.earlierShown[g.cardId] = upTo + GROUP_PAGE * 4; }}>{showMore(Math.min(GROUP_PAGE * 4, g.earlier.length - upTo))}</button>{/if}
               {/if}
             </div>
             <span class="ib-when">{when(g.latest)}</span>

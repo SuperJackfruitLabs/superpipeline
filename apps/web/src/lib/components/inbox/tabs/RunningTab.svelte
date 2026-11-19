@@ -4,25 +4,29 @@
    * Running (inbox-tabs mockup): one row per card an agent is working, with who, the card, its stage,
    * how long and what it has cost so far; the only verb is Open. When nothing runs, one sentence.
    */
-  import { Button, Face, SectionHeader } from '@superjackfruitlabs/vibekit-ui';
+  import { Button, Face, LoadMore, SectionHeader } from '@superjackfruitlabs/vibekit-ui';
   import { fade, flip, rise } from '@superjackfruitlabs/vibekit-ui/motion';
   import { usd } from '../../operate/operate-words';
   import BoardChip from '../BoardChip.svelte';
   import type { InboxStore } from '../inbox-model.svelte';
-  import { RUNNING_NONE, RUNNING_NOTE, runningMeta } from '../inbox-words';
+  import { GROUP_PAGE, RUNNING_NONE, RUNNING_NOTE, runningMeta, showMore } from '../inbox-words';
 
   let { store }: { store: InboxStore } = $props();
   const rows = $derived(store.running);
+  /** Paged like a Needs you group (rule 7): five, then twenty more at a time. */
+  let shown = $state(GROUP_PAGE);
+  const page = $derived(rows.slice(0, shown));
+  let root = $state<HTMLElement | null>(null);
   const go = (e: MouseEvent, cardId: string, boardId: string) => { e.preventDefault(); store.open(cardId, boardId); };
 </script>
 
-<section class="ib-group" aria-labelledby="ib-running-h">
+<section class="ib-group" aria-labelledby="ib-running-h" bind:this={root}>
   <div id="ib-running-h"><SectionHeader n={1} title="Running" meta={`${rows.length} ${rows.length === 1 ? 'card' : 'cards'}`} /></div>
   {#if rows.length === 0}
     <p class="ib-why">{RUNNING_NONE}</p>
   {:else}
     <ul class="ib-rows">
-      {#each rows as r (r.cardId)}
+      {#each page as r (r.cardId)}
         <li class="ib-li" in:rise out:fade animate:flip>
           <article class="ib-row ib-row--run" data-row={r.cardId} aria-labelledby="ib-run-{r.cardId}">
             <span class="ib-row__face" aria-hidden="true">{#if r.agentName}<Face id={r.agentName} label={r.agentName} mood="working" size={32} src={r.iconUrl ?? undefined} />{/if}</span>
@@ -36,6 +40,9 @@
         </li>
       {/each}
     </ul>
+    {#if rows.length > GROUP_PAGE}
+      <LoadMore {shown} total={rows.length} label={showMore(Math.min(GROUP_PAGE * 4, rows.length - shown))} onmore={() => { shown = Math.min(rows.length, shown + GROUP_PAGE * 4); }} focusTarget={(i) => root?.querySelectorAll<HTMLElement>('.ib-row__t a')[i]} />
+    {/if}
     <p class="ib-why">{RUNNING_NOTE}</p>
   {/if}
 </section>

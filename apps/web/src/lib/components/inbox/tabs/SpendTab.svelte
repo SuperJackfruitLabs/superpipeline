@@ -10,7 +10,7 @@
   import { countUp } from '@superjackfruitlabs/vibekit-ui/motion';
   import { usd } from '../../operate/operate-words';
   import { CHOOSE_A_BOARD_FOR_CAPS, type InboxStore } from '../inbox-model.svelte';
-  import { SPEND_DETAIL, SPEND_FAILED, SPEND_NONE, SPEND_NOTE, spendCapLine, spendCapVerb, spendMeta } from '../inbox-words';
+  import { SPEND_DETAIL, SPEND_FAILED, SPEND_NONE, SPEND_NOTE, spendCapLine, spendCapVerb, spendMeta, spendMore } from '../inbox-words';
 
   let { store }: { store: InboxStore } = $props();
   const s = $derived(store.spend);
@@ -38,6 +38,7 @@
         <li class="ib-row ib-row--spend" data-row={a.name}><span class="ib-row__face" aria-hidden="true"><Face id={a.name} label={a.name} mood="resting" size={24} /></span><span class="ib-row__t">{a.name}</span><span class="ib-cost">{usd(a.costUsd)}</span></li>
       {/each}
     </ul>
+    {#if s.more > 0}<p class="ib-why">{spendMore(s.more)}</p>{/if}
   {/if}
   <p class="ib-why">{SPEND_NOTE}</p>
 </section>

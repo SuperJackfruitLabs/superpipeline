@@ -54,6 +54,13 @@ export class LiveUpdates {
    * and takes the latest `fn` (a board read again replaces its older read), so a long pause holds one
    * entry per board, not one per event. Incremental changes use a key of their own each (`feed:<seq>`).
    */
+  /**
+   * Forgets what waits under `key`: a fresher read of the same thing has just been applied (the
+   * person's own action), so replaying the older one on Apply would undo it.
+   */
+  drop(key: string): void {
+    if (this.queued.some((q) => q.key === key)) this.queued = this.queued.filter((q) => q.key !== key);
+  }
   push(key: string, fn: () => void): void {
     if (this.live) { fn(); return; }
     const at = this.queued.findIndex((q) => q.key === key);

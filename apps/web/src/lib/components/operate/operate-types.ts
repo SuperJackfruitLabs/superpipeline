@@ -54,6 +54,8 @@ export interface SpendView {
   pct: number | null;
   /** Up to five agents, most spent first. */
   top: Array<{ name: string; costUsd: number }>;
+  /** Agents that spent something but are not in `top`. */
+  more: number;
 }
 
 /** What a cap save says back: field errors, a refusal, or null when it saved. */

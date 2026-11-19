@@ -31,7 +31,7 @@
 
 {#snippet menu(label: string, shown: string, items: MenuItem[])}
   <Menu {label} {items} width={260} align="start">
-    {#snippet trigger(props)}<button {...props} type="button" class="vk-button vk-button--ghost ib-menu">{shown}</button>{/snippet}
+    {#snippet trigger(props)}<button {...props} type="button" class="vk-button vk-button--ghost ib-menu">{shown}<span class="ib-menu__chev" aria-hidden="true">⌄</span></button>{/snippet}
   </Menu>
 {/snippet}
 

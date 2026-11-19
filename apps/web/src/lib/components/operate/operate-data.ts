@@ -82,7 +82,9 @@ export function runningRows(board: BoardSnapshot, agents: AgentSummary[]): Runni
 export function spendView(usage: UsageSummary | null, caps: BoardUsage | null, agents: AgentSummary[]): SpendView {
   const total = usage?.totalCostUsd ?? 0;
   const cap = caps?.budgetUsd ?? null;
+  const spent = (usage?.byAgent ?? []).filter((a) => a.costUsd > 0).length;
   return {
+    more: Math.max(0, spent - 5),
     total, cap, cardCap: caps?.cardUsdCap ?? null, overBudget: caps?.overBudget ?? false,
     pct: cap && cap > 0 ? Math.min(100, Math.round((total / cap) * 100)) : null,
     top: (usage?.byAgent ?? [])

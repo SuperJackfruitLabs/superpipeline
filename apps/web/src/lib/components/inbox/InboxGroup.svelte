@@ -57,6 +57,7 @@
       {/if}
       {#if group.groupActions.includes('staff')}<Button variant="quiet" href="/crew/capabilities">{STAFF_LABEL}</Button>{/if}
     </div>
+    {#if ui.moveAllNote}<p class="ib-row__refused" role="alert">{ui.moveAllNote}</p>{/if}
   {/if}
   <ul class="ib-rows">
     {#each page as item (item.id)}

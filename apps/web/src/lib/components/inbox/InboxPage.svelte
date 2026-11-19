@@ -99,6 +99,6 @@
     <Tabs label="Inbox" mode="panels" {items} value={ui.tab} onchange={(v) => (ui.tab = v)} {panel} end={filterControl} />
   </div>
   {#if !loading}
-    <p class="ib-foot">{footerLine({ needs: store.needs.length, running: store.running.length, spendUsd: store.spend.total, syncedAt: store.syncedAt, paused: !live.live, queued: live.queued.length })}</p>
+    <p class="ib-foot">{footerLine({ needs: store.needs.length, running: store.running.length, spendUsd: store.spend.total, syncedAt: store.syncedAt, paused: !live.live })}</p>
   {/if}
 </div>

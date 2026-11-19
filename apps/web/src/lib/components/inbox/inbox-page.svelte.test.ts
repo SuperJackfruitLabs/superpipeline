@@ -7,7 +7,7 @@
  * anchored where it is first used, and live changes that move only when motion is on.
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { cleanup, fireEvent, waitFor } from '@testing-library/svelte';
+import { cleanup, fireEvent, waitFor, within } from '@testing-library/svelte';
 import { flushSync, tick } from 'svelte';
 import { VIBES } from '@superjackfruitlabs/vibekit-ui';
 import type * as Api from '$lib/api';
@@ -40,6 +40,7 @@ import { liveUpdates } from '$lib/live/live-updates.svelte';
 import { parityTree, primaryActionsPerRow, rawMachineText, repeatedParagraphs } from '$lib/composition/guards';
 import { renderInVibes, type VibeRoots } from '$lib/composition/render-vibes';
 import { InboxStore } from './inbox-model.svelte';
+import { InboxUi } from './inbox-ui.svelte';
 import { inboxScope } from './inbox-scope.svelte';
 import { GROUP_EXPLANATION } from './inbox-words';
 import InboxPage from './InboxPage.svelte';
@@ -230,5 +231,62 @@ describe('InboxPage in every vibe', () => {
     expect(stopped(motionOn).classList.contains('vk-flash'), 'motion on: the changed row flashes').toBe(true);
     expect(stopped(reduced).textContent).toContain('The release page is up now');
     expect(stopped(reduced).classList.contains('vk-flash'), 'reduced: it changes in place').toBe(false);
+  });
+
+  it('Running pages like a group: five, then "Show N more" (rule 7)', async () => {
+    // Thirty cards at work across the boards.
+    const d = boards[REALISTIC_BOARD_IDS.devex];
+    const extra = Array.from({ length: 30 - d.cards.length }, (_, i) => ({ ...d.cards[0], id: `card_rl_devex_x${i}`, title: `Running card ${i}` }));
+    boards[REALISTIC_BOARD_IDS.devex] = { ...d, cards: [...d.cards, ...extra].map((c) => ({ ...c, state: 'working' as const, delegateAgentId: c.lastAgentId })) };
+    const store = await counted();
+    const ui = new InboxUi(() => store);
+    ui.tab = 'running';
+    roots = await renderInVibes(InboxPage, { ...props(store), ui });
+    const day = roots.daylight;
+    if (!(day instanceof HTMLElement)) throw new Error('the vibe root is not an element');
+    expect(store.running.length).toBeGreaterThanOrEqual(30);
+    expect(day.querySelectorAll('.ib-row--run')).toHaveLength(5);
+    await fireEvent.click(within(day).getByRole('button', { name: /^Show 20 more/ }));
+    await settle();
+    expect(day.querySelectorAll('.ib-row--run')).toHaveLength(25);
+    for (const v of VIBES) expect(primaryActionsPerRow(roots[v]), `${v} vibe`).toEqual([]);
+  });
+
+  it('paused, the footer says so and leaves the count of waiting updates to the Live pill (rule 2)', async () => {
+    const store = await counted();
+    roots = await renderInVibes(InboxPage, props(store));
+    liveUpdates.pause();
+    for (const k of ['a', 'b', 'c', 'd', 'e', 'f', 'g']) liveUpdates.push(`test:${k}`, () => {});
+    await settle();
+    const foot = one(roots.daylight, '.ib-foot').textContent ?? '';
+    expect(foot).toMatch(/· paused$/);
+    expect(roots.daylight.textContent).not.toMatch(/updates? waiting/);
+    liveUpdates.queued = [];
+  });
+
+  it('Studio says the count in words beside its figure, as the mockup does', async () => {
+    roots = await renderInVibes(InboxPage, props(await counted()));
+    expect(one(roots.studio, '.vk-hero__headline').textContent).toContain('Eighteen cards want you.');
+  });
+
+  it('a filter menu’s chevron stays out of its trigger’s name', async () => {
+    roots = await renderInVibes(InboxPage, props(await counted()));
+    const row = one(roots.daylight, '.ib-filters');
+    for (const name of ['Agent · any', 'Label · any', 'Priority · any', 'Oldest first']) {
+      expect(within(row).getByRole('button', { name, hidden: true }).getAttribute('aria-haspopup')).toBe('menu');
+    }
+  });
+
+  it('with the Resume form open, its Send back to work is the row’s one primary (rule 3)', async () => {
+    roots = await renderInVibes(InboxPage, props(await counted()));
+    for (const v of VIBES) {
+      const row = stopped(roots[v]);
+      await fireEvent.click(within(row).getByRole('button', { name: 'Resume' }));
+      await settle();
+      expect(within(row).getByRole('button', { name: 'Send back to work' })).toBeTruthy();
+      expect(within(row).queryByRole('button', { name: 'Resume' })).toBeNull();
+      expect(primaryActionsPerRow(roots[v]), `${v} vibe`).toEqual([]);
+      expect(row.querySelectorAll('.vk-button--primary')).toHaveLength(1);
+    }
   });
 });

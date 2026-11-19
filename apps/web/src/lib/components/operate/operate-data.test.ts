@@ -49,11 +49,18 @@ describe('runningRows and spendView', () => {
     expect(runningRows(board, DX_AGENTS)).toEqual([{ cardId: C58F8.id, title: C58F8.title, boardId: DX_BOARD.boardId, boardName: DX_BOARD.name, stageName: 'Failing test', agentName: 'tester-tim', iconUrl: null, costUsd: 0.42, since: C58F8.stateSince ?? null }]);
   });
   it('spend with no usage, no cap', () => {
-    expect(spendView(null, DX_BOARD.usage, DX_AGENTS)).toEqual({ total: 0, cap: null, cardCap: null, overBudget: false, pct: null, top: [] });
+    expect(spendView(null, DX_BOARD.usage, DX_AGENTS)).toEqual({ total: 0, cap: null, cardCap: null, overBudget: false, pct: null, top: [], more: 0 });
   });
   it('spend against a cap, top agents by name', () => {
     const usage = { totalCostUsd: 5, estimatedCostUsd: 0, totalInputTokens: 0, totalOutputTokens: 0, unpricedRecords: 0, byModel: [], byCard: [], byAgent: [{ agentId: 'agt_fx_tester_tim', costUsd: 1 }, { agentId: 'agt_fx_coder_kai', costUsd: 4 }], byDay: [] };
     expect(spendView(usage, { ...DX_BOARD.usage, budgetUsd: 20 }, DX_AGENTS)).toMatchObject({ total: 5, cap: 20, pct: 25, top: [{ name: 'coder-kai', costUsd: 4 }, { name: 'tester-tim', costUsd: 1 }] });
+  });
+  it('names five who spent most and counts the rest, never dropping them silently', () => {
+    const byAgent = Array.from({ length: 8 }, (_, i) => ({ agentId: `agt_${i}`, costUsd: i + 1 }));
+    const usage = { totalCostUsd: 36, estimatedCostUsd: 0, totalInputTokens: 0, totalOutputTokens: 0, unpricedRecords: 0, byModel: [], byCard: [], byAgent, byDay: [] };
+    const v = spendView(usage, null, []);
+    expect(v.top).toHaveLength(5);
+    expect(v.more).toBe(3);
   });
 });
 

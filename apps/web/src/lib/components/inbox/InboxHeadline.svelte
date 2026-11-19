@@ -8,7 +8,7 @@
   import { Hero, useVibe } from '@superjackfruitlabs/vibekit-ui';
   import { viewport } from '$lib/viewport.svelte';
   import type { InboxStore } from './inbox-model.svelte';
-  import { CHECKING, studioKicker } from './inbox-words';
+  import { CHECKING, studioHeadline, studioKicker } from './inbox-words';
 
   let { store }: { store: InboxStore } = $props();
   const vibe = useVibe();
@@ -26,7 +26,7 @@
     <svelte:element this={heading} class="ib-head__h">Inbox</svelte:element>
     <p class="ib-head__lede">{CHECKING}</p>
   {:else if figure}
-    <Hero figure={n} tone="needs" size="section" kicker={studioKicker(store.boardCount, store.running.length)} headline={head.h1.replace(/^\d+ /, '')} lede={head.lede} />
+    <Hero figure={n} tone="needs" size="section" kicker={studioKicker(store.boardCount, store.running.length)} headline={studioHeadline(n)} lede={head.lede} />
   {:else}
     <svelte:element this={heading} class="ib-head__h">{head.h1}</svelte:element>
     <p class="ib-head__lede">{head.lede}</p>
