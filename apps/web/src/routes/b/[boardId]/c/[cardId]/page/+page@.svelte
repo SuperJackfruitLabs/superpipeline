@@ -43,5 +43,6 @@
   <CardPhoneSheet {model} gate={model.gateBinding} question={model.questionBinding} pageHref={model.pageHref} boardHref={model.boardHref} onClose={() => void goto(model.boardHref)} />
 {:else}
   <CardPageBar boardName={model.boardName} boardHref={model.boardHref} />
-  <main id="content" class="cv-page"><CardView {model} surface="page" gate={model.gateBinding} question={model.questionBinding} pageHref={model.pageHref} boardHref={model.boardHref} /></main>
+  <!-- Esc closes the page back to its board, as Close does and as the phone page's sheet does (CARD_KEYS). -->
+  <main id="content" class="cv-page"><CardView {model} surface="page" gate={model.gateBinding} question={model.questionBinding} pageHref={model.pageHref} boardHref={model.boardHref} onClose={() => void goto(model.boardHref)} /></main>
 {/if}

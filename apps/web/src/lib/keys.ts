@@ -40,13 +40,13 @@ export const INBOX_KEYS: readonly KeyHint[] = [
   ...GLOBAL_KEYS,
 ];
 
-/** A card (CardPageStudio `onKey`, CardStudio `onKey`). Wired into the Card page once that page lands. */
-export const CARD_KEYS: readonly KeyHint[] = [
-  { key: 'E', does: 'edit' },
-  { key: 'C', does: 'comment' },
-  { key: '⇧C', does: 'copy link' },
-  { key: 'G B', does: 'back to the board' },
-];
+/**
+ * The card, on the drawer, the phone sheet and the page alike (CardView's footer): Esc closes it
+ * (CardView `escape`; the page closes back to its board), ⌘K searches (PaletteMount, mounted beside the
+ * page's bare frame too). The shell's G chords, N and F are not here: the card page has no shell. The
+ * retired Studio card's E, C, ⇧C and G B have no handler any more.
+ */
+export const CARD_KEYS: readonly KeyHint[] = [{ key: 'Esc', does: 'close' }, ...GLOBAL_KEYS.slice(0, 1)];
 
 /** Pages with no keys of their own: Crew, Settings, Spend, Board log, Projects. */
 export const PAGE_KEYS: readonly KeyHint[] = GLOBAL_KEYS;

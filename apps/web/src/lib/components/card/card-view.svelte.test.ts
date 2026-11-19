@@ -125,6 +125,28 @@ describe('the card in every vibe, on every surface', () => {
     expect([phone.getAttribute('href'), phone.getAttribute('target')]).toEqual([`/b/${BOARD_DX.boardId}/c/${CARD_4605.id}/page`, '_blank']);
     dispose();
   });
+
+  it("the card's footer names its keys (rule 13): the end of its last block, the same on every surface and in every vibe, and Esc does what it says", async () => {
+    for (const surface of ['drawer', 'phone', 'page'] as const) {
+      const { model, dispose } = await loaded(surface);
+      const p = props(model, surface);
+      const roots = await renderInVibes(CardView, p);
+      try {
+        for (const v of VIBES) {
+          const last = roots[v].querySelector('article.cv')?.lastElementChild;
+          expect(last?.getAttribute('data-block'), `${surface} ${v}`).toBe('raw');
+          const keys = last?.lastElementChild?.querySelector('[aria-label="Keyboard"]');
+          expect(keys?.textContent, `${surface} ${v}`).toBe('Esc close · ⌘K search');
+        }
+        // Esc closes the card on every surface (the page closes back to its board).
+        await fireEvent.keyDown(roots.daylight.querySelector('article.cv') ?? document.body, { key: 'Escape' });
+        expect(p.onClose).toHaveBeenCalledTimes(1);
+      } finally {
+        roots.unmount();
+        dispose();
+      }
+    }
+  });
 });
 
 describe('the sections', () => {

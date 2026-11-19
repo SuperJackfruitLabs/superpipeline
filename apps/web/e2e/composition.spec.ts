@@ -179,6 +179,38 @@ test('board: an empty board ends with its keys too', async ({ page, request }) =
   await expect(page.getByLabel('Keyboard', { exact: true })).toContainText('N new card');
 });
 
+test("card: the footer names its keys on the drawer and the page, Esc closes both, and a phone hides the line", async ({ page, request }) => {
+  const id = await seedBoard(request, 'Keys card', STAGES);
+  const created = await request.post(`${API}/v1/boards/${id}/cards`, { headers: TENANT, data: { title: 'A card with keys', ownerUserId: 'usr_a' } });
+  const card = String((await created.json()).card.id);
+  await setAppearance(page, appearance('daylight'));
+  await page.setViewportSize({ width: 1280, height: 800 });
+
+  // The drawer: its own line, not the board's behind it. Reached by its address, Esc closes it too.
+  await page.goto(`/b/${id}/c/${card}`);
+  const drawer = page.getByRole('dialog');
+  await expect(drawer.getByLabel('Keyboard', { exact: true })).toHaveText('Esc close · ⌘K search');
+  await drawer.getByRole('button', { name: 'Edit card' }).focus();
+  await page.keyboard.press('Escape');
+  await expect(drawer).toBeHidden();
+
+  // The page: the same line; Esc closes it back to the board, as Close does.
+  await page.goto(`/b/${id}/c/${card}/page`);
+  const main = page.getByRole('main');
+  await expect(main.getByLabel('Keyboard', { exact: true })).toHaveText('Esc close · ⌘K search');
+  await main.getByRole('button', { name: 'Edit card' }).focus();
+  await page.keyboard.press('Escape');
+  await expect(page).toHaveURL(new RegExp(`/b/${id}$`));
+
+  // A phone has no hardware keyboard: the card's line is hidden on the sheet, from the board or the page.
+  await page.setViewportSize({ width: 390, height: 800 });
+  for (const url of [`/b/${id}/c/${card}`, `/b/${id}/c/${card}/page`]) {
+    await page.goto(url);
+    await expect(page.getByRole('dialog').getByRole('heading', { name: 'A card with keys' }), url).toBeVisible();
+    await expect(page.getByRole('dialog').getByLabel('Keyboard', { exact: true }), url).toBeHidden();
+  }
+});
+
 test('inbox: the footer names its keys, and they work (J / K pick a row, R resumes it, O opens it, F filters)', async ({ page, request }) => {
   // One board with two blocked cards (two Resume rows), shown alone under Show.
   const at = Date.now();

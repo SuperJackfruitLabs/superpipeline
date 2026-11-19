@@ -73,6 +73,10 @@
 
 /* 7. History and raw data: closed disclosures with a count. */
 .cv-disc { min-width: 0; }
+/* The card's footer line: its keys (rule 13), muted meta in every vibe. Hidden where shell.css hides
+   .sh-keys (no hardware keyboard): the card page has no shell, so shell.css may not be on it. */
+.cv-foot { margin: var(--vk-space-3) 0 0; color: var(--vk-color-muted); font: var(--vk-type-meta); }
+@media (max-width: 899.98px) { .cv-foot { display: none; } }
 .cv-history, .cv-raw { display: grid; gap: var(--vk-space-4); min-width: 0; padding-top: var(--vk-space-2); }
 .cv-runs { display: grid; gap: var(--vk-space-2); }
 .cv-run { display: grid; gap: var(--vk-space-2); min-width: 0; border-top: 1px solid var(--vk-color-line); padding-top: var(--vk-space-2); }
