@@ -1,13 +1,13 @@
 import { expect, test } from '@playwright/test';
 import { AGENT, API, openBoard, seedBoard, setAppearance, TENANT } from './support/seed';
 
-// A blocked card in Studio: on a phone every tab's last control can be reached (the drawer scrolls as one).
+// A blocked card in Studio: on a phone every control can be reached (the card is one document, the same composition as every vibe).
 const PIPELINE = [
   { key: 'build', name: 'Build', order: 0, ownerKind: 'capability', owner: 'build' },
   { key: 'review', name: 'Review', order: 1, ownerKind: 'human', gate: 'approval' },
 ];
 
-test('studio phone: every control in each tab can be reached and nothing covers it', async ({ page, request }) => {
+test('studio phone: every control can be reached and nothing covers it', async ({ page, request }) => {
   await page.setViewportSize({ width: 375, height: 667 });
   await setAppearance(page, 'studio.light.strong.0');
   const boardId = await seedBoard(request, 'Studio resume', PIPELINE);
@@ -27,19 +27,18 @@ test('studio phone: every control in each tab can be reached and nothing covers 
     const top = document.elementFromPoint(r.x + r.width / 2, r.y + r.height / 2);
     return top && (top === el || el.contains(top) || top.contains(el)) ? null : `${top?.tagName.toLowerCase()}.${top?.className}`;
   };
-  for (const tab of ['Spec', 'Log', 'Links', 'Talk', 'Cost']) {
-    await dialog.getByRole('tab', { name: new RegExp(`^${tab}`) }).click();
-    const controls = dialog.getByRole('tabpanel').locator('button:not([disabled]), a[href], input:not([disabled]), textarea:not([disabled]), select:not([disabled]), [tabindex="0"]');
-    const n = await controls.count();
-    for (let i = 0; i < n; i++) {
-      const c = controls.nth(i);
-      if (!(await c.isVisible())) continue;
-      // Scrolled to the bottom edge and to the top edge of the viewport, where a pinned bar would sit on it.
-      for (const block of ['end', 'start'] as const) {
-        await c.evaluate((el, b) => el.scrollIntoView({ block: b }), block);
-        await expect(c, `${tab} #${i}: in the viewport`).toBeInViewport();
-        expect(await c.evaluate(covered), `${tab} #${i}: nothing covers it at 375px (scrolled to the ${block})`).toBeNull();
-      }
+  // Open every disclosure so their controls count.
+  await dialog.locator('details:not([open]) > summary').evaluateAll((els) => els.forEach((e) => { if (e instanceof HTMLElement) e.click(); }));
+  const controls = dialog.locator('button:not([disabled]), a[href], input:not([disabled]), textarea:not([disabled]), select:not([disabled]), [tabindex="0"]');
+  const n = await controls.count();
+  for (let i = 0; i < n; i++) {
+    const c = controls.nth(i);
+    if (!(await c.isVisible())) continue;
+    // Scrolled to the bottom edge and to the top edge of the viewport, where a pinned bar would sit on it.
+    for (const block of ['end', 'start'] as const) {
+      await c.evaluate((el, b) => el.scrollIntoView({ block: b }), block);
+      await expect(c, `#${i}: in the viewport`).toBeInViewport();
+      expect(await c.evaluate(covered), `#${i}: nothing covers it at 375px (scrolled to the ${block})`).toBeNull();
     }
   }
 });
@@ -60,18 +59,17 @@ test('studio phone: the edit form scrolls with the body, and Save can be reached
   await expect(save).toBeFocused();
 });
 
-test('studio board: the column headers show on a desktop, the phone draws rows and no table', async ({ page, request }) => {
+// Was "the column headers show on a desktop, the phone draws rows and no table": the Studio board was an
+// annual-report table. The board is one composition now (Board variant A): lanes of tiles in every vibe.
+test('studio board: the same lanes and tiles on a desktop and a phone, no table, the card reachable by its title', async ({ page, request }) => {
   await setAppearance(page, 'studio.light.strong.0');
   const boardId = await seedBoard(request, 'Studio columns', PIPELINE);
   await request.post(`${API}/v1/boards/${boardId}/cards`, { headers: TENANT, data: { title: 'A row', ownerUserId: 'usr_a' } });
-  await page.setViewportSize({ width: 1280, height: 800 });
-  await openBoard(page, boardId);
-  // The desktop board is the annual report's table (sr-only is a 1px box Playwright still counts as visible: measure the row).
-  const deskTable = page.getByRole('table', { name: /people needed first/ });
-  await expect(deskTable.getByRole('columnheader', { name: 'Tries' })).toBeVisible();
-  expect((await deskTable.locator('thead').boundingBox())!.width).toBeGreaterThan(300);
-  await page.setViewportSize({ width: 375, height: 667 });
-  // The phone board (Task 28) is Studio's row list: no table and no column headers, the card still reachable by its title.
-  await expect(page.getByRole('button', { name: /^A row, in / })).toBeVisible();
-  await expect(page.getByRole('table')).toHaveCount(0);
+  for (const [width, height] of [[1280, 800], [375, 667]] as const) {
+    await page.setViewportSize({ width, height });
+    await openBoard(page, boardId);
+    await expect(page.getByRole('button', { name: /^A row, in / })).toBeVisible();
+    await expect(page.getByRole('list', { name: 'Stages' })).toBeVisible();
+    await expect(page.getByRole('table')).toHaveCount(0);
+  }
 });

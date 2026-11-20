@@ -1,4 +1,4 @@
-/* Ported verbatim from e2e/reference/mockups/SP-Dlg-BoardSwitcher-Daylight, SP-Dlg-BoardSwitcher-Paper, SP-Dlg-BoardSwitcher-Studio, SP-Dlg-BoardSwitcher-Quiet (prefixes bs-acts, bs-del, bs-foot, link, kbd, chip, small, muted, grow; root :where(.fg) as .vk-dialog.bs) by scripts/pixel/extract-css.mjs. */
+/* Ported verbatim from the pixel reference SP-Dlg-BoardSwitcher-Daylight, SP-Dlg-BoardSwitcher-Paper, SP-Dlg-BoardSwitcher-Studio, SP-Dlg-BoardSwitcher-Quiet (prefixes bs-acts, bs-del, bs-foot, link, kbd, chip, small, muted, grow; root :where(.fg) as .vk-dialog.bs) by the pixel suite's extract-css.mjs (both retired). */
 /* Hand edit (vibekit 0.0.9): the "This board:" row is vibekit's CommandPalette actions row, which draws the .bs-acts frame; its links keep the reference's inline row. The footer's .grow is a direct child of vibekit's footer. */
 .vk-dialog.bs .muted { color: var(--vk-color-muted); }
 .vk-dialog.bs .small { font-size: var(--vk-text-sm); }
@@ -17,15 +17,7 @@
 [data-vibe="quiet"] .vk-dialog.bs .chip { background: transparent; border-color: var(--vk-color-line); }
 
 .bs-layer .bs-anchor { position: absolute; display: inline-flex; align-items: center; }
-.bs-layer .bs-anchor .bs-trigger { background: var(--vk-color-surface); box-shadow: inset 0 0 0 2px var(--vk-color-text); color: var(--vk-color-text); cursor: pointer; }
-.bs-layer .bs-anchor .dy-switch { display: inline-flex; align-items: center; gap: 8px; min-height: 48px; padding: 0 12px 0 6px; border: 0; border-radius: var(--vk-radius-md); font: 700 28px/1.1 var(--vk-font-display); letter-spacing: -0.015em; text-align: left; }
-.bs-layer .bs-anchor--ed { align-items: flex-end; gap: 10px 20px; }
-.bs-layer .bs-anchor .mh-title { margin: 0; font-family: var(--vk-font-display); font-size: 46px; font-weight: 500; line-height: 1.05; letter-spacing: -0.012em; color: var(--vk-color-text); }
-.bs-layer .bs-anchor .mh-change { display: inline-flex; align-items: center; min-height: 44px; padding: 0 8px; margin-left: -8px; border: 0; border-radius: var(--vk-radius-sm); font: 400 14px/1 var(--vk-font-body); text-decoration: underline; text-underline-offset: 4px; }
-.bs-layer .bs-anchor.ar-board { flex-direction: column; align-items: flex-start; gap: 2px; }
-.bs-layer .bs-anchor .kick { font: 700 12px/1.2 var(--vk-font-body); letter-spacing: .1em; text-transform: uppercase; color: var(--vk-color-muted); }
-.bs-layer .bs-anchor .ar-sw { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 8px; margin-left: -8px; border: 0; border-radius: 2px; font: 800 28px/1 var(--vk-font-body); font-stretch: 80%; letter-spacing: -.01em; white-space: nowrap; }
-.bs-layer .bs-anchor.qn-board { flex-wrap: wrap; gap: 0 8px; min-height: 44px; font: 400 18px/1.4 var(--vk-font-body); color: var(--vk-color-text); }
-.bs-layer .bs-anchor.qn-board b { font-weight: 700; }
-.bs-layer .bs-anchor .qn-dash { color: var(--vk-color-muted); }
-.bs-layer .bs-anchor .qn-link { display: inline-flex; align-items: center; min-height: 44px; padding: 0 6px; border: 0; border-radius: var(--vk-radius-sm); font: inherit; text-decoration: underline; text-underline-offset: 4px; }
+/* The raised copy is one form in every vibe (BoardPickButton, composition contract). */
+.bs-layer .bs-anchor .bs-trigger { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; padding: 0 12px; border: 0; border-radius: var(--vk-radius-sm); background: var(--vk-color-surface); box-shadow: inset 0 0 0 2px var(--vk-color-text); color: var(--vk-color-text); font: 600 1.125rem/1.1 var(--vk-font-body); cursor: pointer; }
+/* Its name wears the masthead name's type (set on .bs-anchor by BoardSwitcherPopover), so it lies exactly over the board's own name. */
+.bs-layer .bs-anchor .nc-board__name { font-family: var(--bs-name-family); font-size: var(--bs-name-size); font-weight: var(--bs-name-weight); font-style: var(--bs-name-style); font-stretch: var(--bs-name-stretch); letter-spacing: var(--bs-name-ls); font-variation-settings: var(--bs-name-variation); font-feature-settings: var(--bs-name-features); }

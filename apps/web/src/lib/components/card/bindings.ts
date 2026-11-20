@@ -1,9 +1,9 @@
 /**
- * What the card model hands a layout besides itself: the section counts, the agent, and the gate
- * and question bindings. A leaf below both the model and the layout props (`layouts/types.ts`
- * re-exports these), so the model can name them without importing the props that name it.
+ * What the card model hands the view besides itself: the section counts, the agent, and the gate
+ * and question bindings. A leaf below both the model and CardView, so the model can name them
+ * without importing the view that reads them.
  */
-import type { Mood } from '@superjackfruit/vibekit';
+import type { Mood } from '@superjackfruitlabs/vibekit-ui';
 import type { Elicitation, Gate, GateConflict, GateDecision } from '$lib/api';
 import type { QuestionAnswer } from './question/question-answer.svelte';
 

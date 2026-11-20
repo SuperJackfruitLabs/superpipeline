@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Fourth pass: live updates toggle</title>
+<link rel="stylesheet" href="./vk/vibekit.bundle.css">
+<link rel="stylesheet" href="./composition.css">
+<style>
+  .wrap > h2 { font: 600 20px/1.3 ui-sans-serif, system-ui, sans-serif; margin: 28px 0 6px; }
+  .wrap > p.note { margin: 0 0 14px; color: #a9a59c; max-width: 90ch; }
+  .controls { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin: 0 0 14px; }
+  .controls button { padding: 8px 14px; border-radius: 8px; border: 1px solid #333; background: #1c1c1c; color: #e8e6e1; font: 600 14px/1 ui-sans-serif, system-ui, sans-serif; cursor: pointer; }
+  .controls button[aria-pressed="true"] { background: #e8e6e1; color: #111; }
+  .controls .log { color: #a9a59c; font-size: 13px; }
+
+  /* Filter toggle and the hidden row. */
+  .tabsrow { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+  .tabsrow .vk-tabs { flex: 1 1 auto; }
+  .filters { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px; }
+  .find { display: inline-flex; align-items: center; gap: 8px; min-height: 40px; padding: 0 12px; border-radius: var(--vk-radius-md); background: var(--vk-color-surface); box-shadow: inset 0 0 0 1px var(--vk-color-line); color: var(--vk-color-muted); font: var(--vk-type-meta); min-width: 180px; }
+  .filters .sep { flex-basis: 100%; height: 0; }
+  .menu .vk-button::after { content: " ⌄"; color: var(--vk-color-muted); }
+  [data-vibe="studio"] .find { border-radius: 0; background: transparent; }
+  .vk-reveal > div { display: grid; gap: 12px; padding-bottom: 2px; }
+  .vk-reveal[data-open="true"] > div { padding-top: 2px; }
+  .ftoggle .vk-badge { margin-left: 6px; }
+
+  /* Live state and the row animations: all from vibekit's motion.css; only durations and distances differ per vibe. */
+  .live.is-live::before { box-shadow: 0 0 0 0 var(--vk-color-success); animation: ring calc(1200ms * var(--vk-motion-scale)) var(--vk-ease-standard); }
+  /* The Live pill is the toggle: pressed = live, unpressed = paused. Paused: a muted dot, the word Paused, and the queued count with Apply. */
+  button.live { appearance: none; border: 0; background: transparent; padding: 0 10px; min-height: 36px; border-radius: var(--vk-radius-pill); cursor: pointer; font: inherit; }
+  button.live:hover { background: var(--vk-color-surface); }
+  button.live[aria-pressed="false"]::before { background: var(--vk-color-muted); }
+  button.live[aria-pressed="false"] .word::after { content: "Paused"; }
+  button.live[aria-pressed="true"] .word::after { content: "Live"; }
+  .queued { display: inline-flex; align-items: center; gap: 8px; }
+  .queued[hidden] { display: none; }
+  [data-vibe="studio"] button.live { border-radius: 0; }
+  @keyframes ring { to { box-shadow: 0 0 0 8px transparent; } }
+  .row { transition: opacity var(--vk-d-fast) var(--vk-ease-exit); }
+  .row.leaving { animation: vk-motion-out var(--vk-d-fast) var(--vk-ease-exit) forwards; pointer-events: none; }
+  .row.collapsing { display: grid; grid-template-rows: 0fr; min-height: 0; padding-top: 0 !important; padding-bottom: 0 !important; margin: 0; transition: grid-template-rows var(--vk-d-base) var(--vk-ease-standard), padding var(--vk-d-base) var(--vk-ease-standard); }
+  .row.collapsing > * { overflow: hidden; min-height: 0; }
+  .n { display: inline-block; font-variant-numeric: tabular-nums; }
+  .updated { color: var(--vk-color-muted); font: var(--vk-type-meta); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Fourth pass: live updates toggle</h1>
+  <p class="sub"><b>New in this pass:</b> the Live pill in the masthead is now a toggle. Click it to pause live updates; the page then holds still, changes queue behind a count, and Apply (or resuming) plays them with the same motion. The toggle is per person and remembered. Try it: pause one panel, let two refreshes arrive, then apply.</p>
+  <p class="sub">Two changes. The filter row is hidden until you ask for it: one Filter button beside the tabs, with a count when any filter is on, and the row reveals under it. And live refreshes animate instead of repainting: this screen is a working demo, so press the button or wait and watch. Board A is recorded as the choice.</p>
+
+  <div class="controls">
+    <button id="step">Simulate a refresh</button>
+    <button id="auto" aria-pressed="true">Auto every 6 s</button>
+    <button id="motion" aria-pressed="true">Motion on</button>
+    <span class="log" id="log">Waiting for the first change…</span>
+  </div>
+
+  <div class="grid" id="panels"></div>
+
+  <h2>What a refresh does, in the contract</h2>
+  <p class="note">A new row enters (rise, Paper's ink reveal, Quiet's fade). A row that leaves fades out and its space closes, it never jumps. A row whose facts changed flashes once (Studio: an edge bar), and the changed number ticks. Counts in tabs and group headers bump. The Live dot rings. Everything comes from vibekit's motion suite with its per-vibe timings, and all of it is off under reduced motion, which the Motion button above shows. The rule for the app: a refresh is a diff applied to the page, never a re-render of the list.</p>
+
+  <div class="ask">
+    <h2>Does this settle filters and motion?</h2>
+    <div class="options" data-multiselect>
+      <div class="option" data-choice="live-toggle-ok" onclick="toggleSelect(this)"><div class="letter">✓</div><div><h3>Live toggle: good</h3><p>The Live pill pauses and resumes; paused changes queue behind a count and Apply.</p></div></div>
+      <div class="option" data-choice="filters-ok" onclick="toggleSelect(this)"><div class="letter">✓</div><div><h3>Hidden filters: good</h3><p>One Filter button, the row reveals, the count shows when something is on.</p></div></div>
+      <div class="option" data-choice="motion-ok" onclick="toggleSelect(this)"><div class="letter">✓</div><div><h3>Live motion: good</h3><p>Enter, leave, flash, tick, bump; nothing jumps.</p></div></div>
+      <div class="option" data-choice="motion-more" onclick="toggleSelect(this)"><div class="letter">?</div><div><h3>Motion: too much or too little</h3><p>Say which, and for which vibe.</p></div></div>
+    </div>
+  </div>
+</div>
+
+<script src="./helpers.js"></script>
+<script>
+const SHOW = VIBES.filter(x => x.v === 'daylight' || x.v === 'studio');
+
+function inbox(v) {
+  const head = v === 'studio'
+    ? `<div class="body" style="padding-top:8px"><div class="vk-hero vk-hero--studio" data-size="section" data-tone="needs"><div class="vk-hero__figure"><span class="n" data-k="total">18</span></div><div class="vk-hero__text"><p class="vk-hero__kicker">Across three boards · <span data-k="running-word">nothing running</span></p><h1 class="vk-hero__headline"><span data-k="total-word">Eighteen</span> cards want you.</h1></div></div></div>`
+    : `<div class="hero-row"><h1>Working late, Rakesh? <span class="n" data-k="total">18</span> cards want you.</h1><p class="lede"><span data-k="running-word">Nothing is running.</span></p></div>`;
+  return mast(v, '<span class="eyebrow">Superpipeline · Inbox</span>', btn(v, 'New card')).replace('<span class="live">Live</span>', `<button class="live" aria-pressed="true" data-k="livebtn" title="Pause or resume live updates"><span class="word"></span> <span class="updated" data-k="updated"></span></button><span class="queued" data-k="queued" hidden><span class="vk-badge" data-needs data-k="qcount">0</span><span class="meta">waiting</span>${btn(v, 'Apply', 'quiet').replace('<button', '<button data-k="apply"')}</span>`) + head + `<div class="body">
+    ${scope(v, [['All boards', 18, true, true], ['Planning & Roadmap', 13], ['Developer Experience', 3], ['Marketing & Community', 2], ['8 more', 0]])}
+    <div class="tabsrow">${tabs(v, [['Needs you', '<span class="n" data-k="needs">18</span>', true], ['Running', '<span class="n" data-k="running">0</span>'], ['Spend', '$0.00'], ['Activity', 548]])}
+      <span class="ftoggle">${btn(v, 'Filter', 'ghost').replace('<button', '<button aria-expanded="false" data-k="ftoggle"')}</span></div>
+    <div class="vk-reveal" data-open="false" data-k="frow"><div>
+      <div class="filters">
+        <span class="find">⌕ Find a card in your inbox</span>
+        ${v === 'studio' ? [['Review', 1], ['Stopped', 1], ['Unclaimed', 16]].map(([l, c]) => btn(v, `${l} <span class="vk-tabs__count">${c}</span>`, 'ghost')).join('') : scope(v, [['Review', 1], ['Stopped', 1], ['Unclaimed', 16]])}
+        <span class="sep"></span>
+        <span class="menu">${btn(v, 'Agent · any', 'ghost')}</span>
+        <span class="menu">${btn(v, 'Label · any', 'ghost')}</span>
+        <span class="menu">${btn(v, 'Priority · any', 'ghost')}</span>
+        <span class="menu" style="margin-left:auto">${btn(v, 'Oldest first', 'quiet')}</span>
+      </div></div></div>
+    <section class="group" data-k="g-review">${sh(v, 1, 'Review', '<span class="n" data-k="c-review">1</span> <span data-k="c-review-word">card</span>')}
+      <div class="rows" data-k="rows-review">
+        <div class="row" data-id="protect">${face(v, 'KK', 'needs')}<div><p class="t">Protect release tags on every product repo</p><p class="meta">${state(v, 'needs', 'Needs you')} keeper-karen finished attempt 5 · Planning &amp; Roadmap · Approved · <span data-k="age">10 h</span></p></div><div class="act">${btn(v, 'Review')}</div></div>
+      </div>
+    </section>
+    <section class="group">${sh(v, 2, 'Nobody works these stages', '<span class="n" data-k="c-uncl">16</span> cards')}
+      <ul class="compact" data-k="rows-uncl">
+        <li class="row nf" data-id="docs"><div><p class="t">Make the docs checks required on every product repo</p><p class="meta"><span class="chip">Planning &amp; Roadmap</span> Proposed · 3 d</p></div><div class="act">${btn(v, 'Move', 'quiet')}</div></li>
+        <li class="row nf" data-id="ci"><div><p class="t">Let CI read forge CI results without exposing infra</p><p class="meta"><span class="chip">Planning &amp; Roadmap</span> Proposed · 3 d</p></div><div class="act">${btn(v, 'Move', 'quiet')}</div></li>
+        <li class="row nf" data-id="bands"><div><p class="t">ci-bands gets its own GitHub API budget and a budget guard</p><p class="meta"><span class="chip">Planning &amp; Roadmap</span> Proposed · 3 d</p></div><div class="act">${btn(v, 'Move', 'quiet')}</div></li>
+      </ul>
+      <button class="more">Show 13 more</button>
+    </section>
+  </div>`;
+}
+
+const panel = ({ v, theme, cap, note }) => `<div class="col"><p class="cap"><b>${cap}</b><span>${note}</span></p><div class="page" data-vibe="${v}" data-theme="${theme}" data-time="off" data-phase="noon">${inbox(v)}</div></div>`;
+document.getElementById('panels').innerHTML = SHOW.map(panel).join('');
+
+/* ---- motion helpers, the plain-JS twins of vibekit's countUp, flash and replay ---- */
+const ms = (el, name) => { const s = getComputedStyle(el).getPropertyValue(name).trim(); return s.endsWith('ms') ? parseFloat(s) : parseFloat(s) * 1000; };
+const scaleOf = el => parseFloat(getComputedStyle(el).getPropertyValue('--vk-motion-scale')) || 0;
+function replay(el, cls) { el.classList.remove(cls); void el.offsetWidth; el.classList.add(cls); el.addEventListener('animationend', () => el.classList.remove(cls), { once: true }); }
+function countTo(el, to) {
+  const from = parseInt(el.textContent, 10) || 0; const d = ms(el, '--vk-d-count');
+  if (!d || scaleOf(el) === 0 || from === to) { el.textContent = to; if (scaleOf(el) > 0) replay(el, 'vk-number-swap'); return; }
+  const t0 = performance.now();
+  (function tick(t) { const p = Math.min(1, (t - t0) / d); const e = 1 - Math.pow(1 - p, 3); el.textContent = Math.round(from + (to - from) * e); if (p < 1) requestAnimationFrame(tick); })(t0);
+}
+function enter(container, html, v) {
+  container.insertAdjacentHTML('afterbegin', html);
+  const el = container.firstElementChild; el.classList.add('vk-enter'); if (v === 'paper') el.classList.add('vk-ink');
+  el.addEventListener('animationend', () => el.classList.remove('vk-enter', 'vk-ink'), { once: true });
+  return el;
+}
+function leave(el) {
+  const d = ms(el, '--vk-d-fast'), s = scaleOf(el);
+  if (!s) { el.remove(); return; }
+  el.classList.add('leaving');
+  setTimeout(() => { el.classList.remove('leaving'); el.style.opacity = '0'; el.classList.add('collapsing'); setTimeout(() => el.remove(), ms(el, '--vk-d-base') + 20); }, d);
+}
+
+/* ---- the scripted refreshes, applied as a diff to each panel ---- */
+const WORDS = ['Eighteen', 'Nineteen'];
+const steps = [
+  { log: 'Refresh 1: keeper-karen finished another review. A row enters Review; counts tick 18 → 19; the Live dot rings.',
+    run(p, v) { const rows = p.querySelector('[data-k="rows-review"]');
+      enter(rows, `<div class="row" data-id="docsite">${face(v, 'KK', 'needs')}<div><p class="t">Move every docs site onto the shared Bento docs theme</p><p class="meta">${state(v, 'needs', 'Needs you')} keeper-karen finished attempt 2 · Planning &amp; Roadmap · Approved · just now</p></div><div class="act">${btn(v, 'Review')}</div></div>`, v);
+      countTo(p.querySelector('[data-k="c-review"]'), 2); replay(p.querySelector('[data-k="c-review"]'), 'vk-bump');
+      countTo(p.querySelector('[data-k="needs"]'), 19); replay(p.querySelector('[data-k="needs"]').closest('.vk-tabs__item'), 'vk-bump');
+      countTo(p.querySelector('[data-k="total"]'), 19); const w = p.querySelector('[data-k="total-word"]'); if (w) w.textContent = WORDS[1]; } },
+  { log: 'Refresh 2: builder-bo claimed "Make the docs checks required…". The row flashes, leaves, and its space closes; Unclaimed 16 → 15; Running 0 → 1.',
+    run(p) { const row = p.querySelector('[data-id="docs"]'); replay(row, 'vk-flash'); setTimeout(() => leave(row), ms(row, '--vk-d-base'));
+      countTo(p.querySelector('[data-k="c-uncl"]'), 15); countTo(p.querySelector('[data-k="needs"]'), 18); countTo(p.querySelector('[data-k="total"]'), 18); const w = p.querySelector('[data-k="total-word"]'); if (w) w.textContent = WORDS[0];
+      const r = p.querySelector('[data-k="running"]'); countTo(r, 1); replay(r.closest('.vk-tabs__item'), 'vk-bump');
+      p.querySelectorAll('[data-k="running-word"]').forEach(e => { e.textContent = e.textContent.includes('Nothing') ? 'builder-bo is working one card.' : 'one running'; replay(e, 'vk-flash'); }); } },
+  { log: 'Refresh 3: only a fact changed. The row flashes once and the age ticks 10 h → 11 h. Nothing moves.',
+    run(p) { const row = p.querySelector('[data-id="protect"]'); replay(row, 'vk-flash'); const a = p.querySelector('[data-k="age"]'); a.textContent = '11 h'; replay(a, 'vk-number-swap'); } },
+  { log: 'Refresh 4: back to the start, the same way: the new review row leaves, the claimed card returns.',
+    run(p, v) { const rows = p.querySelector('[data-k="rows-review"]'); const nr = rows.querySelector('[data-id="docsite"]'); if (nr) leave(nr);
+      enter(p.querySelector('[data-k="rows-uncl"]'), `<li class="row nf" data-id="docs"><div><p class="t">Make the docs checks required on every product repo</p><p class="meta"><span class="chip">Planning &amp; Roadmap</span> Proposed · 3 d</p></div><div class="act">${btn(v, 'Move', 'quiet')}</div></li>`, v);
+      countTo(p.querySelector('[data-k="c-review"]'), 1); countTo(p.querySelector('[data-k="c-uncl"]'), 16); countTo(p.querySelector('[data-k="running"]'), 0); p.querySelector('[data-k="age"]').textContent = '10 h';
+      p.querySelectorAll('[data-k="running-word"]').forEach(e => { e.textContent = e.textContent.includes('builder') ? 'Nothing is running.' : 'nothing running'; }); } },
+];
+let i = 0;
+function applyOn(p, s) {
+  s.run(p, p.dataset.vibe);
+  setTimeout(() => { const n = parseInt(p.querySelector('[data-k="c-review"]').textContent, 10); p.querySelector('[data-k="c-review-word"]').textContent = n === 1 ? 'card' : 'cards'; }, 900);
+  replay(p.querySelector('.live'), 'is-live'); p.querySelector('[data-k="updated"]').textContent = '· updated just now';
+}
+function step() {
+  const s = steps[i % steps.length]; i++;
+  document.querySelectorAll('.page').forEach(p => {
+    if (p.dataset.paused === 'true') { (p._queue ||= []).push(s); const q = p.querySelector('[data-k="queued"]'); q.hidden = false; const c = q.querySelector('[data-k="qcount"]'); c.textContent = p._queue.length; replay(c, 'vk-bump'); p.querySelector('[data-k="updated"]').textContent = '· holding'; return; }
+    applyOn(p, s);
+  });
+  document.getElementById('log').textContent = s.log;
+}
+/* Paused panels queue their changes; Apply or resume plays them in order, one beat apart, with the same motion. */
+function flush(p) {
+  const q = p._queue || []; p._queue = []; const box = p.querySelector('[data-k="queued"]');
+  q.forEach((s, k) => setTimeout(() => applyOn(p, s), k * 900));
+  setTimeout(() => { box.hidden = true; box.querySelector('[data-k="qcount"]').textContent = '0'; }, Math.max(0, q.length - 1) * 900 + 300);
+}
+document.querySelectorAll('[data-k="livebtn"]').forEach(b => b.onclick = () => {
+  const p = b.closest('.page'); const live = b.getAttribute('aria-pressed') !== 'true'; b.setAttribute('aria-pressed', live); p.dataset.paused = live ? 'false' : 'true';
+  if (live) flush(p); else p.querySelector('[data-k="updated"]').textContent = '· holding';
+});
+document.querySelectorAll('[data-k="apply"]').forEach(b => b.onclick = () => flush(b.closest('.page')));
+document.getElementById('step').onclick = step;
+let timer = setInterval(step, 6000);
+document.getElementById('auto').onclick = e => { const on = e.currentTarget.getAttribute('aria-pressed') !== 'true'; e.currentTarget.setAttribute('aria-pressed', on); clearInterval(timer); if (on) timer = setInterval(step, 6000); };
+document.getElementById('motion').onclick = e => { const on = e.currentTarget.getAttribute('aria-pressed') !== 'true'; e.currentTarget.setAttribute('aria-pressed', on); e.currentTarget.textContent = on ? 'Motion on' : 'Motion off (reduced)'; document.querySelectorAll('.page').forEach(p => { if (on) delete p.dataset.motion; else p.dataset.motion = 'reduce'; }); };
+
+/* Filter toggle: the row reveals; a count badge appears when a filter is on (here, after the first open, as a stand-in). */
+document.querySelectorAll('[data-k="ftoggle"]').forEach(b => b.onclick = () => {
+  const open = b.getAttribute('aria-expanded') !== 'true'; b.setAttribute('aria-expanded', open);
+  const row = b.closest('.body').querySelector('[data-k="frow"]'); row.dataset.open = open;
+  if (open && !b.querySelector('.vk-badge')) { b.insertAdjacentHTML('beforeend', '<span class="vk-badge" data-needs>1</span>'); replay(b.lastElementChild, 'vk-bump'); }
+});
+setTimeout(step, 1500);
+</script>
+</body>
+</html>

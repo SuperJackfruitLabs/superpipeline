@@ -14,6 +14,26 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html). Entries g
 
 ## Unreleased
 
+- Every page is one composition, the same in every vibe: the Inbox, the Board, the List, the Card, Crew, Settings and Board settings, Projects, Spend in detail and the board log. A vibe changes how a page looks and how its headline is set, never what it says or where its actions are. The board shows every stage in one track, with its count and who works it, and draws lanes only for the stages that hold cards. The card is the same in the drawer, on a phone and on its own page: one sentence says where it is, for how long and what is wanted, beside the one action that answers it, and Review, Answer and Resume open in its place. The Inbox groups what wants you by what you must do (Review, Answer, Resume a stopped agent, Over budget, Nobody works these stages), with Running, Spend and Activity as tabs. Crew and Settings are tabs with their counts and one table each.
+
+- Live changes move instead of repainting: Inbox rows slide in and out and flash once when they change. The Live pill in the header pauses updates. While paused it counts what is waiting and offers Apply, which plays the changes in order; resuming plays the rest. Your own actions still show at once, and the choice is remembered in this browser.
+
+- Filters hide behind one Filter control beside the page's tabs, which counts the filters that are on; F opens it. On the Inbox it holds find, the group chips, the Agent, Label and Priority menus and the sort. The List keeps Group by and Sort by beside Board | List. Studio's List loses its own quick filter: use Filter.
+
+- Long lists and lanes fold behind "Show N more" and say who is waiting. An Inbox group, the Running tab and a board lane show five cards, then twenty more at a time, and the button says how many of the next cards want you ("Show 6 more · 2 want you"). The List shows 30 rows, Crew ten agents, Settings six labels, Activity twenty entries and the board log fifty. A lane's count is still the whole lane, and a card dropped on a folded lane lands there.
+
+- Pages say what they are waiting for. Crew, Settings, the board's schedules and the card show a short placeholder, after 8 seconds say the server is slow, and offer Try again; a read that fails says so and offers Try again. A card shows its title and track at once while the rest loads. A schedules list that could not be read no longer says the board has none, and Connections no longer says "Not linked" when it could not ask. On a phone the header no longer jumps when the Live pill changes its word.
+
+- Every page's footer names the keys that work on it (hidden on a phone). On the Inbox, J / K pick a row, O opens it, M moves it, R resumes it and F opens the filter. On the List, J / K pick a row, Enter opens it, M moves it, S changes the sort and R the grouping, so G stays the G I / G P / G C shortcut to Inbox, Plan and Crew. Esc closes the card.
+
+- Fixes you would notice: a card opened from its link closes with Esc or Close and stays closed, and its link or ⌘K opens it again. Esc leaves the card's own page from anywhere on it. Cards that another person or window adds keep arriving live, on the board and in the Inbox, even while the page is still opening.
+
+- The board moves on live changes too: a card someone else or an agent moves fades out of its lane and rises into its new one while the others glide, a card whose line changes flashes once, and the lane and stage counts tick. On the List, a row that moved glides and a row that changed flashes. Under reduced motion nothing moves.
+
+- Paused, the board's footer says "paused" where it said when it last synced, as the Inbox's does, and the Live pill no longer counts an update that your own change has already shown.
+
+- The Inbox names agents, never ids: an agent the workspace cannot name reads "An agent" in its rows, Running, Activity, Spend, the Agent filter and a question's headline, as the card already did.
+
 - Keep disabled checkpoint integration dormant: ordinary boards create no checkpoint claim tables or triggers, generic claims retain their original behavior, and policy-less claim/run context JSON omits checkpoint markers, including legacy nulls.
 
 - Add separate default-off proposed checkpoint policy administration with strict bounded input, workspace admin checks at the Worker and Board boundaries, and refusal to change an affected stage while work is active. No pilot or deployment is enabled.

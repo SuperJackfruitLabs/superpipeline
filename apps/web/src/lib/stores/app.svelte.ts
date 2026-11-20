@@ -19,6 +19,7 @@ import {
   createCard,
   moveCard,
   openBoardSocket,
+  closeBoardSocket,
   setUnauthorizedHandler,
   renewSession,
   type BoardFeedEvent,
@@ -43,12 +44,14 @@ import {
   type StaleCard,
 } from '$lib/api';
 import { flushSync, tick } from 'svelte';
-import { optimistic } from '@superjackfruit/vibekit/motion';
+import { optimistic } from '@superjackfruitlabs/vibekit-ui/motion';
+import { liveMatch } from '$lib/focus-row';
 import { auth } from '$lib/auth-recovery.svelte';
 import { itemsFromBoard, type AttentionItem } from '$lib/components/attention/attention';
 import { noFilters, passesArchivedFilter, passesProjectFilter } from './card-filters';
 import { feedIsStalled, STALL_CHECK_MS } from '../feed-liveness';
 import { connectionOf, failKind, type Connection, type FailKind } from '../loading';
+import { liveUpdates } from '$lib/live/live-updates.svelte';
 
 const BOARD_KEY = 'superpipeline.boardId';
 const ATTENTION_COALESCE_MS = 1000;
@@ -72,7 +75,7 @@ export interface CardFilters {
 
 class AppStore {
   #busy = 0;
-  /** Track a load that the pixel suite must wait for (dev galleries, workspace tabs). */
+  /** Track a load that the visual capture must wait for (dev galleries, workspace tabs). */
   markBusy<T>(p: Promise<T>): Promise<T> {
     this.#busy++;
     this.noteLoaded();
@@ -345,7 +348,7 @@ class AppStore {
       window.addEventListener('online', () => { this.online = true; if (this.boardId && !this.connected) void this.retry(); });
       window.addEventListener('offline', () => { this.online = false; });
     }
-    auth.configure({ restore: () => this.#restore(), onExpired: () => this.#closeSocket() });
+    auth.configure({ restore: () => this.#restore(), onExpired: () => { this.#closeSocket(); this.#stopScope(); } });
     if (!this.#watchingVisibility && typeof document !== 'undefined') {
       this.#watchingVisibility = true;
       // Signed in again in another tab: back to work without a click.
@@ -362,6 +365,9 @@ class AppStore {
     this.user = me;
     await this.refresh();
     if (this.boardId) this.#connect(this.boardId);
+    // The Inbox's other boards come back too; they were stopped when the session lapsed.
+    // As reconnects, so each feed's opening snapshot reads its board: what changed during the lapse.
+    if (this.#scopeWanted.length) this.openScopeSockets(this.#scopeWanted, true);
     return true;
   }
 
@@ -488,6 +494,9 @@ class AppStore {
     await this.refresh();
     // Remembered only once it has been read: a board that is not there must not become the one boot reopens.
     if (this.boardFailure !== 'missing') localStorage.setItem(BOARD_KEY, id);
+    // The feed opens as soon as the snapshot is here. It used to wait for the reads below, so a slow
+    // agents read held the pill on "Connecting…" while the board was already on screen.
+    this.#connect(id);
     await this.loadBoards();
     // Best-effort and independent: a workspace where one read is refused should still resolve the
     // others rather than fall back to ids for everything.
@@ -502,7 +511,6 @@ class AppStore {
     this.members = members.status === 'fulfilled' ? members.value : [];
     this.labels = labels.status === 'fulfilled' ? labels.value : [];
     this.projects = projects.status === 'fulfilled' ? projects.value : [];
-    this.#connect(id);
   }
 
   /**
@@ -512,16 +520,28 @@ class AppStore {
    * moment when a Worker restarts, and a fixed delay would have them all return in the same
    * instant.
    */
-  #connect(boardId: string): void {
+  #connect(boardId: string, reconnect = false): void {
     this.#closeSocket();
     const generation = this.#socketGeneration;
-    const sock = openBoardSocket(boardId, (event) => {
+    // A fresh feed's first message is its opening snapshot: the board as the feed began. The board was
+    // read before that (then the notifications, the attention and the labels), so a change made in
+    // between reaches this client through the snapshot alone: it is skipped only when it is the board
+    // already held. Skipping every one lost a card another client created in that gap.
+    // After a reconnect it is kept: whatever happened while the feed was down did not reach us.
+    let opening = !reconnect;
+    const sock = openBoardSocket(boardId, (event, snapshot) => {
       this.#lastMessageAt = Date.now();
-      this.syncedAt = new Date();
-      void this.refresh();
+      const skip = opening && event === null && snapshot !== undefined && this.#holds(snapshot);
+      opening = false;
+      // "Synced" is when the page last showed the board as it is: a read that lands (`#refresh`), or
+      // an opening snapshot of the very board on screen. An event held behind the Live toggle is not.
+      if (skip) { this.syncedAt = new Date(); return; }
+      // Through the Live toggle: paused, the board holds still and one refresh waits its turn.
+      liveUpdates.push(`app:board:${boardId}`, () => void this.refresh());
       // Fan the event out to whoever is watching one card. The board snapshot that `refresh`
-      // reloads does not carry activities, so without this the open card learns nothing.
-      if (event) for (const fn of this.#feedListeners) fn(event);
+      // reloads does not carry activities, so without this the open card learns nothing. Paused,
+      // each event waits too (they are incremental, so one entry per event), played in order.
+      if (event && this.#feedListeners.size > 0) liveUpdates.push(`feed:${boardId}:${event.seq}`, () => { for (const fn of this.#feedListeners) fn(event); });
     });
     sock.addEventListener('open', () => {
       if (generation !== this.#socketGeneration) return;
@@ -541,12 +561,18 @@ class AppStore {
       this.#reconnectTimer = setTimeout(() => {
         if (generation !== this.#socketGeneration) return;
         // Refresh on the way back: whatever happened while the socket was down did not reach us,
-        // and reconnecting to a live feed with a stale board is the same lie in slower form.
-        void this.refresh();
-        this.#connect(boardId);
+        // and reconnecting to a live feed with a stale board is the same lie in slower form. Paused, it queues.
+        liveUpdates.push(`app:board:${boardId}`, () => void this.refresh());
+        this.#connect(boardId, true);
       }, delay);
     });
     this.#socket = sock;
+  }
+
+  /** Whether `snapshot` is the board on screen: the same read, as this viewer sees it. */
+  #holds(snapshot: BoardSnapshot): boolean {
+    return !!this.board && snapshot.boardId === this.board.boardId
+      && JSON.stringify(forViewer(snapshot, this.user?.role)) === JSON.stringify(this.board);
   }
 
   /**
@@ -586,7 +612,7 @@ class AppStore {
         return;
       }
       this.connected = false;
-      this.#connect(boardId);
+      this.#connect(boardId, true);
     }, STALL_CHECK_MS);
   }
 
@@ -601,6 +627,104 @@ class AppStore {
     this.#socket = undefined;
   }
 
+  // ---- the other boards the Inbox shows: one feed each (spec §12.2) ----
+  /** Board id → its feed, for every board in the Inbox's scope except the open one. */
+  #scopeSockets = new Map<string, WebSocket>();
+  /** Reconnects waiting to fire, and how many drops in a row each board has had (0 once a feed opens). */
+  #scopeRetry = new Map<string, ReturnType<typeof setTimeout>>();
+  #scopeAttempt = new Map<string, number>();
+  /** The scope last asked for, so a renewed session can open it again. */
+  #scopeWanted: string[] = [];
+  #scopeListeners = new Set<(boardId: string, event: BoardFeedEvent | null) => void>();
+  #scopeHolds = new Set<(boardId: string, snapshot: BoardSnapshot) => boolean>();
+
+  /**
+   * Who hears the scope boards' events (the Inbox). Returns its own unsubscribe. `holds` says whether a
+   * fresh feed's opening snapshot is the board the listener already shows (or will read): the store
+   * holds none of these boards, so only the listener can tell whether a change was made in between.
+   */
+  onScopeEvent(fn: (boardId: string, event: BoardFeedEvent | null) => void, holds?: (boardId: string, snapshot: BoardSnapshot) => boolean): () => void {
+    this.#scopeListeners.add(fn);
+    if (holds) this.#scopeHolds.add(holds);
+    return () => {
+      this.#scopeListeners.delete(fn);
+      if (holds) this.#scopeHolds.delete(holds);
+    };
+  }
+
+  /**
+   * Keep one feed open per board in `ids`, minus the open board (its own feed carries it): boards
+   * that left the scope close, boards that joined open, the rest are left as they are. `reconnect`
+   * opens them as coming back (their opening snapshot is kept, so each board is read again).
+   */
+  openScopeSockets(ids: string[], reconnect = false): void {
+    this.#scopeWanted = [...ids];
+    const want = new Set(ids.filter((id) => id && id !== this.boardId));
+    for (const id of this.#scopeIds()) if (!want.has(id)) this.#closeScope(id);
+    for (const id of want) if (!this.#scopeSockets.has(id) && !this.#scopeRetry.has(id)) this.#openScope(id, reconnect);
+  }
+
+  /** Close every scope feed and forget the scope. */
+  closeScopeSockets(): void {
+    this.#scopeWanted = [];
+    this.#stopScope();
+  }
+
+  /** Close every scope feed and cancel its reconnect, keeping the scope for a renewed session. */
+  #stopScope(): void {
+    for (const id of this.#scopeIds()) this.#closeScope(id);
+  }
+  #scopeIds(): string[] {
+    return [...new Set([...this.#scopeSockets.keys(), ...this.#scopeRetry.keys()])];
+  }
+
+  /**
+   * Scope feeds have no stall watchdog: it needs to know whether a board has work in flight, and the
+   * app holds only the open board. They rely on the Worker closing a dead feed (and the Inbox being
+   * read again after every action); the open board keeps its watchdog.
+   */
+  #openScope(boardId: string, reconnect: boolean): void {
+    // The first message on a fresh feed is its opening snapshot: the board as the feed began. It is
+    // skipped only when every listener holds that board already; a change made between the Inbox's
+    // read and the feed's start reaches it through this snapshot alone (as on the open board's feed).
+    // After a reconnect it is the read that catches up on what happened while down.
+    let opening = !reconnect;
+    const sock = openBoardSocket(boardId, (event, snapshot) => {
+      if (this.#scopeSockets.get(boardId) !== sock) return;
+      const holds = [...this.#scopeHolds];
+      const skip = opening && event === null && snapshot !== undefined && holds.length > 0 && holds.every((h) => h(boardId, snapshot));
+      opening = false;
+      if (skip) return;
+      for (const fn of this.#scopeListeners) fn(boardId, event);
+    });
+    this.#scopeSockets.set(boardId, sock);
+    sock.addEventListener('open', () => { if (this.#scopeSockets.get(boardId) === sock) this.#scopeAttempt.set(boardId, 0); });
+    // A dropped feed comes back the way the open board's does: backoff capped at 30 s, jittered.
+    sock.addEventListener('close', () => {
+      if (this.#scopeSockets.get(boardId) !== sock) return;
+      this.#scopeSockets.delete(boardId);
+      const attempt = this.#scopeAttempt.get(boardId) ?? 0;
+      this.#scopeAttempt.set(boardId, attempt + 1);
+      const delay = Math.min(30_000, 1000 * 2 ** attempt) * (0.75 + Math.random() * 0.5);
+      const timer = setTimeout(() => {
+        if (this.#scopeRetry.get(boardId) !== timer) return;
+        this.#scopeRetry.delete(boardId);
+        this.#openScope(boardId, true);
+      }, delay);
+      this.#scopeRetry.set(boardId, timer);
+    });
+  }
+
+  #closeScope(boardId: string): void {
+    const timer = this.#scopeRetry.get(boardId);
+    if (timer !== undefined) clearTimeout(timer);
+    this.#scopeRetry.delete(boardId);
+    this.#scopeAttempt.delete(boardId);
+    const sock = this.#scopeSockets.get(boardId);
+    this.#scopeSockets.delete(boardId);
+    if (sock) closeBoardSocket(sock);
+  }
+
   async switchBoard(id: string): Promise<void> {
     if (id !== this.boardId) await this.openBoard(id);
   }
@@ -612,6 +736,10 @@ class AppStore {
   async #refresh(): Promise<void> {
     if (!this.boardId) return;
     const id = this.boardId;
+    // A refresh waiting behind the Live toggle since before this read began is answered by it: once
+    // this read lands it is forgotten, so the pill does not count a change that is already on the page.
+    const key = `app:board:${id}`;
+    const waiting = liveUpdates.queued.find((q) => q.key === key)?.fn;
     try {
       const board = await getBoard(id);
       if (id !== this.boardId) return;
@@ -619,6 +747,7 @@ class AppStore {
       this.board = forViewer(board, this.user?.role);
       this.boardFailure = null;
       this.syncedAt = new Date();
+      if (waiting && liveUpdates.queued.find((q) => q.key === key)?.fn === waiting) liveUpdates.drop(key);
       this.notifications = await getNotifications(id);
     } catch (e) {
       // A board never read draws its failure (missing or failed) in place of the board; one that was
@@ -690,10 +819,11 @@ class AppStore {
     const dom = typeof document !== 'undefined';
     let refusal: string | null = null;
     const ok = await optimistic({
-      items: () => (dom ? [...document.querySelectorAll('[data-card-id]')] : []),
+      // The lane's slots, which carry the board's own motion (Lane's animate:flip): the glide and the flip move one element.
+      items: () => (dom ? [...document.querySelectorAll('[data-card-slot]')] : []),
       apply: () => set(toStageKey),
       revert: () => set(from),
-      subject: () => (dom ? document.querySelector<HTMLElement>(`[data-card-id="${CSS.escape(cardId)}"]`) : null),
+      subject: () => (dom ? liveMatch(`[data-card-id="${CSS.escape(cardId)}"]`) : null),
       commit: async () => {
         const res = await moveCard(boardId, cardId, toStageKey).catch((e: unknown) => { refusal = e instanceof Error ? e.message : String(e); throw e; });
         if (!res.ok) {
@@ -770,6 +900,7 @@ class AppStore {
     // Through `#closeSocket`, so the pending reconnect goes with it. Closing the socket alone
     // would leave a timer that reopens one after the component that owned it is gone.
     this.#closeSocket();
+    this.closeScopeSockets();
     this.connected = false;
     if (this.#attentionTimer !== undefined) clearTimeout(this.#attentionTimer);
     this.#attentionTimer = undefined;

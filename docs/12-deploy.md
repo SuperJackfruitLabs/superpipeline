@@ -14,7 +14,7 @@ the web SPA (static assets, same-origin). Same-origin means the session cookie a
 - **Production.** Pushing a `v*` tag (versions stay on 0.0.x) runs `.github/workflows/release.yml`,
   the suite's shared release workflow (settings in `.github/release-config.json`). It refuses a tag
   whose commit is not on `main`, requires main's own CI run for that commit to have passed (`test`,
-  `e2e` and `visual` among it; `pixel` never runs on a push), and builds the supi CLI at the tag
+  `e2e` and `visual` among it), and builds the supi CLI at the tag
   (`deploy/release/build.sh`). Then `deploy/release/deploy.sh` downloads the app artifact that CI run
   built (`app-<sha>`; it is never rebuilt — if it has expired after 14 days, re-run main's CI for the
   commit, then `gh workflow run release.yml -f tag=<tag>` on the mirror), verifies it, migrates the
@@ -243,7 +243,7 @@ The Worker reads these (`apps/api/src/env.ts`). Plain vars live in `apps/api/wra
 | `SUPERWITNESS_URL`, `SUPERWITNESS_REPORTER_CREDENTIAL`, `SUPERWITNESS_REPORT_STAGE` | var, secret, var | run reporting to SuperWitness (see below) |
 | `RELAY_URL`, `RELAY_TOKEN` | var, secret | the suite's event relay; both set publishes the board-chat events and `card.ready` to it |
 | `DEV_AUTH` | var | `"true"` accepts the dev `X-Tenant-Id` / `X-Agent-Id` headers. Local and tests only, never production |
-| `FIXTURE_IMPORT` | var | with `DEV_AUTH`, lets `POST /v1/dev/fixture` replace a tenant with a fixture world. The pixel dev server and the tests only; never in `wrangler.jsonc` |
+| `FIXTURE_IMPORT` | var | with `DEV_AUTH`, lets `POST /v1/dev/fixture` replace a tenant with a fixture world. The fixture dev server (`api dev:pixel`, which the visual job and the e2e suite start) and the tests only; never in `wrangler.jsonc` |
 
 The web app reads one build-time setting: `PUBLIC_HUB_URL`, the hub it asks for tokens, by default
 `https://hub.agentpod.dev`.

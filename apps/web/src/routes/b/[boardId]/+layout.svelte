@@ -19,6 +19,7 @@
   import { viewport } from '$lib/viewport.svelte';
   import { appearance } from '$lib/appearance.svelte';
   import AppShell from '$lib/components/shell/AppShell.svelte';
+  import { shellModel } from '$lib/components/shell/shell-model.svelte';
   import BoardSkeleton from '$lib/components/board/BoardSkeleton.svelte';
   import { pending } from '$lib/loading.svelte';
   import { viewFromSearch } from '$lib/view-param';
@@ -84,11 +85,11 @@
 {#if shown}
   <div style:display={phoneCard ? 'none' : 'contents'}>{@render children()}</div>
   {#if app.openCardId}
-    <CardDrawer />
+    <CardDrawer {boardId} />
   {/if}
 {:else}
   <!-- The real shell with the board's shape in it: no logo screen, no raw error text (loading-audit L4, L5). -->
-  <AppShell here="plan" section={wait.section} boardName={knownName} view={wait.view} plan={wait.view ? 'boards' : undefined} showing={null} bleed={appearance.value.vibe === 'quiet'} ownHeading>
+  <AppShell live={shellModel.liveToggle} here="plan" section={wait.section} boardName={knownName} plan={wait.view ? 'boards' : undefined} bleed={appearance.value.vibe === 'quiet'} ownHeading>
     <BoardSkeleton form={wait.form} {failure} slow={gate.slow} onRetry={() => app.retry()} />
   </AppShell>
 {/if}

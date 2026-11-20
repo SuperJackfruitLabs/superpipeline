@@ -5,7 +5,7 @@
  * decides what this person may see. No cookies cross: `credentials: 'omit'`.
  */
 import { reconnectedThisTab } from './reconnect';
-import { say, type Vibe } from '@superjackfruit/vibekit';
+import { say, type Vibe } from '@superjackfruitlabs/vibekit-ui';
 import { forgetLibraryToken, libraryConfigured, libraryProblem, libraryToken } from '$lib/hub-token';
 import type { EmbedGrant, MountOptions, Scope, ShareInfo } from '$lib/vendor/superlibrary-embed/superlibrary-embed.js';
 

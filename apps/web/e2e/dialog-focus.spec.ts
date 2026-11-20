@@ -54,13 +54,39 @@ test('a Move that moves the tile puts focus on the card in its new column', asyn
   await expect.poll(async () => (await focused(page))?.card).toBe(cardId);
 });
 
+test('with motion on, a Move puts focus on the card’s new tile, not the one fading out of its old lane', async ({ page, request }) => {
+  // The suite runs with reduced motion; the lanes' out:fade (the old tile, inert while it fades) runs only with motion on.
+  await page.emulateMedia({ reducedMotion: 'no-preference' });
+  const { boardId, cardId } = await boardWithCard(request, 'Focus moved with motion');
+  await setAppearance(page, 'daylight.light.strong.0');
+  await openBoard(page, boardId);
+  await page.locator(`[data-card-id="${cardId}"]`).getByRole('button', { name: /^Move/ }).first().click();
+  const dialog = page.getByRole('dialog', { name: 'Focus moved with motion' });
+  await dialog.getByRole('button', { name: /^Move to / }).click();
+  await expect(dialog).toBeHidden();
+  const where = () => page.evaluate(() => {
+    const e = document.activeElement;
+    return { body: !e || e === document.body, card: e?.closest('[data-card-id]')?.getAttribute('data-card-id') ?? null, inert: !!e?.closest('[inert]'), connected: !!e?.isConnected };
+  });
+  await expect.poll(where).toEqual({ body: false, card: cardId, inert: false, connected: true });
+  // Once the old tile has faded and gone, focus is still on the card.
+  await page.waitForTimeout(600);
+  expect(await where()).toEqual({ body: false, card: cardId, inert: false, connected: true });
+});
+
 test('a List row’s Move gives focus back to it', async ({ page, request }) => {
   const { boardId } = await boardWithCard(request, 'Focus row');
   await setAppearance(page, 'paper.light.strong.0');
   await page.goto(`/b/${boardId}?view=list`);
   const move = page.getByRole('row', { name: /Focus row/ }).getByRole('button', { name: /^Move/ });
+  // Every vibe's row Move opens the stage menu under it (one List composition).
   await move.focus();
   await page.keyboard.press('Enter');
+  await expect(page.getByRole('menu', { name: 'Move to' })).toBeVisible();
+  await page.keyboard.press('Escape');
+  await expect(move).toBeFocused();
+  // M opens the Move dialog for the row that has focus; closing it gives focus back.
+  await page.keyboard.press('m');
   await expect(page.getByRole('dialog', { name: 'Focus row' })).toBeVisible();
   await page.keyboard.press('Escape');
   await expect(move).toBeFocused();

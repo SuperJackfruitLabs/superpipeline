@@ -6,7 +6,7 @@
    * a principal id, which this page has no picker for (the API takes `externalId`, the UI never did).
    */
   import './crew-dialogs.css';
-  import { Button, Dialog, Field } from '@superjackfruit/vibekit';
+  import { Button, Dialog, Field } from '@superjackfruitlabs/vibekit-ui';
   import type { AgentsModel } from '../agents-model.svelte';
   import CapabilityChips from '../agents/CapabilityChips.svelte';
 

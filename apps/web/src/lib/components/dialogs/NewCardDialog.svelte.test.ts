@@ -3,7 +3,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, fireEvent, render, screen } from '@testing-library/svelte';
 import { tick } from 'svelte';
-import { AGENTS, DX_STAGES } from '../../../../e2e/pixel/fixture/dialog-cases';
+import { AGENTS, DX_STAGES } from '../../../../e2e/visual/fixture/dialog-cases';
 import NewCardDialog from './NewCardDialog.svelte';
 import { app } from '$lib/stores/app.svelte';
 import { appearance } from '$lib/appearance.svelte';

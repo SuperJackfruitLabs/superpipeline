@@ -1,6 +1,6 @@
 // apps/web/src/lib/components/dialogs/palette-index.test.ts
 import { describe, expect, it } from 'vitest';
-import { AGENTS, BOARDS, DX_STAGES, PR_STAGES } from '../../../../e2e/pixel/fixture/dialog-cases';
+import { AGENTS, BOARDS, DX_STAGES, PR_STAGES } from '../../../../e2e/visual/fixture/dialog-cases';
 import { switcherOrder } from './switcher-model';
 import { buildPaletteIndex, filterPalette, groupCount, paletteCount, soleOwnerOrder, splitMark, type PaletteCtx } from './palette-index';
 

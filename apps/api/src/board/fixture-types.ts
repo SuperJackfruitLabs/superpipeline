@@ -12,6 +12,8 @@ export interface FixtureBoard {
   references: Row[];
   links: Array<{ from_card_id: string; to_card_id: string; kind: string; created_at: string; created_by: string | null }>;
   comments: Row[];
+  /** `usage_records` rows: what a card spent, which its cost and the budget cap read. Optional: a world without spend omits it. */
+  usage?: Row[];
 }
 export interface FixtureWorld {
   tenant: { id: string; slug: string; name: string; forgeHost: string | null; externalId: string | null; externalSource: string | null; createdAt: string };

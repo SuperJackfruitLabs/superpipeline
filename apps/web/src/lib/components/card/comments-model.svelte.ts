@@ -9,6 +9,8 @@ import { deleteComment, getComments, postComment, type BoardFeedEvent, type Card
 export interface CommentsContext {
   boardId: string | null;
   cardId: string | null;
+  /** False while the card's board is not yet the open board: nothing is read until it is. Absent means ready. */
+  ready?: boolean;
   onFeed: (fn: (e: BoardFeedEvent) => void) => () => void;
   coalesceMs?: number;
 }
@@ -52,11 +54,11 @@ export class CommentsModel {
   }
   /** Call inside an `$effect`; re-runs when the card changes; returns the cleanup. */
   attach(): () => void {
-    const { boardId: bid, cardId: id, onFeed, coalesceMs = 250 } = this.#ctx();
+    const { boardId: bid, cardId: id, ready = true, onFeed, coalesceMs = 250 } = this.#ctx();
     this.comments = [];
     this.loaded = false;
     this.error = null;
-    if (!bid || !id) return () => {};
+    if (!bid || !id || !ready) return () => {};
     void this.load(bid, id);
     let timer: ReturnType<typeof setTimeout> | undefined;
     const stop = onFeed((event) => {

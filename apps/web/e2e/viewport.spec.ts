@@ -64,6 +64,8 @@ for (const { name, height } of HEIGHTS) {
       await waitForAppReady(page);
       await waitForSurfaceReady(page);
       await waitForLayout(page);
+      // Activity is its own tab (composition contract rule 7).
+      await page.getByRole('tab', { name: /^Activity/ }).click();
       const activity = page.locator('section', { has: page.getByRole('heading', { name: 'Activity' }) });
       await expect(activity).toBeVisible();
 

@@ -1,4 +1,4 @@
-/* Ported verbatim from e2e/reference/mockups/SP-Spend-Daylight, SP-Spend-Paper, SP-Spend-Quiet (prefixes tiles, tile, big, bar, grid2, chart, col, days, rrow, money, emptyp, log, lrow, time, idchip, raw, capform, seg, where .scr-spend) by scripts/pixel/extract-css.mjs. */
+/* Ported from the pixel reference SP-Spend-Daylight, SP-Spend-Paper, SP-Spend-Quiet by the pixel suite's extract-css.mjs (both retired; this is now SpendView's and BoardLogView's one composition for every vibe). */
 :where(.scr-spend) .tiles { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--vk-space-4); }
 :where(.scr-spend) .tile { padding: var(--vk-space-4) var(--vk-space-5); display: flex; flex-direction: column; gap: 6px; }
 :where(.scr-spend) .big { margin: 0; font: 700 2rem/1.1 var(--vk-font-display); font-variant-numeric: tabular-nums; }
@@ -34,3 +34,35 @@
 /* Hand deltas: narrow widths (notes `pages.md` §6). */
 @media (max-width: 1099.98px) { :where(.scr-spend) .tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); } :where(.scr-spend) .grid2 { grid-template-columns: minmax(0, 1fr); } }
 @media (max-width: 599.98px) { :where(.scr-spend) .capform { grid-template-columns: minmax(0, 1fr); } :where(.scr-spend) .chart, :where(.scr-spend) .days { gap: 2px; } :where(.scr-spend) .lrow { grid-template-columns: 72px minmax(0, 1fr); } }
+/* The composition contract: one Spend in every vibe. The head is the page's one signature slot. */
+:where(.scr-spend) .sp-top { display: flex; flex-direction: column; gap: var(--vk-space-2); }
+:where(.scr-spend) .sp-headrow { display: flex; flex-wrap: wrap; align-items: flex-end; gap: var(--vk-space-4); }
+:where(.scr-spend) .sp-head { flex: 1 1 320px; display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+:where(.scr-spend) .sp-lede, :where(.scr-spend) .sp-muted { color: var(--vk-color-muted); }
+:where(.scr-spend) .sp-end { margin-left: auto; }
+:where(.scr-spend) .sp-rows { list-style: none; margin: 0; padding: 0; }
+:where(.scr-spend) .sp-face { width: 24px; height: 24px; }
+:where(.scr-spend) .rrow a { overflow-wrap: anywhere; }
+:where(.scr-spend) .bar > i.over { background: var(--vk-color-signal); }
+
+/* ===== The signature: the page head only. ===== */
+/* Daylight: the head sits in a band tinted with the accent. */
+[data-vibe="daylight"] :where(.scr-spend) .sp-head { padding: var(--vk-space-4); border-radius: var(--vk-radius-md); background: linear-gradient(180deg, color-mix(in oklch, var(--vk-color-accent) 22%, var(--vk-color-bg)) 0%, var(--vk-color-bg) 100%); }
+/* Paper: an italic lede and an ink rule under the head. */
+[data-vibe="paper"] :where(.scr-spend) .sp-head { padding-bottom: var(--vk-space-3); border-bottom: 2px solid var(--vk-color-rule); }
+[data-vibe="paper"] :where(.scr-spend) .sp-title { font-weight: 500; }
+[data-vibe="paper"] :where(.scr-spend) .sp-lede { font: italic 400 17px/1.45 var(--vk-font-display); color: var(--vk-color-text); }
+/* Studio: a mono kicker, a serif lede and a heavy rule (the annual-report head). */
+[data-vibe="studio"] :where(.scr-spend) .sp-head { padding-bottom: var(--vk-space-3); border-bottom: 3px solid var(--vk-color-text); }
+[data-vibe="studio"] :where(.scr-spend) .sp-eyebrow { font: 500 12px/1.5 var(--vk-font-mono); letter-spacing: 0.04em; color: var(--vk-color-text); text-transform: uppercase; }
+[data-vibe="studio"] :where(.scr-spend) .sp-lede { font: 400 15px/1.45 var(--vk-font-serif); color: var(--vk-color-text); }
+
+/* The board log (BoardLog), on Spend and on its own page. */
+:where(.scr-spend) .log-full { margin-left: auto; text-decoration: none; }
+:where(.scr-spend) .log-what { font-size: 0.9375rem; }
+:where(.scr-spend) .log-card { display: inline-flex; gap: 8px; align-items: center; min-width: 0; }
+:where(.scr-spend) .log-card a { overflow-wrap: anywhere; }
+:where(.scr-spend) .log-foot { border-top: 1px solid var(--vk-color-line); display: flex; flex-direction: column; gap: var(--vk-space-2); }
+:where(.scr-spend) .log-toggle { align-self: flex-start; }
+:where(.scr-spend) .log-raw { min-height: 44px; display: flex; align-items: center; gap: 6px; }
+:where(.scr-spend) .log-rawword { text-decoration: underline; }

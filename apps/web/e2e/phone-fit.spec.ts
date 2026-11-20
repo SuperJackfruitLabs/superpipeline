@@ -24,7 +24,8 @@ async function measure(page: Page) {
     const shown = (el: Element) => {
       const r = el.getBoundingClientRect();
       const cs = getComputedStyle(el);
-      return r.width > 0 && r.height > 0 && cs.visibility !== 'hidden' && !el.closest('.vk-visually-hidden, .sr, [aria-hidden="true"], .vk-phonetabbar, [role="dialog"]') && !contained(el);
+      // cs.clipPath 'inset(50%)': read by screen readers, not drawn (the visually-hidden rule written in a page's css).
+      return r.width > 0 && r.height > 0 && cs.visibility !== 'hidden' && cs.clipPath !== 'inset(50%)' && !el.closest('.vk-visually-hidden, .sr, [aria-hidden="true"], .vk-phonetabbar, [role="dialog"]') && !contained(el);
     };
     const name = (el: Element) => `${el.tagName.toLowerCase()}.${String(el.className).split(' ')[0]} "${(el.textContent ?? '').trim().slice(0, 30)}"`;
     const main = document.querySelector('main') ?? document.body;

@@ -1,4 +1,3 @@
-import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 
 /** Template comments, script comments: a word that only a comment mentions is not used. */
@@ -31,24 +30,17 @@ export function conditionalSections(src: string): string[] {
   return out;
 }
 
-// Every pre-sweep layout is gone: the board (Task 28) and the card (Tasks 22-27). What is left to
-// guard is the registry itself, so a vibe can never fall back to a missing or legacy layout.
-const LAYOUTS_SRC = readFileSync(new URL('./layouts.ts', import.meta.url), 'utf8');
-const VIBE_NAMES = ['Daylight', 'Paper', 'Studio', 'Quiet'];
+// Every pre-sweep layout is gone: the board (one BoardView for every vibe) and the card (one CardView
+// for every vibe and surface). What is left to guard is the registry itself, so no surface goes back
+// to a layout per vibe.
+/** Every per-vibe layout file left under a component folder (layouts/ or legacy/); the contract retired them all. */
+const PER_VIBE_FILES = Object.keys(import.meta.glob(['./components/**/layouts/**/*.svelte', './components/**/legacy/**/*.svelte']));
 
-describe('every vibe has its swept board and card layouts (spec §7.3–7.5)', () => {
-  it('layouts.ts imports nothing from a legacy folder', () => expect(LAYOUTS_SRC).not.toMatch(/\/legacy\//));
-  for (const v of VIBE_NAMES) {
-    const k = v.toLowerCase();
-    it(`${v} board: desktop Board${v} and phone Board${v}Phone`, () =>
-      expect(LAYOUTS_SRC).toContain(`${k}: { desktop: Board${v}, phone: Board${v}Phone }`));
-    it(`${v} card: drawer Card${v} and phone CardPhone${v}`, () =>
-      expect(LAYOUTS_SRC).toMatch(new RegExp(`${k}: \\{ drawer: Card${v}, phone: CardPhone${v},`)));
-    it(`${v} card page and states`, () => {
-      expect(LAYOUTS_SRC).toMatch(new RegExp(`\\b${k}: CardPage${v}\\b`));
-      expect(LAYOUTS_SRC).toMatch(new RegExp(`\\b${k}: CardStates${v}\\b`));
-    });
-  }
+describe('every page is one composition (composition contract §8)', () => {
+  it('no per-vibe layout or legacy component is left, and layouts.ts is gone', () => {
+    expect(PER_VIBE_FILES).toEqual([]);
+    expect(Object.keys(import.meta.glob('./layouts.ts'))).toEqual([]);
+  });
 });
 
 describe('the parity guards catch what they are for', () => {

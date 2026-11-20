@@ -22,7 +22,10 @@ async function measure(page: Page) {
     };
     const shown = (el: Element) => {
       const r = el.getBoundingClientRect();
-      return r.width > 0 && r.height > 0 && getComputedStyle(el).visibility !== 'hidden' && !el.closest('.vk-visually-hidden, .sr, [aria-hidden="true"], [role="dialog"], details:not([open]) > :not(summary)');
+      const cs = getComputedStyle(el);
+      // clipPath 'inset(50%)': read by screen readers, not drawn. vibekit's visually-hidden class, or the same rule
+      // written in a page's css (a 1px box clipped to nothing, e.g. the List's copy of the keys line).
+      return r.width > 0 && r.height > 0 && cs.visibility !== 'hidden' && cs.clipPath !== 'inset(50%)' && !el.closest('.vk-visually-hidden, .sr, [aria-hidden="true"], [role="dialog"], details:not([open]) > :not(summary)');
     };
     const name = (el: Element) => `${el.tagName.toLowerCase()}.${String(el.className).split(' ')[0]} "${(el.textContent ?? '').trim().slice(0, 30)}"`;
     const tight: string[] = [];
@@ -75,17 +78,35 @@ for (const vibe of VIBES) {
   });
 }
 
-// Paper's board switcher raises a copy of the board's name and "Change board" above the scrim. The copy's name sat
-// 8px right of the real one, so the two showed through each other as a doubled, smeared title (Round 3).
-for (const width of [1440, 1100]) {
-  test(`paper ${width}: the switcher's raised name lies exactly over the board's own name`, async ({ page }) => {
-    await openWorld(page, DX, { vibe: 'paper', dark: false, width, height: 900 });
-    await page.getByRole('button', { name: /Change board/ }).first().click();
-    const copy = page.locator('.bs-anchor .mh-title');
-    await expect(copy).toBeVisible();
-    const [a, b] = await Promise.all([copy.boundingBox(), page.locator('.vk-masthead__name').first().boundingBox()]);
-    expect(Math.abs(a!.x - b!.x), `copy x ${a!.x}, name x ${b!.x}`).toBeLessThanOrEqual(1);
-    expect(Math.abs(a!.y - b!.y), `copy y ${a!.y}, name y ${b!.y}`).toBeLessThanOrEqual(1);
-    expect(Math.abs(a!.width - b!.width), 'same metrics').toBeLessThanOrEqual(1);
-  });
+// The board switcher raises a copy of the board's control above the scrim. In Paper (Round 3) the copy's name sat 8px
+// right of the real one, so the two showed through each other as a doubled, smeared title. The copy is now one form in
+// every vibe (BoardPickButton): its name must still lie exactly over the board's own name, in the same type, in each
+// vibe (Paper and Quiet draw the name and "Switch board" inline; the copy's name must not land on those words).
+for (const vibe of VIBES) {
+  for (const width of [1440, 1100]) {
+    test(`${vibe} ${width}: the switcher's raised name lies exactly over the board's own name`, async ({ page }) => {
+      await openWorld(page, DX, { vibe, dark: false, width, height: 900 });
+      // The one shell names the masthead's board button "…: Switch board" (B7).
+      await page.getByRole('button', { name: /Switch board/ }).first().click();
+      const copy = page.locator('.bs-anchor .nc-board__name');
+      await expect(copy).toBeVisible();
+      // The real name: Paper and Quiet's .vk-masthead__name, else the title button's own text (before its chevron).
+      const [a, b] = await page.evaluate(() => {
+        const title = document.querySelector('.vk-masthead__title[aria-haspopup]');
+        // Each name's first drawn text (the title button's text stops before its chevron).
+        return [document.querySelector('.bs-anchor .nc-board__name'), title?.querySelector('.vk-masthead__name') ?? title ?? null].map((el) => {
+          const n = el && document.createTreeWalker(el, NodeFilter.SHOW_TEXT, { acceptNode: (t) => ((t.textContent ?? '').trim() ? 1 : 3) }).nextNode();
+          if (!n) return null;
+          const r = document.createRange();
+          r.selectNodeContents(n);
+          const box = r.getBoundingClientRect();
+          return { x: box.x, y: box.y, width: box.width };
+        });
+      });
+      expect(a && b, 'both names are drawn').toBeTruthy();
+      expect(Math.abs(a!.x - b!.x), `copy x ${a!.x}, name x ${b!.x}`).toBeLessThanOrEqual(1);
+      expect(Math.abs(a!.y - b!.y), `copy y ${a!.y}, name y ${b!.y}`).toBeLessThanOrEqual(1);
+      expect(Math.abs(a!.width - b!.width), 'same metrics').toBeLessThanOrEqual(1);
+    });
+  }
 }

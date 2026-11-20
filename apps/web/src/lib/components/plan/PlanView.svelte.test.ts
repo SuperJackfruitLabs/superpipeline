@@ -1,11 +1,11 @@
 // @vitest-environment jsdom
 /**
- * What PlanView decides: an empty board draws the empty explanation (on a phone too), and Daylight's
- * greeting sits in the shell's sky as the band on a desktop and the hello on a phone. The shells,
- * the board layouts and the store are the real ones.
+ * What PlanView decides: an empty board draws the empty explanation (on a phone too), the page draws
+ * its own top row (Board | List, Filter, the "Showing…" line), and the shell draws no greeting. The
+ * shell, the board view and the store are the real ones.
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { cleanup, render, screen } from '@testing-library/svelte';
+import { cleanup, fireEvent, render, screen, within } from '@testing-library/svelte';
 import { tick } from 'svelte';
 
 const env = vi.hoisted(() => {
@@ -21,6 +21,7 @@ vi.mock('$lib/api', async (orig) => ({ ...(await orig<typeof import('$lib/api')>
 import PlanView from './PlanView.svelte';
 import { app } from '$lib/stores/app.svelte';
 import { appearance } from '$lib/appearance.svelte';
+import { shellModel } from '$lib/components/shell/shell-model.svelte';
 import { DX_AGENTS, DX_CARDS, DX_STAGES } from '$lib/components/shell/__fixtures__/dx';
 
 const board = (cards = DX_CARDS) => ({ boardId: 'brd_134a0ddb6d434478', name: 'Developer Experience', stages: DX_STAGES, cards, gates: [], elicitations: [], references: [], intro: null }) as never;
@@ -44,60 +45,60 @@ describe('PlanView: the empty board', () => {
       app.board = board(archived);
       const { container } = render(PlanView);
       expect(screen.getByRole('heading', { level: 2, name: 'No cards yet. Here is what this board does.' })).toBeTruthy();
-      expect(container.querySelector('.pd-board, .dl-board')).toBeNull();
+      expect(container.querySelector('.bv')).toBeNull();
+      expect(screen.queryAllByRole('region')).toHaveLength(0);
     });
   }
   it('draws the board, not the explanation, once a card is live', () => {
     app.board = board();
     const { container } = render(PlanView);
     expect(container.querySelector('.em')).toBeNull();
-    expect(container.querySelector('.dl-board')).toBeTruthy();
+    expect(container.querySelector('.bv')).toBeTruthy();
   });
 });
 
-describe('PlanView: the Daylight greeting', () => {
-  it('is the band on a desktop', () => {
-    app.board = board();
-    const { container } = render(PlanView);
-    expect(container.querySelector('.dl-band')).toBeTruthy();
-    expect(container.querySelector('.pd-hello')).toBeNull();
-  });
-  it('is the hello in the sky on a phone, greeting the person by first name', () => {
-    env.phone = true;
-    app.board = board();
-    const { container } = render(PlanView);
-    expect(container.querySelector('.dl-band')).toBeNull();
-    const hello = screen.getByRole('region', { name: 'Greeting' });
-    expect(hello.querySelector('h2')!.textContent).toMatch(/, Ira[.?]$/);
-    expect(container.querySelector('.pd-board')).toBeTruthy();
-  });
-  it('is not drawn on an empty board (O-13)', () => {
-    env.phone = true;
-    app.board = board(archived);
-    const { container } = render(PlanView);
-    expect(container.querySelector('.pd-hello, .dl-band')).toBeNull();
-  });
-  it('belongs to Daylight alone', () => {
-    env.phone = true;
-    appearance.set({ theme: 'light', vibe: 'quiet' });
-    document.documentElement.dataset.vibe = 'quiet';
-    app.board = board();
-    const { container } = render(PlanView);
-    expect(container.querySelector('.pd-hello')).toBeNull();
-    expect(container.querySelector('.qb-board')).toBeTruthy();
-  });
+describe('PlanView: the greeting', () => {
+  // The greeting ("Working late, …?") is the Inbox headline's, not the board's: the shell's Daylight signature is the sky alone.
+  for (const [where, phone] of [['desktop', false], ['phone', true]] as const) {
+    it(`is not drawn on a Daylight board on a ${where}`, () => {
+      env.phone = phone;
+      app.board = board();
+      const { container } = render(PlanView);
+      expect(container.querySelector('.dl-band, .pd-hello')).toBeNull();
+      expect(screen.queryByRole('region', { name: 'Greeting' })).toBeNull();
+      expect(container.querySelector('.bv')).toBeTruthy();
+    });
+  }
+});
+
+describe('PlanView: the top row', () => {
+  for (const vibe of ['daylight', 'paper', 'studio', 'quiet'] as const) {
+    it(`draws Board | List, Filter and the Showing line in ${vibe}, and offers F while it is there`, async () => {
+      appearance.set({ theme: 'light', vibe });
+      document.documentElement.dataset.vibe = vibe;
+      app.board = board();
+      app.filterOpen = false;
+      render(PlanView);
+      const views = screen.getByRole('navigation', { name: 'View' });
+      expect(within(views).getByRole('link', { name: 'Board' }).getAttribute('aria-current')).toBe('page');
+      expect(screen.getByText(shellModel.showing)).toBeTruthy();
+      expect(shellModel.filterAvailable).toBe(true);
+      await fireEvent.click(screen.getByRole('button', { name: /^Filter cards/ }));
+      expect(app.filterOpen).toBe(true);
+      app.filterOpen = false;
+      cleanup();
+      expect(shellModel.filterAvailable).toBe(false);
+    });
+  }
 });
 
 describe('PlanView: the week\'s spend', () => {
-  it('is read once per board, not again when a refresh replaces the board object', async () => {
-    // A live refresh swaps app.board for a new object with the same id. Reading the spend again would
-    // draw it as still being read (a dash) until the second read lands.
+  // The Studio boards printed the week's spend; the one board composition does not, so it reads none
+  // (was: "is read once per board, not again when a refresh replaces the board object").
+  it('is not read: the board shows no spend figure', async () => {
     app.board = board();
     render(PlanView);
     await tick();
-    const before = usage.calls;
-    app.board = board();
-    await tick();
-    expect(usage.calls).toBe(before);
+    expect(usage.calls).toBe(0);
   });
 });

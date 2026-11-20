@@ -1,10 +1,10 @@
-/* Ported verbatim from e2e/reference/mockups/SP-Board-Empty-Paper.html (prefixes em) by scripts/pixel/extract-css.mjs. */
+/* Ported verbatim from the pixel reference SP-Board-Empty-Paper.html (prefixes em) by the pixel suite's extract-css.mjs (both retired). */
 .em { flex: 1; display: flex; align-items: flex-start; justify-content: center; padding: 48px 40px 64px; }
 .em-card { width: 100%; max-width: 1180px; display: flex; flex-direction: column; gap: 36px; padding: 44px 48px 40px; border: 1px solid var(--vk-color-line); border-radius: var(--vk-radius-lg); background: var(--vk-color-surface); box-shadow: 0 var(--vk-lift) 0 var(--vk-color-ground); }
 .em-head { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: 24px 56px; align-items: end; }
 .em-eyebrow { margin: 0 0 10px; overflow-wrap: anywhere; }
 .em-head > div { min-width: 0; }
-.em-eyebrow:not(.kick) { font-size: 13px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--vk-product-superpipeline-fg); }
+.em-eyebrow { font-size: 13px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--vk-product-superpipeline-fg); }
 .em-eyebrow span { padding: 3px 10px; border-radius: var(--vk-radius-pill); background: var(--vk-product-superpipeline-bg); }
 .em-head h1, .em-head .em-h { margin: 0; font-family: var(--vk-font-display); font-size: 44px; line-height: 1.08; font-weight: 700; letter-spacing: -0.015em; }
 .em-lede { margin: 14px 0 0; font-size: 19px; line-height: 1.55; color: var(--vk-color-muted); max-width: 60ch; }

@@ -1,6 +1,5 @@
 // apps/web/src/lib/components/workspace/crew-new.ts — Crew's masthead primary action ("New agent", "New person",
 // "New capability") opens the dialog the tab owns. The tab registers its opener; the Crew layout calls it.
-import { appearance } from '$lib/appearance.svelte';
 import { viewport } from '$lib/viewport.svelte';
 
 export type CrewNewTab = 'agents' | 'people' | 'capabilities';
@@ -15,5 +14,5 @@ export function onCrewNew(tab: CrewNewTab, open: () => void): () => void {
 }
 export function requestCrewNew(tab: CrewNewTab): void { openers.get(tab)?.(); }
 
-/** The tab draws its own New button only where the masthead has none: a phone, and Quiet (one link row, no actions). */
-export function crewNewInPage(): boolean { return viewport.phone || appearance.value.vibe === 'quiet'; }
+/** The tab draws its own New button only where the masthead has none: a phone (the one shell's masthead carries it in every vibe). */
+export function crewNewInPage(): boolean { return viewport.phone; }

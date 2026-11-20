@@ -1,4 +1,5 @@
 // apps/web/src/lib/components/settings/types.ts
-import type { Vibe } from '@superjackfruit/vibekit';
 import type { BoardSnapshot } from '$lib/api';
-export interface SettingsLayoutProps { board: BoardSnapshot; vibe: Vibe; onChanged: () => void }
+import type { BoardSettingsTab } from './settings-words';
+/** Board settings: the board, a hook for a saved change, the tab to open and a hook for a tab change. */
+export interface BoardSettingsViewProps { board: BoardSnapshot; onChanged: () => void; initial?: BoardSettingsTab; ontab?: (t: BoardSettingsTab) => void }

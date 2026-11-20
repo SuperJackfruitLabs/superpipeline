@@ -8,7 +8,7 @@
  */
 import { test, expect, type Page, type BrowserContext } from '@playwright/test';
 import { waitForSurfaceReady, waitForLayout } from './support/readiness';
-import { seedWorld, FIXTURE_TENANT, FIXTURE_USER } from './pixel/fixture/seed';
+import { seedWorld, FIXTURE_TENANT, FIXTURE_USER } from './visual/fixture/seed';
 
 const DX = '/b/brd_134a0ddb6d434478';
 const CARD = 'card_05823a57e8224605';
@@ -18,7 +18,9 @@ const SIZES = [{ n: 'desk', width: 1440, height: 900 }, { n: 'phone', width: 390
 /** Words that would be false before the data is in. */
 const EMPTY = 'Nothing needs you|Nothing is running|Nothing waits|Nothing is waiting|No [a-z ]{1,24} yet|Reconnecting|Nothing here|No boards|No projects|No agents|No agent is working|Nothing unread|None\\.|\\b0 (cards?|boards?|agents?|projects?|asks?|letters?)\\b|\\$0\\.00|Error:';
 /** Text that is only on screen once the fixture's data is: the surface has loaded. */
-const REAL = ['Diagnose Melissa', 'Fix the highest-severity', 'AgentPod: connector', 'Integrate editorial', 'Building in public', 'Melissa and Anna onboarding', 'Research Ray', 'research-ray', 'Coder Kai', 'coder-kai', 'Developer Experience', 'Client Quality', 'Ira Mehta'];
+const REAL = ['Diagnose Melissa', 'Fix the highest-severity', 'AgentPod: connector', 'Integrate editorial', 'Building in public', 'Melissa and Anna onboarding', 'Research Ray', 'research-ray', 'Coder Kai', 'coder-kai', 'Developer Experience', 'Client Quality', 'Ira Mehta',
+  // Crew's Capabilities: the fixture's described capability (the page has no back link to a board any more).
+  'claim-check'];
 
 const SURFACES: Record<string, string> = {
   inbox: '/inbox', home: '/', board: DX, list: `${DX}?view=list`, drawer: `${DX}/c/${CARD}`, cardpage: `${DX}/c/${CARD}/page`,
@@ -175,6 +177,32 @@ test.describe('slow and silent servers', () => {
     await expect(page.locator('body')).not.toContainText(/establishing link|Nothing/);
     await expect(page.getByText('Still loading — the server is slow.').first()).toBeVisible({ timeout: 12_000 });
     await expect(page.getByRole('button', { name: 'Try again' })).toBeVisible({ timeout: 30_000 });
+    await ctx.close();
+  });
+
+  // Contract rule 11: Crew's list read is sent on its own (it does not wait for the board or its live
+  // feed) and a wait never rests on bars: at 8 s it says the server is slow and Try again reads again.
+  test('crew shows a retry when the agents read hangs', async ({ browser }) => {
+    const ctx = await browser.newContext({ reducedMotion: 'reduce' });
+    const page = await open(ctx, 'daylight');
+    let reads = 0;
+    await page.route('**/v1/agents', (r) => { if (r.request().method() === 'GET') reads++; return new Promise(() => {}); });
+    await page.clock.install();
+    await page.goto('/crew/agents');
+    await expect(page.locator('[data-skeleton][aria-busy="true"]').first()).toBeAttached();
+    await expect.poll(() => reads).toBeGreaterThan(0);
+    await expect(page.getByText('Still loading — the server is slow.')).toHaveCount(0);
+    await page.clock.runFor(8_000);
+    const slow = page.locator('[data-skeleton]').filter({ hasText: 'Still loading — the server is slow.' });
+    await expect(slow).toBeVisible();
+    await expect(page.locator('body')).not.toContainText(/No agents yet|Error:/);
+    // The board open and the Crew counts read the agents too. Wait until no read has started for 1.5 s,
+    // so every one of theirs has fired (and hangs in the route); then only the click can add one.
+    let seen = -1;
+    while (seen !== reads) { seen = reads; await page.waitForTimeout(1_500); }
+    const before = reads;
+    await slow.getByRole('button', { name: 'Try again' }).click();
+    await expect.poll(() => reads).toBe(before + 1);
     await ctx.close();
   });
 

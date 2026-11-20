@@ -40,9 +40,13 @@ test('a human approves an agent-opened gate from the board', async ({ page, requ
 
   const review = page.locator('[data-lane="review"]');
   await expect(review.locator('[data-card-id]', { hasText: 'Launch post' })).toBeVisible();
-  // The tile no longer decides (a decision there had no way to carry a note): it opens the drawer.
-  await page.getByRole('button', { name: 'Review', exact: true }).click();
-  const note = page.getByLabel('Add a note (optional)');
+  // The board's signal: the gated card is marked as waiting on you.
+  await expect(review.locator('[data-card-id]', { hasText: 'Launch post' })).toHaveAttribute('data-needs', '1');
+  // The tile does not decide (a decision there had no way to carry a note): its title opens the drawer.
+  await review.locator('[data-card-open]', { hasText: 'Launch post' }).click();
+  // The card says what waits on you; Review opens the decision in place of that sentence.
+  await page.getByRole('dialog').getByRole('button', { name: 'Review', exact: true }).click();
+  const note = page.getByLabel('Note to the agent (optional)');
   await expect(note).toBeVisible();
   await expect(page.getByRole('button', { name: 'Approve' })).toBeVisible();
 
@@ -80,16 +84,23 @@ test.describe('on a phone', () => {
     });
     await page.addInitScript((id) => window.localStorage.setItem('superpipeline.boardId', id), boardId);
     await page.goto(`/b/${boardId}`);
-    // The phone board's tile action is the needs word itself (the desktop board's is '⚑ Review').
-    await page.getByRole('button', { name: /^(⚑ )?Review$/ }).first().click();
+    await expect(page.locator('[data-lane="review"] [data-card-id]', { hasText: 'Phone post' })).toHaveAttribute('data-needs', '1');
+    // The tile's title opens the card; the decision is in the card.
+    await page.locator('[data-lane="review"] [data-card-open]', { hasText: 'Phone post' }).click();
+    await page.getByRole('dialog').getByRole('button', { name: 'Review', exact: true }).click();
 
-    const note = page.getByLabel('Add a note (optional)');
+    const note = page.getByLabel('Note to the agent (optional)');
     await expect(note).toBeVisible();
     expect(await note.evaluate((el) => parseFloat(getComputedStyle(el).fontSize))).toBeGreaterThanOrEqual(16);
+    // Each decision is a choice the whole row of which is the target; the one button sends the picked one.
     for (const name of ['Approve', 'Request changes', 'Reject']) {
-      const box = await page.getByRole('button', { name, exact: true }).boundingBox();
-      expect(box!.height, name).toBeGreaterThanOrEqual(44);
+      const row = page.getByRole('radio', { name: new RegExp(`^${name}`) }).locator('xpath=ancestor::label[1]');
+      const box = await row.boundingBox();
+      expect(box?.height ?? 0, name).toBeGreaterThanOrEqual(44);
+      expect((box?.x ?? 0) + (box?.width ?? 999), name).toBeLessThanOrEqual(390);
     }
+    const send = await page.getByRole('button', { name: 'Approve', exact: true }).boundingBox();
+    expect(send?.height ?? 0).toBeGreaterThanOrEqual(44);
     const nbox = await note.boundingBox();
     expect(nbox!.x + nbox!.width).toBeLessThanOrEqual(390);
   });

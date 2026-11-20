@@ -44,14 +44,19 @@ test('a human answers a blocked agent’s question from the board', async ({ pag
 
   const tile = page.locator('[data-card-id]', { hasText: 'Add the OAuth flow' });
   await expect(tile).toBeVisible();
-  await tile.getByRole('button', { name: 'Answer', exact: true }).click();
+  // The board's signal: the tile is marked as waiting on you.
+  await expect(tile).toHaveAttribute('data-needs', '1');
+  // The tile says it waits on you in its state line; its title opens the card, where the question is.
+  await tile.locator('[data-card-open]').click();
+  // The card says it waits for an answer; Answer opens the question in place of that sentence.
+  await page.getByRole('dialog').getByRole('button', { name: 'Answer', exact: true }).click();
   const panel = page.locator('.elicitation');
-  // The default vibe (Daylight) says it as SP-Card-States-Daylight B does.
-  await expect(panel).toContainText('has a question');
+  await expect(panel).toContainText('asks:');
   await expect(panel).toContainText('May I run the test suite?');
 
   // 3. Answering unblocks the agent: the card returns to `working` and the run carries the decision.
-  await panel.getByRole('button', { name: 'Run the tests' }).click();
+  await panel.getByRole('radio', { name: /^Run the tests/ }).check();
+  await panel.getByRole('button', { name: 'Answer', exact: true }).click();
 
   await expect
     .poll(async () => {

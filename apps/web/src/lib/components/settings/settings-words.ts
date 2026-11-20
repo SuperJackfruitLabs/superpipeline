@@ -62,3 +62,45 @@ export function grantNote(n: number | null): string {
     ? 'Saving carries your dispatch authority onto every card this trigger opens. Without it, no agent can claim those cards.'
     : `Cards from this trigger may be dispatched to ${n} ${n === 1 ? 'agent' : 'agents'}. Save again to refresh that.`;
 }
+
+// ---- The Settings composition (composition contract, Settings): tabs, labels, connections, caps ----
+
+/** The account Settings tabs, in page order; the hash (`/settings#labels`) picks one. */
+export type SettingsTab = 'labels' | 'connections' | 'appearance' | 'account';
+export const SETTINGS_TABS: readonly { id: SettingsTab; label: string }[] = [
+  { id: 'labels', label: 'Labels' }, { id: 'connections', label: 'Connections' }, { id: 'appearance', label: 'Appearance' }, { id: 'account', label: 'Account' },
+];
+/** Board settings' tabs, in page order; the hash picks one too. */
+export type BoardSettingsTab = 'stages' | 'schedules' | 'labels' | 'caps' | 'github' | 'board';
+export const BOARD_SETTINGS_TABS: readonly { id: BoardSettingsTab; label: string }[] = [
+  { id: 'stages', label: 'Stages' }, { id: 'schedules', label: 'Schedules' }, { id: 'labels', label: 'Labels' },
+  { id: 'caps', label: 'Spending caps' }, { id: 'github', label: 'GitHub' }, { id: 'board', label: 'Name and profiles' },
+];
+/** The tab a URL hash names, or the first. */
+export function tabFromHash<T extends string>(hash: string, tabs: readonly { id: T }[]): T {
+  const h = hash.replace(/^#/, '');
+  return tabs.find((t) => t.id === h)?.id ?? tabs[0].id;
+}
+
+export const BOARD_SETTINGS_LEDE = 'How this board works: its stages, schedules, labels, spending caps and GitHub. Each section saves on its own.';
+
+/** How many live cards carry each label, by label id (a card's `labels` are ids): "used on N cards". */
+export function labelUse(cards: Pick<Card, 'labels' | 'archivedAt'>[]): Record<string, number> {
+  const out: Record<string, number> = {};
+  for (const c of cards) if (!c.archivedAt) for (const id of c.labels ?? []) out[id] = (out[id] ?? 0) + 1;
+  return out;
+}
+export const usedOn = (n: number) => `${n} ${n === 1 ? 'card' : 'cards'}`;
+/** A label's origin in words: someone named it ("you"), or a card created it ("inferred"). */
+export const labelOrigin = (o: 'declared' | 'inferred') => (o === 'inferred' ? 'inferred' : 'you');
+/** The labels section's line under its header: what the list is, and where the use counts come from. */
+export function labelsMeta(scope: 'workspace' | 'board', boardName: string | null): string {
+  if (scope === 'board') return 'The labels this board’s cards carry. A rename or removal reaches every board.';
+  return boardName ? `Shared by every board. Use counts are for ${boardName}, the board you have open.` : 'Shared by every board. Open a board to count where each is used.';
+}
+/** Rows a labels table shows before "Show N more". */
+export const LABELS_PAGE = 6;
+export const showMore = (n: number) => `Show ${n} more`;
+
+/** A spending cap in words. */
+export const capWords = (usd: number | null | undefined) => (usd === null || usd === undefined ? 'No cap' : `$${usd.toFixed(2)}`);

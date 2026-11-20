@@ -1,16 +1,11 @@
 // apps/web/src/lib/components/board/board-words.ts
 /**
- * The boards' own words, as pure functions of the model. Every string here is printed verbatim by a
- * reference artboard; the unit tests hold the exact strings.
+ * The boards' own words, as pure functions of the model. The same words in every vibe; the unit
+ * tests hold the exact strings.
  */
-import { greetNamed } from '$lib/greet';
-import type { Mood, Phase } from '@superjackfruit/vibekit';
-import type { AttentionKind } from '$lib/components/attention/attention';
+import type { Mood } from '@superjackfruitlabs/vibekit-ui';
 import type { BoardSnapshot, Stage } from '$lib/api';
-import { ageStage } from '$lib/age';
 import { numWord, plural } from '$lib/words';
-import type { BoardModel, BoardStage } from './board-model';
-import { refLabel } from './ref-chip';
 import type { CardSummary, StageSummary } from './card-summary';
 
 export const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'] as const;
@@ -19,30 +14,10 @@ const parts = (d: string) => d.slice(0, 10).split('-').map(Number) as [number, n
 export const dueShort = (d: string): string => `${parts(d)[2]} ${MONTHS[parts(d)[1] - 1].slice(0, 3)}`;
 /** '2026-10-06' → '6 October'. */
 export const dueLong = (d: string): string => `${parts(d)[2]} ${MONTHS[parts(d)[1] - 1]}`;
-/** Whole days from the due day to today (the same UTC "today" `overdue()` uses). */
-export function daysOverdue(due: string, nowMs: number): number {
-  const today = Date.parse(new Date(nowMs).toISOString().slice(0, 10));
-  return Math.max(0, Math.round((today - Date.parse(due.slice(0, 10))) / 86_400_000));
-}
 /** Lives in `$lib/names` (card summaries use it, and this file reads theirs); re-exported here. */
 export { personInitials } from '$lib/names';
 
-// ── Daylight ────────────────────────────────────────────────────────────────────────────────────
-export function greetingLine(phase: Phase, firstName: string, needs: number): string {
-  const tail = needs === 0 ? 'Nothing needs you.' : `${needs} ${needs === 1 ? 'card wants' : 'cards want'} you.`;
-  return `${greetNamed(phase, firstName)} ${tail}`;
-}
-
-/** What the agent says in the peek bubble, after its name. */
-export const KIND_SAYS: Partial<Record<AttentionKind, string>> = {
-  blocked: 'I’ve stopped and need you',
-  'repeated-failure': 'I keep failing and need you',
-  question: 'I have a question',
-  review: 'please review my work',
-  'no-owner': 'nobody works this stage',
-};
-export const isStopped = (k: AttentionKind | null): boolean => k === 'blocked' || k === 'repeated-failure';
-export const peekEyebrow = (s: CardSummary): string => `Peek · ${s.stageName} · ${ageStage(s.ageHours)} in this stage`;
+// ── The board page ──────────────────────────────────────────────────────────────────────────────
 export const moreLabelsTitle = (n: number): string => `${n} more ${n === 1 ? 'label' : 'labels'}`;
 
 export type TileWho =
@@ -51,7 +26,7 @@ export type TileWho =
   | { kind: 'plain'; text: string }
   | { kind: 'done'; text: string };
 
-/** The `.dl-who` line of a tile (SB §3.3). */
+/** Who holds a card, and what that means for you (the first half of a tile's state line). */
 export function tileWho(s: CardSummary): TileWho {
   if (s.urgency === 'done') return { kind: 'done', text: s.stageName };
   if (s.urgency === 'closed') return { kind: 'plain', text: 'Closed' };
@@ -67,176 +42,28 @@ export function tileWho(s: CardSummary): TileWho {
   return { kind: 'agent', name: a.name, mood: 'needs', note: '· needs you' };
 }
 
-export interface CardAction { label: string; does: 'move' | 'open' }
-/** The one thing a needs card asks of you. Resume, Answer and Review open the card. */
-export function needsAction(kind: AttentionKind | null): CardAction | null {
-  if (kind === null) return null;
-  if (kind === 'no-owner') return { label: 'Move to another stage', does: 'move' };
-  if (isStopped(kind)) return { label: 'Resume', does: 'open' };
-  if (kind === 'question') return { label: 'Answer', does: 'open' };
-  if (kind === 'review') return { label: 'Review', does: 'open' };
-  return { label: 'Open', does: 'open' };
-}
-export const tileAction = (s: CardSummary): CardAction | null => (s.urgency === 'needs' ? needsAction(s.kind) : null);
-
-/** `.dl-board` columns: an empty collapsed stage is 60px; the fullest lane (when more than one card) is 1.15fr. */
-export function dlCols(stages: Array<Pick<StageSummary, 'key' | 'count'>>, expanded: Record<string, boolean>): string {
-  const max = Math.max(0, ...stages.map((s) => s.count));
-  return stages
-    .map((s) => (s.count === 0 && !expanded[s.key] ? '60px' : max > 1 && s.count === max ? 'minmax(0, 1.15fr)' : 'minmax(0, 1fr)'))
-    .join(' ');
-}
-export const stripLabel = (s: StageSummary): string => `${s.name}, no cards. ${s.ownerLong}${s.gate ? ', approval gate' : ''}. Expand stage`;
-/** The vertical owner word on a strip; null when the single declaring agent's face stands in for it. */
-export function stripOwner(s: StageSummary): string | null {
-  if (s.owner.kind === 'human') return 'a person';
-  if (s.owner.kind === 'agent') return s.owner.label;
-  if (s.declaredBy.length === 1) return null;
-  return s.declaredBy.length === 0 ? 'nobody' : plural(s.declaredBy.length, 'agent', 'agents');
+/** Who works a lane, beside its name: the last stage is where cards end, a gate is a person deciding. */
+export function laneWho(st: StageSummary): string {
+  if (st.terminal) return 'done';
+  if (st.owner.kind === 'human') return st.gate ? 'a person decides' : 'a person works this';
+  if (st.owner.kind === 'agent') return `${st.owner.label} works this`;
+  const d = st.declaredBy;
+  if (d.length === 0) return 'no agent declares this';
+  return d.length === 1 ? `${d[0]} works this` : `${plural(d.length, 'agent', 'agents')} work this`;
 }
 
-// ── Paper ───────────────────────────────────────────────────────────────────────────────────────
-export interface PaperKicker { text: string; live: boolean; none: string | null }
-/** Column 1's kicker: the only signal-coloured heading on the page, and only while something waits. */
-export const paperKicker = (needs: number): PaperKicker =>
-  needs === 0 ? { text: 'Waiting on you', live: false, none: 'Nothing waits on you.' } : { text: `Waiting on you · ${plural(needs, 'letter', 'letters')}`, live: true, none: null };
-/** Any other column kicker: "Coming up · 2", or the bare label and a line saying it is empty. */
-export const paperSection = (label: string, n: number, none: string): { text: string; none: string | null } =>
-  n === 0 ? { text: label, none } : { text: `${label} · ${n}`, none: null };
-/** What a lead story quotes: the agent's words verbatim, or the instruction for an unowned stage. */
-export const paperQuote = (s: CardSummary): string | null => (s.urgency === 'needs' ? s.stopReason : null);
-
-export type PaperBy =
-  | { mark: 'person'; name: string; initials: string; em: string; rest: string }
-  | { mark: 'agent'; name: string; mood: Mood; em: string; rest: string }
-  | { mark: 'check'; em: string; rest: string }
-  | { mark: 'none'; em: string; rest: string };
-
-export function paperBy(s: CardSummary, terminalName: string): PaperBy {
-  if (s.urgency === 'done') return { mark: 'check', em: terminalName, rest: `· ${s.stageName}` };
-  if (s.urgency === 'closed') return { mark: 'none', em: 'Closed', rest: `· ${s.stageName}` };
-  if (s.urgency === 'queued') return { mark: 'none', em: 'Unclaimed', rest: `· ${s.stageName} · ${s.held ? 'starts when unblocked' : 'waiting to be picked up'}` };
-  if (s.urgency === 'working') {
-    const a = s.delegate ?? s.lastAgent;
-    return a ? { mark: 'agent', name: a.name, mood: 'working', em: a.name, rest: `· ${s.stageName} · working` } : { mark: 'none', em: 'Working', rest: `· ${s.stageName}` };
-  }
-  const a = s.lastAgent ?? s.delegate;
-  if (s.kind === 'no-owner' || !a) {
-    return { mark: 'person', name: s.owner.name, initials: s.owner.initials, em: s.owner.isMe ? 'With you' : `With ${s.owner.name}`, rest: `· ${s.stageName} · ${s.ageShort}` };
-  }
-  const tries = s.attemptCount <= 1 ? 'attempt 1' : `${s.attemptCount} attempts`;
-  return { mark: 'agent', name: a.name, mood: 'needs', em: a.name, rest: `· ${s.stageName} · ${s.ageShort} · ${tries}` };
+/**
+ * A folded lane's "Show N more" (rule 7): `n` is what the press shows, `wanting` how many of those want
+ * you, so the two numbers agree. The fold never hides attention silently: "Show 6 more · 2 want you".
+ */
+export function laneMore(n: number, wanting: number): string {
+  const more = `Show ${n} more`;
+  return wanting > 0 ? `${more} · ${wanting} ${wanting === 1 ? 'wants' : 'want'} you` : more;
 }
 
-export interface PaperFact { text: string; cls?: 'ref' | 'due'; icon?: 'blocked' }
-/** `.pp-facts`, in the reference's order: priority, labels, reference, blocked, asked by, due. */
-export function paperFacts(s: CardSummary): PaperFact[] {
-  const out: PaperFact[] = [];
-  if (s.priority > 0) out.push({ text: `P${s.priority}` });
-  if (s.labelsAll > 0) {
-    const names = s.labels.map((l) => l.name);
-    if (s.moreLabels > 0) names.push(`+${s.moreLabels}`);
-    out.push({ text: names.join(' · ') });
-  }
-  if (s.firstRef) out.push({ text: s.firstRef.title ?? refLabel(s.firstRef), cls: 'ref' });
-  if (s.blocked) out.push({ text: 'Blocked', icon: 'blocked' });
-  if (s.queuedBy) out.push({ text: `asked by ${s.queuedBy.name}` });
-  if (s.dueAt) out.push(s.overdue ? { text: `Overdue · due ${dueShort(s.dueAt)}`, cls: 'due' } : { text: `Due ${dueShort(s.dueAt)}` });
-  return out;
-}
-/** The signal-washed reply button of a lead story. */
-export function paperReply(s: CardSummary): CardAction | null {
-  if (s.urgency !== 'needs') return null;
-  if (s.kind === 'no-owner') return { label: 'Move to a stage someone works', does: 'move' };
-  return needsAction(s.kind);
-}
-/** One stage of the pipeline strip: its count, then blocked, the gate, and who works it. */
-export function pipelineParts(st: BoardStage): { n: string; extra: string[] } {
-  const extra: string[] = [];
-  if (st.blocked > 0) extra.push(`${st.blocked} blocked`);
-  if (st.gate) extra.push('approval gate');
-  extra.push(st.ownerLong);
-  return { n: st.count === 0 ? 'empty' : plural(st.count, 'card', 'cards'), extra };
-}
-
-// ── Quiet ───────────────────────────────────────────────────────────────────────────────────────
-export const quietSub = (all: number, needs: number): string =>
-  `Superpipeline · ${plural(all, 'card', 'cards')}${needs > 0 ? ` · ${needs} need your decision` : ''}`;
-export function quietLede(m: BoardModel): string {
-  const { all, needs, done } = m.counts;
-  if (needs > 0) return `${needs} ${needs === 1 ? 'card needs' : 'cards need'} your decision.`;
-  return all > 0 && done === all ? `Nothing needs you. All ${all} cards are done.` : 'Nothing needs you.';
-}
-export const QUIET_GROUPS = [
-  { urgency: 'needs', label: 'Needs your decision', more: 'cards that need your decision' },
-  { urgency: 'working', label: 'In progress', more: 'cards in progress' },
-  { urgency: 'queued', label: 'Waiting to start', more: 'cards waiting to start' },
-  { urgency: 'done', label: 'Done', more: 'done cards' },
-  { urgency: 'closed', label: 'Closed', more: 'closed cards' },
-] as const;
-type QuietUrgency = (typeof QUIET_GROUPS)[number]['urgency'];
-export type QuietBlock =
-  | { kind: 'zero'; aria: string; labels: string[] }
-  | { kind: 'group'; urgency: QuietUrgency; label: string; total: number; cards: CardSummary[]; shown: CardSummary[]; truncated: boolean; moreLabel: string };
-/** History groups (done, closed) list the newest first and fold after five. */
-const HISTORY = new Set<QuietUrgency>(['done', 'closed']);
-export function quietBlocks(m: BoardModel): QuietBlock[] {
-  const out: QuietBlock[] = [];
-  let seenFull = false;
-  let leading: string[] = [];
-  for (const g of QUIET_GROUPS) {
-    let cards = m.ordered.filter((s) => s.urgency === g.urgency);
-    if (cards.length === 0) {
-      if (seenFull) out.push({ kind: 'zero', aria: g.label, labels: [g.label] });
-      else leading.push(g.label);
-      continue;
-    }
-    if (!seenFull && leading.length) out.push({ kind: 'zero', aria: 'Empty groups', labels: leading });
-    leading = [];
-    seenFull = true;
-    if (HISTORY.has(g.urgency)) cards = [...cards].sort((a, b) => Date.parse(b.stateSince ?? '') - Date.parse(a.stateSince ?? ''));
-    const truncated = HISTORY.has(g.urgency) && cards.length > 5;
-    out.push({ kind: 'group', urgency: g.urgency, label: g.label, total: cards.length, cards, shown: truncated ? cards.slice(0, 5) : cards, truncated, moreLabel: `Show all ${cards.length} ${g.more}` });
-  }
-  if (!seenFull && leading.length) out.push({ kind: 'zero', aria: 'Empty groups', labels: leading });
-  return out;
-}
-const agentOf = (s: CardSummary) => (s.urgency === 'working' ? (s.delegate ?? s.lastAgent) : (s.lastAgent ?? s.delegate));
-export function quietMeta(s: CardSummary): string {
-  const a = agentOf(s);
-  if (s.urgency === 'done') return a ? `Ran by ${a.name} · ${s.stageName} · done ${s.agoWords}` : `${s.stageName} · done ${s.agoWords}`;
-  if (s.urgency === 'closed') return `Closed · ${s.stageName} · ${s.agoWords}`;
-  if (s.urgency === 'queued') return `Not picked up yet · ${s.stageName}`;
-  if (s.urgency === 'working') return `${a?.name ?? 'An agent'} · ${s.stageName} · working`;
-  return `${s.kind !== 'no-owner' && a ? a.name : s.owner.isMe ? 'You' : s.owner.name} · ${s.stageName} · ${s.ageLong}`;
-}
-/** The face beside the meta line (grey in Quiet); null when nobody ran the card. */
-export function quietMood(s: CardSummary): Mood | null {
-  if (!agentOf(s) || s.urgency === 'queued' || (s.urgency === 'needs' && s.kind === 'no-owner')) return null;
-  return s.urgency === 'done' ? 'done' : s.urgency === 'needs' ? 'needs' : s.urgency === 'working' ? 'working' : 'resting';
-}
-const QUIET_HEAD: Record<QuietUrgency, string> = { needs: 'Needs your decision.', working: 'In progress.', queued: 'Waiting to start.', done: 'Done.', closed: 'Closed.' };
-export function quietFacts(s: CardSummary): string {
-  const facts: string[] = [QUIET_HEAD[s.urgency]];
-  if (s.priority > 0) facts.push(`Priority ${s.priority}.`);
-  if (s.labelsAll > 0) facts.push(`Labels: ${s.labels.map((l) => l.name).join(', ')}${s.moreLabels > 0 ? ` and ${s.moreLabels} more` : ''}.`);
-  if (s.blocked) facts.push('Blocked by another card.');
-  if (s.firstRef) facts.push(`Reference: ${s.firstRef.title ?? s.firstRef.url}.`);
-  if (s.queuedBy) facts.push(`Asked by ${s.queuedBy.name}.`);
-  if (s.dueAt) facts.push(`Due ${dueLong(s.dueAt)}${s.overdue ? ', overdue' : ''}.`);
-  facts.push(`${plural(s.attemptCount, 'attempt', 'attempts')}.`);
-  return facts.join(' ');
-}
-/** The decision a needs item offers; an unowned stage needs only "Move to another stage", which every item has. */
-export const quietAction = (s: CardSummary): CardAction | null => (s.urgency === 'needs' && s.kind !== 'no-owner' ? needsAction(s.kind) : null);
-export function quietStageRow(st: BoardStage): { name: string; cards: string; who: string; gate: string } {
-  return {
-    name: st.name,
-    cards: st.count === 0 ? '0 (empty)' : st.blocked > 0 ? `${st.count}, ${st.blocked} blocked` : String(st.count),
-    who: st.gate ? st.ownerLong.replace(/ · approval$/, '') : st.ownerLong,
-    gate: st.gate ? 'Approval gate' : '—',
-  };
-}
+/** The board's one attention line: how many cards here wait on you. */
+export const attentionLine = (needs: number): string =>
+  needs === 0 ? 'Nothing here needs you.' : `${needs} ${needs === 1 ? 'card wants' : 'cards want'} you here.`;
 
 // ── Empty board ─────────────────────────────────────────────────────────────────────────────────
 export const escapeHtml = (s: string): string =>

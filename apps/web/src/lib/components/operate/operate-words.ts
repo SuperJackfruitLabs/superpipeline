@@ -5,7 +5,7 @@
  * shown on the reader's clock, in the app's short date form, like the board's "synced".
  */
 import { greetNamed } from '$lib/greet';
-import { greeting, type Phase, type Vibe } from '@superjackfruit/vibekit';
+import { greeting, type Phase, type Vibe } from '@superjackfruitlabs/vibekit-ui';
 import type { AgentSummary, Notification, Stage } from '$lib/api';
 import type { AttentionItem, AttentionKind } from '$lib/components/attention/attention';
 import { stageOwner } from '$lib/components/board/stage-owner';
@@ -14,7 +14,7 @@ import { PAPER_PHASE } from '$lib/components/shell/shell-words';
 import { ageShort, ageWords } from '$lib/age';
 import { clockHM } from '$lib/when';
 import { numWord } from '$lib/words';
-import type { NeedRow } from './layouts/types';
+import type { NeedRow } from './operate-types';
 
 export const RESUME_HINT = 'Fix what it says, then resume it with a note it will read.';
 export const RESUME_LABEL = 'What changed, or what should the agent do differently? It reads this.';
@@ -231,3 +231,10 @@ export function quietSpend(cap: number | null, top: Array<{ name: string; costUs
   const spent = top.length === 0 ? ' No agent has spent anything.' : ` ${top[0].name} spent the most.`;
   return `.${capText}${spent}`;
 }
+
+// ── Spend, in detail, and the board log (one composition in every vibe) ─────────────────────────
+export const SPEND_EYEBROW = 'Plan · spend, in detail';
+export const SPEND_LEDE = (board: string): string => `${board} · what agents cost, by day, agent, board, model and card.`;
+export const SPEND_COMING = 'Success rate, time in stage, throughput and gate rejections arrive with telemetry aggregation (tier 2).';
+/** The board log pages by this many events (rule 7). */
+export const LOG_PAGE = 50;

@@ -40,7 +40,7 @@ export class ProjectsModel {
   /** The boards a project's cards live on (read once per visit, across every board). */
   boardsOf(id: string): Array<{ id: string; name: string }> { return projectWorkspace.boardsOf(id); }
 
-  /** Projects and milestones gate the ready flag; rollups do not (the pixel harness holds them). */
+  /** Projects and milestones gate the ready flag; rollups do not (the retired pixel harness held them). */
   async refresh(): Promise<void> {
     this.loading = true;
     this.loadError = null;

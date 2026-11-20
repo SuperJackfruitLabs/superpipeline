@@ -56,7 +56,7 @@ test.describe('create from the dialog', () => {
     await dialog.getByRole('button', { name: 'Create agent and issue token' }).click();
     await expect(dialog).toBeHidden();
     await expect(page.getByLabel(`New token for ${name}`)).toHaveText(/^spa_/);
-    await expect(page.locator('li.arow, tr').filter({ hasText: name }).first()).toBeVisible();
+    await expect(page.getByRole('row').filter({ hasText: name }).first()).toBeVisible();
   });
 
   test('New person adds someone with a name and a role', async ({ page }) => {
@@ -79,7 +79,8 @@ test.describe('create from the dialog', () => {
     await dialog.getByLabel('Description (optional)').fill('Made by the dialog test.');
     await dialog.getByRole('button', { name: 'Create capability' }).click();
     await expect(dialog).toBeHidden();
-    await expect(page.getByLabel(`Description of ${key}`)).toHaveValue('Made by the dialog test.');
+    // The new capability's row shows its description (the table shows every row after a create).
+    await expect(page.getByRole('row').filter({ hasText: key })).toContainText('Made by the dialog test.');
   });
 });
 

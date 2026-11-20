@@ -1,5 +1,5 @@
 /**
- * `LabelManager.svelte`'s mutations — kept out of the `.svelte` file for the same reason
+ * The labels table's mutations (`settings/LabelsTable.svelte`, through `LabelsModel`) — kept out of the `.svelte` file for the same reason
  * `add-blocker.ts` is (this project's Vitest config cannot import a `.svelte` file).
  *
  * `createLabel`/`updateLabel`/`deleteLabel` (`$lib/api`) have been exported since Phase 1 with no

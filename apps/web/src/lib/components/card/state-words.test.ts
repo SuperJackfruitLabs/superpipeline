@@ -1,36 +1,19 @@
 // apps/web/src/lib/components/card/state-words.test.ts
 import { describe, expect, it } from 'vitest';
-import { attemptWord, eventSentence, eventVerb, pillTone, STOP_SENTENCE, stateWord, stopLine, stripAria, stripKind, trackStatus, waitingWord } from './state-words';
+import { attemptWord, eventSentence, eventVerb, STOP_SENTENCE, stripAria, stripKind, trackStatus } from './state-words';
 import { cardLead } from './card-lead';
-import { ACTIVITIES_4605, ATTEMPTS_4605, CARD_4605, STAGES_DX } from './testing/card-4605';
+import { ACTIVITIES_4605, ATTEMPTS_4605, CARD_4605 } from './testing/card-4605';
 
 const lead4605 = cardLead({ card: CARD_4605 });
-const AGE_4605 = (Date.parse('2026-10-11T08:21:00Z') - Date.parse(CARD_4605.stateSince!)) / 3_600_000;
 
-describe('state words', () => {
-  it('4605 waits on you, for two days on desktop', () => {
-    expect(stateWord(CARD_4605, lead4605)).toBe('Waiting on you');
-    expect(waitingWord(CARD_4605, lead4605, AGE_4605, 'desktop')).toBe('Waiting on you · 2 days');
-    expect(waitingWord(CARD_4605, lead4605, AGE_4605, 'phone')).toBe('Waiting on you');
-    expect(pillTone(CARD_4605, lead4605)).toBe('needs');
-  });
-  it('an archived card says Archived and carries no signal', () => {
-    const c = { ...CARD_4605, archivedAt: '2026-10-09T05:30:00Z' };
-    expect(stateWord(c, lead4605)).toBe('Archived');
-    expect(waitingWord(c, lead4605, AGE_4605, 'desktop')).toBe('Archived');
-    expect(pillTone(c, lead4605)).toBe('off');
+describe('strip kind', () => {
+  it('an archived card is archived, whatever its lead', () => {
     expect(stripKind(lead4605, true)).toBe('archived');
-  });
-  it('other states name the state, never the raw value', () => {
-    const idle = cardLead({ card: { ...CARD_4605, state: 'submitted', needsHuman: undefined } });
-    expect(stateWord({ ...CARD_4605, state: 'submitted' }, idle)).toBe('Queued');
-    const done = cardLead({ card: { ...CARD_4605, state: 'completed', needsHuman: undefined } });
-    expect(stateWord({ ...CARD_4605, state: 'completed' }, done)).toBe('Done');
-    expect(pillTone({ ...CARD_4605, state: 'completed' }, done)).toBe('done');
+    expect(stripKind(lead4605, false)).toBe('stopped');
   });
 });
 
-describe('strip aria and the stop line', () => {
+describe('strip aria', () => {
   it('drawer, cell and phone forms', () => {
     expect(stripAria(1, 7, 'Reproduce', 'stopped', 'drawer')).toBe('Stages: stage 2 of 7, Reproduce, stopped');
     expect(stripAria(1, 7, 'Reproduce', 'stopped', 'phone')).toBe('Stage 2 of 7, Reproduce, stopped here');
@@ -38,10 +21,7 @@ describe('strip aria and the stop line', () => {
     expect(stripAria(2, 5, 'Build', 'question', 'cell')).toBe('Stage 3 of 5, Build, question pending');
     expect(stripAria(2, 8, 'Messaging approval', 'archived', 'cell')).toBe('Stopped at stage 3 of 8, Messaging approval, archived');
   });
-  it('says the verb, where, and what comes next', () => {
-    expect(stopLine(lead4605, 1, STAGES_DX)).toBe('Stopped in stage 2 of 7. Next: Failing test.');
-    expect(stopLine(lead4605, 6, STAGES_DX)).toBe('Stopped in stage 7 of 7.');
-  });
+
 });
 
 describe('attempts and events', () => {

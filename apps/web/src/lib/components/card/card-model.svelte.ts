@@ -26,10 +26,11 @@ import { isAbsent, libraryRef, relatedForCard, type RelatedLite } from '$lib/sup
 import { buildLinkGroups } from '$lib/components/link-groups';
 import { resolveProjectName } from '$lib/components/plan/project-lookup';
 import { normalisePlan } from './plan';
-import { factItems, unclaimedChip } from './card-words';
+import { factItems, stateSentence, unclaimedChip } from './card-words';
+import { artifactRow } from './references';
 import { cardLead, moodFor, speakerOf } from './card-lead';
 import { trackStatus } from './state-words';
-import type { StageTrackStatus } from '@superjackfruit/vibekit';
+import type { StageTrackStatus } from '@superjackfruitlabs/vibekit-ui';
 import { QuestionAnswer } from './question/question-answer.svelte';
 import { CommentsModel } from './comments-model.svelte';
 import { ResumeModel } from './resume-model.svelte';
@@ -39,7 +40,8 @@ import type { CardAgent, CardCounts, GateBinding, QuestionBinding } from './bind
 export type CardSurface = 'drawer' | 'page' | 'gallery';
 export interface CardSource { board: BoardSnapshot; agents: AgentSummary[] }
 export interface CardModelContext { boardId: string | null; cardId: string | null; surface: CardSurface }
-export interface CardModelOptions { holdDetail?: boolean; source?: CardSource }
+/** `holdDetail`: never fetch the card's log (a gallery cell). `failDetail`: a gallery cell that shows the failed read. */
+export interface CardModelOptions { holdDetail?: boolean; failDetail?: boolean; source?: CardSource }
 export interface RelatedState { phase: 'loading' | 'ok' | 'unavailable' | 'absent'; items: RelatedLite[] }
 
 /** An agent the board does not list is "an agent", never its raw `agt_…` id (review focus 3). */
@@ -61,6 +63,8 @@ export class CardModel {
   edges = $state<CardLinks>({ links: [], externalLinks: [] });
   projectDetail = $state<{ project: Project; milestones: Milestone[] } | null>(null);
   related = $state<RelatedState>({ phase: 'loading', items: [] });
+  /** The card's log could not be read (and none was read before): the card says so and offers Try again. */
+  detailFailed = $state(false);
 
   // ---- local UI state ----
   showToolCalls = $state(false);
@@ -89,6 +93,18 @@ export class CardModel {
   readonly surface = $derived.by(() => this.#ctx().surface);
   readonly boardId = $derived.by(() => this.#ctx().boardId);
   readonly cardId = $derived.by(() => this.#ctx().cardId);
+  /**
+   * The card's board is the open board: the route's board id, the store's id and its snapshot all agree.
+   * Every detail read waits for this, so a drawer mounted while another board is still open (a deep link
+   * with a different board remembered) never asks that other board for the card. A model given its
+   * board (`source`, the gallery) needs no open board.
+   */
+  readonly ready = $derived.by(() => {
+    const bid = this.boardId;
+    if (bid === null) return false;
+    if (this.#opts.source) return true;
+    return app.boardId === bid && app.board?.boardId === bid;
+  });
   readonly board = $derived.by<BoardSnapshot | null>(() => this.#opts.source?.board ?? app.board);
   readonly agents = $derived.by<AgentSummary[]>(() => this.#opts.source?.agents ?? app.agents);
   readonly card = $derived<Card | undefined>(this.cardId ? this.board?.cards.find((c) => c.id === this.cardId) : undefined);
@@ -118,6 +134,11 @@ export class CardModel {
   readonly refs = $derived(this.cardId ? (this.board?.references ?? []).filter((r) => r.cardId === this.cardId) : []);
   readonly libraryRefs = $derived(this.refs.flatMap((r) => { const l = libraryRef(r.url); return l ? [{ ref: r, ...l }] : []; }));
   readonly otherRefs = $derived(this.refs.filter((r) => libraryRef(r.url) === null));
+  /** What the last attempt produced: the pending gate's documents, then the card's Superlibrary references, once each. */
+  readonly artifacts = $derived.by(() => {
+    const seen = new Set<string>();
+    return [...(this.gate?.references ?? []), ...this.libraryRefs.map((l) => l.ref)].map(artifactRow).filter((a) => !seen.has(a.url) && !!seen.add(a.url));
+  });
   readonly children = $derived(this.card ? (this.board?.cards ?? []).filter((c) => c.parentCardId === this.card!.id) : []);
   readonly activityGroups = $derived(groupActivities(this.detail?.activities ?? [], this.attempts));
   readonly stageEntries = $derived(stageAccount(this.attempts, this.refs));
@@ -210,6 +231,17 @@ export class CardModel {
     return p.grantCoversDelegate ? `${base}, including the one working it` : `${base} — NOT including the one working it`;
   });
 
+  /** The card's one sentence and the verb that answers it (composition contract §7 "Card" 3). */
+  readonly sentence = $derived.by(() =>
+    this.card && this.lead
+      ? stateSentence({
+          kind: this.lead.kind, archivedAt: this.card.archivedAt ?? null, stage: this.stageName, ageHours: this.ageHours, agent: this.agent.name,
+          attempt: this.card.attemptCount, produced: this.artifacts.length, reason: this.card.needsHuman?.summary ?? null,
+          nextStage: this.stages[this.stageIndex + 1]?.name ?? null, since: this.card.stateSince ?? null, resumable: this.resume.show,
+        })
+      : { text: '', needsWord: null as string | null },
+  );
+
   readonly counts = $derived<CardCounts>({
     criteria: this.acceptanceCriteria?.length ?? 0,
     planSteps: this.plan?.length ?? 0,
@@ -258,13 +290,14 @@ export class CardModel {
   constructor(ctx: () => CardModelContext, opts: CardModelOptions = {}) {
     this.#ctx = ctx;
     this.#opts = opts;
+    this.detailFailed = !!opts.failDetail;
     this.edit = new EditForm(this);
     this.project = new ProjectPicker(this);
     this.links = new LinkEditor(this);
     this.subtasks = new SubtaskComposer(this);
     this.refsForm = new ReferenceComposer(this);
     this.delivery = new DeliveryControls(this);
-    this.comments = new CommentsModel(() => ({ boardId: this.boardId, cardId: this.cardId, onFeed: (fn) => app.onFeed(fn) }));
+    this.comments = new CommentsModel(() => ({ boardId: this.boardId, cardId: this.cardId, ready: this.ready, onFeed: (fn) => app.onFeed(fn) }));
     this.resume = new ResumeModel(() => ({
       boardId: this.boardId, card: this.card ?? null, stages: this.stages, gatePending: !!this.gate, questionPending: !!this.elicitation,
       agentName: this.agent.name, after: async () => { await Promise.all([app.refresh(), this.refresh()]); },
@@ -276,12 +309,13 @@ export class CardModel {
     $effect(() => this.question.follow(this.elicitation?.id ?? null));
     $effect(() => this.resume.follow(this.cardId));
 
-    // The open card changed: reset the forms, then fetch what the snapshot does not carry.
+    // The open card changed: reset the forms, then fetch what the snapshot does not carry, once its board is open.
     $effect(() => {
       const id = this.cardId;
       const bid = this.boardId;
+      const ready = this.ready;
       untrack(() => this.#reset());
-      if (!id || !bid) return;
+      if (!id || !bid || !ready) return;
       untrack(() => {
         if (this.surface === 'gallery') return;
         void app.loadBoards();
@@ -304,7 +338,7 @@ export class CardModel {
     $effect(() => {
       const id = this.cardId;
       const bid = this.boardId;
-      if (!id || !bid || this.#opts.source || this.#opts.holdDetail) return;
+      if (!id || !bid || !this.ready || this.#opts.source || this.#opts.holdDetail) return;
       let timer: ReturnType<typeof setTimeout> | undefined;
       const stop = app.onFeed((event) => {
         if (event.payload?.cardId && event.payload.cardId !== id) return;
@@ -353,6 +387,7 @@ export class CardModel {
     this.gateError = null;
     this.gateConflict = null;
     this.copied = null;
+    this.detailFailed = !!this.#opts.failDetail;
     this.edit.reset();
     this.project.reset();
     this.links.reset();
@@ -365,11 +400,12 @@ export class CardModel {
   async refresh(): Promise<void> {
     const id = this.cardId;
     const bid = this.boardId;
-    if (!id || !bid || this.#opts.holdDetail) return;
+    if (!id || !bid || !this.ready || this.#opts.holdDetail) return;
     // Busy until the log is in, so a dev build's data-ready means the card can be read, not only the board.
     const [acts, atts, est, links] = await app.markBusy(Promise.allSettled([getCardActivities(bid, id), getAttempts(bid, id), getEstimate(bid, id), listLinks(bid, id)]));
-    if (this.cardId !== id) return;
+    if (this.cardId !== id || this.boardId !== bid) return;
     if (acts.status === 'fulfilled') this.detail = acts.value;
+    this.detailFailed = acts.status === 'rejected' && this.detail === null;
     if (atts.status === 'fulfilled') this.attempts = atts.value;
     if (est.status === 'fulfilled') this.estimate = est.value;
     if (links.status === 'fulfilled') this.edges = links.value;
@@ -431,6 +467,25 @@ export class CardModel {
   async refreshGate(): Promise<void> {
     await Promise.all([this.surface === 'gallery' ? Promise.resolve() : app.refresh(), this.#opts.holdDetail ? Promise.resolve() : this.refresh()]);
     this.gateConflict = null;
+  }
+
+  /** The signed-in person may take the card over (they are not its owner, and it is on the board). */
+  readonly canAssign = $derived(!!app.user && !!this.card && this.card.ownerUserId !== app.user.userId && !this.archived);
+
+  /** Open a sub-task in this drawer. */
+  openCard(id: string): void {
+    app.openCard(id);
+  }
+
+  /** Move: the board's Move dialog for this card. */
+  openMove(): void {
+    if (this.card) app.openMoveDialog(this.card.id);
+  }
+
+  /** Try again after a failed or slow read of the card's log. */
+  async retry(): Promise<void> {
+    this.detailFailed = false;
+    await this.refresh();
   }
 
   async assignToMe(): Promise<void> {

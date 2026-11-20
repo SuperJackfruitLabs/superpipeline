@@ -2,6 +2,7 @@
 import { createCapability, updateCapability, deleteCapability, addImplication, removeImplication, type AgentSummary, type CapabilityRecord } from '$lib/api';
 import { similarKeys } from '@superpipeline/contract';
 import { app } from '$lib/stores/app.svelte';
+import { loadState } from '$lib/loading.svelte';
 import { holdersOf, orphanNote, unstaffedNote, type CapNote } from './capability-notes';
 import { crewLists, workspaceCounts } from './workspace-counts.svelte';
 
@@ -12,11 +13,15 @@ export class CapabilitiesModel {
   error = $state<string | null>(null);
   /** The list could not be read: the tab says so with Try again (never an empty list, never the raw error). */
   failed = $state(false);
+  /** Where the list read stands: skeleton, slow (with Try again), failed or ready. */
+  readonly load = loadState(() => ({ value: this.capabilities, failed: this.failed }));
   newKey = $state('');
   newDescription = $state('');
   /** The New capability dialog's own error. */
   createError = $state<string | null>(null);
   similar = $state<string[]>([]);
+  /** The key the New capability dialog last created, so the table can show it. */
+  lastAdded = $state<string | null>(null);
   implyingFor = $state<string | null>(null);
   implyTo = $state('');
 
@@ -32,6 +37,9 @@ export class CapabilitiesModel {
     this.failed = false;
     try { [this.capabilities, this.agents] = await load; } catch { this.failed = true; }
   }
+
+  /** Try again: read the list once more. */
+  retry(): Promise<void> { return this.refresh(); }
 
   private async bodyError(res: Response, fallback: string): Promise<string> {
     const body = (await res.json().catch(() => null)) as { error?: string } | null;
@@ -55,6 +63,7 @@ export class CapabilitiesModel {
     const body = (await res.clone().json().catch(() => null)) as { similar?: string[] } | null;
     if (!res.ok) { this.createError = await this.bodyError(res, 'Adding failed'); return false; }
     this.similar = body?.similar ?? [];
+    this.lastAdded = key;
     this.newKey = '';
     this.newDescription = '';
     await this.refresh();
@@ -62,7 +71,20 @@ export class CapabilitiesModel {
     return true;
   }
 
-  startImply(key: string): void { this.implyingFor = key; this.implyTo = ''; }
+  /** The capability whose description is open for editing (from its actions menu), and the text in it. */
+  describing = $state<string | null>(null);
+  describeText = $state('');
+
+  startDescribe(c: CapabilityRecord): void { this.implyingFor = null; this.describing = c.key; this.describeText = c.description ?? ''; }
+
+  async saveDescribe(): Promise<void> {
+    const c = this.capabilities?.find((x) => x.key === this.describing);
+    if (!c) return;
+    await this.describe(c, this.describeText);
+    this.describing = null;
+  }
+
+  startImply(key: string): void { this.describing = null; this.implyingFor = key; this.implyTo = ''; }
 
   async imply(from: string): Promise<void> {
     const to = this.implyTo.trim();

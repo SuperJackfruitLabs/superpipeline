@@ -8,7 +8,7 @@
   import { createRawSnippet, mount, unmount, untrack, type Component } from 'svelte';
   import { getBoard, type Stage } from '$lib/api';
   import { goto } from '$app/navigation';
-  import { CommandPalette, Face, type PaletteGroup } from '@superjackfruit/vibekit';
+  import { CommandPalette, Face, type PaletteGroup } from '@superjackfruitlabs/vibekit-ui';
   import { app } from '$lib/stores/app.svelte';
   import { appearance } from '$lib/appearance.svelte';
   import { signOut } from '$lib/components/shell/account';

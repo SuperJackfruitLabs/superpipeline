@@ -1,5 +1,5 @@
 // apps/web/src/lib/components/dialogs/dialog-copy.ts
-import type { Vibe } from '@superjackfruit/vibekit';
+import type { Vibe } from '@superjackfruitlabs/vibekit-ui';
 
 /** The composer's lead, verbatim per vibe. It still says an agent drafts (D-1 ships later; the copy is the reference's). */
 export const NC_LEAD: Readonly<Record<Vibe, string>> = {

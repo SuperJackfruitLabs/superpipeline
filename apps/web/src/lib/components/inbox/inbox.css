@@ -1,37 +1,130 @@
-/* apps/web/src/lib/components/inbox/inbox.css — the Inbox's Show row and board chips, in vibekit tokens. */
-.ib-show { display: flex; flex-direction: column; gap: var(--vk-space-2); margin: 0 0 var(--vk-space-4); min-width: 0; }
-.ib-show__row { display: flex; flex-wrap: wrap; align-items: center; gap: var(--vk-space-2); min-width: 0; }
-.ib-show__h { margin: 0; font: inherit; font-size: var(--vk-text-sm); font-weight: 600; color: var(--vk-color-muted); }
-.ib-show__note { margin: 0; font-size: var(--vk-text-sm); color: var(--vk-color-muted); }
-.ib-chip, .ib-more {
-  display: inline-flex; align-items: center; gap: 6px; min-height: 44px; min-width: 44px; max-width: 100%; padding: 0 12px;
-  border: 1px solid var(--vk-color-line); border-radius: var(--vk-radius-pill, 999px); background: var(--vk-color-raised);
-  color: var(--vk-color-text); font: inherit; font-size: var(--vk-text-sm); cursor: pointer;
+/* apps/web/src/lib/components/inbox/inbox.css: the Inbox (InboxPage), one composition for every vibe
+   (composition contract, Inbox; composition.css .hero-row, .group, .row, .foot). Tokens only. The
+   first part is the same in every vibe; the last part is each vibe's signature, keyed on the vibe
+   root's data-vibe and scoped to [data-signature] (the headline block and the scope control): it
+   changes surfaces and type, never words. */
+
+.ib { display: grid; gap: var(--vk-space-4); padding: var(--vk-space-3) var(--vk-space-4) var(--vk-space-5); min-width: 0; }
+
+/* The headline: one message, one lede. */
+.ib-head { display: grid; gap: 6px; padding: var(--vk-space-4) 0 var(--vk-space-2); min-width: 0; }
+.ib-head__h { margin: 0; font: var(--vk-type-h1); font-stretch: var(--vk-type-h1-stretch); letter-spacing: -0.01em; overflow-wrap: anywhere; }
+.ib-head__lede { margin: 0; max-width: 72ch; color: var(--vk-color-muted); }
+
+/* The scope: vibekit QuickFilter (Studio: SmallMultiples). While counting it holds its row. */
+.ib-scope { min-width: 0; }
+.ib-scope__wait { min-height: 44px; }
+/* A long board name wraps inside its chip, never past the screen. Below 640px vibekit makes the row a scroller, so it is left alone there. */
+@media (min-width: 640px) {
+  .ib-scope .vk-quickfilter__item, .ib-scope .vk-smallmultiples__item { max-width: 100%; min-width: 0; }
+  .ib-scope .vk-quickfilter__face, .ib-scope .vk-quickfilter__label, .ib-scope .vk-smallmultiples__name { white-space: normal; overflow-wrap: anywhere; }
 }
-.ib-chip__name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.ib-chip[aria-pressed='true'] { background: var(--vk-color-text); border-color: var(--vk-color-text); color: var(--vk-color-bg); }
-.ib-chip__n { font-variant-numeric: tabular-nums; color: var(--vk-color-muted); }
-.ib-chip[aria-pressed='true'] .ib-chip__n { color: inherit; }
-.ib-chip__n--needs { color: var(--vk-color-signal-text); font-weight: 600; }
-.ib-more { border-style: dashed; background: transparent; color: var(--vk-color-muted); }
-.ib-chip:focus-visible, .ib-more:focus-visible { outline: 2px solid var(--vk-color-primary); outline-offset: 2px; }
-/* Quiet: a line of words, links not pills. */
-.ib-show--words .ib-chip, .ib-show--words .ib-more { min-height: 44px; padding: 0; border: 0; border-radius: 0; background: none; text-decoration: underline; color: var(--vk-color-text); }
-.ib-show--words .ib-chip[aria-pressed='true'] { background: none; color: var(--vk-color-text); font-weight: 700; text-decoration: none; }
-.ib-show__dot { color: var(--vk-color-muted); }
-.ib-board {
-  display: inline-flex; align-items: center; max-width: 100%; padding: 1px 8px; border: 1px solid var(--vk-color-line);
-  border-radius: var(--vk-radius-pill, 999px); font-size: var(--vk-text-xs, 12px); color: var(--vk-color-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+
+/* The tabs row: the tabs, then Filter at the end. */
+.ib-tabs { min-width: 0; }
+.ib-tabs .vk-tabs { flex-wrap: wrap; row-gap: var(--vk-space-2); }
+.ib-tabs .vk-tabs__end { margin-left: auto; }
+.ib-tabs .vk-tabs__panel { display: grid; gap: var(--vk-space-5); padding-top: var(--vk-space-4); min-width: 0; }
+.ib-tabs .vk-tabs__panel:focus-visible { outline: none; }
+.ib-tabs .vk-badge { margin-left: 6px; }
+
+/* The filter row, revealed under the tabs. */
+/* Shut, it is out of sight and out of reach (inert); it hides once the row has closed. */
+.ib-filters > div { transition: visibility 0s linear var(--vk-d-base); }
+.ib-filters[data-open="false"] > div { visibility: hidden; }
+.ib-filters[data-open="true"] > div { transition-delay: 0s; }
+.ib-filters__row { display: flex; flex-wrap: wrap; align-items: center; gap: var(--vk-space-2) 10px; padding: 2px 2px var(--vk-space-2); }
+.ib-filters__break { flex-basis: 100%; height: 0; }
+.ib-filters__sort { margin-left: auto; }
+.ib-find { display: inline-flex; flex: 1 1 220px; max-width: 360px; min-width: 0; }
+.ib-find__input { width: 100%; min-height: 44px; padding: 0 var(--vk-space-3); border: 0; border-radius: var(--vk-radius-md); background: var(--vk-color-surface); box-shadow: inset 0 0 0 1px var(--vk-color-line); color: var(--vk-color-text); font: inherit; }
+.ib-find__input:focus-visible { outline: 2px solid var(--vk-color-primary); outline-offset: 2px; }
+/* The menu's chevron is drawn, not said: it stays out of the trigger's name. */
+.ib-menu__chev { margin-left: 6px; color: var(--vk-color-muted); }
+
+/* Needs you: the groups, one under another. */
+.ib-needs { display: grid; gap: var(--vk-space-5); min-width: 0; }
+
+/* A group: header with its count, one line that says what it is for, its actions, rows, Show N more. */
+.ib-group { display: grid; gap: var(--vk-space-3); min-width: 0; scroll-margin-top: var(--vk-space-6); }
+.ib-count { font-variant-numeric: tabular-nums; }
+.ib-why { margin: 0; max-width: 72ch; color: var(--vk-color-muted); font: var(--vk-type-meta); }
+.ib-groupact { display: flex; flex-wrap: wrap; align-items: center; gap: var(--vk-space-2); }
+.ib-rows { display: grid; gap: var(--vk-space-2); margin: 0; padding: 0; list-style: none; min-width: 0; }
+.ib-li { min-width: 0; }
+
+/* A row: face, title and meta, the one verb at the end. */
+.ib-row { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: start; gap: var(--vk-space-3); min-height: 52px; padding: var(--vk-space-2) 0; min-width: 0; }
+.ib-row--run, .ib-row--act { grid-template-columns: auto minmax(0, 1fr) auto auto; }
+/* The row J / K picked: raised, with a mark in the gutter beside it (the row's own box does not move). */
+.ib-row[data-selected="true"] { background: var(--vk-color-raised); box-shadow: -4px 0 0 var(--vk-color-text); }
+.ib-row--spend { grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; min-height: 40px; }
+.ib-row__face { display: inline-flex; width: 32px; min-height: 32px; }
+.ib-row__body { display: grid; gap: 4px; min-width: 0; }
+.ib-row__t { margin: 0; font: inherit; font-weight: 600; overflow-wrap: anywhere; }
+.ib-row__t a { color: inherit; text-decoration: none; }
+.ib-row__t a:hover { text-decoration: underline; }
+.ib-row__t a:focus-visible { outline: 2px solid var(--vk-color-primary); outline-offset: 2px; }
+.ib-row__meta { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; margin: 0; color: var(--vk-color-muted); font: var(--vk-type-meta); overflow-wrap: anywhere; min-width: 0; }
+.ib-row__act { display: flex; align-items: center; justify-content: flex-end; }
+.ib-row__refused { margin: 0; color: var(--vk-color-signal-text); font: var(--vk-type-meta); }
+.ib-cost, .ib-when { color: var(--vk-color-muted); font: var(--vk-type-mono); white-space: nowrap; }
+.ib-board { display: inline-block; flex: 0 1 auto; min-width: 0; max-width: 100%; padding: 1px 8px; border: 1px solid var(--vk-color-line); border-radius: var(--vk-radius-pill); font-size: var(--vk-text-xs, 12px); color: var(--vk-color-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* The agent's own words, behind "What it said" (rule 5). */
+.ib-said { min-width: 0; }
+.ib-said__s { display: inline-flex; align-items: center; min-height: 44px; color: var(--vk-color-muted); font: var(--vk-type-meta); text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
+.ib-said__p { margin: 0; max-width: 72ch; white-space: pre-wrap; overflow-wrap: anywhere; }
+
+/* Resume's note form, under its row. */
+.ib-resume { display: grid; gap: var(--vk-space-3); padding: var(--vk-space-3) 0; min-width: 0; }
+.ib-field { display: grid; gap: 6px; min-width: 0; max-width: 100%; font: var(--vk-type-meta); }
+.ib-select, .ib-textarea { max-width: 100%; min-width: 0; min-height: 44px; padding: 0 var(--vk-space-2); border: 1px solid var(--vk-color-line); border-radius: var(--vk-radius-sm); background: var(--vk-color-bg); color: var(--vk-color-text); font: inherit; text-overflow: ellipsis; }
+.ib-textarea { min-height: 88px; padding: var(--vk-space-2); }
+.ib-resume__acts { display: flex; flex-wrap: wrap; gap: var(--vk-space-2); }
+
+/* Spend: one figure, the cap in words, one meter, who spent it. */
+.ib-spend__big { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--vk-space-3); margin: 0; }
+.ib-spend__n { font: var(--vk-type-h1); font-stretch: var(--vk-type-h1-stretch); font-variant-numeric: tabular-nums; }
+.ib-spend__cap { color: var(--vk-color-muted); }
+
+/* Activity: an unread mark, the card, what happened, when. */
+.ib-unread { width: 8px; height: 8px; margin-top: 8px; border-radius: 50%; background: var(--vk-color-signal); }
+.ib-unread[data-read="true"] { background: none; box-shadow: inset 0 0 0 1px var(--vk-color-line); }
+.ib-more { min-height: 44px; padding: 0; border: 0; background: none; color: inherit; font: inherit; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
+.ib-earlier { display: grid; gap: 4px; margin: 0; padding: 0; list-style: none; color: var(--vk-color-muted); font: var(--vk-type-meta); }
+
+.ib-foot { margin: 0; color: var(--vk-color-muted); font: var(--vk-type-meta); }
+
+@media (max-width: 899.98px) {
+  .ib { padding: var(--vk-space-2) 16px var(--vk-space-5); }
+  /* Phone targets are 44px (pages-polish Q4): the scope's chips, and a row's title link without growing its line. */
+  .ib-scope .vk-quickfilter__item { min-height: 44px; }
+  .ib-row__t a { display: inline-flex; align-items: center; min-height: 44px; margin-block: -10px; }
+  .ib-row, .ib-row--run, .ib-row--act { grid-template-columns: auto minmax(0, 1fr); }
+  .ib-row__act, .ib-cost, .ib-row--act .ib-when { grid-column: 2; justify-content: flex-start; }
 }
-.ib-show__scope { margin: 0; font-size: var(--vk-text-lg, 1.125rem); font-weight: 600; color: var(--vk-color-text); }
-/*
- * Native controls in an ask never size the page (operator, iPhone): a <select> grows to its longest
- * option ("Audit … · diagnostics, error-eric"), and a flex item's min-width is its content, so one
- * long stage name pushed the card, and the whole page, past the screen. Cap them at their row.
- */
-:where(.op-dy, .op-pp, .op-q, .op-main) :is(select, input, textarea) { max-width: 100%; min-width: 0; text-overflow: ellipsis; }
-:where(.op-dy, .op-pp, .op-q, .op-main) select { flex: 1 1 12rem; width: 100%; }
-:where(.op-dy, .op-pp, .op-q, .op-main) :is(label, .acts, .resume__row, .ask, .ask > div, .letter, .grp, .ev) { min-width: 0; max-width: 100%; }
-:where(.op-dy, .op-pp, .op-q, .op-main) :is(.acts, .resume__row) { flex-wrap: wrap; }
-/* A long board name on a chip ends in an ellipsis and keeps its full name in the title. */
-.ib-board { display: inline-block; flex: 0 1 auto; min-width: 0; }
+
+/* ---- Rows per vibe (the list-row treatment): surfaces and rules, never words ---- */
+[data-vibe="daylight"] .ib-group { padding: var(--vk-space-4); border-radius: 16px; background: var(--vk-color-surface); }
+[data-vibe="daylight"] .ib-row { padding: 6px 14px; border-radius: var(--vk-radius-md); background: var(--vk-color-raised); }
+[data-vibe="daylight"] .ib-row[data-selected="true"] { box-shadow: inset 3px 0 0 var(--vk-color-text); }
+[data-vibe="paper"] .ib-li + .ib-li .ib-row,
+[data-vibe="studio"] .ib-li + .ib-li .ib-row,
+[data-vibe="quiet"] .ib-li + .ib-li .ib-row { border-top: 1px solid var(--vk-color-line); }
+[data-vibe="studio"] .ib-unread, [data-vibe="studio"] .ib-find__input, [data-vibe="studio"] .ib-board { border-radius: 0; }
+[data-vibe="quiet"] .ib-board { border: 0; padding: 0; text-decoration: underline; }
+
+/* ---- Signature: the headline block and the scope control ---- */
+/* Daylight: the greeting band. */
+[data-vibe="daylight"] .ib-head[data-signature] { padding: var(--vk-space-5) var(--vk-space-5) var(--vk-space-4); border-radius: 20px; background: var(--vk-color-raised); }
+[data-vibe="daylight"] .ib-head[data-signature] .ib-head__h { font-family: var(--vk-font-display); }
+/* Studio: the figure (vibekit Hero), ink rule under it. */
+[data-vibe="studio"] .ib-head[data-signature] { padding-bottom: var(--vk-space-3); border-bottom: 2px solid var(--vk-color-text); }
+[data-vibe="studio"] .ib-head[data-signature] .ib-head__h { text-transform: none; letter-spacing: -0.02em; }
+/* Paper: Newsreader display, an italic lede. */
+[data-vibe="paper"] .ib-head[data-signature] .ib-head__h { font-family: var(--vk-font-display); font-weight: 500; }
+[data-vibe="paper"] .ib-head[data-signature] .ib-head__lede { font-style: italic; }
+/* Quiet: larger plain type, one column. */
+[data-vibe="quiet"] .ib-head[data-signature] .ib-head__lede { font-size: var(--vk-text-lg, 1.125rem); color: var(--vk-color-text); }
+[data-vibe="studio"] .ib-scope[data-signature] { padding-top: var(--vk-space-1); }

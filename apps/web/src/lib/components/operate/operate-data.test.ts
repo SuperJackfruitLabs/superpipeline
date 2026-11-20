@@ -46,14 +46,21 @@ describe('runningRows and spendView', () => {
   it('nothing runs on the fixture board', () => expect(runningRows(DX_BOARD, DX_AGENTS)).toEqual([]));
   it('a working card is a running row', () => {
     const board = { ...DX_BOARD, cards: [{ ...C58F8, state: 'working', delegateAgentId: 'agt_fx_tester_tim', costUsd: 0.42 }] };
-    expect(runningRows(board, DX_AGENTS)).toEqual([{ cardId: C58F8.id, title: C58F8.title, boardId: DX_BOARD.boardId, boardName: DX_BOARD.name, stageName: 'Failing test', agentName: 'tester-tim', iconUrl: null, costUsd: 0.42 }]);
+    expect(runningRows(board, DX_AGENTS)).toEqual([{ cardId: C58F8.id, title: C58F8.title, boardId: DX_BOARD.boardId, boardName: DX_BOARD.name, stageName: 'Failing test', agentName: 'tester-tim', iconUrl: null, costUsd: 0.42, since: C58F8.stateSince ?? null }]);
   });
   it('spend with no usage, no cap', () => {
-    expect(spendView(null, DX_BOARD.usage, DX_AGENTS)).toEqual({ total: 0, cap: null, cardCap: null, overBudget: false, pct: null, top: [] });
+    expect(spendView(null, DX_BOARD.usage, DX_AGENTS)).toEqual({ total: 0, cap: null, cardCap: null, overBudget: false, pct: null, top: [], more: 0 });
   });
   it('spend against a cap, top agents by name', () => {
     const usage = { totalCostUsd: 5, estimatedCostUsd: 0, totalInputTokens: 0, totalOutputTokens: 0, unpricedRecords: 0, byModel: [], byCard: [], byAgent: [{ agentId: 'agt_fx_tester_tim', costUsd: 1 }, { agentId: 'agt_fx_coder_kai', costUsd: 4 }], byDay: [] };
     expect(spendView(usage, { ...DX_BOARD.usage, budgetUsd: 20 }, DX_AGENTS)).toMatchObject({ total: 5, cap: 20, pct: 25, top: [{ name: 'coder-kai', costUsd: 4 }, { name: 'tester-tim', costUsd: 1 }] });
+  });
+  it('names five who spent most and counts the rest, never dropping them silently', () => {
+    const byAgent = Array.from({ length: 8 }, (_, i) => ({ agentId: `agt_${i}`, costUsd: i + 1 }));
+    const usage = { totalCostUsd: 36, estimatedCostUsd: 0, totalInputTokens: 0, totalOutputTokens: 0, unpricedRecords: 0, byModel: [], byCard: [], byAgent, byDay: [] };
+    const v = spendView(usage, null, []);
+    expect(v.top).toHaveLength(5);
+    expect(v.more).toBe(3);
   });
 });
 
@@ -66,6 +73,26 @@ describe('moveTargets and parseCap', () => {
     expect(parseCap(' 25.50 ')).toEqual({ ok: true, value: 25.5 });
     expect(parseCap('-1')).toEqual({ ok: false, error: 'Enter an amount in dollars, like 25 or 25.50.' });
     expect(parseCap('lots')).toEqual({ ok: false, error: 'Enter an amount in dollars, like 25 or 25.50.' });
+  });
+});
+
+describe('an agent the workspace cannot name (rule 5: names, never ids)', () => {
+  const GHOST = 'agt_2613e473e3934509';
+  it('Needs, Running and Activity rows carry no name, so their words say "An agent"; Spend says it too', () => {
+    const board = { ...DX_BOARD, cards: DX_BOARD.cards.map((c) => ({ ...c, delegateAgentId: GHOST, lastAgentId: GHOST })) };
+    const need = needRows(board, DX_AGENTS, sortAttention(itemsFromBoard(board, DX_AGENTS, DX_NOW), 'stage'), DX_NOW);
+    expect(need.length).toBeGreaterThan(0);
+    for (const r of need) expect(r.agentName).toBeNull();
+    for (const g of activityGroups(DX_NOTIFICATIONS, true, need, board, DX_AGENTS)) expect(g.agentName).toBeNull();
+    const running = runningRows({ ...board, cards: board.cards.map((c) => ({ ...c, state: 'working' as const })) }, DX_AGENTS);
+    expect(running.length).toBeGreaterThan(0);
+    for (const r of running) expect(r.agentName).toBeNull();
+    const usage = { totalCostUsd: 1, estimatedCostUsd: 0, totalInputTokens: 0, totalOutputTokens: 0, unpricedRecords: 0, byModel: [], byCard: [], byAgent: [{ agentId: GHOST, costUsd: 1 }], byDay: [] };
+    expect(spendView(usage, null, DX_AGENTS).top).toEqual([{ id: GHOST, name: 'An agent', costUsd: 1 }]);
+    // Two such agents are two rows (their key is the id, not the words).
+    const two = spendView({ ...usage, byAgent: [{ agentId: GHOST, costUsd: 1 }, { agentId: 'agt_ffffffffffff0001', costUsd: 2 }] }, null, DX_AGENTS).top;
+    expect(new Set(two.map((a) => a.id)).size).toBe(2);
+    expect(JSON.stringify([need.map((r) => r.agentName), running])).not.toMatch(/agt_…|…934509/);
   });
 });
 

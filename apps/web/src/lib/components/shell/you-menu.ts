@@ -4,7 +4,7 @@
  * who is signed in, Appearance, the theme, Settings and Sign out. The rail and bar shells use AppNav's own
  * `account.items`.
  */
-import type { MenuItem } from '@superjackfruit/vibekit';
+import type { MenuItem } from '@superjackfruitlabs/vibekit-ui';
 import { shellModel as m } from './shell-model.svelte';
 
 export function youMenuItems(): MenuItem[] {

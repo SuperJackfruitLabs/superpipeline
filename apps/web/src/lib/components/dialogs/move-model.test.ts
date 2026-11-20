@@ -1,6 +1,6 @@
 // apps/web/src/lib/components/dialogs/move-model.test.ts
 import { describe, expect, it } from 'vitest';
-import { AGENTS, DX_STAGES } from '../../../../e2e/pixel/fixture/dialog-cases';
+import { AGENTS, DX_STAGES } from '../../../../e2e/visual/fixture/dialog-cases';
 import { dirLabel, initialPick, moveNowLead, moveThen, ownerFace, primaryLabel, stageCountText } from './move-model';
 
 describe('move dialog model', () => {

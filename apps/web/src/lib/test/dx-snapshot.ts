@@ -1,7 +1,7 @@
 // apps/web/src/lib/test/dx-snapshot.ts
 /**
  * The Developer Experience board as the web client receives it at the fixture clock — the same
- * world `e2e/pixel/fixture/world.ts` imports, shaped as the API types so unit tests can derive
+ * world `e2e/visual/fixture/world.ts` imports, shaped as the API types so unit tests can derive
  * exactly what the Operate and List artboards print. Test data only: nothing in the app imports it.
  */
 import type { AgentSummary, BoardSnapshot, Card, Label, Member, Notification } from '$lib/api';

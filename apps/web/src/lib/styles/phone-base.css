@@ -1,7 +1,7 @@
 /* apps/web/src/lib/styles/phone-base.css
-   The phone frame's product-only rules, under every phone shell's .ph-root. vibekit draws the
+   The phone frame's product-only rules, under the shell's .ph-root (ShellView below PHONE_QUERY). vibekit draws the
    header and the tab bar (PhoneHeader, PhoneTabBar); nothing here restyles them.
-   Root ported from e2e/reference/mockups/SP-Phone-Board-Daylight.html (.r, lines 3-16, the same in
+   Root ported from the pixel reference SP-Phone-Board-Daylight.html (.r, lines 3-16, the same in
    the Paper and Quiet phone references). Deltas: .r → .ph-root; width:390px → width:100%;
    + min-height:100dvh, so the bar meets the screen's foot on a short page. */
 .ph-root { width: 100%; min-height: 100dvh; box-sizing: border-box; background: var(--vk-color-bg); color: var(--vk-color-text); display: flex; flex-direction: column; }
@@ -9,8 +9,8 @@
 /* The "You" glyph in the icon bars: the person's initials. Daylight's .av and Studio's .me, from
    SP-Phone-Board-Daylight and SP-Phone-Board-Studio. */
 .ph-root .ph-you { display: inline-grid; place-items: center; box-sizing: border-box; font-size: 10px; font-weight: 800; }
-.ph-root[data-shell="daylight-phone"] .ph-you { width: 26px; height: 26px; border-radius: 50%; background: var(--vk-mood-resting); color: var(--vk-face-ink); }
-.ph-root[data-shell="studio-phone"] .ph-you { width: 22px; height: 22px; border: 1.5px solid currentColor; font-family: var(--vk-font-display); }
+[data-vibe='daylight'] .ph-root .ph-you { width: 26px; height: 26px; border-radius: 50%; background: var(--vk-mood-resting); color: var(--vk-face-ink); }
+[data-vibe='studio'] .ph-root .ph-you { width: 22px; height: 22px; border: 1.5px solid currentColor; font-family: var(--vk-font-display); }
 /* A row of Quiet's header buttons and its view links (SP-Phone-Board-Quiet .pq-row: 16px apart). */
 .ph-root .ph-row { display: flex; flex-wrap: wrap; align-items: center; gap: 0 16px; min-width: 0; }
 
@@ -20,7 +20,7 @@
  * out wider than the screen. On the phone shell every Studio page body keeps the 16px gutter, and a table scrolls
  * inside itself rather than widening the page.
  */
-[data-shell='studio-phone'] div:is(.wo-main, .wa-main, .op-main, .pj-main, .pjb-main) { padding-inline: 16px; }
-[data-shell='studio-phone'] :is(.wo-main, .wa-main, .op-main, .pj-main, .pjb-main) .ar-tbl { display: block; max-width: 100%; overflow-x: auto; }
+[data-vibe='studio'] [data-shell='phone'] div:is(.wo-main, .wa-main, .op-main, .pj-main, .pjb-main) { padding-inline: 16px; }
+[data-vibe='studio'] [data-shell='phone'] :is(.wo-main, .wa-main, .op-main, .pj-main, .pjb-main) .ar-tbl { display: block; max-width: 100%; overflow-x: auto; }
 /* The List in Paper and Studio runs to the frame's edges too: on a phone its masthead, rows and Open buttons keep the 16px gutter. */
-[data-shell='studio-phone'] div.ls-main, [data-shell='paper-phone'] div.ls-pp { padding-inline: 16px; }
+[data-vibe='studio'] [data-shell='phone'] div.ls-main, [data-vibe='paper'] [data-shell='phone'] div.ls-pp { padding-inline: 16px; }

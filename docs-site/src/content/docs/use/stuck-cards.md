@@ -122,8 +122,8 @@ supi set-stale <boardId> --hours 48
 supi set-stale <boardId> --off
 ```
 
-`supi stale` (and `GET /v1/stale`) lists, for each card: the board, the card, its stage, why it is
-stuck, how long, and the suggested next action.
+`supi stale` (and `GET /v1/stale`) lists, for each card: the board, the card, its stage, the agent
+holding it (`agentId`, or null), why it is stuck, how long, and the suggested next action.
 
 While a board's stale cards are on, the five-minute sweep sends a **digest** through the board's
 existing channels:

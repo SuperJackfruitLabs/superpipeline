@@ -3,9 +3,9 @@
 import type { AgentSummary, BoardSnapshot, BoardUsage, Notification, Stage, UsageSummary } from '$lib/api';
 import type { AttentionItem } from '$lib/components/attention/attention';
 import { overdue } from '$lib/components/board/card-due';
-import { displayAgent } from '$lib/names';
+import { knownAgent } from '$lib/names';
 import { CAP_ERROR } from './operate-words';
-import type { ActivityGroup, NeedRow, RunningRow, SpendView } from './layouts/types';
+import type { ActivityGroup, NeedRow, RunningRow, SpendView } from './operate-types';
 
 const byOrder = (stages: Stage[]): Stage[] => [...stages].sort((a, b) => a.order - b.order);
 
@@ -21,7 +21,7 @@ export function needRows(board: BoardSnapshot, agents: AgentSummary[], items: At
     return [{
       item, card, stage: stages[idx], stageIndex: idx + 1, stages,
       boardId: board.boardId ?? item.boardId, boardName: board.name ?? item.boardName ?? '',
-      agentName: agentId ? displayAgent(agentId, agents) : null,
+      agentName: knownAgent(agentId, agents),
       iconUrl: agentId ? (agents.find((a) => a.id === agentId)?.iconUrl ?? null) : null,
       actions: item.actions,
       overdue: overdue(card.dueAt, card.state, today),
@@ -36,6 +36,9 @@ export function crewOf(rows: NeedRow[]): Array<{ name: string; iconUrl: string |
   for (const r of rows) if (r.agentName && !seen.has(r.agentName)) seen.set(r.agentName, { name: r.agentName, iconUrl: r.iconUrl });
   return [...seen.values()];
 }
+
+/** Activity groups drawn at first and added by each "Show more". */
+export const ACTIVITY_PAGE = 20;
 
 export function activityGroups(notifications: Notification[], showRead: boolean, needs: NeedRow[], board: BoardSnapshot, agents: AgentSummary[]): ActivityGroup[] {
   const shown = showRead ? notifications : notifications.filter((n) => !n.read);
@@ -52,7 +55,7 @@ export function activityGroups(notifications: Notification[], showRead: boolean,
     const agentId = need ? (need.agentName ? (card?.delegateAgentId ?? card?.lastAgentId ?? null) : null) : (card?.delegateAgentId ?? card?.lastAgentId ?? null);
     return {
       cardId, title: card?.title ?? cardId, boardId: board.boardId ?? '', boardName: board.name ?? '',
-      agentName: agentId ? displayAgent(agentId, agents) : null,
+      agentName: knownAgent(agentId, agents),
       iconUrl: agentId ? (agents.find((a) => a.id === agentId)?.iconUrl ?? null) : null,
       latest: sorted[0], earlier: sorted.slice(1), need,
     };
@@ -68,9 +71,10 @@ export function runningRows(board: BoardSnapshot, agents: AgentSummary[]): Runni
       return {
         cardId: c.id, title: c.title, boardId: board.boardId ?? '', boardName: board.name ?? '',
         stageName: board.stages.find((s) => s.key === c.currentStageKey)?.name ?? c.currentStageKey,
-        agentName: agentId ? displayAgent(agentId, agents) : null,
+        agentName: knownAgent(agentId, agents),
         iconUrl: agentId ? (agents.find((a) => a.id === agentId)?.iconUrl ?? null) : null,
         costUsd: c.costUsd,
+        since: c.stateSince ?? null,
       };
     });
 }
@@ -78,14 +82,16 @@ export function runningRows(board: BoardSnapshot, agents: AgentSummary[]): Runni
 export function spendView(usage: UsageSummary | null, caps: BoardUsage | null, agents: AgentSummary[]): SpendView {
   const total = usage?.totalCostUsd ?? 0;
   const cap = caps?.budgetUsd ?? null;
+  const spent = (usage?.byAgent ?? []).filter((a) => a.costUsd > 0).length;
   return {
+    more: Math.max(0, spent - 5),
     total, cap, cardCap: caps?.cardUsdCap ?? null, overBudget: caps?.overBudget ?? false,
     pct: cap && cap > 0 ? Math.min(100, Math.round((total / cap) * 100)) : null,
     top: (usage?.byAgent ?? [])
       .filter((a) => a.costUsd > 0)
       .sort((a, b) => b.costUsd - a.costUsd)
       .slice(0, 5)
-      .map((a) => ({ name: displayAgent(a.agentId, agents), costUsd: a.costUsd })),
+      .map((a) => ({ id: a.agentId, name: knownAgent(a.agentId, agents) ?? 'An agent', costUsd: a.costUsd })),
   };
 }
 

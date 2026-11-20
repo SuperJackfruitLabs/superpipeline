@@ -99,25 +99,35 @@ from drift and lowers integration cost for the "any harness" promise.
 - **Coverage is judged on the normative tables**, not a global %: every spec table row must have a
   corresponding test id.
 
-## 8. Visual regression and the pixel conformance report
+## 8. Visual regression
 
-**The gate is the `visual` job.** It captures twenty of the app's own screens (four vibes: Board, the
-rich card's page and drawer, the phone board, the New card dialog) at the PR's base commit and at its
-head, one after the other in the same Playwright container, and compares them pixel for pixel. Nothing
-is stored and nothing is compared with a mockup. Any change fails the job unless a commit in the range
-carries a `Visual-Change: <why>` trailer; the log names each changed screen with its ratio and the
-bounding box of the difference. `deploy` waits for `test`, `e2e` and `visual`. Run it locally with
-`pnpm --filter @superpipeline/web visual:local` (HEAD~1 versus HEAD; informative on a Mac).
+**The gate is the `visual` job.** It captures fifty-two of the app's own screens (four vibes, light
+theme, thirteen kinds: Board, the rich card's page and its drawer, the phone board, the Inbox, Crew,
+board settings and the six dialogs: New card, Move, the command palette, the board switcher, Appearance
+and Reconnect) at the PR's base commit and at its head, one after the other in the same Playwright
+container, and compares them pixel for pixel. Nothing is stored and nothing is compared with a mockup.
+Any change fails the job unless a commit in the range carries a `Visual-Change: <why>` trailer; the log
+names each changed screen with its ratio and the bounding box of the difference. `deploy` waits for
+`test`, `e2e` and `visual`.
 
-**The pixel suite is a conformance report.** It renders the app and the approved Design-canvas
-references in the same Chromium and reports how far each screen has drifted from its mockup. The
-references are frozen at the approved design: ordinary product PRs do not touch references or the
-allow-list, and new features add no references. CI runs it as the `pixel` job (`continue-on-error`,
-not in `deploy.needs`) only nightly at 03:30 UTC and by manual dispatch (any branch, a PR's included),
-never on pushes or pull requests, and ends with a drift summary; the `visual` job is the PR gate. Under
-`CI` the test timeouts are longer (`ci-timeouts.mjs`: vitest 20s/30s hooks, Playwright 60s test, 15s
-expect), local defaults unchanged. A change to the reference lock still needs a `Reference-Change:` trailer.
-See the [pixel suite](../apps/web/e2e/pixel/README.md), which also says how to run base-vs-head locally.
+Everything the job needs lives in `apps/web/e2e/visual/`: the screen list (`screens.ts`), the steps
+that open each dialog (`steps.ts`), the renderer (`app.ts`), the comparison (`compare.ts`,
+`verdict.ts`) and the fixture world it seeds (`fixture/`, which the e2e specs and unit tests also read).
+`scripts/visual/base-vs-head.sh` adds a git worktree at the base, copies HEAD's `e2e/visual` into it so
+both sides are captured the same way, captures base then head, and compares the two folders. Run it
+locally:
+
+    pnpm --filter @superpipeline/web visual:local        # HEAD~1 versus HEAD
+    bash apps/web/scripts/visual/base-vs-head.sh <ref>   # any base
+    pnpm --filter @superpipeline/web visual:self         # HEAD twice: the noise floor, must be zero
+
+Output lands in `apps/web/test-results/visual/{base,head,diff}`. A Mac result is informative only; CI's
+Linux container is the verdict. Under `CI` the test timeouts are longer (`ci-timeouts.mjs`: vitest
+20s/30s hooks, Playwright 60s test, 15s expect), local defaults unchanged.
+
+The frozen pixel references (Design-canvas mockups the app was once compared with) and their nightly
+conformance report were retired by the composition contract: each page is now one composition with the
+vibes on top, held by the composition guards and by this gate.
 
 **Real-shaped data.** `apps/web/e2e/rich-card.spec.ts` drives the fixture world's rich card (several
 attempts, tool calls on long unbroken strings, a long brief, correspondence) in every vibe, desktop and

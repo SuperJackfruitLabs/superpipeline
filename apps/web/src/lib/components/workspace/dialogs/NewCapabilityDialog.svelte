@@ -6,7 +6,7 @@
    * on from Crew · Agents.
    */
   import './crew-dialogs.css';
-  import { Button, Dialog, Field } from '@superjackfruit/vibekit';
+  import { Button, Dialog, Field } from '@superjackfruitlabs/vibekit-ui';
   import type { CapabilitiesModel } from '../capabilities-model.svelte';
   import { similarText } from '../workspace-words';
 

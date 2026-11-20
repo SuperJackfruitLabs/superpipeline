@@ -5,7 +5,7 @@
    * say what is on, each one a way to switch it off: a board must never silently misrepresent what
    * it is showing.
    */
-  import { Button, Choice, Dialog, Field } from '@superjackfruit/vibekit';
+  import { Button, Choice, Dialog, Field } from '@superjackfruitlabs/vibekit-ui';
   import { app } from '$lib/stores/app.svelte';
   import { noFilters } from '$lib/stores/card-filters';
   import { resolveProjectName } from './project-lookup';

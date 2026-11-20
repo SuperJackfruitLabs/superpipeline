@@ -1,6 +1,6 @@
 // apps/web/src/lib/test/fixture-boards.ts
 /**
- * The pixel fixture world (`e2e/pixel/fixture/world.ts`, BASE_WORLD) as the web client receives it at
+ * The fixture world (`e2e/visual/fixture/world.ts`, BASE_WORLD) as the web client receives it at
  * 2026-10-11T08:21:00Z: the Developer Experience, Agent Onboarding and Production Releases snapshots,
  * the 22 agents, the label catalogue and the one member. Unit tests of board derivations read these,
  * so a test's expected string is the reference artboard's string. Keep it in step with world.ts.

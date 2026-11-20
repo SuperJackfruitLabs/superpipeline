@@ -1,10 +1,10 @@
 // apps/web/src/lib/components/parts/icons.ts
 /**
  * The product's icon names. Names vibekit draws render vibekit's `Icon` (directly or through
- * `VK_ALIASES`); `PRODUCT_ICONS` holds only the glyphs the references draw that vibekit 0.0.1 has
- * no icon for. Each is a CORRECTIONS.md deviation row; delete an entry when vibekit ships it.
+ * `VK_ALIASES`); `PRODUCT_ICONS` holds only the glyphs the references drew that vibekit had no icon
+ * for. Each has a `PRODUCT_ICON_LOG` entry saying why; delete both when vibekit ships it.
  */
-import { ICON_NAMES, type IconName as VkIconName } from '@superjackfruit/vibekit';
+import { ICON_NAMES, type IconName as VkIconName } from '@superjackfruitlabs/vibekit-ui';
 
 /** Reference names that are vibekit icons under another name. */
 export const VK_ALIASES = { chev: 'chevron-down', 'search-phone': 'search', close: 'x', settings: 'gear' } as const satisfies Record<string, VkIconName>;
@@ -52,6 +52,52 @@ export const PRODUCT_ICONS = {
   restore: '<path d="M4 12a8 8 0 1 0 2.4-5.7"/><path d="M4 4v4h4"/>',
   comment: '<path d="M4 5h16v11H9l-5 4z"/>',
 } as const;
+
+/**
+ * Why each product glyph exists: the vibekit version that had no icon for it when it was added. Every
+ * entry in PRODUCT_ICONS needs one (the type requires it; Icon.svelte.test.ts reads the words). These
+ * were the "no vibekit icon" rows of the retired pixel references' CORRECTIONS.md.
+ */
+export const PRODUCT_ICON_LOG = {
+  card: 'Tasks 37–39: no vibekit icon in 0.0.8',
+  coin: 'Tasks 37–39: no vibekit icon in 0.0.8',
+  swatch: 'Tasks 37–39: no vibekit icon in 0.0.8',
+  power: 'Tasks 37–39: no vibekit icon in 0.0.8',
+  plan: 'Task 11: no vibekit icon in 0.0.1',
+  'plan-sq': 'Task 11: no vibekit icon in 0.0.1',
+  'plan-phone': 'Task 11: no vibekit icon in 0.0.1',
+  operate: 'Task 11: no vibekit icon in 0.0.1',
+  'operate-filled': 'Task 11: no vibekit icon in 0.0.1',
+  workspace: 'Task 11: no vibekit icon in 0.0.1',
+  moon: 'Task 11: no vibekit icon in 0.0.1',
+  sun: 'Task 11: no vibekit icon in 0.0.1',
+  signout: 'Task 11: no vibekit icon in 0.0.1',
+  'signout-studio': 'Task 11: no vibekit icon in 0.0.1',
+  filter: 'Task 11: no vibekit icon in 0.0.1',
+  'filter-paper': 'Task 11: no vibekit icon in 0.0.1',
+  funnel: 'Task 11: no vibekit icon in 0.0.1',
+  move: 'Task 11: no vibekit icon in 0.0.1',
+  'move-phone': 'Task 11: no vibekit icon in 0.0.1',
+  warn: 'Task 11: no vibekit icon in 0.0.1',
+  'warn-phone': 'Task 11: no vibekit icon in 0.0.1',
+  blocked: 'Task 11: no vibekit icon in 0.0.1',
+  'blocked-phone': 'Task 11: no vibekit icon in 0.0.1',
+  lock: 'Task 11: no vibekit icon in 0.0.1',
+  link: 'Task 11: no vibekit icon in 0.0.1',
+  doc: 'Task 11: no vibekit icon in 0.0.1',
+  arrow: 'Task 11: no vibekit icon in 0.0.1',
+  pen: 'Task 11: no vibekit icon in 0.0.1',
+  'open-window': 'Task 20: no vibekit icon in 0.0.3',
+  edit: 'Task 20: no vibekit icon in 0.0.3',
+  pushpin: 'Task 20: no vibekit icon in 0.0.3; renamed from `pin` when vibekit 0.0.9 added a location pin',
+  send: 'Task 20: no vibekit icon in 0.0.3',
+  archive: 'Task 20: no vibekit icon in 0.0.3',
+  trash: 'Task 20: no vibekit icon in 0.0.3',
+  flag: 'Task 20: no vibekit icon in 0.0.3',
+  seal: 'Task 20: no vibekit icon in 0.0.3',
+  restore: 'Task 20: no vibekit icon in 0.0.3',
+  comment: 'Task 21: no vibekit icon in 0.0.4',
+} as const satisfies Record<keyof typeof PRODUCT_ICONS, string>;
 
 /**
  * The nav v2 glyphs (operator, 2026-10-13): Inbox is a tray, Crew two overlapping faces. Approved

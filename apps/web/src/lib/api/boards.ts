@@ -224,20 +224,35 @@ export interface BoardFeedEvent {
  * so no subscriber could tell WHICH card had changed, and the only listener refetched the whole
  * board on every event while the open card's own activity list refreshed on nothing. A run posted
  * 67 activities, every one of them delivered here, and the card drawer showed none of them.
+ *
+ * The opening snapshot also comes as the second argument: it is the board as the feed began, which
+ * a subscriber compares with the board it read to learn whether anything changed in between.
  */
-export function openBoardSocket(boardId: string, onEvent: (event: BoardFeedEvent | null) => void): WebSocket {
+export function openBoardSocket(boardId: string, onEvent: (event: BoardFeedEvent | null, snapshot?: BoardSnapshot) => void): WebSocket {
   const proto = location.protocol === 'https:' ? 'wss' : 'ws';
   const ws = new WebSocket(`${proto}://${location.host}/v1/boards/${boardId}/ws?tenant=${TENANT}${DEV_USER ? `&user=${encodeURIComponent(DEV_USER)}` : ''}`);
   ws.addEventListener('message', (e) => {
     let parsed: BoardFeedEvent | null = null;
+    let snapshot: BoardSnapshot | undefined;
     try {
-      const msg = JSON.parse(String(e.data)) as { kind?: string; event?: BoardFeedEvent };
+      const msg = JSON.parse(String(e.data)) as { kind?: string; event?: BoardFeedEvent; state?: BoardSnapshot };
       if (msg.kind === 'event' && msg.event) parsed = msg.event;
+      else if (msg.kind === 'snapshot' && msg.state) snapshot = msg.state;
     } catch {
       // A message we cannot read is still a message: the board changed, so the caller should
       // still refresh. It simply learns nothing about what changed.
     }
-    onEvent(parsed);
+    onEvent(parsed, snapshot);
   });
   return ws;
+}
+
+/**
+ * Close a board feed opened by `openBoardSocket`, whatever state it is in. A socket still connecting
+ * closes as soon as it can; one already closed is left alone.
+ */
+export function closeBoardSocket(ws: WebSocket): void {
+  // 2 and 3 are CLOSING and CLOSED; literal so this runs where no WebSocket global exists (tests, SSR).
+  if (ws.readyState === 2 || ws.readyState === 3) return;
+  ws.close();
 }

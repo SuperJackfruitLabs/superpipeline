@@ -4,17 +4,16 @@
  * so every vibe prints the same facts (spec List §3.3). A row needs you exactly when the card has
  * an attention item; `card.state` alone never decides it.
  */
-import type { Mood } from '@superjackfruit/vibekit';
+import type { Mood } from '@superjackfruitlabs/vibekit-ui';
 import type { AgentSummary, Card, Member } from '$lib/api';
 import type { AttentionItem, AttentionKind } from '$lib/components/attention/attention';
 import type { CardSummary, StageSummary } from '$lib/components/board/card-summary';
 import type { StageOwnerLabel } from '$lib/components/board/stage-owner';
 import { moodWord } from '$lib/components/card/card-lead';
 import { ageShort } from '$lib/age';
-import { joinAnd } from '$lib/words';
 import { displayAgent, displayPrincipal } from '$lib/names';
-import type { CardFilters, ListGroupBy } from '$lib/stores/app.svelte';
-import type { ListAgent, ListGroup, ListRow, ListSort, ListSortKey, ListState, ListTone, QuickFilter } from './types';
+import type { ListGroupBy } from '$lib/stores/app.svelte';
+import type { ListAgent, ListGroup, ListRow, ListSort, ListSortKey, ListState, ListTone } from './types';
 
 const SUB: Record<AttentionKind, string> = {
   review: 'review', question: 'question asked', blocked: 'stopped', 'repeated-failure': 'failing', refused: 'refused',
@@ -120,12 +119,12 @@ export function sortHint(s: ListSort): string {
 }
 
 export const SORT_NOUN: Record<ListSortKey, string> = { priority: 'priority', title: 'card title', state: 'state', agent: 'agent', due: 'due date', cost: 'cost', attempts: 'attempts', age: 'age' };
-export const STUDIO_HEADER: Record<ListSortKey, string> = { priority: 'Pri', title: 'Card', state: 'State', agent: 'Agent', attempts: 'Att', age: 'Age', due: 'Due', cost: 'Cost' };
 export const GROUP_NOUN: Record<ListGroupBy, string> = { stage: 'stage', state: 'state', owner: 'owner', priority: 'priority' };
 export const GROUPS: Array<{ id: ListGroupBy; label: string }> = [
   { id: 'stage', label: 'Stage' }, { id: 'state', label: 'State' }, { id: 'owner', label: 'Owner' }, { id: 'priority', label: 'Priority' },
 ];
-export const STUDIO_SORT_CYCLE: ListSortKey[] = ['priority', 'title', 'state', 'agent', 'attempts', 'age', 'due', 'cost'];
+/** S cycles the sort through every key, the table's columns and attempts and age. */
+export const SORT_CYCLE: ListSortKey[] = ['priority', 'title', 'state', 'agent', 'attempts', 'age', 'due', 'cost'];
 export const GROUP_CYCLE: ListGroupBy[] = ['stage', 'state', 'owner', 'priority'];
 export function nextInCycle<T>(cycle: readonly T[], cur: T): T {
   return cycle[(cycle.indexOf(cur) + 1) % cycle.length];
@@ -160,104 +159,17 @@ export function groupRows(rows: ListRow[], groupBy: ListGroupBy, sort: ListSort,
   return groups.filter((g) => g.rows.length > 0).map((g) => ({ ...g, rows: sortRows(g.rows, sort) }));
 }
 
-export function quickCounts(rows: ListRow[]): Record<QuickFilter, number> {
-  const n = (t: ListTone) => rows.filter((r) => r.state.tone === t).length;
-  return { all: rows.length, needs: n('needs'), working: n('working'), idle: n('queued'), done: n('done') + n('closed') };
-}
-
-const QUICK_TONES: Record<QuickFilter, ListTone[] | null> = { all: null, needs: ['needs'], working: ['working'], idle: ['queued'], done: ['done', 'closed'] };
-/** Studio's quick filter: rows by tone after grouping; groups left empty drop. */
-export function filterQuick(groups: ListGroup[], quick: QuickFilter): ListGroup[] {
-  const tones = QUICK_TONES[quick];
-  if (!tones) return groups;
-  return groups.map((g) => ({ ...g, rows: g.rows.filter((r) => tones.includes(r.state.tone)) })).filter((g) => g.rows.length > 0);
-}
-
-export function filtersActive(f: CardFilters): boolean {
-  return f.states.length > 0 || f.owners.length > 0 || f.minPriority !== null || f.needsReview || f.live || f.overBudget || f.labels.length > 0 || f.showArchived || f.projectId !== null;
-}
-
 // ---- words ----
-const WORDS = ['no', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten', 'eleven', 'twelve'];
-/** The List counts in words up to twelve (Operate stops at ten). */
-export const listNumberWord = (n: number): string => WORDS[n] ?? String(n);
 const capWord = (w: string): string => w.charAt(0).toUpperCase() + w.slice(1);
-const cardsText = (n: number): string => `${n} ${n === 1 ? 'card' : 'cards'}`;
-const blockedText = (n: number): string => (n === 1 ? 'Blocked by another card' : `Blocked by ${listNumberWord(n)} other cards`);
 
-export function daylightSum(cardCount: number, needs: number, sort: ListSort): string {
-  return `${cardsText(cardCount)}${needs > 0 ? ` · ${needs} ${needs === 1 ? 'waits' : 'wait'} on you` : ''} · sorted by ${SORT_NOUN[sort.key]}`;
+export function listCaption(boardName: string, groupBy: ListGroupBy, sort: ListSort): string {
+  return `${boardName} cards, grouped by ${GROUP_NOUN[groupBy]}, sorted by ${SORT_NOUN[sort.key]}`;
 }
 
-export function listCaption(boardName: string, groupBy: ListGroupBy, sort: ListSort, withDirection = false): string {
-  return `${boardName} cards, grouped by ${GROUP_NOUN[groupBy]}, sorted by ${SORT_NOUN[sort.key]}${withDirection ? (sort.ascending ? ' ascending' : ' descending') : ''}`;
-}
+/** The state with its qualifier when the row needs you: "Waiting on you, no owner". */
+export const stateText = (s: ListState): string => (s.needsYou && s.sub ? `${s.word}, ${s.sub}` : s.word);
 
-export function paperMastLine(boardName: string, cardCount: number, needs: number): string {
-  const head = `${boardName}, ${listNumberWord(cardCount)} ${cardCount === 1 ? 'card' : 'cards'}.`;
-  return head + (needs === 0 ? ' Nothing waits on you.' : ` ${capWord(listNumberWord(needs))} ${needs === 1 ? 'waits' : 'wait'} on you.`);
-}
-
-export const paperGroupCount = (n: number): string => `— ${listNumberWord(n)} ${n === 1 ? 'card' : 'cards'}`;
-
-export function paperFoot(sort: ListSort, empty: string[]): string {
-  return `Sorted by ${SORT_NOUN[sort.key]}, ${sortHint(sort)}.${empty.length ? ` Stages with no cards are left out: ${joinAnd(empty)}.` : ''}`;
-}
-
-/** Paper's facts run, up to (and including the separator before) the asked-by span. */
-export function paperFacts(r: ListRow): string {
-  const parts = [...r.labelNames, ...(r.moreLabels ? [`+${r.moreLabels} more`] : []), ...(r.blockedCount ? [blockedText(r.blockedCount)] : [])];
-  return parts.join(' · ') + (r.askedBy && parts.length ? ' · ' : '');
-}
-
-const QUICK_WORD: Record<Exclude<QuickFilter, 'all'>, string> = { needs: 'Waiting', working: 'Working', idle: 'Idle', done: 'Done' };
-export function studioKicker(groupBy: ListGroupBy, quick: QuickFilter): string {
-  return quick === 'all' ? `Every card, by ${GROUP_NOUN[groupBy]}` : `${QUICK_WORD[quick]} cards, by ${GROUP_NOUN[groupBy]}`;
-}
-
-export function studioHeadline(visible: number, groups: number, stageCount: number, groupBy: ListGroupBy): { sr: string; text: string } {
-  const text = groupBy === 'stage'
-    ? `${visible === 1 ? 'card sits' : 'cards sit'} in ${groups} of the board’s ${stageCount} stages`
-    : `${visible === 1 ? 'card' : 'cards'} in ${groups} ${GROUP_NOUN[groupBy]}${groups === 1 ? '' : 's'}`;
-  return { sr: `${visible} `, text };
-}
-
-export function studioLede(sort: ListSort, empty: string[]): string {
-  const k = empty.length;
-  return `Sorted by ${SORT_NOUN[sort.key]}, ${sortHint(sort)}.` + (k ? ` The ${listNumberWord(k)} empty stage${k === 1 ? '' : 's'}, ${joinAnd(empty)}, ${k === 1 ? 'is' : 'are'} left out of the list.` : '');
-}
-
-export function studioFoot(f: { visible: number; groups: number; groupBy: ListGroupBy; empty: number; sort: ListSort; total: number; selected: number | null }): string[] {
-  return [
-    cardsText(f.visible),
-    `${f.groups} ${f.groups === 1 ? 'group' : 'groups'}${f.groupBy === 'stage' && f.empty ? ` · ${f.empty} empty ${f.empty === 1 ? 'stage' : 'stages'} hidden` : ''}`,
-    `sort ${STUDIO_HEADER[f.sort.key]} ${f.sort.ascending ? '↑' : '↓'}`,
-    `$${f.total.toFixed(2)} total`,
-    ...(f.selected === null ? [] : [`row ${f.selected + 1} of ${f.visible}`]),
-  ];
-}
-
-/** Studio's group number: the stage's own number, else the group's position. */
-export function groupNo(g: ListGroup, index: number, groupBy: ListGroupBy): string {
-  return String((groupBy === 'stage' ? g.order : index) + 1).padStart(2, '0');
-}
-
-export function quietLede(cardCount: number, needs: number): string {
-  return `${cardsText(cardCount)}.` + (needs === 0 ? ' No card is waiting on you.' : needs === 1 ? ' 1 is waiting on you.' : ` ${needs} are waiting on you.`);
-}
-
-export function quietFacts(r: ListRow): string {
-  const out: string[] = [];
-  if (r.labelNames.length) out.push(r.moreLabels ? `Labels: ${r.labelNames.join(', ')} and ${r.moreLabels} more.` : `Labels: ${joinAnd(r.labelNames)}.`);
-  if (r.blockedCount) out.push(`${blockedText(r.blockedCount)}.`);
-  if (r.askedBy) out.push(`Asked for by ${r.askedBy.name}.`);
-  return out.join(' ');
-}
-
-export const quietState = (s: ListState): string => (s.needsYou && s.sub ? `${s.word}, ${s.sub}` : s.word);
-export const quietEmptyFoot = (empty: string[]): string => `Stages with no cards are not shown: ${empty.join(', ')}.`;
-
-export const QUIET_SORTS: Array<{ label: string; sort: ListSort }> = [
+export const SORTS: Array<{ label: string; sort: ListSort }> = [
   { label: 'Priority, highest first', sort: { key: 'priority', ascending: true } },
   { label: 'Card title', sort: { key: 'title', ascending: true } },
   { label: 'State', sort: { key: 'state', ascending: true } },
@@ -266,11 +178,9 @@ export const QUIET_SORTS: Array<{ label: string; sort: ListSort }> = [
   { label: 'Cost', sort: { key: 'cost', ascending: false } },
 ];
 
-/** The picker's options; a sort set by a header it does not list is shown first, selected (LI-G14). */
-export function quietSortOptions(current: ListSort): Array<{ value: string; label: string; sort: ListSort; selected: boolean }> {
-  const opts = QUIET_SORTS.map((o, i) => ({ value: String(i), label: o.label, sort: o.sort, selected: o.sort.key === current.key && o.sort.ascending === current.ascending }));
+/** The Sort by picker's options; a sort set by a header or S that it does not list is shown first, selected (LI-G14). */
+export function sortOptions(current: ListSort): Array<{ value: string; label: string; sort: ListSort; selected: boolean }> {
+  const opts = SORTS.map((o, i) => ({ value: String(i), label: o.label, sort: o.sort, selected: o.sort.key === current.key && o.sort.ascending === current.ascending }));
   if (opts.some((o) => o.selected)) return opts;
   return [{ value: 'current', label: capWord(`${SORT_NOUN[current.key]}, ${sortHint(current)}`), sort: current, selected: true }, ...opts];
 }
-
-export const emptyText = (p: { filtersOn: boolean; hasCards: boolean }): string => (p.hasCards ? 'No cards match these filters.' : 'No cards on this board');

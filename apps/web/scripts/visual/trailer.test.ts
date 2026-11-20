@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { touchesVisual, trailerReason } from './trailer.mjs';
-import { chooseBase } from '../pixel/lock-base.mjs';
+import { chooseBase, touchesVisual, trailerReason } from './trailer.mjs';
 
 const body = (...lines: string[]) => lines.join('\n');
 describe('Visual-Change trailer', () => {

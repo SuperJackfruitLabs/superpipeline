@@ -4,7 +4,7 @@
    * it in two columns, a phone in one; the drawer draws the same head, roll-up, blockers and
    * milestones compactly and sums up the rest, with "Open full page" for everything else.
    */
-  import { Button, Dialog } from '@superjackfruit/vibekit';
+  import { Button, Dialog } from '@superjackfruitlabs/vibekit-ui';
   import type { Milestone } from '$lib/api';
   import { eventLabel } from '$lib/components/operate/spend-format';
   import { whenLabel } from '$lib/when';

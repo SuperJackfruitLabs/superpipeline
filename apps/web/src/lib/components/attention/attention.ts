@@ -11,7 +11,7 @@
  * the work.
  */
 import type { AgentSummary, BoardSnapshot, Card, NeedsHuman, StaleCard, Stage } from '$lib/api';
-import { displayAgent } from '$lib/names';
+import { knownAgent } from '$lib/names';
 import { needsYou } from '@superpipeline/contract';
 
 export type AttentionKind =
@@ -173,7 +173,7 @@ export function itemsFromBoard(board: BoardSnapshot, agents: AgentSummary[], now
     if (gate) {
       out.push({ ...forNeeds(base, 'review', gate.summary ?? null, undefined), headline: `${gate.stageKey} · waiting for your review` });
     } else if (ask) {
-      out.push({ ...forNeeds(base, 'question', ask.question || null, undefined), headline: `${displayAgent(ask.agentId, agents)} asked a question` });
+      out.push({ ...forNeeds(base, 'question', ask.question || null, undefined), headline: `${knownAgent(ask.agentId, agents) ?? 'An agent'} asked a question` });
     } else if (c.state === 'failed') {
       out.push({ ...base, id: `failed:${boardId}:${c.id}`, kind: 'failed', headline: 'the run failed', detail: null, instruction: 'Open the card to see why it failed.', actions: ['open'] });
     } else if (c.state === 'input-required') {

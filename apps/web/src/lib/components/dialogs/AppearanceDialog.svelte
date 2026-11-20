@@ -4,7 +4,7 @@
    * change applies and is saved at once (appearance.set writes the cookie and <html>); Done closes.
    * Turning the location switch on asks the browser; off forgets the place.
    */
-  import { AppearancePicker, Button, Dialog, type Appearance } from '@superjackfruit/vibekit';
+  import { AppearancePicker, Button, Dialog, type Appearance } from '@superjackfruitlabs/vibekit-ui';
   import { appearance } from '$lib/appearance.svelte';
   import { app } from '$lib/stores/app.svelte';
   import { firstName, personName } from './person';

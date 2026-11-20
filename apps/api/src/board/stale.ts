@@ -358,6 +358,7 @@ function collectStale(deps: StaleDeps, input: { nowIso: string; afterHours?: num
       cardId: card.id,
       title: card.title,
       ownerUserId: card.ownerUserId,
+      agentId: card.lastAgentId ?? null,
       stageKey: card.currentStageKey,
       stageName: stage?.name ?? card.currentStageKey,
       state: card.state,

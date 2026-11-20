@@ -82,6 +82,18 @@ describe('POST /v1/dev/fixture', () => {
     expect(await res.text()).toContain('not_a_column');
   });
 
+  it('imports usage records, so a card’s cost and its budget cap read from them', async () => {
+    const w = world();
+    const board = w.dos[BOARD];
+    if (!board) throw new Error('the world has no board');
+    board.meta = { budgetCardUsdCap: '5' };
+    board.usage = [{ run_id: 'run_fx_0001_1', card_id: 'card_fx_0001', agent_id: 'agt_fx_sample', model: 'model-standard', input_tokens: 1000, output_tokens: 100, cost_usd: 6.4, estimated: 0, ts: '2026-10-08T05:00:00.000Z' }];
+    expect((await SELF.fetch(post(w))).status).toBe(200);
+    const snap = await SELF.fetch(`https://api.test/v1/boards/${BOARD}`, { headers: { 'X-Tenant-Id': T, 'X-User-Id': U } });
+    const body = await snap.json<{ cards: Array<{ costUsd: number; overBudget: boolean }> }>();
+    expect(body.cards[0]).toMatchObject({ costUsd: 6.4, overBudget: true });
+  });
+
   it('writes no event of its own and schedules no alarm', async () => {
     await SELF.fetch(post(world()));
     const stub = env.BOARD_DO.get(env.BOARD_DO.idFromName(`${T}:${BOARD}`)) as unknown as DurableObjectStub<BoardDO>;

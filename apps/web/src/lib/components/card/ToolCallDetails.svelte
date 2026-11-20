@@ -15,5 +15,5 @@
 
 <style>
   .tcd { min-width: 0; max-width: 100%; }
-  .tcd > summary { cursor: pointer; min-height: 24px; }
+  .tcd > summary { cursor: pointer; min-height: 44px; display: flex; align-items: center; }
 </style>

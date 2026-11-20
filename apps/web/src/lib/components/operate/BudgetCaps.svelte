@@ -1,6 +1,6 @@
 <!-- apps/web/src/lib/components/operate/BudgetCaps.svelte -->
 <script lang="ts">
-  import { Button } from '@superjackfruit/vibekit';
+  import { Button } from '@superjackfruitlabs/vibekit-ui';
   import { BudgetCapsModel } from './budget-caps.svelte';
   let { suffix = '1' }: { suffix?: string } = $props();
   const model = new BudgetCapsModel();

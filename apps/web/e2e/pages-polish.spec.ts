@@ -1,6 +1,6 @@
 import { test, expect, type Page } from '@playwright/test';
 import { PORTS } from '../scripts/ports';
-import { FIXTURE_TENANT, FIXTURE_USER } from './pixel/fixture/seed';
+import { FIXTURE_TENANT, FIXTURE_USER } from './visual/fixture/seed';
 import { openWorld, seed, DX, SIZES, VIBES, type VibeName } from './support/world';
 
 /**
@@ -61,7 +61,8 @@ for (const vibe of VIBES) {
 for (const vibe of VIBES) {
   for (const size of SIZES) {
     test(`Q2 payload URL fully shown, dropdowns styled | ${vibe} | ${size.name}`, async ({ page }) => {
-      await openWorld(page, `${DX}/settings`, { vibe, dark: false, width: size.width, height: size.height });
+      // Board settings: GitHub is a tab (the hash names it); the schedule form opens under New schedule.
+      await openWorld(page, `${DX}/settings#github`, { vibe, dark: false, width: size.width, height: size.height });
       const url = page.locator('#gh-url');
       await expect(url).toBeVisible();
       const m = await url.evaluate((el: HTMLInputElement) => ({
@@ -72,6 +73,8 @@ for (const vibe of VIBES) {
       expect(m.sh, 'the value is cut off vertically').toBeLessThanOrEqual(m.h + 1);
       await expect(page.getByRole('button', { name: /^copy/i }).first()).toBeVisible();
 
+      await page.getByRole('tab', { name: /^Schedules/ }).click();
+      await page.getByRole('button', { name: 'New schedule' }).click();
       for (const id of ['#sc-s', '#sc-o']) {
         const s = await page.locator(id).evaluate((el) => {
           const cs = getComputedStyle(el);
@@ -91,37 +94,59 @@ for (const vibe of VIBES) {
     test(`Q3 labels named and untruncated | ${vibe} | ${size.name}`, async ({ page, request }) => {
       await request.post(`${PORTS.apiUrl}/v1/labels`, { headers: { 'X-Tenant-Id': FIXTURE_TENANT, 'X-User-Id': FIXTURE_USER }, data: { name: LONG_LABEL, colour: '#3366cc' } });
       await openWorld(page, '/settings#labels', { vibe, dark: false, width: size.width, height: size.height });
-      await expect(page.locator('[id^="lb-"]').first()).toBeVisible();
+      const table = page.getByRole('table', { name: 'Labels' }).or(page.getByRole('list', { name: 'Labels' }));
+      await expect(table).toBeVisible();
+      // At rest the labels are a table of names, not fields: no text input in it.
+      await expect(table.locator('input:not([type="color"]), textarea')).toHaveCount(0);
+      const more = page.getByRole('button', { name: /^Show \d+ more/ });
+      if (await more.count()) await more.click();
       const r = await page.evaluate(() => {
         const colour = [...document.querySelectorAll('input[type="color"]')].map((i) => i.getAttribute('aria-label') ?? '');
-        const names = [...document.querySelectorAll<HTMLInputElement>('[id^="lb-"]:not(#lb-new)')].map((i) => ({
-          v: i.value, w: i.clientWidth, sw: i.scrollWidth, sh: i.scrollHeight, h: i.clientHeight,
-        }));
+        const names = [...document.querySelectorAll<HTMLElement>('.set-name')].map((e) => ({ v: e.textContent ?? '', w: e.clientWidth, sw: e.scrollWidth, h: e.clientHeight, sh: e.scrollHeight }));
         return { colour, names };
       });
       expect(r.colour.length).toBeGreaterThan(0);
       for (const c of r.colour) expect(c).toMatch(/^Colour for .+/);
-      expect(r.names.some((n) => n.v === 'independent-verification')).toBe(true);
+      expect(r.names.some((n) => n.v === LONG_LABEL)).toBe(true);
       for (const n of r.names) {
         expect(n.sw, `label "${n.v}" is cut off (${n.sw} needed, ${n.w} shown)`).toBeLessThanOrEqual(n.w + 1);
         expect(n.sh, `label "${n.v}" is cut off vertically`).toBeLessThanOrEqual(n.h + 1);
       }
+      // Renamed in place: the long name's cell turns into a field that shows all of it.
+      await page.getByRole('button', { name: `Rename ${LONG_LABEL}` }).first().click();
+      const field = page.getByRole('textbox', { name: `Name of ${LONG_LABEL}` });
+      await expect(field).toBeFocused();
+      const f = await field.evaluate((el: HTMLInputElement) => ({ v: el.value, w: el.clientWidth, sw: el.scrollWidth }));
+      expect(f.v).toBe(LONG_LABEL);
+      expect(f.sw, 'the name field cuts the name off').toBeLessThanOrEqual(f.w + 1);
+      await page.keyboard.press('Escape');
+      await expect(field).toHaveCount(0);
     });
 
-    test(`Q3 capability descriptions grow | ${vibe} | ${size.name}`, async ({ page }) => {
+    test(`Q3 capability descriptions show in full, and grow while edited | ${vibe} | ${size.name}`, async ({ page }) => {
       await openWorld(page, '/crew/capabilities', { vibe, dark: false, width: size.width, height: size.height });
-      await expect(page.locator('[id^="cd-"]').first()).toBeVisible();
-      const fields = await page.evaluate(() =>
-        [...document.querySelectorAll<HTMLTextAreaElement | HTMLInputElement>('[id^="cd-"]')].map((e) => ({
-          tag: e.tagName, v: e.value, w: e.clientWidth, sw: e.scrollWidth, h: e.clientHeight, sh: e.scrollHeight,
-        })),
-      );
-      expect(fields.some((f) => f.v.length > 60), 'the fixture has a long description').toBe(true);
-      for (const f of fields) {
-        expect(f.tag).toBe('TEXTAREA');
-        expect(f.sw, 'description cut off sideways').toBeLessThanOrEqual(f.w + 1);
-        expect(f.sh, `description of ${f.v.length} characters cut off vertically`).toBeLessThanOrEqual(f.h + 1);
+      await expect(page.locator('[data-desc]').first()).toBeVisible();
+      const more = page.getByRole('button', { name: /^Show \d+ more/ });
+      while (await more.isVisible().catch(() => false)) await more.click();
+      // At rest a description is text in the table, never a one-line box that cuts it off.
+      const texts = await page.locator('[data-desc]').evaluateAll((els) => els.map((e) => ({ v: e.textContent ?? '', w: e.clientWidth, sw: e.scrollWidth, h: e.clientHeight, sh: e.scrollHeight })));
+      const long = texts.find((t) => t.v.length > 60);
+      if (!long) throw new Error('the fixture has a long description');
+      for (const t of texts) {
+        expect(t.sw, `"${t.v.slice(0, 30)}…" cut off sideways`).toBeLessThanOrEqual(t.w + 1);
+        expect(t.sh, `"${t.v.slice(0, 30)}…" cut off vertically`).toBeLessThanOrEqual(t.h + 1);
       }
+      // Edit description (from the row's actions menu) opens a field as tall as the text.
+      // A table row on a desktop; on a phone vibekit's DataTable draws each row as a card.
+      const row = page.locator('tr, .vk-datatable__card').filter({ hasText: long.v.slice(0, 40) }).first();
+      await row.getByRole('button', { name: /^Actions for / }).click();
+      await page.getByRole('menuitem', { name: 'Edit description' }).click();
+      const field = page.locator('textarea[id^="cd-"]');
+      await expect(field).toBeVisible();
+      const f = await field.evaluate((e: HTMLTextAreaElement) => ({ v: e.value, w: e.clientWidth, sw: e.scrollWidth, h: e.clientHeight, sh: e.scrollHeight }));
+      expect(f.v).toBe(long.v);
+      expect(f.sw, 'description cut off sideways').toBeLessThanOrEqual(f.w + 1);
+      expect(f.sh, `description of ${f.v.length} characters cut off vertically`).toBeLessThanOrEqual(f.h + 1);
     });
   }
 }
@@ -175,7 +200,8 @@ for (const vibe of VIBES) {
         await openWorld(page, route, { vibe, dark: false, width: size.width, height: size.height, at: '2026-10-11T17:00:00Z' });
         const text = await page.evaluate(() => document.body.innerText + '\n' + [...document.querySelectorAll('[aria-label]')].map((e) => e.getAttribute('aria-label')).join('\n'));
         expect(text).not.toMatch(/\?,/);
-        if (vibe === 'daylight') expect(text).toMatch(/Working late, Ira\?/);
+        // The greeting is the Inbox's headline; the board says how many cards want you in one attention line.
+        if (vibe === 'daylight' && name === 'inbox') expect(text).toMatch(/Working late, Ira\?/);
       });
     }
   }
@@ -196,7 +222,7 @@ for (const size of [SIZES[0], SIZES[1]]) {
   test(`Q5 daylight card titles use the card's width | ${size.name}`, async ({ page }) => {
     await openWorld(page, DX, { vibe: 'daylight', dark: false, width: size.width, height: size.height });
     const gaps = await page.evaluate(() =>
-      [...document.querySelectorAll('.dl-tile')].map((t) => {
+      [...document.querySelectorAll('.bv-tile')].map((t) => {
         // The title's text box: the heading's own padding does not count as width the title uses.
         const h = t.querySelector('h3')!;
         const cs = getComputedStyle(h);
@@ -205,27 +231,24 @@ for (const size of [SIZES[0], SIZES[1]]) {
       }),
     );
     expect(gaps.length).toBeGreaterThan(0);
-    // The tile's own padding is 10px on the right; the title must not hold back more than that.
-    for (const g of gaps) expect(g.right, `"${g.title}" stops ${g.right}px short of the card edge`).toBeLessThanOrEqual(12);
+    // The tile's own padding is 14px on the right; the title must not hold back more than that.
+    for (const g of gaps) expect(g.right, `"${g.title}" stops ${g.right}px short of the card edge`).toBeLessThanOrEqual(16);
   });
 }
 
 for (const size of [SIZES[0], SIZES[1]]) {
-  test(`Q5 studio stage columns line up | ${size.name}`, async ({ page }) => {
+  // Was "Q5 studio stage columns line up" (the Studio board's small multiples, gone with the one board
+  // composition): the stage track is what lines the stages up now, one row, every name whole.
+  test(`Q5 studio stage track: every stage in one row, no name clipped | ${size.name}`, async ({ page }) => {
     await openWorld(page, DX, { vibe: 'studio', dark: false, width: size.width, height: size.height });
-    const cols = await page.evaluate(() =>
-      [...document.querySelectorAll('.ar-sm .ar-mul')].map((m) => {
-        const top = (s: string) => m.querySelector(s)?.getBoundingClientRect().top ?? NaN;
-        return { row: Math.round(m.getBoundingClientRect().top), note: top('.note'), who: m.querySelector('.who')!.getBoundingClientRect().height };
+    const cells = await page.evaluate(() =>
+      [...document.querySelectorAll('.bv-track li.vk-stages__step')].map((li) => {
+        const name = li.querySelector('.vk-stages__name')!;
+        return { top: Math.round(li.getBoundingClientRect().top), clipped: name.scrollWidth > name.clientWidth || name.scrollHeight > name.clientHeight + 1 };
       }),
     );
-    expect(cols.length).toBe(7);
-    expect(cols.some((c) => c.who > 20), 'the fixture has a stage owner line that wraps').toBe(true);
-    const rows = new Map<number, number[]>();
-    for (const c of cols) rows.set(c.row, [...(rows.get(c.row) ?? []), c.note]);
-    expect(rows.size).toBeGreaterThan(0);
-    for (const [row, notes] of rows) {
-      expect(Math.max(...notes) - Math.min(...notes), `note rows in the grid row at ${row}: ${notes}`).toBeLessThanOrEqual(1);
-    }
+    expect(cells.length).toBe(7);
+    expect(new Set(cells.map((c) => c.top)).size).toBe(1);
+    expect(cells.filter((c) => c.clipped)).toEqual([]);
   });
 }

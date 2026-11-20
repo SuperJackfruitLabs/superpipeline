@@ -6,8 +6,9 @@
   import { page } from '$app/state';
   import { appearance } from '$lib/appearance.svelte';
   import AppShell from '$lib/components/shell/AppShell.svelte';
+  import { shellModel } from '$lib/components/shell/shell-model.svelte';
   import PageMain from '$lib/components/parts/PageMain.svelte';
-  import { Button } from '@superjackfruit/vibekit';
+  import { Button } from '@superjackfruitlabs/vibekit-ui';
 
   const vibe = $derived(appearance.value.vibe);
   const missing = $derived(page.status === 404);
@@ -15,7 +16,7 @@
 
 <svelte:head><title>{missing ? 'Not found' : 'Something went wrong'} · Superpipeline</title></svelte:head>
 
-<AppShell here={null} section="inbox" boardName={null} view={null} showing={null} status={null} bleed={vibe === 'quiet'} ownHeading>
+<AppShell live={shellModel.liveToggle} here={null} section="inbox" boardName={null} bleed={vibe === 'quiet'} ownHeading>
   <PageMain scope="scr-error">
     <div class="sp-error">
       <p class="t-eyebrow">{missing ? 'Not found' : `Error ${page.status}`}</p>

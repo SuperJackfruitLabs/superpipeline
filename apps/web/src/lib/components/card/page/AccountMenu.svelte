@@ -1,7 +1,7 @@
 <!-- apps/web/src/lib/components/card/page/AccountMenu.svelte -->
 <script lang="ts">
   /** The card page's account control: a vibekit Menu with one item, Sign out. */
-  import { Menu } from '@superjackfruit/vibekit';
+  import { Menu } from '@superjackfruitlabs/vibekit-ui';
   import Icon from '$lib/components/parts/Icon.svelte';
   import { signOut } from '$lib/components/shell/account';
 

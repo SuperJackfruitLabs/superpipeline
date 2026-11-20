@@ -1,7 +1,7 @@
 // apps/web/e2e/support/realistic.ts — the fixture world plus boards with long names: a decision waiting on one,
 // and an unclaimed card whose move select offers a long stage name. Shared by the phone and desktop fit specs.
 import type { APIRequestContext } from '@playwright/test';
-import { FIXTURE_TENANT, FIXTURE_USER } from '../pixel/fixture/seed';
+import { FIXTURE_TENANT, FIXTURE_USER } from '../visual/fixture/seed';
 import { API } from './seed';
 import { seed } from './world';
 

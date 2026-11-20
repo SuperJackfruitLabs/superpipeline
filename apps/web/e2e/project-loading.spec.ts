@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { seedWorld, FIXTURE_TENANT, FIXTURE_USER } from './pixel/fixture/seed';
+import { seedWorld, FIXTURE_TENANT, FIXTURE_USER } from './visual/fixture/seed';
 import { waitForSurfaceReady, waitForLayout } from './support/readiness';
 
 type Shift = {

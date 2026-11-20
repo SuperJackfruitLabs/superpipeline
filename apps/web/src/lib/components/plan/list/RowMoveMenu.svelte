@@ -1,7 +1,7 @@
 <!-- apps/web/src/lib/components/plan/list/RowMoveMenu.svelte -->
 <script lang="ts">
   /** Daylight's row "Move": a menu under the button, every stage, the card's own marked "here". */
-  import { Button } from '@superjackfruit/vibekit';
+  import { Button } from '@superjackfruitlabs/vibekit-ui';
   import LineIcon from '$lib/components/parts/LineIcon.svelte';
   import MoveMenu from '$lib/components/parts/MoveMenu.svelte';
 

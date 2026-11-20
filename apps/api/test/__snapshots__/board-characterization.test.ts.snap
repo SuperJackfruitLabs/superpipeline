@@ -5428,6 +5428,7 @@ exports[`the Board Durable Object, pinned before the split > runs the same state
     "result": [
       {
         "ageHours": 596075.9,
+        "agentId": null,
         "boardId": "brd_char",
         "boardName": "Characterization",
         "cardId": "card#5",
@@ -5445,6 +5446,7 @@ exports[`the Board Durable Object, pinned before the split > runs the same state
       },
       {
         "ageHours": 596075.9,
+        "agentId": null,
         "boardId": "brd_char",
         "boardName": "Characterization",
         "cardId": "card#9",
@@ -5462,6 +5464,7 @@ exports[`the Board Durable Object, pinned before the split > runs the same state
       },
       {
         "ageHours": 596075.9,
+        "agentId": null,
         "boardId": "brd_char",
         "boardName": "Characterization",
         "cardId": "card#11",
@@ -5479,6 +5482,7 @@ exports[`the Board Durable Object, pinned before the split > runs the same state
       },
       {
         "ageHours": 596075.9,
+        "agentId": null,
         "boardId": "brd_char",
         "boardName": "Characterization",
         "cardId": "card#1",
@@ -5496,6 +5500,7 @@ exports[`the Board Durable Object, pinned before the split > runs the same state
       },
       {
         "ageHours": 596075.9,
+        "agentId": "agt_r2",
         "boardId": "brd_char",
         "boardName": "Characterization",
         "cardId": "card#22",
@@ -5515,6 +5520,7 @@ exports[`the Board Durable Object, pinned before the split > runs the same state
       },
       {
         "ageHours": 596075.9,
+        "agentId": null,
         "boardId": "brd_char",
         "boardName": "Characterization",
         "cardId": "card#40",
@@ -12887,6 +12893,7 @@ exports[`the Board Durable Object, pinned before the split > runs the same state
       "PRAGMA table_info(card_references)",
       "PRAGMA table_info(card_links)",
       "PRAGMA table_info(card_comments)",
+      "PRAGMA table_info(usage_records)",
     ],
     "step": "importFixture",
   },

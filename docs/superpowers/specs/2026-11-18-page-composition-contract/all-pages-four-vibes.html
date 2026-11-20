@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Five pages, four vibes, one composition</title>
+<link rel="stylesheet" href="./vk/vibekit.bundle.css">
+<style>
+  html, body { margin: 0; background: #111; color: #e8e6e1; font: 15px/1.5 ui-sans-serif, system-ui, sans-serif; }
+  .wrap { max-width: 1500px; margin: 0 auto; padding: 24px 24px 64px; }
+  .wrap > h1 { font: 600 24px/1.2 ui-sans-serif, system-ui, sans-serif; margin: 0 0 6px; }
+  .wrap > p.sub { margin: 0 0 16px; color: #a9a59c; max-width: 80ch; }
+  .pagetabs { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 18px; }
+  .pagetabs a { padding: 8px 14px; border-radius: 8px; background: #1c1c1c; color: #e8e6e1; text-decoration: none; font-weight: 600; font-size: 14px; border: 1px solid #2a2a2a; }
+  .pagetabs a[aria-current] { background: #e8e6e1; color: #111; }
+  .rules { margin: 0 0 18px; padding: 12px 16px; border: 1px solid #2a2a2a; border-radius: 10px; color: #cfcbc2; font-size: 14px; }
+  .rules b { color: #fff; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(560px, 1fr)); gap: 22px; align-items: start; }
+  .col > .cap { display: flex; justify-content: space-between; align-items: baseline; margin: 0 0 8px; color: #a9a59c; font-size: 13px; }
+  .col > .cap b { color: #e8e6e1; font-size: 14px; }
+  section.screen[hidden] { display: none; }
+
+  /* The panel: one page of the app at ~700px, in its own vibe. */
+  .page { box-sizing: border-box; padding: 0 0 24px; border-radius: 14px; overflow: hidden; background: var(--vk-color-bg); color: var(--vk-color-text); font: var(--vk-type-body); }
+  .page * { box-sizing: border-box; }
+  .page :is(p, h1, h2, h3, ul, ol) { margin: 0; }
+  .page :is(ul, ol) { padding: 0; list-style: none; }
+  .mast { display: flex; align-items: center; gap: 14px; min-height: 60px; padding: 0 24px; }
+  .mast .eyebrow { color: var(--vk-color-muted); font: var(--vk-type-eyebrow); letter-spacing: 0.08em; text-transform: uppercase; white-space: nowrap; }
+  .mast .title { font: 700 18px/1.2 var(--vk-font-display); white-space: nowrap; }
+  .mast .spacer { flex: 1; }
+  .live { display: inline-flex; align-items: center; gap: 8px; color: var(--vk-color-muted); font: var(--vk-type-meta); white-space: nowrap; }
+  .live::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--vk-color-success); }
+  .search { display: inline-flex; align-items: center; gap: 10px; min-height: 38px; padding: 0 12px; border-radius: var(--vk-radius-pill); background: var(--vk-color-surface); color: var(--vk-color-muted); font: var(--vk-type-meta); }
+  .body { padding: 0 24px; display: grid; gap: 20px; }
+  .lede { color: var(--vk-color-muted); max-width: 64ch; }
+  .meta { color: var(--vk-color-muted); font: var(--vk-type-meta); display: flex; flex-wrap: wrap; gap: 4px 10px; align-items: center; }
+  .group { display: grid; gap: 12px; }
+  .why { max-width: 64ch; color: var(--vk-color-muted); font: var(--vk-type-meta); }
+  .row { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 14px; min-height: 56px; }
+  .row.nf { grid-template-columns: minmax(0, 1fr) auto; }
+  .row .t { font-weight: 700; overflow-wrap: anywhere; }
+  .row .act { display: flex; align-items: center; gap: 10px; }
+  .face { width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; background: var(--vk-color-raised); color: var(--vk-color-text); font: 700 12px/1 var(--vk-font-body); flex: none; }
+  .face[data-mood="needs"] { box-shadow: 0 0 0 3px var(--vk-color-signal); }
+  .face[data-mood="working"] { box-shadow: 0 0 0 3px var(--vk-mood-working); }
+  .face[data-mood="resting"] { box-shadow: 0 0 0 2px var(--vk-color-line); }
+  .compact .row { min-height: 46px; }
+  .compact .row .t { font-weight: 600; }
+  .groupact { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
+  .foot { padding: 16px 24px 0; color: var(--vk-color-muted); font: var(--vk-type-meta); }
+  .chip { display: inline-flex; align-items: center; padding: 1px 8px; border-radius: var(--vk-radius-pill); background: var(--vk-color-surface); font: 600 12px/1.6 var(--vk-font-body); color: var(--vk-color-muted); }
+  .more { color: var(--vk-color-accent-text); text-decoration: underline; text-underline-offset: 3px; font: var(--vk-type-meta); background: none; border: 0; padding: 0; cursor: pointer; }
+  .hero-row { display: grid; gap: 6px; padding: 22px 24px 18px; }
+  .hero-row h1 { font: var(--vk-type-h1); font-stretch: var(--vk-type-h1-stretch); letter-spacing: -0.01em; }
+  .needsline { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 14px; }
+  .needsline b { color: var(--vk-color-signal-text); }
+
+  /* Pipeline track: always visible, horizontal, one cell per stage. */
+  .track { display: grid; grid-template-columns: repeat(var(--n), minmax(0, 1fr)); gap: 6px; }
+  .track li { display: grid; gap: 4px; min-width: 0; }
+  .track .bar { height: 8px; border-radius: var(--vk-radius-pill); background: var(--vk-color-line); }
+  .track li[data-has="1"] .bar { background: var(--vk-color-primary); }
+  .track li[data-needs="1"] .bar { background: var(--vk-color-signal); }
+  .track .nm { font: 600 13px/1.2 var(--vk-font-body); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .track .ct { color: var(--vk-color-muted); font: var(--vk-type-mono); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .track li[data-needs="1"] .ct { color: var(--vk-color-signal-text); }
+  .lanes { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; align-items: start; }
+  .lane { display: grid; gap: 10px; }
+  .lane > header { display: flex; align-items: baseline; gap: 8px; }
+  .lane > header h2 { font: 700 16px/1.2 var(--vk-font-display); }
+  .lane > header .ct { color: var(--vk-color-muted); font: var(--vk-type-mono); }
+  .lane > header .who { margin-left: auto; color: var(--vk-color-muted); font: var(--vk-type-meta); }
+  .tile { display: grid; gap: 6px; padding: 12px 14px; }
+  .tile .t { font-weight: 700; overflow-wrap: anywhere; }
+  .tile .st { font: var(--vk-type-meta); color: var(--vk-color-muted); }
+  .tile[data-needs="1"] .st { color: var(--vk-color-signal-text); font-weight: 600; }
+  .tile .mv { justify-self: end; }
+  .tile .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+
+  /* Card page. */
+  .cardhead { display: grid; gap: 8px; padding: 18px 24px 0; }
+  .cardhead .crumb { color: var(--vk-color-muted); font: var(--vk-type-meta); }
+  .cardhead h1 { font: var(--vk-type-h1); font-stretch: var(--vk-type-h1-stretch); font-size: 28px; }
+  .cardhead .tools { display: flex; gap: 8px; justify-self: end; grid-row: 1 / span 2; grid-column: 2; }
+  .cardhead { grid-template-columns: minmax(0, 1fr) auto; }
+  .state { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 12px 20px; align-items: center; }
+  .state p { font-size: 17px; }
+  .state p b { color: var(--vk-color-signal-text); }
+  .facts { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px 20px; }
+  .facts div { display: grid; gap: 2px; }
+  .facts dt { color: var(--vk-color-muted); font: var(--vk-type-eyebrow); }
+  .facts dd { margin: 0; font-weight: 600; }
+  .checklist li { display: flex; gap: 10px; padding: 6px 0; border-top: 1px solid var(--vk-color-line); }
+  .checklist li:first-child { border-top: 0; }
+  .checklist .k { color: var(--vk-color-muted); font: var(--vk-type-mono); flex: none; min-width: 48px; }
+  .artifact { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 12px; padding: 10px 14px; border: 1px solid var(--vk-color-line); border-radius: var(--vk-radius-md); }
+  .artifact .t { font-weight: 600; }
+
+  /* Tables for Crew and Settings. */
+  table.tbl { width: 100%; border-collapse: collapse; }
+  .tbl th { text-align: left; padding: 8px 10px 8px 0; color: var(--vk-color-muted); font: var(--vk-type-eyebrow); border-bottom: 1px solid var(--vk-color-line); }
+  .tbl td { padding: 10px 10px 10px 0; border-bottom: 1px solid var(--vk-color-line); vertical-align: middle; }
+  .tbl td.n { white-space: nowrap; }
+  .tbl .who { display: flex; align-items: center; gap: 10px; font-weight: 600; }
+  .tbl .face { width: 28px; height: 28px; font-size: 11px; }
+  .dot { display: inline-block; width: 14px; height: 14px; border-radius: 50%; vertical-align: -2px; margin-right: 8px; }
+  .kv { display: grid; grid-template-columns: 110px minmax(0, 1fr); gap: 8px 16px; }
+  .kv dt { color: var(--vk-color-muted); }
+  .kv dd { margin: 0; font-weight: 600; }
+
+  /* ===== Daylight signatures: greeting band, raised rounded rows, pill chips, mood faces. ===== */
+  [data-vibe="daylight"] .hero-row { background: linear-gradient(180deg, color-mix(in oklch, var(--vk-color-accent) 22%, var(--vk-color-bg)) 0%, var(--vk-color-bg) 100%); }
+  [data-vibe="daylight"] .row:not(.compact .row) { padding: 10px 14px; border-radius: var(--vk-radius-md); background: var(--vk-color-raised); }
+  [data-vibe="daylight"] .compact .row { padding: 2px 14px; border-top: 1px solid var(--vk-color-line); }
+  [data-vibe="daylight"] .compact .row:first-child { border-top: 0; }
+  [data-vibe="daylight"] .group { padding: 16px; border-radius: 16px; background: var(--vk-color-surface); }
+  [data-vibe="daylight"] .lane { padding: 12px; border-radius: 16px; background: var(--vk-color-surface); }
+  [data-vibe="daylight"] .tile { border-radius: var(--vk-radius-md); background: var(--vk-color-raised); }
+  [data-vibe="daylight"] .tile[data-needs="1"] { box-shadow: inset 4px 0 0 var(--vk-color-signal); }
+  [data-vibe="daylight"] .cardbox { padding: 16px; border-radius: 16px; background: var(--vk-color-surface); }
+  [data-vibe="daylight"] .track li[data-cur="1"] .bar { outline: 2px solid var(--vk-color-text); outline-offset: 1px; }
+
+  /* ===== Studio signatures: ink rules, mono meta, ordinals, square marks, the ramp. ===== */
+  [data-vibe="studio"] .mast { border-bottom: 1px solid var(--vk-color-rule); }
+  [data-vibe="studio"] .search, [data-vibe="studio"] .chip, [data-vibe="studio"] .artifact { border-radius: 0; }
+  [data-vibe="studio"] .search { background: transparent; box-shadow: inset 0 0 0 1px var(--vk-color-line); }
+  [data-vibe="studio"] .chip { background: transparent; box-shadow: inset 0 0 0 1px var(--vk-color-line); font: 500 11px/1.6 var(--vk-font-mono); }
+  [data-vibe="studio"] .row { border-top: 1px solid var(--vk-color-line); padding: 6px 0; }
+  [data-vibe="studio"] .row:first-child { border-top: 0; }
+  [data-vibe="studio"] .face { border-radius: 0; box-shadow: inset 0 0 0 1.5px var(--vk-color-rule); }
+  [data-vibe="studio"] .face[data-mood="needs"] { background: var(--vk-color-signal-wash); }
+  [data-vibe="studio"] .meta, [data-vibe="studio"] .foot, [data-vibe="studio"] .tile .st, [data-vibe="studio"] .lane > header .who { font: 500 12px/1.5 var(--vk-font-mono); }
+  [data-vibe="studio"] .why, [data-vibe="studio"] .lede { font: 400 15px/1.45 var(--vk-font-serif); color: var(--vk-color-text); }
+  [data-vibe="studio"] .track .bar { border-radius: 0; background: var(--_band); opacity: 0.3; }
+  [data-vibe="studio"] .track li[data-has="1"] .bar { opacity: 1; }
+  [data-vibe="studio"] .track li[data-cur="1"] .bar { height: 14px; margin-top: -6px; opacity: 1; }
+  [data-vibe="studio"] .track li[data-needs="1"] .bar { box-shadow: inset 0 -4px 0 var(--vk-color-signal); }
+  [data-vibe="studio"] .track .nm { padding-top: 4px; border-top: 1px solid var(--vk-color-rule); font: 600 12.5px/1.3 var(--vk-font-body); }
+  [data-vibe="studio"] .track .nm::before { content: attr(data-no) " "; color: var(--vk-color-muted); font: 500 11px/1 var(--vk-font-mono); }
+  [data-vibe="studio"] .lane > header { padding-top: 8px; border-top: 1.5px solid var(--vk-color-rule); }
+  [data-vibe="studio"] .lane > header h2 { font: 800 15px/1.2 var(--vk-font-body); }
+  [data-vibe="studio"] .tile { padding: 10px 0; border-top: 1px solid var(--vk-color-line); }
+  [data-vibe="studio"] .tile[data-needs="1"] .t::before { content: ""; display: inline-block; width: 10px; height: 10px; margin-right: 8px; background: var(--vk-color-signal); }
+  [data-vibe="studio"] .sm { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); border-top: 1.5px solid var(--vk-color-rule); }
+  [data-vibe="studio"] .sm button { appearance: none; border: 0; background: transparent; text-align: left; padding: 10px 8px 10px 10px; border-left: 1px solid var(--vk-color-line); cursor: pointer; color: var(--vk-color-text); display: grid; gap: 2px; min-width: 0; }
+  [data-vibe="studio"] .sm button:first-child { border-left: 0; padding-left: 0; }
+  [data-vibe="studio"] .sm .n { font: 800 24px/1 var(--vk-font-display); font-stretch: 80%; }
+  [data-vibe="studio"] .sm .n[data-tone="needs"] { color: var(--vk-color-signal-text); }
+  [data-vibe="studio"] .sm .l { font: 500 10.5px/1.3 var(--vk-font-mono); color: var(--vk-color-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  [data-vibe="studio"] .sm button[aria-pressed="true"] .l { color: var(--vk-color-text); font-weight: 700; }
+  [data-vibe="studio"] .facts dt { font: 700 11px/1.2 var(--vk-font-body); letter-spacing: 0.1em; text-transform: uppercase; }
+  [data-vibe="studio"] .tbl th { font: 700 11px/1.2 var(--vk-font-body); letter-spacing: 0.1em; text-transform: uppercase; border-bottom: 1.5px solid var(--vk-color-rule); }
+
+  /* ===== Paper signatures: Newsreader display, italic ledes, ink rules, roman numerals, no radius. ===== */
+  [data-vibe="paper"] .page, [data-vibe="paper"] .search, [data-vibe="paper"] .chip, [data-vibe="paper"] .artifact, [data-vibe="paper"] .face { border-radius: 2px; }
+  [data-vibe="paper"] .mast { border-bottom: 1px solid var(--vk-color-line); }
+  [data-vibe="paper"] .hero-row { padding-bottom: 14px; margin: 0 24px; padding-left: 0; padding-right: 0; border-bottom: 2px solid var(--vk-color-rule); }
+  [data-vibe="paper"] .hero-row h1, [data-vibe="paper"] .cardhead h1 { font-weight: 500; }
+  [data-vibe="paper"] .lede, [data-vibe="paper"] .why { font: italic 400 17px/1.45 var(--vk-font-display); color: var(--vk-color-text); }
+  [data-vibe="paper"] .row { border-top: 1px solid var(--vk-color-line); padding: 6px 0; }
+  [data-vibe="paper"] .row:first-child { border-top: 0; }
+  [data-vibe="paper"] .face { border-radius: 50%; }
+  [data-vibe="paper"] .meta { font: italic 400 14px/1.4 var(--vk-font-display); }
+  [data-vibe="paper"] .chip { border-radius: 0; background: transparent; box-shadow: inset 0 0 0 1px var(--vk-color-line); font: 600 11px/1.6 var(--vk-font-body); letter-spacing: 0.06em; text-transform: uppercase; }
+  [data-vibe="paper"] .track { padding-top: 10px; border-top: 1px solid var(--vk-color-line); gap: 0; }
+  [data-vibe="paper"] .track li { padding: 0 10px; border-left: 1px solid var(--vk-color-line); }
+  [data-vibe="paper"] .track li:first-child { padding-left: 0; border-left: 0; }
+  [data-vibe="paper"] .track .bar { display: none; }
+  [data-vibe="paper"] .track .nm { font: 400 15px/1.25 var(--vk-font-display); }
+  [data-vibe="paper"] .track .nm::before { content: attr(data-ro) " · "; font: 600 10.5px/1 var(--vk-font-body); letter-spacing: 0.12em; }
+  [data-vibe="paper"] .track li[data-cur="1"] .nm { font-style: italic; font-weight: 600; text-decoration: underline; text-underline-offset: 5px; text-decoration-thickness: 2px; }
+  [data-vibe="paper"] .track li[data-needs="1"] .nm { text-decoration-color: var(--vk-color-signal); }
+  [data-vibe="paper"] .lane > header { padding-bottom: 6px; border-bottom: 1px solid var(--vk-color-rule); }
+  [data-vibe="paper"] .lane > header h2 { font: 600 20px/1.2 var(--vk-font-display); }
+  [data-vibe="paper"] .tile { padding: 10px 0; border-top: 1px solid var(--vk-color-line); }
+  [data-vibe="paper"] .tile:first-of-type { border-top: 0; }
+  [data-vibe="paper"] .tile[data-needs="1"] .t::before { content: ""; display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 8px; vertical-align: 2px; background: var(--vk-color-signal); }
+  [data-vibe="paper"] .facts dt { font: 600 11px/1.2 var(--vk-font-body); letter-spacing: 0.12em; text-transform: uppercase; }
+  [data-vibe="paper"] .tbl th { font: 600 11px/1.2 var(--vk-font-body); letter-spacing: 0.12em; text-transform: uppercase; border-bottom: 1px solid var(--vk-color-rule); }
+
+  /* ===== Quiet signatures: larger plain type, one column, ruled rows, underlined links, no boxes. ===== */
+  [data-vibe="quiet"] .page { font-size: 17px; }
+  [data-vibe="quiet"] .mast { border-bottom: 1px solid var(--vk-color-line); }
+  [data-vibe="quiet"] .search { border-radius: 6px; }
+  [data-vibe="quiet"] .hero-row h1 { font-size: 30px; }
+  [data-vibe="quiet"] .row { border-top: 1px solid var(--vk-color-line); padding: 8px 0; }
+  [data-vibe="quiet"] .row:first-child { border-top: 0; }
+  [data-vibe="quiet"] .face { filter: grayscale(0.6); }
+  [data-vibe="quiet"] .chip { border-radius: 4px; }
+  [data-vibe="quiet"] .track { gap: 4px 16px; display: flex; flex-wrap: wrap; counter-reset: st; }
+  [data-vibe="quiet"] .track li { display: inline; counter-increment: st; font: 400 16px/1.5 var(--vk-font-body); }
+  [data-vibe="quiet"] .track li::before { content: counter(st) ". "; }
+  [data-vibe="quiet"] .track .bar { display: none; }
+  [data-vibe="quiet"] .track .nm, [data-vibe="quiet"] .track .ct { display: inline; white-space: normal; font: inherit; }
+  [data-vibe="quiet"] .track .ct::before { content: " ("; } [data-vibe="quiet"] .track .ct::after { content: ")"; }
+  [data-vibe="quiet"] .track li[data-cur="1"] .nm { font-weight: 700; text-decoration: underline; text-underline-offset: 4px; }
+  [data-vibe="quiet"] .lanes { grid-template-columns: 1fr; }
+  [data-vibe="quiet"] .lane > header h2 { font: 700 22px/1.3 var(--vk-font-body); }
+  [data-vibe="quiet"] .tile { padding: 10px 0; border-top: 1px solid var(--vk-color-line); }
+  [data-vibe="quiet"] .tile[data-needs="1"] .st::before { content: "Needs you · "; }
+  [data-vibe="quiet"] .facts { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+
+  /* Choices. */
+  .ask { margin-top: 32px; }
+  .ask h2 { font: 600 18px/1.3 ui-sans-serif, system-ui, sans-serif; margin: 0 0 12px; }
+  .options { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 12px; }
+  .option { display: flex; gap: 12px; padding: 14px 16px; border: 1px solid #333; border-radius: 10px; background: #1a1a1a; cursor: pointer; }
+  .option.selected { border-color: #8fa8ff; background: #1c2033; }
+  .option .letter { width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; background: #2a2a2a; font-weight: 700; flex: none; }
+  .option h3 { margin: 0 0 4px; font: 600 15px/1.3 ui-sans-serif, system-ui, sans-serif; }
+  .option p { margin: 0; color: #a9a59c; font-size: 13px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Five pages, four vibes, one composition</h1>
+  <p class="sub">Each page is written once as a template and rendered into the four vibes. Only type, colour, surface and a few signature touches change between panels. Daylight is shown dark, as you run it; the others light.</p>
+  <nav class="pagetabs" id="pagetabs"></nav>
+  <div class="rules" id="rules"></div>
+  <div id="screens"></div>
+
+  <div class="ask">
+    <h2>Which pages need another pass before this becomes the contract?</h2>
+    <div class="options" data-multiselect>
+      <div class="option" data-choice="all-good" onclick="toggleSelect(this)"><div class="letter">✓</div><div><h3>All five read right</h3><p>Write the composition contract and start on Phase 0 and the Inbox.</p></div></div>
+      <div class="option" data-choice="inbox" onclick="toggleSelect(this)"><div class="letter">1</div><div><h3>Inbox</h3><p>Needs changes</p></div></div>
+      <div class="option" data-choice="board" onclick="toggleSelect(this)"><div class="letter">2</div><div><h3>Board</h3><p>Needs changes</p></div></div>
+      <div class="option" data-choice="card" onclick="toggleSelect(this)"><div class="letter">3</div><div><h3>Card</h3><p>Needs changes</p></div></div>
+      <div class="option" data-choice="crew" onclick="toggleSelect(this)"><div class="letter">4</div><div><h3>Crew</h3><p>Needs changes</p></div></div>
+      <div class="option" data-choice="settings" onclick="toggleSelect(this)"><div class="letter">5</div><div><h3>Settings</h3><p>Needs changes</p></div></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const VIBES = [
+  { v: 'daylight', theme: 'dark',  cap: 'Daylight · dark',  note: 'greeting band, raised rows, pills' },
+  { v: 'studio',   theme: 'light', cap: 'Studio · light',   note: 'figure, ink rules, ordinals, mono' },
+  { v: 'paper',    theme: 'light', cap: 'Paper · light',    note: 'Newsreader, italics, rules, numerals' },
+  { v: 'quiet',    theme: 'light', cap: 'Quiet · light',    note: 'plain large type, one column, links' },
+];
+const ROMAN = ['I','II','III','IV','V','VI','VII','VIII'];
+
+/* ---- component helpers: the same call draws the vibe's own form ---- */
+const btn = (v, label, variant = 'primary', sm = true) => `<button class="vk-button vk-button--${variant}${sm ? ' vk-button--sm' : ''}">${label}</button>`;
+const tabs = (v, items) => `<div class="vk-tabs vk-tabs--${v}" role="tablist">${v === 'quiet' ? '<span class="vk-tabs__label">View:</span>' : ''}${items.map(([l, c, on]) => `<button class="vk-tabs__item" role="tab" aria-selected="${on ? 'true' : 'false'}">${l}${c !== undefined ? ` <span class="vk-tabs__count">${c}</span>` : ''}</button>`).join('')}</div>`;
+const sh = (v, no, title, count) => {
+  if (v === 'studio') return `<header class="vk-sectionheader vk-sectionheader--studio"><span class="vk-sectionheader__no">${String(no).padStart(2, '0')}</span><h2 class="vk-sectionheader__title">${title}</h2>${count ? `<span class="vk-sectionheader__count">${count}</span>` : ''}</header>`;
+  if (v === 'paper') return `<header class="vk-sectionheader vk-sectionheader--paper"><div class="vk-sectionheader__row"><h2 class="vk-sectionheader__title">${title}</h2>${count ? `<span class="vk-sectionheader__count">${count}</span>` : ''}</div></header>`;
+  return `<header class="vk-sectionheader vk-sectionheader--${v}"><h2 class="vk-sectionheader__title">${title}</h2>${count ? `<span class="vk-sectionheader__count">${count}</span>` : ''}</header>`;
+};
+const state = (v, s, word) => `<span class="vk-statelabel vk-statelabel--${v}" data-state="${s}">${v === 'studio' ? '<span class="vk-statelabel__sq"></span>' : ''}${word}</span>`;
+const face = (v, ini, mood) => `<span class="face" data-mood="${mood}" aria-hidden="true">${ini}</span>`;
+const scope = (v, items) => {
+  if (v === 'studio') return `<div class="sm" role="group" aria-label="Show">${items.map(([l, c, on, needs]) => `<button aria-pressed="${on ? 'true' : 'false'}"><span class="n"${needs ? ' data-tone="needs"' : ''}>${c}</span><span class="l">${l}</span></button>`).join('')}</div>`;
+  return `<div class="vk-quickfilter vk-quickfilter--${v}" role="group" aria-label="Show">${items.map(([l, c, on]) => `<button class="vk-quickfilter__item"${on ? ' data-state="checked"' : ''}${c === 0 ? ' data-zero="true"' : ''}><span class="vk-quickfilter__face">${l} <span class="vk-quickfilter__count">${c}</span></span></button>`).join('')}</div>`;
+};
+const track = (v, stages, cur) => `<ol class="track" aria-label="Stages" style="--n:${stages.length}">${stages.map((s, i) => `<li data-has="${s.n ? 1 : 0}" data-needs="${s.needs ? 1 : 0}" data-cur="${i === cur ? 1 : 0}" style="--_band: var(--vk-stage-${i + 1})"><span class="bar" aria-hidden="true"></span><span class="nm" data-no="${String(i + 1).padStart(2, '0')}" data-ro="${ROMAN[i]}">${s.name}</span><span class="ct">${s.ct}</span></li>`).join('')}</ol>`;
+const disc = (v, title, meta, body, open) => `<details class="vk-disclosure vk-disclosure--${v} vk-disclosure--section"${open ? ' open' : ''}><summary class="vk-disclosure__summary">${title}${meta ? ` <span class="vk-disclosure__meta">${meta}</span>` : ''}<span class="vk-disclosure__mark" aria-hidden="true">${v === 'studio' ? (open ? '–' : '+') : (v === 'quiet' ? (open ? 'Hide' : 'Show') : '⌄')}</span></summary><div class="vk-disclosure__body">${body}</div></details>`;
+const mast = (v, left, right) => `<div class="mast">${left}<span class="live">Live</span><span class="spacer"></span><span class="search">Search <kbd>⌘K</kbd></span>${right}</div>`;
+
+/* ---- the five pages, each one composition ---- */
+const PAGES = {
+  inbox: {
+    title: 'Inbox',
+    rules: '<b>Contract:</b> one headline that says how many and why · board scope once · four tabs (Needs you, Running, Spend, Activity) · cards grouped by what you must do · one verb per row · machine detail behind a link.',
+    render(v) {
+      const unclaimed = [
+        ['Make the docs checks required on every product repo', 'Planning & Roadmap', 'Proposed', '3 d'],
+        ['Let CI read forge CI results without exposing infra', 'Planning & Roadmap', 'Proposed', '3 d'],
+        ['ci-bands gets its own GitHub API budget and a budget guard', 'Planning & Roadmap', 'Proposed', '3 d'],
+        ['Hub leaves its old board-room cards live after a board moves to SuperExchange', 'Developer Experience', 'Reported', '3 d'],
+      ];
+      const head = v === 'studio'
+        ? `<div class="body" style="padding-top:8px"><div class="vk-hero vk-hero--studio" data-size="section" data-tone="needs"><div class="vk-hero__figure">18</div><div class="vk-hero__text"><p class="vk-hero__kicker">Across three boards · nothing running</p><h1 class="vk-hero__headline">Eighteen cards want you.</h1><p class="vk-hero__lede">One review, one stopped agent, and sixteen cards nobody is set up to work.</p></div></div></div>`
+        : `<div class="hero-row"><h1>${v === 'daylight' ? 'Working late, Rakesh? 18 cards want you.' : '18 cards want you.'}</h1><p class="lede">One review, one stopped agent, and 16 cards nobody is set up to work. Nothing is running.</p></div>`;
+      return mast(v, '<span class="eyebrow">Superpipeline · Inbox</span>', btn(v, 'New card')) + head + `<div class="body">
+        ${scope(v, [['All boards', 18, true, true], ['Planning & Roadmap', 13], ['Developer Experience', 3], ['Marketing & Community', 2], ['8 more', 0]])}
+        ${tabs(v, [['Needs you', 18, true], ['Running', 0], ['Spend', '$0.00'], ['Activity', 548]])}
+        <section class="group">${sh(v, 1, 'Review', '1 card')}
+          <div class="row">${face(v, 'KK', 'needs')}<div><p class="t">Protect release tags on every product repo</p><p class="meta">${state(v, 'needs', 'Needs you')} keeper-karen finished attempt 5 · Planning &amp; Roadmap · Approved · 10 h</p></div><div class="act">${btn(v, 'Review')}</div></div>
+        </section>
+        <section class="group">${sh(v, 2, 'Resume a stopped agent', '1 card')}
+          <div class="row">${face(v, 'MM', 'needs')}<div><p class="t">LinkedIn post (Fri): one selective post about shipped work</p><p class="meta">${state(v, 'stopped', 'Stopped')} message-melissa, twice, in Messaging brief · Marketing · 11 days · <button class="more">what it said</button></p></div><div class="act">${btn(v, 'Resume')}</div></div>
+        </section>
+        <section class="group">${sh(v, 3, 'Nobody works these stages', '16 cards')}
+          <p class="why">These cards sit in Proposed and Reported on three boards. No agent holds those stages and no review is asked for, so they will not move on their own.</p>
+          <div class="groupact">${btn(v, 'Move all 16…', 'secondary')}${btn(v, 'Staff an agent', 'quiet')}</div>
+          <ul class="compact">${unclaimed.map(([t, b, s, a]) => `<li class="row nf"><div><p class="t">${t}</p><p class="meta"><span class="chip">${b}</span> ${s} · ${a}</p></div><div class="act">${btn(v, 'Move', 'quiet')}</div></li>`).join('')}</ul>
+          <button class="more">Show 12 more</button>
+        </section>
+      </div><p class="foot">18 need you · 0 running · $0.00 in the last 7 days · synced 03:24</p>`;
+    }
+  },
+  board: {
+    title: 'Board',
+    rules: '<b>Contract:</b> the pipeline is always visible as one horizontal track, every stage named with its count and who works it · one attention line, not a hero · lanes only for stages that hold cards · a card shows title, priority, labels and one state line · unclaimed cards get a mark, not a frame and a button.',
+    render(v) {
+      const stages = [
+        { name: 'Reported', n: 3, ct: '3 · a person', needs: true }, { name: 'Reproduce', n: 0, ct: '0 · 3 agents' }, { name: 'Failing test', n: 0, ct: '0 · 3 agents' },
+        { name: 'Fix', n: 0, ct: '0 · 3 agents' }, { name: 'Integrate', n: 0, ct: '0 · 3 agents' }, { name: 'Signed off', n: 0, ct: '0 · gate · a person' }, { name: 'Shipped', n: 13, ct: '13 · a person' },
+      ];
+      const tile = (t, p, labels, st, needs) => `<article class="tile" data-needs="${needs ? 1 : 0}"><p class="t">${t}</p><div class="chips"><span class="chip">${p}</span>${labels.map(l => `<span class="chip">${l}</span>`).join('')}</div><p class="st">${st}</p><span class="mv">${btn(v, 'Move', 'quiet')}</span></article>`;
+      return mast(v, `<span class="title">Developer Experience ⌄</span>`, btn(v, 'New card')) + `<div class="body" style="padding-top:16px">
+        <div class="needsline">${tabs(v, [['Board', undefined, true], ['List']])}<span class="meta">Filter · none on · 16 cards</span><span class="spacer" style="flex:1"></span><span><b>3 cards want you here.</b> <button class="more">Show the first</button></span></div>
+        ${track(v, stages, 0)}
+        <div class="lanes">
+          <section class="lane"><header><h2>Reported</h2><span class="ct">3</span><span class="who">a person works this</span></header>
+            ${tile('Hub leaves its old board-room cards live after a board moves to SuperExchange', 'P2', ['agentpod', 'superexchange'], 'With you · no agent works this stage', true)}
+            ${tile("SuperToolkit's policy file accepts a scopes key that no code reads", 'P1', ['supertoolkit'], 'With you · no agent works this stage', true)}
+            ${tile("Salaam's automatic deliverable links are not version-pinned", 'P2', ['agentpod'], 'With you · no agent works this stage', true)}
+          </section>
+          <section class="lane"><header><h2>Shipped</h2><span class="ct">13</span><span class="who">done</span></header>
+            ${tile('Build immutable approval subjects and digest-bound gates', 'P2', [], 'Shipped · test(api): pin immutable approval subject binding')}
+            ${tile('Publishing: SuperPipeline gate drives the stk effect, with read-back', 'P2', [], 'Shipped · SuperPipeline red-test commit')}
+            ${tile('supi cannot assign a card to a project, milestone or label after creation', 'P2', ['superpipeline'], 'Shipped · supi v0.0.26 card organisation CLI reproduction')}
+            <button class="more">Show 10 more</button>
+          </section>
+        </div>
+      </div><p class="foot">16 cards · 3 need you · 13 shipped · synced 03:24</p>`;
+    }
+  },
+  card: {
+    title: 'Card',
+    rules: '<b>Contract:</b> title, then the track with the current stage named · one sentence that says where the card is and what is wanted, with the primary action beside it · facts in words (label names, not ids) · the brief open · what the last attempt produced, with acceptance as a checklist · conversation, history and raw data collapsed.',
+    render(v) {
+      const stages = ['Proposed', 'Shaped', 'Planned', 'Building', 'Reviewing', 'Approved', 'Done'].map((name, i) => ({ name, n: i <= 5 ? 1 : 0, ct: i < 5 ? 'done' : (i === 5 ? 'you · 10 h' : 'next'), needs: i === 5 }));
+      const acs = [['AC-01', 'Fixed host split: the inventory names exactly the GitHub-primary repos (agentpod, salaam, accounts, superwitness) and the forge-primary ones.'], ['AC-02', 'Every product repo refuses a v* tag push from anyone but the operator.'], ['AC-03', 'The push mirror from forge to GitHub still succeeds after the ruleset.']];
+      return `<div class="cardhead"><p class="crumb">Planning &amp; Roadmap · Approved · card 4854</p><h1>Protect release tags on every product repo</h1><div class="tools">${btn(v, 'Open in new window', 'tool')}${btn(v, 'Close', 'tool')}</div></div>
+      <div class="body" style="padding-top:16px">
+        ${track(v, stages, 5)}
+        <div class="state"><p><b>Waiting for your review</b> in Approved for 10 hours. keeper-karen finished attempt 5 and produced one document.</p><div class="act">${btn(v, 'Review', 'primary', false)}${btn(v, 'Move', 'secondary', false)}</div></div>
+        <dl class="facts"><div><dt>Owner</dt><dd>Rakesh</dd></div><div><dt>Priority</dt><dd>P1</dd></div><div><dt>Labels</dt><dd>estate, release</dd></div><div><dt>Due</dt><dd>none</dd></div><div><dt>Attempt</dt><dd>5 of 5</dd></div><div><dt>Asked by</dt><dd>Rakesh</dd></div></dl>
+        <section class="group">${sh(v, 1, 'The brief')}<p>Only superlibrary and supermessage have the v* tag ruleset. Apply the estate release tag ruleset to agentpod, salaam, accounts and superwitness, and protect v* tags on the forge for the forge-primary repos, since a GitHub ruleset would block the push mirror.</p></section>
+        <section class="group">${sh(v, 2, 'What attempt 5 produced', '1 document · 3 criteria')}
+          <div class="artifact"><div><p class="t">Protect v* release tags on every product repository — implementation specification</p><p class="meta">version 1 · SuperLibrary · 10 h ago</p></div>${btn(v, 'Open', 'secondary')}</div>
+          <ul class="checklist">${acs.map(([k, t]) => `<li><span class="k">${k}</span><span>${t}</span></li>`).join('')}</ul>
+        </section>
+        ${disc(v, 'Conversation and history', '12 entries · last 10 h ago', '<p class="meta">Attempt 5 finished · attempt 4 sent back from Reviewing · …</p>', false)}
+        ${disc(v, 'Raw data', 'JSON', '<p class="meta">{ "acceptance": [ … ] }</p>', false)}
+      </div>`;
+    }
+  },
+  crew: {
+    title: 'Crew',
+    rules: '<b>Contract:</b> a page head that says what the page is for · three tabs with counts · one table: who, what they work, where they come from, last seen, actions · no legend row; help lives behind one link · real loading and empty states with a time limit and a next step.',
+    render(v) {
+      const rows = [['KK', 'keeper-karen', 'needs', 'review, release', 'AgentPod', '10 h ago'], ['MM', 'message-melissa', 'needs', 'messaging, drafts', 'AgentPod', '11 d ago'], ['BB', 'builder-bo', 'resting', 'planning, fix, integrate', 'AgentPod', '2 d ago'], ['SS', 'scout-sam', 'resting', 'planning, research', 'AgentPod', '3 d ago'], ['CC', 'checker-chen', 'resting', 'verify, failing test', 'AgentPod', '5 d ago']];
+      return mast(v, '<span class="eyebrow">Crew · shared by every board</span>', btn(v, 'New agent')) + `<div class="hero-row"><h1>Crew</h1><p class="lede">The agents and people who can claim cards on your boards. A card in a stage goes to an agent holding that stage's capability. <button class="more">How agents pick cards</button></p></div>
+      <div class="body">
+        ${tabs(v, [['Agents', 14, true], ['People', 2], ['Capabilities', 9]])}
+        <table class="tbl"><thead><tr><th>Agent</th><th>Works</th><th>From</th><th>Last seen</th><th></th></tr></thead><tbody>
+        ${rows.map(([i, n, m, w, f, l]) => `<tr><td><span class="who">${face(v, i, m)}${n}</span></td><td>${w}</td><td class="n">${f}</td><td class="n">${l}</td><td class="n">${btn(v, '⋯', 'quiet')}</td></tr>`).join('')}
+        </tbody></table>
+        <button class="more">Show 9 more</button>
+      </div><p class="foot">14 agents · 2 need you · 12 resting · tokens and links under each agent's actions</p>`;
+    }
+  },
+  settings: {
+    title: 'Settings',
+    rules: '<b>Contract:</b> one page head · sections as tabs with counts · labels as a compact table (name, origin, use count, remove), renamed in place on click, not twenty full-width inputs · connections as rows with a state · appearance and account as facts with one action each.',
+    render(v) {
+      const labels = [['#7fa14b', 'accounts', '', '4 cards'], ['#3a6fc8', 'agentpod', '', '21 cards'], ['#9a9a9a', 'baseline', 'inferred', '2 cards'], ['#9a9a9a', 'ci', '', '6 cards'], ['#c678b6', 'docs', '', '9 cards'], ['#d18a1c', 'estate', '', '7 cards']];
+      return mast(v, '<span class="eyebrow">Settings</span>', '') + `<div class="hero-row"><h1>Settings</h1><p class="lede">Workspace labels and connections, and how Superpipeline looks for you.</p></div>
+      <div class="body">
+        ${tabs(v, [['Labels', 20, true], ['Connections', 2], ['Appearance'], ['Account']])}
+        <section class="group">${sh(v, 1, 'Labels', '20 · shared by every board')}
+          <table class="tbl"><thead><tr><th>Label</th><th>Origin</th><th>Used on</th><th></th></tr></thead><tbody>
+          ${labels.map(([c, n, o, u]) => `<tr><td><span class="dot" style="background:${c}"></span><b>${n}</b></td><td class="n">${o ? '<span class="chip">inferred</span>' : 'you'}</td><td class="n">${u}</td><td class="n">${btn(v, 'Remove', 'quiet')}</td></tr>`).join('')}
+          </tbody></table>
+          <div class="groupact"><button class="more">Show 14 more</button>${btn(v, 'New label', 'secondary')}</div>
+        </section>
+        <section class="group">${sh(v, 2, 'Connections', '2')}
+          <div class="row nf"><div><p class="t">Forge</p><p class="meta">${state(v, 'done', 'Connected')} 9 repositories · agents push here</p></div><div class="act">${btn(v, 'Manage', 'quiet')}</div></div>
+          <div class="row nf"><div><p class="t">AgentPod</p><p class="meta">${state(v, 'done', 'Connected')} 14 agents sign in through it</p></div><div class="act">${btn(v, 'Manage', 'quiet')}</div></div>
+        </section>
+        <section class="group">${sh(v, 3, 'Appearance')}<dl class="kv"><dt>Vibe</dt><dd>${v[0].toUpperCase() + v.slice(1)}</dd><dt>Theme</dt><dd>${v === 'daylight' ? 'Dark' : 'Light'}</dd><dt>Accent</dt><dd>Superpipeline (default)</dd></dl><div class="groupact">${btn(v, 'Open Appearance', 'secondary')}</div></section>
+        <section class="group">${sh(v, 4, 'Account')}<p class="meta">Signed in as Rakesh. Agents keep working while you are signed out.</p><div class="groupact">${btn(v, 'Sign out', 'secondary')}</div></section>
+      </div>`;
+    }
+  }
+};
+
+/* ---- mount: tabs, rules, 2x2 panels per page ---- */
+const keys = Object.keys(PAGES);
+const nav = document.getElementById('pagetabs');
+const screens = document.getElementById('screens');
+for (const k of keys) {
+  const a = document.createElement('a'); a.href = '#' + k; a.textContent = PAGES[k].title; a.id = 'tab-' + k; nav.appendChild(a);
+  const s = document.createElement('section'); s.className = 'screen'; s.id = 'screen-' + k; s.hidden = true;
+  s.innerHTML = `<div class="grid">${VIBES.map(({ v, theme, cap, note }) => `<div class="col"><p class="cap"><b>${cap}</b><span>${note}</span></p><div class="page" data-vibe="${v}" data-theme="${theme}" data-motion="reduce" data-time="off" data-phase="noon">${PAGES[k].render(v)}</div></div>`).join('')}</div>`;
+  screens.appendChild(s);
+}
+function show() {
+  const k = keys.includes(location.hash.slice(1)) ? location.hash.slice(1) : keys[0];
+  for (const x of keys) { document.getElementById('screen-' + x).hidden = x !== k; const t = document.getElementById('tab-' + x); if (x === k) t.setAttribute('aria-current', 'page'); else t.removeAttribute('aria-current'); }
+  document.getElementById('rules').innerHTML = PAGES[k].rules;
+}
+addEventListener('hashchange', show); show();
+</script>
+</body>
+</html>

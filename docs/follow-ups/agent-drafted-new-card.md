@@ -1,10 +1,10 @@
 # Follow-up: an agent drafts the new card (dialogs D-1)
 
 The vibes sweep shipped the new card composer without drafting. The person writes the title and the
-brief. The SP-Dlg-NewCard references draw the drafted state: a "Draft again" button and the note
+brief. The retired SP-Dlg-NewCard pixel references drew the drafted state: a "Draft again" button and the note
 "**{drafter}** drafted the title and brief from your sentence. Change anything.", plus a
-"Drafted · not sent yet" tag on the brief. The pixel harness deletes `.nc-draftrow` and
-`.nc-brief-tag` from those references until this lands. The composer's lead copy already promises
+"Drafted · not sent yet" tag on the brief. The pixel harness deleted `.nc-draftrow` and
+`.nc-brief-tag` from those references, as out of scope. The composer's lead copy already promises
 drafting ("An agent drafts the brief…"), so this is the gap between the copy and the product.
 
 ## What it needs

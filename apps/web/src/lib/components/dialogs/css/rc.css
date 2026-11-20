@@ -1,4 +1,4 @@
-/* Ported verbatim from e2e/reference/mockups/SP-Dlg-Reconnect-Daylight, SP-Dlg-Reconnect-Paper, SP-Dlg-Reconnect-Studio, SP-Dlg-Reconnect-Quiet (prefixes rc-, bd-avatar, small, muted, mono; root :where(.fg) as .vk-dialog.rc) by scripts/pixel/extract-css.mjs. */
+/* Ported verbatim from the pixel reference SP-Dlg-Reconnect-Daylight, SP-Dlg-Reconnect-Paper, SP-Dlg-Reconnect-Studio, SP-Dlg-Reconnect-Quiet (prefixes rc-, bd-avatar, small, muted, mono; root :where(.fg) as .vk-dialog.rc) by the pixel suite's extract-css.mjs (both retired). */
 .vk-dialog.rc .muted { color: var(--vk-color-muted); }
 .vk-dialog.rc .small { font-size: var(--vk-text-sm); }
 .vk-dialog.rc .mono { font-family: var(--vk-font-mono); }

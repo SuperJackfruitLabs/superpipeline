@@ -7,13 +7,14 @@
    * region (`app.moveSaid`), success or refusal.
    */
   import { untrack } from 'svelte';
-  import { Button, Choice, Dialog, Face } from '@superjackfruit/vibekit';
+  import { Button, Choice, Dialog, Face } from '@superjackfruitlabs/vibekit-ui';
   import { app } from '$lib/stores/app.svelte';
   import { displayAgent } from '$lib/names';
   import { stageSummaries, summarize } from '$lib/components/board/card-summary';
   import Icon from '$lib/components/parts/Icon.svelte';
   import { dirLabel, initialPick, moveNowLead, moveThen, ownerFace, primaryLabel, stageCountText } from './move-model';
   import { ownerLine } from './who-picks-up';
+  import { liveMatch } from '$lib/focus-row';
   import './css/mv.css';
 
   let pick = $state<string | undefined>(undefined);
@@ -56,15 +57,25 @@
     const id = card.id;
     close();
     // The control that opened this moved with its card (a new column, a new group): if focus could not
-    // go back to it, it goes to the card where it is now, else to the page heading.
-    setTimeout(() => {
+    // go back to it, it goes to the card where it is now, else to the page heading. With motion on, the
+    // dialog hands focus back only after its own exit, and the old tile fades out inert (Lane's out:fade):
+    // focus that lands there, or on the page when the old tile goes, is put on the live tile. Watched for
+    // a frame at a time until the old tile is gone and the dialog with it.
+    const sel = `[data-card-id="${CSS.escape(id)}"]`;
+    const until = performance.now() + 1500;
+    const settle = (): void => {
       const here = document.activeElement;
-      if (here && here !== document.body && here.isConnected) return;
-      const tile = document.querySelector<HTMLElement>(`[data-card-id="${id}"]`);
-      const target = tile?.querySelector<HTMLElement>('button, a[href], [tabindex]:not([tabindex="-1"])') ?? document.querySelector<HTMLElement>('h1');
-      if (target && !target.matches('button, a[href], [tabindex]')) target.tabIndex = -1;
-      target?.focus();
-    }, 50);
+      const lost = !here || here === document.body || !here.isConnected || !!here.closest('[inert]');
+      if (lost) {
+        const tile = liveMatch(sel);
+        const target = tile?.querySelector<HTMLElement>('button, a[href], [tabindex]:not([tabindex="-1"])') ?? document.querySelector<HTMLElement>('h1');
+        if (target && !target.matches('button, a[href], [tabindex]')) target.tabIndex = -1;
+        target?.focus();
+      }
+      const leaving = [...document.querySelectorAll(sel)].some((t) => t.closest('[inert]')) || document.querySelector('[role="dialog"]') !== null;
+      if (leaving && performance.now() < until) requestAnimationFrame(settle);
+    };
+    setTimeout(settle, 50);
   }
 </script>
 
@@ -113,7 +124,5 @@
   :global(.vk-dialog.mv .vk-overlay__description strong) { color: var(--vk-color-text); }
   :global(.vk-dialog.mv .mv-set) { border: 0; padding: 0; margin: 10px 0 0; min-width: 0; }
   :global(.vk-dialog.mv .mv-min) { min-width: 0; }
-  /* The Studio shell's unscoped .st-right (styles/shell/studio.css) must not reach the rows. */
-  :global(.vk-dialog.mv .st-right) { font-family: inherit; font-weight: inherit; line-height: inherit; margin-left: 0; white-space: normal; }
   :global(.vk-dialog.mv .mv-legend) { padding: 0; margin-bottom: 8px; font: 700 15px/1.3 var(--vk-font-display); }
 </style>

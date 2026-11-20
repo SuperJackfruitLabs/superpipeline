@@ -11,8 +11,8 @@ describe('vibekit is the only source of colour and type', () => {
 
   it('imports tailwind, then vibekit fonts, then vibekit styles', () => {
     const tw = css.indexOf("@import 'tailwindcss';");
-    const fonts = css.indexOf("@import '@superjackfruit/vibekit/fonts.css';");
-    const vk = css.indexOf("@import '@superjackfruit/vibekit/vibekit.css';");
+    const fonts = css.indexOf("@import '@superjackfruitlabs/vibekit-ui/fonts.css';");
+    const vk = css.indexOf("@import '@superjackfruitlabs/vibekit-ui/vibekit.css';");
     expect(tw).toBeGreaterThan(-1);
     expect(fonts).toBeGreaterThan(tw);
     expect(vk).toBeGreaterThan(fonts);

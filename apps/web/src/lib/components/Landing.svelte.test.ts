@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, render, screen } from '@testing-library/svelte';
-import { greeting } from '@superjackfruit/vibekit';
+import { greeting } from '@superjackfruitlabs/vibekit-ui';
 import { BOARD_TEMPLATES } from '$lib/api';
 import { appearance } from '$lib/appearance.svelte';
 

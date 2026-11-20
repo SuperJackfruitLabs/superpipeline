@@ -20,7 +20,7 @@ async function seedCard(request: APIRequestContext, boardId: string, title: stri
   const res = await request.post(`${API}/v1/boards/${boardId}/cards`, { headers: TENANT, data: { title, ownerUserId: 'usr_a', projectId } });
   return ((await res.json()) as { card: { id: string } }).card.id;
 }
-/** Daylight's Plan switch is a Segmented (radios); the other vibes' are link tabs. */
+/** Plan's switch: link tabs in every vibe (the radios form is the old Daylight shell's). */
 const planItem = (page: Page, name: 'Boards' | 'Projects') =>
   page.getByRole('radiogroup', { name: 'Plan' }).getByRole('radio', { name })
     .or(page.getByRole('navigation', { name: 'Plan' }).getByRole('link', { name, exact: true }));
@@ -34,14 +34,14 @@ test('Plan switches between Boards and Projects; Projects has no board switcher'
   const boardId = await seedBoard(request, `Plan switch ${tag()}`);
   await openBoard(page, boardId);
   await expect(planItem(page, 'Boards')).toBeVisible();
-  // A board's views are Board and List; Projects is no longer one of them.
-  const views = page.getByRole('radiogroup', { name: 'View' });
-  await expect(views.getByRole('radio')).toHaveText(['Board', 'List']);
+  // A board's views are Board and List (the board page's own top row); Projects is no longer one of them.
+  const views = page.getByRole('navigation', { name: 'View' });
+  await expect(views.getByRole('link')).toHaveText(['Board', 'List']);
   await planItem(page, 'Projects').click();
   await expect(page).toHaveURL(/\/plan\/projects$/);
   await expect(page.getByRole('heading', { level: 1, name: 'Projects' })).toBeVisible();
   await expect(page.getByRole('button', { name: /Switch board|Change board/ })).toHaveCount(0);
-  await expect(page.getByRole('radiogroup', { name: 'View' })).toHaveCount(0);
+  await expect(page.getByRole('navigation', { name: 'View' })).toHaveCount(0);
   await planItem(page, 'Boards').click();
   await expect(page).toHaveURL(new RegExp(`/b/${boardId}$`));
 });
@@ -173,8 +173,8 @@ for (const vibe of VIBES) {
     await expect(page.getByRole('dialog', { name: 'New project' })).toBeVisible();
     await page.keyboard.press('Escape');
     await page.goto('/inbox');
-    // Quiet's board-less pages have one row, the links, and no masthead action (its Projects page draws New project itself).
-    await expect(page.getByRole('button', { name: /^(New card|Write a new card)/ })).toHaveCount(vibe === 'quiet' ? 0 : 1);
+    // One shell in every vibe: the Inbox's masthead says New card.
+    await expect(page.getByRole('button', { name: /^(New card|Write a new card)/ })).toHaveCount(1);
     await expect(page.getByRole('button', { name: /^New project/ })).toHaveCount(0);
   });
 }

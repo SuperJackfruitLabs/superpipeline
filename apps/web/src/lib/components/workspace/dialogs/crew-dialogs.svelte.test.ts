@@ -10,12 +10,19 @@ const api = vi.hoisted(() => ({
   addImplication: vi.fn(), removeImplication: vi.fn(), listAttention: vi.fn(), listLabels: vi.fn(),
 }));
 vi.mock('$lib/api', () => api);
-vi.mock('$lib/stores/app.svelte', () => ({ app: { markBusy: <T,>(p: Promise<T>) => p, boardId: null, board: null, user: { userId: 'usr_ira' } } }));
+// jsdom has no matchMedia; vibekit's DataTable asks it for the phone width.
+vi.hoisted(() => {
+  Object.defineProperty(window, 'matchMedia', {
+    configurable: true,
+    value: (query: string): MediaQueryList => ({ matches: false, media: query, onchange: null, addEventListener: () => {}, removeEventListener: () => {}, addListener: () => {}, removeListener: () => {}, dispatchEvent: () => false }),
+  });
+});
+vi.mock('$lib/stores/app.svelte', () => ({ app: { markBusy: <T,>(p: Promise<T>) => p, attention: [], boardId: null, board: null, user: { userId: 'usr_ira' } } }));
 
-import PeopleTab from '../PeopleTab.svelte';
+import CrewView from '../CrewView.svelte';
+import { crewLists } from '../workspace-counts.svelte';
 import { viewport } from '$lib/viewport.svelte';
 import { requestCrewNew } from '../crew-new';
-import CapabilitiesTab from '../CapabilitiesTab.svelte';
 
 const ira = { userId: 'usr_ira', name: 'Ira Mehta', email: 'ira@vibes-fixture.invalid', role: 'owner' };
 const cap = (key: string) => ({ id: `cap_${key}`, key, name: key, description: null, tags: [], examples: [], origin: 'declared', externalId: null, externalSource: null, inputModes: [], outputModes: [], agentCount: 1, boardCount: 1 });
@@ -24,6 +31,7 @@ const json = (body: unknown, status = 200) => new Response(JSON.stringify(body),
 // The tab's own New button shows where the masthead has none (a phone, Quiet); these tests drive it.
 beforeEach(() => {
   viewport.phone = true;
+  crewLists.clear();
   for (const f of Object.values(api)) f.mockReset();
   api.getMembers.mockResolvedValue([ira]);
   api.getAgents.mockResolvedValue([]);
@@ -36,7 +44,7 @@ afterEach(() => { cleanup(); viewport.phone = false; });
 describe('New person', () => {
   it('has no inline invite form; the dialog adds a person with a name, email and role, then closes', async () => {
     api.addMember.mockResolvedValue(json({ member: {} }, 201));
-    render(PeopleTab, { vibe: 'daylight' });
+    render(CrewView, { tab: 'people' });
     await screen.findByText('Ira Mehta');
     expect(screen.queryByLabelText('Invite by email'), 'no inline form').toBeNull();
     await fireEvent.click(screen.getByRole('button', { name: 'New person' }));
@@ -50,7 +58,7 @@ describe('New person', () => {
   });
   it('keeps the dialog open with the refusal inline', async () => {
     api.addMember.mockResolvedValue(json({ error: 'already a member of this workspace' }, 409));
-    render(PeopleTab, { vibe: 'daylight' });
+    render(CrewView, { tab: 'people' });
     await fireEvent.click(await screen.findByRole('button', { name: 'New person' }));
     const dialog = await screen.findByRole('dialog', { name: 'New person' });
     await fireEvent.input(within(dialog).getByLabelText('Email'), { target: { value: 'dev@vibes-fixture.invalid' } });
@@ -63,8 +71,8 @@ describe('New person', () => {
 describe('New capability', () => {
   it('has no inline add form; the dialog hints at a near name while typing and creates with a description', async () => {
     api.createCapability.mockResolvedValue(json({ capability: cap('cdoe'), similar: ['code'] }, 201));
-    render(CapabilitiesTab, { vibe: 'daylight' });
-    await screen.findByText('code');
+    render(CrewView, { tab: 'capabilities' });
+    await screen.findAllByText('code');
     expect(screen.queryByLabelText('Add a capability'), 'no inline form').toBeNull();
     await fireEvent.click(screen.getByRole('button', { name: 'New capability' }));
     const dialog = await screen.findByRole('dialog', { name: 'New capability' });
@@ -81,7 +89,7 @@ describe('New capability', () => {
 describe('the Crew masthead opens the tab’s New dialog', () => {
   it('on a desktop the tab draws no New button of its own, and the masthead’s request opens its dialog', async () => {
     viewport.phone = false;
-    render(PeopleTab, { props: {} });
+    render(CrewView, { tab: 'people' });
     expect(screen.queryByRole('button', { name: 'New person' })).toBeNull();
     requestCrewNew('people');
     expect(await screen.findByRole('dialog', { name: 'New person' })).toBeTruthy();

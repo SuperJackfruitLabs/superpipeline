@@ -11,9 +11,13 @@ const t = timeouts().playwright;
 // `e2e:dev` retains the Vite frontend for development and visual comparisons.
 export default defineConfig({
   testDir: './e2e',
-  // The pixel folder has its own config (e2e/pixel/playwright.pixel.config.ts, `pnpm test:pixel`);
-  // its *.test.ts files are vitest files run by `pnpm test`.
-  testIgnore: ['pixel/**', 'visual/**'],
+  // The visual folder has its own configs (e2e/visual/playwright.visual.config.ts, run by
+  // scripts/visual/base-vs-head.sh); its *.test.ts files are vitest files run by `pnpm test`.
+  testIgnore: ['visual/**'],
+  // Warms the servers once (after webServer is up, before any test): a cold dev server's first board
+  // read outlasted the expect timeout, so a fresh run's first test failed. Under SP_E2E_BASE_URL it
+  // warms the given origin. It never fails the run.
+  globalSetup: './e2e/global-setup.ts',
   fullyParallel: false,
   workers: 1,
   metadata: { project: process.env.SP_E2E_PROJECT ?? 'local', shard: process.env.SP_E2E_SHARD ?? '1/1' },
@@ -28,7 +32,8 @@ export default defineConfig({
     ? [['list'], ['json', { outputFile: process.env.SP_E2E_REPORT }]]
     : process.env.CI ? [['list'], ['html', { open: 'never' }]] : 'list',
   use: {
-    baseURL: PORTS.webUrl,
+    // SP_E2E_BASE_URL aims the run at an already-deployed origin (the monthly composition audit).
+    baseURL: process.env.SP_E2E_BASE_URL || PORTS.webUrl,
     // The fixture world's zone: clock words ("as of HH:MM", greetings) read the same on every machine.
     timezoneId: 'Asia/Kolkata',
     // Tests never wait on an animation: reduced motion stops vibekit's motion suite (e2e/motion.spec.ts turns it back on).
@@ -39,11 +44,11 @@ export default defineConfig({
   },
   // Set PW_CHANNEL=chrome to drive a locally-installed Chrome instead of the downloaded browser.
   projects: [
-    { name: 'critical', testIgnore: ['**/pixel/**', '**/visual/**', ...[...extendedSpecs, smokeSpec].map((name) => '**/' + name)], use: { ...devices['Desktop Chrome'], channel: process.env.PW_CHANNEL || undefined } },
+    { name: 'critical', testIgnore: ['**/visual/**', ...[...extendedSpecs, smokeSpec].map((name) => '**/' + name)], use: { ...devices['Desktop Chrome'], channel: process.env.PW_CHANNEL || undefined } },
     { name: 'extended', testMatch: extendedSpecs.map((name) => '**/' + name), use: { ...devices['Desktop Chrome'], channel: process.env.PW_CHANNEL || undefined } },
     { name: 'smoke', testMatch: '**/' + smokeSpec, retries: 0, use: { ...devices['Desktop Chrome'], channel: process.env.PW_CHANNEL || undefined } },
   ],
-  webServer: process.env.SP_E2E_SERVER === 'built' ? [{
+  webServer: process.env.SP_E2E_BASE_URL ? undefined : process.env.SP_E2E_SERVER === 'built' ? [{
     command: 'node scripts/e2e-server.mjs',
     url: `${PORTS.apiUrl}/health`,
     reuseExistingServer: false,

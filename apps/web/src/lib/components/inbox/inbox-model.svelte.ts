@@ -3,23 +3,41 @@
  * The Inbox's data: what needs you, what is running, what it cost and what happened, on every
  * board or on the one chosen in the Show row (`inboxScope`, in memory only). The open board reads
  * live from the app store; every other board in scope is read once per visit and again after the
- * person acts on it. The four Operate layouts draw it unchanged; each row carries its board.
+ * person acts on it. One page draws it in every vibe (InboxPage); each row carries its board.
+ *
+ * Live (contract rules 8-10): every other board in scope has its own feed (`app.openScopeSockets`);
+ * an event reloads that board and applies the result through the Live toggle (`liveUpdates`), so a
+ * paused Inbox holds still and plays the changes in order on Apply. `needGroups` is the needs grouped
+ * by what the person must do, narrowed by `filters`; `headline` is the page's one message.
  */
 import { goto } from '$app/navigation';
 import { tick } from 'svelte';
+import type { Vibe } from '@superjackfruitlabs/vibekit-ui';
 import { app } from '$lib/stores/app.svelte';
 import { appearance } from '$lib/appearance.svelte';
 import {
   getBoard, getNotifications, getUsage, markNotificationRead, moveCard, resumeCard, setBudget,
   type BoardSnapshot, type Notification, type UsageSummary,
 } from '$lib/api';
-import { itemsFromBoard, sortAttention } from '$lib/components/attention/attention';
+import { itemsFromBoard, sortAttention, type AttentionItem } from '$lib/components/attention/attention';
 import { refusalOf } from '$lib/components/attention/refusal';
+import { knownAgent } from '$lib/names';
 import { greetingName } from '../dialogs/person';
-import { activityGroups, mergeUsage, needRows, parseCap, runningRows, spendView } from '../operate/operate-data';
-import type { CapResult, NeedRow, OperateModel } from '../operate/layouts/types';
+import { ACTIVITY_PAGE, activityGroups, mergeUsage, needRows, parseCap, runningRows, spendView } from '../operate/operate-data';
+import type { ActivityGroup, CapResult, NeedRow, OperateModel } from '../operate/operate-types';
 import { boardsNeedingFirst, inboxScope, scopeLabel } from './inbox-scope.svelte';
 import { pending, type Pending } from '$lib/loading.svelte';
+import type { BoardFeedEvent, Card } from '$lib/api';
+import { liveUpdates } from '$lib/live/live-updates.svelte';
+import { inboxGroups, inboxHeadline, type InboxGroup } from './inbox-groups';
+import { InboxFilters } from './inbox-filters.svelte';
+
+/** One board read: what `#applyBoard` sets. */
+interface BoardRead {
+  snap: PromiseSettledResult<BoardSnapshot>;
+  notes: PromiseSettledResult<Notification[]>;
+  usage: PromiseSettledResult<UsageSummary>;
+}
 
 /** Boards read at once (each is three requests). */
 const LOAD_AT_ONCE = 2;
@@ -28,6 +46,8 @@ export const CHOOSE_A_BOARD_FOR_CAPS = 'Choose one board under Show to set its c
 
 export class InboxStore implements OperateModel {
   showRead = $state(false);
+  /** How many Activity groups are drawn; a board change starts again at one page. */
+  activityShown = $state(ACTIVITY_PAGE);
   #snaps = $state<Record<string, BoardSnapshot>>({});
   #notes = $state<Record<string, Notification[]>>({});
   #usage = $state<Record<string, UsageSummary>>({});
@@ -37,6 +57,13 @@ export class InboxStore implements OperateModel {
   /** Boards whose first read failed. */
   #failed = $state<Record<string, true>>({});
   #gate: Pending;
+  /** The filter row: find, group chips, Agent, Label, Priority and the sort. */
+  readonly filters = new InboxFilters();
+  /** When a board's read last landed on the page (ISO): the footer's "synced". */
+  syncedAt = $state<string | null>(null);
+  /** Boards being read again after a live event, and those whose events arrived meanwhile. */
+  #reading = new Set<string>();
+  #readAgain = new Set<string>();
 
   /** The boards in scope, the ones that need you first. */
   readonly boardIds = $derived.by(() => {
@@ -68,6 +95,40 @@ export class InboxStore implements OperateModel {
       .sort((a, b) => b.latest.createdAt.localeCompare(a.latest.createdAt)),
   );
   get groups() { return this.loading ? [] : this.#groupsAll; }
+
+  /** The needs grouped by what the person must do (Review, Answer, Resume, Over budget, Nobody works these stages), filtered. */
+  get needGroups(): InboxGroup[] {
+    if (this.loading) return [];
+    return inboxGroups(this.filters.apply(this.#needsAll.map((r) => r.item), {
+      agentOf: (i) => this.#cardOf(i)?.lastAgentId ?? null,
+      labelsOf: (i) => this.#cardOf(i)?.labels ?? [],
+      priorityOf: (i) => this.#cardOf(i)?.priority ?? null,
+    }));
+  }
+  /** The page's one message, over every need in scope (filters narrow the list, not the message). */
+  get headline(): { h1: string; lede: string } { return this.headlineFor(appearance.value.vibe); }
+  /** The headline in a given vibe: Daylight greets first. */
+  headlineFor(vibe: Vibe): { h1: string; lede: string } {
+    return inboxHeadline(inboxGroups(this.#needsAll.map((r) => r.item)), this.boardCount, this.#runningAll.length, this.firstName || null, vibe, appearance.phase);
+  }
+  /** What the filter row's menus offer: the agents, labels and priorities on the cards that need you, by name. */
+  get filterChoices(): { agents: { id: string; name: string }[]; labels: { id: string; name: string }[]; priorities: number[] } {
+    const cards = this.#needsAll.map((r) => r.card);
+    const agentIds = [...new Set(cards.map((c) => c.lastAgentId).filter((id): id is string => !!id))];
+    const names = app.labelById();
+    const labelIds = [...new Set(cards.flatMap((c) => c.labels))];
+    return {
+      agents: agentIds.map((id) => ({ id, name: knownAgent(id, app.agents) ?? 'An agent' })).toSorted((a, b) => a.name.localeCompare(b.name)),
+      labels: labelIds.flatMap((id) => { const l = names.get(id); return l ? [{ id, name: l.name }] : []; }).toSorted((a, b) => a.name.localeCompare(b.name)),
+      priorities: [...new Set(cards.map((c) => c.priority).filter((p) => p > 0))].toSorted((a, b) => b - a),
+    };
+  }
+  #cardOf(i: AttentionItem): Card | undefined {
+    return this.#snap(i.boardId)?.cards.find((c) => c.id === i.cardId);
+  }
+  get activityPage(): ActivityGroup[] { return this.groups.slice(0, this.activityShown); }
+  get activityRemaining(): number { return Math.max(0, this.groups.length - this.activityShown); }
+  showMoreActivity(): void { this.activityShown += ACTIVITY_PAGE; }
   readonly cardCount = $derived(this.#boards.reduce((n, b) => n + b.cards.filter((c) => !c.archivedAt).length, 0));
   readonly stages = $derived(this.scoped ? [...(this.#boards[0]?.stages ?? [])].sort((a, b) => a.order - b.order) : []);
 
@@ -75,13 +136,59 @@ export class InboxStore implements OperateModel {
   readonly #idsKey = $derived([...this.boardIds].sort().join(','));
   /** Boards read (or being read) this visit; after an action only that board is read again. */
   #asked = new Set<string>();
+  /** Opening snapshots that arrived while the board's first read was out, judged when it lands. */
+  #opening: Record<string, BoardSnapshot> = {};
 
   constructor() {
     this.#gate = pending(() => this.pendingNow);
     $effect(() => {
+      void inboxScope.boardId;
+      this.activityShown = ACTIVITY_PAGE;
+    });
+    $effect(() => {
       const key = this.#idsKey;
       void this.#load(key ? key.split(',').filter((id) => !this.#asked.has(id)) : []);
     });
+    // One feed per board in scope (the open board's is the app's own); all close when the Inbox goes.
+    $effect(() => { app.openScopeSockets(this.boardIds); });
+    $effect(() => {
+      const off = app.onScopeEvent((id, event) => this.onBoardEvent(id, event), (id, snapshot) => this.holdsOpening(id, snapshot));
+      return () => { off(); app.closeScopeSockets(); };
+    });
+  }
+
+  /**
+   * Whether a board's opening snapshot (its feed just began) is the board this page shows or will
+   * show. A board not asked for yet is left to its first read. One read but not answered yet is judged
+   * when the read lands (`#loadBoard`): the read may have started before a change the snapshot holds.
+   */
+  holdsOpening(boardId: string, snapshot: BoardSnapshot): boolean {
+    if (!this.#asked.has(boardId)) return true;
+    const held = this.#snaps[boardId];
+    if (held) return JSON.stringify(held) === JSON.stringify(snapshot);
+    this.#opening[boardId] = snapshot;
+    return true;
+  }
+
+  /**
+   * A board in scope spoke: read it again and apply the read through the Live toggle. A burst of
+   * events costs one read in flight and one after it, not one per event. A board not read yet is
+   * left to its first read.
+   */
+  onBoardEvent(boardId: string, _event: BoardFeedEvent | null): void {
+    if (!this.#asked.has(boardId)) return;
+    if (this.#reading.has(boardId)) { this.#readAgain.add(boardId); return; }
+    this.#reading.add(boardId);
+    void (async () => {
+      try {
+        do {
+          this.#readAgain.delete(boardId);
+          await this.#loadBoard(boardId, true);
+        } while (this.#readAgain.has(boardId));
+      } finally {
+        this.#reading.delete(boardId);
+      }
+    })();
   }
 
   /**
@@ -143,16 +250,51 @@ export class InboxStore implements OperateModel {
     const worker = async () => { for (let id = queue.shift(); id; id = queue.shift()) await this.#loadBoard(id); };
     return app.markBusy(Promise.all(Array.from({ length: Math.min(LOAD_AT_ONCE, queue.length) }, worker)).then(() => undefined));
   }
-  async #loadBoard(id: string): Promise<void> {
-    this.#usageError = null;
+  /** Read one board; `live` applies the read through the Live toggle (a feed event), otherwise at once. */
+  async #loadBoard(id: string, live = false): Promise<void> {
     // The open board is read too: opening a card on another board makes this one a board like the rest.
     const [snap, notes, usage] = await Promise.allSettled([getBoard(id), getNotifications(id), getUsage(id, '7d')]);
-    if (snap.status === 'fulfilled') this.#snaps[id] = snap.value;
-    else this.#failed[id] = true;
+    const result: BoardRead = { snap, notes, usage };
+    const key = `inbox:board:${id}`;
+    // The Show row's chips and the rail's badge count from the workspace's attention list, not from
+    // these reads: it is read again with the board, so the two counts never disagree (and, paused,
+    // it waits with the board).
+    if (live) { liveUpdates.push(key, () => { this.#applyBoard(id, result); void app.scheduleAttention(); }); return; }
+    // A read applied at once (a first read, or after the person acted) is fresher than any read still
+    // waiting behind the Live toggle for this board: that one must not replay on Apply and undo it.
+    liveUpdates.drop(key);
+    this.#applyBoard(id, result);
+    // The board's feed began while this read was out: if it began on a board this read does not show,
+    // something changed in between, and it is read again (through the Live toggle, as any change).
+    const opening = this.#opening[id];
+    delete this.#opening[id];
+    if (opening && snap.status === 'fulfilled' && JSON.stringify(this.#snaps[id]) !== JSON.stringify(opening)) this.onBoardEvent(id, null);
+  }
+  /**
+   * Set one board's read. Cards that did not change keep the object they had, so a keyed row keeps
+   * its identity (key = card id): the page's keyed rows and their motion show what entered, left or changed.
+   */
+  #applyBoard(id: string, { snap, notes, usage }: BoardRead): void {
+    this.#usageError = null;
+    if (snap.status === 'fulfilled') {
+      const prev = this.#snaps[id];
+      const was = new Map((prev?.cards ?? []).map((c) => [c.id, c]));
+      const cards = snap.value.cards.map((c) => {
+        const old = was.get(c.id);
+        return old && JSON.stringify(old) === JSON.stringify(c) ? old : c;
+      });
+      const next = { ...snap.value, cards };
+      this.#snaps[id] = next;
+      delete this.#failed[id];
+    } else if (!this.#snaps[id]) {
+      // Only a board never read has failed; a live re-read that fails keeps what the page shows.
+      this.#failed[id] = true;
+    }
     if (notes.status === 'fulfilled') this.#notes[id] = notes.value;
     if (usage.status === 'fulfilled') this.#usage[id] = usage.value;
     else this.#usageError = 'try again in a moment';
     this.#settled[id] = true;
+    this.syncedAt = new Date().toISOString();
   }
   async #after(boardId: string): Promise<void> {
     if (boardId === app.boardId) await app.refresh();

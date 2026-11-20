@@ -1,6 +1,6 @@
 // apps/web/src/lib/components/dialogs/who-picks-up.test.ts
 import { describe, expect, it } from 'vitest';
-import { AGENTS, DX_STAGES } from '../../../../e2e/pixel/fixture/dialog-cases';
+import { AGENTS, DX_STAGES } from '../../../../e2e/visual/fixture/dialog-cases';
 import { dispatchFoot, joinCaps, ownerLine, ownerShort, pickupSentence, soleAgent } from './who-picks-up';
 
 const at = (key: string) => DX_STAGES.find((s) => s.key === key)!;

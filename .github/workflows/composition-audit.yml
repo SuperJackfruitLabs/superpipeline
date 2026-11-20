@@ -1,0 +1,54 @@
+# Monthly composition audit: runs the composition spec against staging and reports pass/fail per
+# rule per page (scripts/composition-audit.mjs). A workflow of its own, so its cron does not re-run
+# ci.yml. The operator defines the repository variable STAGING_URL; until then the job skips.
+#
+# STAGING_URL must be a DEV-MODE plane (a dev stack with DEV_AUTH and FIXTURE_IMPORT on), not the
+# deployed staging: every check seeds a fixture world through POST /v1/dev/fixture and signs in
+# with dev headers. The script's preflight asks the target read-only first and stops with one line
+# when the fixture route is not there. This audit must never be the reason to turn DEV_AUTH or
+# FIXTURE_IMPORT on for a deployed plane: there the fixture route deletes a tenant by id with no
+# sign-in. A read-only audit of a real workspace is a later item.
+name: composition-audit
+on:
+  schedule:
+    - cron: '0 4 1 * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  composition-audit:
+    if: github.server_url == 'https://github.com'
+    runs-on: ubuntu-22.04
+    continue-on-error: true
+    container:
+      image: mcr.microsoft.com/playwright:v1.61.0-jammy
+      options: --ipc=host
+    env:
+      STAGING_URL: ${{ vars.STAGING_URL }}
+    steps:
+      - name: skip, STAGING_URL is not set
+        if: env.STAGING_URL == ''
+        run: |
+          echo "STAGING_URL is not set: define the repository variable to run the audit" | tee -a "$GITHUB_STEP_SUMMARY"
+      - uses: actions/checkout@v4
+        if: env.STAGING_URL != ''
+      - uses: pnpm/action-setup@v4
+        if: env.STAGING_URL != ''
+      - uses: actions/setup-node@v4
+        if: env.STAGING_URL != ''
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+        if: env.STAGING_URL != ''
+      - run: node scripts/composition-audit.mjs
+        if: env.STAGING_URL != ''
+      - uses: actions/upload-artifact@v4
+        if: always() && env.STAGING_URL != ''
+        with:
+          name: composition-audit
+          path: docs/reviews/composition-audit-*.md
+          if-no-files-found: error
+          retention-days: 90

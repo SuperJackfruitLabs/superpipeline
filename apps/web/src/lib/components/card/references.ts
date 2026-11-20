@@ -34,3 +34,44 @@ export function referenceSource(ref: Pick<Reference, 'url'>): string {
   const where = !lines ? '' : lines[2] ? ` lines ${lines[1]}–${lines[2]}` : ` line ${lines[1]}`;
   return `github · ${blob[1]} · ${file}${where}`;
 }
+
+/** A produced document, as the card lists it: a title, where it lives, and the link that opens it (pinned to its version). */
+export interface ArtifactRow { id: string; title: string; url: string; version: string | null; meta: string }
+
+const versionValue = (value: unknown): string | null => {
+  if (typeof value === 'number' && Number.isSafeInteger(value) && value > 0) return String(value);
+  if (typeof value === 'string' && /^[1-9]\d*$/.test(value)) return value;
+  return null;
+};
+const PROVIDER: Readonly<Record<string, string>> = { superlibrary: 'SuperLibrary', github: 'GitHub' };
+
+/** A Superlibrary item link is pinned to the version the run recorded; a malformed link stays as it was. */
+export function artifactRow(reference: Reference): ArtifactRow {
+  let url = reference.url;
+  let version: string | null = null;
+  try {
+    const parsed = new URL(reference.url);
+    const pinned = parsed.pathname.match(/^(\/a\/[^/]+)\/v\/([1-9]\d*)\/?$/);
+    if (pinned?.[2]) version = pinned[2];
+    else if (reference.provider === 'superlibrary') {
+      const itemPath = parsed.pathname.match(/^(\/a\/[^/]+)\/?$/)?.[1];
+      version = versionValue(reference.metadata?.version);
+      if (itemPath && version) {
+        parsed.pathname = `${itemPath}/v/${version}`;
+        parsed.search = '';
+        parsed.hash = '';
+        url = parsed.toString();
+      }
+    }
+  } catch {
+    // Keep a malformed legacy link visible; the browser still has the original href.
+  }
+  const where = PROVIDER[reference.provider ?? ''] ?? referenceSource(reference);
+  return {
+    id: reference.id,
+    title: reference.title?.trim() || reference.subtitle?.trim() || reference.url,
+    url,
+    version,
+    meta: [version ? `version ${version}` : null, where].filter(Boolean).join(' · '),
+  };
+}

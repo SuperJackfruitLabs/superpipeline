@@ -112,6 +112,8 @@ export interface StaleCard {
   cardId: string;
   title: string;
   ownerUserId: string;
+  /** The agent holding the card, or null. Absent from servers older than this field. */
+  agentId?: string | null;
   stageKey: string;
   stageName: string;
   state: string;

@@ -1,5 +1,5 @@
 import { readFileSync } from 'node:fs';
-import { VIBES } from '@superjackfruit/vibekit';
+import { VIBES } from '@superjackfruitlabs/vibekit-ui';
 import { describe, expect, it } from 'vitest';
 import { COPY, LEAD_FALLBACK, leadText, splitEmoji, wantYou, words } from './copy';
 

@@ -3195,6 +3195,7 @@ exports[`the API client, pinned > exports the same names, of the same kinds 1`] 
   "answerElicitation": "function",
   "archiveCard": "function",
   "boardTemplate": "function",
+  "closeBoardSocket": "function",
   "createAgent": "function",
   "createBoard": "function",
   "createCapability": "function",

@@ -94,9 +94,8 @@ for (const viewport of [
     await page.setViewportSize(viewport);
     await page.goto(`/b/${boardId}/c/${cardId}`);
     await expect(page.getByRole('dialog')).toBeVisible();
-    // Daylight keeps the carried handoff under "What happened", closed until asked for.
-    const happened = page.getByRole('dialog').locator('summary', { hasText: 'What happened' });
-    if (await happened.count()) await happened.click();
+    // The carried handoff is under "Conversation and history", closed until asked for.
+    await page.getByRole('dialog').locator('summary', { hasText: 'Conversation and history' }).click();
 
     const carried = page.getByTestId('carried-handoff');
     await expect(carried).toBeVisible();

@@ -1,6 +1,6 @@
-// apps/web/e2e/reveal.spec.ts — "Show all" grows into place (Round 3, M1). The Needs-you ask swapped its clamped
-// excerpt for the full text instantly; now the block's height animates (Quiet: a short fade), nothing moves under
-// reduced motion, and the toggle keeps focus and says it is expanded.
+// apps/web/e2e/reveal.spec.ts — an expand toggle grows into place (Round 3, M1). An Inbox Activity row's "N earlier"
+// (once the Needs-you ask's "Show all") used to swap its content instantly; now the block's height animates (Quiet: a
+// short fade), nothing moves under reduced motion, and the toggle keeps focus and says it is expanded.
 import { expect, test, type Page } from '@playwright/test';
 import { DX, VIBES, openWorld, seed } from './support/world';
 
@@ -17,10 +17,21 @@ async function clickAndRead(page: Page, toggle: ReturnType<Page['locator']>): Pr
   }))));
 }
 
-/** The first expand toggle: an ask's "Show all" on the Inbox; Quiet's asks print in full, so a card's closed attempt. */
-function where(vibe: string): { route: string; toggle: (p: Page) => ReturnType<Page['locator']> } {
-  if (vibe === 'quiet') return { route: `${DX}/c/card_05823a57e8224605`, toggle: (p) => p.locator('[data-reveal] button[data-attempt-head][aria-expanded="false"]').first() };
-  return { route: '/inbox', toggle: (p) => p.locator('[data-reveal]').getByRole('button', { name: 'Show all', exact: true }).first() };
+/**
+ * The first expand toggle: an Activity row's "N earlier" on the Inbox; Quiet keeps its card's closed attempt, which
+ * sits in the card's "Conversation and history", closed until asked for (rule 5), so that is opened first.
+ */
+function where(vibe: string): { route: string; open?: (p: Page) => Promise<void>; toggle: (p: Page) => ReturnType<Page['locator']> } {
+  if (vibe === 'quiet') return {
+    route: `${DX}/c/card_05823a57e8224605`,
+    open: (p) => p.locator('[data-block="history"] summary', { hasText: 'Conversation and history' }).first().click(),
+    toggle: (p) => p.locator('[data-reveal] button[data-attempt-head][aria-expanded="false"]').first(),
+  };
+  return {
+    route: '/inbox',
+    open: (p) => p.getByRole('tab', { name: /^Activity/ }).click(),
+    toggle: (p) => p.locator('[data-reveal]').getByRole('button', { name: /^\d+ earlier$/ }).first(),
+  };
 }
 
 for (const vibe of VIBES) {
@@ -29,6 +40,7 @@ for (const vibe of VIBES) {
       const w = where(vibe);
       await openWorld(page, w.route, { vibe, dark: false, width: 1280, height: 900 });
       if (motion === 'on') await page.emulateMedia({ reducedMotion: 'no-preference' });
+      await w.open?.(page);
       const toggle = w.toggle(page);
       await expect(toggle).toBeVisible();
       await toggle.scrollIntoViewIfNeeded();

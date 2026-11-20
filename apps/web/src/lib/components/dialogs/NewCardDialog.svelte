@@ -6,7 +6,7 @@
    * `app.requestCompose()`: the N key, the shell's New card button and the palette.
    */
   import { untrack } from 'svelte';
-  import { Button, Dialog, Field, Segmented } from '@superjackfruit/vibekit';
+  import { Button, Dialog, Field, Segmented } from '@superjackfruitlabs/vibekit-ui';
   import { app } from '$lib/stores/app.svelte';
   import { appearance } from '$lib/appearance.svelte';
   import { getBoard, type Stage } from '$lib/api';

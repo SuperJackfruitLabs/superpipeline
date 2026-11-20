@@ -4,7 +4,7 @@
  * same in every vibe (spec decision 6). vibekit's own catalogue (say, greeting) covers the suite
  * strings; these are Superpipeline's.
  */
-import type { Phase, Vibe } from '@superjackfruit/vibekit';
+import type { Phase, Vibe } from '@superjackfruitlabs/vibekit-ui';
 import type { CardLead, LeadKind } from '$lib/components/card/card-lead';
 
 export type Four = Readonly<Record<Vibe, string>>;

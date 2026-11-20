@@ -39,14 +39,17 @@ select.input, select.ar-sel {
   .vk-appshell__main :is(h2, h3) > a { display: flex; align-items: center; min-height: 44px; }
 }
 
-/* 18: Daylight's phone header: the decorative sun sat on the Live chip (top-right of the title block); it goes lower, under it. */
-.vk-phoneheader--daylight .vk-phoneheader__sun { top: 176px !important; }
+
+/* 18: Daylight's phone header: vibekit's PhoneHeader places its decorative sun (top 128px) where the Live chip ends the
+   row under the title (Search, New card, Plan's switch, then Live), so it sits lower, under that row. Expressed in
+   space tokens: 4 x space-7 + space-2. Unlayered, so it outranks vibekit's layer without !important. */
+.vk-phoneheader--daylight .vk-phoneheader__sun { top: calc(var(--vk-space-7) * 4 + var(--vk-space-2)); }
 
 /* Rail height (live, 2026-10-14): vibekit's Daylight and Studio rails sit in a grid row as tall as the page,
    so a long lane stretched the rail to thousands of pixels and pushed its foot (the account) off-screen.
    The rail is the window's height instead: sticky in the page's own scroll, and it scrolls on its own if
    the window is short. Daylight floats inside the shell's 12px padding. Belongs upstream in vibekit's
    appshell.css; remove when the vendored vibekit carries it. e2e/rail-height.spec.ts holds it. */
-.dy-shell .vk-appshell--daylight > .vk-appshell__nav { position: sticky; top: 12px; align-self: start; height: calc(100dvh - 24px); }
-.st-shell .vk-appshell--studio > .vk-appshell__nav { position: sticky; top: 0; align-self: start; height: 100dvh; }
-:is(.dy-shell, .st-shell) .vk-appshell__nav > .vk-appnav { max-height: 100%; overflow-y: auto; }
+.sh-root .vk-appshell--daylight > .vk-appshell__nav { position: sticky; top: 12px; align-self: start; height: calc(100dvh - 24px); }
+.sh-root .vk-appshell--studio > .vk-appshell__nav { position: sticky; top: 0; align-self: start; height: 100dvh; }
+.sh-root :is(.vk-appshell--daylight, .vk-appshell--studio) > .vk-appshell__nav > .vk-appnav { max-height: 100%; overflow-y: auto; }

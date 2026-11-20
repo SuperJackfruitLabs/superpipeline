@@ -7,8 +7,8 @@
    * `nameShown`: the caller prints the name itself, right beside the face. The `name` variant then
    * draws nothing, so the name is not printed (and read) twice.
    */
-  import { Face, type Mood } from '@superjackfruit/vibekit';
-  import type { FaceVariant } from '$lib/layouts';
+  import { Face, type Mood } from '@superjackfruitlabs/vibekit-ui';
+  import type { FaceVariant } from '$lib/face-variant';
   import { initialOf } from '$lib/names';
 
   let {

@@ -1,6 +1,6 @@
 <script lang="ts">
   import { Button } from '$lib/components/ui/button';
-  import { Dialog } from '@superjackfruit/vibekit';
+  import { Dialog } from '@superjackfruitlabs/vibekit-ui';
   import { createBoard, getCapabilities, BOARD_TEMPLATES, type Stage, type CapabilityRecord } from '$lib/api';
   import { capabilityTag } from '@superpipeline/contract';
   import { onMount } from 'svelte';

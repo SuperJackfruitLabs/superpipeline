@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, render, screen } from '@testing-library/svelte';
 import CardPageMissing from './CardPageMissing.svelte';
 
@@ -21,5 +21,20 @@ describe('CardPageMissing', () => {
   it('waits in aria-busy while the board loads', () => {
     render(CardPageMissing, { kind: 'loading', boardName: '', boardHref: '/' });
     expect(document.querySelector('[aria-busy="true"]')).not.toBeNull();
+  });
+  it('from 8 s says the server is slow and offers Try again, which asks again', async () => {
+    vi.useFakeTimers();
+    try {
+      const onRetry = vi.fn<() => void>();
+      render(CardPageMissing, { kind: 'loading', boardName: '', boardHref: '/', onRetry });
+      expect(screen.queryByRole('button', { name: 'Try again' })).toBeNull();
+      await vi.advanceTimersByTimeAsync(8_100);
+      expect(document.body.textContent).toMatch(/slow/i);
+      screen.getByRole('button', { name: 'Try again' }).click();
+      await vi.advanceTimersByTimeAsync(0);
+      expect(onRetry).toHaveBeenCalled();
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });

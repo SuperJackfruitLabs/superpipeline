@@ -5,7 +5,7 @@
    * Health is declared here; the project page also computes one from milestones and cards.
    */
   import { untrack } from 'svelte';
-  import { Button, Dialog, Field, Segmented } from '@superjackfruit/vibekit';
+  import { Button, Dialog, Field, Segmented } from '@superjackfruitlabs/vibekit-ui';
   import { createMilestone, createProject, updateProject, type Project, type ProjectHealth } from '$lib/api';
   import { MOD_KEY } from '$lib/components/dialogs/dialog-copy';
   import './project-dialog.css';

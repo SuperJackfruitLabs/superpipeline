@@ -1,9 +1,16 @@
 // apps/web/src/lib/components/board/schedule-model.svelte.ts
 import { getSchedules, createSchedule, updateSchedule, deleteSchedule, type Schedule } from '$lib/api';
 import { app } from '$lib/stores/app.svelte';
+import { loadState } from '$lib/loading.svelte';
 
 export class ScheduleModel {
   schedules = $state<Schedule[]>([]);
+  /** A read has answered with the list (an empty list is a real "none"). */
+  loaded = $state(false);
+  /** The last read failed: the table says so with Try again, never "No recurring cards". */
+  failed = $state(false);
+  /** Where the list read stands: skeleton, slow (with Try again), failed or ready. */
+  readonly load = loadState(() => ({ value: this.loaded ? this.schedules : null, failed: this.failed }));
   busy = $state('');
   formError = $state<string | null>(null);
   title = $state('');
@@ -15,11 +22,18 @@ export class ScheduleModel {
 
   constructor(private boardId: string) {}
 
-  async load(): Promise<void> {
+  async refresh(): Promise<void> {
     const req = getSchedules(this.boardId);
     void app.markBusy(req);
-    this.schedules = await req.catch(() => []);
+    this.failed = false;
+    try {
+      this.schedules = await req;
+      this.loaded = true;
+    } catch { this.failed = true; }
   }
+
+  /** Try again: read the list once more. */
+  retry(): Promise<void> { return this.refresh(); }
 
   async add(): Promise<void> {
     if (this.busy !== '') return;
@@ -39,19 +53,19 @@ export class ScheduleModel {
         return;
       }
       this.title = ''; this.rule = ''; this.timezone = ''; this.stageKey = ''; this.priority = ''; this.overlap = 'skip';
-      await this.load();
+      await this.refresh();
     } finally { this.busy = ''; }
   }
 
   async toggle(s: Schedule): Promise<void> {
     if (this.busy !== '') return;
     this.busy = s.id;
-    try { await updateSchedule(this.boardId, s.id, { enabled: !s.enabled }); await this.load(); } finally { this.busy = ''; }
+    try { await updateSchedule(this.boardId, s.id, { enabled: !s.enabled }); await this.refresh(); } finally { this.busy = ''; }
   }
 
   async remove(s: Schedule): Promise<void> {
     if (this.busy !== '') return;
     this.busy = s.id;
-    try { await deleteSchedule(this.boardId, s.id); await this.load(); } finally { this.busy = ''; }
+    try { await deleteSchedule(this.boardId, s.id); await this.refresh(); } finally { this.busy = ''; }
   }
 }

@@ -1,13 +1,22 @@
 #!/usr/bin/env node
 // apps/web/scripts/visual/trailer.mjs — the base the visual job compares against, and whether the range
-// says why the screens change. Same base resolution as check-lock-change.mjs (lock-base.mjs chooseBase).
+// says why the screens change.
 //   node trailer.mjs base   <arg>   prints the base sha
 //   node trailer.mjs reason <base>  prints the Visual-Change reason(s) from the range's commit messages
 //                                  (never the PR text), or nothing
 //   node trailer.mjs touches <base> prints yes when the range changes a file that can move a pixel
 import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
-import { chooseBase } from '../pixel/lock-base.mjs';
+
+/**
+ * The commit to compare against. CI passes the PR base sha or the push's `before`; a new branch push
+ * sends all zeros and a manual run sends nothing, so fall back to where HEAD left origin/main.
+ */
+export function chooseBase(arg, mergeBase) {
+  const a = (arg ?? '').trim();
+  if (a && !/^0+$/.test(a)) return a;
+  return mergeBase();
+}
 
 /** Every `<key>: <why>` trailer line in the commit bodies, joined; null when there is none. */
 export function trailerReason(bodies, key) {

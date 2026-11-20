@@ -2,7 +2,7 @@
 # apps/web/scripts/visual/base-vs-head.sh [base] — the visual job, and `pnpm visual:local`.
 # Captures the app's visual screens at the base commit and at HEAD on this machine, one after the other,
 # with HEAD's capture code in both trees, then compares them (e2e/visual/diff.spec.ts).
-#   base: a sha or ref; empty or all zeros falls back to the merge base with origin/main (lock-base.mjs).
+#   base: a sha or ref; empty or all zeros falls back to the merge base with origin/main (trailer.mjs chooseBase).
 #   VISUAL_SELF=1  capture HEAD twice instead (calibration: the noise floor must be zero).
 #   VISUAL_TMP     where the base worktree and the captures go (default: a new temp dir).
 set -euo pipefail

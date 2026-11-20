@@ -1,6 +1,7 @@
 // apps/web/src/lib/components/workspace/labels-model.svelte.ts
 import { listLabels, createLabel, updateLabel, deleteLabel, type Label } from '$lib/api';
 import { app } from '$lib/stores/app.svelte';
+import { loadState } from '$lib/loading.svelte';
 import { recolourLabel, removeLabel, renameLabel } from './label-manager';
 import { NEW_LABEL_COLOUR } from './workspace-words';
 import { workspaceCounts } from './workspace-counts.svelte';
@@ -12,6 +13,8 @@ export class LabelsModel {
   error = $state<string | null>(null);
   /** The list could not be read: the tab says so with Try again (never an empty list, never the raw error). */
   failed = $state(false);
+  /** Where the list read stands: skeleton, slow (with Try again), failed or ready. */
+  readonly load = loadState(() => ({ value: this.labels, failed: this.failed }));
   removing = $state<string | null>(null);
   newName = $state('');
   /** Null until a colour is picked: the swatch shows the needs mood, the request sends NEW_LABEL_COLOUR. */
@@ -24,6 +27,9 @@ export class LabelsModel {
     this.failed = false;
     try { this.labels = await req; } catch { this.failed = true; }
   }
+
+  /** Try again: read the list once more. */
+  retry(): Promise<void> { return this.refresh(); }
 
   private async fail(res: Response, what: string): Promise<void> {
     const body = (await res.json().catch(() => null)) as { error?: string } | null;

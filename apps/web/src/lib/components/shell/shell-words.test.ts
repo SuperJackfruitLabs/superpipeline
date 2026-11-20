@@ -1,6 +1,6 @@
 // apps/web/src/lib/components/shell/shell-words.test.ts
 import { describe, expect, it } from 'vitest';
-import { countWords } from '@superjackfruit/vibekit';
+import { countWords } from '@superjackfruitlabs/vibekit-ui';
 import {
   boardCounts, boardStatus, dateline, filterSummary, firstNameOf, initialsOf, needsPart, operateCount, paperShowingLine,
   projectCountOf, showingLine, statusLine, studioSubRight, userNameOf,
@@ -73,6 +73,11 @@ describe('counts and status lines', () => {
       items: [{ text: '7 cards' }, { text: '4 need you', signal: true }, { text: '2 blocked' }, { text: '1 shipped' }, { text: 'synced 13:51' }],
       right: ['⌘K commands', 'N new card'],
     });
+  });
+  it('paused, the board status says paused where it said synced, as the Inbox footer does (M3)', () => {
+    const { items } = boardStatus(boardCounts(DX_CARDS, DX_NEEDS), NOW, TZ, true);
+    expect(items.at(-1)).toEqual({ text: 'paused' });
+    expect(items.some((i) => i.text.startsWith('synced'))).toBe(false);
   });
   it('each page’s status line (notes `pages.md` §1, Operate and the empty board)', () => {
     const synced = { text: 'synced 13:51' };

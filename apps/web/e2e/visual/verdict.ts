@@ -2,7 +2,7 @@
 // head, rendered by the same machine in the same job. Both sides come from one Chromium in one container,
 // so the noise floor is zero (calibrated by capturing one tree twice): ANY differing pixel is a change.
 import { PNG } from 'pngjs';
-import { compare, type Result } from '../pixel/compare';
+import { compare, type Result } from './compare';
 
 export interface Box { x: number; y: number; w: number; h: number }
 export interface Row {
