@@ -1,5 +1,6 @@
 // @vitest-environment jsdom
 /** The keys line (contract rule 13): the page's keys as words, the same element and text in every vibe. */
+import { VIBES } from '@superjackfruitlabs/vibekit-ui';
 import { afterEach, describe, expect, it } from 'vitest';
 import { render } from '@testing-library/svelte';
 import { renderInVibes } from '$lib/composition/render-vibes';
@@ -21,9 +22,9 @@ describe('KeysLine', () => {
     expect(keysText(BOARD_KEYS)).toContain('N new card');
   });
 
-  it('draws the same words in all four vibes', async () => {
+  it('draws the same words in every vibe', async () => {
     const roots = await renderInVibes(KeysLine, { keys: LIST_KEYS });
-    const texts = (['daylight', 'paper', 'studio', 'quiet'] as const).map((v) => roots[v].querySelector('.sh-keys')?.textContent);
+    const texts = VIBES.map((v) => roots[v].querySelector('.sh-keys')?.textContent);
     roots.unmount();
     expect(new Set(texts).size).toBe(1);
     expect(texts[0]).toBe(keysText(LIST_KEYS));

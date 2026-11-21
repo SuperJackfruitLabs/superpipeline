@@ -6,6 +6,7 @@ export const RC_LEAD: Readonly<Record<Vibe, string>> = {
   paper: 'Your sign-in has expired, and it could not be renewed in the background. Once you sign in, you return to this card.',
   studio: 'SESSION EXPIRED. Background renewal failed. Sign in to return to this card.',
   quiet: 'You are signed out. We could not renew your sign-in. After you sign in, this card opens again.',
+  console: 'Session: expired. Background renewal failed. Sign in to return to this card.',
 };
 export const rcLead = (vibe: Vibe, onCard: boolean): string => (onCard ? RC_LEAD[vibe] : RC_LEAD[vibe].replace('this card', 'this page'));
 

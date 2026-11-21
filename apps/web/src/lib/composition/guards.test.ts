@@ -174,7 +174,7 @@ describe('keysLine', () => {
 describe('renderInVibes', () => {
   it('renders one root per vibe, each marked with its vibe and reduced motion', async () => {
     const roots = await renderInVibes(Badge, { count: 3 });
-    expect(Object.keys(roots)).toEqual(['daylight', 'paper', 'studio', 'quiet']);
+    expect(Object.keys(roots)).toEqual([...VIBES]);
     for (const vibe of VIBES) {
       const root = roots[vibe];
       expect(root.getAttribute('data-vibe')).toBe(vibe);
@@ -182,7 +182,7 @@ describe('renderInVibes', () => {
       expect(root.childElementCount).toBeGreaterThan(0);
       expect(root.isConnected).toBe(true);
     }
-    expect(document.body.childElementCount).toBe(4);
+    expect(document.body.childElementCount).toBe(VIBES.length);
     roots.unmount();
     expect(document.body.childElementCount).toBe(0);
     expect(VIBES.some((v) => roots[v].isConnected)).toBe(false);

@@ -1,6 +1,7 @@
 <!-- apps/web/src/routes/b/[boardId]/operate/log/+page.svelte -->
 <script lang="ts">
   /** The whole board log (up to 500 events), opened from Spend: one composition in every vibe (BoardLogView). */
+  import { BLEED_VIBES } from '$lib/vibe-sets';
   import { page } from '$app/state';
   import { getBoardEvents, type BoardEvent } from '$lib/api';
   import { appearance } from '$lib/appearance.svelte';
@@ -21,6 +22,6 @@
   const vibe = $derived(appearance.value.vibe);
 </script>
 
-<AppShell live={shellModel.liveToggle} here="plan" section="log" boardName={app.board?.name ?? 'Untitled board'} bleed={vibe === 'quiet'}>
+<AppShell live={shellModel.liveToggle} here="plan" section="log" boardName={app.board?.name ?? 'Untitled board'} bleed={BLEED_VIBES.has(vibe)}>
   <BoardLogView {boardId} {events} {error} />
 </AppShell>

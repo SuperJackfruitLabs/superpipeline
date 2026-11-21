@@ -3,6 +3,7 @@ import { PORTS } from '../scripts/ports';
 import { BASE_WORLD, IDS } from './visual/fixture/world';
 import { FIXTURE_TENANT, FIXTURE_USER } from './visual/fixture/seed';
 import type { Row } from './visual/fixture/types';
+import { VIBES, appearanceCookie } from './support/world';
 
 /**
  * The rich card, the way a person meets it: the fixture world's 4605 (two attempts with twenty tool
@@ -47,7 +48,7 @@ test.beforeAll(async ({ request }) => {
 
 async function open(page: Page, vibe: string, width: number, route: string): Promise<void> {
   await page.setViewportSize({ width, height: width < 600 ? 844 : 900 });
-  await page.context().addCookies([{ name: 'vk_appearance', value: `${vibe}.light.${vibe === 'quiet' ? 'off' : 'strong'}.0`, url: PORTS.webUrl }]);
+  await page.context().addCookies([{ name: 'vk_appearance', value: appearanceCookie(vibe, 'light'), url: PORTS.webUrl }]);
   await page.addInitScript(([t, u, b]) => {
     localStorage.setItem('superpipeline.devTenant', t);
     localStorage.setItem('superpipeline.devUser', u);
@@ -111,7 +112,7 @@ async function clean(page: Page): Promise<void> {
   expect(around(/\b(?!git@)[\w.+-]+@[\w-]+(?:\.[\w-]+)+\b(?!:)/g), 'no email in visible text').toEqual([]);
 }
 
-for (const vibe of ['daylight', 'paper', 'studio', 'quiet'] as const) {
+for (const vibe of VIBES) {
   test.describe(`${vibe}: the rich card`, () => {
     test('board, then the drawer: opens at the top with Close visible, attempts work, nothing leaks', async ({ page }) => {
       await open(page, vibe, 1440, DX);
@@ -144,7 +145,7 @@ test('with no name on the account, no vibe greets by email', async ({ page, requ
   const world = richWorld();
   world.user.name = '';
   expect((await request.post(`${API}/v1/dev/fixture`, { data: world, headers: { 'Content-Type': 'application/json' } })).ok()).toBe(true);
-  for (const vibe of ['daylight', 'paper', 'studio', 'quiet'] as const) {
+  for (const vibe of VIBES) {
     for (const width of [1440, 390]) {
       await open(page, vibe, width, DX);
       await clean(page);

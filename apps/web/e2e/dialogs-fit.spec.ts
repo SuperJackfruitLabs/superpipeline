@@ -4,8 +4,8 @@
 // on a phone), a named modal dialog, and the Project and Due values drawn in full.
 import { expect, test, type Locator, type Page } from '@playwright/test';
 import { API, TENANT, openBoard, seedBoard, setAppearance } from './support/seed';
+import { VIBES } from './support/world';
 
-const VIBES = ['daylight', 'paper', 'studio', 'quiet'] as const;
 const SIZES = [
   { name: 'desktop', width: 1440, height: 900 },
   { name: 'laptop', width: 1100, height: 800 },

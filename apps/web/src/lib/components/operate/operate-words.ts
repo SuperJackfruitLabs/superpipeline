@@ -71,16 +71,16 @@ export function staleLine(n: Notification, vibe: Vibe, needKind: AttentionKind |
   const h = Number(m[1]);
   const stage = m[2];
   const unclaimed = needKind === 'no-owner';
-  switch (vibe) {
-    case 'daylight':
-      return unclaimed ? `Still unclaimed after ${dayWords(h)} in ${stage}.` : `Still stopped ${dayWords(h)} later in ${stage}.`;
-    case 'paper':
-      return unclaimed ? ` — still unclaimed after ${dayWords(h)} in ${stage}. ` : ` — still stopped ${dayWords(h)} later in ${stage}. `;
-    case 'studio':
-      return unclaimed ? `Still unclaimed ${h}h in ${stage}. ` : `Still stopped ${h}h later in ${stage}. `;
-    case 'quiet':
-      return unclaimed ? `${when(n, timeZone)}: still unclaimed after ${dayWords(h)} in ${stage}.` : `${when(n, timeZone)}: still stopped ${dayWords(h)} later in ${stage}.`;
-  }
+  const stamped = (): string => (unclaimed ? `${when(n, timeZone)}: still unclaimed after ${dayWords(h)} in ${stage}.` : `${when(n, timeZone)}: still stopped ${dayWords(h)} later in ${stage}.`);
+  // A Record, so a new vibe fails the typecheck here until it has its line. Console stamps the time, as Quiet does.
+  const LINES: Readonly<Record<Vibe, () => string>> = {
+    daylight: () => (unclaimed ? `Still unclaimed after ${dayWords(h)} in ${stage}.` : `Still stopped ${dayWords(h)} later in ${stage}.`),
+    paper: () => (unclaimed ? ` — still unclaimed after ${dayWords(h)} in ${stage}. ` : ` — still stopped ${dayWords(h)} later in ${stage}. `),
+    studio: () => (unclaimed ? `Still unclaimed ${h}h in ${stage}. ` : `Still stopped ${h}h later in ${stage}. `),
+    quiet: stamped,
+    console: stamped,
+  };
+  return LINES[vibe]();
 }
 
 /** Quiet's one line per notice: time, what happened, and where the reason is. */
@@ -101,10 +101,13 @@ export function stageOwnerText(stage: Stage, agents: AgentSummary[], form: 'full
   return form === 'full' ? `${o.label}, ${who}` : who;
 }
 
+/** How each vibe names a stage in the Move menu: Quiet and Console in brackets, Paper with the agents, the others in full. */
+const MOVE_OPTION: Readonly<Record<Vibe, 'bracket' | 'agents' | 'full'>> = { daylight: 'full', paper: 'agents', studio: 'full', quiet: 'bracket', console: 'bracket' };
+
 export function moveOptionLabel(vibe: Vibe, stage: Stage, agents: AgentSummary[]): string {
-  if (vibe === 'quiet') return `${stage.name} (${stageOwnerText(stage, agents, 'agents')})`;
-  if (vibe === 'paper') return `${stage.name} · ${stageOwnerText(stage, agents, 'agents')}`;
-  return `${stage.name} · ${stageOwnerText(stage, agents, 'full')}`;
+  const form = MOVE_OPTION[vibe];
+  if (form === 'bracket') return `${stage.name} (${stageOwnerText(stage, agents, 'agents')})`;
+  return `${stage.name} · ${stageOwnerText(stage, agents, form)}`;
 }
 
 /** The Resume-at options: every stage in order, the current one "(where it stopped)". */

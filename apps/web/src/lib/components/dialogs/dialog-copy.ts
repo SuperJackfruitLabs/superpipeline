@@ -7,6 +7,7 @@ export const NC_LEAD: Readonly<Record<Vibe, string>> = {
   paper: 'Describe it in a sentence. An agent drafts the brief, and you may change any of it before it goes.',
   studio: 'One sentence in, a drafted brief out. Edit anything before dispatch.',
   quiet: 'Describe the work in one sentence. An agent writes a draft brief. You can change all of it before you dispatch.',
+  console: 'One sentence in. An agent drafts the brief; edit any of it before dispatch.',
 };
 
 /** The lead when a person works the chosen stage (#11): the same words, without an agent drafting. */
@@ -15,6 +16,7 @@ export const NC_LEAD_PERSON: Readonly<Record<Vibe, string>> = {
   paper: 'Describe it in a sentence. You may change any of it before it goes.',
   studio: 'One sentence in. Edit anything before dispatch.',
   quiet: 'Describe the work in one sentence. You can change all of it before you dispatch.',
+  console: 'One sentence in. Edit any of it before dispatch.',
 };
 
 export const PRIORITY_OPTIONS = [

@@ -3,6 +3,7 @@
    * An address that is not a page (404), or a page that threw, inside the vibe's own shell with a way
    * home (loading-audit L16). Never SvelteKit's bare "404 Not Found".
    */
+  import { BLEED_VIBES } from '$lib/vibe-sets';
   import { page } from '$app/state';
   import { appearance } from '$lib/appearance.svelte';
   import AppShell from '$lib/components/shell/AppShell.svelte';
@@ -16,7 +17,7 @@
 
 <svelte:head><title>{missing ? 'Not found' : 'Something went wrong'} · Superpipeline</title></svelte:head>
 
-<AppShell live={shellModel.liveToggle} here={null} section="inbox" boardName={null} bleed={vibe === 'quiet'} ownHeading>
+<AppShell live={shellModel.liveToggle} here={null} section="inbox" boardName={null} bleed={BLEED_VIBES.has(vibe)} ownHeading>
   <PageMain scope="scr-error">
     <div class="sp-error">
       <p class="t-eyebrow">{missing ? 'Not found' : `Error ${page.status}`}</p>

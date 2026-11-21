@@ -2,9 +2,13 @@
 import type { Page, APIRequestContext } from '@playwright/test';
 import { FIXTURE_TENANT, FIXTURE_USER, seedWorld } from '../visual/fixture/seed';
 import { PORTS } from '../../scripts/ports';
+import { defaultTimeStrength, type Vibe } from '@superjackfruitlabs/vibekit-ui/appearance';
 
-export const VIBES = ['daylight', 'paper', 'studio', 'quiet'] as const;
-export type VibeName = (typeof VIBES)[number];
+/** Every vibe, from vibekit (its plain entry: no Svelte), so a new vibe reaches every spec that loops VIBES. */
+export { VIBES, defaultTimeStrength } from '@superjackfruitlabs/vibekit-ui/appearance';
+export type VibeName = Vibe;
+/** The vk_appearance cookie for a vibe and theme, with the vibe's own time-of-day default (off in the plain vibes). */
+export const appearanceCookie = (vibe: Vibe, theme: 'light' | 'dark'): string => `${vibe}.${theme}.${defaultTimeStrength(vibe)}.0`;
 export const SIZES = [
   { name: '1440x900', width: 1440, height: 900 },
   { name: '1100x800', width: 1100, height: 800 },
@@ -18,7 +22,7 @@ export async function seed(request: APIRequestContext): Promise<void> {
 
 export async function openWorld(page: Page, route: string, o: { vibe: VibeName; dark: boolean; width: number; height: number; at?: string }): Promise<void> {
   const ctx = page.context();
-  await ctx.addCookies([{ name: 'vk_appearance', value: `${o.vibe}.${o.dark ? 'dark' : 'light'}.${o.vibe === 'quiet' ? 'off' : 'strong'}.0`, url: PORTS.webUrl }]);
+  await ctx.addCookies([{ name: 'vk_appearance', value: appearanceCookie(o.vibe, o.dark ? 'dark' : 'light'), url: PORTS.webUrl }]);
   await ctx.addInitScript(([t, u, b]) => {
     localStorage.setItem('superpipeline.devTenant', t);
     localStorage.setItem('superpipeline.devUser', u);

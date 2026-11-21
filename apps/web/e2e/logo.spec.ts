@@ -1,5 +1,6 @@
 import { expect, test } from '@playwright/test';
 import { openBoard, seedBoard, setAppearance } from './support/seed';
+import { VIBES } from './support/world';
 
 /**
  * The translucent-v2 Channel mark (static/brand/README.md) where the app shows its brand.
@@ -9,7 +10,6 @@ import { openBoard, seedBoard, setAppearance } from './support/seed';
  * the name, never a picture. On a phone no vibe draws the rail; the check there is that no mark
  * that does render has collapsed to nothing. The favicons the page links must load.
  */
-const VIBES = ['daylight', 'paper', 'studio', 'quiet'] as const;
 const DRAWN = new Set(['daylight', 'studio']);
 const AMBER = 'rgb(216, 150, 0)';
 const WHITE = 'rgb(255, 255, 255)';

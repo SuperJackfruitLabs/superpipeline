@@ -9,6 +9,7 @@ describe('reconnect copy', () => {
       paper: 'Your sign-in has expired, and it could not be renewed in the background. Once you sign in, you return to this card.',
       studio: 'SESSION EXPIRED. Background renewal failed. Sign in to return to this card.',
       quiet: 'You are signed out. We could not renew your sign-in. After you sign in, this card opens again.',
+      console: 'Session: expired. Background renewal failed. Sign in to return to this card.',
     });
     expect(rcLead('quiet', false)).toBe('You are signed out. We could not renew your sign-in. After you sign in, this page opens again.');
   });

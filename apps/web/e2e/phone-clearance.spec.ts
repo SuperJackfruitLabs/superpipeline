@@ -1,10 +1,10 @@
 import { expect, test, type Page } from '@playwright/test';
 import { API, TENANT, openBoard, seedBoard, setAppearance } from './support/seed';
+import { VIBES } from './support/world';
 
 // vibekit's phone tab bar is fixed to the foot of the screen. Every phone page must leave enough
 // bottom padding that, scrolled to the end, its last item sits above the bar: an item under the bar
 // cannot be read or tapped (the Studio phone's title hid under it once, merge-2).
-const VIBES = ['daylight', 'paper', 'studio', 'quiet'] as const;
 const PHONE = { width: 390, height: 844 };
 
 /** Scrolls to the end and returns how far the last visible item in main runs under the tab bar (0 when it clears). */

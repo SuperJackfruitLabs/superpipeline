@@ -2,6 +2,7 @@
 import { test, expect } from '@playwright/test';
 import { API, TENANT, seedBoard, setAppearance } from './support/seed';
 import { seedRealistic, useRealistic } from './support/realistic-inbox';
+import { VIBES, appearanceCookie } from './support/world';
 
 const STAGES = [
   { key: 'todo', name: 'To do', order: 0, ownerKind: 'human' },
@@ -28,11 +29,11 @@ test('?view=list opens the List, and a row menu moves the card on the server', a
 
 
 // The composition contract: one List in every vibe, on the realistic workspace's first board.
-for (const vibe of ['daylight', 'paper', 'studio', 'quiet'] as const) {
+for (const vibe of VIBES) {
   test(`${vibe}: the List is one composition: the pickers in the top row, one Move per row, J and R work`, async ({ page, request }) => {
     const { boardIds } = await seedRealistic(request);
     await useRealistic(page, boardIds[0]);
-    await setAppearance(page, `${vibe}.light.${vibe === 'quiet' ? 'off' : 'strong'}.0`);
+    await setAppearance(page, appearanceCookie(vibe, 'light'));
     await page.goto(`/b/${boardIds[0]}?view=list`);
 
     const top = page.locator('.bv-top');

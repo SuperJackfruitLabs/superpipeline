@@ -9,7 +9,7 @@
    */
   import { createRawSnippet, tick } from 'svelte';
   import { goto } from '$app/navigation';
-  import { Button, CommandPalette, Field, type PaletteGroup } from '@superjackfruitlabs/vibekit-ui';
+  import { Button, CommandPalette, Field, type PaletteGroup, type Vibe } from '@superjackfruitlabs/vibekit-ui';
   import { app } from '$lib/stores/app.svelte';
   import { appearance } from '$lib/appearance.svelte';
   import BoardPickButton from './BoardPickButton.svelte';
@@ -23,7 +23,7 @@
   import './css/palclose.css';
 
   /** Where the reference puts the panel under the shell's control, per vibe (dialog top − control top). */
-  const DROP: Record<string, number> = { daylight: 56, paper: 57, studio: 68, quiet: 52 };
+  const DROP: Readonly<Record<Vibe, number>> = { daylight: 56, paper: 57, studio: 68, quiet: 52, console: 44 };
   const SWITCHER_W = 520;
   const MARGIN = 16;
 
@@ -109,7 +109,7 @@
     // O10, #26: hang under the trigger, but never past a screen edge (16px margins); the panel is as wide as fits.
     const w = Math.min(SWITCHER_W, window.innerWidth - 2 * MARGIN);
     s.setProperty('--sp-bs-x', `${Math.max(MARGIN, Math.min(a.left, window.innerWidth - w - MARGIN))}px`);
-    s.setProperty('--sp-bs-y', `${a.top + (DROP[vibe] ?? 56)}px`);
+    s.setProperty('--sp-bs-y', `${a.top + DROP[vibe]}px`);
   });
 
   function close(): void { app.boardSwitcherOpen = false; }

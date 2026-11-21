@@ -6,7 +6,7 @@
    * its panel in its place), the facts in words, the brief, what the last attempt produced, then the
    * conversation and history and the raw data behind closed disclosures. The drawer, the phone sheet and
    * the page mount this same view; phone is a breakpoint (card.css), not a second file. Outside the one
-   * `[data-signature]` slot the markup and the words are the same in all four vibes.
+   * `[data-signature]` slot the markup and the words are the same in every vibe.
    *
    * While the card's log is on its way only the head and the track draw (both from the board snapshot)
    * and the state block waits (rule 11); the rest follows once the log is in, or the read failed.

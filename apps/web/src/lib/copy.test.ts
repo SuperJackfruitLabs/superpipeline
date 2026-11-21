@@ -5,8 +5,8 @@ import { COPY, LEAD_FALLBACK, leadText, splitEmoji, wantYou, words } from './cop
 
 const holes = (s: string) => [...s.matchAll(/\{(\w+)\}/g)].map((m) => m[1]).sort();
 
-describe('four-way words', () => {
-  it('every string is written for all four vibes with the same placeholders', () => {
+describe('per-vibe words', () => {
+  it('every string is written for every vibe with the same placeholders', () => {
     for (const [id, four] of Object.entries({ ...COPY, ...Object.fromEntries(Object.entries(LEAD_FALLBACK).map(([k, v]) => [`lead.${k}`, v])) })) {
       const base = holes(four.daylight);
       for (const v of VIBES) {

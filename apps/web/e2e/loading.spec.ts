@@ -9,11 +9,11 @@
 import { test, expect, type Page, type BrowserContext } from '@playwright/test';
 import { waitForSurfaceReady, waitForLayout } from './support/readiness';
 import { seedWorld, FIXTURE_TENANT, FIXTURE_USER } from './visual/fixture/seed';
+import { VIBES, appearanceCookie } from './support/world';
 
 const DX = '/b/brd_134a0ddb6d434478';
 const CARD = 'card_05823a57e8224605';
 const PROJECT = '/plan/projects/prj_34b48f840daa4309';
-const VIBES = ['daylight', 'paper', 'studio', 'quiet'] as const;
 const SIZES = [{ n: 'desk', width: 1440, height: 900 }, { n: 'phone', width: 390, height: 844 }] as const;
 /** Words that would be false before the data is in. */
 const EMPTY = 'Nothing needs you|Nothing is running|Nothing waits|Nothing is waiting|No [a-z ]{1,24} yet|Reconnecting|Nothing here|No boards|No projects|No agents|No agent is working|Nothing unread|None\\.|\\b0 (cards?|boards?|agents?|projects?|asks?|letters?)\\b|\\$0\\.00|Error:';
@@ -52,7 +52,7 @@ function sampler([empty, real]: [string, string[]]): void {
 }
 
 async function open(ctx: BrowserContext, vibe: string, boardId = 'brd_134a0ddb6d434478'): Promise<Page> {
-  await ctx.addCookies([{ name: 'vk_appearance', value: `${vibe}.light.${vibe === 'quiet' ? 'off' : 'strong'}.0`, url: test.info().project.use.baseURL! }]);
+  await ctx.addCookies([{ name: 'vk_appearance', value: appearanceCookie(vibe, 'light'), url: test.info().project.use.baseURL! }]);
   await ctx.addInitScript(([t, u, b]) => {
     localStorage.setItem('superpipeline.devTenant', t);
     localStorage.setItem('superpipeline.devUser', u);

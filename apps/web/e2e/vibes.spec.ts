@@ -1,10 +1,11 @@
 import AxeBuilder from '@axe-core/playwright';
 import { expect, test, type Locator, type Page } from '@playwright/test';
 import { BOUND_PIPELINE, openBoard, REVIEW_PIPELINE, seedBoard, seedBoundGateCard, seedGatedCard, seedQuestionCard, setAppearance } from './support/seed';
+import { VIBES } from './support/world';
 
 // Every vibe × theme runs against the card's one composition (CardView): the same words and
 // controls in every vibe. The card says what waits on you; Review and Answer open their panel in place.
-const ALL_VIBES = ['daylight', 'paper', 'studio', 'quiet'] as const;
+const ALL_VIBES = VIBES;
 
 test.use({ timezoneId: 'Europe/London' });
 const SUBJECT = [/What you are signing/, /example_product/, /Approving exactly this version, revision 1 · sealed [0-9a-f]{4}·[0-9a-f]{4}/, /sha256:[0-9a-f]{64}/];

@@ -3,8 +3,9 @@
    * The screen before the app has a page to draw: signing in, then finding your boards. Never blank:
    * the vibe's background (app.html's first frame), the mark and wordmark centred, one polite status
    * line; from 8 s it says the server is slow, from 20 s it says it could not reach Superpipeline and
-   * offers Try again. Quiet draws the words alone.
+   * offers Try again. Quiet and Console draw the words alone (WORDS_ONLY_BOOT_VIBES).
    */
+  import { WORDS_ONLY_BOOT_VIBES } from '$lib/vibe-sets';
   import { onMount } from 'svelte';
   import { appearance } from '$lib/appearance.svelte';
   import LogoMotion from '$lib/components/LogoMotion.svelte';
@@ -13,7 +14,7 @@
 
   let { label, heading, onRetry = () => location.reload() }: { label: string; heading: string; onRetry?: () => void } = $props();
   let phase = $state<'waiting' | 'slow' | 'failed'>('waiting');
-  const quiet = $derived(appearance.value.vibe === 'quiet');
+  const quiet = $derived(WORDS_ONLY_BOOT_VIBES.has(appearance.value.vibe));
   let timers: ReturnType<typeof setTimeout>[] = [];
   function start(): void {
     timers.forEach(clearTimeout);

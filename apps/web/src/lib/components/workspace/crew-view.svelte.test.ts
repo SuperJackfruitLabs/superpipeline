@@ -89,7 +89,7 @@ afterEach(() => { roots?.unmount(); roots = null; cleanup(); vi.useRealTimers();
 
 describe('CrewView in every vibe', () => {
   for (const tab of CREW_TAB_IDS) {
-    it(`${tab}: renders the same accessibility tree in all four vibes outside the signature`, async () => {
+    it(`${tab}: renders the same accessibility tree in every vibe outside the signature`, async () => {
       roots = await renderInVibes(CrewView, { tab });
       await settle();
       const day = parityTree(roots.daylight);

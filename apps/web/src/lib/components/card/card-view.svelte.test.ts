@@ -63,7 +63,7 @@ const cell = (k: string) => document.querySelector(`[data-cell="${k}"]`);
 
 describe('the card in every vibe, on every surface', () => {
   for (const surface of ['drawer', 'phone', 'page'] as const) {
-    it(`${surface}: the same accessibility tree in all four vibes outside the signature slot, and the guards pass`, async () => {
+    it(`${surface}: the same accessibility tree in every vibe outside the signature slot, and the guards pass`, async () => {
       const { model, dispose } = await loaded(surface);
       const roots = await renderInVibes(CardView, props(model, surface));
       try {

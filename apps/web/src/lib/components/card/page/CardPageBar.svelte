@@ -10,11 +10,11 @@
   import { appearance } from '$lib/appearance.svelte';
   import BrandMark from '$lib/components/BrandMark.svelte';
   import { initials, personName } from '$lib/components/dialogs/person';
+  import { vibeWords } from '$lib/components/settings/account-settings-words';
   import AccountMenu from './AccountMenu.svelte';
 
   let { boardName, boardHref }: { boardName: string; boardHref: string } = $props();
   const name = $derived(personName(app.user, app.members) || 'there');
-  const VIBE_NAME = { daylight: 'Daylight', paper: 'Paper', studio: 'Studio', quiet: 'Quiet' } as const;
 </script>
 
 <nav class="cv-pagebar" aria-label="Card window">
@@ -22,7 +22,7 @@
   <Button variant="quiet" href={boardHref}>Back to the board</Button>
   <span class="cv-meta">{boardName}</span>
   <span class="cv-pagebar__end">
-    <Button variant="tool" aria-label="Appearance: {VIBE_NAME[appearance.value.vibe]}, {appearance.phase} sky" aria-haspopup="dialog" onclick={() => (appearance.pickerOpen = true)}>Appearance</Button>
+    <Button variant="tool" aria-label="Appearance: {vibeWords(appearance.value.vibe)}, {appearance.phase} sky" aria-haspopup="dialog" onclick={() => (appearance.pickerOpen = true)}>Appearance</Button>
     <AccountMenu triggerClass="vk-button vk-button--tool" label="Account, {name}. Menu has Sign out" initials={initials(name)} />
   </span>
 </nav>

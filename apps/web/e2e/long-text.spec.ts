@@ -9,6 +9,7 @@ import { expect, test, type Page } from '@playwright/test';
 import { API, TENANT, REVIEW_PIPELINE, openBoard, seedBoard, seedGatedCard, seedQuestionCard, setAppearance } from './support/seed';
 
 import { waitForAppReady, waitForLayout } from './support/readiness';
+import { VIBES } from './support/world';
 
 const LONG = 'Supercalifragilistic' + 'x'.repeat(100); // 120 characters, no break opportunity
 const MARKERS = [LONG.slice(0, 24), '{{y}}', '<script>'];
@@ -71,7 +72,7 @@ test.beforeAll(async ({ request }) => {
 });
 
 const SIZES = [{ w: 1440, h: 900 }, { w: 1100, h: 800 }, { w: 390, h: 844 }];
-for (const vibe of ['daylight', 'paper', 'studio', 'quiet']) {
+for (const vibe of VIBES) {
   for (const { w, h } of SIZES) {
     test(`${vibe} ${w}: long titles wrap inside their containers everywhere`, async ({ page }) => {
       await page.setViewportSize({ width: w, height: h });

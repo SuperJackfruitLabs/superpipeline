@@ -6,6 +6,7 @@
 // pixel artboard had, so the capture covers what that artboard covered; a page taller than its size
 // grows the shot (app.ts).
 import type { Page } from '@playwright/test';
+import { defaultTimeStrength } from '@superjackfruitlabs/vibekit-ui/appearance';
 import { CARD_4605, DX, blurActive, expireSession, fillNewCard, openMoveStep } from './steps';
 
 export type Vibe = 'daylight' | 'paper' | 'studio' | 'quiet';
@@ -105,8 +106,8 @@ const DEFS: Record<Exclude<Kind, 'Phone-Board'>, Def> = {
 
 function screen(kind: Kind, V: (typeof VIBES)[number]): Screen {
   const vibe = V.toLowerCase() as Vibe;
-  // Quiet has no strength; every other vibe renders at the app's default (strong).
-  const strength = vibe === 'quiet' ? ('off' as const) : undefined;
+  // A plain vibe (Quiet) has no time of day; every other vibe renders at the app's default (strong).
+  const strength = defaultTimeStrength(vibe) === 'off' ? ('off' as const) : undefined;
   const artboard = `SP-${kind}-${V}`;
   if (kind === 'Phone-Board') return { artboard, vibe, route: DX, strength, steps: waitLive, size: { w: 390, h: 844 } };
   return { artboard, vibe, strength, ...DEFS[kind], size: { w: W, h: HEIGHT[kind][V] } };

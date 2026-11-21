@@ -11,7 +11,7 @@
   "import(no-unassigned-import)": 30,
   "promise(always-return)": 13,
   "typescript(await-thenable)": 3,
-  "typescript(consistent-return)": 8,
+  "typescript(consistent-return)": 7,
   "typescript(consistent-type-imports)": 94,
   "typescript(no-base-to-string)": 50,
   "typescript(no-misused-spread)": 6,

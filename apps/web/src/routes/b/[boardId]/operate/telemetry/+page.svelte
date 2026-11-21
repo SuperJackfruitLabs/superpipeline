@@ -1,6 +1,7 @@
 <!-- apps/web/src/routes/b/[boardId]/operate/telemetry/+page.svelte (whole file) -->
 <script lang="ts">
   /** Spend, in detail: "where did it go", next to Operate's "are we fine". One composition in every vibe (SpendView). */
+  import { BLEED_VIBES } from '$lib/vibe-sets';
   import { appearance } from '$lib/appearance.svelte';
   import SpendView from '$lib/components/operate/SpendView.svelte';
   import AppShell from '$lib/components/shell/AppShell.svelte';
@@ -10,6 +11,6 @@
   const vibe = $derived(appearance.value.vibe);
 </script>
 
-<AppShell live={shellModel.liveToggle} here="plan" section="spend" boardName={app.board?.name ?? 'Untitled board'} bleed={vibe === 'quiet'} ownHeading>
+<AppShell live={shellModel.liveToggle} here="plan" section="spend" boardName={app.board?.name ?? 'Untitled board'} bleed={BLEED_VIBES.has(vibe)} ownHeading>
   <SpendView />
 </AppShell>

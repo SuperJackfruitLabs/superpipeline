@@ -118,7 +118,7 @@ describe('vibe parity', () => {
     ['Plan · Projects', { here: 'plan', section: 'projects', boardName: null, plan: 'projects', ownHeading: true, primary: { label: 'New project', onclick: () => {} } }],
     ['Crew', { here: 'crew', section: 'crew', boardName: null, ownHeading: true, primary: { label: 'New agent', onclick: () => {} } }],
   ];
-  it.each(PAGES)('renders the same accessibility tree in all four vibes outside the signature slot (%s)', async (_name, page) => {
+  it.each(PAGES)('renders the same accessibility tree in every vibe outside the signature slot (%s)', async (_name, page) => {
     realistic();
     const roots = await renderInVibes(AppShell, { ...page, live: shellModel.liveToggle, children } as never);
     try {

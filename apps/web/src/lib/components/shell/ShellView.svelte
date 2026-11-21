@@ -7,9 +7,9 @@
    * Plan's Boards | Projects switch). Below PHONE_QUERY the same component hands vibekit its phone
    * slots: PhoneHeader and PhoneTabBar (with You, the account menu).
    *
-   * The markup is the same in all four vibes. The one exception is the `[data-signature]` slot under
+   * The markup is the same in every vibe. The one exception is the `[data-signature]` slot under
    * the masthead, where each vibe draws its signature (`signature/`): Daylight's sky, Paper's
-   * dateline, Studio's status line; Quiet has none.
+   * dateline, Studio's status line; Quiet and Console have none.
    */
   import {
     AppNav, AppShell as VkAppShell, Button, CommandField, IconButton, LIVE_LABELS, LiveDot, Masthead, PhoneHeader, PhoneTabBar, usePhone, useVibe,
@@ -29,6 +29,7 @@
   import PaperSignature from './signature/PaperSignature.svelte';
   import StudioSignature from './signature/StudioSignature.svelte';
   import QuietSignature from './signature/QuietSignature.svelte';
+  import ConsoleSignature from './signature/ConsoleSignature.svelte';
   import type { ShellProps } from './types';
 
   let { here, section, boardName, plan, title, live, primary, bleed = false, ownHeading = false, children }: ShellProps = $props();
@@ -58,6 +59,7 @@
     paper: { component: PaperSignature },
     studio: { component: StudioSignature, rootClass: 'ar' },
     quiet: { component: QuietSignature },
+    console: { component: ConsoleSignature },
   };
 
   const vibe = useVibe();

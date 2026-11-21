@@ -1,10 +1,10 @@
 import { expect, test } from '@playwright/test';
 import { API, TENANT, openBoard, seedBoard, setAppearance } from './support/seed';
+import { VIBES } from './support/world';
 
 // One page, one h1. The shell's masthead (or the phone header) is the page's h1, so a page drawn
 // inside the shell titles its own content with h2: Settings and Telemetry (Task 13 review).
 // The front door's onboarding draws no shell, and keeps its own h1 (Onboarding.svelte.test.ts).
-const VIBES = ['daylight', 'paper', 'studio', 'quiet'] as const;
 const SIZES = [{ name: 'desktop', width: 1280, height: 820 }, { name: 'phone', width: 390, height: 844 }] as const;
 
 for (const vibe of VIBES) {

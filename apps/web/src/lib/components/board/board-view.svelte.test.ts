@@ -89,7 +89,7 @@ describe('the board: drag and drop', () => {
 });
 
 describe('the board in every vibe', () => {
-  it('renders the same accessibility tree in all four vibes outside the signature slot', async () => {
+  it('renders the same accessibility tree in every vibe outside the signature slot', async () => {
     const roots = await renderInVibes(BoardView, props());
     try {
       const trees = Object.fromEntries(VIBES.map((v) => [v, parityTree(roots[v])]));

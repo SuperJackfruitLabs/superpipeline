@@ -1,6 +1,7 @@
 // apps/web/e2e/visual/app.ts — render one screen of the running app for the visual job: the screen's
 // size, a frozen clock, reduced motion, no animation or transition, fonts awaited, and every request
 // that leaves localhost refused and reported (a render that leaned on the network is not a capture).
+import { defaultTimeStrength } from '@superjackfruitlabs/vibekit-ui/appearance';
 import type { Browser, Page } from '@playwright/test';
 import { FAMILIES, SYMBOL_PIN_CSS } from './fonts';
 import { FIXTURE_TENANT, FIXTURE_USER } from './fixture/seed';
@@ -72,7 +73,7 @@ async function assertFamiliesLoaded(page: Page, families: string[]): Promise<voi
 /** One screen, light theme (the visual job captures light only), as a viewport screenshot. */
 export async function renderApp(browser: Browser, screen: Screen): Promise<Buffer> {
   const { w, h } = screen.size;
-  const strength = screen.strength ?? (screen.vibe === 'quiet' ? 'off' : 'strong');
+  const strength = screen.strength ?? defaultTimeStrength(screen.vibe);
   const themeWord = screen.lightTheme ?? 'light';
   const context = await browser.newContext({
     viewport: { width: w, height: Math.min(h, 1200) }, deviceScaleFactor: 1, timezoneId: 'Asia/Kolkata', locale: 'en-GB',

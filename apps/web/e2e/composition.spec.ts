@@ -8,10 +8,10 @@ import { REALISTIC_BOARD_IDS, REALISTIC_TENANT, REALISTIC_USER } from '../src/li
 import { seedRealistic, useRealistic } from './support/realistic-inbox';
 import { API, TENANT, seedBoard, setAppearance } from './support/seed';
 import { waitForAppReady, waitForLayout } from './support/readiness';
+import { VIBES, appearanceCookie } from './support/world';
 
-const VIBES = ['daylight', 'paper', 'studio', 'quiet'] as const;
 type Vibe = (typeof VIBES)[number];
-const appearance = (vibe: Vibe) => `${vibe}.light.${vibe === 'quiet' ? 'off' : 'strong'}.0`;
+const appearance = (vibe: Vibe) => appearanceCookie(vibe, 'light');
 const BOARDS = [REALISTIC_BOARD_IDS.planning, REALISTIC_BOARD_IDS.devex, REALISTIC_BOARD_IDS.marketing] as const;
 const AS_OWNER = { 'X-Tenant-Id': REALISTIC_TENANT, 'X-User-Id': REALISTIC_USER, 'Content-Type': 'application/json' };
 

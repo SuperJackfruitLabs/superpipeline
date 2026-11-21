@@ -2,7 +2,7 @@
 // @vitest-environment jsdom
 /**
  * The composition guards (design spec §9) wired for every page, one row each, on the realistic
- * workspace (`$lib/fixtures/realistic`): each page mounts in all four vibes through `renderInVibes`
+ * workspace (`$lib/fixtures/realistic`): each page mounts in every vibe through `renderInVibes`
  * and must pass, in every vibe, vibe parity (the same accessibility tree outside `[data-signature]`),
  * one primary action per row, no repeated paragraph, no raw id or JSON outside a disclosure, no
  * clipped stage name, a signature no larger than its allowed parts (§11.6), and a footer that ends

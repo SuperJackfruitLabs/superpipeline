@@ -11,6 +11,7 @@
    * uninitialised object and the API answers 404 — the same answer a board that never existed
    * gets. A board id in a URL is therefore not an existence oracle.
    */
+  import { BLEED_VIBES } from '$lib/vibe-sets';
   import { untrack } from 'svelte';
   import { page } from '$app/state';
   import { replaceState } from '$app/navigation';
@@ -89,7 +90,7 @@
   {/if}
 {:else}
   <!-- The real shell with the board's shape in it: no logo screen, no raw error text (loading-audit L4, L5). -->
-  <AppShell live={shellModel.liveToggle} here="plan" section={wait.section} boardName={knownName} plan={wait.view ? 'boards' : undefined} bleed={appearance.value.vibe === 'quiet'} ownHeading>
+  <AppShell live={shellModel.liveToggle} here="plan" section={wait.section} boardName={knownName} plan={wait.view ? 'boards' : undefined} bleed={BLEED_VIBES.has(appearance.value.vibe)} ownHeading>
     <BoardSkeleton form={wait.form} {failure} slow={gate.slow} onRetry={() => app.retry()} />
   </AppShell>
 {/if}

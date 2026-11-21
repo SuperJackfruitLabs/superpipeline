@@ -4,8 +4,8 @@
 // stacked fields, inside the viewport).
 import { expect, test, type Locator, type Page } from '@playwright/test';
 import { API, TENANT, seedBoard, setAppearance } from './support/seed';
+import { VIBES, appearanceCookie } from './support/world';
 
-const VIBES = ['daylight', 'paper', 'studio', 'quiet'] as const;
 const DIALOGS = [
   { tab: 'agents', open: 'New agent', first: 'Name', primary: 'Create agent and issue token' },
   { tab: 'people', open: 'New person', first: 'Name (optional)', primary: 'Add person' },
@@ -138,7 +138,7 @@ test.describe('phone fit', () => {
 for (const vibe of VIBES) {
   test(`${vibe} desktop: the Crew masthead says New agent / New person / New capability per tab and opens its dialog`, async ({ page, request }) => {
     await seedBoard(request, `Crew masthead ${Date.now().toString(36)}`);
-    await setAppearance(page, `${vibe}.light.${vibe === 'quiet' ? 'off' : 'strong'}.0`);
+    await setAppearance(page, appearanceCookie(vibe, 'light'));
     await page.setViewportSize({ width: 1280, height: 900 });
     for (const d of DIALOGS) {
       await page.goto(`/crew/${d.tab}`);
