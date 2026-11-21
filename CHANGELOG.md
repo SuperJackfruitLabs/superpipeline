@@ -14,6 +14,8 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html). Entries g
 
 ## Unreleased
 
+## v0.0.34 — 2026-11-21
+
 - Every page is one composition, the same in every vibe: the Inbox, the Board, the List, the Card, Crew, Settings and Board settings, Projects, Spend in detail and the board log. A vibe changes how a page looks and how its headline is set, never what it says or where its actions are. The board shows every stage in one track, with its count and who works it, and draws lanes only for the stages that hold cards. The card is the same in the drawer, on a phone and on its own page: one sentence says where it is, for how long and what is wanted, beside the one action that answers it, and Review, Answer and Resume open in its place. The Inbox groups what wants you by what you must do (Review, Answer, Resume a stopped agent, Over budget, Nobody works these stages), with Running, Spend and Activity as tabs. Crew and Settings are tabs with their counts and one table each.
 
 - Live changes move instead of repainting: Inbox rows slide in and out and flash once when they change. The Live pill in the header pauses updates. While paused it counts what is waiting and offers Apply, which plays the changes in order; resuming plays the rest. Your own actions still show at once, and the choice is remembered in this browser.
