@@ -98,6 +98,20 @@ async function boardLiveChange(page: Page, request: APIRequestContext): Promise<
   return [...seen];
 }
 
+/**
+ * Needs-you rows wholly on one 1440×900 screen, from the list's first row: that row is brought to the top of the
+ * viewport, so the count measures the rows (their height, their group heads and explanations), not the headline
+ * and scope above them, which take a different height in each vibe. On the page as it loads Studio shows one row,
+ * too few for a ratio to mean anything.
+ */
+const rowsOnScreen = (page: Page) => page.locator('[data-row]').evaluateAll((els) => {
+  els[0]?.scrollIntoView({ block: 'start' });
+  return els.filter((el) => {
+    const r = el.getBoundingClientRect();
+    return r.height > 0 && r.top >= 0 && r.bottom <= window.innerHeight;
+  }).length;
+});
+
 // ── Height budget (§9): the Inbox under three screens and a board under about two, at 1440×900 ────────────────────
 
 /** The Inbox: three screens. */
@@ -107,7 +121,7 @@ const INBOX_BUDGET = 2700;
  * 1800 px (two screens) was the plan's estimate, not the rule: Quiet is one column by design and Paper sets larger
  * type, so on the realistic seed they need more room for the same five-tile lanes.
  */
-const BOARD_BUDGET: Record<Vibe, number> = { daylight: 1800, studio: 1800, paper: 2100, quiet: 2400 };
+const BOARD_BUDGET: Record<Vibe, number> = { daylight: 1800, studio: 1800, paper: 2100, quiet: 2400, console: 1800 };
 
 test.describe('on the realistic workspace', () => {
   test.beforeEach(async ({ request }) => { await seedRealistic(request); });
@@ -125,6 +139,19 @@ test.describe('on the realistic workspace', () => {
       }
     });
   }
+
+  // ── Density (Console spec §2): Console shows at least a third more Inbox rows than Studio, from spacing and row
+  // heights alone, with every hit area kept ──────────────────────────────────────────────────────────────────────────
+
+
+  test('Console shows at least a third more Inbox rows than Studio at 1440×900', async ({ page }) => {
+    await openInbox(page, 'studio');
+    const studio = await rowsOnScreen(page);
+    await openInbox(page, 'console');
+    const dense = await rowsOnScreen(page);
+    expect(studio, 'Studio shows some rows').toBeGreaterThan(0);
+    expect(dense, `Console ${dense} rows against Studio's ${studio}`).toBeGreaterThanOrEqual(Math.ceil(studio * 1.33));
+  });
 
   // ── Track never truncates (§9, rule 6): at 1008 px every stage is named in full ─────────────────────────────────────
 

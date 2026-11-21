@@ -1,0 +1,26 @@
+/* apps/web/src/lib/styles/console.css: Console across the app, what no single page owns. Console is dense, dark-first
+   and monospaced: vibekit 0.0.21 carries its tokens (Martian Mono throughout, square, hairlines, the 2–32px spacing
+   scale) and its component forms; this file sets the app's own base type and joins Console to the plain motion Quiet
+   already has. Each page's own Console block sits in that page's stylesheet. Selectors are keyed on data-vibe only,
+   so no other vibe can change here. */
+
+/* The body type: vibekit's base sets the body to --vk-text-md (17px) in every vibe; Console reads at its own body size,
+   with numbers that line up. A vibe root on an element (the Appearance previews, renderInVibes) reads the same. */
+:root[data-vibe="console"] body, .vk-viberoot[data-vibe="console"] { font: var(--vk-type-body); font-variant-numeric: tabular-nums; }
+
+/* Eyebrows: small uppercase mono, as Studio's, without its tracking. */
+[data-vibe="console"] .eyebrow { font: var(--vk-type-eyebrow); text-transform: uppercase; letter-spacing: 0.06em; }
+
+/* Plain motion, as Quiet: no pulsing live dot, no busy sweep; skeletons are the word alone. */
+[data-vibe="console"] .live-dot { animation: none; border-radius: 0; }
+:where([data-vibe="console"]) .vk-button[data-busy="true"]::after { display: none; }
+:where([data-vibe="console"]) :is(.ds-sk, .pcs-sk, .ss-sk, .skel, .pj-skel)::after { display: none; }
+:where([data-vibe="console"]) .sp-skeleton .vk-skeleton, :where([data-vibe="console"]) .sp-skeleton__row { display: none; }
+:where([data-vibe="console"]) .sp-skeleton__word--quiet { display: block; color: var(--vk-color-muted); font: var(--vk-type-meta); }
+
+/* The keys line (rule 13) is Console's strip: the same words as every vibe, on a surface under a hairline. */
+[data-vibe="console"] .sh-keys { color: var(--vk-color-muted); }
+
+/* Phone targets are 44px (pages-polish Q4): vibekit's Console Tabs form draws its tabs 31px tall; on a phone each tab
+   keeps the suite's floor. */
+@media (max-width: 899.98px) { [data-vibe="console"] .vk-tabs__item { min-height: var(--vk-target-min); } }

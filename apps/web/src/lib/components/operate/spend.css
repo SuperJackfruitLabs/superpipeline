@@ -66,3 +66,11 @@
 :where(.scr-spend) .log-toggle { align-self: flex-start; }
 :where(.scr-spend) .log-raw { min-height: 44px; display: flex; align-items: center; gap: 6px; }
 :where(.scr-spend) .log-rawword { text-decoration: underline; }
+
+/* Console: the head is a strip; the figure is Console's headline size. */
+[data-vibe="console"] :where(.scr-spend) .sp-head { padding-bottom: var(--vk-space-3); border-bottom: 1px solid var(--vk-color-line); }
+[data-vibe="console"] :where(.scr-spend) .sp-lede { font: var(--vk-type-meta); }
+[data-vibe="console"] :where(.scr-spend) .big { font: 700 20px/1.15 var(--vk-font-display); }
+[data-vibe="console"] :where(.scr-spend) .seg { gap: 0; padding: 0; background: transparent; box-shadow: inset 0 0 0 1px var(--vk-color-line); }
+[data-vibe="console"] :where(.scr-spend) .seg button { padding: 0 var(--vk-space-3); font: 600 11.5px/1.2 var(--vk-font-body); }
+[data-vibe="console"] :where(.scr-spend) .seg button[aria-pressed="true"] { background: var(--vk-color-select); box-shadow: inset 0 0 0 1px var(--vk-color-accent); }

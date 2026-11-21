@@ -50,3 +50,20 @@
 [data-vibe="quiet"] :where(.page) .t-h1 { font-size: 1.875rem; }
 [data-vibe="quiet"] .page a { text-decoration: underline; }
 [data-vibe="quiet"] :where(.page) .panel { border-width: 1px; }
+[data-vibe="console"] :where(.page) { font: var(--vk-type-body); }
+[data-vibe="console"] .page { gap: var(--vk-space-4); padding: var(--vk-space-4) var(--vk-space-5) var(--vk-space-5); }
+[data-vibe="console"] :where(.page) .t-h1 { font: var(--vk-type-h1); letter-spacing: 0; }
+[data-vibe="console"] :where(.page) .t-h1::before { content: "> " / ""; color: var(--vk-color-signal-text); }
+[data-vibe="console"] :where(.page) .t-h2 { font: var(--vk-type-h2); letter-spacing: 0.08em; text-transform: uppercase; }
+[data-vibe="console"] :where(.page) .t-h3 { font: 600 12.5px/1.35 var(--vk-font-body); }
+[data-vibe="console"] :where(.page) .t-eyebrow { font: var(--vk-type-eyebrow); text-transform: uppercase; letter-spacing: 0.06em; }
+[data-vibe="console"] :where(.page) :is(.t-body, .t-meta) { font: var(--vk-type-meta); }
+[data-vibe="console"] :where(.page) .t-body { color: var(--vk-color-text); }
+[data-vibe="console"] :where(.page) :is(input, select, textarea, .input) { font: var(--vk-type-body); }
+[data-vibe="console"] :where(.page) :is(.panel, .input, .note) { border-radius: 0; }
+[data-vibe="console"] :where(.page) .panel-head { padding: var(--vk-space-2) var(--vk-space-4); }
+[data-vibe="console"] :where(.page) .panel-body { padding: var(--vk-space-3) var(--vk-space-4); }
+[data-vibe="console"] :where(.page) :is(.chip, .count, .count-signal) { min-height: 0; height: auto; padding: 0 4px; border-radius: 0; font: 500 10.5px/1.6 var(--vk-font-mono); }
+[data-vibe="console"] :where(.page) .tab { min-height: 44px; padding: 0 var(--vk-space-3); font: 600 12px/1.3 var(--vk-font-body); border-bottom-width: 2px; }
+[data-vibe="console"] :where(.page) .tab[aria-selected="true"] { border-bottom-color: var(--vk-color-accent); }
+[data-vibe="console"] :where(.page) :is(.hint, .saved, .unsaved, .note) { font: var(--vk-type-meta); }

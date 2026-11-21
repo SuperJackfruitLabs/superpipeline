@@ -21,3 +21,14 @@
 .bs-layer .bs-anchor .bs-trigger { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; padding: 0 12px; border: 0; border-radius: var(--vk-radius-sm); background: var(--vk-color-surface); box-shadow: inset 0 0 0 2px var(--vk-color-text); color: var(--vk-color-text); font: 600 1.125rem/1.1 var(--vk-font-body); cursor: pointer; }
 /* Its name wears the masthead name's type (set on .bs-anchor by BoardSwitcherPopover), so it lies exactly over the board's own name. */
 .bs-layer .bs-anchor .nc-board__name { font-family: var(--bs-name-family); font-size: var(--bs-name-size); font-weight: var(--bs-name-weight); font-style: var(--bs-name-style); font-stretch: var(--bs-name-stretch); letter-spacing: var(--bs-name-ls); font-variation-settings: var(--bs-name-variation); font-feature-settings: var(--bs-name-features); }
+/* Console: square mono chips and keys, transparent like Quiet's. */
+[data-vibe="console"] .vk-dialog.bs .chip { border-radius: 0; background: transparent; border-color: var(--vk-color-line); font: 500 10.5px/1.6 var(--vk-font-mono); text-transform: none; letter-spacing: 0; }
+[data-vibe="console"] .vk-dialog.bs .chip--needs { border-color: var(--vk-color-signal); color: var(--vk-color-signal-text); }
+[data-vibe="console"] .vk-dialog.bs .kbd { border-radius: 0; background: transparent; border-color: var(--vk-color-rule); }
+[data-vibe="console"] .vk-dialog.bs .bs-del { border-radius: 0; }
+[data-vibe="console"] .vk-dialog.bs .vk-commandpalette__actions .link { font: var(--vk-type-meta); }
+[data-vibe="console"] .vk-dialog.bs :is(.bs-del, .grow) { font: var(--vk-type-meta); }
+/* Console: the body is a column the board list shrinks in, so under a short screen the list scrolls and This board's
+   actions (Delete board…) and the foot stay inside the dialog's max-height. */
+[data-vibe="console"] .vk-dialog.bs .vk-overlay__body { display: flex; flex-direction: column; flex: 1 1 auto; min-height: 0; }
+[data-vibe="console"] .vk-dialog.bs .vk-commandpalette { min-height: 0; }

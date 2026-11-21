@@ -24,3 +24,6 @@
 [data-vibe='studio'] [data-shell='phone'] :is(.wo-main, .wa-main, .op-main, .pj-main, .pjb-main) .ar-tbl { display: block; max-width: 100%; overflow-x: auto; }
 /* The List in Paper and Studio runs to the frame's edges too: on a phone its masthead, rows and Open buttons keep the 16px gutter. */
 [data-vibe='studio'] [data-shell='phone'] div.ls-main, [data-vibe='paper'] [data-shell='phone'] div.ls-pp { padding-inline: 16px; }
+/* Console: the You mark is a square, as its faces are. */
+[data-vibe='console'] .ph-root .ph-you { width: 22px; height: 22px; box-shadow: inset 0 0 0 1px var(--vk-color-rule); font: 700 9.5px/1 var(--vk-font-mono); }
+[data-vibe='console'] [data-shell='phone'] div:is(.wo-main, .wa-main, .op-main, .pj-main, .pjb-main) { padding-inline: 16px; }

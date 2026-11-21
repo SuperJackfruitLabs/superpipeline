@@ -70,3 +70,16 @@
 [data-vibe="studio"] .crew-head { border-bottom: 3px solid var(--vk-color-text); }
 [data-vibe="studio"] .crew-eyebrow { font: 500 12px/1.5 var(--vk-font-mono); letter-spacing: 0.04em; color: var(--vk-color-text); }
 [data-vibe="studio"] .crew-lede { font: 400 15px/1.45 var(--vk-font-serif); color: var(--vk-color-text); }
+
+/* Console: the head is a strip (a prompt mark before the title, the lede as meta, a hairline under); a capability list
+   wraps between words, never inside one. */
+[data-vibe="console"] .crew { padding: var(--vk-space-3) var(--vk-space-5) var(--vk-space-5); }
+[data-vibe="console"] .crew-head { gap: 4px; padding: var(--vk-space-3) 0; border-bottom: 1px solid var(--vk-color-line); }
+[data-vibe="console"] .crew-title { font: var(--vk-type-h1); letter-spacing: 0; }
+[data-vibe="console"] .crew-title::before { content: "> " / ""; color: var(--vk-color-signal-text); }
+[data-vibe="console"] .crew-lede { max-width: 90ch; font: var(--vk-type-meta); }
+[data-vibe="console"] .crew-help { color: var(--vk-color-accent-text); text-decoration: none; }
+[data-vibe="console"] .crew-works { overflow-wrap: break-word; }
+[data-vibe="console"] :is(.crew-chip, .crew .pick) { border-radius: 0; }
+[data-vibe="console"] :is(.crew-banner, .crew-form, .crew-token) { border-radius: 0; }
+[data-vibe="console"] .crew-foot { padding-top: var(--vk-space-3); border-top: 1px solid var(--vk-color-line); }

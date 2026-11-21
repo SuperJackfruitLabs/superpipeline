@@ -25,3 +25,8 @@
 .vk-dialog.rc .rc-who strong { color: var(--vk-color-text); }
 .rc-toast-wrap { position: fixed; inset-inline: 0; top: 100px; z-index: 60; display: flex; justify-content: center; pointer-events: none; }
 .rc-toast-wrap > * { pointer-events: auto; }
+/* Console: mono type at Console's sizes, square marks. */
+[data-vibe="console"] .vk-dialog.rc .rc-body { font: var(--vk-type-body); }
+[data-vibe="console"] .vk-dialog.rc .rc-lead { font: var(--vk-type-body); font-size: 13px; }
+[data-vibe="console"] .vk-dialog.rc :is(.rc-ic, .rc-back, .bd-avatar) { border-radius: 0; }
+[data-vibe="console"] .vk-dialog.rc :is(details, .rc-who) { font: var(--vk-type-meta); }

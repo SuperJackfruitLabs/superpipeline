@@ -32,3 +32,12 @@
 [data-vibe="paper"] .vk-dialog.nc .nc-sentence { font-family: var(--vk-font-display); font-size: 20px; border-radius: var(--vk-radius-sm); }
 [data-vibe="studio"] .vk-dialog.nc .eyebrow { font: 700 12px/1.2 var(--vk-font-body); text-transform: uppercase; letter-spacing: .1em; }
 [data-vibe="studio"] .vk-dialog.nc .kbd { border-radius: 2px; background: transparent; border-color: currentColor; }
+/* Console: mono type at Console's sizes, square fields and marks. */
+[data-vibe="console"] .vk-dialog.nc .eyebrow { font: var(--vk-type-eyebrow); text-transform: uppercase; letter-spacing: 0.06em; }
+[data-vibe="console"] .vk-dialog.nc .kbd { border-radius: 0; background: transparent; border-color: var(--vk-color-rule); }
+[data-vibe="console"] .vk-dialog.nc .nc-lead { font: var(--vk-type-meta); }
+[data-vibe="console"] .vk-dialog.nc :is(.nc-sentence, .nc-brief) { border-width: 1px; border-radius: 0; font: var(--vk-type-body); }
+[data-vibe="console"] .vk-dialog.nc .nc-sentence { font-size: 14px; }
+[data-vibe="console"] .vk-dialog.nc :is(.nc-label, .nc-label button, .nc-addlabel, .nc-board, .nc-where) { border-radius: 0; }
+[data-vibe="console"] .vk-dialog.nc .nc-where { font: var(--vk-type-meta); }
+[data-vibe="console"] .vk-dialog.nc :is(.link, .nc-label, .nc-addlabel) { font: var(--vk-type-body); }

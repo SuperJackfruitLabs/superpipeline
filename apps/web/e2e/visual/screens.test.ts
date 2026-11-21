@@ -4,9 +4,9 @@ import { describe, expect, it } from 'vitest';
 import { KINDS, VIBES, VISUAL_ARTBOARDS, VISUAL_SCREENS } from './screens';
 
 describe('visual screens', () => {
-  it('captures thirteen kinds in four vibes, each once (52)', () => {
+  it('captures thirteen kinds in five vibes, each once (65)', () => {
     expect(VISUAL_SCREENS).toHaveLength(KINDS.length * VIBES.length);
-    expect(VISUAL_SCREENS).toHaveLength(52);
+    expect(VISUAL_SCREENS).toHaveLength(65);
     expect(VISUAL_SCREENS.map((s) => s.artboard)).toEqual(VISUAL_ARTBOARDS);
     expect(new Set(VISUAL_ARTBOARDS).size).toBe(VISUAL_ARTBOARDS.length);
   });

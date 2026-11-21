@@ -48,6 +48,8 @@
     onadd(id);
     active = 0;
     await tick();
+    // The new chip can move the trigger (onto the next line in a dense vibe): hang the list from where it is now, never over it.
+    measure();
     list?.focus({ preventScroll: true }); // the picked option is gone; keep focus (and Escape) inside the picker
   }
   function onkey(e: KeyboardEvent): void {

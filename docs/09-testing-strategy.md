@@ -102,7 +102,7 @@ from drift and lowers integration cost for the "any harness" promise.
 
 ## 8. Visual regression
 
-**The gate is the `visual` job.** It captures fifty-two of the app's own screens (four vibes, light
+**The gate is the `visual` job.** It captures sixty-five of the app's own screens (five vibes, light
 theme, thirteen kinds: Board, the rich card's page and its drawer, the phone board, the Inbox, Crew,
 board settings and the six dialogs: New card, Move, the command palette, the board switcher, Appearance
 and Reconnect) at the PR's base commit and at its head, one after the other in the same Playwright
