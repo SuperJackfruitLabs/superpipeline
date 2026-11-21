@@ -5,10 +5,10 @@
  * so a slow list read on a tab switch shows the known rows, not the loading form.
  */
 import { expect, test } from '@playwright/test';
-import { openWorld, seed, VIBES } from './support/world';
+import { DARK_MEASURED_VIBES, openWorld, seed, VIBES } from './support/world';
 
 for (const vibe of VIBES) {
-  for (const dark of vibe === 'studio' ? [true, false] : [false]) {
+  for (const dark of DARK_MEASURED_VIBES.has(vibe) ? [true, false] : [false]) {
     test(`${vibe}${dark ? ' dark' : ''}: switching Crew tabs with a slow server keeps the rows`, async ({ page, request }) => {
       await seed(request);
       await openWorld(page, '/crew/agents', { vibe, dark, width: 1440, height: 900 });

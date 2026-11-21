@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test';
 import { openBoard, seedBoard, setAppearance } from './support/seed';
-import { VIBES } from './support/world';
+import { VIBES, WHITE_DARK_MARK_VIBES } from './support/world';
 
 /**
  * The translucent-v2 Channel mark (static/brand/README.md) where the app shows its brand.
@@ -29,7 +29,7 @@ for (const vibe of VIBES) {
         expect(box.height).toBe(box.width);
         await expect(mark).toHaveAttribute('aria-hidden', 'true');
         // Brand colours are fixed by design: Studio keeps a light tile even in dark mode.
-        await expect(mark).toHaveCSS('color', vibe === 'daylight' && theme === 'dark' ? WHITE : AMBER);
+        await expect(mark).toHaveCSS('color', WHITE_DARK_MARK_VIBES.has(vibe) && theme === 'dark' ? WHITE : AMBER);
       } else {
         await expect(mark).toHaveCount(0);
         await expect(home).toHaveText(/Superpipeline/);

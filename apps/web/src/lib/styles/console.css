@@ -21,6 +21,6 @@
 /* The keys line (rule 13) is Console's strip: the same words as every vibe, on a surface under a hairline. */
 [data-vibe="console"] .sh-keys { color: var(--vk-color-muted); }
 
-/* Phone targets are 44px (pages-polish Q4): vibekit's Console Tabs form draws its tabs 31px tall; on a phone each tab
-   keeps the suite's floor. */
-@media (max-width: 899.98px) { [data-vibe="console"] .vk-tabs__item { min-height: var(--vk-target-min); } }
+/* Touch targets are 44px (pages-polish Q4): vibekit's Console Tabs form draws its tabs 31px tall; on a phone, and on any
+   coarse pointer (a touch tablet or laptop at desktop width), each tab keeps the suite's floor. */
+@media (max-width: 899.98px), (pointer: coarse) { [data-vibe="console"] .vk-tabs__item { min-height: var(--vk-target-min); } }

@@ -2,7 +2,7 @@
 // the asks). Round 3: in Studio the Inbox's Show block sat flush against the rail (no gutter), and the board chip
 // beside an agent's name ran over the Age and Att. columns. Measures every vibe at 1440, 1280 and 1100.
 import { expect, test, type Page } from '@playwright/test';
-import { DX, VIBES, openWorld } from './support/world';
+import { DARK_MEASURED_VIBES, DX, VIBES, openWorld } from './support/world';
 import { seedRealistic } from './support/realistic';
 
 const WIDTHS = [1440, 1280, 1100] as const;
@@ -55,7 +55,7 @@ for (const vibe of VIBES) {
     test(`${vibe} ${width}: the nav v2 pages keep a ${GUTTER}px gutter and no table cell runs into the next`, async ({ page }) => {
       test.setTimeout(120_000);
       for (const path of PAGES) {
-        await openWorld(page, path, { vibe, dark: vibe === 'studio', width, height: 900 });
+        await openWorld(page, path, { vibe, dark: DARK_MEASURED_VIBES.has(vibe), width, height: 900 });
         if (path === '/inbox') await expect(page.locator('.ib-board', { hasText: 'Workspace Operations' }).first()).toBeVisible();
         const m = await measure(page);
         expect.soft(m.tight, `${path}: inside the ${GUTTER}px gutter`).toEqual([]);

@@ -104,11 +104,15 @@ async function boardLiveChange(page: Page, request: APIRequestContext): Promise<
  * and scope above them, which take a different height in each vibe. On the page as it loads Studio shows one row,
  * too few for a ratio to mean anything.
  */
-const rowsOnScreen = (page: Page) => page.locator('[data-row]').evaluateAll((els) => {
+const rowsOnScreen = (page: Page) => page.locator('.ib-needs .ib-row[data-row]').evaluateAll((els) => {
   els[0]?.scrollIntoView({ block: 'start' });
+  // The visible top is the scroll container's top edge (the shell scrolls inside itself, under its own header), not 0.
+  let box: HTMLElement | null = els[0]?.parentElement ?? null;
+  while (box && !(/(auto|scroll)/.test(getComputedStyle(box).overflowY) && box.scrollHeight > box.clientHeight)) box = box.parentElement;
+  const top = Math.max(0, box?.getBoundingClientRect().top ?? 0);
   return els.filter((el) => {
     const r = el.getBoundingClientRect();
-    return r.height > 0 && r.top >= 0 && r.bottom <= window.innerHeight;
+    return r.height > 0 && r.top >= top - 1 && r.bottom <= window.innerHeight;
   }).length;
 });
 

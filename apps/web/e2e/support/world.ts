@@ -7,6 +7,15 @@ import { defaultTimeStrength, type Vibe } from '@superjackfruitlabs/vibekit-ui/a
 /** Every vibe, from vibekit (its plain entry: no Svelte), so a new vibe reaches every spec that loops VIBES. */
 export { VIBES, defaultTimeStrength } from '@superjackfruitlabs/vibekit-ui/appearance';
 export type VibeName = Vibe;
+/** Test-only groups of vibes, each named for what a spec checks (no spec compares a vibe to a name; see no-vibe-literals.test.ts). */
+/** Also measured in the dark theme: Studio's dark look is the one whose chrome and columns change width. */
+export const DARK_MEASURED_VIBES: ReadonlySet<Vibe> = new Set<Vibe>(['studio']);
+/** The shell's chrome (AppNav, PhoneTabBar) is opaque, never a translucent wash. */
+export const OPAQUE_CHROME_VIBES: ReadonlySet<Vibe> = new Set<Vibe>(['studio']);
+/** The mark turns white in the dark theme (on the sky); the others keep the amber mark. */
+export const WHITE_DARK_MARK_VIBES: ReadonlySet<Vibe> = new Set<Vibe>(['daylight']);
+/** Walked at every size by the loading spec; the other vibes at phone size only. */
+export const EVERY_SIZE_LOADING_VIBES: ReadonlySet<Vibe> = new Set<Vibe>(['daylight']);
 /** The vk_appearance cookie for a vibe and theme, with the vibe's own time-of-day default (off in the plain vibes). */
 export const appearanceCookie = (vibe: Vibe, theme: 'light' | 'dark'): string => `${vibe}.${theme}.${defaultTimeStrength(vibe)}.0`;
 export const SIZES = [

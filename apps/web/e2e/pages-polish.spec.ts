@@ -1,7 +1,8 @@
 import { test, expect, type Page } from '@playwright/test';
 import { PORTS } from '../scripts/ports';
 import { FIXTURE_TENANT, FIXTURE_USER } from './visual/fixture/seed';
-import { openWorld, seed, DX, SIZES, VIBES, type VibeName } from './support/world';
+import { openWorld, seed, DX, SIZES, VIBES, OPAQUE_CHROME_VIBES, type VibeName } from './support/world';
+import { GREETING_VIBES } from '../src/lib/vibe-sets';
 
 /**
  * Pages, phone and polish (live-UI issues 15, 17, 18, 20-25, 29 and the Studio dark rail).
@@ -52,7 +53,7 @@ for (const vibe of VIBES) {
           expect(contrast(c.current.fg, c.current.bg), `${c.name} current item ${c.current.fg} on ${c.current.bg}`).toBeGreaterThanOrEqual(4.5);
         }
       }
-      if (vibe === 'studio') expect(chrome.some((c) => /appnav|phonetabbar/.test(c.name) && !/rgba/.test(c.bg))).toBe(true);
+      if (OPAQUE_CHROME_VIBES.has(vibe)) expect(chrome.some((c) => /appnav|phonetabbar/.test(c.name) && !/rgba/.test(c.bg))).toBe(true);
     });
   }
 }
@@ -201,7 +202,7 @@ for (const vibe of VIBES) {
         const text = await page.evaluate(() => document.body.innerText + '\n' + [...document.querySelectorAll('[aria-label]')].map((e) => e.getAttribute('aria-label')).join('\n'));
         expect(text).not.toMatch(/\?,/);
         // The greeting is the Inbox's headline; the board says how many cards want you in one attention line.
-        if (vibe === 'daylight' && name === 'inbox') expect(text).toMatch(/Working late, Ira\?/);
+        if (GREETING_VIBES.has(vibe) && name === 'inbox') expect(text).toMatch(/Working late, Ira\?/);
       });
     }
   }
