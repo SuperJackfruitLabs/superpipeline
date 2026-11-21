@@ -1,5 +1,5 @@
 import { readFileSync } from 'node:fs';
-import { HEAD_SCRIPT } from '@superjackfruitlabs/vibekit-ui';
+import { HEAD_SCRIPT, THEMES, VIBES } from '@superjackfruitlabs/vibekit-ui';
 import { describe, expect, it } from 'vitest';
 
 const html = readFileSync(new URL('../app.html', import.meta.url), 'utf8');
@@ -23,8 +23,8 @@ describe('app.html paints the right vibe on the first frame', () => {
   });
   it('paints each vibe and theme’s own background on the first frame, matching vibekit’s tokens', () => {
     const tokens = readFileSync(new URL('../../node_modules/@superjackfruitlabs/vibekit-ui/dist/styles/tokens.css', import.meta.url), 'utf8');
-    for (const vibe of ['daylight', 'paper', 'studio', 'quiet']) {
-      for (const theme of ['light', 'dark']) {
+    for (const vibe of VIBES) {
+      for (const theme of THEMES) {
         const block = new RegExp(`\\[data-vibe="${vibe}"\\]\\[data-theme="${theme}"\\] \\{[^}]*?--vk-color-bg: (#[0-9a-f]+);`).exec(tokens);
         expect(block, `${vibe} ${theme} in tokens.css`).not.toBeNull();
         const want = block![1];

@@ -17,7 +17,7 @@
   },
   "dependencies": {
     "@atlaskit/pragmatic-drag-and-drop": "^2.0.1",
-    "@superjackfruitlabs/vibekit-ui": "^0.0.20",
+    "@superjackfruitlabs/vibekit-ui": "^0.0.21",
     "@superpipeline/contract": "workspace:*",
     "bits-ui": "^2.18.1",
     "clsx": "^2.1.1",
