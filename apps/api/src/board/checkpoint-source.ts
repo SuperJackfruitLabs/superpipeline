@@ -93,7 +93,9 @@ function claim(board: SourceBoard, source: CheckpointSource): PendingCheckpointC
 /**
  * The claim's frozen policy is still what its stage gives the card: a v1 stage's policy unchanged,
  * or a v2 stage whose policy is the one the selection was narrowed from, narrowing the card's
- * (frozen) choice to the same policy. Any stage policy change before settlement makes it stale.
+ * (frozen) choice to the same repositories and start. Any stage policy change before settlement
+ * makes it stale. The selection's `source` is not compared: a card that named none is fixed to its
+ * resolved repositories at claim, so it narrows as `card` from then on, to the same policy.
  */
 function stillCurrent(board: Pick<SourceBoard, 'stages' | 'getCardRow'>, pending: PendingCheckpointClaim): boolean {
   const stage = board.stages().find((s) => s.key === pending.stageKey);
@@ -106,7 +108,6 @@ function stillCurrent(board: Pick<SourceBoard, 'stages' | 'getCardRow'>, pending
   return now?.stagePolicy !== undefined && pending.stagePolicy !== undefined && now.selection !== undefined &&
     canonicalCheckpoint(now.stagePolicy) === canonicalCheckpoint(pending.stagePolicy) &&
     canonicalCheckpoint(now.policy) === canonicalCheckpoint(pending.policy) &&
-    now.selection.source === pending.selection.source &&
     canonicalCheckpoint(now.selection.repositories) === canonicalCheckpoint(pending.selection.repositories) &&
     now.selection.checkpointRepository === pending.selection.checkpointRepository;
 }

@@ -255,4 +255,31 @@ describe('default-change-spares-existing-claims', () => {
     expect(state.storage.sql.exec('SELECT * FROM proposed_checkpoint_selections WHERE run_id=?', first.runId).one()).toEqual(before);
     expect(readCheckpointClaim(state.storage.sql, first.runId)?.selection).toMatchObject({ repositories: ['app'] });
   }));
+  it('a card that named none keeps what it resolved to: its re-claim reuses it after the default changed', () => fixture([build(choosesWithDefault), ship], async ({ board, context }) => {
+    const made = await card(board, { title: 'Default', ownerUserId: 'usr_a' });
+    const first = await board.claim(v2);
+    if (!first.claimed) throw new Error('expected a claim');
+    // Fixed onto the card at the claim, like a choice it made, and frozen from then on.
+    expect(first.card).toMatchObject({ repositories: ['app'] });
+    expect(await board.updateCard(made.id, { repositories: null })).toMatchObject({ ok: false, detail: { reason: 'frozen' } });
+    await board.release({ runId: first.runId, leaseEpoch: first.leaseEpoch, agentId: 'agt_example' });
+    expect(await asAdmin(context, () => board.updateStage('build', { cardCheckpointPolicy: { ...choosesWithDefault, defaultRepositories: ['api'] } }, admin))).toMatchObject({ ok: true });
+    const again = await board.claim(v2);
+    expect(again).toMatchObject({ claimed: true, card: { id: made.id }, checkpointClaim: { selection: { repositories: ['app'], checkpointRepository: 'app' } } });
+    expect(again.claimed && again.checkpointClaim?.policy.repositories.map((r) => r.name)).toEqual(['app']);
+  }));
+  it('a card claimed on the default admits its source, now that it carries the resolved repositories', () => fixture([build(choosesWithDefault), ship], async (f) => {
+    const made = await card(f.board, { title: 'Default bench', ownerUserId: 'usr_a' });
+    const claim = await f.board.claim(v2);
+    if (!claim.claimed) throw new Error('expected a claim');
+    createCheckpointSourceTables(f.state.storage.sql);
+    const source: CheckpointSource = {
+      binding: { boardId: f.id, cardId: made.id, stageKey: 'build', runId: claim.runId, leaseEpoch: claim.leaseEpoch,
+        agentId: 'agt_example', stationId: 'station_pilot01', nodeId: 'node_pilot01', attemptId: 'attempt-1' },
+      start: [{ name: 'app', commit: 'b'.repeat(40) }], benchKey: made.id, benchId: 'c'.repeat(32), requestId: 'run-checkpoint-1',
+      sourceRequestSha256: '0'.repeat(64), workerContextSha256: '4'.repeat(64),
+    };
+    const actor: VerifiedCheckpointReporter = { kind: 'service', tenantId: 'tnt_cardrepos', principalId: chooses.reporterPrincipalId, scopes: ['checkpoints:submit'], expiresAt: Date.now() + 60000 };
+    expect(await admitCheckpointSourceCandidate(f.context, () => actor, bytes(source), privateOnly)).toMatchObject({ runId: claim.runId });
+  }));
 });

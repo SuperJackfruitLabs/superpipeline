@@ -7,7 +7,7 @@ import {
   CHECKPOINT_CLAIM_PROTOCOL, CHECKPOINT_CLAIM_PROTOCOL_V2, checkpointClaimDiscovery, insertPendingCheckpointClaim,
   type CheckpointClaimDiscovery,
 } from './checkpoint-claims';
-import { hasCheckpointPolicy } from './checkpoint-policy-admin';
+import { canonicalCardRepositories, hasCheckpointPolicy } from './checkpoint-policy-admin';
 import { cardRepositoriesOf, narrowCheckpointPolicy, narrowingWords, stageCardPolicy } from './checkpoint-selection';
 import { grantPermitsAgent, isControlPairEnforced } from '../auth/grant-match';
 import { newId } from '../ids';
@@ -261,6 +261,15 @@ export async function claim(deps: ClaimsDeps, input: Claimant & { profileKey?: s
         ...chosen,
       });
       checkpointClaim = checkpointClaimDiscovery(saved);
+      // A card that named none is fixed to what it resolved to (the stage default, or its only
+      // repository), exactly like a choice it made: its bench now exists with these repositories,
+      // so a later claim reuses them even if the stage's default has changed since.
+      if (narrowed?.ok && narrowed.selection.source !== 'card') {
+        const resolved = narrowed.selection.repositories.length > 1
+          ? { repositories: narrowed.selection.repositories, primaryRepository: narrowed.selection.checkpointRepository }
+          : { repositories: narrowed.selection.repositories };
+        deps.sql.exec('UPDATE cards SET repositories_json = ? WHERE id = ?', canonicalCardRepositories(resolved), card.id);
+      }
     }
     deps.reportRun(runId);
     deps.emit('card.claimed', { cardId: card.id, agentId: input.agentId, runId, ...(fulfils !== null ? { reservationDecisionId: fulfils } : {}) });

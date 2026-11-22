@@ -158,7 +158,9 @@ edit the card may choose, a person or an agent, but only within the list.
   with `detail.reason` naming why, and nothing is saved.
 - If an admin later drops a repository a card chose, the card is parked for a person at claim.
 - Once an agent has claimed the card on such a stage, its bench exists and the choice is fixed:
-  changing it is refused (`detail.reason: "frozen"`). Make a new card to work in other repositories.
+  changing it is refused (`detail.reason: "frozen"`). To change a claimed card's repositories, make
+  a new card. A card that named none is fixed to what it got at that claim (the default, or the only
+  repository), and the card shows it; a later change to the stage's default does not move it.
 
 Through the API, send `repositories` (sorted names) and, when needed, `primaryRepository` on
 `POST /v1/boards/:id/cards` or `PATCH /v1/boards/:id/cards/:cardId`; `repositories: null` clears

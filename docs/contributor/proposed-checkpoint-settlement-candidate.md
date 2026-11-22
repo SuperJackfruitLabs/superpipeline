@@ -76,7 +76,11 @@ words). The claim narrows the current allowlist by the current choice
 the claim row as for v1 (with the narrowed policy and its digest) plus an
 immutable `proposed_checkpoint_selections` row: the selection, with the stage
 policy's digest, and that stage policy's canonical bytes. A v1 claim writes no
-selection row. Once a card has a selection row its choice cannot change.
+selection row. Once a card has a selection row its choice cannot change; to change a claimed card's
+repositories, make a new card. A card that named none has its resolved choice (the default, or the
+only repository, with its start) written onto it in the same claim transaction, so a later claim
+reuses it even after the stage default changes, and its bench keeps the same repositories. Source
+admission therefore compares the narrowed repositories and start, not the selection's `source`.
 
 Every later check compares with the frozen narrowed policy: the claim insert
 recomputes the narrowing, source admission requires the stage to hold the same
