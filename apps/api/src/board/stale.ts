@@ -2,6 +2,7 @@ import type { BoardContext } from './context';
 import { newId } from '../ids';
 import type { CardView, Result, Row, StaleCardView, StaleSettings } from './model';
 import { handoffSummary } from './rules';
+import { queuePush } from './push';
 import type { StaleDigestBody } from './views';
 import type { ReporterFetch } from '../superwitness/client';
 
@@ -19,6 +20,7 @@ export type StaleDeps = Pick<
   | 'ctx'
   | 'emit'
   | 'endLapsedDeliveries'
+  | 'env'
   | 'expireLapsedGates'
   | 'fireDueSchedules'
   | 'getMeta'
@@ -436,18 +438,7 @@ function sendStaleDigest(deps: StaleDeps, nowIso: string): number {
   const boardId = deps.getMeta('boardId');
   if (!boardId) return due.length;
   const payload: StaleDigestBody = { event: 'cards.stale', boardId, boardName: deps.getMeta('name') ?? '', cards: due, ts: nowIso };
-  const body = JSON.stringify(payload);
-  for (const cfg of deps.sql.exec(`SELECT * FROM push_configs`).toArray()) {
-    const events = JSON.parse(cfg.events_json as string) as string[];
-    if (!events.includes('cards.stale')) continue;
-    deps.sql.exec(
-      `INSERT INTO push_deliveries (config_id, url, body, status, attempts, created_at) VALUES (?, ?, ?, 'pending', 0, ?)`,
-      cfg.id,
-      cfg.url,
-      body,
-      deps.now(),
-    );
-  }
+  queuePush(deps, payload);
   deps.emit('cards.stale_digest', { count: due.length, cardIds: due.map((c) => c.cardId) });
   return due.length;
 }

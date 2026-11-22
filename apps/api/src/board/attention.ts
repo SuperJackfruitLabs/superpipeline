@@ -1,6 +1,6 @@
 import type { BoardContext } from './context';
 import type { CardNeedsHuman, Result, Row } from './model';
-import { queueRelay, queueSubscribedPush } from './push';
+import { queuePush } from './push';
 import { COMMENT_MAX_BYTES } from './rules';
 import type { AttentionPendingBody, AttentionReason } from './views';
 
@@ -127,8 +127,7 @@ export function notifyAttentionPending(deps: AttentionDeps, cardId: string): voi
   const deadline = deps.startDecisionWait({ kind: 'attention', decisionId: waiting.waitId, cardId: waiting.cardId, stageKey: waiting.stageKey });
   const { ts, ...rest } = waiting;
   const payload: AttentionPendingBody = { ...rest, ...deadline, ts };
-  queueSubscribedPush(deps, payload);
-  queueRelay(deps, payload);
+  queuePush(deps, payload);
 }
 
 /**

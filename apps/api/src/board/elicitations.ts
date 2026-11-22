@@ -6,7 +6,7 @@ import type { BoardContext } from './context';
 import { parseElicitationOptions } from './elicitation';
 import type { GateOption } from './gate-option';
 import type { AgentActivityInput, CardView, Result, Row } from './model';
-import { queueRelay } from './push';
+import { queuePush } from './push';
 import { HEARTBEAT_TIMEOUT_MS } from './rules';
 import { posterSubject, posterSubjectEnvelope, PosterSubject, questionOptionMeaning, questionOptionScope, strictSubjectEnvelope, subjectAnswerError } from './question-subject';
 import { ApprovalDetail, StrictDecision } from './strict-decision';
@@ -495,20 +495,7 @@ function notifyElicitationPending(deps: ElicitationsDeps, elicitationId: string,
   if (!row) return;
   const payload = elicitationPendingBody(deps, row, strict);
   if (!payload) return;
-  const body = JSON.stringify(payload);
-  const ts = deps.now();
-  for (const cfg of deps.sql.exec(`SELECT * FROM push_configs`).toArray()) {
-    const events = JSON.parse(cfg.events_json as string) as string[];
-    if (!events.includes('elicitation.pending')) continue;
-    deps.sql.exec(
-      `INSERT INTO push_deliveries (config_id, url, body, status, attempts, created_at) VALUES (?, ?, ?, 'pending', 0, ?)`,
-      cfg.id,
-      cfg.url,
-      body,
-      ts,
-    );
-  }
-  queueRelay(deps, payload);
+  queuePush(deps, payload);
 }
 
 /**

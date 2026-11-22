@@ -5,7 +5,7 @@ import { cleanCheck } from './check-rules';
 import { type CheckProvider, type CheckRow, arrivalChecks, checkView } from './check-store';
 import type { BoardContext } from './context';
 import type { CardView, CheckDef, CheckStatus, Result, Row } from './model';
-import { queueRelay, queueSubscribedPush } from './push';
+import { queuePush } from './push';
 import { CIRCUIT_BREAKER_LIMIT, COMMENT_MAX_BYTES } from './rules';
 import { returnCard } from './run-verbs';
 import type { CardChecksView, CheckFailedBody, CheckOverriddenBody, PreparedApproval, PreparedApprovalSubject } from './views';
@@ -454,8 +454,7 @@ function failArrival(deps: MachineChecksDeps, arrival: Row, failed: CheckRow[]):
       check: { name: c.name, provider: c.provider, status: 'failed', ...(c.detail !== null ? { detail: c.detail } : {}), ...(c.url !== null ? { url: c.url } : {}) },
       returnedTo,
     };
-    queueSubscribedPush(deps, body);
-    queueRelay(deps, body);
+    queuePush(deps, body);
     deps.emit('check.failed', { cardId, stageKey, name: c.name, provider: c.provider, returnedTo });
   }
 }
@@ -544,8 +543,7 @@ export async function overrideCheck(
     comment,
     at: now,
   };
-  queueSubscribedPush(deps, body);
-  queueRelay(deps, body);
+  queuePush(deps, body);
   deps.emit('check.overridden', { cardId: input.cardId, stageKey: check.stageKey, name: check.name, by: input.by });
   // What is left decides: all passed or overridden opens the gate; a parked card stays parked
   // while another check is still failed.

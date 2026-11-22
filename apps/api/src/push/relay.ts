@@ -7,8 +7,9 @@
  * suite's communication server) receive it from there.
  *
  * The delivery row is the outbox: it is queued in the transaction that wrote the change, and the
- * drain retries it like any push. Its id is fixed per row, so a retry the relay already stored
- * is a duplicate there, not a second event.
+ * drain retries it like any push. Its id is the event's own, `<boardId>:<seq>`, shared with the
+ * event's direct push rows, so a retry the relay already stored is a duplicate there, not a second
+ * event, and a consumer that receives the event on both paths can apply it once.
  */
 import { eventSubject, eventType, toBinary, type CloudEvent } from '@superjackfruitlabs/treaty-cloudevents';
 import catalog from '@superjackfruitlabs/treaty-event-schemas/catalog.json';
@@ -65,7 +66,7 @@ export function hasTreatySchema(event: string): boolean {
 
 /** The relay request for one delivery row: where to POST and the CloudEvent's headers. */
 export function relayRequest(
-  delivery: { id: number; body: string },
+  delivery: { eventId: string; body: string },
   board: { boardId: string; tenantId: string },
   relay: RelaySettings,
 ): { url: string; headers: Record<string, string> } {
@@ -79,7 +80,7 @@ export function relayRequest(
   if (!dataschema) throw new Error(`no treaty schema for ${event}`);
   const attributes: Record<string, string> = {
     specversion: '1.0',
-    id: `${board.boardId}:${delivery.id}`,
+    id: delivery.eventId,
     source: `/superpipeline/boards/${board.boardId}`,
     type: eventType(name, 1),
     datacontenttype: 'application/json',

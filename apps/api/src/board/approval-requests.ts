@@ -3,7 +3,7 @@ import { newId } from '../ids';
 import type { BoardContext } from './context';
 import type { GateOptionMeaning } from './gate-option';
 import type { Result, Row } from './model';
-import { queueRelay, queueSubscribedPush } from './push';
+import { queuePush } from './push';
 import { posterSubjectEnvelope, StkCapabilitySubject, subjectAnswerError } from './question-subject';
 import type { ApprovalRequestView, ElicitationPendingBody } from './views';
 
@@ -126,8 +126,7 @@ export async function createApprovalRequest(deps: ApprovalRequestsDeps, input: {
   // broker's arguments. The relay is the other recipient: it publishes to the suite's services on
   // this tenant's subject, the ones that carry decisions to chat.
   if (body) {
-    queueSubscribedPush(deps, body, { servicesOnly: true });
-    queueRelay(deps, body);
+    queuePush(deps, body, { servicesOnly: true });
   }
   return { ok: true, value: { created: true, approvalRequest: viewOf(deps, row) } };
 }

@@ -161,15 +161,15 @@ describe('what the relay carries', () => {
   it("names each relayed event's treaty type, schema and subject", () => {
     const named = BOARD_CHAT.map((event) => {
       const body = JSON.stringify({ event, ts: '2026-11-12T09:00:00.000Z' });
-      const request = relayRequest({ id: 3, body }, { boardId: 'brd_r', tenantId: TENANT }, { url: RELAY_URL, token: 't' });
+      const request = relayRequest({ eventId: 'brd_r:3', body }, { boardId: 'brd_r', tenantId: TENANT }, { url: RELAY_URL, token: 't' });
       return { event, url: request.url, type: request.headers['ce-type'], dataschema: request.headers['ce-dataschema'] };
     });
     expect(named).toEqual(BOARD_CHAT.map((event) => ({ event, ...expected(event) })));
     // Underscored verbs keep their underscore in the subject and the type.
-    expect(relayRequest({ id: 1, body: '{"event":"gate.approval_recorded"}' }, { boardId: 'b', tenantId: TENANT }, { url: RELAY_URL, token: 't' }).url).toBe(
+    expect(relayRequest({ eventId: 'b:1', body: '{"event":"gate.approval_recorded"}' }, { boardId: 'b', tenantId: TENANT }, { url: RELAY_URL, token: 't' }).url).toBe(
       `${RELAY_URL}/v1/events/evt.${TENANT}.superpipeline.gate.approval_recorded`,
     );
-    expect(relayRequest({ id: 1, body: '{"event":"decision.pulled_back"}' }, { boardId: 'b', tenantId: TENANT }, { url: RELAY_URL, token: 't' }).headers['ce-type']).toBe(
+    expect(relayRequest({ eventId: 'b:1', body: '{"event":"decision.pulled_back"}' }, { boardId: 'b', tenantId: TENANT }, { url: RELAY_URL, token: 't' }).headers['ce-type']).toBe(
       'com.superjackfruit.superpipeline.decision.pulled_back.v1',
     );
   });

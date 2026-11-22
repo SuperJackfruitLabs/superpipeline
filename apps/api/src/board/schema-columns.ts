@@ -366,6 +366,16 @@ export function migrateCardAndRunColumns(sql: SqlStorage): void {
   } catch {
     // column already exists
   }
+  /**
+   * The board event sequence number of the event a push delivery carries (treaty phase 2, ruling 2):
+   * every row of one event, relay included, shares it, and its id is `<boardId>:<event_seq>`. Null
+   * on a row queued before the column arrived; such a row keeps an id of its own.
+   */
+  try {
+    sql.exec(`ALTER TABLE push_deliveries ADD COLUMN event_seq INTEGER`);
+  } catch {
+    // column already exists
+  }
   // Only `project_id` is indexed: `projectSummary` is the one query that filters cards by it,
   // and nothing here looks cards up by `milestone_id` on its own.
   sql.exec(`CREATE INDEX IF NOT EXISTS idx_cards_project ON cards(project_id)`);
