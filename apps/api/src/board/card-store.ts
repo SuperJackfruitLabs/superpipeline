@@ -6,6 +6,7 @@ import { cardIdsOf, isRecordEvent, type RecordPushBody } from '../push/events';
 import type { BoardContext } from './context';
 import type { CardNeedsHuman, CardView, Row, StageDef } from './model';
 import { RESOLVED_SQL } from './rules';
+import { cardRepositoriesOf } from './checkpoint-selection';
 import { logError } from '../log';
 import { queueEvent, subscribedTargets } from './push';
 
@@ -158,6 +159,13 @@ function reservationField(row: Row, nowMs: number): { reservation?: CardReservat
   return reservation ? { reservation } : {};
 }
 
+/** `{ repositories, primaryRepository? }` when the card chose its repositories, else nothing. */
+function cardRepositoriesField(row: Row): { repositories?: string[]; primaryRepository?: string } {
+  const choice = cardRepositoriesOf(row);
+  if (!choice) return {};
+  return { repositories: [...choice.repositories], ...(choice.primaryRepository !== undefined ? { primaryRepository: choice.primaryRepository } : {}) };
+}
+
 /** `{ placementWindowUntil }` while the card is inside its placement window, else nothing. */
 function windowField(deps: CardStoreDeps, row: Row): { placementWindowUntil?: string } {
   if (row.ready_since_ms === null || row.ready_since_ms === undefined) return {};
@@ -209,6 +217,8 @@ export function rowToCard(deps: CardStoreDeps, row: Row, pre?: {
     projectId: (row.project_id as string | null) ?? null,
     milestoneId: (row.milestone_id as string | null) ?? null,
     dueAt: (row.due_at as string | null) ?? null,
+    // Omitted when the card names none, as the contract says (`CardView.repositories`).
+    ...cardRepositoriesField(row),
     // Omitted rather than null when absent: the field means "there is a reason", and
     // a present-but-empty one would make every reader check two things.
     ...(row.needs_human_json

@@ -67,9 +67,15 @@ export async function stageEdit({ request, env, user, agent, stub }: BoardReques
   // Built from named fields rather than forwarding `body` whole: the cast above names the
   // same type `updateStage` accepts, but it is still only a compile-time assertion — it does
   // not stop a caller's JSON from carrying a key the type never declared.
-  if (body.checkpointPolicy !== undefined) {
+  if (body.checkpointPolicy !== undefined || body.cardCheckpointPolicy !== undefined) {
     const current = (await stub.getState()).stages;
-    const next = current.map((stage) => stage.key === stageMatch[1] ? { ...stage, checkpointPolicy: body.checkpointPolicy ?? undefined } : stage);
+    const next = current.map((stage) => {
+      if (stage.key !== stageMatch[1]) return stage;
+      const patched = { ...stage };
+      if (body.checkpointPolicy !== undefined) patched.checkpointPolicy = body.checkpointPolicy ?? undefined;
+      if (body.cardCheckpointPolicy !== undefined) patched.cardCheckpointPolicy = body.cardCheckpointPolicy ?? undefined;
+      return patched;
+    });
     const denied = checkpointStageWriteRefusal(env, user, current, next);
     if (denied) return denied;
   }
@@ -84,6 +90,7 @@ export async function stageEdit({ request, env, user, agent, stub }: BoardReques
     summary: body.summary,
     completion: body.completion,
     checkpointPolicy: body.checkpointPolicy,
+    cardCheckpointPolicy: body.cardCheckpointPolicy,
     returnStage: body.returnStage,
     timeout: body.timeout,
     quorum: body.quorum,

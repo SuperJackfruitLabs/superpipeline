@@ -4,6 +4,7 @@ import type { VerifiedCheckpointReporter } from '../auth/checkpoint-reporter';
 import type { BoardContext } from './context';
 import type { ProposedCheckpointReceipt } from './checkpoint-candidate';
 import { parseCheckpointJSON } from './checkpoint-json';
+import { readCheckpointClaim } from './checkpoint-claims';
 import schema from './checkpoint-contract/run-checkpoint-receipt.v1.json';
 
 function pinned(value: unknown): value is Schema { return typeof value === 'object' && value !== null; }
@@ -27,8 +28,15 @@ export function readCheckpointReceipt(board: BoardContext, actor: VerifiedCheckp
   if (typeof run.card_id !== 'string' || typeof run.stage_key !== 'string' ||
     !Number.isSafeInteger(run.lease_epoch)) throw new Error('INVALID_CHECKPOINT_RECEIPT');
   const cardId = run.card_id;
-  const policy = board.stages().find((stage) => stage.key === run.stage_key)?.checkpointPolicy;
-  requireCheckpointActor(actor, board.getMeta('tenantId'), policy?.reporterPrincipalId, board.nowMs(), 'checkpoints:read');
+  const stage = board.stages().find((s) => s.key === run.stage_key);
+  // The stage's selected reporter, as for a v1 stage; on a stage whose cards choose, that reporter
+  // must also be the one the claim froze in its narrowed policy.
+  let reporterId = stage?.checkpointPolicy?.reporterPrincipalId;
+  if (stage?.cardCheckpointPolicy !== undefined) {
+    const frozen = readCheckpointClaim(board.sql, runId)?.policy.reporterPrincipalId;
+    reporterId = frozen === stage.cardCheckpointPolicy.reporterPrincipalId ? frozen : undefined;
+  }
+  requireCheckpointActor(actor, board.getMeta('tenantId'), reporterId, board.nowMs(), 'checkpoints:read');
   if (!board.getCardRow(run.card_id)) throw new Error('CHECKPOINT_RECEIPT_MISSING');
   if (!board.sql.exec("SELECT 1 FROM sqlite_master WHERE type='table' AND name='proposed_checkpoint_receipts'").toArray().length)
     throw new Error('CHECKPOINT_RECEIPT_MISSING');

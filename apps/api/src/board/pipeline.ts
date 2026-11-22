@@ -1,4 +1,4 @@
-import { checkpointPolicyFieldError, checkpointPolicyWriteError, prepareCheckpointPolicy } from './checkpoint-policy-admin';
+import { checkpointPolicyWriteError, prepareCheckpointPolicy, stageCheckpointFieldError } from './checkpoint-policy-admin';
 import { capabilityTag, normalizeRequirement, returnStageError } from '@superpipeline/contract';
 import type { BoardContext } from './context';
 import { checksError, cleanChecks } from './check-rules';
@@ -81,10 +81,10 @@ export function completionShapeError(c: unknown): string | null {
 }
 
 export function stageFieldError(
-  s: Pick<StageDef, 'key' | 'wipLimit' | 'instructions' | 'summary' | 'timeout' | 'quorum' | 'holdFor' | 'approvalDeciderPrincipalIds' | 'gate' | 'checks' | 'returnStage' | 'ownerKind' | 'placement' | 'checkpointPolicy'>,
+  s: Pick<StageDef, 'key' | 'wipLimit' | 'instructions' | 'summary' | 'timeout' | 'quorum' | 'holdFor' | 'approvalDeciderPrincipalIds' | 'gate' | 'checks' | 'returnStage' | 'ownerKind' | 'placement' | 'checkpointPolicy' | 'cardCheckpointPolicy'>,
   enabled = false,
 ): string | null {
-  const policyError = checkpointPolicyFieldError(s.checkpointPolicy, enabled);
+  const policyError = stageCheckpointFieldError(s, enabled);
   if (policyError) return policyError;
   if (s.placement !== undefined) {
     const bad = placementError(s.placement, `stage "${s.key}" placement`);
@@ -158,7 +158,7 @@ function withCleanPlacement(stage: StageDef): StageDef {
 export async function init(deps: PipelineDeps, board: BoardInit, editor: StageEditor = { kind: 'person', mayChangeDecisionPolicy: false }): Promise<BoardSnapshot> {
   if (!deps.getMeta('boardId')) {
     for (const stage of board.stages) {
-      const bad = checkpointPolicyFieldError(stage.checkpointPolicy, deps.env.PROPOSED_CHECKPOINT_POLICY === 'true');
+      const bad = stageCheckpointFieldError(stage, deps.env.PROPOSED_CHECKPOINT_POLICY === 'true');
       if (bad) throw new Error(bad);
     }
     const policyRefusal = checkpointPolicyWriteError(deps, [], board.stages, editor);
@@ -190,6 +190,8 @@ function decisionPolicyOf(stage: StageDef | undefined): string {
     holdFor: stage?.holdFor ?? null,
     checks: cleanChecks(stage?.checks),
     checkpointPolicy: stage?.checkpointPolicy ?? null,
+    // Only present when set, so every stage written before it existed compares as it did.
+    ...(stage?.cardCheckpointPolicy !== undefined ? { cardCheckpointPolicy: stage.cardCheckpointPolicy } : {}),
   });
 }
 
@@ -359,6 +361,10 @@ export async function updateStage(deps: PipelineDeps, stageKey: string, patch: S
   if (patch.checkpointPolicy !== undefined) {
     if (patch.checkpointPolicy === null) delete next.checkpointPolicy;
     else next.checkpointPolicy = patch.checkpointPolicy;
+  }
+  if (patch.cardCheckpointPolicy !== undefined) {
+    if (patch.cardCheckpointPolicy === null) delete next.cardCheckpointPolicy;
+    else next.cardCheckpointPolicy = patch.cardCheckpointPolicy;
   }
   if (patch.completion !== undefined) {
     if (patch.completion === null) delete next.completion;

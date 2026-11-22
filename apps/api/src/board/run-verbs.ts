@@ -1,4 +1,5 @@
 import { commitCompletion } from './completion-commit';
+import { hasCheckpointPolicy } from './checkpoint-policy-admin';
 export { returnCard } from './completion-commit';
 import { outcomeInputError, type StageOutcome, type TaskState } from '@superpipeline/contract';
 import type { JsonValue } from '../json';
@@ -248,7 +249,7 @@ export async function complete(deps: RunVerbsDeps, input: CompleteVerbInput): Pr
 
   const card = deps.mustGetCard(cardId);
   const stages = deps.stages();
-  if (stages.find((stage) => stage.key === card.currentStageKey)?.checkpointPolicy !== undefined) {
+  if (hasCheckpointPolicy(stages.find((stage) => stage.key === card.currentStageKey))) {
     return { ok: false, code: 'CHECKPOINT_REQUIRED', message: 'this stage requires coordinator checkpoint settlement, which is not enabled' };
   }
   const stageIndex = stages.findIndex((stage) => stage.key === card.currentStageKey);
@@ -269,8 +270,8 @@ export async function complete(deps: RunVerbsDeps, input: CompleteVerbInput): Pr
       return { ok: false, code: 'STALE_LEASE', message: 'the card moved while the approval subject was prepared' };
     }
     if ((deps.commitEffects !== undefined || deps.env.PROPOSED_CHECKPOINT_POLICY === 'true' || deps.env.PROPOSED_CHECKPOINT_SOURCE === 'true' ||
-      deps.env.PROPOSED_CHECKPOINT_SETTLEMENT === 'true' || stages.some((stage) => stage.checkpointPolicy !== undefined)) &&
-      deps.stages().find((stage) => stage.key === current.currentStageKey)?.checkpointPolicy !== undefined) {
+      deps.env.PROPOSED_CHECKPOINT_SETTLEMENT === 'true' || stages.some(hasCheckpointPolicy)) &&
+      hasCheckpointPolicy(deps.stages().find((stage) => stage.key === current.currentStageKey))) {
       return { ok: false, code: 'CHECKPOINT_REQUIRED', message: 'this stage requires coordinator checkpoint settlement, which is not enabled' };
     }
   }

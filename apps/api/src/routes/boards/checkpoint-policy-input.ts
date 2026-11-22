@@ -2,7 +2,7 @@
  * parsing any parent keys. Flag-off requests retain their existing JSON behavior. */
 import { checkpointBody } from './checkpoint-body';
 import { parseStageEnvelopeJSON } from '../../board/checkpoint-json';
-import { changedCheckpointStages, checkpointPolicyFieldError } from '../../board/checkpoint-policy-admin';
+import { changedCheckpointStages, stageCheckpointFieldError } from '../../board/checkpoint-policy-admin';
 import type { StageDef } from '../../board/model';
 import type { Env } from '../../env';
 import type { UserPrincipal } from '../../auth/resolve';
@@ -33,7 +33,7 @@ export async function readStageWrite(request: Request, enabled: boolean): Promis
 export function checkpointStageWriteRefusal(env: Env, user: UserPrincipal | null,
   before: StageDef[], after: StageDef[]): Response | null {
   for (const stage of after) {
-    const bad = checkpointPolicyFieldError(stage.checkpointPolicy, env.PROPOSED_CHECKPOINT_POLICY === 'true');
+    const bad = stageCheckpointFieldError(stage, env.PROPOSED_CHECKPOINT_POLICY === 'true');
     if (bad) return refuse('INVALID_STAGES', bad);
   }
   if (!changedCheckpointStages(before, after).length) return null;

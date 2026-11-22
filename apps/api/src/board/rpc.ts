@@ -1,4 +1,5 @@
 import type { CardReservation, GateDecision, TaskState } from '@superpipeline/contract';
+import type { CardRepositories } from './checkpoint-selection';
 import type { JsonValue } from '../json';
 import type { VerifiedCheckpointReporter } from '../auth/checkpoint-reporter';
 import type { CheckpointSourceReceipt } from './checkpoint-source';
@@ -52,6 +53,8 @@ export interface BoardStub {
     projectId?: string | null;
     stageKey?: string;
     labels?: string[];
+    /** The repositories the card chooses from a bench stage's allowlist (card-repositories.v1). */
+    repositories?: CardRepositories;
   }): Promise<Result<CardView>>;
   /** Split a card into a sub-task: a claimable card of its own, linked back with a `parent` edge. */
   createChildCard(
@@ -99,6 +102,8 @@ export interface BoardStub {
       /** Cross-board project/milestone membership (Task 19). `null` clears it. */
       projectId?: string | null;
       milestoneId?: string | null;
+      /** The card's repository choice, written whole; `null` clears it. */
+      repositories?: CardRepositories | null;
       /** A precondition: the card's `updatedAt` as last read; a mismatch refuses `CARD_CHANGED`. */
       expectedUpdatedAt?: string | null;
     },
@@ -111,7 +116,7 @@ export interface BoardStub {
   getState(): Promise<BoardSnapshot>;
   getEvents(limit?: number): Promise<BoardEvent[]>;
   // Agent contract (docs/04 §3)
-  claim(input: { agentId: string; capabilities: string[]; checkpointProtocol?: string; checkpointOnly?: boolean; maxConcurrency?: number; profileKey?: string; principalId?: string | null }): Promise<ClaimResult>;
+  claim(input: { agentId: string; capabilities: string[]; checkpointProtocol?: string; checkpointProtocols?: string[]; checkpointOnly?: boolean; maxConcurrency?: number; profileKey?: string; principalId?: string | null }): Promise<ClaimResult>;
   setProfile(input: ProfileInput): Promise<Result<{ key: string }>>;
   getProfiles(): Promise<ProfileView[]>;
   heartbeat(input: RunVerbInput): Promise<Result<{ acknowledged: true }>>;

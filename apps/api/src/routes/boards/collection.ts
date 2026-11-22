@@ -68,11 +68,12 @@ export async function boardCollection({ request, env, tenantId, user, agent }: B
   // validator: a too-long summary or a malformed intro is a 400 at the door.
   for (const st of stages) {
     const bad =
-      st.summary === undefined && st.timeout === undefined && st.quorum === undefined && st.holdFor === undefined && st.checks === undefined && st.gate !== 'checks' && st.checkpointPolicy === undefined
+      st.summary === undefined && st.timeout === undefined && st.quorum === undefined && st.holdFor === undefined && st.checks === undefined && st.gate !== 'checks' && st.checkpointPolicy === undefined && st.cardCheckpointPolicy === undefined
         ? null
         : stageFieldError({
             key: st.key,
             checkpointPolicy: st.checkpointPolicy,
+            cardCheckpointPolicy: st.cardCheckpointPolicy,
             summary: st.summary,
             timeout: st.timeout,
             quorum: st.quorum,
@@ -102,7 +103,7 @@ export async function boardCollection({ request, env, tenantId, user, agent }: B
       st.quorum !== undefined ||
       st.holdFor !== undefined ||
       st.checks !== undefined ||
-      st.gate === 'checks' || st.checkpointPolicy !== undefined,
+      st.gate === 'checks' || st.checkpointPolicy !== undefined || st.cardCheckpointPolicy !== undefined,
   );
   if (setsDeciders && !isWorkspaceAdmin(env, user)) {
     return refuse('WORKSPACE_ADMIN_REQUIRED', 'only a workspace owner or admin can create a board whose stages bind an approval subject, name its deciders, set a decision timeout, require a quorum, hold approvals or name checks');

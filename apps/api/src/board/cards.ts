@@ -4,6 +4,8 @@ import { notifyAttentionPending, waitChangedError } from './attention';
 import type { BoardContext } from './context';
 import type { CardView, Result } from './model';
 import { COMMENT_MAX_BYTES } from './rules';
+import { canonicalCardRepositories, cardRepositoriesEntryRefusal, cardRepositoriesFrozenRefusal } from './checkpoint-policy-admin';
+import { cardRepositoriesOf, type CardRepositories } from './checkpoint-selection';
 import type { CommentView } from './views';
 
 /**
@@ -141,6 +143,11 @@ export async function createCard(deps: CardsDeps, input: {
   stageKey?: string;
   /** Label ids to attach at creation. The route has already checked they are the workspace's. */
   labels?: string[];
+  /**
+   * The repositories the card chooses from a bench stage's allowlist. The route has checked the
+   * shape (card-repositories.v1); the start stage's allowlist is checked here.
+   */
+  repositories?: CardRepositories;
 }): Promise<Result<CardView>> {
   if (!deps.getMeta('boardId')) {
     return { ok: false, code: 'NOT_INITIALIZED', message: 'board is not initialized' };
@@ -150,13 +157,17 @@ export async function createCard(deps: CardsDeps, input: {
     return { ok: false, code: 'UNKNOWN_STAGE', message: `no such stage on this board: ${input.stageKey}` };
   }
   if (!first) return { ok: false, code: 'NOT_INITIALIZED', message: 'board has no stages' };
+  // Refused before anything is stored: a card naming repositories outside its first stage's
+  // allowlist, or several without a start repository, never exists.
+  const repositoriesRefused = cardRepositoriesEntryRefusal(first, input.repositories ?? null);
+  if (repositoriesRefused) return repositoriesRefused;
   const id = newId('card');
   const contextId = newId('ctx');
   const now = deps.now();
   deps.sql.exec(
     `INSERT INTO cards
-      (id, title, spec_json, owner_user_id, current_stage_key, state, priority, context_id, created_at, updated_at, queued_by, queued_by_agent_id, queued_grant, due_at, project_id, queued_grant_owner, stage_since, labels)
-     VALUES (?, ?, ?, ?, ?, 'submitted', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      (id, title, spec_json, owner_user_id, current_stage_key, state, priority, context_id, created_at, updated_at, queued_by, queued_by_agent_id, queued_grant, due_at, project_id, queued_grant_owner, stage_since, labels, repositories_json)
+     VALUES (?, ?, ?, ?, ?, 'submitted', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     id,
     input.title,
     JSON.stringify((deps.getMeta('dueBackfillDone') ? stripStaleSpecKeys(input.spec) : input.spec) ?? {}),
@@ -177,6 +188,7 @@ export async function createCard(deps: CardsDeps, input: {
     input.queuedGrantOwner ?? null,
     now,
     JSON.stringify([...new Set(input.labels ?? [])]),
+    input.repositories ? canonicalCardRepositories(input.repositories) : null,
   );
   const card = deps.mustGetCard(id);
   deps.emit('card.created', { card });
@@ -328,6 +340,12 @@ export async function updateCard(deps: CardsDeps, cardId: string, patch: {
     projectId?: string | null;
     milestoneId?: string | null;
     /**
+     * The card's repository choice, written whole: the names and, optionally, the start
+     * repository. `null` clears it. Checked against the current stage's allowlist, and refused
+     * once the card's bench exists.
+     */
+    repositories?: CardRepositories | null;
+    /**
      * A precondition, not a field: the card's `updatedAt` as the caller last read it. When
      * present and the card has moved on since, nothing is written and `CARD_CHANGED` comes back.
      * A read-modify-write (`supi edit-card --merge-spec`) sends it so it cannot overwrite an edit
@@ -347,6 +365,16 @@ export async function updateCard(deps: CardsDeps, cardId: string, patch: {
   }
   const sets: string[] = [];
   const vals: unknown[] = [];
+  if (patch.repositories !== undefined) {
+    const row = deps.getCardRow(cardId);
+    const before = row ? cardRepositoriesOf(row) : null;
+    const frozen = cardRepositoriesFrozenRefusal(deps.sql, cardId, before, patch.repositories);
+    if (frozen) return frozen;
+    const refused = cardRepositoriesEntryRefusal(deps.stages().find((s) => s.key === existing.currentStageKey), patch.repositories);
+    if (refused) return refused;
+    sets.push('repositories_json = ?');
+    vals.push(patch.repositories === null ? null : canonicalCardRepositories(patch.repositories));
+  }
   if (patch.title !== undefined) {
     sets.push('title = ?');
     vals.push(patch.title);

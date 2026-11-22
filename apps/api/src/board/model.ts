@@ -1,5 +1,6 @@
 import type { CheckpointClaimDiscovery } from './checkpoint-claims';
 import type { CheckpointPolicy } from './checkpoint-proposal';
+import type { CardCheckpointPolicy } from './checkpoint-selection';
 import type { CardReservation, ClaimReason, CompletionRequirement, StageOutcome, TaskState } from '@superpipeline/contract';
 import type { JsonValue } from '../json';
 import type { RunReportDraft } from '../superwitness/report';
@@ -57,6 +58,8 @@ export type StageGateKind = 'none' | 'approval' | 'checks';
 export interface StagePatch {
   /** Proposed and disabled; only admin policy removal is available. */
   checkpointPolicy?: CheckpointPolicy | null;
+  /** The allowlist cards on this stage choose from; an owner or admin write, like `checkpointPolicy`. */
+  cardCheckpointPolicy?: CardCheckpointPolicy | null;
   name?: string;
   owner?: string;
   ownerKind?: 'capability' | 'agent' | 'human';
@@ -134,6 +137,12 @@ export function internalStageEditor(reason: string): StageEditor {
 export interface StageDef {
   /** Proposed safety floor. Administration requires an explicit private opt-in and workspace admin. */
   checkpointPolicy?: CheckpointPolicy;
+  /**
+   * Proposed, like `checkpointPolicy`, and never beside it: the checkpoint policy of a stage whose
+   * cards choose their repositories from its allowlist (treaty run-checkpoint-policy.v2). Offered
+   * only to a claimant whose `checkpointProtocols` lists superpipeline.checkpoint-claim.v2.
+   */
+  cardCheckpointPolicy?: CardCheckpointPolicy;
   key: string;
   name: string;
   order: number;
@@ -296,6 +305,14 @@ export interface CardView {
   milestoneId: string | null;
   /** ISO date (no time), or null. */
   dueAt: string | null;
+  /**
+   * The repositories this card chose from a bench stage's allowlist (treaty card-repositories.v1),
+   * sorted. Absent when the card names none. Fixed once the card has been claimed on a stage whose
+   * cards choose, because its bench then exists.
+   */
+  repositories?: string[];
+  /** One of `repositories`: where the card's work starts. Only with `repositories`. */
+  primaryRepository?: string;
   /**
    * Why this card is waiting on a person, when it is. Absent whenever it is not —
    * so a reader that does nothing with it behaves exactly as it does today.
@@ -463,6 +480,8 @@ export type BoardErrorCode =
   | 'WORKSPACE_ADMIN_REQUIRED'
   | 'UNKNOWN_STAGE'
   | 'WIP_LIMIT'
+  /** A card's repositories do not fit the stage it enters, or are frozen because its bench exists. */
+  | 'REPOSITORY_CHOICE_REFUSED'
   | 'CARD_NOT_FOUND'
   | 'RUN_NOT_FOUND'
   | 'NOT_RUN_OWNER'

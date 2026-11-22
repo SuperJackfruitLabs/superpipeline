@@ -171,6 +171,7 @@ export function statusForCode(code: BoardErrorCode): number {
     case 'CHECKPOINT_SOURCE_FAILED':
       return 500;
     case 'WIP_LIMIT':
+    case 'REPOSITORY_CHOICE_REFUSED':
       return 409;
     case 'UNKNOWN_STAGE':
     case 'INVALID_URL':
