@@ -1,5 +1,6 @@
 import { expect, test } from '@playwright/test';
 import { AGENT, API, openBoard, seedBoard, setAppearance, TENANT } from './support/seed';
+import { VIBES } from './support/world';
 
 // Every vibe's phone card: the sheet is one document, and the last control can be reached with nothing over it
 // (the fixed tab bar included). Same elementFromPoint hit-test as studio-card.spec.
@@ -8,7 +9,7 @@ const PIPELINE = [
   { key: 'review', name: 'Review', order: 1, ownerKind: 'human', gate: 'approval' },
 ];
 
-for (const vibe of ['daylight', 'paper', 'studio', 'quiet']) {
+for (const vibe of VIBES) {
   test(`${vibe} phone card: every control can be reached and nothing covers it`, async ({ page, request }) => {
     await page.setViewportSize({ width: 390, height: 844 });
     await setAppearance(page, `${vibe}.light.strong.0`);
@@ -55,7 +56,7 @@ for (const vibe of ['daylight', 'paper', 'studio', 'quiet']) {
   });
 }
 
-for (const vibe of ['daylight', 'paper', 'studio', 'quiet']) {
+for (const vibe of VIBES) {
   test(`${vibe} phone card: closing returns focus to the card that opened it`, async ({ page, request }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await setAppearance(page, `${vibe}.light.strong.0`);

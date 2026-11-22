@@ -4,6 +4,7 @@
  * its own top row (Board | List, Filter, the "Showing…" line), and the shell draws no greeting. The
  * shell, the board view and the store are the real ones.
  */
+import { VIBES } from '@superjackfruitlabs/vibekit-ui';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, fireEvent, render, screen, within } from '@testing-library/svelte';
 import { tick } from 'svelte';
@@ -72,7 +73,7 @@ describe('PlanView: the greeting', () => {
 });
 
 describe('PlanView: the top row', () => {
-  for (const vibe of ['daylight', 'paper', 'studio', 'quiet'] as const) {
+  for (const vibe of VIBES) {
     it(`draws Board | List, Filter and the Showing line in ${vibe}, and offers F while it is there`, async () => {
       appearance.set({ theme: 'light', vibe });
       document.documentElement.dataset.vibe = vibe;

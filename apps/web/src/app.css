@@ -10,6 +10,8 @@
 /* Page fixes that outrank both layers: unlayered. */
 @import './lib/styles/page-fixes.css';
 @import './lib/styles/long-text.css';
+/* Console's app-wide rules (the base type, plain motion); each page's Console block is in its own stylesheet. */
+@import './lib/styles/console.css';
 
 /*
  * Superpipeline on vibekit. The person's vibe and theme live on <html> (data-vibe, data-theme,

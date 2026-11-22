@@ -4,7 +4,8 @@
    * change applies and is saved at once (appearance.set writes the cookie and <html>); Done closes.
    * Turning the location switch on asks the browser; off forgets the place.
    */
-  import { AppearancePicker, Button, Dialog, type Appearance } from '@superjackfruitlabs/vibekit-ui';
+  import { AppearancePicker, Button, Dialog, type Appearance, type Vibe } from '@superjackfruitlabs/vibekit-ui';
+  import type { Snippet } from 'svelte';
   import { appearance } from '$lib/appearance.svelte';
   import { app } from '$lib/stores/app.svelte';
   import { firstName, personName } from './person';
@@ -33,9 +34,9 @@
     return st.length > 1 ? `Stages, ${st[0]!.name} to ${st[st.length - 1]!.name}: one colour family from the accent.` : undefined;
   });
   /** What a vibe changes in Superpipeline: its board and its card (the SP-Dlg-Appearance copy). */
-  const vibeNotes = { daylight: nDaylight, paper: nPaper, studio: nStudio, quiet: nQuiet };
+  const vibeNotes: Record<Vibe, Snippet> = { daylight: nDaylight, paper: nPaper, studio: nStudio, quiet: nQuiet, console: nConsole };
   /** Each vibe card's picture: this product's board in that vibe. */
-  const previews = { daylight: pDaylight, paper: pPaper, studio: pStudio, quiet: pQuiet };
+  const previews: Record<Vibe, Snippet> = { daylight: pDaylight, paper: pPaper, studio: pStudio, quiet: pQuiet, console: pConsole };
 
   function onchange(next: Appearance): void {
     if (next.useLocation && !appearance.value.useLocation) void appearance.useLocation();
@@ -49,12 +50,14 @@
 {#snippet nPaper()}Calm and editorial. <b>Board:</b> a front page. <b>Card:</b> a letter.{/snippet}
 {#snippet nStudio()}An annual report: warm paper, ink and one blue. <b>Board:</b> a report led by one big figure. <b>Card:</b> a profile with footnotes.{/snippet}
 {#snippet nQuiet()}Plain and focused. <b>Board:</b> one list by urgency. <b>Card:</b> a form.{/snippet}
+{#snippet nConsole()}Dense and monospaced, for the long day. <b>Board:</b> ruled stage cells over hairline lanes. <b>Card:</b> facts in rows, the keys in the footer.{/snippet}
 {#snippet vibeHint()}A vibe changes <strong>the layout of your boards and cards</strong>, not only the colours and type. Operate, settings and Workspace keep one layout in every vibe. Every action stays in every vibe.{/snippet}
 {#snippet mark()}<svg aria-hidden="true" focusable="false" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h10a3 3 0 0 1 0 6H8a3 3 0 0 0 0 6h12"></path><path d="M18 4v6"></path></svg>{/snippet}
 {#snippet pDaylight()}<div class="pv" aria-hidden="true"><div class="pv-dl-sky">Good afternoon</div><div class="pv-dl-cols"><div class="pv-dl-col"><div class="pv-dl-tile" data-n="1"><i style="background: var(--vk-mood-needs);"></i><s></s></div><div class="pv-dl-tile"><i style="background: var(--vk-mood-working);"></i><s></s></div></div><div class="pv-dl-col"><div class="pv-dl-tile"><i style="background: var(--vk-mood-thinking);"></i><s></s></div></div><div class="pv-dl-col"><div class="pv-dl-tile"><i style="background: var(--vk-mood-done);"></i><s></s></div><div class="pv-dl-tile"><i style="background: var(--vk-mood-done);"></i><s></s></div></div></div></div>{/snippet}
 {#snippet pPaper()}<div class="pv pv-pp" aria-hidden="true"><div class="pv-pp-mast">{app.board?.name ?? ''}</div><div class="pv-pp-cols"><div class="pv-pp-col"><span class="pv-pp-h">Waiting on you</span><span class="pv-pp-q">{#if first}<b>Dear {first},</b>{' '}{/if}I stopped, and I’d rather ask than guess…</span><span class="pv-pp-l"></span></div><div class="pv-pp-col"><span class="pv-pp-h">In progress</span><span class="pv-pp-l"></span><span class="pv-pp-l" style="width: 70%;"></span><span class="pv-pp-l"></span></div><div class="pv-pp-col"><span class="pv-pp-h">Shipped</span><span class="pv-pp-l"></span><span class="pv-pp-l" style="width: 60%;"></span></div></div></div>{/snippet}
 {#snippet pStudio()}<div class="pv pv-st" aria-hidden="true"><div class="pv-ar-hero"><b>{counts?.needs ?? ''}</b><span><s></s><s></s></span></div><div class="pv-ar-sm"><span><i style="background: var(--vk-stage-1);"></i><u><em data-k="n"></em></u></span><span><i style="background: var(--vk-stage-2);"></i><u><em data-k="n"></em></u></span><span><i style="background: var(--vk-stage-3);"></i><u><em data-k="n"></em><em data-k="b"></em><em data-k="b"></em></u></span><span><i style="background: var(--vk-stage-4);"></i><u><em data-k="n"></em></u></span><span><i style="background: var(--vk-stage-5);"></i><u></u></span><span><i style="background: var(--vk-stage-6);"></i><u></u></span><span><i style="background: var(--vk-stage-7);"></i><u><em data-k="d"></em></u></span></div><div class="pv-ar-rows"><s></s><s style="width: 80%;"></s></div></div>{/snippet}
 {#snippet pQuiet()}<div class="pv pv-qt" aria-hidden="true"><span class="pv-qt-h">{app.board?.name ?? ''}</span><span class="pv-qt-g">Needs your decision{#if counts}{' '}({counts.needs}){/if}</span><div class="pv-qt-i" data-n="1"><s></s><u></u></div><div class="pv-qt-i" data-n="1"><s style="width: 70%;"></s><u></u></div><span class="pv-qt-g">In progress{#if counts}{' '}({counts.working}){/if}</span><span class="pv-qt-g">Waiting to start{#if counts}{' '}({counts.queued}){/if}</span><div class="pv-qt-i"><s style="width: 60%;"></s><u></u></div></div>{/snippet}
+{#snippet pConsole()}<div class="pv pv-co" aria-hidden="true"><span class="pv-co-h"><i>&gt;</i> {counts?.needs ?? ''} need you</span><div class="pv-co-track"><span><i style="background: var(--vk-stage-1);"></i></span><span data-cur="1"><i style="background: var(--vk-stage-2);"></i></span><span><i style="background: var(--vk-stage-3);"></i></span><span><i style="background: var(--vk-stage-4);"></i></span><span><i style="background: var(--vk-stage-7);"></i></span></div><div class="pv-co-r" data-n="1"><s></s><u></u></div><div class="pv-co-r"><s style="width: 70%;"></s><u></u></div><div class="pv-co-r"><s style="width: 55%;"></s><u></u></div><span class="pv-co-k">J/K · ↵ · M</span></div>{/snippet}
 
 <Dialog bind:open={appearance.pickerOpen} title="Appearance" description="Vibe, light or dark and time of day apply to every product on this device. The accent belongs to Superpipeline alone."
   width="1000px" frame="sectioned" close="Close appearance" class="ap" onclose={close}>

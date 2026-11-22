@@ -6,6 +6,7 @@
 import type { Phase, Vibe } from '@superjackfruitlabs/vibekit-ui';
 import type { AttentionItem, AttentionKind } from '$lib/components/attention/attention';
 import { greetNamed } from '$lib/greet';
+import { GREETING_VIBES } from '$lib/vibe-sets';
 import { GROUP_EXPLANATION, GROUP_WORDS, groupsLede, unclaimedExplanation, wantYou } from './inbox-words';
 
 export type InboxGroupKey = 'review' | 'answer' | 'resume' | 'budget' | 'unclaimed';
@@ -72,7 +73,7 @@ export function inboxHeadline(
 ): { h1: string; lede: string } {
   const n = groups.reduce((sum, g) => sum + g.items.length, 0);
   const count = wantYou(n);
-  const h1 = vibe === 'daylight' ? `${greetNamed(phase, firstName ?? '')} ${count}` : count;
+  const h1 = GREETING_VIBES.has(vibe) ? `${greetNamed(phase, firstName ?? '')} ${count}` : count;
   const lede = groupsLede(groups.map((g) => ({ key: g.key, n: g.items.length })), running);
   return { h1, lede };
 }

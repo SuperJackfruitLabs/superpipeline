@@ -2,8 +2,9 @@
 /** A long board name wraps in every phone header, which holds the page's one h1; it never scrolls the phone sideways. */
 import { expect, test } from '@playwright/test';
 import { openBoard, seedBoard, setAppearance } from './support/seed';
+import { VIBES } from './support/world';
 
-for (const vibe of ['daylight', 'paper', 'studio', 'quiet']) {
+for (const vibe of VIBES) {
   test(`${vibe}: a 90-character board name never scrolls the phone sideways`, async ({ page, request }) => {
     await page.setViewportSize({ width: 390, height: 844 });
     const id = await seedBoard(request, 'A board whose name runs on and on past any phone header ' + 'x'.repeat(34));

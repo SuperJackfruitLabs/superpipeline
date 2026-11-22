@@ -3,7 +3,7 @@ import { createRequire } from 'node:module';
 import { dirname, join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import * as vk from '@superjackfruitlabs/vibekit-ui';
-// The 0.0.20 types the board page's track and the Masthead's live toggle take; svelte-check fails if they go.
+// The types the board page's track and the Masthead's live toggle take; svelte-check fails if they go.
 import type { LiveToggle, StageDetail } from '@superjackfruitlabs/vibekit-ui';
 
 const require = createRequire(import.meta.url);
@@ -12,7 +12,7 @@ const dir = join(dirname(require.resolve('@superjackfruitlabs/vibekit-ui/accents
 const css = ['vibekit.css', 'tokens.css', 'accents.css', 'type.css', 'derived.css'].map((f) => { try { return readFileSync(join(dir, 'dist/styles', f), 'utf8'); } catch { return ''; } }).join('\n');
 
 describe('the component-library vibekit release is the library in use', () => {
-  it('is version 0.0.20 (the Masthead live toggle and the StageTrack board form)', () => expect(JSON.parse(readFileSync(join(dir, 'package.json'), 'utf8')).version).toBe('0.0.20'));
+  it('is version 0.0.21 (the Console vibe)', () => expect(JSON.parse(readFileSync(join(dir, 'package.json'), 'utf8')).version).toBe('0.0.21'));
   it('exports the components and the accent API the screens use', () => {
     const types: [LiveToggle | null, StageDetail | null] = [null, null];
     expect(types).toHaveLength(2);
@@ -22,6 +22,7 @@ describe('the component-library vibekit release is the library in use', () => {
       'Drawer', 'Sheet', 'Toast', 'Toaster', 'Notice', 'EmptyState', 'Loading', 'LoadMore', 'Meter', 'Sky',
       'ACCENTS', 'ACCENT_CHOICES', 'ACCENT_LABELS', 'PRODUCT_ACCENTS', 'resolveAccent', 'accentFor', 'withAccent', 'htmlAttributes', 'HEAD_SCRIPT']) expect(vk, n).toHaveProperty(n);
   });
+  it('knows the Console vibe', () => expect(vk.VIBES).toContain('console'));
   it('stops the sweep if the accent tokens are missing', () => {
     expect(css).toMatch(/\[data-accent="gold"\]/);
     for (const t of ['--vk-color-accent', '--vk-color-accent-fg', '--vk-color-accent-wash', '--vk-color-accent-text']) expect(css).toContain(t);

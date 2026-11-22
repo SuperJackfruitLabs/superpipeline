@@ -4,6 +4,7 @@
    * switcher. One composition in every vibe (`ProjectsView`); a project opens in a drawer over it
    * (or its page, on a phone), and New project opens the dialog.
    */
+  import { BLEED_VIBES } from '$lib/vibe-sets';
   import { goto } from '$app/navigation';
   import { appearance } from '$lib/appearance.svelte';
   import AppShell from '$lib/components/shell/AppShell.svelte';
@@ -19,7 +20,7 @@
   void model.refresh();
 </script>
 
-<AppShell live={shellModel.liveToggle} here="plan" section="projects" boardName={null} plan="projects" bleed={vibe === 'quiet'} ownHeading primary={{ label: 'New project', onclick: () => (model.dialogOpen = true) }}>
+<AppShell live={shellModel.liveToggle} here="plan" section="projects" boardName={null} plan="projects" bleed={BLEED_VIBES.has(vibe)} ownHeading primary={{ label: 'New project', onclick: () => (model.dialogOpen = true) }}>
   <!-- Keyed on pending: the list arrives as a fresh frame rather than moving the waiting one (phone CLS). -->
   {#key model.pending}<ProjectsView {model} />{/key}
 </AppShell>

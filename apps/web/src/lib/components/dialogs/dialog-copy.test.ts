@@ -9,6 +9,7 @@ describe('new card copy', () => {
       paper: 'Describe it in a sentence. An agent drafts the brief, and you may change any of it before it goes.',
       studio: 'One sentence in, a drafted brief out. Edit anything before dispatch.',
       quiet: 'Describe the work in one sentence. An agent writes a draft brief. You can change all of it before you dispatch.',
+      console: 'One sentence in. An agent drafts the brief; edit any of it before dispatch.',
     });
   });
   it('offers None and P1–P4, and prints the command key as the shell does', () => {

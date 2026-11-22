@@ -8,7 +8,7 @@ describe('face variants', () => {
     for (const v of VIBES) expect(FACE_VARIANT[v], v).toBeTruthy();
   });
   it('each vibe has its own face variant', () => {
-    expect(FACE_VARIANT).toEqual({ daylight: 'mood', paper: 'portrait', studio: 'light', quiet: 'name' });
+    expect(FACE_VARIANT).toEqual({ daylight: 'mood', paper: 'portrait', studio: 'light', quiet: 'name', console: 'name' });
   });
 });
 

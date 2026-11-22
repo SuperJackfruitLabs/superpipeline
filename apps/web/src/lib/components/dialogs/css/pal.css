@@ -9,3 +9,7 @@
 [data-vibe="quiet"] .vk-dialog.pal .chip { background: transparent; border-color: var(--vk-color-line); }
 /* Hand-written: the footer's spacer (the reference's .pal-foot .grow). vibekit draws the palette itself. */
 .vk-dialog.pal .pal-grow { flex: 1; }
+/* Console: square mono chips and keys, transparent like Quiet's. */
+[data-vibe="console"] .vk-dialog.pal .chip { border-radius: 0; background: transparent; border-color: var(--vk-color-line); font: 500 10.5px/1.6 var(--vk-font-mono); text-transform: none; letter-spacing: 0; }
+[data-vibe="console"] .vk-dialog.pal .chip--needs { border-color: var(--vk-color-signal); color: var(--vk-color-signal-text); }
+[data-vibe="console"] .vk-dialog.pal .kbd { border-radius: 0; background: transparent; border-color: var(--vk-color-rule); }

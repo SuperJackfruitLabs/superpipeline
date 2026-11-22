@@ -1,6 +1,6 @@
 import { test, expect, type APIRequestContext, type Page } from '@playwright/test';
 import { API, TENANT, openBoard, seedBoard, setAppearance } from './support/seed';
-import { VIBES } from './support/world';
+import { VIBES, appearanceCookie } from './support/world';
 
 /**
  * Nav v2, track N2: Plan has two sections, Boards and Projects. Projects belong to the workspace,
@@ -163,7 +163,7 @@ for (const vibe of VIBES) {
 for (const vibe of VIBES) {
   test(`${vibe} desktop: the masthead says New project on Projects (it opens the dialog) and New card on the Inbox`, async ({ page, request }) => {
     await openBoard(page, await seedBoard(request, `Masthead ${tag()}`));
-    await setAppearance(page, `${vibe}.light.${vibe === 'quiet' ? 'off' : 'strong'}.0`);
+    await setAppearance(page, appearanceCookie(vibe, 'light'));
     await page.setViewportSize({ width: 1280, height: 900 });
     await page.goto('/plan/projects');
     const opener = page.getByRole('button', { name: /^New project/ });

@@ -7,4 +7,5 @@ export const CARD_DRAWER_WIDTH: Readonly<Record<Vibe, string>> = {
   paper: 'min(780px, calc(100% - 32px))',
   studio: 'min(940px, 100%)',
   quiet: 'min(1120px, 100%)',
+  console: 'min(760px, 100%)',
 };

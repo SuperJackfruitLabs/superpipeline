@@ -10,6 +10,7 @@ import { test, expect } from '@playwright/test';
  */
 import { PORTS } from '../scripts/ports';
 import { openBoard, seedBoard, setAppearance } from './support/seed';
+import { VIBES } from './support/world';
 const API = PORTS.apiUrl;
 const TENANT = { 'X-Tenant-Id': 'tnt_dev', 'Content-Type': 'application/json' };
 
@@ -100,7 +101,7 @@ test('a card tile exposes one button for itself, not a button inside a button', 
   expect(nested, 'no interactive element may contain another').toBe(0);
 });
 
-for (const vibe of ['daylight', 'paper', 'studio', 'quiet'] as const) {
+for (const vibe of VIBES) {
   test(`${vibe}: the dialog keeps its name while editing, and a second "Edit card" keeps the draft`, async ({ page, request }) => {
     await page.context().addCookies([{ name: 'vk_appearance', value: `${vibe}.light.strong.0`, url: PORTS.webUrl }]);
     const boardId = await boardWithACard(request);
@@ -125,7 +126,7 @@ for (const vibe of ['daylight', 'paper', 'studio', 'quiet'] as const) {
  * The drawer opens at the top (audit #1/#28): the first focus used to land below the drawer's
  * head and scroll it 130–265px, hiding the title and Close. Every vibe, on a card long enough to scroll.
  */
-for (const vibe of ['daylight', 'paper', 'studio', 'quiet'] as const) {
+for (const vibe of VIBES) {
   test(`${vibe}: the drawer opens scrolled to the top, title and Close in view`, async ({ page, request }) => {
     await page.setViewportSize({ width: 1440, height: 900 });
     await setAppearance(page, `${vibe}.light.strong.0`);

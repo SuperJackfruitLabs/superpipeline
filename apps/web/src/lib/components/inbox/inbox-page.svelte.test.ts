@@ -115,7 +115,7 @@ afterEach(() => {
 const titles = (root: Element) => [...root.querySelectorAll('.ib-group .vk-sectionheader__title')].map((h) => h.textContent);
 
 describe('InboxPage in every vibe', () => {
-  it('renders the contract order in all four vibes with the same tree outside the signature', async () => {
+  it('renders the contract order in every vibe with the same tree outside the signature', async () => {
     roots = await renderInVibes(InboxPage, props(await counted()));
     const day = roots.daylight;
     // Headline, scope, tabs (with Filter at the end), the filter row, the groups, the footer.

@@ -4,6 +4,7 @@
    * (`BoardTopRow`), the List with its two pickers; `?view=` picks the view from a link. Projects is Plan's other section
    * (`/plan/projects`, nav v2): an old `?view=projects` link is sent there.
    */
+  import { BLEED_VIBES } from '$lib/vibe-sets';
   import { page } from '$app/state';
   import { goto } from '$app/navigation';
   import { app } from '$lib/stores/app.svelte';
@@ -69,7 +70,7 @@
   boardName={app.board?.name ?? 'Untitled board'}
   plan="boards"
   live={shellModel.liveToggle}
-  bleed={app.view === 'board' || vibe === 'quiet'}
+  bleed={app.view === 'board' || BLEED_VIBES.has(vibe)}
 >
   {#if model && app.view === 'board' && empty}
     <BoardTopRow filters={app.filters} />

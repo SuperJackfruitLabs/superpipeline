@@ -99,3 +99,21 @@
 @media (pointer: coarse) {
   .bv-open { display: flex; align-items: center; min-height: 44px; }
 }
+
+/* Console: bordered lanes with a ruled head, tiles as dense rows on hairlines, square chips, a signal edge on a card
+   that wants you. The track is vibekit StageTrack's Console form (ruled cells). */
+[data-vibe="console"] .bv { gap: var(--vk-space-4); padding: var(--vk-space-3) var(--vk-space-5) var(--vk-space-5); }
+[data-vibe="console"] .bv-attn { font: var(--vk-type-meta); }
+[data-vibe="console"] .bv-lanes { gap: var(--vk-space-4); }
+[data-vibe="console"] .bv-lane { gap: 0; border: 1px solid var(--vk-color-line); }
+[data-vibe="console"] .bv-lanehead { padding: 6px 10px; border-bottom: 1px solid var(--vk-color-line); background: var(--vk-color-surface); }
+[data-vibe="console"] .bv-lanehead h2 { font: 700 11.5px/1.2 var(--vk-font-body); letter-spacing: 0.06em; text-transform: uppercase; }
+[data-vibe="console"] :is(.bv-ct, .bv-who) { font: var(--vk-type-meta); }
+[data-vibe="console"] .bv-none { padding: var(--vk-space-3) 10px; }
+[data-vibe="console"] .bv-more { justify-self: center; margin: var(--vk-space-2) 0; }
+[data-vibe="console"] .bv-tile { gap: 4px; padding: 8px 10px; border-bottom: 1px solid var(--vk-color-line); }
+[data-vibe="console"] .bv-slot:last-of-type > .bv-tile { border-bottom: 0; }
+[data-vibe="console"] .bv-t { font: 600 12px/1.4 var(--vk-font-body); }
+[data-vibe="console"] .bv-chip { padding: 0 4px; border-radius: 0; background: transparent; box-shadow: inset 0 0 0 1px var(--vk-color-line); font: 500 10.5px/1.6 var(--vk-font-mono); }
+[data-vibe="console"] .bv-tile[data-needs="1"] { box-shadow: inset 2px 0 0 var(--vk-color-signal); }
+[data-vibe="console"] .bv-foot { padding-top: var(--vk-space-3); border-top: 1px solid var(--vk-color-line); }

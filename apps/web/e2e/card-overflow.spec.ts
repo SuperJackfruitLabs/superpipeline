@@ -1,6 +1,7 @@
 import { test, expect, type Page } from '@playwright/test';
 import { PORTS } from '../scripts/ports';
 import { setAppearance } from './support/seed';
+import { VIBES } from './support/world';
 
 /**
  * Hostile unbroken text stays inside its box (O5, review R1). A tool call, a thought, a long
@@ -77,7 +78,7 @@ async function overflows(page: Page, root: string): Promise<string[]> {
   }, root);
 }
 
-for (const vibe of ['daylight', 'paper', 'studio', 'quiet'] as const) {
+for (const vibe of VIBES) {
   for (const width of [680, 1100]) {
     for (const surface of ['drawer', 'page'] as const) {
       test(`${vibe} ${surface} at ${width}px: hostile unbroken text stays inside its box`, async ({ page, request }) => {

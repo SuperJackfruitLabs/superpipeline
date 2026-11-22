@@ -2,6 +2,7 @@
 import { expect, test } from '@playwright/test';
 import { API, TENANT, seedBoard, setAppearance } from './support/seed';
 import { seedRealistic, useRealistic } from './support/realistic-inbox';
+import { VIBES, appearanceCookie } from './support/world';
 
 const ZERO = { totalCostUsd: 0, estimatedCostUsd: 0, totalInputTokens: 0, totalOutputTokens: 0, unpricedRecords: 0, byModel: [], byAgent: [], byCard: [], byDay: [] };
 const WITH_SPEND = {
@@ -39,11 +40,11 @@ test('with spend, the detail view adds it up against the cap', async ({ page, re
 
 
 // The composition contract: one Spend and one board log in every vibe, on the realistic workspace.
-for (const vibe of ['daylight', 'paper', 'studio', 'quiet'] as const) {
+for (const vibe of VIBES) {
   test(`${vibe}: Spend and the full board log are one composition`, async ({ page, request }) => {
     const { boardIds } = await seedRealistic(request);
     await useRealistic(page, boardIds[0]);
-    await setAppearance(page, `${vibe}.light.${vibe === 'quiet' ? 'off' : 'strong'}.0`);
+    await setAppearance(page, appearanceCookie(vibe, 'light'));
     // The realistic world records no board events: 120 of them, oldest first as the API answers.
     const events = Array.from({ length: 120 }, (_, i) => ({ seq: i + 1, type: 'cards.stale_digest', payload: {}, ts: new Date(Date.UTC(2026, 10, 17, 8, 0, 0) + i * 60_000).toISOString() }));
     await page.route('**/v1/boards/*/events*', (route) => route.fulfill({ json: { events } }));

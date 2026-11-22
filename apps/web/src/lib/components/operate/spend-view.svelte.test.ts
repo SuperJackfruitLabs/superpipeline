@@ -40,7 +40,7 @@ const SPEND = {
 };
 
 describe('SpendView and BoardLogView in every vibe', () => {
-  it('Spend: the same accessibility tree in all four vibes outside the signature, and the guards pass', async () => {
+  it('Spend: the same accessibility tree in every vibe outside the signature, and the guards pass', async () => {
     api.getUsage.mockResolvedValue(SPEND);
     roots = await renderInVibes(SpendView, {});
     await settle();

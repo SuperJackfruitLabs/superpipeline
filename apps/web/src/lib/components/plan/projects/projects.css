@@ -49,3 +49,8 @@
 [data-vibe="studio"] :where(.scr-projects) .pj-head { padding-bottom: var(--vk-space-3); border-bottom: 3px solid var(--vk-color-text); }
 [data-vibe="studio"] :where(.scr-projects) .pj-eyebrow { font: 500 12px/1.5 var(--vk-font-mono); letter-spacing: 0.04em; color: var(--vk-color-text); text-transform: uppercase; }
 [data-vibe="studio"] :where(.scr-projects) .pj-lede { font: 400 15px/1.45 var(--vk-font-serif); color: var(--vk-color-text); }
+
+/* Console: the head is a strip; a project's name at Console's row size. */
+[data-vibe="console"] :where(.scr-projects) .pj-head { padding-bottom: var(--vk-space-3); border-bottom: 1px solid var(--vk-color-line); }
+[data-vibe="console"] :where(.scr-projects) .pj-lede { font: var(--vk-type-meta); }
+[data-vibe="console"] :where(.scr-projects) .ptitle { font: 600 12.5px/1.4 var(--vk-font-body); }

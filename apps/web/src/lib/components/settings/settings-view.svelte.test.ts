@@ -62,7 +62,7 @@ afterEach(() => { roots?.unmount(); roots = null; cleanup(); });
 
 describe('SettingsView in every vibe', () => {
   for (const { id } of SETTINGS_TABS) {
-    it(`${id}: renders the same accessibility tree in all four vibes outside the signature`, async () => {
+    it(`${id}: renders the same accessibility tree in every vibe outside the signature`, async () => {
       roots = await renderInVibes(SettingsView, { initial: id });
       await settle();
       const day = parityTree(roots.daylight);

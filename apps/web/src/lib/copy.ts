@@ -1,5 +1,5 @@
 /**
- * Product strings that change tone by vibe. Each is written four ways with the same meaning and
+ * Product strings that change tone by vibe. Each is written once per vibe with the same meaning and
  * the same placeholders (copy.test.ts). Buttons, fields and badges are NOT here: they read the
  * same in every vibe (spec decision 6). vibekit's own catalogue (say, greeting) covers the suite
  * strings; these are Superpipeline's.
@@ -7,26 +7,26 @@
 import type { Phase, Vibe } from '@superjackfruitlabs/vibekit-ui';
 import type { CardLead, LeadKind } from '$lib/components/card/card-lead';
 
-export type Four = Readonly<Record<Vibe, string>>;
-const four = (daylight: string, paper: string, studio: string, quiet: string): Four => ({ daylight, paper, studio, quiet });
+export type PerVibe = Readonly<Record<Vibe, string>>;
+const perVibe = (daylight: string, paper: string, studio: string, quiet: string, console: string): PerVibe => ({ daylight, paper, studio, quiet, console });
 
-export const LEAD_FALLBACK: Readonly<Record<LeadKind, Four>> = {
-  question: four("I've got a question for you 🙋", 'I have a question before I go on.', 'QUESTION PENDING.', 'The agent asked a question.'),
-  review: four('All done, ready for your review ✨', "It's ready for you to review.", 'AWAITING REVIEW.', 'Waiting for your review.'),
-  stopped: four("I've stopped and need you 😕", "I stopped, and I'd rather ask than guess.", 'STOPPED. Needs operator.', 'Stopped. Waiting for you.'),
-  failed: four('That run failed 😬', 'The last run failed.', 'FAILED.', 'The run failed.'),
-  budget: four("I've hit the budget cap 💸", "I've reached the budget cap.", 'OVER BUDGET.', 'Over its budget cap.'),
-  working: four('On it!', "I'm working on it.", 'WORKING.', 'Working.'),
-  done: four('Done! 🎉', 'This is done.', 'DONE.', 'Completed.'),
-  idle: four('Waiting to be picked up.', 'Waiting to be picked up.', 'QUEUED.', 'Not started.'),
+export const LEAD_FALLBACK: Readonly<Record<LeadKind, PerVibe>> = {
+  question: perVibe("I've got a question for you 🙋", 'I have a question before I go on.', 'QUESTION PENDING.', 'The agent asked a question.', 'Question: pending.'),
+  review: perVibe('All done, ready for your review ✨', "It's ready for you to review.", 'AWAITING REVIEW.', 'Waiting for your review.', 'Review: ready.'),
+  stopped: perVibe("I've stopped and need you 😕", "I stopped, and I'd rather ask than guess.", 'STOPPED. Needs operator.', 'Stopped. Waiting for you.', 'Stopped: needs you.'),
+  failed: perVibe('That run failed 😬', 'The last run failed.', 'FAILED.', 'The run failed.', 'Run: failed.'),
+  budget: perVibe("I've hit the budget cap 💸", "I've reached the budget cap.", 'OVER BUDGET.', 'Over its budget cap.', 'Budget: over cap.'),
+  working: perVibe('On it!', "I'm working on it.", 'WORKING.', 'Working.', 'Working.'),
+  done: perVibe('Done! 🎉', 'This is done.', 'DONE.', 'Completed.', 'Done.'),
+  idle: perVibe('Waiting to be picked up.', 'Waiting to be picked up.', 'QUEUED.', 'Not started.', 'Queued.'),
 };
 
 export const COPY = {
-  'board.wantYou': four('{n} cards want you.', '{n} letters wait on you.', '{n} NEED YOU.', '{n} cards need your decision.'),
-  'board.wantYouOne': four('1 card wants you.', 'One letter waits on you.', '1 NEEDS YOU.', '1 card needs your decision.'),
-  'board.nothing': four('Nothing needs you.', 'Nothing waits on you.', '0 NEED YOU.', 'No cards need your decision.'),
-  'lead.from': four('{agent}', '{agent} wrote', '{agent}', '{agent}'),
-} as const satisfies Record<string, Four>;
+  'board.wantYou': perVibe('{n} cards want you.', '{n} letters wait on you.', '{n} NEED YOU.', '{n} cards need your decision.', '{n} need you.'),
+  'board.wantYouOne': perVibe('1 card wants you.', 'One letter waits on you.', '1 NEEDS YOU.', '1 card needs your decision.', '1 needs you.'),
+  'board.nothing': perVibe('Nothing needs you.', 'Nothing waits on you.', '0 NEED YOU.', 'No cards need your decision.', '0 need you.'),
+  'lead.from': perVibe('{agent}', '{agent} wrote', '{agent}', '{agent}', '{agent}'),
+} as const satisfies Record<string, PerVibe>;
 export type CopyId = keyof typeof COPY;
 
 export function words(id: CopyId, vibe: Vibe, vars: Record<string, string | number> = {}): string {

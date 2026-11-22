@@ -2,7 +2,8 @@
 // (once the Needs-you ask's "Show all") used to swap its content instantly; now the block's height animates (Quiet: a
 // short fade), nothing moves under reduced motion, and the toggle keeps focus and says it is expanded.
 import { expect, test, type Page } from '@playwright/test';
-import { DX, VIBES, openWorld, seed } from './support/world';
+import { DX, VIBES, openWorld, seed, type VibeName } from './support/world';
+import { FADE_VIBES } from '../src/lib/vibe-sets';
 
 test.beforeAll(async ({ request }) => seed(request));
 
@@ -21,8 +22,8 @@ async function clickAndRead(page: Page, toggle: ReturnType<Page['locator']>): Pr
  * The first expand toggle: an Activity row's "N earlier" on the Inbox; Quiet keeps its card's closed attempt, which
  * sits in the card's "Conversation and history", closed until asked for (rule 5), so that is opened first.
  */
-function where(vibe: string): { route: string; open?: (p: Page) => Promise<void>; toggle: (p: Page) => ReturnType<Page['locator']> } {
-  if (vibe === 'quiet') return {
+function where(vibe: VibeName): { route: string; open?: (p: Page) => Promise<void>; toggle: (p: Page) => ReturnType<Page['locator']> } {
+  if (FADE_VIBES.has(vibe)) return {
     route: `${DX}/c/card_05823a57e8224605`,
     open: (p) => p.locator('[data-block="history"] summary', { hasText: 'Conversation and history' }).first().click(),
     toggle: (p) => p.locator('[data-reveal] button[data-attempt-head][aria-expanded="false"]').first(),
@@ -36,7 +37,7 @@ function where(vibe: string): { route: string; open?: (p: Page) => Promise<void>
 
 for (const vibe of VIBES) {
   for (const motion of ['on', 'reduced'] as const) {
-    test(`${vibe}, motion ${motion}: an expand toggle ${motion === 'on' ? (vibe === 'quiet' ? 'fades its block in' : 'animates its block’s height') : 'changes nothing but the content'}`, async ({ page }) => {
+    test(`${vibe}, motion ${motion}: an expand toggle ${motion === 'on' ? (FADE_VIBES.has(vibe) ? 'fades its block in' : 'animates its block’s height') : 'changes nothing but the content'}`, async ({ page }) => {
       const w = where(vibe);
       await openWorld(page, w.route, { vibe, dark: false, width: 1280, height: 900 });
       if (motion === 'on') await page.emulateMedia({ reducedMotion: 'no-preference' });
@@ -45,7 +46,7 @@ for (const vibe of VIBES) {
       await expect(toggle).toBeVisible();
       await toggle.scrollIntoViewIfNeeded();
       const props = await clickAndRead(page, toggle);
-      expect(props).toEqual(motion === 'reduced' ? [] : vibe === 'quiet' ? ['opacity'] : ['height']);
+      expect(props).toEqual(motion === 'reduced' ? [] : FADE_VIBES.has(vibe) ? ['opacity'] : ['height']);
       // The toggle keeps focus and says it is open (its label may change: Show all → Show less).
       const focused = page.locator(':focus');
       await expect(focused).toHaveAttribute('aria-expanded', 'true');

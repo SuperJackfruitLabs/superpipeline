@@ -5,16 +5,18 @@
 // be instant. One document-level listener measures the block's height before the click, lets Svelte update the
 // DOM, then animates the height from the old value to the new one (overflow clipped while it runs), so the text
 // grows into place instead of jumping. vibekit's .vk-reveal (0fr → 1fr) only covers hidden → shown; these swaps
-// go from one height to another, so the height is measured. Reduced motion: nothing animates. Quiet: a short
+// go from one height to another, so the height is measured. Reduced motion: nothing animates. Quiet and Console (FADE_VIBES): a short
 // fade only, never a moving height. Focus and aria-expanded are the toggle's own and are left alone.
 import { duration, isReducedMotion } from '@superjackfruitlabs/vibekit-ui/motion';
+import { isVibe } from '@superjackfruitlabs/vibekit-ui';
+import { FADE_VIBES } from '$lib/vibe-sets';
 
 export type RevealKind = 'none' | 'fade' | 'height';
 
 /** What a toggle does in this vibe and motion setting. */
 export function revealKind(reduced: boolean, vibe: string | undefined, from: number, to: number): RevealKind {
   if (reduced) return 'none';
-  if (vibe === 'quiet') return 'fade';
+  if (isVibe(vibe) && FADE_VIBES.has(vibe)) return 'fade';
   return Math.abs(to - from) < 1 ? 'none' : 'height';
 }
 

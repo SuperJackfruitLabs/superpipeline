@@ -1,5 +1,6 @@
 <script lang="ts">
   /** Crew — who and what may act here: Agents, People, Capabilities. One shell; the tab page draws CrewView, the same in every vibe. */
+  import { BLEED_VIBES } from '$lib/vibe-sets';
   import { page } from '$app/state';
   import { appearance } from '$lib/appearance.svelte';
   import AppShell from '$lib/components/shell/AppShell.svelte';
@@ -17,6 +18,6 @@
 </script>
 
 <!-- CrewView draws its own h1 (the masthead title becomes a plain line), so the page still has one. -->
-<AppShell live={shellModel.liveToggle} here="crew" section="crew" boardName={null} bleed={vibe === 'quiet'} ownHeading {primary}>
+<AppShell live={shellModel.liveToggle} here="crew" section="crew" boardName={null} bleed={BLEED_VIBES.has(vibe)} ownHeading {primary}>
   {@render children()}
 </AppShell>

@@ -116,3 +116,17 @@ form.set-manage > .field { flex: 1 1 220px; }
 [data-vibe="studio"] .set-lede { font: 400 15px/1.45 var(--vk-font-serif); color: var(--vk-color-text); }
 /* Quiet: larger plain type, no band, no rule. */
 [data-vibe="quiet"] .set-title { font-size: 30px; }
+
+/* Console: the head is a strip (a prompt mark before the title, the lede as meta, a hairline under). */
+[data-vibe="console"] .set-head { gap: 4px; padding: var(--vk-space-3) 0; border-bottom: 1px solid var(--vk-color-line); }
+[data-vibe="console"] .set-title { font: var(--vk-type-h1); letter-spacing: 0; }
+[data-vibe="console"] .set-title::before { content: "> " / ""; color: var(--vk-color-signal-text); }
+[data-vibe="console"] .set-lede { max-width: 90ch; font: var(--vk-type-meta); }
+[data-vibe="console"] .set-mono { font: var(--vk-type-mono); }
+[data-vibe="console"] :where(.scr-settings) .sumrule { font: var(--vk-type-meta); }
+/* The rename field sizes itself in the span's ch; under 640px vibekit sets Console's field to 16px (no zoom on focus), so the
+   span matches, and the field's inset is Console's 6px so a long name in Martian Mono still shows whole on a 390px phone. */
+@media (max-width: 639.98px) {
+  [data-vibe="console"] .set-rename { font-size: 16px; }
+  [data-vibe="console"] .set-rename .vk-field__input { padding-inline: 6px; }
+}

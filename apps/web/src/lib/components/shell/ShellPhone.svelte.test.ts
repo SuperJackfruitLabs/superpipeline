@@ -10,7 +10,7 @@ import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, fireEvent, render, screen, within } from '@testing-library/svelte';
 import { createRawSnippet, tick } from 'svelte';
-import { VIBES, type Vibe } from '@superjackfruitlabs/vibekit-ui';
+import { VIBES, formVibe, type Vibe } from '@superjackfruitlabs/vibekit-ui';
 
 // jsdom has no matchMedia; vibekit's AppShell asks it for the phone width. A phone window.
 vi.hoisted(() => {
@@ -61,7 +61,7 @@ describe.each(VIBES)('the shell on a phone, in %s', (vibe) => {
   it('is vibekit’s phone frame, in the same component: PhoneTabBar, and PhoneHeader whose one h1 is the board name', () => {
     const { container } = show(vibe);
     expect(container.querySelector('.sh-root.ph-root[data-shell="phone"] .vk-appshell--phone')).toBeTruthy();
-    expect(screen.getByRole('navigation', { name: 'Superpipeline' }).classList.contains(`vk-phonetabbar--${vibe}`)).toBe(true);
+    expect(screen.getByRole('navigation', { name: 'Superpipeline' }).classList.contains(`vk-phonetabbar--${formVibe(vibe)}`)).toBe(true);
     const h1s = screen.getAllByRole('heading', { level: 1 });
     expect(h1s).toHaveLength(1);
     expect(h1s[0]!.textContent).toMatch(/^Developer Experience(: Switch board)?$/);
@@ -154,7 +154,7 @@ describe('vibe parity on a phone', () => {
     ['a board', { here: 'plan', section: 'board', boardName: 'Developer Experience', plan: 'boards' }],
     ['the Inbox', { here: 'inbox', section: 'inbox', boardName: null, ownHeading: true }],
   ];
-  it.each(PAGES)('renders the same accessibility tree in all four vibes outside the signature slot (%s)', async (_name, over) => {
+  it.each(PAGES)('renders the same accessibility tree in every vibe outside the signature slot (%s)', async (_name, over) => {
     const roots = await renderInVibes(AppShell, page(over) as never);
     try {
       await settle();

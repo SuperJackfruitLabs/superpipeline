@@ -4,7 +4,7 @@
    * The board page, one composition for every vibe (composition contract, Board variant A): the top
    * row with the attention line, the stage track (every stage, always), lanes only where cards are,
    * and the footer line. Outside the one `[data-signature]` slot the markup and words are the same
-   * in all four vibes; each vibe's look is CSS on the vibe root (board.css).
+   * in every vibe; each vibe's look is CSS on the vibe root (board.css).
    */
   import './board.css';
   import type { CardFilters } from '$lib/stores/app.svelte';

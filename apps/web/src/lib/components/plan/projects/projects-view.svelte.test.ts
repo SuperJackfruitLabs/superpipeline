@@ -41,7 +41,7 @@ async function mount(): Promise<ProjectsModel> {
 const second = { ...guild, id: 'prj_7f1a2b3c4d5e6f70', name: 'Release kit — shared workflow and rollback', state: 'planned', health: 'at-risk', targetDate: '2026-12-01' };
 
 describe('ProjectsView in every vibe', () => {
-  it('renders the same accessibility tree in all four vibes outside the signature, and passes the guards', async () => {
+  it('renders the same accessibility tree in every vibe outside the signature, and passes the guards', async () => {
     api.listProjects.mockResolvedValue([guild, second]);
     api.getProjectRollup.mockImplementation(async (id: string) => (id === guild.id
       ? { projectId: id, cardsTotal: 7, cardsDone: 2, cardsOverdue: 1, costUsd: 1.85, computedAt: '2026-10-11T08:21:00Z', partial: false, boardsUnanswered: 0 }

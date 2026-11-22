@@ -14,6 +14,8 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html). Entries g
 
 ## Unreleased
 
+- A fifth vibe, Console: dense, dark-first, monospaced, with every page's keys in the footer.
+
 - A person moving a card while its run is working ends that run (`status: ended`, a new run outcome `moved`, reported to SuperWitness as cancelled). It used to stay `working` with no card naming it and hold the agent's concurrency until the 15-minute heartbeat timeout reclaimed it. Later verbs on the run are refused `409 STALE_LEASE`.
 
 - Reclaiming a lapsed run counts a failure against its card only while the card still names that run. A run its card had left bumped the card's failure count and requeued it, even from a finished stage.

@@ -6,6 +6,7 @@
 // own way. Crew and these panels are one component in every vibe now, so each renders inside that vibe's root.
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
+import { VIBES } from '@superjackfruitlabs/vibekit-ui';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, render } from '@testing-library/svelte';
 import type * as Api from '$lib/api';
@@ -32,7 +33,6 @@ import { crewLists } from '$lib/components/workspace/workspace-counts.svelte';
 import type { Component } from 'svelte';
 import { SLOW_COPY, SLOW_MS, TRY_AGAIN } from '$lib/loading';
 
-const VIBES = ['daylight', 'paper', 'studio', 'quiet'] as const;
 const TABS = ['agents', 'people', 'capabilities', 'labels'] as const;
 
 type Tab = (typeof TABS)[number] | 'connections';

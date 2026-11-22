@@ -36,7 +36,7 @@ const selected = () => document.querySelector('tr[aria-current="true"]');
 const rowCount = () => document.querySelectorAll('tr[data-row]').length;
 
 describe('ListView in every vibe', () => {
-  it('renders the same accessibility tree in all four vibes, and passes the guards', async () => {
+  it('renders the same accessibility tree in every vibe, and passes the guards', async () => {
     roots = await renderInVibes(ListView, listProps());
     const day = parityTree(roots.daylight);
     expect(day).toContain('Fix the highest-severity blocker');

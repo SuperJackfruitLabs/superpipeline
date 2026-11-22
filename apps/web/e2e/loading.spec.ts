@@ -9,11 +9,11 @@
 import { test, expect, type Page, type BrowserContext } from '@playwright/test';
 import { waitForSurfaceReady, waitForLayout } from './support/readiness';
 import { seedWorld, FIXTURE_TENANT, FIXTURE_USER } from './visual/fixture/seed';
+import { EVERY_SIZE_LOADING_VIBES, VIBES, appearanceCookie } from './support/world';
 
 const DX = '/b/brd_134a0ddb6d434478';
 const CARD = 'card_05823a57e8224605';
 const PROJECT = '/plan/projects/prj_34b48f840daa4309';
-const VIBES = ['daylight', 'paper', 'studio', 'quiet'] as const;
 const SIZES = [{ n: 'desk', width: 1440, height: 900 }, { n: 'phone', width: 390, height: 844 }] as const;
 /** Words that would be false before the data is in. */
 const EMPTY = 'Nothing needs you|Nothing is running|Nothing waits|Nothing is waiting|No [a-z ]{1,24} yet|Reconnecting|Nothing here|No boards|No projects|No agents|No agent is working|Nothing unread|None\\.|\\b0 (cards?|boards?|agents?|projects?|asks?|letters?)\\b|\\$0\\.00|Error:';
@@ -52,7 +52,7 @@ function sampler([empty, real]: [string, string[]]): void {
 }
 
 async function open(ctx: BrowserContext, vibe: string, boardId = 'brd_134a0ddb6d434478'): Promise<Page> {
-  await ctx.addCookies([{ name: 'vk_appearance', value: `${vibe}.light.${vibe === 'quiet' ? 'off' : 'strong'}.0`, url: test.info().project.use.baseURL! }]);
+  await ctx.addCookies([{ name: 'vk_appearance', value: appearanceCookie(vibe, 'light'), url: test.info().project.use.baseURL! }]);
   await ctx.addInitScript(([t, u, b]) => {
     localStorage.setItem('superpipeline.devTenant', t);
     localStorage.setItem('superpipeline.devUser', u);
@@ -83,13 +83,13 @@ test.beforeAll(async ({ request }) => { await seedWorld(request); });
 // four surfaces whose pending frames differ most by vibe (Inbox, board, card page, Projects) at 390, where CLS bites.
 // The other surfaces' per-vibe skeletons are covered by unit tests (SkeletonRows and the layouts' pending tests).
 const OTHER_VIBE_SURFACES = ['inbox', 'board', 'cardpage', 'projects'];
-const WALKS = VIBES.flatMap((vibe) => SIZES.filter((size) => vibe === 'daylight' || size.n === 'phone').map((size) => ({ vibe, size })));
+const WALKS = VIBES.flatMap((vibe) => SIZES.filter((size) => EVERY_SIZE_LOADING_VIBES.has(vibe) || size.n === 'phone').map((size) => ({ vibe, size })));
 for (const { vibe, size } of WALKS) {
   {
     test(`${vibe} ${size.n}: no surface says "nothing" or 0 before its data, and each waits in aria-busy`, async ({ browser }) => {
       test.setTimeout(180_000);
       const problems: string[] = [];
-      for (const [name, url] of Object.entries(SURFACES).filter(([n]) => vibe === 'daylight' || OTHER_VIBE_SURFACES.includes(n))) {
+      for (const [name, url] of Object.entries(SURFACES).filter(([n]) => EVERY_SIZE_LOADING_VIBES.has(vibe) || OTHER_VIBE_SURFACES.includes(n))) {
         await test.step(`${name}: ${url}`, async () => {
           const ctx = await browser.newContext({ viewport: { width: size.width, height: size.height }, reducedMotion: 'reduce', timezoneId: 'Asia/Kolkata', isMobile: size.width < 500, hasTouch: size.width < 500 });
           try {

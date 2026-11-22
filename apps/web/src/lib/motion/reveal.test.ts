@@ -1,13 +1,17 @@
 // apps/web/src/lib/motion/reveal.test.ts
 // @vitest-environment jsdom
 import { describe, expect, it } from 'vitest';
+import { VIBES } from '@superjackfruitlabs/vibekit-ui';
 import { revealKind, revealTarget } from './reveal';
 
 describe('revealKind', () => {
   it('does nothing under reduced motion, in every vibe', () => {
-    for (const v of ['daylight', 'paper', 'studio', 'quiet']) expect(revealKind(true, v, 40, 200)).toBe('none');
+    for (const v of VIBES) expect(revealKind(true, v, 40, 200)).toBe('none');
   });
-  it('fades in Quiet, never moving a height', () => expect(revealKind(false, 'quiet', 40, 200)).toBe('fade'));
+  it('fades in Quiet and Console, never moving a height', () => {
+    expect(revealKind(false, 'quiet', 40, 200)).toBe('fade');
+    expect(revealKind(false, 'console', 40, 200)).toBe('fade');
+  });
   it('animates the height elsewhere, unless it did not change', () => {
     expect(revealKind(false, 'paper', 40, 200)).toBe('height');
     expect(revealKind(false, 'studio', 120, 120.4)).toBe('none');

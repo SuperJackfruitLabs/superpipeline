@@ -8,10 +8,10 @@ import { REALISTIC_BOARD_IDS, REALISTIC_TENANT, REALISTIC_USER } from '../src/li
 import { seedRealistic, useRealistic } from './support/realistic-inbox';
 import { API, TENANT, seedBoard, setAppearance } from './support/seed';
 import { waitForAppReady, waitForLayout } from './support/readiness';
+import { VIBES, appearanceCookie } from './support/world';
 
-const VIBES = ['daylight', 'paper', 'studio', 'quiet'] as const;
 type Vibe = (typeof VIBES)[number];
-const appearance = (vibe: Vibe) => `${vibe}.light.${vibe === 'quiet' ? 'off' : 'strong'}.0`;
+const appearance = (vibe: Vibe) => appearanceCookie(vibe, 'light');
 const BOARDS = [REALISTIC_BOARD_IDS.planning, REALISTIC_BOARD_IDS.devex, REALISTIC_BOARD_IDS.marketing] as const;
 const AS_OWNER = { 'X-Tenant-Id': REALISTIC_TENANT, 'X-User-Id': REALISTIC_USER, 'Content-Type': 'application/json' };
 
@@ -98,6 +98,24 @@ async function boardLiveChange(page: Page, request: APIRequestContext): Promise<
   return [...seen];
 }
 
+/**
+ * Needs-you rows wholly on one 1440×900 screen, from the list's first row: that row is brought to the top of the
+ * viewport, so the count measures the rows (their height, their group heads and explanations), not the headline
+ * and scope above them, which take a different height in each vibe. On the page as it loads Studio shows one row,
+ * too few for a ratio to mean anything.
+ */
+const rowsOnScreen = (page: Page) => page.locator('.ib-needs .ib-row[data-row]').evaluateAll((els) => {
+  els[0]?.scrollIntoView({ block: 'start' });
+  // The visible top is the scroll container's top edge (the shell scrolls inside itself, under its own header), not 0.
+  let box: HTMLElement | null = els[0]?.parentElement ?? null;
+  while (box && !(/(auto|scroll)/.test(getComputedStyle(box).overflowY) && box.scrollHeight > box.clientHeight)) box = box.parentElement;
+  const top = Math.max(0, box?.getBoundingClientRect().top ?? 0);
+  return els.filter((el) => {
+    const r = el.getBoundingClientRect();
+    return r.height > 0 && r.top >= top - 1 && r.bottom <= window.innerHeight;
+  }).length;
+});
+
 // ── Height budget (§9): the Inbox under three screens and a board under about two, at 1440×900 ────────────────────
 
 /** The Inbox: three screens. */
@@ -107,7 +125,7 @@ const INBOX_BUDGET = 2700;
  * 1800 px (two screens) was the plan's estimate, not the rule: Quiet is one column by design and Paper sets larger
  * type, so on the realistic seed they need more room for the same five-tile lanes.
  */
-const BOARD_BUDGET: Record<Vibe, number> = { daylight: 1800, studio: 1800, paper: 2100, quiet: 2400 };
+const BOARD_BUDGET: Record<Vibe, number> = { daylight: 1800, studio: 1800, paper: 2100, quiet: 2400, console: 1800 };
 
 test.describe('on the realistic workspace', () => {
   test.beforeEach(async ({ request }) => { await seedRealistic(request); });
@@ -125,6 +143,19 @@ test.describe('on the realistic workspace', () => {
       }
     });
   }
+
+  // ── Density (Console spec §2): Console shows at least a third more Inbox rows than Studio, from spacing and row
+  // heights alone, with every hit area kept ──────────────────────────────────────────────────────────────────────────
+
+
+  test('Console shows at least a third more Inbox rows than Studio at 1440×900', async ({ page }) => {
+    await openInbox(page, 'studio');
+    const studio = await rowsOnScreen(page);
+    await openInbox(page, 'console');
+    const dense = await rowsOnScreen(page);
+    expect(studio, 'Studio shows some rows').toBeGreaterThan(0);
+    expect(dense, `Console ${dense} rows against Studio's ${studio}`).toBeGreaterThanOrEqual(Math.ceil(studio * 1.33));
+  });
 
   // ── Track never truncates (§9, rule 6): at 1008 px every stage is named in full ─────────────────────────────────────
 

@@ -33,3 +33,12 @@
 [data-vibe="studio"] .vk-dialog.mv .chip--needs { background: transparent; }
 [data-vibe="studio"] .vk-dialog.mv .chip--done { background: transparent; border-color: var(--vk-stage-7); color: var(--vk-color-text); }
 [data-vibe="quiet"] .vk-dialog.mv .chip { background: transparent; border-color: var(--vk-color-line); }
+/* Console: square mono chips and keys, transparent like Quiet's. */
+[data-vibe="console"] .vk-dialog.mv .chip { border-radius: 0; background: transparent; border-color: var(--vk-color-line); font: 500 10.5px/1.6 var(--vk-font-mono); text-transform: none; letter-spacing: 0; }
+[data-vibe="console"] .vk-dialog.mv .chip--needs { border-color: var(--vk-color-signal); color: var(--vk-color-signal-text); }
+[data-vibe="console"] .vk-dialog.mv .kbd { border-radius: 0; background: transparent; border-color: var(--vk-color-rule); }
+[data-vibe="console"] .vk-dialog.mv .st { min-height: 44px; border-radius: 0; }
+[data-vibe="console"] .vk-dialog.mv .st-dot { border-radius: 0; }
+[data-vibe="console"] .vk-dialog.mv .st-name { font: 600 12.5px/1.3 var(--vk-font-body); }
+[data-vibe="console"] .vk-dialog.mv :is(.st-owner, .st-right, .mv-now, .mv-keys, .mv-then) { font: var(--vk-type-meta); }
+[data-vibe="console"] .vk-dialog.mv .mv-then { border-radius: 0; }

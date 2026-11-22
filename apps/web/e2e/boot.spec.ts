@@ -2,12 +2,14 @@
 /**
  * The boot screen is never blank (operator, Studio dark: a dark page with one tiny mono line). While
  * sign-in and the board list are slow it shows the mark, a status line, then the slow copy, then
- * Failed with Try again; Quiet shows the words alone.
+ * Failed with Try again; Quiet and Console show the words alone.
  */
 import { expect, test } from '@playwright/test';
 import { setAppearance } from './support/seed';
+import { VIBES } from './support/world';
+import { WORDS_ONLY_BOOT_VIBES } from '../src/lib/vibe-sets';
 
-for (const vibe of ['daylight', 'paper', 'studio', 'quiet']) for (const held of ['sign-in', 'boards'] as const) {
+for (const vibe of VIBES) for (const held of ['sign-in', 'boards'] as const) {
   test(`${vibe}: a slow ${held} show a branded boot screen, then slow, then Try again`, async ({ page }) => {
     await setAppearance(page, `${vibe}.dark.strong.0`);
     await page.clock.install();
@@ -17,7 +19,7 @@ for (const vibe of ['daylight', 'paper', 'studio', 'quiet']) for (const held of 
     const status = page.locator('main.sp-boot [role="status"]');
     await expect(status).toBeVisible();
     await expect(status).toHaveText(held === 'sign-in' ? /Signing you in…/ : /Finding your boards…/);
-    await expect(page.locator('main.sp-boot .wordmark')).toHaveCount(vibe === 'quiet' ? 0 : 1);
+    await expect(page.locator('main.sp-boot .wordmark')).toHaveCount(WORDS_ONLY_BOOT_VIBES.has(vibe) ? 0 : 1);
     const box = await page.locator('main.sp-boot').boundingBox();
     expect(box!.height).toBeGreaterThan(400); // centred in the viewport, not a line at the top
     await page.clock.runFor(8_500);

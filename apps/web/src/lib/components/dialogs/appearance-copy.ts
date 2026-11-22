@@ -16,9 +16,14 @@ export interface ReadoutInput { vibe: Vibe; phase: Phase; timeOff: boolean; firs
 export function appearanceReadout({ vibe, phase, timeOff, firstName, clock }: ReadoutInput): string {
   const p = PHASE_WORDS[phase];
   if (timeOff) return `Time of day is off · ${p}.`;
-  if (vibe === 'paper') return phase === 'noon' ? `${p} · ${PAPER_NOON}` : p;
-  if (vibe === 'studio') return `${p}, ${clock}`;
-  if (vibe === 'quiet') return p;
   const g = greeting(phase, 'daylight');
-  return `${p} · ${firstName ? g.replace(/([.?!])$/, `, ${firstName}$1`) : g}`;
+  // A Record, so a new vibe fails the typecheck here until it has its readout. Quiet and Console say the phase alone.
+  const READOUT: Readonly<Record<Vibe, () => string>> = {
+    daylight: () => `${p} · ${firstName ? g.replace(/([.?!])$/, `, ${firstName}$1`) : g}`,
+    paper: () => (phase === 'noon' ? `${p} · ${PAPER_NOON}` : p),
+    studio: () => `${p}, ${clock}`,
+    quiet: () => p,
+    console: () => p,
+  };
+  return READOUT[vibe]();
 }
