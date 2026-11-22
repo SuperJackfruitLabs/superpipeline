@@ -52,8 +52,8 @@ importers:
         specifier: ^4.20260619.1
         version: 4.20260619.1
       '@superjackfruitlabs/treaty-contracts':
-        specifier: link:../../../treaty-contracts/packages/contracts
-        version: link:../../../treaty-contracts/packages/contracts
+        specifier: 0.0.15
+        version: 0.0.15
       '@superjackfruitlabs/treaty-ecosystem-identity':
         specifier: 0.0.13
         version: 0.0.13
@@ -1184,6 +1184,10 @@ packages:
 
   '@superjackfruitlabs/treaty-cloudevents@0.0.13':
     resolution: {integrity: sha512-/qjUQFVHjzXdM15mT/tSwBRLGrmM5+kzYZZyLQIck6HsIhA6eU8waPyAJsZfGw6vbG0YfXWKAN5HDa4oiO8nRg==}
+
+  '@superjackfruitlabs/treaty-contracts@0.0.15':
+    resolution: {integrity: sha512-7JE6yFDT6ICWY8/iY1PuLIQF9vot0UhONAdvNn+ZCDAEd0B7ypoiWdmaGLvhjBXiXJ0ObjdotsIMuf2UMGWv2A==}
+    hasBin: true
 
   '@superjackfruitlabs/treaty-ecosystem-identity@0.0.13':
     resolution: {integrity: sha512-S00YgLCN8tzrv8hAH0oAr+MPEKEDWKk9HXUPpti3VaT+Up+odK0Mn6XRfkO4H9+Z7OnVkNsokEBXbhk19jlKWg==}
@@ -3302,6 +3306,10 @@ snapshots:
   '@standard-schema/spec@1.1.0': {}
 
   '@superjackfruitlabs/treaty-cloudevents@0.0.13': {}
+
+  '@superjackfruitlabs/treaty-contracts@0.0.15':
+    dependencies:
+      '@cfworker/json-schema': 4.1.1
 
   '@superjackfruitlabs/treaty-ecosystem-identity@0.0.13': {}
 
