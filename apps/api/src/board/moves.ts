@@ -60,9 +60,12 @@ export async function moveCard(deps: MovesDeps, cardId: string, toStageKey: stri
   if (!target) return { ok: false, code: 'UNKNOWN_STAGE', message: `unknown stage: ${toStageKey}` };
   if (target.key === card.currentStageKey) return { ok: true, value: card };
   // A card whose repositories do not fit the target's allowlist is refused before anything moves.
-  const cardRow = deps.getCardRow(cardId);
-  const repositoriesRefused = cardRepositoriesEntryRefusal(target, cardRow ? cardRepositoriesOf(cardRow) : null);
-  if (repositoriesRefused) return repositoriesRefused;
+  // Read only for such a target, so every other move runs the statements it always did.
+  if (target.cardCheckpointPolicy !== undefined) {
+    const cardRow = deps.getCardRow(cardId);
+    const repositoriesRefused = cardRepositoriesEntryRefusal(target, cardRow ? cardRepositoriesOf(cardRow) : null);
+    if (repositoriesRefused) return repositoriesRefused;
+  }
   if (target.wipLimit !== undefined && deps.countInStage(target.key) >= target.wipLimit) {
     return {
       ok: false,
@@ -334,9 +337,11 @@ export async function resumeCard(deps: MovesDeps, input: {
   }
   // Resuming re-enters a stage: a choice that does not fit its allowlist is refused here, where a
   // person can fix it, rather than parked again at the next claim.
-  const resumeRow = deps.getCardRow(card.id);
-  const repositoriesRefused = cardRepositoriesEntryRefusal(stages[targetIdx], resumeRow ? cardRepositoriesOf(resumeRow) : null);
-  if (repositoriesRefused) return repositoriesRefused;
+  if (stages[targetIdx]?.cardCheckpointPolicy !== undefined) {
+    const resumeRow = deps.getCardRow(card.id);
+    const repositoriesRefused = cardRepositoriesEntryRefusal(stages[targetIdx], resumeRow ? cardRepositoriesOf(resumeRow) : null);
+    if (repositoriesRefused) return repositoriesRefused;
+  }
 
   const now = deps.now();
   const prior = deps.parseHandoff(deps.getCardHandoffJson(card.id));
