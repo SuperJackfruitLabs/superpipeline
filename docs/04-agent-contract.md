@@ -65,7 +65,7 @@ renew a lease. Witness independently fetches the committed export and verifies i
 ## 3. The verbs
 
 Surface-neutral verb set. Each maps to one MCP tool and one REST endpoint with identical
-semantics. Signatures are illustrative (finalized as zod schemas in `packages/contract`).
+semantics. Signatures are illustrative; the REST wire contract is treaty's `schemas/http/superpipeline/agent-work.v1.openapi.json`.
 
 | Verb | Direction | Purpose | Result / effect |
 |------|-----------|---------|-----------------|

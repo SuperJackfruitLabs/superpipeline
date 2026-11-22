@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { ActivityEnvelope, PostActivityInput } from '../src';
+import { ActivityEnvelope } from '../src';
 
 const base = {
   runId: 'run_abc123',
@@ -65,14 +65,10 @@ describe('an elicitation carries its options in `parameter` (docs/04 §4)', () =
   it('keeps the options an agent sends in `parameter`', () => {
     const a = ActivityEnvelope.parse({ ...question, parameter: { options } });
     expect(a.parameter).toEqual({ options });
-    const v = PostActivityInput.parse({ ...question, leaseEpoch: 1, parameter: { options } });
-    expect(v.parameter).toEqual({ options });
   });
 
   it('has no `signalMetadata` field — the second carrier is gone, not merely unread', () => {
     const a = ActivityEnvelope.parse({ ...question, signalMetadata: { options } }) as Record<string, unknown>;
     expect('signalMetadata' in a).toBe(false);
-    const v = PostActivityInput.parse({ ...question, leaseEpoch: 1, signalMetadata: { options } }) as Record<string, unknown>;
-    expect('signalMetadata' in v).toBe(false);
   });
 });
