@@ -25,7 +25,7 @@ import type { AgentPrincipal } from './resolve';
  */
 export type AgentQueueVerdict =
   | { ok: true; ownerUserId: string; queuedBy: string; queuedGrant: string[] }
-  | { ok: false; status: number; code: string; message: string };
+  | { ok: false; status: number; code: 'AGENT_QUEUE_POLICY_UNKNOWN' | 'BOARD_NOT_PERMITTED' | 'AGENT_HAS_NO_OWNER' | 'AGENT_CANNOT_SET_OWNER' | 'DISPATCH_GRANT_UNKNOWN' | 'NO_DISPATCH_AUTHORITY' | 'QUEUE_CEILING_REACHED'; message: string };
 
 /** How far back the ceiling looks. A moving hour, so an agent recovers as it rolls. */
 const WINDOW_MS = 60 * 60 * 1000;

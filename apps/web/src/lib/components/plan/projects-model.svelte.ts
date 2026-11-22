@@ -6,6 +6,7 @@ import {
 import { groupProjects, projectsSummary, type ProjectGroup } from './project-rollup';
 import { projectWorkspace } from './project-workspace.svelte';
 import { couldNotLoad } from '$lib/loading';
+import { errorText } from '$lib/api/error-text';
 
 export class ProjectsModel {
   projects = $state<Project[]>([]);
@@ -100,8 +101,8 @@ export class ProjectsModel {
     try {
       const res = await createMilestone(projectId, { name, targetDate: (this.msTarget[projectId] ?? '').trim() || undefined });
       if (!res.ok) {
-        const body = (await res.json().catch(() => null)) as { error?: string } | null;
-        this.msError = { ...this.msError, [projectId]: body?.error ?? `Couldn't add that milestone (${res.status})` };
+        const body: unknown = await res.json().catch(() => null);
+        this.msError = { ...this.msError, [projectId]: errorText(body) ?? `Couldn't add that milestone (${res.status})` };
         return;
       }
       this.msName = { ...this.msName, [projectId]: '' };

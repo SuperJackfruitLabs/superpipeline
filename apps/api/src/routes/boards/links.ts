@@ -2,7 +2,7 @@
 import { isEnforcedKind, type LinkKind } from '../../board/links';
 import { cardLinksBody } from '../../card-links';
 import { addExternalLink, removeExternalLink } from '../../db/card-links-external';
-import { statusForCode, statusForExternalLinkCode } from '../errors';
+import { readJson, refuse, refusal } from '../errors';
 import type { BoardRequest } from './request';
 
 // POST /v1/boards/:id/links — declare an edge · DELETE — remove one (spec §3.4).
@@ -22,11 +22,13 @@ import type { BoardRequest } from './request';
 // design, so `kind` outside the known set — and now a malformed `toBoardId` — are refused as
 // a 400 before either is called, rather than being stored or crashing downstream.
 export async function linksEdit({ request, env, tenantId, boardId, user, stub }: BoardRequest): Promise<Response> {
-  const body = (await request.json().catch(() => null)) as
+  const sent = await readJson(request, { emptyAs: null });
+  if (!sent.ok) return sent.response;
+  const body = sent.value as
     | { fromCardId?: unknown; toCardId?: unknown; kind?: unknown; toBoardId?: unknown }
     | null;
   if (!body || typeof body !== 'object') {
-    return Response.json({ error: { message: 'Expected a JSON object.' } }, { status: 400 });
+    return refuse('INVALID_BODY', 'Expected a JSON object.');
   }
   if (
     typeof body.fromCardId !== 'string' ||
@@ -34,27 +36,13 @@ export async function linksEdit({ request, env, tenantId, boardId, user, stub }:
     typeof body.toCardId !== 'string' ||
     body.toCardId.trim() === ''
   ) {
-    return Response.json(
-      { error: { code: 'INVALID_LINK', message: 'fromCardId and toCardId are required, non-empty card ids' } },
-      { status: 400 },
-    );
+    return refuse('INVALID_LINK', 'fromCardId and toCardId are required, non-empty card ids');
   }
   if (body.kind !== 'blocks' && body.kind !== 'relates' && body.kind !== 'parent' && body.kind !== 'supersedes') {
-    return Response.json(
-      {
-        error: {
-          code: 'INVALID_LINK_KIND',
-          message: `kind must be 'blocks', 'relates', 'parent' or 'supersedes', got ${JSON.stringify(body.kind)}`,
-        },
-      },
-      { status: 400 },
-    );
+    return refuse('INVALID_LINK_KIND', `kind must be 'blocks', 'relates', 'parent' or 'supersedes', got ${JSON.stringify(body.kind)}`);
   }
   if (body.toBoardId !== undefined && (typeof body.toBoardId !== 'string' || body.toBoardId.trim() === '')) {
-    return Response.json(
-      { error: { code: 'INVALID_LINK', message: 'toBoardId must be a non-empty board id when present' } },
-      { status: 400 },
-    );
+    return refuse('INVALID_LINK', 'toBoardId must be a non-empty board id when present');
   }
   const kind: LinkKind = body.kind;
   const fromCardId = body.fromCardId;
@@ -69,24 +57,15 @@ export async function linksEdit({ request, env, tenantId, boardId, user, stub }:
     // saying why such an edge can never exist. Same code and message `addExternalLink` would
     // give, so POST and DELETE disagree about nothing.
     if (kind === 'parent') {
-      return Response.json(
-        {
-          error: {
-            code: 'PARENT_MUST_BE_SAME_BOARD',
-            message:
-              "A parent edge carries a rule — a parent does not advance while a child is open — and an advisory containment relationship is one that fails to contain. Use a project to group cards across boards.",
-          },
-        },
-        { status: 400 },
+      return refuse(
+        'PARENT_MUST_BE_SAME_BOARD',
+        'A parent edge carries a rule — a parent does not advance while a child is open — and an advisory containment relationship is one that fails to contain. Use a project to group cards across boards.',
       );
     }
     // `supersedes` names a card's replacement on its own board (P7); the advisory store has no
     // such kind and its D1 CHECK stays as it is.
     if (kind === 'supersedes') {
-      return Response.json(
-        { error: { code: 'INVALID_LINK_KIND', message: 'supersedes links cards on one board' } },
-        { status: 400 },
-      );
+      return refuse('INVALID_LINK_KIND', 'supersedes links cards on one board');
     }
     if (request.method === 'POST') {
       const result = await addExternalLink(env.DB, tenantId, {
@@ -94,7 +73,7 @@ export async function linksEdit({ request, env, tenantId, boardId, user, stub }:
         to: { boardId: toBoardId, cardId: toCardId },
         kind,
       });
-      if (!result.ok) return Response.json({ error: result }, { status: statusForExternalLinkCode(result.code) });
+      if (!result.ok) return refusal(result);
       return Response.json(
         { link: { fromBoardId: boardId, fromCardId, toBoardId, toCardId, kind, enforced: false as const } },
         { status: 201 },
@@ -105,10 +84,7 @@ export async function linksEdit({ request, env, tenantId, boardId, user, stub }:
   }
 
   if (kind === 'supersedes' && fromCardId === toCardId) {
-    return Response.json(
-      { error: { code: 'INVALID_LINK', message: 'a card cannot supersede itself' } },
-      { status: 400 },
-    );
+    return refuse('INVALID_LINK', 'a card cannot supersede itself');
   }
 
   // Same-board: Task 12's enforced edge on the DO, unchanged from Task 17a except that the
@@ -116,11 +92,11 @@ export async function linksEdit({ request, env, tenantId, boardId, user, stub }:
   // a caller never has to infer enforcement from whether `toBoardId` was sent.
   if (request.method === 'POST') {
     const result = await stub.addLink({ fromCardId, toCardId, kind, createdBy: user?.userId ?? null });
-    if (!result.ok) return Response.json({ error: result }, { status: statusForCode(result.code) });
+    if (!result.ok) return refusal(result);
     return Response.json({ link: { ...result.value, enforced: isEnforcedKind(kind) } }, { status: 201 });
   }
   const result = await stub.removeLink(fromCardId, toCardId, kind);
-  if (!result.ok) return Response.json({ error: result }, { status: statusForCode(result.code) });
+  if (!result.ok) return refusal(result);
   return Response.json({ ...result.value, enforced: isEnforcedKind(kind) });
 }
 

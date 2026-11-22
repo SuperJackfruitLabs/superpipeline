@@ -1,4 +1,4 @@
-import { stageWriteInput } from './checkpoint-policy-input';
+import { readStageWrite } from './checkpoint-policy-input';
 // The board collection: listing a workspace's boards and composing one.
 import { type StageDef, stageFieldError, boardIntroError } from '../../board/board-do';
 import { boardStub } from '../../board/stub';
@@ -7,6 +7,7 @@ import { newId } from '../../ids';
 import { isWorkspaceAdmin } from '../callers';
 import type { BoardCaller } from './request';
 import { registerStageCapabilities } from './stage-capabilities';
+import { refuse } from '../errors';
 
 /** GET /v1/boards — list the workspace's boards · POST /v1/boards — create one. */
 export async function boardCollection({ request, env, tenantId, user, agent }: BoardCaller): Promise<Response> {
@@ -29,7 +30,7 @@ export async function boardCollection({ request, env, tenantId, user, agent }: B
       }),
     });
   }
-  if (request.method !== 'POST') return Response.json({ error: 'method not allowed' }, { status: 405 });
+  if (request.method !== 'POST') return refuse('METHOD_NOT_ALLOWED', 'method not allowed');
 
   // Validated rather than asserted. The assertion `as { name: string; stages: StageDef[] }`
   // promised the compiler two fields the request had no obligation to carry, and the first
@@ -43,26 +44,23 @@ export async function boardCollection({ request, env, tenantId, user, agent }: B
   // What a *valid pipeline* is remains the board's decision — it normalises owners and
   // routing on the way in (`board-do.ts`) — and duplicating that here is how a route starts
   // refusing things the board would have accepted.
-  const body = (await stageWriteInput(request, env.PROPOSED_CHECKPOINT_POLICY === 'true').catch(() => null)) as { name?: unknown; stages?: unknown; intro?: unknown } | null;
+  const sent = await readStageWrite(request, env.PROPOSED_CHECKPOINT_POLICY === 'true');
+  if (!sent.ok) return sent.response;
+  const body = sent.value as { name?: unknown; stages?: unknown; intro?: unknown } | null;
   if (!body || typeof body !== 'object') {
-    return Response.json({ error: { message: 'Expected a JSON object.' } }, { status: 400 });
+    return refuse('INVALID_BODY', 'Expected a JSON object.');
   }
   if (typeof body.name !== 'string' || body.name.trim() === '') {
-    return Response.json({ error: { message: '`name` is required and must be a non-empty string.' } }, { status: 400 });
+    return refuse('INVALID_INPUT', '`name` is required and must be a non-empty string.');
   }
   if (!Array.isArray(body.stages) || body.stages.length === 0) {
-    return Response.json(
-      {
-        error: {
-          message:
-            '`stages` is required and must be a non-empty array. There is no `template` field — a client picks the stages and sends them.',
-        },
-      },
-      { status: 400 },
+    return refuse(
+      'INVALID_STAGES',
+      '`stages` is required and must be a non-empty array. There is no `template` field — a client picks the stages and sends them.',
     );
   }
   if (!body.stages.every((s) => s && typeof s === 'object' && typeof (s as { key?: unknown }).key === 'string')) {
-    return Response.json({ error: { message: 'Every stage needs a string `key`.' } }, { status: 400 });
+    return refuse('INVALID_STAGES', 'Every stage needs a string `key`.');
   }
   const name = body.name;
   const stages = body.stages as StageDef[];
@@ -85,7 +83,7 @@ export async function boardCollection({ request, env, tenantId, user, agent }: B
             returnStage: st.returnStage,
             ownerKind: st.ownerKind,
           }, env.PROPOSED_CHECKPOINT_POLICY === 'true');
-    if (bad) return Response.json({ error: { code: 'INVALID_STAGES', message: bad } }, { status: 400 });
+    if (bad) return refuse('INVALID_STAGES', bad);
   }
   // Who approves a bound subject is decision policy, a workspace admin's to set even on a new board
   // (charter 2026-11-08, decision 6): otherwise a member, or a composing agent, could create a
@@ -107,14 +105,11 @@ export async function boardCollection({ request, env, tenantId, user, agent }: B
       st.gate === 'checks' || st.checkpointPolicy !== undefined,
   );
   if (setsDeciders && !isWorkspaceAdmin(env, user)) {
-    return Response.json(
-      { error: { code: 'WORKSPACE_ADMIN_REQUIRED', message: 'only a workspace owner or admin can create a board whose stages bind an approval subject, name its deciders, set a decision timeout, require a quorum, hold approvals or name checks' } },
-      { status: 403 },
-    );
+    return refuse('WORKSPACE_ADMIN_REQUIRED', 'only a workspace owner or admin can create a board whose stages bind an approval subject, name its deciders, set a decision timeout, require a quorum, hold approvals or name checks');
   }
   if (body.intro !== undefined) {
     const bad = boardIntroError(body.intro);
-    if (bad) return Response.json({ error: { code: 'INVALID_INTRO', message: bad } }, { status: 400 });
+    if (bad) return refuse('INVALID_INTRO', bad);
   }
 
   /**
@@ -130,28 +125,12 @@ export async function boardCollection({ request, env, tenantId, user, agent }: B
   if (agent) {
     const owner = agent.queueing?.ownerUserId ?? null;
     if (!owner) {
-      return Response.json(
-        {
-          error: {
-            code: 'AGENT_HAS_NO_OWNER',
-            message: 'this agent has no owner, so there is nobody to be answerable for the board',
-          },
-        },
-        { status: 403 },
-      );
+      return refuse('AGENT_HAS_NO_OWNER', 'this agent has no owner, so there is nobody to be answerable for the board');
     }
     const ceiling = agent.queueing?.boardCeilingPerDay ?? 3;
     const already = await countBoardsComposedToday(env.DB, agent.agentId!);
     if (already >= ceiling) {
-      return Response.json(
-        {
-          error: {
-            code: 'BOARD_CEILING_REACHED',
-            message: `this agent has composed ${already} boards today, at its ceiling of ${ceiling}`,
-          },
-        },
-        { status: 429 },
-      );
+      return refuse('BOARD_CEILING_REACHED', `this agent has composed ${already} boards today, at its ceiling of ${ceiling}`);
     }
     composedByAgentId = agent.agentId;
     composedFor = owner;

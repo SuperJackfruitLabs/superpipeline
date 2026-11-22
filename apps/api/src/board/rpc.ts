@@ -186,6 +186,10 @@ export interface BoardStub {
     subjectId: string;
     digest: string;
     gateId: string;
+    /** The subject's own expiry, or '' when it names none. */
+    expiresAt: string;
+    /** The bound gate's status: `pending`, `resolved` or `cancelled`. */
+    gateStatus: string;
   }>>;
 
   /** A run as evidence for superwitness (contract C4). `NOT_INITIALIZED` means no such board here. */

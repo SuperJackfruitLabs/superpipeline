@@ -177,7 +177,7 @@ describe('token scopes are compared to the action attempted', () => {
       body: JSON.stringify({}),
     });
     expect(res.status).toBe(403);
-    expect((await res.json<{ error: string }>()).error).toContain('claim');
+    expect((await res.json<{ error: { code: string; message: string } }>()).error.message).toContain('claim');
   });
 
   it('lets a legacy claim-only token finish the work it took — the grandfather clause', async () => {

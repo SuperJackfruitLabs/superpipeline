@@ -3,6 +3,7 @@ import type { AgentScope } from '@superpipeline/contract';
 import { ApiError } from '../loading';
 import { hubAudienceToken } from '../hub-token';
 import { fetch, headers } from './client';
+import { errorText } from './error-text';
 
 export interface AgentToken {
   agent: { id: string; name: string; capabilities: string[] };
@@ -59,8 +60,8 @@ export async function createAgent(
   if (!res.ok) {
     // The Worker's message is the useful one — "already linked to a different
     // agent" is what an operator needs to read, not a bare status code.
-    const detail = await res.json().catch(() => null) as { error?: string } | null;
-    throw new Error(detail?.error ?? `createAgent failed (${res.status})`);
+    const detail: unknown = await res.json().catch(() => null);
+    throw new Error(errorText(detail) ?? `createAgent failed (${res.status})`);
   }
   return (await res.json()) as AgentToken;
 }
@@ -184,8 +185,8 @@ export async function issueAgentToken(
     ...(scopes ? { body: JSON.stringify({ scopes }) } : {}),
   });
   if (!res.ok) {
-    const detail = (await res.json().catch(() => null)) as { error?: string } | null;
-    throw new Error(detail?.error ?? `issueAgentToken failed (${res.status})`);
+    const detail: unknown = await res.json().catch(() => null);
+    throw new Error(errorText(detail) ?? `issueAgentToken failed (${res.status})`);
   }
   return (await res.json()) as { token: string; tokenId: string; scopes?: AgentScope[] };
 }

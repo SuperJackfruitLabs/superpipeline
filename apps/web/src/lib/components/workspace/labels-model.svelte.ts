@@ -5,6 +5,7 @@ import { loadState } from '$lib/loading.svelte';
 import { recolourLabel, removeLabel, renameLabel } from './label-manager';
 import { NEW_LABEL_COLOUR } from './workspace-words';
 import { workspaceCounts } from './workspace-counts.svelte';
+import { errorText } from '$lib/api/error-text';
 
 const deps = { updateLabel, deleteLabel };
 
@@ -32,8 +33,8 @@ export class LabelsModel {
   retry(): Promise<void> { return this.refresh(); }
 
   private async fail(res: Response, what: string): Promise<void> {
-    const body = (await res.json().catch(() => null)) as { error?: string } | null;
-    this.error = body?.error ?? `Couldn't ${what} (${res.status})`;
+    const body: unknown = await res.json().catch(() => null);
+    this.error = errorText(body) ?? `Couldn't ${what} (${res.status})`;
   }
 
   async rename(l: Label, name: string): Promise<void> {

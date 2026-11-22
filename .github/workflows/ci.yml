@@ -53,6 +53,10 @@ jobs:
       - run: pnpm typecheck
       - run: pnpm test
       - run: pnpm ci:test
+      # treaty.json against the pinned treaty release: what this product produces and consumes, and
+      # the pin. The api package's `treaty` bin, run from the repository root, where treaty.json is
+      # (`pnpm --filter … exec` would run it in apps/api).
+      - run: ./apps/api/node_modules/.bin/treaty verify
 
 
   # Type-aware oxlint held by a per-rule ratchet (scripts/lint.mjs, scripts/lint-baseline.json):

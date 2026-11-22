@@ -33,7 +33,7 @@ const API_LAYERS: readonly (readonly string[])[] = [
   // The Worker's log sink: imports nothing.
   ['log.ts'],
   // Foundations: no imports of the Worker's own code, or only each other's.
-  ['env.ts', 'ids.ts', 'json.ts', 'flat-error.ts', 'crypto', 'metering', 'telemetry'],
+  ['env.ts', 'ids.ts', 'json.ts', 'crypto', 'metering', 'telemetry'],
   // Pure helpers over the foundations: outbound delivery, reference parsing.
   ['push', 'references', 'approval-subject-kinds'],
   // The D1 catalog.
@@ -44,6 +44,8 @@ const API_LAYERS: readonly (readonly string[])[] = [
   ['superwitness'],
   // The Board Durable Object and its stub.
   ['board'],
+  // The one error body and the status each code carries.
+  ['api-errors.ts'],
   // Surfaces over the board: MCP, dev fixtures, cross-board links.
   ['mcp', 'dev', 'card-links.ts', 'card-eligibility.ts', 'card-reservation.ts'],
   ['service-routes.ts'],

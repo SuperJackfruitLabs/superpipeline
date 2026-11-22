@@ -5,7 +5,6 @@ import {
   returnStageError,
   routeOutcome,
 } from '../src/outcome';
-import { CompleteInput } from '../src/verbs';
 import { Stage } from '../src/entities';
 
 /**
@@ -27,18 +26,6 @@ const PLAIN = { key: 'build' };
 describe('the outcome vocabulary', () => {
   it('is exactly pass, changes-needed and needs-person', () => {
     expect(StageOutcome.options).toEqual(['pass', 'changes-needed', 'needs-person']);
-  });
-
-  it('rides on complete beside the handoff, and is optional so every existing caller is unchanged', () => {
-    expect(CompleteInput.safeParse({ runId: 'run_abc123', leaseEpoch: 0 }).success).toBe(true);
-    const r = CompleteInput.safeParse({
-      runId: 'run_abc123',
-      leaseEpoch: 0,
-      outcome: 'changes-needed',
-      findings: 'the migration drops a column the API still reads',
-    });
-    expect(r.success).toBe(true);
-    expect(CompleteInput.safeParse({ runId: 'run_abc123', leaseEpoch: 0, outcome: 'unsafe' }).success).toBe(false);
   });
 
   it('a stage may name where a failing verdict sends the card', () => {

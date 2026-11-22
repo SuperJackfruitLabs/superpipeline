@@ -1,11 +1,13 @@
 # 05 — Integration Surfaces
 
-The contract from [04 — Agent Contract](./04-agent-contract.md) is defined **once** (zod schemas
-in `packages/contract`) and projected onto multiple wire surfaces. This doc specifies those
+The contract from [04 — Agent Contract](./04-agent-contract.md) is defined **once** and projected
+onto multiple wire surfaces. The REST wire is treaty's `agent-work.v1`, `decisions.v1` and
+`approvals.v1` OpenAPI documents, which the API's tests check every exchange against;
+`packages/contract` holds the shared vocabulary (activity envelope, outcomes, scopes, A2A types). This doc specifies those
 surfaces and how heterogeneous external harnesses connect.
 
 ```
-                       packages/contract  (zod: verbs · activity envelope · A2A types)
+                       treaty agent-work.v1 · packages/contract (activity envelope · A2A types)
                                   │  one definition, many projections
         ┌─────────────────┬───────┴────────┬──────────────────┬─────────────────┐
         ▼                 ▼                ▼                  ▼                 ▼

@@ -1,6 +1,6 @@
 // Recurring cards.
 import type { JsonValue } from '../../board/board-do';
-import { statusForCode } from '../errors';
+import { readJson, refuse, refusal } from '../errors';
 import type { BoardRequest } from './request';
 
 // GET/POST /v1/boards/:id/schedules · PATCH/DELETE /v1/boards/:id/schedules/:scheduleId
@@ -28,7 +28,9 @@ export async function schedules({ request, user, stub }: BoardRequest, schedules
   }
 
   if (request.method === 'POST' && !scheduleId) {
-    const body = (await request.json().catch(() => null)) as {
+    const sent = await readJson(request, { emptyAs: null });
+    if (!sent.ok) return sent.response;
+    const body = sent.value as {
       title?: unknown;
       rule?: unknown;
       timezone?: unknown;
@@ -40,58 +42,34 @@ export async function schedules({ request, user, stub }: BoardRequest, schedules
       enabled?: unknown;
     } | null;
     if (!body || typeof body !== 'object') {
-      return Response.json({ error: { message: 'Expected a JSON object.' } }, { status: 400 });
+      return refuse('INVALID_BODY', 'Expected a JSON object.');
     }
     if (typeof body.title !== 'string' || body.title.trim() === '') {
-      return Response.json(
-        { error: { code: 'INVALID_SCHEDULE', message: '`title` is required and must be a non-empty string.' } },
-        { status: 400 },
-      );
+      return refuse('INVALID_SCHEDULE', '`title` is required and must be a non-empty string.');
     }
     // Shape only: whether the TEXT reads as a rule is `parseRule`'s job, and its message —
     // returned verbatim below — is the only sentence that tells the author what to type
     // instead. This just keeps a non-string off the path that would crash on it.
     if (typeof body.rule !== 'string' || body.rule.trim() === '') {
-      return Response.json(
-        { error: { code: 'INVALID_RULE', message: '`rule` is required and must be a string.' } },
-        { status: 400 },
-      );
+      return refuse('INVALID_RULE', '`rule` is required and must be a string.');
     }
     if (typeof body.timezone !== 'string' || body.timezone.trim() === '') {
-      return Response.json(
-        { error: { code: 'INVALID_TIMEZONE', message: '`timezone` is required and must be a string.' } },
-        { status: 400 },
-      );
+      return refuse('INVALID_TIMEZONE', '`timezone` is required and must be a string.');
     }
     if (body.overlap !== undefined && body.overlap !== 'skip' && body.overlap !== 'allow') {
-      return Response.json(
-        { error: { code: 'INVALID_SCHEDULE', message: `overlap must be "skip" or "allow", not ${JSON.stringify(body.overlap)}` } },
-        { status: 400 },
-      );
+      return refuse('INVALID_SCHEDULE', `overlap must be "skip" or "allow", not ${JSON.stringify(body.overlap)}`);
     }
     if (body.stageKey !== undefined && body.stageKey !== null && typeof body.stageKey !== 'string') {
-      return Response.json(
-        { error: { code: 'INVALID_SCHEDULE', message: '`stageKey` must be a string or null.' } },
-        { status: 400 },
-      );
+      return refuse('INVALID_SCHEDULE', '`stageKey` must be a string or null.');
     }
     if (body.priority !== undefined && typeof body.priority !== 'number') {
-      return Response.json(
-        { error: { code: 'INVALID_SCHEDULE', message: '`priority` must be a number.' } },
-        { status: 400 },
-      );
+      return refuse('INVALID_SCHEDULE', '`priority` must be a number.');
     }
     if (body.labels !== undefined && (!Array.isArray(body.labels) || body.labels.some((l) => typeof l !== 'string'))) {
-      return Response.json(
-        { error: { code: 'INVALID_SCHEDULE', message: '`labels` must be an array of strings.' } },
-        { status: 400 },
-      );
+      return refuse('INVALID_SCHEDULE', '`labels` must be an array of strings.');
     }
     if (body.enabled !== undefined && typeof body.enabled !== 'boolean') {
-      return Response.json(
-        { error: { code: 'INVALID_SCHEDULE', message: '`enabled` must be a boolean.' } },
-        { status: 400 },
-      );
+      return refuse('INVALID_SCHEDULE', '`enabled` must be a boolean.');
     }
     // `spec` was the one field here with no shape guard, which reopens exactly the bug the
     // guards above exist for: `board-do.ts` spreads the parsed spec as
@@ -100,10 +78,7 @@ export async function schedules({ request, user, stub }: BoardRequest, schedules
     // being rejected. Reject a non-object (or null, or an array) here, before it ever reaches
     // that spread.
     if (body.spec !== undefined && (typeof body.spec !== 'object' || body.spec === null || Array.isArray(body.spec))) {
-      return Response.json(
-        { error: { code: 'INVALID_SCHEDULE', message: '`spec` must be a JSON object.' } },
-        { status: 400 },
-      );
+      return refuse('INVALID_SCHEDULE', '`spec` must be a JSON object.');
     }
 
     const result = await stub.createSchedule({
@@ -127,12 +102,14 @@ export async function schedules({ request, user, stub }: BoardRequest, schedules
       ...(body.spec !== undefined ? { spec: body.spec } : {}),
       ...(body.enabled !== undefined ? { enabled: body.enabled } : {}),
     });
-    if (!result.ok) return Response.json({ error: result }, { status: statusForCode(result.code) });
+    if (!result.ok) return refusal(result);
     return Response.json({ schedule: result.value }, { status: 201 });
   }
 
   if (scheduleId && request.method === 'PATCH') {
-    const body = (await request.json().catch(() => null)) as {
+    const sent = await readJson(request, { emptyAs: null });
+    if (!sent.ok) return sent.response;
+    const body = sent.value as {
       title?: unknown;
       rule?: unknown;
       timezone?: unknown;
@@ -144,62 +121,35 @@ export async function schedules({ request, user, stub }: BoardRequest, schedules
       enabled?: unknown;
     } | null;
     if (!body || typeof body !== 'object') {
-      return Response.json({ error: { message: 'Expected a JSON object.' } }, { status: 400 });
+      return refuse('INVALID_BODY', 'Expected a JSON object.');
     }
     if (body.title !== undefined && (typeof body.title !== 'string' || body.title.trim() === '')) {
-      return Response.json(
-        { error: { code: 'INVALID_SCHEDULE', message: '`title` must be a non-empty string.' } },
-        { status: 400 },
-      );
+      return refuse('INVALID_SCHEDULE', '`title` must be a non-empty string.');
     }
     if (body.rule !== undefined && (typeof body.rule !== 'string' || body.rule.trim() === '')) {
-      return Response.json(
-        { error: { code: 'INVALID_RULE', message: '`rule` must be a string.' } },
-        { status: 400 },
-      );
+      return refuse('INVALID_RULE', '`rule` must be a string.');
     }
     if (body.timezone !== undefined && (typeof body.timezone !== 'string' || body.timezone.trim() === '')) {
-      return Response.json(
-        { error: { code: 'INVALID_TIMEZONE', message: '`timezone` must be a string.' } },
-        { status: 400 },
-      );
+      return refuse('INVALID_TIMEZONE', '`timezone` must be a string.');
     }
     if (body.overlap !== undefined && body.overlap !== 'skip' && body.overlap !== 'allow') {
-      return Response.json(
-        { error: { code: 'INVALID_SCHEDULE', message: `overlap must be "skip" or "allow", not ${JSON.stringify(body.overlap)}` } },
-        { status: 400 },
-      );
+      return refuse('INVALID_SCHEDULE', `overlap must be "skip" or "allow", not ${JSON.stringify(body.overlap)}`);
     }
     if (body.stageKey !== undefined && body.stageKey !== null && typeof body.stageKey !== 'string') {
-      return Response.json(
-        { error: { code: 'INVALID_SCHEDULE', message: '`stageKey` must be a string or null.' } },
-        { status: 400 },
-      );
+      return refuse('INVALID_SCHEDULE', '`stageKey` must be a string or null.');
     }
     if (body.priority !== undefined && typeof body.priority !== 'number') {
-      return Response.json(
-        { error: { code: 'INVALID_SCHEDULE', message: '`priority` must be a number.' } },
-        { status: 400 },
-      );
+      return refuse('INVALID_SCHEDULE', '`priority` must be a number.');
     }
     if (body.labels !== undefined && (!Array.isArray(body.labels) || body.labels.some((l) => typeof l !== 'string'))) {
-      return Response.json(
-        { error: { code: 'INVALID_SCHEDULE', message: '`labels` must be an array of strings.' } },
-        { status: 400 },
-      );
+      return refuse('INVALID_SCHEDULE', '`labels` must be an array of strings.');
     }
     if (body.enabled !== undefined && typeof body.enabled !== 'boolean') {
-      return Response.json(
-        { error: { code: 'INVALID_SCHEDULE', message: '`enabled` must be a boolean.' } },
-        { status: 400 },
-      );
+      return refuse('INVALID_SCHEDULE', '`enabled` must be a boolean.');
     }
     // Same shape guard as the create route — see its comment.
     if (body.spec !== undefined && (typeof body.spec !== 'object' || body.spec === null || Array.isArray(body.spec))) {
-      return Response.json(
-        { error: { code: 'INVALID_SCHEDULE', message: '`spec` must be a JSON object.' } },
-        { status: 400 },
-      );
+      return refuse('INVALID_SCHEDULE', '`spec` must be a JSON object.');
     }
 
     const result = await stub.updateSchedule(scheduleId, {
@@ -213,15 +163,15 @@ export async function schedules({ request, user, stub }: BoardRequest, schedules
       ...(body.spec !== undefined ? { spec: body.spec } : {}),
       ...(body.enabled !== undefined ? { enabled: body.enabled } : {}),
     });
-    if (!result.ok) return Response.json({ error: result }, { status: statusForCode(result.code) });
+    if (!result.ok) return refusal(result);
     return Response.json({ schedule: result.value });
   }
 
   if (scheduleId && request.method === 'DELETE') {
     const result = await stub.deleteSchedule(scheduleId);
-    if (!result.ok) return Response.json({ error: result }, { status: statusForCode(result.code) });
+    if (!result.ok) return refusal(result);
     return new Response(null, { status: 204 });
   }
 
-  return Response.json({ error: 'method not allowed' }, { status: 405 });
+  return refuse('METHOD_NOT_ALLOWED', 'method not allowed');
 }

@@ -182,10 +182,10 @@ describe('GET /v1/boards/:id/runs/:runId/evidence', () => {
       const t = await hubToken();
       let res = await evidence(boardId, 'run_doesnotexist01', t);
       expect(res.status).toBe(404);
-      expect(await res.json()).toEqual({ error: { code: 'RUN_NOT_FOUND' } });
+      expect(await res.json()).toMatchObject({ error: { code: 'RUN_NOT_FOUND', message: expect.any(String) } });
       res = await evidence('brd_0000000000000000', 'run_doesnotexist01', t);
       expect(res.status).toBe(404);
-      expect(await res.json()).toEqual({ error: { code: 'BOARD_NOT_FOUND' } });
+      expect(await res.json()).toMatchObject({ error: { code: 'BOARD_NOT_FOUND', message: expect.any(String) } });
     });
   });
 
@@ -194,7 +194,7 @@ describe('GET /v1/boards/:id/runs/:runId/evidence', () => {
       const { boardId, runId } = await aRun({ tenant: OTHER_TENANT });
       const res = await evidence(boardId, runId, await hubToken());
       expect(res.status).toBe(404);
-      expect(await res.json()).toEqual({ error: { code: 'BOARD_NOT_FOUND' } });
+      expect(await res.json()).toMatchObject({ error: { code: 'BOARD_NOT_FOUND', message: expect.any(String) } });
     });
   });
 

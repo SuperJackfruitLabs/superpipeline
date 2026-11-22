@@ -12,11 +12,12 @@ import {
   agentsOn, blockersOf, cardsByBoard, computedHealth, milestoneStatus, spendByBoard, todayIso, type MilestoneStatus,
 } from './project-detail';
 import { projectWorkspace } from './project-workspace.svelte';
+import { errorText } from '$lib/api/error-text';
 
 async function refusal(res: Response, fallback: string): Promise<string | null> {
   if (res.ok) return null;
-  const body = (await res.json().catch(() => null)) as { error?: string } | null;
-  return body?.error ?? `${fallback} (${res.status})`;
+  const body: unknown = await res.json().catch(() => null);
+  return errorText(body) ?? `${fallback} (${res.status})`;
 }
 
 export class ProjectPageModel {

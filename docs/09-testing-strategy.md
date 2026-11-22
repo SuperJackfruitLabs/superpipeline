@@ -23,9 +23,10 @@ This doc defines the method, the layers, and the suites that must exist.
 4. Refactor with the test as a safety net.
 5. The spec, the test, and the code stay in lockstep — a spec change starts with a test change.
 
-**Contract-first**: the zod schemas in `packages/contract` are the single source of truth for
-shapes. Tests import them; runtime validates against them; we never hand-redefine a payload in a
-test.
+**Contract-first**: the wire shapes of the routes other products call are treaty's HTTP contracts
+(`agent-work.v1`, `decisions.v1`, `approvals.v1`); `test/setup.ts` checks every request and
+response a test makes on those routes against them. The zod schemas in `packages/contract` are the
+shared vocabulary. We never hand-redefine a payload in a test.
 
 ## 2. Test pyramid
 

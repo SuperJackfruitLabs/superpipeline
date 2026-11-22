@@ -3,6 +3,7 @@ import { addMember, setMemberRole, removeMember, type Member, type Role } from '
 import { app } from '$lib/stores/app.svelte';
 import { loadState } from '$lib/loading.svelte';
 import { crewLists, workspaceCounts } from './workspace-counts.svelte';
+import { errorText } from '$lib/api/error-text';
 
 export class PeopleModel {
   // Opens on the list this tab last read (crewLists), refreshed behind it.
@@ -32,8 +33,8 @@ export class PeopleModel {
   retry(): Promise<void> { return this.refresh(); }
 
   private async fail(res: Response, fallback: string): Promise<void> {
-    const body = (await res.json().catch(() => null)) as { error?: string } | null;
-    this.error = body?.error ?? `${fallback} (${res.status})`;
+    const body: unknown = await res.json().catch(() => null);
+    this.error = errorText(body) ?? `${fallback} (${res.status})`;
   }
 
   /** A blank New person form, for each opening of the dialog. */

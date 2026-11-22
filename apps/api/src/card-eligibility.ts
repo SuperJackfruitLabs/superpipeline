@@ -3,7 +3,7 @@ import type { BoardStub } from './board/board-do';
 import { listAgents } from './db/catalog';
 import { expand, listImplications } from './db/implications';
 import type { Env } from './env';
-import { flatError } from './flat-error';
+import { refusal } from './api-errors';
 
 /**
  * The eligibility body for one card: every agent in the board's workspace (superpipeline keeps no
@@ -26,6 +26,6 @@ export async function eligibilityResponse(env: Env, tenantId: string, stub: Boar
       maxConcurrency: a.concurrency,
     })),
   });
-  if (!result.ok) return Response.json({ error: flatError(result) }, { status: 404 });
+  if (!result.ok) return refusal(result);
   return Response.json(result.value);
 }

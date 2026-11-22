@@ -242,6 +242,18 @@ describe('a publisher service confirming automatic-delivery authority', () => {
       expect(await mismatch.json()).toMatchObject({ approved: false, digest: requestDigest, gateId: gate.id });
 
       const deliveryPath = `/v1/boards/${boardId}/approval-subjects/${gate.approvalSubject.id}/delivery`;
+      // Malformed JSON is 400 INVALID_JSON on both service routes; a live URL that is not https is
+      // INVALID_LIVE_URL at its own status, 400 (both were a blanket 403 or a body read as null).
+      for (const path of [`/v1/boards/${boardId}/approval-subjects/${gate.approvalSubject.id}/verify`, deliveryPath]) {
+        const malformed = await SELF.fetch(`https://api.test${path}`, {
+          method: 'POST', headers: { Authorization: `Bearer ${await hubToken({ scope: 'approvals:read approvals:write' })}`, 'content-type': 'application/json' }, body: '{"expectedDigest":',
+        });
+        expect(malformed.status).toBe(400);
+        expect((await malformed.json<{ error: { code: string } }>()).error.code).toBe('INVALID_JSON');
+      }
+      const notHttps = await post(deliveryPath, await hubToken({ scope: 'approvals:write' }), { expectedDigest: requestDigest, liveUrl: 'http://x.com/fixture_account/status/123' });
+      expect(notHttps.status).toBe(400);
+      expect((await notHttps.json<{ error: { code: string } }>()).error.code).toBe('INVALID_LIVE_URL');
       expect((await post(deliveryPath, await hubToken({ scope: 'approvals:read' }), {
         expectedDigest: requestDigest,
         liveUrl: 'https://x.com/fixture_account/status/123',
@@ -274,7 +286,8 @@ describe('a publisher service confirming automatic-delivery authority', () => {
         expectedDigest: requestDigest,
         liveUrl: 'https://x.com/fixture_account/status/456',
       });
-      expect(conflict.status).toBe(403);
+      // A conflict with the recorded delivery, at its code's own status (was a blanket 403).
+      expect(conflict.status).toBe(409);
       const events = await runInDurableObject(
         env.BOARD_DO.get(env.BOARD_DO.idFromName(`${TENANT}:${boardId}`)),
         async (_board, storageState) => storageState.storage.sql.exec(
@@ -296,7 +309,7 @@ describe('a publisher service confirming automatic-delivery authority', () => {
       expect((await post(deliveryPath, await hubToken({ scope: 'approvals:write' }), {
         expectedDigest: requestDigest,
         liveUrl: 'https://x.com/fixture_account/status/123',
-      })).status).toBe(403);
+      })).status).toBe(409);
     });
   });
 });
@@ -730,7 +743,7 @@ describe('a service reading a card\'s checks with gates:read (Organization plane
       const { boardId, cardId } = await seedBoardWithChecks(tenant);
       const r = await get(`/v1/boards/${boardId}/cards/${cardId}/checks`, await gateReader({ org: OTHER_ORG }));
       // The board is not found in the caller's workspace: refused before its board is asked at all.
-      expect({ status: r.status, body: await r.json() }).toEqual({ status: 404, body: { error: 'board not found' } });
+      expect({ status: r.status, body: await r.json() }).toEqual({ status: 404, body: { error: { code: 'BOARD_NOT_FOUND', message: 'board not found' } } });
     });
   });
 
@@ -758,7 +771,7 @@ describe('a service reading a card\'s checks with gates:read (hub issuer)', () =
       const t = await hubToken({ scope: 'gates:read' });
       expect((await get(`/v1/boards/${own.boardId}/cards/${own.cardId}/checks`, t)).status).toBe(200);
       const foreignRead = await get(`/v1/boards/${foreign.boardId}/cards/${foreign.cardId}/checks`, t);
-      expect({ status: foreignRead.status, body: await foreignRead.json() }).toEqual({ status: 404, body: { error: 'board not found' } });
+      expect({ status: foreignRead.status, body: await foreignRead.json() }).toEqual({ status: 404, body: { error: { code: 'BOARD_NOT_FOUND', message: 'board not found' } } });
       expect((await get(`/v1/boards/${own.boardId}/cards/${own.cardId}/checks`, await hubToken())).status).toBe(403);
     });
   });

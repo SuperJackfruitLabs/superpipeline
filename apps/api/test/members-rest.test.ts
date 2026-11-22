@@ -49,7 +49,7 @@ describe('roles decide what a person may do', () => {
 
     const write = await SELF.fetch(`https://api.test/v1/boards/${boardId}/cards`, { method: 'POST', headers: as('usr_viewer'), body: JSON.stringify({ title: 'x' }) });
     expect(write.status).toBe(403);
-    expect((await write.json<{ error: string }>()).error).toContain('viewer');
+    expect((await write.json<{ error: { code: string; message: string } }>()).error.message).toContain('viewer');
   });
 
   it('lets a member work the board but not restaff it', async () => {
@@ -103,7 +103,7 @@ describe('roles decide what a person may do', () => {
       headers: { 'X-Tenant-Id': TENANT, 'X-User-Id': 'usr_stranger', 'Content-Type': 'application/json' },
     });
     expect(res.status).toBe(403);
-    expect((await res.json<{ error: string }>()).error).toContain('not a member');
+    expect((await res.json<{ error: { code: string; message: string } }>()).error.message).toContain('not a member');
   });
 });
 
