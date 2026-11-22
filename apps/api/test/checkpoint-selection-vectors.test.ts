@@ -14,6 +14,7 @@ import {
   isCardRepositories, isCheckpointSelection, narrowCheckpointPolicy, parseCardCheckpointPolicy,
   type CardCheckpointPolicy, type CardRepositories,
 } from '../src/board/checkpoint-selection';
+import { parseCheckpointPolicy } from '../src/board/checkpoint-proposal';
 import { cardRepositoriesInput } from '../src/routes/fields';
 import vectors from './fixtures/checkpoint-settlement/selection.json';
 import canonical from './fixtures/checkpoint-settlement/canonical.json';
@@ -22,50 +23,78 @@ const V1 = 'superpipeline.checkpoint-claim.v1';
 const V2 = 'superpipeline.checkpoint-claim.v2';
 const stages: Record<string, unknown> = vectors.stages;
 let serial = 0;
+/**
+ * A stage policy value handed to validation as it came off the wire: unparsed, which is what the
+ * write path sees. The validators take `unknown`; this only satisfies the stage field's type.
+ */
+function parseUnchecked(value: unknown): CardCheckpointPolicy {
+  const holder: { cardCheckpointPolicy?: CardCheckpointPolicy } = {};
+  Reflect.set(holder, 'cardCheckpointPolicy', value);
+  if (!holder.cardCheckpointPolicy) throw new Error('no policy');
+  return holder.cardCheckpointPolicy;
+}
+
+const encode = (value: unknown) => new TextEncoder().encode(JSON.stringify(value));
+/** A vector's card choice as the board takes it, or undefined when it names none. */
+function choiceOf(card: { repositories?: string[]; primaryRepository?: string }): CardRepositories | undefined {
+  if (!card.repositories) return undefined;
+  return { repositories: card.repositories, ...(card.primaryRepository ? { primaryRepository: card.primaryRepository } : {}) };
+}
+/** The vector stage as a board stage: a v2 policy in `cardCheckpointPolicy`, a v1 one in `checkpointPolicy`. */
+function vectorStage(name: string): StageDef {
+  const policy = stages[name];
+  const stage: StageDef = { key: 'test', name: 'Test', order: 0, ownerKind: 'capability', owner: 'code' };
+  const isV2 = typeof policy === 'object' && policy !== null && 'version' in policy && policy.version === 'superpipeline.checkpoint-policy.v2';
+  return isV2 ? { ...stage, cardCheckpointPolicy: parseCardCheckpointPolicy(encode(policy)) } : { ...stage, checkpointPolicy: parseCheckpointPolicy(encode(policy)) };
+}
+function canonicalCase(name: string) {
+  const found = canonical.cases.find((c) => c.name === name);
+  if (!found) throw new Error(`no canonical case ${name}`);
+  return found;
+}
 
 /** A board whose one stage carries the named vector stage policy, in its v1 or v2 field. */
 async function onStage(name: string, check: (board: BoardDO, state: DurableObjectState) => Promise<void>) {
   const id = `brd_selectionvector${serial++}`;
   await runInDurableObject(env.BOARD_DO.get(env.BOARD_DO.idFromName(id)), async (board, state) => {
     if (!(board instanceof BoardDO)) throw new Error('expected BoardDO');
-    const policy = stages[name] as { version: string };
-    const stage: StageDef = { key: 'test', name: 'Test', order: 0, ownerKind: 'capability', owner: 'code' };
-    if (policy.version === 'superpipeline.checkpoint-policy.v2') stage.cardCheckpointPolicy = policy as CardCheckpointPolicy;
-    else stage.checkpointPolicy = policy as StageDef['checkpointPolicy'];
-    await initPrivateCheckpointBoard(board, { id, tenantId: 'tnt_selectionvector', name: 'Vectors', stages: [stage] });
+    await initPrivateCheckpointBoard(board, { id, tenantId: 'tnt_selectionvector', name: 'Vectors', stages: [vectorStage(name)] });
     try { await check(board, state); } finally { await state.storage.deleteAlarm(); }
   });
 }
+const claimant = { agentId: 'agt_example', capabilities: ['code'], checkpointProtocol: V1, checkpointProtocols: [V1, V2] };
+const claimed = vectors.narrowing.flatMap((v) => (v.expect ? [[v.name, v.stage, v.card, v.expect] as const] : []));
+const refusedOnEntry = vectors.narrowing.flatMap((v) => (v.refuse && v.refuse !== 'needs-person' ? [[v.name, v.stage, v.card, v.refuse] as const] : []));
+const waits = vectors.narrowing.flatMap((v) => (v.refuse === 'needs-person' ? [[v.name, v.stage] as const] : []));
 
 describe('narrowing vectors, through a real claim', () => {
-  it.each(vectors.narrowing.map((v) => [v.name, v] as const))('%s', (_name, vector) => onStage(vector.stage, async (board, state) => {
-    const card: Partial<CardRepositories> = vector.card;
-    const choice = card.repositories ? { repositories: card.repositories, ...(card.primaryRepository ? { primaryRepository: card.primaryRepository } : {}) } : undefined;
+  it.each(claimed)('%s', (_name, stage, card, expected) => onStage(stage, async (board) => {
+    const choice = choiceOf(card);
     const made = await board.createCard({ title: 'Vector', ownerUserId: 'usr_vector', ...(choice ? { repositories: choice } : {}) });
-    if ('refuse' in vector && vector.refuse !== 'needs-person') {
-      // A choice the allowlist cannot narrow to is refused on entry, in the vector's word, and
-      // nothing is stored.
-      expect(made).toMatchObject({ ok: false, code: 'REPOSITORY_CHOICE_REFUSED', detail: { reason: vector.refuse } });
-      expect(state.storage.sql.exec('SELECT COUNT(*) AS n FROM cards').one().n).toBe(0);
-      return;
-    }
-    if (!made.ok) throw new Error(made.message);
-    const claim = await board.claim({ agentId: 'agt_example', capabilities: ['code'], checkpointProtocol: V1, checkpointProtocols: [V1, V2] });
-    if ('refuse' in vector) {
-      // needs-person: parked, visibly, and never benched with the whole allowlist.
-      expect(claim).toMatchObject({ claimed: false });
-      expect(state.storage.sql.exec('SELECT state, needs_human_json FROM cards').one()).toMatchObject({ state: 'input-required' });
-      expect(JSON.parse(String(state.storage.sql.exec('SELECT needs_human_json FROM cards').one().needs_human_json))).toMatchObject({ reason: 'blocked' });
-      expect(state.storage.sql.exec('SELECT * FROM runs').toArray()).toEqual([]);
-      return;
-    }
+    expect(made.ok).toBe(true);
+    const claim = await board.claim(claimant);
     if (!claim.claimed || !claim.checkpointClaim) throw new Error('expected a checkpoint claim');
-    expect(claim.checkpointClaim.policy).toEqual(vector.expect.policy);
-    expect(claim.checkpointClaim.policyDigest).toBe(vector.expect.policyDigest);
-    if ('selection' in vector.expect) expect(claim.checkpointClaim.selection).toEqual(vector.expect.selection);
-    else expect(claim.checkpointClaim).not.toHaveProperty('selection');
+    expect(claim.checkpointClaim.policy).toEqual(expected.policy);
+    expect(claim.checkpointClaim.policyDigest).toBe(expected.policyDigest);
+    // A v2 stage's claim carries exactly the vector's selection; a v1 stage's carries none.
+    expect(claim.checkpointClaim.selection).toEqual('selection' in expected ? expected.selection : undefined);
     // The claimant never sees the internal copy of the stage policy.
     expect(claim.checkpointClaim).not.toHaveProperty('stagePolicy');
+  }));
+  it.each(refusedOnEntry)('%s is refused on entry and stores nothing', (_name, stage, card, refuse) => onStage(stage, async (board, state) => {
+    const choice = choiceOf(card);
+    expect(await board.createCard({ title: 'Vector', ownerUserId: 'usr_vector', ...(choice ? { repositories: choice } : {}) }))
+      .toMatchObject({ ok: false, code: 'REPOSITORY_CHOICE_REFUSED', detail: { reason: refuse } });
+    expect(state.storage.sql.exec('SELECT COUNT(*) AS n FROM cards').one().n).toBe(0);
+  }));
+  it.each(waits)('%s: parked, visibly, and never benched with the whole allowlist', (_name, stage) => onStage(stage, async (board, state) => {
+    const made = await board.createCard({ title: 'Vector', ownerUserId: 'usr_vector' });
+    expect(made.ok).toBe(true);
+    expect(await board.claim(claimant)).toMatchObject({ claimed: false });
+    expect(state.storage.sql.exec('SELECT state FROM cards').one().state).toBe('input-required');
+    const parked = await board.getCardView(made.ok ? made.value.id : '');
+    expect(parked).toMatchObject({ ok: true, value: { needsHuman: { reason: 'blocked' } } });
+    expect(state.storage.sql.exec('SELECT * FROM runs').toArray()).toEqual([]);
   }));
 
   it('a v1 stage gives a v1-only claimant the same claim it gives a v2 one', () => onStage('fixed', async (board) => {
@@ -79,7 +108,7 @@ describe('narrowing vectors, through a real claim', () => {
 
 describe('stage policy relations, through stage validation', () => {
   it.each(vectors.policyRelations.map((v) => [v.name, v] as const))('%s', (_name, vector) => {
-    expect(stageCheckpointFieldError({ cardCheckpointPolicy: vector.policy as CardCheckpointPolicy }, true))
+    expect(stageCheckpointFieldError({ cardCheckpointPolicy: parseUnchecked(vector.policy) }, true))
       .toBe(`cardCheckpointPolicy is invalid: ${vector.refuse}`);
   });
   it.each(vectors.policyRelations.map((v) => [v.name, v] as const))('%s refuses board creation', (_name, vector) => {
@@ -87,7 +116,7 @@ describe('stage policy relations, through stage validation', () => {
     return runInDurableObject(env.BOARD_DO.get(env.BOARD_DO.idFromName(id)), async (board) => {
       if (!(board instanceof BoardDO)) throw new Error('expected BoardDO');
       await expect(initPrivateCheckpointBoard(board, { id, tenantId: 'tnt_selectionvector', name: 'Relation', stages: [
-        { key: 'test', name: 'Test', order: 0, ownerKind: 'capability', owner: 'code', cardCheckpointPolicy: vector.policy as CardCheckpointPolicy },
+        { key: 'test', name: 'Test', order: 0, ownerKind: 'capability', owner: 'code', cardCheckpointPolicy: parseUnchecked(vector.policy) },
       ] })).rejects.toThrow(vector.refuse);
       expect((await board.getState()).boardId).toBeNull();
     });
@@ -96,10 +125,10 @@ describe('stage policy relations, through stage validation', () => {
 
 describe('structural vectors', () => {
   it.each(vectors.structural.policy.accept.map((c) => [c.name, c.body] as const))('policy accepts %s', (_name, body) => {
-    expect(stageCheckpointFieldError({ cardCheckpointPolicy: body as CardCheckpointPolicy }, true)).toBeNull();
+    expect(stageCheckpointFieldError({ cardCheckpointPolicy: parseUnchecked(body) }, true)).toBeNull();
   });
   it.each(vectors.structural.policy.reject.map((c) => [c.name, c.body] as const))('policy refuses %s', (_name, body) => {
-    expect(stageCheckpointFieldError({ cardCheckpointPolicy: body as CardCheckpointPolicy }, true)).not.toBeNull();
+    expect(stageCheckpointFieldError({ cardCheckpointPolicy: parseUnchecked(body) }, true)).not.toBeNull();
   });
   // A card's choice reaches the board through the route's reader: the same body a create sends.
   it.each(vectors.structural.card.accept.map((c) => [c.name, c.body] as const))('card choice accepts %s', (_name, body) => {
@@ -110,10 +139,12 @@ describe('structural vectors', () => {
   // vectors state. `{}` and a stray field are object-level cases, so they are the schema's.
   it.each(vectors.structural.card.reject.map((c) => [c.name, c.body] as const))('card choice refuses %s', (_name, body) => {
     expect(isCardRepositories(body)).toBe(false);
-    const sent: { repositories?: unknown; primaryRepository?: unknown } = body;
-    if (sent.repositories !== undefined || sent.primaryRepository !== undefined) {
-      if (Object.keys(body).every((k) => k === 'repositories' || k === 'primaryRepository')) expect(cardRepositoriesInput(sent, false).ok).toBe(false);
-    }
+  });
+  // Those the route can be sent as card fields, it refuses too.
+  const asFields = vectors.structural.card.reject.filter((c) => Object.keys(c.body).length > 0 &&
+    Object.keys(c.body).every((k) => k === 'repositories' || k === 'primaryRepository'));
+  it.each(asFields.map((c) => [c.name, c.body] as const))('the card route refuses %s', (_name, body) => {
+    expect(cardRepositoriesInput(body, false).ok).toBe(false);
   });
   it.each(vectors.structural.selection.accept.map((c) => [c.name, c.body] as const))('selection accepts %s', (_name, body) => {
     expect(isCheckpointSelection(body)).toBe(true);
@@ -124,18 +155,14 @@ describe('structural vectors', () => {
 });
 
 describe('canonical vectors', () => {
-  const entry = (name: string) => {
-    const found = canonical.cases.find((c) => c.name === name);
-    if (!found) throw new Error(`no canonical case ${name}`);
-    return found;
-  };
+  const entry = canonicalCase;
   it.each(['policy-v2', 'selection', 'narrowed-policy', 'card-repositories'])('%s canonicalises and digests as treaty does', async (name) => {
     const c = entry(name);
     expect(canonicalCheckpoint(c.value)).toBe(c.canonical);
     expect(await checkpointDigest(c.value)).toBe(c.sha256);
   });
   it('the narrowed policy is what narrowing the v2 policy by api and app gives', async () => {
-    const stage = parseCardCheckpointPolicy(new TextEncoder().encode(JSON.stringify(entry('policy-v2').value)));
+    const stage = parseCardCheckpointPolicy(encode(entry('policy-v2').value));
     const narrowed = narrowCheckpointPolicy(stage, { repositories: ['api', 'app'] });
     if (!narrowed.ok) throw new Error(narrowed.refusal);
     expect(canonicalCheckpoint(narrowed.policy)).toBe(entry('narrowed-policy').canonical);

@@ -10,7 +10,7 @@ import { BoardDO } from '../src/board/board-do';
 import type { BoardContext } from '../src/board/context';
 import { boards } from '../src/routes/boards/entry';
 import { ensureOrgTenant } from '../src/auth/org-tenancy';
-import type { CardCheckpointPolicy } from '../src/board/checkpoint-selection';
+import { parseCardCheckpointPolicy } from '../src/board/checkpoint-selection';
 import corpus from './fixtures/checkpoint-settlement/cases.json';
 import vectors from './fixtures/checkpoint-settlement/selection.json';
 import { setupCatalog } from './helpers/catalog';
@@ -20,7 +20,7 @@ import { withOrgPlane, planeEnv, planeToken, SERVICE, ORG } from './helpers/org-
 beforeAll(setupCatalog);
 afterEach(quietBoards);
 let serial = 0;
-const stagePolicy: CardCheckpointPolicy = { ...(vectors.stages.chooses as CardCheckpointPolicy), reporterPrincipalId: SERVICE };
+const stagePolicy = parseCardCheckpointPolicy(new TextEncoder().encode(JSON.stringify({ ...vectors.stages.chooses, reporterPrincipalId: SERVICE })));
 const subset = vectors.narrowing.find((v) => v.name === 'card-chooses-a-subset');
 
 async function token(scope = 'checkpoints:submit') {

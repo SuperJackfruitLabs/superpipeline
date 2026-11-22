@@ -11,24 +11,27 @@ import type { BoardContext } from '../src/board/context';
 import type { VerifiedCheckpointReporter } from '../src/auth/checkpoint-reporter';
 import { readCheckpointClaim } from '../src/board/checkpoint-claims';
 import { canonicalCheckpoint, checkpointDigest } from '../src/board/checkpoint-json';
-import type { CheckpointPolicy } from '../src/board/checkpoint-proposal';
-import type { CardCheckpointPolicy } from '../src/board/checkpoint-selection';
+import { parseCheckpointPolicy } from '../src/board/checkpoint-proposal';
+import { parseCardCheckpointPolicy, type CardCheckpointPolicy } from '../src/board/checkpoint-selection';
 import { admitCheckpointSourceCandidate, createCheckpointSourceTables, type CheckpointSource } from '../src/board/checkpoint-source';
 import { internalStageEditor } from '../src/board/model';
 import vectors from './fixtures/checkpoint-settlement/selection.json';
 
 const V1 = 'superpipeline.checkpoint-claim.v1';
 const V2 = 'superpipeline.checkpoint-claim.v2';
-const chooses = vectors.stages.chooses as CardCheckpointPolicy;
-const choosesWithDefault = vectors.stages.choosesWithDefault as CardCheckpointPolicy;
-const fixed = vectors.stages.fixed as CheckpointPolicy;
+const encode = (value: unknown) => new TextEncoder().encode(JSON.stringify(value));
+const chooses = parseCardCheckpointPolicy(encode(vectors.stages.chooses));
+const choosesWithDefault = parseCardCheckpointPolicy(encode(vectors.stages.choosesWithDefault));
+const fixed = parseCheckpointPolicy(encode(vectors.stages.fixed));
 const admin = internalStageEditor('card-chosen repositories fixture');
 const v2 = { agentId: 'agt_example', capabilities: ['code'], checkpointProtocol: V1, checkpointProtocols: [V1, V2] };
-const scenario = (name: string) => {
-  const found = vectors.producer.find((p) => p.name === name);
-  if (!found) throw new Error(`treaty has no producer scenario ${name}`);
-  return `${found.name}: ${found.rule}`;
-};
+/** The scenarios below, by treaty's names; the first test holds this list to treaty's. */
+const COVERED = ['refused-on-entry', 'no-choice-enters-and-waits', 'allowlist-shrinks-after-entry', 'frozen-once-a-bench-exists',
+  'claim-freezes-the-selection', 'old-claimant-never-offered', 'fixed-stage-unchanged', 'one-policy-per-stage',
+  'card-writers-choose', 'default-change-spares-existing-claims'];
+it('covers every producer scenario treaty states', () => {
+  expect(vectors.producer.map((p) => p.name).toSorted()).toEqual(COVERED.toSorted());
+});
 
 const plan: StageDef = { key: 'plan', name: 'Plan', order: 0, ownerKind: 'human' };
 const build = (policy: CardCheckpointPolicy = chooses): StageDef => ({ key: 'build', name: 'Build', order: 1, ownerKind: 'capability', owner: 'code', cardCheckpointPolicy: policy });
@@ -57,7 +60,7 @@ async function card(board: BoardDO, input: Parameters<BoardDO['createCard']>[0])
   return made.value;
 }
 
-describe(scenario('refused-on-entry'), () => {
+describe('refused-on-entry', () => {
   it('a create into the stage naming a repository outside the allowlist stores nothing', () => fixture([plan, build(), ship], async ({ board, state }) => {
     expect(await board.createCard({ title: 'Outside', ownerUserId: 'usr_a', stageKey: 'build', repositories: { repositories: ['app', 'mobile'] } }))
       .toMatchObject({ ok: false, code: 'REPOSITORY_CHOICE_REFUSED', detail: { reason: 'repository-not-allowed', stageKey: 'build' }, message: expect.stringContaining('mobile') });
@@ -89,7 +92,7 @@ describe(scenario('refused-on-entry'), () => {
   }));
 });
 
-describe(scenario('no-choice-enters-and-waits'), () => {
+describe('no-choice-enters-and-waits', () => {
   it('enters, is parked for a person at claim with the reason, and claims once a person chooses', () => fixture([build(), ship], async ({ board, state }) => {
     const made = await card(board, { title: 'None', ownerUserId: 'usr_a' });
     expect(made).not.toHaveProperty('repositories');
@@ -105,7 +108,7 @@ describe(scenario('no-choice-enters-and-waits'), () => {
   }));
 });
 
-describe(scenario('allowlist-shrinks-after-entry'), () => {
+describe('allowlist-shrinks-after-entry', () => {
   it('parks the card naming the repository the stage no longer allows, and claims nothing', () => fixture([build(), ship], async ({ board, state, context }) => {
     const made = await card(board, { title: 'Docs', ownerUserId: 'usr_a', repositories: { repositories: ['api', 'docs'], primaryRepository: 'docs' } });
     const shrunk = { ...chooses, repositories: chooses.repositories.filter((r) => r.name !== 'docs') };
@@ -118,7 +121,7 @@ describe(scenario('allowlist-shrinks-after-entry'), () => {
   }));
 });
 
-describe(scenario('frozen-once-a-bench-exists'), () => {
+describe('frozen-once-a-bench-exists', () => {
   it('refuses a changed choice once claimed, even after the run ends, and accepts the same one', () => fixture([build(), ship], async ({ board }) => {
     const made = await card(board, { title: 'Frozen', ownerUserId: 'usr_a', repositories: { repositories: ['api', 'app'] } });
     const claim = await board.claim(v2);
@@ -137,30 +140,32 @@ describe(scenario('frozen-once-a-bench-exists'), () => {
   }));
 });
 
-describe(scenario('claim-freezes-the-selection'), () => {
-  async function claimed(f: Fixture) {
-    const made = await card(f.board, { title: 'Bench', ownerUserId: 'usr_a', repositories: { repositories: ['api', 'app'] } });
-    const claim = await f.board.claim(v2);
-    if (!claim.claimed || !claim.checkpointClaim) throw new Error('expected a checkpoint claim');
-    const source: CheckpointSource = {
-      binding: { boardId: f.id, cardId: made.id, stageKey: 'build', runId: claim.runId, leaseEpoch: claim.leaseEpoch,
-        agentId: 'agt_example', stationId: 'station_pilot01', nodeId: 'node_pilot01', attemptId: 'attempt-1' },
-      start: [{ name: 'api', commit: '9'.repeat(40) }, { name: 'app', commit: 'b'.repeat(40) }],
-      benchKey: made.id, benchId: 'c'.repeat(32), requestId: 'run-checkpoint-1',
-      sourceRequestSha256: '0'.repeat(64), workerContextSha256: '4'.repeat(64),
-    };
-    const actor: VerifiedCheckpointReporter = { kind: 'service', tenantId: 'tnt_cardrepos', principalId: chooses.reporterPrincipalId, scopes: ['checkpoints:submit'], expiresAt: Date.now() + 60000 };
-    createCheckpointSourceTables(f.state.storage.sql);
-    return { made, claim, source, actor };
-  }
-  const bytes = (source: CheckpointSource) => new TextEncoder().encode(JSON.stringify(source));
-  const privateOnly = { privateTestOnly: true } as const;
+async function claimed(f: Fixture) {
+  const made = await card(f.board, { title: 'Bench', ownerUserId: 'usr_a', repositories: { repositories: ['api', 'app'] } });
+  const claim = await f.board.claim(v2);
+  if (!claim.claimed || !claim.checkpointClaim) throw new Error('expected a checkpoint claim');
+  const source: CheckpointSource = {
+    binding: { boardId: f.id, cardId: made.id, stageKey: 'build', runId: claim.runId, leaseEpoch: claim.leaseEpoch,
+      agentId: 'agt_example', stationId: 'station_pilot01', nodeId: 'node_pilot01', attemptId: 'attempt-1' },
+    start: [{ name: 'api', commit: '9'.repeat(40) }, { name: 'app', commit: 'b'.repeat(40) }],
+    benchKey: made.id, benchId: 'c'.repeat(32), requestId: 'run-checkpoint-1',
+    sourceRequestSha256: '0'.repeat(64), workerContextSha256: '4'.repeat(64),
+  };
+  const actor: VerifiedCheckpointReporter = { kind: 'service', tenantId: 'tnt_cardrepos', principalId: chooses.reporterPrincipalId, scopes: ['checkpoints:submit'], expiresAt: Date.now() + 60000 };
+  createCheckpointSourceTables(f.state.storage.sql);
+  return { made, claim, source, actor };
+}
+const bytes = (source: CheckpointSource) => new TextEncoder().encode(JSON.stringify(source));
+const privateOnly = { privateTestOnly: true } as const;
+
+describe('claim-freezes-the-selection', () => {
 
   it('stores the stage policy digest, the selection and the narrowed policy with the claim', () => fixture([build(), ship], async (f) => {
     const { claim } = await claimed(f);
     const row = f.state.storage.sql.exec('SELECT * FROM proposed_checkpoint_selections WHERE run_id=?', claim.runId).one();
     expect(row.stage_policy_json).toBe(canonicalCheckpoint(chooses));
-    expect(JSON.parse(String(row.selection_json))).toEqual({
+    if (typeof row.selection_json !== 'string') throw new Error('expected a stored selection');
+    expect(JSON.parse(row.selection_json)).toEqual({
       version: 'superpipeline.checkpoint-selection.v1', stagePolicyDigest: await checkpointDigest(chooses),
       source: 'card', repositories: ['api', 'app'], checkpointRepository: 'app',
     });
@@ -183,7 +188,7 @@ describe(scenario('claim-freezes-the-selection'), () => {
   }));
 });
 
-describe(scenario('old-claimant-never-offered'), () => {
+describe('old-claimant-never-offered', () => {
   it.each([
     ['a v1 claimant', { checkpointProtocol: V1 }],
     ['a v1 claimant asking for checkpoint work only', { checkpointProtocol: V1, checkpointOnly: true }],
@@ -196,7 +201,7 @@ describe(scenario('old-claimant-never-offered'), () => {
   }));
 });
 
-describe(scenario('fixed-stage-unchanged'), () => {
+describe('fixed-stage-unchanged', () => {
   it('a v1 stage ignores the card\'s choice for every claimant and records no selection', () => fixture([{ key: 'build', name: 'Build', order: 0, ownerKind: 'capability', owner: 'code', checkpointPolicy: fixed }, ship], async ({ board, state }) => {
     await card(board, { title: 'Fixed', ownerUserId: 'usr_a', repositories: { repositories: ['api'] } });
     const claim = await board.claim(v2);
@@ -207,7 +212,7 @@ describe(scenario('fixed-stage-unchanged'), () => {
   }));
 });
 
-describe(scenario('one-policy-per-stage'), () => {
+describe('one-policy-per-stage', () => {
   it('refuses a stage carrying both policies, on creation and on a patch', async () => {
     const id = `brd_cardrepos${serial++}`;
     await runInDurableObject(env.BOARD_DO.get(env.BOARD_DO.idFromName(id)), async (board) => {
@@ -227,7 +232,7 @@ describe(scenario('one-policy-per-stage'), () => {
   }));
 });
 
-describe(scenario('card-writers-choose'), () => {
+describe('card-writers-choose', () => {
   it('only an owner or admin writes the allowlist, as for checkpointPolicy', () => fixture([build(), ship], async ({ board, context }) => {
     const member = { kind: 'person' as const, mayChangeDecisionPolicy: false };
     expect(await asAdmin(context, () => board.updateStage('build', { cardCheckpointPolicy: choosesWithDefault }, member)))
@@ -235,7 +240,7 @@ describe(scenario('card-writers-choose'), () => {
   }));
 });
 
-describe(scenario('default-change-spares-existing-claims'), () => {
+describe('default-change-spares-existing-claims', () => {
   it('a claim keeps the default it was narrowed with; later claims get the new one', () => fixture([build(choosesWithDefault), ship], async ({ board, state, context }) => {
     await card(board, { title: 'Before', ownerUserId: 'usr_a' });
     const first = await board.claim(v2);

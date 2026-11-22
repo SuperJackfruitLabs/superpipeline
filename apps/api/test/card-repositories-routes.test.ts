@@ -8,7 +8,7 @@ import { env, runInDurableObject } from 'cloudflare:test';
 import { beforeAll, expect, it, vi } from 'vitest';
 import { BoardDO } from '../src/board/board-do';
 import type { BoardContext } from '../src/board/context';
-import type { CardCheckpointPolicy } from '../src/board/checkpoint-selection';
+import { parseCardCheckpointPolicy } from '../src/board/checkpoint-selection';
 import { boards } from '../src/routes/boards/entry';
 import { agentRegistry } from '../src/routes/agents';
 import { ensureOrgTenant } from '../src/auth/org-tenancy';
@@ -18,7 +18,7 @@ import { withOrgPlane, planeEnv, planeToken, AGENT, ORG } from './helpers/org-pl
 import vectors from './fixtures/checkpoint-settlement/selection.json';
 
 beforeAll(setupCatalog);
-const chooses = vectors.stages.chooses as CardCheckpointPolicy;
+const chooses = parseCardCheckpointPolicy(new TextEncoder().encode(JSON.stringify(vectors.stages.chooses)));
 const stage = { key: 'build', name: 'Build', order: 0, ownerKind: 'capability' as const, owner: 'code', cardCheckpointPolicy: chooses };
 let serial = 0;
 

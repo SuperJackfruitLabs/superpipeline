@@ -102,13 +102,13 @@ function stillCurrent(board: Pick<SourceBoard, 'stages' | 'getCardRow'>, pending
       canonicalCheckpoint(stage?.checkpointPolicy) === canonicalCheckpoint(pending.policy);
   }
   const card = board.getCardRow(pending.cardId) ?? undefined;
-  const current = currentCheckpointPolicy(stage, card);
-  return current?.stagePolicy !== undefined && pending.stagePolicy !== undefined && current.selection !== undefined &&
-    canonicalCheckpoint(current.stagePolicy) === canonicalCheckpoint(pending.stagePolicy) &&
-    canonicalCheckpoint(current.policy) === canonicalCheckpoint(pending.policy) &&
-    current.selection.source === pending.selection.source &&
-    canonicalCheckpoint(current.selection.repositories) === canonicalCheckpoint(pending.selection.repositories) &&
-    current.selection.checkpointRepository === pending.selection.checkpointRepository;
+  const now = currentCheckpointPolicy(stage, card);
+  return now?.stagePolicy !== undefined && pending.stagePolicy !== undefined && now.selection !== undefined &&
+    canonicalCheckpoint(now.stagePolicy) === canonicalCheckpoint(pending.stagePolicy) &&
+    canonicalCheckpoint(now.policy) === canonicalCheckpoint(pending.policy) &&
+    now.selection.source === pending.selection.source &&
+    canonicalCheckpoint(now.selection.repositories) === canonicalCheckpoint(pending.selection.repositories) &&
+    now.selection.checkpointRepository === pending.selection.checkpointRepository;
 }
 function checkedNow(board: SourceBoard): number {
   const now = board.nowMs();

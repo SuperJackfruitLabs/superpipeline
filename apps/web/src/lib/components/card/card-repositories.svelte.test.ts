@@ -17,12 +17,13 @@ import { BOARD_DX, CARD_4605, STAGES_DX } from './testing/card-4605';
 import CardView from './CardView.svelte';
 
 vi.mock('$lib/stores/app.svelte', async () => ({ app: (await import('./testing/fakes')).fakeApp }));
-vi.mock('$lib/api', async (orig) => ({ ...(await orig<typeof import('$lib/api')>()), ...(await import('./testing/fakes')).fakeApi }));
-vi.mock('$lib/superlibrary', async (orig) => ({ ...(await orig<typeof import('$lib/superlibrary')>()), relatedForCard: vi.fn(async () => []) }));
-vi.mock('$app/navigation', () => ({ goto: vi.fn() }));
-globalThis.ResizeObserver ??= class { observe() {} unobserve() {} disconnect() {} } as never;
+vi.mock('$lib/api', async (orig) => ({ ...(await orig<Record<string, unknown>>()), ...(await import('./testing/fakes')).fakeApi }));
+vi.mock('$lib/superlibrary', async (orig) => ({ ...(await orig<Record<string, unknown>>()), relatedForCard: vi.fn<() => Promise<never[]>>(async () => []) }));
+vi.mock('$app/navigation', () => ({ goto: vi.fn<() => Promise<void>>() }));
+globalThis.ResizeObserver ??= class implements ResizeObserver { observe(): void {} unobserve(): void {} disconnect(): void {} };
 beforeAll(() => {
-  window.matchMedia ??= vi.fn().mockImplementation((q: string) => ({ matches: false, media: q, addEventListener() {}, removeEventListener() {}, addListener() {}, removeListener() {}, onchange: null, dispatchEvent: () => false })) as never;
+  window.matchMedia ??= (q: string): MediaQueryList => ({ matches: false, media: q, onchange: null,
+    addEventListener() {}, removeEventListener() {}, addListener() {}, removeListener() {}, dispatchEvent: () => false });
 });
 
 const BOARD = fakeApp.board;
@@ -42,8 +43,12 @@ async function loaded() {
   await vi.waitFor(() => expect(m.model.detailLoaded).toBe(true));
   return m;
 }
-const props = (model: ReturnType<typeof mountModel>['model']) => ({ model, surface: 'drawer' as const, gate: model.gateBinding, question: model.questionBinding, pageHref: model.pageHref, boardHref: model.boardHref, onClose: vi.fn() });
-const section = () => document.querySelector<HTMLElement>('[data-section="repositories"]')!;
+const props = (model: ReturnType<typeof mountModel>['model']) => ({ model, surface: 'drawer' as const, gate: model.gateBinding, question: model.questionBinding, pageHref: model.pageHref, boardHref: model.boardHref, onClose: vi.fn<() => void>() });
+function section(): HTMLElement {
+  const found = document.querySelector<HTMLElement>('[data-section="repositories"]');
+  if (!found) throw new Error('no Repositories fact on the card');
+  return found;
+}
 
 describe('choosing a card\'s repositories', () => {
   it('a board with no choosing stage shows nothing new', async () => {
@@ -102,8 +107,8 @@ describe('choosing a card\'s repositories', () => {
     try {
       const trees = Object.fromEntries(VIBES.map((v) => [v, parityTree(roots[v])]));
       for (const v of VIBES) {
-        expect(trees[v], `${v} against daylight`).toBe(trees.daylight);
-        expect(roots[v].querySelectorAll('[data-repositories-form] input[type="checkbox"]'), v).toHaveLength(3);
+        expect(trees[v]).toBe(trees.daylight);
+        expect(roots[v].querySelectorAll('[data-repositories-form] input[type="checkbox"]')).toHaveLength(3);
       }
     } finally {
       roots.unmount();

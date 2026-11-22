@@ -10,7 +10,12 @@ import { app } from '$lib/stores/app.svelte';
 import type { CardFormHost } from './card-forms.svelte';
 import { choicePatch, choosableRepositories, choosingPolicy, needsPrimary, startRepository } from './card-repositories';
 
-type Refusal = { error?: { code?: string; message?: string } } | null;
+/** The board's own sentence from a refusal body, when it has one. */
+function refusalMessage(body: unknown): string | null {
+  if (!body || typeof body !== 'object' || !('error' in body)) return null;
+  const error: unknown = body.error;
+  return error && typeof error === 'object' && 'message' in error && typeof error.message === 'string' ? error.message : null;
+}
 
 export class RepositoryPicker {
   editing = $state(false);
@@ -67,8 +72,8 @@ export class RepositoryPicker {
     try {
       const res = await updateCard(boardId, cardId, choicePatch(this.chosen, this.primary, this.policy));
       if (!res.ok) {
-        const body = (await res.json().catch(() => null)) as Refusal;
-        this.error = body?.error?.message ?? `Couldn't save the repositories (${res.status})`;
+        const body: unknown = await res.json().catch(() => null);
+        this.error = refusalMessage(body) ?? `Couldn't save the repositories (${res.status})`;
         return;
       }
       this.editing = false;

@@ -198,20 +198,16 @@ export function entryRefusal(stage: CardCheckpointPolicy, choice: CardRepositori
 /** What a person reads when a card is refused on entry or parked at claim. */
 export function narrowingWords(refusal: NarrowingRefusal, stageName: string, choice: CardRepositories | null, stage: CardCheckpointPolicy): string {
   const allowed = stage.repositories.map((r) => r.name);
-  switch (refusal) {
-    case 'needs-person':
-      return `this card names no repository, and stage "${stageName}" offers ${allowed.length} with no default: choose the repositories it works in`;
-    case 'repository-not-allowed': {
-      const outside = (choice?.repositories ?? []).filter((name) => !allowed.includes(name));
-      return `stage "${stageName}" does not allow ${outside.join(', ')}; it allows ${allowed.join(', ')}`;
-    }
-    case 'primary-not-chosen':
-      return `the primary repository ${choice?.primaryRepository ?? ''} is not one the card chose`;
-    case 'no-primary':
-      return `this card chose ${choice?.repositories.length ?? 0} repositories without ${stage.checkpointRepository}, stage "${stageName}"'s start repository: name the primary one`;
-    case 'repositories-not-canonical':
-      return 'repositories must be sorted by name, each name once';
+  if (refusal === 'needs-person')
+    return `this card names no repository, and stage "${stageName}" offers ${allowed.length} with no default: choose the repositories it works in`;
+  if (refusal === 'repository-not-allowed') {
+    const outside = (choice?.repositories ?? []).filter((name) => !allowed.includes(name));
+    return `stage "${stageName}" does not allow ${outside.join(', ')}; it allows ${allowed.join(', ')}`;
   }
+  if (refusal === 'primary-not-chosen') return `the primary repository ${choice?.primaryRepository ?? ''} is not one the card chose`;
+  if (refusal === 'no-primary')
+    return `this card chose ${choice?.repositories.length ?? 0} repositories without ${stage.checkpointRepository}, stage "${stageName}"'s start repository: name the primary one`;
+  return 'repositories must be sorted by name, each name once';
 }
 
 /** A card row's stored choice. The column holds canonical card-repositories.v1 JSON, or null. */
