@@ -31,21 +31,40 @@ replaces the one with the same subscriber and URL.
 
 ## Delivery
 
-Each delivery is a POST of the event's JSON with:
+Each delivery is a POST of the event's JSON as a
+[CloudEvent](https://treaty.superjackfruit.com/relay/) in HTTP binary mode, the same envelope the
+event relay uses:
 
-- `X-Superpipeline-Signature: sha256=<hex>`, an HMAC over the exact body bytes, keyed with the
-  config's `token`;
-- `X-Superpipeline-Event: <event>`.
+- `ce-id: <boardId>:<seq>`, the event's id. `seq` is the board's own event sequence, so every
+  delivery of one event carries the same id, on the push and on the relay alike. Handle each id
+  once.
+- `ce-type: com.superjackfruit.superpipeline.<entity>.<verb>.v1`, `ce-source:
+  /superpipeline/boards/<boardId>`, `ce-dataschema` (the event's schema in Treaty's catalog),
+  `ce-time` (the body's `ts`), `ce-specversion: 1.0` and `content-type: application/json`.
+- `x-treaty-signature: t=<unix seconds>,v1=<hex>`, an HMAC-SHA256 keyed with the config's `token`
+  over `<t>.<ce-id>.<body>`. Verify it with `verifyDelivery` from
+  `@superjackfruitlabs/treaty-cloudevents`, which also refuses a delivery signed more than 300
+  seconds away from your clock. Binding the id and the time stops a captured delivery being
+  replayed.
+- `X-Superpipeline-Signature: sha256=<hex>`, the older HMAC over the body alone, and
+  `X-Superpipeline-Event: <event>`. Both are still sent while receivers move to
+  `x-treaty-signature`; the old signature will be removed in a later release.
 
-Verify the signature before trusting the body.
+Verify the signature over the exact bytes you received, before parsing the body.
 
 Once it verifies, you know the payload came from the board that owns the subscription and can
 process it as an at-least-once delivery.
 
-Delivery is **at least once**. The board's own alarm drains its queue; a failed delivery is tried
-again with backoff doubling from 5 seconds, up to 5 attempts, and is then kept as `dead` rather than
-deleted. A person can see the queue at `GET /v1/boards/:id/push/deliveries` and drain it now with
-`POST /v1/boards/:id/push/dispatch`.
+Delivery is **at least once**. The board's own alarm drains its queue. What your answer means:
+
+- **2xx**: handled, or ignored for good (an event you do not take).
+- **408, 429 or 5xx, or no answer within 10 seconds**: try again. Answer **503** for something you
+  expect to know soon, such as a board you have not mapped yet. The board tries again with backoff
+  doubling from 5 seconds, up to 5 attempts, and then keeps the delivery as `dead`.
+- **Any other 4xx**: refused for good. The delivery is kept as `dead` at once and not sent again.
+
+A person can see the queue at `GET /v1/boards/:id/push/deliveries` (each delivery with its
+`eventId`) and drain it now with `POST /v1/boards/:id/push/dispatch`.
 
 Push is an accelerator, not the source of truth. `work.available` says "claim now", and the claim
 decides; a record event names cards, and the subscriber reads them back with its own credential.
@@ -127,8 +146,8 @@ decision: the placement service hears that a card is ready inside its placement 
   [Treaty](https://treaty.superjackfruit.com/relay/)'s catalog.
 - The data is the same JSON the push carries.
 - The event is queued in the same transaction as the change that caused it and retried like a
-  push. Its id, `<boardId>:<row>`, stays the same across retries, so the relay stores a retried
-  event once.
+  push. Its id is the event's, `<boardId>:<seq>`, the same as on the direct push and across
+  retries, so the relay stores a retried event once and a subscriber on both paths handles it once.
 
 Without both settings nothing is published to the relay, and a standalone board is unchanged.
 

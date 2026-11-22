@@ -64,12 +64,12 @@ export function hasTreatySchema(event: string): boolean {
   return dataschemaFor.has(event);
 }
 
-/** The relay request for one delivery row: where to POST and the CloudEvent's headers. */
-export function relayRequest(
-  delivery: { eventId: string; body: string },
-  board: { boardId: string; tenantId: string },
-  relay: RelaySettings,
-): { url: string; headers: Record<string, string> } {
+/**
+ * The CloudEvent one pushed body travels as, on either path (treaty phase 2, ruling 1): the relay
+ * and the direct push send the same attributes, under the event's own id. Throws for an event
+ * treaty's catalogue has no schema for.
+ */
+export function cloudEventFor(delivery: { eventId: string; body: string }, boardId: string): { event: CloudEvent; name: { product: string; entity: string; verb: string } } {
   const parsed: unknown = JSON.parse(delivery.body);
   const event = typeof parsed === 'object' && parsed !== null && 'event' in parsed ? String(parsed.event) : '';
   const ts = typeof parsed === 'object' && parsed !== null && 'ts' in parsed ? String(parsed.ts) : '';
@@ -81,16 +81,25 @@ export function relayRequest(
   const attributes: Record<string, string> = {
     specversion: '1.0',
     id: delivery.eventId,
-    source: `/superpipeline/boards/${board.boardId}`,
+    source: `/superpipeline/boards/${boardId}`,
     type: eventType(name, 1),
     datacontenttype: 'application/json',
     dataschema,
   };
   if (ts) attributes.time = ts;
-  const cloudEvent: CloudEvent = { attributes };
+  return { event: { attributes }, name };
+}
+
+/** The relay request for one delivery row: where to POST and the CloudEvent's headers. */
+export function relayRequest(
+  delivery: { eventId: string; body: string },
+  board: { boardId: string; tenantId: string },
+  relay: RelaySettings,
+): { url: string; headers: Record<string, string> } {
+  const { event, name } = cloudEventFor(delivery, board.boardId);
   const subject = eventSubject(board.tenantId, name);
   return {
     url: `${relay.url}/v1/events/${subject}`,
-    headers: { ...toBinary(cloudEvent, 'http').headers, Authorization: `Bearer ${relay.token}` },
+    headers: { ...toBinary(event, 'http').headers, Authorization: `Bearer ${relay.token}` },
   };
 }

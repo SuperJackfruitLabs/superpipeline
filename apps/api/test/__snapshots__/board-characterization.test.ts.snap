@@ -5922,6 +5922,8 @@ exports[`the Board Durable Object, pinned before the split > runs the same state
     },
     "sql": [
       "SELECT d.id, d.config_id, d.url, d.body, d.attempts, d.event_seq, c.token FROM push_deliveries d LEFT JOIN push_configs c ON d.config_id = c.id WHERE d.status IN ('pending', 'failed') AND d.attempts < ? AND (c.id IS NOT NULL OR d.config_id = ?) ORDER BY d.attempts ASC, d.id ASC LIMIT 500  <-  [5,"relay"]",
+      "SELECT v FROM meta WHERE k = ?  <-  ["boardId"]",
+      "SELECT v FROM meta WHERE k = ?  <-  ["boardId"]",
       "UPDATE push_deliveries SET status = ?, attempts = ?, last_status = ? WHERE id = ?  <-  ["sent",1,200,1]",
       "DELETE FROM push_deliveries WHERE status IN ('sent', 'dead') AND id NOT IN (SELECT id FROM push_deliveries WHERE status IN ('sent', 'dead') ORDER BY id DESC LIMIT 100)",
     ],

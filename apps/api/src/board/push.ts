@@ -1,5 +1,5 @@
 import { newId } from '../ids';
-import { PUSH_TIMEOUT_MS, type PushOutcome, type PushSender, postWithTimeout, signAndSend } from '../push/deliver';
+import { PUSH_TIMEOUT_MS, type PushOutcome, type PushSender, isRetryable, postWithTimeout, signAndSend } from '../push/deliver';
 import { SUBSCRIBABLE_EVENTS, cardIdsOf } from '../push/events';
 import { RELAY_CONFIG_ID, RELAYED_EVENTS, relayRequest, relaySettings } from '../push/relay';
 import { isPublicHttpUrl } from '../push/ssrf';
@@ -208,7 +208,9 @@ export async function getPushDeliveries(deps: PushDeps, opts?: { status?: string
 }
 
 /**
- * Drain pending push deliveries: sign each with its config token and send (docs/05 §4). The sender
+ * Drain pending push deliveries: sign each with its config token and send (docs/05 §4). A delivery
+ * the receiver refused for good (any 4xx but 408 and 429) is dead-lettered at once; a transient
+ * failure is retried up to the cap (treaty's receiver status contract). The sender
  * is injectable (tests pass a stub); production durability — Queue + Workflow with exponential
  * backoff — wraps this. A single drain marks each delivery sent/failed.
  */
@@ -240,9 +242,15 @@ export async function dispatchPushDeliveries(deps: PushDeps, sender: PushSender 
     const outcome =
       r.config_id === RELAY_CONFIG_ID
         ? await sendToRelay(deps, Number(r.id), eventIdOf(deps, r), typeof r.body === 'string' ? r.body : '', sender, opts?.timeoutMs)
-        : await signAndSend({ id: Number(r.id), url: r.url as string, body: r.body as string, token: r.token as string }, sender, opts?.timeoutMs);
+        : await signAndSend(
+            { id: Number(r.id), eventId: eventIdOf(deps, r), url: r.url as string, body: r.body as string, token: r.token as string },
+            deps.getMeta('boardId') ?? '',
+            sender,
+            opts?.timeoutMs,
+          );
     const attempts = Number(r.attempts) + 1;
-    const status = outcome.ok ? 'sent' : attempts >= MAX_PUSH_ATTEMPTS ? 'dead' : 'failed';
+    // The relay's retry rules on both paths: only a transient failure is sent again.
+    const status = outcome.ok ? 'sent' : attempts >= MAX_PUSH_ATTEMPTS || !isRetryable(outcome.status) ? 'dead' : 'failed';
     deps.sql.exec(`UPDATE push_deliveries SET status = ?, attempts = ?, last_status = ? WHERE id = ?`, status, attempts, outcome.status, r.id);
     if (outcome.ok) sent++;
     else failed++;

@@ -409,9 +409,14 @@ agent token's own catalog row, else the body) and expanded through the workspace
 when it registers; registering again picks up edges added since. So an agent is only pinged about work
 it could actually claim. A card under a live reservation is announced to the agent it is held for
 only, and reserving a card pings that agent; when a hold lapses nobody is pinged again (nothing sweeps
-for expiry), so the others find the card on their next claim, within their poll interval. `dispatchPushDeliveries(sender)` drains pending rows, **signs each
-body** (`X-Superpipeline-Signature: sha256=…`, HMAC over the exact bytes — shared with the inbound GitHub
-verifier, `src/crypto/hmac.ts`) and POSTs it (`src/push/deliver.ts`), marking each sent/failed.
+for expiry), so the others find the card on their next claim, within their poll interval. `dispatchPushDeliveries(sender)` drains pending rows and POSTs
+each (`src/push/deliver.ts`) on the relay's envelope (treaty phase 2, ruling 1): the CloudEvent in
+HTTP binary mode under the event's id, `<boardId>:<seq>` (`seq` from the board's `events` log, shared
+by every row of the event, relay included), **signed** `x-treaty-signature: t=…,v1=…` with the
+config's token over `<t>.<id>.<body>` (treaty's `signDelivery`). The older `X-Superpipeline-Signature:
+sha256=…` (HMAC over the body alone, shared with the inbound GitHub verifier, `src/crypto/hmac.ts`)
+and `X-Superpipeline-Event` are still sent beside it until every receiver verifies the treaty header.
+Treaty's vectors (`fixtures/cloudevents/push-delivery.json`) pin both.
 `POST …/push/dispatch` triggers a drain; `GET …/push/deliveries` inspects the queue. URLs are checked
 against an **SSRF denylist** (`src/push/ssrf.ts` — only public http(s); blocks localhost, loopback,
 RFC1918, link-local/169.254 metadata, IPv6 ULA/link-local).
@@ -419,7 +424,10 @@ RFC1918, link-local/169.254 metadata, IPv6 ULA/link-local).
 - **At-least-once, within a cap.** A `failed` delivery is retried: the drain re-picks rows in
   `status IN ('pending','failed')` while `attempts < MAX_PUSH_ATTEMPTS` (5), and an exhausted row
   is dead-lettered to `status = 'dead'` rather than deleted, so a delivery nobody could receive
-  stays visible in `GET …/push/deliveries`.
+  stays visible in `GET …/push/deliveries`. Only a transient failure is retried, by the relay's
+  rule (treaty's receiver status contract, `isRetryable`): 408, 429, 5xx, or no answer within
+  `PUSH_TIMEOUT_MS` (10 s). Any other 4xx is the receiver refusing the event for good, and the
+  row is dead-lettered at once.
 - **The alarm drains the queue** (`alarm()` → `dispatchPushDeliveries`), with backoff doubling
   from `PUSH_DRAIN_BASE_MS` (5s) off the least-tried pending row: 5s, 10s, 20s, 40s, 80s. The DO
   has one alarm and two jobs, so `scheduleReclaim` sets whichever of the reclaim deadline and the
@@ -460,8 +468,9 @@ direct push, which keeps running:
   `/superpipeline/boards/<boardId>`, `time` the body's `ts`. The data is the push body.
 - **The outbox**: each producer queues one more `push_deliveries` row (config id `relay`) in the same
   transaction as its push. The drain sends it and retries it like any push, dead-lettering after
-  `MAX_PUSH_ATTEMPTS`. Its id, `<boardId>:<row>`, is fixed per row, so a retry the relay already
-  stored is a duplicate there, not a second event.
+  `MAX_PUSH_ATTEMPTS`. Its id is the event's, `<boardId>:<seq>`, the same as the event's direct push
+  rows, so a retry the relay already stored is a duplicate there, not a second event, and a consumer
+  receiving both paths applies it once.
 - Either setting unset: nothing is published to the relay.
 
 **`gate.pending` fan-out is by subscription only**, deliberately unlike `work.available`. That one
