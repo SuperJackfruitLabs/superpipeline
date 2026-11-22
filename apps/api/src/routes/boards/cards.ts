@@ -7,7 +7,7 @@ import { tenantById, recordAgentQueue } from '../../db/catalog';
 import { unknownLabelIds, resolveLabelNames } from '../../db/labels';
 import { projectById, milestoneById } from '../../db/projects';
 import { resolveReferenceInput } from '../../references/resolve';
-import { statusForCode } from '../errors';
+import { refuse, refusal } from '../errors';
 import { isInvalidDueAt } from '../fields';
 import type { BoardRequest } from './request';
 
@@ -24,10 +24,7 @@ export async function cardCreate({ request, env, tenantId, boardId, user, agent,
     projectId?: unknown;
   };
   if (isInvalidDueAt(body.dueAt)) {
-    return Response.json(
-      { error: { code: 'INVALID_DUE_AT', message: 'dueAt must be null or a date in YYYY-MM-DD form' } },
-      { status: 400 },
-    );
+    return refuse('INVALID_DUE_AT', 'dueAt must be null or a date in YYYY-MM-DD form');
   }
   // The authority that accompanied the act, recorded with the card. A
   // session-cookie caller carries none, and `undefined` there means "no
@@ -52,37 +49,28 @@ export async function cardCreate({ request, env, tenantId, boardId, user, agent,
   // Where the card starts, and what it carries from the first moment. Checked before anything
   // is written, by name, so a typo is a 400 that says which field and not a card in the wrong place.
   if (body.stageKey !== undefined && typeof body.stageKey !== 'string') {
-    return Response.json({ error: { code: 'UNKNOWN_STAGE', message: 'stageKey must be a stage key' } }, { status: 400 });
+    return refuse('UNKNOWN_STAGE', 'stageKey must be a stage key');
   }
   if (body.labelIds !== undefined) {
     if (!Array.isArray(body.labelIds) || body.labelIds.some((l) => typeof l !== 'string')) {
-      return Response.json({ error: { code: 'INVALID_LABELS', message: 'labelIds must be an array of label ids' } }, { status: 400 });
+      return refuse('INVALID_LABELS', 'labelIds must be an array of label ids');
     }
     const unknown = await unknownLabelIds(env.DB, tenantId, body.labelIds as string[]);
     if (unknown.length > 0) {
-      return Response.json(
-        { error: { code: 'UNKNOWN_LABEL', message: `no such label in this workspace: ${unknown.join(', ')}` } },
-        { status: 400 },
-      );
+      return refuse('UNKNOWN_LABEL', `no such label in this workspace: ${unknown.join(', ')}`);
     }
   }
   if (body.projectId !== undefined && body.projectId !== null && typeof body.projectId !== 'string') {
-    return Response.json({ error: { code: 'INVALID_PROJECT', message: 'projectId must be a project id or null' } }, { status: 400 });
+    return refuse('INVALID_PROJECT', 'projectId must be a project id or null');
   }
   if (typeof body.projectId === 'string' && !(await projectById(env.DB, tenantId, body.projectId))) {
-    return Response.json(
-      { error: { code: 'UNKNOWN_PROJECT', message: `no such project in this workspace: ${body.projectId}` } },
-      { status: 400 },
-    );
+    return refuse('UNKNOWN_PROJECT', `no such project in this workspace: ${body.projectId}`);
   }
   const queueing = agent
     ? await authorizeAgentQueue(env.DB, agent, boardId, body.ownerUserId)
     : null;
   if (queueing && !queueing.ok) {
-    return Response.json(
-      { error: { code: queueing.code, message: queueing.message } },
-      { status: queueing.status },
-    );
+    return refuse(queueing.code, queueing.message, { status: queueing.status });
   }
   const result = await stub.createCard({
     title: body.title,
@@ -100,7 +88,7 @@ export async function cardCreate({ request, env, tenantId, boardId, user, agent,
     queuedBy: queueing ? queueing.queuedBy : null,
     queuedByAgentId: agent?.agentId ?? null,
   });
-  if (!result.ok) return Response.json({ error: result }, { status: statusForCode(result.code) });
+  if (!result.ok) return refusal(result);
   // Written AFTER the card exists, so the ceiling counts cards that were actually created
   // rather than attempts — and so a board that refused the card does not spend the agent's
   // hourly budget on nothing.
@@ -133,10 +121,7 @@ export async function cardMove({ request, env, boardId, user, agent, stub }: Boa
    */
   const mover = agent ? await authorizeAgentQueue(env.DB, agent, boardId) : null;
   if (mover && !mover.ok) {
-    return Response.json(
-      { error: { code: mover.code, message: mover.message } },
-      { status: mover.status },
-    );
+    return refuse(mover.code, mover.message, { status: mover.status });
   }
   const result = await stub.moveCard(
     moveMatch[1],
@@ -146,7 +131,7 @@ export async function cardMove({ request, env, boardId, user, agent, stub }: Boa
     mover ? agent!.agentId : null,
     mover ? mover.ownerUserId : user?.userId ?? null,
   );
-  if (!result.ok) return Response.json({ error: result }, { status: statusForCode(result.code) });
+  if (!result.ok) return refusal(result);
   return Response.json({ card: result.value });
 }
 
@@ -154,13 +139,13 @@ export async function cardMove({ request, env, boardId, user, agent, stub }: Boa
 // (or an earlier one), with a comment the next agent reads. A person only: the agent branch
 // above refuses every agent token, and the human branch requires `work`, the role a move needs.
 export async function cardResume({ request, user, stub }: BoardRequest, resumeMatch: RegExpMatchArray): Promise<Response> {
-  if (!user) return Response.json({ error: 'only a person resumes a card' }, { status: 403 });
+  if (!user) return refuse('FORBIDDEN', 'only a person resumes a card');
   const body = (await request.json().catch(() => null)) as { comment?: unknown; toStageKey?: unknown; expectedWaitId?: unknown } | null;
   if (!body || typeof body !== 'object' || typeof body.comment !== 'string') {
-    return Response.json({ error: { code: 'INVALID_COMMENT', message: 'send { "comment": "<what changed>", "toStageKey"?: "<stage>" }' } }, { status: 400 });
+    return refuse('INVALID_COMMENT', 'send { "comment": "<what changed>", "toStageKey"?: "<stage>" }');
   }
   if (body.toStageKey !== undefined && typeof body.toStageKey !== 'string') {
-    return Response.json({ error: { code: 'UNKNOWN_STAGE', message: '`toStageKey` must be a stage key' } }, { status: 400 });
+    return refuse('UNKNOWN_STAGE', '`toStageKey` must be a stage key');
   }
   const expected = expectedWait(body);
   if (expected instanceof Response) return expected;
@@ -173,7 +158,7 @@ export async function cardResume({ request, user, stub }: BoardRequest, resumeMa
     queuedGrant: user.mayDispatch ?? null,
     queuedGrantOwner: user.userId,
   });
-  if (!result.ok) return Response.json({ error: result }, { status: statusForCode(result.code) });
+  if (!result.ok) return refusal(result);
   return Response.json(result.value);
 }
 
@@ -185,7 +170,7 @@ export async function cardResume({ request, user, stub }: BoardRequest, resumeMa
 function expectedWait(body: object): { expectedWaitId?: string } | Response {
   if (!('expectedWaitId' in body) || body.expectedWaitId === undefined) return {};
   if (typeof body.expectedWaitId !== 'string' || body.expectedWaitId === '') {
-    return Response.json({ error: { code: 'INVALID_WAIT_ID', message: '`expectedWaitId` must be the waitId the answer was given for' } }, { status: 400 });
+    return refuse('INVALID_WAIT_ID', '`expectedWaitId` must be the waitId the answer was given for');
   }
   return { expectedWaitId: body.expectedWaitId };
 }
@@ -194,13 +179,13 @@ function expectedWait(body: object): { expectedWaitId?: string } | Response {
 // and only while it is still in the wait named, when one is (`attention.pending`'s `archive`).
 // Archiving is what the card PATCH's `archivedAt` does: a pending review or question ends with it.
 export async function cardArchive({ request, user, stub }: BoardRequest, archiveMatch: RegExpMatchArray): Promise<Response> {
-  if (!user) return Response.json({ error: 'only a person archives a card this way' }, { status: 403 });
+  if (!user) return refuse('FORBIDDEN', 'only a person archives a card this way');
   const body: unknown = await request.json().catch(() => ({}));
   if (body === null || typeof body !== 'object') {
-    return Response.json({ error: { code: 'INVALID_COMMENT', message: 'send { "expectedWaitId"?: "<waitId>", "comment"?: "<why>" }' } }, { status: 400 });
+    return refuse('INVALID_COMMENT', 'send { "expectedWaitId"?: "<waitId>", "comment"?: "<why>" }');
   }
   if ('comment' in body && body.comment !== undefined && typeof body.comment !== 'string') {
-    return Response.json({ error: { code: 'INVALID_COMMENT', message: '`comment` must be text' } }, { status: 400 });
+    return refuse('INVALID_COMMENT', '`comment` must be text');
   }
   const expected = expectedWait(body);
   if (expected instanceof Response) return expected;
@@ -210,7 +195,7 @@ export async function cardArchive({ request, user, stub }: BoardRequest, archive
     ...expected,
     ...('comment' in body && typeof body.comment === 'string' ? { comment: body.comment } : {}),
   });
-  if (!result.ok) return Response.json({ error: result }, { status: statusForCode(result.code) });
+  if (!result.ok) return refusal(result);
   return Response.json(result.value);
 }
 
@@ -227,7 +212,7 @@ export async function cardArchive({ request, user, stub }: BoardRequest, archive
  */
 export async function cardRead({ stub }: BoardRequest, cardMatch: RegExpMatchArray): Promise<Response> {
   const result = await stub.getCardView(cardMatch[1]);
-  if (!result.ok) return Response.json({ error: result }, { status: statusForCode(result.code) });
+  if (!result.ok) return refusal(result);
   return Response.json({ card: result.value });
 }
 
@@ -256,36 +241,24 @@ export async function cardEdit({ request, env, tenantId, user, stub }: BoardRequ
     expectedUpdatedAt?: string | null;
   };
   if (body.expectedUpdatedAt !== undefined && body.expectedUpdatedAt !== null && typeof body.expectedUpdatedAt !== 'string') {
-    return Response.json(
-      { error: { code: 'INVALID_PRECONDITION', message: 'expectedUpdatedAt must be null or the card\'s updatedAt string' } },
-      { status: 400 },
-    );
+    return refuse('INVALID_PRECONDITION', 'expectedUpdatedAt must be null or the card\'s updatedAt string');
   }
   if (body.ownerUserId !== undefined && (typeof body.ownerUserId !== 'string' || body.ownerUserId.trim() === '')) {
-    return Response.json({ error: 'ownerUserId must be a non-empty user id' }, { status: 400 });
+    return refuse('INVALID_INPUT', 'ownerUserId must be a non-empty user id');
   }
   if (isInvalidDueAt(body.dueAt)) {
-    return Response.json(
-      { error: { code: 'INVALID_DUE_AT', message: 'dueAt must be null or a date in YYYY-MM-DD form' } },
-      { status: 400 },
-    );
+    return refuse('INVALID_DUE_AT', 'dueAt must be null or a date in YYYY-MM-DD form');
   }
   if (
     body.archivedAt !== undefined &&
     body.archivedAt !== null &&
     (typeof body.archivedAt !== 'string' || Number.isNaN(Date.parse(body.archivedAt)))
   ) {
-    return Response.json(
-      { error: { code: 'INVALID_ARCHIVED_AT', message: 'archivedAt must be null or an ISO timestamp' } },
-      { status: 400 },
-    );
+    return refuse('INVALID_ARCHIVED_AT', 'archivedAt must be null or an ISO timestamp');
   }
   if (body.labelNames !== undefined) {
     if (!Array.isArray(body.labelNames) || body.labelNames.some((n) => typeof n !== 'string')) {
-      return Response.json(
-        { error: { code: 'INVALID_LABELS', message: 'labelNames must be an array of strings' } },
-        { status: 400 },
-      );
+      return refuse('INVALID_LABELS', 'labelNames must be an array of strings');
     }
     // Resolved BEFORE the unknown-id check below, so a freshly created id still passes it —
     // it was just inserted into the same tenant's catalogue this request resolved against.
@@ -301,17 +274,11 @@ export async function cardEdit({ request, env, tenantId, user, stub }: BoardRequ
     // into ['u','r','g','e','n','t'] — written to storage, no error raised. A plain object
     // throws an unhandled TypeError inside the DO instead. Neither answers 400.
     if (!Array.isArray(body.labels) || body.labels.some((l) => typeof l !== 'string')) {
-      return Response.json(
-        { error: { code: 'INVALID_LABELS', message: 'labels must be an array of label ids' } },
-        { status: 400 },
-      );
+      return refuse('INVALID_LABELS', 'labels must be an array of label ids');
     }
     const unknown = await unknownLabelIds(env.DB, tenantId, body.labels);
     if (unknown.length > 0) {
-      return Response.json(
-        { error: { code: 'UNKNOWN_LABEL', message: `no such label in this workspace: ${unknown.join(', ')}` } },
-        { status: 400 },
-      );
+      return refuse('UNKNOWN_LABEL', `no such label in this workspace: ${unknown.join(', ')}`);
     }
   }
   // Milestones are in D1; the DO cannot check that a milestone belongs to the project it is
@@ -332,22 +299,14 @@ export async function cardEdit({ request, env, tenantId, user, stub }: BoardRequ
     let effectiveProjectId = body.projectId;
     if (effectiveMilestoneId === undefined || effectiveProjectId === undefined) {
       const current = await stub.getCardView(cardMatch[1]);
-      if (!current.ok) return Response.json({ error: current }, { status: statusForCode(current.code) });
+      if (!current.ok) return refusal(current);
       if (effectiveMilestoneId === undefined) effectiveMilestoneId = current.value.milestoneId;
       if (effectiveProjectId === undefined) effectiveProjectId = current.value.projectId;
     }
     if (effectiveMilestoneId) {
       const milestone = effectiveProjectId ? await milestoneById(env.DB, tenantId, effectiveMilestoneId) : null;
       if (!milestone || milestone.projectId !== effectiveProjectId) {
-        return Response.json(
-          {
-            error: {
-              code: 'MILESTONE_NOT_IN_PROJECT',
-              message: "milestoneId does not belong to the card's project",
-            },
-          },
-          { status: 400 },
-        );
+        return refuse('MILESTONE_NOT_IN_PROJECT', "milestoneId does not belong to the card's project");
       }
     }
   }
@@ -368,13 +327,13 @@ export async function cardEdit({ request, env, tenantId, user, stub }: BoardRequ
     milestoneId: body.milestoneId,
     expectedUpdatedAt: body.expectedUpdatedAt,
   });
-  if (!result.ok) return Response.json({ error: result }, { status: statusForCode(result.code) });
+  if (!result.ok) return refusal(result);
   return Response.json({ card: result.value });
 }
 
 export async function cardDelete({ env, tenantId, stub }: BoardRequest, cardMatch: RegExpMatchArray): Promise<Response> {
   const result = await stub.deleteCard(cardMatch[1]);
-  if (!result.ok) return Response.json({ error: result }, { status: statusForCode(result.code) });
+  if (!result.ok) return refusal(result);
   // `deleteCard` cleans the DO's own same-board `card_links` in both directions, for a
   // reason that applies identically to Task 16's cross-board advisory store: a lingering
   // edge would point at a card that no longer exists. The DO cannot reach D1, so this is
@@ -390,15 +349,15 @@ export async function cardDelete({ env, tenantId, stub }: BoardRequest, cardMatc
 export async function cardSplit({ request, user, stub }: BoardRequest, splitMatch: RegExpMatchArray): Promise<Response> {
   const body = (await request.json().catch(() => null)) as { titles?: unknown } | null;
   if (!body || typeof body !== 'object') {
-    return Response.json({ error: { message: 'Expected a JSON object.' } }, { status: 400 });
+    return refuse('INVALID_BODY', 'Expected a JSON object.');
   }
   // Shape-checked here — the DO trusts its callers by design — so a malformed body answers
   // 400 rather than reaching `splitCard` and failing in a way that points at the wrong layer.
   if (!Array.isArray(body.titles) || body.titles.some((t) => typeof t !== 'string')) {
-    return Response.json({ error: { message: '`titles` is required and must be an array of strings.' } }, { status: 400 });
+    return refuse('INVALID_INPUT', '`titles` is required and must be an array of strings.');
   }
   const result = await stub.splitCard(splitMatch[1], body.titles as string[], user?.userId ?? 'usr_dev');
-  if (!result.ok) return Response.json({ error: result }, { status: statusForCode(result.code) });
+  if (!result.ok) return refusal(result);
   return Response.json({ children: result.value.children }, { status: 201 });
 }
 
@@ -422,11 +381,8 @@ export async function cardReference({ request, env, tenantId, agent, stub }: Boa
   // that threw on them would turn a tightening into an outage.
   // oxlint-disable-next-line typescript/no-unnecessary-type-conversion -- the body is cast, not parsed: String() is the parse
   if (body.provider !== undefined && !isKnownProvider(String(body.provider))) {
-    return Response.json(
-      // oxlint-disable-next-line typescript/no-unnecessary-type-conversion -- the body is cast, not parsed: String() is the parse
-      { error: `unknown reference provider: ${String(body.provider)}. Known: ${providerKeys().join(', ')}` },
-      { status: 400 },
-    );
+    // oxlint-disable-next-line typescript/no-unnecessary-type-conversion -- the body is cast, not parsed: String() is the parse
+    return refuse('INVALID_INPUT', `unknown reference provider: ${String(body.provider)}. Known: ${providerKeys().join(', ')}`);
   }
 
   // The tenant's forge host is read here rather than held in the DO: it is a workspace
@@ -456,7 +412,7 @@ export async function cardReference({ request, env, tenantId, agent, stub }: Boa
       refTenant?.forgeHost ?? null,
     ),
   );
-  if (!result.ok) return Response.json({ error: result }, { status: statusForCode(result.code) });
+  if (!result.ok) return refusal(result);
   return Response.json({ reference: result.value });
 }
 
@@ -473,6 +429,6 @@ export async function cardActivities({ stub }: BoardRequest, cardActMatch: RegEx
 // GET /v1/boards/:id/cards/:cardId/estimate — pre-run cost estimate (docs/07 §6)
 export async function cardEstimate({ stub }: BoardRequest, estimateMatch: RegExpMatchArray): Promise<Response> {
   const result = await stub.estimateCardCost(estimateMatch[1]);
-  if (!result.ok) return Response.json({ error: result }, { status: statusForCode(result.code) });
+  if (!result.ok) return refusal(result);
   return Response.json(result.value);
 }

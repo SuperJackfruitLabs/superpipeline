@@ -9,6 +9,7 @@
   import { createMilestone, createProject, updateProject, type Project, type ProjectHealth } from '$lib/api';
   import { MOD_KEY } from '$lib/components/dialogs/dialog-copy';
   import './project-dialog.css';
+  import { errorText } from '$lib/api/error-text';
 
   let { open = $bindable(false), project = null, onsaved, onclose }: {
     open?: boolean;
@@ -47,8 +48,8 @@
 
   async function refusal(res: Response, fallback: string): Promise<string | null> {
     if (res.ok) return null;
-    const body = (await res.json().catch(() => null)) as { error?: string } | null;
-    return body?.error ?? `${fallback} (${res.status})`;
+    const body: unknown = await res.json().catch(() => null);
+    return errorText(body) ?? `${fallback} (${res.status})`;
   }
 
   async function save(): Promise<void> {

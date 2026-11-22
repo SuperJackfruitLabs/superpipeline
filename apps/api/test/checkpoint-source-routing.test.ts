@@ -35,7 +35,7 @@ async function send(token?: string, body = '{}', enabled = true, method = 'POST'
 it('keeps the proposed source endpoint disabled without explicit deployment configuration', () => withOrgPlane(async () => {
   const response = await send(await signed(), '{}', false);
   expect(response.status).toBe(404);
-  expect(await response.json()).toEqual({ error: { code: 'CHECKPOINT_SOURCE_DISABLED' } });
+  expect(await response.json()).toMatchObject({ error: { code: 'CHECKPOINT_SOURCE_DISABLED', message: expect.any(String) } });
 }));
 
 it('requires an issuer-verified service and exact submit scope before reading the source body', () => withOrgPlane(async () => {
@@ -48,7 +48,7 @@ it('requires an issuer-verified service and exact submit scope before reading th
 it('bounds actual source bytes independently of content-length before reaching a board', () => withOrgPlane(async () => {
   const response = await send(await signed(), ' '.repeat(65537));
   expect(response.status).toBe(413);
-  expect(await response.json()).toEqual({ error: { code: 'CHECKPOINT_SOURCE_TOO_LARGE' } });
+  expect(await response.json()).toMatchObject({ error: { code: 'CHECKPOINT_SOURCE_TOO_LARGE', message: expect.any(String) } });
 }));
 
 it('owns the source path for every method without falling back to agent or human dispatch', () => withOrgPlane(async () => {

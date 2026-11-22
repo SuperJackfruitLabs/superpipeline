@@ -3,7 +3,7 @@ import { resolveHubService, EVIDENCE_READ } from '../../auth/resolve';
 import { boardStub } from '../../board/stub';
 import { principalIdsFor, hubSubjectsFor } from '../../db/catalog';
 import type { Env } from '../../env';
-import { statusForCode, unexpected } from '../errors';
+import { refuse, refusal, unexpected } from '../errors';
 
 /**
  * GET /v1/boards/:id/runs/:runId/evidence — a SERVICE principal (superwitness) reading a run
@@ -14,16 +14,10 @@ import { statusForCode, unexpected } from '../errors';
 export async function runEvidence(request: Request, env: Env, boardId: string, runId: string, versioned = false): Promise<Response> {
   const service = await resolveHubService(request, env);
   if (!service) {
-    return Response.json(
-      { error: { code: 'UNAUTHORIZED', message: 'a hub-issued service token for a mapped fleet is required' } },
-      { status: 401 },
-    );
+    return refuse('UNAUTHORIZED', 'a hub-issued service token for a mapped fleet is required');
   }
   if (!service.scopes.includes(EVIDENCE_READ)) {
-    return Response.json(
-      { error: { code: 'FORBIDDEN', message: 'this principal does not hold evidence:read' } },
-      { status: 403 },
-    );
+    return refuse('FORBIDDEN', 'this principal does not hold evidence:read');
   }
   try {
     const stub = boardStub(env, service.tenantId, boardId);
@@ -53,9 +47,9 @@ export async function runEvidence(request: Request, env: Env, boardId: string, r
       };
       return Response.json(extension?.ok ? { ...extension.value, pipeline } : pipeline);
     }
-    if (result.code === 'NOT_INITIALIZED') return Response.json({ error: { code: 'BOARD_NOT_FOUND' } }, { status: 404 });
-    if (result.code === 'RUN_NOT_FOUND') return Response.json({ error: { code: 'RUN_NOT_FOUND' } }, { status: 404 });
-    return Response.json({ error: { code: result.code } }, { status: statusForCode(result.code) });
+    if (result.code === 'NOT_INITIALIZED') return refuse('BOARD_NOT_FOUND', 'board not found');
+    if (result.code === 'RUN_NOT_FOUND') return refuse('RUN_NOT_FOUND', result.message);
+    return refusal(result);
   } catch (err) {
     return unexpected(err);
   }

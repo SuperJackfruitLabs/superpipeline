@@ -5,6 +5,7 @@ import { app } from '$lib/stores/app.svelte';
 import { loadState } from '$lib/loading.svelte';
 import { holdersOf, orphanNote, unstaffedNote, type CapNote } from './capability-notes';
 import { crewLists, workspaceCounts } from './workspace-counts.svelte';
+import { errorText } from '$lib/api/error-text';
 
 export class CapabilitiesModel {
   // Opens on the list this tab last read (crewLists), refreshed behind it.
@@ -42,8 +43,8 @@ export class CapabilitiesModel {
   retry(): Promise<void> { return this.refresh(); }
 
   private async bodyError(res: Response, fallback: string): Promise<string> {
-    const body = (await res.json().catch(() => null)) as { error?: string } | null;
-    return body?.error ?? `${fallback} (${res.status})`;
+    const body: unknown = await res.json().catch(() => null);
+    return errorText(body) ?? `${fallback} (${res.status})`;
   }
 
   /** Existing keys close to the name being typed: the same rule the server's hint uses. */

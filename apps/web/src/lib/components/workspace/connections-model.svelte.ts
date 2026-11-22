@@ -4,6 +4,7 @@ import { beginHubAuthorization, hubStatus } from '$lib/hub-token';
 import { app } from '$lib/stores/app.svelte';
 import { loadState } from '$lib/loading.svelte';
 import { FORGE_HOST_ERROR } from './workspace-words';
+import { errorText } from '$lib/api/error-text';
 
 export class ConnectionsModel {
   loading = $state(true);
@@ -73,8 +74,8 @@ export class ConnectionsModel {
       const v = this.fleetInput.trim();
       const res = await setWorkspaceFleet(v === '' ? null : v);
       if (!res.ok) {
-        const body = (await res.json().catch(() => null)) as { error?: string } | null;
-        this.error = body?.error ?? `Linking failed (${res.status})`;
+        const body: unknown = await res.json().catch(() => null);
+        this.error = errorText(body) ?? `Linking failed (${res.status})`;
         return;
       }
       this.editingFleet = false;

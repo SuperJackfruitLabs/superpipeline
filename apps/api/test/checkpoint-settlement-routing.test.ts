@@ -18,7 +18,7 @@ it.each([
   if (!match) throw new Error('invalid fixture path');
   const response = await boards({ request, path, url: new URL(request.url), env }, match);
   expect(response.status).toBe(404);
-  expect(await response.json()).toEqual({ error: { code: 'CHECKPOINT_SETTLEMENT_DISABLED' } });
+  expect(await response.json()).toMatchObject({ error: { code: 'CHECKPOINT_SETTLEMENT_DISABLED', message: expect.any(String) } });
   const [production, environments] = wranglerJsonc.split('"env": {');
   expect(production).toContain('"PROPOSED_CHECKPOINT_SETTLEMENT": "true"');
   expect(environments).not.toContain('PROPOSED_CHECKPOINT_SETTLEMENT');

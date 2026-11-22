@@ -197,9 +197,9 @@ describe('creating and reading an approval request', () => {
       // Another workspace's service sees no such board.
       const foreign = await call('GET', `${path}/${String(created.json.approvalRequestId)}`, bearer(await service({ tenant: OTHER_FLEET, scope: 'approval-requests:read' })));
       expect(foreign.status).toBe(404);
-      expect(await foreign.json()).toEqual({ error: 'board not found' });
+      expect(await foreign.json()).toEqual({ error: { code: 'BOARD_NOT_FOUND', message: 'board not found' } });
       const foreignCreate = await call('POST', path, bearer(await service({ tenant: OTHER_FLEET })), createBody());
-      expect(await foreignCreate.json()).toEqual({ error: 'board not found' });
+      expect(await foreignCreate.json()).toEqual({ error: { code: 'BOARD_NOT_FOUND', message: 'board not found' } });
     });
   });
 });

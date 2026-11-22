@@ -4,7 +4,7 @@ import { stagePatchRefusal } from '../../auth/scopes';
 import type { StageDef, StagePatch, BoardSnapshot } from '../../board/board-do';
 import { renameBoard, updateBoardStages, deleteBoard } from '../../db/catalog';
 import { isWorkspaceAdmin } from '../callers';
-import { statusForCode } from '../errors';
+import { refuse, refusal, statusForCode } from '../errors';
 import type { BoardRequest } from './request';
 import { registerStageCapabilities } from './stage-capabilities';
 
@@ -16,7 +16,7 @@ export async function liveFeed({ request, stub }: BoardRequest): Promise<Respons
 // GET /v1/boards/:id — board snapshot
 export async function boardSnapshot({ stub }: BoardRequest): Promise<Response> {
   const snapshot: BoardSnapshot = await stub.getState();
-  if (!snapshot.boardId) return Response.json({ error: 'board not found' }, { status: 404 });
+  if (!snapshot.boardId) return refuse('BOARD_NOT_FOUND', 'board not found');
   return Response.json(snapshot);
 }
 
@@ -25,7 +25,7 @@ export async function boardRename({ request, env, tenantId, boardId, stub }: Boa
   const body = (await request.json()) as { name?: string };
   if (body.name && body.name.trim() !== '') {
     const r = await stub.setName(body.name.trim());
-    if (!r.ok) return Response.json({ error: r }, { status: statusForCode(r.code) });
+    if (!r.ok) return refusal(r);
     await renameBoard(env.DB, tenantId, boardId, body.name.trim());
   }
   return Response.json(await stub.getState());
@@ -39,7 +39,7 @@ export async function boardRename({ request, env, tenantId, boardId, stub }: Boa
 export async function stageEdit({ request, env, user, agent, stub }: BoardRequest, stageMatch: RegExpMatchArray): Promise<Response> {
   const body = (await stageWriteInput(request, env.PROPOSED_CHECKPOINT_POLICY === 'true').catch(() => null)) as StagePatch | null;
   if (!body || typeof body !== 'object' || Array.isArray(body)) {
-    return Response.json({ error: 'a stage patch must be a JSON object' }, { status: 400 });
+    return refuse('INVALID_BODY', 'a stage patch must be a JSON object');
   }
   /**
    * An agent may set a stage's `instructions` and nothing else.
@@ -50,19 +50,14 @@ export async function stageEdit({ request, env, user, agent, stub }: BoardReques
    * routing, and wrong routing strands every card in the lane with nothing to see.
    */
   if (agent) {
-    const refusal = stagePatchRefusal(body as Record<string, unknown>);
-    if (refusal) {
-      return Response.json({ error: { code: 'FIELD_NOT_COMPOSABLE', message: refusal } }, { status: 403 });
-    }
+    const notComposable = stagePatchRefusal(body as Record<string, unknown>);
+    if (notComposable) return refuse('FIELD_NOT_COMPOSABLE', notComposable);
   }
   // Named rather than ignored. A caller sending `key` means to rename the stage, and
   // silently dropping it would report success for a change that did not happen.
   for (const forbidden of ['key', 'order'] as const) {
     if (forbidden in body) {
-      return Response.json(
-        { error: `\`${forbidden}\` is not patchable — use PUT /stages, where its effect on the other stages is visible` },
-        { status: 400 },
-      );
+      return refuse('INVALID_INPUT', `\`${forbidden}\` is not patchable — use PUT /stages, where its effect on the other stages is visible`);
     }
   }
   // Built from named fields rather than forwarding `body` whole: the cast above names the
@@ -100,7 +95,7 @@ export async function stageEdit({ request, env, user, agent, stub }: BoardReques
     // path segment, and a path naming nothing is a 404: that is how a caller tells a typo in
     // the URL from a bad payload without reading the message.
     const status = result.code === 'UNKNOWN_STAGE' ? 404 : statusForCode(result.code);
-    return Response.json({ error: result }, { status });
+    return refusal(result, status);
   }
   return Response.json(result.value);
 }
@@ -114,13 +109,13 @@ export async function stageEdit({ request, env, user, agent, stub }: BoardReques
 export async function stagesReplace({ request, env, tenantId, boardId, user, stub }: BoardRequest): Promise<Response> {
   const body = (await stageWriteInput(request, env.PROPOSED_CHECKPOINT_POLICY === 'true').catch(() => null)) as { stages?: StageDef[] } | null;
   if (!body || !Array.isArray(body.stages) || body.stages.some((stage) => !stage || typeof stage.key !== 'string'))
-    return Response.json({ error: { code: 'INVALID_STAGES', message: 'stages must be an array of stage objects' } }, { status: 400 });
+    return refuse('INVALID_STAGES', 'stages must be an array of stage objects');
   const denied = checkpointStageWriteRefusal(env, user, (await stub.getState()).stages, body.stages);
   if (denied) return denied;
   // `manage` let this caller in by the local role; changing any stage's decision policy also needs
   // a workspace owner or admin by the Accounts role (charter decision 6), which the board checks.
   const r = await stub.setStages(body.stages ?? [], { kind: 'person', mayChangeDecisionPolicy: isWorkspaceAdmin(env, user) });
-  if (!r.ok) return Response.json({ error: r }, { status: statusForCode(r.code) });
+  if (!r.ok) return refusal(r);
   await updateBoardStages(env.DB, tenantId, boardId, JSON.stringify(r.value.stages));
   await registerStageCapabilities(env, tenantId, r.value.stages, user?.userId ?? null);
   return Response.json(await stub.getState());
@@ -181,7 +176,8 @@ export async function notificationsList({ url, user, stub }: BoardRequest): Prom
 // POST /v1/boards/:id/notifications/:seq/read — mark a notification read (docs/07 §7)
 export async function notificationRead({ stub }: BoardRequest, notifReadMatch: RegExpMatchArray): Promise<Response> {
   const r = await stub.markNotificationRead(Number(notifReadMatch[1]));
-  return Response.json(r.ok ? r.value : { error: r });
+  // A refusal here has always answered 200; only its body takes the one shape.
+  return r.ok ? Response.json(r.value) : refusal(r, 200);
 }
 
 // GET/POST /v1/boards/:id/profiles — agent profiles as data (docs/05 §7)
@@ -210,7 +206,7 @@ export async function profileSet({ request, stub }: BoardRequest): Promise<Respo
     autonomyLevel: body.autonomyLevel,
     capabilities: body.capabilities,
   });
-  if (!result.ok) return Response.json({ error: result }, { status: statusForCode(result.code) });
+  if (!result.ok) return refusal(result);
   return Response.json(result.value, { status: 201 });
 }
 
@@ -220,13 +216,13 @@ export async function profileSet({ request, stub }: BoardRequest): Promise<Respo
 export async function staleSettings({ request, stub }: BoardRequest): Promise<Response> {
   const body = (await request.json().catch(() => null)) as { enabled?: unknown; afterHours?: unknown } | null;
   if (!body || typeof body !== 'object') {
-    return Response.json({ error: { code: 'INVALID_STALE_SETTINGS', message: 'send { "afterHours"?: number, "enabled"?: boolean }' } }, { status: 400 });
+    return refuse('INVALID_STALE_SETTINGS', 'send { "afterHours"?: number, "enabled"?: boolean }');
   }
   const result = await stub.setStaleSettings({
     ...(body.enabled !== undefined ? { enabled: body.enabled as boolean } : {}),
     ...(body.afterHours !== undefined ? { afterHours: body.afterHours as number } : {}),
   });
-  if (!result.ok) return Response.json({ error: result }, { status: statusForCode(result.code) });
+  if (!result.ok) return refusal(result);
   return Response.json({ stale: result.value });
 }
 
@@ -236,14 +232,14 @@ export async function staleSettings({ request, stub }: BoardRequest): Promise<Re
 // workspace owner or admin by the Accounts role (decision 6).
 export async function decisionTimeoutSet({ request, env, user, stub }: BoardRequest): Promise<Response> {
   if (!isWorkspaceAdmin(env, user)) {
-    return Response.json({ error: { code: 'WORKSPACE_ADMIN_REQUIRED', message: 'only a workspace owner or admin can set the board decision timeout' } }, { status: 403 });
+    return refuse('WORKSPACE_ADMIN_REQUIRED', 'only a workspace owner or admin can set the board decision timeout');
   }
   const body: unknown = await request.json().catch(() => undefined);
   if (body === undefined) {
-    return Response.json({ error: { code: 'INVALID_TIMEOUT', message: 'send { "remindAfterMinutes"?: number, "escalateAfterMinutes"?: number } or null' } }, { status: 400 });
+    return refuse('INVALID_TIMEOUT', 'send { "remindAfterMinutes"?: number, "escalateAfterMinutes"?: number } or null');
   }
   const result = await stub.setDecisionTimeout(body);
-  if (!result.ok) return Response.json({ error: result }, { status: statusForCode(result.code) });
+  if (!result.ok) return refusal(result);
   return Response.json(result.value);
 }
 
@@ -252,6 +248,6 @@ export async function budgetSet({ request, stub }: BoardRequest): Promise<Respon
   // Built from named fields rather than forwarding `body` whole, same as the other PUT/POST
   // routes in this file: the cast strips nothing at runtime.
   const result = await stub.setBudget({ boardUsdCap: body.boardUsdCap, cardUsdCap: body.cardUsdCap });
-  if (!result.ok) return Response.json({ error: result }, { status: statusForCode(result.code) });
+  if (!result.ok) return refusal(result);
   return Response.json(result.value);
 }

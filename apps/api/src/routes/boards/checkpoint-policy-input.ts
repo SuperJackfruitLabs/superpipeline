@@ -7,6 +7,7 @@ import type { StageDef } from '../../board/model';
 import type { Env } from '../../env';
 import type { UserPrincipal } from '../../auth/resolve';
 import { isWorkspaceAdmin } from '../callers';
+import { refuse } from '../errors';
 
 export async function stageWriteInput(request: Request, enabled = false): Promise<unknown> {
   if (!enabled) return request.json();
@@ -18,12 +19,12 @@ export function checkpointStageWriteRefusal(env: Env, user: UserPrincipal | null
   before: StageDef[], after: StageDef[]): Response | null {
   for (const stage of after) {
     const bad = checkpointPolicyFieldError(stage.checkpointPolicy, env.PROPOSED_CHECKPOINT_POLICY === 'true');
-    if (bad) return Response.json({ error: { code: 'INVALID_STAGES', message: bad } }, { status: 400 });
+    if (bad) return refuse('INVALID_STAGES', bad);
   }
   if (!changedCheckpointStages(before, after).length) return null;
   if (env.PROPOSED_CHECKPOINT_POLICY !== 'true')
-    return Response.json({ error: { code: 'INVALID_STAGES', message: 'checkpointPolicy is proposed and not enabled' } }, { status: 400 });
+    return refuse('INVALID_STAGES', 'checkpointPolicy is proposed and not enabled');
   if (!isWorkspaceAdmin(env, user))
-    return Response.json({ error: { code: 'WORKSPACE_ADMIN_REQUIRED', message: 'only a workspace owner or admin can administer checkpoint policy' } }, { status: 403 });
+    return refuse('WORKSPACE_ADMIN_REQUIRED', 'only a workspace owner or admin can administer checkpoint policy');
   return null;
 }

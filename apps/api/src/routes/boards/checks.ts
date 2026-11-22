@@ -1,9 +1,8 @@
 // A card's machine checks: reading them, and an owner or admin passing one by hand (charter:
 // decisions/2026-11-09-a-gate-may-be-decided-by-checks.md, decisions 5 and 7).
 import { principalIdsFor } from '../../db/catalog';
-import { flatError } from '../../flat-error';
 import { workspaceRoleFor } from '../callers';
-import { statusForCode } from '../errors';
+import { refuse, refusal } from '../errors';
 import type { BoardRequest } from './request';
 
 // GET /v1/boards/:id/cards/:cardId/checks — the checks of the card's latest arrival at a stage with
@@ -14,7 +13,7 @@ import type { BoardRequest } from './request';
 // work came back needs it as much as the chat bridge relaying the result.
 export async function cardChecksRead({ stub }: BoardRequest, match: RegExpMatchArray): Promise<Response> {
   const result = await stub.cardChecks(match[1]);
-  if (!result.ok) return Response.json({ error: flatError(result) }, { status: statusForCode(result.code) });
+  if (!result.ok) return refusal(result);
   return Response.json({ checks: result.value });
 }
 
@@ -23,12 +22,12 @@ export async function cardChecksRead({ stub }: BoardRequest, match: RegExpMatchA
 // card is still waiting on). Reachable with an agent's credential only to be refused by name.
 export async function checkOverride({ request, env, tenantId, user, agent, stub }: BoardRequest, match: RegExpMatchArray): Promise<Response> {
   if (agent) {
-    return Response.json({ error: { code: 'CHECK_OVERRIDE_NOT_ALLOWED', message: 'an agent never overrides a check' } }, { status: 403 });
+    return refuse('CHECK_OVERRIDE_NOT_ALLOWED', 'an agent never overrides a check');
   }
   const body: unknown = await request.json().catch(() => null);
   const comment = body !== null && typeof body === 'object' && 'comment' in body && typeof body.comment === 'string' ? body.comment : null;
   if (comment === null) {
-    return Response.json({ error: { code: 'INVALID_COMMENT', message: 'overriding a check needs a `comment` saying why' } }, { status: 400 });
+    return refuse('INVALID_COMMENT', 'overriding a check needs a `comment` saying why');
   }
   const localId = user?.userId ?? 'usr_dev';
   const principalIds = await principalIdsFor(env.DB, tenantId, [localId]);
@@ -41,6 +40,6 @@ export async function checkOverride({ request, env, tenantId, user, agent, stub 
     role: workspaceRoleFor(env, user),
     comment,
   });
-  if (!result.ok) return Response.json({ error: flatError(result) }, { status: statusForCode(result.code) });
+  if (!result.ok) return refusal(result);
   return Response.json(result.value);
 }

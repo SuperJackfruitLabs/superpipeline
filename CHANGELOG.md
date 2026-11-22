@@ -14,6 +14,8 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html). Entries g
 
 ## Unreleased
 
+- Every error from the board and service routes is one shape, `{ "error": { "code", "message", "detail"? } }` (treaty `error.v1`). Refusals that answered a plain sentence now carry a code: `UNAUTHORIZED` (401), `FORBIDDEN` (403), `METHOD_NOT_ALLOWED` (405), `UNKNOWN_RUN_ACTION` (404), `BOARD_NOT_FOUND` (404), `INVALID_BODY` or `INVALID_INPUT` (400), and an unplanned failure is `UNEXPECTED` (500). A refusal's `detail` is under `detail` and, as before, beside `code` too. The sign-in and role refusals on the workspace routes (projects, labels, members, capabilities, agents) take the same shape; those routes' own refusals are unchanged.
+
 ## v0.0.34 — 2026-11-21
 
 - Every page is one composition, the same in every vibe: the Inbox, the Board, the List, the Card, Crew, Settings and Board settings, Projects, Spend in detail and the board log. A vibe changes how a page looks and how its headline is set, never what it says or where its actions are. The board shows every stage in one track, with its count and who works it, and draws lanes only for the stages that hold cards. The card is the same in the drawer, on a phone and on its own page: one sentence says where it is, for how long and what is wanted, beside the one action that answers it, and Review, Answer and Resume open in its place. The Inbox groups what wants you by what you must do (Review, Answer, Resume a stopped agent, Over budget, Nobody works these stages), with Running, Spend and Activity as tabs. Crew and Settings are tabs with their counts and one table each.

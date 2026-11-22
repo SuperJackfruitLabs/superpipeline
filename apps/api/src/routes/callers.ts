@@ -4,6 +4,7 @@ import { orgPlaneMode } from '../auth/org-plane';
 import { scopePermits, type AgentScope } from '../auth/scopes';
 import { permits, type Capability } from '../db/members';
 import type { Env } from '../env';
+import { refuse } from './errors';
 
 /**
  * Refuse an act this member's role does not reach, or null to proceed.
@@ -15,10 +16,10 @@ import type { Env } from '../env';
  * cookie naming that tenant, and they are refused rather than demoted to a reader.
  */
 export function refuseByRole(user: UserPrincipal | null, capability: Capability): Response | null {
-  if (!user) return Response.json({ error: 'sign in to continue' }, { status: 401 });
-  if (!user.role) return Response.json({ error: 'you are not a member of this workspace' }, { status: 403 });
+  if (!user) return refuse('UNAUTHORIZED', 'sign in to continue');
+  if (!user.role) return refuse('FORBIDDEN', 'you are not a member of this workspace');
   if (!permits(user.role, capability)) {
-    return Response.json({ error: `a ${user.role} may not do that in this workspace` }, { status: 403 });
+    return refuse('FORBIDDEN', `a ${user.role} may not do that in this workspace`);
   }
   return null;
 }
@@ -73,19 +74,9 @@ export async function resolveWorkspaceCaller(
   }
 
   const agent = (await resolveAgent(request, env)) ?? (await resolveHubAgent(request, env));
-  if (!agent) return Response.json({ error: 'sign in to continue' }, { status: 401 });
-  if (needed.agentScope === null) {
-    return Response.json(
-      { error: 'this is not something an agent may do in this workspace' },
-      { status: 403 },
-    );
-  }
-  if (!scopePermits(agent.scopes, needed.agentScope)) {
-    return Response.json(
-      { error: `this token is not permitted to ${needed.agentScope}` },
-      { status: 403 },
-    );
-  }
+  if (!agent) return refuse('UNAUTHORIZED', 'sign in to continue');
+  if (needed.agentScope === null) return refuse('FORBIDDEN', 'this is not something an agent may do in this workspace');
+  if (!scopePermits(agent.scopes, needed.agentScope)) return refuse('FORBIDDEN', `this token is not permitted to ${needed.agentScope}`);
   return { tenantId: agent.tenantId, user: null, agent };
 }
 

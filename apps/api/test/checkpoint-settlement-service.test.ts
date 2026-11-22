@@ -144,7 +144,7 @@ it('rolls back the whole real completion when receipt insertion is ignored', () 
   const before = await f.inspect((_board, _context, state) => state.storage.sql.exec('SELECT * FROM run_reports').toArray());
   const response = await send(f.path, await token(), 'POST', f.raw);
   expect(response.status).toBe(500);
-  expect(await response.json()).toEqual({ error: { code: 'CHECKPOINT_RECEIPT_NOT_SAVED' } });
+  expect(await response.json()).toMatchObject({ error: { code: 'CHECKPOINT_RECEIPT_NOT_SAVED', message: expect.any(String) } });
   await f.inspect((_board, context, state) => {
     expect(context.getRunRow(f.runId)?.status).toBe('working');
     expect(state.storage.sql.exec('SELECT * FROM card_references').toArray()).toEqual([]);
@@ -158,7 +158,7 @@ it('bounds the actual settlement stream before receipt admission and accepts exa
   const auth = await token();
   const excess = await send(f.path, auth, 'POST', exact + ' ');
   expect(excess.status).toBe(413);
-  expect(await excess.json()).toEqual({ error: { code: 'CHECKPOINT_SETTLEMENT_TOO_LARGE' } });
+  expect(await excess.json()).toMatchObject({ error: { code: 'CHECKPOINT_SETTLEMENT_TOO_LARGE', message: expect.any(String) } });
   await f.inspect((_board, context, state) => {
     expect(context.getRunRow(f.runId)?.status).toBe('working');
     expect(state.storage.sql.exec("SELECT name FROM sqlite_master WHERE name='proposed_checkpoint_receipts'").toArray()).toEqual([]);

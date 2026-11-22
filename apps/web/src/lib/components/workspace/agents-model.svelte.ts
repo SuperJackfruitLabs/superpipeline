@@ -8,6 +8,7 @@ import {
 import { app } from '$lib/stores/app.svelte';
 import { loadState } from '$lib/loading.svelte';
 import { crewLists, workspaceCounts } from './workspace-counts.svelte';
+import { errorText } from '$lib/api/error-text';
 
 export interface MintedToken { agentName: string; token: string; scopes?: AgentScope[] }
 const message = (e: unknown) => (e instanceof Error ? e.message : String(e));
@@ -85,8 +86,8 @@ export class AgentsModel {
         iconUrl: this.editIcon.trim() === '' ? null : this.editIcon.trim(),
       });
       if (!res.ok) {
-        const body = (await res.json().catch(() => null)) as { error?: string } | null;
-        this.error = body?.error ?? `Saving failed (${res.status})`;
+        const body: unknown = await res.json().catch(() => null);
+        this.error = errorText(body) ?? `Saving failed (${res.status})`;
         return;
       }
       this.editingId = null;
@@ -162,8 +163,8 @@ export class AgentsModel {
       if (icon !== '') {
         const res = await updateAgent(t.agent.id, { iconUrl: icon });
         if (!res.ok) {
-          const body = (await res.json().catch(() => null)) as { error?: string } | null;
-          this.error = `${t.agent.name} was created, but its picture was not saved: ${body?.error ?? res.status}`;
+          const body: unknown = await res.json().catch(() => null);
+          this.error = `${t.agent.name} was created, but its picture was not saved: ${errorText(body) ?? res.status}`;
         }
       }
       this.resetNew();

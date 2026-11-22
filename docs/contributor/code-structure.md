@@ -102,16 +102,17 @@ a strictly lower layer; nodes in one layer do not import each other.
 | Layer | Nodes |
 |---|---|
 | 0 log | `log.ts` (the Worker's log sink; imports nothing) |
-| 1 foundations | `env.ts`, `ids.ts`, `json.ts`, `flat-error.ts`, `crypto/`, `metering/`, `telemetry/` |
+| 1 foundations | `env.ts`, `ids.ts`, `json.ts`, `crypto/`, `metering/`, `telemetry/` |
 | 2 pure helpers | `push/`, `references/`, `approval-subject-kinds/` |
 | 3 catalog | `db/` |
 | 4 identity | `auth/` |
 | 5 run reports | `superwitness/` |
 | 6 board | `board/` (the Durable Object, its modules and its stub) |
-| 7 surfaces | `mcp/`, `dev/`, `card-links.ts` |
-| 8 | `service-routes.ts` |
-| 9 routes | `routes/` (the router, its tables and one module per resource) |
-| 10 entry | `index.ts` |
+| 7 errors | `api-errors.ts` (the one error body, treaty `error.v1`, and the status each code carries) |
+| 8 surfaces | `mcp/`, `dev/`, `card-links.ts`, `card-eligibility.ts`, `card-reservation.ts` |
+| 9 | `service-routes.ts` |
+| 10 routes | `routes/` (the router, its tables and one module per resource) |
+| 11 entry | `index.ts` |
 
 A new folder or root file fails the test until it is placed in `API_LAYERS`. An import that points
 up fails it too. `KNOWN_BACK_EDGES` exists to hold one while it is being removed; it may only

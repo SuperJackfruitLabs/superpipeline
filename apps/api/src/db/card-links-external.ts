@@ -13,7 +13,7 @@ export interface ExternalLinkRow { fromBoardId: string; fromCardId: string; toBo
 const COLUMNS =
   'from_board_id AS fromBoardId, from_card_id AS fromCardId, to_board_id AS toBoardId, to_card_id AS toCardId, kind';
 
-export type AddResult = { ok: true } | { ok: false; code: string; message: string };
+export type AddResult = { ok: true } | { ok: false; code: 'PARENT_MUST_BE_SAME_BOARD' | 'BAD_KIND' | 'SAME_BOARD_EDGE' | 'SELF_EDGE' | 'FOREIGN_BOARD'; message: string };
 
 export async function addExternalLink(
   db: D1Database,

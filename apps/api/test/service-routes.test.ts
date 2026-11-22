@@ -730,7 +730,7 @@ describe('a service reading a card\'s checks with gates:read (Organization plane
       const { boardId, cardId } = await seedBoardWithChecks(tenant);
       const r = await get(`/v1/boards/${boardId}/cards/${cardId}/checks`, await gateReader({ org: OTHER_ORG }));
       // The board is not found in the caller's workspace: refused before its board is asked at all.
-      expect({ status: r.status, body: await r.json() }).toEqual({ status: 404, body: { error: 'board not found' } });
+      expect({ status: r.status, body: await r.json() }).toEqual({ status: 404, body: { error: { code: 'BOARD_NOT_FOUND', message: 'board not found' } } });
     });
   });
 
@@ -758,7 +758,7 @@ describe('a service reading a card\'s checks with gates:read (hub issuer)', () =
       const t = await hubToken({ scope: 'gates:read' });
       expect((await get(`/v1/boards/${own.boardId}/cards/${own.cardId}/checks`, t)).status).toBe(200);
       const foreignRead = await get(`/v1/boards/${foreign.boardId}/cards/${foreign.cardId}/checks`, t);
-      expect({ status: foreignRead.status, body: await foreignRead.json() }).toEqual({ status: 404, body: { error: 'board not found' } });
+      expect({ status: foreignRead.status, body: await foreignRead.json() }).toEqual({ status: 404, body: { error: { code: 'BOARD_NOT_FOUND', message: 'board not found' } } });
       expect((await get(`/v1/boards/${own.boardId}/cards/${own.cardId}/checks`, await hubToken())).status).toBe(403);
     });
   });

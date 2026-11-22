@@ -6,7 +6,7 @@ import type { Capability } from '../../db/members';
 import { serviceRoute } from '../../service-routes';
 import { touchOnSuccess } from '../activity';
 import { refuseByRole } from '../callers';
-import { unexpected, methodNotAllowed } from '../errors';
+import { methodNotAllowed, refuse, unexpected } from '../errors';
 import { dispatch, type WorkerRequest } from '../router';
 import { boardCollection } from './collection';
 import { runEvidence } from './evidence';
@@ -183,7 +183,7 @@ export async function boards({ request, env, url, path }: WorkerRequest, match: 
     // routes that QUEUE work are where authority has to arrive: the grant is
     // recorded with the card and outlives the token that carried it.
     if (!human) human = await resolveHubUser(request, env);
-    if (!human) return Response.json({ error: 'sign in to continue' }, { status: 401 });
+    if (!human) return refuse('UNAUTHORIZED', 'sign in to continue');
     // A viewer reads the board; working it — creating, moving, editing and deleting cards,
     // resolving gates, answering an agent's question — is `member`, and reworking the board
     // itself is `admin`. GET is almost the whole read surface, so the method is the right
@@ -208,7 +208,7 @@ export async function boards({ request, env, url, path }: WorkerRequest, match: 
 
   if (isWebhook) {
     const t = url.searchParams.get('tenant');
-    if (!t || t.trim() === '') return Response.json({ error: 'tenant required' }, { status: 400 });
+    if (!t || t.trim() === '') return refuse('INVALID_INPUT', 'tenant required');
     tenantId = t;
   } else if (isAgentRoute) {
     agent = await resolveAgent(request, env);
@@ -229,20 +229,17 @@ export async function boards({ request, env, url, path }: WorkerRequest, match: 
       user = resolved;
       tenantId = resolved.tenantId;
     } else {
-      if (!agent) return Response.json({ error: 'a valid agent token is required' }, { status: 401 });
+      if (!agent) return refuse('UNAUTHORIZED', 'a valid agent token is required');
       // Scopes stop being decoration here. Every `spa_` token has carried a scope set since
       // migration 0001, the resolver has always returned it, and nothing compared it to the action
       // being attempted — so a token minted to claim drove every run verb. A recorded permission
       // nobody checks reads as protection that does not exist (auth/scopes.ts).
       const needed = requiredScope(rest, request.method, { hasBoardId: !!boardId });
       if (needed === SCOPE_FORBIDDEN) {
-        return Response.json(
-          { error: `an agent token cannot ${request.method} this route` },
-          { status: 403 },
-        );
+        return refuse('FORBIDDEN', `an agent token cannot ${request.method} this route`);
       }
       if (needed && !scopePermits(agent.scopes, needed)) {
-        return Response.json({ error: `this token is not permitted to ${needed}` }, { status: 403 });
+        return refuse('FORBIDDEN', `this token is not permitted to ${needed}`);
       }
       tenantId = agent.tenantId;
     }

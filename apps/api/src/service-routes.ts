@@ -5,7 +5,7 @@ import { boardNamesById, cardLinksBody } from './card-links';
 import { listBoards } from './db/catalog';
 import { eligibilityResponse } from './card-eligibility';
 import { clearReservationResponse, reserveResponse } from './card-reservation';
-import { flatError } from './flat-error';
+import { refuse, refusal } from './api-errors';
 import { readSchedulingInput } from './board/placement-window';
 import { DECISION_EVENTS, SUBSCRIBABLE_EVENTS, isRecordEvent } from './push/events';
 
@@ -46,10 +46,7 @@ function looksLikeService(request: Request): boolean {
   }
 }
 
-const refuse = (status: number, code: string, message: string) => Response.json({ error: { code, message } }, { status });
-/** The status of an approval-request refusal; the same as `routes/errors.ts` gives these codes. */
-const requestStatus = (code: string) => (code === 'INVALID_APPROVAL_REQUEST' ? 400 : code === 'REQUEST_ID_CONFLICT' ? 409 : 404);
-const notFound = (what: string) => Response.json({ error: `${what} not found` }, { status: 404 });
+const boardNotFound = () => refuse('BOARD_NOT_FOUND', 'board not found');
 
 export async function serviceRoute(request: Request, env: Env, path: string): Promise<Response | null> {
   const read = request.method === 'GET' ? READS.exec(path) : null;
@@ -70,7 +67,7 @@ export async function serviceRoute(request: Request, env: Env, path: string): Pr
   }
 
   const svc = await resolveHubService(request, env);
-  if (!svc) return refuse(401, 'UNAUTHORIZED', 'a service token for a mapped workspace is required');
+  if (!svc) return refuse('UNAUTHORIZED', 'a service token for a mapped workspace is required');
 
   /**
    * The decision carrier's sweep: every question waiting on a person, broker approval requests
@@ -78,9 +75,9 @@ export async function serviceRoute(request: Request, env: Env, path: string): Pr
    * same path lists card questions only, since a request's preview carries every argument in full.
    */
   if (questions) {
-    if (!svc.scopes.includes(APPROVAL_REQUESTS_RELAY)) return refuse(403, 'FORBIDDEN', 'this principal does not hold approval-requests:relay');
+    if (!svc.scopes.includes(APPROVAL_REQUESTS_RELAY)) return refuse('FORBIDDEN', 'this principal does not hold approval-requests:relay');
     const [, boardId] = questions;
-    if (!(await boardNamesById(env.DB, svc.tenantId, [boardId])).has(boardId)) return notFound('board');
+    if (!(await boardNamesById(env.DB, svc.tenantId, [boardId])).has(boardId)) return boardNotFound();
     return Response.json({ elicitations: await boardStub(env, svc.tenantId, boardId).pendingElicitationDeliveries({ approvalRequests: true }) });
   }
 
@@ -90,14 +87,14 @@ export async function serviceRoute(request: Request, env: Env, path: string): Pr
    * deciding, pulling back and delivery stay on the human routes, which a service token never reaches.
    */
   if (gates) {
-    if (!svc.scopes.includes(GATES_READ)) return refuse(403, 'FORBIDDEN', 'this principal does not hold gates:read');
+    if (!svc.scopes.includes(GATES_READ)) return refuse('FORBIDDEN', 'this principal does not hold gates:read');
     const [, boardId, which] = gates;
-    if (!(await boardNamesById(env.DB, svc.tenantId, [boardId])).has(boardId)) return notFound('board');
+    if (!(await boardNamesById(env.DB, svc.tenantId, [boardId])).has(boardId)) return boardNotFound();
     const stub = boardStub(env, svc.tenantId, boardId);
     if (which === 'pending') return Response.json({ gates: await stub.pendingGateDeliveries() });
     const result = await stub.getGate(which);
     // Its one refusal is GATE_NOT_FOUND, a 404 as on the human route.
-    return result.ok ? Response.json({ gate: result.value }) : Response.json({ error: result }, { status: 404 });
+    return result.ok ? Response.json({ gate: result.value }) : refusal(result, 404);
   }
 
   /**
@@ -106,9 +103,9 @@ export async function serviceRoute(request: Request, env: Env, path: string): Pr
    * resuming and archiving stay on the human routes.
    */
   if (followUps) {
-    if (!svc.scopes.includes(GATES_READ)) return refuse(403, 'FORBIDDEN', 'this principal does not hold gates:read');
+    if (!svc.scopes.includes(GATES_READ)) return refuse('FORBIDDEN', 'this principal does not hold gates:read');
     const [, boardId, which] = followUps;
-    if (!(await boardNamesById(env.DB, svc.tenantId, [boardId])).has(boardId)) return notFound('board');
+    if (!(await boardNamesById(env.DB, svc.tenantId, [boardId])).has(boardId)) return boardNotFound();
     const stub = boardStub(env, svc.tenantId, boardId);
     if (which === 'deliveries') return Response.json({ deliveries: await stub.pendingDeliveryFollowUps() });
     return Response.json({ attention: await stub.pendingAttention() });
@@ -120,12 +117,12 @@ export async function serviceRoute(request: Request, env: Env, path: string): Pr
    * on the human route.
    */
   if (checks) {
-    if (!svc.scopes.includes(GATES_READ)) return refuse(403, 'FORBIDDEN', 'this principal does not hold gates:read');
+    if (!svc.scopes.includes(GATES_READ)) return refuse('FORBIDDEN', 'this principal does not hold gates:read');
     const [, boardId, cardId] = checks;
-    if (!(await boardNamesById(env.DB, svc.tenantId, [boardId])).has(boardId)) return notFound('board');
+    if (!(await boardNamesById(env.DB, svc.tenantId, [boardId])).has(boardId)) return boardNotFound();
     const result = await boardStub(env, svc.tenantId, boardId).cardChecks(cardId);
     // Its refusals are CARD_NOT_FOUND and NOT_INITIALIZED, both a 404 on the human route too.
-    return result.ok ? Response.json({ checks: result.value }) : Response.json({ error: flatError(result) }, { status: 404 });
+    return result.ok ? Response.json({ checks: result.value }) : refusal(result, 404);
   }
 
   /**
@@ -133,9 +130,9 @@ export async function serviceRoute(request: Request, env: Env, path: string): Pr
    * placement service ranks candidates after. The person's route answers the same body.
    */
   if (eligibility) {
-    if (!svc.scopes.includes(DISPATCH_READ)) return refuse(403, 'FORBIDDEN', 'this principal does not hold dispatch:read');
+    if (!svc.scopes.includes(DISPATCH_READ)) return refuse('FORBIDDEN', 'this principal does not hold dispatch:read');
     const [, boardId, cardId] = eligibility;
-    if (!(await boardNamesById(env.DB, svc.tenantId, [boardId])).has(boardId)) return notFound('board');
+    if (!(await boardNamesById(env.DB, svc.tenantId, [boardId])).has(boardId)) return boardNotFound();
     return eligibilityResponse(env, svc.tenantId, boardStub(env, svc.tenantId, boardId), cardId);
   }
 
@@ -144,9 +141,9 @@ export async function serviceRoute(request: Request, env: Env, path: string): Pr
    * placement service writes once it has chosen. The hold records this service as `reservedBy`.
    */
   if (reservation) {
-    if (!svc.scopes.includes(DISPATCH_RESERVE)) return refuse(403, 'FORBIDDEN', 'this principal does not hold dispatch:reserve');
+    if (!svc.scopes.includes(DISPATCH_RESERVE)) return refuse('FORBIDDEN', 'this principal does not hold dispatch:reserve');
     const [, boardId, cardId] = reservation;
-    if (!(await boardNamesById(env.DB, svc.tenantId, [boardId])).has(boardId)) return notFound('board');
+    if (!(await boardNamesById(env.DB, svc.tenantId, [boardId])).has(boardId)) return boardNotFound();
     const stub = boardStub(env, svc.tenantId, boardId);
     if (request.method === 'DELETE') return clearReservationResponse(stub, cardId, `svc:${svc.principalId}`);
     return reserveResponse(env, svc.tenantId, stub, cardId, svc.principalId, await request.json().catch(() => null));
@@ -161,18 +158,18 @@ export async function serviceRoute(request: Request, env: Env, path: string): Pr
     const [, boardId] = scheduling;
     const writes = request.method === 'PUT';
     if (writes ? !svc.scopes.includes(DISPATCH_RESERVE) : !svc.scopes.includes(DISPATCH_READ) && !svc.scopes.includes(DISPATCH_RESERVE)) {
-      return refuse(403, 'FORBIDDEN', writes ? 'this principal does not hold dispatch:reserve' : 'this principal holds neither dispatch:read nor dispatch:reserve');
+      return refuse('FORBIDDEN', writes ? 'this principal does not hold dispatch:reserve' : 'this principal holds neither dispatch:read nor dispatch:reserve');
     }
-    if (!(await boardNamesById(env.DB, svc.tenantId, [boardId])).has(boardId)) return notFound('board');
+    if (!(await boardNamesById(env.DB, svc.tenantId, [boardId])).has(boardId)) return boardNotFound();
     const stub = boardStub(env, svc.tenantId, boardId);
     if (!writes) {
       const settings = await stub.schedulingSettings();
-      return settings ? Response.json({ scheduling: settings }) : notFound('board');
+      return settings ? Response.json({ scheduling: settings }) : boardNotFound();
     }
     const input = readSchedulingInput(await request.json().catch(() => null));
-    if (!input.ok) return refuse(400, 'INVALID_SCHEDULING', input.message);
+    if (!input.ok) return refuse('INVALID_SCHEDULING', input.message);
     const result = await stub.setPlacementWindow({ placementWindowSeconds: input.placementWindowSeconds, by: `svc:${svc.principalId}` });
-    return result.ok ? Response.json({ scheduling: result.value }) : refuse(result.code === 'INVALID_SCHEDULING' ? 400 : 404, result.code, result.message);
+    return result.ok ? Response.json({ scheduling: result.value }) : refusal(result, result.code === 'INVALID_SCHEDULING' ? 400 : 404);
   }
 
   /**
@@ -184,70 +181,70 @@ export async function serviceRoute(request: Request, env: Env, path: string): Pr
    */
   if (requestCreate || requestRead) {
     const [, boardId, approvalRequestId] = requestCreate ?? requestRead ?? [];
-    if (requestCreate && !svc.scopes.includes(APPROVAL_REQUESTS_WRITE)) return refuse(403, 'FORBIDDEN', 'this principal does not hold approval-requests:write');
+    if (requestCreate && !svc.scopes.includes(APPROVAL_REQUESTS_WRITE)) return refuse('FORBIDDEN', 'this principal does not hold approval-requests:write');
     if (requestRead && !svc.scopes.includes(APPROVAL_REQUESTS_READ) && !svc.scopes.includes(APPROVAL_REQUESTS_WRITE)) {
-      return refuse(403, 'FORBIDDEN', 'this principal holds neither approval-requests:read nor approval-requests:write');
+      return refuse('FORBIDDEN', 'this principal holds neither approval-requests:read nor approval-requests:write');
     }
-    if (!boardId || !(await boardNamesById(env.DB, svc.tenantId, [boardId])).has(boardId)) return notFound('board');
+    if (!boardId || !(await boardNamesById(env.DB, svc.tenantId, [boardId])).has(boardId)) return boardNotFound();
     const stub = boardStub(env, svc.tenantId, boardId);
     if (requestRead && approvalRequestId) {
       const found = await stub.getApprovalRequest(approvalRequestId);
-      return found.ok ? Response.json(found.value) : refuse(requestStatus(found.code), found.code, found.message);
+      return found.ok ? Response.json(found.value) : refusal(found);
     }
     const body: unknown = await request.json().catch(() => null);
     const created = await stub.createApprovalRequest({ requestedBy: svc.principalId, body });
-    if (!created.ok) return refuse(requestStatus(created.code), created.code, created.message);
+    if (!created.ok) return refusal(created);
     const { approvalRequestId: id, state } = created.value.approvalRequest;
     return created.value.created ? Response.json({ approvalRequestId: id, state }, { status: 201 }) : Response.json({ approvalRequestId: id, state });
   }
 
   if (read) {
-    if (!svc.scopes.includes(CARDS_READ)) return refuse(403, 'FORBIDDEN', 'this principal does not hold cards:read');
+    if (!svc.scopes.includes(CARDS_READ)) return refuse('FORBIDDEN', 'this principal does not hold cards:read');
     const [, boardId, cardId, sub] = read;
     if (!boardId) return Response.json({ boards: await listBoards(env.DB, svc.tenantId) });
-    if (!(await boardNamesById(env.DB, svc.tenantId, [boardId])).has(boardId)) return notFound('board');
+    if (!(await boardNamesById(env.DB, svc.tenantId, [boardId])).has(boardId)) return boardNotFound();
     const stub = boardStub(env, svc.tenantId, boardId);
     if (!cardId) {
       const snapshot = await stub.getState();
-      return snapshot.boardId ? Response.json(snapshot) : notFound('board');
+      return snapshot.boardId ? Response.json(snapshot) : boardNotFound();
     }
     if (!sub) {
       const r = await stub.getCardView(cardId);
-      return r.ok ? Response.json({ card: r.value }) : Response.json({ error: r }, { status: 404 });
+      return r.ok ? Response.json({ card: r.value }) : refusal(r, 404);
     }
     if (sub === 'attempts') return Response.json({ attempts: await stub.getAttempts(cardId) });
     if (sub === 'links') return Response.json(await cardLinksBody(env, svc.tenantId, stub, cardId));
     if (sub === 'activities') return Response.json(await stub.getCardActivities(cardId));
     const c = await stub.listComments(cardId);
-    return c.ok ? Response.json({ comments: c.value }) : Response.json({ error: c }, { status: 404 });
+    return c.ok ? Response.json({ comments: c.value }) : refusal(c, 404);
   }
 
   if (approval) {
-    if (!svc.scopes.includes(APPROVALS_READ)) return refuse(403, 'FORBIDDEN', 'this principal does not hold approvals:read');
+    if (!svc.scopes.includes(APPROVALS_READ)) return refuse('FORBIDDEN', 'this principal does not hold approvals:read');
     const [, boardId, subjectId] = approval;
-    if (!(await boardNamesById(env.DB, svc.tenantId, [boardId])).has(boardId)) return notFound('board');
+    if (!(await boardNamesById(env.DB, svc.tenantId, [boardId])).has(boardId)) return boardNotFound();
     const body: unknown = await request.json().catch(() => null);
     if (typeof body !== 'object' || body === null || !('expectedDigest' in body) || typeof body.expectedDigest !== 'string') {
-      return refuse(400, 'INVALID_BODY', 'expectedDigest is required');
+      return refuse('INVALID_BODY', 'expectedDigest is required');
     }
     const result = await boardStub(env, svc.tenantId, boardId).confirmApprovalSubject({ subjectId, expectedDigest: body.expectedDigest });
-    return result.ok ? Response.json(result.value) : refuse(403, result.code, result.message);
+    return result.ok ? Response.json(result.value) : refusal(result, 403);
   }
 
   if (approvalDelivery) {
-    if (!svc.scopes.includes(APPROVALS_WRITE)) return refuse(403, 'FORBIDDEN', 'this principal does not hold approvals:write');
+    if (!svc.scopes.includes(APPROVALS_WRITE)) return refuse('FORBIDDEN', 'this principal does not hold approvals:write');
     const [, boardId, subjectId] = approvalDelivery;
-    if (!(await boardNamesById(env.DB, svc.tenantId, [boardId])).has(boardId)) return notFound('board');
+    if (!(await boardNamesById(env.DB, svc.tenantId, [boardId])).has(boardId)) return boardNotFound();
     const body: unknown = await request.json().catch(() => null);
     if (!body || typeof body !== 'object' || !('expectedDigest' in body) || typeof body.expectedDigest !== 'string' || !('liveUrl' in body) || typeof body.liveUrl !== 'string') {
-      return refuse(400, 'INVALID_BODY', 'expectedDigest and liveUrl are required');
+      return refuse('INVALID_BODY', 'expectedDigest and liveUrl are required');
     }
     const stub = boardStub(env, svc.tenantId, boardId);
     const confirmed = await stub.confirmApprovalSubject({ subjectId, expectedDigest: body.expectedDigest });
-    if (!confirmed.ok) return refuse(403, confirmed.code, confirmed.message);
-    if (!confirmed.value.approved) return refuse(403, 'APPROVAL_SUBJECT_NOT_VERIFIED', 'automatic delivery approval was not confirmed');
+    if (!confirmed.ok) return refusal(confirmed, 403);
+    if (!confirmed.value.approved) return refuse('APPROVAL_SUBJECT_NOT_VERIFIED', 'automatic delivery approval was not confirmed', { status: 403 });
     if ('gateId' in body && typeof body.gateId === 'string' && body.gateId !== confirmed.value.gateId) {
-      return refuse(403, 'APPROVAL_SUBJECT_NOT_VERIFIED', 'gate does not match the confirmed approval');
+      return refuse('APPROVAL_SUBJECT_NOT_VERIFIED', 'gate does not match the confirmed approval', { status: 403 });
     }
     const result = await stub.recordAutomaticDelivery({
       gateId: confirmed.value.gateId,
@@ -256,29 +253,29 @@ export async function serviceRoute(request: Request, env: Env, path: string): Pr
       actor: `svc:${svc.principalId}`,
       liveUrl: body.liveUrl,
     });
-    return result.ok ? Response.json(result.value) : refuse(403, result.code, result.message);
+    return result.ok ? Response.json(result.value) : refusal(result, 403);
   }
 
   const boardId = push![1];
-  if (!(await boardNamesById(env.DB, svc.tenantId, [boardId])).has(boardId)) return notFound('board');
+  if (!(await boardNamesById(env.DB, svc.tenantId, [boardId])).has(boardId)) return boardNotFound();
   const body = (await request.json().catch(() => null)) as { url?: unknown; token?: unknown; events?: unknown } | null;
   if (
     !body || typeof body.url !== 'string' || typeof body.token !== 'string' || body.token === '' ||
     !Array.isArray(body.events) || body.events.length === 0 ||
     !body.events.every((e): e is string => typeof e === 'string')
   ) {
-    return refuse(400, 'INVALID_BODY', 'url, token and events are required');
+    return refuse('INVALID_BODY', 'url, token and events are required');
   }
   const unknown = body.events.filter((e) => !SUBSCRIBABLE_EVENTS.has(e));
-  if (unknown.length > 0) return refuse(400, 'UNKNOWN_EVENT', `cannot subscribe to: ${unknown.join(', ')}`);
+  if (unknown.length > 0) return refuse('UNKNOWN_EVENT', `cannot subscribe to: ${unknown.join(', ')}`);
   if (!body.events.every((e) => isRecordEvent(e) || DECISION_EVENTS.has(e))) {
-    return refuse(400, 'INVALID_BODY', 'a service may subscribe to record events, and with approval-requests:relay to the decision events');
+    return refuse('INVALID_BODY', 'a service may subscribe to record events, and with approval-requests:relay to the decision events');
   }
   // Record events on `push:write`; the decision events (approval requests among them) only for a
   // carrier holding `approval-requests:relay`.
-  if (body.events.some(isRecordEvent) && !svc.scopes.includes(PUSH_WRITE)) return refuse(403, 'FORBIDDEN', 'this principal does not hold push:write');
+  if (body.events.some(isRecordEvent) && !svc.scopes.includes(PUSH_WRITE)) return refuse('FORBIDDEN', 'this principal does not hold push:write');
   if (body.events.some((e) => DECISION_EVENTS.has(e)) && !svc.scopes.includes(APPROVAL_REQUESTS_RELAY)) {
-    return refuse(403, 'FORBIDDEN', 'this principal does not hold approval-requests:relay');
+    return refuse('FORBIDDEN', 'this principal does not hold approval-requests:relay');
   }
   const result = await boardStub(env, svc.tenantId, boardId).registerPushConfig({
     agentId: `svc:${svc.principalId}`,
@@ -286,5 +283,5 @@ export async function serviceRoute(request: Request, env: Env, path: string): Pr
     token: body.token,
     events: body.events,
   });
-  return result.ok ? Response.json(result.value, { status: 201 }) : Response.json({ error: result }, { status: 400 });
+  return result.ok ? Response.json(result.value, { status: 201 }) : refusal(result, 400);
 }

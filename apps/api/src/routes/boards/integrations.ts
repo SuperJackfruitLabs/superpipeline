@@ -1,7 +1,7 @@
 // Push delivery, GitHub and Forgejo configuration, triggers and webhooks.
 import type { JsonValue } from '../../board/board-do';
 import { effectiveCapabilities } from '../../db/implications';
-import { statusForCode } from '../errors';
+import { refuse, refusal } from '../errors';
 import type { BoardRequest } from './request';
 
 // POST /v1/boards/:id/push-configs — register an agent push subscription (docs/05 §4)
@@ -9,10 +9,10 @@ export async function pushConfigRegister({ request, env, tenantId, agent, stub }
   // An agent token subscribes the agent it authenticates — never the one a header names. A
   // person (session cookie or dev headers) still names the subscriber with `X-Agent-Id`.
   const agentId = agent ? agent.agentId : request.headers.get('X-Agent-Id');
-  if (!agentId || agentId.trim() === '') return Response.json({ error: 'X-Agent-Id required' }, { status: 400 });
+  if (!agentId || agentId.trim() === '') return refuse('INVALID_INPUT', 'X-Agent-Id required');
   // `svc:<prn>` names a service's own subscription (serviceRoute). registerPushConfig upserts on
   // (agent_id, url), so a person naming one could overwrite a service's config.
-  if (agentId.startsWith('svc:')) return Response.json({ error: 'X-Agent-Id may not name a service' }, { status: 400 });
+  if (agentId.startsWith('svc:')) return refuse('INVALID_INPUT', 'X-Agent-Id may not name a service');
   const body = (await request.json()) as { url: string; token: string; capabilities?: string[]; events?: string[] };
   // Built from named fields rather than `...body`: `agentId` is the caller's own identity,
   // asserted by the `X-Agent-Id` header above — `as` strips nothing at runtime, so a body
@@ -21,10 +21,10 @@ export async function pushConfigRegister({ request, env, tenantId, agent, stub }
   // as a different one). A cast is not validation, so the route has to name what it accepts
   // rather than forward what it received.
   if (body.events !== undefined && (!Array.isArray(body.events) || body.events.some((e) => typeof e !== 'string'))) {
-    return Response.json({ error: { code: 'INVALID_BODY', message: '`events` must be an array of event names' } }, { status: 400 });
+    return refuse('INVALID_BODY', '`events` must be an array of event names');
   }
   if (body.capabilities !== undefined && (!Array.isArray(body.capabilities) || body.capabilities.some((c) => typeof c !== 'string'))) {
-    return Response.json({ error: { code: 'INVALID_BODY', message: '`capabilities` must be an array of strings' } }, { status: 400 });
+    return refuse('INVALID_BODY', '`capabilities` must be an array of strings');
   }
   // The capabilities `work.available` is matched on, chosen as a claim chooses them
   // (`routes/boards/runs.ts`): an agent token's own catalog row first, the body only where the
@@ -40,7 +40,7 @@ export async function pushConfigRegister({ request, env, tenantId, agent, stub }
     capabilities: await effectiveCapabilities(env.DB, tenantId, declared),
     events: body.events,
   });
-  if (!result.ok) return Response.json({ error: result }, { status: statusForCode(result.code) });
+  if (!result.ok) return refusal(result);
   return Response.json(result.value, { status: 201 });
 }
 
@@ -75,7 +75,7 @@ export async function githubConfig({ request, user, stub }: BoardRequest): Promi
     issueTrigger: body.issueTrigger,
     triggerGrant: user?.mayDispatch ?? null,
   });
-  if (!result.ok) return Response.json({ error: result }, { status: statusForCode(result.code) });
+  if (!result.ok) return refusal(result);
   return Response.json(result.value);
 }
 
@@ -97,7 +97,7 @@ export async function triggerCreate({ request, user, stub }: BoardRequest): Prom
     queuedGrant: user?.mayDispatch ?? null,
     source: body.source,
   });
-  if (!result.ok) return Response.json({ error: result }, { status: statusForCode(result.code) });
+  if (!result.ok) return refusal(result);
   return Response.json(result.value, { status: 201 });
 }
 
@@ -109,10 +109,10 @@ export async function triggerCreate({ request, user, stub }: BoardRequest): Prom
 export async function forgeSecret({ request, stub }: BoardRequest): Promise<Response> {
   const body = (await request.json().catch(() => null)) as { secret?: string } | null;
   if (!body || typeof body.secret !== 'string' || body.secret.trim() === '') {
-    return Response.json({ error: 'secret is required' }, { status: 400 });
+    return refuse('INVALID_INPUT', 'secret is required');
   }
   const result = await stub.setForgeSecret(body.secret);
-  if (!result.ok) return Response.json({ error: result }, { status: statusForCode(result.code) });
+  if (!result.ok) return refusal(result);
   return Response.json(result.value);
 }
 
@@ -138,7 +138,7 @@ export async function forgeWebhook({ request, stub }: BoardRequest): Promise<Res
     deliveryId: header('X-Forgejo-Delivery', 'X-Gitea-Delivery', 'X-GitHub-Delivery'),
     event: header('X-Forgejo-Event', 'X-Gitea-Event', 'X-GitHub-Event') ?? '',
   });
-  if (!result.ok) return Response.json({ error: result }, { status: statusForCode(result.code) });
+  if (!result.ok) return refusal(result);
   return Response.json(result.value);
 }
 
@@ -153,6 +153,6 @@ export async function githubWebhook({ request, stub }: BoardRequest): Promise<Re
     deliveryId: request.headers.get('X-GitHub-Delivery'),
     event: request.headers.get('X-GitHub-Event') ?? '',
   });
-  if (!result.ok) return Response.json({ error: result }, { status: statusForCode(result.code) });
+  if (!result.ok) return refusal(result);
   return Response.json(result.value);
 }

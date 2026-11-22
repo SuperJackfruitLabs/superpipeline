@@ -7,36 +7,36 @@ import type { StrictDecision } from '../../board/strict-decision';
 import { tenantById, principalIdsFor } from '../../db/catalog';
 import { effectiveCapabilities } from '../../db/implications';
 import { resolveReferenceInput } from '../../references/resolve';
-import { statusForCode } from '../errors';
+import { refuse, refusal } from '../errors';
 import type { BoardRequest } from './request';
 
 // POST /v1/boards/:id/claims — an agent claims a ready card (docs/04 §3). Identity + capabilities
 // come from the agent's token; the request body only carries concurrency/profile (and, in dev,
 // the capabilities since the dev headers don't encode them).
 export async function claim({ request, env, agent, stub }: BoardRequest): Promise<Response> {
-  if (!agent!.agentId) return Response.json({ error: 'an agent identity is required to claim' }, { status: 400 });
+  if (!agent!.agentId) return refuse('INVALID_INPUT', 'an agent identity is required to claim');
   const input: unknown = await request.json().catch(() => null);
   if (!input || typeof input !== 'object' || Array.isArray(input)) {
-    return Response.json({ error: 'claim body must be a JSON object' }, { status: 400 });
+    return refuse('INVALID_BODY', 'claim body must be a JSON object');
   }
   const payload = input as { capabilities?: unknown; maxConcurrency?: unknown; profileKey?: unknown; checkpointProtocol?: unknown; checkpointOnly?: unknown };
   if (payload.maxConcurrency !== undefined &&
       (typeof payload.maxConcurrency !== 'number' || !Number.isInteger(payload.maxConcurrency) || payload.maxConcurrency <= 0)) {
-    return Response.json({ error: 'maxConcurrency must be a positive finite integer' }, { status: 400 });
+    return refuse('INVALID_INPUT', 'maxConcurrency must be a positive finite integer');
   }
   if (payload.capabilities !== undefined &&
       (!Array.isArray(payload.capabilities) || !payload.capabilities.every((cap): cap is string => typeof cap === 'string'))) {
-    return Response.json({ error: 'capabilities must be an array of strings' }, { status: 400 });
+    return refuse('INVALID_INPUT', 'capabilities must be an array of strings');
   }
   if (payload.profileKey !== undefined && typeof payload.profileKey !== 'string') {
-    return Response.json({ error: 'profileKey must be a string' }, { status: 400 });
+    return refuse('INVALID_INPUT', 'profileKey must be a string');
   }
   if (payload.checkpointProtocol !== undefined && payload.checkpointProtocol !== CHECKPOINT_CLAIM_PROTOCOL) {
-    return Response.json({ error: 'unsupported checkpointProtocol' }, { status: 400 });
+    return refuse('INVALID_INPUT', 'unsupported checkpointProtocol');
   }
   if (payload.checkpointOnly !== undefined && (typeof payload.checkpointOnly !== 'boolean' ||
       (payload.checkpointOnly && payload.checkpointProtocol !== CHECKPOINT_CLAIM_PROTOCOL))) {
-    return Response.json({ error: 'checkpointOnly must be boolean and requires checkpointProtocol when true' }, { status: 400 });
+    return refuse('INVALID_INPUT', 'checkpointOnly must be boolean and requires checkpointProtocol when true');
   }
   // Declared → effective. An agent staffed for `code-review` claims a `code` lane when the
   // workspace has said one implies the other. The expansion happens HERE, at the Worker
@@ -66,7 +66,7 @@ export async function claim({ request, env, agent, stub }: BoardRequest): Promis
 // agent that claimed the run — a shared board is not readable through an agent token.
 export async function runRead({ env, tenantId, agent, stub }: BoardRequest, runReadMatch: RegExpMatchArray): Promise<Response> {
   const result = await stub.getRunContext({ runId: runReadMatch[1], agentId: agent!.agentId });
-  if (!result.ok) return Response.json({ error: result }, { status: statusForCode(result.code) });
+  if (!result.ok) return refusal(result);
   // The answerer by principal too (users.external_id), for a reader that acts as that person in
   // the suite: the hub sets "Always allow" for them and reads their role from the org plane.
   // A user with no principal reads null, never a guess.
@@ -83,21 +83,21 @@ export async function runRead({ env, tenantId, agent, stub }: BoardRequest, runR
 // that holds the run (operator ruling 2026-10-28, board reads). Read-only; never another card.
 export async function runAttempts({ agent, stub }: BoardRequest, runAttemptsMatch: RegExpMatchArray): Promise<Response> {
   const held = await stub.getRunContext({ runId: runAttemptsMatch[1], agentId: agent!.agentId });
-  if (!held.ok) return Response.json({ error: held }, { status: statusForCode(held.code) });
+  if (!held.ok) return refusal(held);
   return Response.json({ attempts: await stub.getAttempts(held.value.run.cardId) });
 }
 
 export async function evidenceReference({ request, env, agent, stub }: BoardRequest, evidenceRefMatch: RegExpMatchArray): Promise<Response> {
   const raw: unknown = await request.json().catch(() => null);
   const parsed = z.object({ leaseEpoch: z.number().int().positive(), cardId: z.string().min(1).max(256), stageKey: z.string().min(1).max(256), export_id: z.uuid(), manifest_sha256: z.string().regex(/^[a-f0-9]{64}$/) }).strict().safeParse(raw);
-  if (!parsed.success) return Response.json({ error: { code: 'INVALID_INPUT' } }, { status: 400 });
+  if (!parsed.success) return refuse('INVALID_INPUT', 'send leaseEpoch, cardId, stageKey, export_id and manifest_sha256, and nothing else');
   let hub: URL;
-  try { hub = new URL(env.HUB_ISSUER ?? ''); } catch { return Response.json({ error: { code: 'EVIDENCE_LINK_UNAVAILABLE' } }, { status: 503 }); }
-  if (hub.protocol !== 'https:' || hub.username || hub.password || hub.pathname !== '/') return Response.json({ error: { code: 'EVIDENCE_LINK_UNAVAILABLE' } }, { status: 503 });
+  try { hub = new URL(env.HUB_ISSUER ?? ''); } catch { return refuse('EVIDENCE_LINK_UNAVAILABLE', 'this plane has no evidence host configured'); }
+  if (hub.protocol !== 'https:' || hub.username || hub.password || hub.pathname !== '/') return refuse('EVIDENCE_LINK_UNAVAILABLE', 'this plane has no evidence host configured');
   const p = parsed.data;
   const result = await stub.attachEvidenceReference({ runId: evidenceRefMatch[1], agentId: agent!.agentId!, leaseEpoch: p.leaseEpoch, cardId: p.cardId, stageKey: p.stageKey, exportId: p.export_id, manifestSha256: p.manifest_sha256,
     url: `${hub.origin}/api/evidence/exports/${p.export_id}?schema_version=agentpod-execution-export%2Fv1` });
-  if (!result.ok) return Response.json({ error: result }, { status: statusForCode(result.code) });
+  if (!result.ok) return refusal(result);
   return Response.json({ reference_id: result.value.id, verification: 'unverified' });
 }
 
@@ -121,10 +121,7 @@ export async function approvalSubjectVerify({ request, agent, stub }: BoardReque
     !/^sha256:[0-9a-f]{64}$/.test(p.expectedDigest) ||
     p.expectedAccount === undefined
   ) {
-    return Response.json(
-      { error: { code: 'INVALID_APPROVAL_SUBJECT', message: 'leaseEpoch and exact schema, subject id, digest, and account are required' } },
-      { status: 400 },
-    );
+    return refuse('INVALID_APPROVAL_SUBJECT', 'leaseEpoch and exact schema, subject id, digest, and account are required');
   }
   const result = await stub.verifyApprovalSubject({
     runId: approvalVerifyMatch[1],
@@ -135,7 +132,7 @@ export async function approvalSubjectVerify({ request, agent, stub }: BoardReque
     expectedDigest: p.expectedDigest,
     expectedAccount: p.expectedAccount,
   });
-  if (!result.ok) return Response.json({ error: result }, { status: statusForCode(result.code) });
+  if (!result.ok) return refusal(result);
   return Response.json(result.value);
 }
 
@@ -143,7 +140,7 @@ export async function approvalSubjectVerify({ request, agent, stub }: BoardReque
 const respond = (r: Result<unknown>, key: string): Response =>
   r.ok
     ? Response.json({ [key]: r.value })
-    : Response.json({ error: r }, { status: statusForCode(r.code) });
+    : refusal(r);
 
 // POST /v1/boards/:id/runs/:runId/:action — agent run verbs (docs/04 §3)
 export async function runVerb({ request, env, tenantId, agent, stub }: BoardRequest, runMatch: RegExpMatchArray): Promise<Response> {
@@ -223,11 +220,8 @@ export async function runVerb({ request, env, tenantId, agent, stub }: BoardRequ
       // The run holder links what it produced from its own card; the card route stays human.
       // oxlint-disable-next-line typescript/no-unnecessary-type-conversion -- the body is cast, not parsed: String() is the parse
       if (p.provider !== undefined && !isKnownProvider(String(p.provider))) {
-        return Response.json(
-          // oxlint-disable-next-line typescript/no-unnecessary-type-conversion -- the body is cast, not parsed: String() is the parse
-          { error: `unknown reference provider: ${String(p.provider)}. Known: ${providerKeys().join(', ')}` },
-          { status: 400 },
-        );
+        // oxlint-disable-next-line typescript/no-unnecessary-type-conversion -- the body is cast, not parsed: String() is the parse
+        return refuse('INVALID_INPUT', `unknown reference provider: ${String(p.provider)}. Known: ${providerKeys().join(', ')}`);
       }
       const refTenant = await tenantById(env.DB, tenantId);
       return respond(
@@ -255,6 +249,6 @@ export async function runVerb({ request, env, tenantId, agent, stub }: BoardRequ
     case 'submit':
       return respond(await stub.submitForReview({ ...lease, output: p.output }), 'card');
     default:
-      return Response.json({ error: `unknown run action: ${action}` }, { status: 404 });
+      return refuse('UNKNOWN_RUN_ACTION', `unknown run action: ${action}`);
   }
 }
