@@ -8,9 +8,9 @@ it('leaves ordinary boards free of checkpoint schema and effect scopes with ever
   await runInDurableObject(stub, async (board, state) => {
     if (!(board instanceof BoardDO)) throw new Error('expected BoardDO');
     const context: BoardContext = Reflect.get(board, 'board');
-    expect(context.env.PROPOSED_CHECKPOINT_POLICY).toBeUndefined();
-    expect(context.env.PROPOSED_CHECKPOINT_SOURCE).toBeUndefined();
-    expect(context.env.PROPOSED_CHECKPOINT_SETTLEMENT).toBeUndefined();
+    expect(context.env.PROPOSED_CHECKPOINT_POLICY ?? '').toBe('');
+    expect(context.env.PROPOSED_CHECKPOINT_SOURCE ?? '').toBe('');
+    expect(context.env.PROPOSED_CHECKPOINT_SETTLEMENT ?? '').toBe('');
     await board.init({ id: 'brd_disabled', tenantId: 'tnt_disabled', name: 'Ordinary', stages: [
       { key: 'code', name: 'Code', order: 0, ownerKind: 'capability', owner: 'code' },
       { key: 'done', name: 'Done', order: 1, ownerKind: 'human' },

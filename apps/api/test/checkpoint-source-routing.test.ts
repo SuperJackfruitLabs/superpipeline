@@ -64,7 +64,9 @@ it('does not consume denied request bodies or enable the proposal in deployment 
     expect((await checkpointSource(request, planeEnv({ PROPOSED_CHECKPOINT_SOURCE: 'true' }), 'brd_example', 'run_example')).status).toBe(403);
     expect(reader).not.toHaveBeenCalled();
   } finally { reader.mockRestore(); }
-  expect(wranglerJsonc).not.toContain('PROPOSED_CHECKPOINT_SOURCE');
+  const [production, environments] = wranglerJsonc.split('"env": {');
+  expect(production).toContain('"PROPOSED_CHECKPOINT_SOURCE": "true"');
+  expect(environments).not.toContain('PROPOSED_CHECKPOINT_SOURCE');
 }));
 
 let serial = 0;

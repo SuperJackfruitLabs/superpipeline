@@ -25,6 +25,12 @@ export default defineConfig({
           // (test/control-pair-claim.test.ts), which is the right shape: opt in
           // where it is the subject, off where it is scenery.
           ENFORCE_CONTROL_PAIR: 'false',
+          // The checkpoint switches are ON in wrangler.jsonc (production) and OFF here: the suite
+          // was written with them unset, and the checkpoint tests turn each one on where it is the
+          // subject (test/helpers/checkpoint-policy.ts and the checkpoint-* tests). Empty is "off".
+          PROPOSED_CHECKPOINT_POLICY: '',
+          PROPOSED_CHECKPOINT_SOURCE: '',
+          PROPOSED_CHECKPOINT_SETTLEMENT: '',
           // This plane's own origin, which a hub token must now name in `aud`
           // (`auth/hub-jwt.ts`, `planeAudience`). Overridden here rather than
           // inherited from wrangler.jsonc so the suite does not depend on the

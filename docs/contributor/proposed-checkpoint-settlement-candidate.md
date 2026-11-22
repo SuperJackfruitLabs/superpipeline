@@ -4,7 +4,9 @@ The coordinator-grant design is accepted. This implementation remains disabled;
 acceptance does not provision a reporter or authorize enablement. Issuer scopes,
 a least-privilege service principal, producer and consumer conformance, and the
 accepted decision's runtime proof gates must be verified before configuration.
-Repository deployment configuration leaves all three independent switches unset:
+Production's deployment configuration (`apps/api/wrangler.jsonc`) sets all three
+independent switches to `true`, since the staging rehearsal proved the path; staging
+sets them as Worker secrets. Unset, each stays off:
 
 | Switch | Proposed behavior enabled by the literal value `true` |
 | --- | --- |

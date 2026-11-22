@@ -59,11 +59,13 @@ async function send(path: string, body: unknown, options: { method?: string; ena
   return boards({ request, path, url: new URL(request.url), env: planeEnv({ PROPOSED_CHECKPOINT_POLICY: options.enabled ? 'true' : undefined }) }, match);
 }
 
-it('keeps policy creation off by default without enabling production configuration', () => fixture(async ({ stub }) => {
+it('keeps policy creation off when the switch is unset; production configuration sets it', () => fixture(async ({ stub }) => {
   const response = await send('/v1/boards', { name: 'Off', stages: [stage] });
   expect(response.status).toBe(400);
   await onBoard(stub, async (board) => { expect((await board.getState()).boardId).toBeNull(); });
-  expect(wrangler).not.toContain('PROPOSED_CHECKPOINT_POLICY');
+  const [production, environments] = wrangler.split('"env": {');
+  expect(production).toContain('"PROPOSED_CHECKPOINT_POLICY": "true"');
+  expect(environments).not.toContain('PROPOSED_CHECKPOINT_POLICY');
 }));
 it('admits a signed workspace admin through the actual Worker and independently enabled Board', () => fixture(async ({ enable, stub }) => {
   await enable(true);
