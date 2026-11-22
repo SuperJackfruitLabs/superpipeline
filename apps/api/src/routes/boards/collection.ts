@@ -1,4 +1,4 @@
-import { stageWriteInput } from './checkpoint-policy-input';
+import { readStageWrite } from './checkpoint-policy-input';
 // The board collection: listing a workspace's boards and composing one.
 import { type StageDef, stageFieldError, boardIntroError } from '../../board/board-do';
 import { boardStub } from '../../board/stub';
@@ -44,7 +44,9 @@ export async function boardCollection({ request, env, tenantId, user, agent }: B
   // What a *valid pipeline* is remains the board's decision — it normalises owners and
   // routing on the way in (`board-do.ts`) — and duplicating that here is how a route starts
   // refusing things the board would have accepted.
-  const body = (await stageWriteInput(request, env.PROPOSED_CHECKPOINT_POLICY === 'true').catch(() => null)) as { name?: unknown; stages?: unknown; intro?: unknown } | null;
+  const sent = await readStageWrite(request, env.PROPOSED_CHECKPOINT_POLICY === 'true');
+  if (!sent.ok) return sent.response;
+  const body = sent.value as { name?: unknown; stages?: unknown; intro?: unknown } | null;
   if (!body || typeof body !== 'object') {
     return refuse('INVALID_BODY', 'Expected a JSON object.');
   }

@@ -1,6 +1,6 @@
 // A card's comment thread.
 import { agentNamesFor } from '../../db/catalog';
-import { refuse, refusal } from '../errors';
+import { readJson, refuse, refusal } from '../errors';
 import type { BoardRequest } from './request';
 
 // GET /v1/boards/:id/cards/:cardId/comments — the thread · POST — add to it.
@@ -15,7 +15,9 @@ export async function commentsList({ stub }: BoardRequest, commentsMatch: RegExp
 }
 
 export async function commentAdd({ request, env, tenantId, user, agent, stub }: BoardRequest, commentsMatch: RegExpMatchArray): Promise<Response> {
-  const body = (await request.json().catch(() => null)) as { body?: unknown } | null;
+  const sent = await readJson(request, { emptyAs: null });
+  if (!sent.ok) return sent.response;
+  const body = sent.value as { body?: unknown } | null;
   if (!body || typeof body !== 'object' || typeof body.body !== 'string') {
     return refuse('INVALID_COMMENT', 'send { "body": "<text>" }');
   }

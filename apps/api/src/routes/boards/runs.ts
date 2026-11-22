@@ -7,15 +7,17 @@ import type { StrictDecision } from '../../board/strict-decision';
 import { tenantById, principalIdsFor } from '../../db/catalog';
 import { effectiveCapabilities } from '../../db/implications';
 import { resolveReferenceInput } from '../../references/resolve';
-import { refuse, refusal } from '../errors';
+import { readJson, readObject, refuse, refusal } from '../errors';
 import type { BoardRequest } from './request';
 
 // POST /v1/boards/:id/claims — an agent claims a ready card (docs/04 §3). Identity + capabilities
 // come from the agent's token; the request body only carries concurrency/profile (and, in dev,
 // the capabilities since the dev headers don't encode them).
 export async function claim({ request, env, agent, stub }: BoardRequest): Promise<Response> {
-  if (!agent!.agentId) return refuse('INVALID_INPUT', 'an agent identity is required to claim');
-  const input: unknown = await request.json().catch(() => null);
+  if (!agent!.agentId) return refuse('UNAUTHORIZED', 'an agent identity is required to claim');
+  const sent = await readJson(request);
+  if (!sent.ok) return sent.response;
+  const input = sent.value;
   if (!input || typeof input !== 'object' || Array.isArray(input)) {
     return refuse('INVALID_BODY', 'claim body must be a JSON object');
   }
@@ -88,7 +90,9 @@ export async function runAttempts({ agent, stub }: BoardRequest, runAttemptsMatc
 }
 
 export async function evidenceReference({ request, env, agent, stub }: BoardRequest, evidenceRefMatch: RegExpMatchArray): Promise<Response> {
-  const raw: unknown = await request.json().catch(() => null);
+  const sent = await readJson(request);
+  if (!sent.ok) return sent.response;
+  const raw = sent.value;
   const parsed = z.object({ leaseEpoch: z.number().int().positive(), cardId: z.string().min(1).max(256), stageKey: z.string().min(1).max(256), export_id: z.uuid(), manifest_sha256: z.string().regex(/^[a-f0-9]{64}$/) }).strict().safeParse(raw);
   if (!parsed.success) return refuse('INVALID_INPUT', 'send leaseEpoch, cardId, stageKey, export_id and manifest_sha256, and nothing else');
   let hub: URL;
@@ -104,7 +108,9 @@ export async function evidenceReference({ request, env, agent, stub }: BoardRequ
 // The publisher's final authenticated lease fence. Authoritative stored bytes are returned
 // only while the run/card/stage/subject/gate/account/expiry binding still agrees.
 export async function approvalSubjectVerify({ request, agent, stub }: BoardRequest, approvalVerifyMatch: RegExpMatchArray): Promise<Response> {
-  const p = (await request.json()) as {
+  const sent = await readJson(request);
+  if (!sent.ok) return sent.response;
+  const p = (sent.value !== null && typeof sent.value === 'object' ? sent.value : {}) as {
     leaseEpoch?: number;
     expectedSchema?: string;
     expectedSubjectId?: string;
@@ -146,7 +152,9 @@ const respond = (r: Result<unknown>, key: string): Response =>
 export async function runVerb({ request, env, tenantId, agent, stub }: BoardRequest, runMatch: RegExpMatchArray): Promise<Response> {
   const runId = runMatch[1];
   const action = runMatch[2];
-  const p = (await request.json()) as {
+  const sent = await readObject(request);
+  if (!sent.ok) return sent.response;
+  const p = sent.value as {
     leaseEpoch: number;
     type?: AgentActivityType;
     strictDecision?: StrictDecision;

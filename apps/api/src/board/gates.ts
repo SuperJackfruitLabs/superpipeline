@@ -1,3 +1,4 @@
+import { GateDecision as GateDecisionSchema } from '@superpipeline/contract';
 import type { GateDecision } from '@superpipeline/contract';
 import { newId } from '../ids';
 import type { BoardContext } from './context';
@@ -14,6 +15,9 @@ import { previewSummary, subjectEnvelope, variantsEnvelope, variantsSummary } fr
 import type { DeliveryPendingBody, GateApprovalRecordedBody, GateOptionMeaning, GatePendingBody, GateQuorumEnvelope, GateView, PreparedApproval } from './views';
 
 export { PREVIEW_SHORTENED_NOTE } from './subject-envelope';
+
+/** Every decision a gate can be given. */
+const GATE_DECISIONS = GateDecisionSchema.options;
 
 /**
  * Approval gates: opening one, a person deciding it, the delivery it carries, and its push body.
@@ -80,6 +84,11 @@ export async function resolveGate(deps: GatesDeps, input: {
   /** The workspace role in the answer's verified token (`workspaceRoleFor`); a quorum `from: admins` reads it. */
   deciderRole?: DeciderRole;
 }): Promise<Result<CardView>> {
+  // A decision outside the vocabulary is refused on every gate, plain ones included: read as
+  // anything else it fell through to a rejection, so a typo rejected the work.
+  if (!(GATE_DECISIONS as readonly unknown[]).includes(input.decision)) {
+    return { ok: false, code: 'GATE_DECISION_NOT_ALLOWED', message: `decision must be one of ${GATE_DECISIONS.join(', ')}` };
+  }
   const gate = deps.sql.exec(`SELECT * FROM gates WHERE id = ?`, input.gateId).toArray()[0];
   if (!gate) return { ok: false, code: 'GATE_NOT_FOUND', message: `gate not found: ${input.gateId}` };
   if ((gate.status as string) !== 'pending') {
@@ -655,7 +664,7 @@ function rowToGate(deps: GatesDeps, r: Row): GateView {
     id: r.id as string,
     cardId: r.card_id as string,
     stageKey: r.stage_key as string,
-    status: r.status as 'pending' | 'resolved',
+    status: r.status as GateView['status'],
     decision,
     options: JSON.parse(r.options_json as string) as GateOption[],
     producedBy: r.produced_by as string,

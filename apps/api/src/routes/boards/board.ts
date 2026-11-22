@@ -1,10 +1,10 @@
-import { checkpointStageWriteRefusal, stageWriteInput } from './checkpoint-policy-input';
+import { checkpointStageWriteRefusal, readStageWrite } from './checkpoint-policy-input';
 // One board: its snapshot, name, stages, settings, events, usage, notifications and profiles.
 import { stagePatchRefusal } from '../../auth/scopes';
 import type { StageDef, StagePatch, BoardSnapshot } from '../../board/board-do';
 import { renameBoard, updateBoardStages, deleteBoard } from '../../db/catalog';
 import { isWorkspaceAdmin } from '../callers';
-import { refuse, refusal, statusForCode } from '../errors';
+import { readJson, readObject, refuse, refusal, statusForCode } from '../errors';
 import type { BoardRequest } from './request';
 import { registerStageCapabilities } from './stage-capabilities';
 
@@ -22,7 +22,9 @@ export async function boardSnapshot({ stub }: BoardRequest): Promise<Response> {
 
 // PATCH /v1/boards/:id — rename the board (DO + catalog)
 export async function boardRename({ request, env, tenantId, boardId, stub }: BoardRequest): Promise<Response> {
-  const body = (await request.json()) as { name?: string };
+  const sent = await readObject(request);
+  if (!sent.ok) return sent.response;
+  const body = sent.value as { name?: string };
   if (body.name && body.name.trim() !== '') {
     const r = await stub.setName(body.name.trim());
     if (!r.ok) return refusal(r);
@@ -37,7 +39,9 @@ export async function boardRename({ request, env, tenantId, boardId, stub }: Boa
 // statements about the pipeline and stay there. This is for the fields that belong to one
 // stage, where a full replace would discard a concurrent edit to a stage nobody touched.
 export async function stageEdit({ request, env, user, agent, stub }: BoardRequest, stageMatch: RegExpMatchArray): Promise<Response> {
-  const body = (await stageWriteInput(request, env.PROPOSED_CHECKPOINT_POLICY === 'true').catch(() => null)) as StagePatch | null;
+  const sent = await readStageWrite(request, env.PROPOSED_CHECKPOINT_POLICY === 'true');
+  if (!sent.ok) return sent.response;
+  const body = sent.value as StagePatch | null;
   if (!body || typeof body !== 'object' || Array.isArray(body)) {
     return refuse('INVALID_BODY', 'a stage patch must be a JSON object');
   }
@@ -107,7 +111,9 @@ export async function stageEdit({ request, env, user, agent, stub }: BoardReques
 // catalog's `stages_json` is only mirrored after that succeeds, so a rejected change never
 // leaves the two disagreeing about what the board's pipeline is.
 export async function stagesReplace({ request, env, tenantId, boardId, user, stub }: BoardRequest): Promise<Response> {
-  const body = (await stageWriteInput(request, env.PROPOSED_CHECKPOINT_POLICY === 'true').catch(() => null)) as { stages?: StageDef[] } | null;
+  const sent = await readStageWrite(request, env.PROPOSED_CHECKPOINT_POLICY === 'true');
+  if (!sent.ok) return sent.response;
+  const body = sent.value as { stages?: StageDef[] } | null;
   if (!body || !Array.isArray(body.stages) || body.stages.some((stage) => !stage || typeof stage.key !== 'string'))
     return refuse('INVALID_STAGES', 'stages must be an array of stage objects');
   const denied = checkpointStageWriteRefusal(env, user, (await stub.getState()).stages, body.stages);
@@ -186,7 +192,9 @@ export async function profilesList({ stub }: BoardRequest): Promise<Response> {
 }
 
 export async function profileSet({ request, stub }: BoardRequest): Promise<Response> {
-  const body = (await request.json()) as {
+  const sent = await readObject(request);
+  if (!sent.ok) return sent.response;
+  const body = sent.value as {
     key: string;
     name?: string;
     harness?: string;
@@ -214,7 +222,9 @@ export async function profileSet({ request, stub }: BoardRequest): Promise<Respo
 // PUT /v1/boards/:id/stale — how long a card may wait before it counts as stale, and whether
 // the board reports stale cards at all (the digest and the default list). `manage`, like budget.
 export async function staleSettings({ request, stub }: BoardRequest): Promise<Response> {
-  const body = (await request.json().catch(() => null)) as { enabled?: unknown; afterHours?: unknown } | null;
+  const sent = await readJson(request, { emptyAs: null });
+  if (!sent.ok) return sent.response;
+  const body = sent.value as { enabled?: unknown; afterHours?: unknown } | null;
   if (!body || typeof body !== 'object') {
     return refuse('INVALID_STALE_SETTINGS', 'send { "afterHours"?: number, "enabled"?: boolean }');
   }
@@ -234,7 +244,9 @@ export async function decisionTimeoutSet({ request, env, user, stub }: BoardRequ
   if (!isWorkspaceAdmin(env, user)) {
     return refuse('WORKSPACE_ADMIN_REQUIRED', 'only a workspace owner or admin can set the board decision timeout');
   }
-  const body: unknown = await request.json().catch(() => undefined);
+  const sent = await readJson(request, { emptyAs: undefined });
+  if (!sent.ok) return sent.response;
+  const body: unknown = sent.value;
   if (body === undefined) {
     return refuse('INVALID_TIMEOUT', 'send { "remindAfterMinutes"?: number, "escalateAfterMinutes"?: number } or null');
   }
@@ -244,7 +256,9 @@ export async function decisionTimeoutSet({ request, env, user, stub }: BoardRequ
 }
 
 export async function budgetSet({ request, stub }: BoardRequest): Promise<Response> {
-  const body = (await request.json()) as { boardUsdCap?: number | null; cardUsdCap?: number | null };
+  const sent = await readObject(request);
+  if (!sent.ok) return sent.response;
+  const body = sent.value as { boardUsdCap?: number | null; cardUsdCap?: number | null };
   // Built from named fields rather than forwarding `body` whole, same as the other PUT/POST
   // routes in this file: the cast strips nothing at runtime.
   const result = await stub.setBudget({ boardUsdCap: body.boardUsdCap, cardUsdCap: body.cardUsdCap });

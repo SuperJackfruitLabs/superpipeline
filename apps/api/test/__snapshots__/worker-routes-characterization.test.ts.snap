@@ -2474,15 +2474,15 @@ exports[`the Worker HTTP surface, pinned before the split > answers every route 
   {
     "body": {
       "error": {
-        "code": "UNEXPECTED",
-        "message": "Expected property name or '}' in JSON at position 1 (line 1 column 2)",
+        "code": "INVALID_JSON",
+        "message": "the request body is not valid JSON",
       },
     },
     "headers": {
       "content-type": "application/json",
     },
     "request": "PATCH /v1/boards/brd#15",
-    "status": 500,
+    "status": 400,
     "step": "board, rename not JSON",
   },
   {
@@ -2976,15 +2976,15 @@ exports[`the Worker HTTP surface, pinned before the split > answers every route 
   {
     "body": {
       "error": {
-        "code": "UNEXPECTED",
-        "message": "Expected property name or '}' in JSON at position 1 (line 1 column 2)",
+        "code": "INVALID_JSON",
+        "message": "the request body is not valid JSON",
       },
     },
     "headers": {
       "content-type": "application/json",
     },
     "request": "POST /v1/boards/brd#15/cards",
-    "status": 500,
+    "status": 400,
     "step": "card, not JSON",
   },
   {
@@ -5200,15 +5200,15 @@ exports[`the Worker HTTP surface, pinned before the split > answers every route 
   {
     "body": {
       "error": {
-        "code": "UNEXPECTED",
-        "message": "Expected property name or '}' in JSON at position 1 (line 1 column 2)",
+        "code": "INVALID_JSON",
+        "message": "the request body is not valid JSON",
       },
     },
     "headers": {
       "content-type": "application/json",
     },
     "request": "POST /v1/boards/brd#15/runs/run#33/heartbeat",
-    "status": 500,
+    "status": 400,
     "step": "run, not JSON",
   },
   {

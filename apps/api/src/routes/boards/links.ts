@@ -2,7 +2,7 @@
 import { isEnforcedKind, type LinkKind } from '../../board/links';
 import { cardLinksBody } from '../../card-links';
 import { addExternalLink, removeExternalLink } from '../../db/card-links-external';
-import { refuse, refusal } from '../errors';
+import { readJson, refuse, refusal } from '../errors';
 import type { BoardRequest } from './request';
 
 // POST /v1/boards/:id/links — declare an edge · DELETE — remove one (spec §3.4).
@@ -22,7 +22,9 @@ import type { BoardRequest } from './request';
 // design, so `kind` outside the known set — and now a malformed `toBoardId` — are refused as
 // a 400 before either is called, rather than being stored or crashing downstream.
 export async function linksEdit({ request, env, tenantId, boardId, user, stub }: BoardRequest): Promise<Response> {
-  const body = (await request.json().catch(() => null)) as
+  const sent = await readJson(request, { emptyAs: null });
+  if (!sent.ok) return sent.response;
+  const body = sent.value as
     | { fromCardId?: unknown; toCardId?: unknown; kind?: unknown; toBoardId?: unknown }
     | null;
   if (!body || typeof body !== 'object') {

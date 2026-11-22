@@ -3,7 +3,7 @@ import { viaFor } from '../../auth/resolve';
 import type { GateDecision } from '../../board/board-do';
 import { principalIdsFor } from '../../db/catalog';
 import { workspaceRoleFor } from '../callers';
-import { refuse, refusal } from '../errors';
+import { readJson, refuse, refusal } from '../errors';
 import type { BoardRequest } from './request';
 
 // GET /v1/boards/:id/gates/pending — every gate still waiting on a human.
@@ -35,7 +35,10 @@ export async function gateRead({ stub }: BoardRequest, oneGate: RegExpMatchArray
 
 // POST /v1/boards/:id/gates/:gateId/resolve — the signed-in human resolves an approval gate (docs/08 §6)
 export async function gateResolve({ request, env, tenantId, user, agent, stub }: BoardRequest, gateMatch: RegExpMatchArray): Promise<Response> {
-  const gp = (await request.json()) as {
+  const sent = await readJson(request);
+  if (!sent.ok) return sent.response;
+  // A body that is not an object names no decision, which the board refuses as GATE_DECISION_NOT_ALLOWED.
+  const gp = asObject(sent.value) as {
     decision: GateDecision;
     comment?: string;
     approvalSubjectId?: string;
@@ -71,7 +74,9 @@ export async function gateResolve({ request, env, tenantId, user, agent, stub }:
 // Judged like a decision on the gate: a decider of the gate, or an owner or admin by the role in
 // the verified token at the time of the request.
 export async function gatePullBack({ request, env, tenantId, user, stub }: BoardRequest, gateMatch: RegExpMatchArray): Promise<Response> {
-  const body = (await request.json().catch(() => null)) as { comment?: unknown } | null;
+  const sent = await readJson(request, { emptyAs: null });
+  if (!sent.ok) return sent.response;
+  const body = sent.value as { comment?: unknown } | null;
   if (!body || typeof body !== 'object' || typeof body.comment !== 'string') {
     return refuse('INVALID_COMMENT', 'pulling back an approval needs a `comment` saying why');
   }
@@ -94,7 +99,9 @@ export async function gatePullBack({ request, env, tenantId, user, stub }: Board
 
 // POST /v1/boards/:id/gates/:gateId/delivery — alter delivery, never approved bytes.
 export async function gateDelivery({ request, env, tenantId, user, stub }: BoardRequest, deliveryMatch: RegExpMatchArray): Promise<Response> {
-  const body = (await request.json().catch(() => null)) as { mode?: unknown; liveUrl?: unknown; remindAt?: unknown } | null;
+  const sent = await readJson(request, { emptyAs: null });
+  if (!sent.ok) return sent.response;
+  const body = sent.value as { mode?: unknown; liveUrl?: unknown; remindAt?: unknown } | null;
   if (!body || typeof body !== 'object') {
     return refuse('INVALID_APPROVAL_DELIVERY', 'Expected a JSON object.');
   }
@@ -158,7 +165,10 @@ export async function attentionPending({ stub }: BoardRequest): Promise<Response
 // the rule holds on every surface rather than only at this door.
 export async function elicitationAnswer(req: BoardRequest, answerMatch: RegExpMatchArray): Promise<Response> {
   const { request, env, user, stub } = req;
-  const ap = (await request.json()) as { option?: string; text?: string; subject?: unknown };
+  const sent = await readJson(request);
+  if (!sent.ok) return sent.response;
+  // A body that is not an object carries neither an option nor text: INVALID_ANSWER, from the board.
+  const ap = asObject(sent.value) as { option?: string; text?: string; subject?: unknown };
   // A broker's approval request answers through the same route (charter: waiting cards and broker
   // approvals reach chat §4), judged by the same subject rules plus owner-or-admin to approve.
   if (answerMatch[1].startsWith('apr_')) return approvalRequestAnswer(req, answerMatch[1], ap);
@@ -194,6 +204,11 @@ async function approvalRequestAnswer({ env, tenantId, user, stub }: BoardRequest
   });
   if (!result.ok) return refusal(result);
   return Response.json(result.value);
+}
+
+/** The body when it is a JSON object, else an empty one: what a route reads fields from. */
+function asObject(value: unknown): Record<string, unknown> {
+  return value !== null && typeof value === 'object' && !Array.isArray(value) ? (value as Record<string, unknown>) : {};
 }
 
 /** An answer's `subject` binding, when it is two strings; otherwise none. */

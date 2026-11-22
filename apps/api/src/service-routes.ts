@@ -5,7 +5,7 @@ import { boardNamesById, cardLinksBody } from './card-links';
 import { listBoards } from './db/catalog';
 import { eligibilityResponse } from './card-eligibility';
 import { clearReservationResponse, reserveResponse } from './card-reservation';
-import { refuse, refusal } from './api-errors';
+import { readJson, refuse, refusal } from './api-errors';
 import { readSchedulingInput } from './board/placement-window';
 import { DECISION_EVENTS, SUBSCRIBABLE_EVENTS, isRecordEvent } from './push/events';
 
@@ -146,7 +146,9 @@ export async function serviceRoute(request: Request, env: Env, path: string): Pr
     if (!(await boardNamesById(env.DB, svc.tenantId, [boardId])).has(boardId)) return boardNotFound();
     const stub = boardStub(env, svc.tenantId, boardId);
     if (request.method === 'DELETE') return clearReservationResponse(stub, cardId, `svc:${svc.principalId}`);
-    return reserveResponse(env, svc.tenantId, stub, cardId, svc.principalId, await request.json().catch(() => null));
+    const sent = await readJson(request, { emptyAs: null });
+    if (!sent.ok) return sent.response;
+    return reserveResponse(env, svc.tenantId, stub, cardId, svc.principalId, sent.value);
   }
 
   /**
@@ -166,7 +168,9 @@ export async function serviceRoute(request: Request, env: Env, path: string): Pr
       const settings = await stub.schedulingSettings();
       return settings ? Response.json({ scheduling: settings }) : boardNotFound();
     }
-    const input = readSchedulingInput(await request.json().catch(() => null));
+    const sent = await readJson(request, { emptyAs: null });
+    if (!sent.ok) return sent.response;
+    const input = readSchedulingInput(sent.value);
     if (!input.ok) return refuse('INVALID_SCHEDULING', input.message);
     const result = await stub.setPlacementWindow({ placementWindowSeconds: input.placementWindowSeconds, by: `svc:${svc.principalId}` });
     return result.ok ? Response.json({ scheduling: result.value }) : refusal(result, result.code === 'INVALID_SCHEDULING' ? 400 : 404);
@@ -191,7 +195,9 @@ export async function serviceRoute(request: Request, env: Env, path: string): Pr
       const found = await stub.getApprovalRequest(approvalRequestId);
       return found.ok ? Response.json(found.value) : refusal(found);
     }
-    const body: unknown = await request.json().catch(() => null);
+    const sent = await readJson(request, { emptyAs: null });
+    if (!sent.ok) return sent.response;
+    const body: unknown = sent.value;
     const created = await stub.createApprovalRequest({ requestedBy: svc.principalId, body });
     if (!created.ok) return refusal(created);
     const { approvalRequestId: id, state } = created.value.approvalRequest;
@@ -223,28 +229,32 @@ export async function serviceRoute(request: Request, env: Env, path: string): Pr
     if (!svc.scopes.includes(APPROVALS_READ)) return refuse('FORBIDDEN', 'this principal does not hold approvals:read');
     const [, boardId, subjectId] = approval;
     if (!(await boardNamesById(env.DB, svc.tenantId, [boardId])).has(boardId)) return boardNotFound();
-    const body: unknown = await request.json().catch(() => null);
+    const sent = await readJson(request, { emptyAs: null });
+    if (!sent.ok) return sent.response;
+    const body: unknown = sent.value;
     if (typeof body !== 'object' || body === null || !('expectedDigest' in body) || typeof body.expectedDigest !== 'string') {
       return refuse('INVALID_BODY', 'expectedDigest is required');
     }
     const result = await boardStub(env, svc.tenantId, boardId).confirmApprovalSubject({ subjectId, expectedDigest: body.expectedDigest });
-    return result.ok ? Response.json(result.value) : refusal(result, 403);
+    return result.ok ? Response.json(result.value) : refusal(result);
   }
 
   if (approvalDelivery) {
     if (!svc.scopes.includes(APPROVALS_WRITE)) return refuse('FORBIDDEN', 'this principal does not hold approvals:write');
     const [, boardId, subjectId] = approvalDelivery;
     if (!(await boardNamesById(env.DB, svc.tenantId, [boardId])).has(boardId)) return boardNotFound();
-    const body: unknown = await request.json().catch(() => null);
+    const sent = await readJson(request, { emptyAs: null });
+    if (!sent.ok) return sent.response;
+    const body: unknown = sent.value;
     if (!body || typeof body !== 'object' || !('expectedDigest' in body) || typeof body.expectedDigest !== 'string' || !('liveUrl' in body) || typeof body.liveUrl !== 'string') {
       return refuse('INVALID_BODY', 'expectedDigest and liveUrl are required');
     }
     const stub = boardStub(env, svc.tenantId, boardId);
     const confirmed = await stub.confirmApprovalSubject({ subjectId, expectedDigest: body.expectedDigest });
-    if (!confirmed.ok) return refusal(confirmed, 403);
-    if (!confirmed.value.approved) return refuse('APPROVAL_SUBJECT_NOT_VERIFIED', 'automatic delivery approval was not confirmed', { status: 403 });
+    if (!confirmed.ok) return refusal(confirmed);
+    if (!confirmed.value.approved) return refuse('APPROVAL_SUBJECT_NOT_VERIFIED', 'automatic delivery approval was not confirmed');
     if ('gateId' in body && typeof body.gateId === 'string' && body.gateId !== confirmed.value.gateId) {
-      return refuse('APPROVAL_SUBJECT_NOT_VERIFIED', 'gate does not match the confirmed approval', { status: 403 });
+      return refuse('APPROVAL_SUBJECT_NOT_VERIFIED', 'gate does not match the confirmed approval');
     }
     const result = await stub.recordAutomaticDelivery({
       gateId: confirmed.value.gateId,
@@ -253,12 +263,14 @@ export async function serviceRoute(request: Request, env: Env, path: string): Pr
       actor: `svc:${svc.principalId}`,
       liveUrl: body.liveUrl,
     });
-    return result.ok ? Response.json(result.value) : refusal(result, 403);
+    return result.ok ? Response.json(result.value) : refusal(result);
   }
 
   const boardId = push![1];
   if (!(await boardNamesById(env.DB, svc.tenantId, [boardId])).has(boardId)) return boardNotFound();
-  const body = (await request.json().catch(() => null)) as { url?: unknown; token?: unknown; events?: unknown } | null;
+  const sent = await readJson(request, { emptyAs: null });
+  if (!sent.ok) return sent.response;
+  const body = sent.value as { url?: unknown; token?: unknown; events?: unknown } | null;
   if (
     !body || typeof body.url !== 'string' || typeof body.token !== 'string' || body.token === '' ||
     !Array.isArray(body.events) || body.events.length === 0 ||

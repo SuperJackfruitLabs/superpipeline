@@ -181,6 +181,17 @@ describe('creating and reading an approval request', () => {
     });
   });
 
+  it('answers malformed JSON with 400 INVALID_JSON, not INVALID_APPROVAL_REQUEST', async () => {
+    await legacy(async () => {
+      const boardId = await seedBoard();
+      const res = await SELF.fetch(`https://api.test/v1/boards/${boardId}/approval-requests`, {
+        method: 'POST', headers: { 'content-type': 'application/json', ...bearer(await service()) }, body: '{"requestId":',
+      });
+      expect(res.status).toBe(400);
+      expect(await res.json()).toMatchObject({ error: { code: 'INVALID_JSON', message: expect.any(String) } });
+    });
+  });
+
   it('creates only on approval-requests:write, reads on approval-requests:read or write, and never across workspaces', async () => {
     await legacy(async () => {
       const boardId = await seedBoard();

@@ -1,7 +1,7 @@
 // Push delivery, GitHub and Forgejo configuration, triggers and webhooks.
 import type { JsonValue } from '../../board/board-do';
 import { effectiveCapabilities } from '../../db/implications';
-import { refuse, refusal } from '../errors';
+import { readJson, readObject, refuse, refusal } from '../errors';
 import type { BoardRequest } from './request';
 
 // POST /v1/boards/:id/push-configs — register an agent push subscription (docs/05 §4)
@@ -13,7 +13,9 @@ export async function pushConfigRegister({ request, env, tenantId, agent, stub }
   // `svc:<prn>` names a service's own subscription (serviceRoute). registerPushConfig upserts on
   // (agent_id, url), so a person naming one could overwrite a service's config.
   if (agentId.startsWith('svc:')) return refuse('INVALID_INPUT', 'X-Agent-Id may not name a service');
-  const body = (await request.json()) as { url: string; token: string; capabilities?: string[]; events?: string[] };
+  const sent = await readObject(request);
+  if (!sent.ok) return sent.response;
+  const body = sent.value as { url: string; token: string; capabilities?: string[]; events?: string[] };
   // Built from named fields rather than `...body`: `agentId` is the caller's own identity,
   // asserted by the `X-Agent-Id` header above — `as` strips nothing at runtime, so a body
   // `agentId` would otherwise win over the header for this call (it did, before this fix: a
@@ -56,7 +58,9 @@ export async function pushDeliveries({ stub }: BoardRequest): Promise<Response> 
 
 // PUT /v1/boards/:id/github — configure GitHub: webhook secret + issue→card trigger (docs/06 §3, docs/05 §6)
 export async function githubConfig({ request, user, stub }: BoardRequest): Promise<Response> {
-  const body = (await request.json()) as { secret?: string; issueTrigger?: boolean };
+  const sent = await readObject(request);
+  if (!sent.ok) return sent.response;
+  const body = sent.value as { secret?: string; issueTrigger?: boolean };
   // Wiring a repository to a board IS the act of authorising automated
   // dispatch from it, so the grant the operator holds at that moment is
   // recorded with the configuration. A webhook fires with nobody present;
@@ -81,7 +85,9 @@ export async function githubConfig({ request, user, stub }: BoardRequest): Promi
 
 // POST /v1/boards/:id/triggers — generic inbound trigger → one createCard path (docs/05 §6)
 export async function triggerCreate({ request, user, stub }: BoardRequest): Promise<Response> {
-  const body = (await request.json()) as {
+  const sent = await readObject(request);
+  if (!sent.ok) return sent.response;
+  const body = sent.value as {
     title: string;
     ownerUserId?: string;
     spec?: JsonValue;
@@ -107,7 +113,9 @@ export async function triggerCreate({ request, user, stub }: BoardRequest): Prom
 // from a forge-primary repository AND its GitHub mirror, and one shared secret would mean
 // revoking either side's access revokes the other's.
 export async function forgeSecret({ request, stub }: BoardRequest): Promise<Response> {
-  const body = (await request.json().catch(() => null)) as { secret?: string } | null;
+  const sent = await readJson(request, { emptyAs: null });
+  if (!sent.ok) return sent.response;
+  const body = sent.value as { secret?: string } | null;
   if (!body || typeof body.secret !== 'string' || body.secret.trim() === '') {
     return refuse('INVALID_INPUT', 'secret is required');
   }

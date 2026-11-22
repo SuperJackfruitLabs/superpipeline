@@ -1,6 +1,6 @@
 // Recurring cards.
 import type { JsonValue } from '../../board/board-do';
-import { refuse, refusal } from '../errors';
+import { readJson, refuse, refusal } from '../errors';
 import type { BoardRequest } from './request';
 
 // GET/POST /v1/boards/:id/schedules · PATCH/DELETE /v1/boards/:id/schedules/:scheduleId
@@ -28,7 +28,9 @@ export async function schedules({ request, user, stub }: BoardRequest, schedules
   }
 
   if (request.method === 'POST' && !scheduleId) {
-    const body = (await request.json().catch(() => null)) as {
+    const sent = await readJson(request, { emptyAs: null });
+    if (!sent.ok) return sent.response;
+    const body = sent.value as {
       title?: unknown;
       rule?: unknown;
       timezone?: unknown;
@@ -105,7 +107,9 @@ export async function schedules({ request, user, stub }: BoardRequest, schedules
   }
 
   if (scheduleId && request.method === 'PATCH') {
-    const body = (await request.json().catch(() => null)) as {
+    const sent = await readJson(request, { emptyAs: null });
+    if (!sent.ok) return sent.response;
+    const body = sent.value as {
       title?: unknown;
       rule?: unknown;
       timezone?: unknown;

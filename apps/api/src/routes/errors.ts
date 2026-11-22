@@ -1,7 +1,7 @@
 // The answers every route block shares: a failure nobody planned for, and a method a path does not serve.
 import { refuse } from '../api-errors';
 
-export { refuse, refusal, readJson, statusFor, statusForCode } from '../api-errors';
+export { refuse, refusal, readJson, readObject, statusFor, statusForCode } from '../api-errors';
 
 /**
  * What an error nobody planned for looks like on the wire: `UNEXPECTED`, with the error's message,

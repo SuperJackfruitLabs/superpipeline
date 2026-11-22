@@ -7,13 +7,15 @@ import { tenantById, recordAgentQueue } from '../../db/catalog';
 import { unknownLabelIds, resolveLabelNames } from '../../db/labels';
 import { projectById, milestoneById } from '../../db/projects';
 import { resolveReferenceInput } from '../../references/resolve';
-import { refuse, refusal } from '../errors';
+import { readJson, readObject, refuse, refusal } from '../errors';
 import { isInvalidDueAt } from '../fields';
 import type { BoardRequest } from './request';
 
 // POST /v1/boards/:id/cards — create a card (owner defaults to the signed-in user)
 export async function cardCreate({ request, env, tenantId, boardId, user, agent, stub }: BoardRequest): Promise<Response> {
-  const body = (await request.json()) as {
+  const sent = await readObject(request);
+  if (!sent.ok) return sent.response;
+  const body = sent.value as {
     title: string;
     ownerUserId?: string;
     spec?: JsonValue;
@@ -105,7 +107,9 @@ export async function cardCreate({ request, env, tenantId, boardId, user, agent,
 
 // POST /v1/boards/:id/cards/:cardId/move — move a card
 export async function cardMove({ request, env, boardId, user, agent, stub }: BoardRequest, moveMatch: RegExpMatchArray): Promise<Response> {
-  const body = (await request.json()) as { toStageKey: string };
+  const sent = await readObject(request);
+  if (!sent.ok) return sent.response;
+  const body = sent.value as { toStageKey: string };
   // The mover is passed through: whoever moves a card into a dispatchable
   // stage is the one dispatching it now, and the control pair needs a
   // principal to check at claim time. `moveCard` has always accepted an
@@ -140,7 +144,9 @@ export async function cardMove({ request, env, boardId, user, agent, stub }: Boa
 // above refuses every agent token, and the human branch requires `work`, the role a move needs.
 export async function cardResume({ request, user, stub }: BoardRequest, resumeMatch: RegExpMatchArray): Promise<Response> {
   if (!user) return refuse('FORBIDDEN', 'only a person resumes a card');
-  const body = (await request.json().catch(() => null)) as { comment?: unknown; toStageKey?: unknown; expectedWaitId?: unknown } | null;
+  const sent = await readJson(request, { emptyAs: null });
+  if (!sent.ok) return sent.response;
+  const body = sent.value as { comment?: unknown; toStageKey?: unknown; expectedWaitId?: unknown } | null;
   if (!body || typeof body !== 'object' || typeof body.comment !== 'string') {
     return refuse('INVALID_COMMENT', 'send { "comment": "<what changed>", "toStageKey"?: "<stage>" }');
   }
@@ -180,7 +186,9 @@ function expectedWait(body: object): { expectedWaitId?: string } | Response {
 // Archiving is what the card PATCH's `archivedAt` does: a pending review or question ends with it.
 export async function cardArchive({ request, user, stub }: BoardRequest, archiveMatch: RegExpMatchArray): Promise<Response> {
   if (!user) return refuse('FORBIDDEN', 'only a person archives a card this way');
-  const body: unknown = await request.json().catch(() => ({}));
+  const sent = await readJson(request, { emptyAs: {} });
+  if (!sent.ok) return sent.response;
+  const body: unknown = sent.value;
   if (body === null || typeof body !== 'object') {
     return refuse('INVALID_COMMENT', 'send { "expectedWaitId"?: "<waitId>", "comment"?: "<why>" }');
   }
@@ -217,7 +225,9 @@ export async function cardRead({ stub }: BoardRequest, cardMatch: RegExpMatchArr
 }
 
 export async function cardEdit({ request, env, tenantId, user, stub }: BoardRequest, cardMatch: RegExpMatchArray): Promise<Response> {
-  const body = (await request.json()) as {
+  const sent = await readObject(request);
+  if (!sent.ok) return sent.response;
+  const body = sent.value as {
     title?: string;
     spec?: JsonValue;
     priority?: number;
@@ -347,7 +357,9 @@ export async function cardDelete({ env, tenantId, stub }: BoardRequest, cardMatc
 // `splitCard` through `superpipeline_split_card` (scope `run`) instead, calling the same DO
 // method directly — this route and that tool are the same contract on two wires.
 export async function cardSplit({ request, user, stub }: BoardRequest, splitMatch: RegExpMatchArray): Promise<Response> {
-  const body = (await request.json().catch(() => null)) as { titles?: unknown } | null;
+  const sent = await readJson(request, { emptyAs: null });
+  if (!sent.ok) return sent.response;
+  const body = sent.value as { titles?: unknown } | null;
   if (!body || typeof body !== 'object') {
     return refuse('INVALID_BODY', 'Expected a JSON object.');
   }
@@ -363,7 +375,9 @@ export async function cardSplit({ request, user, stub }: BoardRequest, splitMatc
 
 // PUT /v1/boards/:id/cards/:cardId/references — idempotent reference upsert (docs/06 §1)
 export async function cardReference({ request, env, tenantId, agent, stub }: BoardRequest, refMatch: RegExpMatchArray): Promise<Response> {
-  const body = (await request.json()) as {
+  const sent = await readObject(request);
+  if (!sent.ok) return sent.response;
+  const body = sent.value as {
     url: string;
     provider?: string;
     sourceType?: string;

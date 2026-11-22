@@ -7,7 +7,8 @@ import type { StageDef } from '../../board/model';
 import type { Env } from '../../env';
 import type { UserPrincipal } from '../../auth/resolve';
 import { isWorkspaceAdmin } from '../callers';
-import { refuse } from '../errors';
+import { readJson, refuse } from '../errors';
+import type { JsonBody } from '../../api-errors';
 
 export async function stageWriteInput(request: Request, enabled = false): Promise<unknown> {
   if (!enabled) return request.json();
@@ -15,6 +16,20 @@ export async function stageWriteInput(request: Request, enabled = false): Promis
   if (raw === null) throw new Error('checkpoint policy write exceeds 64 KiB');
   return parseStageEnvelopeJSON(raw);
 }
+/**
+ * `stageWriteInput` as a route reads it: malformed JSON (or a body the strict reader refuses) is
+ * 400 `INVALID_JSON`; a body over its bound reads as null, which each route refuses in its own words.
+ */
+export async function readStageWrite(request: Request, enabled: boolean): Promise<JsonBody> {
+  if (!enabled) return readJson(request, { emptyAs: null });
+  try {
+    return { ok: true, value: await stageWriteInput(request, true) };
+  } catch (err) {
+    if (err instanceof Error && err.message.includes('64 KiB')) return { ok: true, value: null };
+    return { ok: false, response: refuse('INVALID_JSON', 'the request body is not valid JSON') };
+  }
+}
+
 export function checkpointStageWriteRefusal(env: Env, user: UserPrincipal | null,
   before: StageDef[], after: StageDef[]): Response | null {
   for (const stage of after) {

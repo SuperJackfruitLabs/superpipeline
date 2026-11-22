@@ -71,7 +71,9 @@ describe('agent REST contract', () => {
       headers: headers(),
       body: JSON.stringify({ capabilities: ['research'] }),
     });
-    expect(res.status).toBe(400);
+    // No agent identity is an authentication failure, as the agent-work contract has it.
+    expect(res.status).toBe(401);
+    expect(await res.json()).toMatchObject({ error: { code: 'UNAUTHORIZED' } });
   });
 
   it('drives a full claim → heartbeat → activity → complete loop', async () => {

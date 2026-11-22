@@ -2,7 +2,7 @@
 // decisions/2026-11-09-a-gate-may-be-decided-by-checks.md, decisions 5 and 7).
 import { principalIdsFor } from '../../db/catalog';
 import { workspaceRoleFor } from '../callers';
-import { refuse, refusal } from '../errors';
+import { readJson, refuse, refusal } from '../errors';
 import type { BoardRequest } from './request';
 
 // GET /v1/boards/:id/cards/:cardId/checks — the checks of the card's latest arrival at a stage with
@@ -24,7 +24,9 @@ export async function checkOverride({ request, env, tenantId, user, agent, stub 
   if (agent) {
     return refuse('CHECK_OVERRIDE_NOT_ALLOWED', 'an agent never overrides a check');
   }
-  const body: unknown = await request.json().catch(() => null);
+  const sent = await readJson(request, { emptyAs: null });
+  if (!sent.ok) return sent.response;
+  const body: unknown = sent.value;
   const comment = body !== null && typeof body === 'object' && 'comment' in body && typeof body.comment === 'string' ? body.comment : null;
   if (comment === null) {
     return refuse('INVALID_COMMENT', 'overriding a check needs a `comment` saying why');

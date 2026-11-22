@@ -268,7 +268,8 @@ export interface GateView {
   id: string;
   cardId: string;
   stageKey: string;
-  status: 'pending' | 'resolved';
+  /** `cancelled` when the card moved on before anyone decided (`cancelGatesForCard`). */
+  status: 'pending' | 'resolved' | 'cancelled';
   decision: string | null;
   options: GateOption[];
   producedBy: string;

@@ -101,7 +101,7 @@ export function refusal(r: Refusal, status?: number): Response {
   return Response.json(errorBody(r), { status: status ?? statusFor(r.code) });
 }
 
-/** A request body read as JSON: the value, or the 400 `INVALID_JSON` to answer instead. */
+/** A request body read as JSON: the value, or the 400 to answer instead. */
 export type JsonBody = { ok: true; value: unknown } | { ok: false; response: Response };
 
 /**
@@ -116,6 +116,16 @@ export async function readJson(request: Request, opts: { emptyAs?: unknown } = {
   } catch {
     return { ok: false, response: refuse('INVALID_JSON', 'the request body is not valid JSON') };
   }
+}
+
+/** Read a request body that must be a JSON object: malformed JSON is `INVALID_JSON`, anything else `INVALID_BODY`. */
+export async function readObject(request: Request): Promise<{ ok: true; value: Record<string, unknown> } | { ok: false; response: Response }> {
+  const sent = await readJson(request);
+  if (!sent.ok) return sent;
+  if (sent.value === null || typeof sent.value !== 'object' || Array.isArray(sent.value)) {
+    return { ok: false, response: refuse('INVALID_BODY', 'the request body must be a JSON object') };
+  }
+  return { ok: true, value: sent.value as Record<string, unknown> };
 }
 
 /**
