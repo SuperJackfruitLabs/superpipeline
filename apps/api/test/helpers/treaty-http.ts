@@ -51,22 +51,6 @@ const bundle = createBundle({
 const APIS: Api[] = Object.values(DOCUMENTS).map((path) => openApi(bundle, path));
 
 /**
- * Operations whose request body the document marks optional (`requestBody.required: false`), where
- * a request with no body at all is valid. treaty's `validateRequest` does not read `required`
- * (reported), so this hook does.
- */
-const isRecord = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null && !Array.isArray(v);
-const OPTIONAL_BODY = new Set(
-  [agentWork, decisions, approvals].flatMap((doc) =>
-    Object.values(doc.paths).flatMap((ops: unknown) =>
-      (isRecord(ops) ? Object.values(ops) : []).flatMap((op) =>
-        isRecord(op) && typeof op.operationId === 'string' && isRecord(op.requestBody) && op.requestBody.required !== true ? [op.operationId] : [],
-      ),
-    ),
-  ),
-);
-
-/**
  * Where this product and the contract disagree and the contract is believed wrong: reported, and
  * held here so the rest of the suite stays checked. Each entry names one operation and one status,
  * and why. Keep it empty; an entry that no longer matches anything fails (`unusedAllowances`).
@@ -120,9 +104,7 @@ export function checkExchange(method: string, url: string, requestText: string, 
   const sent = parse(requestText);
   const request = !sent.ok
     ? { valid: false, errors: ['the body is not JSON'] }
-    : sent.value === undefined && OPTIONAL_BODY.has(operation)
-      ? { valid: true, errors: [] }
-      : validateRequest(bundle, api, operation, sent.value);
+    : validateRequest(bundle, api, operation, sent.value);
   if (!request.valid && status < 400) {
     problems.push(`${operation} accepted (${status}) a request the contract refuses:\n  ${first(request.errors)}`);
   }

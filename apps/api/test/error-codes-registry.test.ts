@@ -116,16 +116,7 @@ const BOARD_CODES: Record<BoardErrorCode, true> = {
  * in treaty (then removed here). May only shrink; a code listed here that the registry now holds
  * fails the test below.
  */
-const NOT_YET_REGISTERED: readonly ApiErrorCode[] = [
-  // Card fields (routes/boards/cards.ts, collection.ts).
-  'INVALID_DUE_AT', 'INVALID_ARCHIVED_AT', 'INVALID_LABELS', 'UNKNOWN_LABEL', 'INVALID_PROJECT', 'UNKNOWN_PROJECT',
-  'MILESTONE_NOT_IN_PROJECT', 'INVALID_PRECONDITION', 'INVALID_INTRO',
-  // Links and the advisory cross-board store (routes/boards/links.ts, db/card-links-external.ts).
-  'INVALID_LINK', 'INVALID_LINK_KIND', 'PARENT_MUST_BE_SAME_BOARD', 'SELF_EDGE', 'BAD_KIND', 'FOREIGN_BOARD', 'SAME_BOARD_EDGE',
-  // An agent composing or queueing work (auth/agent-queue.ts, card-reservation.ts, routes/boards/board.ts).
-  'FIELD_NOT_COMPOSABLE', 'AGENT_NOT_FOUND', 'AGENT_HAS_NO_OWNER', 'AGENT_QUEUE_POLICY_UNKNOWN', 'AGENT_CANNOT_SET_OWNER',
-  'BOARD_NOT_PERMITTED', 'DISPATCH_GRANT_UNKNOWN', 'NO_DISPATCH_AUTHORITY', 'QUEUE_CEILING_REACHED', 'BOARD_CEILING_REACHED',
-];
+const NOT_YET_REGISTERED: readonly ApiErrorCode[] = [];
 
 interface Entry { code: string; owner: string; envelope?: string; status: number }
 const registered = new Map((registry.codes as Entry[]).filter((c) => c.owner === 'superpipeline').map((c) => [c.code, c]));
