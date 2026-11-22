@@ -1,0 +1,28 @@
+{
+  "$schema": "https://raw.githubusercontent.com/SuperJackfruitLabs/treaty/main/schemas/treaty/product-manifest.v1.json",
+  "product": "superpipeline",
+  "treaty": "0.0.16",
+  "produces": [
+    "superpipeline.events",
+    "superpipeline.run-checkpoint",
+    "superpipeline.agent-work",
+    "superpipeline.decisions",
+    "superpipeline.approvals",
+    "superpipeline.direct-push",
+    "superpipeline.board-read",
+    "superpipeline.placement",
+    "superpipeline.mcp"
+  ],
+  "consumes": [
+    "treaty.relay",
+    "accounts.token-claims",
+    "accounts.identity-corpus",
+    "accounts.plane-api",
+    "accounts.sign-in",
+    "agentpod.hub-auth",
+    "agentpod.evidence",
+    "agentpod.fleet-api",
+    "superwitness.runs",
+    "superlibrary.api"
+  ]
+}
