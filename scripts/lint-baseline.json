@@ -20,7 +20,7 @@
   "typescript(no-unnecessary-template-expression)": 3,
   "typescript(no-unnecessary-type-assertion)": 813,
   "typescript(no-unnecessary-type-conversion)": 38,
-  "typescript(no-unsafe-type-assertion)": 1492,
+  "typescript(no-unsafe-type-assertion)": 1491,
   "typescript(require-array-sort-compare)": 5,
   "typescript(restrict-template-expressions)": 4,
   "typescript(unbound-method)": 6,
