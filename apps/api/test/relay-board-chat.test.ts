@@ -3,8 +3,8 @@
  * gates, questions (an agent's and a broker's), manual-delivery follow-ups, waiting cards,
  * decision reminders and escalations, quorum votes, held approvals released or pulled back, and
  * machine checks failed or overridden. Each is a CloudEvent with treaty's type and schema, on the
- * subject treaty's helpers name for the board's tenant. Record events and `work.available` are not
- * relayed.
+ * subject treaty's helpers name for the board's tenant. Record events and `work.available` are
+ * relayed too (relay-records.test.ts); `cards.stale`, a digest for push configs, is not.
  *
  * Each producer is driven for real here, with a relay named for the deployment, so a producer that
  * stops queueing for the relay fails its own test. `test/setup.ts` checks every body read back
@@ -18,6 +18,7 @@ import type { BoardDO, BoardInit } from '../src/board/board-do';
 import { queueRelay, type PushDeps } from '../src/board/push';
 import { hmacSha256Hex } from '../src/crypto/hmac';
 import type { PushSender } from '../src/push/deliver';
+import { RECORD_EVENTS } from '../src/push/events';
 import { RELAY_CONFIG_ID, RELAYED_EVENTS, relayRequest } from '../src/push/relay';
 import { addBoundCard, boardStub, boundDecision, DECIDER, STAGES as BOUND_STAGES } from './approval-subject-fixtures';
 
@@ -29,7 +30,7 @@ const SHA = 'a'.repeat(40);
 const MIN = 60_000;
 
 /** The board-chat events, in treaty's catalogue order. */
-const BOARD_CHAT = [
+const BOARD_CHAT: readonly string[] = [
   'gate.pending',
   'elicitation.pending',
   'delivery.pending',
@@ -42,11 +43,14 @@ const BOARD_CHAT = [
   'check.failed',
   'check.overridden',
 ];
-/** What the board pushes that is not board chat: record events and `work.available`. */
-const NOT_RELAYED = ['work.available', 'card.created', 'card.updated', 'card.moved', 'card.advanced', 'card.completed', 'card.comment.added', 'gate.resolved', 'link.added'];
+/**
+ * What the board pushes that is not board chat: record events and `work.available`. Relayed since
+ * treaty phase 2 (relay-records.test.ts), and subscribed to here as well.
+ */
+const RECORD_AND_WORK = ['work.available', 'card.created', 'card.updated', 'card.moved', 'card.advanced', 'card.completed', 'card.comment.added', 'gate.resolved', 'link.added'];
 
 /** Subscribed to everything, so each scenario's direct pushes are there to compare against. */
-const ALL_EVENTS = [...BOARD_CHAT, ...NOT_RELAYED];
+const ALL_EVENTS = [...BOARD_CHAT, ...RECORD_AND_WORK];
 
 const entry = (event: string) => {
   const e = catalog.events.find((c) => c.producer === 'superpipeline' && c.pushName === event);
@@ -82,7 +86,9 @@ function eventOf(body: string): string {
 async function queued(board: BoardDO): Promise<{ relayed: string[]; pushed: string[] }> {
   const rows = await board.getPushDeliveries();
   return {
-    relayed: rows.filter((r) => r.configId === RELAY_CONFIG_ID).map((r) => eventOf(r.body)),
+    // The board-chat events: the record events and `work.available` each scenario also relays are
+    // relay-records.test.ts's.
+    relayed: rows.filter((r) => r.configId === RELAY_CONFIG_ID).map((r) => eventOf(r.body)).filter((e) => BOARD_CHAT.includes(e)),
     pushed: rows.filter((r) => r.configId !== RELAY_CONFIG_ID).map((r) => eventOf(r.body)),
   };
 }
@@ -98,7 +104,7 @@ async function drainAndCheck(board: BoardDO): Promise<string[]> {
     return { status: 202 };
   };
   await board.dispatchPushDeliveries(sender);
-  const toRelay = sent.filter((s) => s.url.startsWith(`${RELAY_URL}/`));
+  const toRelay = sent.filter((s) => s.url.startsWith(`${RELAY_URL}/`) && BOARD_CHAT.includes(eventOf(s.body)));
   const toHub = sent.filter((s) => s.url === HOOK);
   const seen = toRelay.map((s) => ({
     event: eventOf(s.body),
@@ -152,10 +158,10 @@ async function onlyGate(board: BoardDO): Promise<string> {
 }
 
 describe('what the relay carries', () => {
-  it('is every board-chat event and card.ready, and nothing else', () => {
-    // And `card.ready`, for the placement service (placement-window.test.ts).
-    expect(new Set(RELAYED_EVENTS)).toEqual(new Set([...BOARD_CHAT, 'card.ready']));
-    expect(NOT_RELAYED.filter((event) => RELAYED_EVENTS.has(event))).toEqual([]);
+  it('is every board-chat event, every record event, work.available and card.ready; not cards.stale', () => {
+    // `card.ready`, for the placement service (placement-window.test.ts).
+    expect(new Set(RELAYED_EVENTS)).toEqual(new Set([...BOARD_CHAT, ...RECORD_EVENTS, 'work.available', 'card.ready']));
+    expect(RELAYED_EVENTS.has('cards.stale')).toBe(false);
   });
 
   it("names each relayed event's treaty type, schema and subject", () => {
@@ -174,12 +180,12 @@ describe('what the relay carries', () => {
     );
   });
 
-  it('queues none of the record events or work.available, even with a relay named', async () => {
+  it('queues no cards.stale, even with a relay named: the digest is for push configs', async () => {
     await runInDurableObject(boardStub('relay-chat-not'), async (board: BoardDO, state) => {
       await setUp(board, 'brd_relay_not', reviewPipeline());
       const meta: Record<string, string> = { boardId: 'brd_relay_not', tenantId: TENANT };
       const deps: PushDeps = { env, sql: state.storage.sql, now: () => '2026-11-12T09:00:00.000Z', getMeta: (k) => meta[k] ?? null };
-      for (const event of NOT_RELAYED) queueRelay(deps, { event });
+      queueRelay(deps, { event: 'cards.stale' });
       expect(await board.getPushDeliveries()).toEqual([]);
       // The control: a board-chat event on the same deps is queued (a full body, as setup.ts checks it).
       const pulledBack = { event: 'decision.pulled_back', boardId: 'brd_relay_not', cardId: 'crd_1', gateId: 'gte_1', pulledBackBy: 'usr_b', at: '2026-11-12T09:00:00.000Z', comment: 'wait' };

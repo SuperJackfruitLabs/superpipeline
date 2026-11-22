@@ -138,12 +138,13 @@ describe('publishing through the relay', () => {
     });
   });
 
-  it('publishes no record event and no work.available (relay-board-chat.test.ts covers what it does publish)', async () => {
+  it('publishes record events and work.available too, and no cards.stale (relay-records.test.ts drives them)', async () => {
     await withBoard('relay-publish-4', RELAY, async (deps, board) => {
-      queueRelay(deps, { event: 'work.available' });
-      queueRelay(deps, { event: 'card.created' });
-      queueRelay(deps, { event: 'gate.resolved' });
+      queueRelay(deps, { event: 'cards.stale' });
       expect(await board.getPushDeliveries()).toEqual([]);
+      const work = { event: 'work.available', boardId: 'brd_00000000000000r1', cardId: 'crd_0000000000000001', stageKey: 'draft', ts: gate.ts };
+      queueRelay(deps, work);
+      expect((await board.getPushDeliveries()).map((r) => r.configId)).toEqual([RELAY_CONFIG_ID]);
     });
   });
 });

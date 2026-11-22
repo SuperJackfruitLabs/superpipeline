@@ -10,8 +10,8 @@ suite path:
   subscribed to, signed.
 - **The board log**: `GET /v1/boards/:id/events?limit=` (up to 500, default 100) returns the board's
   latest events, every type below included, for a person who may read the board.
-- **The event relay** (optional): a deployment linked to the suite also publishes the board-chat
-  events as CloudEvents, beside the push.
+- **The event relay** (optional): a deployment linked to the suite also publishes the board-chat,
+  record and `work.available` events as CloudEvents, beside the push.
 
 ## Subscribing
 
@@ -131,12 +131,20 @@ These are recorded in the board log but cannot be subscribed to:
 A deployment with both `RELAY_URL` and `RELAY_TOKEN` set publishes these events to the suite's event
 relay too, beside the direct push, which keeps running:
 
-`gate.pending`, `elicitation.pending`, `delivery.pending`, `attention.pending`,
-`decision.reminded`, `decision.escalated`, `gate.approval_recorded`, `decision.released`,
-`decision.pulled_back`, `check.failed`, `check.overridden`, and `card.ready`.
+- the decision events: `gate.pending`, `elicitation.pending`, `delivery.pending`,
+  `attention.pending`, `decision.reminded`, `decision.escalated`, `gate.approval_recorded`,
+  `decision.released`, `decision.pulled_back`, `check.failed`, `check.overridden`;
+- every record event, above;
+- `work.available`, once per event;
+- `card.ready`.
 
-Record events and `work.available` are not relayed. `card.ready` is relayed although it is not a
-decision: the placement service hears that a card is ready inside its placement window.
+`cards.stale` is not relayed: it is a digest for the push configs that asked for it.
+`work.available` is relayed once, while its direct push still goes only to the agents that could
+claim the card. `card.ready` is relayed although no push config can subscribe to it: the placement
+service hears that a card is ready inside its placement window.
+
+An event that reaches you by both the relay and the push carries the same id on each, so handle
+each id once.
 
 - Each event is a CloudEvent in HTTP binary mode, POSTed to
   `RELAY_URL/v1/events/evt.<workspace>.superpipeline.<entity>.<verb>` with
@@ -149,7 +157,8 @@ decision: the placement service hears that a card is ready inside its placement 
   push. Its id is the event's, `<boardId>:<seq>`, the same as on the direct push and across
   retries, so the relay stores a retried event once and a subscriber on both paths handles it once.
 
-Without both settings nothing is published to the relay, and a standalone board is unchanged.
+Without both settings nothing is published to the relay, and a standalone board still pushes every
+event to the push configs subscribed to it.
 
 So you can choose the smallest boundary that fits: poll the log, subscribe directly, or add the
 relay without making it a condition for the board to work.

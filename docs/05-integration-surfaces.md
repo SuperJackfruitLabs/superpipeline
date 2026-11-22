@@ -459,8 +459,10 @@ direct push, which keeps running:
 - **What**: every board-chat event — `gate.pending`, `elicitation.pending`, `delivery.pending`,
   `attention.pending`, `decision.reminded`, `decision.escalated`, `gate.approval_recorded`,
   `decision.released`, `decision.pulled_back`, `check.failed`, `check.overridden` — plus
-  `card.ready`, which a board with a placement window sends when a card becomes ready to claim. 12
-  in all. Record events (`card.*`, `gate.resolved`, links) and `work.available` are not relayed.
+  `card.ready`, which a board with a placement window sends when a card becomes ready to claim;
+  and, since treaty phase 2 (ruling 3), every record event (`card.*`, `gate.resolved`, links) and
+  `work.available`, relayed once per event while its direct push stays per-agent. `cards.stale`,
+  a digest for the configs that asked, is not relayed.
 - **How**: a CloudEvent in HTTP binary mode (`@superjackfruitlabs/treaty-cloudevents`), POSTed to
   `RELAY_URL/v1/events/evt.<tenant>.superpipeline.<entity>.<verb>` with `Authorization: Bearer
   RELAY_TOKEN`; type `com.superjackfruit.superpipeline.<entity>.<verb>.v1`, `dataschema` from
@@ -471,7 +473,8 @@ direct push, which keeps running:
   `MAX_PUSH_ATTEMPTS`. Its id is the event's, `<boardId>:<seq>`, the same as the event's direct push
   rows, so a retry the relay already stored is a duplicate there, not a second event, and a consumer
   receiving both paths applies it once.
-- Either setting unset: nothing is published to the relay.
+- Either setting unset: nothing is published to the relay, and every event still reaches the push
+  configs subscribed to it (a standalone board needs no relay).
 
 **`gate.pending` fan-out is by subscription only**, deliberately unlike `work.available`. That one
 asks *who could claim this stage* and matches on capability; a gate asks *who owns this card*, and
