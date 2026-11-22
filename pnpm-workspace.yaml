@@ -16,3 +16,7 @@ minimumReleaseAgeExclude:
   - '@superjackfruitlabs/vibekit-ui@0.0.20'
   - '@superjackfruitlabs/treaty-contracts@0.0.15'
   - '@superjackfruitlabs/vibekit-ui@0.0.21'
+  - '@superjackfruitlabs/treaty-cloudevents@0.0.17'
+  - '@superjackfruitlabs/treaty-contracts@0.0.17'
+  - '@superjackfruitlabs/treaty-ecosystem-identity@0.0.17'
+  - '@superjackfruitlabs/treaty-event-schemas@0.0.17'

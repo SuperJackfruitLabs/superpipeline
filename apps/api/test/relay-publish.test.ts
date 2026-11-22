@@ -88,13 +88,13 @@ describe('relayRequest', () => {
     expect(request.headers['ce-dataschema']).toBe('https://raw.githubusercontent.com/SuperJackfruitLabs/treaty/main/schemas/superpipeline/card.ready.v1.json');
   });
 
-  it('relays only events treaty has a schema for: every relayed event has one, work.available none', () => {
+  it('relays only events treaty has a schema for: every relayed event has one', () => {
     expect([...RELAYED_EVENTS].filter((event) => !hasTreatySchema(event))).toEqual([]);
-    expect(hasTreatySchema('work.available')).toBe(false);
+    expect(hasTreatySchema('made.up')).toBe(false);
   });
 
   it('refuses an event treaty has no schema for', () => {
-    expect(() => relayRequest({ id: 1, body: '{"event":"work.available"}' }, { boardId: 'b', tenantId: 't' }, { url: 'https://r', token: 't' })).toThrow(/no treaty schema for work.available/);
+    expect(() => relayRequest({ id: 1, body: '{"event":"made.up"}' }, { boardId: 'b', tenantId: 't' }, { url: 'https://r', token: 't' })).toThrow(/no treaty schema for made.up/);
   });
 });
 
