@@ -7,7 +7,8 @@
    * Names, never ids. A fact with nothing to say and nothing to do stays out of the way.
    */
   import { tick } from 'svelte';
-  import { Button, Field } from '@superjackfruitlabs/vibekit-ui';
+  import { Button, Choice, Field } from '@superjackfruitlabs/vibekit-ui';
+  import { boardChoosesRepositories, repositoriesFact, repositoriesWait } from './card-repositories';
   import type { CardModel } from './card-model.svelte';
   import LinkAddForm from './LinkAddForm.svelte';
   import { REFERENCE_ACTION, REFERENCE_LABEL, SUBTASK_ACTION, SUBTASK_LABEL, cardFacts, costFact, labelName, linksFact, projectLine, subtasksLine } from './card-words';
@@ -22,6 +23,11 @@
   type LinkRow = { title: string; remove: import('$lib/components/link-groups').RemoveArgs };
   const linkRows = $derived(Object.entries(LINK_LABEL).flatMap(([key, label]) => (m.linkGroups[key as keyof typeof LINK_LABEL] as LinkRow[]).map((row) => ({ key, label, ...row }))));
   const showCost = $derived(card.costUsd > 0 || !!m.estimate?.estimatedUsd);
+  // Repositories: only on a board with a bench stage whose cards choose, or a card that already chose.
+  const stages = $derived(m.board?.stages ?? []);
+  const here = $derived(stages.find((s) => s.key === card.currentStageKey));
+  const showRepositories = $derived(boardChoosesRepositories(stages) || !!card.repositories?.length);
+  const repositoriesWaits = $derived(repositoriesWait(card, here));
 
   // Add a sub-task, attach a reference: one composer open at a time, in place; it takes focus where it is.
   let adding = $state<'subtask' | 'reference' | null>(null);
@@ -52,6 +58,37 @@
     {#each facts as f (f.term)}
       <div><dt>{f.term}</dt><dd>{f.value}{#if f.term === 'Owner' && m.canAssign}{' '}<Button variant="quiet" disabled={m.assigning} onclick={() => m.assignToMe()}>{m.assigning ? 'Assigning…' : 'Assign to me'}</Button>{/if}</dd></div>
     {/each}
+    {#if showRepositories}
+      <div class="cv-wide" data-section="repositories">
+        <dt>Repositories</dt>
+        <dd>
+          {#if m.repositories.editing}
+            <form class="cv-form" data-repositories-form onsubmit={(e) => { e.preventDefault(); void m.repositories.save(); }}>
+              <fieldset class="cv-choices">
+                <legend class="vk-visually-hidden">Repositories this card works in</legend>
+                {#each m.repositories.options as name (name)}
+                  <Choice type="checkbox" name="cv-repositories-{card.id}" value={name} label={name}
+                    bind:checked={() => m.repositories.chosen.includes(name), (on) => m.repositories.toggle(name, on)} />
+                {/each}
+              </fieldset>
+              {#if m.repositories.chosen.length > 1}
+                <Field id="cv-primary-{card.id}" label="Work starts in" control="select" bind:value={m.repositories.primary}
+                  options={[{ value: '', label: m.repositories.start && m.repositories.primary === '' ? `${m.repositories.start} (the stage's start)` : 'Choose one' }, ...m.repositories.chosen.map((n) => ({ value: n, label: n }))]} />
+              {/if}
+              {#if m.repositories.mustName}<p class="cv-meta" role="status">Name the repository the work starts in.</p>{/if}
+              {#if m.repositories.error}<p class="cv-alert" role="alert">{m.repositories.error}</p>{/if}
+              <div class="cv-row">
+                <Button type="submit" variant="primary" disabled={m.repositories.saving || m.repositories.mustName}>{m.repositories.saving ? 'Saving…' : 'Save'}</Button>
+                <Button variant="quiet" onclick={() => m.repositories.cancel()}>Cancel</Button>
+              </div>
+            </form>
+          {:else}
+            {repositoriesFact(card, here)}{' '}<Button variant="quiet" onclick={() => m.repositories.open()}>{card.repositories?.length ? 'Change repositories' : 'Choose repositories'}</Button>
+            {#if repositoriesWaits}<p class="cv-alert" data-waits="repositories">{repositoriesWaits}</p>{/if}
+          {/if}
+        </dd>
+      </div>
+    {/if}
     <div class="cv-wide" data-section="project">
       <dt>Project</dt>
       <dd>
