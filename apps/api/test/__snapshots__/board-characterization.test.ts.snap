@@ -8929,6 +8929,7 @@ exports[`the Board Durable Object, pinned before the split > runs the same state
       "SELECT id, card_id FROM runs WHERE status = 'working' AND (last_heartbeat_ms + ?) <= ?  <-  [900000,8000000000000]",
       "UPDATE runs SET status = 'ended', outcome = 'reclaimed', ended_at = ? WHERE id = ?  <-  ["t#296","run#48"]",
       "UPDATE elicitations SET status = 'cancelled', answered_at = ? WHERE status = 'pending' AND run_id = ?  <-  ["t#297","run#48"]",
+      "SELECT 1 FROM cards WHERE id = ? AND current_run_id = ?  <-  ["card#24","run#48"]",
       "SELECT * FROM cards WHERE id = ?  <-  ["card#24"]",
       "UPDATE cards SET state = ?, delegate_agent_id = NULL, current_run_id = NULL, failure_count = ?, updated_at = ? WHERE id = ?  <-  ["submitted",1,"t#298","card#24"]",
       "UPDATE cards SET needs_human_json = ? WHERE id = ?  <-  [null,"card#24"]",

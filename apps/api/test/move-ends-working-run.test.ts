@@ -131,3 +131,55 @@ describe('a person moving a working card', () => {
     });
   });
 });
+
+/**
+ * A run left `working` after its card was unbound — what every human move did before it ended
+ * the run, so rows like this exist on boards that ran the old code.
+ */
+async function orphan(board: BoardDO, state: DurableObjectState, id: string, to: { stage: string; state: string }) {
+  await board.init(init(id));
+  const a = await mustCreate(board, 'A');
+  const c = await board.claim(RESEARCHER);
+  if (!c.claimed) throw new Error('expected a claim');
+  state.storage.sql.exec(
+    `UPDATE cards SET current_stage_key = ?, state = ?, delegate_agent_id = NULL, current_run_id = NULL WHERE id = ?`,
+    to.stage,
+    to.state,
+    a.id,
+  );
+  return { cardId: a.id, runId: c.runId };
+}
+
+describe('reclaiming a run its card no longer names', () => {
+  it("ends the run without touching the card's failure count or state", async () => {
+    await runInDurableObject(freshBoard(), async (board: BoardDO, state) => {
+      const { cardId, runId } = await orphan(board, state, 'brd_rc_orphan', { stage: 'build', state: 'submitted' });
+      expect(board.reclaimExpired(FAR_FUTURE)).toBe(1);
+
+      expect(runOf(state, runId)).toMatchObject({ status: 'ended', outcome: 'reclaimed' });
+      expect(cardOf(state, cardId)).toMatchObject({ current_stage_key: 'build', state: 'submitted', failure_count: 0 });
+      // The concurrency it held is free.
+      const other = await mustCreate(board, 'B');
+      expect(await board.claim(RESEARCHER)).toMatchObject({ claimed: true, card: { id: other.id } });
+    });
+  });
+
+  it('does not re-queue a card that has finished', async () => {
+    await runInDurableObject(freshBoard(), async (board: BoardDO, state) => {
+      const { cardId } = await orphan(board, state, 'brd_rc_done', { stage: 'done', state: 'completed' });
+      expect(board.reclaimExpired(FAR_FUTURE)).toBe(1);
+      expect(cardOf(state, cardId)).toMatchObject({ current_stage_key: 'done', state: 'completed', failure_count: 0 });
+    });
+  });
+
+  it('still charges the attempt to a card that names the run', async () => {
+    await runInDurableObject(freshBoard(), async (board: BoardDO, state) => {
+      await board.init(init('brd_rc_bound'));
+      const a = await mustCreate(board, 'A');
+      const c = await board.claim(RESEARCHER);
+      if (!c.claimed) throw new Error('expected a claim');
+      expect(board.reclaimExpired(FAR_FUTURE)).toBe(1);
+      expect(cardOf(state, a.id)).toMatchObject({ current_stage_key: 'research', state: 'submitted', failure_count: 1 });
+    });
+  });
+});
