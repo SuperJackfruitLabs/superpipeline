@@ -3,7 +3,7 @@ import { resolveUser, resolveAgent, type UserPrincipal, type AgentPrincipal, res
 import { requiredScope, scopePermits, SCOPE_FORBIDDEN } from '../../auth/scopes';
 import { boardStub } from '../../board/stub';
 import type { Capability } from '../../db/members';
-import { serviceRoute } from '../../service-routes';
+import { serviceOnlyRefusal, serviceRoute } from '../../service-routes';
 import { touchOnSuccess } from '../activity';
 import { refuseByRole } from '../callers';
 import { methodNotAllowed, refuse, unexpected } from '../errors';
@@ -46,6 +46,8 @@ export async function boards({ request, env, url, path }: WorkerRequest, match: 
   // A service token (Superlibrary) reading cards or registering a push config; any other bearer falls through.
   const asService = await serviceRoute(request, env, path);
   if (asService) return asService;
+  const notAService = serviceOnlyRefusal(request.method, path);
+  if (notAService) return notAService;
 
   // Resolve the caller by route type: agent routes carry a token; the GitHub webhook
   // self-authenticates (HMAC) and carries ?tenant=; everything else is a human (session cookie).

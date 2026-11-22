@@ -34,6 +34,18 @@ const RESERVATION = /^\/v1\/boards\/(brd_[0-9a-f]{16})\/cards\/(card_[0-9a-f]{16
 const SCHEDULING = /^\/v1\/boards\/(brd_[0-9a-f]{16})\/scheduling$/;
 const APPROVAL_DELIVERY = /^\/v1\/boards\/(brd_[0-9a-f]{16})\/approval-subjects\/(aps_[0-9a-f]{16})\/delivery$/;
 
+/**
+ * The routes only a service serves: a broker's approval requests and a publisher's approval
+ * subjects. Any other caller is refused 401 here (`serviceOnlyRefusal`), rather than falling
+ * through to the person routes, where no route serves the path and it read as a 405.
+ */
+export function serviceOnlyRefusal(method: string, path: string): Response | null {
+  const serviceOnly =
+    (method === 'POST' && (APPROVAL.test(path) || APPROVAL_DELIVERY.test(path) || APPROVAL_REQUESTS.test(path))) ||
+    (method === 'GET' && APPROVAL_REQUEST.test(path));
+  return serviceOnly ? refuse('UNAUTHORIZED', 'a service token for a mapped workspace is required') : null;
+}
+
 /** Decoded without verifying, only to route: resolveHubService verifies before anything is read. */
 function looksLikeService(request: Request): boolean {
   const m = (request.headers.get('Authorization') ?? '').match(/^Bearer\s+([^.\s]+)\.([^.\s]+)\.[^.\s]+$/);

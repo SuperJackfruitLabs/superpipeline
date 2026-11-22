@@ -51,6 +51,9 @@ importers:
       '@cloudflare/workers-types':
         specifier: ^4.20260619.1
         version: 4.20260619.1
+      '@superjackfruitlabs/treaty-contracts':
+        specifier: link:../../../treaty-contracts/packages/contracts
+        version: link:../../../treaty-contracts/packages/contracts
       '@superjackfruitlabs/treaty-ecosystem-identity':
         specifier: 0.0.13
         version: 0.0.13
