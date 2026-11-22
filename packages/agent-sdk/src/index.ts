@@ -188,11 +188,13 @@ export interface AgentActivity {
 
 interface ClaimResponse {
   claimed: boolean;
+  /** Why nothing was handed out, when `claimed` is false (`ClaimReason` in @superpipeline/contract). */
+  reason?: string;
   checkpointClaim?: unknown;
   runId?: string;
   leaseEpoch?: number;
   card?: ClaimedWork['card'];
-  stage?: ClaimedWork['stage'] & { checkpointPolicy?: unknown };
+  stage?: ClaimedWork['stage'] & { checkpointPolicy?: unknown; cardCheckpointPolicy?: unknown };
   handoff?: unknown;
 }
 
@@ -255,12 +257,23 @@ export class SuperpipelineAgent {
   }
 
   /**
-   * Claim the next ready card matching this agent, or null when none is available.
+   * Claim the next ready card matching this agent, or null when none is available. Use
+   * {@link claimNext} to learn why nothing was handed out.
    *
    * Throws {@link SuperpipelineApiError} when the server refuses the request — a rejected token must
    * not be indistinguishable from "no work available".
    */
   async claim(): Promise<ClaimedWork | null> {
+    const next = await this.claimNext();
+    return next.claimed ? next.work : null;
+  }
+
+  /**
+   * Claim the next ready card, saying why when there is none: `{ claimed: false, reason }`, with
+   * the board's reason (`no_matching_card`, `concurrency_reached`, `capability_mismatch`, ...). A
+   * reason this SDK does not know is passed through as it came; read it as "nothing to claim now".
+   */
+  async claimNext(): Promise<{ claimed: true; work: ClaimedWork } | { claimed: false; reason: string }> {
     const path = `/v1/boards/${this.config.boardId}/claims`;
     const res = await this.post(path, {
       capabilities: this.config.capabilities,
@@ -270,18 +283,21 @@ export class SuperpipelineAgent {
     const body = (await res.json()) as ClaimResponse;
     // This generic SDK never opts into the dedicated checkpoint protocol.
     // Do not erase an unsolicited requirement while projecting ordinary work.
-    if ('checkpointClaim' in body || (body.stage && 'checkpointPolicy' in body.stage)) {
+    if ('checkpointClaim' in body || (body.stage && ('checkpointPolicy' in body.stage || 'cardCheckpointPolicy' in body.stage))) {
       throw new Error('checkpoint claim requires a dedicated coordinator');
     }
     if (!body.claimed || !body.runId || body.leaseEpoch === undefined || !body.card || !body.stage) {
-      return null;
+      return { claimed: false, reason: typeof body.reason === 'string' && body.reason !== '' ? body.reason : 'no_matching_card' };
     }
     return {
-      runId: body.runId,
-      leaseEpoch: body.leaseEpoch,
-      card: body.card,
-      stage: body.stage,
-      handoff: body.handoff ?? null,
+      claimed: true,
+      work: {
+        runId: body.runId,
+        leaseEpoch: body.leaseEpoch,
+        card: body.card,
+        stage: body.stage,
+        handoff: body.handoff ?? null,
+      },
     };
   }
 
