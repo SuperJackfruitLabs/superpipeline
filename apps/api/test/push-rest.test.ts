@@ -103,4 +103,25 @@ describe('REST — push-configs: the X-Agent-Id header, not a body `agentId`, de
     const deliveries = ((await (await SELF.fetch(`${base}/v1/boards/${bid}/push/deliveries`, { headers: T })).json()) as { deliveries: PushDeliveryView[] }).deliveries;
     expect(deliveries).toHaveLength(1);
   });
+
+  it('refuses a body without a url or a token, or with either not a string, as INVALID_BODY (push.v1)', async () => {
+    const bid = await board();
+    const bodies = [
+      { token: 's' },
+      { url: 'https://agent.example/hook' },
+      { url: 'https://agent.example/hook', token: 7 },
+      { url: 42, token: 's' },
+      { url: '', token: 's' },
+    ];
+    const answers = [];
+    for (const body of bodies) {
+      const res = await SELF.fetch(`${base}/v1/boards/${bid}/push-configs`, { method: 'POST', headers: { ...T, 'X-Agent-Id': 'agt_b' }, body: JSON.stringify(body) });
+      const answer = await res.json<{ error?: { code?: string } }>();
+      answers.push({ body, status: res.status, code: answer.error?.code });
+    }
+    expect(answers).toEqual(bodies.map((body) => ({ body, status: 400, code: 'INVALID_BODY' })));
+    // Nothing was stored.
+    const deliveries = await SELF.fetch(`${base}/v1/boards/${bid}/push/deliveries`, { headers: T });
+    expect(deliveries.status).toBe(200);
+  });
 });

@@ -20,7 +20,10 @@ replaces the one with the same subscriber and URL.
 
 - `url` must be a public `http(s)` endpoint. Loopback, private and link-local addresses are refused
   `INVALID_URL`.
-- `token` is the config's signing secret.
+- `token` is the config's signing secret. A body without a `url` or a `token`, or with either not
+  a string, is refused `INVALID_BODY`.
+- The route follows Treaty's push registration contract (`push.v1`). A board that is not set up
+  yet is `NOT_INITIALIZED`: 404 for an agent or a person, 400 for a service.
 - `events` defaults to `["work.available"]`. A name the board cannot send is refused
   `UNKNOWN_EVENT`.
 - Who may register:

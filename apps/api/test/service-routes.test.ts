@@ -352,6 +352,19 @@ describe('a service registering a push config (hub issuer)', () => {
     });
   });
 
+  it('answers a board that is not initialised 400 NOT_INITIALIZED, as push.v1 says the service form does', async () => {
+    await legacy(async () => {
+      const boardId = newId('brd');
+      // In the catalog, but its Durable Object never initialised.
+      await recordBoard(env.DB, TENANT, { id: boardId, name: 'Not yet', stagesJson: JSON.stringify(PIPELINE) });
+      const r = await post(`/v1/boards/${boardId}/push-configs`, await hubToken({ scope: 'push:write' }), {
+        url: 'https://library.example.com/x', token: 'd', events: ['card.updated'],
+      });
+      expect(r.status).toBe(400);
+      expect((await r.json<{ error: { code: string } }>()).error.code).toBe('NOT_INITIALIZED');
+    });
+  });
+
   it('needs push:write, not cards:read', async () => {
     await legacy(async () => {
       const { boardId } = await seedBoardWithResolvedGate();

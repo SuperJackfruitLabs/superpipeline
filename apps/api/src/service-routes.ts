@@ -307,5 +307,7 @@ export async function serviceRoute(request: Request, env: Env, path: string): Pr
     token: body.token,
     events: body.events,
   });
+  // Every refusal from the board is a 400 on the service form, NOT_INITIALIZED included (push.v1:
+  // the agent form answers it 404; treaty's error codes allow both).
   return result.ok ? Response.json(result.value, { status: 201 }) : refusal(result, 400);
 }

@@ -3,7 +3,7 @@
  * HTTP contracts, in every test that makes one.
  *
  * `test/setup.ts` wraps the Worker's own `fetch` (what `SELF.fetch` reaches) with `checkExchange`.
- * A request to a route none of the three documents describe is not checked: those routes are not
+ * A request to a route none of the four documents describe is not checked: those routes are not
  * contracted yet. On a contracted operation:
  *
  * - the response must validate against the operation's contract for its status (a status the
@@ -18,6 +18,7 @@ import { createBundle, matchRoute, openApi, validateRequest, validateResponse, t
 import agentWork from '@superjackfruitlabs/treaty-contracts/data/schemas/http/superpipeline/agent-work.v1.openapi.json';
 import approvals from '@superjackfruitlabs/treaty-contracts/data/schemas/http/superpipeline/approvals.v1.openapi.json';
 import decisions from '@superjackfruitlabs/treaty-contracts/data/schemas/http/superpipeline/decisions.v1.openapi.json';
+import push from '@superjackfruitlabs/treaty-contracts/data/schemas/http/superpipeline/push.v1.openapi.json';
 import errorV1 from '@superjackfruitlabs/treaty-contracts/data/schemas/common/error.v1.json';
 import attentionPending from '@superjackfruitlabs/treaty-contracts/data/schemas/superpipeline/attention.pending.v1.json';
 import deliveryPending from '@superjackfruitlabs/treaty-contracts/data/schemas/superpipeline/delivery.pending.v1.json';
@@ -32,12 +33,14 @@ export const DOCUMENTS = {
   agentWork: 'schemas/http/superpipeline/agent-work.v1.openapi.json',
   decisions: 'schemas/http/superpipeline/decisions.v1.openapi.json',
   approvals: 'schemas/http/superpipeline/approvals.v1.openapi.json',
+  push: 'schemas/http/superpipeline/push.v1.openapi.json',
 } as const;
 
 const bundle = createBundle({
   [DOCUMENTS.agentWork]: agentWork,
   [DOCUMENTS.decisions]: decisions,
   [DOCUMENTS.approvals]: approvals,
+  [DOCUMENTS.push]: push,
   'schemas/common/error.v1.json': errorV1,
   'schemas/superpipeline/attention.pending.v1.json': attentionPending,
   'schemas/superpipeline/delivery.pending.v1.json': deliveryPending,
@@ -62,6 +65,7 @@ export const treatyHttpChecked: Record<string, number> = {
   [DOCUMENTS.agentWork]: 0,
   [DOCUMENTS.decisions]: 0,
   [DOCUMENTS.approvals]: 0,
+  [DOCUMENTS.push]: 0,
 };
 
 const mismatches: string[] = [];
