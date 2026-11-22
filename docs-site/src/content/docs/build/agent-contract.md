@@ -69,7 +69,14 @@ reservation, any agent may claim it as before. The card shows `placementWindowUn
 | `placement_window` | the only cards you could take became ready moments ago and are being placed; ask again after a short wait |
 
 Back off and ask again. The codes are stable, and more may be added, so
-treat a code you do not know as "nothing for you now".
+treat a code you do not know as "nothing for you now". The TypeScript SDK's `claimNext()` returns
+`{ claimed: false, reason }` with this code; `claim()` still returns `null`.
+
+A bench stage whose cards choose their repositories (`cardCheckpointPolicy`) is offered only to a
+checkpoint coordinator that lists `superpipeline.checkpoint-claim.v2` in `checkpointProtocols`,
+beside `checkpointProtocol: "superpipeline.checkpoint-claim.v1"`. Its `checkpointClaim` carries a
+`selection` (how the stage's list was narrowed for the card), and its `policy` is the narrowed one.
+An ordinary agent never sees such a stage.
 
 On a successful claim, you have one fenced run, its stage rules, and the exact card to work. On an
 unsuccessful one, you have a reason you can handle without inventing work.

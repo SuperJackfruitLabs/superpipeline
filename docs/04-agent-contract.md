@@ -121,6 +121,20 @@ ACP. The generic SDK and MCP client do not advertise this protocol. The generic
 TypeScript SDK refuses unsolicited checkpoint claim or policy fields before
 invoking its work handler.
 
+A stage may instead carry `cardCheckpointPolicy` (treaty
+`run-checkpoint-policy.v2`): an allowlist each card narrows with its own
+`repositories` and `primaryRepository` (treaty `card-repositories.v1`). Never
+both on one stage. Such a stage is matched only when the claim also sends
+`checkpointProtocols` listing `superpipeline.checkpoint-claim.v2` (1 to 8 known
+protocols, each once, v1 among them, beside `checkpointProtocol`; anything else
+is **400**). Its `checkpointClaim` keeps `version`
+`superpipeline.checkpoint-claim.v1` and adds `selection` (treaty
+`run-checkpoint-selection.v1`: the stage policy digest, `source` `card`,
+`default` or `single`, the names and the start repository); `policy` is then the
+narrowed v1 policy and `policyDigest` its digest. A card the stage cannot narrow
+(none named and no default, or a choice the list no longer holds) is parked for
+a person with `needsHuman.reason: "blocked"` and the claim hands out nothing.
+
 This is an implementation candidate for the proposed coordinator contract, not
 acceptance, a reporter grant, or pilot enablement. See the
 [candidate boundaries](./contributor/proposed-checkpoint-settlement-candidate.md).

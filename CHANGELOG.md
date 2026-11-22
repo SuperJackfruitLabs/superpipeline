@@ -28,6 +28,12 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html). Entries g
 
 - A fifth vibe, Console: dense, dark-first, monospaced, with every page's keys in the footer.
 
+- **A bench stage can let each card choose its repositories** (proposed, behind the checkpoint policy switch; treaty v0.0.16). A workspace owner or admin gives the stage a `cardCheckpointPolicy`: an allowlist of up to 32 repositories, the start repository and an optional default, refused if the default cannot name a start repository or the stage also has `checkpointPolicy`. A card carries `repositories` and `primaryRepository`, which anyone who may edit it sets on create or edit, within the list; a choice outside it is refused `409 REPOSITORY_CHOICE_REFUSED` on create, move, resume or edit. A card that names none gets the default or the only repository, and otherwise waits for a person. Only a coordinator that sends `checkpointProtocols` with `superpipeline.checkpoint-claim.v2` is offered such a stage; its claim narrows the list to the card's choice and freezes it (`checkpointClaim.selection`), and source admission, settlement, references and receipts compare with that narrowed policy. After the claim the card's choice is fixed. The card page has a repository picker. Stages with `checkpointPolicy`, and every claimant that does not send v2, behave as before.
+
+- The agent SDK's `claimNext()` says why a claim handed out nothing (`{ claimed: false, reason }`); `claim()` still returns `null`.
+
+- An attempt a person's move ended reads "moved by a person" on the card.
+
 - A person moving a card while its run is working ends that run (`status: ended`, a new run outcome `moved`, reported to SuperWitness as cancelled). It used to stay `working` with no card naming it and hold the agent's concurrency until the 15-minute heartbeat timeout reclaimed it. Later verbs on the run are refused `409 STALE_LEASE`.
 
 - Reclaiming a lapsed run counts a failure against its card only while the card still names that run. A run its card had left bumped the card's failure count and requeued it, even from a finished stage.
