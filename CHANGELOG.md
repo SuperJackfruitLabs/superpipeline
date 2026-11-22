@@ -14,6 +14,8 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html). Entries g
 
 ## Unreleased
 
+- A person moving a card while its run is working ends that run (`status: ended`, a new run outcome `moved`, reported to SuperWitness as cancelled). It used to stay `working` with no card naming it and hold the agent's concurrency until the 15-minute heartbeat timeout reclaimed it. Later verbs on the run are refused `409 STALE_LEASE`.
+
 - A caller without a service token on a service-only route (approval requests, approval-subject verify and delivery) is refused `401 UNAUTHORIZED`; it answered `405`.
 
 - Bad input is a 400, never a 500 and never a different action. Malformed JSON is `400 INVALID_JSON` on every board and service route that reads a body (it was a 500 on the run verbs, gate resolve, answering a question and approval-subject verify; `INVALID_APPROVAL_REQUEST` on creating an approval request; `INVALID_INPUT` on the evidence reference). Archiving a card with a malformed body no longer archives it. A gate decision outside `approve`, `approve_manual`, `approve_automatic`, `request_changes` and `reject`, or none, is `400 GATE_DECISION_NOT_ALLOWED` on every gate; on a plain gate it used to reject the card. The approval-subject verify and delivery service routes answer each refusal at its code's status (`INVALID_LIVE_URL` 400, `APPROVAL_SUBJECT_NOT_VERIFIED` and `APPROVAL_HELD` 409) instead of 403. A claim with no agent identity is `401 UNAUTHORIZED` (was 400).

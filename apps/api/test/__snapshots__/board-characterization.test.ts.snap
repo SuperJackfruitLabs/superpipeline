@@ -1407,6 +1407,7 @@ exports[`the Board Durable Object, pinned before the split > runs the same state
       "SELECT v FROM meta WHERE k = ?  <-  ["stages"]",
       "SELECT COUNT(*) AS n FROM card_links l JOIN cards ch ON ch.id = l.to_card_id WHERE l.from_card_id = ? AND l.kind = 'parent' AND ch.state NOT IN ('completed', 'canceled')  <-  ["card#7"]",
       "SELECT COUNT(*) AS n FROM card_links l JOIN cards b ON b.id = l.from_card_id WHERE l.to_card_id = ? AND l.kind = 'blocks' AND b.state NOT IN ('completed', 'canceled')  <-  ["card#7"]",
+      "SELECT r.id FROM cards c JOIN runs r ON r.id = c.current_run_id WHERE c.id = ? AND r.status = 'working'  <-  ["card#7"]",
       "SELECT * FROM cards WHERE id = ?  <-  ["card#7"]",
       "SELECT v.gate_id, v.subject_id FROM gate_variants v JOIN gates g ON g.id = v.gate_id JOIN approval_subjects s ON s.id = v.subject_id WHERE g.card_id = ? AND g.approval_subject_id IS NULL AND s.status = 'active'  <-  ["card#7"]",
       "SELECT * FROM gates WHERE card_id = ? AND status = 'pending'  <-  ["card#7"]",

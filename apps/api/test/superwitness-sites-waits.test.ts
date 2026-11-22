@@ -107,7 +107,9 @@ describe('superwitness reports — waits', () => {
       }),
     ));
 
-  it('a manual move cancels a pending question → the asking run is running again', () =>
+  // The move ends the asking run (`moved`), which reads as cancelled. It used to read `running`
+  // again: the move unbound the run and left it working, the orphan this test once pinned.
+  it('a manual move cancels a pending question → the asking run is cancelled (moved)', () =>
     withReporting(() =>
       runInDurableObject(stubFor('sww-move-elicit'), async (board: BoardDO, state) => {
         await board.init({ id: 'brd_sww_me', tenantId: 'tnt_sw', name: 'B', stages: SUBMIT });
@@ -118,7 +120,8 @@ describe('superwitness reports — waits', () => {
         await board.postActivity({ runId: c.runId, leaseEpoch: c.leaseEpoch, type: 'elicitation', body: 'Which?' });
         expect((await reported(board, state, c.runId)).status).toBe('waiting');
         await board.moveCard(card.value.id, 'ship', 'usr_x');
-        expect((await reported(board, state, c.runId)).status).toBe('running');
+        expect((await reported(board, state, c.runId)).status).toBe('cancelled');
+        expect(runRow(state, c.runId)).toMatchObject({ status: 'ended', outcome: 'moved' });
       }),
     ));
 });

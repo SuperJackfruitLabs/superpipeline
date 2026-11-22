@@ -16,6 +16,7 @@ export type MovesDeps = Pick<
   BoardContext,
   | 'addComment'
   | 'awaitChecks'
+  | 'cancelElicitationsForRun'
   | 'decisionDeadline'
   | 'startDecisionWait'
   | 'cancelPendingReviews'
@@ -89,6 +90,10 @@ export async function moveCard(deps: MovesDeps, cardId: string, toStageKey: stri
   }
   const unresolvedBlockers = deps.unresolvedBlockerCount(cardId);
   const now = deps.now();
+  // Before either branch below unbinds the card: a run left `working` with no card naming it
+  // still counts against its agent's concurrency, and holds that agent until the heartbeat
+  // timeout reclaims it.
+  endRunForMove(deps, cardId, now);
   deps.invalidateApprovalSubject(cardId, 'card.route_changed', actorUserId ?? null);
   // A manual move overrides any in-flight review: cancel pending gates and return the card to a
   // clean, claimable state. Without this, dragging a card off a human gate strands it in
@@ -163,6 +168,34 @@ export async function moveCard(deps: MovesDeps, cardId: string, toStageKey: stri
   deps.openPlacementWindow(cardId);
   await deps.scheduleReclaim();
   return { ok: true, value: updated };
+}
+
+/**
+ * A card moved while its run is working ends that run.
+ *
+ * The run's work is over: the card is somewhere else now, and only a new claim binds it to a run
+ * again. The outcome is `moved` and not `released`: for the run it is a claim given back without
+ * penalty, as a release is (the card's failure count is not touched, and a run report reads it as
+ * cancelled, not failed), but it was a person who stopped it, not the agent, and the run's agent
+ * may still post a closing note on it (`run-verbs.ts`, `MOVED_RUN_NOTE_GRACE_MS`). Ended rather
+ * than unbound, so every other verb on it is refused as `STALE_LEASE` and the agent's concurrency
+ * is free for its next claim at once.
+ *
+ * Synchronous, and called before the card is unbound with no await between: in a Durable Object
+ * that makes it one write with the move.
+ */
+function endRunForMove(deps: MovesDeps, cardId: string, now: string): void {
+  const run = deps.sql
+    .exec(
+      `SELECT r.id FROM cards c JOIN runs r ON r.id = c.current_run_id WHERE c.id = ? AND r.status = 'working'`,
+      cardId,
+    )
+    .toArray()[0];
+  const runId = run?.id;
+  if (typeof runId !== 'string') return;
+  deps.sql.exec(`UPDATE runs SET status = 'ended', outcome = 'moved', ended_at = ? WHERE id = ?`, now, runId);
+  deps.cancelElicitationsForRun(runId);
+  deps.reportRun(runId);
 }
 
 /** An agent move refused for a gate: 409, and the message says a person resolves it. */
