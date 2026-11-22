@@ -7,7 +7,7 @@ import type { BoardContext } from './context';
 import { parseElicitationOptions } from './elicitation';
 import { questionPostError } from './question-subject';
 import type { AgentActivityInput, CardView, CompleteVerbInput, Result, Row, RunVerbInput } from './model';
-import { COMMENT_MAX_BYTES, HEARTBEAT_TIMEOUT_MS } from './rules';
+import { COMMENT_MAX_BYTES, HEARTBEAT_TIMEOUT_MS, MOVED_RUN_NOTE_GRACE_MS } from './rules';
 import { ApprovalDetail, canonicalDecisionRequest, StrictDecision } from './strict-decision';
 import type { PreparedApproval } from './views';
 
@@ -32,6 +32,7 @@ export type RunVerbsDeps = Pick<
   | 'env'
   | 'getCard'
   | 'getCardRow'
+  | 'getRunRow'
   | 'isAgentClaimable'
   | 'mustGetCard'
   | 'notify'
@@ -55,7 +56,7 @@ const OUTCOMES: ReadonlySet<string> = new Set<StageOutcome>(['pass', 'changes-ne
 export async function postActivity(deps: RunVerbsDeps, input: AgentActivityInput): Promise<Result<{ accepted: true; cardState: TaskState; elicitationId?: string; strictDecision?: StrictDecision }>> {
   if (input.strictDecision !== undefined) return postStrictDecision(deps, input);
   const auth = deps.authorizeRun(input);
-  if (!auth.ok) return auth;
+  if (!auth.ok) return auth.code === 'STALE_LEASE' ? (lateNoteOnMovedRun(deps, input) ?? auth) : auth;
   const run = auth.run;
   const cardId = run.card_id as string;
   // A poster's meanings, scopes and subject are checked before anything is written (charter:
@@ -127,6 +128,44 @@ export async function postActivity(deps: RunVerbsDeps, input: AgentActivityInput
   deps.emit('activity', { runId: input.runId, cardId, activityType: input.type });
   await deps.scheduleReclaim();
   return { ok: true, value: { accepted: true, cardState } };
+}
+
+/**
+ * A note on a run a person ended by moving its card, from the run's own agent, shortly after.
+ *
+ * Moving the card ends the run (`moves.ts`), and the agent finds out only on its next call. What it
+ * has to say then — that it stopped, and where it saved the partial work — belongs on the card, and
+ * refusing it would lose the one record of where that work went. So the run's lease, otherwise
+ * stale, still takes a plain note: no question, no usage, nothing that changes the card, the run
+ * or its heartbeat, and only within `MOVED_RUN_NOTE_GRACE_MS` of the move. Anything else, and any
+ * run that ended another way, is `STALE_LEASE` as before; null hands that refusal back.
+ *
+ * `authorizeRun` already refused another agent's run (`NOT_RUN_OWNER`), so the caller is the run's
+ * agent; the lease epoch must still be the run's.
+ */
+function lateNoteOnMovedRun(deps: RunVerbsDeps, input: AgentActivityInput): Result<{ accepted: true; cardState: TaskState }> | null {
+  if (input.type === 'elicitation' || input.usage !== undefined) return null;
+  const run = deps.getRunRow(input.runId);
+  if (!run || run.status !== 'ended' || run.outcome !== 'moved' || Number(run.lease_epoch) !== input.leaseEpoch) return null;
+  const endedMs = typeof run.ended_at === 'string' ? Date.parse(run.ended_at) : Number.NaN;
+  if (!(deps.nowMs() < endedMs + MOVED_RUN_NOTE_GRACE_MS)) return null;
+  const cardId = run.card_id;
+  const card = typeof cardId === 'string' ? deps.getCard(cardId) : null;
+  if (!card || typeof cardId !== 'string') return null;
+  deps.sql.exec(
+    `INSERT INTO activities (run_id, card_id, type, ephemeral, body, action, detail_json, ts)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+    input.runId,
+    cardId,
+    input.type,
+    input.ephemeral ? 1 : 0,
+    input.body ?? null,
+    input.action ?? null,
+    JSON.stringify({ parameter: input.parameter ?? null, result: input.result ?? null, signal: input.signal ?? null }),
+    deps.now(),
+  );
+  deps.emit('activity', { runId: input.runId, cardId, activityType: input.type });
+  return { ok: true, value: { accepted: true, cardState: card.state } };
 }
 
 async function postStrictDecision(deps: RunVerbsDeps, input: AgentActivityInput): Promise<Result<{ accepted: true; cardState: TaskState; elicitationId?: string; strictDecision?: StrictDecision }>> {

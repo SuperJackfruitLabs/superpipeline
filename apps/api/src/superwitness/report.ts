@@ -41,6 +41,8 @@ export function mapRunStatus(f: RunFacts): { status: RunStatus; sourceStatus: st
       return { status: f.gate.decision === 'approve' ? 'succeeded' : 'failed', sourceStatus };
     }
     case 'released':
+    // A person moved the card while the run worked it: stopped, not failed.
+    case 'moved':
       return { status: 'cancelled', sourceStatus };
     default:
       // blocked, crashed, reclaimed — and anything this mapping has not met yet.

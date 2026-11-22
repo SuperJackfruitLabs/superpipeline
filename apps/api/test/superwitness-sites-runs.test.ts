@@ -28,7 +28,7 @@ async function start(board: BoardDO, id: string, stages: BoardInit['stages'], ca
   await board.createCard({ title: 'Work', ownerUserId: 'usr_a' });
   const c = await board.claim({ agentId: 'agt_w', capabilities: [cap] });
   if (!c.claimed) throw new Error('expected a claim');
-  return { runId: c.runId, leaseEpoch: c.leaseEpoch };
+  return { runId: c.runId, leaseEpoch: c.leaseEpoch, cardId: c.card.id };
 }
 
 /** The run's outbox row must say `status`/`sourceStatus`, at the run's own updated_at, newer than the claim's. */
@@ -103,6 +103,17 @@ describe('superwitness reports — run-ending verbs', () => {
         const { runId, leaseEpoch } = await start(board, 'brd_sws_r', BUILD, 'build');
         await board.release({ runId, leaseEpoch });
         await expectReported(board, state, runId, 'cancelled', 'released');
+      }),
+    ));
+
+  it('a person moving the card off its working run → cancelled (moved)', () =>
+    withReporting(() =>
+      runInDurableObject(stubFor('sws-moved'), async (board: BoardDO, state) => {
+        const { runId, cardId } = await start(board, 'brd_sws_mv', SUBMIT, 'build');
+        const moved = await board.moveCard(cardId, 'ship', 'usr_a');
+        expect(moved.ok).toBe(true);
+        await expectReported(board, state, runId, 'cancelled', 'moved');
+        expect(runRow(state, runId).ended_at).not.toBeNull();
       }),
     ));
 

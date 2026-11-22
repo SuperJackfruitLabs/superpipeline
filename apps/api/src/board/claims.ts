@@ -575,11 +575,22 @@ export function reclaimExpired(deps: ClaimsDeps, nowMs: number): number {
   for (const r of rows) {
     deps.sql.exec(`UPDATE runs SET status = 'ended', outcome = 'reclaimed', ended_at = ? WHERE id = ?`, now, r.id);
     deps.cancelElicitationsForRun(r.id as string);
-    deps.endAttempt(r.card_id as string, 'run.reclaimed', null, String(r.id)); // endAttempt re-queues + notifies work.available
-    deps.notify('reclaimed', r.card_id as string, 'Agent went dark — run reclaimed');
+    // The attempt is the card's only while the card still names this run. A run the card has
+    // left (moved, re-routed, or bound to a newer run) is ended above and nothing more: charging
+    // it to the card would count a failure against work it is no longer doing, and re-queue a card
+    // that has moved on, even out of a finished stage.
+    if (cardNamesRun(deps, r)) {
+      deps.endAttempt(r.card_id as string, 'run.reclaimed', null, String(r.id)); // endAttempt re-queues + notifies work.available
+      deps.notify('reclaimed', r.card_id as string, 'Agent went dark — run reclaimed');
+    }
     deps.reportRun(r.id as string);
   }
   return rows.length;
+}
+
+/** Is this run (a `runs` row with its `id` and `card_id`) its card's current one? */
+function cardNamesRun(deps: Pick<ClaimsDeps, 'sql'>, run: Row): boolean {
+  return deps.sql.exec(`SELECT 1 FROM cards WHERE id = ? AND current_run_id = ?`, run.card_id, run.id).toArray().length > 0;
 }
 
 /**

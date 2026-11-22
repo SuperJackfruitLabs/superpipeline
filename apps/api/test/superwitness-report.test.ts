@@ -63,6 +63,7 @@ describe('mapRunStatus — the table in the plan', () => {
     [{ status: 'ended', outcome: 'crashed', pendingElicitation: false, gate: null }, 'failed', 'crashed'],
     [{ status: 'ended', outcome: 'reclaimed', pendingElicitation: false, gate: null }, 'failed', 'reclaimed'],
     [{ status: 'ended', outcome: 'released', pendingElicitation: false, gate: null }, 'cancelled', 'released'],
+    [{ status: 'ended', outcome: 'moved', pendingElicitation: false, gate: null }, 'cancelled', 'moved'],
     [{ status: 'ended', outcome: 'vanished', pendingElicitation: false, gate: null }, 'failed', 'vanished'],
   ];
   it.each(cases)('%j → %s / %s', (facts, status, sourceStatus) => {
