@@ -183,3 +183,91 @@ describe('reclaiming a run its card no longer names', () => {
     });
   });
 });
+
+const NOTE = { type: 'response' as const, body: 'Run stopped because the card moved; partial work saved' };
+
+/** A card claimed and then moved by a person; the run is ended `moved`. */
+async function movedRun(board: BoardDO, id: string) {
+  await board.init(init(id));
+  const a = await mustCreate(board, 'A');
+  const c = await board.claim(RESEARCHER);
+  if (!c.claimed) throw new Error('expected a claim');
+  const moved = await board.moveCard(a.id, 'build', 'usr_a');
+  if (!moved.ok) throw new Error(`move failed: ${moved.message}`);
+  return { cardId: a.id, lease: { runId: c.runId, leaseEpoch: c.leaseEpoch, agentId: RESEARCHER.agentId } };
+}
+
+function notesOn(state: DurableObjectState, runId: string) {
+  return state.storage.sql.exec(`SELECT type, body FROM activities WHERE run_id = ?`, runId).toArray();
+}
+
+describe("a note on a run a person's move ended", () => {
+  it('is taken from the run’s agent inside the grace window, and changes nothing else', async () => {
+    await runInDurableObject(freshBoard(), async (board: BoardDO, state) => {
+      const { cardId, lease } = await movedRun(board, 'brd_note_in');
+      const heartbeat = state.storage.sql.exec(`SELECT last_heartbeat_ms FROM runs WHERE id = ?`, lease.runId).one();
+
+      expect(await board.postActivity({ ...lease, ...NOTE })).toEqual({ ok: true, value: { accepted: true, cardState: 'submitted' } });
+
+      expect(notesOn(state, lease.runId)).toEqual([{ type: 'response', body: NOTE.body }]);
+      expect(runOf(state, lease.runId)).toMatchObject({ status: 'ended', outcome: 'moved' });
+      expect(state.storage.sql.exec(`SELECT last_heartbeat_ms FROM runs WHERE id = ?`, lease.runId).one()).toEqual(heartbeat);
+      expect(cardOf(state, cardId)).toMatchObject({ current_stage_key: 'build', state: 'submitted', current_run_id: null });
+    });
+  });
+
+  it('is refused as STALE_LEASE once the window has passed', async () => {
+    await runInDurableObject(freshBoard(), async (board: BoardDO, state) => {
+      const { lease } = await movedRun(board, 'brd_note_late');
+      const longAgo = new Date(Date.now() - 11 * 60 * 1000).toISOString();
+      state.storage.sql.exec(`UPDATE runs SET ended_at = ? WHERE id = ?`, longAgo, lease.runId);
+
+      expect(await board.postActivity({ ...lease, ...NOTE })).toMatchObject({ ok: false, code: 'STALE_LEASE' });
+      expect(notesOn(state, lease.runId)).toEqual([]);
+    });
+  });
+
+  it('takes nothing but a plain note: every other verb is STALE_LEASE', async () => {
+    await runInDurableObject(freshBoard(), async (board: BoardDO, state) => {
+      const { cardId, lease } = await movedRun(board, 'brd_note_verbs');
+      for (const verb of [
+        () => board.postActivity({ ...lease, type: 'elicitation', body: 'May I?', signal: 'select', parameter: { options: [{ name: 'yes', title: 'Yes' }] } }),
+        () => board.postActivity({ ...lease, ...NOTE, usage: { inputTokens: 1, outputTokens: 1 } }),
+        () => board.postActivity({ ...lease, ...NOTE, leaseEpoch: lease.leaseEpoch + 1 }),
+        () => board.heartbeat(lease),
+        () => board.complete({ ...lease, handoff: { summary: 'late' } }),
+        () => board.submitForReview({ ...lease }),
+        () => board.block({ ...lease, reason: 'late' }),
+        () => board.fail({ ...lease, reason: 'late' }),
+        () => board.release(lease),
+      ]) {
+        expect(await verb()).toMatchObject({ ok: false, code: 'STALE_LEASE' });
+      }
+      expect(notesOn(state, lease.runId)).toEqual([]);
+      expect(cardOf(state, cardId)).toMatchObject({ current_stage_key: 'build', state: 'submitted', failure_count: 0 });
+    });
+  });
+
+  it('is refused for a run that ended any other way', async () => {
+    const endings: Array<[string, (board: BoardDO, lease: { runId: string; leaseEpoch: number }) => Promise<unknown>]> = [
+      ['released', (board, lease) => board.release(lease)],
+      ['crashed', (board, lease) => board.fail({ ...lease, reason: 'boom' })],
+      ['blocked', (board, lease) => board.block({ ...lease, reason: 'stuck' })],
+      ['reclaimed', async (board) => board.reclaimExpired(FAR_FUTURE)],
+    ];
+    for (const [outcome, end] of endings) {
+      await runInDurableObject(freshBoard(), async (board: BoardDO, state) => {
+        await board.init(init(`brd_note_${outcome}`));
+        await mustCreate(board, 'A');
+        const c = await board.claim(RESEARCHER);
+        if (!c.claimed) throw new Error('expected a claim');
+        const lease = { runId: c.runId, leaseEpoch: c.leaseEpoch, agentId: RESEARCHER.agentId };
+        await end(board, lease);
+        expect(runOf(state, c.runId)).toMatchObject({ status: 'ended', outcome });
+
+        expect(await board.postActivity({ ...lease, ...NOTE })).toMatchObject({ ok: false, code: 'STALE_LEASE' });
+        expect(notesOn(state, c.runId)).toEqual([]);
+      });
+    }
+  });
+});

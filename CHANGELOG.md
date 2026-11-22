@@ -18,6 +18,8 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html). Entries g
 
 - Reclaiming a lapsed run counts a failure against its card only while the card still names that run. A run its card had left bumped the card's failure count and requeued it, even from a finished stage.
 
+- The agent of a run a person ended by moving its card may still post a plain note on that run (an activity with no question and no usage) for 10 minutes after the move, so a closing note such as where it saved partial work reaches the card. Every other verb on the run, and a note after the window or on a run ended any other way, is still `409 STALE_LEASE`.
+
 - A caller without a service token on a service-only route (approval requests, approval-subject verify and delivery) is refused `401 UNAUTHORIZED`; it answered `405`.
 
 - Bad input is a 400, never a 500 and never a different action. Malformed JSON is `400 INVALID_JSON` on every board and service route that reads a body (it was a 500 on the run verbs, gate resolve, answering a question and approval-subject verify; `INVALID_APPROVAL_REQUEST` on creating an approval request; `INVALID_INPUT` on the evidence reference). Archiving a card with a malformed body no longer archives it. A gate decision outside `approve`, `approve_manual`, `approve_automatic`, `request_changes` and `reject`, or none, is `400 GATE_DECISION_NOT_ALLOWED` on every gate; on a plain gate it used to reject the card. The approval-subject verify and delivery service routes answer each refusal at its code's status (`INVALID_LIVE_URL` 400, `APPROVAL_SUBJECT_NOT_VERIFIED` and `APPROVAL_HELD` 409) instead of 403. A claim with no agent identity is `401 UNAUTHORIZED` (was 400).

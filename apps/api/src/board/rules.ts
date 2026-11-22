@@ -9,6 +9,17 @@ import type { DecisionTimeout } from './model';
 export const HEARTBEAT_TIMEOUT_MS = 15 * 60 * 1000;
 
 /**
+ * How long after a person moves a card off a working run that run's agent may still post a note
+ * on it (`run-verbs.ts`, `lateNoteOnMovedRun`).
+ *
+ * The agent learns of the move on its next call to the board, stops its work and saves what it
+ * had before it can say where: seconds, or a few minutes for a slow push. Ten minutes covers that,
+ * and stays under the heartbeat timeout, the board's own bound on how long a quiet agent still
+ * counts as present on a run.
+ */
+export const MOVED_RUN_NOTE_GRACE_MS = 10 * 60 * 1000;
+
+/**
  * The decision a gate records when its approval subject expired before anyone decided (charter
  * 2026-11-08, decision 7). Not an option anyone can choose; the board writes it.
  */
