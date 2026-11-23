@@ -48,10 +48,9 @@ event relay uses:
   over `<t>.<ce-id>.<body>`. Verify it with `verifyDelivery` from
   `@superjackfruitlabs/treaty-cloudevents`, which also refuses a delivery signed more than 300
   seconds away from your clock. Binding the id and the time stops a captured delivery being
-  replayed.
-- `X-Superpipeline-Signature: sha256=<hex>`, the older HMAC over the body alone, and
-  `X-Superpipeline-Event: <event>`. Both are still sent while receivers move to
-  `x-treaty-signature`; the old signature will be removed in a later release.
+  replayed. It is the only signature a delivery carries: the older `X-Superpipeline-Signature`
+  and `X-Superpipeline-Event` headers are no longer sent. Read the event's name from `ce-type`
+  or from the body's `event`.
 
 Verify the signature over the exact bytes you received, before parsing the body.
 

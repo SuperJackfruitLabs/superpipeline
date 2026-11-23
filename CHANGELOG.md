@@ -14,6 +14,8 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html). Entries g
 
 ## Unreleased
 
+- **The direct push carries only `x-treaty-signature`** (treaty phase 2's cleanup). `X-Superpipeline-Signature` (the HMAC over the body alone) and `X-Superpipeline-Event` are no longer sent. Receivers must verify `x-treaty-signature` with treaty's `verifyDelivery` (an HMAC keyed with the push config's token over `<t>.<ce-id>.<body>`) and read the event's name from `ce-type` or the body's `event`. A receiver that still checks only the old header will refuse every push.
+
 ## v0.0.36 — 2026-11-23
 
 - **The direct push uses the event relay's envelope** (treaty phase 2). Each delivery is a CloudEvent in HTTP binary mode (`ce-id`, `ce-type`, `ce-source`, `ce-dataschema`, `ce-time`) signed `x-treaty-signature: t=<seconds>,v1=<hex>`: an HMAC keyed with the push config's token over `<t>.<ce-id>.<body>`, verified with treaty's `verifyDelivery`. `X-Superpipeline-Signature` and `X-Superpipeline-Event` are still sent beside it and will be removed in a later release, once every receiver verifies the new header.

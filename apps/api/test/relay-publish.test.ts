@@ -115,7 +115,8 @@ describe('publishing through the relay', () => {
       expect(toRelay?.body).toBe(JSON.stringify(gate));
       expect(toRelay?.headers['ce-type']).toBe('com.superjackfruit.superpipeline.gate.pending.v1');
       expect(toRelay?.headers.Authorization).toBe('Bearer producer-token');
-      expect(toHub?.headers['X-Superpipeline-Signature']).toMatch(/^sha256=/);
+      expect(toHub?.headers['x-treaty-signature']).toMatch(/^t=\d+,v1=[0-9a-f]{64}$/);
+      expect(toHub?.headers).not.toHaveProperty('X-Superpipeline-Signature');
       expect(toHub?.body).toBe(toRelay?.body);
     });
   });

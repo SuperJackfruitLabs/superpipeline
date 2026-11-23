@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { verifyGithubSignature, githubSignatureHeader } from '../src/references/github-signature';
+import { verifyGithubSignature } from '../src/references/github-signature';
+import { githubSignatureHeader } from './helpers/github-signature';
 
 describe('verifyGithubSignature (X-Hub-Signature-256, docs/06 §3)', () => {
   it('accepts the known-good vector from GitHub docs', async () => {

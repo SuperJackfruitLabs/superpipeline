@@ -35,7 +35,7 @@ describe('record events reach push configs (Superlibrary spec §5)', () => {
     });
   });
 
-  it('drains record deliveries signed, with the event header', async () => {
+  it('drains record deliveries signed, named by their CloudEvent type', async () => {
     await runInDurableObject(stubFor('rec-5'), async (board: BoardDO) => {
       await board.init({ id: 'brd_00000000000000b5', tenantId: 'tnt_a', name: 'R', stages: BUILD });
       await board.registerPushConfig({ agentId: SVC, url: HOOK, token: 's3cret', events: ['card.created'] });
@@ -47,8 +47,9 @@ describe('record events reach push configs (Superlibrary spec §5)', () => {
       });
       expect(out).toEqual({ sent: 1, failed: 0 });
       expect(seen[0]!.url).toBe(HOOK);
-      expect(seen[0]!.headers['X-Superpipeline-Signature']).toMatch(/^sha256=[0-9a-f]{64}$/);
-      expect(seen[0]!.headers['X-Superpipeline-Event']).toBe('card.created');
+      expect(seen[0]!.headers['x-treaty-signature']).toMatch(/^t=\d+,v1=[0-9a-f]{64}$/);
+      expect(seen[0]!.headers['ce-type']).toBe('com.superjackfruit.superpipeline.card.created.v1');
+      expect(seen[0]!.headers).not.toHaveProperty('X-Superpipeline-Event');
       expect(await board.getPushDeliveries({ status: 'sent' })).toHaveLength(1);
     });
   });

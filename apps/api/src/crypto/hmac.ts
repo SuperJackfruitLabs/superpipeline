@@ -1,15 +1,10 @@
-/** Shared HMAC-SHA256 helpers (Web Crypto): inbound webhook verification + outbound push signing. */
+/** Shared HMAC-SHA256 helpers (Web Crypto): inbound webhook verification and session cookies. */
 const enc = new TextEncoder();
 
 export async function hmacSha256Hex(secret: string, body: string): Promise<string> {
   const key = await crypto.subtle.importKey('raw', enc.encode(secret), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
   const sig = await crypto.subtle.sign('HMAC', key, enc.encode(body));
   return [...new Uint8Array(sig)].map((b) => b.toString(16).padStart(2, '0')).join('');
-}
-
-/** The `sha256=<hex>` header form used by GitHub (`X-Hub-Signature-256`) and our outbound deliveries. */
-export async function hmacSignatureHeader(secret: string, body: string): Promise<string> {
-  return `sha256=${await hmacSha256Hex(secret, body)}`;
 }
 
 /** Constant-time compare of two equal-length hex strings. */

@@ -5,11 +5,10 @@
  *
  * The direct push travels on the relay's envelope (treaty phase 2, ruling 1): the CloudEvent in
  * HTTP binary mode under the event's id, signed `x-treaty-signature` with the config's token over
- * `<t>.<id>.<body>`. `X-Superpipeline-Signature` (an HMAC over the body alone) is still sent beside
- * it, until every receiver verifies the treaty header.
+ * `<t>.<id>.<body>`. That is the only signature: receivers verify it with treaty's `verifyDelivery`,
+ * and `ce-type` names the event.
  */
 import { SIGNATURE_HEADER, signDelivery, toBinary } from '@superjackfruitlabs/treaty-cloudevents';
-import { hmacSignatureHeader } from '../crypto/hmac';
 import { cloudEventFor } from './relay';
 
 export interface PushDelivery {
@@ -46,16 +45,12 @@ export function isRetryable(status: number): boolean {
 
 const UTF8 = new TextEncoder();
 
-/** The headers one direct push carries: the CloudEvent's, both signatures and the event's name. */
+/** The headers one direct push carries: the CloudEvent's and its `x-treaty-signature`. */
 export async function directPushHeaders(delivery: Pick<PushDelivery, 'eventId' | 'body' | 'token'>, boardId: string, nowMs = Date.now()): Promise<Record<string, string>> {
   const { event } = cloudEventFor(delivery, boardId);
-  const parsed: unknown = JSON.parse(delivery.body);
-  const name = typeof parsed === 'object' && parsed !== null && 'event' in parsed ? String(parsed.event) : '';
   return {
     ...toBinary(event, 'http').headers,
     [SIGNATURE_HEADER]: await signDelivery(delivery.token, delivery.eventId, UTF8.encode(delivery.body), nowMs),
-    'X-Superpipeline-Signature': await hmacSignatureHeader(delivery.token, delivery.body),
-    'X-Superpipeline-Event': name,
   };
 }
 

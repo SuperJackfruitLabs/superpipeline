@@ -1,10 +1,10 @@
 import { describe, it, expect } from 'vitest';
 import { signAndSend, type PushSender } from '../src/push/deliver';
-import { verifyGithubSignature } from '../src/references/github-signature';
+import { SIGNATURE_HEADER, verifyDelivery } from '@superjackfruitlabs/treaty-cloudevents';
 
 const WORK = JSON.stringify({ event: 'work.available', boardId: 'b', cardId: 'c', stageKey: 's', ts: '2026-11-23T00:00:00.000Z' });
 
-/** docs/05 §4: each outbound delivery is HMAC-signed; the receiver verifies, then may claim. */
+/** docs/05 §4: each outbound delivery is signed `x-treaty-signature`; the receiver verifies, then may claim. */
 describe('signAndSend', () => {
   it('signs the body with the config token and POSTs it (verifiable by the receiver)', async () => {
     const calls: Array<{ url: string; headers: Record<string, string>; body: string }> = [];
@@ -18,11 +18,14 @@ describe('signAndSend', () => {
     expect(out.ok).toBe(true);
     expect(out.status).toBe(200);
     expect(calls[0]!.url).toBe('https://agent.example/hook');
-    const sig = calls[0]!.headers['X-Superpipeline-Signature']!;
-    expect(sig).toMatch(/^sha256=[0-9a-f]{64}$/);
-    // The same HMAC scheme the receiver verifies with.
-    expect(await verifyGithubSignature('s3cret', body, sig)).toBe(true);
-    expect(await verifyGithubSignature('wrong', body, sig)).toBe(false);
+    const headers = calls[0]!.headers;
+    // Treaty's verifier, the one every receiver uses, accepts it under the config's token and no other.
+    const bytes = new TextEncoder().encode(body);
+    await verifyDelivery('s3cret', headers[SIGNATURE_HEADER] ?? null, 'brd_1:1', bytes);
+    await expect(verifyDelivery('wrong', headers[SIGNATURE_HEADER] ?? null, 'brd_1:1', bytes)).rejects.toThrow('signature does not match');
+    // The older body-only signature and event name are no longer sent.
+    expect(headers).not.toHaveProperty('X-Superpipeline-Signature');
+    expect(headers).not.toHaveProperty('X-Superpipeline-Event');
   });
 
   it('reports a non-2xx response as not ok', async () => {
