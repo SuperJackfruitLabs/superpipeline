@@ -111,8 +111,10 @@ act on.
 ```sh
 supi create-card <boardId> "<title>" [--spec <file|->] [--priority <n>]
                                      [--due YYYY-MM-DD] [--label <id>]...
+                                     [--repo <name>]... [--primary-repo <name>]
 supi edit-card <boardId> <cardId> [--title <text>] [--spec <file|->] [--merge-spec <file|->]
                                    [--priority <n>] [--due YYYY-MM-DD|none]
+                                   [--repo <name>]... [--primary-repo <name>] [--clear-repos]
 supi move <boardId> <cardId> <stageKey>
 supi archive <boardId> <cardId>
 ```
@@ -138,6 +140,13 @@ A merge reads the card first and writes back only if the card is unchanged since
 someone edited it in the drawer, or an agent claimed it, in between, the write is refused with a
 409 and nothing changes; run the command again to merge into the card as it now is. `--due none`
 clears the due date.
+
+On a bench stage whose cards choose their repositories, `--repo` (repeat it) chooses them from the
+stage's list and `--primary-repo` names where the work starts; `edit-card --clear-repos` removes the
+choice so the card takes the stage's default. `edit-card --repo` replaces the whole choice. A choice
+the stage does not allow, or a change after an agent has claimed the card, is refused with the
+board's reason and nothing is written — see [Repositories](/use/cards/#repositories). `supi board`
+shows each card's choice on its line.
 
 ## Order and grouping
 

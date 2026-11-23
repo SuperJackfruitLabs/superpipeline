@@ -227,3 +227,74 @@ describe("supi edit-card --merge-spec", () => {
     expect(fetchMock).toHaveBeenCalledTimes(1); // read, never written
   });
 });
+
+/** The wire shape of a board refusal (`errorBody`, apps/api/src/api-errors.ts): detail spread, and kept. */
+const refused = (reason: string, message: string, stageKey?: string) => {
+  const detail = { reason, ...(stageKey ? { stageKey } : {}) };
+  return json({ error: { ...detail, code: "REPOSITORY_CHOICE_REFUSED", message, detail } }, 409);
+};
+
+describe("supi edit-card — repositories", () => {
+  it("sends --repo sorted and once each, with --primary-repo, in one PATCH", async () => {
+    fetchMock.mockResolvedValueOnce(json({ card: { ...CARD, repositories: ["api", "web"], primaryRepository: "web" } }));
+
+    expect(await run(["edit-card", "brd_1", "crd_1", "--repo", "web", "--repo", "api", "--repo=web", "--primary-repo", "web"])).toBe(0);
+
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(sent(0)).toEqual({ url: URL_, method: "PATCH", body: { repositories: ["api", "web"], primaryRepository: "web" } });
+  });
+
+  it("sends no primaryRepository when --primary-repo is not given", async () => {
+    fetchMock.mockResolvedValueOnce(json({ card: CARD }));
+    await run(["edit-card", "brd_1", "crd_1", "--repo", "api"]);
+    expect(sent(0).body).toEqual({ repositories: ["api"] });
+  });
+
+  it("clears both with --clear-repos, as repositories: null", async () => {
+    fetchMock.mockResolvedValueOnce(json({ card: CARD }));
+    expect(await run(["edit-card", "brd_1", "crd_1", "--clear-repos"])).toBe(0);
+    expect(sent(0).body).toEqual({ repositories: null });
+  });
+
+  it("does not read the value after --clear-repos as a flag value: the ids stay positionals", async () => {
+    fetchMock.mockResolvedValueOnce(json({ card: CARD }));
+    expect(await run(["edit-card", "--clear-repos", "brd_1", "crd_1"])).toBe(0);
+    expect(sent(0).url).toBe(URL_);
+  });
+
+  it("refuses before sending anything: --primary-repo alone, one not among --repo, --clear-repos with --repo", async () => {
+    expect(await run(["edit-card", "brd_1", "crd_1", "--primary-repo", "api"])).toBe(1);
+    expect(stderr.join("")).toContain("--primary-repo");
+    expect(await run(["edit-card", "brd_1", "crd_1", "--repo", "web", "--primary-repo", "api"])).toBe(1);
+    expect(stderr.join("")).toContain("not one of the --repo names: web");
+    expect(await run(["edit-card", "brd_1", "crd_1", "--clear-repos", "--repo", "api"])).toBe(1);
+    expect(await run(["edit-card", "brd_1", "crd_1", "--clear-repos", "--primary-repo", "api"])).toBe(1);
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("prints a 409 REPOSITORY_CHOICE_REFUSED as what it is, with its reason and what to change", async () => {
+    fetchMock.mockResolvedValueOnce(refused("repository-not-allowed", 'stage "Build" does not allow docs; it allows api, web', "build"));
+
+    expect(await run(["edit-card", "brd_1", "crd_1", "--repo", "docs"])).toBe(1);
+
+    const err = stderr.join("");
+    expect(err).toContain("REPOSITORY_CHOICE_REFUSED");
+    expect(err).toContain('stage "Build" does not allow docs; it allows api, web');
+    expect(err).toContain("reason: repository-not-allowed  (stage build)");
+    expect(err).toContain("cardCheckpointPolicy");
+    expect(err).not.toContain("returned 409");
+  });
+
+  it("says a frozen choice is fixed, even beside a spec merge whose 409 would otherwise read as a changed card", async () => {
+    fetchMock
+      .mockResolvedValueOnce(json({ card: CARD }))
+      .mockResolvedValueOnce(refused("frozen", "this card's repositories are fixed: its bench exists. Make a new card to work in other repositories"));
+
+    expect(await run(["edit-card", "brd_1", "crd_1", "--repo", "api", "--merge-spec", file("m.json", '{"notes":"n"}')])).toBe(1);
+
+    expect(sent(1).body).toMatchObject({ repositories: ["api"], expectedUpdatedAt: CARD.updatedAt });
+    const err = stderr.join("");
+    expect(err).toContain("reason: frozen");
+    expect(err).not.toContain("changed since");
+  });
+});

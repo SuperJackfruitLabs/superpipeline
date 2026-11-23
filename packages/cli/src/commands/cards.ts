@@ -18,7 +18,7 @@ export const CARDS_COMMANDS: CommandSpec[] = [
     args: [BOARD, CARD],
     flags: [],
     summary: "one card in full",
-    description: "One card: its fields, stage, labels, references and state.",
+    description: "One card: its fields, stage, labels, references, repositories and state.",
     routes: [{ method: "GET", path: "/v1/boards/:boardId/cards/:cardId" }],
     access: { role: "viewer", agent: "read" },
     output: "JSON: the card",
@@ -68,12 +68,33 @@ export const CARDS_COMMANDS: CommandSpec[] = [
         default: "no milestone",
         description: "the milestone the card belongs to, as mls_… (see `supi project show`)",
       },
+      {
+        name: "--repo",
+        value: "<name>",
+        type: "string",
+        repeatable: true,
+        default: "no choice: the stage's default, or its only repository",
+        description:
+          "a repository the card works in, from its bench stage's list (see `supi board <boardId> --json`, the stage's " +
+          "`cardCheckpointPolicy`); repeat for more than one. Sent sorted, each name once",
+      },
+      {
+        name: "--primary-repo",
+        value: "<name>",
+        type: "string",
+        default: "the stage's start repository when chosen, or the only one",
+        description:
+          "where the card's work starts: one of the `--repo` names. Needed when the card names two or more repositories " +
+          "without the stage's start repository",
+      },
     ],
     summary: "queue a card, with this token as its grant",
     description:
       "Creates a card in the board's first stage, or the one `--stage` names. The card records the credential that queued it as its grant — " +
       "who asked for the work and on whose authority. An agent's card is also bounded by the queueing policy " +
-      "`supi agent queueing` sets: which boards may receive it, whose work it is, and how many cards an hour.",
+      "`supi agent queueing` sets: which boards may receive it, whose work it is, and how many cards an hour.\n\n" +
+      "On a bench stage whose cards choose their repositories, `--repo` and `--primary-repo` choose them from the stage's " +
+      "list. A choice the stage does not allow is refused (`409 REPOSITORY_CHOICE_REFUSED`, with the reason) and no card is made.",
     routes: [
       { method: "POST", path: "/v1/boards/:boardId/cards" },
       { method: "PATCH", path: "/v1/boards/:boardId/cards/:cardId" },
@@ -89,11 +110,14 @@ export const CARDS_COMMANDS: CommandSpec[] = [
       "`--spec` cannot be read or is not JSON",
       "`--due` is not `YYYY-MM-DD`",
       "`--stage` names no stage on the board, `--project` no project in the workspace, or `--milestone` no milestone in that project (refused by the server)",
+      "`--primary-repo` without `--repo`, or not one of the `--repo` names",
+      "the start stage does not allow the repositories chosen (409 `REPOSITORY_CHOICE_REFUSED`, with the reason)",
     ],
     examples: [
       "supi create-card brd_8f2c… Write the release notes for 0.0.9",
       "supi create-card brd_8f2c… Audit the token routes --spec spec.json --priority 2 --due 2026-11-01 --label lbl_sec",
       "supi create-card brd_8f2c… X post: the 0.0.9 release --stage x-post --project prj_34b4… --milestone mls_18a2… --spec post.json",
+      "supi create-card brd_8f2c… Rename the session cookie --repo api --repo web --primary-repo api",
     ],
   },
   {
@@ -160,11 +184,39 @@ export const CARDS_COMMANDS: CommandSpec[] = [
       },
       { name: "--project", value: "<projectId>", type: "string", default: "unchanged", description: "the card's project" },
       { name: "--milestone", value: "<milestoneId>", type: "string", default: "unchanged", description: "the card's milestone" },
+      {
+        name: "--repo",
+        value: "<name>",
+        type: "string",
+        repeatable: true,
+        default: "unchanged",
+        description:
+          "a repository the card works in, from its bench stage's list (see `supi board <boardId> --json`, the stage's " +
+          "`cardCheckpointPolicy`); repeat for more than one. Sent sorted, each name once. Replaces the card's whole choice",
+      },
+      {
+        name: "--primary-repo",
+        value: "<name>",
+        type: "string",
+        default: "the stage's start repository when chosen, or the only one",
+        description:
+          "where the card's work starts: one of the `--repo` names. Needed when the card names two or more repositories " +
+          "without the stage's start repository",
+      },
+      {
+        name: "--clear-repos",
+        type: "boolean",
+        default: "off",
+        description: "clear the card's repositories and primary repository, so it takes the stage's default again. Cannot be combined with `--repo`",
+      },
     ],
-    summary: "change a card's fields, project or milestone",
+    summary: "change a card's fields, project, milestone or repositories",
     description:
       "Edits a card through the same `PATCH` the web app's card drawer sends, with the same authority. Only the fields " +
       "named change. Labels, owner and archiving have their own verbs and routes.\n\n" +
+      "`--repo` replaces the card's repository choice whole, with `--primary-repo` where its work starts; `--clear-repos` " +
+      "removes it. The card's current stage must allow the choice, and once an agent has claimed the card on a bench stage " +
+      "its choice is fixed: either is refused `409 REPOSITORY_CHOICE_REFUSED`, with the reason, and nothing is written.\n\n" +
       "`--merge-spec` is a read-modify-write: it reads the card, merges into the spec it read, and writes back with " +
       "`expectedUpdatedAt` set to the card's `updatedAt` as read. If anything changed the card in between — an edit in " +
       "the drawer, a claim, a move — the server answers 409 and nothing is written; run the command again to merge into " +
@@ -189,12 +241,16 @@ export const CARDS_COMMANDS: CommandSpec[] = [
       "`--merge-spec` on a card whose spec is not a JSON object",
       "`--priority` is not a number; `--due` is neither `YYYY-MM-DD` nor `none`",
       "the card changed between the read and the write (`--merge-spec`; the server's 409)",
+      "`--primary-repo` without `--repo`, or not one of the `--repo` names; `--clear-repos` with `--repo` or `--primary-repo`",
+      "the stage does not allow the repositories chosen, or the card's choice is fixed (409 `REPOSITORY_CHOICE_REFUSED`, with the reason)",
     ],
     examples: [
       'supi edit-card brd_8f2c… crd_41aa… --title "Write the 0.0.9 release notes" --priority 2',
       "supi edit-card brd_8f2c… crd_41aa… --merge-spec acceptance.json",
       "echo '{\"notes\": null}' | supi edit-card brd_8f2c… crd_41aa… --merge-spec -",
       "supi edit-card brd_8f2c… crd_41aa… --due none",
+      "supi edit-card brd_8f2c… crd_41aa… --repo api --repo web --primary-repo web",
+      "supi edit-card brd_8f2c… crd_41aa… --clear-repos",
     ],
   },
   {
@@ -399,7 +455,8 @@ export async function runCreateCard({ rest, pos }: Args): Promise<void> {
   if (!pos[0] || !pos[1]) {
     fail(
       "usage: supi create-card <boardId> <title> [--spec <file|->] [--priority <n>]",
-      "  [--due YYYY-MM-DD] [--label <id>]... [--stage <stageKey>] [--project <projectId>] [--milestone <milestoneId>]",
+      "  [--due YYYY-MM-DD] [--label <id>]... [--stage <stageKey>] [--project <projectId>] [--milestone <milestoneId>]\n" +
+        "  [--repo <name>]... [--primary-repo <name>]",
     );
   }
   const specArg = flag(rest, "--spec");
@@ -412,8 +469,9 @@ export async function runCreateCard({ rest, pos }: Args): Promise<void> {
   const stageArg = flag(rest, "--stage");
   const projectArg = flag(rest, "--project");
   const milestoneArg = flag(rest, "--milestone");
+  const repositories = repositoryChoice(flags(rest, "--repo"), flag(rest, "--primary-repo"), false);
   // Every remaining positional is the title, so a sentence needs no quoting.
-  const body: Record<string, unknown> = { title: pos.slice(1).join(" ") };
+  const body: Record<string, unknown> = { title: pos.slice(1).join(" "), ...repositories };
   if (specArg) {
     const raw = specArg === "-" ? readFileSync(0, "utf8") : readFileSync(specArg, "utf8");
     try {
@@ -493,7 +551,8 @@ export async function runEditCard({ rest, pos }: Args): Promise<void> {
   if (!pos[0] || !pos[1]) {
     fail(
       "usage: supi edit-card <boardId> <cardId> [--title <text>] [--spec <file|->]",
-      "  [--merge-spec <file|->] [--priority <n>] [--due YYYY-MM-DD|none]",
+      "  [--merge-spec <file|->] [--priority <n>] [--due YYYY-MM-DD|none]\n" +
+        "  [--project <projectId>] [--milestone <milestoneId>] [--repo <name>]... [--primary-repo <name>] [--clear-repos]",
     );
   }
   const titleArg = flag(rest, "--title");
@@ -503,11 +562,21 @@ export async function runEditCard({ rest, pos }: Args): Promise<void> {
   const dueArg = flag(rest, "--due");
   const projectArg = flag(rest, "--project");
   const milestoneArg = flag(rest, "--milestone");
+  const repoArgs = flags(rest, "--repo");
+  const primaryArg = flag(rest, "--primary-repo");
+  const clearRepos = rest.includes("--clear-repos");
   if (specArg && mergeArg) fail("--spec replaces the spec and --merge-spec merges into it; pass one.");
-  if (!titleArg && !specArg && !mergeArg && !priorityArg && !dueArg && !projectArg && !milestoneArg) {
-    fail("Nothing to change.", "  supi edit-card <boardId> <cardId> --title … | --spec … | --merge-spec … | --priority … | --due … | --project … | --milestone …");
+  if (clearRepos && (repoArgs.length > 0 || primaryArg)) {
+    fail("--clear-repos removes the card's repositories and --repo sets them; pass one.");
   }
-  const body: Record<string, unknown> = {};
+  const repositories = clearRepos ? { repositories: null } : repositoryChoice(repoArgs, primaryArg, true);
+  if (!titleArg && !specArg && !mergeArg && !priorityArg && !dueArg && !projectArg && !milestoneArg && !repositories) {
+    fail(
+      "Nothing to change.",
+      "  supi edit-card <boardId> <cardId> --title … | --spec … | --merge-spec … | --priority … | --due … | --project … | --milestone … | --repo … | --clear-repos",
+    );
+  }
+  const body: Record<string, unknown> = { ...repositories };
   if (titleArg) body.title = titleArg;
   if (projectArg) body.projectId = projectArg;
   if (milestoneArg) body.milestoneId = milestoneArg;
@@ -540,4 +609,31 @@ export async function runEditCard({ rest, pos }: Args): Promise<void> {
         "  Run the same command again: it re-reads the card and merges into what is there now.",
     }),
   );
+}
+
+/**
+ * `--repo` and `--primary-repo` as the card routes take them: `repositories` sorted by name, each
+ * once (the server refuses any other order, and a person's typing order is not a choice), with
+ * `primaryRepository` beside them. `undefined` when no `--repo` was given.
+ *
+ * The primary repository is checked here because the server's answer to it alone — a 400 about a
+ * field named `primaryRepository` — names a field, not the flag the person typed. Whether the
+ * stage allows the names is the board's to say: only it holds the stage's list.
+ */
+function repositoryChoice(
+  repos: string[],
+  primary: string | null,
+  editing: boolean,
+): { repositories: string[]; primaryRepository?: string } | undefined {
+  const verb = editing ? "edit-card <boardId> <cardId>" : "create-card <boardId> <title>";
+  if (repos.length === 0) {
+    if (primary) fail("--primary-repo names one of the card's --repo repositories, so it needs them.", `  supi ${verb} --repo ${primary} --primary-repo ${primary}`);
+    return undefined;
+  }
+  // oxlint-disable-next-line unicorn/no-array-sort -- sorts a fresh copy; this package's ES2022 lib has no toSorted
+  const repositories = [...new Set(repos)].sort();
+  if (primary && !repositories.includes(primary)) {
+    fail(`--primary-repo ${primary} is not one of the --repo names: ${repositories.join(", ")}.`, `  add --repo ${primary}, or name one of those`);
+  }
+  return { repositories, ...(primary ? { primaryRepository: primary } : {}) };
 }

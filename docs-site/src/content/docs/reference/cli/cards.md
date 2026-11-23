@@ -14,7 +14,7 @@ Every command here also takes `--json` and `--help` — see [the overview](/refe
 
 ## `supi card`
 
-One card: its fields, stage, labels, references and state.
+One card: its fields, stage, labels, references, repositories and state.
 
 ```sh
 supi card <boardId> <cardId>
@@ -49,8 +49,10 @@ supi card brd_8f2c… crd_41aa…
 
 Creates a card in the board's first stage, or the one `--stage` names. The card records the credential that queued it as its grant — who asked for the work and on whose authority. An agent's card is also bounded by the queueing policy `supi agent queueing` sets: which boards may receive it, whose work it is, and how many cards an hour.
 
+On a bench stage whose cards choose their repositories, `--repo` and `--primary-repo` choose them from the stage's list. A choice the stage does not allow is refused (`409 REPOSITORY_CHOICE_REFUSED`, with the reason) and no card is made.
+
 ```sh
-supi create-card <boardId> <title> [--spec <file|->] [--priority <n>] [--due YYYY-MM-DD] [--label <id>...] [--stage <stageKey>] [--project <projectId>] [--milestone <milestoneId>]
+supi create-card <boardId> <title> [--spec <file|->] [--priority <n>] [--due YYYY-MM-DD] [--label <id>...] [--stage <stageKey>] [--project <projectId>] [--milestone <milestoneId>] [--repo <name>...] [--primary-repo <name>]
 ```
 
 | argument | meaning |
@@ -67,6 +69,8 @@ supi create-card <boardId> <title> [--spec <file|->] [--priority <n>] [--due YYY
 | `--stage <stageKey>` | string | the board's first stage | the stage the card starts in, by key (see `supi board`), e.g. a lane that does not begin at the first stage |
 | `--project <projectId>` | string | no project | the project the card belongs to, as prj_… (see `supi project list`); a stage that freezes an approval subject needs one |
 | `--milestone <milestoneId>` | string | no milestone | the milestone the card belongs to, as mls_… (see `supi project show`) |
+| `--repo <name>` | string | no choice: the stage's default, or its only repository | a repository the card works in, from its bench stage's list (see `supi board <boardId> --json`, the stage's `cardCheckpointPolicy`); repeat for more than one. Sent sorted, each name once. Repeatable |
+| `--primary-repo <name>` | string | the stage's start repository when chosen, or the only one | where the card's work starts: one of the `--repo` names. Needed when the card names two or more repositories without the stage's start repository |
 
 **Who may run it**
 
@@ -85,6 +89,8 @@ The PATCH that applies `--label` also needs `plan` on an agent token. An agent's
 - `--spec` cannot be read or is not JSON
 - `--due` is not `YYYY-MM-DD`
 - `--stage` names no stage on the board, `--project` no project in the workspace, or `--milestone` no milestone in that project (refused by the server)
+- `--primary-repo` without `--repo`, or not one of the `--repo` names
+- the start stage does not allow the repositories chosen (409 `REPOSITORY_CHOICE_REFUSED`, with the reason)
 - there is no usable credential, or the server refuses it (401) or the act (403), or answers any other error
 
 **Example**
@@ -93,6 +99,7 @@ The PATCH that applies `--label` also needs `plan` on an agent token. An agent's
 supi create-card brd_8f2c… Write the release notes for 0.0.9
 supi create-card brd_8f2c… Audit the token routes --spec spec.json --priority 2 --due 2026-11-01 --label lbl_sec
 supi create-card brd_8f2c… X post: the 0.0.9 release --stage x-post --project prj_34b4… --milestone mls_18a2… --spec post.json
+supi create-card brd_8f2c… Rename the session cookie --repo api --repo web --primary-repo api
 ```
 
 ## `supi card-label add`
@@ -173,10 +180,12 @@ supi card-label rm brd_8f2c… crd_41aa… lbl_sec
 
 Edits a card through the same `PATCH` the web app's card drawer sends, with the same authority. Only the fields named change. Labels, owner and archiving have their own verbs and routes.
 
+`--repo` replaces the card's repository choice whole, with `--primary-repo` where its work starts; `--clear-repos` removes it. The card's current stage must allow the choice, and once an agent has claimed the card on a bench stage its choice is fixed: either is refused `409 REPOSITORY_CHOICE_REFUSED`, with the reason, and nothing is written.
+
 `--merge-spec` is a read-modify-write: it reads the card, merges into the spec it read, and writes back with `expectedUpdatedAt` set to the card's `updatedAt` as read. If anything changed the card in between — an edit in the drawer, a claim, a move — the server answers 409 and nothing is written; run the command again to merge into the card as it now is. `--spec` replaces the spec outright and sends no precondition.
 
 ```sh
-supi edit-card <boardId> <cardId> [--title <text>] [--spec <file|->] [--merge-spec <file|->] [--priority <n>] [--due YYYY-MM-DD|none] [--project <projectId>] [--milestone <milestoneId>]
+supi edit-card <boardId> <cardId> [--title <text>] [--spec <file|->] [--merge-spec <file|->] [--priority <n>] [--due YYYY-MM-DD|none] [--project <projectId>] [--milestone <milestoneId>] [--repo <name>...] [--primary-repo <name>] [--clear-repos]
 ```
 
 | argument | meaning |
@@ -193,6 +202,9 @@ supi edit-card <boardId> <cardId> [--title <text>] [--spec <file|->] [--merge-sp
 | `--due YYYY-MM-DD\|none` | string | unchanged | the new due date, or `none` to clear it; a date must be a date in `YYYY-MM-DD` form (checked before anything is sent) |
 | `--project <projectId>` | string | unchanged | the card's project |
 | `--milestone <milestoneId>` | string | unchanged | the card's milestone |
+| `--repo <name>` | string | unchanged | a repository the card works in, from its bench stage's list (see `supi board <boardId> --json`, the stage's `cardCheckpointPolicy`); repeat for more than one. Sent sorted, each name once. Replaces the card's whole choice. Repeatable |
+| `--primary-repo <name>` | string | the stage's start repository when chosen, or the only one | where the card's work starts: one of the `--repo` names. Needed when the card names two or more repositories without the stage's start repository |
+| `--clear-repos` | boolean | off | clear the card's repositories and primary repository, so it takes the stage's default again. Cannot be combined with `--repo` |
 
 **Who may run it**
 
@@ -214,6 +226,8 @@ With `--merge-spec` the card is read (the GET) before the PATCH, which needs `re
 - `--merge-spec` on a card whose spec is not a JSON object
 - `--priority` is not a number; `--due` is neither `YYYY-MM-DD` nor `none`
 - the card changed between the read and the write (`--merge-spec`; the server's 409)
+- `--primary-repo` without `--repo`, or not one of the `--repo` names; `--clear-repos` with `--repo` or `--primary-repo`
+- the stage does not allow the repositories chosen, or the card's choice is fixed (409 `REPOSITORY_CHOICE_REFUSED`, with the reason)
 - there is no usable credential, or the server refuses it (401) or the act (403), or answers any other error
 
 **Example**
@@ -223,6 +237,8 @@ supi edit-card brd_8f2c… crd_41aa… --title "Write the 0.0.9 release notes" -
 supi edit-card brd_8f2c… crd_41aa… --merge-spec acceptance.json
 echo '{"notes": null}' | supi edit-card brd_8f2c… crd_41aa… --merge-spec -
 supi edit-card brd_8f2c… crd_41aa… --due none
+supi edit-card brd_8f2c… crd_41aa… --repo api --repo web --primary-repo web
+supi edit-card brd_8f2c… crd_41aa… --clear-repos
 ```
 
 ## `supi move`
