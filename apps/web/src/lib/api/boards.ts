@@ -43,6 +43,12 @@ export interface Stage {
    * this existed reads back unchanged.
    */
   requires?: { all?: string[]; any?: string[] };
+  /**
+   * A bench stage whose cards choose their repositories (treaty run-checkpoint-policy.v2): the
+   * allowlist, the repository work starts in, and what a card that names none gets. Only the parts
+   * this client reads; the rest of the policy is the coordinator's.
+   */
+  cardCheckpointPolicy?: { repositories: Array<{ name: string }>; checkpointRepository: string; defaultRepositories?: string[] };
 }
 
 export interface StaleSettings {

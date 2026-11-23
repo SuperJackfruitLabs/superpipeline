@@ -1,5 +1,5 @@
 {
-  "revision": "4ba0c9f857f3b01e39c6332c8a005beff0733886",
+  "revision": "d28f0881f6e6332521039ee181782b4d28447b61",
   "status": "PROPOSED; publication is not acceptance",
   "files": [
     {
@@ -11,6 +11,18 @@
       "sha256": "bfe207f1a331355ab74e62aeb64e34600ce5ab2aa976d1f3390210acf72fd921"
     },
     {
+      "path": "schemas/superpipeline-api/run-checkpoint-policy.v2.json",
+      "sha256": "7d9d1a9dafc2f1023f4759f9f2dbc4e15fa13d48350f0853c2cdaf8f6183cbb9"
+    },
+    {
+      "path": "schemas/superpipeline-api/card-repositories.v1.json",
+      "sha256": "7e76392601993df40b9cf2de53a2ee6b5d0800db9f27b30012738257836dc7bd"
+    },
+    {
+      "path": "schemas/superpipeline-api/run-checkpoint-selection.v1.json",
+      "sha256": "e8a9f924bdcf1af1b4d6a87a2863552fd2948fd551170059f343a1366b3c3bb3"
+    },
+    {
       "path": "schemas/superpipeline-api/checkpoint-settlement.v1.json",
       "sha256": "e3d509c26c089f2c0a7a5960a743f0e399ec10a63903d162daf5fc7b2f6853f9"
     },
@@ -20,7 +32,7 @@
     },
     {
       "path": "fixtures/superpipeline-run-checkpoint/canonical.json",
-      "sha256": "e199f937c17a28edf8b0ab7285870faf0880dba23ccf15f51604e183052e7fb0"
+      "sha256": "7e62ceb2c8b4442cc2e7b8159f54ed61ec52178336b791ac52b1289ed22d4098"
     },
     {
       "path": "fixtures/superpipeline-run-checkpoint/cases.json",
@@ -29,6 +41,10 @@
     {
       "path": "fixtures/superpipeline-run-checkpoint/producer-scenarios.json",
       "sha256": "c29a7073b74e64da23939652ea11e8c658f355b73e6b4e5936ba31a7690e8d36"
+    },
+    {
+      "path": "fixtures/superpipeline-run-checkpoint/selection.json",
+      "sha256": "2e49baa9389304fa750164cfe18e38ecfa69ad5cdd440eaf468130484274158f"
     }
   ]
 }

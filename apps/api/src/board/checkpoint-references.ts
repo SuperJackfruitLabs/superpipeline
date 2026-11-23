@@ -3,6 +3,7 @@
 import type { BoardContext } from './context';
 import type { CheckpointSubmission } from './checkpoint-proposal';
 import { canonicalCheckpoint } from './checkpoint-json';
+import { readCheckpointClaim } from './checkpoint-claims';
 import { commitReference } from './references';
 
 export interface CheckpointReferenceMapping {
@@ -18,13 +19,23 @@ function forgeOrigin(host: string | null): string {
     throw new Error('CHECKPOINT_REFERENCE_MAPPING_REQUIRED');
   return url.origin;
 }
+/**
+ * The policy the references are checked against: a v1 stage's own, or, on a stage whose cards
+ * choose, the claim's frozen narrowed policy (the settlement already checked it is still current).
+ */
+function settledPolicy(board: BoardContext, runId: string, stageKey: string) {
+  const stage = board.stages().find((s) => s.key === stageKey);
+  if (stage?.cardCheckpointPolicy === undefined) return stage?.checkpointPolicy;
+  const claim = readCheckpointClaim(board.sql, runId);
+  return claim?.selection ? claim.policy : undefined;
+}
 /** Run only within the receipt's owned synchronous transaction. A link is an
  * output locator, not independent verification of a producer fence or release. */
 export function commitCheckpointReferences(board: BoardContext, input: CheckpointSubmission, mapping: CheckpointReferenceMapping): void {
   if (!board.commitEffects) throw new Error('COMMIT_EFFECTS_REQUIRED');
   board.commitEffects.requireActive();
   const report = input.checkpoint, binding = report.binding;
-  const policy = board.stages().find((stage) => stage.key === binding.stageKey)?.checkpointPolicy;
+  const policy = settledPolicy(board, binding.runId, binding.stageKey);
   if (!mapping || mapping.tenantId !== board.getMeta('tenantId') || binding.boardId !== board.getMeta('boardId') ||
     !policy || mapping.reporterPrincipalId !== policy.reporterPrincipalId || policy.repositories.length !== report.checkpoint.members.length)
     throw new Error('CHECKPOINT_REFERENCE_MAPPING_REQUIRED');

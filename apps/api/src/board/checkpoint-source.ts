@@ -2,7 +2,7 @@
 import { Validator, type Schema } from '@cfworker/json-schema';
 import type { VerifiedCheckpointReporter } from '../auth/checkpoint-reporter';
 import type { BoardContext } from './context';
-import { readCheckpointClaim, type PendingCheckpointClaim } from './checkpoint-claims';
+import { currentCheckpointPolicy, readCheckpointClaim, type PendingCheckpointClaim } from './checkpoint-claims';
 import { canonicalCheckpoint, checkpointDigest, parseCheckpointJSON } from './checkpoint-json';
 import type { CheckpointClaimSnapshot } from './checkpoint-candidate';
 import type { CheckpointReport } from './checkpoint-proposal';
@@ -86,9 +86,30 @@ function claim(board: SourceBoard, source: CheckpointSource): PendingCheckpointC
     board.getMeta('boardId') !== pending.boardId || pending.policy.nodeId !== b.nodeId ||
     !pending.policy.executors.some((e) => e.agentId === b.agentId && e.stationId === b.stationId) ||
     source.start.length !== pending.policy.repositories.length || source.start.some((m, i) => m.name !== pending.policy.repositories[i]?.name) ||
-    canonicalCheckpoint(board.stages().find((stage) => stage.key === pending.stageKey)?.checkpointPolicy) !== canonicalCheckpoint(pending.policy)
+    !stillCurrent(board, pending)
   ) throw new Error('INVALID_CHECKPOINT_SOURCE');
   return pending;
+}
+/**
+ * The claim's frozen policy is still what its stage gives the card: a v1 stage's policy unchanged,
+ * or a v2 stage whose policy is the one the selection was narrowed from, narrowing the card's
+ * (frozen) choice to the same repositories and start. Any stage policy change before settlement
+ * makes it stale. The selection's `source` is not compared: a card that named none is fixed to its
+ * resolved repositories at claim, so it narrows as `card` from then on, to the same policy.
+ */
+function stillCurrent(board: Pick<SourceBoard, 'stages' | 'getCardRow'>, pending: PendingCheckpointClaim): boolean {
+  const stage = board.stages().find((s) => s.key === pending.stageKey);
+  if (!pending.selection) {
+    return stage?.cardCheckpointPolicy === undefined &&
+      canonicalCheckpoint(stage?.checkpointPolicy) === canonicalCheckpoint(pending.policy);
+  }
+  const card = board.getCardRow(pending.cardId) ?? undefined;
+  const now = currentCheckpointPolicy(stage, card);
+  return now?.stagePolicy !== undefined && pending.stagePolicy !== undefined && now.selection !== undefined &&
+    canonicalCheckpoint(now.stagePolicy) === canonicalCheckpoint(pending.stagePolicy) &&
+    canonicalCheckpoint(now.policy) === canonicalCheckpoint(pending.policy) &&
+    canonicalCheckpoint(now.selection.repositories) === canonicalCheckpoint(pending.selection.repositories) &&
+    now.selection.checkpointRepository === pending.selection.checkpointRepository;
 }
 function checkedNow(board: SourceBoard): number {
   const now = board.nowMs();
@@ -115,6 +136,7 @@ function current(board: SourceBoard, source: CheckpointSource, pending: PendingC
   )) throw new Error('STALE_LEASE');
   return {
     tenantId: pending.tenantId, policy: pending.policy, policyDigest: pending.policyDigest,
+    ...(pending.selection ? { selection: pending.selection } : {}),
     binding: source.binding, start: source.start, benchKey: source.benchKey, benchId: source.benchId,
     requestId: source.requestId, sourceRequestSha256: source.sourceRequestSha256,
     workerContextSha256: source.workerContextSha256,
@@ -152,6 +174,9 @@ export async function admitCheckpointSource(
   active(board, current(board, source, pending));
   const digest = await checkpointDigest(source);
   if (await checkpointDigest(pending.policy) !== pending.policyDigest) throw new Error('INVALID_CHECKPOINT_SOURCE');
+  // The selection names the stage policy by digest; the claim row holds that policy's bytes.
+  if (pending.selection && (!pending.stagePolicy || await checkpointDigest(pending.stagePolicy) !== pending.selection.stagePolicyDigest))
+    throw new Error('INVALID_CHECKPOINT_SOURCE');
   return board.ctx.storage.transactionSync(() => {
     const latest = claim(board, source);
     if (canonicalCheckpoint(latest) !== canonicalCheckpoint(pending)) throw new Error('STALE_LEASE');

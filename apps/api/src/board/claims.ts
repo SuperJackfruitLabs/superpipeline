@@ -3,7 +3,12 @@ import { CommitEffects } from './commit-effects';
 import { type ClaimReason, needsYou, stageCapabilitiesMet } from '@superpipeline/contract';
 import { checkpointDigest } from './checkpoint-json';
 import { parseCheckpointPolicy } from './checkpoint-proposal';
-import { CHECKPOINT_CLAIM_PROTOCOL, insertPendingCheckpointClaim, type CheckpointClaimDiscovery } from './checkpoint-claims';
+import {
+  CHECKPOINT_CLAIM_PROTOCOL, CHECKPOINT_CLAIM_PROTOCOL_V2, checkpointClaimDiscovery, insertPendingCheckpointClaim,
+  type CheckpointClaimDiscovery,
+} from './checkpoint-claims';
+import { canonicalCardRepositories, hasCheckpointPolicy } from './checkpoint-policy-admin';
+import { cardRepositoriesOf, narrowCheckpointPolicy, narrowingWords, stageCardPolicy } from './checkpoint-selection';
 import { grantPermitsAgent, isControlPairEnforced } from '../auth/grant-match';
 import { newId } from '../ids';
 import { RELAY_CONFIG_ID } from '../push/relay';
@@ -107,7 +112,7 @@ export async function claim(deps: ClaimsDeps, input: Claimant & { profileKey?: s
   if (first) return refused(first);
 
   const selectedStages = deps.stages();
-  const claimableKeys = claimableStageKeys({ stages: () => selectedStages }, input.agentId, input.capabilities, input.checkpointProtocol, input.checkpointOnly);
+  const claimableKeys = claimableStageKeys({ stages: () => selectedStages }, input.agentId, input.capabilities, input);
   const placeholders = claimableKeys.map(() => '?').join(', ');
   const holdMs = deps.nowMs();
   const windowMs = placementWindowMs(deps);
@@ -133,7 +138,7 @@ export async function claim(deps: ClaimsDeps, input: Claimant & { profileKey?: s
     return refused(windowMs > 0 && inWindowCount(deps, placeholders, claimableKeys, windowMs, holdMs) > 0 ? 'placement_window' : 'no_matching_card');
   }
 
-  if (selectedStages.find((stage) => stage.key === row.current_stage_key)?.checkpointPolicy === undefined &&
+  if (!hasCheckpointPolicy(selectedStages.find((stage) => stage.key === row.current_stage_key)) &&
     input.checkpointProtocol !== CHECKPOINT_CLAIM_PROTOCOL)
     return claimOrdinarySelected(deps, input, row, holdMs);
 
@@ -149,10 +154,17 @@ export async function claim(deps: ClaimsDeps, input: Claimant & { profileKey?: s
   const selectedRow = JSON.stringify(row);
   const selectedStage = deps.stages().find((s) => s.key === row.current_stage_key);
   if (!selectedStage) return refused('no_matching_card');
-  const policy = selectedStage.checkpointPolicy === undefined ? undefined :
-    parseCheckpointPolicy(new TextEncoder().encode(JSON.stringify(selectedStage.checkpointPolicy)));
+  // A stage whose cards choose narrows its allowlist by this card's choice, now and synchronously;
+  // the transaction below re-reads the same card row and stages, so the narrowing it records is
+  // exactly this one. A narrowing that refuses parks the card for a person below.
+  const stagePolicy = stageCardPolicy(selectedStage);
+  const narrowed = stagePolicy === undefined ? undefined : narrowCheckpointPolicy(stagePolicy, cardRepositoriesOf(row));
+  const policy = selectedStage.checkpointPolicy !== undefined
+    ? parseCheckpointPolicy(new TextEncoder().encode(JSON.stringify(selectedStage.checkpointPolicy)))
+    : narrowed?.ok ? narrowed.policy : undefined;
   const denied = await grantRefused(deps, input, row);
   const policyDigest = policy === undefined ? undefined : await checkpointDigest(policy);
+  const stagePolicyDigest = stagePolicy === undefined ? undefined : await checkpointDigest(stagePolicy);
   deps.commitEffects ??= new CommitEffects();
   const result = deps.commitEffects.run(deps.ctx.storage, (): ClaimResult => {
     const currentRow = deps.sql.exec('SELECT * FROM cards WHERE id=?', row.id).toArray()[0];
@@ -183,6 +195,16 @@ export async function claim(deps: ClaimsDeps, input: Claimant & { profileKey?: s
       deps.notify('control-pair', selectedCardId, `Not dispatched: ${why}`);
       deps.emit('card.blocked', { cardId: row.id, reason: why });
       return refused('grant_denied');
+    }
+    // No repositories to bench: the card names none and the stage has no default, or its choice
+    // is no longer inside the stage's allowlist. It waits for a person, visibly, rather than being
+    // skipped or benched with every repository; the person who chooses moves it back.
+    if (stagePolicy !== undefined && narrowed !== undefined && !narrowed.ok) {
+      const why = narrowingWords(narrowed.refusal, selectedStage.name, cardRepositoriesOf(row), stagePolicy);
+      deps.parkForHuman(selectedCardId, { reason: 'blocked', detail: why }, false);
+      deps.notify('blocked', selectedCardId, `Waiting for a person: ${why}`);
+      deps.emit('card.blocked', { cardId: selectedCardId, reason: why });
+      return refused('no_matching_card');
     }
     // The hold this claim fulfils, if any; cleared with the claim, live or dead, so it never outlives it.
     const fulfils = isLiveHold(row, checkedMs) && typeof row.reserved_decision_id === 'string' ? row.reserved_decision_id : null;
@@ -231,11 +253,23 @@ export async function claim(deps: ClaimsDeps, input: Claimant & { profileKey?: s
     if (policy !== undefined && policyDigest !== undefined) {
       const tenantId = deps.getMeta('tenantId'), boardId = deps.getMeta('boardId');
       if (!tenantId || !boardId) throw new Error('INVALID_CHECKPOINT_CLAIM');
+      const chosen = stagePolicy !== undefined && stagePolicyDigest !== undefined && narrowed?.ok
+        ? { selection: { ...narrowed.selection, stagePolicyDigest }, stagePolicy } : {};
       const saved = insertPendingCheckpointClaim(deps.sql, {
         tenantId, boardId, cardId: card.id, stageKey: card.currentStageKey,
         agentId: input.agentId, runId, leaseEpoch, policy, policyDigest, admissionState: 'pending',
+        ...chosen,
       });
-      checkpointClaim = { ...saved, version: CHECKPOINT_CLAIM_PROTOCOL };
+      checkpointClaim = checkpointClaimDiscovery(saved);
+      // A card that named none is fixed to what it resolved to (the stage default, or its only
+      // repository), exactly like a choice it made: its bench now exists with these repositories,
+      // so a later claim reuses them even if the stage's default has changed since.
+      if (narrowed?.ok && narrowed.selection.source !== 'card') {
+        const resolved = narrowed.selection.repositories.length > 1
+          ? { repositories: narrowed.selection.repositories, primaryRepository: narrowed.selection.checkpointRepository }
+          : { repositories: narrowed.selection.repositories };
+        deps.sql.exec('UPDATE cards SET repositories_json = ? WHERE id = ?', canonicalCardRepositories(resolved), card.id);
+      }
     }
     deps.reportRun(runId);
     deps.emit('card.claimed', { cardId: card.id, agentId: input.agentId, runId, ...(fulfils !== null ? { reservationDecisionId: fulfils } : {}) });
@@ -368,17 +402,29 @@ export interface Claimant {
   agentId: string;
   capabilities: string[];
   checkpointProtocol?: string;
+  /**
+   * Every checkpoint claim protocol the claimant speaks, beside `checkpointProtocol`. A stage whose
+   * cards choose is offered only when this lists superpipeline.checkpoint-claim.v2.
+   */
+  checkpointProtocols?: string[];
   checkpointOnly?: boolean;
   maxConcurrency?: number;
   principalId?: string | null;
 }
 
 /** The stages on this board this claimant can take, by the one stage matcher. */
-function claimableStageKeys(deps: Pick<ClaimsDeps, 'stages'>, agentId: string, capabilities: string[], checkpointProtocol?: string, checkpointOnly?: boolean): string[] {
+function claimableStageKeys(deps: Pick<ClaimsDeps, 'stages'>, agentId: string, capabilities: string[],
+  protocols: Pick<Claimant, 'checkpointProtocol' | 'checkpointProtocols' | 'checkpointOnly'> = {}): string[] {
+  const { checkpointProtocol, checkpointOnly } = protocols;
   if (checkpointOnly !== undefined && typeof checkpointOnly !== 'boolean') return [];
+  const v1 = checkpointProtocol === CHECKPOINT_CLAIM_PROTOCOL;
+  // v2 is spoken beside v1, never instead of it: a claimant that sends the list without
+  // `checkpointProtocol` is refused at the route, and here never reaches a choosing stage.
+  const v2 = v1 && Array.isArray(protocols.checkpointProtocols) && protocols.checkpointProtocols.includes(CHECKPOINT_CLAIM_PROTOCOL_V2);
   return deps.stages().filter((s) => stageMatches(s, agentId, capabilities) &&
-    (s.checkpointPolicy === undefined || checkpointProtocol === CHECKPOINT_CLAIM_PROTOCOL) &&
-    (!checkpointOnly || s.checkpointPolicy !== undefined)).map((s) => s.key);
+    (s.checkpointPolicy === undefined || v1) &&
+    (s.cardCheckpointPolicy === undefined || v2) &&
+    (!checkpointOnly || hasCheckpointPolicy(s))).map((s) => s.key);
 }
 
 /**
@@ -403,7 +449,7 @@ export function claimantRefusals(
     ? Number(deps.sql.exec(`SELECT COUNT(*) AS n FROM runs WHERE agent_id = ? AND status = 'working'`, who.agentId).one().n)
     : 0;
   if (!validMax || active >= max) out.push('concurrency_reached');
-  const keys = claimableStageKeys(deps, who.agentId, who.capabilities, who.checkpointProtocol, who.checkpointOnly);
+  const keys = claimableStageKeys(deps, who.agentId, who.capabilities, who);
   if (stageKey === undefined ? keys.length === 0 : !keys.includes(stageKey)) out.push('capability_mismatch');
   return out;
 }

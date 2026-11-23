@@ -59,6 +59,37 @@ The synchronous commit rechecks those inputs, current eligibility, budget and
 concurrency. Failed commits retain neither partial ownership nor a pending claim.
 SQL events/reports remain transactional and external effects wait for commit.
 
+## Cards that choose their repositories
+
+A stage's `cardCheckpointPolicy` (treaty `run-checkpoint-policy.v2`, charter
+decision of 2026-11-15 as amended 2026-11-22) is written under the same gate as
+`checkpointPolicy`: the switch, a workspace owner or admin, no active work. It is
+validated with the relations treaty's selection vectors state (sorted unique
+allowlist, start and default inside it, a default that resolves a start
+repository), and refused beside `checkpointPolicy`.
+
+A card's `repositories_json` column holds its canonical card-repositories.v1
+choice. Create, move, resume and edit refuse a choice the destination stage
+cannot narrow to (`REPOSITORY_CHOICE_REFUSED`, `detail.reason` in the vectors'
+words). The claim narrows the current allowlist by the current choice
+(`checkpoint-selection.ts`), parks a card it cannot narrow, and otherwise writes
+the claim row as for v1 (with the narrowed policy and its digest) plus an
+immutable `proposed_checkpoint_selections` row: the selection, with the stage
+policy's digest, and that stage policy's canonical bytes. A v1 claim writes no
+selection row. Once a card has a selection row its choice cannot change; to change a claimed card's
+repositories, make a new card. A card that named none has its resolved choice (the default, or the
+only repository, with its start) written onto it in the same claim transaction, so a later claim
+reuses it even after the stage default changes, and its bench keeps the same repositories. Source
+admission therefore compares the narrowed repositories and start, not the selection's `source`.
+
+Every later check compares with the frozen narrowed policy: the claim insert
+recomputes the narrowing, source admission requires the stage to hold the same
+v2 policy and the narrowing to reproduce the frozen one (and the selection's
+digest to match the stored stage policy), settlement checks members against the
+snapshot's narrowed policy, commit references use it, and the receipt read
+requires its reporter to be the stage's current one. A stage policy change before
+settlement makes the claim stale.
+
 ## Authentication and source admission
 
 The service boundaries resolve the actual issuer, audience, organization mapping,

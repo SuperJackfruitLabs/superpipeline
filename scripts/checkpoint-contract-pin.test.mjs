@@ -6,7 +6,7 @@ const root = new URL('../', import.meta.url);
 const fixture = 'apps/api/test/fixtures/checkpoint-settlement/';
 const pin = JSON.parse(readFileSync(new URL(fixture + 'pin.json', root), 'utf8'));
 await test('proposed Treaty schemas and corpus remain byte-pinned', () => {
-  assert.equal(pin.revision, '4ba0c9f857f3b01e39c6332c8a005beff0733886');
+  assert.equal(pin.revision, 'd28f0881f6e6332521039ee181782b4d28447b61');
   assert.equal(pin.status, 'PROPOSED; publication is not acceptance');
   for (const entry of pin.files) {
     const path = entry.path.startsWith('schemas/')

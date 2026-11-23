@@ -141,6 +141,32 @@ it) to have the write refused with `409 CARD_CHANGED` rather than overwrite an e
 An agent that already claimed the card was handed the spec at claim time and is not sent the edit;
 the next stage's agent reads the spec as it is when it claims.
 
+## Repositories
+
+On a bench stage whose cards choose their repositories, a workspace owner or admin gives the stage
+an allowlist (up to 32 repositories), the repository work starts in, and optionally a default. Each
+card then picks the repositories it works in from that list. The card's **Repositories** row shows
+the choice and where the work starts, and **Choose repositories** opens the picker. Anyone who may
+edit the card may choose, a person or an agent, but only within the list.
+
+- A card that names none gets the stage's default, or the only repository when the list has one.
+  Otherwise it **waits for a person**: the card says so, and when an agent comes to claim it the card
+  is parked with the reason at the top. It is never worked in every repository on the list.
+- A card that picks two or more without the stage's start repository says where its work starts.
+- A choice outside the list, or with a start repository it did not pick, is refused when the card is
+  created in, moved into, resumed into or edited on such a stage: `409 REPOSITORY_CHOICE_REFUSED`,
+  with `detail.reason` naming why, and nothing is saved.
+- If an admin later drops a repository a card chose, the card is parked for a person at claim.
+- Once an agent has claimed the card on such a stage, its bench exists and the choice is fixed:
+  changing it is refused (`detail.reason: "frozen"`). To change a claimed card's repositories, make
+  a new card. A card that named none is fixed to what it got at that claim (the default, or the only
+  repository), and the card shows it; a later change to the stage's default does not move it.
+
+Through the API, send `repositories` (sorted names) and, when needed, `primaryRepository` on
+`POST /v1/boards/:id/cards` or `PATCH /v1/boards/:id/cards/:cardId`; `repositories: null` clears
+both. Names only, never a provider, URL or clone address. The card reads back with the same two
+fields, absent when it names none.
+
 ## References
 
 A card can carry links — a GitHub issue, a pull request, a document, any URL. Agents attach them

@@ -1,4 +1,4 @@
-import { CHECKPOINT_CLAIM_PROTOCOL } from '../../board/checkpoint-claims';
+import { CHECKPOINT_CLAIM_PROTOCOL, CHECKPOINT_CLAIM_PROTOCOLS } from '../../board/checkpoint-claims';
 // Claims and the run verbs an agent drives a card with.
 import { isKnownProvider, providerKeys, type StageOutcome } from '@superpipeline/contract';
 import { z } from 'zod';
@@ -21,7 +21,7 @@ export async function claim({ request, env, agent, stub }: BoardRequest): Promis
   if (!input || typeof input !== 'object' || Array.isArray(input)) {
     return refuse('INVALID_BODY', 'claim body must be a JSON object');
   }
-  const payload = input as { capabilities?: unknown; maxConcurrency?: unknown; profileKey?: unknown; checkpointProtocol?: unknown; checkpointOnly?: unknown };
+  const payload = input as { capabilities?: unknown; maxConcurrency?: unknown; profileKey?: unknown; checkpointProtocol?: unknown; checkpointProtocols?: unknown; checkpointOnly?: unknown };
   if (payload.maxConcurrency !== undefined &&
       (typeof payload.maxConcurrency !== 'number' || !Number.isInteger(payload.maxConcurrency) || payload.maxConcurrency <= 0)) {
     return refuse('INVALID_INPUT', 'maxConcurrency must be a positive finite integer');
@@ -35,6 +35,17 @@ export async function claim({ request, env, agent, stub }: BoardRequest): Promis
   }
   if (payload.checkpointProtocol !== undefined && payload.checkpointProtocol !== CHECKPOINT_CLAIM_PROTOCOL) {
     return refuse('INVALID_INPUT', 'unsupported checkpointProtocol');
+  }
+  // Every protocol the claimant speaks, beside `checkpointProtocol` (which a server that predates
+  // this list still reads): 1 to 8 known protocols, each once, v1 among them. A stage whose cards
+  // choose their repositories is offered only to a claimant that lists v2.
+  const protocols = payload.checkpointProtocols;
+  if (protocols !== undefined && (payload.checkpointProtocol !== CHECKPOINT_CLAIM_PROTOCOL ||
+      !Array.isArray(protocols) || protocols.length < 1 || protocols.length > 8 ||
+      new Set(protocols).size !== protocols.length ||
+      !protocols.every((p): p is string => typeof p === 'string' && (CHECKPOINT_CLAIM_PROTOCOLS as readonly string[]).includes(p)) ||
+      !protocols.includes(CHECKPOINT_CLAIM_PROTOCOL))) {
+    return refuse('INVALID_INPUT', 'checkpointProtocols must list 1 to 8 known checkpoint claim protocols, each once, including superpipeline.checkpoint-claim.v1, beside checkpointProtocol');
   }
   if (payload.checkpointOnly !== undefined && (typeof payload.checkpointOnly !== 'boolean' ||
       (payload.checkpointOnly && payload.checkpointProtocol !== CHECKPOINT_CLAIM_PROTOCOL))) {
@@ -57,6 +68,7 @@ export async function claim({ request, env, agent, stub }: BoardRequest): Promis
         : (payload.maxConcurrency ?? agent!.concurrency),
     profileKey: payload.profileKey,
     ...(payload.checkpointProtocol === CHECKPOINT_CLAIM_PROTOCOL ? { checkpointProtocol: payload.checkpointProtocol } : {}),
+    ...(Array.isArray(protocols) ? { checkpointProtocols: protocols.filter((p): p is string => typeof p === 'string') } : {}),
     ...(payload.checkpointOnly !== undefined ? { checkpointOnly: payload.checkpointOnly } : {}),
     principalId: agent!.externalId,
   });

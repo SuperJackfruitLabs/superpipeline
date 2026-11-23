@@ -8,7 +8,7 @@ import { unknownLabelIds, resolveLabelNames } from '../../db/labels';
 import { projectById, milestoneById } from '../../db/projects';
 import { resolveReferenceInput } from '../../references/resolve';
 import { readJson, readObject, refuse, refusal } from '../errors';
-import { isInvalidDueAt } from '../fields';
+import { cardRepositoriesInput, isInvalidDueAt } from '../fields';
 import type { BoardRequest } from './request';
 
 // POST /v1/boards/:id/cards — create a card (owner defaults to the signed-in user)
@@ -24,10 +24,14 @@ export async function cardCreate({ request, env, tenantId, boardId, user, agent,
     stageKey?: unknown;
     labelIds?: unknown;
     projectId?: unknown;
+    repositories?: unknown;
+    primaryRepository?: unknown;
   };
   if (isInvalidDueAt(body.dueAt)) {
     return refuse('INVALID_DUE_AT', 'dueAt must be null or a date in YYYY-MM-DD form');
   }
+  const repositories = cardRepositoriesInput(body, false);
+  if (!repositories.ok) return refuse('INVALID_INPUT', repositories.message);
   // The authority that accompanied the act, recorded with the card. A
   // session-cookie caller carries none, and `undefined` there means "no
   // one with permission asked for this to run" — which is refused under
@@ -82,6 +86,7 @@ export async function cardCreate({ request, env, tenantId, boardId, user, agent,
     ...(body.stageKey !== undefined ? { stageKey: body.stageKey } : {}),
     ...(body.labelIds !== undefined ? { labels: body.labelIds as string[] } : {}),
     ...(body.projectId !== undefined ? { projectId: body.projectId } : {}),
+    ...(repositories.value ? { repositories: repositories.value } : {}),
     ownerUserId: queueing ? queueing.ownerUserId : body.ownerUserId ?? user!.userId,
     queuedGrant: queueing ? queueing.queuedGrant : user?.mayDispatch ?? null,
     queuedGrantOwner: queueing ? queueing.ownerUserId : user?.userId ?? null,
@@ -249,6 +254,13 @@ export async function cardEdit({ request, env, tenantId, user, stub }: BoardRequ
     milestoneId?: string | null;
     /** A precondition: the card's `updatedAt` as last read. A mismatch is a 409 `CARD_CHANGED`. */
     expectedUpdatedAt?: string | null;
+    /**
+     * The repositories the card chooses from its bench stage's allowlist, with `primaryRepository`
+     * where its work starts; written together. `repositories: null` clears both. Anyone who may
+     * edit the card may set them, within the allowlist; the board refuses anything outside it.
+     */
+    repositories?: unknown;
+    primaryRepository?: unknown;
   };
   if (body.expectedUpdatedAt !== undefined && body.expectedUpdatedAt !== null && typeof body.expectedUpdatedAt !== 'string') {
     return refuse('INVALID_PRECONDITION', 'expectedUpdatedAt must be null or the card\'s updatedAt string');
@@ -259,6 +271,8 @@ export async function cardEdit({ request, env, tenantId, user, stub }: BoardRequ
   if (isInvalidDueAt(body.dueAt)) {
     return refuse('INVALID_DUE_AT', 'dueAt must be null or a date in YYYY-MM-DD form');
   }
+  const repositories = cardRepositoriesInput(body, true);
+  if (!repositories.ok) return refuse('INVALID_INPUT', repositories.message);
   if (
     body.archivedAt !== undefined &&
     body.archivedAt !== null &&
@@ -335,6 +349,7 @@ export async function cardEdit({ request, env, tenantId, user, stub }: BoardRequ
     archivedAt: body.archivedAt,
     projectId: body.projectId,
     milestoneId: body.milestoneId,
+    ...(repositories.value !== undefined ? { repositories: repositories.value } : {}),
     expectedUpdatedAt: body.expectedUpdatedAt,
   });
   if (!result.ok) return refusal(result);

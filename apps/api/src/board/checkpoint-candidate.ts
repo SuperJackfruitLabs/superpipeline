@@ -3,6 +3,7 @@ import { HEARTBEAT_TIMEOUT_MS } from './rules';
 import type { VerifiedCheckpointReporter } from '../auth/checkpoint-reporter';
 export type { VerifiedCheckpointReporter } from '../auth/checkpoint-reporter';
 import { canonicalCheckpoint, checkpointDigest } from './checkpoint-json';
+import type { CheckpointSelection } from './checkpoint-selection';
 import {
   parseCheckpointSubmission,
   type CheckpointPolicy,
@@ -14,6 +15,8 @@ export interface CheckpointClaimSnapshot {
   tenantId: string;
   policy: CheckpointPolicy;
   policyDigest: string;
+  /** The selection frozen with the claim, when the stage's cards choose; `policy` is then the narrowed one. */
+  selection?: CheckpointSelection;
   binding: CheckpointReport['binding'];
   start: CheckpointReport['start'];
   benchKey: string;
@@ -185,6 +188,7 @@ function admittedSource(snapshot: CheckpointClaimSnapshot): CheckpointSourceExpe
 function authority(snapshot: CheckpointClaimSnapshot): string {
   return canonicalCheckpoint({
     tenantId: snapshot.tenantId, policy: snapshot.policy, policyDigest: snapshot.policyDigest,
+    ...(snapshot.selection ? { selection: snapshot.selection } : {}),
     ...admittedSource(snapshot),
   });
 }

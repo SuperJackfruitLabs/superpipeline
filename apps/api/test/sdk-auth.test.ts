@@ -118,6 +118,18 @@ describe('agent SDK — spa_ bearer auth', () => {
     const agent = new SuperpipelineAgent({ baseUrl: 'https://api.test', boardId, token, fetch: fetcher });
     // Same board id, different tenant → a different Board DO, which has no such card.
     expect(await agent.claim()).toBeNull();
+    // claimNext says why: that board was never made in this tenant.
+    expect(await agent.claimNext()).toEqual({ claimed: false, reason: 'board_not_initialized' });
+  });
+
+  it('claimNext hands out the work, then the board\'s reason when there is none', async () => {
+    const boardId = await createBoard('tnt_sdk5');
+    await addCard('tnt_sdk5', boardId, 'One card');
+    const { token } = await connectAgent('tnt_sdk5', ['research']);
+    const agent = new SuperpipelineAgent({ baseUrl: 'https://api.test', boardId, token, fetch: fetcher });
+    expect(await agent.claimNext()).toMatchObject({ claimed: true, work: { card: { title: 'One card' } } });
+    // The agent's one run is still working: concurrency, not "nothing there".
+    expect(await agent.claimNext()).toEqual({ claimed: false, reason: 'concurrency_reached' });
   });
 
   it('rejects a malformed token at construction', () => {

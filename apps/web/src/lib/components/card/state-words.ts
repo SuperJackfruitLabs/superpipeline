@@ -31,6 +31,8 @@ export function attemptWord(a: Pick<Attempt, 'outcome' | 'completion'>): string 
   if (a.outcome === 'sent_back' || (a.outcome === 'completed' && a.completion?.ok === false)) return 'sent back';
   if (a.outcome === 'completed') return 'done';
   if (a.outcome === 'failed') return 'failed';
+  // A person moved the card while the run was working, which ended the run: nobody's failure.
+  if (a.outcome === 'moved') return 'moved by a person';
   return a.outcome ?? 'working';
 }
 

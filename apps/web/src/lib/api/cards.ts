@@ -48,6 +48,10 @@ export interface Card {
   /** Applied label ids; the catalogue itself is fetched separately (`listLabels`). */
   labels: string[];
   dueAt: string | null;
+  /** The repositories this card chose from its bench stage's allowlist, sorted; absent when it names none. */
+  repositories?: string[];
+  /** One of `repositories`: where the card's work starts. */
+  primaryRepository?: string;
   archivedAt: string | null;
   /**
    * This card's `parent` edge (`card_links`, this card as `to_card_id`), or null if it has none.
@@ -250,6 +254,9 @@ export function updateCard(
      */
     projectId?: string | null;
     milestoneId?: string | null;
+    /** The card's repository choice, written whole with `primaryRepository`; `null` clears both. */
+    repositories?: string[] | null;
+    primaryRepository?: string;
   },
 ): Promise<Response> {
   return fetch(`/v1/boards/${boardId}/cards/${cardId}`, { method: 'PATCH', headers, body: JSON.stringify(patch) });

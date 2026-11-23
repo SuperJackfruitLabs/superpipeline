@@ -34,6 +34,7 @@ const BOARD_CODES: Record<BoardErrorCode, true> = {
   WORKSPACE_ADMIN_REQUIRED: true,
   UNKNOWN_STAGE: true,
   WIP_LIMIT: true,
+  REPOSITORY_CHOICE_REFUSED: true,
   CARD_NOT_FOUND: true,
   RUN_NOT_FOUND: true,
   NOT_RUN_OWNER: true,
@@ -116,7 +117,12 @@ const BOARD_CODES: Record<BoardErrorCode, true> = {
  * in treaty (then removed here). May only shrink; a code listed here that the registry now holds
  * fails the test below.
  */
-const NOT_YET_REGISTERED: readonly ApiErrorCode[] = [];
+const NOT_YET_REGISTERED: readonly ApiErrorCode[] = [
+  // A card's repositories refused on entry to a stage whose cards choose, or once frozen (treaty
+  // card-repositories.v1). treaty v0.0.16 names the refusals in its selection vectors but does not
+  // register a code for them yet.
+  'REPOSITORY_CHOICE_REFUSED',
+];
 
 interface Entry { code: string; owner: string; envelope?: string; status: number }
 const registered = new Map((registry.codes as Entry[]).filter((c) => c.owner === 'superpipeline').map((c) => [c.code, c]));

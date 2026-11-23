@@ -1,4 +1,6 @@
 import type { TaskState } from '@superpipeline/contract';
+import { cardRepositoriesEntryRefusal } from './checkpoint-policy-admin';
+import { cardRepositoriesOf } from './checkpoint-selection';
 import type { JsonValue } from '../json';
 import { notifyAttentionPending, waitChangedError } from './attention';
 import type { BoardContext } from './context';
@@ -57,6 +59,13 @@ export async function moveCard(deps: MovesDeps, cardId: string, toStageKey: stri
   const target = deps.stages().find((s) => s.key === toStageKey);
   if (!target) return { ok: false, code: 'UNKNOWN_STAGE', message: `unknown stage: ${toStageKey}` };
   if (target.key === card.currentStageKey) return { ok: true, value: card };
+  // A card whose repositories do not fit the target's allowlist is refused before anything moves.
+  // Read only for such a target, so every other move runs the statements it always did.
+  if (target.cardCheckpointPolicy !== undefined) {
+    const cardRow = deps.getCardRow(cardId);
+    const repositoriesRefused = cardRepositoriesEntryRefusal(target, cardRow ? cardRepositoriesOf(cardRow) : null);
+    if (repositoriesRefused) return repositoriesRefused;
+  }
   if (target.wipLimit !== undefined && deps.countInStage(target.key) >= target.wipLimit) {
     return {
       ok: false,
@@ -325,6 +334,13 @@ export async function resumeCard(deps: MovesDeps, input: {
   if (targetIdx === -1) return { ok: false, code: 'UNKNOWN_STAGE', message: `unknown stage: ${targetKey}` };
   if (currentIdx !== -1 && targetIdx > currentIdx) {
     return { ok: false, code: 'INVALID_RESUME', message: `"${targetKey}" is after "${card.currentStageKey}" — resume returns a card to its stage or an earlier one; move it to go forward` };
+  }
+  // Resuming re-enters a stage: a choice that does not fit its allowlist is refused here, where a
+  // person can fix it, rather than parked again at the next claim.
+  if (stages[targetIdx]?.cardCheckpointPolicy !== undefined) {
+    const resumeRow = deps.getCardRow(card.id);
+    const repositoriesRefused = cardRepositoriesEntryRefusal(stages[targetIdx], resumeRow ? cardRepositoriesOf(resumeRow) : null);
+    if (repositoriesRefused) return repositoriesRefused;
   }
 
   const now = deps.now();

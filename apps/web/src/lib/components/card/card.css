@@ -55,6 +55,7 @@
 .cv-dl--stack { grid-template-columns: minmax(0, 1fr); }
 .cv-dl--stack dd { font-weight: 400; }
 .cv-form { display: grid; gap: var(--vk-space-3); max-width: 32rem; font-weight: 400; }
+.cv-choices { display: grid; gap: var(--vk-space-1); margin: 0; padding: 0; border: 0; min-width: 0; }
 
 /* 5 and 6. The brief and what was produced: a section header, then the content. */
 .cv-sec { display: grid; gap: var(--vk-space-3); min-width: 0; }

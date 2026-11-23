@@ -35,6 +35,7 @@ import { QuestionAnswer } from './question/question-answer.svelte';
 import { CommentsModel } from './comments-model.svelte';
 import { ResumeModel } from './resume-model.svelte';
 import { DeliveryControls, EditForm, LinkEditor, ProjectPicker, ReferenceComposer, SubtaskComposer } from './card-forms.svelte';
+import { RepositoryPicker } from './repository-picker.svelte';
 import type { CardAgent, CardCounts, GateBinding, QuestionBinding } from './bindings';
 
 export type CardSurface = 'drawer' | 'page' | 'gallery';
@@ -81,6 +82,7 @@ export class CardModel {
 
   readonly edit: EditForm;
   readonly project: ProjectPicker;
+  readonly repositories: RepositoryPicker;
   readonly links: LinkEditor;
   readonly subtasks: SubtaskComposer;
   readonly refsForm: ReferenceComposer;
@@ -293,6 +295,7 @@ export class CardModel {
     this.detailFailed = !!opts.failDetail;
     this.edit = new EditForm(this);
     this.project = new ProjectPicker(this);
+    this.repositories = new RepositoryPicker(this);
     this.links = new LinkEditor(this);
     this.subtasks = new SubtaskComposer(this);
     this.refsForm = new ReferenceComposer(this);
@@ -390,6 +393,7 @@ export class CardModel {
     this.detailFailed = !!this.#opts.failDetail;
     this.edit.reset();
     this.project.reset();
+    this.repositories.reset();
     this.links.reset();
     this.subtasks.reset();
     this.refsForm.reset();

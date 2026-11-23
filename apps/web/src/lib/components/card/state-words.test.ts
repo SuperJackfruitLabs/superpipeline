@@ -30,6 +30,7 @@ describe('attempts and events', () => {
     expect(attemptWord({ ...ATTEMPTS_4605[0]!, completion: { ok: true } })).toBe('done');
     expect(attemptWord({ ...ATTEMPTS_4605[0]!, outcome: 'failed', completion: null })).toBe('failed');
     expect(attemptWord({ ...ATTEMPTS_4605[0]!, outcome: null, completion: null })).toBe('working');
+    expect(attemptWord({ outcome: 'moved', completion: null })).toBe('moved by a person');
   });
   it('names an event by its action, its stop signal, or its type', () => {
     const run1 = ACTIVITIES_4605.find((a) => a.runId === 'run_fx_4605_1' && a.seq === 1)!;

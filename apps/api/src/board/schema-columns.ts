@@ -376,6 +376,17 @@ export function migrateCardAndRunColumns(sql: SqlStorage): void {
   } catch {
     // column already exists
   }
+  /**
+   * The repositories the card chose from a bench stage's allowlist, as canonical
+   * card-repositories.v1 JSON (`{"primaryRepository"?, "repositories"}`), checkpoint-selection.ts.
+   * Null on a card that names none, which is every card until a person or agent picks some. One
+   * column rather than two: the choice and its start repository are one value, written together.
+   */
+  try {
+    sql.exec(`ALTER TABLE cards ADD COLUMN repositories_json TEXT`);
+  } catch {
+    // column already exists
+  }
   // Only `project_id` is indexed: `projectSummary` is the one query that filters cards by it,
   // and nothing here looks cards up by `milestone_id` on its own.
   sql.exec(`CREATE INDEX IF NOT EXISTS idx_cards_project ON cards(project_id)`);
