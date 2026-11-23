@@ -121,7 +121,7 @@ without the other. These rearrange:
 ```bash
 supi project add <name> [--description <text>] [--target YYYY-MM-DD]
 supi milestone add <projectId> <name> [--target YYYY-MM-DD]
-supi edit-card <boardId> <cardId> [--title <text>] [--merge-spec <file|->] [--priority <n>] [--due YYYY-MM-DD|none] [--project <projectId>] [--milestone <milestoneId>]
+supi edit-card <boardId> <cardId> [--title <text>] [--merge-spec <file|->] [--priority <n>] [--due YYYY-MM-DD|none] [--project <projectId>] [--milestone <milestoneId>] [--repo <name>]... [--primary-repo <name>] [--clear-repos]
 supi card-label add|rm <boardId> <cardId> <labelId>
 supi move <boardId> <cardId> <stageKey>
 supi link add <boardId> <fromCardId> <toCardId> --kind blocks|relates|parent
@@ -144,7 +144,7 @@ card to a last stage nobody can act on completes it.
 ## Queueing work
 
 ```bash
-supi create-card <boardId> "<title>" [--spec <file|->] [--priority <n>] [--due YYYY-MM-DD] [--project <projectId>] [--milestone <milestoneId>]
+supi create-card <boardId> "<title>" [--spec <file|->] [--priority <n>] [--due YYYY-MM-DD] [--project <projectId>] [--milestone <milestoneId>] [--repo <name>]... [--primary-repo <name>]
 ```
 
 A card you queue carries **your** authority, not the operator's. The board records you as the
@@ -164,6 +164,12 @@ Four things refuse a queue, each by name. Read the code and act on it rather tha
 
 `this token is not permitted to queue` is different again: your token lacks the `queue` scope,
 which no retry fixes.
+
+On a bench stage whose cards choose their repositories, `--repo` (repeat it) picks them from the
+stage's list and `--primary-repo` says where the work starts. A choice the stage does not allow is
+refused `REPOSITORY_CHOICE_REFUSED` with a reason; change the choice it names rather than retrying.
+`frozen` means an agent already claimed the card and its repositories are fixed: say so instead of
+looking for a way round it.
 
 ## What you cannot do, by design
 

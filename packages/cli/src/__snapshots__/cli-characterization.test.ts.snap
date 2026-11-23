@@ -36,7 +36,7 @@ Cards:
   supi card <boardId> <cardId>       one card in full
   supi create-card <boardId> <title> [--spec <file|->] [--priority <n>] [--due YYYY-MM-DD]
         [--label <id>...] [--stage <stageKey>] [--project <projectId>]
-        [--milestone <milestoneId>]
+        [--milestone <milestoneId>] [--repo <name>...] [--primary-repo <name>]
                                      queue a card, with this token as its grant
   supi card-label add <boardId> <cardId> <labelId>
                                      add a label to an existing card
@@ -44,8 +44,8 @@ Cards:
                                      remove a label from an existing card
   supi edit-card <boardId> <cardId> [--title <text>] [--spec <file|->] [--merge-spec <file|->]
         [--priority <n>] [--due YYYY-MM-DD|none] [--project <projectId>]
-        [--milestone <milestoneId>]
-                                     change a card's fields, project or milestone
+        [--milestone <milestoneId>] [--repo <name>...] [--primary-repo <name>] [--clear-repos]
+                                     change a card's fields, project, milestone or repositories
   supi move <boardId> <cardId> <stageKey>
                                      move a card to another stage
   supi resume <boardId> <cardId> --comment <text> [--stage <key>]
@@ -292,7 +292,7 @@ exports[`supi commands against a fake API, pinned > supi 012 skill 1`] = `
   "exit": 0,
   "requests": [],
   "stderr": "",
-  "stdout": "sha256 0762279d5ef9aee7caf55b909381874407958f28d0bd9e9bda6d815d4e94fc30 (9968 chars)",
+  "stdout": "sha256 2f281414e9a593882e1b34d6a435c4c5e2e59309075f6a44bc965ca71b2121cc (10494 chars)",
 }
 `;
 
@@ -1353,6 +1353,7 @@ exports[`supi commands against a fake API, pinned > supi 067 create-card brd_1 1
   "stderr": "usage: supi create-card <boardId> <title> [--spec <file|->] [--priority <n>]
 
   [--due YYYY-MM-DD] [--label <id>]... [--stage <stageKey>] [--project <projectId>] [--milestone <milestoneId>]
+  [--repo <name>]... [--primary-repo <name>]
 ",
   "stdout": "",
 }
@@ -1468,6 +1469,7 @@ exports[`supi commands against a fake API, pinned > supi 073 edit-card brd_1 1`]
   "stderr": "usage: supi edit-card <boardId> <cardId> [--title <text>] [--spec <file|->]
 
   [--merge-spec <file|->] [--priority <n>] [--due YYYY-MM-DD|none]
+  [--project <projectId>] [--milestone <milestoneId>] [--repo <name>]... [--primary-repo <name>] [--clear-repos]
 ",
   "stdout": "",
 }
@@ -1479,7 +1481,7 @@ exports[`supi commands against a fake API, pinned > supi 074 edit-card brd_1 crd
   "requests": [],
   "stderr": "Nothing to change.
 
-  supi edit-card <boardId> <cardId> --title … | --spec … | --merge-spec … | --priority … | --due … | --project … | --milestone …
+  supi edit-card <boardId> <cardId> --title … | --spec … | --merge-spec … | --priority … | --due … | --project … | --milestone … | --repo … | --clear-repos
 ",
   "stdout": "",
 }
@@ -3650,7 +3652,7 @@ Cards:
   supi card <boardId> <cardId>       one card in full
   supi create-card <boardId> <title> [--spec <file|->] [--priority <n>] [--due YYYY-MM-DD]
         [--label <id>...] [--stage <stageKey>] [--project <projectId>]
-        [--milestone <milestoneId>]
+        [--milestone <milestoneId>] [--repo <name>...] [--primary-repo <name>]
                                      queue a card, with this token as its grant
   supi card-label add <boardId> <cardId> <labelId>
                                      add a label to an existing card
@@ -3658,8 +3660,8 @@ Cards:
                                      remove a label from an existing card
   supi edit-card <boardId> <cardId> [--title <text>] [--spec <file|->] [--merge-spec <file|->]
         [--priority <n>] [--due YYYY-MM-DD|none] [--project <projectId>]
-        [--milestone <milestoneId>]
-                                     change a card's fields, project or milestone
+        [--milestone <milestoneId>] [--repo <name>...] [--primary-repo <name>] [--clear-repos]
+                                     change a card's fields, project, milestone or repositories
   supi move <boardId> <cardId> <stageKey>
                                      move a card to another stage
   supi resume <boardId> <cardId> --comment <text> [--stage <key>]
@@ -3789,7 +3791,7 @@ Cards:
   supi card <boardId> <cardId>       one card in full
   supi create-card <boardId> <title> [--spec <file|->] [--priority <n>] [--due YYYY-MM-DD]
         [--label <id>...] [--stage <stageKey>] [--project <projectId>]
-        [--milestone <milestoneId>]
+        [--milestone <milestoneId>] [--repo <name>...] [--primary-repo <name>]
                                      queue a card, with this token as its grant
   supi card-label add <boardId> <cardId> <labelId>
                                      add a label to an existing card
@@ -3797,8 +3799,8 @@ Cards:
                                      remove a label from an existing card
   supi edit-card <boardId> <cardId> [--title <text>] [--spec <file|->] [--merge-spec <file|->]
         [--priority <n>] [--due YYYY-MM-DD|none] [--project <projectId>]
-        [--milestone <milestoneId>]
-                                     change a card's fields, project or milestone
+        [--milestone <milestoneId>] [--repo <name>...] [--primary-repo <name>] [--clear-repos]
+                                     change a card's fields, project, milestone or repositories
   supi move <boardId> <cardId> <stageKey>
                                      move a card to another stage
   supi resume <boardId> <cardId> --comment <text> [--stage <key>]
@@ -3928,7 +3930,7 @@ Cards:
   supi card <boardId> <cardId>       one card in full
   supi create-card <boardId> <title> [--spec <file|->] [--priority <n>] [--due YYYY-MM-DD]
         [--label <id>...] [--stage <stageKey>] [--project <projectId>]
-        [--milestone <milestoneId>]
+        [--milestone <milestoneId>] [--repo <name>...] [--primary-repo <name>]
                                      queue a card, with this token as its grant
   supi card-label add <boardId> <cardId> <labelId>
                                      add a label to an existing card
@@ -3936,8 +3938,8 @@ Cards:
                                      remove a label from an existing card
   supi edit-card <boardId> <cardId> [--title <text>] [--spec <file|->] [--merge-spec <file|->]
         [--priority <n>] [--due YYYY-MM-DD|none] [--project <projectId>]
-        [--milestone <milestoneId>]
-                                     change a card's fields, project or milestone
+        [--milestone <milestoneId>] [--repo <name>...] [--primary-repo <name>] [--clear-repos]
+                                     change a card's fields, project, milestone or repositories
   supi move <boardId> <cardId> <stageKey>
                                      move a card to another stage
   supi resume <boardId> <cardId> --comment <text> [--stage <key>]
@@ -4405,7 +4407,7 @@ exports[`supi help, pinned > supi card --help 1`] = `
   "stderr": "",
   "stdout": "supi card <boardId> <cardId>
 
-One card: its fields, stage, labels, references and state.
+One card: its fields, stage, labels, references, repositories and state.
 
 Arguments:
   <boardId>             the board, as brd_… (see supi boards)
@@ -4591,11 +4593,16 @@ exports[`supi help, pinned > supi create-card --help 1`] = `
   "stderr": "",
   "stdout": "supi create-card <boardId> <title> [--spec <file|->] [--priority <n>] [--due YYYY-MM-DD]
     [--label <id>...] [--stage <stageKey>] [--project <projectId>] [--milestone <milestoneId>]
+    [--repo <name>...] [--primary-repo <name>]
 
 Creates a card in the board's first stage, or the one --stage names. The card records the
 credential that queued it as its grant — who asked for the work and on whose authority. An
 agent's card is also bounded by the queueing policy supi agent queueing sets: which boards may
 receive it, whose work it is, and how many cards an hour.
+
+On a bench stage whose cards choose their repositories, --repo and --primary-repo choose them
+from the stage's list. A choice the stage does not allow is refused (409
+REPOSITORY_CHOICE_REFUSED, with the reason) and no card is made.
 
 Arguments:
   <boardId>             the board, as brd_… (see supi boards)
@@ -4619,6 +4626,14 @@ Flags:
                               project.
   --milestone <milestoneId>   the milestone the card belongs to, as mls_… (see supi project
                               show). Default: no milestone.
+  --repo <name>               a repository the card works in, from its bench stage's list (see
+                              supi board <boardId> --json, the stage's cardCheckpointPolicy);
+                              repeat for more than one. Sent sorted, each name once. Default: no
+                              choice: the stage's default, or its only repository. Repeatable.
+  --primary-repo <name>       where the card's work starts: one of the --repo names. Needed when
+                              the card names two or more repositories without the stage's start
+                              repository. Default: the stage's start repository when chosen, or
+                              the only one.
 
 Who may run it:
   a person: member or above in the workspace
@@ -4634,6 +4649,7 @@ Examples:
   supi create-card brd_8f2c… Write the release notes for 0.0.9
   supi create-card brd_8f2c… Audit the token routes --spec spec.json --priority 2 --due 2026-11-01 --label lbl_sec
   supi create-card brd_8f2c… X post: the 0.0.9 release --stage x-post --project prj_34b4… --milestone mls_18a2… --spec post.json
+  supi create-card brd_8f2c… Rename the session cookie --repo api --repo web --primary-repo api
 ",
 }
 `;
@@ -4681,9 +4697,15 @@ exports[`supi help, pinned > supi edit-card --help 1`] = `
   "stderr": "",
   "stdout": "supi edit-card <boardId> <cardId> [--title <text>] [--spec <file|->] [--merge-spec <file|->]
     [--priority <n>] [--due YYYY-MM-DD|none] [--project <projectId>] [--milestone <milestoneId>]
+    [--repo <name>...] [--primary-repo <name>] [--clear-repos]
 
 Edits a card through the same PATCH the web app's card drawer sends, with the same authority.
 Only the fields named change. Labels, owner and archiving have their own verbs and routes.
+
+--repo replaces the card's repository choice whole, with --primary-repo where its work starts;
+--clear-repos removes it. The card's current stage must allow the choice, and once an agent has
+claimed the card on a bench stage its choice is fixed: either is refused 409
+REPOSITORY_CHOICE_REFUSED, with the reason, and nothing is written.
 
 --merge-spec is a read-modify-write: it reads the card, merges into the spec it read, and writes
 back with expectedUpdatedAt set to the card's updatedAt as read. If anything changed the card in
@@ -4710,6 +4732,17 @@ Flags:
                               unchanged.
   --project <projectId>       the card's project. Default: unchanged.
   --milestone <milestoneId>   the card's milestone. Default: unchanged.
+  --repo <name>               a repository the card works in, from its bench stage's list (see
+                              supi board <boardId> --json, the stage's cardCheckpointPolicy);
+                              repeat for more than one. Sent sorted, each name once. Replaces
+                              the card's whole choice. Default: unchanged. Repeatable.
+  --primary-repo <name>       where the card's work starts: one of the --repo names. Needed when
+                              the card names two or more repositories without the stage's start
+                              repository. Default: the stage's start repository when chosen, or
+                              the only one.
+  --clear-repos               clear the card's repositories and primary repository, so it takes
+                              the stage's default again. Cannot be combined with --repo.
+                              Default: off.
 
 Who may run it:
   a person: member or above in the workspace
@@ -4726,6 +4759,8 @@ Examples:
   supi edit-card brd_8f2c… crd_41aa… --merge-spec acceptance.json
   echo '{"notes": null}' | supi edit-card brd_8f2c… crd_41aa… --merge-spec -
   supi edit-card brd_8f2c… crd_41aa… --due none
+  supi edit-card brd_8f2c… crd_41aa… --repo api --repo web --primary-repo web
+  supi edit-card brd_8f2c… crd_41aa… --clear-repos
 ",
 }
 `;
@@ -4822,7 +4857,7 @@ Cards:
   supi card <boardId> <cardId>       one card in full
   supi create-card <boardId> <title> [--spec <file|->] [--priority <n>] [--due YYYY-MM-DD]
         [--label <id>...] [--stage <stageKey>] [--project <projectId>]
-        [--milestone <milestoneId>]
+        [--milestone <milestoneId>] [--repo <name>...] [--primary-repo <name>]
                                      queue a card, with this token as its grant
   supi card-label add <boardId> <cardId> <labelId>
                                      add a label to an existing card
@@ -4830,8 +4865,8 @@ Cards:
                                      remove a label from an existing card
   supi edit-card <boardId> <cardId> [--title <text>] [--spec <file|->] [--merge-spec <file|->]
         [--priority <n>] [--due YYYY-MM-DD|none] [--project <projectId>]
-        [--milestone <milestoneId>]
-                                     change a card's fields, project or milestone
+        [--milestone <milestoneId>] [--repo <name>...] [--primary-repo <name>] [--clear-repos]
+                                     change a card's fields, project, milestone or repositories
   supi move <boardId> <cardId> <stageKey>
                                      move a card to another stage
   supi resume <boardId> <cardId> --comment <text> [--stage <key>]
@@ -4961,7 +4996,7 @@ Cards:
   supi card <boardId> <cardId>       one card in full
   supi create-card <boardId> <title> [--spec <file|->] [--priority <n>] [--due YYYY-MM-DD]
         [--label <id>...] [--stage <stageKey>] [--project <projectId>]
-        [--milestone <milestoneId>]
+        [--milestone <milestoneId>] [--repo <name>...] [--primary-repo <name>]
                                      queue a card, with this token as its grant
   supi card-label add <boardId> <cardId> <labelId>
                                      add a label to an existing card
@@ -4969,8 +5004,8 @@ Cards:
                                      remove a label from an existing card
   supi edit-card <boardId> <cardId> [--title <text>] [--spec <file|->] [--merge-spec <file|->]
         [--priority <n>] [--due YYYY-MM-DD|none] [--project <projectId>]
-        [--milestone <milestoneId>]
-                                     change a card's fields, project or milestone
+        [--milestone <milestoneId>] [--repo <name>...] [--primary-repo <name>] [--clear-repos]
+                                     change a card's fields, project, milestone or repositories
   supi move <boardId> <cardId> <stageKey>
                                      move a card to another stage
   supi resume <boardId> <cardId> --comment <text> [--stage <key>]
@@ -5410,7 +5445,7 @@ exports[`supi help, pinned > supi help card 1`] = `
   "stderr": "",
   "stdout": "supi card <boardId> <cardId>
 
-One card: its fields, stage, labels, references and state.
+One card: its fields, stage, labels, references, repositories and state.
 
 Arguments:
   <boardId>             the board, as brd_… (see supi boards)
@@ -5596,11 +5631,16 @@ exports[`supi help, pinned > supi help create-card 1`] = `
   "stderr": "",
   "stdout": "supi create-card <boardId> <title> [--spec <file|->] [--priority <n>] [--due YYYY-MM-DD]
     [--label <id>...] [--stage <stageKey>] [--project <projectId>] [--milestone <milestoneId>]
+    [--repo <name>...] [--primary-repo <name>]
 
 Creates a card in the board's first stage, or the one --stage names. The card records the
 credential that queued it as its grant — who asked for the work and on whose authority. An
 agent's card is also bounded by the queueing policy supi agent queueing sets: which boards may
 receive it, whose work it is, and how many cards an hour.
+
+On a bench stage whose cards choose their repositories, --repo and --primary-repo choose them
+from the stage's list. A choice the stage does not allow is refused (409
+REPOSITORY_CHOICE_REFUSED, with the reason) and no card is made.
 
 Arguments:
   <boardId>             the board, as brd_… (see supi boards)
@@ -5624,6 +5664,14 @@ Flags:
                               project.
   --milestone <milestoneId>   the milestone the card belongs to, as mls_… (see supi project
                               show). Default: no milestone.
+  --repo <name>               a repository the card works in, from its bench stage's list (see
+                              supi board <boardId> --json, the stage's cardCheckpointPolicy);
+                              repeat for more than one. Sent sorted, each name once. Default: no
+                              choice: the stage's default, or its only repository. Repeatable.
+  --primary-repo <name>       where the card's work starts: one of the --repo names. Needed when
+                              the card names two or more repositories without the stage's start
+                              repository. Default: the stage's start repository when chosen, or
+                              the only one.
 
 Who may run it:
   a person: member or above in the workspace
@@ -5639,6 +5687,7 @@ Examples:
   supi create-card brd_8f2c… Write the release notes for 0.0.9
   supi create-card brd_8f2c… Audit the token routes --spec spec.json --priority 2 --due 2026-11-01 --label lbl_sec
   supi create-card brd_8f2c… X post: the 0.0.9 release --stage x-post --project prj_34b4… --milestone mls_18a2… --spec post.json
+  supi create-card brd_8f2c… Rename the session cookie --repo api --repo web --primary-repo api
 ",
 }
 `;
@@ -5686,9 +5735,15 @@ exports[`supi help, pinned > supi help edit-card 1`] = `
   "stderr": "",
   "stdout": "supi edit-card <boardId> <cardId> [--title <text>] [--spec <file|->] [--merge-spec <file|->]
     [--priority <n>] [--due YYYY-MM-DD|none] [--project <projectId>] [--milestone <milestoneId>]
+    [--repo <name>...] [--primary-repo <name>] [--clear-repos]
 
 Edits a card through the same PATCH the web app's card drawer sends, with the same authority.
 Only the fields named change. Labels, owner and archiving have their own verbs and routes.
+
+--repo replaces the card's repository choice whole, with --primary-repo where its work starts;
+--clear-repos removes it. The card's current stage must allow the choice, and once an agent has
+claimed the card on a bench stage its choice is fixed: either is refused 409
+REPOSITORY_CHOICE_REFUSED, with the reason, and nothing is written.
 
 --merge-spec is a read-modify-write: it reads the card, merges into the spec it read, and writes
 back with expectedUpdatedAt set to the card's updatedAt as read. If anything changed the card in
@@ -5715,6 +5770,17 @@ Flags:
                               unchanged.
   --project <projectId>       the card's project. Default: unchanged.
   --milestone <milestoneId>   the card's milestone. Default: unchanged.
+  --repo <name>               a repository the card works in, from its bench stage's list (see
+                              supi board <boardId> --json, the stage's cardCheckpointPolicy);
+                              repeat for more than one. Sent sorted, each name once. Replaces
+                              the card's whole choice. Default: unchanged. Repeatable.
+  --primary-repo <name>       where the card's work starts: one of the --repo names. Needed when
+                              the card names two or more repositories without the stage's start
+                              repository. Default: the stage's start repository when chosen, or
+                              the only one.
+  --clear-repos               clear the card's repositories and primary repository, so it takes
+                              the stage's default again. Cannot be combined with --repo.
+                              Default: off.
 
 Who may run it:
   a person: member or above in the workspace
@@ -5731,6 +5797,8 @@ Examples:
   supi edit-card brd_8f2c… crd_41aa… --merge-spec acceptance.json
   echo '{"notes": null}' | supi edit-card brd_8f2c… crd_41aa… --merge-spec -
   supi edit-card brd_8f2c… crd_41aa… --due none
+  supi edit-card brd_8f2c… crd_41aa… --repo api --repo web --primary-repo web
+  supi edit-card brd_8f2c… crd_41aa… --clear-repos
 ",
 }
 `;

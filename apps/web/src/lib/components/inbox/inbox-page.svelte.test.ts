@@ -12,7 +12,7 @@ import { flushSync, tick } from 'svelte';
 import { VIBES } from '@superjackfruitlabs/vibekit-ui';
 import type * as Api from '$lib/api';
 import type { BoardSnapshot, StaleCard } from '$lib/api';
-import { realisticWorkspace, REALISTIC_BOARD_IDS } from '$lib/fixtures/realistic';
+import { realisticWorkspace, REALISTIC_BOARD_IDS, REALISTIC_NOW_MS } from '$lib/fixtures/realistic';
 import { INBOX_KEYS, keysText } from '$lib/keys';
 
 vi.hoisted(() => {
@@ -84,6 +84,10 @@ function button(root: Element, start: string): HTMLButtonElement {
 const stopped = (root: Element) => one(root, '[data-attention-row="blocked"]');
 
 beforeEach(() => {
+  // The fixture's times are measured back from REALISTIC_NOW; read ages against it, not today
+  // (on 2026-11-23 a card turned "18 days" old and collided with the 18 count).
+  vi.useFakeTimers({ toFake: ['Date'] });
+  vi.setSystemTime(REALISTIC_NOW_MS);
   boards = Object.fromEntries(world.boards.map((b) => [b.boardId ?? '', b]));
   api.getBoard.mockImplementation(async (id: string) => boards[id]);
   api.getNotifications.mockImplementation(async (id: string) => world.notifications[id] ?? []);
@@ -100,6 +104,7 @@ beforeEach(() => {
   liveUpdates.resume();
 });
 afterEach(() => {
+  vi.useRealTimers();
   roots?.unmount();
   roots = null;
   cleanup();

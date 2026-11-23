@@ -110,6 +110,9 @@ export async function api(path: string, init: RequestInit = {}, opts: { conflict
     // Which dead end this is depends on what is holding the credential — see `refusalHint`.
     fail(`Refused by superpipeline (403). ${body.trim()}`, refusalHint(c.kind));
   }
+  // Checked before `conflict`: an edit that both merges a spec and sets repositories is refused
+  // for its repositories too, and "the card changed since it was read" would be the wrong reason.
+  if (res.status === 409) repositoryRefusal(body);
   if (res.status === 409 && opts.conflict) fail(opts.conflict);
   if (!res.ok) fail(`superpipeline returned ${res.status}: ${body.trim()}`);
 
@@ -118,6 +121,47 @@ export async function api(path: string, init: RequestInit = {}, opts: { conflict
   } catch {
     return body;
   }
+}
+
+/** What to do about each reason the board gives for `REPOSITORY_CHOICE_REFUSED`, by the flag to change. */
+const REPOSITORY_REMEDY: Record<string, string> = {
+  "repository-not-allowed": "Choose with --repo from the stage's list: `supi board <boardId> --json` shows it under the stage's `cardCheckpointPolicy`.",
+  "primary-not-chosen": "--primary-repo must be one of the --repo names.",
+  "no-primary": "Name where the work starts with --primary-repo.",
+  "repositories-not-canonical": "Name each repository once.",
+  frozen: "An agent has claimed this card, so its repositories are fixed. Make a new card to work in other repositories.",
+};
+
+/**
+ * A 409 `REPOSITORY_CHOICE_REFUSED`: the board refused the card's repositories — on a create, an
+ * edit, or a move or resume into a stage whose list does not hold them. Printed as what it is,
+ * with the reason and what to change, rather than "superpipeline returned 409: {…}". Returns for
+ * any other 409.
+ */
+function repositoryRefusal(body: string): void {
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(body);
+  } catch {
+    return;
+  }
+  const error = field(parsed, "error");
+  if (field(error, "code") !== "REPOSITORY_CHOICE_REFUSED") return;
+  const detail = field(error, "detail");
+  const reason = field(detail, "reason") ?? field(error, "reason");
+  const stageKey = field(detail, "stageKey") ?? field(error, "stageKey");
+  const message = field(error, "message");
+  const why = typeof reason === "string" ? reason : "unknown";
+  const remedy = REPOSITORY_REMEDY[why];
+  fail(
+    `The board refused this card's repositories (409 REPOSITORY_CHOICE_REFUSED): ${typeof message === "string" ? message : "no reason given"}. Nothing was written.`,
+    `  reason: ${why}${typeof stageKey === "string" ? `  (stage ${stageKey})` : ""}${remedy ? `\n  ${remedy}` : ""}`,
+  );
+}
+
+/** `value[key]` when `value` is an object, else `undefined`: reading a JSON body without asserting its shape. */
+function field(value: unknown, key: string): unknown {
+  return typeof value === "object" && value !== null ? (Object.getOwnPropertyDescriptor(value, key)?.value as unknown) : undefined;
 }
 
 /**

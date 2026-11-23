@@ -72,5 +72,39 @@ describe("supi create-card", () => {
     expect(body).not.toHaveProperty("stageKey");
     expect(body).not.toHaveProperty("projectId");
     expect(body).not.toHaveProperty("milestoneId");
+    expect(body).not.toHaveProperty("repositories");
+    expect(body).not.toHaveProperty("primaryRepository");
+  });
+
+  it("sends --repo sorted and once each, with --primary-repo, in the create itself", async () => {
+    fetchMock.mockResolvedValue(created());
+    const code = await run(["create-card", "brd_1", "Rename", "the", "cookie", "--repo", "web", "--repo", "api", "--repo", "web", "--primary-repo", "api"]);
+    expect(code).toBe(0);
+    expect(sentBody()).toEqual({ title: "Rename the cookie", repositories: ["api", "web"], primaryRepository: "api" });
+  });
+
+  it("refuses --primary-repo without --repo, or not among them, before sending anything", async () => {
+    expect(await run(["create-card", "brd_1", "A", "card", "--primary-repo", "api"])).toBe(1);
+    expect(await run(["create-card", "brd_1", "A", "card", "--repo", "web", "--primary-repo", "api"])).toBe(1);
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("prints a 409 REPOSITORY_CHOICE_REFUSED with its reason, not the raw body", async () => {
+    // The spy beforeEach set: its calls are what was written to stderr.
+    const stderr = vi.spyOn(process.stderr, "write");
+    const detail = { reason: "no-primary", stageKey: "build" };
+    fetchMock.mockResolvedValue(
+      new Response(
+        JSON.stringify({ error: { ...detail, code: "REPOSITORY_CHOICE_REFUSED", message: 'this card chose 2 repositories without core, stage "Build"\'s start repository: name the primary one', detail } }),
+        { status: 409 },
+      ),
+    );
+    expect(await run(["create-card", "brd_1", "A", "card", "--repo", "api", "--repo", "web"])).toBe(1);
+    const err = stderr.mock.calls.map(([s]) => s).join("");
+    expect(err).toContain("REPOSITORY_CHOICE_REFUSED");
+    expect(err).toContain("name the primary one");
+    expect(err).toContain("reason: no-primary  (stage build)");
+    expect(err).toContain("--primary-repo");
+    expect(err).not.toContain("returned 409");
   });
 });

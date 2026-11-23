@@ -14,6 +14,7 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html). Entries g
 
 ## Unreleased
 
+- `supi create-card` and `supi edit-card` choose a card's repositories: `--repo <name>` (repeat it) and `--primary-repo <name>`, sent sorted and once each; `edit-card --clear-repos` removes the choice. A `409 REPOSITORY_CHOICE_REFUSED` on any verb prints the board's sentence, its `reason` and what to change, instead of the raw body, and an edit that also merges a spec no longer reports it as a changed card. `supi board` shows each card's repositories on its line.
 - **The direct push carries only `x-treaty-signature`** (treaty phase 2's cleanup). `X-Superpipeline-Signature` (the HMAC over the body alone) and `X-Superpipeline-Event` are no longer sent. Receivers must verify `x-treaty-signature` with treaty's `verifyDelivery` (an HMAC keyed with the push config's token over `<t>.<ce-id>.<body>`) and read the event's name from `ce-type` or the body's `event`. A receiver that still checks only the old header will refuse every push.
 
 ## v0.0.36 — 2026-11-23

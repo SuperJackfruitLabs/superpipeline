@@ -42,7 +42,9 @@ describe('ci.yml', () => {
     // The whole push run on main for the tagged commit must have succeeded.
     expect(cfg.ci_workflow).toBe('ci.yml');
     const ci = gate?.steps.find((s) => s.id === 'ci');
-    expect(ci?.run).toContain('runs?head_sha=$SHA&branch=main&status=success');
+    expect(ci?.run).toContain('runs?head_sha=$SHA&branch=main');
+    // The gate checks the run's outcome itself: GitHub's status=success list once left out a passed run.
+    expect(ci?.run).toContain('select(.status == "completed" and .conclusion == "success")');
     expect(rel.jobs.release && needs(rel.jobs.release)).toContain('gate');
     for (const j of ['test', 'e2e', 'visual']) expect(wf.jobs[j]?.['continue-on-error']).toBeFalsy();
   });

@@ -48,7 +48,7 @@ export function renderBoard(value: unknown): string {
     name?: string;
     boardId?: string;
     stages?: { key: string; name: string; ownerKind?: string; owner?: string; gate?: string; instructions?: string }[];
-    cards?: { id: string; title: string; currentStageKey?: string; state?: string }[];
+    cards?: { id: string; title: string; currentStageKey?: string; state?: string; repositories?: string[]; primaryRepository?: string }[];
     gates?: { cardId?: string; stageKey?: string }[];
   };
   const stages = [...(b.stages ?? [])];
@@ -63,10 +63,19 @@ export function renderBoard(value: unknown): string {
     const marks = [s.gate === "approval" ? "gate" : "", s.instructions ? "rule" : ""].filter(Boolean);
     lines.push(`${s.name}  [${worker}]${marks.length ? `  ${marks.join(" ")}` : ""}`);
     for (const c of cards.filter((card) => card.currentStageKey === s.key)) {
-      lines.push(`${PAD}${c.title}  ${c.id}  ${c.state ?? ""}${waiting.has(c.id) ? "  ← waiting on you" : ""}`);
+      lines.push(`${PAD}${c.title}  ${c.id}  ${c.state ?? ""}${waiting.has(c.id) ? "  ← waiting on you" : ""}${repositoriesText(c)}`);
     }
   }
   return lines.join("\n");
+}
+
+/**
+ * A card's repository choice on its board line: `repos api, web (starts in web)`. A card that
+ * names none prints nothing — it takes its stage's default, which the stage, not the card, holds.
+ */
+function repositoriesText(c: { repositories?: string[]; primaryRepository?: string }): string {
+  if (!Array.isArray(c.repositories) || c.repositories.length === 0) return "";
+  return `  repos ${c.repositories.join(", ")}${c.primaryRepository ? ` (starts in ${c.primaryRepository})` : ""}`;
 }
 
 export function renderGates(value: unknown): string {
