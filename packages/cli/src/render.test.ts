@@ -47,6 +47,13 @@ describe("a board", () => {
     expect(card).toBeGreaterThan(brief);
   });
 
+  it("shows a card's repositories and where its work starts, and nothing for a card that names none", () => {
+    const chosen = { ...board, cards: [{ ...board.cards[0], repositories: ["api", "web"], primaryRepository: "web" }] };
+    const line = renderBoard(chosen).split("\n").find((l) => l.includes("A post"));
+    expect(line).toContain("repos api, web (starts in web)");
+    expect(renderBoard(board)).not.toContain("repos");
+  });
+
   it("marks a stage that carries a standing rule, because nothing else reveals one", () => {
     // `stage.instructions` is in no UI and no other command. A board view that omits it leaves
     // the operator no way to discover that a stage tells its agent anything at all.

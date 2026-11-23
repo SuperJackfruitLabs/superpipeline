@@ -162,6 +162,10 @@ edit the card may choose, a person or an agent, but only within the list.
   a new card. A card that named none is fixed to what it got at that claim (the default, or the only
   repository), and the card shows it; a later change to the stage's default does not move it.
 
+From a terminal, `supi create-card … --repo api --repo web --primary-repo web` chooses at creation,
+`supi edit-card … --repo …` replaces the choice and `supi edit-card … --clear-repos` removes it — see
+[the CLI](/use/cli/#moving-work).
+
 Through the API, send `repositories` (sorted names) and, when needed, `primaryRepository` on
 `POST /v1/boards/:id/cards` or `PATCH /v1/boards/:id/cards/:cardId`; `repositories: null` clears
 both. Names only, never a provider, URL or clone address. The card reads back with the same two
