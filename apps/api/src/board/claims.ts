@@ -7,12 +7,14 @@ import { CHECKPOINT_CLAIM_PROTOCOL, insertPendingCheckpointClaim, type Checkpoin
 import { grantPermitsAgent, isControlPairEnforced } from '../auth/grant-match';
 import { newId } from '../ids';
 import { RELAY_CONFIG_ID } from '../push/relay';
+import { queueEvent, type PushTarget } from './push';
 import type { JsonValue } from '../json';
 import { reportingEnabled } from '../superwitness/config';
 import type { BoardContext } from './context';
 import { CLEAR_HOLD_SQL, isLiveHold, liveHoldWhere } from './hold';
 import type { CardView, ClaimResult, Result, Row, RunAuth, RunVerbInput, StageDef } from './model';
 import { inWindowWhere, placementWindowMs, placementWindowUntil } from './placement-window';
+import type { WorkAvailableBody } from './views';
 import { HEARTBEAT_TIMEOUT_MS, MAX_PUSH_ATTEMPTS } from './rules';
 
 /**
@@ -695,22 +697,20 @@ export function notifyWorkAvailable(deps: ClaimsDeps, cardId: string): void {
   // card on their next claim, within their poll interval.
   const heldFor = card.reservation?.agentId ?? null;
   const boardId = deps.getMeta('boardId');
+  if (!boardId) return;
   const ts = deps.now();
+  const payload: WorkAvailableBody = { event: 'work.available', boardId, cardId, stageKey: stage.key, ts };
+  const targets: PushTarget[] = [];
   for (const cfg of deps.sql.exec(`SELECT * FROM push_configs`).toArray()) {
     const events = JSON.parse(cfg.events_json as string) as string[];
     if (!events.includes('work.available')) continue;
     const caps = JSON.parse(cfg.capabilities_json as string) as string[];
     if (typeof cfg.agent_id !== 'string' || !stageMatches(stage, cfg.agent_id, caps)) continue;
     if (heldFor !== null && cfg.agent_id !== heldFor) continue;
-    const body = JSON.stringify({ event: 'work.available', boardId, cardId, stageKey: stage.key, ts });
-    deps.sql.exec(
-      `INSERT INTO push_deliveries (config_id, url, body, status, attempts, created_at) VALUES (?, ?, ?, 'pending', 0, ?)`,
-      cfg.id,
-      cfg.url,
-      body,
-      ts,
-    );
+    targets.push({ configId: cfg.id as string, url: cfg.url as string });
   }
+  // One event, however many agents it is sent to: every row carries the same id.
+  queueEvent(deps, payload, targets);
 }
 
 /**

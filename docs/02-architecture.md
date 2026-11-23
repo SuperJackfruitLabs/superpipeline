@@ -139,7 +139,7 @@ is also why there is no way to revoke one before it expires.
 | Agent (REST **and** MCP) | Per-agent `spa_` token, stored as a SHA-256 hash; carries tenant + agent identity + capabilities | `Authorization: Bearer` on `/v1/boards/*` and `/mcp` |
 | Human or agent, **dev only** | `X-Tenant-Id` / `X-Agent-Id` / `?tenant=`, or an MCP `<tenant>:<agent>:<caps>` bearer — self-asserted, no secret. Requires `DEV_AUTH=true`; a deploy rejects them | Headers / query |
 | Inbound webhook (GitHub) | HMAC-SHA256 signature verify, in the DO | `X-Hub-Signature-256` |
-| Outbound webhook (to agents) | HMAC-SHA256 over the exact body | `X-Superpipeline-Signature: sha256=…` |
+| Outbound webhook (to agents) | HMAC-SHA256 over `<t>.<event id>.<body>` (treaty's `signDelivery`); the older HMAC over the body alone beside it until receivers move | `x-treaty-signature: t=…,v1=…`; `X-Superpipeline-Signature: sha256=…` |
 
 **Not implemented**: any authorization server, `/authorize`, `/token`, dynamic client
 registration, PKCE, JWTs, audience (`aud`) claims, token expiry or rotation, role/scope checks,

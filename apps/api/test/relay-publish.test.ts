@@ -7,7 +7,7 @@ import { env as testEnv, runInDurableObject } from 'cloudflare:test';
 import { describe, expect, it } from 'vitest';
 import { fromBinary, parseSubject, parseType } from '@superjackfruitlabs/treaty-cloudevents';
 import type { BoardDO } from '../src/board/board-do';
-import { dispatchPushDeliveries, queueRelay, queueSubscribedPush, type PushDeps } from '../src/board/push';
+import { dispatchPushDeliveries, queuePush, queueRelay, type PushDeps } from '../src/board/push';
 import { RELAY_CONFIG_ID, RELAYED_EVENTS, hasTreatySchema, relayRequest, relaySettings } from '../src/push/relay';
 import type { PushSender } from '../src/push/deliver';
 import { boardStub, STAGES } from './approval-subject-fixtures';
@@ -64,7 +64,7 @@ describe('relaySettings', () => {
 describe('relayRequest', () => {
   it("names the board's tenant in the subject, and the treaty type and schema", () => {
     const body = JSON.stringify(gate);
-    const request = relayRequest({ id: 7, body }, { boardId: gate.boardId, tenantId: 'tnt_relay' }, { url: 'https://relay.test', token: 'producer-token' });
+    const request = relayRequest({ eventId: 'brd_00000000000000r1:7', body }, { boardId: gate.boardId, tenantId: 'tnt_relay' }, { url: 'https://relay.test', token: 'producer-token' });
     expect(request.url).toBe('https://relay.test/v1/events/evt.tnt_relay.superpipeline.gate.pending');
     expect(parseSubject(request.url.split('/v1/events/')[1] ?? '')).toMatchObject({ workspace: 'tnt_relay', entity: 'gate', verb: 'pending' });
     expect(request.headers.Authorization).toBe('Bearer producer-token');
@@ -82,19 +82,19 @@ describe('relayRequest', () => {
 
   it('names card.ready by treaty\'s type and schema, on the board\'s card.ready subject', () => {
     const body = JSON.stringify({ event: 'card.ready', boardId: 'brd_00000000000000r1', cardId: 'card_0000000000000001', stageKey: 'build', readyAt: '2026-11-13T09:00:00.000Z', ts: '2026-11-13T09:00:00.000Z' });
-    const request = relayRequest({ id: 9, body }, { boardId: 'brd_00000000000000r1', tenantId: 'tnt_relay' }, { url: 'https://relay.test', token: 't' });
+    const request = relayRequest({ eventId: 'brd_00000000000000r1:9', body }, { boardId: 'brd_00000000000000r1', tenantId: 'tnt_relay' }, { url: 'https://relay.test', token: 't' });
     expect(request.url).toBe('https://relay.test/v1/events/evt.tnt_relay.superpipeline.card.ready');
     expect(request.headers['ce-type']).toBe('com.superjackfruit.superpipeline.card.ready.v1');
     expect(request.headers['ce-dataschema']).toBe('https://raw.githubusercontent.com/SuperJackfruitLabs/treaty/main/schemas/superpipeline/card.ready.v1.json');
   });
 
-  it('relays only events treaty has a schema for: every relayed event has one, work.available none', () => {
+  it('relays only events treaty has a schema for: every relayed event has one', () => {
     expect([...RELAYED_EVENTS].filter((event) => !hasTreatySchema(event))).toEqual([]);
-    expect(hasTreatySchema('work.available')).toBe(false);
+    expect(hasTreatySchema('made.up')).toBe(false);
   });
 
   it('refuses an event treaty has no schema for', () => {
-    expect(() => relayRequest({ id: 1, body: '{"event":"work.available"}' }, { boardId: 'b', tenantId: 't' }, { url: 'https://r', token: 't' })).toThrow(/no treaty schema for work.available/);
+    expect(() => relayRequest({ eventId: 'b:1', body: '{"event":"made.up"}' }, { boardId: 'b', tenantId: 't' }, { url: 'https://r', token: 't' })).toThrow(/no treaty schema for made.up/);
   });
 });
 
@@ -102,8 +102,7 @@ describe('publishing through the relay', () => {
   it('queues a gate.pending for the relay beside the direct push, and sends it as a CloudEvent', async () => {
     await withBoard('relay-publish-1', RELAY, async (deps, board) => {
       await board.registerPushConfig({ agentId: 'svc:prn_0000000000000000c0b3', url: 'https://hub.test/push', token: 's', events: ['gate.pending'] });
-      queueSubscribedPush(deps, gate);
-      queueRelay(deps, gate);
+      queuePush(deps, gate);
       const rows = await board.getPushDeliveries();
       expect(rows.map((r) => r.configId)).toContain(RELAY_CONFIG_ID);
       expect(rows).toHaveLength(2);
@@ -139,12 +138,13 @@ describe('publishing through the relay', () => {
     });
   });
 
-  it('publishes no record event and no work.available (relay-board-chat.test.ts covers what it does publish)', async () => {
+  it('publishes record events and work.available too, and no cards.stale (relay-records.test.ts drives them)', async () => {
     await withBoard('relay-publish-4', RELAY, async (deps, board) => {
-      queueRelay(deps, { event: 'work.available' });
-      queueRelay(deps, { event: 'card.created' });
-      queueRelay(deps, { event: 'gate.resolved' });
+      queueRelay(deps, { event: 'cards.stale' });
       expect(await board.getPushDeliveries()).toEqual([]);
+      const work = { event: 'work.available', boardId: 'brd_00000000000000r1', cardId: 'crd_0000000000000001', stageKey: 'draft', ts: gate.ts };
+      queueRelay(deps, work);
+      expect((await board.getPushDeliveries()).map((r) => r.configId)).toEqual([RELAY_CONFIG_ID]);
     });
   });
 });

@@ -10,8 +10,8 @@ suite path:
   subscribed to, signed.
 - **The board log**: `GET /v1/boards/:id/events?limit=` (up to 500, default 100) returns the board's
   latest events, every type below included, for a person who may read the board.
-- **The event relay** (optional): a deployment linked to the suite also publishes the board-chat
-  events as CloudEvents, beside the push.
+- **The event relay** (optional): a deployment linked to the suite also publishes the board-chat,
+  record and `work.available` events as CloudEvents, beside the push.
 
 ## Subscribing
 
@@ -20,7 +20,10 @@ replaces the one with the same subscriber and URL.
 
 - `url` must be a public `http(s)` endpoint. Loopback, private and link-local addresses are refused
   `INVALID_URL`.
-- `token` is the config's signing secret.
+- `token` is the config's signing secret. A body without a `url` or a `token`, or with either not
+  a string, is refused `INVALID_BODY`.
+- The route follows Treaty's push registration contract (`push.v1`). A board that is not set up
+  yet is `NOT_INITIALIZED`: 404 for an agent or a person, 400 for a service.
 - `events` defaults to `["work.available"]`. A name the board cannot send is refused
   `UNKNOWN_EVENT`.
 - Who may register:
@@ -31,21 +34,40 @@ replaces the one with the same subscriber and URL.
 
 ## Delivery
 
-Each delivery is a POST of the event's JSON with:
+Each delivery is a POST of the event's JSON as a
+[CloudEvent](https://treaty.superjackfruit.com/relay/) in HTTP binary mode, the same envelope the
+event relay uses:
 
-- `X-Superpipeline-Signature: sha256=<hex>`, an HMAC over the exact body bytes, keyed with the
-  config's `token`;
-- `X-Superpipeline-Event: <event>`.
+- `ce-id: <boardId>:<seq>`, the event's id. `seq` is the board's own event sequence, so every
+  delivery of one event carries the same id, on the push and on the relay alike. Handle each id
+  once.
+- `ce-type: com.superjackfruit.superpipeline.<entity>.<verb>.v1`, `ce-source:
+  /superpipeline/boards/<boardId>`, `ce-dataschema` (the event's schema in Treaty's catalog),
+  `ce-time` (the body's `ts`), `ce-specversion: 1.0` and `content-type: application/json`.
+- `x-treaty-signature: t=<unix seconds>,v1=<hex>`, an HMAC-SHA256 keyed with the config's `token`
+  over `<t>.<ce-id>.<body>`. Verify it with `verifyDelivery` from
+  `@superjackfruitlabs/treaty-cloudevents`, which also refuses a delivery signed more than 300
+  seconds away from your clock. Binding the id and the time stops a captured delivery being
+  replayed.
+- `X-Superpipeline-Signature: sha256=<hex>`, the older HMAC over the body alone, and
+  `X-Superpipeline-Event: <event>`. Both are still sent while receivers move to
+  `x-treaty-signature`; the old signature will be removed in a later release.
 
-Verify the signature before trusting the body.
+Verify the signature over the exact bytes you received, before parsing the body.
 
 Once it verifies, you know the payload came from the board that owns the subscription and can
 process it as an at-least-once delivery.
 
-Delivery is **at least once**. The board's own alarm drains its queue; a failed delivery is tried
-again with backoff doubling from 5 seconds, up to 5 attempts, and is then kept as `dead` rather than
-deleted. A person can see the queue at `GET /v1/boards/:id/push/deliveries` and drain it now with
-`POST /v1/boards/:id/push/dispatch`.
+Delivery is **at least once**. The board's own alarm drains its queue. What your answer means:
+
+- **2xx**: handled, or ignored for good (an event you do not take).
+- **408, 429 or 5xx, or no answer within 10 seconds**: try again. Answer **503** for something you
+  expect to know soon, such as a board you have not mapped yet. The board tries again with backoff
+  doubling from 5 seconds, up to 5 attempts, and then keeps the delivery as `dead`.
+- **Any other 4xx**: refused for good. The delivery is kept as `dead` at once and not sent again.
+
+A person can see the queue at `GET /v1/boards/:id/push/deliveries` (each delivery with its
+`eventId`) and drain it now with `POST /v1/boards/:id/push/dispatch`.
 
 Push is an accelerator, not the source of truth. `work.available` says "claim now", and the claim
 decides; a record event names cards, and the subscriber reads them back with its own credential.
@@ -112,12 +134,20 @@ These are recorded in the board log but cannot be subscribed to:
 A deployment with both `RELAY_URL` and `RELAY_TOKEN` set publishes these events to the suite's event
 relay too, beside the direct push, which keeps running:
 
-`gate.pending`, `elicitation.pending`, `delivery.pending`, `attention.pending`,
-`decision.reminded`, `decision.escalated`, `gate.approval_recorded`, `decision.released`,
-`decision.pulled_back`, `check.failed`, `check.overridden`, and `card.ready`.
+- the decision events: `gate.pending`, `elicitation.pending`, `delivery.pending`,
+  `attention.pending`, `decision.reminded`, `decision.escalated`, `gate.approval_recorded`,
+  `decision.released`, `decision.pulled_back`, `check.failed`, `check.overridden`;
+- every record event, above;
+- `work.available`, once per event;
+- `card.ready`.
 
-Record events and `work.available` are not relayed. `card.ready` is relayed although it is not a
-decision: the placement service hears that a card is ready inside its placement window.
+`cards.stale` is not relayed: it is a digest for the push configs that asked for it.
+`work.available` is relayed once, while its direct push still goes only to the agents that could
+claim the card. `card.ready` is relayed although no push config can subscribe to it: the placement
+service hears that a card is ready inside its placement window.
+
+An event that reaches you by both the relay and the push carries the same id on each, so handle
+each id once.
 
 - Each event is a CloudEvent in HTTP binary mode, POSTed to
   `RELAY_URL/v1/events/evt.<workspace>.superpipeline.<entity>.<verb>` with
@@ -127,10 +157,11 @@ decision: the placement service hears that a card is ready inside its placement 
   [Treaty](https://treaty.superjackfruit.com/relay/)'s catalog.
 - The data is the same JSON the push carries.
 - The event is queued in the same transaction as the change that caused it and retried like a
-  push. Its id, `<boardId>:<row>`, stays the same across retries, so the relay stores a retried
-  event once.
+  push. Its id is the event's, `<boardId>:<seq>`, the same as on the direct push and across
+  retries, so the relay stores a retried event once and a subscriber on both paths handles it once.
 
-Without both settings nothing is published to the relay, and a standalone board is unchanged.
+Without both settings nothing is published to the relay, and a standalone board still pushes every
+event to the push configs subscribed to it.
 
 So you can choose the smallest boundary that fits: poll the log, subscribe directly, or add the
 relay without making it a condition for the board to work.

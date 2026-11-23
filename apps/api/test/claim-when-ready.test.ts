@@ -44,7 +44,8 @@ function eventOf(body: string): string {
   return typeof parsed === 'object' && parsed !== null && 'event' in parsed ? String(parsed.event) : '';
 }
 
-const relayed = async (board: BoardDO) => (await board.getPushDeliveries()).filter((d) => d.configId === RELAY_CONFIG_ID).map((d) => eventOf(d.body));
+/** The `card.ready` events queued for the relay (record events and `work.available` are relayed too). */
+const relayed = async (board: BoardDO) => (await board.getPushDeliveries()).filter((d) => d.configId === RELAY_CONFIG_ID).map((d) => eventOf(d.body)).filter((e) => e === 'card.ready');
 
 describe('a card that just became ready, on a board with no placement window', () => {
   it('is claimable at once when it is created in an agent stage', async () => {

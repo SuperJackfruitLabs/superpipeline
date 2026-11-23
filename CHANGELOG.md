@@ -14,6 +14,18 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html). Entries g
 
 ## Unreleased
 
+- **The direct push uses the event relay's envelope** (treaty phase 2). Each delivery is a CloudEvent in HTTP binary mode (`ce-id`, `ce-type`, `ce-source`, `ce-dataschema`, `ce-time`) signed `x-treaty-signature: t=<seconds>,v1=<hex>`: an HMAC keyed with the push config's token over `<t>.<ce-id>.<body>`, verified with treaty's `verifyDelivery`. `X-Superpipeline-Signature` and `X-Superpipeline-Event` are still sent beside it and will be removed in a later release, once every receiver verifies the new header.
+
+- **One id per event.** Every delivery of one event carries the same id, `<boardId>:<seq>`, where `seq` is the board's own event sequence: on each push config's delivery and on the relay. A subscriber that receives an event on both paths can handle it once. The relay's id used to be per delivery row. Pushed events that are not record events now appear in the board log by name (`GET /v1/boards/:id/events`), with the cards they name; the push queue shows each delivery's `eventId`.
+
+- **Retries follow the receiver's answer.** 408, 429, 5xx and no answer within 10 seconds are retried, up to 5 attempts; any other 4xx is the receiver refusing the event for good, and the delivery is dead-lettered at once instead of being sent four more times. Answer 503 for something you expect to know soon.
+
+- **More goes through the relay.** With `RELAY_URL` and `RELAY_TOKEN` set, every record event (`card.*`, `gate.resolved`, links) and `work.available` are relayed too. `work.available` is relayed once per event while its direct push still goes only to the agents that could claim the card. `cards.stale` is not relayed. Without a relay, every event still reaches the push configs subscribed to it.
+
+- Every pushed body has a treaty schema: `work.available` and `cards.stale` are now contracts (treaty 0.0.17).
+
+- `POST /v1/boards/:id/push-configs` refuses a body without a `url` or a `token`, or with either not a string, `400 INVALID_BODY`. A missing token was a 500, and a token that was not a string was stored as the signing secret.
+
 - A fifth vibe, Console: dense, dark-first, monospaced, with every page's keys in the footer.
 
 - A person moving a card while its run is working ends that run (`status: ended`, a new run outcome `moved`, reported to SuperWitness as cancelled). It used to stay `working` with no card naming it and hold the agent's concurrency until the 15-minute heartbeat timeout reclaimed it. Later verbs on the run are refused `409 STALE_LEASE`.

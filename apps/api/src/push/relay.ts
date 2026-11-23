@@ -7,23 +7,29 @@
  * suite's communication server) receive it from there.
  *
  * The delivery row is the outbox: it is queued in the transaction that wrote the change, and the
- * drain retries it like any push. Its id is fixed per row, so a retry the relay already stored
- * is a duplicate there, not a second event.
+ * drain retries it like any push. Its id is the event's own, `<boardId>:<seq>`, shared with the
+ * event's direct push rows, so a retry the relay already stored is a duplicate there, not a second
+ * event, and a consumer that receives the event on both paths can apply it once.
  */
 import { eventSubject, eventType, toBinary, type CloudEvent } from '@superjackfruitlabs/treaty-cloudevents';
 import catalog from '@superjackfruitlabs/treaty-event-schemas/catalog.json';
 import type { Env } from '../env';
+import { RECORD_EVENTS } from './events';
 
 /** The config id a relay delivery row carries. Not a registered push config. */
 export const RELAY_CONFIG_ID = 'relay';
 
 /**
  * What goes through the relay: every event board chat carries (gates, questions, deliveries,
- * waiting cards, decision reminders and escalations, quorum votes, held approvals, machine checks).
- * Each has a treaty schema; `relayRequest` refuses one that has none. Record events
- * (`card.*`, `gate.resolved`, links) and `work.available` are not relayed. `card.ready` is, though it
- * is not board chat: a board with a placement window sends it when a card becomes ready to claim
- * (`board/placement-window.ts`), so the placement service can reserve the card inside the window.
+ * waiting cards, decision reminders and escalations, quorum votes, held approvals, machine checks),
+ * every record event (`card.*`, `gate.resolved`, links) and `work.available` (treaty phase 2,
+ * ruling 3). Each has a treaty schema; `relayRequest` refuses one that has none. `card.ready` is
+ * relayed, though no push config can subscribe to it: a board with a placement window sends it when
+ * a card becomes ready to claim (`board/placement-window.ts`), so the placement service can reserve
+ * the card inside the window. `cards.stale` is not: it is a digest for the push configs that asked.
+ *
+ * `work.available` is relayed once per event; its direct push stays per-agent, to the agents that
+ * could claim the card (`notifyWorkAvailable`), which the relay's static subscribers cannot express.
  */
 export const RELAYED_EVENTS: ReadonlySet<string> = new Set([
   'gate.pending',
@@ -37,6 +43,8 @@ export const RELAYED_EVENTS: ReadonlySet<string> = new Set([
   'decision.pulled_back',
   'check.failed',
   'check.overridden',
+  ...RECORD_EVENTS,
+  'work.available',
   // Not board chat: a card ready to claim on a board opted into scheduling, for the placement service.
   'card.ready',
 ]);
@@ -63,12 +71,12 @@ export function hasTreatySchema(event: string): boolean {
   return dataschemaFor.has(event);
 }
 
-/** The relay request for one delivery row: where to POST and the CloudEvent's headers. */
-export function relayRequest(
-  delivery: { id: number; body: string },
-  board: { boardId: string; tenantId: string },
-  relay: RelaySettings,
-): { url: string; headers: Record<string, string> } {
+/**
+ * The CloudEvent one pushed body travels as, on either path (treaty phase 2, ruling 1): the relay
+ * and the direct push send the same attributes, under the event's own id. Throws for an event
+ * treaty's catalogue has no schema for.
+ */
+export function cloudEventFor(delivery: { eventId: string; body: string }, boardId: string): { event: CloudEvent; name: { product: string; entity: string; verb: string } } {
   const parsed: unknown = JSON.parse(delivery.body);
   const event = typeof parsed === 'object' && parsed !== null && 'event' in parsed ? String(parsed.event) : '';
   const ts = typeof parsed === 'object' && parsed !== null && 'ts' in parsed ? String(parsed.ts) : '';
@@ -79,17 +87,26 @@ export function relayRequest(
   if (!dataschema) throw new Error(`no treaty schema for ${event}`);
   const attributes: Record<string, string> = {
     specversion: '1.0',
-    id: `${board.boardId}:${delivery.id}`,
-    source: `/superpipeline/boards/${board.boardId}`,
+    id: delivery.eventId,
+    source: `/superpipeline/boards/${boardId}`,
     type: eventType(name, 1),
     datacontenttype: 'application/json',
     dataschema,
   };
   if (ts) attributes.time = ts;
-  const cloudEvent: CloudEvent = { attributes };
+  return { event: { attributes }, name };
+}
+
+/** The relay request for one delivery row: where to POST and the CloudEvent's headers. */
+export function relayRequest(
+  delivery: { eventId: string; body: string },
+  board: { boardId: string; tenantId: string },
+  relay: RelaySettings,
+): { url: string; headers: Record<string, string> } {
+  const { event, name } = cloudEventFor(delivery, board.boardId);
   const subject = eventSubject(board.tenantId, name);
   return {
     url: `${relay.url}/v1/events/${subject}`,
-    headers: { ...toBinary(cloudEvent, 'http').headers, Authorization: `Bearer ${relay.token}` },
+    headers: { ...toBinary(event, 'http').headers, Authorization: `Bearer ${relay.token}` },
   };
 }

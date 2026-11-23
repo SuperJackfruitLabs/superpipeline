@@ -15,7 +15,13 @@ export async function pushConfigRegister({ request, env, tenantId, agent, stub }
   if (agentId.startsWith('svc:')) return refuse('INVALID_INPUT', 'X-Agent-Id may not name a service');
   const sent = await readObject(request);
   if (!sent.ok) return sent.response;
-  const body = sent.value as { url: string; token: string; capabilities?: string[]; events?: string[] };
+  const body = sent.value as { url: unknown; token: unknown; capabilities?: string[]; events?: string[] };
+  // push.v1's AgentPushConfigRequest: a non-empty `url` and a string `token`, the secret each
+  // delivery is signed with. Unchecked, a missing token reached the board's NOT NULL column as a
+  // 500 and a number was stored as a signing secret.
+  if (typeof body.url !== 'string' || body.url === '' || typeof body.token !== 'string') {
+    return refuse('INVALID_BODY', '`url` and `token` are required strings');
+  }
   // Built from named fields rather than `...body`: `agentId` is the caller's own identity,
   // asserted by the `X-Agent-Id` header above — `as` strips nothing at runtime, so a body
   // `agentId` would otherwise win over the header for this call (it did, before this fix: a

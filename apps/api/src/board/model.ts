@@ -686,6 +686,8 @@ export interface PushDeliveryView {
   body: string;
   status: string;
   attempts: number;
+  /** The event's id, `<boardId>:<seq>`: the same on every row of one event, relay included. */
+  eventId: string;
 }
 
 /** An in-app notification for a notify-worthy status transition (docs/07 §7). */

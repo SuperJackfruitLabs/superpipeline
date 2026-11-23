@@ -1,6 +1,6 @@
 import { newId } from '../ids';
-import { PUSH_TIMEOUT_MS, type PushOutcome, type PushSender, postWithTimeout, signAndSend } from '../push/deliver';
-import { SUBSCRIBABLE_EVENTS } from '../push/events';
+import { PUSH_TIMEOUT_MS, type PushOutcome, type PushSender, isRetryable, postWithTimeout, signAndSend } from '../push/deliver';
+import { SUBSCRIBABLE_EVENTS, cardIdsOf } from '../push/events';
 import { RELAY_CONFIG_ID, RELAYED_EVENTS, relayRequest, relaySettings } from '../push/relay';
 import { isPublicHttpUrl } from '../push/ssrf';
 import type { BoardContext } from './context';
@@ -20,46 +20,82 @@ export type PushDeps = Pick<
   | 'sql'
 >;
 
+/** Where one delivery of a pushed event goes: a push config, or the relay. */
+export interface PushTarget {
+  configId: string;
+  url: string;
+}
+
 /**
- * Queue one body for every push config subscribed to its event. **Subscription only, never
- * capability**: a gate, a question, a follow-up or a waiting card is addressed to a person, and
- * matching on capability (as `work.available` does) would send it to whichever agents advertise
- * the stage, or to nobody when a person owns it.
+ * Queue one pushed event: a delivery row for each target, and one for the suite's event relay
+ * when this deployment publishes to one and relays this event (treaty plan step 7). Every row of
+ * the event carries one event id, `<boardId>:<seq>`, where `seq` is the board's own event sequence
+ * (treaty phase 2, ruling 2), so a consumer that receives it on both paths applies it once.
+ *
+ * A record event passes the seq and time `emit` gave it. Any other event is written to the event log here,
+ * by name and the cards it names only (a decision body can carry an approval request's arguments,
+ * which the log's readers must not see), and not broadcast. Nothing is written when nothing is
+ * queued. Returns the seq, or null when no row was queued.
  */
-export function queueSubscribedPush(deps: Pick<PushDeps, 'now' | 'sql'>, payload: { event: string }, opts?: { servicesOnly?: boolean }): void {
+export function queueEvent(
+  deps: Pick<PushDeps, 'env' | 'now' | 'sql'>,
+  payload: { event: string },
+  targets: readonly PushTarget[],
+  opts?: { seq?: number; ts?: string },
+): number | null {
+  const relay = relaySettings(deps.env);
+  const rows = relay && RELAYED_EVENTS.has(payload.event) ? [...targets, { configId: RELAY_CONFIG_ID, url: relay.url }] : [...targets];
+  if (rows.length === 0) return null;
+  const ts = opts?.ts ?? deps.now();
+  const seq = opts?.seq ?? logPushedEvent(deps, payload, ts);
   const body = JSON.stringify(payload);
-  const ts = deps.now();
+  for (const row of rows) {
+    deps.sql.exec(
+      `INSERT INTO push_deliveries (config_id, url, body, status, attempts, created_at, event_seq) VALUES (?, ?, ?, 'pending', 0, ?, ?)`,
+      row.configId,
+      row.url,
+      body,
+      ts,
+      seq,
+    );
+  }
+  return seq;
+}
+
+/** The pushed event's place in the board's event log: its seq. */
+function logPushedEvent(deps: Pick<PushDeps, 'sql'>, payload: { event: string }, ts: string): number {
+  const cardIds = cardIdsOf(payload);
+  deps.sql.exec(`INSERT INTO events (type, payload_json, ts) VALUES (?, ?, ?)`, payload.event, JSON.stringify({ cardIds }), ts);
+  return Number(deps.sql.exec(`SELECT last_insert_rowid() AS seq`).one().seq);
+}
+
+/**
+ * Every push config subscribed to an event. **Subscription only, never capability**: a gate, a
+ * question, a follow-up or a waiting card is addressed to a person, and matching on capability (as
+ * `work.available` does) would send it to whichever agents advertise the stage, or to nobody when a
+ * person owns it.
+ */
+export function subscribedTargets(deps: Pick<PushDeps, 'sql'>, event: string, opts?: { servicesOnly?: boolean }): PushTarget[] {
+  const out: PushTarget[] = [];
   for (const cfg of deps.sql.exec(`SELECT * FROM push_configs`).toArray()) {
     // A service config subscribed to a decision event was registered with `approval-requests:relay`
     // (service-routes.ts), so `servicesOnly` reaches the decision carrier and no agent.
     if (opts?.servicesOnly === true && !(typeof cfg.agent_id === 'string' && cfg.agent_id.startsWith('svc:'))) continue;
     const events: unknown = typeof cfg.events_json === 'string' ? JSON.parse(cfg.events_json) : null;
-    if (!Array.isArray(events) || !events.includes(payload.event)) continue;
-    deps.sql.exec(
-      `INSERT INTO push_deliveries (config_id, url, body, status, attempts, created_at) VALUES (?, ?, ?, 'pending', 0, ?)`,
-      cfg.id,
-      cfg.url,
-      body,
-      ts,
-    );
+    if (!Array.isArray(events) || !events.includes(event)) continue;
+    out.push({ configId: cfg.id as string, url: cfg.url as string });
   }
+  return out;
 }
 
-/**
- * Queue a relayed event for the suite's event relay too (treaty plan step 7), when this deployment
- * publishes to one. The direct push is queued as before, by `queueSubscribedPush`; this row rides
- * the same queue, transaction and retries, and the drain sends it as a CloudEvent.
- */
-export function queueRelay(deps: Pick<PushDeps, 'env' | 'now' | 'sql'>, payload: { event: string }): void {
-  const relay = relaySettings(deps.env);
-  if (!relay || !RELAYED_EVENTS.has(payload.event)) return;
-  deps.sql.exec(
-    `INSERT INTO push_deliveries (config_id, url, body, status, attempts, created_at) VALUES (?, ?, ?, 'pending', 0, ?)`,
-    RELAY_CONFIG_ID,
-    relay.url,
-    JSON.stringify(payload),
-    deps.now(),
-  );
+/** Queue one event for every push config subscribed to it, and for the relay when it relays it. */
+export function queuePush(deps: Pick<PushDeps, 'env' | 'now' | 'sql'>, payload: { event: string }, opts?: { servicesOnly?: boolean }): number | null {
+  return queueEvent(deps, payload, subscribedTargets(deps, payload.event, opts));
+}
+
+/** Queue one event for the relay alone (`card.ready`, which no push config subscribes to). */
+export function queueRelay(deps: Pick<PushDeps, 'env' | 'now' | 'sql'>, payload: { event: string }): number | null {
+  return queueEvent(deps, payload, []);
 }
 
 /** One config's share of a single drain. */
@@ -143,6 +179,15 @@ export async function registerPushConfig(deps: PushDeps, input: PushConfigInput)
   return { ok: true, value: { configId: id } };
 }
 
+/**
+ * A delivery row's event id: `<boardId>:<seq>`. A row queued before rows carried their event's seq
+ * keeps an id of its own, which no event's id can equal.
+ */
+function eventIdOf(deps: Pick<PushDeps, 'getMeta'>, row: Record<string, unknown>): string {
+  const boardId = deps.getMeta('boardId') ?? '';
+  return row.event_seq === null || row.event_seq === undefined ? `${boardId}:delivery-${Number(row.id)}` : `${boardId}:${Number(row.event_seq)}`;
+}
+
 /** Inspect the push delivery queue (docs/05 §4). */
 export async function getPushDeliveries(deps: PushDeps, opts?: { status?: string }): Promise<PushDeliveryView[]> {
   const where = opts?.status ? ` WHERE status = ?` : '';
@@ -158,11 +203,14 @@ export async function getPushDeliveries(deps: PushDeps, opts?: { status?: string
       body: r.body as string,
       status: r.status as string,
       attempts: Number(r.attempts),
+      eventId: eventIdOf(deps, r),
     }));
 }
 
 /**
- * Drain pending push deliveries: sign each with its config token and send (docs/05 §4). The sender
+ * Drain pending push deliveries: sign each with its config token and send (docs/05 §4). A delivery
+ * the receiver refused for good (any 4xx but 408 and 429) is dead-lettered at once; a transient
+ * failure is retried up to the cap (treaty's receiver status contract). The sender
  * is injectable (tests pass a stub); production durability — Queue + Workflow with exponential
  * backoff — wraps this. A single drain marks each delivery sent/failed.
  */
@@ -174,7 +222,7 @@ export async function dispatchPushDeliveries(deps: PushDeps, sender: PushSender 
   const perConfig = new Map<string, number>();
   const rows = deps.sql
     .exec(
-      `SELECT d.id, d.config_id, d.url, d.body, d.attempts, c.token FROM push_deliveries d LEFT JOIN push_configs c ON d.config_id = c.id
+      `SELECT d.id, d.config_id, d.url, d.body, d.attempts, d.event_seq, c.token FROM push_deliveries d LEFT JOIN push_configs c ON d.config_id = c.id
        WHERE d.status IN ('pending', 'failed') AND d.attempts < ? AND (c.id IS NOT NULL OR d.config_id = ?)
        ORDER BY d.attempts ASC, d.id ASC LIMIT 500`,
       MAX_PUSH_ATTEMPTS,
@@ -193,10 +241,16 @@ export async function dispatchPushDeliveries(deps: PushDeps, sender: PushSender 
   for (const r of rows) {
     const outcome =
       r.config_id === RELAY_CONFIG_ID
-        ? await sendToRelay(deps, Number(r.id), typeof r.body === 'string' ? r.body : '', sender, opts?.timeoutMs)
-        : await signAndSend({ id: Number(r.id), url: r.url as string, body: r.body as string, token: r.token as string }, sender, opts?.timeoutMs);
+        ? await sendToRelay(deps, Number(r.id), eventIdOf(deps, r), typeof r.body === 'string' ? r.body : '', sender, opts?.timeoutMs)
+        : await signAndSend(
+            { id: Number(r.id), eventId: eventIdOf(deps, r), url: r.url as string, body: r.body as string, token: r.token as string },
+            deps.getMeta('boardId') ?? '',
+            sender,
+            opts?.timeoutMs,
+          );
     const attempts = Number(r.attempts) + 1;
-    const status = outcome.ok ? 'sent' : attempts >= MAX_PUSH_ATTEMPTS ? 'dead' : 'failed';
+    // The relay's retry rules on both paths: only a transient failure is sent again.
+    const status = outcome.ok ? 'sent' : attempts >= MAX_PUSH_ATTEMPTS || !isRetryable(outcome.status) ? 'dead' : 'failed';
     deps.sql.exec(`UPDATE push_deliveries SET status = ?, attempts = ?, last_status = ? WHERE id = ?`, status, attempts, outcome.status, r.id);
     if (outcome.ok) sent++;
     else failed++;
@@ -210,7 +264,7 @@ export async function dispatchPushDeliveries(deps: PushDeps, sender: PushSender 
 }
 
 /** One relay delivery: the queued body as a CloudEvent, to the relay this deployment names now. */
-async function sendToRelay(deps: Pick<PushDeps, 'env' | 'getMeta'>, id: number, body: string, sender: PushSender, timeoutMs?: number): Promise<PushOutcome> {
+async function sendToRelay(deps: Pick<PushDeps, 'env' | 'getMeta'>, id: number, eventId: string, body: string, sender: PushSender, timeoutMs?: number): Promise<PushOutcome> {
   const relay = relaySettings(deps.env);
   const boardId = deps.getMeta('boardId');
   const tenantId = deps.getMeta('tenantId');
@@ -218,7 +272,7 @@ async function sendToRelay(deps: Pick<PushDeps, 'env' | 'getMeta'>, id: number, 
   if (!relay || !boardId || !tenantId) return { id, ok: false, status: 0 };
   let request;
   try {
-    request = relayRequest({ id, body }, { boardId, tenantId }, relay);
+    request = relayRequest({ eventId, body }, { boardId, tenantId }, relay);
   } catch {
     return { id, ok: false, status: 0 };
   }

@@ -52,7 +52,8 @@ function record(body: string): Record<string, unknown> {
   return typeof parsed === 'object' && parsed !== null ? Object.fromEntries(Object.entries(parsed)) : {};
 }
 
-const relayed = async (board: BoardDO) => (await board.getPushDeliveries()).filter((d) => d.configId === RELAY_CONFIG_ID).map((d) => record(d.body));
+/** The `card.ready` bodies queued for the relay (record events and `work.available` are relayed too). */
+const relayed = async (board: BoardDO) => (await board.getPushDeliveries()).filter((d) => d.configId === RELAY_CONFIG_ID).map((d) => record(d.body)).filter((b) => b.event === 'card.ready');
 
 describe('the setting', () => {
   it('is off until set, takes 0 to 30 whole seconds, and 0 turns it off again', async () => {

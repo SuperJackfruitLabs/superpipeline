@@ -1,7 +1,7 @@
 import type { PreviewBlock } from '../approval-subject-kinds/kind';
 import type { JsonValue } from '../json';
 import type { GateOption, GateOptionMeaning, OptionScope } from './gate-option';
-import type { BoardUsage, CardView, DecisionDeadline, DecisionTimeout, StageDef, StaleSettings } from './model';
+import type { BoardUsage, CardView, DecisionDeadline, DecisionTimeout, StageDef, StaleCardView, StaleSettings } from './model';
 import type { ApprovalDetail, StrictDecision } from './strict-decision';
 
 /**
@@ -402,6 +402,33 @@ export interface CardChecksView {
   /** `open` while the card waits on them; `passed` once the gate opened or the stage passed; `returned` once a failure sent the card back; `closed` when the card left otherwise. */
   status: 'open' | 'passed' | 'returned' | 'closed';
   checks: CheckView[];
+}
+
+/**
+ * What a `work.available` carries (treaty's `superpipeline/work.available.v1.json`): a card became
+ * claimable by the agent this push config subscribes. A hint to claim now; the claim is the truth.
+ */
+export interface WorkAvailableBody {
+  event: 'work.available';
+  /** Never null: a card is claimable only on an initialised board. */
+  boardId: string;
+  cardId: string;
+  stageKey: string;
+  ts: string;
+}
+
+/**
+ * What a `cards.stale` carries (treaty's `superpipeline/cards.stale.v1.json`): the board's daily
+ * digest of cards that will go on waiting unless somebody acts. Never sent empty.
+ */
+export interface StaleDigestBody {
+  event: 'cards.stale';
+  /** Never null: an uninitialised board has no stale cards. */
+  boardId: string;
+  /** Empty when the board has no name. */
+  boardName: string;
+  cards: StaleCardView[];
+  ts: string;
 }
 
 /** What a `check.failed` carries: a check failed and the card went back to `returnedTo`. */

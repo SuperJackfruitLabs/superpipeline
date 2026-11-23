@@ -1,6 +1,6 @@
 import type { BoardContext } from './context';
 import type { DecisionDeadline, DecisionKind, DecisionTimeout, Result, StageDef } from './model';
-import { queueRelay, queueSubscribedPush } from './push';
+import { queuePush } from './push';
 import { cleanTimeout, parseDecisionTimeout, timeoutError } from './rules';
 
 /**
@@ -247,8 +247,7 @@ export function sweepDecisionTimeouts(deps: DecisionTimeoutDeps, nowIso: string)
         if (claimed.rowsWritten > 0) {
           const body = noticeBody(deps, wait, 'decision.escalated', nowIso);
           if (body) {
-            queueSubscribedPush(deps, body);
-            queueRelay(deps, body);
+            queuePush(deps, body);
           }
           deps.notify('decision-escalated', cardId, `${KIND_WORDS[kind]} on "${title}" went unanswered and was escalated to the workspace's owners and admins.`);
           deps.emit('decision.escalated', { kind, decisionId, cardId });
@@ -271,8 +270,7 @@ export function sweepDecisionTimeouts(deps: DecisionTimeoutDeps, nowIso: string)
         if (claimed.rowsWritten > 0) {
           const body = noticeBody(deps, wait, 'decision.reminded', nowIso);
           if (body) {
-            queueSubscribedPush(deps, body);
-            queueRelay(deps, body);
+            queuePush(deps, body);
           }
           deps.notify('decision-reminder', cardId, `Reminder: ${KIND_WORDS[kind].toLowerCase()} on "${title}" is still waiting on you.`);
           deps.emit('decision.reminded', { kind, decisionId, cardId });

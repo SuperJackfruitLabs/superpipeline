@@ -5,7 +5,7 @@ import { DOCUMENTS, checkExchange, takeMismatches, treatyHttpChecked } from './h
 const headers = { 'X-Tenant-Id': 'tnt_treaty_hook', 'Content-Type': 'application/json' };
 
 describe('treaty HTTP contracts are checked on every exchange', () => {
-  it('checks the agent-work, decisions and approvals routes a test reaches', async () => {
+  it('checks the agent-work, decisions, approvals and push routes a test reaches', async () => {
     const before = { ...treatyHttpChecked };
     const created = await SELF.fetch('https://api.test/v1/boards', {
       method: 'POST', headers, body: JSON.stringify({ name: 'Hook', stages: [{ key: 'a', name: 'A', order: 0, ownerKind: 'capability', owner: 'a' }] }),
@@ -14,6 +14,11 @@ describe('treaty HTTP contracts are checked on every exchange', () => {
     // agent-work: a claim; decisions: the pending gates; approvals: a request with no service token.
     await SELF.fetch(`https://api.test/v1/boards/${boardId}/claims`, { method: 'POST', headers: { ...headers, 'X-Agent-Id': 'agt_hook' }, body: JSON.stringify({ capabilities: ['a'] }) });
     await SELF.fetch(`https://api.test/v1/boards/${boardId}/gates/pending`, { headers });
+    // push: a person registering a push config for a named agent.
+    const registered = await SELF.fetch(`https://api.test/v1/boards/${boardId}/push-configs`, {
+      method: 'POST', headers: { ...headers, 'X-Agent-Id': 'agt_hook' }, body: JSON.stringify({ url: 'https://agent.example.com/push', token: 's' }),
+    });
+    expect(registered.status).toBe(201);
     // A person on a service-only route is refused 401 UNAUTHORIZED (it read as a 405, which the contract does not name).
     const notAService = await SELF.fetch(`https://api.test/v1/boards/${boardId}/approval-requests/apr_0000000000000000`, { headers });
     expect(notAService.status).toBe(401);

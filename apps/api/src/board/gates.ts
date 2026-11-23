@@ -8,7 +8,7 @@ import { applyVariantChoice, deciderError, gateVariants, judgeVariantDecision, o
 import type { GateOption } from './gate-option';
 import { NOT_ACTED_SQL, approvalNotActed, heldDetail, heldError, holdFields, judgeReleaseTime, releaseField } from './gate-release';
 import { type DeciderRole, type QuorumApproval, gateQuorum, judgeQuorumApproval, quorumApprovals, quorumSnapshot, recordQuorumApproval } from './gate-quorum';
-import { queueRelay, queueSubscribedPush } from './push';
+import { queuePush } from './push';
 import type { CardView, Result, Row } from './model';
 import { EXPIRED_DECISION, handoffSummary, isApproveDecision } from './rules';
 import { previewSummary, subjectEnvelope, variantsEnvelope, variantsSummary } from './subject-envelope';
@@ -729,8 +729,7 @@ function notifyApprovalRecorded(deps: GatesDeps, gateId: string, approval: Pick<
     approval: approvalOnTheWire(approval),
     quorum,
   };
-  queueSubscribedPush(deps, body);
-  queueRelay(deps, body);
+  queuePush(deps, body);
 }
 
 /** A card's session replay: its durable activity waterfall + the handoff carried into it (docs/07 §4). */
@@ -867,8 +866,7 @@ function notifyGatePending(deps: GatesDeps, gateId: string): void {
   if (!gate) return;
   const payload = gatePendingBody(deps, gate);
   if (!payload) return;
-  queueSubscribedPush(deps, payload);
-  queueRelay(deps, payload);
+  queuePush(deps, payload);
 }
 
 /**
@@ -963,8 +961,7 @@ function notifyDeliveryPending(deps: GatesDeps, gateId: string): void {
   if (!gate) return;
   const payload = deliveryPendingBody(deps, gate);
   if (!payload) return;
-  queueSubscribedPush(deps, payload);
-  queueRelay(deps, payload);
+  queuePush(deps, payload);
 }
 
 /**

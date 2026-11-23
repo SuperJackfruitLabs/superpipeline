@@ -7,6 +7,7 @@ import type { BoardContext } from './context';
 import type { CardNeedsHuman, CardView, Row, StageDef } from './model';
 import { RESOLVED_SQL } from './rules';
 import { logError } from '../log';
+import { queueEvent, subscribedTargets } from './push';
 
 /**
  * The board's shared reads and writes: its meta keys, its stages, card rows and the cards they
@@ -23,6 +24,7 @@ export type CardStoreDeps = Pick<
   | 'childrenCost'
   | 'ctx'
   | 'commitEffects'
+  | 'env'
   | 'now'
   | 'nowMs'
   | 'openChildCount'
@@ -280,17 +282,10 @@ export function notify(deps: CardStoreDeps, kind: string, cardId: string, body: 
 
 /** Record events to whoever subscribed (Superlibrary spec §5). One delivery per matching config. */
 function queueRecordPush(deps: CardStoreDeps, type: string, seq: number, payload: Record<string, unknown>, ts: string): void {
-  const configs = deps.sql.exec(`SELECT id, url, events_json FROM push_configs`).toArray()
-    .filter((c) => (JSON.parse(c.events_json as string) as string[]).includes(type));
-  if (configs.length === 0) return;
+  const targets = subscribedTargets(deps, type);
   const body: RecordPushBody = { event: type, boardId: getMeta(deps, 'boardId') as string, seq, ts, cardIds: cardIdsOf(payload) };
-  const text = JSON.stringify(body);
-  for (const c of configs) {
-    deps.sql.exec(
-      `INSERT INTO push_deliveries (config_id, url, body, status, attempts, created_at) VALUES (?, ?, ?, 'pending', 0, ?)`,
-      c.id, c.url, text, ts,
-    );
-  }
+  // The event's id is the seq `emit` just gave it, which the body carries too.
+  if (queueEvent(deps, body, targets, { seq, ts }) === null) return;
   // The one alarm drains pending deliveries (scheduleReclaim computes drainAt from them).
   void deps.scheduleReclaim().catch((err) => logError('record push: alarm not armed', String(err)));
 }

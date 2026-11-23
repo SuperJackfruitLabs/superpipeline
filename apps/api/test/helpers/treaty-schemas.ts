@@ -5,8 +5,8 @@
  * `checkAgainstTreaty`, so each scenario the suite already builds (plain, subject-bound, variant,
  * quorum, release-time and checked gates, questions, approval requests, follow-ups, waiting cards,
  * reminders and escalations, held approvals, machine checks, record events) is checked against
- * `@superjackfruitlabs/treaty-event-schemas`. A body whose event treaty has no schema for
- * yet is skipped; one that has a schema and fails it fails the test that read it.
+ * `@superjackfruitlabs/treaty-event-schemas`. Every pushed body is typed: a body whose event
+ * treaty has no schema for fails the test that read it, as does one that fails its schema.
  */
 import { Validator } from '@cfworker/json-schema';
 import catalog from '@superjackfruitlabs/treaty-event-schemas/catalog.json';
@@ -21,7 +21,9 @@ import deliveryPending from '@superjackfruitlabs/treaty-event-schemas/superpipel
 import elicitationPending from '@superjackfruitlabs/treaty-event-schemas/superpipeline/elicitation.pending.v1.json';
 import gateApprovalRecorded from '@superjackfruitlabs/treaty-event-schemas/superpipeline/gate.approval_recorded.v1.json';
 import gatePending from '@superjackfruitlabs/treaty-event-schemas/superpipeline/gate.pending.v1.json';
+import cardsStale from '@superjackfruitlabs/treaty-event-schemas/superpipeline/cards.stale.v1.json';
 import record from '@superjackfruitlabs/treaty-event-schemas/superpipeline/record.v1.json';
+import workAvailable from '@superjackfruitlabs/treaty-event-schemas/superpipeline/work.available.v1.json';
 
 const validators = new Map<string, Validator>();
 /** Every SuperPipeline schema treaty publishes; `decision.timeout` covers `decision.reminded` and `decision.escalated`. */
@@ -38,6 +40,8 @@ const SCHEMAS = [
   checkOverridden,
   cardReady,
   record,
+  workAvailable,
+  cardsStale,
 ];
 for (const schema of SCHEMAS) {
   const asData: object = schema;
@@ -54,7 +58,7 @@ export function checkAgainstTreaty(json: string): void {
   const body: unknown = JSON.parse(json);
   const event = typeof body === 'object' && body !== null && 'event' in body ? body.event : undefined;
   const validator = typeof event === 'string' ? byEvent.get(event) : undefined;
-  if (!validator) return;
+  if (!validator) throw new Error(`${String(event)} has no treaty schema: every pushed body must be one treaty's catalog names`);
   treatyChecked.count++;
   const result = validator.validate(body);
   if (!result.valid) {

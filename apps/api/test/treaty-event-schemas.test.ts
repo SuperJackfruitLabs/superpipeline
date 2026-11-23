@@ -45,7 +45,27 @@ describe("treaty's event schemas", () => {
     expect(refused).toEqual(events);
   });
 
-  it('skip an event treaty has no schema for yet', () => {
-    expect(() => checkAgainstTreaty(JSON.stringify({ event: 'work.available' }))).not.toThrow();
+  it('check work.available and cards.stale, which every push config can receive', () => {
+    const work = { event: 'work.available', boardId: 'brd_00000000000000e4', cardId: 'crd_1', stageKey: 'a', ts: '2026-11-23T00:00:00.000Z' };
+    expect(() => checkAgainstTreaty(JSON.stringify(work))).not.toThrow();
+    expect(() => checkAgainstTreaty(JSON.stringify({ ...work, boardId: null }))).toThrow(/work.available does not validate/);
+    expect(() => checkAgainstTreaty(JSON.stringify({ event: 'cards.stale', boardId: 'brd_00000000000000e4', boardName: '', cards: [], ts: work.ts }))).toThrow(/cards.stale does not validate/);
+  });
+
+  it('refuse a body whose event treaty has no schema for: every pushed body is typed', () => {
+    expect(() => checkAgainstTreaty(JSON.stringify({ event: 'made.up' }))).toThrow(/made.up has no treaty schema/);
+    expect(() => checkAgainstTreaty(JSON.stringify({ cardId: 'crd_1' }))).toThrow(/has no treaty schema/);
+  });
+
+  it('check the work.available and cards.stale bodies the board builds', async () => {
+    await runInDurableObject(boardStub('treaty-schemas-work'), async (board: BoardDO) => {
+      await board.init({ id: 'brd_00000000000000e5', tenantId: 'tnt_a', name: 'Treaty', stages: STAGES });
+      await board.registerPushConfig({ agentId: 'agt_treaty', url: 'https://agent.example.com/push', token: 's', capabilities: ['writing'], events: ['work.available', 'cards.stale'] });
+      await board.createCard({ title: 'x', ownerUserId: 'usr_a' });
+      const before = treatyChecked.count;
+      const rows = (await board.getPushDeliveries()).filter((r) => JSON.parse(r.body).event === 'work.available');
+      expect(rows.length).toBeGreaterThan(0);
+      expect(treatyChecked.count).toBeGreaterThan(before);
+    });
   });
 });
