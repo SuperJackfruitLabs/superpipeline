@@ -1,6 +1,6 @@
 import { SELF } from 'cloudflare:test';
 import { describe, it, expect } from 'vitest';
-import { githubSignatureHeader } from '../src/references/github-signature';
+import { githubSignatureHeader } from './helpers/github-signature';
 
 const T = { 'X-Tenant-Id': 'tnt_wh', 'Content-Type': 'application/json' };
 const base = 'https://api.test';

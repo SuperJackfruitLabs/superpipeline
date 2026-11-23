@@ -1,7 +1,7 @@
 import { env, runInDurableObject } from 'cloudflare:test';
 import { describe, it, expect } from 'vitest';
 import { BoardDO, type BoardInit } from '../src/board/board-do';
-import { githubSignatureHeader } from '../src/references/github-signature';
+import { githubSignatureHeader } from './helpers/github-signature';
 
 const PIPE: BoardInit['stages'] = [{ key: 'triage', name: 'Triage', order: 0 }];
 

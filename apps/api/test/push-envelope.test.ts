@@ -1,8 +1,8 @@
 /**
  * The direct push on the relay's envelope (treaty phase 2, ruling 1): CloudEvents binary-mode
  * headers, `x-treaty-signature` signed with the push config's token over `t.id.body`, and the
- * relay's retry rules. `X-Superpipeline-Signature` is still sent beside it until every receiver
- * verifies the treaty header. Checked against treaty's own vectors.
+ * relay's retry rules, and nothing else: the older `X-Superpipeline-Signature` and
+ * `X-Superpipeline-Event` are gone (phase 2's cleanup). Checked against treaty's own vectors.
  */
 import { runInDurableObject } from 'cloudflare:test';
 import { describe, expect, it } from 'vitest';
@@ -10,7 +10,6 @@ import vectors from '@superjackfruitlabs/treaty-contracts/data/fixtures/cloudeve
 import { SIGNATURE_HEADER, verifyDelivery } from '@superjackfruitlabs/treaty-cloudevents';
 import type { BoardDO } from '../src/board/board-do';
 import { directPushHeaders, isRetryable, type PushSender } from '../src/push/deliver';
-import { verifyGithubSignature } from '../src/references/github-signature';
 import { boardStub, STAGES } from './approval-subject-fixtures';
 
 const UTF8 = new TextEncoder();
@@ -25,12 +24,9 @@ describe("the direct push matches treaty's delivery vectors", () => {
       const { id, source } = d.event.attributes;
       const boardId = source.replace('/superpipeline/boards/', '');
       const headers = await directPushHeaders({ eventId: id, body: d.http.body, token: d.secret }, boardId, d.t * 1000);
-      // Every header treaty names, exactly; the two old ones beside them.
+      // Every header treaty names, exactly, and no other.
       for (const [name, value] of Object.entries(d.http.headers)) expect({ name, value: headers[name] }).toEqual({ name, value });
-      expect(new Set(Object.keys(headers))).toEqual(new Set([...Object.keys(d.http.headers), 'X-Superpipeline-Event', 'X-Superpipeline-Signature']));
-      expect(headers['X-Superpipeline-Event']).toBe(JSON.parse(d.http.body).event);
-      const legacy = headers['X-Superpipeline-Signature'] ?? '';
-      expect(await verifyGithubSignature(d.secret, d.http.body, legacy)).toBe(true);
+      expect(new Set(Object.keys(headers))).toEqual(new Set(Object.keys(d.http.headers)));
       await verifyDelivery(d.secret, headers[SIGNATURE_HEADER] ?? null, id, UTF8.encode(d.http.body), { nowMs: d.t * 1000 });
     });
   }
@@ -57,15 +53,15 @@ describe('a drained direct push', () => {
         'ce-type': 'com.superjackfruit.superpipeline.card.created.v1',
         'ce-dataschema': 'https://raw.githubusercontent.com/SuperJackfruitLabs/treaty/main/schemas/superpipeline/record.v1.json',
         'content-type': 'application/json',
-        'X-Superpipeline-Event': 'card.created',
       });
+      expect(sent?.headers).not.toHaveProperty('X-Superpipeline-Signature');
+      expect(sent?.headers).not.toHaveProperty('X-Superpipeline-Event');
       await verifyDelivery('lib-secret', sent?.headers[SIGNATURE_HEADER] ?? null, sent?.headers['ce-id'] ?? '', UTF8.encode(sent?.body ?? ''));
       const refused = await verifyDelivery('another-secret', sent?.headers[SIGNATURE_HEADER] ?? null, sent?.headers['ce-id'] ?? '', UTF8.encode(sent?.body ?? '')).then(
         () => false,
         () => true,
       );
       expect(refused).toBe(true);
-      expect(await verifyGithubSignature('lib-secret', sent?.body ?? '', sent?.headers['X-Superpipeline-Signature'] ?? '')).toBe(true);
     });
   });
 });

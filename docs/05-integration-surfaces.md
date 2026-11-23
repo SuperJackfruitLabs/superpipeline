@@ -413,10 +413,10 @@ for expiry), so the others find the card on their next claim, within their poll 
 each (`src/push/deliver.ts`) on the relay's envelope (treaty phase 2, ruling 1): the CloudEvent in
 HTTP binary mode under the event's id, `<boardId>:<seq>` (`seq` from the board's `events` log, shared
 by every row of the event, relay included), **signed** `x-treaty-signature: t=…,v1=…` with the
-config's token over `<t>.<id>.<body>` (treaty's `signDelivery`). The older `X-Superpipeline-Signature:
-sha256=…` (HMAC over the body alone, shared with the inbound GitHub verifier, `src/crypto/hmac.ts`)
-and `X-Superpipeline-Event` are still sent beside it until every receiver verifies the treaty header.
-Treaty's vectors (`fixtures/cloudevents/push-delivery.json`) pin both.
+config's token over `<t>.<id>.<body>` (treaty's `signDelivery`), and nothing else: receivers verify
+it with treaty's `verifyDelivery` and read the event's name from `ce-type`. The older
+`X-Superpipeline-Signature` (HMAC over the body alone) and `X-Superpipeline-Event` are no longer
+sent. Treaty's vectors (`fixtures/cloudevents/push-delivery.json`) pin the headers exactly.
 `POST …/push/dispatch` triggers a drain; `GET …/push/deliveries` inspects the queue. URLs are checked
 against an **SSRF denylist** (`src/push/ssrf.ts` — only public http(s); blocks localhost, loopback,
 RFC1918, link-local/169.254 metadata, IPv6 ULA/link-local).
