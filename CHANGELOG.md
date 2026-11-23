@@ -14,6 +14,8 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html). Entries g
 
 ## Unreleased
 
+## v0.0.36 — 2026-11-23
+
 - **The direct push uses the event relay's envelope** (treaty phase 2). Each delivery is a CloudEvent in HTTP binary mode (`ce-id`, `ce-type`, `ce-source`, `ce-dataschema`, `ce-time`) signed `x-treaty-signature: t=<seconds>,v1=<hex>`: an HMAC keyed with the push config's token over `<t>.<ce-id>.<body>`, verified with treaty's `verifyDelivery`. `X-Superpipeline-Signature` and `X-Superpipeline-Event` are still sent beside it and will be removed in a later release, once every receiver verifies the new header.
 
 - **One id per event.** Every delivery of one event carries the same id, `<boardId>:<seq>`, where `seq` is the board's own event sequence: on each push config's delivery and on the relay. A subscriber that receives an event on both paths can handle it once. The relay's id used to be per delivery row. Pushed events that are not record events now appear in the board log by name (`GET /v1/boards/:id/events`), with the cards they name; the push queue shows each delivery's `eventId`.
@@ -45,6 +47,10 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html). Entries g
 - Bad input is a 400, never a 500 and never a different action. Malformed JSON is `400 INVALID_JSON` on every board and service route that reads a body (it was a 500 on the run verbs, gate resolve, answering a question and approval-subject verify; `INVALID_APPROVAL_REQUEST` on creating an approval request; `INVALID_INPUT` on the evidence reference). Archiving a card with a malformed body no longer archives it. A gate decision outside `approve`, `approve_manual`, `approve_automatic`, `request_changes` and `reject`, or none, is `400 GATE_DECISION_NOT_ALLOWED` on every gate; on a plain gate it used to reject the card. The approval-subject verify and delivery service routes answer each refusal at its code's status (`INVALID_LIVE_URL` 400, `APPROVAL_SUBJECT_NOT_VERIFIED` and `APPROVAL_HELD` 409) instead of 403. A claim with no agent identity is `401 UNAUTHORIZED` (was 400).
 
 - Every error from the board and service routes is one shape, `{ "error": { "code", "message", "detail"? } }` (treaty `error.v1`). Refusals that answered a plain sentence now carry a code: `UNAUTHORIZED` (401), `FORBIDDEN` (403), `METHOD_NOT_ALLOWED` (405), `UNKNOWN_RUN_ACTION` (404), `BOARD_NOT_FOUND` (404), `INVALID_BODY` or `INVALID_INPUT` (400), and an unplanned failure is `UNEXPECTED` (500). A refusal's `detail` is under `detail` and, as before, beside `code` too. The sign-in and role refusals on the workspace routes (projects, labels, members, capabilities, agents) take the same shape; those routes' own refusals are unchanged.
+
+## v0.0.35 — 2026-11-22
+
+- Production turns on the checkpoint switches. `apps/api/wrangler.jsonc` sets `PROPOSED_CHECKPOINT_POLICY`, `PROPOSED_CHECKPOINT_SOURCE` and `PROPOSED_CHECKPOINT_SETTLEMENT` to `"true"` in its production block, since the staging rehearsal proved the coordinator path end to end; staging sets the same three as Worker secrets. Each only opens its own routes, which still demand a service principal with `checkpoints:submit` or `checkpoints:read` and a stage whose policy an owner or admin set. Removing a line turns that part off; a stage with a checkpoint policy then refuses its claims rather than running them. Ordinary boards are unchanged. (This section was added with v0.0.36; v0.0.35 shipped without one.)
 
 ## v0.0.34 — 2026-11-21
 
