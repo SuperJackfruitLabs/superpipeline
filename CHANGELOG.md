@@ -14,9 +14,12 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html). Entries g
 
 ## Unreleased
 
+## v0.0.38 — 2026-11-24
+
 - **Treaty 0.0.20.** Every treaty package and `treaty.json` are pinned to 0.0.20, which declares the Organization-plane gate's `product_not_enabled` 403 (flat-error.v1) on every SuperPipeline document. The test hook's `readBoard 403` allowance is gone: the gate's real body validates on all six documents, and a malformed one is refused.
 - **`GET /v1/agents/load`** (treaty `placement.v1`), for a placement service on `dispatch:read`: every agent of the workspace with `inFlight` (its runs still working, over every board), `capacity` (its concurrency; 0 takes nothing) and `lastHeartbeatAt` (null when it never ran). SuperDispatch already calls it; until now it answered 404.
 - **The assignee picker and SuperLibrary previews read through treaty's contracts** (`agentpod.fleet-api`'s `fleet.v1`, `superlibrary.api`'s `api.v1`) instead of trusting the body's shape. A hub fleet list off the contract shows no picker, as when the hub is down; a SuperLibrary answer off the contract shows the preview's retryable error (`invalid_response`).
+- **Contract checks in CI.** The test hook validates every service-token exchange on the board reads, run evidence, eligibility, reservations, scheduling and `agents/load` against treaty's documents; the MCP server's tools, scopes and input schemas must equal treaty's `superpipeline.v1` catalog; the `run_route` span and log line carry every key `suite.v1` requires, with its type. `treaty.json` now consumes `superwitness.telemetry`.
 
 ## v0.0.37 — 2026-11-23
 
