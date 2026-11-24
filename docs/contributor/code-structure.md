@@ -109,7 +109,7 @@ a strictly lower layer; nodes in one layer do not import each other.
 | 5 run reports | `superwitness/` |
 | 6 board | `board/` (the Durable Object, its modules and its stub) |
 | 7 errors | `api-errors.ts` (the one error body, treaty `error.v1`, and the status each code carries) |
-| 8 surfaces | `mcp/`, `dev/`, `card-links.ts`, `card-eligibility.ts`, `card-reservation.ts` |
+| 8 surfaces | `mcp/`, `dev/`, `card-links.ts`, `card-eligibility.ts`, `card-reservation.ts`, `agent-load.ts` |
 | 9 | `service-routes.ts` |
 | 10 routes | `routes/` (the router, its tables and one module per resource) |
 | 11 entry | `index.ts` |

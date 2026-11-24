@@ -1,5 +1,6 @@
 // The Worker's top-level route table (index.ts dispatches through it; the board routes are in
 // boards/table.ts). The tables replaced one if-chain in `fetch` and keep its order.
+import { agentsLoadRoute } from '../agent-load';
 import { MCP_PROTECTED_RESOURCE_PATH } from '../mcp/auth';
 import { staleAcrossBoards, superwitnessBackfill } from './admin';
 import { agentCard, agentRegistry } from './agents';
@@ -44,6 +45,8 @@ export const ROUTES: readonly Route<WorkerRequest>[] = [
   route('*', /^\/v1\/stale$/, staleAcrossBoards),
   route('*', /^\/v1\/projects(?:\/([^/]+)(?:\/(milestones|rollup))?)?$/, projects),
   route('*', /^\/v1\/milestones\/([^/]+)$/, milestone),
+  // Before `/v1/agents/:id`, which would read `load` as an agent id.
+  route('*', /^\/v1\/agents\/load$/, agentsLoadRoute),
   route('*', /^\/v1\/agents\/([^/]+)\/card$/, agentCard),
   route('*', /^\/v1\/agents(?:\/([^/]+)(?:\/(tokens)(?:\/([^/]+))?)?)?$/, agentRegistry),
   route('*', /^\/v1\/boards(?:\/([^/]+))?(?:\/(.*))?$/, boards),
