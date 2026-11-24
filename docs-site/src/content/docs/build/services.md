@@ -27,7 +27,7 @@ whoever asks.
 | `push:write` | register a push config for the [record events](/build/events/#record-events) |
 | `approval-requests:relay` | read the questions waiting on a person, broker approval requests included, and subscribe to the [decision events](/build/events/#work-and-decisions) |
 | `gates:read` | read a board's pending gates and one gate, the manual deliveries still owed a link, the cards waiting on a person, and a card's checks |
-| `dispatch:read` | read who could claim a card, and why not (the eligibility read); read a board's scheduling |
+| `dispatch:read` | read who could claim a card, and why not (the eligibility read); read every agent's load; read a board's scheduling |
 | `dispatch:reserve` | reserve a card for one agent and clear the reservation; set a board's placement window |
 | `approval-requests:write` | create a broker approval request |
 | `approval-requests:read` | read a broker approval request's decision back |
@@ -73,6 +73,15 @@ changes a board that has no placement service.
   filter: `{ cardId, stageKey, reasons, agents: [{ agentId, name, principalId, eligible, reasons }] }`.
   The top-level `reasons` are about the card itself; an agent is `eligible` when both lists are
   empty. It only reads: nothing is claimed.
+- **How busy each agent is**: `GET /v1/agents/load` (`dispatch:read`) lists every agent of the
+  workspace, whether or not it ever ran:
+  `{ agents: [{ agentId, principalId, inFlight, capacity, lastHeartbeatAt }] }`. `inFlight` is its
+  runs still working, summed over every board; a card waiting on a person is not in flight.
+  `capacity` is its concurrency (1 by default; 0 takes nothing). A claim holds an agent to its
+  capacity on each board, so an agent working on two boards can read more in flight than its
+  capacity: treat that as full. `lastHeartbeatAt` is the latest heartbeat any of its runs sent,
+  or null when it never ran. If any board cannot answer, the read fails (500) rather than
+  under-count.
 - **Hold it**: `PUT /v1/boards/:boardId/cards/:cardId/reservation`
   `{agentId, decisionId, ttlSeconds?}` (`dispatch:reserve`) holds a ready card for that agent for
   10 to 300 seconds (60 by default). Until it lapses, other agents' claims pass the card over, and

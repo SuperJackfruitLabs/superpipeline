@@ -4868,8 +4868,9 @@ exports[`the API client, pinned > getHubPrincipals 1`] = `
     "result": {
       "value": [
         {
-          "id": "agt_1",
-          "name": "Builder",
+          "displayName": "Builder",
+          "handle": "builder",
+          "id": "prn_0123456789abcdef0a01",
         },
       ],
     },

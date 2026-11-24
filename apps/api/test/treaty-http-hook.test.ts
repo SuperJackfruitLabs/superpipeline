@@ -23,7 +23,26 @@ describe('treaty HTTP contracts are checked on every exchange', () => {
     const notAService = await SELF.fetch(`https://api.test/v1/boards/${boardId}/approval-requests/apr_0000000000000000`, { headers });
     expect(notAService.status).toBe(401);
     expect((await notAService.json<{ error: { code: string } }>()).error.code).toBe('UNAUTHORIZED');
-    for (const path of Object.values(DOCUMENTS)) expect({ path, checked: treatyHttpChecked[path] }).toMatchObject({ path, checked: (before[path] ?? 0) + 1 });
+    for (const path of [DOCUMENTS.agentWork, DOCUMENTS.decisions, DOCUMENTS.approvals, DOCUMENTS.push]) expect({ path, checked: treatyHttpChecked[path] }).toMatchObject({ path, checked: (before[path] ?? 0) + 1 });
+  });
+
+  it('checks board-read and placement on a service’s exchanges only, which those documents describe', () => {
+    const before = { ...treatyHttpChecked };
+    const boards = 'https://api.test/v1/boards';
+    const load = 'https://api.test/v1/agents/load';
+    // A person's board list carries counts the service read does not: not checked against board-read.
+    checkExchange('GET', boards, '', 200, 'application/json', '{"boards":[{"id":"brd_0123456789abcdef","name":"B","cardCount":0}]}');
+    checkExchange('GET', load, '', 401, 'application/json', '{"error":{"code":"UNAUTHORIZED","message":"x"}}');
+    expect(takeMismatches()).toEqual([]);
+    expect(treatyHttpChecked).toEqual(before);
+    // A service's: checked, and a body off the contract is a mismatch.
+    checkExchange('GET', boards, '', 200, 'application/json', '{"boards":[{"id":"brd_0123456789abcdef","name":"B","updatedAt":null}]}', true);
+    checkExchange('GET', load, '', 200, 'application/json', '{"agents":[{"agentId":"agt_1","principalId":null,"inFlight":0,"capacity":1,"lastHeartbeatAt":null}]}', true);
+    expect(takeMismatches()).toEqual([]);
+    expect(treatyHttpChecked[DOCUMENTS.boardRead]).toBe((before[DOCUMENTS.boardRead] ?? 0) + 1);
+    expect(treatyHttpChecked[DOCUMENTS.placement]).toBe((before[DOCUMENTS.placement] ?? 0) + 1);
+    checkExchange('GET', load, '', 200, 'application/json', '{"agents":[{"agentId":"agt_1","principalId":null,"inFlight":-1,"capacity":1}]}', true);
+    expect(takeMismatches().join('\n')).toContain('readAgentLoad 200 does not validate');
   });
 
   it('records a response that does not match, naming the operation, status and errors', () => {

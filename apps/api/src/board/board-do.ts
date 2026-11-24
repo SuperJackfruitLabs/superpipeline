@@ -31,6 +31,7 @@ import * as push from './push';
 import * as references from './references';
 import * as reservations from './reservations';
 import * as runHistory from './run-history';
+import * as runLoads from './run-load';
 import * as runReports from './run-reports';
 import * as runVerbs from './run-verbs';
 import * as schedules from './schedules';
@@ -262,6 +263,10 @@ export class BoardDO extends DurableObject<Env> {
 
   agentLoad(...args: OpArgs<typeof claims.agentLoad>): ReturnType<typeof claims.agentLoad> {
     return claims.agentLoad(this.board, ...args);
+  }
+
+  runLoad(): Promise<Record<string, runLoads.AgentRunLoad>> {
+    return Promise.resolve(runLoads.runLoad(this.board));
   }
 
   summaryCounts(...args: OpArgs<typeof claims.summaryCounts>): ReturnType<typeof claims.summaryCounts> {

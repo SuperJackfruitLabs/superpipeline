@@ -1,7 +1,7 @@
 {
   "$schema": "https://raw.githubusercontent.com/SuperJackfruitLabs/treaty/main/schemas/treaty/product-manifest.v1.json",
   "product": "superpipeline",
-  "treaty": "0.0.17",
+  "treaty": "0.0.19",
   "produces": [
     "superpipeline.events",
     "superpipeline.run-checkpoint",
@@ -23,6 +23,7 @@
     "agentpod.evidence",
     "agentpod.fleet-api",
     "superwitness.runs",
-    "superlibrary.api"
+    "superlibrary.api",
+    "superwitness.telemetry"
   ]
 }

@@ -3,9 +3,23 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('$lib/hub-token', () => ({ libraryToken: vi.fn(async () => 'lib-token'), forgetLibraryToken: vi.fn(), libraryConfigured: vi.fn(() => true), libraryProblem: vi.fn(() => null) }));
 import { forgetLibraryToken, libraryConfigured, libraryProblem, libraryToken } from '$lib/hub-token';
-import { LibraryError, hasReason, embedCallbacks, libraryFetch, libraryRef, needsReconnect, reasonFor, sentenceFor } from './superlibrary';
+import { LibraryError, hasReason, embedCallbacks, libraryFetch, libraryRef, needsReconnect, reasonFor, relatedForCard, sentenceFor } from './superlibrary';
+
+import libraryCases from '@superjackfruitlabs/treaty-contracts/data/fixtures/http/superlibrary/api.v1.cases.json';
 
 afterEach(() => { vi.unstubAllGlobals(); vi.mocked(libraryToken).mockResolvedValue('lib-token'); });
+
+/** 200 bodies SuperLibrary's contract holds as valid (treaty's own cases), to change from. */
+const OK = {
+  item: libraryCases.operations.getItem.responses['200'].valid["a person's upload"],
+  embed: libraryCases.operations.embedItem.responses['200'].valid['one file'],
+  me: libraryCases.operations.me.responses['200'].valid['a member'],
+  related: libraryCases.operations.relatedWork.responses['200'].valid.one,
+};
+/** An item read with this scope and creator, with its one version or none. */
+const itemBody = (scope: string, createdBy: string, versions: 0 | 1 = 1) =>
+  ({ item: { ...OK.item.item, scope, createdBy }, versions: versions === 0 ? [] : OK.item.versions });
+const me = (role: 'owner' | 'member') => ({ ...OK.me, principalId: 'prn_000000000000000000a2', role });
 
 describe('Superlibrary references (spec §11: the drawer previews linked artifacts)', () => {
   it('says the true reason a token is missing: a sign-in to refresh (Reconnect) apart from a plane that will not issue one (no Reconnect)', async () => {
@@ -42,7 +56,7 @@ describe('Superlibrary references (spec §11: the drawer previews linked artifac
   });
   it('calls Superlibrary with the person’s own library token, never cookies', async () => {
     const calls: Array<{ url: string; init: RequestInit }> = [];
-    vi.stubGlobal('fetch', vi.fn(async (url: string, init: RequestInit) => { calls.push({ url, init }); return Response.json({ url: 'https://itm-x.superlibrarycontent.dev/_view?sig=s', version: 2 }); }));
+    vi.stubGlobal('fetch', vi.fn(async (url: string, init: RequestInit) => { calls.push({ url, init }); return Response.json(OK.embed); }));
     await embedCallbacks().getEmbedUrl({ itemId: 'itm_0123456789abcdef', version: 2 });
     expect(calls[0]!.url).toBe('https://app.superlibrary.dev/api/v1/items/itm_0123456789abcdef/embed');
     expect(new Headers(calls[0]!.init.headers).get('Authorization')).toBe('Bearer lib-token');
@@ -67,8 +81,8 @@ describe('Superlibrary references (spec §11: the drawer previews linked artifac
     const urls: string[] = [];
     vi.stubGlobal('fetch', vi.fn(async (url: string) => {
       urls.push(url);
-      if (url.endsWith('/api/v1/me')) return Response.json({ principalId: 'prn_000000000000000000a2', role: 'member' });
-      return Response.json({ item: { scope: 'workspace', title: 'T', createdBy: 'prn_000000000000000000a2' }, versions: [{ version: 1, revokedAt: null }] });
+      if (url.endsWith('/api/v1/me')) return Response.json(me('member'));
+      return Response.json(itemBody('workspace', 'prn_000000000000000000a2'));
     }));
     const cb = embedCallbacks();
     await cb.getVersions!({ itemId: 'itm_0123456789abcdef' });
@@ -79,10 +93,10 @@ describe('Superlibrary references (spec §11: the drawer previews linked artifac
     let scope = 'board:brd_00000000000000b1';
     let reads = 0;
     vi.stubGlobal('fetch', vi.fn(async (url: string, init?: RequestInit) => {
-      if (url.endsWith('/scope')) { scope = 'workspace'; return Response.json({ scope }); }
-      if (url.endsWith('/api/v1/me')) return Response.json({ principalId: 'prn_000000000000000000a2', role: 'owner' });
+      if (url.endsWith('/scope')) { scope = 'workspace'; return Response.json({ item: itemBody(scope, 'prn_000000000000000000a2').item }); }
+      if (url.endsWith('/api/v1/me')) return Response.json(me('owner'));
       reads += 1;
-      return Response.json({ item: { scope, title: 'T', createdBy: 'prn_000000000000000000a2' }, versions: [] });
+      return Response.json(itemBody(scope, 'prn_000000000000000000a2', 0));
     }));
     const cb = embedCallbacks();
     expect((await cb.getShareInfo!({ itemId: 'itm_0123456789abcdef' })).scope).toBe('board:brd_00000000000000b1');
@@ -108,5 +122,19 @@ describe('Superlibrary references (spec §11: the drawer previews linked artifac
       expect(e).toBeInstanceOf(LibraryError);
       expect(sentenceFor(e)).toMatch(/could not be loaded/);
     } finally { vi.useRealTimers(); }
+  });
+  it('reads every answer through treaty’s api.v1: a body it refuses is the retryable error, never half-read', async () => {
+    expect(OK.related.items).toHaveLength(1);
+    vi.stubGlobal('fetch', vi.fn(async () => Response.json(OK.related)));
+    expect(await relatedForCard('card_0123456789abcdef')).toEqual(OK.related.items);
+    for (const body of [{}, { items: 'none' }, { items: [{ itemId: 'itm_0123456789abcdef' }] }]) {
+      vi.stubGlobal('fetch', vi.fn(async () => Response.json(body)));
+      const e = await relatedForCard('card_0123456789abcdef').catch((err: unknown) => err);
+      expect({ body, code: e instanceof LibraryError ? e.code : e }).toEqual({ body, code: 'invalid_response' });
+      expect(sentenceFor(e)).toMatch(/could not be loaded/);
+    }
+    // An item read the contract refuses: no versions are offered rather than a crash in the embed.
+    vi.stubGlobal('fetch', vi.fn(async () => Response.json({ item: { title: 7 } })));
+    await expect(embedCallbacks().getVersions?.({ itemId: 'itm_0123456789abcdef' })).rejects.toMatchObject({ code: 'invalid_response' });
   });
 });

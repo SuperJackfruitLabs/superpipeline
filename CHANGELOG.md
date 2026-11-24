@@ -14,6 +14,9 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html). Entries g
 
 ## Unreleased
 
+- **`GET /v1/agents/load`** (treaty `placement.v1`), for a placement service on `dispatch:read`: every agent of the workspace with `inFlight` (its runs still working, over every board), `capacity` (its concurrency; 0 takes nothing) and `lastHeartbeatAt` (null when it never ran). SuperDispatch already calls it; until now it answered 404.
+- **The assignee picker and SuperLibrary previews read through treaty's contracts** (`agentpod.fleet-api`'s `fleet.v1`, `superlibrary.api`'s `api.v1`) instead of trusting the body's shape. A hub fleet list off the contract shows no picker, as when the hub is down; a SuperLibrary answer off the contract shows the preview's retryable error (`invalid_response`).
+
 ## v0.0.37 — 2026-11-23
 
 - `supi create-card` and `supi edit-card` choose a card's repositories: `--repo <name>` (repeat it) and `--primary-repo <name>`, sent sorted and once each; `edit-card --clear-repos` removes the choice. A `409 REPOSITORY_CHOICE_REFUSED` on any verb prints the board's sentence, its `reason` and what to change, instead of the raw body, and an edit that also merges a spec no longer reports it as a changed card. `supi board` shows each card's repositories on its line.
