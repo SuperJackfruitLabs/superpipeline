@@ -2,10 +2,12 @@ import { describe, expect, it } from 'vitest';
 import registry from '@superjackfruitlabs/treaty-contracts/data/contracts/error-codes.json';
 import { ROUTE_ERROR_STATUS, statusFor, type ApiErrorCode, type RouteErrorCode } from '../src/api-errors';
 import type { BoardErrorCode } from '../src/board/board-do';
+import { productNotEnabled } from '../src/auth/org-plane-resolve';
 
 // Treaty phase 1, ruling 1: every code SuperPipeline can return is in treaty's
 // `contracts/error-codes.json`, owned by superpipeline, in the error.v1 envelope, with the status
-// this API gives it.
+// this API gives it. The one exception is the Organization-plane gate's refusal, which answers in the
+// plane's flat-error.v1 envelope before any route runs (treaty's `x-treaty-gate-refusals`).
 
 /** Every `BoardErrorCode`. A type error when the union gains or loses one, so the list stays whole. */
 const BOARD_CODES: Record<BoardErrorCode, true> = {
@@ -120,7 +122,10 @@ const BOARD_CODES: Record<BoardErrorCode, true> = {
 const NOT_YET_REGISTERED: readonly ApiErrorCode[] = [];
 
 interface Entry { code: string; owner: string; envelope?: string; status: number }
-const registered = new Map((registry.codes as Entry[]).filter((c) => c.owner === 'superpipeline').map((c) => [c.code, c]));
+const ours = (registry.codes as Entry[]).filter((c) => c.owner === 'superpipeline');
+const registered = new Map(ours.filter((c) => (c.envelope ?? 'error.v1') === 'error.v1').map((c) => [c.code, c]));
+/** The gate's codes: flat-error.v1, answered by `productNotEnabled`, not by a route. */
+const GATE_CODES = ['product_not_enabled'];
 const ALL: ApiErrorCode[] = [
   ...Object.keys(BOARD_CODES).filter((c): c is BoardErrorCode => c in BOARD_CODES),
   ...Object.keys(ROUTE_ERROR_STATUS).filter((c): c is RouteErrorCode => c in ROUTE_ERROR_STATUS),
@@ -141,5 +146,13 @@ describe('every error code is in treaty\'s registry', () => {
 
   it('every superpipeline code in the registry is one this API can return', () => {
     expect([...registered.keys()].filter((c) => !(ALL as string[]).includes(c))).toEqual([]);
+    expect(ours.filter((c) => !registered.has(c.code)).map((c) => c.code)).toEqual(GATE_CODES);
+  });
+
+  it('the gate\'s code is registered in flat-error.v1 at the status the gate answers', async () => {
+    const res = productNotEnabled('org_00000000000000000b02');
+    const body = await res.json<{ error: string }>();
+    expect(GATE_CODES).toContain(body.error);
+    expect(ours.find((c) => c.code === body.error)).toMatchObject({ envelope: 'flat-error.v1', status: res.status });
   });
 });
