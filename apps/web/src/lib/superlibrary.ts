@@ -8,6 +8,7 @@ import { reconnectedThisTab } from './reconnect';
 import { say, type Vibe } from '@superjackfruitlabs/vibekit-ui';
 import { forgetLibraryToken, libraryConfigured, libraryProblem, libraryToken } from '$lib/hub-token';
 import type { EmbedGrant, MountOptions, Scope, ShareInfo } from '$lib/vendor/superlibrary-embed/superlibrary-embed.js';
+import { isLibraryBody, type LibraryOperation } from '$lib/treaty';
 
 export const LIBRARY_URL = 'https://app.superlibrary.dev';
 /** A hung Superlibrary ends in the retryable message rather than a spinner. */
@@ -51,12 +52,32 @@ export async function libraryFetch(path: string, init: RequestInit = {}): Promis
   return res;
 }
 
-async function jsonOf<T>(res: Response): Promise<T> {
+/**
+ * A successful answer read through SuperLibrary's `api.v1` (treaty): a body the contract refuses is
+ * `invalid_response`, which the drawer shows as its retryable error, never half-read.
+ */
+async function jsonOf<K extends LibraryOperation>(res: Response, operation: K): Promise<LibraryBodies[K]> {
   if (!res.ok) {
     const b = (await res.json().catch(() => ({}))) as { error?: string };
     throw new LibraryError(res.status, b.error ?? `http_${res.status}`);
   }
-  return (await res.json()) as T;
+  const body: unknown = await res.json().catch(() => undefined);
+  if (!readsAs(await isLibraryBody(operation, res.status, body), operation, body)) throw new LibraryError(res.status, 'invalid_response');
+  return body;
+}
+
+/** What this app reads of each answer; `api.v1`'s schema for the operation covers each. */
+interface LibraryBodies {
+  getItem: ItemRead;
+  embedItem: EmbedGrant;
+  me: { principalId: string; role: 'owner' | 'member' };
+  widenItemScope: unknown;
+  relatedWork: { items: RelatedLite[] };
+}
+
+/** A body `api.v1` accepted (`valid`) for `operation` is what this app reads of it. */
+function readsAs<K extends LibraryOperation>(valid: boolean, _operation: K, _body: unknown): _body is LibraryBodies[K] {
+  return valid;
 }
 
 interface ItemRead { item: { scope: Scope; title: string; createdBy: string; audience?: string }; versions: Array<{ version: number; revokedAt: string | null }> }
@@ -68,7 +89,7 @@ export function embedCallbacks(): Pick<MountOptions, 'getEmbedUrl' | 'getVersion
   const readItem = (itemId: string): Promise<ItemRead> => {
     let p = reads.get(itemId);
     if (!p) {
-      p = libraryFetch(`/api/v1/items/${itemId}`).then((r) => jsonOf<ItemRead>(r));
+      p = libraryFetch(`/api/v1/items/${itemId}`).then((r) => jsonOf(r, 'getItem'));
       reads.set(itemId, p);
       p.catch(() => reads.delete(itemId));
     }
@@ -76,19 +97,19 @@ export function embedCallbacks(): Pick<MountOptions, 'getEmbedUrl' | 'getVersion
   };
   return {
     getEmbedUrl: async ({ itemId, version }) =>
-      jsonOf<EmbedGrant>(await libraryFetch(`/api/v1/items/${itemId}/embed`, { method: 'POST', body: JSON.stringify(version ? { version } : {}) })),
+      jsonOf(await libraryFetch(`/api/v1/items/${itemId}/embed`, { method: 'POST', body: JSON.stringify(version ? { version } : {}) }), 'embedItem'),
     getVersions: async ({ itemId }) =>
       (await readItem(itemId)).versions.filter((v) => !v.revokedAt).map((v) => v.version),
     getShareInfo: async ({ itemId }): Promise<ShareInfo> => {
       const [{ item }, me] = await Promise.all([
         readItem(itemId),
-        libraryFetch('/api/v1/me').then((r) => jsonOf<{ principalId: string; role: 'owner' | 'member' }>(r)).catch(() => null),
+        libraryFetch('/api/v1/me').then((r) => jsonOf(r, 'me')).catch(() => null),
       ]);
       // Superlibrary decides on widening; this only offers it to whom it would allow (its plan D12).
       return { scope: item.scope, title: item.title, boardVisible: item.audience === 'board', canWiden: me !== null && (item.createdBy === me.principalId || me.role === 'owner') };
     },
     setScope: async ({ itemId, scope }) => {
-      const done = await jsonOf(await libraryFetch(`/api/v1/items/${itemId}/scope`, { method: 'POST', body: JSON.stringify({ scope }) }));
+      const done = await jsonOf(await libraryFetch(`/api/v1/items/${itemId}/scope`, { method: 'POST', body: JSON.stringify({ scope }) }), 'widenItemScope');
       // The embed asks for share info right after a widen; it must see the new scope, not the cached read.
       reads.delete(itemId);
       return done;
@@ -132,7 +153,7 @@ export interface RelatedLite { itemId: string; title: string; kind: 'artifact' |
 
 /** Items related to this card, as Superlibrary sees them for this person (its visibility rule, spec §4). */
 export async function relatedForCard(cardId: string): Promise<RelatedLite[]> {
-  const body = await jsonOf<{ items: RelatedLite[] }>(await libraryFetch('/api/v1/related', { method: 'POST', body: JSON.stringify({ cardId, limit: 5 }) }));
+  const body = await jsonOf(await libraryFetch('/api/v1/related', { method: 'POST', body: JSON.stringify({ cardId, limit: 5 }) }), 'relatedWork');
   return body.items;
 }
 

@@ -123,10 +123,10 @@ describe('getHubPrincipals', () => {
     const token = jwtExpiringIn(300);
     const spy = stubFetch(
       token,
-      new Response(JSON.stringify({ agents: [{ id: 'prn_a', handle: 'alpha', displayName: 'Alpha' }] }), { status: 200 }),
+      new Response(JSON.stringify({ agents: [{ id: 'prn_0123456789abcdef0a01', handle: 'alpha', displayName: 'Alpha' }] }), { status: 200 }),
     );
 
-    expect(await getHubPrincipals()).toEqual([{ id: 'prn_a', handle: 'alpha', displayName: 'Alpha' }]);
+    expect(await getHubPrincipals()).toEqual([{ id: 'prn_0123456789abcdef0a01', handle: 'alpha', displayName: 'Alpha' }]);
 
     const call = spy.mock.calls.find((c) => String(c[0]).includes('/api/fleet/dispatchable'));
     expect(call).toBeTruthy();
@@ -145,6 +145,21 @@ describe('getHubPrincipals', () => {
 
     expect(await getHubPrincipals()).toBeNull();
     expect(spy.mock.calls.some((c) => String(c[0]).includes('/api/fleet/dispatchable'))).toBe(false);
+  });
+
+  it('answers null, not a half-read list, when the body is not what treaty’s fleet.v1 says', async () => {
+    // Read through the contract, not cast: a hub that answers another shape is treated like a hub
+    // that is down. The picker shows nothing, and nothing throws.
+    for (const body of [
+      {},
+      { agents: [{ id: 'prn_0123456789abcdef0a01', handle: 'alpha' }] },
+      { agents: [{ id: 'not-a-principal', handle: 'alpha', displayName: null }] },
+      { agents: 'everyone' },
+    ]) {
+      forgetHubToken();
+      stubFetch(jwtExpiringIn(300), new Response(JSON.stringify(body), { status: 200 }));
+      expect({ body, read: await getHubPrincipals() }).toEqual({ body, read: null });
+    }
   });
 
   it('answers null, not an error, when the endpoint refuses', async () => {

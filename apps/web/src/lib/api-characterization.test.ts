@@ -53,6 +53,9 @@ const BODY = {
   boardsUnanswered: 0,
 };
 
+/** The hub's fleet list, as treaty's `fleet.v1` holds it: the picker reads it through that contract. */
+const FLEET_BODY = { agents: [{ id: 'prn_0123456789abcdef0a01', handle: 'builder', displayName: 'Builder' }] };
+
 interface Sent {
   url: string;
   method: string;
@@ -96,6 +99,7 @@ beforeEach(() => {
       });
       if (url === '/hub/token') return new Response(JSON.stringify({ token: HUB_JWT, hubConfigured: true, signIn: 'github' }), { status: 200 });
       if (mode === 'offline') throw new TypeError('Failed to fetch');
+      if (mode === 200 && url.endsWith('/api/fleet/dispatchable')) return new Response(JSON.stringify(FLEET_BODY), { status: 200 });
       return new Response(JSON.stringify(mode === 200 ? BODY : { error: `refused (${mode})` }), { status: mode });
     }),
   );

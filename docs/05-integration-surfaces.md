@@ -1,8 +1,13 @@
 # 05 — Integration Surfaces
 
 The contract from [04 — Agent Contract](./04-agent-contract.md) is defined **once** and projected
-onto multiple wire surfaces. The REST wire is treaty's `agent-work.v1`, `decisions.v1` and
-`approvals.v1` OpenAPI documents, which the API's tests check every exchange against;
+onto multiple wire surfaces. The REST wire is treaty's `agent-work.v1`, `decisions.v1`,
+`approvals.v1` and `push.v1` OpenAPI documents, which the API's tests check every exchange against,
+and `board-read.v1` and `placement.v1`, checked on every exchange a service token makes. The MCP
+tools are treaty's `superpipeline.v1` tool catalog (names, scopes, input schemas and argument cases,
+`test/mcp-catalog.test.ts`), and the run route's span and log line follow treaty's `suite.v1`
+telemetry conventions (`test/run-telemetry-conventions.test.ts`). Reads from other products (the
+hub's fleet list, SuperLibrary) go through treaty's validators in the web app (`src/lib/treaty.ts`).
 `packages/contract` holds the shared vocabulary (activity envelope, outcomes, scopes, A2A types). This doc specifies those
 surfaces and how heterogeneous external harnesses connect.
 

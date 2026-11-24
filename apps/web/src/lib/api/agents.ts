@@ -4,6 +4,7 @@ import { ApiError } from '../loading';
 import { hubAudienceToken } from '../hub-token';
 import { fetch, headers } from './client';
 import { errorText } from './error-text';
+import { isFleetBody } from '../treaty';
 
 export interface AgentToken {
   agent: { id: string; name: string; capabilities: string[] };
@@ -115,11 +116,22 @@ export async function getHubPrincipals(): Promise<HubPrincipal[] | null> {
       headers: { Authorization: `Bearer ${token}` },
     });
     if (!res.ok) return null;
-    const body = (await res.json()) as { agents?: HubPrincipal[] };
-    return body.agents ?? [];
+    // Read through treaty's `fleet.v1`: a body the contract refuses is no answer, like a hub that
+    // is down, rather than a list the picker half-renders.
+    const body: unknown = await res.json();
+    return isDispatchable(await isFleetBody(res.status, body), body) ? body.agents : null;
   } catch {
     return null;
   }
+}
+
+/**
+ * A body `fleet.v1` accepted (`valid`) is its dispatchable list. `HubPrincipal` is the contract's
+ * `DispatchableAgent` field for field (id, handle, displayName, all required), so the narrowing
+ * claims nothing the schema did not check; `agents.test.ts` refuses a body missing any of them.
+ */
+function isDispatchable(valid: boolean, _body: unknown): _body is { agents: HubPrincipal[] } {
+  return valid;
 }
 
 /** The agents registered in the signed-in user's workspace. */
