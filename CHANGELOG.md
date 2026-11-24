@@ -14,6 +14,7 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html). Entries g
 
 ## Unreleased
 
+- **Treaty 0.0.20.** Every treaty package and `treaty.json` are pinned to 0.0.20, which declares the Organization-plane gate's `product_not_enabled` 403 (flat-error.v1) on every SuperPipeline document. The test hook's `readBoard 403` allowance is gone: the gate's real body validates on all six documents, and a malformed one is refused.
 - **`GET /v1/agents/load`** (treaty `placement.v1`), for a placement service on `dispatch:read`: every agent of the workspace with `inFlight` (its runs still working, over every board), `capacity` (its concurrency; 0 takes nothing) and `lastHeartbeatAt` (null when it never ran). SuperDispatch already calls it; until now it answered 404.
 - **The assignee picker and SuperLibrary previews read through treaty's contracts** (`agentpod.fleet-api`'s `fleet.v1`, `superlibrary.api`'s `api.v1`) instead of trusting the body's shape. A hub fleet list off the contract shows no picker, as when the hub is down; a SuperLibrary answer off the contract shows the preview's retryable error (`invalid_response`).
 

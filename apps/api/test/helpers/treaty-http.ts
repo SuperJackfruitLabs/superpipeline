@@ -24,6 +24,7 @@ import placement from '@superjackfruitlabs/treaty-contracts/data/schemas/http/su
 import cardRepositories from '@superjackfruitlabs/treaty-contracts/data/schemas/superpipeline-api/card-repositories.v1.json';
 import runCheckpointPolicyV2 from '@superjackfruitlabs/treaty-contracts/data/schemas/superpipeline-api/run-checkpoint-policy.v2.json';
 import errorV1 from '@superjackfruitlabs/treaty-contracts/data/schemas/common/error.v1.json';
+import flatErrorV1 from '@superjackfruitlabs/treaty-contracts/data/schemas/common/flat-error.v1.json';
 import attentionPending from '@superjackfruitlabs/treaty-contracts/data/schemas/superpipeline/attention.pending.v1.json';
 import deliveryPending from '@superjackfruitlabs/treaty-contracts/data/schemas/superpipeline/delivery.pending.v1.json';
 import elicitationPending from '@superjackfruitlabs/treaty-contracts/data/schemas/superpipeline/elicitation.pending.v1.json';
@@ -50,6 +51,8 @@ const bundle = createBundle({
   [DOCUMENTS.boardRead]: boardRead,
   [DOCUMENTS.placement]: placement,
   'schemas/common/error.v1.json': errorV1,
+  // The Organization-plane gate's `product_not_enabled` refusal, declared on every document (`x-treaty-gate-refusals`).
+  'schemas/common/flat-error.v1.json': flatErrorV1,
   'schemas/superpipeline-api/card-repositories.v1.json': cardRepositories,
   'schemas/superpipeline-api/run-checkpoint-policy.v2.json': runCheckpointPolicyV2,
   'schemas/superpipeline/attention.pending.v1.json': attentionPending,
@@ -75,13 +78,7 @@ const SERVICE_DOCUMENTS: ReadonlySet<string> = new Set([DOCUMENTS.boardRead, DOC
  * held here so the rest of the suite stays checked. Each entry names one operation and one status,
  * and why. Keep it empty; an entry that no longer matches anything fails (`unusedAllowances`).
  */
-export const ALLOWED_MISMATCHES: readonly { operation: string; status: number; why: string }[] = [
-  {
-    operation: 'readBoard',
-    status: 403,
-    why: 'In Organization-plane mode a token whose org is not entitled to SuperPipeline is refused before any route runs with the plane contract\'s `{error: "product_not_enabled", org}` (accounts.token-claims), not error.v1; board-read.v1 names only error.v1 for 403. Reported to treaty.',
-  },
-];
+export const ALLOWED_MISMATCHES: readonly { operation: string; status: number; why: string }[] = [];
 
 /** How many exchanges were checked in this test file, by document, so a test can prove the hook ran. */
 export const treatyHttpChecked: Record<string, number> = {
